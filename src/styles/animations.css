@@ -1,0 +1,50 @@
+@keyframes fly-up {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes flash-green {
+  0%,
+  100% {
+    color: inherit;
+  }
+  30%,
+  70% {
+    color: #10b981;
+  }
+}
+
+@keyframes flash-red {
+  0%,
+  100% {
+    color: inherit;
+  }
+  30%,
+  70% {
+    color: #ef4444;
+  }
+}
+
+.animate-fly-up {
+  animation: fly-up 1s ease-out forwards;
+}
+
+.animate-flash-green {
+  animation: flash-green 1.2s ease-out forwards;
+}
+
+.animate-flash-red {
+  animation: flash-red 1.2s ease-out forwards;
+}
