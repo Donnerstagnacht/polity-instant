@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="af919d9d-e07e-4bff-ad76-c0c0359139df" name="Changes" comment="" />
+    <list default="true" id="af919d9d-e07e-4bff-ad76-c0c0359139df" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/src/routeTree.gen.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/routeTree.gen.ts" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -40,7 +42,7 @@
   "keyToString": {
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "react-flow",
+    "git-widget-placeholder": "profile",
     "ignore.virus.scanning.warn.message": "true",
     "junie.onboarding.icon.badge.shown": "true",
     "node.js.detected.package.eslint": "true",
@@ -86,6 +88,7 @@
       <workItem from="1750505563800" duration="797000" />
       <workItem from="1750666150580" duration="2762000" />
       <workItem from="1750671480426" duration="6700000" />
+      <workItem from="1750765373137" duration="352000" />
     </task>
     <servers />
   </component>

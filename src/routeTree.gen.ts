@@ -23,6 +23,19 @@ import { Route as ProjectsTestsRouteImport } from './routes/projects/tests'
 import { Route as ProjectsTasksRouteImport } from './routes/projects/tasks'
 import { Route as DashboardReportsRouteImport } from './routes/dashboard/reports'
 import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard/analytics'
+import { Route as UserIdIndexRouteImport } from './routes/user/$id/index'
+import { Route as UserIdRoomRouteImport } from './routes/user/$id/room'
+import { Route as UserIdNetworkRouteImport } from './routes/user/$id/network'
+import { Route as UserIdSettingsTsxIndexRouteImport } from './routes/user/$id/settings.tsx/index'
+import { Route as UserIdSettingsTsxSocialsRouteImport } from './routes/user/$id/settings.tsx/socials'
+import { Route as UserIdSettingsTsxNotificationsRouteImport } from './routes/user/$id/settings.tsx/notifications'
+import { Route as UserIdSettingsTsxGroupsRouteImport } from './routes/user/$id/settings.tsx/groups'
+import { Route as UserIdSettingsTsxGeneralRouteImport } from './routes/user/$id/settings.tsx/general'
+import { Route as UserIdSettingsTsxContactRouteImport } from './routes/user/$id/settings.tsx/contact'
+import { Route as UserIdSettingsTsxAccountRouteImport } from './routes/user/$id/settings.tsx/account'
+import { Route as UserIdSettingsTsxFollowshipIndexRouteImport } from './routes/user/$id/settings.tsx/followship/index'
+import { Route as UserIdSettingsTsxFollowshipFollowingsRouteImport } from './routes/user/$id/settings.tsx/followship/followings'
+import { Route as UserIdSettingsTsxFollowshipFollowersRouteImport } from './routes/user/$id/settings.tsx/followship/followers'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -94,6 +107,79 @@ const DashboardAnalyticsRoute = DashboardAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => DashboardRoute,
 } as any)
+const UserIdIndexRoute = UserIdIndexRouteImport.update({
+  id: '/user/$id/',
+  path: '/user/$id/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UserIdRoomRoute = UserIdRoomRouteImport.update({
+  id: '/user/$id/room',
+  path: '/user/$id/room',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UserIdNetworkRoute = UserIdNetworkRouteImport.update({
+  id: '/user/$id/network',
+  path: '/user/$id/network',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UserIdSettingsTsxIndexRoute = UserIdSettingsTsxIndexRouteImport.update({
+  id: '/user/$id/settings/tsx/',
+  path: '/user/$id/settings/tsx/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UserIdSettingsTsxSocialsRoute =
+  UserIdSettingsTsxSocialsRouteImport.update({
+    id: '/user/$id/settings/tsx/socials',
+    path: '/user/$id/settings/tsx/socials',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const UserIdSettingsTsxNotificationsRoute =
+  UserIdSettingsTsxNotificationsRouteImport.update({
+    id: '/user/$id/settings/tsx/notifications',
+    path: '/user/$id/settings/tsx/notifications',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const UserIdSettingsTsxGroupsRoute = UserIdSettingsTsxGroupsRouteImport.update({
+  id: '/user/$id/settings/tsx/groups',
+  path: '/user/$id/settings/tsx/groups',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UserIdSettingsTsxGeneralRoute =
+  UserIdSettingsTsxGeneralRouteImport.update({
+    id: '/user/$id/settings/tsx/general',
+    path: '/user/$id/settings/tsx/general',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const UserIdSettingsTsxContactRoute =
+  UserIdSettingsTsxContactRouteImport.update({
+    id: '/user/$id/settings/tsx/contact',
+    path: '/user/$id/settings/tsx/contact',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const UserIdSettingsTsxAccountRoute =
+  UserIdSettingsTsxAccountRouteImport.update({
+    id: '/user/$id/settings/tsx/account',
+    path: '/user/$id/settings/tsx/account',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const UserIdSettingsTsxFollowshipIndexRoute =
+  UserIdSettingsTsxFollowshipIndexRouteImport.update({
+    id: '/user/$id/settings/tsx/followship/',
+    path: '/user/$id/settings/tsx/followship/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const UserIdSettingsTsxFollowshipFollowingsRoute =
+  UserIdSettingsTsxFollowshipFollowingsRouteImport.update({
+    id: '/user/$id/settings/tsx/followship/followings',
+    path: '/user/$id/settings/tsx/followship/followings',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const UserIdSettingsTsxFollowshipFollowersRoute =
+  UserIdSettingsTsxFollowshipFollowersRouteImport.update({
+    id: '/user/$id/settings/tsx/followship/followers',
+    path: '/user/$id/settings/tsx/followship/followers',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -110,6 +196,19 @@ export interface FileRoutesByFullPath {
   '/dashboard/reports': typeof DashboardReportsRoute
   '/projects/tasks': typeof ProjectsTasksRoute
   '/projects/tests': typeof ProjectsTestsRoute
+  '/user/$id/network': typeof UserIdNetworkRoute
+  '/user/$id/room': typeof UserIdRoomRoute
+  '/user/$id': typeof UserIdIndexRoute
+  '/user/$id/settings/tsx/account': typeof UserIdSettingsTsxAccountRoute
+  '/user/$id/settings/tsx/contact': typeof UserIdSettingsTsxContactRoute
+  '/user/$id/settings/tsx/general': typeof UserIdSettingsTsxGeneralRoute
+  '/user/$id/settings/tsx/groups': typeof UserIdSettingsTsxGroupsRoute
+  '/user/$id/settings/tsx/notifications': typeof UserIdSettingsTsxNotificationsRoute
+  '/user/$id/settings/tsx/socials': typeof UserIdSettingsTsxSocialsRoute
+  '/user/$id/settings/tsx': typeof UserIdSettingsTsxIndexRoute
+  '/user/$id/settings/tsx/followship/followers': typeof UserIdSettingsTsxFollowshipFollowersRoute
+  '/user/$id/settings/tsx/followship/followings': typeof UserIdSettingsTsxFollowshipFollowingsRoute
+  '/user/$id/settings/tsx/followship': typeof UserIdSettingsTsxFollowshipIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -126,6 +225,19 @@ export interface FileRoutesByTo {
   '/dashboard/reports': typeof DashboardReportsRoute
   '/projects/tasks': typeof ProjectsTasksRoute
   '/projects/tests': typeof ProjectsTestsRoute
+  '/user/$id/network': typeof UserIdNetworkRoute
+  '/user/$id/room': typeof UserIdRoomRoute
+  '/user/$id': typeof UserIdIndexRoute
+  '/user/$id/settings/tsx/account': typeof UserIdSettingsTsxAccountRoute
+  '/user/$id/settings/tsx/contact': typeof UserIdSettingsTsxContactRoute
+  '/user/$id/settings/tsx/general': typeof UserIdSettingsTsxGeneralRoute
+  '/user/$id/settings/tsx/groups': typeof UserIdSettingsTsxGroupsRoute
+  '/user/$id/settings/tsx/notifications': typeof UserIdSettingsTsxNotificationsRoute
+  '/user/$id/settings/tsx/socials': typeof UserIdSettingsTsxSocialsRoute
+  '/user/$id/settings/tsx': typeof UserIdSettingsTsxIndexRoute
+  '/user/$id/settings/tsx/followship/followers': typeof UserIdSettingsTsxFollowshipFollowersRoute
+  '/user/$id/settings/tsx/followship/followings': typeof UserIdSettingsTsxFollowshipFollowingsRoute
+  '/user/$id/settings/tsx/followship': typeof UserIdSettingsTsxFollowshipIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -143,6 +255,19 @@ export interface FileRoutesById {
   '/dashboard/reports': typeof DashboardReportsRoute
   '/projects/tasks': typeof ProjectsTasksRoute
   '/projects/tests': typeof ProjectsTestsRoute
+  '/user/$id/network': typeof UserIdNetworkRoute
+  '/user/$id/room': typeof UserIdRoomRoute
+  '/user/$id/': typeof UserIdIndexRoute
+  '/user/$id/settings/tsx/account': typeof UserIdSettingsTsxAccountRoute
+  '/user/$id/settings/tsx/contact': typeof UserIdSettingsTsxContactRoute
+  '/user/$id/settings/tsx/general': typeof UserIdSettingsTsxGeneralRoute
+  '/user/$id/settings/tsx/groups': typeof UserIdSettingsTsxGroupsRoute
+  '/user/$id/settings/tsx/notifications': typeof UserIdSettingsTsxNotificationsRoute
+  '/user/$id/settings/tsx/socials': typeof UserIdSettingsTsxSocialsRoute
+  '/user/$id/settings/tsx/': typeof UserIdSettingsTsxIndexRoute
+  '/user/$id/settings/tsx/followship/followers': typeof UserIdSettingsTsxFollowshipFollowersRoute
+  '/user/$id/settings/tsx/followship/followings': typeof UserIdSettingsTsxFollowshipFollowingsRoute
+  '/user/$id/settings/tsx/followship/': typeof UserIdSettingsTsxFollowshipIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -161,6 +286,19 @@ export interface FileRouteTypes {
     | '/dashboard/reports'
     | '/projects/tasks'
     | '/projects/tests'
+    | '/user/$id/network'
+    | '/user/$id/room'
+    | '/user/$id'
+    | '/user/$id/settings/tsx/account'
+    | '/user/$id/settings/tsx/contact'
+    | '/user/$id/settings/tsx/general'
+    | '/user/$id/settings/tsx/groups'
+    | '/user/$id/settings/tsx/notifications'
+    | '/user/$id/settings/tsx/socials'
+    | '/user/$id/settings/tsx'
+    | '/user/$id/settings/tsx/followship/followers'
+    | '/user/$id/settings/tsx/followship/followings'
+    | '/user/$id/settings/tsx/followship'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -177,6 +315,19 @@ export interface FileRouteTypes {
     | '/dashboard/reports'
     | '/projects/tasks'
     | '/projects/tests'
+    | '/user/$id/network'
+    | '/user/$id/room'
+    | '/user/$id'
+    | '/user/$id/settings/tsx/account'
+    | '/user/$id/settings/tsx/contact'
+    | '/user/$id/settings/tsx/general'
+    | '/user/$id/settings/tsx/groups'
+    | '/user/$id/settings/tsx/notifications'
+    | '/user/$id/settings/tsx/socials'
+    | '/user/$id/settings/tsx'
+    | '/user/$id/settings/tsx/followship/followers'
+    | '/user/$id/settings/tsx/followship/followings'
+    | '/user/$id/settings/tsx/followship'
   id:
     | '__root__'
     | '/'
@@ -193,6 +344,19 @@ export interface FileRouteTypes {
     | '/dashboard/reports'
     | '/projects/tasks'
     | '/projects/tests'
+    | '/user/$id/network'
+    | '/user/$id/room'
+    | '/user/$id/'
+    | '/user/$id/settings/tsx/account'
+    | '/user/$id/settings/tsx/contact'
+    | '/user/$id/settings/tsx/general'
+    | '/user/$id/settings/tsx/groups'
+    | '/user/$id/settings/tsx/notifications'
+    | '/user/$id/settings/tsx/socials'
+    | '/user/$id/settings/tsx/'
+    | '/user/$id/settings/tsx/followship/followers'
+    | '/user/$id/settings/tsx/followship/followings'
+    | '/user/$id/settings/tsx/followship/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -206,6 +370,19 @@ export interface RootRouteChildren {
   NotificationsRoute: typeof NotificationsRoute
   ProjectsRoute: typeof ProjectsRouteWithChildren
   SettingsRoute: typeof SettingsRoute
+  UserIdNetworkRoute: typeof UserIdNetworkRoute
+  UserIdRoomRoute: typeof UserIdRoomRoute
+  UserIdIndexRoute: typeof UserIdIndexRoute
+  UserIdSettingsTsxAccountRoute: typeof UserIdSettingsTsxAccountRoute
+  UserIdSettingsTsxContactRoute: typeof UserIdSettingsTsxContactRoute
+  UserIdSettingsTsxGeneralRoute: typeof UserIdSettingsTsxGeneralRoute
+  UserIdSettingsTsxGroupsRoute: typeof UserIdSettingsTsxGroupsRoute
+  UserIdSettingsTsxNotificationsRoute: typeof UserIdSettingsTsxNotificationsRoute
+  UserIdSettingsTsxSocialsRoute: typeof UserIdSettingsTsxSocialsRoute
+  UserIdSettingsTsxIndexRoute: typeof UserIdSettingsTsxIndexRoute
+  UserIdSettingsTsxFollowshipFollowersRoute: typeof UserIdSettingsTsxFollowshipFollowersRoute
+  UserIdSettingsTsxFollowshipFollowingsRoute: typeof UserIdSettingsTsxFollowshipFollowingsRoute
+  UserIdSettingsTsxFollowshipIndexRoute: typeof UserIdSettingsTsxFollowshipIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -308,6 +485,97 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAnalyticsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/user/$id/': {
+      id: '/user/$id/'
+      path: '/user/$id'
+      fullPath: '/user/$id'
+      preLoaderRoute: typeof UserIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/user/$id/room': {
+      id: '/user/$id/room'
+      path: '/user/$id/room'
+      fullPath: '/user/$id/room'
+      preLoaderRoute: typeof UserIdRoomRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/user/$id/network': {
+      id: '/user/$id/network'
+      path: '/user/$id/network'
+      fullPath: '/user/$id/network'
+      preLoaderRoute: typeof UserIdNetworkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/user/$id/settings/tsx/': {
+      id: '/user/$id/settings/tsx/'
+      path: '/user/$id/settings/tsx'
+      fullPath: '/user/$id/settings/tsx'
+      preLoaderRoute: typeof UserIdSettingsTsxIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/user/$id/settings/tsx/socials': {
+      id: '/user/$id/settings/tsx/socials'
+      path: '/user/$id/settings/tsx/socials'
+      fullPath: '/user/$id/settings/tsx/socials'
+      preLoaderRoute: typeof UserIdSettingsTsxSocialsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/user/$id/settings/tsx/notifications': {
+      id: '/user/$id/settings/tsx/notifications'
+      path: '/user/$id/settings/tsx/notifications'
+      fullPath: '/user/$id/settings/tsx/notifications'
+      preLoaderRoute: typeof UserIdSettingsTsxNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/user/$id/settings/tsx/groups': {
+      id: '/user/$id/settings/tsx/groups'
+      path: '/user/$id/settings/tsx/groups'
+      fullPath: '/user/$id/settings/tsx/groups'
+      preLoaderRoute: typeof UserIdSettingsTsxGroupsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/user/$id/settings/tsx/general': {
+      id: '/user/$id/settings/tsx/general'
+      path: '/user/$id/settings/tsx/general'
+      fullPath: '/user/$id/settings/tsx/general'
+      preLoaderRoute: typeof UserIdSettingsTsxGeneralRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/user/$id/settings/tsx/contact': {
+      id: '/user/$id/settings/tsx/contact'
+      path: '/user/$id/settings/tsx/contact'
+      fullPath: '/user/$id/settings/tsx/contact'
+      preLoaderRoute: typeof UserIdSettingsTsxContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/user/$id/settings/tsx/account': {
+      id: '/user/$id/settings/tsx/account'
+      path: '/user/$id/settings/tsx/account'
+      fullPath: '/user/$id/settings/tsx/account'
+      preLoaderRoute: typeof UserIdSettingsTsxAccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/user/$id/settings/tsx/followship/': {
+      id: '/user/$id/settings/tsx/followship/'
+      path: '/user/$id/settings/tsx/followship'
+      fullPath: '/user/$id/settings/tsx/followship'
+      preLoaderRoute: typeof UserIdSettingsTsxFollowshipIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/user/$id/settings/tsx/followship/followings': {
+      id: '/user/$id/settings/tsx/followship/followings'
+      path: '/user/$id/settings/tsx/followship/followings'
+      fullPath: '/user/$id/settings/tsx/followship/followings'
+      preLoaderRoute: typeof UserIdSettingsTsxFollowshipFollowingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/user/$id/settings/tsx/followship/followers': {
+      id: '/user/$id/settings/tsx/followship/followers'
+      path: '/user/$id/settings/tsx/followship/followers'
+      fullPath: '/user/$id/settings/tsx/followship/followers'
+      preLoaderRoute: typeof UserIdSettingsTsxFollowshipFollowersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -350,6 +618,21 @@ const rootRouteChildren: RootRouteChildren = {
   NotificationsRoute: NotificationsRoute,
   ProjectsRoute: ProjectsRouteWithChildren,
   SettingsRoute: SettingsRoute,
+  UserIdNetworkRoute: UserIdNetworkRoute,
+  UserIdRoomRoute: UserIdRoomRoute,
+  UserIdIndexRoute: UserIdIndexRoute,
+  UserIdSettingsTsxAccountRoute: UserIdSettingsTsxAccountRoute,
+  UserIdSettingsTsxContactRoute: UserIdSettingsTsxContactRoute,
+  UserIdSettingsTsxGeneralRoute: UserIdSettingsTsxGeneralRoute,
+  UserIdSettingsTsxGroupsRoute: UserIdSettingsTsxGroupsRoute,
+  UserIdSettingsTsxNotificationsRoute: UserIdSettingsTsxNotificationsRoute,
+  UserIdSettingsTsxSocialsRoute: UserIdSettingsTsxSocialsRoute,
+  UserIdSettingsTsxIndexRoute: UserIdSettingsTsxIndexRoute,
+  UserIdSettingsTsxFollowshipFollowersRoute:
+    UserIdSettingsTsxFollowshipFollowersRoute,
+  UserIdSettingsTsxFollowshipFollowingsRoute:
+    UserIdSettingsTsxFollowshipFollowingsRoute,
+  UserIdSettingsTsxFollowshipIndexRoute: UserIdSettingsTsxFollowshipIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
