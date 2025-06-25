@@ -1,0 +1,37 @@
+name: "🚀 - User Story3"
+description: Specific
+title: "🚀 - Users can3"
+labels: []
+assignees:
+  - Donnerstagnacht
+projects:
+  - polity-live/3
+type: User Story
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🎯 Summary table
+
+        | 🧑‍💼Subject | ➡️Action | 💡Object |
+        |-------------|----------|----------|
+        | Users       | can create | events  |
+  - type: textarea
+    id: description
+    attributes:
+      label: 📘 Description
+      description: A more detailed explanation of how the feature should be implemented and how to split the feature into subtasks.
+      placeholder: |
+        Describe the user story in detail and how it could be implemented or split into subtasks.
+    validations:
+      required: true
+  - type: checkboxes
+    id: todos
+    attributes:
+      label: 🔳 Todos
+      description: List the main tasks and subtasks for this user story.
+      options:
+        - label: Test 1
+        - label: Component 1
+        - label: Store 1
+        - label: router 1
