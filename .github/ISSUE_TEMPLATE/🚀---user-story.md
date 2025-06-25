@@ -4,6 +4,7 @@ about: Specific
 title: "\U0001F680 - Users can"
 labels: ''
 assignees: Donnerstagnacht
+type: User story
 
 ---
 
