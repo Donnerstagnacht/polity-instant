@@ -7,31 +7,9 @@ assignees:
 projects:
   - polity-live/3
 type: User Story
-body:
-  - type: markdown
-    attributes:
-      value: |
-        ## 🎯 Summary table
+body: |
+  <!-- This is an internal comment and won’t appear -->
+  ### Issue Description
+  _Please provide a description._
 
-        | 🧑‍💼Subject | ➡️Action | 💡Object |
-        |-------------|----------|----------|
-        | Users       | can create | events  |
-  - type: textarea
-    id: description
-    attributes:
-      label: 📘 Description
-      description: A more detailed explanation of how the feature should be implemented and how to split the feature into subtasks.
-      placeholder: |
-        Describe the user story in detail and how it could be implemented or split into subtasks.
-    validations:
-      required: true
-  - type: checkboxes
-    id: todos
-    attributes:
-      label: 🔳 Todos
-      description: List the main tasks and subtasks for this user story.
-      options:
-        - label: Test 1
-        - label: Component 1
-        - label: Store 1
-        - label: router 1
+  ---
