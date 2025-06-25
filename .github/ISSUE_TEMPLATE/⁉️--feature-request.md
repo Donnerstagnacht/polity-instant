@@ -5,7 +5,7 @@ title: "\U0001F680 -"
 labels: enhancement
 assignees: Donnerstagnacht
 type: Feature Request
-project: ["Polity"]
+projects: ["polity-live/3"]
 ---
 
 **Is your feature request related to a problem? Please describe.**
