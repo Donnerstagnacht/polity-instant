@@ -9,7 +9,7 @@ projects:
 type: User Story
 body:
 - type: textarea
-  id: repro
+  id: story
   attributes:
     label: Description
     value: |
