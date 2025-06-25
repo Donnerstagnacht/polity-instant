@@ -4,6 +4,7 @@ about: Describe this issue template's purpose here.
 title: "\U0001F451 - "
 labels: ''
 assignees: Donnerstagnacht
+type: Epic
 
 ---
 
