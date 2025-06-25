@@ -8,16 +8,6 @@ assignees:
 projects:
   - polity-live/3
 type: Feature Request 
-name: "⁉️- Feature request"
-description: Suggest an idea for this project
-title: "🚀 -"
-labels:
-  - enhancement
-assignees:
-  - Donnerstagnacht
-projects:
-  - polity-live/3
-type: Feature Request
 body:
 - type: textarea
   id: repro
