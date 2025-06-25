@@ -8,10 +8,23 @@ assignees:
 projects:
   - polity-live/3
 type: Feature Request 
+name: "⁉️- Feature request"
+description: Suggest an idea for this project
+title: "🚀 -"
+labels:
+  - enhancement
+assignees:
+  - Donnerstagnacht
+projects:
+  - polity-live/3
+type: Feature Request
 body:
-  - type: markdown
+  - type: textarea
+    id: feature_request
     attributes:
-      value: |
+      label: Feature Request
+      description: Please describe your feature in detail below.
+      default: |
         ## Is your feature request related to a problem? Please describe.
         A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
 
@@ -26,3 +39,5 @@ body:
 
         ## Additional context
         Add any other context or screenshots about the feature request here.
+    validations:
+      required: true
