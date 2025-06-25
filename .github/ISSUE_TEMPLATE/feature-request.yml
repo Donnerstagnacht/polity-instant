@@ -10,7 +10,7 @@ projects:
 type: Feature Request 
 body:
 - type: textarea
-  id: repro
+  id: feature
   attributes:
     label: Description
     value: |
