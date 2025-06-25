@@ -6,6 +6,7 @@ assignees:
   - Donnerstagnacht
 projects:
   - polity-live/3
+type: User Story
 body:
   - type: markdown
     attributes:
