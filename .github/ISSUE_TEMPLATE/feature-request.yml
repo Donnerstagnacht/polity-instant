@@ -18,25 +18,20 @@ assignees:
 projects:
   - polity-live/3
 type: Feature Request
-body: |
-  ### Description
-  _A clear and concise description of the bug._
+body:
+- type: textarea
+  id: repro
+  attributes:
+    label: Description
+    value: |
+      ## Describe the solution you'd like
+      A clear and concise description of what you want to happen.
 
-  ---
+      ## Describe alternatives you've considered
+      A clear and concise description of any alternative solutions or features you've considered.
 
-  ### Steps to Reproduce
-  1. Step one
-  2. Step two
-  3. Step three
+      ## Steps for implementation
+      1. ...
 
-  ---
-  
-  ### Expected Behavior
-  _What you expected to happen._
-
-  ---
-
-  ### Screenshots
-  _If applicable, add screenshots to help explain the problem._
-
-  ---
+      ## Additional context
+      Add any other context or screenshots about the feature request here.

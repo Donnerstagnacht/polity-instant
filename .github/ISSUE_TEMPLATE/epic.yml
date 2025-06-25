@@ -1,0 +1,19 @@
+name: "👑 - Epic"
+description: Suggest an idea for this project
+title: "👑 -"
+assignees:
+  - Donnerstagnacht
+projects:
+  - polity-live/3
+type: Feature Request
+body:
+- type: textarea
+  id: repro
+  attributes:
+    label: Description
+    value: |
+        ## 🎯 Goal
+        A brief, high-level description of what this epic aims to achieve.
+
+        ## 📘 Description
+        A more detailed explanation of the problem, the proposed solution, and why it matters.
