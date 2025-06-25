@@ -5,10 +5,10 @@ assignees:
   - Donnerstagnacht
 projects:
   - polity-live/3
-type: Feature Request
+type: Epic
 body:
 - type: textarea
-  id: repro
+  id: epic
   attributes:
     label: Description
     value: |
