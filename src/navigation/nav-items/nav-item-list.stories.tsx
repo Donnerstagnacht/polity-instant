@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-
 import { NavItemList } from './nav-item-list';
 
 const meta = {
