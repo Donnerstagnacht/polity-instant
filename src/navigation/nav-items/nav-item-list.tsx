@@ -19,7 +19,7 @@ export function NavItemList({
   isPrimary: boolean;
 }) {
   const router = useRouter();
-  const currentRoute = router.state.location.pathname;
+  const currentRoute = router?.state?.location?.pathname ?? 'home';
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const { navigationView } = useNavigationStore();
 

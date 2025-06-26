@@ -6,3 +6,5 @@ dist-ssr
 count.txt
 .env
 .tanstack
+*storybook.log
+storybook-static
