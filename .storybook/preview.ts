@@ -1,12 +1,5 @@
-import React from 'react';
-import { I18nextProvider } from 'react-i18next';
-
-import i18n from '../src/i18n/i18n';
 import type { Preview } from '@storybook/react-vite';
-
-const withI18next = (Story: React.FC, context: any) => {
-  return React.createElement(I18nextProvider, { i18n }, React.createElement(Story, context));
-};
+import '../src/styles.css';
 
 const preview: Preview = {
   parameters: {
@@ -16,16 +9,50 @@ const preview: Preview = {
         date: /Date$/i,
       },
     },
-
     a11y: {
       // 'todo' - show a11y violations in the test UI only
       // 'error' - fail CI on a11y violations
       // 'off' - skip a11y checks entirely
       test: 'todo',
     },
+    // Add a toolbar for theme switching
+    backgrounds: {
+      default: 'light',
+      values: [
+        { name: 'light', value: '#ffffff' },
+        { name: 'dark', value: '#18181b' },
+      ],
+    },
   },
-
-  decorators: [withI18next],
+  globalTypes: {
+    theme: {
+      name: 'Theme',
+      description: 'Global theme for Tailwind',
+      defaultValue: 'light',
+      toolbar: {
+        icon: 'circlehollow',
+        items: [
+          { value: 'light', title: 'Light' },
+          { value: 'dark', title: 'Dark' },
+        ],
+      },
+    },
+  },
+  decorators: [
+    (Story, context) => {
+      // Set Tailwind dark mode class on html element
+      const theme = context.globals.theme;
+      if (typeof window !== 'undefined') {
+        const root = window.document.documentElement;
+        if (theme === 'dark') {
+          root.classList.add('dark');
+        } else {
+          root.classList.remove('dark');
+        }
+      }
+      return Story();
+    },
+  ],
 };
 
 export default preview;

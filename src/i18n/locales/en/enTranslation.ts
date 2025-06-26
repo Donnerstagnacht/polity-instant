@@ -43,6 +43,7 @@ const enTranslation = {
       projects: 'Projects',
       calendar: 'Calendar',
       notifications: 'Notifications',
+      flow: 'Flow',
     },
     secondary: {
       projects: {
