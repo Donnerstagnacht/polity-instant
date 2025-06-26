@@ -21,7 +21,15 @@ export const ThemeToggleDefault: Story = {
     size: 'default' as Size,
   },
   name: 'ThemeToggle - default',
-  parameters: { docs: { autodocs: true } },
+  parameters: {
+    docs: {
+      autodocs: true,
+      description: {
+        story:
+          'This component uses a global theme store and therefore the button clicks do not work in storybook.',
+      },
+    },
+  },
 };
 
 export const StateToggleDefault: Story = {
