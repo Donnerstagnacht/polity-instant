@@ -57,6 +57,7 @@
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
     "prettierjs.PrettierConfiguration.Package": "C:\\react\\polity\\node_modules\\prettier",
+    "settings.editor.selected.configurable": "com.github.copilot.settings.ApplicationConfigurable",
     "ts.external.directory.path": "C:\\react\\polity\\node_modules\\typescript\\lib",
     "vue.rearranger.settings.migration": "true"
   }

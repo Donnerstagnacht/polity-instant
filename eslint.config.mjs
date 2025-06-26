@@ -1,3 +1,6 @@
+// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
+import storybook from 'eslint-plugin-storybook';
+
 // @ts-check
 
 import eslint from '@eslint/js';
@@ -12,6 +15,8 @@ export default tseslint.config(
       'src/components/kit-platejs/**/*',
       'src/components/ui/**/*',
       'src/components/ui-platejs/**/*',
+      '.github/**/*',
+      '.storybook/**/*',
     ],
   },
   eslint.configs.recommended,
@@ -21,9 +26,11 @@ export default tseslint.config(
     plugins: {
       react: reactPlugin,
       'react-hooks': reactHooksPlugin,
+      storybook: storybook,
     },
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
     },
-  }
+  },
+  storybook.configs['flat/recommended']
 );

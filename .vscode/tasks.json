@@ -8,6 +8,16 @@
       "group": "none",
       "isBackground": true,
       "problemMatcher": []
+    },
+    {
+      "label": "Push current Git branch",
+      "type": "shell",
+      "command": "git push origin $(git rev-parse --abbrev-ref HEAD)",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
     }
   ]
 }

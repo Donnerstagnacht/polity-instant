@@ -1,0 +1,29 @@
+name: "🚀 - User Story"
+description: Specific
+title: "🚀 - Users can"
+labels: []
+assignees:
+  - Donnerstagnacht
+projects:
+  - polity-live/3
+type: User Story
+body:
+- type: textarea
+  id: story
+  attributes:
+    label: Description
+    value: |
+      ## 🎯 Summary table
+      
+      | 🧑‍💼Subject                                      |  ➡️Action                      | 💡Object                                                    |
+      |--------------------------------------|---------------------------|-----------------------------------------------|
+      | Users                                              | can create                      | events                                                         |
+      
+      ## 📘 Description
+      A more detailed explanation how the feature should be implemented and how to split thefeature in subtasks.
+      
+      ## 🔳 Todos
+      - [ ] Test 1
+      - [ ] Component 1
+      - [ ] Store 1
+      - [ ] router 1
