@@ -1,8 +1,5 @@
-import i18n from '../src/i18n/i18n';
-import React from 'react';
 import type { Preview } from '@storybook/react-vite';
 import '../src/styles.css';
-import { useAuthStore } from '../src/global-state/auth.store';
 import { decorators } from './decorators';
 
 const preview: Preview = {

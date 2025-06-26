@@ -20,12 +20,19 @@ export const Authenticated: Story = {
       }),
     } as any;
     const { primaryNavItems } = navItemsAuthenticated(router);
-    return <NavItemList {...args} navigationItems={primaryNavItems} />;
+    return (
+      <NavItemList
+        {...args}
+        navigationItems={primaryNavItems}
+        navigationView={args.navigationView || 'asButtonList'}
+      />
+    );
   },
   args: {
     navigationItems: [],
     isMobile: true,
     isPrimary: true,
+    navigationView: 'asButtonList',
   },
 };
 
@@ -34,5 +41,6 @@ export const UnAuthenticated: Story = {
     navigationItems: navItemsUnauthenticated,
     isMobile: true,
     isPrimary: true,
+    navigationView: 'asButtonList',
   },
 };

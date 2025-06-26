@@ -2,26 +2,26 @@ import { Badge } from '../../components/ui/badge.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { cn } from '@/i18n/i18n.types.ts';
 import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover.tsx';
-import type { NavigationItem } from '@/navigation/types/navigation.types.tsx';
+import type { NavigationItem, NavigationView } from '@/navigation/types/navigation.types.tsx';
 import { iconMap } from '@/navigation/nav-items/icon-map.tsx';
 import React, { useState } from 'react';
 import { useRouter } from '@tanstack/react-router';
 import { isItemActive } from './nav-helpers.ts';
-import { useNavigationStore } from '../state/navigation.store.tsx';
 
 export function NavItemList({
   navigationItems,
   isMobile,
   isPrimary,
+  navigationView,
 }: {
   navigationItems: NavigationItem[];
   isMobile: boolean;
   isPrimary: boolean;
+  navigationView: NavigationView;
 }) {
   const router = useRouter();
   const currentRoute = router?.state?.location?.pathname ?? 'home';
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
-  const { navigationView } = useNavigationStore();
 
   if (navigationView === 'asButton') {
     return (

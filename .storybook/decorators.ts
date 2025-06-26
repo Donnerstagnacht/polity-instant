@@ -1,39 +1,4 @@
-import { create } from 'zustand';
-import { immer } from 'zustand/middleware/immer';
-import type { NavigationView, NavigationType } from '../src/navigation/types/navigation.types';
-
-interface NavigationState {
-  navigationType: NavigationType;
-  navigationView: NavigationView;
-}
-
-interface NavigationActions {
-  setNavigationType: (navigationType: NavigationType) => void;
-  setNavigationView: (navigationView: NavigationView) => void;
-}
-
-// Create the navigation store with zustand and immer
-export const useNavigationStore = create<NavigationState & NavigationActions>()(
-  immer(set => ({
-    // Initial state
-    navigationType: 'combined',
-    navigationView: 'asButtonList',
-
-    // Actions
-    setNavigationType: navigationType => {
-      set(state => {
-        state.navigationType = navigationType;
-      });
-    },
-
-    setNavigationView: navigationView => {
-      set(state => {
-        state.navigationView = navigationView;
-      });
-    },
-  }))
-);
-
+import { useNavigationStore } from '../src/navigation/state/navigation.store';
 import i18n from '../src/i18n/i18n';
 import React, { useEffect } from 'react';
 import { useAuthStore } from '../src/global-state/auth.store';
@@ -62,6 +27,15 @@ export const decorators = [
         useAuthStore.getState().logout();
       }
     }, [context.globals.auth]);
+    // Set navigation state from Storybook toolbar (if present)
+    React.useEffect(() => {
+      if (context.globals.navigationType) {
+        useNavigationStore.getState().setNavigationType(context.globals.navigationType);
+      }
+      if (context.globals.navigationView) {
+        useNavigationStore.getState().setNavigationView(context.globals.navigationView);
+      }
+    }, [context.globals.navigationType, context.globals.navigationView]);
     return Story();
   },
 ];
