@@ -1,3 +1,5 @@
+import i18n from '../src/i18n/i18n';
+import React from 'react';
 import type { Preview } from '@storybook/react-vite';
 import '../src/styles.css';
 
@@ -37,6 +39,18 @@ const preview: Preview = {
         ],
       },
     },
+    locale: {
+      name: 'Language',
+      description: 'i18n language',
+      defaultValue: 'en',
+      toolbar: {
+        icon: 'globe',
+        items: [
+          { value: 'en', title: 'English' },
+          { value: 'de', title: 'Deutsch' },
+        ],
+      },
+    },
   },
   decorators: [
     (Story, context) => {
@@ -50,6 +64,10 @@ const preview: Preview = {
           root.classList.remove('dark');
         }
       }
+      // Set i18n language from Storybook toolbar
+      React.useEffect(() => {
+        i18n.changeLanguage(context.globals.locale);
+      }, [context.globals.locale]);
       return Story();
     },
   ],
