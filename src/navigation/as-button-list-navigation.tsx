@@ -7,7 +7,6 @@ import type { NavigationProps } from './types/navigation.types';
 
 export function AsButtonListNavigation({
   navigationItems,
-  navigationView,
   navigationType,
   isMobile,
 }: NavigationProps) {
@@ -31,11 +30,7 @@ export function AsButtonListNavigation({
           {isPrimary && <NavUserAvatar navigationView="asButtonList" isMobile={isMobile} />}
           {isPrimary && (
             <div className="flex items-center gap-2 px-2">
-              <StateSwitcher
-                state={navigationView}
-                isMobile={isMobile}
-                navigationType={navigationType}
-              />
+              <StateSwitcher isMobile={isMobile} navigationType={navigationType} />
             </div>
           )}
         </div>
@@ -65,11 +60,7 @@ export function AsButtonListNavigation({
               <NavUserAvatar isMobile={isMobile} navigationView="asButtonList" />
 
               <div className="flex flex-col items-center gap-2">
-                <StateSwitcher
-                  state={navigationView}
-                  isMobile={isMobile}
-                  navigationType={navigationType}
-                />
+                <StateSwitcher isMobile={isMobile} navigationType={navigationType} />
               </div>
             </div>
           </div>

@@ -1,7 +1,8 @@
 import i18n from '../src/i18n/i18n';
-import React from 'react';
+import React, { useEffect } from 'react';
 import type { Preview } from '@storybook/react-vite';
 import '../src/styles.css';
+import { useAuthStore } from '../src/global-state/auth.store';
 
 const preview: Preview = {
   parameters: {
@@ -12,12 +13,8 @@ const preview: Preview = {
       },
     },
     a11y: {
-      // 'todo' - show a11y violations in the test UI only
-      // 'error' - fail CI on a11y violations
-      // 'off' - skip a11y checks entirely
       test: 'todo',
     },
-    // Add a toolbar for theme switching
     backgrounds: {
       default: 'light',
       values: [
@@ -51,6 +48,18 @@ const preview: Preview = {
         ],
       },
     },
+    auth: {
+      name: 'Auth',
+      description: 'Authentication state',
+      defaultValue: 'loggedIn',
+      toolbar: {
+        icon: 'lock',
+        items: [
+          { value: 'loggedIn', title: 'Logged In' },
+          { value: 'loggedOut', title: 'Logged Out' },
+        ],
+      },
+    },
   },
   decorators: [
     (Story, context) => {
@@ -68,6 +77,14 @@ const preview: Preview = {
       React.useEffect(() => {
         i18n.changeLanguage(context.globals.locale);
       }, [context.globals.locale]);
+      // Set auth state from Storybook toolbar
+      useEffect(() => {
+        if (context.globals.auth === 'loggedIn') {
+          useAuthStore.getState().login();
+        } else {
+          useAuthStore.getState().logout();
+        }
+      }, [context.globals.auth]);
       return Story();
     },
   ],
