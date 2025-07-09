@@ -11,7 +11,7 @@
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "github.copilot.chat.commitMessageGeneration.instructions": [
     {
-      "text": "Message type should be <type>.: <subject> with types like feat, fix, chore, docs, style, refactor, perf, test, revert."
+      "text": "Message type should be <type>.: <subject> with types like feat, fix, story, docs, style, refactor, perf, test, revert."
     }
   ],
   "editor.formatOnSave": true,

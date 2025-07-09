@@ -9,6 +9,7 @@ export function AsButtonListNavigation({
   navigationItems,
   navigationType,
   isMobile,
+  navigationView,
 }: NavigationProps) {
   const isPrimary = navigationType === 'primary';
 
@@ -25,6 +26,7 @@ export function AsButtonListNavigation({
             navigationItems={navigationItems}
             isMobile={isMobile}
             isPrimary={isPrimary}
+            navigationView={navigationView}
           />
           {isPrimary && <Separator orientation="vertical" className="mx-2 h-8" />}
           {isPrimary && <NavUserAvatar navigationView="asButtonList" isMobile={isMobile} />}
@@ -53,6 +55,7 @@ export function AsButtonListNavigation({
               navigationItems={navigationItems}
               isMobile={isMobile}
               isPrimary={isPrimary}
+              navigationView={navigationView}
             />
           </div>
           <div className="flex-shrink-0 border-t">
@@ -67,7 +70,12 @@ export function AsButtonListNavigation({
         </>
       ) : (
         <div className="scrollbar-hide flex-1 overflow-y-auto py-4">
-          <NavItemList navigationItems={navigationItems} isMobile={false} isPrimary={isPrimary} />
+          <NavItemList
+            navigationItems={navigationItems}
+            isMobile={false}
+            isPrimary={isPrimary}
+            navigationView={navigationView}
+          />
         </div>
       )}
     </div>
