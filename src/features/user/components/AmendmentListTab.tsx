@@ -1,0 +1,61 @@
+import React, { useMemo } from 'react';
+import { Search } from 'lucide-react';
+import type { UserAmendment } from '../types/user.types';
+import { Input } from '@/components/ui/input';
+import { AmendmentsCard } from '../ui-user/AmendmentsCard';
+
+interface AmendmentListTabProps {
+  amendments: UserAmendment[];
+  searchValue: string;
+  onSearchChange: (value: string) => void;
+  getStatusStyles: (status: UserAmendment['status']) => any;
+}
+
+export const AmendmentListTab: React.FC<AmendmentListTabProps> = ({
+  amendments,
+  searchValue,
+  onSearchChange,
+  getStatusStyles,
+}) => {
+  const filteredAmendments = useMemo(() => {
+    const term = (searchValue ?? '').toLowerCase();
+    if (!term) return amendments;
+    return amendments.filter(
+      amendment =>
+        amendment.title.toLowerCase().includes(term) ||
+        amendment.status.toLowerCase().includes(term) ||
+        (amendment.subtitle && amendment.subtitle.toLowerCase().includes(term)) ||
+        (amendment.code && amendment.code.toLowerCase().includes(term)) ||
+        amendment.date.toLowerCase().includes(term) ||
+        (amendment.tags && amendment.tags.some(tag => tag.toLowerCase().includes(term)))
+    );
+  }, [amendments, searchValue]);
+
+  return (
+    <>
+      <div className="relative mb-4">
+        <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+        <Input
+          placeholder="Search amendments by title, code, tags..."
+          className="pl-10"
+          value={searchValue}
+          onChange={e => onSearchChange(e.target.value)}
+        />
+      </div>
+      {filteredAmendments.length === 0 ? (
+        <p className="text-muted-foreground py-8 text-center">
+          No amendments found matching your search.
+        </p>
+      ) : (
+        <div className="space-y-4">
+          {filteredAmendments.map(amendment => {
+            const statusStyle = getStatusStyles(amendment.status);
+            return (
+              <AmendmentsCard key={amendment.id} amendment={amendment} statusStyle={statusStyle} />
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+};
