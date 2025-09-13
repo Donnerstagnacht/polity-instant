@@ -14,6 +14,7 @@ import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as HomeRouteImport } from './routes/home'
+import { Route as GroupsRouteImport } from './routes/groups'
 import { Route as FlowRouteImport } from './routes/flow'
 import { Route as FilesRouteImport } from './routes/files'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -60,6 +61,11 @@ const MessagesRoute = MessagesRouteImport.update({
 const HomeRoute = HomeRouteImport.update({
   id: '/home',
   path: '/home',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GroupsRoute = GroupsRouteImport.update({
+  id: '/groups',
+  path: '/groups',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FlowRoute = FlowRouteImport.update({
@@ -183,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRouteWithChildren
   '/files': typeof FilesRoute
   '/flow': typeof FlowRoute
+  '/groups': typeof GroupsRoute
   '/home': typeof HomeRoute
   '/messages': typeof MessagesRoute
   '/notifications': typeof NotificationsRoute
@@ -212,6 +219,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRouteWithChildren
   '/files': typeof FilesRoute
   '/flow': typeof FlowRoute
+  '/groups': typeof GroupsRoute
   '/home': typeof HomeRoute
   '/messages': typeof MessagesRoute
   '/notifications': typeof NotificationsRoute
@@ -242,6 +250,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteWithChildren
   '/files': typeof FilesRoute
   '/flow': typeof FlowRoute
+  '/groups': typeof GroupsRoute
   '/home': typeof HomeRoute
   '/messages': typeof MessagesRoute
   '/notifications': typeof NotificationsRoute
@@ -273,6 +282,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/files'
     | '/flow'
+    | '/groups'
     | '/home'
     | '/messages'
     | '/notifications'
@@ -302,6 +312,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/files'
     | '/flow'
+    | '/groups'
     | '/home'
     | '/messages'
     | '/notifications'
@@ -331,6 +342,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/files'
     | '/flow'
+    | '/groups'
     | '/home'
     | '/messages'
     | '/notifications'
@@ -361,6 +373,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRouteWithChildren
   FilesRoute: typeof FilesRoute
   FlowRoute: typeof FlowRoute
+  GroupsRoute: typeof GroupsRoute
   HomeRoute: typeof HomeRoute
   MessagesRoute: typeof MessagesRoute
   NotificationsRoute: typeof NotificationsRoute
@@ -416,6 +429,13 @@ declare module '@tanstack/react-router' {
       path: '/home'
       fullPath: '/home'
       preLoaderRoute: typeof HomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/groups': {
+      id: '/groups'
+      path: '/groups'
+      fullPath: '/groups'
+      preLoaderRoute: typeof GroupsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/flow': {
@@ -609,6 +629,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRouteWithChildren,
   FilesRoute: FilesRoute,
   FlowRoute: FlowRoute,
+  GroupsRoute: GroupsRoute,
   HomeRoute: HomeRoute,
   MessagesRoute: MessagesRoute,
   NotificationsRoute: NotificationsRoute,

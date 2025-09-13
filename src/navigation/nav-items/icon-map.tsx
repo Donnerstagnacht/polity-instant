@@ -19,6 +19,7 @@ import {
   Settings,
   Sun,
   User,
+  Users,
   Workflow,
 } from 'lucide-react';
 import type { ComponentType } from 'react';
@@ -27,6 +28,7 @@ export const iconMap = {
   Home,
   Settings,
   User,
+  Users,
   Mail,
   Search,
   Bell,

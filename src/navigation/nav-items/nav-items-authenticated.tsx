@@ -103,6 +103,16 @@ export const navItemsAuthenticated = (
         if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('notifications');
       },
     },
+    {
+      id: 'groups',
+      label: t('navigation.primary.groups'),
+      icon: 'Users',
+      href: '/groups',
+      onClick: () => {
+        router.navigate({ to: '/groups' });
+        if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('groups');
+      },
+    },
   ];
   // Define route-specific secondary navigation items
   const projectSecondaryNavItems: NavigationItem[] = [
