@@ -484,6 +484,18 @@ const enTranslation = {
       success: 'You have been signed out successfully.',
     },
   },
+  common: {
+    goBack: 'Go Back',
+    goHome: 'Go Home',
+    search: 'Search',
+  },
+  errors: {
+    pageNotFound: {
+      title: 'Page Not Found',
+      description: 'The page you are looking for does not exist or has been moved.',
+      helpText: 'Need help finding something?',
+    },
+  },
 };
 
 export default enTranslation;

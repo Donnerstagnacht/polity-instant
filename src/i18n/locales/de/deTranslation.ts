@@ -489,6 +489,18 @@ const deTranslation: I18nLocale = {
       success: 'Sie wurden erfolgreich abgemeldet.',
     },
   },
+  common: {
+    goBack: 'Zurück',
+    goHome: 'Zur Startseite',
+    search: 'Suchen',
+  },
+  errors: {
+    pageNotFound: {
+      title: 'Seite nicht gefunden',
+      description: 'Die gesuchte Seite existiert nicht oder wurde verschoben.',
+      helpText: 'Benötigen Sie Hilfe beim Finden?',
+    },
+  },
 };
 
 export default deTranslation;
