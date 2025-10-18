@@ -15,6 +15,7 @@ export default tseslint.config(
       'src/components/ui-platejs/**/*',
       '.github/**/*',
       '.storybook/**/*',
+      '.next/**/*',
     ],
   },
   eslint.configs.recommended,
@@ -28,6 +29,22 @@ export default tseslint.config(
     },
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+  {
+    // Allow CommonJS in config files
+    files: ['*.config.js', '*.config.mjs', 'postcss.config.js', 'tailwind.config.js'],
+    languageOptions: {
+      globals: {
+        module: 'readonly',
+        require: 'readonly',
+        process: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
     },
   },
   storybook.configs['flat/recommended']

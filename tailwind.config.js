@@ -1,9 +1,5 @@
-import tailwindcssAnimate from 'tailwindcss-animate';
-import tailwindScrollbarHide from 'tailwind-scrollbar-hide';
-import tailwindTypography from '@tailwindcss/typography';
-
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
   darkMode: ['class'],
   content: [
     './pages/**/*.{ts,tsx}',
@@ -77,5 +73,9 @@ export default {
       },
     },
   },
-  plugins: [tailwindcssAnimate, tailwindScrollbarHide, tailwindTypography],
+  plugins: [
+    require('tailwindcss-animate'),
+    require('tailwind-scrollbar-hide'),
+    require('@tailwindcss/typography'),
+  ],
 };
