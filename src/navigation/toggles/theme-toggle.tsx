@@ -1,9 +1,9 @@
 import { Laptop, Moon, Sun } from 'lucide-react';
-import { Button } from '@/components/ui/button.tsx';
-import { cn } from '@/i18n/i18n.types.ts';
-import { useThemeStore } from '@/global-state/theme.store.tsx';
-import { useTranslation } from 'react-i18next';
-import type { Size } from '@/navigation/types/navigation.types.tsx';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/i18n/i18n.types';
+import { useThemeStore } from '@/global-state/theme.store';
+import { useTranslation } from '@/hooks/use-translation';
+import type { Size } from '@/navigation/types/navigation.types';
 
 const ThemeButton = ({
   theme,

@@ -1,13 +1,13 @@
-import { AsButtonNavigation } from '@/navigation/as-button-navigation.tsx';
-import { AsButtonListNavigation } from '@/navigation/as-button-list-navigation.tsx';
-import { AsLabeledButtonListNavigation } from '@/navigation/as-labeled-button-list-navigation.tsx';
+import { AsButtonNavigation } from '@/navigation/as-button-navigation';
+import { AsButtonListNavigation } from '@/navigation/as-button-list-navigation';
+import { AsLabeledButtonListNavigation } from '@/navigation/as-labeled-button-list-navigation';
 import type {
   NavigationItem,
   NavigationView,
   NavigationType,
   ScreenType,
-} from '@/navigation/types/navigation.types.tsx';
-import { useScreenStore } from '@/global-state/screen.store.tsx';
+} from '@/navigation/types/navigation.types';
+import { useScreenStore } from '@/global-state/screen.store';
 
 export function DynamicNavigation({
   navigationView,

@@ -1,7 +1,7 @@
-import { cn } from '@/i18n/i18n.types.ts';
-import { StateSwitcher } from '@/navigation/toggles/state-switcher.tsx';
-import { NavItemList } from '@/navigation/nav-items/nav-item-list.tsx';
-import { NavUserAvatar } from '@/navigation/nav-items/nav-user-avatar.tsx';
+import { cn } from '@/i18n/i18n.types';
+import { StateSwitcher } from '@/navigation/toggles/state-switcher';
+import { NavItemList } from '@/navigation/nav-items/nav-item-list';
+import { NavUserAvatar } from '@/navigation/nav-items/nav-user-avatar';
 import { Separator } from '@/components/ui/separator';
 import type { NavigationProps } from './types/navigation.types';
 
@@ -17,7 +17,7 @@ export function AsLabeledButtonListNavigation({
     return (
       <div
         className={cn(
-          'bg-background fixed right-0 left-0 z-40',
+          'fixed left-0 right-0 z-40 bg-background',
           isPrimary ? 'bottom-0 border-t' : 'top-0 border-b'
         )}
       >
@@ -46,11 +46,11 @@ export function AsLabeledButtonListNavigation({
   return (
     <div
       className={cn(
-        'bg-background fixed top-0 z-40 flex h-full w-64 flex-col border-r',
-        isPrimary ? 'left-0' : 'right-0 border-r-0 border-l'
+        'fixed top-0 z-40 flex h-full w-64 flex-col border-r bg-background',
+        isPrimary ? 'left-0' : 'right-0 border-l border-r-0'
       )}
     >
-      <div className="scrollbar-hide flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-4 scrollbar-hide">
         <NavItemList
           navigationItems={navigationItems}
           isMobile={false}

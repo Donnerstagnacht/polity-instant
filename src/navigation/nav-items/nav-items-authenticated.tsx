@@ -1,115 +1,134 @@
-import { useTranslation } from 'react-i18next';
-import type { AnyRouter } from '@tanstack/react-router';
-import type { NavigationItem } from '@/navigation/types/navigation.types.tsx';
+import type { NavigationItem } from '@/navigation/types/navigation.types';
+
+// Next.js router type interface
+interface NextRouter {
+  push: (url: string) => void;
+  state?: {
+    location: {
+      pathname: string;
+    };
+  };
+}
 
 // This function factory creates navigation items with router integration
 export const navItemsAuthenticated = (
-  router: AnyRouter, // Use AnyRouter type from TanStack Router
+  router: NextRouter, // Use Next.js router type
   setCurrentPrimaryRoute?: (route: string) => void
 ) => {
-  const { t } = useTranslation();
+  // Note: useTranslation() hook removed to fix hook order issues
+  // Using static strings temporarily until i18n is properly configured
 
-  // Define navigation items for primary navigation with TanStack Router integration
+  // Define navigation items for primary navigation with Next.js router integration
   const primaryNavItems: NavigationItem[] = [
     {
       id: 'home',
-      label: t('navigation.primary.home'),
+      label: 'Home',
       icon: 'Home',
       href: '/',
       onClick: () => {
-        router.navigate({ to: '/' });
+        router.push('/');
         if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('home');
       },
     },
     {
       id: 'dashboard',
-      label: t('navigation.primary.dashboard'),
+      label: 'Dashboard',
       icon: 'LayoutDashboard',
       href: '/dashboard',
       onClick: () => {
-        router.navigate({ to: '/dashboard' });
+        router.push('/dashboard');
         if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('dashboard');
       },
     },
     {
       id: 'messages',
-      label: t('navigation.primary.messages'),
+      label: 'Messages',
       icon: 'MessageSquare',
       badge: 5,
       href: '/messages',
       onClick: () => {
-        router.navigate({ to: '/messages' });
+        router.push('/messages');
         if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('messages');
       },
     },
     {
       id: 'settings',
-      label: t('navigation.primary.settings'),
+      label: 'Settings',
       icon: 'Settings',
       href: '/settings',
       onClick: () => {
-        router.navigate({ to: '/settings' });
+        router.push('/settings');
         if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('settings');
       },
     },
     {
       id: 'files',
-      label: t('navigation.primary.files'),
+      label: 'Files',
       icon: 'File',
       href: '/files',
       onClick: () => {
-        router.navigate({ to: '/files' });
+        router.push('/files');
         if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('files');
       },
     },
     {
+      id: 'editor',
+      label: 'Editor',
+      icon: 'FileText',
+      href: '/editor',
+      onClick: () => {
+        router.push('/editor');
+        if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('editor');
+      },
+    },
+    {
       id: 'flow',
-      label: t('navigation.primary.flow'),
+      label: 'Flow',
       icon: 'Workflow',
       href: '/flow',
       onClick: () => {
-        router.navigate({ to: '/flow' });
+        router.push('/flow');
         if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('flow');
       },
     },
     {
       id: 'projects',
-      label: t('navigation.primary.projects'),
+      label: 'Projects',
       icon: 'FolderOpen',
       href: '/projects',
       onClick: () => {
-        router.navigate({ to: '/projects' });
+        router.push('/projects');
         if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('projects');
       },
     },
     {
       id: 'calendar',
-      label: t('navigation.primary.calendar'),
+      label: 'Calendar',
       icon: 'Calendar',
       href: '/calendar',
       onClick: () => {
-        router.navigate({ to: '/calendar' });
+        router.push('/calendar');
         if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('calendar');
       },
     },
     {
       id: 'notifications',
-      label: t('navigation.primary.notifications'),
+      label: 'Notifications',
       icon: 'Bell',
       badge: 2,
       href: '/notifications',
       onClick: () => {
-        router.navigate({ to: '/notifications' });
+        router.push('/notifications');
         if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('notifications');
       },
     },
     {
       id: 'groups',
-      label: t('navigation.primary.groups'),
+      label: 'Groups',
       icon: 'Users',
       href: '/groups',
       onClick: () => {
-        router.navigate({ to: '/groups' });
+        router.push('/groups');
         if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('groups');
       },
     },
@@ -118,19 +137,19 @@ export const navItemsAuthenticated = (
   const projectSecondaryNavItems: NavigationItem[] = [
     {
       id: 'tasks',
-      label: t('navigation.secondary.projects.tasks'),
+      label: 'Tasks',
       icon: 'File',
       badge: 3,
       href: '/projects/tasks',
-      onClick: () => router.navigate({ to: '/projects/tasks' }),
+      onClick: () => router.push('/projects/tasks'),
     },
     {
       id: 'tests',
-      label: t('navigation.secondary.projects.tests'),
+      label: 'Tests',
       icon: 'FolderOpen',
       badge: 2,
       href: '/projects/tests',
-      onClick: () => router.navigate({ to: '/projects/tests' }),
+      onClick: () => router.push('/projects/tests'),
     },
   ];
 
@@ -138,17 +157,17 @@ export const navItemsAuthenticated = (
   const dashboardSecondaryNavItems: NavigationItem[] = [
     {
       id: 'analytics',
-      label: t('navigation.secondary.dashboard.analytics'),
+      label: 'Analytics',
       icon: 'LineChart',
       href: '/dashboard/analytics',
-      onClick: () => router.navigate({ to: '/dashboard/analytics' }),
+      onClick: () => router.push('/dashboard/analytics'),
     },
     {
       id: 'reports',
-      label: t('navigation.secondary.dashboard.reports'),
+      label: 'Reports',
       icon: 'AreaChart',
       href: '/dashboard/reports',
-      onClick: () => router.navigate({ to: '/dashboard/reports' }),
+      onClick: () => router.push('/dashboard/reports'),
     },
   ];
 

@@ -1,16 +1,16 @@
 import { MoreHorizontal } from 'lucide-react';
 
-import { Button } from '@/components/ui/button.tsx';
-import { ThemeToggle } from '@/navigation/toggles/theme-toggle.tsx';
-import { StateToggle } from '@/navigation/toggles/state-toggle.tsx';
-import { LanguageToggle } from '@/navigation/toggles/language-toggle.tsx';
+import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/navigation/toggles/theme-toggle';
+import { StateToggle } from '@/navigation/toggles/state-toggle';
+import { LanguageToggle } from '@/navigation/toggles/language-toggle';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu.tsx';
-import type { NavigationType } from '@/navigation/types/navigation.types.tsx';
+} from '@/components/ui/dropdown-menu';
+import type { NavigationType } from '@/navigation/types/navigation.types';
 import { useEffect, useState } from 'react';
 import { useNavigationStore } from '../state/navigation.store';
 
@@ -37,9 +37,9 @@ export const StateSwitcher: React.FC<{
     return (
       <div className="flex items-center gap-3">
         <StateToggle currentState={navigationView} onStateChange={setNavigationView} size="small" />
-        <div className="bg-border h-8 w-px"></div>
+        <div className="h-8 w-px bg-border"></div>
         <LanguageToggle size="small" />
-        <div className="bg-border h-8 w-px"></div>
+        <div className="h-8 w-px bg-border"></div>
         <ThemeToggle size="small" />
       </div>
     );
@@ -53,7 +53,7 @@ export const StateSwitcher: React.FC<{
           <Button
             variant="ghost"
             size="icon"
-            className="hover:bg-accent h-12 w-12"
+            className="h-12 w-12 hover:bg-accent"
             onMouseEnter={() => {
               if (hoverTimeout) {
                 clearTimeout(hoverTimeout);
@@ -184,13 +184,13 @@ export const StateSwitcher: React.FC<{
   // Overlay variant for asButton fullscreen
   if (navigationView === 'asButton') {
     return (
-      <div className="bg-background/95 absolute bottom-8 left-1/2 flex -translate-x-1/2 transform gap-2 rounded-full border p-2 shadow-lg backdrop-blur-sm">
+      <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 transform gap-2 rounded-full border bg-background/95 p-2 shadow-lg backdrop-blur-sm">
         <StateToggle currentState={navigationView} onStateChange={setNavigationView} />
         <>
-          <div className="bg-border mx-1 w-px"></div>
+          <div className="mx-1 w-px bg-border"></div>
           <LanguageToggle />
         </>
-        <div className="bg-border mx-1 w-px"></div>
+        <div className="mx-1 w-px bg-border"></div>
         <ThemeToggle size="default" />
       </div>
     );

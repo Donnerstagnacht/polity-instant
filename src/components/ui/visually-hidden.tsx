@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { cn } from '@/i18n/i18n.types.ts';
+import { cn } from '@/i18n/i18n.types';
 
 interface VisuallyHiddenProps extends React.HTMLAttributes<HTMLSpanElement> {}
 
@@ -13,7 +13,7 @@ const VisuallyHidden = React.forwardRef<HTMLSpanElement, VisuallyHiddenProps>(
       <span
         ref={ref}
         className={cn(
-          'absolute h-px w-px overflow-hidden border-0 p-0 whitespace-nowrap',
+          'absolute h-px w-px overflow-hidden whitespace-nowrap border-0 p-0',
           'clip-path-[inset(50%)]',
           className
         )}

@@ -40,6 +40,7 @@ const enTranslation = {
       messages: 'Messages',
       settings: 'Settings',
       files: 'Files',
+      editor: 'Editor',
       projects: 'Projects',
       calendar: 'Calendar',
       notifications: 'Notifications',

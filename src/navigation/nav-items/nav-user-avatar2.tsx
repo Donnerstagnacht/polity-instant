@@ -1,8 +1,8 @@
-import { Button } from '@/components/ui/button.tsx';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
-import { cn } from '@/i18n/i18n.types.ts';
-import type { NavigationView } from '@/navigation/types/navigation.types.tsx';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/i18n/i18n.types';
+import type { NavigationView } from '@/navigation/types/navigation.types';
 import { useState } from 'react';
 import { useAuthStore } from '@/global-state/auth.store';
 
@@ -38,7 +38,7 @@ export function NavUserAvatar({
       <Button
         variant="ghost"
         className={cn(
-          'hover:bg-accent flex h-24 w-fit items-center justify-center gap-4',
+          'flex h-24 w-fit items-center justify-center gap-4 hover:bg-accent',
           className
         )}
         onClick={clickHandler}
@@ -61,7 +61,7 @@ export function NavUserAvatar({
             size={isMobile ? 'icon' : undefined}
             className={cn(
               isMobile
-                ? 'hover:bg-accent h-12 w-12 flex-shrink-0'
+                ? 'h-12 w-12 flex-shrink-0 hover:bg-accent'
                 : 'flex h-12 w-full items-center justify-center',
               className
             )}
@@ -93,7 +93,7 @@ export function NavUserAvatar({
           <Button
             variant="ghost"
             size="icon"
-            className={cn('hover:bg-accent h-12 w-12 flex-shrink-0', className)}
+            className={cn('h-12 w-12 flex-shrink-0 hover:bg-accent', className)}
             onClick={clickHandler}
             onMouseEnter={() => setHoveredItem(popoverId)}
             onMouseLeave={() => setHoveredItem(null)}

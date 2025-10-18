@@ -7,21 +7,21 @@ import {
   CommandList,
   CommandSeparator,
   CommandShortcut,
-} from '@/components/ui/command.tsx';
-import { Badge } from '@/components/ui/badge.tsx';
+} from '@/components/ui/command';
+import { Badge } from '@/components/ui/badge';
 import { Keyboard, Moon } from 'lucide-react';
-import { getIconComponent } from '@/navigation/nav-items/icon-map.tsx';
-import { getShortcutForItem } from '@/navigation/nav-keyboard/keyboard-navigation.ts';
-import { useTranslation } from 'react-i18next';
-import { useRouter } from '@tanstack/react-router';
+import { getIconComponent } from '@/navigation/nav-items/icon-map';
+import { getShortcutForItem } from '@/navigation/nav-keyboard/keyboard-navigation';
+// import { useTranslation } from 'react-i18next'; // Temporarily disabled
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import {
   useCommandDialogShortcut,
   useNavigationKeyboard,
-} from '@/navigation/nav-keyboard/use-navigation-keyboard.tsx';
-import { navItemsAuthenticated } from '@/navigation/nav-items/nav-items-authenticated.tsx';
+} from '@/navigation/nav-keyboard/use-navigation-keyboard';
+import { navItemsAuthenticated } from '@/navigation/nav-items/nav-items-authenticated';
 import { useNavigationStore } from '@/navigation/state/navigation.store';
-import type { NavigationItem } from '@/navigation/types/navigation.types.tsx';
+import type { NavigationItem } from '@/navigation/types/navigation.types';
 import { useAuthStore } from '@/global-state/auth.store';
 
 export function NavigationCommandDialog({
@@ -31,7 +31,7 @@ export function NavigationCommandDialog({
   primaryNavItems: NavigationItem[];
   secondaryNavItems: NavigationItem[] | null;
 }) {
-  const { t } = useTranslation();
+  // const { t } = useTranslation(); // Temporarily disabled
   const router = useRouter();
 
   const [open, setOpen] = useState(false);
@@ -57,12 +57,12 @@ export function NavigationCommandDialog({
       const navItems = [...primaryNavItems, ...(secondaryNavItems || [])];
       const navItem = navItems.find(navItem => navItem.id === navId);
       if (navItem) {
-        // Navigate to the appropriate route using TanStack Router
+        // Navigate to the appropriate route using Next.js Router
         if (navItem.onClick) {
           navItem.onClick();
         } else {
           const route = navId === 'home' ? '/' : `/${navId}`;
-          router.navigate({ to: route });
+          router.push(route);
         }
 
         // Toggle priority based on navigation item if it exists in both
@@ -88,22 +88,22 @@ export function NavigationCommandDialog({
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder={t('commandDialog.placeholder')} />
+      <CommandInput placeholder="Search navigation..." />
       <CommandList>
-        <CommandEmpty>{t('commandDialog.noResults')}</CommandEmpty>
-        <CommandGroup heading={t('commandDialog.groups.primaryNavigation')}>
+        <CommandEmpty>No results found.</CommandEmpty>
+        <CommandGroup heading="Primary Navigation">
           {primaryNavItems.map(item => {
             const IconComponent = getIconComponent(item.icon);
             return (
               <CommandItem
                 key={item.id}
                 onSelect={() => {
-                  // Navigate to the appropriate route using TanStack Router
+                  // Navigate to the appropriate route using Next.js Router
                   if (item.onClick) {
                     item.onClick();
                   } else {
                     const route = item.id === 'home' ? '/' : `/${item.id}`;
-                    router.navigate({ to: route });
+                    router.push(route);
                   }
                   setOpen(false);
                 }}
@@ -127,12 +127,12 @@ export function NavigationCommandDialog({
           [
             {
               type: 'projects',
-              heading: t('commandDialog.groups.projectsNavigation'),
+              heading: 'Projects Navigation',
               items: navItemsAuthenticated(router).projectSecondaryNavItems,
             },
             {
               type: 'dashboard',
-              heading: t('commandDialog.groups.dashboardNavigation'),
+              heading: 'Dashboard Navigation',
               items: navItemsAuthenticated(router).dashboardSecondaryNavItems,
             },
           ].map(
@@ -147,11 +147,11 @@ export function NavigationCommandDialog({
                         <CommandItem
                           key={item.id}
                           onSelect={() => {
-                            // Navigate to the appropriate route using TanStack Router
+                            // Navigate to the appropriate route using Next.js Router
                             if (item.onClick) {
                               item.onClick();
-                            } else {
-                              router.navigate({ to: item.href });
+                            } else if (item.href) {
+                              router.push(item.href);
                             }
                             setOpen(false);
                           }}
@@ -177,7 +177,7 @@ export function NavigationCommandDialog({
         {authenticated && (
           <>
             <CommandSeparator />
-            <CommandGroup heading={t('commandDialog.groups.settings')}>
+            <CommandGroup heading="Settings">
               <CommandItem
                 onSelect={() => {
                   if (onThemeToggle) onThemeToggle();
@@ -185,7 +185,7 @@ export function NavigationCommandDialog({
                 }}
               >
                 <Moon className="mr-2 h-4 w-4" />
-                {t('commandDialog.items.changeTheme')}
+                Change Theme
                 <CommandShortcut>{getShortcutForItem('theme').display}</CommandShortcut>
               </CommandItem>
               <CommandItem
@@ -195,7 +195,7 @@ export function NavigationCommandDialog({
                 }}
               >
                 <Keyboard className="mr-2 h-4 w-4" />
-                {t('commandDialog.items.keyboardShortcuts')}
+                Keyboard Shortcuts
                 <CommandShortcut>{getShortcutForItem('keyboard').display}</CommandShortcut>
               </CommandItem>
             </CommandGroup>

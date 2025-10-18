@@ -42,6 +42,7 @@ const deTranslation: I18nLocale = {
       messages: 'Nachrichten',
       settings: 'Einstellungen',
       files: 'Dateien',
+      editor: 'Editor',
       projects: 'Projekte',
       calendar: 'Kalender',
       notifications: 'Benachrichtigungen',

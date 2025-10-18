@@ -1,5 +1,5 @@
-import { Button } from '@/components/ui/button.tsx';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   DropdownMenuItem,
   DropdownMenuPortal,
@@ -7,12 +7,12 @@ import {
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-} from '@/components/ui/dropdown-menu.tsx';
-import { cn } from '@/i18n/i18n.types.ts';
+} from '@/components/ui/dropdown-menu';
+import { cn } from '@/i18n/i18n.types';
 import { toast } from 'sonner';
-import { useTranslation } from 'react-i18next';
-import type { Language } from '@/i18n/i18n.ts';
-import type { Size } from '@/navigation/types/navigation.types.tsx';
+import { useTranslation } from '@/hooks/use-translation';
+import type { Language } from '@/global-state/language.store';
+import type { Size } from '@/navigation/types/navigation.types';
 import { useState } from 'react';
 
 export function LanguageToggle({
@@ -29,9 +29,7 @@ export function LanguageToggle({
   variant?: 'popover' | 'dropdown';
 }) {
   const [isLanguagePopoverOpen, setIsLanguagePopoverOpen] = useState(false);
-  const { i18n } = useTranslation();
-  const language = i18n.language as Language;
-  const { t } = useTranslation();
+  const { t, language, changeLanguage } = useTranslation();
 
   // Helper function to render the language display
   const renderLanguageDisplay = (lang: Language) => {
@@ -47,10 +45,13 @@ export function LanguageToggle({
         </span>
       </span>
     );
-  }; // Custom language setter with toast notification and i18n integration
+  };
+
+  // Custom language setter with toast notification and i18n integration
   const handleLanguageChange = (lang: Language) => {
-    // Always change the i18n language
-    i18n.changeLanguage(lang);
+    // Change the language using our custom hook
+    changeLanguage(lang);
+
     // Show notification
     toast.success(
       lang === 'en'

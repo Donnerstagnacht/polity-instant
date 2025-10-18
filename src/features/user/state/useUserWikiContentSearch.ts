@@ -1,28 +1,30 @@
 import { useState } from 'react';
-import { useSearch } from '@tanstack/react-router';
+import { useSearchParams } from 'next/navigation';
 import type { TabSearchState } from '../types/user.types';
 
 export function useUserWikiContentSearch() {
-  const search = useSearch({
-    from: '/user/$id/',
-  });
+  const searchParams = useSearchParams();
 
   const [searchTerms, setSearchTerms] = useState<TabSearchState>({
-    blogs: search.blogs ?? '',
-    groups: search.groups ?? '',
-    amendments: search.amendments ?? '',
+    blogs: searchParams.get('blogs') ?? '',
+    groups: searchParams.get('groups') ?? '',
+    amendments: searchParams.get('amendments') ?? '',
   });
 
   // Update URL when searchTerms change
   const updateUrlSearch = (tab: keyof TabSearchState, value: string) => {
-    const newSearch = { ...search, [tab]: value || undefined };
+    const current = new URLSearchParams(Array.from(searchParams.entries()));
+    if (value) {
+      current.set(tab, value);
+    } else {
+      current.delete(tab);
+    }
+    const search = current.toString();
+    const query = search ? `?${search}` : '';
     window.history.replaceState(
       window.history.state,
       '',
-      `${window.location.pathname}?${Object.entries(newSearch)
-        .filter(([, v]) => v)
-        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v as string)}`)
-        .join('&')}${window.location.hash}`
+      `${window.location.pathname}${query}${window.location.hash}`
     );
   };
 

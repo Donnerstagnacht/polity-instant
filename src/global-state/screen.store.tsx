@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { useEffect } from 'react';
-import type { ScreenType } from '@/navigation/types/navigation.types.tsx';
+import type { ScreenType } from '@/navigation/types/navigation.types';
 
 const MOBILE_BREAKPOINT = 768;
 

@@ -23,10 +23,13 @@ const NavigationStory = (args: any) => {
   const setNavigationType = useNavigationStore(state => state.setNavigationType);
   const setNavigationView = useNavigationStore(state => state.setNavigationView);
 
-  // Create router and nav items inside the component
+  // Create router and nav items inside the component using the function
   const mockRouter = {
     navigate: () => {
       console.log('Navigating...');
+    },
+    push: () => {
+      console.log('Pushing...');
     },
   } as any;
   const { primaryNavItems } = navItemsAuthenticated(mockRouter);

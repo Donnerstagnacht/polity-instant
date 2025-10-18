@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { isShortcutMatch } from '@/navigation/nav-keyboard/keyboard-navigation.ts';
-import type { NavigationItem } from '@/navigation/types/navigation.types.tsx';
+import { isShortcutMatch } from '@/navigation/nav-keyboard/keyboard-navigation';
+import type { NavigationItem } from '@/navigation/types/navigation.types';
 
 /**
  * Hook for handling keyboard shortcuts in navigation

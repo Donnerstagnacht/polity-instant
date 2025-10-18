@@ -21,7 +21,17 @@ import {
   getBlogGradient,
 } from './utils/userWiki.utils';
 
-export function UserWiki() {
+// TODO: Re-enable when props are implemented
+// interface UserWikiProps {
+//   userId?: string;
+//   searchFilters?: {
+//     blogs?: string;
+//     groups?: string;
+//     amendments?: string;
+//   };
+// }
+
+export function UserWiki(/* _props?: UserWikiProps */) {
   const [following, setFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(2.5); // Track the actual follower count
   const [showAnimation, setShowAnimation] = useState(false);

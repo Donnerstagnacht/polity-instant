@@ -36,5 +36,20 @@
   },
   "[css]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "css.validate": true,
+  "css.lint.unknownAtRules": "ignore",
+  "less.validate": true,
+  "less.lint.unknownAtRules": "ignore",
+  "scss.validate": true,
+  "scss.lint.unknownAtRules": "ignore",
+  "tailwindCSS.includeLanguages": {
+    "typescript": "javascript",
+    "typescriptreact": "javascript"
+  },
+  "tailwindCSS.classAttributes": ["class", "className", "class:list", "classList", "ngClass"],
+  "emmet.includeLanguages": {
+    "typescript": "html",
+    "typescriptreact": "html"
   }
 }

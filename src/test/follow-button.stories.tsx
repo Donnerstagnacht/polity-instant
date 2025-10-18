@@ -1,7 +1,7 @@
 // FollowButton.stories.tsx
 import { useArgs } from 'storybook/preview-api';
 import { useFollowStore } from './store';
-import { FollowButton } from './follow-button.tsx';
+import { FollowButton } from './follow-button';
 import { useEffect } from 'react';
 
 export default {
@@ -29,7 +29,6 @@ export const WithZustand = {
       if (state !== isFollowing) {
         useFollowStore.getState().set(isFollowing);
       }
-       
     }, [isFollowing]);
 
     // Sync Zustand store → Storybook args (only when Zustand changes)
@@ -37,7 +36,6 @@ export const WithZustand = {
       if (state !== isFollowing) {
         updateArgs({ isFollowing: state });
       }
-       
     }, [state]);
 
     function onClick() {

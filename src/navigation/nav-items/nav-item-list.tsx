@@ -1,12 +1,12 @@
-import { Badge } from '../../components/ui/badge.tsx';
-import { Button } from '../../components/ui/button.tsx';
-import { cn } from '@/i18n/i18n.types.ts';
-import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover.tsx';
-import type { NavigationItem, NavigationView } from '@/navigation/types/navigation.types.tsx';
-import { iconMap } from '@/navigation/nav-items/icon-map.tsx';
+import { Badge } from '../../components/ui/badge';
+import { Button } from '../../components/ui/button';
+import { cn } from '@/i18n/i18n.types';
+import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover';
+import type { NavigationItem, NavigationView } from '@/navigation/types/navigation.types';
+import { iconMap } from '@/navigation/nav-items/icon-map';
 import React, { useState } from 'react';
-import { useRouter } from '@tanstack/react-router';
-import { isItemActive } from './nav-helpers.ts';
+import { usePathname } from 'next/navigation';
+import { isItemActive } from './nav-helpers';
 
 export function NavItemList({
   navigationItems,
@@ -19,13 +19,13 @@ export function NavItemList({
   isPrimary: boolean;
   navigationView: NavigationView;
 }) {
-  const router = useRouter();
-  const currentRoute = router?.state?.location?.pathname ?? 'home';
+  const pathname = usePathname();
+  const currentRoute = pathname ?? '/';
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
   if (navigationView === 'asButton') {
     return (
-      <div className="scrollbar-hide max-h-[70vh] overflow-y-auto">
+      <div className="max-h-[70vh] overflow-y-auto scrollbar-hide">
         <div className="grid w-full auto-rows-max grid-cols-2 gap-8 p-4 sm:grid-cols-3 md:grid-cols-4">
           {/* Use different layout for fewer items */}
           {navigationItems.length <= 4 ? (
@@ -35,7 +35,7 @@ export function NavItemList({
                   key={item.id}
                   variant="ghost"
                   className={cn(
-                    'hover:bg-accent relative h-24 w-24 flex-shrink-0 flex-col gap-2',
+                    'relative h-24 w-24 flex-shrink-0 flex-col gap-2 hover:bg-accent',
                     isItemActive(item, currentRoute, isPrimary) &&
                       'bg-accent text-accent-foreground'
                   )}
@@ -53,7 +53,7 @@ export function NavItemList({
                   <span className="text-sm">{item.label}</span>
                   {item.badge && (
                     <Badge
-                      className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center p-0"
+                      className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center p-0"
                       variant="default"
                     >
                       {item.badge}
@@ -69,7 +69,7 @@ export function NavItemList({
                 key={item.id}
                 variant="ghost"
                 className={cn(
-                  'hover:bg-accent relative h-24 w-24 flex-shrink-0 flex-col gap-2',
+                  'relative h-24 w-24 flex-shrink-0 flex-col gap-2 hover:bg-accent',
                   isItemActive(item, currentRoute, isPrimary) && 'bg-accent text-accent-foreground'
                 )}
                 onClick={() => {
@@ -86,7 +86,7 @@ export function NavItemList({
                 <span className="text-sm">{item.label}</span>
                 {item.badge && (
                   <Badge
-                    className="absolute top-2 right-4 flex h-5 w-5 items-center justify-center p-0"
+                    className="absolute right-4 top-2 flex h-5 w-5 items-center justify-center p-0"
                     variant="default"
                   >
                     {item.badge}
@@ -103,7 +103,7 @@ export function NavItemList({
   // asButtonList variant - Mobile: Horizontal scrolling buttons with popovers
   if (navigationView === 'asButtonList' && isMobile) {
     return (
-      <div className="scrollbar-hide flex-1 overflow-x-auto">
+      <div className="flex-1 overflow-x-auto scrollbar-hide">
         <div className="flex min-w-max items-center justify-center gap-1 px-2">
           {navigationItems.map(item => (
             <Popover key={item.id} open={hoveredItem === item.id}>
@@ -112,7 +112,7 @@ export function NavItemList({
                   variant="ghost"
                   size="icon"
                   className={cn(
-                    'hover:bg-accent relative h-12 w-12 flex-shrink-0',
+                    'relative h-12 w-12 flex-shrink-0 hover:bg-accent',
                     isItemActive(item, currentRoute, isPrimary) &&
                       'bg-accent text-accent-foreground'
                   )}
@@ -133,7 +133,7 @@ export function NavItemList({
                   })}
                   {item.badge && (
                     <Badge
-                      className="absolute -top-0 -right-1 flex h-5 w-5 items-center justify-center p-0"
+                      className="absolute -right-1 -top-0 flex h-5 w-5 items-center justify-center p-0"
                       variant="default"
                     >
                       {item.badge}
@@ -162,7 +162,7 @@ export function NavItemList({
                 variant="ghost"
                 size="icon"
                 className={cn(
-                  'hover:bg-accent relative h-12 w-12 flex-shrink-0',
+                  'relative h-12 w-12 flex-shrink-0 hover:bg-accent',
                   isItemActive(item, currentRoute, isPrimary) && 'bg-accent text-accent-foreground'
                 )}
                 onClick={() => {
@@ -180,7 +180,7 @@ export function NavItemList({
                 })}
                 {item.badge && (
                   <Badge
-                    className="absolute -top-0 -right-1 flex h-5 w-5 items-center justify-center p-0"
+                    className="absolute -right-1 -top-0 flex h-5 w-5 items-center justify-center p-0"
                     variant="default"
                   >
                     {item.badge}
@@ -204,14 +204,14 @@ export function NavItemList({
   // asLabeledButtonList variant - Mobile: Horizontal scrolling buttons with labels
   if (navigationView === 'asLabeledButtonList' && isMobile) {
     return (
-      <div className="scrollbar-hide flex-1 overflow-x-auto">
+      <div className="flex-1 overflow-x-auto scrollbar-hide">
         <div className="flex min-w-max items-center justify-center gap-1 px-2">
           {navigationItems.map(item => (
             <Button
               key={item.id}
               variant="ghost"
               className={cn(
-                'hover:bg-accent flex h-16 min-w-16 flex-shrink-0 flex-col gap-1 px-2',
+                'flex h-16 min-w-16 flex-shrink-0 flex-col gap-1 px-2 hover:bg-accent',
                 isItemActive(item, currentRoute, isPrimary) && 'bg-accent text-accent-foreground'
               )}
               onClick={() => {
@@ -231,14 +231,14 @@ export function NavItemList({
                 })}
                 {item.badge && (
                   <Badge
-                    className="absolute -top-3 -right-5 flex h-5 w-5 items-center justify-center p-0"
+                    className="absolute -right-5 -top-3 flex h-5 w-5 items-center justify-center p-0"
                     variant="default"
                   >
                     {item.badge}
                   </Badge>
                 )}
               </div>
-              <span className="text-center text-xs leading-tight whitespace-nowrap">
+              <span className="whitespace-nowrap text-center text-xs leading-tight">
                 {item.label}
               </span>
             </Button>
