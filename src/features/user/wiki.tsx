@@ -21,17 +21,18 @@ import {
   getBlogGradient,
 } from './utils/userWiki.utils';
 
-// TODO: Re-enable when props are implemented
-// interface UserWikiProps {
-//   userId?: string;
-//   searchFilters?: {
-//     blogs?: string;
-//     groups?: string;
-//     amendments?: string;
-//   };
-// }
+interface UserWikiProps {
+  userId?: string;
+  searchFilters?: {
+    blogs?: string;
+    groups?: string;
+    amendments?: string;
+  };
+}
 
-export function UserWiki(/* _props?: UserWikiProps */) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function UserWiki(_props: UserWikiProps) {
+  // Props available: _props.userId, _props.searchFilters
   const [following, setFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(2.5); // Track the actual follower count
   const [showAnimation, setShowAnimation] = useState(false);
