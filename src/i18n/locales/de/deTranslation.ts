@@ -446,7 +446,48 @@ const deTranslation: I18nLocale = {
     tomorrow: 'Morgen',
   },
   columnElement: {
-    dragToMove: 'Zum Verschieben ziehen',
+    dragToMove: 'Ziehen, um Spalte zu verschieben',
+  },
+  auth: {
+    login: {
+      title: 'Bei Polity anmelden',
+      description:
+        'Geben Sie Ihre E-Mail-Adresse ein und wir senden Ihnen einen sicheren Magic-Code',
+      emailLabel: 'E-Mail-Adresse',
+      emailPlaceholder: 'ihre.email@beispiel.de',
+      sendCode: 'Magic-Code senden',
+      sending: 'Wird gesendet...',
+      footer: {
+        noPassword:
+          'Kein Passwort erforderlich - wir senden Ihnen stattdessen einen sicheren Code.',
+        checkEmail: 'Überprüfen Sie Ihre E-Mails für den Bestätigungscode.',
+      },
+    },
+    verify: {
+      title: 'Bestätigungscode eingeben',
+      description: 'Wir haben einen 6-stelligen Code gesendet an',
+      codeLabel: 'Bestätigungscode',
+      submit: 'Verifizieren und anmelden',
+      verifying: 'Verifiziere...',
+      back: 'Zurück',
+      resend: 'Erneut senden',
+      footer: {
+        checkSpam: 'Keine E-Mail erhalten? Überprüfen Sie Ihren Spam-Ordner.',
+        devNote: 'Entwicklungsmodus: Code verwenden',
+      },
+    },
+    codeSent: {
+      title: 'Code gesendet!',
+      description: 'Wir haben einen Bestätigungscode an {{email}} gesendet',
+      instructions:
+        'Überprüfen Sie Ihre E-Mails und geben Sie den 6-stelligen Code auf der nächsten Seite ein.',
+      backToEmail: 'E-Mail-Adresse ändern',
+    },
+    logout: {
+      button: 'Abmelden',
+      confirm: 'Sind Sie sicher, dass Sie sich abmelden möchten?',
+      success: 'Sie wurden erfolgreich abgemeldet.',
+    },
   },
 };
 

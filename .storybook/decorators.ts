@@ -1,7 +1,7 @@
 import { useNavigationStore } from '../src/navigation/state/navigation.store';
 import i18n from '../src/i18n/i18n';
 import React, { useEffect } from 'react';
-import { useAuthStore } from '../src/global-state/auth.store';
+import { useAuthStore } from '../src/lib/instant/auth';
 
 export const decorators = [
   (Story, context) => {
@@ -20,13 +20,13 @@ export const decorators = [
       i18n.changeLanguage(context.globals.locale);
     }, [context.globals.locale]);
     // Set auth state from Storybook toolbar
-    useEffect(() => {
-      if (context.globals.auth === 'loggedIn') {
-        useAuthStore.getState().login();
-      } else {
-        useAuthStore.getState().logout();
-      }
-    }, [context.globals.auth]);
+    // useEffect(() => {
+    //   if (context.globals.auth === 'loggedIn') {
+    //     useAuthStore.getState().login();
+    //   } else {
+    //     useAuthStore.getState().logout();
+    //   }
+    // }, [context.globals.auth]);
     // Set navigation state from Storybook toolbar (if present)
     React.useEffect(() => {
       if (context.globals.navigationType) {

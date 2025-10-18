@@ -3,6 +3,7 @@
 import { UserWiki } from '@/features/user/wiki';
 import { useSearchParams } from 'next/navigation';
 import { use } from 'react';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 
 export default function UserPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -17,13 +18,15 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
   // Pass them as props or use a custom hook to access them
 
   return (
-    <UserWiki
-      userId={resolvedParams.id}
-      searchFilters={{
-        blogs,
-        groups,
-        amendments,
-      }}
-    />
+    <AuthGuard requireAuth={true}>
+      <UserWiki
+        userId={resolvedParams.id}
+        searchFilters={{
+          blogs,
+          groups,
+          amendments,
+        }}
+      />
+    </AuthGuard>
   );
 }

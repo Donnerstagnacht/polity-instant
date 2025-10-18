@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { NavigationCommandDialog } from './command-dialog';
 import { useNavigation } from './state/useNavigation';
-import { useAuthStore } from '@/global-state/auth.store';
 
 const meta = {
   component: NavigationCommandDialog,
@@ -17,8 +16,6 @@ export const Authenticated: Story = {
     secondaryNavItems: [],
   },
   render: args => {
-    // Set auth state for the story
-    useAuthStore.getState().login();
     // Use navigation store logic as in __root.tsx
     const { primaryNavItems, secondaryNavItems } = useNavigation();
     return (
@@ -37,7 +34,6 @@ export const UnAuthenticated: Story = {
     secondaryNavItems: null,
   },
   render: args => {
-    useAuthStore.getState().logout();
     const { primaryNavItems } = useNavigation();
     return (
       <NavigationCommandDialog

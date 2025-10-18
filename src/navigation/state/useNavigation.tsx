@@ -16,6 +16,24 @@ export function useNavigation() {
   const [currentPrimaryRoute, setCurrentPrimaryRoute] = useState<string | null>(null);
   const { t } = useTranslation();
 
+  // Create unauthenticated navigation items with proper onClick handlers
+  const unauthenticatedNavItems: NavigationItem[] = [
+    {
+      id: 'home',
+      icon: 'Home',
+      label: 'Home',
+      href: '/',
+      onClick: () => router.push('/'),
+    },
+    {
+      id: 'auth',
+      icon: 'User',
+      label: 'Login',
+      href: '/auth',
+      onClick: () => router.push('/auth'),
+    },
+  ];
+
   // Create a mock router object that matches the expected interface
   const mockRouter = {
     ...router,
@@ -60,6 +78,7 @@ export function useNavigation() {
   return {
     primaryNavItems,
     secondaryNavItems,
+    unauthenticatedNavItems,
     currentPrimaryRoute,
   };
 }

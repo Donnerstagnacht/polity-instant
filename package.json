@@ -23,6 +23,7 @@
     "@ariakit/react": "^0.4.17",
     "@emoji-mart/data": "^1.2.1",
     "@faker-js/faker": "^9.8.0",
+    "@instantdb/react": "^0.22.21",
     "@platejs/ai": "^49.0.1",
     "@platejs/autoformat": "^49.0.0",
     "@platejs/basic-nodes": "^49.0.0",

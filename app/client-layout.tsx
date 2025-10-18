@@ -13,32 +13,20 @@ import type {
   NavigationView,
 } from '@/navigation/types/navigation.types';
 import { useNavigation } from '@/navigation/state/useNavigation';
-import { navItemsUnauthenticated } from '@/navigation/nav-items/nav-items-unauthenticated';
-import { useAuthStore, useAuthInitializer } from '@/global-state/auth.store';
+import { useAuthStore } from '@/lib/instant/auth';
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   // Initialize theme, screen responsive detection, and auth state
   useThemeInitializer({ defaultTheme: 'system', storageKey: 'theme' });
   useScreenResponsiveDetector();
 
-  // Initialize authentication
-  useAuthInitializer({
-    onInitialized: isAuthenticated => {
-      console.log('Auth initialized:', isAuthenticated);
-      // You could trigger additional actions here when auth state is initialized
-    },
-    // Uncomment to enable auto-login for development
-    autoLogin: true,
-    storageKey: 'auth-storage',
-  });
-
   const { screenType, isMobileScreen } = useScreenStore();
   const { navigationType, navigationView } = useNavigationStore();
-  const { primaryNavItems, secondaryNavItems } = useNavigation();
+  const { primaryNavItems, secondaryNavItems, unauthenticatedNavItems } = useNavigation();
   const { isAuthenticated } = useAuthStore();
 
   // Determine navigation items based on authentication status
-  const navigationItems = isAuthenticated ? primaryNavItems : navItemsUnauthenticated;
+  const navigationItems = isAuthenticated ? primaryNavItems : unauthenticatedNavItems;
 
   const isMobile = screenType === 'mobile' || (screenType === 'automatic' && isMobileScreen);
 

@@ -4,7 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/i18n/i18n.types';
 import type { NavigationView } from '@/navigation/types/navigation.types';
 import { useState } from 'react';
-import { useAuthStore } from '@/global-state/auth.store';
+import { useAuthStore } from '@/lib/instant/auth';
 
 export function NavUserAvatar({
   navigationView,

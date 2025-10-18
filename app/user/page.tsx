@@ -2,6 +2,7 @@
 
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 
 function UserContent() {
   const searchParams = useSearchParams();
@@ -51,8 +52,10 @@ function UserContent() {
 
 export default function UserPage() {
   return (
-    <Suspense fallback={<div>Loading user profile...</div>}>
-      <UserContent />
-    </Suspense>
+    <AuthGuard requireAuth={true}>
+      <Suspense fallback={<div>Loading user profile...</div>}>
+        <UserContent />
+      </Suspense>
+    </AuthGuard>
   );
 }
