@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { Suspense, useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,7 @@ import { useTranslation } from '@/hooks/use-translation';
 import { useAuthStore } from '@/lib/instant/auth';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 
-export default function VerifyPage() {
+function VerifyContent() {
   const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -107,101 +107,119 @@ export default function VerifyPage() {
   };
 
   return (
-    <AuthGuard requireAuth={false}>
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4 dark:from-gray-900 dark:to-gray-800">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mb-4 flex justify-center">
-              <Shield className="h-12 w-12 text-blue-500" />
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4 dark:from-gray-900 dark:to-gray-800">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="mb-4 flex justify-center">
+            <Shield className="h-12 w-12 text-blue-500" />
+          </div>
+          <CardTitle className="text-2xl font-bold">{t('auth.verify.title')}</CardTitle>
+          <CardDescription>
+            {t('auth.verify.description')} <strong>{email}</strong>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label>{t('auth.verify.codeLabel')}</Label>
+            <div className="flex justify-center gap-2">
+              {code.map((digit, index) => (
+                <Input
+                  key={index}
+                  ref={el => {
+                    inputRefs.current[index] = el;
+                  }}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  className="h-12 w-12 text-center text-lg font-semibold"
+                  value={digit}
+                  onChange={e => handleCodeChange(index, e.target.value)}
+                  onKeyDown={e => handleKeyDown(index, e)}
+                  onPaste={index === 0 ? handlePaste : undefined}
+                  disabled={isLoading}
+                />
+              ))}
             </div>
-            <CardTitle className="text-2xl font-bold">{t('auth.verify.title')}</CardTitle>
-            <CardDescription>
-              {t('auth.verify.description')} <strong>{email}</strong>
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label>{t('auth.verify.codeLabel')}</Label>
-              <div className="flex justify-center gap-2">
-                {code.map((digit, index) => (
-                  <Input
-                    key={index}
-                    ref={el => {
-                      inputRefs.current[index] = el;
-                    }}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={1}
-                    className="h-12 w-12 text-center text-lg font-semibold"
-                    value={digit}
-                    onChange={e => handleCodeChange(index, e.target.value)}
-                    onKeyDown={e => handleKeyDown(index, e)}
-                    onPaste={index === 0 ? handlePaste : undefined}
-                    disabled={isLoading}
-                  />
-                ))}
-              </div>
-            </div>
+          </div>
 
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-            <div className="space-y-3">
+          <div className="space-y-3">
+            <Button
+              onClick={() => handleVerify()}
+              className="w-full"
+              disabled={isLoading || code.some(digit => digit === '')}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {t('auth.verify.verifying')}
+                </>
+              ) : (
+                t('auth.verify.submit')
+              )}
+            </Button>
+
+            <div className="flex gap-2">
               <Button
-                onClick={() => handleVerify()}
-                className="w-full"
-                disabled={isLoading || code.some(digit => digit === '')}
+                variant="outline"
+                onClick={handleBackToEmail}
+                className="flex-1"
+                disabled={isLoading}
               >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {t('auth.verify.verifying')}
-                  </>
-                ) : (
-                  t('auth.verify.submit')
-                )}
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                {t('auth.verify.back')}
               </Button>
 
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={handleBackToEmail}
-                  className="flex-1"
-                  disabled={isLoading}
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  {t('auth.verify.back')}
-                </Button>
-
-                <Button
-                  variant="outline"
-                  onClick={handleResendCode}
-                  disabled={isLoading || isResending}
-                  className="flex-1"
-                >
-                  {isResending ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <RotateCcw className="mr-2 h-4 w-4" />
-                  )}
-                  {t('auth.verify.resend')}
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                onClick={handleResendCode}
+                disabled={isLoading || isResending}
+                className="flex-1"
+              >
+                {isResending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                )}
+                {t('auth.verify.resend')}
+              </Button>
             </div>
+          </div>
 
-            <div className="text-center text-sm text-muted-foreground">
-              <p>{t('auth.verify.footer.checkSpam')}</p>
-              <p className="mt-1">
-                {t('auth.verify.footer.devNote')}{' '}
-                <code className="rounded bg-muted px-1">123456</code>
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          <div className="text-center text-sm text-muted-foreground">
+            <p>{t('auth.verify.footer.checkSpam')}</p>
+            <p className="mt-1">
+              {t('auth.verify.footer.devNote')}{' '}
+              <code className="rounded bg-muted px-1">123456</code>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+export default function VerifyPage() {
+  return (
+    <AuthGuard requireAuth={false}>
+      <Suspense
+        fallback={
+          <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4 dark:from-gray-900 dark:to-gray-800">
+            <Card className="w-full max-w-md">
+              <CardContent className="flex items-center justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </CardContent>
+            </Card>
+          </div>
+        }
+      >
+        <VerifyContent />
+      </Suspense>
     </AuthGuard>
   );
 }
