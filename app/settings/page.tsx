@@ -1,6 +1,8 @@
+import { PageWrapper } from '@/components/layout/page-wrapper';
+
 export default function SettingsPage() {
   return (
-    <div className="container mx-auto p-4">
+    <PageWrapper className="container mx-auto p-4">
       <h1 className="mb-4 text-2xl font-bold">Settings</h1>
       <div className="space-y-4">
         <div className="rounded-lg border p-4">
@@ -8,6 +10,6 @@ export default function SettingsPage() {
           <p className="text-muted-foreground">General settings</p>
         </div>
       </div>
-    </div>
+    </PageWrapper>
   );
 }

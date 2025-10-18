@@ -2,10 +2,11 @@
 
 import { PlateEditor } from '@/components/kit-platejs/plate-editor';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageWrapper } from '@/components/layout/page-wrapper';
 
 export default function EditorPage() {
   return (
-    <div className="container mx-auto p-8">
+    <PageWrapper className="container mx-auto p-8">
       <div className="mb-8">
         <h1 className="mb-4 text-4xl font-bold">Rich Text Editor</h1>
         <p className="text-muted-foreground">
@@ -26,6 +27,6 @@ export default function EditorPage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </PageWrapper>
   );
 }

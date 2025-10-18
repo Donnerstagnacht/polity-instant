@@ -79,6 +79,12 @@ const enTranslation = {
       },
     },
   },
+  loading: {
+    page: 'Loading page...',
+    navigation: 'Navigating...',
+    general: 'Loading...',
+    compiling: 'Compiling page...',
+  },
   navigationDemo: {
     title: 'Dynamic Navigation Demo',
     description: 'Test different navigation configurations',

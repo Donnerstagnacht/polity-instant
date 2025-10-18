@@ -81,6 +81,12 @@ const deTranslation: I18nLocale = {
       },
     },
   },
+  loading: {
+    page: 'Seite wird geladen...',
+    navigation: 'Navigation...',
+    general: 'Wird geladen...',
+    compiling: 'Seite wird kompiliert...',
+  },
   navigationDemo: {
     title: 'Dynamische Navigations-Demo',
     description: 'Testen Sie verschiedene Navigations-Konfigurationen',

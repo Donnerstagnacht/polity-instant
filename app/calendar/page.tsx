@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { PageWrapper } from '@/components/layout/page-wrapper';
 
 interface Event {
   id: string;
@@ -54,7 +55,7 @@ export default function CalendarPage() {
   const [events] = useState<Event[]>(sampleEvents);
 
   return (
-    <div className="container mx-auto p-8">
+    <PageWrapper className="container mx-auto p-8">
       <div className="mb-8">
         <h1 className="mb-4 text-4xl font-bold">Calendar</h1>
         <p className="text-muted-foreground">Manage your schedule and upcoming events.</p>
@@ -125,6 +126,6 @@ export default function CalendarPage() {
           </Card>
         </div>
       </div>
-    </div>
+    </PageWrapper>
   );
 }

@@ -7,6 +7,7 @@ import { iconMap } from '@/navigation/nav-items/icon-map';
 import React, { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { isItemActive } from './nav-helpers';
+import { Loader2 } from 'lucide-react';
 
 export function NavItemList({
   navigationItems,
@@ -22,10 +23,21 @@ export function NavItemList({
   const pathname = usePathname();
   const currentRoute = pathname ?? '/';
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const [loadingItem, setLoadingItem] = useState<string | null>(null);
+
+  const handleItemClick = (item: NavigationItem) => {
+    setLoadingItem(item.id);
+    if (item.onClick) {
+      item.onClick();
+    }
+    setHoveredItem(null);
+    // Reset loading state after navigation
+    setTimeout(() => setLoadingItem(null), 1000);
+  };
 
   if (navigationView === 'asButton') {
     return (
-      <div className="max-h-[70vh] overflow-y-auto scrollbar-hide">
+      <div className="scrollbar-hide max-h-[70vh] overflow-y-auto">
         <div className="grid w-full auto-rows-max grid-cols-2 gap-8 p-4 sm:grid-cols-3 md:grid-cols-4">
           {/* Use different layout for fewer items */}
           {navigationItems.length <= 4 ? (
@@ -34,22 +46,24 @@ export function NavItemList({
                 <Button
                   key={item.id}
                   variant="ghost"
+                  disabled={loadingItem === item.id}
                   className={cn(
                     'relative h-24 w-24 flex-shrink-0 flex-col gap-2 hover:bg-accent',
                     isItemActive(item, currentRoute, isPrimary) &&
                       'bg-accent text-accent-foreground'
                   )}
-                  onClick={() => {
-                    if (item.onClick) item.onClick();
-                    setHoveredItem(null); // Reset hover state after click
-                  }}
+                  onClick={() => handleItemClick(item)}
                 >
-                  {React.createElement(iconMap[item.icon], {
-                    className: cn(
-                      'h-8 w-8',
-                      isItemActive(item, currentRoute, isPrimary) && 'text-primary'
-                    ),
-                  })}
+                  {loadingItem === item.id ? (
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  ) : (
+                    React.createElement(iconMap[item.icon], {
+                      className: cn(
+                        'h-8 w-8',
+                        isItemActive(item, currentRoute, isPrimary) && 'text-primary'
+                      ),
+                    })
+                  )}
                   <span className="text-sm">{item.label}</span>
                   {item.badge && (
                     <Badge
@@ -68,21 +82,23 @@ export function NavItemList({
               <Button
                 key={item.id}
                 variant="ghost"
+                disabled={loadingItem === item.id}
                 className={cn(
                   'relative h-24 w-24 flex-shrink-0 flex-col gap-2 hover:bg-accent',
                   isItemActive(item, currentRoute, isPrimary) && 'bg-accent text-accent-foreground'
                 )}
-                onClick={() => {
-                  if (item.onClick) item.onClick();
-                  setHoveredItem(null); // Reset hover state after click
-                }}
+                onClick={() => handleItemClick(item)}
               >
-                {React.createElement(iconMap[item.icon], {
-                  className: cn(
-                    'h-8 w-8',
-                    isItemActive(item, currentRoute, isPrimary) && 'text-primary'
-                  ),
-                })}
+                {loadingItem === item.id ? (
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                ) : (
+                  React.createElement(iconMap[item.icon], {
+                    className: cn(
+                      'h-8 w-8',
+                      isItemActive(item, currentRoute, isPrimary) && 'text-primary'
+                    ),
+                  })
+                )}
                 <span className="text-sm">{item.label}</span>
                 {item.badge && (
                   <Badge
@@ -103,7 +119,7 @@ export function NavItemList({
   // asButtonList variant - Mobile: Horizontal scrolling buttons with popovers
   if (navigationView === 'asButtonList' && isMobile) {
     return (
-      <div className="flex-1 overflow-x-auto scrollbar-hide">
+      <div className="scrollbar-hide flex-1 overflow-x-auto">
         <div className="flex min-w-max items-center justify-center gap-1 px-2">
           {navigationItems.map(item => (
             <Popover key={item.id} open={hoveredItem === item.id}>
@@ -204,7 +220,7 @@ export function NavItemList({
   // asLabeledButtonList variant - Mobile: Horizontal scrolling buttons with labels
   if (navigationView === 'asLabeledButtonList' && isMobile) {
     return (
-      <div className="flex-1 overflow-x-auto scrollbar-hide">
+      <div className="scrollbar-hide flex-1 overflow-x-auto">
         <div className="flex min-w-max items-center justify-center gap-1 px-2">
           {navigationItems.map(item => (
             <Button

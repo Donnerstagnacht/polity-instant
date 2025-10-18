@@ -10,13 +10,14 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { PageWrapper } from '@/components/layout/page-wrapper';
 // import { useTranslation } from 'react-i18next'; // Temporarily disabled
 
 export default function HomePage() {
   // const { t } = useTranslation(); // Temporarily disabled
 
   return (
-    <div className="container mx-auto p-8">
+    <PageWrapper className="container mx-auto p-8">
       <div className="mb-8 text-center">
         <h1 className="mb-4 text-4xl font-bold">Welcome to Polity</h1>
         <p className="text-lg text-muted-foreground">
@@ -79,6 +80,6 @@ export default function HomePage() {
           </CardFooter>
         </Card>
       </div>
-    </div>
+    </PageWrapper>
   );
 }
