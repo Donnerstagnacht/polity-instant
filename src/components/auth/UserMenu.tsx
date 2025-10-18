@@ -47,7 +47,10 @@ export function UserMenu({ className, isMobile }: UserMenuProps) {
   };
 
   const handleProfileClick = () => {
-    router.push('/user');
+    // Navigate to the logged-in user's profile page
+    if (user?.id) {
+      router.push(`/user/${user.id}`);
+    }
   };
 
   const handleSettingsClick = () => {

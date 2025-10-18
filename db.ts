@@ -31,14 +31,26 @@ export const queries = {
     // Get current user
     me: () => db.useAuth(),
 
-    // Get user by ID
-    byId: (userId: string) => db.useQuery({ $users: { $: { where: { id: userId } } } }),
+    // Get user by ID with profile
+    byId: (userId: string) =>
+      db.useQuery({
+        $users: {
+          $: { where: { id: userId } },
+          profile: {},
+        },
+      }),
 
     // Get user by email
     byEmail: (email: string) => db.useQuery({ $users: { $: { where: { email } } } }),
 
-    // Get active users
-    active: () => db.useQuery({ $users: { $: { where: { isActive: true } } } }),
+    // Get active users (users with active profiles)
+    active: () =>
+      db.useQuery({
+        profiles: {
+          $: { where: { isActive: true } },
+          user: {},
+        },
+      }),
   },
 
   // Group queries

@@ -5,7 +5,7 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { db } from './db';
+import { db } from '../../../db';
 
 // Define the user interface
 interface User {

@@ -11,6 +11,9 @@ import { UserInfoTabs } from './ui-user/UserInfoTabs';
 import { StatementCarousel } from './ui-user/StatementCarousel';
 import { UserWikiContentTabs } from './ui-user/UserWikiContentTabs';
 import { UserWikiHeader } from './ui-user/UserWikiHeader';
+import { useUserData } from './hooks/useUserData';
+import { useFollowUser } from './hooks/useFollowUser';
+import { useAuthStore } from '@/lib/instant/auth';
 
 // --- UserWiki utility functions moved to utils/userWiki.utils.ts ---
 import {
@@ -30,11 +33,9 @@ interface UserWikiProps {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 export function UserWiki(_props: UserWikiProps) {
   // Props available: _props.userId, _props.searchFilters
-  const [following, setFollowing] = useState(false);
-  const [followerCount, setFollowerCount] = useState(2.5); // Track the actual follower count
   const [showAnimation, setShowAnimation] = useState(false);
   const [animationText, setAnimationText] = useState('');
   const animationRef = useRef<HTMLDivElement>(null);
@@ -42,28 +43,29 @@ export function UserWiki(_props: UserWikiProps) {
   // Content search state and handler
   const { searchTerms, handleSearchChange } = useUserWikiContentSearch();
 
-  const user: User = USER;
+  // Get the current logged-in user if no userId is provided
+  const { user: authUser } = useAuthStore();
+  const userIdToFetch = _props.userId || authUser?.id;
+
+  // Fetch user data from Instant DB
+  const { user: dbUser, isLoading, error } = useUserData(userIdToFetch);
+
+  // Follow/unfollow functionality
+  const { isFollowing: following, followerCount, toggleFollow } = useFollowUser(userIdToFetch);
+
+  // Fallback to mock data if no database user is found (for development)
+  const user: User = dbUser || USER;
 
   // Function to handle follow/unfollow with animation
-  const handleFollowClick = () => {
-    // Toggle the following state
-    setFollowing(prev => !prev);
+  const handleFollowClick = async () => {
+    const wasFollowing = following;
 
-    // Calculate the actual count (converting k to actual numbers)
-    const actualFollowers = followerCount * 1000;
+    // Toggle the follow state
+    await toggleFollow();
 
-    // Update the follower count and show animation
-    if (!following) {
-      // When following (add a follower)
-      setFollowerCount((actualFollowers + 1) / 1000);
-      setAnimationText('+1');
-      setShowAnimation(true);
-    } else {
-      // When unfollowing (remove a follower)
-      setFollowerCount((actualFollowers - 1) / 1000);
-      setAnimationText('-1');
-      setShowAnimation(true);
-    }
+    // Show animation
+    setAnimationText(wasFollowing ? '-1' : '+1');
+    setShowAnimation(true);
 
     // Hide animation after it completes
     setTimeout(() => setShowAnimation(false), 1000);
@@ -72,8 +74,8 @@ export function UserWiki(_props: UserWikiProps) {
   // Create a version of the stats array with the updated follower count
   const displayStats = user.stats.map(stat => {
     if (stat.label === 'Followers') {
-      // For followers, use the follower count state
-      const formatted = formatNumberWithUnit(followerCount * 1000);
+      // For followers, use the actual follower count from the database
+      const formatted = formatNumberWithUnit(followerCount);
       return { ...stat, value: formatted.value, unit: formatted.unit };
     } else if (stat.value >= 1000) {
       // For other stats that are >= 1000, also apply the formatting
@@ -85,40 +87,58 @@ export function UserWiki(_props: UserWikiProps) {
 
   return (
     <>
-      <div className="container mx-auto max-w-6xl p-4">
-        <UserWikiHeader
-          name={user.name}
-          avatar={user.avatar}
-          subtitle={user.subtitle}
-          following={following}
-          onFollowClick={handleFollowClick}
-        />
+      {isLoading && (
+        <div className="container mx-auto max-w-6xl p-4">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-lg text-muted-foreground">Loading user profile...</div>
+          </div>
+        </div>
+      )}
 
-        <StatsBar
-          stats={displayStats}
-          showAnimation={showAnimation}
-          animationText={animationText}
-          animationRef={animationRef}
-        />
+      {error && (
+        <div className="container mx-auto max-w-6xl p-4">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-lg text-red-500">Error loading profile: {error}</div>
+          </div>
+        </div>
+      )}
 
-        <SocialBar socialMedia={user.socialMedia} />
+      {!isLoading && !error && (
+        <div className="container mx-auto max-w-6xl p-4">
+          <UserWikiHeader
+            name={user.name}
+            avatar={user.avatar}
+            subtitle={user.subtitle}
+            following={following}
+            onFollowClick={handleFollowClick}
+          />
 
-        <UserInfoTabs about={user.about} contact={user.contact} />
+          <StatsBar
+            stats={displayStats}
+            showAnimation={showAnimation}
+            animationText={animationText}
+            animationRef={animationRef}
+          />
 
-        <StatementCarousel
-          statements={user.statements}
-          getTagColor={(tag: string) => getTagColor(tag, BADGE_COLORS)}
-        />
+          <SocialBar socialMedia={user.socialMedia} />
 
-        <UserWikiContentTabs
-          user={user}
-          searchTerms={searchTerms}
-          handleSearchChange={handleSearchChange}
-          getBlogGradient={(blogId: number) => getBlogGradient(blogId, GRADIENTS)}
-          getRoleBadgeColor={getRoleBadgeColor}
-          getStatusStyles={getStatusStyles}
-        />
-      </div>
+          <UserInfoTabs about={user.about} contact={user.contact} />
+
+          <StatementCarousel
+            statements={user.statements}
+            getTagColor={(tag: string) => getTagColor(tag, BADGE_COLORS)}
+          />
+
+          <UserWikiContentTabs
+            user={user}
+            searchTerms={searchTerms}
+            handleSearchChange={handleSearchChange}
+            getBlogGradient={(blogId: number) => getBlogGradient(blogId, GRADIENTS)}
+            getRoleBadgeColor={getRoleBadgeColor}
+            getStatusStyles={getStatusStyles}
+          />
+        </div>
+      )}
     </>
   );
 }

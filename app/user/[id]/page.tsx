@@ -1,6 +1,7 @@
 'use client';
 
 import { UserWiki } from '@/features/user/wiki';
+import { SeedUserDataButton } from '@/features/user/ui-user/SeedUserDataButton';
 import { useSearchParams } from 'next/navigation';
 import { use } from 'react';
 import { AuthGuard } from '@/components/auth/AuthGuard';
@@ -27,6 +28,7 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
           amendments,
         }}
       />
+      <SeedUserDataButton />
     </AuthGuard>
   );
 }
