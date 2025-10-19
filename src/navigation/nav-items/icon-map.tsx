@@ -15,6 +15,7 @@ import {
   Mail,
   MessageSquare,
   Moon,
+  PlusCircle,
   Search,
   Settings,
   Sun,
@@ -47,6 +48,7 @@ export const iconMap = {
   FileText,
   AreaChart,
   Workflow,
+  PlusCircle,
 } as const;
 
 export type IconName = keyof typeof iconMap;

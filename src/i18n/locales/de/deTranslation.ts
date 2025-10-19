@@ -38,6 +38,7 @@ const deTranslation: I18nLocale = {
   navigation: {
     primary: {
       home: 'Startseite',
+      create: 'Erstellen',
       dashboard: 'Dashboard',
       messages: 'Nachrichten',
       settings: 'Einstellungen',

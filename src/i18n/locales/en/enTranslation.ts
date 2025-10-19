@@ -36,6 +36,7 @@ const enTranslation = {
   navigation: {
     primary: {
       home: 'Home',
+      create: 'Create',
       dashboard: 'Dashboard',
       messages: 'Messages',
       settings: 'Settings',

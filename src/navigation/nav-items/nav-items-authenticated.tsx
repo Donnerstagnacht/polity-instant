@@ -31,6 +31,16 @@ export const navItemsAuthenticated = (
       },
     },
     {
+      id: 'create',
+      label: 'Create',
+      icon: 'PlusCircle',
+      href: '/create',
+      onClick: () => {
+        router.push('/create');
+        if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('create');
+      },
+    },
+    {
       id: 'dashboard',
       label: 'Dashboard',
       icon: 'LayoutDashboard',
