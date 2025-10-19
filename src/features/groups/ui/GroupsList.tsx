@@ -1,6 +1,6 @@
 import React from 'react';
 import { useGroupsStore } from '@/global-state/groups.store';
-import { GroupsCard } from '@/features/user/ui-user/GroupsCard';
+import { GroupsCard } from '@/features/user/ui/GroupsCard';
 import { getRoleBadgeColor } from '@/features/user/utils/userWiki.utils';
 import { Loader2 } from 'lucide-react';
 
@@ -12,8 +12,8 @@ export const GroupsList: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="text-primary h-8 w-8 animate-spin" />
-        <span className="text-muted-foreground ml-2">Loading groups...</span>
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Loading groups...</span>
       </div>
     );
   }
@@ -22,11 +22,11 @@ export const GroupsList: React.FC = () => {
     return (
       <div className="py-12 text-center">
         <div className="mb-4">
-          <div className="bg-muted mx-auto flex h-16 w-16 items-center justify-center rounded-full">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
             <span className="text-2xl">🔍</span>
           </div>
         </div>
-        <h3 className="text-foreground mb-2 text-lg font-medium">No groups found</h3>
+        <h3 className="mb-2 text-lg font-medium text-foreground">No groups found</h3>
         <p className="text-muted-foreground">
           Try adjusting your search terms or clearing the filters.
         </p>
@@ -37,7 +37,7 @@ export const GroupsList: React.FC = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-foreground text-lg font-semibold">
+        <h2 className="text-lg font-semibold text-foreground">
           {filteredGroups.length} group{filteredGroups.length !== 1 ? 's' : ''} found
         </h2>
       </div>

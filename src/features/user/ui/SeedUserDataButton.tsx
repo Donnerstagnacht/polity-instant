@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { seedCompleteUserProfile } from '../utils/seedUserData';
-import { useAuthStore } from '@/lib/instant/auth';
+import { useAuthStore } from '@/features/auth/auth.ts';
 import { Loader2, Database } from 'lucide-react';
 
 /**

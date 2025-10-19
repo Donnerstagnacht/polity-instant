@@ -66,7 +66,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu.tsx';
 import { Popover, PopoverContent } from '@/components/ui/popover.tsx';
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 
 import { blockSelectionVariants } from './block-selection.tsx';
 import { ColorDropdownMenuItems, DEFAULT_COLORS } from './font-color-toolbar-button.tsx';

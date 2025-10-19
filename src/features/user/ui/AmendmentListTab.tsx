@@ -34,7 +34,7 @@ export const AmendmentListTab: React.FC<AmendmentListTabProps> = ({
   return (
     <>
       <div className="relative mb-4">
-        <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           placeholder="Search amendments by title, code, tags..."
           className="pl-10"
@@ -43,7 +43,7 @@ export const AmendmentListTab: React.FC<AmendmentListTabProps> = ({
         />
       </div>
       {filteredAmendments.length === 0 ? (
-        <p className="text-muted-foreground py-8 text-center">
+        <p className="py-8 text-center text-muted-foreground">
           No amendments found matching your search.
         </p>
       ) : (

@@ -1,7 +1,7 @@
 'use client';
 
 import { PageWrapper } from '@/components/layout/page-wrapper';
-import { AuthGuard } from '@/components/auth/AuthGuard';
+import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 
 export default function SettingsPage() {
   return (

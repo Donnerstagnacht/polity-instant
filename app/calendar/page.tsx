@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PageWrapper } from '@/components/layout/page-wrapper';
-import { AuthGuard } from '@/components/auth/AuthGuard';
+import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 
 interface Event {
   id: string;

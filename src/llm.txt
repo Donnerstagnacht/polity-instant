@@ -1,4 +1,0 @@
-# Use one abstraction principle for react components, e.g. one level nesting in functions and tsx html
-=> supports S in SOLID
-
-# Solid: do not use {object abstraction } since this breakes interface segration principle (L in solid)

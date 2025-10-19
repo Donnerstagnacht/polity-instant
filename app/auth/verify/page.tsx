@@ -9,8 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Shield, ArrowLeft, RotateCcw } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
-import { useAuthStore } from '@/lib/instant/auth';
-import { AuthGuard } from '@/components/auth/AuthGuard';
+import { useAuthStore } from '@/features/auth/auth.ts';
+import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 
 function VerifyContent() {
   const { t } = useTranslation();

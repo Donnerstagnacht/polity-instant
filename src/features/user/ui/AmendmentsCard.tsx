@@ -35,9 +35,9 @@ export const AmendmentsCard: React.FC<AmendmentsCardProps> = ({ amendment, statu
         )}
         <h3 className={`text-lg font-semibold ${statusStyle.textColor}`}>{amendment.title}</h3>
         {amendment.subtitle && (
-          <p className="text-muted-foreground mb-2 text-sm">{amendment.subtitle}</p>
+          <p className="mb-2 text-sm text-muted-foreground">{amendment.subtitle}</p>
         )}
-        <p className="text-muted-foreground mt-1 text-sm">
+        <p className="mt-1 text-sm text-muted-foreground">
           {amendment.supporters} supporters • {amendment.date}
         </p>
         {amendment.tags && amendment.tags.length > 0 && (

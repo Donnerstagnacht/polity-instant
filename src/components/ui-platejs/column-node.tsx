@@ -32,7 +32,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip.tsx';
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 
 export const ColumnElement = withHOC(
   ResizableProvider,
@@ -55,7 +55,7 @@ export const ColumnElement = withHOC(
           <div
             ref={handleRef}
             className={cn(
-              'absolute top-2 left-1/2 z-50 -translate-x-1/2 -translate-y-1/2',
+              'absolute left-1/2 top-2 z-50 -translate-x-1/2 -translate-y-1/2',
               'pointer-events-auto flex items-center',
               'opacity-0 transition-opacity group-hover/column:opacity-100'
             )}
@@ -72,7 +72,7 @@ export const ColumnElement = withHOC(
           <div
             className={cn(
               'relative h-full border border-transparent p-1.5',
-              !readOnly && 'border-border rounded-lg border-dashed',
+              !readOnly && 'rounded-lg border-dashed border-border',
               isDragging && 'opacity-50'
             )}
           >

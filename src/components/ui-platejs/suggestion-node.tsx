@@ -6,7 +6,7 @@ import type { PlateLeafProps, RenderNodeWrapper } from 'platejs/react';
 import { CornerDownLeftIcon } from 'lucide-react';
 import { PlateLeaf, useEditorPlugin, usePluginOption } from 'platejs/react';
 
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 import {
   type SuggestionConfig,
   suggestionPlugin,

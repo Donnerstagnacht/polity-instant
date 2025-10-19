@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 
-interface VisuallyHiddenProps extends React.HTMLAttributes<HTMLSpanElement> {}
+type VisuallyHiddenProps = React.HTMLAttributes<HTMLSpanElement>;
 
 /**
  * This component visually hides content while keeping it accessible to screen readers.

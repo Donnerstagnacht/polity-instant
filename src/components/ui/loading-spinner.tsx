@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 import { Loader2 } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
 

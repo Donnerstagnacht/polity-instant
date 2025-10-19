@@ -10,7 +10,7 @@ import { useMediaState } from '@platejs/media/react';
 import { ResizableProvider, useResizableValue } from '@platejs/resizable';
 import { PlateElement, useEditorMounted, withHOC } from 'platejs/react';
 
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 
 import { Caption, CaptionTextarea } from './caption.tsx';
 import { mediaResizeHandleVariants, Resizable, ResizeHandle } from '../ui/resize-handle.tsx';
@@ -62,10 +62,10 @@ export const VideoElement = withHOC(
                 options={{ direction: 'right' }}
               />
 
-              {!isUpload && isYoutube && (
+              {!isUpload && isYoutube && embed?.id && (
                 <div ref={handleRef}>
                   <LiteYouTubeEmbed
-                    id={embed!.id!}
+                    id={embed.id}
                     title="youtube"
                     wrapperClass={cn(
                       'aspect-video rounded-sm',

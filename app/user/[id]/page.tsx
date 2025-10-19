@@ -1,10 +1,10 @@
 'use client';
 
 import { UserWiki } from '@/features/user/wiki';
-import { SeedUserDataButton } from '@/features/user/ui-user/SeedUserDataButton';
+import { SeedUserDataButton } from '@/features/user/ui/SeedUserDataButton';
 import { useSearchParams } from 'next/navigation';
 import { use } from 'react';
-import { AuthGuard } from '@/components/auth/AuthGuard';
+import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 
 export default function UserPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);

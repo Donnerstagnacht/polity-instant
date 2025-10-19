@@ -2,7 +2,7 @@
 
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
-import { AuthGuard } from '@/components/auth/AuthGuard';
+import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 
 function UserContent() {
   const searchParams = useSearchParams();

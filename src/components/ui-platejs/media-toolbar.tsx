@@ -51,8 +51,7 @@ export function MediaToolbar({
     if (!isOpen && isEditing) {
       FloatingMediaStore.set('isEditing', false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+  }, [isOpen, isEditing]);
 
   const element = useElement();
   const { props: buttonProps } = useRemoveNodeButton({ element });
@@ -67,7 +66,7 @@ export function MediaToolbar({
         {isEditing ? (
           <div className="flex w-[330px] flex-col">
             <div className="flex items-center">
-              <div className="text-muted-foreground flex items-center pr-1 pl-2">
+              <div className="flex items-center pl-2 pr-1 text-muted-foreground">
                 <Link className="size-4" />
               </div>
 

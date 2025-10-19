@@ -18,7 +18,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button.tsx';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip.tsx';
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 
 const UNDRAGGABLE_KEYS = [KEYS.column, KEYS.tr, KEYS.td];
 
@@ -109,7 +109,7 @@ function Draggable(props: PlateElementProps) {
               <Button
                 ref={handleRef}
                 variant="ghost"
-                className="h-6 w-4.5 p-0"
+                className="w-4.5 h-6 p-0"
                 data-plate-prevent-deselect
               >
                 <DragHandle />
@@ -151,15 +151,15 @@ function Gutter({ children, className, ...props }: React.ComponentProps<'div'>) 
         !selected && 'opacity-0',
         isNodeType(KEYS.h1) && 'pb-1 text-[1.875em]',
         isNodeType(KEYS.h2) && 'pb-1 text-[1.5em]',
-        isNodeType(KEYS.h3) && 'pt-[2px] pb-1 text-[1.25em]',
-        isNodeType([KEYS.h4, KEYS.h5]) && 'pt-1 pb-0 text-[1.1em]',
+        isNodeType(KEYS.h3) && 'pb-1 pt-[2px] text-[1.25em]',
+        isNodeType([KEYS.h4, KEYS.h5]) && 'pb-0 pt-1 text-[1.1em]',
         isNodeType(KEYS.h6) && 'pb-0',
-        isNodeType(KEYS.p) && 'pt-1 pb-0',
+        isNodeType(KEYS.p) && 'pb-0 pt-1',
         isNodeType(KEYS.blockquote) && 'pb-0',
-        isNodeType(KEYS.codeBlock) && 'pt-6 pb-0',
+        isNodeType(KEYS.codeBlock) && 'pb-0 pt-6',
         isNodeType([KEYS.img, KEYS.mediaEmbed, KEYS.excalidraw, KEYS.toggle, KEYS.column]) &&
           'py-0',
-        isNodeType([KEYS.placeholder, KEYS.table]) && 'pt-3 pb-0',
+        isNodeType([KEYS.placeholder, KEYS.table]) && 'pb-0 pt-3',
         isInColumn && 'mt-2 h-4 pt-0',
         className
       )}

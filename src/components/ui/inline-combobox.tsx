@@ -24,7 +24,7 @@ import {
 import { cva } from 'class-variance-authority';
 import { useComposedRef, useEditorRef } from 'platejs/react';
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/utils.ts';
 
 type FilterFn = (
   item: { value: string; group?: string; keywords?: string[]; label?: string },
@@ -48,7 +48,7 @@ const InlineComboboxContext = React.createContext<InlineComboboxContextValue>(
 const defaultFilter: FilterFn = ({ group, keywords = [], label, value }, search) => {
   const uniqueTerms = new Set([value, ...keywords, group, label].filter(Boolean));
 
-  return Array.from(uniqueTerms).some(keyword => filterWords(keyword!, search));
+  return Array.from(uniqueTerms).some(keyword => keyword && filterWords(keyword, search));
 };
 
 interface InlineComboboxProps {
@@ -190,8 +190,8 @@ const InlineComboboxInput = React.forwardRef<
     trigger,
   } = React.useContext(InlineComboboxContext);
 
-  const store = useComboboxContext()!;
-  const value = store.useState('value');
+  const store = useComboboxContext();
+  const value = store?.useState('value');
 
   const ref = useComposedRef(propRef, contextRef);
 
@@ -213,7 +213,7 @@ const InlineComboboxInput = React.forwardRef<
 
         <Combobox
           ref={ref}
-          className={cn('absolute top-0 left-0 size-full bg-transparent outline-none', className)}
+          className={cn('absolute left-0 top-0 size-full bg-transparent outline-none', className)}
           value={value}
           autoSelect
           {...inputProps}
@@ -232,7 +232,7 @@ const InlineComboboxContent: typeof ComboboxPopover = ({ className, ...props }) 
     <Portal>
       <ComboboxPopover
         className={cn(
-          'bg-popover z-500 max-h-[288px] w-[300px] overflow-y-auto rounded-md shadow-md',
+          'z-500 max-h-[288px] w-[300px] overflow-y-auto rounded-md bg-popover shadow-md',
           className
         )}
         {...props}
@@ -275,10 +275,10 @@ const InlineComboboxItem = ({
 
   const { filter, removeInput } = React.useContext(InlineComboboxContext);
 
-  const store = useComboboxContext()!;
+  const store = useComboboxContext();
 
   // Optimization: Do not subscribe to value if filter is false
-  const search = filter && store.useState('value');
+  const search = filter && store?.useState('value');
 
   const visible = React.useMemo(
     () => !filter || filter({ group, keywords, label, value }, search as string),
@@ -301,8 +301,8 @@ const InlineComboboxItem = ({
 
 const InlineComboboxEmpty = ({ children, className }: React.HTMLAttributes<HTMLDivElement>) => {
   const { setHasEmpty } = React.useContext(InlineComboboxContext);
-  const store = useComboboxContext()!;
-  const items = store.useState('items');
+  const store = useComboboxContext();
+  const items = store?.useState('items');
 
   React.useEffect(() => {
     setHasEmpty(true);
@@ -312,7 +312,7 @@ const InlineComboboxEmpty = ({ children, className }: React.HTMLAttributes<HTMLD
     };
   }, [setHasEmpty]);
 
-  if (items.length > 0) return null;
+  if (!items || items.length > 0) return null;
 
   return (
     <div className={cn(comboboxItemVariants({ interactive: false }), className)}>{children}</div>
@@ -325,7 +325,7 @@ function InlineComboboxGroup({ className, ...props }: React.ComponentProps<typeo
   return (
     <ComboboxGroup
       {...props}
-      className={cn('hidden py-1.5 not-last:border-b [&:has([role=option])]:block', className)}
+      className={cn('not-last:border-b hidden py-1.5 [&:has([role=option])]:block', className)}
     />
   );
 }
@@ -337,7 +337,7 @@ function InlineComboboxGroupLabel({
   return (
     <ComboboxGroupLabel
       {...props}
-      className={cn('text-muted-foreground mt-1.5 mb-2 px-3 text-xs font-medium', className)}
+      className={cn('mb-2 mt-1.5 px-3 text-xs font-medium text-muted-foreground', className)}
     />
   );
 }

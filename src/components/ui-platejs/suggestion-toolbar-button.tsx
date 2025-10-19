@@ -3,7 +3,7 @@ import { PencilLineIcon } from 'lucide-react';
 import { useEditorPlugin, usePluginOption } from 'platejs/react';
 import { useTranslation } from 'react-i18next';
 
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 
 import { ToolbarButton } from '../ui/toolbar.tsx';
 

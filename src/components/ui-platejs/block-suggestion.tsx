@@ -26,7 +26,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx';
 import { Button } from '@/components/ui/button.tsx';
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 import { type TDiscussion, discussionPlugin } from '@/components/kit-platejs/discussion-kit.tsx';
 import { suggestionPlugin } from '@/components/kit-platejs/suggestion-kit.tsx';
 
@@ -84,7 +84,7 @@ export function BlockSuggestion({ element }: { element: TSuggestionElement }) {
   return (
     <div
       className={cn(
-        'border-brand/[0.8] pointer-events-none absolute inset-0 z-1 border-2 transition-opacity',
+        'border-brand/[0.8] z-1 pointer-events-none absolute inset-0 border-2 transition-opacity',
         isRemove && 'border-gray-300'
       )}
       contentEditable={false}
@@ -142,19 +142,19 @@ export function BlockSuggestionCard({
             <AvatarImage alt={userInfo?.name} src={userInfo?.avatarUrl} />
             <AvatarFallback>{userInfo?.name?.[0]}</AvatarFallback>
           </Avatar>
-          <h4 className="mx-2 text-sm leading-none font-semibold">{userInfo?.name}</h4>
-          <div className="text-muted-foreground/80 text-xs leading-none">
+          <h4 className="mx-2 text-sm font-semibold leading-none">{userInfo?.name}</h4>
+          <div className="text-xs leading-none text-muted-foreground/80">
             <span className="mr-1">{formatCommentDate(new Date(suggestion.createdAt))}</span>
           </div>
         </div>
 
-        <div className="relative mt-1 mb-4 pl-[32px]">
+        <div className="relative mb-4 mt-1 pl-[32px]">
           <div className="flex flex-col gap-2">
-            {suggestion.type === 'remove' && (
+            {suggestion.type === 'remove' && suggestion.text && (
               <React.Fragment>
-                {suggestionText2Array(suggestion.text!).map((text, index) => (
+                {suggestionText2Array(suggestion.text).map((text, index) => (
                   <div key={index} className="flex items-center gap-2">
-                    <span className="text-muted-foreground text-sm">
+                    <span className="text-sm text-muted-foreground">
                       {t('plateJs.blockSuggestion.delete')}
                     </span>
 
@@ -166,11 +166,11 @@ export function BlockSuggestionCard({
               </React.Fragment>
             )}
 
-            {suggestion.type === 'insert' && (
+            {suggestion.type === 'insert' && suggestion.newText && (
               <React.Fragment>
-                {suggestionText2Array(suggestion.newText!).map((text, index) => (
+                {suggestionText2Array(suggestion.newText).map((text, index) => (
                   <div key={index} className="flex items-center gap-2">
-                    <span className="text-muted-foreground text-sm">
+                    <span className="text-sm text-muted-foreground">
                       {t('plateJs.blockSuggestion.add')}
                     </span>
 
@@ -182,9 +182,9 @@ export function BlockSuggestionCard({
               </React.Fragment>
             )}
 
-            {suggestion.type === 'replace' && (
+            {suggestion.type === 'replace' && suggestion.newText && suggestion.text && (
               <div className="flex flex-col gap-2">
-                {suggestionText2Array(suggestion.newText!).map((text, index) => (
+                {suggestionText2Array(suggestion.newText).map((text, index) => (
                   <React.Fragment key={index}>
                     <div key={index} className="text-brand/80 flex items-start gap-2">
                       <span className="text-sm">{t('plateJs.blockSuggestion.with')}</span>
@@ -195,10 +195,10 @@ export function BlockSuggestionCard({
                   </React.Fragment>
                 ))}
 
-                {suggestionText2Array(suggestion.text!).map((text, index) => (
+                {suggestionText2Array(suggestion.text).map((text, index) => (
                   <React.Fragment key={index}>
                     <div key={index} className="flex items-start gap-2">
-                      <span className="text-muted-foreground text-sm">
+                      <span className="text-sm text-muted-foreground">
                         {index === 0
                           ? t('plateJs.blockSuggestion.replace')
                           : t('plateJs.blockSuggestion.delete')}
@@ -214,7 +214,7 @@ export function BlockSuggestionCard({
 
             {suggestion.type === 'update' && (
               <div className="flex items-center gap-2">
-                <span className="text-muted-foreground text-sm">
+                <span className="text-sm text-muted-foreground">
                   {Object.keys(suggestion.properties).map(key => (
                     <span key={key}>
                       {t('plateJs.blockSuggestion.un')}
@@ -245,10 +245,10 @@ export function BlockSuggestionCard({
         ))}
 
         {hovering && (
-          <div className="absolute top-4 right-4 flex gap-2">
+          <div className="absolute right-4 top-4 flex gap-2">
             <Button
               variant="ghost"
-              className="text-muted-foreground size-6 p-1"
+              className="size-6 p-1 text-muted-foreground"
               onClick={() => accept(suggestion)}
             >
               <CheckIcon className="size-4" />
@@ -256,7 +256,7 @@ export function BlockSuggestionCard({
 
             <Button
               variant="ghost"
-              className="text-muted-foreground size-6 p-1"
+              className="size-6 p-1 text-muted-foreground"
               onClick={() => reject(suggestion)}
             >
               <XIcon className="size-4" />
@@ -267,7 +267,7 @@ export function BlockSuggestionCard({
         <CommentCreateForm discussionId={suggestion.suggestionId} />
       </div>
 
-      {!isLast && <div className="bg-muted h-px w-full" />}
+      {!isLast && <div className="h-px w-full bg-muted" />}
     </div>
   );
 }

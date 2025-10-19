@@ -21,7 +21,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip.tsx';
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 
 import { ToolbarButton, ToolbarMenuGroup } from '../ui/toolbar.tsx';
 
@@ -222,7 +222,6 @@ function ColorCustom({
     [customColor, customColors]
   );
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const updateCustomColorDebounced = React.useCallback(debounce(updateCustomColor, 100), [
     updateCustomColor,
   ]);
@@ -243,7 +242,7 @@ function ColorCustom({
                 size: 'icon',
                 variant: 'outline',
               }),
-              'absolute top-1 right-2 bottom-2 flex size-8 items-center justify-center rounded-full'
+              'absolute bottom-2 right-2 top-1 flex size-8 items-center justify-center rounded-full'
             )}
             onSelect={e => {
               e.preventDefault();
@@ -291,11 +290,11 @@ function ColorInput({
   );
 }
 
-type TColor = {
+interface TColor {
   isBrightColor: boolean;
   name: string;
   value: string;
-};
+}
 
 function ColorDropdownMenuItem({
   className,
@@ -319,9 +318,9 @@ function ColorDropdownMenuItem({
           size: 'icon',
           variant: 'outline',
         }),
-        'border-muted my-1 flex size-6 items-center justify-center rounded-full border border-solid p-0 transition-all hover:scale-125',
+        'my-1 flex size-6 items-center justify-center rounded-full border border-solid border-muted p-0 transition-all hover:scale-125',
         !isBrightColor && 'border-transparent',
-        isSelected && 'border-primary border-2',
+        isSelected && 'border-2 border-primary',
         className
       )}
       style={{ backgroundColor: value }}

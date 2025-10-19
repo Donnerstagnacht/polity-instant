@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Calendar } from '@/components/ui/calendar.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 
 export function DateElement(props: PlateElementProps<TDateElement>) {
   const { editor, element } = props;
@@ -15,7 +15,7 @@ export function DateElement(props: PlateElementProps<TDateElement>) {
 
   const trigger = (
     <span
-      className={cn('bg-muted text-muted-foreground w-fit cursor-pointer rounded-sm px-1')}
+      className={cn('w-fit cursor-pointer rounded-sm bg-muted px-1 text-muted-foreground')}
       contentEditable={false}
       draggable
     >

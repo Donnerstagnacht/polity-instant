@@ -1,10 +1,10 @@
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 import type { NavigationView } from '@/navigation/types/navigation.types';
 import { useState } from 'react';
-import { useAuthStore } from '@/lib/instant/auth';
+import { useAuthStore } from '@/features/auth/auth.ts';
 
 export function NavUserAvatar({
   navigationView,

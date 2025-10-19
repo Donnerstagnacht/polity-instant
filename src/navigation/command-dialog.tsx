@@ -22,7 +22,7 @@ import {
 import { navItemsAuthenticated } from '@/navigation/nav-items/nav-items-authenticated';
 import { useNavigationStore } from '@/navigation/state/navigation.store';
 import type { NavigationItem } from '@/navigation/types/navigation.types';
-import { useAuthStore } from '@/lib/instant/auth';
+import { useAuthStore } from '@/features/auth/auth.ts';
 
 export function NavigationCommandDialog({
   primaryNavItems,

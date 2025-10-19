@@ -6,7 +6,7 @@ import i18n from '@/i18n/i18n.ts';
 
 /**
  * Provider that syncs the Zustand language store with i18next.
- * This ensures that all components using either the custom useTranslation hook
+ * This ensures that all ui using either the custom useTranslation hook
  * or the react-i18next useTranslation hook stay in sync.
  */
 export function I18nSyncProvider({ children }: { children: React.ReactNode }) {

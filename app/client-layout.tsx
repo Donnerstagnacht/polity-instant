@@ -14,7 +14,7 @@ import type {
   NavigationView,
 } from '@/navigation/types/navigation.types';
 import { useNavigation } from '@/navigation/state/useNavigation';
-import { useAuthStore } from '@/lib/instant/auth';
+import { useAuthStore } from '@/features/auth/auth.ts';
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   // Initialize theme, screen responsive detection, and auth state

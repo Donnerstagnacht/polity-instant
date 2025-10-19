@@ -1,7 +1,7 @@
 'use client';
 
 import { FlowEditor } from '@/components/ui-flow/flowEditor';
-import { AuthGuard } from '@/components/auth/AuthGuard';
+import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 
 export default function FlowPage() {
   return (

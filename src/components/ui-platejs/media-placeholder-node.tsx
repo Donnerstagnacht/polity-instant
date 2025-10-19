@@ -9,7 +9,7 @@ import { KEYS } from 'platejs';
 import { PlateElement, useEditorPlugin, withHOC } from 'platejs/react';
 import { useFilePicker } from 'use-file-picker';
 
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 import { useUploadFile } from '@/hooks/use-upload-file.ts';
 
 const CONTENT: Record<
@@ -97,7 +97,7 @@ export const PlaceholderElement = withHOC(
           isUpload: true,
           name: element.mediaType === KEYS.file ? uploadedFile.name : '',
           placeholderId: element.id as string,
-          type: element.mediaType!,
+          type: element.mediaType || 'file',
           url: uploadedFile.url,
         };
 
@@ -107,8 +107,7 @@ export const PlaceholderElement = withHOC(
       });
 
       api.placeholder.removeUploadingFile(element.id as string);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [uploadedFile, element.id]);
+    }, [uploadedFile, element.id, editor, api.placeholder, imageRef]);
 
     // React dev mode will call React.useEffect twice
     const isReplaced = React.useRef(false);
@@ -123,24 +122,22 @@ export const PlaceholderElement = withHOC(
       if (!currentFiles) return;
 
       replaceCurrentPlaceholder(currentFiles);
-
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isReplaced]);
+    }, [element.id, api.placeholder, replaceCurrentPlaceholder]);
 
     return (
       <PlateElement className="my-1" {...props}>
         {(!loading || !isImage) && (
           <div
             className={cn(
-              'bg-muted hover:bg-primary/10 flex cursor-pointer items-center rounded-sm p-3 pr-9 select-none'
+              'flex cursor-pointer select-none items-center rounded-sm bg-muted p-3 pr-9 hover:bg-primary/10'
             )}
             onClick={() => !loading && openFilePicker()}
             contentEditable={false}
           >
-            <div className="text-muted-foreground/80 relative mr-3 flex [&_svg]:size-6">
+            <div className="relative mr-3 flex text-muted-foreground/80 [&_svg]:size-6">
               {currentContent.icon}
             </div>
-            <div className="text-muted-foreground text-sm whitespace-nowrap">
+            <div className="whitespace-nowrap text-sm text-muted-foreground">
               <div>{loading ? uploadingFile?.name : currentContent.content}</div>
 
               {loading && !isImage && (
@@ -148,7 +145,7 @@ export const PlaceholderElement = withHOC(
                   <div>{formatBytes(uploadingFile?.size ?? 0)}</div>
                   <div>–</div>
                   <div className="flex items-center">
-                    <Loader2Icon className="text-muted-foreground mr-1 size-3.5 animate-spin" />
+                    <Loader2Icon className="mr-1 size-3.5 animate-spin text-muted-foreground" />
                     {progress ?? 0}%
                   </div>
                 </div>
@@ -202,8 +199,8 @@ export function ImageProgress({
         src={objectUrl}
       />
       {progress < 100 && (
-        <div className="absolute right-1 bottom-1 flex items-center space-x-2 rounded-full bg-black/50 px-1 py-0.5">
-          <Loader2Icon className="text-muted-foreground size-3.5 animate-spin" />
+        <div className="absolute bottom-1 right-1 flex items-center space-x-2 rounded-full bg-black/50 px-1 py-0.5">
+          <Loader2Icon className="size-3.5 animate-spin text-muted-foreground" />
           <span className="text-xs font-medium text-white">{Math.round(progress)}%</span>
         </div>
       )}

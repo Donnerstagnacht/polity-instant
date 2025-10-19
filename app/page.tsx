@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PageWrapper } from '@/components/layout/page-wrapper';
-import { useAuthStore } from '@/lib/instant/auth';
+import { useAuthStore } from '@/features/auth/auth.ts';
 import { LogIn, UserPlus } from 'lucide-react';
 // import { useTranslation } from 'react-i18next'; // Temporarily disabled
 

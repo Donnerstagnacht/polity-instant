@@ -21,7 +21,7 @@ export const BlogsCard: React.FC<BlogsCardProps> = ({ blog, gradientClass }) => 
       <CardTitle>{blog.title}</CardTitle>
       <CardDescription>{blog.date}</CardDescription>
     </CardHeader>
-    <CardFooter className="text-muted-foreground mt-auto flex items-center justify-between">
+    <CardFooter className="mt-auto flex items-center justify-between text-muted-foreground">
       <span className="flex items-center">
         <span className="text-red-500">♥</span>
         <span className="ml-1">{blog.likes} likes</span>

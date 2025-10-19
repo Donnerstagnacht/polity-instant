@@ -22,7 +22,7 @@ export const GroupsFilters: React.FC = () => {
     <div className="mb-6 space-y-4">
       {/* Search Bar */}
       <div className="relative">
-        <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           placeholder="Search groups by name, description, or tags..."
           className="pl-10"
@@ -34,13 +34,13 @@ export const GroupsFilters: React.FC = () => {
       {/* Tag Filters */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <h3 className="text-foreground text-sm font-medium">Filter by tags:</h3>
+          <h3 className="text-sm font-medium text-foreground">Filter by tags:</h3>
           {hasActiveFilters && (
             <Button
               variant="ghost"
               size="sm"
               onClick={clearAllFilters}
-              className="text-muted-foreground hover:text-foreground h-8 px-3"
+              className="h-8 px-3 text-muted-foreground hover:text-foreground"
             >
               <X className="mr-1 h-3 w-3" />
               Clear filters
@@ -67,7 +67,7 @@ export const GroupsFilters: React.FC = () => {
 
       {/* Active Filters Display */}
       {hasActiveFilters && (
-        <div className="text-muted-foreground flex items-center gap-2 text-sm">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>Active filters:</span>
           {searchTerm && (
             <Badge variant="secondary" className="text-xs">

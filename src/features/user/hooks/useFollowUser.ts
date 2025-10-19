@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { db, tx, id } from '../../../../db';
-import { useAuthStore } from '@/lib/instant/auth';
+import { useAuthStore } from '@/features/auth/auth.ts';
 
 /**
  * Hook to handle user following functionality

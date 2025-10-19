@@ -8,7 +8,7 @@ import { IS_APPLE, KEYS } from 'platejs';
 import { PlateElement, useFocused, useReadOnly, useSelected } from 'platejs/react';
 
 import { useTranslation } from 'react-i18next';
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 import { useMounted } from '@/hooks/use-mounted.ts';
 
 import {
@@ -36,9 +36,9 @@ export function MentionElement(
     <PlateElement
       {...props}
       className={cn(
-        'bg-muted inline-block rounded-md px-1.5 py-0.5 align-baseline text-sm font-medium',
+        'inline-block rounded-md bg-muted px-1.5 py-0.5 align-baseline text-sm font-medium',
         !readOnly && 'cursor-pointer',
-        selected && focused && 'ring-ring ring-2',
+        selected && focused && 'ring-2 ring-ring',
         element.children[0][KEYS.bold] === true && 'font-bold',
         element.children[0][KEYS.italic] === true && 'italic',
         element.children[0][KEYS.underline] === true && 'underline'
@@ -85,7 +85,7 @@ export function MentionInputElement(props: PlateElementProps<TComboboxInputEleme
         showTrigger={false}
         trigger="@"
       >
-        <span className="bg-muted ring-ring inline-block rounded-md px-1.5 py-0.5 align-baseline text-sm focus-within:ring-2">
+        <span className="inline-block rounded-md bg-muted px-1.5 py-0.5 align-baseline text-sm ring-ring focus-within:ring-2">
           <InlineComboboxInput />
         </span>{' '}
         <InlineComboboxContent className="my-1.5">

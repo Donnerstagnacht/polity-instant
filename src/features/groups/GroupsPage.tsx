@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { useGroupsStore } from '@/global-state/groups.store';
-import { GroupsHeader } from './components/GroupsHeader';
-import { GroupsFilters } from './components/GroupsFilters';
-import { GroupsList } from './components/GroupsList';
+import { GroupsHeader } from '@/features/groups/ui/GroupsHeader';
+import { GroupsFilters } from '@/features/groups/ui/GroupsFilters';
+import { GroupsList } from '@/features/groups/ui/GroupsList';
 
 export const GroupsPage: React.FC = () => {
   const { fetchGroups } = useGroupsStore();

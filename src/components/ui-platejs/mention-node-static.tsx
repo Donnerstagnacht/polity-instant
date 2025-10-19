@@ -4,7 +4,7 @@ import type { SlateElementProps, TMentionElement } from 'platejs';
 
 import { IS_APPLE, KEYS, SlateElement } from 'platejs';
 
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 
 export function MentionElementStatic(
   props: SlateElementProps<TMentionElement> & {
@@ -18,7 +18,7 @@ export function MentionElementStatic(
     <SlateElement
       {...props}
       className={cn(
-        'bg-muted inline-block rounded-md px-1.5 py-0.5 align-baseline text-sm font-medium',
+        'inline-block rounded-md bg-muted px-1.5 py-0.5 align-baseline text-sm font-medium',
         element.children[0][KEYS.bold] === true && 'font-bold',
         element.children[0][KEYS.italic] === true && 'italic',
         element.children[0][KEYS.underline] === true && 'underline'

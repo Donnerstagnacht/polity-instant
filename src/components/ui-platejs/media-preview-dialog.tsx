@@ -8,7 +8,7 @@ import { cva } from 'class-variance-authority';
 import { ArrowLeft, ArrowRight, Download, Minus, Plus, X } from 'lucide-react';
 import { useEditorRef } from 'platejs/react';
 
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 
 const buttonVariants = cva('rounded bg-[rgba(0,0,0,0.5)] px-1', {
   defaultVariants: {
@@ -46,7 +46,7 @@ export function MediaPreviewDialog() {
 
   return (
     <div
-      className={cn('fixed top-0 left-0 z-50 h-screen w-screen select-none', !isOpen && 'hidden')}
+      className={cn('fixed left-0 top-0 z-50 h-screen w-screen select-none', !isOpen && 'hidden')}
       onContextMenu={e => e.stopPropagation()}
       {...maskLayerProps}
     >

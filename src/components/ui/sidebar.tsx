@@ -3,7 +3,7 @@ import { Slot } from '@radix-ui/react-slot';
 import type { VariantProps } from 'class-variance-authority';
 import { cva } from 'class-variance-authority';
 import { PanelLeft } from 'lucide-react';
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 import { Button } from '@/components/ui/button.tsx';
 import { Input } from '@/components/ui/input.tsx';
 import { Separator } from '@/components/ui/separator.tsx';

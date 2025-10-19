@@ -2,7 +2,7 @@ import type { PlateElementProps } from 'platejs/react';
 
 import { PlateElement, useFocused, useReadOnly, useSelected } from 'platejs/react';
 
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 
 export function HrElement(props: PlateElementProps) {
   const readOnly = useReadOnly();
@@ -14,8 +14,8 @@ export function HrElement(props: PlateElementProps) {
       <div className="py-6" contentEditable={false}>
         <hr
           className={cn(
-            'bg-muted h-0.5 rounded-sm border-none bg-clip-content',
-            selected && focused && 'ring-ring ring-2 ring-offset-2',
+            'h-0.5 rounded-sm border-none bg-muted bg-clip-content',
+            selected && focused && 'ring-2 ring-ring ring-offset-2',
             !readOnly && 'cursor-pointer'
           )}
         />

@@ -1,19 +1,19 @@
 import { useState, useRef } from 'react';
-import { StatsBar } from './ui-user/StatsBar';
+import { StatsBar } from '@/features/user/ui/StatsBar';
 import '@/styles/animations.css';
-import { SocialBar } from './ui-user/SocialBar';
+import { SocialBar } from '@/features/user/ui/SocialBar';
 import { useUserWikiContentSearch } from './state/useUserWikiContentSearch';
 import type { User } from './types/user.types';
 import { USER } from './state/user.data';
 import { BADGE_COLORS } from './state/badgeColors';
 import { GRADIENTS } from './state/gradientColors';
-import { UserInfoTabs } from './ui-user/UserInfoTabs';
-import { StatementCarousel } from './ui-user/StatementCarousel';
-import { UserWikiContentTabs } from './ui-user/UserWikiContentTabs';
-import { UserWikiHeader } from './ui-user/UserWikiHeader';
+import { UserInfoTabs } from '@/features/user/ui/UserInfoTabs';
+import { StatementCarousel } from '@/features/user/ui/StatementCarousel';
+import { UserWikiContentTabs } from '@/features/user/ui/UserWikiContentTabs';
+import { UserWikiHeader } from '@/features/user/ui/UserWikiHeader';
 import { useUserData } from './hooks/useUserData';
 import { useFollowUser } from './hooks/useFollowUser';
-import { useAuthStore } from '@/lib/instant/auth';
+import { useAuthStore } from '@/features/auth/auth.ts';
 
 // --- UserWiki utility functions moved to utils/userWiki.utils.ts ---
 import {
@@ -33,7 +33,6 @@ interface UserWikiProps {
   };
 }
 
- 
 export function UserWiki(_props: UserWikiProps) {
   // Props available: _props.userId, _props.searchFilters
   const [showAnimation, setShowAnimation] = useState(false);

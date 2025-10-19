@@ -7,7 +7,7 @@ import {
 import { RangeApi } from 'platejs';
 import { usePluginOption } from 'platejs/react';
 
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 
 export function CursorOverlay() {
   const { cursors } = useCursorOverlay();

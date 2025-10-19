@@ -23,9 +23,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { LogOut, User, Settings } from 'lucide-react';
-import { useAuthStore } from '@/lib/instant/auth';
+import { useAuthStore } from '@/features/auth/auth.ts';
 import { useTranslation } from '@/hooks/use-translation';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/utils.ts';
 
 interface UserMenuProps {
   className?: string;

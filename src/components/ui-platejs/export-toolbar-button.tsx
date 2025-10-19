@@ -33,7 +33,10 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
     const style = document.createElement('style');
     document.head.append(style);
 
-    const canvas = await html2canvas(editor.api.toDOMNode(editor)!, {
+    const editorDom = editor.api.toDOMNode(editor);
+    if (!editorDom) return;
+
+    const canvas = await html2canvas(editorDom, {
       onclone: (document: Document) => {
         const editorElement = document.querySelector('[contenteditable="true"]');
         if (editorElement) {
@@ -71,6 +74,7 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
 
   const exportToPdf = async () => {
     const canvas = await getCanvas();
+    if (!canvas) return;
 
     const PDFLib = await import('pdf-lib');
     const pdfDoc = await PDFLib.PDFDocument.create();
@@ -90,6 +94,7 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
 
   const exportToImage = async () => {
     const canvas = await getCanvas();
+    if (!canvas) return;
     await downloadFile(canvas.toDataURL('image/png'), 'plate.png');
   };
 

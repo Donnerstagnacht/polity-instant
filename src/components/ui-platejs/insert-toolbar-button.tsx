@@ -39,10 +39,10 @@ import { insertBlock, insertInlineElement } from '@/components/kit-platejs/trans
 
 import { ToolbarButton, ToolbarMenuGroup } from '../ui/toolbar.tsx';
 
-type Group = {
+interface Group {
   group: string;
   items: Item[];
-};
+}
 
 interface Item {
   icon: React.ReactNode;

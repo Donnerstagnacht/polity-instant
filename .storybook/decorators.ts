@@ -1,7 +1,7 @@
 import { useNavigationStore } from '../src/navigation/state/navigation.store';
 import i18n from '../src/i18n/i18n';
 import React, { useEffect } from 'react';
-import { useAuthStore } from '../src/lib/instant/auth';
+import { useAuthStore } from '@/features/auth/auth.ts';
 
 export const decorators = [
   (Story, context) => {

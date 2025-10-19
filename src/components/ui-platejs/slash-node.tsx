@@ -38,7 +38,7 @@ import {
   InlineComboboxItem,
 } from '../ui/inline-combobox.tsx';
 
-type Group = {
+interface Group {
   group: string;
   items: {
     icon: React.ReactNode;
@@ -49,7 +49,7 @@ type Group = {
     keywords?: string[];
     label?: string;
   }[];
-};
+}
 
 const groups: Group[] = [
   {

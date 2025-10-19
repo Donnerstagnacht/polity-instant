@@ -3,7 +3,7 @@
 import { PlateEditor } from '@/components/kit-platejs/plate-editor';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageWrapper } from '@/components/layout/page-wrapper';
-import { AuthGuard } from '@/components/auth/AuthGuard';
+import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 
 export default function EditorPage() {
   return (

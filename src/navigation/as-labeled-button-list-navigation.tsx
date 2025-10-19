@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 import { StateSwitcher } from '@/navigation/toggles/state-switcher';
 import { NavItemList } from '@/navigation/nav-items/nav-item-list';
 import { NavUserAvatar } from '@/navigation/nav-items/nav-user-avatar';

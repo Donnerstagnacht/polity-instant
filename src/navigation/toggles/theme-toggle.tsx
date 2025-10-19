@@ -1,6 +1,6 @@
 import { Laptop, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 import { useThemeStore } from '@/global-state/theme.store';
 import { useTranslation } from '@/hooks/use-translation';
 import type { Size } from '@/navigation/types/navigation.types';

@@ -8,7 +8,7 @@ import { Image, ImagePlugin, useMediaState } from '@platejs/media/react';
 import { ResizableProvider, useResizableValue } from '@platejs/resizable';
 import { PlateElement, withHOC } from 'platejs/react';
 
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 
 import { Caption, CaptionTextarea } from './caption.tsx';
 import { MediaToolbar } from './media-toolbar.tsx';
@@ -44,7 +44,7 @@ export const ImageElement = withHOC(
                 className={cn(
                   'block w-full max-w-full cursor-pointer object-cover px-0',
                   'rounded-sm',
-                  focused && selected && 'ring-ring ring-2 ring-offset-2',
+                  focused && selected && 'ring-2 ring-ring ring-offset-2',
                   isDragging && 'opacity-50'
                 )}
                 alt={(props.attributes as any).alt}

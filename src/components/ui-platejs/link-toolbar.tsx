@@ -88,7 +88,7 @@ export function LinkFloatingToolbar({ state }: { state?: LinkFloatingToolbarStat
   const input = (
     <div className="flex w-[330px] flex-col" {...inputProps}>
       <div className="flex items-center">
-        <div className="text-muted-foreground flex items-center pr-1 pl-2">
+        <div className="flex items-center pl-2 pr-1 text-muted-foreground">
           <Link className="size-4" />
         </div>
 
@@ -100,7 +100,7 @@ export function LinkFloatingToolbar({ state }: { state?: LinkFloatingToolbarStat
       </div>
       <Separator className="my-1" />
       <div className="flex items-center">
-        <div className="text-muted-foreground flex items-center pr-1 pl-2">
+        <div className="flex items-center pl-2 pr-1 text-muted-foreground">
           <Text className="size-4" />
         </div>
         <input
@@ -162,20 +162,16 @@ function LinkOpenButton() {
   const selection = useEditorSelection();
   const { t } = useTranslation();
 
-  const attributes = React.useMemo(
-    () => {
-      const entry = editor.api.node<TLinkElement>({
-        match: { type: editor.getType(KEYS.link) },
-      });
-      if (!entry) {
-        return {};
-      }
-      const [element] = entry;
-      return getLinkAttributes(editor, element);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [editor, selection]
-  );
+  const attributes = React.useMemo(() => {
+    const entry = editor.api.node<TLinkElement>({
+      match: { type: editor.getType(KEYS.link) },
+    });
+    if (!entry) {
+      return {};
+    }
+    const [element] = entry;
+    return getLinkAttributes(editor, element);
+  }, [editor, selection]);
 
   return (
     <a

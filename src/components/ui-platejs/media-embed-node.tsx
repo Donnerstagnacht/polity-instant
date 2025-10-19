@@ -10,7 +10,7 @@ import { ResizableProvider, useResizableValue } from '@platejs/resizable';
 import { PlateElement, withHOC } from 'platejs/react';
 import { useTranslation } from 'react-i18next';
 
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 
 import { Caption, CaptionTextarea } from './caption.tsx';
 import { MediaToolbar } from './media-toolbar.tsx';
@@ -53,9 +53,9 @@ export const MediaEmbedElement = withHOC(
               />
 
               {isVideo ? (
-                isYoutube ? (
+                isYoutube && embed?.id ? (
                   <LiteYouTubeEmbed
-                    id={embed!.id!}
+                    id={embed.id}
                     title={t('plateJs.media.youtube', 'youtube')}
                     wrapperClass={cn(
                       'rounded-sm',
@@ -84,30 +84,32 @@ export const MediaEmbedElement = withHOC(
                       provider === 'coub' && 'pb-[51.25%]'
                     )}
                   >
-                    <iframe
-                      className={cn(
-                        'absolute top-0 left-0 size-full rounded-sm',
-                        isVideo && 'border-0',
-                        focused && selected && 'ring-ring ring-2 ring-offset-2'
-                      )}
-                      title={t('plateJs.media.embed', 'embed')}
-                      src={embed!.url}
-                      allowFullScreen
-                    />
+                    {embed?.url && (
+                      <iframe
+                        className={cn(
+                          'absolute left-0 top-0 size-full rounded-sm',
+                          isVideo && 'border-0',
+                          focused && selected && 'ring-2 ring-ring ring-offset-2'
+                        )}
+                        title={t('plateJs.media.embed', 'embed')}
+                        src={embed.url}
+                        allowFullScreen
+                      />
+                    )}
                   </div>
                 )
               ) : null}
 
-              {isTweet && (
+              {isTweet && embed?.id && (
                 <div
                   className={cn(
                     '[&_.react-tweet-theme]:my-0',
                     !readOnly &&
                       selected &&
-                      '[&_.react-tweet-theme]:ring-ring [&_.react-tweet-theme]:ring-2 [&_.react-tweet-theme]:ring-offset-2'
+                      '[&_.react-tweet-theme]:ring-2 [&_.react-tweet-theme]:ring-ring [&_.react-tweet-theme]:ring-offset-2'
                   )}
                 >
-                  <Tweet id={embed!.id!} />
+                  <Tweet id={embed.id} />
                 </div>
               )}
 

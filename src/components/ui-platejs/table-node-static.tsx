@@ -5,7 +5,7 @@ import type { SlateElementProps, TTableCellElement, TTableElement } from 'platej
 import { BaseTablePlugin } from '@platejs/table';
 import { SlateElement } from 'platejs';
 
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 
 export function TableElementStatic({ children, ...props }: SlateElementProps<TTableElement>) {
   const { disableMarginLeft } = props.editor.getOptions(BaseTablePlugin);
@@ -14,7 +14,7 @@ export function TableElementStatic({ children, ...props }: SlateElementProps<TTa
   return (
     <SlateElement {...props} className="overflow-x-auto py-5" style={{ paddingLeft: marginLeft }}>
       <div className="group/table relative w-fit">
-        <table className="mr-0 ml-px table h-px table-fixed border-collapse">
+        <table className="ml-px mr-0 table h-px table-fixed border-collapse">
           <tbody className="min-w-full">{children}</tbody>
         </table>
       </div>
@@ -47,17 +47,17 @@ export function TableCellElementStatic({
       {...props}
       as={isHeader ? 'th' : 'td'}
       className={cn(
-        'bg-background h-full overflow-visible border-none p-0',
+        'h-full overflow-visible border-none bg-background p-0',
         element.background ? 'bg-(--cellBackground)' : 'bg-background',
         isHeader && 'text-left font-normal *:m-0',
         'before:size-full',
-        "before:absolute before:box-border before:content-[''] before:select-none",
+        "before:absolute before:box-border before:select-none before:content-['']",
         borders &&
           cn(
-            borders.bottom?.size && `before:border-b-border before:border-b`,
-            borders.right?.size && `before:border-r-border before:border-r`,
-            borders.left?.size && `before:border-l-border before:border-l`,
-            borders.top?.size && `before:border-t-border before:border-t`
+            borders.bottom?.size && `before:border-b before:border-b-border`,
+            borders.right?.size && `before:border-r before:border-r-border`,
+            borders.left?.size && `before:border-l before:border-l-border`,
+            borders.top?.size && `before:border-t before:border-t-border`
           )
       )}
       style={

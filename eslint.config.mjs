@@ -10,9 +10,9 @@ export default tseslint.config(
   {
     // Define ignores for the flat config
     ignores: [
-      'src/components/kit-platejs/**/*',
-      'src/components/ui/**/*',
-      'src/components/ui-platejs/**/*',
+      'src/ui/kit-platejs/**/*',
+      'src/ui/ui/**/*',
+      'src/ui/ui-platejs/**/*',
       '.github/**/*',
       '.storybook/**/*',
       '.next/**/*',

@@ -33,7 +33,7 @@ import {
 } from '@/components/ui/dialog.tsx';
 import { Input } from '@/components/ui/input.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 import { aiChatPlugin } from '@/components/kit-platejs/ai-kit.tsx';
 
 interface Model {
@@ -98,12 +98,12 @@ export function SettingsDialog() {
     <div className="group relative">
       <div className="flex items-center justify-between">
         <label
-          className="text-muted-foreground/70 group-focus-within:text-foreground has-[+input:not(:placeholder-shown)]:text-foreground absolute top-1/2 block -translate-y-1/2 cursor-text px-1 text-sm transition-all group-focus-within:pointer-events-none group-focus-within:top-0 group-focus-within:cursor-default group-focus-within:text-xs group-focus-within:font-medium has-[+input:not(:placeholder-shown)]:pointer-events-none has-[+input:not(:placeholder-shown)]:top-0 has-[+input:not(:placeholder-shown)]:cursor-default has-[+input:not(:placeholder-shown)]:text-xs has-[+input:not(:placeholder-shown)]:font-medium"
+          className="absolute top-1/2 block -translate-y-1/2 cursor-text px-1 text-sm text-muted-foreground/70 transition-all group-focus-within:pointer-events-none group-focus-within:top-0 group-focus-within:cursor-default group-focus-within:text-xs group-focus-within:font-medium group-focus-within:text-foreground has-[+input:not(:placeholder-shown)]:pointer-events-none has-[+input:not(:placeholder-shown)]:top-0 has-[+input:not(:placeholder-shown)]:cursor-default has-[+input:not(:placeholder-shown)]:text-xs has-[+input:not(:placeholder-shown)]:font-medium has-[+input:not(:placeholder-shown)]:text-foreground"
           htmlFor={label}
         >
-          <span className="bg-background inline-flex px-2">{label}</span>
+          <span className="inline-flex bg-background px-2">{label}</span>
         </label>
-        <Button asChild size="icon" variant="ghost" className="absolute top-0 right-[28px] h-full">
+        <Button asChild size="icon" variant="ghost" className="absolute right-[28px] top-0 h-full">
           <a
             className="flex items-center"
             href={
@@ -132,7 +132,7 @@ export function SettingsDialog() {
       <Button
         size="icon"
         variant="ghost"
-        className="absolute top-0 right-0 h-full"
+        className="absolute right-0 top-0 h-full"
         onClick={() => toggleKeyVisibility(service)}
         type="button"
       >
@@ -151,7 +151,7 @@ export function SettingsDialog() {
           size="icon"
           variant="default"
           className={cn(
-            'group fixed right-4 bottom-4 z-50 size-10 overflow-hidden',
+            'group fixed bottom-4 right-4 z-50 size-10 overflow-hidden',
             'rounded-full shadow-md hover:shadow-lg'
           )}
           // data-block-hide
@@ -180,7 +180,7 @@ export function SettingsDialog() {
 
               <div className="group relative">
                 <label
-                  className="bg-background text-foreground absolute start-1 top-0 z-10 block -translate-y-1/2 px-2 text-xs font-medium group-has-disabled:opacity-50"
+                  className="group-has-disabled:opacity-50 absolute start-1 top-0 z-10 block -translate-y-1/2 bg-background px-2 text-xs font-medium text-foreground"
                   htmlFor="select-model"
                 >
                   Model
@@ -250,7 +250,7 @@ export function SettingsDialog() {
           </Button>
         </form>
 
-        <p className="text-muted-foreground text-sm">
+        <p className="text-sm text-muted-foreground">
           Not stored anywhere. Used only for current session requests.
         </p>
       </DialogContent>

@@ -7,7 +7,7 @@ import { useTodoListElement, useTodoListElementState } from '@platejs/list/react
 import { type PlateElementProps, type RenderNodeWrapper, useReadOnly } from 'platejs/react';
 
 import { Checkbox } from '@/components/ui/checkbox.tsx';
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 
 const config: Record<
   string,
@@ -49,7 +49,7 @@ function TodoMarker(props: PlateElementProps) {
   return (
     <div contentEditable={false}>
       <Checkbox
-        className={cn('absolute top-1 -left-6', readOnly && 'pointer-events-none')}
+        className={cn('absolute -left-6 top-1', readOnly && 'pointer-events-none')}
         {...checkboxProps}
       />
     </div>

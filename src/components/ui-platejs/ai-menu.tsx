@@ -28,7 +28,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button.tsx';
 import { Command, CommandGroup, CommandItem, CommandList } from '@/components/ui/command.tsx';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover.tsx';
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/utils/utils.ts';
 import { useChat } from '@/components/kit-platejs/use-chat.ts';
 
 import { AIChatEditor } from './ai-chat-editor.tsx';
@@ -54,12 +54,13 @@ export function AIMenu() {
     if (streaming) {
       const anchor = api.aiChat.node({ anchor: true });
       setTimeout(() => {
-        const anchorDom = editor.api.toDOMNode(anchor![0])!;
-        setAnchorElement(anchorDom);
+        if (anchor?.[0]) {
+          const anchorDom = editor.api.toDOMNode(anchor[0]);
+          if (anchorDom) setAnchorElement(anchorDom);
+        }
       }, 0);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [streaming]);
+  }, [streaming, api.aiChat, editor]);
 
   const setOpen = (open: boolean) => {
     if (open) {
@@ -77,7 +78,11 @@ export function AIMenu() {
   useEditorChat({
     chat,
     onOpenBlockSelection: (blocks: NodeEntry[]) => {
-      show(editor.api.toDOMNode(blocks.at(-1)![0])!);
+      const lastBlock = blocks.at(-1)?.[0];
+      if (lastBlock) {
+        const dom = editor.api.toDOMNode(lastBlock);
+        if (dom) show(dom);
+      }
     },
     onOpenChange: open => {
       if (!open) {
@@ -86,16 +91,24 @@ export function AIMenu() {
       }
     },
     onOpenCursor: () => {
-      const [ancestor] = editor.api.block({ highest: true })!;
+      const block = editor.api.block({ highest: true });
+      if (!block) return;
+
+      const [ancestor] = block;
 
       if (!editor.api.isAt({ end: true }) && !editor.api.isEmpty(ancestor)) {
         editor.getApi(BlockSelectionPlugin).blockSelection.set(ancestor.id as string);
       }
 
-      show(editor.api.toDOMNode(ancestor)!);
+      const dom = editor.api.toDOMNode(ancestor);
+      if (dom) show(dom);
     },
     onOpenSelection: () => {
-      show(editor.api.toDOMNode(editor.api.blocks().at(-1)![0])!);
+      const lastBlock = editor.api.blocks().at(-1)?.[0];
+      if (lastBlock) {
+        const dom = editor.api.toDOMNode(lastBlock);
+        if (dom) show(dom);
+      }
     },
   });
 
@@ -112,9 +125,11 @@ export function AIMenu() {
     return null;
   }
 
+  if (!anchorElement) return null;
+
   return (
     <Popover open={open} onOpenChange={setOpen} modal={false}>
-      <PopoverAnchor virtualRef={{ current: anchorElement! }} />
+      <PopoverAnchor virtualRef={{ current: anchorElement }} />
 
       <PopoverContent
         className="border-none bg-transparent p-0 shadow-none"
@@ -137,14 +152,14 @@ export function AIMenu() {
           {mode === 'chat' && isSelecting && content && <AIChatEditor content={content} />}
 
           {isLoading ? (
-            <div className="text-muted-foreground flex grow items-center gap-2 p-2 text-sm select-none">
+            <div className="flex grow select-none items-center gap-2 p-2 text-sm text-muted-foreground">
               <Loader2Icon className="size-4 animate-spin" />
               {messages.length > 1 ? t('plateJs.ai.menu.editing') : t('plateJs.ai.menu.thinking')}
             </div>
           ) : (
             <CommandPrimitive.Input
               className={cn(
-                'border-input placeholder:text-muted-foreground dark:bg-input/30 flex h-9 w-full min-w-0 bg-transparent px-3 py-1 text-base transition-[color,box-shadow] outline-none md:text-sm',
+                'flex h-9 w-full min-w-0 border-input bg-transparent px-3 py-1 text-base outline-none transition-[color,box-shadow] placeholder:text-muted-foreground md:text-sm dark:bg-input/30',
                 'aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40',
                 'border-b focus-visible:ring-transparent'
               )}
@@ -187,7 +202,7 @@ export const AIMenuItems = ({ setValue }: { setValue: (value: string) => void })
   const { t } = useTranslation();
   const editor = useEditorRef();
   const { messages } = usePluginOption(AIChatPlugin, 'chat');
-  const aiEditor = usePluginOption(AIChatPlugin, 'aiEditor')!;
+  const aiEditor = usePluginOption(AIChatPlugin, 'aiEditor');
   const isSelecting = useIsSelecting();
 
   const aiChatItems = {
@@ -444,6 +459,8 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
     }
   }, [menuGroups, setValue]);
 
+  if (!aiEditor) return null;
+
   return (
     <>
       {menuGroups.map((group, index) => (
@@ -488,10 +505,10 @@ export function AILoadingBar() {
   return (
     <div
       className={cn(
-        'border-border bg-muted text-muted-foreground absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-3 rounded-md border px-3 py-1.5 text-sm shadow-md transition-all duration-300'
+        'absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-3 rounded-md border border-border bg-muted px-3 py-1.5 text-sm text-muted-foreground shadow-md transition-all duration-300'
       )}
     >
-      <span className="border-muted-foreground h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />
+      <span className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
       <span>
         {status === 'submitted' ? t('plateJs.ai.menu.thinking') : t('plateJs.ai.menu.writing')}
       </span>
@@ -503,7 +520,7 @@ export function AILoadingBar() {
       >
         <PauseIcon className="h-4 w-4" />
         {t('plateJs.ai.menu.stop')}
-        <kbd className="bg-border text-muted-foreground ml-1 rounded px-1 font-mono text-[10px] shadow-sm">
+        <kbd className="ml-1 rounded bg-border px-1 font-mono text-[10px] text-muted-foreground shadow-sm">
           Esc
         </kbd>
       </Button>
