@@ -372,6 +372,8 @@ function SearchContent() {
 
 // Unified Result Card for Mosaic Display
 function UnifiedResultCard({ item }: { item: any }) {
+  const router = useRouter();
+
   const getTypeBadge = () => {
     const badges: Record<
       string,
@@ -386,6 +388,26 @@ function UnifiedResultCard({ item }: { item: any }) {
     return badges[item._type] || badges.user;
   };
 
+  const handleClick = () => {
+    switch (item._type) {
+      case 'user':
+        router.push(`/user/${item.id}`);
+        break;
+      case 'group':
+        router.push(`/group/${item.id}`);
+        break;
+      case 'statement':
+        router.push(`/statement/${item.id}`);
+        break;
+      case 'blog':
+        router.push(`/blog/${item.id}`);
+        break;
+      case 'amendment':
+        router.push(`/amendment/${item.id}`);
+        break;
+    }
+  };
+
   const typeBadge = getTypeBadge();
   const TypeIcon = typeBadge.icon;
 
@@ -393,7 +415,7 @@ function UnifiedResultCard({ item }: { item: any }) {
   switch (item._type) {
     case 'user':
       return (
-        <Card className="cursor-pointer transition-colors hover:bg-accent">
+        <Card className="cursor-pointer transition-colors hover:bg-accent" onClick={handleClick}>
           <CardHeader>
             <div className="mb-2 flex items-center justify-between">
               <Badge variant={typeBadge.variant} className="text-xs">
@@ -415,7 +437,7 @@ function UnifiedResultCard({ item }: { item: any }) {
 
     case 'group':
       return (
-        <Card className="cursor-pointer transition-colors hover:bg-accent">
+        <Card className="cursor-pointer transition-colors hover:bg-accent" onClick={handleClick}>
           <CardHeader>
             <div className="mb-2 flex items-center justify-between">
               <Badge variant={typeBadge.variant} className="text-xs">
@@ -443,7 +465,7 @@ function UnifiedResultCard({ item }: { item: any }) {
 
     case 'statement':
       return (
-        <Card className="cursor-pointer transition-colors hover:bg-accent">
+        <Card className="cursor-pointer transition-colors hover:bg-accent" onClick={handleClick}>
           <CardHeader>
             <div className="mb-2">
               <Badge variant={typeBadge.variant} className="text-xs">
@@ -461,7 +483,7 @@ function UnifiedResultCard({ item }: { item: any }) {
 
     case 'blog':
       return (
-        <Card className="cursor-pointer transition-colors hover:bg-accent">
+        <Card className="cursor-pointer transition-colors hover:bg-accent" onClick={handleClick}>
           <CardHeader>
             <div className="mb-2">
               <Badge variant={typeBadge.variant} className="text-xs">
@@ -489,7 +511,7 @@ function UnifiedResultCard({ item }: { item: any }) {
         Drafting: 'bg-blue-500/10 text-blue-500',
       };
       return (
-        <Card className="cursor-pointer transition-colors hover:bg-accent">
+        <Card className="cursor-pointer transition-colors hover:bg-accent" onClick={handleClick}>
           <CardHeader>
             <div className="mb-2 flex items-center justify-between">
               <Badge variant={typeBadge.variant} className="text-xs">
@@ -518,8 +540,13 @@ function UnifiedResultCard({ item }: { item: any }) {
 
 // Result Card Components (for individual tabs)
 function UserCard({ user }: { user: any }) {
+  const router = useRouter();
+
   return (
-    <Card className="cursor-pointer transition-colors hover:bg-accent">
+    <Card
+      className="cursor-pointer transition-colors hover:bg-accent"
+      onClick={() => router.push(`/user/${user.id}`)}
+    >
       <CardHeader>
         <div className="mb-2">
           <Badge variant="default" className="text-xs">
@@ -541,8 +568,13 @@ function UserCard({ user }: { user: any }) {
 }
 
 function GroupCard({ group }: { group: any }) {
+  const router = useRouter();
+
   return (
-    <Card className="cursor-pointer transition-colors hover:bg-accent">
+    <Card
+      className="cursor-pointer transition-colors hover:bg-accent"
+      onClick={() => router.push(`/group/${group.id}`)}
+    >
       <CardHeader>
         <div className="mb-2 flex items-center justify-between">
           <Badge variant="secondary" className="text-xs">
@@ -570,8 +602,13 @@ function GroupCard({ group }: { group: any }) {
 }
 
 function StatementCard({ statement }: { statement: any }) {
+  const router = useRouter();
+
   return (
-    <Card className="cursor-pointer transition-colors hover:bg-accent">
+    <Card
+      className="cursor-pointer transition-colors hover:bg-accent"
+      onClick={() => router.push(`/statement/${statement.id}`)}
+    >
       <CardHeader>
         <div className="mb-2">
           <Badge variant="outline" className="text-xs">
@@ -589,8 +626,13 @@ function StatementCard({ statement }: { statement: any }) {
 }
 
 function BlogCard({ blog }: { blog: any }) {
+  const router = useRouter();
+
   return (
-    <Card className="cursor-pointer transition-colors hover:bg-accent">
+    <Card
+      className="cursor-pointer transition-colors hover:bg-accent"
+      onClick={() => router.push(`/blog/${blog.id}`)}
+    >
       <CardHeader>
         <div className="mb-2">
           <Badge variant="default" className="text-xs">
@@ -612,6 +654,8 @@ function BlogCard({ blog }: { blog: any }) {
 }
 
 function AmendmentCard({ amendment }: { amendment: any }) {
+  const router = useRouter();
+
   const statusColors: Record<string, string> = {
     Passed: 'bg-green-500/10 text-green-500',
     Rejected: 'bg-red-500/10 text-red-500',
@@ -620,7 +664,10 @@ function AmendmentCard({ amendment }: { amendment: any }) {
   };
 
   return (
-    <Card className="cursor-pointer transition-colors hover:bg-accent">
+    <Card
+      className="cursor-pointer transition-colors hover:bg-accent"
+      onClick={() => router.push(`/amendment/${amendment.id}`)}
+    >
       <CardHeader>
         <div className="mb-2 flex items-center justify-between">
           <Badge variant="secondary" className="text-xs">
