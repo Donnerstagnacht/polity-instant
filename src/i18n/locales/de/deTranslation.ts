@@ -39,6 +39,7 @@ const deTranslation: I18nLocale = {
     primary: {
       home: 'Startseite',
       create: 'Erstellen',
+      search: 'Suchen',
       dashboard: 'Dashboard',
       messages: 'Nachrichten',
       settings: 'Einstellungen',

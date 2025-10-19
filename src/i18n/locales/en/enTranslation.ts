@@ -37,6 +37,7 @@ const enTranslation = {
     primary: {
       home: 'Home',
       create: 'Create',
+      search: 'Search',
       dashboard: 'Dashboard',
       messages: 'Messages',
       settings: 'Settings',

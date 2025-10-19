@@ -41,6 +41,16 @@ export const navItemsAuthenticated = (
       },
     },
     {
+      id: 'search',
+      label: 'Search',
+      icon: 'Search',
+      href: '/search',
+      onClick: () => {
+        router.push('/search');
+        if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('search');
+      },
+    },
+    {
       id: 'dashboard',
       label: 'Dashboard',
       icon: 'LayoutDashboard',
