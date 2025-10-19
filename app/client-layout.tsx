@@ -7,7 +7,7 @@ import { NavigationCommandDialog } from '@/navigation/command-dialog';
 import { useScreenResponsiveDetector, useScreenStore } from '@/global-state/screen.store';
 import { useNavigationStore } from '@/navigation/state/navigation.store';
 import { useThemeInitializer } from '@/global-state/theme.store';
-import { I18nSyncProvider } from '@/providers/i18n-sync-provider';
+import { I18nSyncProvider } from '@/i18n/i18n-sync-provider.tsx';
 import type {
   NavigationItem,
   NavigationType,

@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useLanguageStore } from '@/global-state/language.store';
-import i18n from '@/i18n/i18n';
+import { useLanguageStore } from '@/global-state/language.store.tsx';
+import i18n from '@/i18n/i18n.ts';
 
 /**
  * Provider that syncs the Zustand language store with i18next.

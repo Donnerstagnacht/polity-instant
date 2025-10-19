@@ -5,6 +5,11 @@ import resources from './locales';
 
 // Get initial language from localStorage (Zustand store)
 const getInitialLanguage = (): string => {
+  // Check if we're in a browser environment
+  if (typeof window === 'undefined') {
+    return 'en';
+  }
+
   try {
     const stored = localStorage.getItem('language-storage');
     if (stored) {
