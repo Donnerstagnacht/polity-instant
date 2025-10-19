@@ -7,6 +7,7 @@ import { NavigationCommandDialog } from '@/navigation/command-dialog';
 import { useScreenResponsiveDetector, useScreenStore } from '@/global-state/screen.store';
 import { useNavigationStore } from '@/navigation/state/navigation.store';
 import { useThemeInitializer } from '@/global-state/theme.store';
+import { I18nSyncProvider } from '@/providers/i18n-sync-provider';
 import type {
   NavigationItem,
   NavigationType,
@@ -31,44 +32,46 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   const isMobile = screenType === 'mobile' || (screenType === 'automatic' && isMobileScreen);
 
   return (
-    <div className="min-h-screen bg-background">
-      {['primary', 'combined'].includes(navigationType) && (
-        <DynamicNavigation
-          navigationType="primary"
-          navigationView={navigationView}
-          navigationItems={navigationItems}
-          screenType={screenType}
-        />
-      )}
-      {isAuthenticated &&
-        secondaryNavItems &&
-        ['secondary', 'combined'].includes(navigationType) && (
+    <I18nSyncProvider>
+      <div className="min-h-screen bg-background">
+        {['primary', 'combined'].includes(navigationType) && (
           <DynamicNavigation
-            navigationType="secondary"
+            navigationType="primary"
             navigationView={navigationView}
-            navigationItems={secondaryNavItems}
+            navigationItems={navigationItems}
             screenType={screenType}
           />
         )}
-      <main
-        className={`transition-all duration-300 ${getMarginClasses({
-          isMobile,
-          navigationView: navigationView,
-          navigationType: navigationType,
-          secondaryNavItems,
-        })}`}
-      >
-        {children}
-      </main>
+        {isAuthenticated &&
+          secondaryNavItems &&
+          ['secondary', 'combined'].includes(navigationType) && (
+            <DynamicNavigation
+              navigationType="secondary"
+              navigationView={navigationView}
+              navigationItems={secondaryNavItems}
+              screenType={screenType}
+            />
+          )}
+        <main
+          className={`transition-all duration-300 ${getMarginClasses({
+            isMobile,
+            navigationView: navigationView,
+            navigationType: navigationType,
+            secondaryNavItems,
+          })}`}
+        >
+          {children}
+        </main>
 
-      {/* Command Dialog for global search */}
-      <NavigationCommandDialog
-        primaryNavItems={navigationItems}
-        secondaryNavItems={secondaryNavItems}
-      />
+        {/* Command Dialog for global search */}
+        <NavigationCommandDialog
+          primaryNavItems={navigationItems}
+          secondaryNavItems={secondaryNavItems}
+        />
 
-      <Toaster richColors position="top-right" />
-    </div>
+        <Toaster richColors position="top-right" />
+      </div>
+    </I18nSyncProvider>
   );
 }
 

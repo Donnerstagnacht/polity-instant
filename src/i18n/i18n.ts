@@ -3,6 +3,20 @@ import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import resources from './locales';
 
+// Get initial language from localStorage (Zustand store)
+const getInitialLanguage = (): string => {
+  try {
+    const stored = localStorage.getItem('language-storage');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return parsed.state?.language || 'en';
+    }
+  } catch (error) {
+    console.error('Error reading language from localStorage:', error);
+  }
+  return 'en';
+};
+
 i18n
   // Erkennt die Sprachpräferenz des Browsers
   .use(LanguageDetector)
@@ -11,6 +25,7 @@ i18n
   // Initialisiert i18next
   .init({
     resources,
+    lng: getInitialLanguage(), // Use stored language as initial
     fallbackLng: 'en',
     interpolation: {
       escapeValue: false, // React escapes values already

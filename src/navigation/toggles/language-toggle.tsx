@@ -8,7 +8,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
-import { cn } from '@/i18n/i18n.types';
+import { cn } from '@/lib/utils.ts';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/use-translation';
 import type { Language } from '@/global-state/language.store';

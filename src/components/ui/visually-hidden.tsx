@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { cn } from '@/i18n/i18n.types';
+import { cn } from '@/lib/utils.ts';
 
 interface VisuallyHiddenProps extends React.HTMLAttributes<HTMLSpanElement> {}
 

@@ -1,6 +1,6 @@
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
-import { cn } from '@/i18n/i18n.types';
+import { cn } from '@/lib/utils.ts';
 import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover';
 import type { NavigationItem, NavigationView } from '@/navigation/types/navigation.types';
 import { iconMap } from '@/navigation/nav-items/icon-map';

@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/i18n/i18n.types';
+import { cn } from '@/lib/utils.ts';
 import type { NavigationView } from '@/navigation/types/navigation.types';
 import { useState } from 'react';
 import { useAuthStore } from '@/lib/instant/auth';

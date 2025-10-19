@@ -1,6 +1,6 @@
 import { AlignLeft, Circle, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/i18n/i18n.types';
+import { cn } from '@/lib/utils.ts';
 import { useTranslation } from '@/hooks/use-translation';
 import type { NavigationView, Size } from '@/navigation/types/navigation.types';
 

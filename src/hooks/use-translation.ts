@@ -1,6 +1,8 @@
 import { useLanguageStore, type Language } from '@/global-state/language.store';
 import enTranslation from '@/i18n/locales/en/enTranslation';
 import deTranslation from '@/i18n/locales/de/deTranslation';
+import i18n from '@/i18n/i18n';
+import { useEffect } from 'react';
 
 const translations = {
   en: enTranslation,
@@ -27,13 +29,22 @@ function getNestedValue(obj: any, path: string): string {
 export function useTranslation() {
   const { language, setLanguage } = useLanguageStore();
 
+  // Sync custom language store with i18next
+  useEffect(() => {
+    if (i18n.language !== language) {
+      i18n.changeLanguage(language);
+    }
+  }, [language]);
+
   const t = (key: string, fallback?: string): string => {
     const translation = getNestedValue(translations[language], key);
     return translation !== key ? translation : fallback || key;
   };
 
-  const changeLanguage = (newLanguage: Language) => {
+  const changeLanguage = async (newLanguage: Language) => {
     setLanguage(newLanguage);
+    // Also change i18next language
+    await i18n.changeLanguage(newLanguage);
   };
 
   return {

@@ -1,4 +1,4 @@
-import { cn } from '@/i18n/i18n.types';
+import { cn } from '@/lib/utils.ts';
 import { StateSwitcher } from '@/navigation/toggles/state-switcher';
 import { NavItemList } from '@/navigation/nav-items/nav-item-list';
 import { NavUserAvatar } from '@/navigation/nav-items/nav-user-avatar';
@@ -50,7 +50,7 @@ export function AsLabeledButtonListNavigation({
         isPrimary ? 'left-0' : 'right-0 border-l border-r-0'
       )}
     >
-      <div className="flex-1 overflow-y-auto p-4 scrollbar-hide">
+      <div className="scrollbar-hide flex-1 overflow-y-auto p-4">
         <NavItemList
           navigationItems={navigationItems}
           isMobile={false}

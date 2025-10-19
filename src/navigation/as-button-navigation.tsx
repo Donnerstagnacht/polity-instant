@@ -1,5 +1,5 @@
 import { Home, X } from 'lucide-react';
-import { cn } from '@/i18n/i18n.types';
+import { cn } from '@/lib/utils.ts';
 import { Button } from '@/components/ui/button';
 import { StateSwitcher } from '@/navigation/toggles/state-switcher';
 import { NavItemList } from '@/navigation/nav-items/nav-item-list';
