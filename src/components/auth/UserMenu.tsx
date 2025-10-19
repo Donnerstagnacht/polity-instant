@@ -30,9 +30,11 @@ import { cn } from '@/utils/utils.ts';
 interface UserMenuProps {
   className?: string;
   isMobile?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function UserMenu({ className, isMobile }: UserMenuProps) {
+export function UserMenu({ className, isMobile, open, onOpenChange }: UserMenuProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const { user, logout } = useAuthStore();
@@ -48,8 +50,12 @@ export function UserMenu({ className, isMobile }: UserMenuProps) {
 
   const handleProfileClick = () => {
     // Navigate to the logged-in user's profile page
+    console.log('Profile click - user:', user);
     if (user?.id) {
+      console.log('Navigating to /user/' + user.id);
       router.push(`/user/${user.id}`);
+    } else {
+      console.error('User ID not found:', user);
     }
   };
 
@@ -67,9 +73,10 @@ export function UserMenu({ className, isMobile }: UserMenuProps) {
 
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu open={open} onOpenChange={onOpenChange}>
         <DropdownMenuTrigger asChild>
           <Button
+            data-user-menu-trigger
             variant="ghost"
             className={cn(
               'h-10 w-10 rounded-full p-0 hover:bg-accent',
@@ -84,7 +91,7 @@ export function UserMenu({ className, isMobile }: UserMenuProps) {
           </Button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuContent align="end" className="z-50 w-56">
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
               <p className="text-sm font-medium leading-none">

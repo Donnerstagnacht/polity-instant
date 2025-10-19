@@ -1,7 +1,6 @@
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/utils/utils.ts';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { UserMenu } from '@/components/auth/UserMenu';
@@ -16,11 +15,10 @@ export function NavUserAvatar({
   isMobile: boolean;
   className?: string;
 }) {
+  const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
-  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
-
-  // If no id is provided, use a default based on variant
-  const popoverId = isMobile ? 'user-avatar-mobile' : 'user-avatar';
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   if (!isAuthenticated || !user) {
     return null;
@@ -35,37 +33,41 @@ export function NavUserAvatar({
     : user.email.substring(0, 2).toUpperCase();
 
   if (navigationView === 'asButton') {
+    // Fullscreen overlay mode - click goes directly to profile
+    const handleClick = () => {
+      if (user?.id) {
+        router.push(`/user/${user.id}`);
+      }
+    };
+
     return (
-      <div className={cn('flex items-center justify-center', className)}>
-        <UserMenu isMobile={isMobile} />
+      <div
+        className={cn(
+          'flex cursor-pointer items-center gap-3 transition-opacity hover:opacity-80',
+          className
+        )}
+        onClick={handleClick}
+      >
+        <Avatar className="h-8 w-8">
+          <AvatarImage
+            src={user.photoURL || user.avatar || undefined}
+            alt={user.name || user.email}
+          />
+          <AvatarFallback>{userInitials}</AvatarFallback>
+        </Avatar>
+        <span className="truncate text-sm font-medium">
+          {user.name || user.email.split('@')[0]}
+        </span>
       </div>
     );
   }
 
   if (navigationView === 'asButtonList') {
-    if (isMobile) {
-      return (
-        <div className={cn('flex items-center justify-center', className)}>
-          <UserMenu isMobile={isMobile} />
-        </div>
-      );
-    }
-
+    // Both mobile and desktop: just show UserMenu (which has its own popover with logout, etc.)
     return (
-      <Popover open={hoveredItem === popoverId}>
-        <PopoverTrigger asChild>
-          <div
-            onMouseEnter={() => setHoveredItem(popoverId)}
-            onMouseLeave={() => setHoveredItem(null)}
-            className={cn('flex items-center justify-center', className)}
-          >
-            <UserMenu isMobile={isMobile} />
-          </div>
-        </PopoverTrigger>
-        <PopoverContent side="right" className="w-auto p-2" sideOffset={8}>
-          <span className="text-sm font-medium">{user.name || user.email.split('@')[0]}</span>
-        </PopoverContent>
-      </Popover>
+      <div className={cn('flex items-center justify-center', className)}>
+        <UserMenu isMobile={isMobile} />
+      </div>
     );
   }
 
@@ -77,29 +79,24 @@ export function NavUserAvatar({
     );
   }
 
-  // Desktop asLabeledButtonList
+  // Desktop asLabeledButtonList - show UserMenu icon and name next to it with click trigger
+  const handleNameClick = () => {
+    setIsDropdownOpen(!isDropdownOpen);
+  };
+
+  const handleDropdownOpenChange = (open: boolean) => {
+    if (!open && closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+    }
+    setIsDropdownOpen(open);
+  };
+
   return (
-    <Popover open={hoveredItem === popoverId}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          className={cn(
-            'flex h-12 w-full items-center justify-start gap-3 px-3 hover:bg-accent',
-            className
-          )}
-          onMouseEnter={() => setHoveredItem(popoverId)}
-          onMouseLeave={() => setHoveredItem(null)}
-        >
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={user.avatar} alt={user.name || user.email} />
-            <AvatarFallback>{userInitials}</AvatarFallback>
-          </Avatar>
-          <span className="text-sm font-medium">{user.name || user.email.split('@')[0]}</span>
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent side="right" className="w-auto p-2" sideOffset={8}>
-        <UserMenu />
-      </PopoverContent>
-    </Popover>
+    <div className={cn('flex w-full items-center gap-3 px-3 py-2', className)}>
+      <UserMenu isMobile={isMobile} open={isDropdownOpen} onOpenChange={handleDropdownOpenChange} />
+      <span className="cursor-pointer truncate text-sm font-medium" onClick={handleNameClick}>
+        {user.name || user.email.split('@')[0]}
+      </span>
+    </div>
   );
 }

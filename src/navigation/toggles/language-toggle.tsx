@@ -109,7 +109,7 @@ export function LanguageToggle({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-auto p-1"
+        className="z-40 w-auto p-1"
         side={side}
         sideOffset={sideOffset}
         onMouseLeave={() => setIsLanguagePopoverOpen(false)}

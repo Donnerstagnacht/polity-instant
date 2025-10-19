@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, ReactNode } from 'react';
+import { useEffect, ReactNode, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { Loader2 } from 'lucide-react';
@@ -19,10 +19,16 @@ export function AuthGuard({ children, requireAuth = true, redirectTo, fallback }
   const router = useRouter();
   const pathname = usePathname();
   const { isAuthenticated, isLoading } = useAuthStore();
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Track when component has mounted to avoid hydration issues
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
-    // Don't redirect while loading
-    if (isLoading) return;
+    // Don't redirect while loading or before mount
+    if (isLoading || !isMounted) return;
 
     if (requireAuth && !isAuthenticated) {
       // User needs to be authenticated but isn't
@@ -33,10 +39,10 @@ export function AuthGuard({ children, requireAuth = true, redirectTo, fallback }
       const destination = redirectTo || '/dashboard';
       router.push(destination);
     }
-  }, [isAuthenticated, isLoading, requireAuth, router, pathname, redirectTo]);
+  }, [isAuthenticated, isLoading, requireAuth, router, pathname, redirectTo, isMounted]);
 
-  // Show loading spinner while checking auth status
-  if (isLoading) {
+  // Show loading spinner while checking auth status or before mount
+  if (isLoading || !isMounted) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4">

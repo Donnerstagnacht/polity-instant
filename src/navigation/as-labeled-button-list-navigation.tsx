@@ -62,7 +62,7 @@ export function AsLabeledButtonListNavigation({
       <div className="flex-shrink-0 border-t">
         {isPrimary && <NavUserAvatar navigationView="asLabeledButtonList" isMobile={false} />}
         {isPrimary && (
-          <div className="px-4 pb-4">
+          <div className="px-4 pb-2 pt-4">
             <StateSwitcher isMobile={false} navigationType={navigationType} />
           </div>
         )}

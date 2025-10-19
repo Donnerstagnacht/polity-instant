@@ -148,6 +148,7 @@ export const useAuthStore = create<AuthState>()(
       partialize: state => ({
         isAuthenticated: state.isAuthenticated,
         user: state.user,
+        // Don't persist isLoading - it should always start as false on mount
       }),
     }
   )
