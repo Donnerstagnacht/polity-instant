@@ -120,6 +120,83 @@ const graph = i.graph(
     follows: i.entity({
       createdAt: i.date().indexed(),
     }),
+
+    // Message system entities
+    // Conversations between users
+    conversations: i.entity({
+      lastMessageAt: i.date().indexed(),
+      createdAt: i.date().indexed(),
+    }),
+
+    // Individual messages within conversations
+    messages: i.entity({
+      content: i.string(),
+      isRead: i.boolean().indexed(),
+      createdAt: i.date().indexed(),
+      updatedAt: i.date().optional(),
+      deletedAt: i.date().optional(),
+    }),
+
+    // Participants in a conversation
+    conversationParticipants: i.entity({
+      lastReadAt: i.date().optional(),
+      joinedAt: i.date().indexed(),
+      leftAt: i.date().optional(),
+    }),
+
+    // Events system entities
+    events: i.entity({
+      title: i.string().indexed(),
+      description: i.string().optional(),
+      location: i.string().optional(),
+      startDate: i.date().indexed(),
+      endDate: i.date().indexed().optional(),
+      isPublic: i.boolean().indexed(),
+      capacity: i.number().optional(),
+      imageURL: i.string().optional(),
+      tags: i.json().optional(),
+      createdAt: i.date().indexed(),
+      updatedAt: i.date().indexed(),
+    }),
+
+    // Event participants (attendees)
+    eventParticipants: i.entity({
+      status: i.string().indexed(), // 'going', 'maybe', 'declined', 'invited'
+      joinedAt: i.date().indexed(),
+      role: i.string().optional(), // 'organizer', 'speaker', 'attendee'
+    }),
+
+    // Notifications system entities
+    notifications: i.entity({
+      type: i.string().indexed(), // 'group_invite', 'event_invite', 'message', 'follow', 'mention', etc.
+      title: i.string(),
+      message: i.string(),
+      isRead: i.boolean().indexed(),
+      createdAt: i.date().indexed(),
+      // References to related entities (stored as entity IDs)
+      relatedEntityType: i.string().optional(), // 'group', 'event', 'user', 'message', etc.
+      relatedEntityId: i.string().optional(),
+      actionUrl: i.string().optional(), // URL to navigate when clicked
+    }),
+
+    // Todo system entities
+    todos: i.entity({
+      title: i.string().indexed(),
+      description: i.string().optional(),
+      status: i.string().indexed(), // 'todo', 'in_progress', 'completed', 'cancelled'
+      priority: i.string().indexed(), // 'low', 'medium', 'high', 'urgent'
+      dueDate: i.date().indexed().optional(),
+      completedAt: i.date().optional(),
+      tags: i.json().optional(),
+      createdAt: i.date().indexed(),
+      updatedAt: i.date().indexed(),
+    }),
+
+    // Todo assignments (many-to-many: todos and users)
+    todoAssignments: i.entity({
+      assignedAt: i.date().indexed(),
+      role: i.string().optional(), // 'owner', 'collaborator', 'reviewer'
+    }),
   },
   {
     // 1. Link between users and profiles (one-to-one)
@@ -273,6 +350,203 @@ const graph = i.graph(
         on: '$users',
         has: 'many',
         label: 'followers',
+      },
+    },
+
+    // 10. Conversation participants (many-to-many: users and conversations)
+    conversationParticipantUsers: {
+      forward: {
+        on: 'conversationParticipants',
+        has: 'one',
+        label: 'user',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'conversationParticipants',
+      },
+    },
+
+    // 11. Conversation participants to conversations
+    conversationParticipantConversations: {
+      forward: {
+        on: 'conversationParticipants',
+        has: 'one',
+        label: 'conversation',
+      },
+      reverse: {
+        on: 'conversations',
+        has: 'many',
+        label: 'participants',
+      },
+    },
+
+    // 12. Messages to conversations (many-to-one)
+    messageConversations: {
+      forward: {
+        on: 'messages',
+        has: 'one',
+        label: 'conversation',
+      },
+      reverse: {
+        on: 'conversations',
+        has: 'many',
+        label: 'messages',
+      },
+    },
+
+    // 13. Messages to sender profile (many-to-one)
+    // Changed from $users to profiles so sender data is properly returned
+    messageSenders: {
+      forward: {
+        on: 'messages',
+        has: 'one',
+        label: 'sender',
+      },
+      reverse: {
+        on: 'profiles',
+        has: 'many',
+        label: 'sentMessages',
+      },
+    },
+
+    // 14. Events to organizer (many-to-one)
+    eventOrganizers: {
+      forward: {
+        on: 'events',
+        has: 'one',
+        label: 'organizer',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'organizedEvents',
+      },
+    },
+
+    // 15. Event participants to users (many-to-one)
+    eventParticipantUsers: {
+      forward: {
+        on: 'eventParticipants',
+        has: 'one',
+        label: 'user',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'eventParticipations',
+      },
+    },
+
+    // 16. Event participants to events (many-to-one)
+    eventParticipantEvents: {
+      forward: {
+        on: 'eventParticipants',
+        has: 'one',
+        label: 'event',
+      },
+      reverse: {
+        on: 'events',
+        has: 'many',
+        label: 'participants',
+      },
+    },
+
+    // 17. Events to groups (optional - for group events)
+    eventGroups: {
+      forward: {
+        on: 'events',
+        has: 'one',
+        label: 'group',
+      },
+      reverse: {
+        on: 'groups',
+        has: 'many',
+        label: 'events',
+      },
+    },
+
+    // 18. Notifications to recipient user (many-to-one)
+    notificationRecipients: {
+      forward: {
+        on: 'notifications',
+        has: 'one',
+        label: 'recipient',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'notifications',
+      },
+    },
+
+    // 19. Notifications to sender user (many-to-one, optional)
+    notificationSenders: {
+      forward: {
+        on: 'notifications',
+        has: 'one',
+        label: 'sender',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'sentNotifications',
+      },
+    },
+
+    // 20. Todos to creator (many-to-one)
+    todoCreators: {
+      forward: {
+        on: 'todos',
+        has: 'one',
+        label: 'creator',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'createdTodos',
+      },
+    },
+
+    // 21. Todo assignments to users (many-to-one)
+    todoAssignmentUsers: {
+      forward: {
+        on: 'todoAssignments',
+        has: 'one',
+        label: 'user',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'todoAssignments',
+      },
+    },
+
+    // 22. Todo assignments to todos (many-to-one)
+    todoAssignmentTodos: {
+      forward: {
+        on: 'todoAssignments',
+        has: 'one',
+        label: 'todo',
+      },
+      reverse: {
+        on: 'todos',
+        has: 'many',
+        label: 'assignments',
+      },
+    },
+
+    // 23. Todos to groups (optional - for group todos)
+    todoGroups: {
+      forward: {
+        on: 'todos',
+        has: 'one',
+        label: 'group',
+      },
+      reverse: {
+        on: 'groups',
+        has: 'many',
+        label: 'todos',
       },
     },
   }

@@ -45,6 +45,7 @@ const enTranslation = {
       editor: 'Editor',
       projects: 'Projects',
       calendar: 'Calendar',
+      todos: 'Todos',
       notifications: 'Notifications',
       flow: 'Flow',
       groups: 'Groups',

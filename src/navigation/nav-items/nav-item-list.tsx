@@ -70,7 +70,15 @@ export function NavItemList({
                       className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center p-0"
                       variant="default"
                     >
-                      {item.badge}
+                      {(() => {
+                        console.log('🏷️ [NavItemList] Rendering badge:', {
+                          itemId: item.id,
+                          itemLabel: item.label,
+                          badge: item.badge,
+                          navigationView: 'asButton',
+                        });
+                        return item.badge;
+                      })()}
                     </Badge>
                   )}
                 </Button>
@@ -149,10 +157,18 @@ export function NavItemList({
                   })}
                   {item.badge && (
                     <Badge
-                      className="absolute -right-1 -top-0 flex h-5 w-5 items-center justify-center p-0"
+                      className="absolute right-4 top-2 flex h-5 w-5 items-center justify-center p-0"
                       variant="default"
                     >
-                      {item.badge}
+                      {(() => {
+                        console.log('🏷️ [NavItemList] Rendering badge (grid):', {
+                          itemId: item.id,
+                          itemLabel: item.label,
+                          badge: item.badge,
+                          navigationView: 'asButton-grid',
+                        });
+                        return item.badge;
+                      })()}
                     </Badge>
                   )}
                 </Button>

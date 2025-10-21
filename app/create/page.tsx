@@ -25,12 +25,12 @@ import {
   type CarouselApi,
 } from '@/components/ui/carousel';
 import { useState, useEffect } from 'react';
-import { Users, FileText, BookOpen, Scale, List, Layers } from 'lucide-react';
+import { Users, FileText, BookOpen, Scale, List, Layers, CheckSquare } from 'lucide-react';
 import { db, tx, id } from '@/../../db.ts';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { toast } from 'sonner';
 
-type ItemType = 'groups' | 'statements' | 'blogs' | 'amendments' | null;
+type ItemType = 'groups' | 'statements' | 'blogs' | 'amendments' | 'todos' | null;
 
 export default function CreatePage() {
   const [isCarouselMode, setIsCarouselMode] = useState(false);
@@ -104,7 +104,7 @@ export default function CreatePage() {
           onValueChange={v => setSelectedItemType(v as ItemType)}
           className="w-full"
         >
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="groups" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Groups
@@ -120,6 +120,10 @@ export default function CreatePage() {
             <TabsTrigger value="amendments" className="flex items-center gap-2">
               <Scale className="h-4 w-4" />
               Amendments
+            </TabsTrigger>
+            <TabsTrigger value="todos" className="flex items-center gap-2">
+              <CheckSquare className="h-4 w-4" />
+              Todos
             </TabsTrigger>
           </TabsList>
 
@@ -137,6 +141,10 @@ export default function CreatePage() {
 
           <TabsContent value="amendments">
             <CreateAmendmentForm isCarouselMode={false} />
+          </TabsContent>
+
+          <TabsContent value="todos">
+            <CreateTodoForm isCarouselMode={false} />
           </TabsContent>
         </Tabs>
       </PageWrapper>
@@ -168,6 +176,8 @@ function GuidedCreateFlow() {
       return <GuidedBlogFlow {...commonProps} />;
     case 'amendments':
       return <GuidedAmendmentFlow {...commonProps} />;
+    case 'todos':
+      return <GuidedTodoFlow {...commonProps} />;
     default:
       return null;
   }
@@ -199,6 +209,12 @@ function ItemTypeSelector({ onSelect }: { onSelect: (type: ItemType) => void }) 
       icon: Scale,
       title: 'Amendment',
       description: 'Propose changes or new policies for consideration',
+    },
+    {
+      type: 'todos' as ItemType,
+      icon: CheckSquare,
+      title: 'Todo',
+      description: 'Create a task to track your work and progress',
     },
   ];
 
@@ -867,6 +883,734 @@ function GuidedAmendmentFlow({
           {current === count - 1 && (
             <Button onClick={handleSubmit} disabled={isSubmitting || !data.title.trim()}>
               {isSubmitting ? 'Creating...' : 'Create Amendment'}
+            </Button>
+          )}
+        </div>
+      </CardFooter>
+    </Card>
+  );
+}
+
+// ====== TODO FORMS ======
+function CreateTodoForm({ isCarouselMode }: { isCarouselMode: boolean }) {
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    status: 'pending' as 'pending' | 'in_progress' | 'completed' | 'cancelled',
+    priority: 'medium' as 'low' | 'medium' | 'high' | 'urgent',
+    dueDate: '',
+    tags: [] as string[],
+  });
+  const [tagInput, setTagInput] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const user = useAuthStore(state => state.user);
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      if (!user?.id) {
+        toast.error('You must be logged in to create a todo');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const todoId = id();
+      const assignmentId = id();
+      const now = Date.now();
+
+      await db.transact([
+        tx.todos[todoId].update({
+          title: formData.title,
+          description: formData.description || '',
+          status: formData.status,
+          priority: formData.priority,
+          dueDate: formData.dueDate ? new Date(formData.dueDate).getTime() : null,
+          completedAt: null,
+          tags: formData.tags.length > 0 ? formData.tags : null,
+          createdAt: now,
+          updatedAt: now,
+        }),
+        tx.todos[todoId].link({ creator: user.id }),
+        tx.todoAssignments[assignmentId].update({
+          assignedAt: now,
+          role: 'assignee',
+        }),
+        tx.todoAssignments[assignmentId].link({ todo: todoId, user: user.id }),
+      ]);
+
+      toast.success('Todo created successfully!');
+      setTimeout(() => {
+        window.location.href = '/todos';
+      }, 500);
+    } catch (error) {
+      console.error('Failed to create todo:', error);
+      toast.error('Failed to create todo. Please try again.');
+      setIsSubmitting(false);
+    }
+  };
+
+  const addTag = () => {
+    if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
+      setFormData({ ...formData, tags: [...formData.tags, tagInput.trim()] });
+      setTagInput('');
+    }
+  };
+
+  const removeTag = (tag: string) => {
+    setFormData({ ...formData, tags: formData.tags.filter(t => t !== tag) });
+  };
+
+  if (isCarouselMode) {
+    return (
+      <CarouselTodoForm
+        formData={formData}
+        setFormData={setFormData}
+        onSubmit={handleSubmit}
+        isSubmitting={isSubmitting}
+        tagInput={tagInput}
+        setTagInput={setTagInput}
+        addTag={addTag}
+        removeTag={removeTag}
+      />
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Create a New Todo</CardTitle>
+        <CardDescription>Create a task to track your work and progress</CardDescription>
+      </CardHeader>
+      <form onSubmit={handleSubmit}>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="todo-title">Title</Label>
+            <Input
+              id="todo-title"
+              placeholder="Enter todo title"
+              value={formData.title}
+              onChange={e => setFormData({ ...formData, title: e.target.value })}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="todo-description">Description</Label>
+            <Textarea
+              id="todo-description"
+              placeholder="Describe the task (optional)"
+              value={formData.description}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
+              rows={3}
+            />
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="todo-status">Status</Label>
+              <select
+                id="todo-status"
+                value={formData.status}
+                onChange={e =>
+                  setFormData({
+                    ...formData,
+                    status: e.target.value as typeof formData.status,
+                  })
+                }
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                required
+              >
+                <option value="pending">Pending</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="todo-priority">Priority</Label>
+              <select
+                id="todo-priority"
+                value={formData.priority}
+                onChange={e =>
+                  setFormData({
+                    ...formData,
+                    priority: e.target.value as typeof formData.priority,
+                  })
+                }
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                required
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="todo-dueDate">Due Date (Optional)</Label>
+            <Input
+              id="todo-dueDate"
+              type="date"
+              value={formData.dueDate}
+              onChange={e => setFormData({ ...formData, dueDate: e.target.value })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="todo-tags">Tags</Label>
+            <div className="flex gap-2">
+              <Input
+                id="todo-tags"
+                placeholder="Add a tag and press Enter"
+                value={tagInput}
+                onChange={e => setTagInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addTag();
+                  }
+                }}
+              />
+              <Button type="button" variant="secondary" onClick={addTag}>
+                Add
+              </Button>
+            </div>
+            {formData.tags.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {formData.tags.map(tag => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1 text-sm"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => removeTag(tag)}
+                      className="hover:text-destructive"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? 'Creating...' : 'Create Todo'}
+          </Button>
+        </CardFooter>
+      </form>
+    </Card>
+  );
+}
+
+function CarouselTodoForm({
+  formData,
+  setFormData,
+  onSubmit,
+  isSubmitting,
+  tagInput,
+  setTagInput,
+  addTag,
+  removeTag,
+}: {
+  formData: {
+    title: string;
+    description: string;
+    status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+    priority: 'low' | 'medium' | 'high' | 'urgent';
+    dueDate: string;
+    tags: string[];
+  };
+  setFormData: (data: any) => void;
+  onSubmit: () => void;
+  isSubmitting: boolean;
+  tagInput: string;
+  setTagInput: (value: string) => void;
+  addTag: () => void;
+  removeTag: (tag: string) => void;
+}) {
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!api) return;
+    setCount(api.scrollSnapList().length);
+    setCurrent(api.selectedScrollSnap());
+    api.on('select', () => setCurrent(api.selectedScrollSnap()));
+  }, [api]);
+
+  const canProceed = () => {
+    if (current === 0) return formData.title.trim() !== '';
+    return true;
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Create a New Todo</CardTitle>
+        <CardDescription>
+          Step {current + 1} of {count}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Carousel setApi={setApi} className="w-full">
+          <CarouselContent>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="carousel-todo-title" className="text-lg">
+                    What needs to be done?
+                  </Label>
+                  <Input
+                    id="carousel-todo-title"
+                    placeholder="Enter todo title"
+                    value={formData.title}
+                    onChange={e => setFormData({ ...formData, title: e.target.value })}
+                    className="text-lg"
+                    autoFocus
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Be specific about the task you want to accomplish
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="carousel-todo-description" className="text-lg">
+                    Add more details (Optional)
+                  </Label>
+                  <Textarea
+                    id="carousel-todo-description"
+                    placeholder="Describe the task in more detail"
+                    value={formData.description}
+                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                    rows={6}
+                    className="text-base"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Optional: Add any additional context or requirements
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-4">
+                  <Label className="text-lg">Set Priority and Status</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="carousel-todo-priority">Priority</Label>
+                    <select
+                      id="carousel-todo-priority"
+                      value={formData.priority}
+                      onChange={e =>
+                        setFormData({
+                          ...formData,
+                          priority: e.target.value as typeof formData.priority,
+                        })
+                      }
+                      className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                      <option value="urgent">Urgent</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="carousel-todo-status">Status</Label>
+                    <select
+                      id="carousel-todo-status"
+                      value={formData.status}
+                      onChange={e =>
+                        setFormData({
+                          ...formData,
+                          status: e.target.value as typeof formData.status,
+                        })
+                      }
+                      className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </CarouselItem>
+
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="carousel-todo-dueDate" className="text-lg">
+                    When is this due? (Optional)
+                  </Label>
+                  <Input
+                    id="carousel-todo-dueDate"
+                    type="date"
+                    value={formData.dueDate}
+                    onChange={e => setFormData({ ...formData, dueDate: e.target.value })}
+                    className="text-lg"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Optional: Set a due date to keep yourself on track
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label className="text-lg">Add Tags (Optional)</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Add a tag and press Enter"
+                      value={tagInput}
+                      onChange={e => setTagInput(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addTag();
+                        }
+                      }}
+                    />
+                    <Button type="button" variant="secondary" onClick={addTag}>
+                      Add
+                    </Button>
+                  </div>
+                  {formData.tags.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {formData.tags.map(tag => (
+                        <span
+                          key={tag}
+                          className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1 text-sm"
+                        >
+                          {tag}
+                          <button
+                            type="button"
+                            onClick={() => removeTag(tag)}
+                            className="hover:text-destructive"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-sm text-muted-foreground">
+                    Optional: Organize your todos with tags
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+          </CarouselContent>
+          <div className="absolute -left-12 right-12 top-1/2 flex -translate-y-1/2 justify-between">
+            <CarouselPrevious />
+            <CarouselNext disabled={!canProceed()} />
+          </div>
+        </Carousel>
+      </CardContent>
+      <CardFooter className="flex justify-between">
+        <div className="flex gap-1">
+          {Array.from({ length: count }).map((_, index) => (
+            <div
+              key={index}
+              className={`h-2 w-2 rounded-full ${index === current ? 'bg-primary' : 'bg-muted'}`}
+            />
+          ))}
+        </div>
+        {current === count - 1 && (
+          <Button onClick={onSubmit} disabled={isSubmitting || !formData.title.trim()}>
+            {isSubmitting ? 'Creating...' : 'Create Todo'}
+          </Button>
+        )}
+      </CardFooter>
+    </Card>
+  );
+}
+
+function GuidedTodoFlow({
+  formData,
+  setFormData,
+  onBack,
+}: {
+  formData: any;
+  setFormData: (data: any) => void;
+  onBack: () => void;
+}) {
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
+  const [count, setCount] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tagInput, setTagInput] = useState('');
+  const user = useAuthStore(state => state.user);
+
+  const data = {
+    title: formData.title || '',
+    description: formData.description || '',
+    status: formData.status || ('pending' as 'pending' | 'in_progress' | 'completed' | 'cancelled'),
+    priority: formData.priority || ('medium' as 'low' | 'medium' | 'high' | 'urgent'),
+    dueDate: formData.dueDate || '',
+    tags: formData.tags || ([] as string[]),
+  };
+
+  useEffect(() => {
+    if (!api) return;
+    setCount(api.scrollSnapList().length);
+    setCurrent(api.selectedScrollSnap());
+    api.on('select', () => setCurrent(api.selectedScrollSnap()));
+  }, [api]);
+
+  const handleKeyDown = (e: React.KeyboardEvent, canProceed: boolean) => {
+    if (e.key === 'Enter' && canProceed && api && api.canScrollNext()) {
+      e.preventDefault();
+      api.scrollNext();
+    }
+  };
+
+  const addTag = () => {
+    if (tagInput.trim() && !data.tags.includes(tagInput.trim())) {
+      setFormData({ ...formData, tags: [...data.tags, tagInput.trim()] });
+      setTagInput('');
+    }
+  };
+
+  const removeTag = (tag: string) => {
+    setFormData({ ...formData, tags: data.tags.filter((t: string) => t !== tag) });
+  };
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      if (!user?.id) {
+        toast.error('You must be logged in to create a todo');
+        return;
+      }
+      const todoId = id();
+      const assignmentId = id();
+      const now = Date.now();
+
+      await db.transact([
+        tx.todos[todoId].update({
+          title: data.title,
+          description: data.description || '',
+          status: data.status,
+          priority: data.priority,
+          dueDate: data.dueDate ? new Date(data.dueDate).getTime() : null,
+          completedAt: null,
+          tags: data.tags.length > 0 ? data.tags : null,
+          createdAt: now,
+          updatedAt: now,
+        }),
+        tx.todos[todoId].link({ creator: user.id }),
+        tx.todoAssignments[assignmentId].update({
+          assignedAt: now,
+          role: 'assignee',
+        }),
+        tx.todoAssignments[assignmentId].link({ todo: todoId, user: user.id }),
+      ]);
+
+      toast.success('Todo created successfully!');
+      setTimeout(() => (window.location.href = '/todos'), 500);
+    } catch (error) {
+      console.error('Failed to create todo:', error);
+      toast.error('Failed to create todo. Please try again.');
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Create a New Todo</CardTitle>
+        <CardDescription>
+          Step {current + 1} of {count}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Carousel setApi={setApi} className="w-full">
+          <CarouselContent>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-todo-title" className="text-lg">
+                    What needs to be done?
+                  </Label>
+                  <Input
+                    id="guided-todo-title"
+                    placeholder="Enter todo title"
+                    value={data.title}
+                    onChange={e => setFormData({ ...formData, title: e.target.value })}
+                    onKeyDown={e => handleKeyDown(e, data.title.trim() !== '')}
+                    className="text-lg"
+                    autoFocus
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Press Enter to continue • Be specific about the task
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-todo-description" className="text-lg">
+                    Add more details (optional)
+                  </Label>
+                  <Textarea
+                    id="guided-todo-description"
+                    placeholder="Describe the task in more detail"
+                    value={data.description}
+                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                    onKeyDown={e => handleKeyDown(e, true)}
+                    rows={6}
+                    className="text-base"
+                  />
+                  <p className="text-sm text-muted-foreground">Press Enter to continue</p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-4">
+                  <Label className="text-lg">Set Priority and Status</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="guided-todo-priority">Priority</Label>
+                    <select
+                      id="guided-todo-priority"
+                      value={data.priority}
+                      onChange={e =>
+                        setFormData({
+                          ...formData,
+                          priority: e.target.value as typeof data.priority,
+                        })
+                      }
+                      className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                      <option value="urgent">Urgent</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="guided-todo-status">Status</Label>
+                    <select
+                      id="guided-todo-status"
+                      value={data.status}
+                      onChange={e =>
+                        setFormData({
+                          ...formData,
+                          status: e.target.value as typeof data.status,
+                        })
+                      }
+                      className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-todo-dueDate" className="text-lg">
+                    When is this due? (Optional)
+                  </Label>
+                  <Input
+                    id="guided-todo-dueDate"
+                    type="date"
+                    value={data.dueDate}
+                    onChange={e => setFormData({ ...formData, dueDate: e.target.value })}
+                    className="text-lg"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Optional: Set a due date to keep yourself on track
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label className="text-lg">Add Tags (Optional)</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Add a tag and press Enter"
+                      value={tagInput}
+                      onChange={e => setTagInput(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addTag();
+                        }
+                      }}
+                    />
+                    <Button type="button" variant="secondary" onClick={addTag}>
+                      Add
+                    </Button>
+                  </div>
+                  {data.tags.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {data.tags.map((tag: string) => (
+                        <span
+                          key={tag}
+                          className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1 text-sm"
+                        >
+                          {tag}
+                          <button
+                            type="button"
+                            onClick={() => removeTag(tag)}
+                            className="hover:text-destructive"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-sm text-muted-foreground">
+                    Optional: Organize your todos with tags
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+          </CarouselContent>
+          <div className="absolute -left-12 right-12 top-1/2 flex -translate-y-1/2 justify-between">
+            <CarouselPrevious />
+            <CarouselNext disabled={current === 0 && !data.title.trim()} />
+          </div>
+        </Carousel>
+      </CardContent>
+      <CardFooter className="flex justify-between">
+        <Button variant="outline" onClick={onBack}>
+          Change Type
+        </Button>
+        <div className="flex items-center gap-4">
+          <div className="flex gap-1">
+            {Array.from({ length: count }).map((_, i) => (
+              <div
+                key={i}
+                className={`h-2 w-2 rounded-full ${i === current ? 'bg-primary' : 'bg-muted'}`}
+              />
+            ))}
+          </div>
+          {current === count - 1 && (
+            <Button onClick={handleSubmit} disabled={isSubmitting || !data.title.trim()}>
+              {isSubmitting ? 'Creating...' : 'Create Todo'}
             </Button>
           )}
         </div>

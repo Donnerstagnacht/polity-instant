@@ -6,6 +6,7 @@ import { init, tx, id } from '@instantdb/react';
 import schema from './instant.schema';
 
 // Initialize Instant client with app ID and schema
+// Default to the configured APP_ID if environment variable is not set
 const APP_ID = process.env.NEXT_PUBLIC_INSTANT_APP_ID || '869f3247-fd73-44fe-9b5f-caa541352f89';
 
 // Create the database client

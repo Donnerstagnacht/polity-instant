@@ -3,6 +3,7 @@ import { navItemsAuthenticated } from '@/navigation/nav-items/nav-items-authenti
 import { useInitialRoute } from '@/navigation/state/useInitialRoute';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from '@/hooks/use-translation';
+import { useUnreadNotificationsCount, useUnreadMessagesCount } from '@/hooks/use-unread-counts';
 import type { NavigationItem } from '@/navigation/types/navigation.types';
 
 /**
@@ -15,6 +16,15 @@ export function useNavigation() {
   const pathname = usePathname();
   const [currentPrimaryRoute, setCurrentPrimaryRoute] = useState<string | null>(null);
   const { t } = useTranslation();
+
+  // Get unread counts for notifications and messages
+  const { count: unreadNotificationsCount } = useUnreadNotificationsCount();
+  const { count: unreadMessagesCount } = useUnreadMessagesCount();
+
+  console.log('🧭 [useNavigation] Unread counts:', {
+    notifications: unreadNotificationsCount,
+    messages: unreadMessagesCount,
+  });
 
   // Create unauthenticated navigation items with proper onClick handlers
   const unauthenticatedNavItems: NavigationItem[] = [
@@ -48,11 +58,33 @@ export function useNavigation() {
   const { primaryNavItems: basePrimaryNavItems, getSecondaryNavItems: baseGetSecondaryNavItems } =
     navItemsAuthenticated(mockRouter, setCurrentPrimaryRoute);
 
-  // Override labels with translations
-  const primaryNavItems: NavigationItem[] = basePrimaryNavItems.map(item => ({
-    ...item,
-    label: t(`navigation.primary.${item.id}`),
-  }));
+  // Override labels with translations and add dynamic badge counts
+  const primaryNavItems: NavigationItem[] = basePrimaryNavItems.map(item => {
+    let badge = item.badge;
+
+    // Update badge counts for notifications and messages
+    if (item.id === 'notifications') {
+      badge = unreadNotificationsCount > 0 ? unreadNotificationsCount : undefined;
+      console.log('🔔 [useNavigation] Setting notifications badge:', {
+        itemId: item.id,
+        count: unreadNotificationsCount,
+        badge,
+      });
+    } else if (item.id === 'messages') {
+      badge = unreadMessagesCount > 0 ? unreadMessagesCount : undefined;
+      console.log('💬 [useNavigation] Setting messages badge:', {
+        itemId: item.id,
+        count: unreadMessagesCount,
+        badge,
+      });
+    }
+
+    return {
+      ...item,
+      label: t(`navigation.primary.${item.id}`),
+      badge,
+    };
+  });
 
   const getSecondaryNavItems = (currentPrimaryRoute: string | null) => {
     const baseSecondaryItems = baseGetSecondaryNavItems(currentPrimaryRoute);

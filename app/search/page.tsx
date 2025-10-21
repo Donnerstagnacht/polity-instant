@@ -11,7 +11,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import db from '../../db';
-import { Users, FileText, BookOpen, Scale, Search as SearchIcon, Filter } from 'lucide-react';
+import {
+  Users,
+  FileText,
+  BookOpen,
+  Scale,
+  Search as SearchIcon,
+  Filter,
+  Calendar,
+  MapPin,
+} from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -21,7 +30,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 
-type SearchType = 'all' | 'users' | 'groups' | 'statements' | 'blogs' | 'amendments';
+type SearchType = 'all' | 'users' | 'groups' | 'statements' | 'blogs' | 'amendments' | 'events';
 
 function SearchContent() {
   const router = useRouter();
@@ -56,6 +65,13 @@ function SearchContent() {
     },
     amendments: {
       user: {},
+    },
+    events: {
+      organizer: {
+        profile: {},
+      },
+      group: {},
+      participants: {},
     },
   });
 
@@ -135,6 +151,15 @@ function SearchContent() {
       return true;
     }) || [];
 
+  const filteredEvents =
+    data?.events?.filter((event: any) => {
+      if (!filterByQuery(event.title || '')) return false;
+      if (event.description && !filterByQuery(event.description)) return false;
+      if (event.location && !filterByQuery(event.location)) return false;
+      if (publicOnly && !event.isPublic) return false;
+      return true;
+    }) || [];
+
   // Sort results
   const sortResults = (items: any[]) => {
     if (sortBy === 'date') {
@@ -160,6 +185,7 @@ function SearchContent() {
     statements: sortResults(filteredStatements),
     blogs: sortResults(filteredBlogs),
     amendments: sortResults(filteredAmendments),
+    events: sortResults(filteredEvents),
   };
 
   const totalResults =
@@ -167,7 +193,8 @@ function SearchContent() {
     allResults.groups.length +
     allResults.statements.length +
     allResults.blogs.length +
-    allResults.amendments.length;
+    allResults.amendments.length +
+    allResults.events.length;
 
   // Create unified mosaic of all results with type information
   const mosaicResults = [
@@ -176,6 +203,7 @@ function SearchContent() {
     ...allResults.statements.map((item: any) => ({ ...item, _type: 'statement' as const })),
     ...allResults.blogs.map((item: any) => ({ ...item, _type: 'blog' as const })),
     ...allResults.amendments.map((item: any) => ({ ...item, _type: 'amendment' as const })),
+    ...allResults.events.map((item: any) => ({ ...item, _type: 'event' as const })),
   ];
 
   return (
@@ -250,7 +278,7 @@ function SearchContent() {
 
       {/* Tabs for different search types */}
       <Tabs value={searchType} onValueChange={value => handleTypeChange(value as SearchType)}>
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="all">All ({totalResults})</TabsTrigger>
           <TabsTrigger value="users">
             <Users className="mr-2 h-4 w-4" />
@@ -259,6 +287,10 @@ function SearchContent() {
           <TabsTrigger value="groups">
             <Users className="mr-2 h-4 w-4" />
             Groups ({allResults.groups.length})
+          </TabsTrigger>
+          <TabsTrigger value="events">
+            <Calendar className="mr-2 h-4 w-4" />
+            Events ({allResults.events.length})
           </TabsTrigger>
           <TabsTrigger value="statements">
             <FileText className="mr-2 h-4 w-4" />
@@ -316,6 +348,21 @@ function SearchContent() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {allResults.groups.map((group: any) => (
                 <GroupCard key={group.id} group={group} />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Events Tab */}
+        <TabsContent value="events">
+          {isLoading ? (
+            <div className="py-8 text-center">Loading...</div>
+          ) : allResults.events.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground">No events found.</div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {allResults.events.map((event: any) => (
+                <EventCard key={event.id} event={event} />
               ))}
             </div>
           )}
@@ -384,6 +431,7 @@ function UnifiedResultCard({ item }: { item: any }) {
       statement: { label: 'Statement', icon: FileText, variant: 'outline' },
       blog: { label: 'Blog', icon: BookOpen, variant: 'default' },
       amendment: { label: 'Amendment', icon: Scale, variant: 'secondary' },
+      event: { label: 'Event', icon: Calendar, variant: 'default' },
     };
     return badges[item._type] || badges.user;
   };
@@ -405,11 +453,23 @@ function UnifiedResultCard({ item }: { item: any }) {
       case 'amendment':
         router.push(`/amendment/${item.id}`);
         break;
+      case 'event':
+        router.push(`/event/${item.id}`);
+        break;
     }
   };
 
   const typeBadge = getTypeBadge();
   const TypeIcon = typeBadge.icon;
+
+  // Format date for events
+  const formatEventDate = (date: string | number) => {
+    return new Date(date).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
 
   // Render based on type
   switch (item._type) {
@@ -532,6 +592,34 @@ function UnifiedResultCard({ item }: { item: any }) {
         </Card>
       );
     }
+
+    case 'event':
+      return (
+        <Card className="cursor-pointer transition-colors hover:bg-accent" onClick={handleClick}>
+          <CardHeader>
+            <div className="mb-2 flex items-center justify-between">
+              <Badge variant={typeBadge.variant} className="text-xs">
+                <TypeIcon className="mr-1 h-3 w-3" />
+                {typeBadge.label}
+              </Badge>
+              {item.isPublic && (
+                <Badge variant="outline" className="text-xs">
+                  Public
+                </Badge>
+              )}
+            </div>
+            <CardTitle className="text-lg">{item.title}</CardTitle>
+            <CardDescription>{formatEventDate(item.startDate)}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {item.location && <p className="mb-2 text-sm text-muted-foreground">{item.location}</p>}
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Users className="h-4 w-4" />
+              <span>{item.participants?.length || 0} participants</span>
+            </div>
+          </CardContent>
+        </Card>
+      );
 
     default:
       return null;
@@ -684,6 +772,71 @@ function AmendmentCard({ amendment }: { amendment: any }) {
           <span>{amendment.date}</span>
           <span>{amendment.supporters || 0} supporters</span>
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function EventCard({ event }: { event: any }) {
+  const router = useRouter();
+
+  const formatEventDate = (date: string | number) => {
+    return new Date(date).toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
+
+  const formatEventTime = (date: string | number) => {
+    return new Date(date).toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  };
+
+  return (
+    <Card
+      className="cursor-pointer transition-colors hover:bg-accent"
+      onClick={() => router.push(`/event/${event.id}`)}
+    >
+      {event.imageURL && (
+        <div className="aspect-video w-full overflow-hidden">
+          <img src={event.imageURL} alt={event.title} className="h-full w-full object-cover" />
+        </div>
+      )}
+      <CardHeader>
+        <div className="mb-2 flex items-center justify-between">
+          <Badge variant="default" className="text-xs">
+            <Calendar className="mr-1 h-3 w-3" />
+            Event
+          </Badge>
+          {event.isPublic && (
+            <Badge variant="outline" className="text-xs">
+              Public
+            </Badge>
+          )}
+        </div>
+        <CardTitle className="text-lg">{event.title}</CardTitle>
+        <CardDescription>
+          {formatEventDate(event.startDate)} at {formatEventTime(event.startDate)}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {event.location && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <MapPin className="h-4 w-4" />
+            <span className="truncate">{event.location}</span>
+          </div>
+        )}
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Users className="h-4 w-4" />
+          <span>{event.participants?.length || 0} participants</span>
+        </div>
+        {event.group && (
+          <p className="text-xs text-muted-foreground">Organized by {event.group.name}</p>
+        )}
       </CardContent>
     </Card>
   );

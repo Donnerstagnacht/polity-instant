@@ -64,7 +64,6 @@ export const navItemsAuthenticated = (
       id: 'messages',
       label: 'Messages',
       icon: 'MessageSquare',
-      badge: 5,
       href: '/messages',
       onClick: () => {
         router.push('/messages');
@@ -132,10 +131,19 @@ export const navItemsAuthenticated = (
       },
     },
     {
+      id: 'todos',
+      label: 'Todos',
+      icon: 'CheckSquare',
+      href: '/todos',
+      onClick: () => {
+        router.push('/todos');
+        if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('todos');
+      },
+    },
+    {
       id: 'notifications',
       label: 'Notifications',
       icon: 'Bell',
-      badge: 2,
       href: '/notifications',
       onClick: () => {
         router.push('/notifications');
