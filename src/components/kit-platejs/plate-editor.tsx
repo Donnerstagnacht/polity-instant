@@ -6,16 +6,70 @@ import { EditorKit } from '@/components/kit-platejs/editor-kit.tsx';
 import { SettingsDialog } from '@/components/kit-platejs/settings-dialog.tsx';
 import { Editor, EditorContainer } from '@/components/ui-platejs/editor.tsx';
 
-export function PlateEditor() {
+interface PlateEditorProps {
+  initialValue?: any[];
+  onChange?: (value: any[]) => void;
+  cursors?: {
+    id: string;
+    name: string;
+    color: string;
+    position: any;
+  }[];
+}
+
+export function PlateEditor({ initialValue, onChange, cursors = [] }: PlateEditorProps) {
+  const editorKey = React.useRef(0);
+  const onChangeRef = React.useRef(onChange);
+
+  // Update the ref when onChange changes, but don't cause re-render
+  React.useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
   const editor = usePlateEditor({
     plugins: EditorKit,
-    value,
+    value: initialValue || value,
   });
 
+  // Handle changes from the editor using ref to avoid recreating function
+  const handleEditorChange = React.useCallback(({ value: newValue }: { value: any }) => {
+    if (onChangeRef.current) {
+      onChangeRef.current(newValue);
+    }
+  }, []);
+
+  // Force re-mount when initialValue changes (switching documents)
+  React.useEffect(() => {
+    editorKey.current += 1;
+  }, [initialValue]);
+
   return (
-    <Plate editor={editor}>
+    <Plate key={editorKey.current} editor={editor} onChange={handleEditorChange}>
       <EditorContainer>
         <Editor variant="demo" />
+
+        {/* Render other users' cursors */}
+        {cursors.map(cursor => (
+          <div
+            key={cursor.id}
+            className="pointer-events-none absolute z-50"
+            style={
+              {
+                // Position would be calculated based on cursor.position
+                // This is a simplified version - full implementation would need
+                // to convert Slate position to DOM position
+              }
+            }
+          >
+            <div className="h-5 w-0.5 animate-pulse" style={{ backgroundColor: cursor.color }} />
+            <div
+              className="mt-1 whitespace-nowrap rounded px-2 py-0.5 text-xs text-white"
+              style={{ backgroundColor: cursor.color }}
+            >
+              {cursor.name}
+            </div>
+          </div>
+        ))}
       </EditorContainer>
 
       <SettingsDialog />

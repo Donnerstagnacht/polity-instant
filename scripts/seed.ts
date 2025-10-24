@@ -1443,6 +1443,185 @@ async function seedPositions(groupIds: string[]) {
   return positionIds;
 }
 
+async function seedDocuments(userIds: string[]) {
+  console.log('Seeding documents...');
+  const transactions = [];
+  let totalDocuments = 0;
+  let totalCollaborators = 0;
+
+  const mainUserId = SEED_CONFIG.mainTestUserId;
+
+  // Sample document contents
+  const documentContents = [
+    [
+      { type: 'h1', children: [{ text: 'Project Proposal: Community Garden Initiative' }] },
+      {
+        type: 'p',
+        children: [
+          {
+            text: 'This proposal outlines our plan to create a community garden in the downtown area.',
+          },
+        ],
+      },
+      { type: 'h2', children: [{ text: 'Objectives' }] },
+      { type: 'p', children: [{ text: '1. Provide fresh produce to local residents' }] },
+      { type: 'p', children: [{ text: '2. Create a community gathering space' }] },
+      { type: 'p', children: [{ text: '3. Promote sustainable agriculture practices' }] },
+    ],
+    [
+      { type: 'h1', children: [{ text: 'Meeting Notes - March 2024' }] },
+      { type: 'p', children: [{ text: 'Attendees: Team leads from all departments' }] },
+      { type: 'h2', children: [{ text: 'Key Discussion Points' }] },
+      { type: 'p', children: [{ text: '• Q1 goals achieved ahead of schedule' }] },
+      { type: 'p', children: [{ text: '• New hiring initiative approved' }] },
+      { type: 'p', children: [{ text: '• Budget reallocation for tech infrastructure' }] },
+    ],
+    [
+      { type: 'h1', children: [{ text: 'Policy Draft: Remote Work Guidelines' }] },
+      {
+        type: 'p',
+        children: [
+          { text: 'Draft guidelines for remote work arrangements within our organization.' },
+        ],
+      },
+      { type: 'h2', children: [{ text: 'Eligibility' }] },
+      {
+        type: 'p',
+        children: [
+          { text: 'All full-time employees with 6+ months tenure are eligible for remote work.' },
+        ],
+      },
+      { type: 'h2', children: [{ text: 'Requirements' }] },
+      { type: 'p', children: [{ text: '1. Stable internet connection (minimum 50 Mbps)' }] },
+      { type: 'p', children: [{ text: '2. Dedicated workspace at home' }] },
+      { type: 'p', children: [{ text: '3. Availability during core hours (10 AM - 3 PM)' }] },
+    ],
+    [
+      { type: 'h1', children: [{ text: 'Event Planning: Annual Fundraiser' }] },
+      { type: 'p', children: [{ text: 'Planning document for our annual fundraising gala.' }] },
+      { type: 'h2', children: [{ text: 'Date & Venue' }] },
+      { type: 'p', children: [{ text: 'Date: October 15, 2024' }] },
+      { type: 'p', children: [{ text: 'Venue: Grand Hall, Downtown Convention Center' }] },
+      { type: 'h2', children: [{ text: 'Budget Estimate' }] },
+      { type: 'p', children: [{ text: 'Venue rental: $5,000' }] },
+      { type: 'p', children: [{ text: 'Catering: $8,000' }] },
+      { type: 'p', children: [{ text: 'Entertainment: $3,000' }] },
+    ],
+  ];
+
+  const documentTitles = [
+    'Community Garden Initiative',
+    'Team Meeting Notes',
+    'Remote Work Policy',
+    'Annual Fundraiser Planning',
+  ];
+
+  const documentTags = [
+    ['proposal', 'community', 'environment'],
+    ['meeting', 'notes', 'team'],
+    ['policy', 'hr', 'remote-work'],
+    ['event', 'fundraiser', 'planning'],
+  ];
+
+  // Create 2 documents for main user
+  for (let i = 0; i < 2; i++) {
+    const docId = id();
+    totalDocuments++;
+
+    transactions.push(
+      tx.documents[docId]
+        .update({
+          title: documentTitles[i],
+          content: documentContents[i],
+          createdAt: faker.date.past({ years: 0.5 }),
+          updatedAt: faker.date.recent({ days: 7 }),
+          isPublic: i === 0, // First document is public
+          tags: documentTags[i],
+        })
+        .link({ owner: mainUserId })
+    );
+
+    // Add some collaborators to the first document
+    if (i === 0) {
+      const collaboratorCount = randomInt(2, 4);
+      const collaborators = randomItems(
+        userIds.filter(uid => uid !== mainUserId),
+        collaboratorCount
+      );
+
+      for (const collaboratorId of collaborators) {
+        const collabId = id();
+        totalCollaborators++;
+
+        transactions.push(
+          tx.documentCollaborators[collabId]
+            .update({
+              canEdit: faker.datatype.boolean(0.7), // 70% can edit, 30% view-only
+              addedAt: faker.date.past({ years: 0.3 }),
+            })
+            .link({ document: docId, user: collaboratorId })
+        );
+      }
+    }
+  }
+
+  // Create documents for other users
+  for (let i = 2; i < 10; i++) {
+    const docId = id();
+    const ownerId = randomItem(userIds);
+    const contentIndex = i % documentContents.length;
+    totalDocuments++;
+
+    transactions.push(
+      tx.documents[docId]
+        .update({
+          title: documentTitles[contentIndex] + ` (${faker.word.adjective()})`,
+          content: documentContents[contentIndex],
+          createdAt: faker.date.past({ years: 1 }),
+          updatedAt: faker.date.recent({ days: 30 }),
+          isPublic: faker.datatype.boolean(0.3), // 30% public
+          tags: documentTags[contentIndex],
+        })
+        .link({ owner: ownerId })
+    );
+
+    // Add collaborators to some documents
+    if (faker.datatype.boolean(0.5)) {
+      const collaboratorCount = randomInt(1, 3);
+      const collaborators = randomItems(
+        userIds.filter(uid => uid !== ownerId),
+        collaboratorCount
+      );
+
+      for (const collaboratorId of collaborators) {
+        const collabId = id();
+        totalCollaborators++;
+
+        transactions.push(
+          tx.documentCollaborators[collabId]
+            .update({
+              canEdit: faker.datatype.boolean(0.6),
+              addedAt: faker.date.past({ years: 0.5 }),
+            })
+            .link({ document: docId, user: collaboratorId })
+        );
+      }
+    }
+  }
+
+  // Execute in batches
+  console.log(`  Creating ${transactions.length} document-related records...`);
+  const batchSize = 50;
+  for (let i = 0; i < transactions.length; i += batchSize) {
+    const batch = transactions.slice(i, i + batchSize);
+    await db.transact(batch);
+  }
+
+  console.log(
+    `✓ Created ${totalDocuments} documents with ${totalCollaborators} collaborators (main user: 2 documents)`
+  );
+}
+
 // Delete all data except $users
 async function cleanDatabase() {
   console.log('🗑️  Cleaning existing data (keeping $users)...\n');
@@ -1478,6 +1657,9 @@ async function cleanDatabase() {
       changeRequestVotes: {},
       amendmentVoteEntries: {},
       positions: {},
+      documents: {},
+      documentCollaborators: {},
+      documentCursors: {},
     };
 
     const data = await db.query(query);
@@ -1513,6 +1695,9 @@ async function cleanDatabase() {
       'changeRequestVotes',
       'amendmentVoteEntries',
       'positions',
+      'documentCursors',
+      'documentCollaborators',
+      'documents',
     ];
 
     for (const entityType of entitiesToDelete) {
@@ -1565,6 +1750,7 @@ async function seed() {
     await seedAgendaAndVoting(userIds, eventIds, positionIds); // Pass positionIds
     await seedNotifications(userIds);
     await seedTodos(userIds, groupIds);
+    await seedDocuments(userIds); // New: seed documents
 
     console.log('\n✅ Database seeded successfully!\n');
     console.log('Summary:');
@@ -1578,7 +1764,8 @@ async function seed() {
     console.log(`  - Events and participants`);
     console.log(`  - Agenda items with elections and voting system (linked to positions)`);
     console.log(`  - Notifications (main user: 10 total, 6 unread)`);
-    console.log(`  - Todos and assignments (main user: 5 todos)\n`);
+    console.log(`  - Todos and assignments (main user: 5 todos)`);
+    console.log(`  - Documents with collaborators (main user: 2 documents)\n`);
     console.log('Main test user details:');
     console.log(`  - ID: ${SEED_CONFIG.mainTestUserId}`);
     console.log(`  - Email: test@polity.app`);

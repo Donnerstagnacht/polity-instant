@@ -301,6 +301,30 @@ const graph = i.graph(
       createdAt: i.date().indexed(),
       updatedAt: i.date().indexed(),
     }),
+
+    // Documents - rich text documents with real-time collaboration
+    documents: i.entity({
+      title: i.string().indexed(),
+      content: i.json(), // Plate.js editor content (Slate value)
+      createdAt: i.date().indexed(),
+      updatedAt: i.date().indexed(),
+      isPublic: i.boolean().optional(),
+      tags: i.json().optional(), // Array of tag strings
+    }),
+
+    // Document collaborators - users with edit access to documents
+    documentCollaborators: i.entity({
+      canEdit: i.boolean(),
+      addedAt: i.date().indexed(),
+    }),
+
+    // Document cursors - real-time cursor positions for collaborative editing
+    documentCursors: i.entity({
+      position: i.json(), // Slate selection/cursor position
+      color: i.string(), // User's cursor color
+      name: i.string(), // User's display name
+      updatedAt: i.date().indexed(),
+    }),
   },
   {
     // 1. Link between users and profiles (one-to-one)
@@ -934,6 +958,76 @@ const graph = i.graph(
         on: 'positions',
         has: 'many',
         label: 'elections',
+      },
+    },
+
+    // 44. Documents to owners (many-to-one)
+    documentOwners: {
+      forward: {
+        on: 'documents',
+        has: 'one',
+        label: 'owner',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'ownedDocuments',
+      },
+    },
+
+    // 45. Document collaborators to documents (many-to-one)
+    documentCollaboratorDocuments: {
+      forward: {
+        on: 'documentCollaborators',
+        has: 'one',
+        label: 'document',
+      },
+      reverse: {
+        on: 'documents',
+        has: 'many',
+        label: 'collaborators',
+      },
+    },
+
+    // 46. Document collaborators to users (many-to-one)
+    documentCollaboratorUsers: {
+      forward: {
+        on: 'documentCollaborators',
+        has: 'one',
+        label: 'user',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'collaboratingDocuments',
+      },
+    },
+
+    // 47. Document cursors to documents (many-to-one)
+    documentCursorDocuments: {
+      forward: {
+        on: 'documentCursors',
+        has: 'one',
+        label: 'document',
+      },
+      reverse: {
+        on: 'documents',
+        has: 'many',
+        label: 'cursors',
+      },
+    },
+
+    // 48. Document cursors to users (many-to-one)
+    documentCursorUsers: {
+      forward: {
+        on: 'documentCursors',
+        has: 'one',
+        label: 'user',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'documentCursors',
       },
     },
   }
