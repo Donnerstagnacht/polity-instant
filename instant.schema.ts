@@ -283,6 +283,14 @@ const graph = i.graph(
       createdAt: i.date().indexed(),
       updatedAt: i.date().optional(),
     }),
+
+    // Group relationships - hierarchical connections between groups
+    groupRelationships: i.entity({
+      relationshipType: i.string().indexed(), // 'isParent' or 'isChild'
+      withRight: i.string().indexed(), // 'informationRight', 'amendmentRight', 'rightToSpeak', 'activeVotingRight', 'passiveVotingRight'
+      createdAt: i.date().indexed(),
+      updatedAt: i.date().indexed(),
+    }),
   },
   {
     // 1. Link between users and profiles (one-to-one)
@@ -848,6 +856,7 @@ const graph = i.graph(
       },
     },
 
+    // Change request votes to change requests (many-to-one)
     // 39. Change request votes to change requests (many-to-one)
     changeRequestVoteChangeRequests: {
       forward: {
@@ -859,6 +868,34 @@ const graph = i.graph(
         on: 'changeRequests',
         has: 'many',
         label: 'votes',
+      },
+    },
+
+    // 40. Group relationships - parent group (many-to-one)
+    groupRelationshipParentGroups: {
+      forward: {
+        on: 'groupRelationships',
+        has: 'one',
+        label: 'parentGroup',
+      },
+      reverse: {
+        on: 'groups',
+        has: 'many',
+        label: 'childRelationships',
+      },
+    },
+
+    // 41. Group relationships - child group (many-to-one)
+    groupRelationshipChildGroups: {
+      forward: {
+        on: 'groupRelationships',
+        has: 'one',
+        label: 'childGroup',
+      },
+      reverse: {
+        on: 'groups',
+        has: 'many',
+        label: 'parentRelationships',
       },
     },
   }

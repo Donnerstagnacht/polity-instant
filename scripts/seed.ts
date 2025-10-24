@@ -271,6 +271,91 @@ async function seedUsers() {
   return { userIds, userToProfileMap };
 }
 
+async function seedGroupRelationships(groupIds: string[]) {
+  console.log('Seeding group relationships...');
+  const transactions = [];
+  let totalRelationships = 0;
+
+  const rights = [
+    'informationRight',
+    'amendmentRight',
+    'rightToSpeak',
+    'activeVotingRight',
+    'passiveVotingRight',
+  ];
+
+  // Create some relationships between groups
+  // Make sure we have at least 3 groups to create relationships
+  if (groupIds.length >= 3) {
+    // Create a hierarchy: Group 0 -> Group 1 -> Group 2
+    for (let i = 0; i < Math.min(3, groupIds.length - 1); i++) {
+      const parentGroupId = groupIds[i];
+      const childGroupId = groupIds[i + 1];
+
+      // Create 1-3 relationships with different rights
+      const relationshipCount = randomInt(1, 3);
+      const selectedRights = randomItems(rights, relationshipCount);
+
+      for (const right of selectedRights) {
+        const relationshipId = id();
+        transactions.push(
+          tx.groupRelationships[relationshipId]
+            .update({
+              relationshipType: 'isParent',
+              withRight: right,
+              createdAt: faker.date.past({ years: 0.5 }),
+              updatedAt: new Date(),
+            })
+            .link({ parentGroup: parentGroupId, childGroup: childGroupId })
+        );
+        totalRelationships++;
+      }
+    }
+
+    // Create some additional cross-relationships
+    if (groupIds.length >= 5) {
+      // Group 3 is parent of Group 4
+      const relationshipId1 = id();
+      transactions.push(
+        tx.groupRelationships[relationshipId1]
+          .update({
+            relationshipType: 'isParent',
+            withRight: randomItem(rights),
+            createdAt: faker.date.past({ years: 0.5 }),
+            updatedAt: new Date(),
+          })
+          .link({ parentGroup: groupIds[3], childGroup: groupIds[4] })
+      );
+      totalRelationships++;
+
+      // Group 0 is also parent of Group 3 (creating a deeper hierarchy)
+      const relationshipId2 = id();
+      transactions.push(
+        tx.groupRelationships[relationshipId2]
+          .update({
+            relationshipType: 'isParent',
+            withRight: randomItem(rights),
+            createdAt: faker.date.past({ years: 0.5 }),
+            updatedAt: new Date(),
+          })
+          .link({ parentGroup: groupIds[0], childGroup: groupIds[3] })
+      );
+      totalRelationships++;
+    }
+  }
+
+  if (transactions.length > 0) {
+    // Execute in batches
+    const batchSize = 50;
+    for (let i = 0; i < transactions.length; i += batchSize) {
+      const batch = transactions.slice(i, i + batchSize);
+      await db.transact(batch);
+    }
+  }
+
+  console.log(`✓ Created ${totalRelationships} group relationships`);
+}
+
 async function seedGroups(userIds: string[]) {
   console.log('Seeding groups...');
   const groupIds: string[] = [];
@@ -1295,6 +1380,7 @@ async function cleanDatabase() {
       user: {},
       groups: {},
       groupMemberships: {},
+      groupRelationships: {}, // New: include group relationships
       follows: {},
       conversations: {},
       conversationParticipants: {},
@@ -1328,6 +1414,7 @@ async function cleanDatabase() {
       'user',
       'groups',
       'groupMemberships',
+      'groupRelationships', // New: include group relationships
       'follows',
       'conversations',
       'conversationParticipants',
@@ -1390,6 +1477,7 @@ async function seed() {
     // Seed in order due to dependencies
     const { userIds, userToProfileMap } = await seedUsers();
     const groupIds = await seedGroups(userIds);
+    await seedGroupRelationships(groupIds); // New: seed group relationships
     await seedFollows(userIds);
     await seedConversationsAndMessages(userIds, userToProfileMap);
     const eventIds = await seedEvents(userIds, groupIds);
@@ -1402,6 +1490,7 @@ async function seed() {
     console.log(`  - 1 main test user (${SEED_CONFIG.mainTestUserId})`);
     console.log(`  - ${SEED_CONFIG.users} additional users`);
     console.log(`  - ${SEED_CONFIG.groups} groups (2 owned by main user)`);
+    console.log(`  - Group relationships with hierarchical structure`);
     console.log(`  - Follow relationships (main user: 10 following, 5 followers)`);
     console.log(`  - Conversations and messages (main user: 3 conversations)`);
     console.log(`  - Events and participants`);

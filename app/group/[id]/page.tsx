@@ -6,6 +6,7 @@ import { PageWrapper } from '@/components/layout/page-wrapper';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { LinkGroupDialog } from '../../../src/components/groups/LinkGroupDialog';
 import db from '../../../db';
 import { Users, Calendar, Settings, UserPlus } from 'lucide-react';
 
@@ -23,6 +24,12 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
         user: {
           profile: {},
         },
+      },
+      childRelationships: {
+        childGroup: {},
+      },
+      parentRelationships: {
+        parentGroup: {},
       },
     },
   });
@@ -57,6 +64,38 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
   const memberCount = group.memberships?.length || group.memberCount || 0;
   const owner = group.owner?.profile;
 
+  // Group relationships by target group
+  const groupRelationshipsByGroup = (relationships: any[], type: 'parent' | 'child') => {
+    const grouped = new Map<string, { group: any; rights: string[]; relationshipIds: string[] }>();
+
+    relationships?.forEach((rel: any) => {
+      const targetGroup = type === 'parent' ? rel.parentGroup : rel.childGroup;
+      if (!targetGroup) return;
+
+      if (!grouped.has(targetGroup.id)) {
+        grouped.set(targetGroup.id, { group: targetGroup, rights: [], relationshipIds: [] });
+      }
+      const entry = grouped.get(targetGroup.id);
+      if (entry) {
+        entry.rights.push(rel.withRight);
+        entry.relationshipIds.push(rel.id);
+      }
+    });
+
+    return Array.from(grouped.values());
+  };
+
+  const formatRight = (right: string) => {
+    const labels: Record<string, string> = {
+      informationRight: 'Informationsrecht',
+      amendmentRight: 'Antragsrecht',
+      rightToSpeak: 'Rederecht',
+      activeVotingRight: 'Aktives Stimmrecht',
+      passiveVotingRight: 'Passives Stimmrecht',
+    };
+    return labels[right] || right.replace(/([A-Z])/g, ' $1').trim();
+  };
+
   return (
     <AuthGuard requireAuth={true}>
       <PageWrapper className="container mx-auto p-8">
@@ -88,6 +127,7 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
               </div>
             </div>
             <div className="flex gap-2">
+              <LinkGroupDialog currentGroupId={resolvedParams.id} currentGroupName={group.name} />
               <Button>
                 <UserPlus className="mr-2 h-4 w-4" />
                 Join Group
@@ -168,6 +208,79 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
             </CardContent>
           </Card>
         </div>
+
+        {/* Parent & Child Groups */}
+        {((group.parentRelationships && group.parentRelationships.length > 0) ||
+          (group.childRelationships && group.childRelationships.length > 0)) && (
+          <div className="mt-6 grid gap-6 md:grid-cols-2">
+            {/* Parent Groups */}
+            {group.parentRelationships && group.parentRelationships.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Übergeordnete Gruppen</CardTitle>
+                  <CardDescription>Gruppen, denen diese Gruppe untergeordnet ist</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {groupRelationshipsByGroup(group.parentRelationships, 'parent').map(
+                      ({ group: parentGroup, rights, relationshipIds }) => (
+                        <div
+                          key={`parent-group-${parentGroup.id}`}
+                          className="rounded-lg border p-3"
+                        >
+                          <p className="mb-1 font-medium">{parentGroup.name || 'Unbekannt'}</p>
+                          <div className="flex flex-wrap gap-1">
+                            {rights.map((right, idx) => (
+                              <Badge
+                                key={`rel-${relationshipIds[idx]}-${right}`}
+                                variant="secondary"
+                                className="text-xs"
+                              >
+                                {formatRight(right)}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Child Groups */}
+            {group.childRelationships && group.childRelationships.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Untergeordnete Gruppen</CardTitle>
+                  <CardDescription>Gruppen, die dieser Gruppe untergeordnet sind</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {groupRelationshipsByGroup(group.childRelationships, 'child').map(
+                      ({ group: childGroup, rights, relationshipIds }) => (
+                        <div key={`child-group-${childGroup.id}`} className="rounded-lg border p-3">
+                          <p className="mb-1 font-medium">{childGroup.name || 'Unbekannt'}</p>
+                          <div className="flex flex-wrap gap-1">
+                            {rights.map((right, idx) => (
+                              <Badge
+                                key={`rel-${relationshipIds[idx]}-${right}`}
+                                variant="secondary"
+                                className="text-xs"
+                              >
+                                {formatRight(right)}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
 
         {/* Activity Section */}
         <Card className="mt-6">

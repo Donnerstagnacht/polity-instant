@@ -197,6 +197,31 @@ export const permissions = {
     },
   },
 
+  // Group relationships permissions
+  groupRelationships: {
+    allow: {
+      // Only group owners (of either parent or child) can create relationships
+      create: `
+        auth.id != null && (
+          auth.id == data.parentGroup.owner.id || 
+          auth.id == data.childGroup.owner.id
+        )
+      `,
+      // Anyone authenticated can view group relationships
+      view: 'auth.id != null',
+      // Only group owners can update relationships
+      update: `
+        auth.id == data.parentGroup.owner.id || 
+        auth.id == data.childGroup.owner.id
+      `,
+      // Only group owners can delete relationships
+      delete: `
+        auth.id == data.parentGroup.owner.id || 
+        auth.id == data.childGroup.owner.id
+      `,
+    },
+  },
+
   // Additional security rules can be added here
   // For example, rate limiting, content filtering, etc.
 };
