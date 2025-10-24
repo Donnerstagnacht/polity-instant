@@ -59,6 +59,15 @@ const enTranslation = {
         analytics: 'Analytics',
         reports: 'Reports',
       },
+      calendar: {
+        day: 'Day View',
+        week: 'Week View',
+        month: 'Month View',
+      },
+      event: {
+        overview: 'Overview',
+        agenda: 'Agenda',
+      },
     },
     toggles: {
       theme: {

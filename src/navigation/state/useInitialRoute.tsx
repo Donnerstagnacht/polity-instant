@@ -1,12 +1,15 @@
 import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 // Custom hook to set initial route based on window location
 export function useInitialRoute(
   setCurrentPrimaryRoute: React.Dispatch<React.SetStateAction<string | null>>
 ) {
+  const pathname = usePathname();
+
   useEffect(() => {
-    const path = window.location.pathname;
-    const route = path === '/' ? 'home' : path.split('/')[1];
+    const route = pathname === '/' ? 'home' : pathname.split('/')[1];
+    console.log('🔄 [useInitialRoute] Updating route:', { pathname, route });
     setCurrentPrimaryRoute(route);
-  }, [setCurrentPrimaryRoute]);
+  }, [pathname, setCurrentPrimaryRoute]);
 }

@@ -61,6 +61,15 @@ const deTranslation: I18nLocale = {
         analytics: 'Analytik',
         reports: 'Berichte',
       },
+      calendar: {
+        day: 'Tagesansicht',
+        week: 'Wochenansicht',
+        month: 'Monatsansicht',
+      },
+      event: {
+        overview: 'Übersicht',
+        agenda: 'Tagesordnung',
+      },
     },
     toggles: {
       theme: {

@@ -87,7 +87,16 @@ export function useNavigation() {
   });
 
   const getSecondaryNavItems = (currentPrimaryRoute: string | null) => {
-    const baseSecondaryItems = baseGetSecondaryNavItems(currentPrimaryRoute);
+    // Extract event ID from pathname if on an event route
+    let eventId: string | undefined;
+    if (pathname.startsWith('/event/')) {
+      const match = pathname.match(/^\/event\/([^/]+)/);
+      if (match) {
+        eventId = match[1];
+      }
+    }
+
+    const baseSecondaryItems = baseGetSecondaryNavItems(currentPrimaryRoute, eventId);
     if (!baseSecondaryItems) return null;
 
     // Override labels with translations for secondary items
@@ -98,11 +107,22 @@ export function useNavigation() {
           ? t(`navigation.secondary.projects.${item.id}`)
           : currentPrimaryRoute === 'dashboard'
             ? t(`navigation.secondary.dashboard.${item.id}`)
-            : item.label,
+            : currentPrimaryRoute === 'calendar'
+              ? t(`navigation.secondary.calendar.${item.id}`)
+              : currentPrimaryRoute === 'event'
+                ? t(`navigation.secondary.event.${item.id}`)
+                : item.label,
     }));
   };
 
   const secondaryNavItems = getSecondaryNavItems(currentPrimaryRoute);
+
+  console.log('🔍 [useNavigation] Current state:', {
+    pathname,
+    currentPrimaryRoute,
+    hasSecondaryNav: !!secondaryNavItems,
+    secondaryNavCount: secondaryNavItems?.length || 0,
+  });
 
   // Use custom hook for initial route
   useInitialRoute(setCurrentPrimaryRoute);

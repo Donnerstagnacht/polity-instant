@@ -734,6 +734,7 @@ async function seedConversationsAndMessages(
 async function seedEvents(userIds: string[], groupIds: string[]) {
   console.log('Seeding events...');
   const transactions = [];
+  const eventIds: string[] = [];
   let totalEvents = 0;
   let totalParticipants = 0;
 
@@ -746,6 +747,8 @@ async function seedEvents(userIds: string[], groupIds: string[]) {
       const startDate = faker.date.future({ years: 1 });
       const endDate = new Date(startDate);
       endDate.setHours(endDate.getHours() + randomInt(1, 4));
+
+      eventIds.push(eventId);
 
       // Create event
       transactions.push(
@@ -808,6 +811,7 @@ async function seedEvents(userIds: string[], groupIds: string[]) {
   }
 
   console.log(`✓ Created ${totalEvents} events with ${totalParticipants} participants`);
+  return eventIds;
 }
 
 async function seedNotifications(userIds: string[]) {
@@ -891,6 +895,221 @@ async function seedNotifications(userIds: string[]) {
   }
 
   console.log(`✓ Created ${totalNotifications} notifications (main user: 10, 6 unread)`);
+}
+
+async function seedAgendaAndVoting(userIds: string[], eventIds: string[]) {
+  console.log('Seeding agenda items and voting system...');
+  const transactions = [];
+  let totalAgendaItems = 0;
+  let totalElections = 0;
+  let totalAmendmentVotes = 0;
+  let totalChangeRequests = 0;
+  let totalVotes = 0;
+
+  const agendaTypes = ['election', 'vote', 'speech', 'discussion'];
+  const voteStatuses = ['planned', 'active', 'completed'];
+  const majorityTypes = ['relative', 'absolute'];
+
+  for (const eventId of eventIds) {
+    const agendaItemCount = randomInt(2, 5); // 2-5 agenda items per event
+
+    for (let i = 0; i < agendaItemCount; i++) {
+      const agendaItemId = id();
+      const creatorId = randomItem(userIds);
+      const type = randomItem(agendaTypes);
+      const startTime = faker.date.future({ years: 0.5 });
+
+      // Create agenda item
+      transactions.push(
+        tx.agendaItems[agendaItemId]
+          .update({
+            title: faker.lorem.words(randomInt(3, 6)),
+            description: faker.lorem.paragraph(),
+            type,
+            scheduledTime: startTime,
+            duration: randomInt(15, 120), // 15-120 minutes
+            status: randomItem(voteStatuses),
+            order: i + 1,
+            createdAt: faker.date.past({ years: 0.08 }),
+            updatedAt: new Date(),
+          })
+          .link({ creator: creatorId, event: eventId })
+      );
+      totalAgendaItems++;
+
+      // Create elections for election-type agenda items (ONLY ONE per agenda item due to unique constraint)
+      if (type === 'election' || faker.datatype.boolean(0.3)) {
+        // 30% chance for non-election types too
+        const electionId = id();
+        const majorityType = randomItem(majorityTypes);
+
+        transactions.push(
+          tx.elections[electionId]
+            .update({
+              title: `${faker.lorem.words(2)} Wahl`,
+              description: faker.lorem.sentence(),
+              majorityType,
+              isMultipleChoice: faker.datatype.boolean(0.3), // 30% allow multiple choices
+              status: randomItem(voteStatuses),
+              votingStartTime: startTime,
+              votingEndTime: new Date(startTime.getTime() + randomInt(30, 180) * 60000), // 30-180 minutes later
+              createdAt: faker.date.past({ years: 0.08 }),
+              updatedAt: new Date(),
+            })
+            .link({ agendaItem: agendaItemId })
+        );
+        totalElections++;
+
+        // Add election candidates
+        const candidateCount = randomInt(2, 5);
+        const candidates = randomItems(userIds, candidateCount);
+
+        for (const candidateUserId of candidates) {
+          const candidateId = id();
+          transactions.push(
+            tx.electionCandidates[candidateId]
+              .update({
+                name: faker.person.fullName(),
+                description: faker.lorem.sentence(),
+                order: candidates.indexOf(candidateUserId) + 1,
+                createdAt: faker.date.past({ years: 0.04 }),
+              })
+              .link({ election: electionId, user: candidateUserId })
+          );
+        }
+
+        // Add election votes (some elections have votes, some don't)
+        if (faker.datatype.boolean(0.6)) {
+          // 60% of elections have votes
+          const voterCount = randomInt(3, Math.min(8, userIds.length));
+          const voters = randomItems(userIds, voterCount);
+
+          for (const voterId of voters) {
+            const voteId = id();
+            const votedCandidateId = randomItem(candidates);
+
+            // Create vote with past date (votes can only happen in past/present)
+            const voteCreatedAt = faker.date.recent({ days: 30 });
+
+            transactions.push(
+              tx.electionVotes[voteId]
+                .update({
+                  createdAt: voteCreatedAt,
+                })
+                .link({
+                  election: electionId,
+                  voter: voterId,
+                  candidate: votedCandidateId,
+                })
+            );
+            totalVotes++;
+          }
+        }
+      }
+
+      // Create amendment votes for vote-type agenda items (ONLY ONE per agenda item due to unique constraint)
+      if (type === 'vote' || faker.datatype.boolean(0.4)) {
+        // 40% chance for non-vote types
+        const amendmentVoteId = id();
+
+        transactions.push(
+          tx.amendmentVotes[amendmentVoteId]
+            .update({
+              title: `Abstimmung: ${faker.lorem.words(3)}`,
+              description: faker.lorem.paragraph(),
+              originalText: faker.lorem.paragraphs(2),
+              proposedText: faker.lorem.paragraphs(2),
+              status: randomItem(voteStatuses),
+              votingStartTime: startTime,
+              votingEndTime: new Date(startTime.getTime() + randomInt(30, 120) * 60000),
+              createdAt: faker.date.past({ years: 0.08 }),
+              updatedAt: new Date(),
+            })
+            .link({ agendaItem: agendaItemId })
+        );
+        totalAmendmentVotes++;
+
+        // Add change requests
+        const changeRequestCount = randomInt(0, 3);
+        for (let k = 0; k < changeRequestCount; k++) {
+          const changeRequestId = id();
+          const submitterId = randomItem(userIds);
+
+          transactions.push(
+            tx.changeRequests[changeRequestId]
+              .update({
+                title: `Änderungsantrag ${k + 1}`,
+                description: faker.lorem.sentence(),
+                proposedChange: faker.lorem.paragraph(),
+                status: randomItem(['pending', 'approved', 'rejected']),
+                createdAt: faker.date.past({ years: 0.04 }),
+                updatedAt: new Date(),
+              })
+              .link({ amendmentVote: amendmentVoteId, creator: submitterId })
+          );
+          totalChangeRequests++;
+
+          // Add votes on change requests
+          if (faker.datatype.boolean(0.5)) {
+            // 50% of change requests have votes
+            const voterCount = randomInt(2, 6);
+            const voters = randomItems(userIds, voterCount);
+
+            for (const voterId of voters) {
+              const voteId = id();
+              transactions.push(
+                tx.changeRequestVotes[voteId]
+                  .update({
+                    vote: randomItem(['yes', 'no', 'abstain']),
+                    createdAt: faker.date.recent({ days: 14 }),
+                  })
+                  .link({ changeRequest: changeRequestId, voter: voterId })
+              );
+              totalVotes++;
+            }
+          }
+        }
+
+        // Add amendment vote entries (main votes on the amendment)
+        if (faker.datatype.boolean(0.7)) {
+          // 70% of amendments have votes
+          const voterCount = randomInt(5, Math.min(12, userIds.length));
+          const voters = randomItems(userIds, voterCount);
+
+          for (const voterId of voters) {
+            const voteEntryId = id();
+
+            // Create vote with past date (votes can only happen in past/present)
+            const voteCreatedAt = faker.date.recent({ days: 30 });
+
+            transactions.push(
+              tx.amendmentVoteEntries[voteEntryId]
+                .update({
+                  vote: randomItem(['yes', 'yes', 'no', 'abstain']), // More yes votes
+                  createdAt: voteCreatedAt,
+                })
+                .link({ amendmentVote: amendmentVoteId, voter: voterId })
+            );
+            totalVotes++;
+          }
+        }
+      }
+    }
+  }
+
+  // Execute in batches
+  console.log(`  Creating ${transactions.length} agenda and voting records...`);
+  const batchSize = 50;
+  for (let i = 0; i < transactions.length; i += batchSize) {
+    const batch = transactions.slice(i, i + batchSize);
+    await db.transact(batch);
+  }
+
+  console.log(`✓ Created ${totalAgendaItems} agenda items with:`);
+  console.log(`  - ${totalElections} elections`);
+  console.log(`  - ${totalAmendmentVotes} amendment votes`);
+  console.log(`  - ${totalChangeRequests} change requests`);
+  console.log(`  - ${totalVotes} total votes across all voting types`);
 }
 
 async function seedTodos(userIds: string[], groupIds: string[]) {
@@ -1086,6 +1305,14 @@ async function cleanDatabase() {
       todos: {},
       todoAssignments: {},
       magicCodes: {},
+      agendaItems: {},
+      elections: {},
+      electionCandidates: {},
+      electionVotes: {},
+      amendmentVotes: {},
+      changeRequests: {},
+      changeRequestVotes: {},
+      amendmentVoteEntries: {},
     };
 
     const data = await db.query(query);
@@ -1111,6 +1338,14 @@ async function cleanDatabase() {
       'todos',
       'todoAssignments',
       'magicCodes',
+      'agendaItems',
+      'elections',
+      'electionCandidates',
+      'electionVotes',
+      'amendmentVotes',
+      'changeRequests',
+      'changeRequestVotes',
+      'amendmentVoteEntries',
     ];
 
     for (const entityType of entitiesToDelete) {
@@ -1157,7 +1392,8 @@ async function seed() {
     const groupIds = await seedGroups(userIds);
     await seedFollows(userIds);
     await seedConversationsAndMessages(userIds, userToProfileMap);
-    await seedEvents(userIds, groupIds);
+    const eventIds = await seedEvents(userIds, groupIds);
+    await seedAgendaAndVoting(userIds, eventIds);
     await seedNotifications(userIds);
     await seedTodos(userIds, groupIds);
 
@@ -1169,6 +1405,7 @@ async function seed() {
     console.log(`  - Follow relationships (main user: 10 following, 5 followers)`);
     console.log(`  - Conversations and messages (main user: 3 conversations)`);
     console.log(`  - Events and participants`);
+    console.log(`  - Agenda items with elections and voting system`);
     console.log(`  - Notifications (main user: 10 total, 6 unread)`);
     console.log(`  - Todos and assignments (main user: 5 todos)\n`);
     console.log('Main test user details:');

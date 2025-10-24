@@ -25,12 +25,32 @@ import {
   type CarouselApi,
 } from '@/components/ui/carousel';
 import { useState, useEffect } from 'react';
-import { Users, FileText, BookOpen, Scale, List, Layers, CheckSquare } from 'lucide-react';
+import {
+  Users,
+  FileText,
+  BookOpen,
+  Scale,
+  List,
+  Layers,
+  CheckSquare,
+  Calendar,
+  Edit,
+  UserCheck,
+} from 'lucide-react';
 import { db, tx, id } from '@/../../db.ts';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { toast } from 'sonner';
 
-type ItemType = 'groups' | 'statements' | 'blogs' | 'amendments' | 'todos' | null;
+type ItemType =
+  | 'groups'
+  | 'statements'
+  | 'blogs'
+  | 'amendments'
+  | 'todos'
+  | 'agendaItems'
+  | 'changeRequests'
+  | 'electionCandidates'
+  | null;
 
 export default function CreatePage() {
   const [isCarouselMode, setIsCarouselMode] = useState(false);
@@ -104,7 +124,7 @@ export default function CreatePage() {
           onValueChange={v => setSelectedItemType(v as ItemType)}
           className="w-full"
         >
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="groups" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Groups
@@ -124,6 +144,18 @@ export default function CreatePage() {
             <TabsTrigger value="todos" className="flex items-center gap-2">
               <CheckSquare className="h-4 w-4" />
               Todos
+            </TabsTrigger>
+            <TabsTrigger value="agendaItems" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Agenda
+            </TabsTrigger>
+            <TabsTrigger value="changeRequests" className="flex items-center gap-2">
+              <Edit className="h-4 w-4" />
+              Change Requests
+            </TabsTrigger>
+            <TabsTrigger value="electionCandidates" className="flex items-center gap-2">
+              <UserCheck className="h-4 w-4" />
+              Candidates
             </TabsTrigger>
           </TabsList>
 
@@ -145,6 +177,18 @@ export default function CreatePage() {
 
           <TabsContent value="todos">
             <CreateTodoForm isCarouselMode={false} />
+          </TabsContent>
+
+          <TabsContent value="agendaItems">
+            <CreateAgendaItemForm />
+          </TabsContent>
+
+          <TabsContent value="changeRequests">
+            <CreateChangeRequestForm />
+          </TabsContent>
+
+          <TabsContent value="electionCandidates">
+            <CreateElectionCandidateForm />
           </TabsContent>
         </Tabs>
       </PageWrapper>
@@ -178,6 +222,12 @@ function GuidedCreateFlow() {
       return <GuidedAmendmentFlow {...commonProps} />;
     case 'todos':
       return <GuidedTodoFlow {...commonProps} />;
+    case 'agendaItems':
+      return <GuidedAgendaItemFlow {...commonProps} />;
+    case 'changeRequests':
+      return <GuidedChangeRequestFlow {...commonProps} />;
+    case 'electionCandidates':
+      return <GuidedElectionCandidateFlow {...commonProps} />;
     default:
       return null;
   }
@@ -215,6 +265,24 @@ function ItemTypeSelector({ onSelect }: { onSelect: (type: ItemType) => void }) 
       icon: CheckSquare,
       title: 'Todo',
       description: 'Create a task to track your work and progress',
+    },
+    {
+      type: 'agendaItems' as ItemType,
+      icon: Calendar,
+      title: 'Agenda Item',
+      description: 'Create an agenda item for an event (election, vote, speech)',
+    },
+    {
+      type: 'changeRequests' as ItemType,
+      icon: Edit,
+      title: 'Change Request',
+      description: 'Propose a change to an existing amendment',
+    },
+    {
+      type: 'electionCandidates' as ItemType,
+      icon: UserCheck,
+      title: 'Election Candidate',
+      description: 'Add a candidate to an election',
     },
   ];
 
@@ -2568,6 +2636,1902 @@ function CarouselAmendmentForm({
             {isSubmitting ? 'Creating...' : 'Create Amendment'}
           </Button>
         )}
+      </CardFooter>
+    </Card>
+  );
+}
+
+// ====== AGENDA ITEM FORMS ======
+function CreateAgendaItemForm() {
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    type: 'discussion' as 'election' | 'vote' | 'speech' | 'discussion',
+    order: 1,
+    duration: '',
+    eventId: '',
+    amendmentId: '', // For vote type
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const user = useAuthStore(state => state.user);
+
+  // Query available events for the dropdown
+  const { data: eventsData } = db.useQuery({
+    events: {},
+  });
+
+  // Query available amendments for the dropdown (when type is vote)
+  const { data: amendmentsData } = db.useQuery({
+    amendments: {},
+  });
+
+  console.log('Events Data:', eventsData);
+  console.log('Amendments Data:', amendmentsData);
+  console.log('Current User ID:', user?.id);
+
+  const userEvents = eventsData?.events || [];
+
+  const userAmendments = amendmentsData?.amendments || [];
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      if (!user?.id) {
+        toast.error('You must be logged in to create an agenda item');
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.eventId) {
+        toast.error('Please select an event for this agenda item');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const agendaItemId = id();
+      const now = new Date();
+
+      await db.transact([
+        tx.agendaItems[agendaItemId].update({
+          title: formData.title,
+          description: formData.description || '',
+          type: formData.type,
+          order: formData.order,
+          duration: formData.duration ? parseInt(formData.duration) : null,
+          status: 'pending',
+          startTime: null,
+          endTime: null,
+          createdAt: now,
+          updatedAt: now,
+        }),
+        tx.agendaItems[agendaItemId].link({
+          event: formData.eventId,
+          creator: user.id,
+        }),
+      ]);
+
+      toast.success('Agenda item created successfully!');
+      setTimeout(() => {
+        window.location.href = `/event/${formData.eventId}/agenda`;
+      }, 500);
+    } catch (error) {
+      console.error('Failed to create agenda item:', error);
+      toast.error('Failed to create agenda item. Please try again.');
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Create a New Agenda Item</CardTitle>
+        <CardDescription>Add an item to an event's agenda</CardDescription>
+      </CardHeader>
+      <form onSubmit={handleSubmit}>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="agenda-event">Event</Label>
+            <select
+              id="agenda-event"
+              value={formData.eventId}
+              onChange={e => setFormData({ ...formData, eventId: e.target.value })}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              required
+            >
+              <option value="">Select an event</option>
+              {userEvents.map((event: any) => (
+                <option key={event.id} value={event.id}>
+                  {event.title}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="agenda-title">Title</Label>
+            <Input
+              id="agenda-title"
+              placeholder="Enter agenda item title"
+              value={formData.title}
+              onChange={e => setFormData({ ...formData, title: e.target.value })}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="agenda-description">Description</Label>
+            <Textarea
+              id="agenda-description"
+              placeholder="Describe this agenda item (optional)"
+              value={formData.description}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
+              rows={3}
+            />
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="agenda-type">Type</Label>
+              <select
+                id="agenda-type"
+                value={formData.type}
+                onChange={e =>
+                  setFormData({ ...formData, type: e.target.value as typeof formData.type })
+                }
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                required
+              >
+                <option value="discussion">Discussion</option>
+                <option value="speech">Speech</option>
+                <option value="election">Election</option>
+                <option value="vote">Vote</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="agenda-order">Order</Label>
+              <Input
+                id="agenda-order"
+                type="number"
+                min="1"
+                placeholder="1"
+                value={formData.order}
+                onChange={e => setFormData({ ...formData, order: parseInt(e.target.value) || 1 })}
+                required
+              />
+            </div>
+          </div>
+          {formData.type === 'vote' && (
+            <div className="space-y-2">
+              <Label htmlFor="agenda-amendment">Amendment (optional)</Label>
+              <select
+                id="agenda-amendment"
+                value={formData.amendmentId}
+                onChange={e => setFormData({ ...formData, amendmentId: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="">Select an amendment</option>
+                {userAmendments.map((amendment: any) => (
+                  <option key={amendment.id} value={amendment.id}>
+                    {amendment.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="agenda-duration">Duration (minutes, optional)</Label>
+            <Input
+              id="agenda-duration"
+              type="number"
+              min="1"
+              placeholder="Enter duration in minutes"
+              value={formData.duration}
+              onChange={e => setFormData({ ...formData, duration: e.target.value })}
+            />
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? 'Creating...' : 'Create Agenda Item'}
+          </Button>
+        </CardFooter>
+      </form>
+    </Card>
+  );
+}
+
+function GuidedAgendaItemFlow({
+  formData,
+  setFormData,
+  onBack,
+}: {
+  formData: any;
+  setFormData: (data: any) => void;
+  onBack: () => void;
+}) {
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
+  const [count, setCount] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const user = useAuthStore(state => state.user);
+
+  const { data: eventsData } = db.useQuery({
+    events: {},
+  });
+
+  const { data: amendmentsData } = db.useQuery({
+    amendments: {},
+  });
+
+  console.log('Guided - Events Data:', eventsData);
+  console.log('Guided - Amendments Data:', amendmentsData);
+
+  const userEvents = eventsData?.events || [];
+
+  const userAmendments = amendmentsData?.amendments || [];
+
+  const data = {
+    title: formData.title || '',
+    description: formData.description || '',
+    type: formData.type || ('discussion' as 'election' | 'vote' | 'speech' | 'discussion'),
+    order: formData.order || 1,
+    duration: formData.duration || '',
+    eventId: formData.eventId || '',
+    amendmentId: formData.amendmentId || '',
+  };
+
+  useEffect(() => {
+    if (!api) return;
+    setCount(api.scrollSnapList().length);
+    setCurrent(api.selectedScrollSnap());
+    api.on('select', () => setCurrent(api.selectedScrollSnap()));
+  }, [api]);
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      if (!user?.id) {
+        toast.error('You must be logged in to create an agenda item');
+        return;
+      }
+
+      if (!data.eventId) {
+        toast.error('Please select an event for this agenda item');
+        return;
+      }
+
+      const agendaItemId = id();
+      const now = new Date();
+
+      await db.transact([
+        tx.agendaItems[agendaItemId].update({
+          title: data.title,
+          description: data.description || '',
+          type: data.type,
+          order: data.order,
+          duration: data.duration ? parseInt(data.duration) : null,
+          status: 'pending',
+          startTime: null,
+          endTime: null,
+          createdAt: now,
+          updatedAt: now,
+        }),
+        tx.agendaItems[agendaItemId].link({
+          event: data.eventId,
+          creator: user.id,
+        }),
+      ]);
+
+      toast.success('Agenda item created successfully!');
+      setTimeout(() => {
+        window.location.href = `/event/${data.eventId}/agenda`;
+      }, 500);
+    } catch (error) {
+      console.error('Failed to create agenda item:', error);
+      toast.error('Failed to create agenda item. Please try again.');
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Create a New Agenda Item</CardTitle>
+        <CardDescription>
+          Step {current + 1} of {count}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Carousel setApi={setApi} className="w-full">
+          <CarouselContent>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-agenda-event" className="text-lg">
+                    Which event is this for?
+                  </Label>
+                  <select
+                    id="guided-agenda-event"
+                    value={data.eventId}
+                    onChange={e => setFormData({ ...formData, eventId: e.target.value })}
+                    className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="">Select an event</option>
+                    {userEvents.map((event: any) => (
+                      <option key={event.id} value={event.id}>
+                        {event.title}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-sm text-muted-foreground">
+                    Choose which event this agenda item belongs to
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-agenda-title" className="text-lg">
+                    What's the agenda item title?
+                  </Label>
+                  <Input
+                    id="guided-agenda-title"
+                    placeholder="Enter agenda item title"
+                    value={data.title}
+                    onChange={e => setFormData({ ...formData, title: e.target.value })}
+                    className="text-lg"
+                    autoFocus
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Be specific about what will be discussed or decided
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-agenda-type" className="text-lg">
+                    What type of agenda item is this?
+                  </Label>
+                  <select
+                    id="guided-agenda-type"
+                    value={data.type}
+                    onChange={e => setFormData({ ...formData, type: e.target.value })}
+                    className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="discussion">Discussion</option>
+                    <option value="speech">Speech</option>
+                    <option value="election">Election</option>
+                    <option value="vote">Vote</option>
+                  </select>
+                  <p className="text-sm text-muted-foreground">
+                    Choose the type that best describes this agenda item
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            {data.type === 'vote' && (
+              <CarouselItem>
+                <div className="space-y-4 p-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="guided-agenda-amendment" className="text-lg">
+                      Which amendment is this vote for? (optional)
+                    </Label>
+                    <select
+                      id="guided-agenda-amendment"
+                      value={data.amendmentId}
+                      onChange={e => setFormData({ ...formData, amendmentId: e.target.value })}
+                      className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <option value="">Select an amendment</option>
+                      {userAmendments.map((amendment: any) => (
+                        <option key={amendment.id} value={amendment.id}>
+                          {amendment.title}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-sm text-muted-foreground">
+                      Optional: Link this vote to a specific amendment
+                    </p>
+                  </div>
+                </div>
+              </CarouselItem>
+            )}
+          </CarouselContent>
+          <div className="absolute -left-12 right-12 top-1/2 flex -translate-y-1/2 justify-between">
+            <CarouselPrevious />
+            <CarouselNext disabled={current === 0 && !data.eventId} />
+          </div>
+        </Carousel>
+      </CardContent>
+      <CardFooter className="flex justify-between">
+        <Button variant="outline" onClick={onBack}>
+          Change Type
+        </Button>
+        <div className="flex items-center gap-4">
+          <div className="flex gap-1">
+            {Array.from({ length: count }).map((_, i) => (
+              <div
+                key={i}
+                className={`h-2 w-2 rounded-full ${i === current ? 'bg-primary' : 'bg-muted'}`}
+              />
+            ))}
+          </div>
+          {current === count - 1 && (
+            <Button
+              onClick={handleSubmit}
+              disabled={isSubmitting || !data.title.trim() || !data.eventId}
+            >
+              {isSubmitting ? 'Creating...' : 'Create Agenda Item'}
+            </Button>
+          )}
+        </div>
+      </CardFooter>
+    </Card>
+  );
+}
+
+// ====== ELECTION FORMS ======
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function CreateElectionForm() {
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    majorityType: 'relative' as 'absolute' | 'relative',
+    isMultipleChoice: false,
+    maxSelections: '',
+    agendaItemId: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const user = useAuthStore(state => state.user);
+
+  // Query available agenda items for elections
+  const { data: agendaData } = db.useQuery({
+    agendaItems: {
+      $: {
+        where: {
+          type: 'election',
+        },
+      },
+    },
+  });
+
+  console.log('Election Agenda Items Data:', agendaData);
+  console.log('Current User ID:', user?.id);
+
+  const userElectionAgendaItems = agendaData?.agendaItems || [];
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      if (!user?.id) {
+        toast.error('You must be logged in to create an election');
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.agendaItemId) {
+        toast.error('Please select an agenda item for this election');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const electionId = id();
+      const now = new Date();
+
+      await db.transact([
+        tx.elections[electionId].update({
+          title: formData.title,
+          description: formData.description || '',
+          majorityType: formData.majorityType,
+          isMultipleChoice: formData.isMultipleChoice,
+          maxSelections: formData.maxSelections ? parseInt(formData.maxSelections) : null,
+          votingStartTime: null,
+          votingEndTime: null,
+          status: 'pending',
+          createdAt: now,
+          updatedAt: now,
+        }),
+        tx.elections[electionId].link({
+          agendaItem: formData.agendaItemId,
+        }),
+      ]);
+
+      toast.success('Election created successfully!');
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 500);
+    } catch (error) {
+      console.error('Failed to create election:', error);
+      toast.error('Failed to create election. Please try again.');
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Create a New Election</CardTitle>
+        <CardDescription>Set up an election with candidates for voting</CardDescription>
+      </CardHeader>
+      <form onSubmit={handleSubmit}>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="election-agenda">Agenda Item</Label>
+            <select
+              id="election-agenda"
+              value={formData.agendaItemId}
+              onChange={e => setFormData({ ...formData, agendaItemId: e.target.value })}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              required
+            >
+              <option value="">Select an election agenda item</option>
+              {userElectionAgendaItems.map((item: any) => (
+                <option key={item.id} value={item.id}>
+                  {item.title} ({item.event?.title})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="election-title">Title</Label>
+            <Input
+              id="election-title"
+              placeholder="Enter election title"
+              value={formData.title}
+              onChange={e => setFormData({ ...formData, title: e.target.value })}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="election-description">Description</Label>
+            <Textarea
+              id="election-description"
+              placeholder="Describe this election (optional)"
+              value={formData.description}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
+              rows={3}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="election-majority">Majority Type</Label>
+            <select
+              id="election-majority"
+              value={formData.majorityType}
+              onChange={e =>
+                setFormData({
+                  ...formData,
+                  majorityType: e.target.value as typeof formData.majorityType,
+                })
+              }
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              required
+            >
+              <option value="relative">Relative Majority (Most votes wins)</option>
+              <option value="absolute">Absolute Majority (50%+ required)</option>
+            </select>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="election-multiple"
+              checked={formData.isMultipleChoice}
+              onCheckedChange={checked => setFormData({ ...formData, isMultipleChoice: checked })}
+            />
+            <Label htmlFor="election-multiple" className="cursor-pointer">
+              Allow multiple selections
+            </Label>
+          </div>
+          {formData.isMultipleChoice && (
+            <div className="space-y-2">
+              <Label htmlFor="election-max">Maximum selections</Label>
+              <Input
+                id="election-max"
+                type="number"
+                min="2"
+                placeholder="Enter maximum number of selections"
+                value={formData.maxSelections}
+                onChange={e => setFormData({ ...formData, maxSelections: e.target.value })}
+              />
+            </div>
+          )}
+        </CardContent>
+        <CardFooter>
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? 'Creating...' : 'Create Election'}
+          </Button>
+        </CardFooter>
+      </form>
+    </Card>
+  );
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function GuidedElectionFlow({
+  formData,
+  setFormData,
+  onBack,
+}: {
+  formData: any;
+  setFormData: (data: any) => void;
+  onBack: () => void;
+}) {
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
+  const [count, setCount] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const user = useAuthStore(state => state.user);
+
+  const { data: agendaData } = db.useQuery({
+    agendaItems: {
+      $: {
+        where: {
+          type: 'election',
+        },
+      },
+    },
+  });
+
+  console.log('Guided - Election Agenda Items Data:', agendaData);
+
+  const userElectionAgendaItems = agendaData?.agendaItems || [];
+
+  const data = {
+    title: formData.title || '',
+    description: formData.description || '',
+    majorityType: formData.majorityType || ('relative' as 'absolute' | 'relative'),
+    isMultipleChoice: formData.isMultipleChoice || false,
+    maxSelections: formData.maxSelections || '',
+    agendaItemId: formData.agendaItemId || '',
+  };
+
+  useEffect(() => {
+    if (!api) return;
+    setCount(api.scrollSnapList().length);
+    setCurrent(api.selectedScrollSnap());
+    api.on('select', () => setCurrent(api.selectedScrollSnap()));
+  }, [api]);
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      if (!user?.id) {
+        toast.error('You must be logged in to create an election');
+        return;
+      }
+
+      if (!data.agendaItemId) {
+        toast.error('Please select an agenda item for this election');
+        return;
+      }
+
+      const electionId = id();
+      const now = new Date();
+
+      await db.transact([
+        tx.elections[electionId].update({
+          title: data.title,
+          description: data.description || '',
+          majorityType: data.majorityType,
+          isMultipleChoice: data.isMultipleChoice,
+          maxSelections: data.maxSelections ? parseInt(data.maxSelections) : null,
+          votingStartTime: null,
+          votingEndTime: null,
+          status: 'pending',
+          createdAt: now,
+          updatedAt: now,
+        }),
+        tx.elections[electionId].link({
+          agendaItem: data.agendaItemId,
+        }),
+      ]);
+
+      toast.success('Election created successfully!');
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 500);
+    } catch (error) {
+      console.error('Failed to create election:', error);
+      toast.error('Failed to create election. Please try again.');
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Create a New Election</CardTitle>
+        <CardDescription>
+          Step {current + 1} of {count}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Carousel setApi={setApi} className="w-full">
+          <CarouselContent>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-election-agenda" className="text-lg">
+                    Which agenda item is this election for?
+                  </Label>
+                  <select
+                    id="guided-election-agenda"
+                    value={data.agendaItemId}
+                    onChange={e => setFormData({ ...formData, agendaItemId: e.target.value })}
+                    className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="">Select an election agenda item</option>
+                    {userElectionAgendaItems.map((item: any) => (
+                      <option key={item.id} value={item.id}>
+                        {item.title} ({item.event?.title})
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-sm text-muted-foreground">
+                    Choose which election agenda item this belongs to
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-election-title" className="text-lg">
+                    What's the election title?
+                  </Label>
+                  <Input
+                    id="guided-election-title"
+                    placeholder="Enter election title"
+                    value={data.title}
+                    onChange={e => setFormData({ ...formData, title: e.target.value })}
+                    className="text-lg"
+                    autoFocus
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Be clear about what position or decision is being voted on
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-4">
+                  <Label className="text-lg">Election Settings</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="guided-election-majority">Majority Type</Label>
+                    <select
+                      id="guided-election-majority"
+                      value={data.majorityType}
+                      onChange={e => setFormData({ ...formData, majorityType: e.target.value })}
+                      className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <option value="relative">Relative Majority (Most votes wins)</option>
+                      <option value="absolute">Absolute Majority (50%+ required)</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div>
+                      <p className="font-medium">Multiple Selections</p>
+                      <p className="text-sm text-muted-foreground">
+                        Allow voters to select multiple candidates
+                      </p>
+                    </div>
+                    <Switch
+                      checked={data.isMultipleChoice}
+                      onCheckedChange={checked =>
+                        setFormData({ ...formData, isMultipleChoice: checked })
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            </CarouselItem>
+          </CarouselContent>
+          <div className="absolute -left-12 right-12 top-1/2 flex -translate-y-1/2 justify-between">
+            <CarouselPrevious />
+            <CarouselNext disabled={current === 0 && !data.agendaItemId} />
+          </div>
+        </Carousel>
+      </CardContent>
+      <CardFooter className="flex justify-between">
+        <Button variant="outline" onClick={onBack}>
+          Change Type
+        </Button>
+        <div className="flex items-center gap-4">
+          <div className="flex gap-1">
+            {Array.from({ length: count }).map((_, i) => (
+              <div
+                key={i}
+                className={`h-2 w-2 rounded-full ${i === current ? 'bg-primary' : 'bg-muted'}`}
+              />
+            ))}
+          </div>
+          {current === count - 1 && (
+            <Button
+              onClick={handleSubmit}
+              disabled={isSubmitting || !data.title.trim() || !data.agendaItemId}
+            >
+              {isSubmitting ? 'Creating...' : 'Create Election'}
+            </Button>
+          )}
+        </div>
+      </CardFooter>
+    </Card>
+  );
+}
+
+// ====== AMENDMENT VOTE FORMS ======
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function CreateAmendmentVoteForm() {
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    originalText: '',
+    proposedText: '',
+    justification: '',
+    agendaItemId: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const user = useAuthStore(state => state.user);
+
+  // Query available agenda items for votes
+  const { data: agendaData } = db.useQuery({
+    agendaItems: {
+      $: {
+        where: {
+          type: 'vote',
+        },
+      },
+    },
+  });
+
+  console.log('Vote Agenda Items Data:', agendaData);
+  console.log('Current User ID:', user?.id);
+
+  const userVoteAgendaItems = agendaData?.agendaItems || [];
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      if (!user?.id) {
+        toast.error('You must be logged in to create an amendment vote');
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.agendaItemId) {
+        toast.error('Please select an agenda item for this amendment vote');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const amendmentVoteId = id();
+      const now = new Date();
+
+      await db.transact([
+        tx.amendmentVotes[amendmentVoteId].update({
+          title: formData.title,
+          description: formData.description || '',
+          originalText: formData.originalText || '',
+          proposedText: formData.proposedText,
+          justification: formData.justification || '',
+          status: 'draft',
+          votingStartTime: null,
+          votingEndTime: null,
+          createdAt: now,
+          updatedAt: now,
+        }),
+        tx.amendmentVotes[amendmentVoteId].link({
+          agendaItem: formData.agendaItemId,
+          creator: user.id,
+        }),
+      ]);
+
+      toast.success('Amendment vote created successfully!');
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 500);
+    } catch (error) {
+      console.error('Failed to create amendment vote:', error);
+      toast.error('Failed to create amendment vote. Please try again.');
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Create a New Amendment Vote</CardTitle>
+        <CardDescription>Create a votable amendment with proposed changes</CardDescription>
+      </CardHeader>
+      <form onSubmit={handleSubmit}>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="amendment-vote-agenda">Agenda Item</Label>
+            <select
+              id="amendment-vote-agenda"
+              value={formData.agendaItemId}
+              onChange={e => setFormData({ ...formData, agendaItemId: e.target.value })}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              required
+            >
+              <option value="">Select a vote agenda item</option>
+              {userVoteAgendaItems.map((item: any) => (
+                <option key={item.id} value={item.id}>
+                  {item.title} ({item.event?.title})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="amendment-vote-title">Title</Label>
+            <Input
+              id="amendment-vote-title"
+              placeholder="Enter amendment title"
+              value={formData.title}
+              onChange={e => setFormData({ ...formData, title: e.target.value })}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="amendment-vote-description">Description</Label>
+            <Textarea
+              id="amendment-vote-description"
+              placeholder="Describe this amendment (optional)"
+              value={formData.description}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
+              rows={3}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="amendment-vote-original">Original Text (optional)</Label>
+            <Textarea
+              id="amendment-vote-original"
+              placeholder="Enter the current/original text"
+              value={formData.originalText}
+              onChange={e => setFormData({ ...formData, originalText: e.target.value })}
+              rows={4}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="amendment-vote-proposed">Proposed Text</Label>
+            <Textarea
+              id="amendment-vote-proposed"
+              placeholder="Enter the proposed new text"
+              value={formData.proposedText}
+              onChange={e => setFormData({ ...formData, proposedText: e.target.value })}
+              rows={4}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="amendment-vote-justification">Justification (optional)</Label>
+            <Textarea
+              id="amendment-vote-justification"
+              placeholder="Explain why this change is needed"
+              value={formData.justification}
+              onChange={e => setFormData({ ...formData, justification: e.target.value })}
+              rows={3}
+            />
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? 'Creating...' : 'Create Amendment Vote'}
+          </Button>
+        </CardFooter>
+      </form>
+    </Card>
+  );
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function GuidedAmendmentVoteFlow({
+  formData,
+  setFormData,
+  onBack,
+}: {
+  formData: any;
+  setFormData: (data: any) => void;
+  onBack: () => void;
+}) {
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
+  const [count, setCount] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const user = useAuthStore(state => state.user);
+
+  const { data: agendaData } = db.useQuery({
+    agendaItems: {
+      $: {
+        where: {
+          type: 'vote',
+        },
+      },
+    },
+  });
+
+  console.log('Guided - Vote Agenda Items Data:', agendaData);
+
+  const userVoteAgendaItems = agendaData?.agendaItems || [];
+
+  const data = {
+    title: formData.title || '',
+    description: formData.description || '',
+    originalText: formData.originalText || '',
+    proposedText: formData.proposedText || '',
+    justification: formData.justification || '',
+    agendaItemId: formData.agendaItemId || '',
+  };
+
+  useEffect(() => {
+    if (!api) return;
+    setCount(api.scrollSnapList().length);
+    setCurrent(api.selectedScrollSnap());
+    api.on('select', () => setCurrent(api.selectedScrollSnap()));
+  }, [api]);
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      if (!user?.id) {
+        toast.error('You must be logged in to create an amendment vote');
+        return;
+      }
+
+      if (!data.agendaItemId) {
+        toast.error('Please select an agenda item for this amendment vote');
+        return;
+      }
+
+      const amendmentVoteId = id();
+      const now = new Date();
+
+      await db.transact([
+        tx.amendmentVotes[amendmentVoteId].update({
+          title: data.title,
+          description: data.description || '',
+          originalText: data.originalText || '',
+          proposedText: data.proposedText,
+          justification: data.justification || '',
+          status: 'draft',
+          votingStartTime: null,
+          votingEndTime: null,
+          createdAt: now,
+          updatedAt: now,
+        }),
+        tx.amendmentVotes[amendmentVoteId].link({
+          agendaItem: data.agendaItemId,
+          creator: user.id,
+        }),
+      ]);
+
+      toast.success('Amendment vote created successfully!');
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 500);
+    } catch (error) {
+      console.error('Failed to create amendment vote:', error);
+      toast.error('Failed to create amendment vote. Please try again.');
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Create a New Amendment Vote</CardTitle>
+        <CardDescription>
+          Step {current + 1} of {count}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Carousel setApi={setApi} className="w-full">
+          <CarouselContent>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-amendment-vote-agenda" className="text-lg">
+                    Which agenda item is this amendment for?
+                  </Label>
+                  <select
+                    id="guided-amendment-vote-agenda"
+                    value={data.agendaItemId}
+                    onChange={e => setFormData({ ...formData, agendaItemId: e.target.value })}
+                    className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="">Select a vote agenda item</option>
+                    {userVoteAgendaItems.map((item: any) => (
+                      <option key={item.id} value={item.id}>
+                        {item.title} ({item.event?.title})
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-sm text-muted-foreground">
+                    Choose which vote agenda item this amendment belongs to
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-amendment-vote-title" className="text-lg">
+                    What's the amendment title?
+                  </Label>
+                  <Input
+                    id="guided-amendment-vote-title"
+                    placeholder="Enter amendment title"
+                    value={data.title}
+                    onChange={e => setFormData({ ...formData, title: e.target.value })}
+                    className="text-lg"
+                    autoFocus
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Be clear about what is being amended or proposed
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-amendment-vote-proposed" className="text-lg">
+                    What is the proposed text?
+                  </Label>
+                  <Textarea
+                    id="guided-amendment-vote-proposed"
+                    placeholder="Enter the proposed new text"
+                    value={data.proposedText}
+                    onChange={e => setFormData({ ...formData, proposedText: e.target.value })}
+                    rows={6}
+                    className="text-base"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    This is what will be voted on - the proposed change or new text
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+          </CarouselContent>
+          <div className="absolute -left-12 right-12 top-1/2 flex -translate-y-1/2 justify-between">
+            <CarouselPrevious />
+            <CarouselNext disabled={current === 0 && !data.agendaItemId} />
+          </div>
+        </Carousel>
+      </CardContent>
+      <CardFooter className="flex justify-between">
+        <Button variant="outline" onClick={onBack}>
+          Change Type
+        </Button>
+        <div className="flex items-center gap-4">
+          <div className="flex gap-1">
+            {Array.from({ length: count }).map((_, i) => (
+              <div
+                key={i}
+                className={`h-2 w-2 rounded-full ${i === current ? 'bg-primary' : 'bg-muted'}`}
+              />
+            ))}
+          </div>
+          {current === count - 1 && (
+            <Button
+              onClick={handleSubmit}
+              disabled={
+                isSubmitting ||
+                !data.title.trim() ||
+                !data.agendaItemId ||
+                !data.proposedText.trim()
+              }
+            >
+              {isSubmitting ? 'Creating...' : 'Create Amendment Vote'}
+            </Button>
+          )}
+        </div>
+      </CardFooter>
+    </Card>
+  );
+}
+
+// ====== CHANGE REQUEST FORMS ======
+function CreateChangeRequestForm() {
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    proposedChange: '',
+    justification: '',
+    amendmentId: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const user = useAuthStore(state => state.user);
+
+  // Query available amendment votes for the dropdown
+  const { data: amendmentVotesData } = db.useQuery({
+    amendmentVotes: {},
+  });
+
+  console.log('Amendment Votes Data:', amendmentVotesData);
+  console.log('Current User ID:', user?.id);
+
+  const userAmendmentVotes = amendmentVotesData?.amendmentVotes || [];
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      if (!user?.id) {
+        toast.error('You must be logged in to create a change request');
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.amendmentId) {
+        toast.error('Please select an amendment for this change request');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const changeRequestId = id();
+      const now = new Date();
+
+      await db.transact([
+        tx.changeRequests[changeRequestId].update({
+          title: formData.title,
+          description: formData.description,
+          proposedChange: formData.proposedChange,
+          justification: formData.justification || '',
+          status: 'proposed',
+          votingStartTime: null,
+          votingEndTime: null,
+          createdAt: now,
+          updatedAt: now,
+        }),
+        tx.changeRequests[changeRequestId].link({
+          amendmentVote: formData.amendmentId,
+          creator: user.id,
+        }),
+      ]);
+
+      toast.success('Change request created successfully!');
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 500);
+    } catch (error) {
+      console.error('Failed to create change request:', error);
+      toast.error('Failed to create change request. Please try again.');
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Create a New Change Request</CardTitle>
+        <CardDescription>Propose a change to an existing amendment</CardDescription>
+      </CardHeader>
+      <form onSubmit={handleSubmit}>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="change-request-amendment">Amendment</Label>
+            <select
+              id="change-request-amendment"
+              value={formData.amendmentId}
+              onChange={e => setFormData({ ...formData, amendmentId: e.target.value })}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              required
+            >
+              <option value="">Select an amendment</option>
+              {userAmendmentVotes.map((amendment: any) => (
+                <option key={amendment.id} value={amendment.id}>
+                  {amendment.title}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="change-request-title">Title</Label>
+            <Input
+              id="change-request-title"
+              placeholder="Enter change request title"
+              value={formData.title}
+              onChange={e => setFormData({ ...formData, title: e.target.value })}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="change-request-description">Description</Label>
+            <Textarea
+              id="change-request-description"
+              placeholder="Describe this change request"
+              value={formData.description}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
+              rows={3}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="change-request-proposed">Proposed Change</Label>
+            <Textarea
+              id="change-request-proposed"
+              placeholder="Enter the proposed change"
+              value={formData.proposedChange}
+              onChange={e => setFormData({ ...formData, proposedChange: e.target.value })}
+              rows={4}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="change-request-justification">Justification (optional)</Label>
+            <Textarea
+              id="change-request-justification"
+              placeholder="Explain why this change is needed"
+              value={formData.justification}
+              onChange={e => setFormData({ ...formData, justification: e.target.value })}
+              rows={3}
+            />
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? 'Creating...' : 'Create Change Request'}
+          </Button>
+        </CardFooter>
+      </form>
+    </Card>
+  );
+}
+
+function GuidedChangeRequestFlow({
+  formData,
+  setFormData,
+  onBack,
+}: {
+  formData: any;
+  setFormData: (data: any) => void;
+  onBack: () => void;
+}) {
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
+  const [count, setCount] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const user = useAuthStore(state => state.user);
+
+  const { data: amendmentVotesData } = db.useQuery({
+    amendmentVotes: {},
+  });
+
+  console.log('Guided - Amendment Votes Data:', amendmentVotesData);
+
+  const userAmendmentVotes = amendmentVotesData?.amendmentVotes || [];
+
+  const data = {
+    title: formData.title || '',
+    description: formData.description || '',
+    proposedChange: formData.proposedChange || '',
+    justification: formData.justification || '',
+    amendmentId: formData.amendmentId || '',
+  };
+
+  useEffect(() => {
+    if (!api) return;
+    setCount(api.scrollSnapList().length);
+    setCurrent(api.selectedScrollSnap());
+    api.on('select', () => setCurrent(api.selectedScrollSnap()));
+  }, [api]);
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      if (!user?.id) {
+        toast.error('You must be logged in to create a change request');
+        return;
+      }
+
+      if (!data.amendmentId) {
+        toast.error('Please select an amendment for this change request');
+        return;
+      }
+
+      const changeRequestId = id();
+      const now = new Date();
+
+      await db.transact([
+        tx.changeRequests[changeRequestId].update({
+          title: data.title,
+          description: data.description,
+          proposedChange: data.proposedChange,
+          justification: data.justification || '',
+          status: 'proposed',
+          votingStartTime: null,
+          votingEndTime: null,
+          createdAt: now,
+          updatedAt: now,
+        }),
+        tx.changeRequests[changeRequestId].link({
+          amendmentVote: data.amendmentId,
+          creator: user.id,
+        }),
+      ]);
+
+      toast.success('Change request created successfully!');
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 500);
+    } catch (error) {
+      console.error('Failed to create change request:', error);
+      toast.error('Failed to create change request. Please try again.');
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Create a New Change Request</CardTitle>
+        <CardDescription>
+          Step {current + 1} of {count}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Carousel setApi={setApi} className="w-full">
+          <CarouselContent>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-change-request-amendment" className="text-lg">
+                    Which amendment is this change request for?
+                  </Label>
+                  <select
+                    id="guided-change-request-amendment"
+                    value={data.amendmentId}
+                    onChange={e => setFormData({ ...formData, amendmentId: e.target.value })}
+                    className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="">Select an amendment</option>
+                    {userAmendmentVotes.map((amendment: any) => (
+                      <option key={amendment.id} value={amendment.id}>
+                        {amendment.title}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-sm text-muted-foreground">
+                    Choose which amendment you want to propose changes to
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-change-request-title" className="text-lg">
+                    What's the title of your change request?
+                  </Label>
+                  <Input
+                    id="guided-change-request-title"
+                    placeholder="Enter change request title"
+                    value={data.title}
+                    onChange={e => setFormData({ ...formData, title: e.target.value })}
+                    className="text-lg"
+                    autoFocus
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Be clear about what you want to change
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-change-request-proposed" className="text-lg">
+                    What is the proposed change?
+                  </Label>
+                  <Textarea
+                    id="guided-change-request-proposed"
+                    placeholder="Enter the proposed change"
+                    value={data.proposedChange}
+                    onChange={e => setFormData({ ...formData, proposedChange: e.target.value })}
+                    rows={6}
+                    className="text-base"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Describe the specific changes you are proposing
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+          </CarouselContent>
+          <div className="absolute -left-12 right-12 top-1/2 flex -translate-y-1/2 justify-between">
+            <CarouselPrevious />
+            <CarouselNext disabled={current === 0 && !data.amendmentId} />
+          </div>
+        </Carousel>
+      </CardContent>
+      <CardFooter className="flex justify-between">
+        <Button variant="outline" onClick={onBack}>
+          Change Type
+        </Button>
+        <div className="flex items-center gap-4">
+          <div className="flex gap-1">
+            {Array.from({ length: count }).map((_, i) => (
+              <div
+                key={i}
+                className={`h-2 w-2 rounded-full ${i === current ? 'bg-primary' : 'bg-muted'}`}
+              />
+            ))}
+          </div>
+          {current === count - 1 && (
+            <Button
+              onClick={handleSubmit}
+              disabled={
+                isSubmitting ||
+                !data.title.trim() ||
+                !data.amendmentId ||
+                !data.proposedChange.trim()
+              }
+            >
+              {isSubmitting ? 'Creating...' : 'Create Change Request'}
+            </Button>
+          )}
+        </div>
+      </CardFooter>
+    </Card>
+  );
+}
+
+// ====== ELECTION CANDIDATE FORMS ======
+function CreateElectionCandidateForm() {
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    imageURL: '',
+    order: 1,
+    electionId: '',
+    userId: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const user = useAuthStore(state => state.user);
+
+  // Query available elections for the dropdown
+  const { data: electionsData } = db.useQuery({
+    elections: {},
+  });
+
+  console.log('Elections Data:', electionsData);
+  console.log('Current User ID:', user?.id);
+
+  const userElections = electionsData?.elections || [];
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      if (!user?.id) {
+        toast.error('You must be logged in to create an election candidate');
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.electionId) {
+        toast.error('Please select an election for this candidate');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const candidateId = id();
+      const now = new Date();
+
+      const transactions = [
+        tx.electionCandidates[candidateId].update({
+          name: formData.name,
+          description: formData.description || '',
+          imageURL: formData.imageURL || '',
+          order: formData.order,
+          createdAt: now,
+        }),
+        tx.electionCandidates[candidateId].link({
+          election: formData.electionId,
+        }),
+      ];
+
+      // Optionally link to a user if userId is provided
+      if (formData.userId) {
+        transactions.push(
+          tx.electionCandidates[candidateId].link({
+            user: formData.userId,
+          })
+        );
+      }
+
+      await db.transact(transactions);
+
+      toast.success('Election candidate created successfully!');
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 500);
+    } catch (error) {
+      console.error('Failed to create election candidate:', error);
+      toast.error('Failed to create election candidate. Please try again.');
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Create a New Election Candidate</CardTitle>
+        <CardDescription>Add a candidate to an election</CardDescription>
+      </CardHeader>
+      <form onSubmit={handleSubmit}>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="election-candidate-election">Election</Label>
+            <select
+              id="election-candidate-election"
+              value={formData.electionId}
+              onChange={e => setFormData({ ...formData, electionId: e.target.value })}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              required
+            >
+              <option value="">Select an election</option>
+              {userElections.map((election: any) => (
+                <option key={election.id} value={election.id}>
+                  {election.title}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="election-candidate-name">Name</Label>
+            <Input
+              id="election-candidate-name"
+              placeholder="Enter candidate name"
+              value={formData.name}
+              onChange={e => setFormData({ ...formData, name: e.target.value })}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="election-candidate-description">Description</Label>
+            <Textarea
+              id="election-candidate-description"
+              placeholder="Describe the candidate (optional)"
+              value={formData.description}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
+              rows={3}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="election-candidate-imageURL">Image URL (optional)</Label>
+            <Input
+              id="election-candidate-imageURL"
+              placeholder="Enter image URL"
+              value={formData.imageURL}
+              onChange={e => setFormData({ ...formData, imageURL: e.target.value })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="election-candidate-order">Order</Label>
+            <Input
+              id="election-candidate-order"
+              type="number"
+              min="1"
+              placeholder="1"
+              value={formData.order}
+              onChange={e => setFormData({ ...formData, order: parseInt(e.target.value) || 1 })}
+              required
+            />
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? 'Creating...' : 'Create Election Candidate'}
+          </Button>
+        </CardFooter>
+      </form>
+    </Card>
+  );
+}
+
+function GuidedElectionCandidateFlow({
+  formData,
+  setFormData,
+  onBack,
+}: {
+  formData: any;
+  setFormData: (data: any) => void;
+  onBack: () => void;
+}) {
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
+  const [count, setCount] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const user = useAuthStore(state => state.user);
+
+  const { data: electionsData } = db.useQuery({
+    elections: {},
+  });
+
+  console.log('Guided - Elections Data:', electionsData);
+
+  const userElections = electionsData?.elections || [];
+
+  const data = {
+    name: formData.name || '',
+    description: formData.description || '',
+    imageURL: formData.imageURL || '',
+    order: formData.order || 1,
+    electionId: formData.electionId || '',
+    userId: formData.userId || '',
+  };
+
+  useEffect(() => {
+    if (!api) return;
+    setCount(api.scrollSnapList().length);
+    setCurrent(api.selectedScrollSnap());
+    api.on('select', () => setCurrent(api.selectedScrollSnap()));
+  }, [api]);
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      if (!user?.id) {
+        toast.error('You must be logged in to create an election candidate');
+        return;
+      }
+
+      if (!data.electionId) {
+        toast.error('Please select an election for this candidate');
+        return;
+      }
+
+      const candidateId = id();
+      const now = new Date();
+
+      const transactions = [
+        tx.electionCandidates[candidateId].update({
+          name: data.name,
+          description: data.description || '',
+          imageURL: data.imageURL || '',
+          order: data.order,
+          createdAt: now,
+        }),
+        tx.electionCandidates[candidateId].link({
+          election: data.electionId,
+        }),
+      ];
+
+      if (data.userId) {
+        transactions.push(
+          tx.electionCandidates[candidateId].link({
+            user: data.userId,
+          })
+        );
+      }
+
+      await db.transact(transactions);
+
+      toast.success('Election candidate created successfully!');
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 500);
+    } catch (error) {
+      console.error('Failed to create election candidate:', error);
+      toast.error('Failed to create election candidate. Please try again.');
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Create a New Election Candidate</CardTitle>
+        <CardDescription>
+          Step {current + 1} of {count}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Carousel setApi={setApi} className="w-full">
+          <CarouselContent>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-election-candidate-election" className="text-lg">
+                    Which election is this candidate for?
+                  </Label>
+                  <select
+                    id="guided-election-candidate-election"
+                    value={data.electionId}
+                    onChange={e => setFormData({ ...formData, electionId: e.target.value })}
+                    className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="">Select an election</option>
+                    {userElections.map((election: any) => (
+                      <option key={election.id} value={election.id}>
+                        {election.title}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-sm text-muted-foreground">
+                    Choose which election this candidate will participate in
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-election-candidate-name" className="text-lg">
+                    What's the candidate's name?
+                  </Label>
+                  <Input
+                    id="guided-election-candidate-name"
+                    placeholder="Enter candidate name"
+                    value={data.name}
+                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    className="text-lg"
+                    autoFocus
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Enter the full name of the candidate
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-election-candidate-description" className="text-lg">
+                    Describe the candidate (optional)
+                  </Label>
+                  <Textarea
+                    id="guided-election-candidate-description"
+                    placeholder="Enter candidate description or qualifications"
+                    value={data.description}
+                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                    rows={6}
+                    className="text-base"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Optional: Add background information or qualifications
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+          </CarouselContent>
+          <div className="absolute -left-12 right-12 top-1/2 flex -translate-y-1/2 justify-between">
+            <CarouselPrevious />
+            <CarouselNext disabled={current === 0 && !data.electionId} />
+          </div>
+        </Carousel>
+      </CardContent>
+      <CardFooter className="flex justify-between">
+        <Button variant="outline" onClick={onBack}>
+          Change Type
+        </Button>
+        <div className="flex items-center gap-4">
+          <div className="flex gap-1">
+            {Array.from({ length: count }).map((_, i) => (
+              <div
+                key={i}
+                className={`h-2 w-2 rounded-full ${i === current ? 'bg-primary' : 'bg-muted'}`}
+              />
+            ))}
+          </div>
+          {current === count - 1 && (
+            <Button
+              onClick={handleSubmit}
+              disabled={isSubmitting || !data.name.trim() || !data.electionId}
+            >
+              {isSubmitting ? 'Creating...' : 'Create Election Candidate'}
+            </Button>
+          )}
+        </div>
       </CardFooter>
     </Card>
   );

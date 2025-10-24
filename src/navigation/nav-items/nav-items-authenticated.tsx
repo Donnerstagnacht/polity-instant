@@ -199,18 +199,67 @@ export const navItemsAuthenticated = (
     },
   ];
 
+  // Define calendar secondary navigation items
+  const calendarSecondaryNavItems: NavigationItem[] = [
+    {
+      id: 'day',
+      label: 'Day View',
+      icon: 'List',
+      href: '/calendar?view=day',
+      onClick: () => router.push('/calendar?view=day'),
+    },
+    {
+      id: 'week',
+      label: 'Week View',
+      icon: 'Grid3x3',
+      href: '/calendar?view=week',
+      onClick: () => router.push('/calendar?view=week'),
+    },
+    {
+      id: 'month',
+      label: 'Month View',
+      icon: 'Calendar',
+      href: '/calendar?view=month',
+      onClick: () => router.push('/calendar?view=month'),
+    },
+  ];
+
+  // Function to create event secondary navigation items for a specific event
+  const getEventSecondaryNavItems = (eventId: string): NavigationItem[] => [
+    {
+      id: 'overview',
+      label: 'Overview',
+      icon: 'FileText',
+      href: `/event/${eventId}`,
+      onClick: () => router.push(`/event/${eventId}`),
+    },
+    {
+      id: 'agenda',
+      label: 'Agenda',
+      icon: 'Calendar',
+      href: `/event/${eventId}/agenda`,
+      onClick: () => router.push(`/event/${eventId}/agenda`),
+    },
+  ];
+
   return {
     primaryNavItems,
     projectSecondaryNavItems,
     dashboardSecondaryNavItems,
+    calendarSecondaryNavItems,
+    getEventSecondaryNavItems,
 
     // Utility function to get secondary items based on current route
-    getSecondaryNavItems: (currentPrimaryRoute: string | null) => {
+    getSecondaryNavItems: (currentPrimaryRoute: string | null, eventId?: string) => {
       switch (currentPrimaryRoute) {
         case 'projects':
           return projectSecondaryNavItems;
         case 'dashboard':
           return dashboardSecondaryNavItems;
+        case 'calendar':
+          return calendarSecondaryNavItems;
+        case 'event':
+          return eventId ? getEventSecondaryNavItems(eventId) : null;
         default:
           return null;
       }

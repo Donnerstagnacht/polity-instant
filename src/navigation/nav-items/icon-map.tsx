@@ -7,12 +7,14 @@ import {
   File,
   FileText,
   FolderOpen,
+  Grid3x3,
   Heart,
   Home,
   Keyboard,
   Laptop,
   LayoutDashboard,
   LineChart,
+  List,
   Mail,
   MessageSquare,
   Moon,
@@ -51,6 +53,8 @@ export const iconMap = {
   AreaChart,
   Workflow,
   PlusCircle,
+  List,
+  Grid3x3,
 } as const;
 
 export type IconName = keyof typeof iconMap;

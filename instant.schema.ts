@@ -197,6 +197,92 @@ const graph = i.graph(
       assignedAt: i.date().indexed(),
       role: i.string().optional(), // 'owner', 'collaborator', 'reviewer'
     }),
+
+    // Agenda system entities
+    // Agenda items for events (Tagesordnungspunkte)
+    agendaItems: i.entity({
+      title: i.string().indexed(),
+      description: i.string().optional(),
+      type: i.string().indexed(), // 'election', 'vote', 'speech', 'discussion'
+      order: i.number().indexed(), // Order within the agenda
+      duration: i.number().optional(), // Duration in minutes
+      status: i.string().indexed(), // 'pending', 'active', 'completed', 'cancelled'
+      startTime: i.date().optional(),
+      endTime: i.date().optional(),
+      createdAt: i.date().indexed(),
+      updatedAt: i.date().indexed(),
+    }),
+
+    // Elections (Wahlen)
+    elections: i.entity({
+      title: i.string().indexed(),
+      description: i.string().optional(),
+      majorityType: i.string().indexed(), // 'absolute', 'relative'
+      isMultipleChoice: i.boolean(), // Allow multiple selections
+      maxSelections: i.number().optional(), // Max number of selections (for multiple choice)
+      votingStartTime: i.date().optional(),
+      votingEndTime: i.date().optional(),
+      status: i.string().indexed(), // 'pending', 'active', 'completed', 'cancelled'
+      createdAt: i.date().indexed(),
+      updatedAt: i.date().indexed(),
+    }),
+
+    // Election candidates (Wahlvorschläge)
+    electionCandidates: i.entity({
+      name: i.string().indexed(),
+      description: i.string().optional(),
+      imageURL: i.string().optional(),
+      order: i.number().indexed(),
+      createdAt: i.date().indexed(),
+    }),
+
+    // Amendment entity (enhanced existing)
+    amendmentVotes: i.entity({
+      title: i.string().indexed(),
+      description: i.string().optional(),
+      originalText: i.string().optional(),
+      proposedText: i.string(),
+      justification: i.string().optional(),
+      status: i.string().indexed(), // 'draft', 'proposed', 'voting', 'accepted', 'rejected'
+      votingStartTime: i.date().optional(),
+      votingEndTime: i.date().optional(),
+      createdAt: i.date().indexed(),
+      updatedAt: i.date().indexed(),
+    }),
+
+    // Change requests for amendments
+    changeRequests: i.entity({
+      title: i.string().indexed(),
+      description: i.string(),
+      proposedChange: i.string(),
+      justification: i.string().optional(),
+      status: i.string().indexed(), // 'proposed', 'voting', 'accepted', 'rejected'
+      votingStartTime: i.date().optional(),
+      votingEndTime: i.date().optional(),
+      createdAt: i.date().indexed(),
+      updatedAt: i.date().indexed(),
+    }),
+
+    // Voting system entities
+    // Votes for elections
+    electionVotes: i.entity({
+      createdAt: i.date().indexed(),
+      updatedAt: i.date().optional(),
+    }),
+
+    // Votes for amendments
+    amendmentVoteEntries: i.entity({
+      vote: i.string().indexed(), // 'yes', 'no', 'abstain'
+      createdAt: i.date().indexed(),
+      updatedAt: i.date().optional(),
+    }),
+
+    // Votes for change requests
+    changeRequestVotes: i.entity({
+      vote: i.string().indexed(), // 'yes', 'no', 'abstain'
+      createdAt: i.date().indexed(),
+      updatedAt: i.date().optional(),
+    }),
   },
   {
     // 1. Link between users and profiles (one-to-one)
@@ -547,6 +633,232 @@ const graph = i.graph(
         on: 'groups',
         has: 'many',
         label: 'todos',
+      },
+    },
+
+    // Agenda system relationships
+    // 24. Agenda items to events (many-to-one)
+    agendaItemEvents: {
+      forward: {
+        on: 'agendaItems',
+        has: 'one',
+        label: 'event',
+      },
+      reverse: {
+        on: 'events',
+        has: 'many',
+        label: 'agendaItems',
+      },
+    },
+
+    // 25. Agenda items to creator (many-to-one)
+    agendaItemCreators: {
+      forward: {
+        on: 'agendaItems',
+        has: 'one',
+        label: 'creator',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'createdAgendaItems',
+      },
+    },
+
+    // 26. Elections to agenda items (one-to-one)
+    electionAgendaItems: {
+      forward: {
+        on: 'elections',
+        has: 'one',
+        label: 'agendaItem',
+      },
+      reverse: {
+        on: 'agendaItems',
+        has: 'one',
+        label: 'election',
+      },
+    },
+
+    // 27. Election candidates to elections (many-to-one)
+    electionCandidateElections: {
+      forward: {
+        on: 'electionCandidates',
+        has: 'one',
+        label: 'election',
+      },
+      reverse: {
+        on: 'elections',
+        has: 'many',
+        label: 'candidates',
+      },
+    },
+
+    // 28. Election candidates to users (many-to-one, optional)
+    electionCandidateUsers: {
+      forward: {
+        on: 'electionCandidates',
+        has: 'one',
+        label: 'user',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'candidacies',
+      },
+    },
+
+    // 29. Amendment votes to agenda items (one-to-one)
+    amendmentVoteAgendaItems: {
+      forward: {
+        on: 'amendmentVotes',
+        has: 'one',
+        label: 'agendaItem',
+      },
+      reverse: {
+        on: 'agendaItems',
+        has: 'one',
+        label: 'amendmentVote',
+      },
+    },
+
+    // 30. Amendment votes to creator (many-to-one)
+    amendmentVoteCreators: {
+      forward: {
+        on: 'amendmentVotes',
+        has: 'one',
+        label: 'creator',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'createdAmendmentVotes',
+      },
+    },
+
+    // 31. Change requests to amendment votes (many-to-one)
+    changeRequestAmendmentVotes: {
+      forward: {
+        on: 'changeRequests',
+        has: 'one',
+        label: 'amendmentVote',
+      },
+      reverse: {
+        on: 'amendmentVotes',
+        has: 'many',
+        label: 'changeRequests',
+      },
+    },
+
+    // 32. Change requests to creator (many-to-one)
+    changeRequestCreators: {
+      forward: {
+        on: 'changeRequests',
+        has: 'one',
+        label: 'creator',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'createdChangeRequests',
+      },
+    },
+
+    // Voting relationships
+    // 33. Election votes to users (many-to-one)
+    electionVoteUsers: {
+      forward: {
+        on: 'electionVotes',
+        has: 'one',
+        label: 'voter',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'electionVotes',
+      },
+    },
+
+    // 34. Election votes to candidates (many-to-one)
+    electionVoteCandidates: {
+      forward: {
+        on: 'electionVotes',
+        has: 'one',
+        label: 'candidate',
+      },
+      reverse: {
+        on: 'electionCandidates',
+        has: 'many',
+        label: 'votes',
+      },
+    },
+
+    // 35. Election votes to elections (many-to-one)
+    electionVoteElections: {
+      forward: {
+        on: 'electionVotes',
+        has: 'one',
+        label: 'election',
+      },
+      reverse: {
+        on: 'elections',
+        has: 'many',
+        label: 'votes',
+      },
+    },
+
+    // 36. Amendment vote entries to users (many-to-one)
+    amendmentVoteEntryUsers: {
+      forward: {
+        on: 'amendmentVoteEntries',
+        has: 'one',
+        label: 'voter',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'amendmentVoteEntries',
+      },
+    },
+
+    // 37. Amendment vote entries to amendment votes (many-to-one)
+    amendmentVoteEntryAmendmentVotes: {
+      forward: {
+        on: 'amendmentVoteEntries',
+        has: 'one',
+        label: 'amendmentVote',
+      },
+      reverse: {
+        on: 'amendmentVotes',
+        has: 'many',
+        label: 'voteEntries',
+      },
+    },
+
+    // 38. Change request votes to users (many-to-one)
+    changeRequestVoteUsers: {
+      forward: {
+        on: 'changeRequestVotes',
+        has: 'one',
+        label: 'voter',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'changeRequestVotes',
+      },
+    },
+
+    // 39. Change request votes to change requests (many-to-one)
+    changeRequestVoteChangeRequests: {
+      forward: {
+        on: 'changeRequestVotes',
+        has: 'one',
+        label: 'changeRequest',
+      },
+      reverse: {
+        on: 'changeRequests',
+        has: 'many',
+        label: 'votes',
       },
     },
   }
