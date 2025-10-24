@@ -8,6 +8,8 @@ import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Cursors } from '@instantdb/react';
 import { db, tx, id } from '../../db';
 import {
   Select,
@@ -44,6 +46,46 @@ export default function EditorPage() {
   // Ref to track if content change is from user input or document load
   const isLoadingDocument = useRef(false);
 
+  // Get user profile for presence data
+  const { data: profileData } = db.useQuery({
+    profiles: {
+      $: { where: { 'user.id': user?.id } },
+    },
+  });
+  const userProfile = profileData?.profiles?.[0];
+
+  // Generate a consistent color for this user
+  const userColor = user?.id
+    ? `hsl(${parseInt(user.id.substring(0, 8), 16) % 360}, 70%, 50%)`
+    : '#888888';
+
+  // Create room for presence and cursors - use a default room if no document selected
+  // This ensures the hook is always called with a valid room
+  const room = db.room('editor', selectedDocId || 'default');
+
+  // Presence hook - show who's online
+  // Always call the hook (required by Rules of Hooks)
+  const { peers, publishPresence } = db.rooms.usePresence(room, {
+    initialData: {
+      name: userProfile?.name || user?.email || 'Anonymous',
+      avatar: userProfile?.avatar,
+      color: userColor,
+      userId: user?.id || '',
+    },
+  });
+
+  // Update presence when profile changes
+  useEffect(() => {
+    if (selectedDocId && userProfile && publishPresence) {
+      publishPresence({
+        name: userProfile.name || user?.email || 'Anonymous',
+        avatar: userProfile.avatar,
+        color: userColor,
+        userId: user?.id || '',
+      });
+    }
+  }, [userProfile, selectedDocId, publishPresence, userColor, user?.email]);
+
   // Query documents owned by or collaborated on by current user
   const { data: documentsData, isLoading: documentsLoading } = db.useQuery({
     documents: {
@@ -69,9 +111,6 @@ export default function EditorPage() {
             collaborators: {
               user: {},
             },
-            cursors: {
-              user: {},
-            },
           },
         }
       : null
@@ -79,7 +118,11 @@ export default function EditorPage() {
 
   const documents = documentsData?.documents || [];
   const selectedDocument = selectedDocData?.documents?.[0];
-  const otherCursors = selectedDocument?.cursors?.filter((c: any) => c.user?.id !== user?.id) || [];
+
+  // Get online peers (excluding current user) - only show when a document is selected
+  const onlinePeers = selectedDocId
+    ? Object.values(peers).filter((peer: any) => peer.userId !== user?.id)
+    : [];
 
   // Memoized onChange handler to prevent infinite loops
   const handleContentChange = useCallback((newContent: any[]) => {
@@ -287,22 +330,27 @@ export default function EditorPage() {
           </Dialog>
 
           {/* Active users indicator */}
-          {selectedDocId && otherCursors.length > 0 && (
+          {selectedDocId && onlinePeers.length > 0 && (
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">
-                {otherCursors.length} {otherCursors.length === 1 ? 'user' : 'users'} editing
+                {onlinePeers.length} {onlinePeers.length === 1 ? 'user' : 'users'} online
               </span>
               <div className="flex -space-x-2">
-                {otherCursors.map((cursor: any) => (
-                  <div
-                    key={cursor.id}
-                    className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-background text-xs font-medium text-white"
-                    style={{ backgroundColor: cursor.color }}
-                    title={cursor.name}
+                {onlinePeers.map((peer: any) => (
+                  <Avatar
+                    key={peer.peerId}
+                    className="h-6 w-6 border-2 border-background"
+                    title={peer.name}
                   >
-                    {cursor.name?.[0]?.toUpperCase()}
-                  </div>
+                    {peer.avatar ? <AvatarImage src={peer.avatar} alt={peer.name} /> : null}
+                    <AvatarFallback
+                      style={{ backgroundColor: peer.color }}
+                      className="text-xs text-white"
+                    >
+                      {peer.name?.[0]?.toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
                 ))}
               </div>
             </div>
@@ -353,13 +401,14 @@ export default function EditorPage() {
             </CardHeader>
             <CardContent>
               <div className="min-h-[600px]">
-                {documentContent && (
-                  <PlateEditor
-                    key={selectedDocId}
-                    initialValue={documentContent}
-                    onChange={handleContentChange}
-                    cursors={otherCursors}
-                  />
+                {documentContent && selectedDocId && (
+                  <Cursors room={room} userCursorColor={userColor} className="h-full w-full">
+                    <PlateEditor
+                      key={selectedDocId}
+                      initialValue={documentContent}
+                      onChange={handleContentChange}
+                    />
+                  </Cursors>
                 )}
               </div>
             </CardContent>

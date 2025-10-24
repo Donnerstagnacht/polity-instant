@@ -4,8 +4,8 @@
 
 import { i } from '@instantdb/react';
 
-const graph = i.graph(
-  {
+const _schema = i.schema({
+  entities: {
     // User entity with authentication (only default attributes)
     $files: i.entity({
       path: i.string().unique().indexed(),
@@ -326,7 +326,7 @@ const graph = i.graph(
       updatedAt: i.date().indexed(),
     }),
   },
-  {
+  links: {
     // 1. Link between users and profiles (one-to-one)
     userProfiles: {
       forward: {
@@ -1030,7 +1030,32 @@ const graph = i.graph(
         label: 'documentCursors',
       },
     },
-  }
-);
+  },
+  rooms: {
+    // Editor room for collaborative editing
+    editor: {
+      presence: i.entity({
+        name: i.string(),
+        avatar: i.string().optional(),
+        color: i.string(),
+        userId: i.string(),
+      }),
+      topics: {
+        // Typing indicator
+        typing: i.entity({
+          userId: i.string(),
+          isTyping: i.boolean(),
+        }),
+      },
+    },
+  },
+});
 
-export default graph;
+// This helps Typescript display nicer intellisense
+type _AppSchema = typeof _schema;
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface AppSchema extends _AppSchema {}
+const schema: AppSchema = _schema;
+
+export type { AppSchema };
+export default schema;

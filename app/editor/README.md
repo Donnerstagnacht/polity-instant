@@ -25,8 +25,10 @@ The collaborative editor at `/editor` allows users to create, edit, and collabor
 
    - Auto-save changes after 1 second
    - Live synchronization via InstantDB
-   - See active collaborators
-   - Cursor position tracking (basic)
+   - Real-time cursor tracking with InstantDB's `<Cursors>` component
+   - See active collaborators with avatars
+   - Presence system showing who's online
+   - Smooth cursor animations
 
 4. **Permissions**
    - Owner: Full edit and delete access
@@ -35,33 +37,28 @@ The collaborative editor at `/editor` allows users to create, edit, and collabor
 
 ### 🚧 Coming Soon
 
-1. **Enhanced Cursor Sync**
-
-   - Full cursor position visualization
-   - Selection highlights
-   - Smooth animations
-
-2. **Advanced Collaboration**
+1. **Advanced Collaboration**
 
    - Operational transformation for conflict resolution
    - Real-time chat in document
    - @mentions
    - Activity feed
+   - Typing indicators
 
-3. **Document Sharing**
+2. **Document Sharing**
 
    - Share dialog with user picker
    - Permission management UI
    - Public link generation
    - Invite via email
 
-4. **Version History**
+3. **Version History**
 
    - Track all revisions
    - Restore previous versions
    - Compare versions side-by-side
 
-5. **Organization**
+4. **Organization**
    - Folders and collections
    - Advanced search and filtering
    - Tags management
@@ -97,7 +94,27 @@ The collaborative editor at `/editor` allows users to create, edit, and collabor
 
 - `documents`: Main document storage
 - `documentCollaborators`: Access control
-- `documentCursors`: Real-time cursor positions
+- Room `editor`: Real-time presence and cursor tracking
+
+### Real-time Features
+
+#### Cursors
+
+The editor uses InstantDB's built-in `<Cursors>` component for real-time cursor tracking:
+
+- Each user gets a unique color based on their user ID
+- Cursors are smoothly animated
+- Selection ranges are highlighted
+- User names appear on hover
+
+#### Presence
+
+The presence system shows who's online:
+
+- User avatars appear in the header
+- Online status updates in real-time
+- Users see their own presence state
+- Colors are consistent across sessions
 
 ### Auto-save
 
@@ -105,12 +122,12 @@ Changes are saved automatically 1 second after typing stops. You'll see an "Auto
 
 ### Real-time Sync
 
-The editor uses InstantDB's real-time queries to:
+The editor uses InstantDB's real-time features:
 
-- Load document content
-- Update on changes from other users
-- Track active collaborators
-- Sync cursor positions
+- **Queries**: Load and sync document content
+- **Rooms**: Scoped collaboration per document
+- **Presence**: Track who's online
+- **Cursors**: Built-in cursor component with smooth animations
 
 ## Testing
 
@@ -130,7 +147,11 @@ Run `npm run seed` to create test documents:
 3. See 2 pre-created documents
 4. Create a new document
 5. Edit and verify auto-save
-6. (Optional) Open in another browser to test real-time sync
+6. **Open in another browser/tab to test real-time features:**
+   - See other users' cursors moving in real-time
+   - See avatars of online users in the header
+   - Verify changes sync automatically
+   - Test cursor colors are consistent
 
 ## Keyboard Shortcuts
 
