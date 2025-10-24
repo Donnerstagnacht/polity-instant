@@ -291,6 +291,16 @@ const graph = i.graph(
       createdAt: i.date().indexed(),
       updatedAt: i.date().indexed(),
     }),
+
+    // Positions - elected positions within groups
+    positions: i.entity({
+      title: i.string().indexed(),
+      description: i.string().optional(),
+      term: i.number(), // Number of months the term lasts
+      firstTermStart: i.date().indexed(), // Date when the first term started
+      createdAt: i.date().indexed(),
+      updatedAt: i.date().indexed(),
+    }),
   },
   {
     // 1. Link between users and profiles (one-to-one)
@@ -896,6 +906,34 @@ const graph = i.graph(
         on: 'groups',
         has: 'many',
         label: 'parentRelationships',
+      },
+    },
+
+    // 42. Positions to groups (many-to-one)
+    positionGroups: {
+      forward: {
+        on: 'positions',
+        has: 'one',
+        label: 'group',
+      },
+      reverse: {
+        on: 'groups',
+        has: 'many',
+        label: 'positions',
+      },
+    },
+
+    // 43. Elections to positions (many-to-one, optional)
+    electionPositions: {
+      forward: {
+        on: 'elections',
+        has: 'one',
+        label: 'position',
+      },
+      reverse: {
+        on: 'positions',
+        has: 'many',
+        label: 'elections',
       },
     },
   }

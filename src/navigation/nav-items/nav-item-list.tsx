@@ -8,6 +8,7 @@ import React, { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { isItemActive } from './nav-helpers';
 import { Loader2 } from 'lucide-react';
+import Link from 'next/link';
 
 export function NavItemList({
   navigationItems,
@@ -43,8 +44,58 @@ export function NavItemList({
           {navigationItems.length <= 4 ? (
             <div className="col-span-full flex flex-wrap justify-center gap-8">
               {navigationItems.map(item => (
+                <Link key={item.id} href={item.href || '#'} className="inline-block">
+                  <Button
+                    variant="ghost"
+                    disabled={loadingItem === item.id}
+                    className={cn(
+                      'relative h-24 w-24 flex-shrink-0 flex-col gap-2 hover:bg-accent',
+                      isItemActive(item, currentRoute, isPrimary) &&
+                        'bg-accent text-accent-foreground'
+                    )}
+                    onClick={e => {
+                      if (item.onClick) {
+                        e.preventDefault();
+                        handleItemClick(item);
+                      }
+                    }}
+                  >
+                    {loadingItem === item.id ? (
+                      <Loader2 className="h-8 w-8 animate-spin" />
+                    ) : (
+                      React.createElement(iconMap[item.icon], {
+                        className: cn(
+                          'h-8 w-8',
+                          isItemActive(item, currentRoute, isPrimary) && 'text-primary'
+                        ),
+                      })
+                    )}
+                    <span className="text-sm">{item.label}</span>
+                    {item.badge && (
+                      <Badge
+                        className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center p-0"
+                        variant="default"
+                      >
+                        {(() => {
+                          console.log('🏷️ [NavItemList] Rendering badge:', {
+                            itemId: item.id,
+                            itemLabel: item.label,
+                            badge: item.badge,
+                            navigationView: 'asButton',
+                          });
+                          return item.badge;
+                        })()}
+                      </Badge>
+                    )}
+                  </Button>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            // Original layout for 5+ items
+            navigationItems.map(item => (
+              <Link key={item.id} href={item.href || '#'} className="inline-block">
                 <Button
-                  key={item.id}
                   variant="ghost"
                   disabled={loadingItem === item.id}
                   className={cn(
@@ -52,7 +103,12 @@ export function NavItemList({
                     isItemActive(item, currentRoute, isPrimary) &&
                       'bg-accent text-accent-foreground'
                   )}
-                  onClick={() => handleItemClick(item)}
+                  onClick={e => {
+                    if (item.onClick) {
+                      e.preventDefault();
+                      handleItemClick(item);
+                    }
+                  }}
                 >
                   {loadingItem === item.id ? (
                     <Loader2 className="h-8 w-8 animate-spin" />
@@ -67,56 +123,14 @@ export function NavItemList({
                   <span className="text-sm">{item.label}</span>
                   {item.badge && (
                     <Badge
-                      className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center p-0"
+                      className="absolute right-4 top-2 flex h-5 w-5 items-center justify-center p-0"
                       variant="default"
                     >
-                      {(() => {
-                        console.log('🏷️ [NavItemList] Rendering badge:', {
-                          itemId: item.id,
-                          itemLabel: item.label,
-                          badge: item.badge,
-                          navigationView: 'asButton',
-                        });
-                        return item.badge;
-                      })()}
+                      {item.badge}
                     </Badge>
                   )}
                 </Button>
-              ))}
-            </div>
-          ) : (
-            // Original layout for 5+ items
-            navigationItems.map(item => (
-              <Button
-                key={item.id}
-                variant="ghost"
-                disabled={loadingItem === item.id}
-                className={cn(
-                  'relative h-24 w-24 flex-shrink-0 flex-col gap-2 hover:bg-accent',
-                  isItemActive(item, currentRoute, isPrimary) && 'bg-accent text-accent-foreground'
-                )}
-                onClick={() => handleItemClick(item)}
-              >
-                {loadingItem === item.id ? (
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                ) : (
-                  React.createElement(iconMap[item.icon], {
-                    className: cn(
-                      'h-8 w-8',
-                      isItemActive(item, currentRoute, isPrimary) && 'text-primary'
-                    ),
-                  })
-                )}
-                <span className="text-sm">{item.label}</span>
-                {item.badge && (
-                  <Badge
-                    className="absolute right-4 top-2 flex h-5 w-5 items-center justify-center p-0"
-                    variant="default"
-                  >
-                    {item.badge}
-                  </Badge>
-                )}
-              </Button>
+              </Link>
             ))
           )}
         </div>
@@ -132,46 +146,51 @@ export function NavItemList({
           {navigationItems.map(item => (
             <Popover key={item.id} open={hoveredItem === item.id}>
               <PopoverTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    'relative h-12 w-12 flex-shrink-0 hover:bg-accent',
-                    isItemActive(item, currentRoute, isPrimary) &&
-                      'bg-accent text-accent-foreground'
-                  )}
-                  onClick={() => {
-                    if (item.onClick) item.onClick();
-                    setHoveredItem(null); // Reset hover state after click
-                  }}
-                  onMouseEnter={() => setHoveredItem(item.id)}
-                  onMouseLeave={() => setHoveredItem(null)}
-                  onTouchStart={() => setHoveredItem(item.id)}
-                  onTouchEnd={() => setHoveredItem(null)}
-                >
-                  {React.createElement(iconMap[item.icon], {
-                    className: cn(
-                      'h-5 w-5',
-                      isItemActive(item, currentRoute, isPrimary) && 'text-primary'
-                    ),
-                  })}
-                  {item.badge && (
-                    <Badge
-                      className="absolute right-4 top-2 flex h-5 w-5 items-center justify-center p-0"
-                      variant="default"
-                    >
-                      {(() => {
-                        console.log('🏷️ [NavItemList] Rendering badge (grid):', {
-                          itemId: item.id,
-                          itemLabel: item.label,
-                          badge: item.badge,
-                          navigationView: 'asButton-grid',
-                        });
-                        return item.badge;
-                      })()}
-                    </Badge>
-                  )}
-                </Button>
+                <Link href={item.href || '#'} className="inline-block">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      'relative h-12 w-12 flex-shrink-0 hover:bg-accent',
+                      isItemActive(item, currentRoute, isPrimary) &&
+                        'bg-accent text-accent-foreground'
+                    )}
+                    onClick={e => {
+                      if (item.onClick) {
+                        e.preventDefault();
+                        item.onClick();
+                      }
+                      setHoveredItem(null); // Reset hover state after click
+                    }}
+                    onMouseEnter={() => setHoveredItem(item.id)}
+                    onMouseLeave={() => setHoveredItem(null)}
+                    onTouchStart={() => setHoveredItem(item.id)}
+                    onTouchEnd={() => setHoveredItem(null)}
+                  >
+                    {React.createElement(iconMap[item.icon], {
+                      className: cn(
+                        'h-5 w-5',
+                        isItemActive(item, currentRoute, isPrimary) && 'text-primary'
+                      ),
+                    })}
+                    {item.badge && (
+                      <Badge
+                        className="absolute right-4 top-2 flex h-5 w-5 items-center justify-center p-0"
+                        variant="default"
+                      >
+                        {(() => {
+                          console.log('🏷️ [NavItemList] Rendering badge (grid):', {
+                            itemId: item.id,
+                            itemLabel: item.label,
+                            badge: item.badge,
+                            navigationView: 'asButton-grid',
+                          });
+                          return item.badge;
+                        })()}
+                      </Badge>
+                    )}
+                  </Button>
+                </Link>
               </PopoverTrigger>
               <PopoverContent side="top" className="w-auto p-2" sideOffset={8}>
                 <span className="text-sm font-medium">{item.label}</span>
@@ -190,35 +209,41 @@ export function NavItemList({
         {navigationItems.map(item => (
           <Popover key={item.id} open={hoveredItem === item.id}>
             <PopoverTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn(
-                  'relative h-12 w-12 flex-shrink-0 hover:bg-accent',
-                  isItemActive(item, currentRoute, isPrimary) && 'bg-accent text-accent-foreground'
-                )}
-                onClick={() => {
-                  if (item.onClick) item.onClick();
-                  setHoveredItem(null); // Reset hover state after click
-                }}
-                onMouseEnter={() => setHoveredItem(item.id)}
-                onMouseLeave={() => setHoveredItem(null)}
-              >
-                {React.createElement(iconMap[item.icon], {
-                  className: cn(
-                    'h-5 w-5',
-                    isItemActive(item, currentRoute, isPrimary) && 'text-primary'
-                  ),
-                })}
-                {item.badge && (
-                  <Badge
-                    className="absolute -right-1 -top-0 flex h-5 w-5 items-center justify-center p-0"
-                    variant="default"
-                  >
-                    {item.badge}
-                  </Badge>
-                )}
-              </Button>
+              <Link href={item.href || '#'} className="inline-block">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    'relative h-12 w-12 flex-shrink-0 hover:bg-accent',
+                    isItemActive(item, currentRoute, isPrimary) &&
+                      'bg-accent text-accent-foreground'
+                  )}
+                  onClick={e => {
+                    if (item.onClick) {
+                      e.preventDefault();
+                      item.onClick();
+                    }
+                    setHoveredItem(null); // Reset hover state after click
+                  }}
+                  onMouseEnter={() => setHoveredItem(item.id)}
+                  onMouseLeave={() => setHoveredItem(null)}
+                >
+                  {React.createElement(iconMap[item.icon], {
+                    className: cn(
+                      'h-5 w-5',
+                      isItemActive(item, currentRoute, isPrimary) && 'text-primary'
+                    ),
+                  })}
+                  {item.badge && (
+                    <Badge
+                      className="absolute -right-1 -top-0 flex h-5 w-5 items-center justify-center p-0"
+                      variant="default"
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
+                </Button>
+              </Link>
             </PopoverTrigger>
             <PopoverContent
               side={isPrimary ? 'right' : 'left'}
@@ -239,41 +264,45 @@ export function NavItemList({
       <div className="scrollbar-hide flex-1 overflow-x-auto">
         <div className="flex min-w-max items-center justify-center gap-1 px-2">
           {navigationItems.map(item => (
-            <Button
-              key={item.id}
-              variant="ghost"
-              className={cn(
-                'flex h-16 min-w-16 flex-shrink-0 flex-col gap-1 px-2 hover:bg-accent',
-                isItemActive(item, currentRoute, isPrimary) && 'bg-accent text-accent-foreground'
-              )}
-              onClick={() => {
-                if (item.onClick) item.onClick();
-                setHoveredItem(null); // Reset hover state after click
-              }}
-              onMouseEnter={() => setHoveredItem(item.id)}
-              onMouseLeave={() => setHoveredItem(null)}
-            >
-              <div className="relative">
-                {' '}
-                {React.createElement(iconMap[item.icon], {
-                  className: cn(
-                    'h-5 w-5 flex-shrink-0',
-                    isItemActive(item, currentRoute, isPrimary) && 'text-primary'
-                  ),
-                })}
-                {item.badge && (
-                  <Badge
-                    className="absolute -right-5 -top-3 flex h-5 w-5 items-center justify-center p-0"
-                    variant="default"
-                  >
-                    {item.badge}
-                  </Badge>
+            <Link key={item.id} href={item.href || '#'} className="inline-block">
+              <Button
+                variant="ghost"
+                className={cn(
+                  'flex h-16 min-w-16 flex-shrink-0 flex-col gap-1 px-2 hover:bg-accent',
+                  isItemActive(item, currentRoute, isPrimary) && 'bg-accent text-accent-foreground'
                 )}
-              </div>
-              <span className="whitespace-nowrap text-center text-xs leading-tight">
-                {item.label}
-              </span>
-            </Button>
+                onClick={e => {
+                  if (item.onClick) {
+                    e.preventDefault();
+                    item.onClick();
+                  }
+                  setHoveredItem(null); // Reset hover state after click
+                }}
+                onMouseEnter={() => setHoveredItem(item.id)}
+                onMouseLeave={() => setHoveredItem(null)}
+              >
+                <div className="relative">
+                  {' '}
+                  {React.createElement(iconMap[item.icon], {
+                    className: cn(
+                      'h-5 w-5 flex-shrink-0',
+                      isItemActive(item, currentRoute, isPrimary) && 'text-primary'
+                    ),
+                  })}
+                  {item.badge && (
+                    <Badge
+                      className="absolute -right-5 -top-3 flex h-5 w-5 items-center justify-center p-0"
+                      variant="default"
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
+                </div>
+                <span className="whitespace-nowrap text-center text-xs leading-tight">
+                  {item.label}
+                </span>
+              </Button>
+            </Link>
           ))}
         </div>
       </div>
@@ -285,33 +314,37 @@ export function NavItemList({
     return (
       <div className="flex flex-col gap-2">
         {navigationItems.map(item => (
-          <Button
-            key={item.id}
-            variant="ghost"
-            className={cn(
-              'h-12 flex-shrink-0 justify-start gap-3 px-3',
-              isItemActive(item, currentRoute, isPrimary) && 'bg-accent text-accent-foreground'
-            )}
-            onClick={() => {
-              if (item.onClick) item.onClick();
-              setHoveredItem(null); // Reset hover state after click
-            }}
-            onMouseEnter={() => setHoveredItem(item.id)}
-            onMouseLeave={() => setHoveredItem(null)}
-          >
-            {React.createElement(iconMap[item.icon], {
-              className: cn(
-                'h-5 w-5',
-                isItemActive(item, currentRoute, isPrimary) && 'text-primary'
-              ),
-            })}
-            <span>{item.label}</span>
-            {item.badge && (
-              <Badge className="ml-auto" variant="default">
-                {item.badge}
-              </Badge>
-            )}
-          </Button>
+          <Link key={item.id} href={item.href || '#'} className="inline-block">
+            <Button
+              variant="ghost"
+              className={cn(
+                'h-12 w-full flex-shrink-0 justify-start gap-3 px-3',
+                isItemActive(item, currentRoute, isPrimary) && 'bg-accent text-accent-foreground'
+              )}
+              onClick={e => {
+                if (item.onClick) {
+                  e.preventDefault();
+                  item.onClick();
+                }
+                setHoveredItem(null); // Reset hover state after click
+              }}
+              onMouseEnter={() => setHoveredItem(item.id)}
+              onMouseLeave={() => setHoveredItem(null)}
+            >
+              {React.createElement(iconMap[item.icon], {
+                className: cn(
+                  'h-5 w-5',
+                  isItemActive(item, currentRoute, isPrimary) && 'text-primary'
+                ),
+              })}
+              <span>{item.label}</span>
+              {item.badge && (
+                <Badge className="ml-auto" variant="default">
+                  {item.badge}
+                </Badge>
+              )}
+            </Button>
+          </Link>
         ))}
       </div>
     );

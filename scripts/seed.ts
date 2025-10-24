@@ -52,6 +52,7 @@ const SEED_CONFIG = {
   notificationsPerUser: { min: 2, max: 7 },
   todosPerUser: { min: 2, max: 5 },
   todoAssignmentsPerTodo: { min: 1, max: 3 },
+  positionsPerGroup: { min: 2, max: 5 },
 };
 
 // Helper functions
@@ -982,7 +983,7 @@ async function seedNotifications(userIds: string[]) {
   console.log(`✓ Created ${totalNotifications} notifications (main user: 10, 6 unread)`);
 }
 
-async function seedAgendaAndVoting(userIds: string[], eventIds: string[]) {
+async function seedAgendaAndVoting(userIds: string[], eventIds: string[], positionIds: string[]) {
   console.log('Seeding agenda items and voting system...');
   const transactions = [];
   let totalAgendaItems = 0;
@@ -1027,22 +1028,24 @@ async function seedAgendaAndVoting(userIds: string[], eventIds: string[]) {
         // 30% chance for non-election types too
         const electionId = id();
         const majorityType = randomItem(majorityTypes);
+        // Always link to a random position (positions are seeded before elections)
+        const positionId = randomItem(positionIds);
 
-        transactions.push(
-          tx.elections[electionId]
-            .update({
-              title: `${faker.lorem.words(2)} Wahl`,
-              description: faker.lorem.sentence(),
-              majorityType,
-              isMultipleChoice: faker.datatype.boolean(0.3), // 30% allow multiple choices
-              status: randomItem(voteStatuses),
-              votingStartTime: startTime,
-              votingEndTime: new Date(startTime.getTime() + randomInt(30, 180) * 60000), // 30-180 minutes later
-              createdAt: faker.date.past({ years: 0.08 }),
-              updatedAt: new Date(),
-            })
-            .link({ agendaItem: agendaItemId })
-        );
+        const electionTx = tx.elections[electionId]
+          .update({
+            title: `${faker.lorem.words(2)} Wahl`,
+            description: faker.lorem.sentence(),
+            majorityType,
+            isMultipleChoice: faker.datatype.boolean(0.3), // 30% allow multiple choices
+            status: randomItem(voteStatuses),
+            votingStartTime: startTime,
+            votingEndTime: new Date(startTime.getTime() + randomInt(30, 180) * 60000), // 30-180 minutes later
+            createdAt: faker.date.past({ years: 0.08 }),
+            updatedAt: new Date(),
+          })
+          .link({ agendaItem: agendaItemId, position: positionId });
+
+        transactions.push(electionTx);
         totalElections++;
 
         // Add election candidates
@@ -1365,6 +1368,81 @@ async function seedTodos(userIds: string[], groupIds: string[]) {
   );
 }
 
+async function seedPositions(groupIds: string[]) {
+  console.log('Seeding positions...');
+  const transactions = [];
+  const positionIds: string[] = [];
+  let totalPositions = 0;
+
+  const positionTitles = [
+    'President',
+    'Vice President',
+    'Secretary',
+    'Treasurer',
+    'Board Member',
+    'Committee Chair',
+    'Regional Representative',
+    'Communications Director',
+    'Events Coordinator',
+    'Membership Coordinator',
+  ];
+
+  const positionDescriptions = [
+    'Leads the organization and represents it externally',
+    'Supports the president and acts in their absence',
+    'Manages documentation and communications',
+    'Oversees financial matters and budgets',
+    'Participates in strategic decision-making',
+    'Leads specific committee activities',
+    'Represents regional interests',
+    'Manages external communications and media',
+    'Organizes and coordinates events',
+    'Manages member relations and recruitment',
+  ];
+
+  for (const groupId of groupIds) {
+    const positionCount = randomInt(
+      SEED_CONFIG.positionsPerGroup.min,
+      SEED_CONFIG.positionsPerGroup.max
+    );
+
+    for (let i = 0; i < positionCount; i++) {
+      const positionId = id();
+      const titleIndex = randomInt(0, positionTitles.length - 1);
+      const term = randomItem([6, 12, 24, 36]); // 6 months, 1 year, 2 years, or 3 years
+      const firstTermStart = faker.date.past({ years: 2 });
+
+      positionIds.push(positionId);
+
+      transactions.push(
+        tx.positions[positionId]
+          .update({
+            title: positionTitles[titleIndex],
+            description: positionDescriptions[titleIndex],
+            term,
+            firstTermStart,
+            createdAt: faker.date.past({ years: 1 }),
+            updatedAt: new Date(),
+          })
+          .link({ group: groupId })
+      );
+
+      totalPositions++;
+    }
+  }
+
+  // Execute in batches
+  console.log(`  Creating ${transactions.length} position records...`);
+  const batchSize = 50;
+  for (let i = 0; i < transactions.length; i += batchSize) {
+    const batch = transactions.slice(i, i + batchSize);
+    await db.transact(batch);
+  }
+
+  console.log(`✓ Created ${totalPositions} positions across all groups`);
+  return positionIds;
+}
+
 // Delete all data except $users
 async function cleanDatabase() {
   console.log('🗑️  Cleaning existing data (keeping $users)...\n');
@@ -1399,6 +1477,7 @@ async function cleanDatabase() {
       changeRequests: {},
       changeRequestVotes: {},
       amendmentVoteEntries: {},
+      positions: {},
     };
 
     const data = await db.query(query);
@@ -1433,6 +1512,7 @@ async function cleanDatabase() {
       'changeRequests',
       'changeRequestVotes',
       'amendmentVoteEntries',
+      'positions',
     ];
 
     for (const entityType of entitiesToDelete) {
@@ -1478,10 +1558,11 @@ async function seed() {
     const { userIds, userToProfileMap } = await seedUsers();
     const groupIds = await seedGroups(userIds);
     await seedGroupRelationships(groupIds); // New: seed group relationships
+    const positionIds = await seedPositions(groupIds); // New: seed positions
     await seedFollows(userIds);
     await seedConversationsAndMessages(userIds, userToProfileMap);
     const eventIds = await seedEvents(userIds, groupIds);
-    await seedAgendaAndVoting(userIds, eventIds);
+    await seedAgendaAndVoting(userIds, eventIds, positionIds); // Pass positionIds
     await seedNotifications(userIds);
     await seedTodos(userIds, groupIds);
 
@@ -1491,10 +1572,11 @@ async function seed() {
     console.log(`  - ${SEED_CONFIG.users} additional users`);
     console.log(`  - ${SEED_CONFIG.groups} groups (2 owned by main user)`);
     console.log(`  - Group relationships with hierarchical structure`);
+    console.log(`  - Positions across all groups`);
     console.log(`  - Follow relationships (main user: 10 following, 5 followers)`);
     console.log(`  - Conversations and messages (main user: 3 conversations)`);
     console.log(`  - Events and participants`);
-    console.log(`  - Agenda items with elections and voting system`);
+    console.log(`  - Agenda items with elections and voting system (linked to positions)`);
     console.log(`  - Notifications (main user: 10 total, 6 unread)`);
     console.log(`  - Todos and assignments (main user: 5 todos)\n`);
     console.log('Main test user details:');

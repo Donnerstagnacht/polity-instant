@@ -60,6 +60,9 @@ export default function EventAgendaPage() {
       election: {
         candidates: {},
         votes: {},
+        position: {
+          group: {},
+        },
       },
       amendmentVote: {
         changeRequests: {},
@@ -404,6 +407,50 @@ export default function EventAgendaPage() {
                                           <p className="mt-1 text-sm text-muted-foreground">
                                             {election.description}
                                           </p>
+                                        )}
+                                        {/* Position Details */}
+                                        {election.position && (
+                                          <div className="mt-3 rounded-md border bg-muted/30 p-3">
+                                            <div className="mb-1 flex items-center gap-2">
+                                              <Badge variant="secondary" className="text-xs">
+                                                Position
+                                              </Badge>
+                                              <span className="font-semibold">
+                                                {election.position.title}
+                                              </span>
+                                            </div>
+                                            {election.position.description && (
+                                              <p className="text-sm text-muted-foreground">
+                                                {election.position.description}
+                                              </p>
+                                            )}
+                                            <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+                                              <div className="flex items-center gap-1">
+                                                <Calendar className="h-3 w-3" />
+                                                <span>
+                                                  Amtszeit: {election.position.term}{' '}
+                                                  {election.position.term === 1
+                                                    ? 'Monat'
+                                                    : 'Monate'}
+                                                </span>
+                                              </div>
+                                              <div className="flex items-center gap-1">
+                                                <Clock className="h-3 w-3" />
+                                                <span>
+                                                  Start:{' '}
+                                                  {new Date(
+                                                    election.position.firstTermStart
+                                                  ).toLocaleDateString('de-DE')}
+                                                </span>
+                                              </div>
+                                              {election.position.group && (
+                                                <div className="flex items-center gap-1">
+                                                  <Users className="h-3 w-3" />
+                                                  <span>{election.position.group.name}</span>
+                                                </div>
+                                              )}
+                                            </div>
+                                          </div>
                                         )}
                                       </div>
                                       <div className="flex items-center gap-2 text-sm text-muted-foreground">

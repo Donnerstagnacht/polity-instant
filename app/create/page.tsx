@@ -36,6 +36,7 @@ import {
   Calendar,
   Edit,
   UserCheck,
+  Briefcase,
 } from 'lucide-react';
 import { db, tx, id } from '@/../../db.ts';
 import { useAuthStore } from '@/features/auth/auth.ts';
@@ -50,6 +51,7 @@ type ItemType =
   | 'agendaItems'
   | 'changeRequests'
   | 'electionCandidates'
+  | 'positions'
   | null;
 
 export default function CreatePage() {
@@ -124,7 +126,7 @@ export default function CreatePage() {
           onValueChange={v => setSelectedItemType(v as ItemType)}
           className="w-full"
         >
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="groups" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Groups
@@ -156,6 +158,10 @@ export default function CreatePage() {
             <TabsTrigger value="electionCandidates" className="flex items-center gap-2">
               <UserCheck className="h-4 w-4" />
               Candidates
+            </TabsTrigger>
+            <TabsTrigger value="positions" className="flex items-center gap-2">
+              <Briefcase className="h-4 w-4" />
+              Positions
             </TabsTrigger>
           </TabsList>
 
@@ -189,6 +195,10 @@ export default function CreatePage() {
 
           <TabsContent value="electionCandidates">
             <CreateElectionCandidateForm />
+          </TabsContent>
+
+          <TabsContent value="positions">
+            <CreatePositionForm />
           </TabsContent>
         </Tabs>
       </PageWrapper>
@@ -228,6 +238,8 @@ function GuidedCreateFlow() {
       return <GuidedChangeRequestFlow {...commonProps} />;
     case 'electionCandidates':
       return <GuidedElectionCandidateFlow {...commonProps} />;
+    case 'positions':
+      return <GuidedPositionFlow {...commonProps} />;
     default:
       return null;
   }
@@ -283,6 +295,12 @@ function ItemTypeSelector({ onSelect }: { onSelect: (type: ItemType) => void }) 
       icon: UserCheck,
       title: 'Election Candidate',
       description: 'Add a candidate to an election',
+    },
+    {
+      type: 'positions' as ItemType,
+      icon: Briefcase,
+      title: 'Position',
+      description: 'Create an elected position within a group',
     },
   ];
 
@@ -2651,6 +2669,7 @@ function CreateAgendaItemForm() {
     duration: '',
     eventId: '',
     amendmentId: '', // For vote type
+    positionId: '', // For election type
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const user = useAuthStore(state => state.user);
@@ -2665,13 +2684,23 @@ function CreateAgendaItemForm() {
     amendments: {},
   });
 
+  // Query available positions for the dropdown (when type is election)
+  const { data: positionsData } = db.useQuery({
+    positions: {
+      group: {},
+    },
+  });
+
   console.log('Events Data:', eventsData);
   console.log('Amendments Data:', amendmentsData);
+  console.log('Positions Data:', positionsData);
   console.log('Current User ID:', user?.id);
 
   const userEvents = eventsData?.events || [];
 
   const userAmendments = amendmentsData?.amendments || [];
+
+  const userPositions = positionsData?.positions || [];
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -2693,7 +2722,7 @@ function CreateAgendaItemForm() {
       const agendaItemId = id();
       const now = new Date();
 
-      await db.transact([
+      const transactions = [
         tx.agendaItems[agendaItemId].update({
           title: formData.title,
           description: formData.description || '',
@@ -2710,7 +2739,32 @@ function CreateAgendaItemForm() {
           event: formData.eventId,
           creator: user.id,
         }),
-      ]);
+      ];
+
+      // If creating an election, also create the election entity
+      if (formData.type === 'election') {
+        const electionId = id();
+        const electionTx = tx.elections[electionId]
+          .update({
+            title: formData.title,
+            description: formData.description || '',
+            majorityType: 'relative',
+            isMultipleChoice: false,
+            status: 'pending',
+            createdAt: now,
+            updatedAt: now,
+          })
+          .link({ agendaItem: agendaItemId });
+
+        // Link to position if selected
+        if (formData.positionId) {
+          electionTx.link({ position: formData.positionId });
+        }
+
+        transactions.push(electionTx);
+      }
+
+      await db.transact(transactions);
 
       toast.success('Agenda item created successfully!');
       setTimeout(() => {
@@ -2817,6 +2871,24 @@ function CreateAgendaItemForm() {
               </select>
             </div>
           )}
+          {formData.type === 'election' && (
+            <div className="space-y-2">
+              <Label htmlFor="agenda-position">Position (optional)</Label>
+              <select
+                id="agenda-position"
+                value={formData.positionId}
+                onChange={e => setFormData({ ...formData, positionId: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="">Select a position</option>
+                {userPositions.map((position: any) => (
+                  <option key={position.id} value={position.id}>
+                    {position.title} {position.group?.name ? `(${position.group.name})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="agenda-duration">Duration (minutes, optional)</Label>
             <Input
@@ -2862,12 +2934,21 @@ function GuidedAgendaItemFlow({
     amendments: {},
   });
 
+  const { data: positionsData } = db.useQuery({
+    positions: {
+      group: {},
+    },
+  });
+
   console.log('Guided - Events Data:', eventsData);
   console.log('Guided - Amendments Data:', amendmentsData);
+  console.log('Guided - Positions Data:', positionsData);
 
   const userEvents = eventsData?.events || [];
 
   const userAmendments = amendmentsData?.amendments || [];
+
+  const userPositions = positionsData?.positions || [];
 
   const data = {
     title: formData.title || '',
@@ -2877,6 +2958,7 @@ function GuidedAgendaItemFlow({
     duration: formData.duration || '',
     eventId: formData.eventId || '',
     amendmentId: formData.amendmentId || '',
+    positionId: formData.positionId || '',
   };
 
   useEffect(() => {
@@ -2902,7 +2984,7 @@ function GuidedAgendaItemFlow({
       const agendaItemId = id();
       const now = new Date();
 
-      await db.transact([
+      const transactions = [
         tx.agendaItems[agendaItemId].update({
           title: data.title,
           description: data.description || '',
@@ -2919,7 +3001,32 @@ function GuidedAgendaItemFlow({
           event: data.eventId,
           creator: user.id,
         }),
-      ]);
+      ];
+
+      // If creating an election, also create the election entity
+      if (data.type === 'election') {
+        const electionId = id();
+        const electionTx = tx.elections[electionId]
+          .update({
+            title: data.title,
+            description: data.description || '',
+            majorityType: 'relative',
+            isMultipleChoice: false,
+            status: 'pending',
+            createdAt: now,
+            updatedAt: now,
+          })
+          .link({ agendaItem: agendaItemId });
+
+        // Link to position if selected
+        if (data.positionId) {
+          electionTx.link({ position: data.positionId });
+        }
+
+        transactions.push(electionTx);
+      }
+
+      await db.transact(transactions);
 
       toast.success('Agenda item created successfully!');
       setTimeout(() => {
@@ -3038,6 +3145,33 @@ function GuidedAgendaItemFlow({
                 </div>
               </CarouselItem>
             )}
+            {data.type === 'election' && (
+              <CarouselItem>
+                <div className="space-y-4 p-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="guided-agenda-position" className="text-lg">
+                      Which position is this election for? (optional)
+                    </Label>
+                    <select
+                      id="guided-agenda-position"
+                      value={data.positionId}
+                      onChange={e => setFormData({ ...formData, positionId: e.target.value })}
+                      className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <option value="">Select a position</option>
+                      {userPositions.map((position: any) => (
+                        <option key={position.id} value={position.id}>
+                          {position.title} {position.group?.name ? `(${position.group.name})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-sm text-muted-foreground">
+                      Optional: Link this election to a specific position
+                    </p>
+                  </div>
+                </div>
+              </CarouselItem>
+            )}
           </CarouselContent>
           <div className="absolute -left-12 right-12 top-1/2 flex -translate-y-1/2 justify-between">
             <CarouselPrevious />
@@ -3082,6 +3216,7 @@ function CreateElectionForm() {
     isMultipleChoice: false,
     maxSelections: '',
     agendaItemId: '',
+    positionId: '', // Add position field
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const user = useAuthStore(state => state.user);
@@ -3097,10 +3232,17 @@ function CreateElectionForm() {
     },
   });
 
+  // Query available positions
+  const { data: positionsData } = db.useQuery({
+    positions: {},
+  });
+
   console.log('Election Agenda Items Data:', agendaData);
+  console.log('Positions Data:', positionsData);
   console.log('Current User ID:', user?.id);
 
   const userElectionAgendaItems = agendaData?.agendaItems || [];
+  const allPositions = positionsData?.positions || [];
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -3122,8 +3264,8 @@ function CreateElectionForm() {
       const electionId = id();
       const now = new Date();
 
-      await db.transact([
-        tx.elections[electionId].update({
+      const electionTx = tx.elections[electionId]
+        .update({
           title: formData.title,
           description: formData.description || '',
           majorityType: formData.majorityType,
@@ -3134,11 +3276,17 @@ function CreateElectionForm() {
           status: 'pending',
           createdAt: now,
           updatedAt: now,
-        }),
-        tx.elections[electionId].link({
+        })
+        .link({
           agendaItem: formData.agendaItemId,
-        }),
-      ]);
+        });
+
+      // Link to position if selected
+      if (formData.positionId) {
+        electionTx.link({ position: formData.positionId });
+      }
+
+      await db.transact([electionTx]);
 
       toast.success('Election created successfully!');
       setTimeout(() => {
@@ -3175,6 +3323,25 @@ function CreateElectionForm() {
                 </option>
               ))}
             </select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="election-position">Position (optional)</Label>
+            <select
+              id="election-position"
+              value={formData.positionId}
+              onChange={e => setFormData({ ...formData, positionId: e.target.value })}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="">No specific position</option>
+              {allPositions.map((position: any) => (
+                <option key={position.id} value={position.id}>
+                  {position.title} - {position.group?.name} ({position.term} months)
+                </option>
+              ))}
+            </select>
+            <p className="text-sm text-muted-foreground">
+              Link this election to a specific position being elected
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="election-title">Title</Label>
@@ -3274,9 +3441,16 @@ function GuidedElectionFlow({
     },
   });
 
+  // Query available positions
+  const { data: positionsData } = db.useQuery({
+    positions: {},
+  });
+
   console.log('Guided - Election Agenda Items Data:', agendaData);
+  console.log('Guided - Positions Data:', positionsData);
 
   const userElectionAgendaItems = agendaData?.agendaItems || [];
+  const allPositions = positionsData?.positions || [];
 
   const data = {
     title: formData.title || '',
@@ -3285,6 +3459,7 @@ function GuidedElectionFlow({
     isMultipleChoice: formData.isMultipleChoice || false,
     maxSelections: formData.maxSelections || '',
     agendaItemId: formData.agendaItemId || '',
+    positionId: formData.positionId || '',
   };
 
   useEffect(() => {
@@ -3310,8 +3485,8 @@ function GuidedElectionFlow({
       const electionId = id();
       const now = new Date();
 
-      await db.transact([
-        tx.elections[electionId].update({
+      const electionTx = tx.elections[electionId]
+        .update({
           title: data.title,
           description: data.description || '',
           majorityType: data.majorityType,
@@ -3322,11 +3497,17 @@ function GuidedElectionFlow({
           status: 'pending',
           createdAt: now,
           updatedAt: now,
-        }),
-        tx.elections[electionId].link({
+        })
+        .link({
           agendaItem: data.agendaItemId,
-        }),
-      ]);
+        });
+
+      // Link to position if selected
+      if (data.positionId) {
+        electionTx.link({ position: data.positionId });
+      }
+
+      await db.transact([electionTx]);
 
       toast.success('Election created successfully!');
       setTimeout(() => {
@@ -3371,6 +3552,31 @@ function GuidedElectionFlow({
                   </select>
                   <p className="text-sm text-muted-foreground">
                     Choose which election agenda item this belongs to
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-election-position" className="text-lg">
+                    Is this election for a specific position? (optional)
+                  </Label>
+                  <select
+                    id="guided-election-position"
+                    value={data.positionId}
+                    onChange={e => setFormData({ ...formData, positionId: e.target.value })}
+                    className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="">No specific position</option>
+                    {allPositions.map((position: any) => (
+                      <option key={position.id} value={position.id}>
+                        {position.title} - {position.group?.name} ({position.term} months)
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-sm text-muted-foreground">
+                    Link this election to a specific position being elected
                   </p>
                 </div>
               </div>
@@ -4529,6 +4735,423 @@ function GuidedElectionCandidateFlow({
               disabled={isSubmitting || !data.name.trim() || !data.electionId}
             >
               {isSubmitting ? 'Creating...' : 'Create Election Candidate'}
+            </Button>
+          )}
+        </div>
+      </CardFooter>
+    </Card>
+  );
+}
+
+// ====== POSITION FORMS ======
+function CreatePositionForm() {
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    term: 12,
+    firstTermStart: '',
+    groupId: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const user = useAuthStore(state => state.user);
+
+  // Fetch user's owned/admin groups
+  const { data, isLoading } = db.useQuery({
+    groups: {
+      $: {
+        where: {
+          'owner.id': user?.id,
+        },
+      },
+    },
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      if (!user?.id) {
+        toast.error('You must be logged in to create a position');
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.groupId) {
+        toast.error('Please select a group');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const positionId = id();
+
+      await db.transact([
+        tx.positions[positionId]
+          .update({
+            title: formData.title,
+            description: formData.description || '',
+            term: formData.term,
+            firstTermStart: new Date(formData.firstTermStart),
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .link({ group: formData.groupId }),
+      ]);
+
+      toast.success('Position created successfully!');
+      setTimeout(() => {
+        window.location.href = `/group/${formData.groupId}`;
+      }, 500);
+    } catch (error) {
+      console.error('Failed to create position:', error);
+      toast.error('Failed to create position. Please try again.');
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Create a New Position</CardTitle>
+        <CardDescription>Create an elected position within a group</CardDescription>
+      </CardHeader>
+      <form onSubmit={handleSubmit}>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="position-group">Group</Label>
+            {isLoading ? (
+              <p className="text-sm text-muted-foreground">Loading groups...</p>
+            ) : data?.groups && data.groups.length > 0 ? (
+              <select
+                id="position-group"
+                value={formData.groupId}
+                onChange={e => setFormData({ ...formData, groupId: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                required
+              >
+                <option value="">Select a group</option>
+                {data.groups.map((group: any) => (
+                  <option key={group.id} value={group.id}>
+                    {group.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No groups found. You need to create or own a group first.
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="position-title">Position Title</Label>
+            <Input
+              id="position-title"
+              placeholder="e.g., President, Secretary, Treasurer"
+              value={formData.title}
+              onChange={e => setFormData({ ...formData, title: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="position-description">Description</Label>
+            <Textarea
+              id="position-description"
+              placeholder="Describe the responsibilities and role"
+              value={formData.description}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
+              rows={4}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="position-term">Term Length (months)</Label>
+            <Input
+              id="position-term"
+              type="number"
+              min="1"
+              max="120"
+              value={formData.term}
+              onChange={e => setFormData({ ...formData, term: parseInt(e.target.value) })}
+              required
+            />
+            <p className="text-sm text-muted-foreground">
+              How long does each term last? (e.g., 6 = 6 months, 12 = 1 year, 24 = 2 years)
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="position-firstTermStart">First Term Start Date</Label>
+            <Input
+              id="position-firstTermStart"
+              type="date"
+              value={formData.firstTermStart}
+              onChange={e => setFormData({ ...formData, firstTermStart: e.target.value })}
+              required
+            />
+            <p className="text-sm text-muted-foreground">
+              When did or will the first term for this position start?
+            </p>
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={isSubmitting || !data?.groups || data.groups.length === 0}
+          >
+            {isSubmitting ? 'Creating...' : 'Create Position'}
+          </Button>
+        </CardFooter>
+      </form>
+    </Card>
+  );
+}
+
+function GuidedPositionFlow({
+  formData,
+  setFormData,
+  onBack,
+}: {
+  formData: any;
+  setFormData: (data: any) => void;
+  onBack: () => void;
+}) {
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
+  const [count, setCount] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const user = useAuthStore(state => state.user);
+
+  // Fetch user's owned/admin groups
+  const { data, isLoading } = db.useQuery({
+    groups: {
+      $: {
+        where: {
+          'owner.id': user?.id,
+        },
+      },
+    },
+  });
+
+  const positionData = {
+    title: formData.title || '',
+    description: formData.description || '',
+    term: formData.term || 12,
+    firstTermStart: formData.firstTermStart || '',
+    groupId: formData.groupId || '',
+  };
+
+  useEffect(() => {
+    if (!api) return;
+    setCount(api.scrollSnapList().length);
+    setCurrent(api.selectedScrollSnap());
+    api.on('select', () => setCurrent(api.selectedScrollSnap()));
+  }, [api]);
+
+  const handleKeyDown = (e: React.KeyboardEvent, canProceed: boolean) => {
+    if (e.key === 'Enter' && canProceed && api && api.canScrollNext()) {
+      e.preventDefault();
+      api.scrollNext();
+    }
+  };
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      if (!user?.id) {
+        toast.error('You must be logged in to create a position');
+        return;
+      }
+
+      if (!positionData.groupId) {
+        toast.error('Please select a group');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const positionId = id();
+
+      await db.transact([
+        tx.positions[positionId]
+          .update({
+            title: positionData.title,
+            description: positionData.description || '',
+            term: positionData.term,
+            firstTermStart: new Date(positionData.firstTermStart),
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .link({ group: positionData.groupId }),
+      ]);
+
+      toast.success('Position created successfully!');
+      setTimeout(() => (window.location.href = `/group/${positionData.groupId}`), 500);
+    } catch (error) {
+      console.error('Failed to create position:', error);
+      toast.error('Failed to create position. Please try again.');
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Create a New Position</CardTitle>
+        <CardDescription>
+          Step {current + 1} of {count}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Carousel setApi={setApi} className="w-full">
+          <CarouselContent>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-position-group" className="text-lg">
+                    Which group is this position for?
+                  </Label>
+                  {isLoading ? (
+                    <p className="text-sm text-muted-foreground">Loading groups...</p>
+                  ) : data?.groups && data.groups.length > 0 ? (
+                    <select
+                      id="guided-position-group"
+                      value={positionData.groupId}
+                      onChange={e => setFormData({ ...formData, groupId: e.target.value })}
+                      className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <option value="">Select a group</option>
+                      {data.groups.map((group: any) => (
+                        <option key={group.id} value={group.id}>
+                          {group.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      No groups found. You need to create or own a group first.
+                    </p>
+                  )}
+                  <p className="text-sm text-muted-foreground">
+                    Choose which group this position belongs to
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-position-title" className="text-lg">
+                    What's the position title?
+                  </Label>
+                  <Input
+                    id="guided-position-title"
+                    placeholder="e.g., President, Secretary, Treasurer"
+                    value={positionData.title}
+                    onChange={e => setFormData({ ...formData, title: e.target.value })}
+                    onKeyDown={e => handleKeyDown(e, positionData.title.trim() !== '')}
+                    className="text-lg"
+                    autoFocus
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Press Enter to continue • Name the elected position
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-position-description" className="text-lg">
+                    Describe the position (optional)
+                  </Label>
+                  <Textarea
+                    id="guided-position-description"
+                    placeholder="Describe the responsibilities and role"
+                    value={positionData.description}
+                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                    onKeyDown={e => handleKeyDown(e, true)}
+                    rows={6}
+                    className="text-base"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Optional: Explain the responsibilities
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-position-term" className="text-lg">
+                    How long is each term?
+                  </Label>
+                  <Input
+                    id="guided-position-term"
+                    type="number"
+                    min="1"
+                    max="120"
+                    value={positionData.term}
+                    onChange={e => setFormData({ ...formData, term: parseInt(e.target.value) })}
+                    className="text-lg"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Term length in months (e.g., 6 = 6 months, 12 = 1 year, 24 = 2 years)
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-position-firstTermStart" className="text-lg">
+                    When does/did the first term start?
+                  </Label>
+                  <Input
+                    id="guided-position-firstTermStart"
+                    type="date"
+                    value={positionData.firstTermStart}
+                    onChange={e => setFormData({ ...formData, firstTermStart: e.target.value })}
+                    className="text-lg"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    The start date of the first term for this position
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+          </CarouselContent>
+          <div className="absolute -left-12 right-12 top-1/2 flex -translate-y-1/2 justify-between">
+            <CarouselPrevious />
+            <CarouselNext disabled={current === 0 && !positionData.groupId} />
+          </div>
+        </Carousel>
+      </CardContent>
+      <CardFooter className="flex justify-between">
+        <Button variant="outline" onClick={onBack}>
+          Change Type
+        </Button>
+        <div className="flex items-center gap-4">
+          <div className="flex gap-1">
+            {Array.from({ length: count }).map((_, i) => (
+              <div
+                key={i}
+                className={`h-2 w-2 rounded-full ${i === current ? 'bg-primary' : 'bg-muted'}`}
+              />
+            ))}
+          </div>
+          {current === count - 1 && (
+            <Button
+              onClick={handleSubmit}
+              disabled={
+                isSubmitting ||
+                !positionData.title.trim() ||
+                !positionData.groupId ||
+                !positionData.firstTermStart
+              }
+            >
+              {isSubmitting ? 'Creating...' : 'Create Position'}
             </Button>
           )}
         </div>
