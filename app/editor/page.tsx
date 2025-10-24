@@ -45,6 +45,8 @@ export default function EditorPage() {
 
   // Ref to track if content change is from user input or document load
   const isLoadingDocument = useRef(false);
+  const lastRemoteUpdate = useRef<number>(0);
+  const [editorKey, setEditorKey] = useState(0);
 
   // Get user profile for presence data
   const { data: profileData } = db.useQuery({
@@ -124,6 +126,13 @@ export default function EditorPage() {
     ? Object.values(peers).filter((peer: any) => peer.userId !== user?.id)
     : [];
 
+  // Reset content when switching documents
+  useEffect(() => {
+    setDocumentContent(null);
+    lastRemoteUpdate.current = 0;
+    setEditorKey(prev => prev + 1);
+  }, [selectedDocId]);
+
   // Memoized onChange handler to prevent infinite loops
   const handleContentChange = useCallback((newContent: any[]) => {
     if (!isLoadingDocument.current) {
@@ -131,10 +140,16 @@ export default function EditorPage() {
     }
   }, []);
 
-  // Load selected document content
+  // Load selected document content and sync real-time updates
   useEffect(() => {
     if (selectedDocument) {
-      isLoadingDocument.current = true;
+      const remoteUpdatedAt = selectedDocument.updatedAt
+        ? typeof selectedDocument.updatedAt === 'number'
+          ? selectedDocument.updatedAt
+          : new Date(selectedDocument.updatedAt).getTime()
+        : 0;
+
+      // Set title
       setDocumentTitle(selectedDocument.title);
 
       // Set content with fallback to default empty content
@@ -144,15 +159,34 @@ export default function EditorPage() {
           children: [{ text: 'Start typing...' }],
         },
       ];
-      setDocumentContent(content);
-      setLastSaved(null); // Reset last saved when switching documents
 
-      // Reset the flag after a short delay to allow state to update
-      setTimeout(() => {
-        isLoadingDocument.current = false;
-      }, 100);
+      // Only update content if this is a new document or a remote update from another user
+      const isNewDocument = documentContent === null;
+      const isRemoteUpdate = remoteUpdatedAt > lastRemoteUpdate.current;
+
+      if (isNewDocument || isRemoteUpdate) {
+        isLoadingDocument.current = true;
+        setDocumentContent(content);
+
+        lastRemoteUpdate.current = remoteUpdatedAt;
+
+        // Force editor to re-render with new content on remote updates
+        if (isRemoteUpdate && !isNewDocument) {
+          setEditorKey(prev => prev + 1);
+        }
+
+        // Reset last saved when switching documents
+        if (isNewDocument) {
+          setLastSaved(null);
+        }
+
+        // Reset the flag after a short delay to allow state to update
+        setTimeout(() => {
+          isLoadingDocument.current = false;
+        }, 100);
+      }
     }
-  }, [selectedDocument]);
+  }, [selectedDocument, documentContent]);
 
   // Auto-save document content (debounced)
   useEffect(() => {
@@ -161,12 +195,15 @@ export default function EditorPage() {
     const saveTimeout = setTimeout(async () => {
       setIsSaving(true);
       try {
+        const now = Date.now();
         await db.transact([
           tx.documents[selectedDocId].update({
             content: documentContent,
-            updatedAt: Date.now(),
+            updatedAt: now,
           }),
         ]);
+        // Update our local timestamp to prevent re-loading our own changes
+        lastRemoteUpdate.current = now;
         setLastSaved(new Date());
         setIsSaving(false);
       } catch (error) {
@@ -404,7 +441,7 @@ export default function EditorPage() {
                 {documentContent && selectedDocId && (
                   <Cursors room={room} userCursorColor={userColor} className="h-full w-full">
                     <PlateEditor
-                      key={selectedDocId}
+                      key={`${selectedDocId}-${editorKey}`}
                       initialValue={documentContent}
                       onChange={handleContentChange}
                     />
