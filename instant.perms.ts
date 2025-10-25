@@ -5,13 +5,15 @@
 import type { InstantRules } from '@instantdb/react';
 
 const rules = {
-  // Default: Deny all access unless explicitly allowed
+  // DEVELOPMENT MODE: Allow all operations
+  // WARNING: This is insecure and should only be used for development/testing
+  // TODO: Re-enable proper permissions before production deployment
   $default: {
     allow: {
-      create: 'false',
-      view: 'false',
-      update: 'false',
-      delete: 'false',
+      create: 'true',
+      view: 'true',
+      update: 'true',
+      delete: 'true',
     },
   },
 
