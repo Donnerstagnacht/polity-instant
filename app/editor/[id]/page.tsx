@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { db, tx } from '../../../db';
 import { Loader2, Users, Eye, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/global-state/use-toast';
+import { InviteCollaboratorDialog } from './invite-collaborator-dialog';
 
 const DEFAULT_CONTENT = [
   {
@@ -85,7 +86,9 @@ export default function DocumentEditorPage() {
       $: { where: { id: documentId } },
       owner: {},
       collaborators: {
-        user: {},
+        user: {
+          profile: {},
+        },
       },
     },
   });
@@ -284,6 +287,15 @@ export default function DocumentEditorPage() {
           </Button>
 
           <div className="flex items-center gap-4">
+            {/* Invite collaborator button */}
+            {document.owner?.id === user?.id && user?.id && (
+              <InviteCollaboratorDialog
+                documentId={documentId}
+                currentUserId={user.id}
+                existingCollaborators={document.collaborators || []}
+              />
+            )}
+
             {/* Active users indicator */}
             {onlinePeers.length > 0 && (
               <div className="flex items-center gap-2">
@@ -343,6 +355,32 @@ export default function DocumentEditorPage() {
             <CardDescription>
               Changes are saved automatically as you type. Other users' changes appear in real-time.
             </CardDescription>
+
+            {/* Collaborators list */}
+            {document.collaborators && document.collaborators.length > 0 && (
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <span className="text-sm text-muted-foreground">Collaborators:</span>
+                {document.collaborators.map((collab: any) => {
+                  const profile = collab.user?.profile;
+                  return (
+                    <div
+                      key={collab.id}
+                      className="flex items-center gap-1 rounded-full bg-muted px-2 py-1"
+                    >
+                      <Avatar className="h-5 w-5">
+                        {profile?.avatar ? (
+                          <AvatarImage src={profile.avatar} alt={profile.name || ''} />
+                        ) : null}
+                        <AvatarFallback className="text-xs">
+                          {profile?.name?.[0]?.toUpperCase() || '?'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-xs">{profile?.name || 'Unknown'}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             <div className="min-h-[600px]">
