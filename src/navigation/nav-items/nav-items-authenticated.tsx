@@ -268,6 +268,31 @@ export const navItemsAuthenticated = (
     return items;
   };
 
+  // Function to create group secondary navigation items for a specific group
+  const getGroupSecondaryNavItems = (groupId: string): NavigationItem[] => [
+    {
+      id: 'overview',
+      label: 'Overview',
+      icon: 'Home',
+      href: `/group/${groupId}`,
+      onClick: () => router.push(`/group/${groupId}`),
+    },
+    {
+      id: 'events',
+      label: 'Events',
+      icon: 'Calendar',
+      href: `/group/${groupId}/events`,
+      onClick: () => router.push(`/group/${groupId}/events`),
+    },
+    {
+      id: 'amendments',
+      label: 'Amendments',
+      icon: 'FileText',
+      href: `/group/${groupId}/amendments`,
+      onClick: () => router.push(`/group/${groupId}/amendments`),
+    },
+  ];
+
   return {
     primaryNavItems,
     projectSecondaryNavItems,
@@ -275,13 +300,15 @@ export const navItemsAuthenticated = (
     calendarSecondaryNavItems,
     getEventSecondaryNavItems,
     getUserSecondaryNavItems,
+    getGroupSecondaryNavItems,
 
     // Utility function to get secondary items based on current route
     getSecondaryNavItems: (
       currentPrimaryRoute: string | null,
       eventId?: string,
       userId?: string,
-      isOwnProfile?: boolean
+      isOwnProfile?: boolean,
+      groupId?: string
     ) => {
       switch (currentPrimaryRoute) {
         case 'projects':
@@ -294,6 +321,8 @@ export const navItemsAuthenticated = (
           return eventId ? getEventSecondaryNavItems(eventId) : null;
         case 'user':
           return userId ? getUserSecondaryNavItems(userId, isOwnProfile ?? false) : null;
+        case 'group':
+          return groupId ? getGroupSecondaryNavItems(groupId) : null;
         default:
           return null;
       }

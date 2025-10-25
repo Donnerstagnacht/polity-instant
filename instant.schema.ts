@@ -299,6 +299,18 @@ const _schema = i.schema({
         label: 'agendaItems',
       },
     },
+    amendmentsGroup: {
+      forward: {
+        on: 'amendments',
+        has: 'one',
+        label: 'group',
+      },
+      reverse: {
+        on: 'groups',
+        has: 'many',
+        label: 'amendments',
+      },
+    },
     amendmentsUser: {
       forward: {
         on: 'amendments',

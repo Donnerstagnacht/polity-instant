@@ -720,6 +720,29 @@ async function seedGroups(userIds: string[]) {
       const blogHashtags = randomItems(BLOG_HASHTAGS, randomInt(1, 4));
       transactions.push(...createHashtagTransactions(blogId, 'blog', blogHashtags));
     }
+
+    // Add 2-4 amendments for this group
+    const amendmentCount = randomInt(2, 4);
+    for (let j = 0; j < amendmentCount; j++) {
+      const amendmentId = id();
+      transactions.push(
+        tx.amendments[amendmentId]
+          .update({
+            title: faker.lorem.sentence(),
+            subtitle: faker.lorem.sentence(),
+            status: randomItem(['Passed', 'Rejected', 'Under Review', 'Drafting']),
+            supporters: randomInt(10, 500),
+            date: faker.date.past({ years: 1 }).toISOString(),
+            code: `AMN-${faker.string.alphanumeric(6).toUpperCase()}`,
+            tags: [randomItem(['policy', 'reform', 'legislation', 'amendment', 'proposal'])],
+          })
+          .link({ user: mainUserId, group: groupId })
+      );
+
+      // Add hashtags to amendment
+      const amendmentHashtags = randomItems(AMENDMENT_HASHTAGS, randomInt(2, 4));
+      transactions.push(...createHashtagTransactions(amendmentId, 'amendment', amendmentHashtags));
+    }
   }
 
   // Create remaining groups
@@ -840,6 +863,29 @@ async function seedGroups(userIds: string[]) {
       // Add hashtags to blog (minimum 1, maximum 4)
       const blogHashtags = randomItems(BLOG_HASHTAGS, randomInt(1, 4));
       transactions.push(...createHashtagTransactions(blogId, 'blog', blogHashtags));
+    }
+
+    // Add 2-4 amendments for this group
+    const amendmentCount = randomInt(2, 4);
+    for (let j = 0; j < amendmentCount; j++) {
+      const amendmentId = id();
+      transactions.push(
+        tx.amendments[amendmentId]
+          .update({
+            title: faker.lorem.sentence(),
+            subtitle: faker.lorem.sentence(),
+            status: randomItem(['Passed', 'Rejected', 'Under Review', 'Drafting']),
+            supporters: randomInt(10, 500),
+            date: faker.date.past({ years: 1 }).toISOString(),
+            code: `AMN-${faker.string.alphanumeric(6).toUpperCase()}`,
+            tags: [randomItem(['policy', 'reform', 'legislation', 'amendment', 'proposal'])],
+          })
+          .link({ user: ownerId, group: groupId })
+      );
+
+      // Add hashtags to amendment
+      const amendmentHashtags = randomItems(AMENDMENT_HASHTAGS, randomInt(2, 4));
+      transactions.push(...createHashtagTransactions(amendmentId, 'amendment', amendmentHashtags));
     }
   }
 

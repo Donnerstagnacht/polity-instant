@@ -74,6 +74,11 @@ const deTranslation: I18nLocale = {
         profile: 'Profil',
         edit: 'Profil bearbeiten',
       },
+      group: {
+        overview: 'Übersicht',
+        events: 'Veranstaltungen',
+        amendments: 'Anträge',
+      },
     },
     toggles: {
       theme: {

@@ -72,6 +72,11 @@ const enTranslation = {
         profile: 'Profile',
         edit: 'Edit Profile',
       },
+      group: {
+        overview: 'Overview',
+        events: 'Events',
+        amendments: 'Amendments',
+      },
     },
     toggles: {
       theme: {

@@ -110,11 +110,21 @@ export function useNavigation() {
       }
     }
 
+    // Extract group ID from pathname if on a group route
+    let groupId: string | undefined;
+    if (pathname.startsWith('/group/')) {
+      const match = pathname.match(/^\/group\/([^/]+)/);
+      if (match) {
+        groupId = match[1];
+      }
+    }
+
     const baseSecondaryItems = baseGetSecondaryNavItems(
       currentPrimaryRoute,
       eventId,
       userId,
-      isOwnProfile
+      isOwnProfile,
+      groupId
     );
     if (!baseSecondaryItems) return null;
 
@@ -132,7 +142,9 @@ export function useNavigation() {
                 ? t(`navigation.secondary.event.${item.id}`)
                 : currentPrimaryRoute === 'user'
                   ? t(`navigation.secondary.user.${item.id}`)
-                  : item.label,
+                  : currentPrimaryRoute === 'group'
+                    ? t(`navigation.secondary.group.${item.id}`)
+                    : item.label,
     }));
   };
 

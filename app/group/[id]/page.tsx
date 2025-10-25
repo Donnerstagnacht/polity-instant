@@ -1,6 +1,6 @@
 'use client';
 
-import { use } from 'react';
+import { use, useEffect } from 'react';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,9 +19,17 @@ import { Users, Calendar, Settings, UserPlus, UserCheck, BookOpen } from 'lucide
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { BlogSearchCard } from '@/features/search/ui/BlogSearchCard';
 import { GRADIENTS } from '@/features/user/state/gradientColors';
+import { useNavigation } from '@/navigation/state/useNavigation';
 
 export default function GroupPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
+  const { currentPrimaryRoute } = useNavigation();
+
+  // Set current route to 'group' when this page is loaded
+  useEffect(() => {
+    // The useNavigation hook will automatically detect we're on a /group/ route
+    // and set the appropriate secondary navigation
+  }, [currentPrimaryRoute]);
 
   // Fetch group data from InstantDB
   const { data, isLoading } = db.useQuery({
