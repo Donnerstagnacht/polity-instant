@@ -47,6 +47,20 @@ export function FixedToolbarButtons() {
 
   return (
     <div className="flex w-full">
+      <ToolbarGroup>
+        <MarkToolbarButton
+          nodeType={KEYS.highlight}
+          tooltip={t('plateJs.toolbar.highlight', 'Highlight')}
+        >
+          <HighlighterIcon />
+        </MarkToolbarButton>
+        <CommentToolbarButton />
+      </ToolbarGroup>
+
+      <ToolbarGroup>
+        <ModeToolbarButton />
+      </ToolbarGroup>
+
       {!readOnly && (
         <>
           <ToolbarGroup>
@@ -160,20 +174,6 @@ export function FixedToolbarButtons() {
       )}
 
       <div className="grow" />
-
-      <ToolbarGroup>
-        <MarkToolbarButton
-          nodeType={KEYS.highlight}
-          tooltip={t('plateJs.toolbar.highlight', 'Highlight')}
-        >
-          <HighlighterIcon />
-        </MarkToolbarButton>
-        <CommentToolbarButton />
-      </ToolbarGroup>
-
-      <ToolbarGroup>
-        <ModeToolbarButton />
-      </ToolbarGroup>
     </div>
   );
 }
