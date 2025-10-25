@@ -828,6 +828,18 @@ const _schema = i.schema({
         label: 'sentNotifications',
       },
     },
+    positionsCurrentHolder: {
+      forward: {
+        on: 'positions',
+        has: 'one',
+        label: 'currentHolder',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'currentPositions',
+      },
+    },
     positionsGroup: {
       forward: {
         on: 'positions',

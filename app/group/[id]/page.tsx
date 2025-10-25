@@ -6,9 +6,16 @@ import { PageWrapper } from '@/components/layout/page-wrapper';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel';
 import { LinkGroupDialog } from '../../../src/components/groups/LinkGroupDialog';
 import db from '../../../db';
-import { Users, Calendar, Settings, UserPlus } from 'lucide-react';
+import { Users, Calendar, Settings, UserPlus, UserCheck } from 'lucide-react';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
 
 export default function GroupPage({ params }: { params: Promise<{ id: string }> }) {
@@ -33,6 +40,11 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
         parentGroup: {},
       },
       hashtags: {},
+      positions: {
+        currentHolder: {
+          profile: {},
+        },
+      },
     },
   });
 
@@ -158,6 +170,103 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
           <Card className="mb-6">
             <CardContent className="pt-6">
               <HashtagDisplay hashtags={group.hashtags} title="Tags" />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Positions Carousel */}
+        {group.positions && group.positions.length > 0 && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserCheck className="h-5 w-5" />
+                Positions
+              </CardTitle>
+              <CardDescription>Current office holders in this group</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Carousel
+                opts={{
+                  align: 'start',
+                  loop: true,
+                }}
+                className="w-full"
+              >
+                <CarouselContent className="-ml-2 md:-ml-4">
+                  {group.positions.map((position: any) => (
+                    <CarouselItem
+                      key={position.id}
+                      className="pl-2 md:basis-1/2 md:pl-4 lg:basis-1/3"
+                    >
+                      <Card className="h-full">
+                        <CardHeader>
+                          <CardTitle className="text-lg">{position.title}</CardTitle>
+                          {position.description && (
+                            <CardDescription className="line-clamp-2">
+                              {position.description}
+                            </CardDescription>
+                          )}
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-3">
+                            {/* Current Holder */}
+                            {position.currentHolder ? (
+                              <div className="rounded-lg border bg-muted/50 p-3">
+                                <p className="mb-1 text-xs font-medium text-muted-foreground">
+                                  Current Holder
+                                </p>
+                                <div className="flex items-center gap-2">
+                                  {position.currentHolder.profile?.imageURL && (
+                                    <img
+                                      src={position.currentHolder.profile.imageURL}
+                                      alt={position.currentHolder.profile?.name || 'User'}
+                                      className="h-8 w-8 rounded-full object-cover"
+                                    />
+                                  )}
+                                  <div className="min-w-0 flex-1">
+                                    <p className="truncate font-medium">
+                                      {position.currentHolder.profile?.name || 'Unknown'}
+                                    </p>
+                                    {position.currentHolder.profile?.handle && (
+                                      <p className="truncate text-xs text-muted-foreground">
+                                        @{position.currentHolder.profile.handle}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="rounded-lg border border-dashed p-3 text-center">
+                                <p className="text-sm text-muted-foreground">Vacant</p>
+                              </div>
+                            )}
+
+                            {/* Position Details */}
+                            <div className="space-y-1 text-sm">
+                              {position.term && (
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Term:</span>
+                                  <span className="font-medium">{position.term}</span>
+                                </div>
+                              )}
+                              {position.firstTermStart && (
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Started:</span>
+                                  <span className="font-medium">
+                                    {new Date(position.firstTermStart).toLocaleDateString()}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious />
+                <CarouselNext />
+              </Carousel>
             </CardContent>
           </Card>
         )}
