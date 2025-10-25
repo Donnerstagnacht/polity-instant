@@ -8,6 +8,7 @@ import { Editor, EditorContainer } from '@/components/ui-platejs/editor.tsx';
 
 interface PlateEditorProps {
   initialValue?: any[];
+  value?: any[]; // Controlled mode
   onChange?: (value: any[]) => void;
   cursors?: {
     id: string;
@@ -17,19 +18,48 @@ interface PlateEditorProps {
   }[];
 }
 
-export function PlateEditor({ initialValue, onChange, cursors = [] }: PlateEditorProps) {
-  const editorKey = React.useRef(0);
+export function PlateEditor({ initialValue, value, onChange, cursors = [] }: PlateEditorProps) {
   const onChangeRef = React.useRef(onChange);
+  const isControlled = value !== undefined;
+  const prevValueRef = React.useRef(value);
 
   // Update the ref when onChange changes, but don't cause re-render
   React.useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
 
-  const editor = usePlateEditor({
-    plugins: EditorKit,
-    value: initialValue || value,
-  });
+  // Memoize the editor configuration to prevent unnecessary re-creations
+  const editorConfig = React.useMemo(
+    () => ({
+      plugins: EditorKit,
+      value: isControlled ? value : initialValue || defaultValue,
+    }),
+    [isControlled, value, initialValue]
+  );
+
+  const editor = usePlateEditor(editorConfig);
+
+  // Update editor value when controlled value changes (without destroying selection)
+  React.useEffect(() => {
+    if (isControlled && value && prevValueRef.current !== value) {
+      // Only update if there's an actual change
+      const valueChanged = JSON.stringify(prevValueRef.current) !== JSON.stringify(value);
+      if (valueChanged) {
+        console.log('📝 Editor value changed, updating...');
+        // Update the editor's children directly
+        try {
+          editor.children = value;
+          // Force a re-render
+          if (typeof editor.onChange === 'function') {
+            (editor.onChange as () => void)();
+          }
+        } catch (e) {
+          console.warn('Failed to update editor value:', e);
+        }
+        prevValueRef.current = value;
+      }
+    }
+  }, [value, isControlled, editor]);
 
   // Handle changes from the editor using ref to avoid recreating function
   const handleEditorChange = React.useCallback(({ value: newValue }: { value: any }) => {
@@ -38,13 +68,8 @@ export function PlateEditor({ initialValue, onChange, cursors = [] }: PlateEdito
     }
   }, []);
 
-  // Force re-mount when initialValue changes (switching documents)
-  React.useEffect(() => {
-    editorKey.current += 1;
-  }, [initialValue]);
-
   return (
-    <Plate key={editorKey.current} editor={editor} onChange={handleEditorChange}>
+    <Plate editor={editor} onChange={handleEditorChange}>
       <EditorContainer>
         <Editor variant="demo" />
 
@@ -615,3 +640,5 @@ const value = [
     type: 'p',
   },
 ];
+
+const defaultValue = value;

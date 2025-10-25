@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { PlateEditor } from '@/components/kit-platejs/plate-editor';
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
@@ -10,10 +10,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Cursors } from '@instantdb/react';
 import { db, tx } from '../../../db';
 import { Loader2, Users, Eye, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/global-state/use-toast';
+
+const DEFAULT_CONTENT = [
+  {
+    type: 'p',
+    children: [{ text: 'Start typing...' }],
+  },
+];
 
 export default function DocumentEditorPage() {
   const params = useParams();
@@ -24,14 +30,15 @@ export default function DocumentEditorPage() {
 
   // State
   const [documentTitle, setDocumentTitle] = useState('');
-  const [documentContent, setDocumentContent] = useState<any[] | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isSavingTitle, setIsSavingTitle] = useState(false);
+  const [editorValue, setEditorValue] = useState<any[] | null>(null);
 
-  // Ref to track if content change is from user input or document load
-  const isLoadingDocument = useRef(false);
+  // Refs to prevent re-renders and update loops
+  const isInitialized = useRef(false);
+  const titleSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSaveTime = useRef<number>(0);
+  const isLocalChange = useRef(false);
   const lastRemoteUpdate = useRef<number>(0);
-  const [editorKey, setEditorKey] = useState(0);
 
   // Get user profile for presence data
   const { data: profileData } = db.useQuery({
@@ -42,11 +49,12 @@ export default function DocumentEditorPage() {
   const userProfile = profileData?.profiles?.[0];
 
   // Generate a consistent color for this user
-  const userColor = user?.id
-    ? `hsl(${parseInt(user.id.substring(0, 8), 16) % 360}, 70%, 50%)`
-    : '#888888';
+  const userColor = useMemo(
+    () => (user?.id ? `hsl(${parseInt(user.id.substring(0, 8), 16) % 360}, 70%, 50%)` : '#888888'),
+    [user?.id]
+  );
 
-  // Create room for presence and cursors
+  // Create room for presence
   const room = db.room('editor', documentId);
 
   // Presence hook - show who's online
@@ -69,7 +77,7 @@ export default function DocumentEditorPage() {
         userId: user?.id || '',
       });
     }
-  }, [userProfile, publishPresence, userColor, user?.email]);
+  }, [userProfile, publishPresence, userColor, user?.email, user?.id]);
 
   // Query selected document with real-time updates
   const { data: documentData, isLoading: documentLoading } = db.useQuery({
@@ -85,123 +93,145 @@ export default function DocumentEditorPage() {
   const document = documentData?.documents?.[0];
 
   // Get online peers (excluding current user)
-  const onlinePeers = Object.values(peers).filter((peer: any) => peer.userId !== user?.id);
+  const onlinePeers = useMemo(
+    () => Object.values(peers).filter((peer: any) => peer.userId !== user?.id),
+    [peers, user?.id]
+  );
 
-  // Memoized onChange handler to prevent infinite loops
-  const handleContentChange = useCallback((newContent: any[]) => {
-    if (!isLoadingDocument.current) {
-      setDocumentContent(newContent);
-    }
-  }, []);
-
-  // Load document content and sync real-time updates
+  // Initialize document data
   useEffect(() => {
-    if (document) {
-      const remoteUpdatedAt = document.updatedAt
-        ? typeof document.updatedAt === 'number'
-          ? document.updatedAt
-          : new Date(document.updatedAt).getTime()
-        : 0;
+    if (document && !isInitialized.current) {
+      setDocumentTitle(document.title || '');
+      setEditorValue(document.content || DEFAULT_CONTENT);
+      isInitialized.current = true;
+    }
+  }, [document]);
 
-      // Set title
-      setDocumentTitle(document.title);
+  // Sync remote updates without destroying local selection
+  useEffect(() => {
+    if (!document || !isInitialized.current) return;
 
-      // Set content with fallback to default empty content
-      const content = document.content || [
-        {
-          type: 'p',
-          children: [{ text: 'Start typing...' }],
-        },
-      ];
+    const remoteUpdatedAt = document.updatedAt
+      ? typeof document.updatedAt === 'number'
+        ? document.updatedAt
+        : new Date(document.updatedAt).getTime()
+      : 0;
 
-      // Only update content if this is a new document or a remote update from another user
-      const isNewDocument = documentContent === null;
-      const isRemoteUpdate = remoteUpdatedAt > lastRemoteUpdate.current;
+    const remoteContent = document.content || DEFAULT_CONTENT;
+    const hasRemoteChanges = JSON.stringify(remoteContent) !== JSON.stringify(editorValue);
 
-      if (isNewDocument || isRemoteUpdate) {
-        isLoadingDocument.current = true;
-        setDocumentContent(content);
+    // Only update if:
+    // 1. This is a remote change (not our own save)
+    // 2. There are actual content differences
+    // 3. We haven't made a local change recently (to avoid conflicts)
+    if (
+      remoteUpdatedAt > lastRemoteUpdate.current &&
+      hasRemoteChanges &&
+      !isLocalChange.current &&
+      Date.now() - lastSaveTime.current > 1500 // Wait 1.5 seconds after last local save
+    ) {
+      console.log('📥 Remote update detected, syncing editor content');
+      setEditorValue(remoteContent);
+      lastRemoteUpdate.current = remoteUpdatedAt;
+    }
+  }, [document?.content, document?.updatedAt, editorValue]);
 
-        lastRemoteUpdate.current = remoteUpdatedAt;
+  // Reset local change flag
+  useEffect(() => {
+    if (isLocalChange.current) {
+      const timeout = setTimeout(() => {
+        isLocalChange.current = false;
+      }, 2000); // Reset after 2 seconds
 
-        // Force editor to re-render with new content on remote updates
-        if (isRemoteUpdate && !isNewDocument) {
-          setEditorKey(prev => prev + 1);
-        }
+      return () => clearTimeout(timeout);
+    }
+  }, [document?.content]);
 
-        // Reset last saved when switching documents
-        if (isNewDocument) {
-          setLastSaved(null);
-        }
+  // Get document content from the database (memoized to prevent unnecessary re-renders)
+  const documentContent = useMemo(() => {
+    return editorValue || DEFAULT_CONTENT;
+  }, [editorValue]);
 
-        // Reset the flag after a short delay to allow state to update
-        setTimeout(() => {
-          isLoadingDocument.current = false;
-        }, 100);
+  // Optimized onChange handler - throttled saves to prevent performance issues
+  const handleContentChange = useCallback(
+    async (newContent: any[]) => {
+      if (!documentId || !user) return;
+
+      // Mark this as a local change
+      isLocalChange.current = true;
+      setEditorValue(newContent);
+
+      // Throttle saves to max 1 per second to prevent performance issues
+      const now = Date.now();
+      if (now - lastSaveTime.current < 1000) {
+        return;
       }
-    }
-  }, [document, documentContent]);
 
-  // Auto-save document content (debounced)
-  useEffect(() => {
-    if (!documentId || !user || !documentContent || isLoadingDocument.current) return;
+      lastSaveTime.current = now;
 
-    const saveTimeout = setTimeout(async () => {
-      setIsSaving(true);
       try {
-        const now = Date.now();
+        // Use merge to only update the content field without overwriting everything
         await db.transact([
-          tx.documents[documentId].update({
-            content: documentContent,
+          tx.documents[documentId].merge({
+            content: newContent,
             updatedAt: now,
           }),
         ]);
         // Update our local timestamp to prevent re-loading our own changes
         lastRemoteUpdate.current = now;
-        setLastSaved(new Date());
-        setIsSaving(false);
       } catch (error) {
-        console.error('Auto-save failed:', error);
-        toast({
-          title: 'Auto-save failed',
-          description: 'Your changes could not be saved automatically.',
-          variant: 'destructive',
-        });
-        setIsSaving(false);
+        console.error('Content save failed:', error);
+        // Don't show error toast for auto-save to avoid annoying the user
       }
-    }, 1000); // Save after 1 second of inactivity
+    },
+    [documentId, user]
+  );
 
-    return () => clearTimeout(saveTimeout);
-  }, [documentContent, documentId, user, toast]);
+  // Save document title (debounced)
+  const handleTitleChange = useCallback(
+    (newTitle: string) => {
+      setDocumentTitle(newTitle);
 
-  // Save document title
-  const handleSaveTitle = async () => {
-    if (!documentId || !documentTitle.trim()) return;
+      // Clear existing timeout
+      if (titleSaveTimeoutRef.current) {
+        clearTimeout(titleSaveTimeoutRef.current);
+      }
 
-    setIsSaving(true);
-    try {
-      await db.transact([
-        tx.documents[documentId].update({
-          title: documentTitle,
-          updatedAt: Date.now(),
-        }),
-      ]);
+      // Debounce title save
+      titleSaveTimeoutRef.current = setTimeout(async () => {
+        if (!documentId || !newTitle.trim()) return;
 
-      toast({
-        title: 'Saved',
-        description: 'Document title updated',
-      });
-    } catch (error) {
-      console.error('Failed to save title:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to save title',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
+        setIsSavingTitle(true);
+        try {
+          await db.transact([
+            tx.documents[documentId].merge({
+              title: newTitle,
+              updatedAt: Date.now(),
+            }),
+          ]);
+        } catch (error) {
+          console.error('Failed to save title:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to save title',
+            variant: 'destructive',
+          });
+        } finally {
+          setIsSavingTitle(false);
+        }
+      }, 500);
+    },
+    [documentId, toast]
+  );
+
+  // Cleanup timeouts
+  useEffect(() => {
+    return () => {
+      if (titleSaveTimeoutRef.current) {
+        clearTimeout(titleSaveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Check if user has access to this document
   const hasAccess =
@@ -291,22 +321,16 @@ export default function DocumentEditorPage() {
               <div className="flex-1">
                 <Input
                   value={documentTitle}
-                  onChange={e => setDocumentTitle(e.target.value)}
-                  onBlur={handleSaveTitle}
+                  onChange={e => handleTitleChange(e.target.value)}
                   className="border-none px-0 text-2xl font-bold shadow-none focus-visible:ring-0"
                   placeholder="Untitled Document"
                 />
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                {isSaving ? (
+                {isSavingTitle ? (
                   <>
                     <Loader2 className="h-3 w-3 animate-spin" />
-                    <span>Saving...</span>
-                  </>
-                ) : lastSaved ? (
-                  <>
-                    <Eye className="h-3 w-3" />
-                    <span>Saved {lastSaved.toLocaleTimeString()}</span>
+                    <span>Saving title...</span>
                   </>
                 ) : (
                   <>
@@ -317,20 +341,16 @@ export default function DocumentEditorPage() {
               </div>
             </div>
             <CardDescription>
-              Changes are saved automatically. Other users' changes appear in real-time.
+              Changes are saved automatically as you type. Other users' changes appear in real-time.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="min-h-[600px]">
-              {documentContent && (
-                <Cursors room={room} userCursorColor={userColor} className="h-full w-full">
-                  <PlateEditor
-                    key={`${documentId}-${editorKey}`}
-                    initialValue={documentContent}
-                    onChange={handleContentChange}
-                  />
-                </Cursors>
-              )}
+              <PlateEditor
+                key={documentId}
+                value={documentContent}
+                onChange={handleContentChange}
+              />
             </div>
           </CardContent>
         </Card>
