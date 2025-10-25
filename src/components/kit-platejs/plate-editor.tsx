@@ -3,6 +3,8 @@ import * as React from 'react';
 import { Plate, usePlateEditor } from 'platejs/react';
 
 import { EditorKit } from '@/components/kit-platejs/editor-kit.tsx';
+import { discussionPlugin } from '@/components/kit-platejs/discussion-kit.tsx';
+import { suggestionPlugin } from '@/components/kit-platejs/suggestion-kit.tsx';
 import { SettingsDialog } from '@/components/kit-platejs/settings-dialog.tsx';
 import { Editor, EditorContainer } from '@/components/ui-platejs/editor.tsx';
 
@@ -16,9 +18,26 @@ interface PlateEditorProps {
     color: string;
     position: any;
   }[];
+  currentUser?: {
+    id: string;
+    name: string;
+    avatar?: string;
+  };
+  users?: Record<string, { id: string; name: string; avatarUrl: string }>;
+  discussions?: any[]; // Discussions/comments data
+  onDiscussionsChange?: (discussions: any[]) => void;
 }
 
-export function PlateEditor({ initialValue, value, onChange, cursors = [] }: PlateEditorProps) {
+export function PlateEditor({
+  initialValue,
+  value,
+  onChange,
+  cursors = [],
+  currentUser,
+  users,
+  discussions,
+  onDiscussionsChange,
+}: PlateEditorProps) {
   const onChangeRef = React.useRef(onChange);
   const isControlled = value !== undefined;
   const prevValueRef = React.useRef(value);
@@ -29,15 +48,72 @@ export function PlateEditor({ initialValue, value, onChange, cursors = [] }: Pla
   }, [onChange]);
 
   // Memoize the editor configuration to prevent unnecessary re-creations
-  const editorConfig = React.useMemo(
-    () => ({
+  const editorConfig = React.useMemo(() => {
+    const config: any = {
       plugins: EditorKit,
       value: isControlled ? value : initialValue || defaultValue,
-    }),
-    [isControlled, value, initialValue]
-  );
+    };
+
+    // Override discussion plugin options with real user data
+    if (currentUser && users) {
+      config.override = {
+        plugins: {
+          discussion: {
+            options: {
+              currentUserId: currentUser.id,
+              users: users,
+              discussions: discussions || [],
+            },
+          },
+        },
+      };
+    }
+
+    return config;
+  }, [isControlled, value, initialValue, currentUser, users, discussions]);
 
   const editor = usePlateEditor(editorConfig);
+
+  // Update discussion plugin options when currentUser or users change
+  React.useEffect(() => {
+    if (currentUser && users && editor) {
+      // Update discussion plugin options
+      editor.setOptions(discussionPlugin, {
+        currentUserId: currentUser.id,
+        users: users,
+        discussions: discussions || [],
+      });
+
+      // Also update suggestion plugin's currentUserId
+      editor.setOptions(suggestionPlugin, {
+        currentUserId: currentUser.id,
+      });
+    }
+  }, [currentUser, users, discussions, editor]);
+
+  // Watch for changes in discussions and call callback
+  React.useEffect(() => {
+    if (!editor || !onDiscussionsChange) return;
+
+    // Create a stable reference to track the last saved discussions
+    let lastSavedDiscussions: any[] = discussions || [];
+
+    // Set up an interval to check for discussion changes
+    const interval = setInterval(() => {
+      const currentDiscussions = editor.getOption(discussionPlugin, 'discussions');
+
+      // Only call onChange if discussions have actually changed
+      if (
+        currentDiscussions &&
+        JSON.stringify(currentDiscussions) !== JSON.stringify(lastSavedDiscussions)
+      ) {
+        lastSavedDiscussions = currentDiscussions;
+        onDiscussionsChange(currentDiscussions);
+      }
+    }, 1000); // Check every 1 second for more responsive updates
+
+    return () => clearInterval(interval);
+  }, [editor, onDiscussionsChange, discussions]);
 
   // Update editor value when controlled value changes (without destroying selection)
   React.useEffect(() => {

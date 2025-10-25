@@ -33,6 +33,7 @@ export default function DocumentEditorPage() {
   const [documentTitle, setDocumentTitle] = useState('');
   const [isSavingTitle, setIsSavingTitle] = useState(false);
   const [editorValue, setEditorValue] = useState<any[] | null>(null);
+  const [discussions, setDiscussions] = useState<any[]>([]);
 
   // Refs to prevent re-renders and update loops
   const isInitialized = useRef(false);
@@ -40,6 +41,7 @@ export default function DocumentEditorPage() {
   const lastSaveTime = useRef<number>(0);
   const isLocalChange = useRef(false);
   const lastRemoteUpdate = useRef<number>(0);
+  const lastDiscussionsSave = useRef<number>(0);
 
   // Get user profile for presence data
   const { data: profileData } = db.useQuery({
@@ -84,7 +86,9 @@ export default function DocumentEditorPage() {
   const { data: documentData, isLoading: documentLoading } = db.useQuery({
     documents: {
       $: { where: { id: documentId } },
-      owner: {},
+      owner: {
+        profile: {},
+      },
       collaborators: {
         user: {
           profile: {},
@@ -101,14 +105,81 @@ export default function DocumentEditorPage() {
     [peers, user?.id]
   );
 
+  // Build users map for the editor (includes current user, owner, and all collaborators)
+  const editorUsers = useMemo(() => {
+    const users: Record<string, { id: string; name: string; avatarUrl: string }> = {};
+
+    // Add current user
+    if (user && userProfile) {
+      users[user.id] = {
+        id: user.id,
+        name: userProfile.name || user.email || 'Anonymous',
+        avatarUrl: userProfile.avatar || `https://api.dicebear.com/9.x/glass/svg?seed=${user.id}`,
+      };
+    }
+
+    // Add document owner
+    if (document?.owner) {
+      const owner = document.owner;
+      const ownerProfile = owner.profile;
+      users[owner.id] = {
+        id: owner.id,
+        name: ownerProfile?.name || owner.email || 'Owner',
+        avatarUrl:
+          ownerProfile?.avatar || `https://api.dicebear.com/9.x/glass/svg?seed=${owner.id}`,
+      };
+    }
+
+    // Add all collaborators
+    if (document?.collaborators) {
+      document.collaborators.forEach((collab: any) => {
+        const collabUser = collab.user;
+        const profile = collabUser?.profile;
+        if (collabUser?.id) {
+          users[collabUser.id] = {
+            id: collabUser.id,
+            name: profile?.name || collabUser.email || 'Collaborator',
+            avatarUrl:
+              profile?.avatar || `https://api.dicebear.com/9.x/glass/svg?seed=${collabUser.id}`,
+          };
+        }
+      });
+    }
+
+    return users;
+  }, [user, userProfile, document?.owner, document?.collaborators]);
+
   // Initialize document data
   useEffect(() => {
     if (document && !isInitialized.current) {
       setDocumentTitle(document.title || '');
       setEditorValue(document.content || DEFAULT_CONTENT);
+      // Load discussions from document metadata or content
+      setDiscussions((document as any).discussions || []);
       isInitialized.current = true;
     }
   }, [document]);
+
+  // Sync discussions from database in real-time
+  useEffect(() => {
+    if (!document || !isInitialized.current) return;
+
+    const remoteDiscussions = (document as any).discussions || [];
+    const localDiscussionsStr = JSON.stringify(discussions);
+    const remoteDiscussionsStr = JSON.stringify(remoteDiscussions);
+
+    // Only update if there are actual changes and it's not our own recent save
+    if (
+      localDiscussionsStr !== remoteDiscussionsStr &&
+      Date.now() - lastDiscussionsSave.current > 2000 // Wait 2 seconds after our last save
+    ) {
+      console.log('📥 Remote discussions update detected, syncing...', {
+        localCount: discussions.length,
+        remoteCount: remoteDiscussions.length,
+      });
+      setDiscussions(remoteDiscussions);
+    }
+  }, [(document as any)?.discussions]);
 
   // Sync remote updates without destroying local selection
   useEffect(() => {
@@ -225,6 +296,45 @@ export default function DocumentEditorPage() {
       }, 500);
     },
     [documentId, toast]
+  );
+
+  // Save discussions (debounced and deduped)
+  const handleDiscussionsChange = useCallback(
+    async (newDiscussions: any[]) => {
+      if (!documentId || !user) return;
+
+      // Check if discussions actually changed
+      const currentDiscussionsStr = JSON.stringify(discussions);
+      const newDiscussionsStr = JSON.stringify(newDiscussions);
+
+      if (currentDiscussionsStr === newDiscussionsStr) {
+        return; // No actual change, skip save
+      }
+
+      // Update local state immediately for UI responsiveness
+      setDiscussions(newDiscussions);
+
+      // Debounce saves to max 1 per second to prevent race conditions
+      const now = Date.now();
+      if (now - lastDiscussionsSave.current < 1000) {
+        return;
+      }
+
+      lastDiscussionsSave.current = now;
+
+      try {
+        await db.transact([
+          tx.documents[documentId].merge({
+            discussions: newDiscussions,
+            updatedAt: now,
+          }),
+        ]);
+        console.log('✅ Discussions saved:', newDiscussions.length);
+      } catch (error) {
+        console.error('❌ Discussions save failed:', error);
+      }
+    },
+    [documentId, user, discussions]
   );
 
   // Cleanup timeouts
@@ -388,6 +498,18 @@ export default function DocumentEditorPage() {
                 key={documentId}
                 value={documentContent}
                 onChange={handleContentChange}
+                currentUser={
+                  user && userProfile
+                    ? {
+                        id: user.id,
+                        name: userProfile.name || user.email || 'Anonymous',
+                        avatar: userProfile.avatar,
+                      }
+                    : undefined
+                }
+                users={editorUsers}
+                discussions={discussions}
+                onDiscussionsChange={handleDiscussionsChange}
               />
             </div>
           </CardContent>

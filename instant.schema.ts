@@ -306,6 +306,7 @@ const _schema = i.schema({
     documents: i.entity({
       title: i.string().indexed(),
       content: i.json(), // Plate.js editor content (Slate value)
+      discussions: i.json().optional(), // Discussion threads and comments on suggestions
       createdAt: i.date().indexed(),
       updatedAt: i.date().indexed(),
       isPublic: i.boolean().optional(),

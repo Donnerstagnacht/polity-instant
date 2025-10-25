@@ -104,7 +104,11 @@ const discussionsData: TDiscussion[] = [
 
 const avatarUrl = (seed: string) => `https://api.dicebear.com/9.x/glass/svg?seed=${seed}`;
 
-const usersData: Record<string, { id: string; avatarUrl: string; name: string; hue?: number }> = {
+// Default demo users for when no user data is provided
+const defaultUsersData: Record<
+  string,
+  { id: string; avatarUrl: string; name: string; hue?: number }
+> = {
   alice: {
     id: 'alice',
     avatarUrl: avatarUrl('alice6'),
@@ -128,7 +132,7 @@ export const discussionPlugin = createPlatePlugin({
   options: {
     currentUserId: 'alice',
     discussions: discussionsData,
-    users: usersData,
+    users: defaultUsersData,
   },
 })
   .configure({
