@@ -359,6 +359,18 @@ const _schema = i.schema({
         label: 'createdAmendmentVotes',
       },
     },
+    blogsGroup: {
+      forward: {
+        on: 'blogs',
+        has: 'one',
+        label: 'group',
+      },
+      reverse: {
+        on: 'groups',
+        has: 'many',
+        label: 'blogs',
+      },
+    },
     blogsUser: {
       forward: {
         on: 'blogs',

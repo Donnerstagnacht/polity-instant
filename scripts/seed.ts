@@ -284,7 +284,7 @@ async function seedUsers() {
   const mainUserHashtags = randomItems(USER_HASHTAGS, randomInt(3, 5));
   transactions.push(...createHashtagTransactions(mainUserId, 'user', mainUserHashtags));
 
-  // Add a blog post for main user
+  // Add a blog post for main user (no group link for user's personal blog)
   const blogId = id();
   transactions.push(
     tx.blogs[blogId]
@@ -367,7 +367,7 @@ async function seedUsers() {
   const tobiasHashtags = randomItems(USER_HASHTAGS, randomInt(3, 5));
   transactions.push(...createHashtagTransactions(tobiasUserId, 'user', tobiasHashtags));
 
-  // Add a blog post for Tobias
+  // Add a blog post for Tobias (no group link for user's personal blog)
   const tobiasBlogId = id();
   transactions.push(
     tx.blogs[tobiasBlogId]
@@ -700,6 +700,26 @@ async function seedGroups(userIds: string[]) {
     // Add hashtags for this group
     const groupHashtags = randomItems(GROUP_HASHTAGS, randomInt(3, 5));
     transactions.push(...createHashtagTransactions(groupId, 'group', groupHashtags));
+
+    // Add 1-3 blog posts for this group
+    const groupBlogCount = randomInt(1, 3);
+    for (let j = 0; j < groupBlogCount; j++) {
+      const blogId = id();
+      transactions.push(
+        tx.blogs[blogId]
+          .update({
+            title: faker.lorem.sentence(),
+            date: faker.date.past({ years: 0.5 }).toISOString(),
+            likes: randomInt(5, 100),
+            comments: randomInt(0, 50),
+          })
+          .link({ user: mainUserId, group: groupId })
+      );
+
+      // Add hashtags to blog (minimum 1, maximum 4)
+      const blogHashtags = randomItems(BLOG_HASHTAGS, randomInt(1, 4));
+      transactions.push(...createHashtagTransactions(blogId, 'blog', blogHashtags));
+    }
   }
 
   // Create remaining groups
@@ -801,6 +821,26 @@ async function seedGroups(userIds: string[]) {
     // Add hashtags for this group
     const groupHashtags = randomItems(GROUP_HASHTAGS, randomInt(3, 5));
     transactions.push(...createHashtagTransactions(groupId, 'group', groupHashtags));
+
+    // Add 1-3 blog posts for this group
+    const groupBlogCount = randomInt(1, 3);
+    for (let j = 0; j < groupBlogCount; j++) {
+      const blogId = id();
+      transactions.push(
+        tx.blogs[blogId]
+          .update({
+            title: faker.lorem.sentence(),
+            date: faker.date.past({ years: 0.5 }).toISOString(),
+            likes: randomInt(5, 100),
+            comments: randomInt(0, 50),
+          })
+          .link({ user: ownerId, group: groupId })
+      );
+
+      // Add hashtags to blog (minimum 1, maximum 4)
+      const blogHashtags = randomItems(BLOG_HASHTAGS, randomInt(1, 4));
+      transactions.push(...createHashtagTransactions(blogId, 'blog', blogHashtags));
+    }
   }
 
   // Execute in batches

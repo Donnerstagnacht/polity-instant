@@ -15,8 +15,10 @@ import {
 } from '@/components/ui/carousel';
 import { LinkGroupDialog } from '../../../src/components/groups/LinkGroupDialog';
 import db from '../../../db';
-import { Users, Calendar, Settings, UserPlus, UserCheck } from 'lucide-react';
+import { Users, Calendar, Settings, UserPlus, UserCheck, BookOpen } from 'lucide-react';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
+import { BlogSearchCard } from '@/features/search/ui/BlogSearchCard';
+import { GRADIENTS } from '@/features/user/state/gradientColors';
 
 export default function GroupPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -44,6 +46,12 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
         currentHolder: {
           profile: {},
         },
+      },
+      blogs: {
+        user: {
+          profile: {},
+        },
+        hashtags: {},
       },
     },
   });
@@ -170,6 +178,30 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
           <Card className="mb-6">
             <CardContent className="pt-6">
               <HashtagDisplay hashtags={group.hashtags} title="Tags" />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Blogs Section */}
+        {group.blogs && group.blogs.length > 0 && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                Blog Posts
+              </CardTitle>
+              <CardDescription>Recent posts from this group</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {group.blogs.map((blog: any, index: number) => (
+                  <BlogSearchCard
+                    key={blog.id}
+                    blog={blog}
+                    gradientClass={GRADIENTS[index % GRADIENTS.length]}
+                  />
+                ))}
+              </div>
             </CardContent>
           </Card>
         )}
