@@ -56,6 +56,11 @@ export interface UserAmendment {
   tags?: string[];
 }
 
+export interface UserHashtag {
+  id: string;
+  tag: string;
+}
+
 export interface User {
   name: string;
   subtitle: string;
@@ -68,6 +73,7 @@ export interface User {
   blogs: UserBlog[];
   groups: UserGroup[];
   amendments: UserAmendment[];
+  hashtags: UserHashtag[];
 }
 
 export interface TabSearchState {

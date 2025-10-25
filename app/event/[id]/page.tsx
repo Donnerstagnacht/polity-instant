@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Calendar, MapPin, Users, ArrowLeft, Check, X, HelpCircle } from 'lucide-react';
+import { HashtagDisplay } from '@/components/ui/hashtag-display';
 
 type EventStatus = 'going' | 'maybe' | 'declined' | 'invited';
 
@@ -36,6 +37,7 @@ export default function EventPage() {
           profile: {},
         },
       },
+      hashtags: {},
     },
   });
 
@@ -225,6 +227,14 @@ export default function EventPage() {
                   </div>
 
                   <Separator />
+
+                  {/* Hashtags */}
+                  {event.hashtags && event.hashtags.length > 0 && (
+                    <>
+                      <HashtagDisplay hashtags={event.hashtags} title="Event Tags" />
+                      <Separator />
+                    </>
+                  )}
 
                   {/* Description */}
                   {event.description && (

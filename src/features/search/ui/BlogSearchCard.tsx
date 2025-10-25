@@ -1,5 +1,4 @@
 import React from 'react';
-import { useRouter } from 'next/navigation';
 import { BlogsCard } from '@/features/user/ui/BlogsCard';
 
 interface BlogSearchCardProps {
@@ -11,14 +10,8 @@ export function BlogSearchCard({
   blog,
   gradientClass = 'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950',
 }: BlogSearchCardProps) {
-  const router = useRouter();
-
-  const handleClick = () => {
-    router.push(`/blog/${blog.id}`);
-  };
-
   return (
-    <div onClick={handleClick} className="cursor-pointer">
+    <a href={`/blog/${blog.id}`} className="block cursor-pointer">
       <BlogsCard
         blog={{
           id: blog.id,
@@ -29,6 +22,6 @@ export function BlogSearchCard({
         }}
         gradientClass={gradientClass}
       />
-    </div>
+    </a>
   );
 }

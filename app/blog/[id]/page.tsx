@@ -6,6 +6,7 @@ import { PageWrapper } from '@/components/layout/page-wrapper';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import db from '../../../db';
 import { BookOpen, User, Calendar, Heart, MessageSquare, Share2 } from 'lucide-react';
 
@@ -19,10 +20,19 @@ export default function BlogPage({ params }: { params: Promise<{ id: string }> }
       user: {
         profile: {},
       },
+      hashtags: {},
     },
   });
 
   const blog = data?.blogs?.[0];
+
+  // Debug: Log hashtags data
+  console.log('Blog data:', {
+    id: blog?.id,
+    title: blog?.title,
+    hashtags: blog?.hashtags,
+    hashtagCount: blog?.hashtags?.length,
+  });
 
   if (isLoading) {
     return (
@@ -196,6 +206,18 @@ export default function BlogPage({ params }: { params: Promise<{ id: string }> }
                 <p className="text-sm text-muted-foreground">No other posts yet.</p>
               </CardContent>
             </Card>
+
+            {/* Hashtags */}
+            {blog.hashtags && blog.hashtags.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Tags</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <HashtagDisplay hashtags={blog.hashtags} title="" />
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </PageWrapper>

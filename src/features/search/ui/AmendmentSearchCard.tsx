@@ -1,5 +1,4 @@
 import React from 'react';
-import { useRouter } from 'next/navigation';
 import { AmendmentsCard } from '@/features/user/ui/AmendmentsCard';
 import { getStatusStyles } from '@/features/user/utils/userWiki.utils';
 
@@ -8,16 +7,10 @@ interface AmendmentSearchCardProps {
 }
 
 export function AmendmentSearchCard({ amendment }: AmendmentSearchCardProps) {
-  const router = useRouter();
-
-  const handleClick = () => {
-    router.push(`/amendment/${amendment.id}`);
-  };
-
   const statusStyle = getStatusStyles(amendment.status);
 
   return (
-    <div onClick={handleClick} className="cursor-pointer">
+    <a href={`/amendment/${amendment.id}`} className="block cursor-pointer">
       <AmendmentsCard
         amendment={{
           id: amendment.id,
@@ -31,6 +24,6 @@ export function AmendmentSearchCard({ amendment }: AmendmentSearchCardProps) {
         }}
         statusStyle={statusStyle}
       />
-    </div>
+    </a>
   );
 }

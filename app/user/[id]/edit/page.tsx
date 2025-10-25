@@ -15,7 +15,8 @@ import { useUserData } from '@/features/user/hooks/useUserData';
 import { toast } from 'sonner';
 import { Camera, Loader2 } from 'lucide-react';
 import { useInstantUpload } from '@/hooks/use-instant-upload';
-import { db, tx } from '../../../../db';
+import { db, tx, id } from '../../../../db';
+import { HashtagInput } from '@/components/ui/hashtag-input';
 
 export default function UserEditPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -32,6 +33,7 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
     website: '',
     location: '',
     avatar: '',
+    hashtags: [] as string[],
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,6 +58,7 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
         website: dbUser.contact?.website || '',
         location: dbUser.contact?.location || '',
         avatar: dbUser.avatar || '',
+        hashtags: [], // Will be populated separately from linked hashtags
       });
     }
   }, [dbUser]);
@@ -117,7 +120,7 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
       });
 
       // Update the profile in Instant DB
-      await db.transact([
+      const transactions = [
         tx.profiles[profileId].update({
           name: formData.name,
           subtitle: formData.subtitle,
@@ -129,7 +132,21 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
           contactLocation: formData.location,
           updatedAt: new Date(),
         }),
-      ]);
+      ];
+
+      // Add hashtags
+      formData.hashtags.forEach(tag => {
+        const hashtagId = id();
+        transactions.push(
+          tx.hashtags[hashtagId].update({
+            tag,
+            createdAt: new Date(),
+          }),
+          tx.hashtags[hashtagId].link({ user: authUser?.id ?? '' })
+        );
+      });
+
+      await db.transact(transactions);
 
       toast.success('Profile updated successfully');
 
@@ -359,6 +376,21 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
                     placeholder="City, Country"
                   />
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Hashtags */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Hashtags</CardTitle>
+                <CardDescription>Add hashtags to help others find you</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <HashtagInput
+                  value={formData.hashtags}
+                  onChange={hashtags => setFormData({ ...formData, hashtags })}
+                  placeholder="Add hashtags (e.g., developer, activist)"
+                />
               </CardContent>
             </Card>
 

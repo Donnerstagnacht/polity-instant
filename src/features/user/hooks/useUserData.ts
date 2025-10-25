@@ -27,6 +27,7 @@ export function useUserData(userId?: string) {
               memberships: {
                 group: {},
               },
+              hashtags: {}, // Add hashtags to the query
             },
           },
         }
@@ -151,6 +152,13 @@ export function useUserData(userId?: string) {
           date: amendment.date,
           code: amendment.code,
           tags: amendment.tags,
+        })) || [],
+
+      // Transform hashtags
+      hashtags:
+        userData?.hashtags?.map((hashtag: any) => ({
+          id: hashtag.id,
+          tag: hashtag.tag,
         })) || [],
     };
   }, [data, userId]);

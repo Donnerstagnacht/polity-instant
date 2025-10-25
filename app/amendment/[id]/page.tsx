@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import db from '../../../db';
 import { Scale, Calendar, User, ThumbsUp, FileText } from 'lucide-react';
+import { HashtagDisplay } from '@/components/ui/hashtag-display';
 
 export default function AmendmentPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -19,6 +20,7 @@ export default function AmendmentPage({ params }: { params: Promise<{ id: string
       user: {
         profile: {},
       },
+      hashtags: {},
     },
   });
 
@@ -110,6 +112,15 @@ export default function AmendmentPage({ params }: { params: Promise<{ id: string
                   <pre className="whitespace-pre-wrap rounded-lg bg-muted p-4 text-sm">
                     {amendment.code}
                   </pre>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Hashtags */}
+            {amendment.hashtags && amendment.hashtags.length > 0 && (
+              <Card>
+                <CardContent className="pt-6">
+                  <HashtagDisplay hashtags={amendment.hashtags} title="Hashtags" />
                 </CardContent>
               </Card>
             )}

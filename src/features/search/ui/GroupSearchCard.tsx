@@ -1,5 +1,4 @@
 import React from 'react';
-import { useRouter } from 'next/navigation';
 import { GroupsCard } from '@/features/user/ui/GroupsCard';
 import { getRoleBadgeColor } from '@/features/user/utils/userWiki.utils';
 
@@ -8,12 +7,6 @@ interface GroupSearchCardProps {
 }
 
 export function GroupSearchCard({ group }: GroupSearchCardProps) {
-  const router = useRouter();
-
-  const handleClick = () => {
-    router.push(`/group/${group.id}`);
-  };
-
   // Default role or get from membership if available
   const role = group.role || 'Member';
   const roleColors = getRoleBadgeColor(role);
@@ -21,7 +14,7 @@ export function GroupSearchCard({ group }: GroupSearchCardProps) {
   const badgeClasses = `${roleColors.bg} ${roleColors.text}`;
 
   return (
-    <div onClick={handleClick} className="cursor-pointer">
+    <a href={`/group/${group.id}`} className="block cursor-pointer">
       <GroupsCard
         group={{
           id: group.id,
@@ -36,6 +29,6 @@ export function GroupSearchCard({ group }: GroupSearchCardProps) {
         }}
         badgeClasses={badgeClasses}
       />
-    </div>
+    </a>
   );
 }

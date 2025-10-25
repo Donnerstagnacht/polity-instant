@@ -41,6 +41,7 @@ import {
 import { db, tx, id } from '@/../../db.ts';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { toast } from 'sonner';
+import { HashtagInput } from '@/components/ui/hashtag-input';
 
 type ItemType =
   | 'groups'
@@ -1711,6 +1712,7 @@ function CreateGroupForm({ isCarouselMode }: { isCarouselMode: boolean }) {
     name: '',
     description: '',
     isPublic: true,
+    hashtags: [] as string[],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const user = useAuthStore(state => state.user);
@@ -1729,7 +1731,7 @@ function CreateGroupForm({ isCarouselMode }: { isCarouselMode: boolean }) {
       const groupId = id();
       const membershipId = id();
 
-      await db.transact([
+      const transactions = [
         tx.groups[groupId].update({
           name: formData.name,
           description: formData.description || '',
@@ -1747,7 +1749,21 @@ function CreateGroupForm({ isCarouselMode }: { isCarouselMode: boolean }) {
           group: groupId,
           user: user.id,
         }),
-      ]);
+      ];
+
+      // Add hashtags
+      formData.hashtags.forEach(tag => {
+        const hashtagId = id();
+        transactions.push(
+          tx.hashtags[hashtagId].update({
+            tag,
+            createdAt: new Date(),
+          }),
+          tx.hashtags[hashtagId].link({ group: groupId })
+        );
+      });
+
+      await db.transact(transactions);
 
       toast.success('Group created successfully!');
       setTimeout(() => {
@@ -1811,6 +1827,11 @@ function CreateGroupForm({ isCarouselMode }: { isCarouselMode: boolean }) {
               Make this group public
             </Label>
           </div>
+          <HashtagInput
+            value={formData.hashtags}
+            onChange={hashtags => setFormData({ ...formData, hashtags })}
+            placeholder="Add hashtags (e.g., politics, community)"
+          />
         </CardContent>
         <CardFooter>
           <Button type="submit" className="w-full" disabled={isSubmitting}>
@@ -2362,6 +2383,7 @@ function CreateAmendmentForm({ isCarouselMode }: { isCarouselMode: boolean }) {
     status: 'Drafting',
     code: '',
     date: new Date().toISOString().split('T')[0],
+    hashtags: [] as string[],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const user = useAuthStore(state => state.user);
@@ -2379,7 +2401,7 @@ function CreateAmendmentForm({ isCarouselMode }: { isCarouselMode: boolean }) {
 
       const amendmentId = id();
 
-      await db.transact([
+      const transactions = [
         tx.amendments[amendmentId].update({
           title: formData.title,
           subtitle: formData.subtitle || '',
@@ -2389,7 +2411,21 @@ function CreateAmendmentForm({ isCarouselMode }: { isCarouselMode: boolean }) {
           code: formData.code || '',
         }),
         tx.amendments[amendmentId].link({ user: user.id }),
-      ]);
+      ];
+
+      // Add hashtags
+      formData.hashtags.forEach(tag => {
+        const hashtagId = id();
+        transactions.push(
+          tx.hashtags[hashtagId].update({
+            tag,
+            createdAt: new Date(),
+          }),
+          tx.hashtags[hashtagId].link({ amendment: amendmentId })
+        );
+      });
+
+      await db.transact(transactions);
 
       toast.success('Amendment created successfully!');
       setTimeout(() => {
@@ -2475,6 +2511,11 @@ function CreateAmendmentForm({ isCarouselMode }: { isCarouselMode: boolean }) {
               required
             />
           </div>
+          <HashtagInput
+            value={formData.hashtags}
+            onChange={hashtags => setFormData({ ...formData, hashtags })}
+            placeholder="Add hashtags (e.g., policy, reform)"
+          />
         </CardContent>
         <CardFooter>
           <Button type="submit" className="w-full" disabled={isSubmitting}>

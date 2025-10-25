@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { LinkGroupDialog } from '../../../src/components/groups/LinkGroupDialog';
 import db from '../../../db';
 import { Users, Calendar, Settings, UserPlus } from 'lucide-react';
+import { HashtagDisplay } from '@/components/ui/hashtag-display';
 
 export default function GroupPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -31,6 +32,7 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
       parentRelationships: {
         parentGroup: {},
       },
+      hashtags: {},
     },
   });
 
@@ -147,6 +149,15 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">{group.description}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Hashtags */}
+        {group.hashtags && group.hashtags.length > 0 && (
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <HashtagDisplay hashtags={group.hashtags} title="Tags" />
             </CardContent>
           </Card>
         )}

@@ -13,6 +13,7 @@ import { useUserData } from './hooks/useUserData';
 import { useFollowUser } from './hooks/useFollowUser';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { SeedUserDataButton } from './ui/SeedUserDataButton';
+import { HashtagDisplay } from '@/components/ui/hashtag-display';
 
 // --- UserWiki utility functions moved to utils/userWiki.utils.ts ---
 import {
@@ -129,6 +130,13 @@ export function UserWiki(_props: UserWikiProps) {
           />
 
           <SocialBar socialMedia={dbUser.socialMedia} />
+
+          {/* Hashtags */}
+          {dbUser.hashtags && dbUser.hashtags.length > 0 && (
+            <div className="mb-6">
+              <HashtagDisplay hashtags={dbUser.hashtags} title="User Tags" />
+            </div>
+          )}
 
           <UserInfoTabs about={dbUser.about} contact={dbUser.contact} />
 

@@ -70,6 +70,147 @@ function randomItems<T>(array: T[], count: number): T[] {
   return shuffled.slice(0, Math.min(count, array.length));
 }
 
+// Helper function to create hashtags
+function createHashtagTransactions(
+  entityId: string,
+  entityType: 'user' | 'group' | 'amendment' | 'event' | 'blog',
+  tags: string[]
+): any[] {
+  const transactions = [];
+
+  for (const tag of tags) {
+    const hashtagId = id();
+
+    // Use the forward label from the schema (not the relationship name)
+    transactions.push(
+      tx.hashtags[hashtagId]
+        .update({
+          tag: tag.toLowerCase().replace(/\s+/g, ''),
+          createdAt: faker.date.past({ years: 0.5 }),
+        })
+        .link({ [entityType]: entityId })
+    );
+  }
+
+  return transactions;
+}
+
+// Predefined hashtag pools
+const USER_HASHTAGS = [
+  'activist',
+  'volunteer',
+  'leader',
+  'organizer',
+  'advocate',
+  'community',
+  'politics',
+  'environment',
+  'education',
+  'healthcare',
+  'technology',
+  'innovation',
+  'sustainability',
+  'democracy',
+  'justice',
+  'equality',
+  'reform',
+  'policy',
+  'governance',
+  'engagement',
+];
+
+const GROUP_HASHTAGS = [
+  'community',
+  'organization',
+  'political',
+  'social',
+  'activism',
+  'nonprofit',
+  'grassroots',
+  'coalition',
+  'network',
+  'movement',
+  'progressive',
+  'conservative',
+  'centrist',
+  'reform',
+  'advocacy',
+  'local',
+  'national',
+  'global',
+  'regional',
+  'municipal',
+];
+
+const AMENDMENT_HASHTAGS = [
+  'policy',
+  'reform',
+  'legislation',
+  'amendment',
+  'proposal',
+  'regulation',
+  'law',
+  'statute',
+  'ordinance',
+  'resolution',
+  'bill',
+  'measure',
+  'initiative',
+  'referendum',
+  'act',
+  'governance',
+  'democracy',
+  'rights',
+  'freedom',
+  'justice',
+];
+
+const EVENT_HASHTAGS = [
+  'conference',
+  'workshop',
+  'meetup',
+  'seminar',
+  'social',
+  'networking',
+  'training',
+  'symposium',
+  'forum',
+  'townhall',
+  'rally',
+  'protest',
+  'demonstration',
+  'gathering',
+  'assembly',
+  'webinar',
+  'panel',
+  'discussion',
+  'debate',
+  'presentation',
+];
+
+const BLOG_HASHTAGS = [
+  'news',
+  'opinion',
+  'analysis',
+  'commentary',
+  'insights',
+  'perspective',
+  'thoughts',
+  'ideas',
+  'discussion',
+  'debate',
+  'reflection',
+  'review',
+  'update',
+  'announcement',
+  'feature',
+  'story',
+  'article',
+  'post',
+  'blog',
+  'writing',
+];
+
 // Seed data generators
 async function seedUsers() {
   console.log('Seeding users...');
@@ -139,6 +280,10 @@ async function seedUsers() {
       .link({ user: mainUserId })
   );
 
+  // Add hashtags for main user
+  const mainUserHashtags = randomItems(USER_HASHTAGS, randomInt(3, 5));
+  transactions.push(...createHashtagTransactions(mainUserId, 'user', mainUserHashtags));
+
   // Add a blog post for main user
   const blogId = id();
   transactions.push(
@@ -151,6 +296,10 @@ async function seedUsers() {
       })
       .link({ user: mainUserId })
   );
+
+  // Add hashtags to main user's blog (minimum 1, maximum 4)
+  const mainBlogHashtags = randomItems(BLOG_HASHTAGS, randomInt(1, 4));
+  transactions.push(...createHashtagTransactions(blogId, 'blog', mainBlogHashtags));
 
   // Create Tobias's user account
   const tobiasUserId = SEED_CONFIG.tobiasUserId;
@@ -214,6 +363,10 @@ async function seedUsers() {
       .link({ user: tobiasUserId })
   );
 
+  // Add hashtags for Tobias
+  const tobiasHashtags = randomItems(USER_HASHTAGS, randomInt(3, 5));
+  transactions.push(...createHashtagTransactions(tobiasUserId, 'user', tobiasHashtags));
+
   // Add a blog post for Tobias
   const tobiasBlogId = id();
   transactions.push(
@@ -226,6 +379,10 @@ async function seedUsers() {
       })
       .link({ user: tobiasUserId })
   );
+
+  // Add hashtags to Tobias's blog (minimum 1, maximum 4)
+  const tobiasBlogHashtags = randomItems(BLOG_HASHTAGS, randomInt(1, 4));
+  transactions.push(...createHashtagTransactions(tobiasBlogId, 'blog', tobiasBlogHashtags));
 
   // Now create other users - EACH USER GETS A PROFILE
   for (let i = 0; i < SEED_CONFIG.users; i++) {
@@ -319,7 +476,15 @@ async function seedUsers() {
           })
           .link({ user: userId })
       );
+
+      // Add hashtags to blog (minimum 1, maximum 4)
+      const blogHashtags = randomItems(BLOG_HASHTAGS, randomInt(1, 4));
+      transactions.push(...createHashtagTransactions(blogId, 'blog', blogHashtags));
     }
+
+    // Add hashtags for this user
+    const userHashtags = randomItems(USER_HASHTAGS, randomInt(2, 5));
+    transactions.push(...createHashtagTransactions(userId, 'user', userHashtags));
 
     // Add some amendments
     const amendmentCount = randomInt(0, 2);
@@ -338,6 +503,10 @@ async function seedUsers() {
           })
           .link({ user: userId })
       );
+
+      // Add hashtags to amendment
+      const amendmentHashtags = randomItems(AMENDMENT_HASHTAGS, randomInt(2, 4));
+      transactions.push(...createHashtagTransactions(amendmentId, 'amendment', amendmentHashtags));
     }
   }
 
@@ -527,6 +696,10 @@ async function seedGroups(userIds: string[]) {
         memberCount: members.length + 1,
       })
     );
+
+    // Add hashtags for this group
+    const groupHashtags = randomItems(GROUP_HASHTAGS, randomInt(3, 5));
+    transactions.push(...createHashtagTransactions(groupId, 'group', groupHashtags));
   }
 
   // Create remaining groups
@@ -624,6 +797,10 @@ async function seedGroups(userIds: string[]) {
         memberCount: members.length + 1, // +1 for owner
       })
     );
+
+    // Add hashtags for this group
+    const groupHashtags = randomItems(GROUP_HASHTAGS, randomInt(3, 5));
+    transactions.push(...createHashtagTransactions(groupId, 'group', groupHashtags));
   }
 
   // Execute in batches
@@ -967,6 +1144,10 @@ async function seedEvents(userIds: string[], groupIds: string[]) {
         );
         totalParticipants++;
       }
+
+      // Add hashtags for this event
+      const eventHashtags = randomItems(EVENT_HASHTAGS, randomInt(2, 4));
+      transactions.push(...createHashtagTransactions(eventId, 'event', eventHashtags));
 
       totalEvents++;
     }
@@ -1744,6 +1925,7 @@ async function cleanDatabase() {
       documents: {},
       documentCollaborators: {},
       documentCursors: {},
+      hashtags: {}, // New: include hashtags
     };
 
     const data = await db.query(query);
@@ -1751,6 +1933,7 @@ async function cleanDatabase() {
 
     // Delete all entities (including $users)
     const entitiesToDelete = [
+      'hashtags', // Delete hashtags first (they link to other entities)
       'documentCursors',
       'documentCollaborators',
       'documents',
@@ -1845,6 +2028,7 @@ async function seed() {
     console.log(`  - ${SEED_CONFIG.groups} groups (2 owned by main user)`);
     console.log(`  - Group relationships with hierarchical structure`);
     console.log(`  - Positions across all groups`);
+    console.log(`  - Hashtags for all users, groups, events, and amendments`);
     console.log(`  - Follow relationships (main user: 10 following, 5 followers)`);
     console.log(`  - Conversations and messages (main user: 3 conversations)`);
     console.log(`  - Events and participants`);

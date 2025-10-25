@@ -20,6 +20,7 @@ import {
   Filter,
   Calendar,
   MapPin,
+  Hash,
 } from 'lucide-react';
 import {
   Select,
@@ -46,30 +47,37 @@ function SearchContent() {
   const typeParam = (searchParams.get('type') || 'all') as SearchType;
   const sortParam = searchParams.get('sort') || 'relevance';
   const publicOnlyParam = searchParams.get('public') === 'true';
+  const hashtagParam = searchParams.get('hashtag') || '';
 
   // Local state
   const [searchQuery, setSearchQuery] = useState(queryParam);
   const [searchType, setSearchType] = useState<SearchType>(typeParam);
   const [sortBy, setSortBy] = useState(sortParam);
   const [publicOnly, setPublicOnly] = useState(publicOnlyParam);
+  const [hashtagFilter, setHashtagFilter] = useState(hashtagParam);
   const [showFilters, setShowFilters] = useState(false);
 
   // Fetch data from InstantDB
   const { data, isLoading } = db.useQuery({
     profiles: {
-      user: {},
+      user: {
+        hashtags: {}, // Load hashtags for users
+      },
     },
     groups: {
       owner: {},
+      hashtags: {},
     },
     statements: {
       user: {},
     },
     blogs: {
       user: {},
+      hashtags: {},
     },
     amendments: {
       user: {},
+      hashtags: {},
     },
     events: {
       organizer: {
@@ -77,6 +85,7 @@ function SearchContent() {
       },
       group: {},
       participants: {},
+      hashtags: {},
     },
   });
 
@@ -101,11 +110,12 @@ function SearchContent() {
         type: searchType,
         sort: sortBy,
         public: publicOnly ? 'true' : '',
+        hashtag: hashtagFilter,
       });
     }, 300); // 300ms debounce
 
     return () => clearTimeout(timer);
-  }, [searchQuery, searchType, sortBy, publicOnly]);
+  }, [searchQuery, searchType, sortBy, publicOnly, hashtagFilter]);
 
   const handleTypeChange = (type: SearchType) => {
     setSearchType(type);
@@ -114,18 +124,40 @@ function SearchContent() {
       type,
       sort: sortBy,
       public: publicOnly ? 'true' : '',
+      hashtag: hashtagFilter,
+    });
+  };
+
+  // Filter by hashtag
+  const matchesHashtag = (item: any) => {
+    if (!hashtagFilter) return true;
+    if (!item.hashtags || item.hashtags.length === 0) return false;
+
+    // Remove # symbol if present at the start
+    const cleanFilter = hashtagFilter.startsWith('#')
+      ? hashtagFilter.substring(1).toLowerCase()
+      : hashtagFilter.toLowerCase();
+
+    // Check if any hashtag matches
+    return item.hashtags.some((h: any) => {
+      if (!h || !h.tag) return false;
+      return h.tag.toLowerCase() === cleanFilter || h.tag.toLowerCase().includes(cleanFilter);
     });
   };
 
   // Filter and search logic
   const filterByQuery = (text: string) => {
-    if (!queryParam) return true;
+    if (!queryParam) return true; // If no query, don't filter by text
     return text.toLowerCase().includes(queryParam.toLowerCase());
   };
 
   const filteredUsers =
     data?.profiles?.filter((profile: any) => {
       if (!filterByQuery(profile.name || '')) return false;
+      // Check hashtags from the linked user
+      if (hashtagFilter && profile.user?.hashtags) {
+        if (!matchesHashtag({ hashtags: profile.user.hashtags })) return false;
+      }
       return true;
     }) || [];
 
@@ -133,6 +165,7 @@ function SearchContent() {
     data?.groups?.filter((group: any) => {
       if (!filterByQuery(group.name || '')) return false;
       if (publicOnly && !group.isPublic) return false;
+      if (!matchesHashtag(group)) return false;
       return true;
     }) || [];
 
@@ -146,6 +179,7 @@ function SearchContent() {
   const filteredBlogs =
     data?.blogs?.filter((blog: any) => {
       if (!filterByQuery(blog.title || '')) return false;
+      if (!matchesHashtag(blog)) return false;
       return true;
     }) || [];
 
@@ -153,6 +187,7 @@ function SearchContent() {
     data?.amendments?.filter((amendment: any) => {
       if (!filterByQuery(amendment.title || '')) return false;
       if (amendment.subtitle && !filterByQuery(amendment.subtitle)) return false;
+      if (!matchesHashtag(amendment)) return false;
       return true;
     }) || [];
 
@@ -162,6 +197,7 @@ function SearchContent() {
       if (event.description && !filterByQuery(event.description)) return false;
       if (event.location && !filterByQuery(event.location)) return false;
       if (publicOnly && !event.isPublic) return false;
+      if (!matchesHashtag(event)) return false;
       return true;
     }) || [];
 
@@ -237,6 +273,30 @@ function SearchContent() {
           </Button>
         </div>
 
+        {/* Active Filters Display */}
+        {hashtagFilter && !showFilters && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Active filter:</span>
+            <Badge
+              variant="secondary"
+              className="cursor-pointer"
+              onClick={() => setHashtagFilter('')}
+            >
+              <Hash className="mr-1 h-3 w-3" />
+              {hashtagFilter.replace(/^#/, '')}
+              <button
+                className="ml-2 hover:text-destructive"
+                onClick={e => {
+                  e.stopPropagation();
+                  setHashtagFilter('');
+                }}
+              >
+                ×
+              </button>
+            </Badge>
+          </div>
+        )}
+
         {/* Filters */}
         {showFilters && (
           <Card>
@@ -267,16 +327,32 @@ function SearchContent() {
                   </Label>
                 </div>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="hashtag-filter">Filter by Hashtag</Label>
+                <Input
+                  id="hashtag-filter"
+                  placeholder="Enter hashtag to filter..."
+                  value={hashtagFilter}
+                  onChange={e => setHashtagFilter(e.target.value)}
+                />
+                {hashtagFilter && (
+                  <p className="text-xs text-muted-foreground">Filtering by: #{hashtagFilter}</p>
+                )}
+              </div>
             </CardContent>
           </Card>
         )}
       </div>
 
       {/* Results Summary */}
-      {queryParam && (
+      {(queryParam || hashtagFilter) && (
         <div className="mb-4">
           <p className="text-sm text-muted-foreground">
-            Found {totalResults} result{totalResults !== 1 ? 's' : ''} for "{queryParam}"
+            {queryParam &&
+              `Found ${totalResults} result${totalResults !== 1 ? 's' : ''} for "${queryParam}"`}
+            {queryParam && hashtagFilter && ' '}
+            {hashtagFilter && `Filtering by hashtag: #${hashtagFilter.replace(/^#/, '')}`}
           </p>
         </div>
       )}
@@ -461,8 +537,6 @@ function UnifiedResultCard({ item, index }: { item: any; index?: number }) {
 
 // Result Card Components (for individual tabs)
 function UserCard({ user, index }: { user: any; index?: number }) {
-  const router = useRouter();
-
   // Use user.user.id (the actual user ID) instead of user.id (the profile ID)
   const userId = user.user?.id || user.id;
 
@@ -473,59 +547,56 @@ function UserCard({ user, index }: { user: any; index?: number }) {
   const gradientClass = GRADIENTS[(index || 0) % GRADIENTS.length];
 
   return (
-    <Card
-      className="group cursor-pointer overflow-hidden transition-all hover:shadow-lg"
-      onClick={() => router.push(`/user/${userId}`)}
-    >
-      {/* Gradient Header */}
-      <div className={`relative h-24 ${gradientClass}`}>
-        <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/20" />
-      </div>
-
-      <CardHeader className="pb-3 pt-4">
-        <div className="mb-3 flex items-start gap-3">
-          {/* Avatar next to name */}
-          <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border-2 border-background shadow-md">
-            {avatar ? (
-              <img
-                src={avatar}
-                alt={user.name || 'User'}
-                className="h-full w-full object-cover transition-transform group-hover:scale-110"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 text-lg font-bold text-white">
-                {(user.name || 'U').charAt(0).toUpperCase()}
-              </div>
-            )}
-          </div>
-
-          {/* Name and handle */}
-          <div className="min-w-0 flex-1">
-            <CardTitle className="text-lg leading-tight">{user.name || 'Unknown User'}</CardTitle>
-            {user.handle && <CardDescription className="mt-0.5">@{user.handle}</CardDescription>}
-          </div>
-
-          {/* Badge */}
-          <Badge variant="secondary" className="flex-shrink-0 text-xs">
-            <Users className="mr-1 h-3 w-3" />
-            User
-          </Badge>
+    <a href={`/user/${userId}`} className="block">
+      <Card className="group cursor-pointer overflow-hidden transition-all hover:shadow-lg">
+        {/* Gradient Header */}
+        <div className={`relative h-24 ${gradientClass}`}>
+          <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/20" />
         </div>
-      </CardHeader>
 
-      <CardContent className="pt-0">
-        {user.bio && <p className="line-clamp-2 text-sm text-muted-foreground">{user.bio}</p>}
-        {user.contactLocation && (
-          <p className="mt-2 text-xs text-muted-foreground">{user.contactLocation}</p>
-        )}
-      </CardContent>
-    </Card>
+        <CardHeader className="pb-3 pt-4">
+          <div className="mb-3 flex items-start gap-3">
+            {/* Avatar next to name */}
+            <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border-2 border-background shadow-md">
+              {avatar ? (
+                <img
+                  src={avatar}
+                  alt={user.name || 'User'}
+                  className="h-full w-full object-cover transition-transform group-hover:scale-110"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 text-lg font-bold text-white">
+                  {(user.name || 'U').charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+
+            {/* Name and handle */}
+            <div className="min-w-0 flex-1">
+              <CardTitle className="text-lg leading-tight">{user.name || 'Unknown User'}</CardTitle>
+              {user.handle && <CardDescription className="mt-0.5">@{user.handle}</CardDescription>}
+            </div>
+
+            {/* Badge */}
+            <Badge variant="secondary" className="flex-shrink-0 text-xs">
+              <Users className="mr-1 h-3 w-3" />
+              User
+            </Badge>
+          </div>
+        </CardHeader>
+
+        <CardContent className="pt-0">
+          {user.bio && <p className="line-clamp-2 text-sm text-muted-foreground">{user.bio}</p>}
+          {user.contactLocation && (
+            <p className="mt-2 text-xs text-muted-foreground">{user.contactLocation}</p>
+          )}
+        </CardContent>
+      </Card>
+    </a>
   );
 }
 
 function EventCard({ event }: { event: any }) {
-  const router = useRouter();
-
   const formatEventDate = (date: string | number) => {
     return new Date(date).toLocaleDateString('en-US', {
       weekday: 'short',
@@ -543,48 +614,47 @@ function EventCard({ event }: { event: any }) {
   };
 
   return (
-    <Card
-      className="cursor-pointer transition-colors hover:bg-accent"
-      onClick={() => router.push(`/event/${event.id}`)}
-    >
-      {event.imageURL && (
-        <div className="aspect-video w-full overflow-hidden">
-          <img src={event.imageURL} alt={event.title} className="h-full w-full object-cover" />
-        </div>
-      )}
-      <CardHeader>
-        <div className="mb-2 flex items-center justify-between">
-          <Badge variant="default" className="text-xs">
-            <Calendar className="mr-1 h-3 w-3" />
-            Event
-          </Badge>
-          {event.isPublic && (
-            <Badge variant="outline" className="text-xs">
-              Public
-            </Badge>
-          )}
-        </div>
-        <CardTitle className="text-lg">{event.title}</CardTitle>
-        <CardDescription>
-          {formatEventDate(event.startDate)} at {formatEventTime(event.startDate)}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {event.location && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <MapPin className="h-4 w-4" />
-            <span className="truncate">{event.location}</span>
+    <a href={`/event/${event.id}`} className="block">
+      <Card className="cursor-pointer transition-colors hover:bg-accent">
+        {event.imageURL && (
+          <div className="aspect-video w-full overflow-hidden">
+            <img src={event.imageURL} alt={event.title} className="h-full w-full object-cover" />
           </div>
         )}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Users className="h-4 w-4" />
-          <span>{event.participants?.length || 0} participants</span>
-        </div>
-        {event.group && (
-          <p className="text-xs text-muted-foreground">Organized by {event.group.name}</p>
-        )}
-      </CardContent>
-    </Card>
+        <CardHeader>
+          <div className="mb-2 flex items-center justify-between">
+            <Badge variant="default" className="text-xs">
+              <Calendar className="mr-1 h-3 w-3" />
+              Event
+            </Badge>
+            {event.isPublic && (
+              <Badge variant="outline" className="text-xs">
+                Public
+              </Badge>
+            )}
+          </div>
+          <CardTitle className="text-lg">{event.title}</CardTitle>
+          <CardDescription>
+            {formatEventDate(event.startDate)} at {formatEventTime(event.startDate)}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {event.location && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <MapPin className="h-4 w-4" />
+              <span className="truncate">{event.location}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Users className="h-4 w-4" />
+            <span>{event.participants?.length || 0} participants</span>
+          </div>
+          {event.group && (
+            <p className="text-xs text-muted-foreground">Organized by {event.group.name}</p>
+          )}
+        </CardContent>
+      </Card>
+    </a>
   );
 }
 
