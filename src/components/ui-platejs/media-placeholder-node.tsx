@@ -82,32 +82,65 @@ export const PlaceholderElement = withHOC(
       [api.placeholder, element.id, uploadFile]
     );
 
+    // Track if we've already processed this upload to prevent double-execution in React Strict Mode
+    const uploadProcessed = React.useRef(false);
+
+    // Reset the flag when uploadedFile changes
+    React.useEffect(() => {
+      uploadProcessed.current = false;
+    }, [uploadedFile?.key]); // Reset when a new file is uploaded
+
     React.useEffect(() => {
       if (!uploadedFile) return;
+      if (uploadProcessed.current) return; // Prevent double execution
+
+      uploadProcessed.current = true;
 
       const path = editor.api.findPath(element);
+      if (!path) {
+        console.warn('Could not find path for placeholder element');
+        return;
+      }
 
-      editor.tf.withoutSaving(() => {
-        editor.tf.removeNodes({ at: path });
+      // Create the appropriate node based on media type
+      const node: any = {
+        children: [{ text: '' }],
+        isUpload: true,
+        type: element.mediaType || 'file',
+        url: uploadedFile.url,
+      };
 
-        const node = {
-          children: [{ text: '' }],
-          initialHeight: imageRef.current?.height,
-          initialWidth: imageRef.current?.width,
-          isUpload: true,
-          name: element.mediaType === KEYS.file ? uploadedFile.name : '',
-          placeholderId: element.id as string,
-          type: element.mediaType || 'file',
-          url: uploadedFile.url,
-        };
+      // Add type-specific properties
+      if (element.mediaType === KEYS.img) {
+        // For images, include dimensions if available
+        if (imageRef.current?.height) {
+          node.initialHeight = imageRef.current.height;
+        }
+        if (imageRef.current?.width) {
+          node.initialWidth = imageRef.current.width;
+        }
+      } else if (element.mediaType === KEYS.file) {
+        // For files, include the name
+        node.name = uploadedFile.name;
+      }
 
-        editor.tf.insertNodes(node, { at: path });
+      // Add placeholder ID for tracking
+      node.placeholderId = element.id as string;
 
+      // Remove the placeholder and insert the actual media node at the same location
+      editor.tf.removeNodes({ at: path });
+      editor.tf.insertNodes(node, { at: path });
+
+      // Only update upload history if the plugin is configured
+      try {
         updateUploadHistory(editor, node);
-      });
+      } catch (error) {
+        console.warn('Upload history plugin not configured:', error);
+      }
 
+      // Remove from uploading state after successful insertion
       api.placeholder.removeUploadingFile(element.id as string);
-    }, [uploadedFile, element.id, editor, api.placeholder, imageRef]);
+    }, [uploadedFile, element.id, element.mediaType, editor, api.placeholder, imageRef]);
 
     // React dev mode will call React.useEffect twice
     const isReplaced = React.useRef(false);

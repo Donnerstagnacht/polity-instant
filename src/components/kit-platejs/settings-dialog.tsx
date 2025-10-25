@@ -56,7 +56,6 @@ export function SettingsDialog() {
   const [tempModel, setTempModel] = React.useState(models[0]);
   const [tempKeys, setTempKeys] = React.useState<Record<string, string>>({
     openai: '',
-    uploadthing: '',
   });
   const [showKey, setShowKey] = React.useState<Record<string, boolean>>({});
   const [open, setOpen] = React.useState(false);
@@ -106,11 +105,7 @@ export function SettingsDialog() {
         <Button asChild size="icon" variant="ghost" className="absolute right-[28px] top-0 h-full">
           <a
             className="flex items-center"
-            href={
-              service === 'openai'
-                ? 'https://platform.openai.com/api-keys'
-                : 'https://uploadthing.com/dashboard'
-            }
+            href="https://platform.openai.com/api-keys"
             rel="noopener noreferrer"
             target="_blank"
           >
