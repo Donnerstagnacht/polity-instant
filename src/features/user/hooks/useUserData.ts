@@ -18,6 +18,7 @@ export function useUserData(userId?: string) {
                 'user.id': userId,
               },
             },
+            avatarFile: {}, // Query the linked avatar file to get URL
             user: {
               stats: {},
               statements: {},
@@ -29,23 +30,55 @@ export function useUserData(userId?: string) {
             },
           },
         }
-      : { profiles: {} }
+      : null
   );
+
+  // Only log when we actually have a userId to query
+  if (userId) {
+    console.log('👤 [useUserData] Query result:', {
+      userId,
+      hasData: !!data,
+      profiles: data?.profiles,
+      profileCount: data?.profiles?.length,
+      isLoading,
+      error,
+    });
+  }
+
+  // Extract profile ID
+  const profileId = useMemo(() => {
+    if (!userId || !data?.profiles || data.profiles.length === 0) {
+      return null;
+    }
+    return data.profiles[0].id;
+  }, [data, userId]);
 
   // Transform Instant DB data to match User type
   const user: User | null = useMemo(() => {
+    if (!userId) {
+      // Don't log when userId is not provided - this is expected during loading
+      return null;
+    }
+
     if (!data?.profiles || data.profiles.length === 0) {
+      console.log('❌ [useUserData] No profiles found for userId:', userId);
       return null;
     }
 
     const profile = data.profiles[0];
     const userData = profile.user;
 
+    console.log('✅ [useUserData] Found profile data:', {
+      profileName: profile.name,
+      hasUserData: !!userData,
+    });
+
     // Transform profile and related data
     return {
       name: profile.name || '',
       subtitle: profile.subtitle || '',
-      avatar: profile.avatar || profile.imageURL || '',
+      // Use avatarFile URL if available, otherwise fall back to avatar string or imageURL
+      avatar: profile.avatarFile?.url || profile.avatar || profile.imageURL || '',
 
       // Transform stats
       stats:
@@ -120,10 +153,11 @@ export function useUserData(userId?: string) {
           tags: amendment.tags,
         })) || [],
     };
-  }, [data]);
+  }, [data, userId]);
 
   return {
     user,
+    profileId,
     isLoading,
     error: error ? String(error) : null,
   };

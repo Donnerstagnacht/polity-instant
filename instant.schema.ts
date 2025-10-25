@@ -1030,6 +1030,20 @@ const _schema = i.schema({
         label: 'documentCursors',
       },
     },
+
+    // 49. Profile avatars to files (many-to-one)
+    profileAvatars: {
+      forward: {
+        on: 'profiles',
+        has: 'one',
+        label: 'avatarFile',
+      },
+      reverse: {
+        on: '$files',
+        has: 'one',
+        label: 'profileAvatar',
+      },
+    },
   },
   rooms: {
     // Editor room for collaborative editing

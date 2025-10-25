@@ -1,7 +1,7 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
-import { BlogsCard } from './BlogsCard';
+import { BlogSearchCard } from '@/features/search/ui/BlogSearchCard';
 
 interface BlogListTabProps {
   blogs: {
@@ -51,7 +51,7 @@ export const BlogListTab: React.FC<BlogListTabProps> = ({
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredBlogs.map(blog => {
             const gradientClass = getBlogGradient(blog.id);
-            return <BlogsCard key={blog.id} blog={blog} gradientClass={gradientClass} />;
+            return <BlogSearchCard key={blog.id} blog={blog} gradientClass={gradientClass} />;
           })}
         </div>
       )}

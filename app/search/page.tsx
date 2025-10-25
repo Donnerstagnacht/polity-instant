@@ -29,6 +29,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { BlogSearchCard } from '@/features/search/ui/BlogSearchCard';
+import { AmendmentSearchCard } from '@/features/search/ui/AmendmentSearchCard';
+import { GroupSearchCard } from '@/features/search/ui/GroupSearchCard';
+import { StatementSearchCard } from '@/features/search/ui/StatementSearchCard';
+import { GRADIENTS } from '@/features/user/state/gradientColors';
 
 type SearchType = 'all' | 'users' | 'groups' | 'statements' | 'blogs' | 'amendments' | 'events';
 
@@ -317,7 +322,11 @@ function SearchContent() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {mosaicResults.map((item: any, index: number) => (
-                <UnifiedResultCard key={`${item._type}-${item.id}-${index}`} item={item} />
+                <UnifiedResultCard
+                  key={`${item._type}-${item.id}-${index}`}
+                  item={item}
+                  index={index}
+                />
               ))}
             </div>
           )}
@@ -347,7 +356,7 @@ function SearchContent() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {allResults.groups.map((group: any) => (
-                <GroupCard key={group.id} group={group} />
+                <GroupSearchCard key={group.id} group={group} />
               ))}
             </div>
           )}
@@ -375,9 +384,9 @@ function SearchContent() {
           ) : allResults.statements.length === 0 ? (
             <div className="py-8 text-center text-muted-foreground">No statements found.</div>
           ) : (
-            <div className="grid gap-4">
+            <div className="grid gap-4 md:grid-cols-2">
               {allResults.statements.map((statement: any) => (
-                <StatementCard key={statement.id} statement={statement} />
+                <StatementSearchCard key={statement.id} statement={statement} />
               ))}
             </div>
           )}
@@ -390,9 +399,13 @@ function SearchContent() {
           ) : allResults.blogs.length === 0 ? (
             <div className="py-8 text-center text-muted-foreground">No blogs found.</div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2">
-              {allResults.blogs.map((blog: any) => (
-                <BlogCard key={blog.id} blog={blog} />
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {allResults.blogs.map((blog: any, index: number) => (
+                <BlogSearchCard
+                  key={blog.id}
+                  blog={blog}
+                  gradientClass={GRADIENTS[index % GRADIENTS.length]}
+                />
               ))}
             </div>
           )}
@@ -407,7 +420,7 @@ function SearchContent() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
               {allResults.amendments.map((amendment: any) => (
-                <AmendmentCard key={amendment.id} amendment={amendment} />
+                <AmendmentSearchCard key={amendment.id} amendment={amendment} />
               ))}
             </div>
           )}
@@ -418,208 +431,28 @@ function SearchContent() {
 }
 
 // Unified Result Card for Mosaic Display
-function UnifiedResultCard({ item }: { item: any }) {
-  const router = useRouter();
-
-  const getTypeBadge = () => {
-    const badges: Record<
-      string,
-      { label: string; icon: any; variant: 'default' | 'secondary' | 'outline' }
-    > = {
-      user: { label: 'User', icon: Users, variant: 'default' },
-      group: { label: 'Group', icon: Users, variant: 'secondary' },
-      statement: { label: 'Statement', icon: FileText, variant: 'outline' },
-      blog: { label: 'Blog', icon: BookOpen, variant: 'default' },
-      amendment: { label: 'Amendment', icon: Scale, variant: 'secondary' },
-      event: { label: 'Event', icon: Calendar, variant: 'default' },
-    };
-    return badges[item._type] || badges.user;
-  };
-
-  const handleClick = () => {
-    switch (item._type) {
-      case 'user':
-        router.push(`/user/${item.id}`);
-        break;
-      case 'group':
-        router.push(`/group/${item.id}`);
-        break;
-      case 'statement':
-        router.push(`/statement/${item.id}`);
-        break;
-      case 'blog':
-        router.push(`/blog/${item.id}`);
-        break;
-      case 'amendment':
-        router.push(`/amendment/${item.id}`);
-        break;
-      case 'event':
-        router.push(`/event/${item.id}`);
-        break;
-    }
-  };
-
-  const typeBadge = getTypeBadge();
-  const TypeIcon = typeBadge.icon;
-
-  // Format date for events
-  const formatEventDate = (date: string | number) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
-
-  // Render based on type
+function UnifiedResultCard({ item, index }: { item: any; index?: number }) {
+  // Use the reusable card components based on type
   switch (item._type) {
-    case 'user':
-      return (
-        <Card className="cursor-pointer transition-colors hover:bg-accent" onClick={handleClick}>
-          <CardHeader>
-            <div className="mb-2 flex items-center justify-between">
-              <Badge variant={typeBadge.variant} className="text-xs">
-                <TypeIcon className="mr-1 h-3 w-3" />
-                {typeBadge.label}
-              </Badge>
-            </div>
-            <CardTitle className="text-lg">{item.name || 'Unknown User'}</CardTitle>
-            {item.handle && <CardDescription>@{item.handle}</CardDescription>}
-          </CardHeader>
-          <CardContent>
-            {item.bio && <p className="line-clamp-2 text-sm text-muted-foreground">{item.bio}</p>}
-            {item.contactLocation && (
-              <p className="mt-2 text-xs text-muted-foreground">{item.contactLocation}</p>
-            )}
-          </CardContent>
-        </Card>
-      );
-
-    case 'group':
-      return (
-        <Card className="cursor-pointer transition-colors hover:bg-accent" onClick={handleClick}>
-          <CardHeader>
-            <div className="mb-2 flex items-center justify-between">
-              <Badge variant={typeBadge.variant} className="text-xs">
-                <TypeIcon className="mr-1 h-3 w-3" />
-                {typeBadge.label}
-              </Badge>
-              {item.isPublic && (
-                <Badge variant="outline" className="text-xs">
-                  Public
-                </Badge>
-              )}
-            </div>
-            <CardTitle className="text-lg">{item.name}</CardTitle>
-            <CardDescription>
-              {item.memberCount || 0} member{item.memberCount !== 1 ? 's' : ''}
-            </CardDescription>
-          </CardHeader>
-          {item.description && (
-            <CardContent>
-              <p className="line-clamp-2 text-sm text-muted-foreground">{item.description}</p>
-            </CardContent>
-          )}
-        </Card>
-      );
-
-    case 'statement':
-      return (
-        <Card className="cursor-pointer transition-colors hover:bg-accent" onClick={handleClick}>
-          <CardHeader>
-            <div className="mb-2">
-              <Badge variant={typeBadge.variant} className="text-xs">
-                <TypeIcon className="mr-1 h-3 w-3" />
-                {typeBadge.label}
-              </Badge>
-            </div>
-            <CardTitle className="line-clamp-3 text-base font-normal">{item.text}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Badge variant="outline">{item.tag}</Badge>
-          </CardContent>
-        </Card>
-      );
-
     case 'blog':
       return (
-        <Card className="cursor-pointer transition-colors hover:bg-accent" onClick={handleClick}>
-          <CardHeader>
-            <div className="mb-2">
-              <Badge variant={typeBadge.variant} className="text-xs">
-                <TypeIcon className="mr-1 h-3 w-3" />
-                {typeBadge.label}
-              </Badge>
-            </div>
-            <CardTitle className="text-lg">{item.title}</CardTitle>
-            <CardDescription>{item.date}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-4 text-sm text-muted-foreground">
-              <span>❤️ {item.likes || 0} likes</span>
-              <span>💬 {item.comments || 0} comments</span>
-            </div>
-          </CardContent>
-        </Card>
+        <BlogSearchCard blog={item} gradientClass={GRADIENTS[(index || 0) % GRADIENTS.length]} />
       );
 
-    case 'amendment': {
-      const statusColors: Record<string, string> = {
-        Passed: 'bg-green-500/10 text-green-500',
-        Rejected: 'bg-red-500/10 text-red-500',
-        'Under Review': 'bg-yellow-500/10 text-yellow-500',
-        Drafting: 'bg-blue-500/10 text-blue-500',
-      };
-      return (
-        <Card className="cursor-pointer transition-colors hover:bg-accent" onClick={handleClick}>
-          <CardHeader>
-            <div className="mb-2 flex items-center justify-between">
-              <Badge variant={typeBadge.variant} className="text-xs">
-                <TypeIcon className="mr-1 h-3 w-3" />
-                {typeBadge.label}
-              </Badge>
-              <Badge className={statusColors[item.status] || ''}>{item.status}</Badge>
-            </div>
-            <CardTitle className="text-lg">{item.title}</CardTitle>
-            {item.subtitle && <CardDescription>{item.subtitle}</CardDescription>}
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>{item.date}</span>
-              <span>{item.supporters || 0} supporters</span>
-            </div>
-          </CardContent>
-        </Card>
-      );
-    }
+    case 'amendment':
+      return <AmendmentSearchCard amendment={item} />;
+
+    case 'group':
+      return <GroupSearchCard group={item} />;
+
+    case 'user':
+      return <UserCard user={item} index={index} />;
+
+    case 'statement':
+      return <StatementSearchCard statement={item} />;
 
     case 'event':
-      return (
-        <Card className="cursor-pointer transition-colors hover:bg-accent" onClick={handleClick}>
-          <CardHeader>
-            <div className="mb-2 flex items-center justify-between">
-              <Badge variant={typeBadge.variant} className="text-xs">
-                <TypeIcon className="mr-1 h-3 w-3" />
-                {typeBadge.label}
-              </Badge>
-              {item.isPublic && (
-                <Badge variant="outline" className="text-xs">
-                  Public
-                </Badge>
-              )}
-            </div>
-            <CardTitle className="text-lg">{item.title}</CardTitle>
-            <CardDescription>{formatEventDate(item.startDate)}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {item.location && <p className="mb-2 text-sm text-muted-foreground">{item.location}</p>}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Users className="h-4 w-4" />
-              <span>{item.participants?.length || 0} participants</span>
-            </div>
-          </CardContent>
-        </Card>
-      );
+      return <EventCard event={item} />;
 
     default:
       return null;
@@ -627,151 +460,64 @@ function UnifiedResultCard({ item }: { item: any }) {
 }
 
 // Result Card Components (for individual tabs)
-function UserCard({ user }: { user: any }) {
+function UserCard({ user, index }: { user: any; index?: number }) {
   const router = useRouter();
+
+  // Use user.user.id (the actual user ID) instead of user.id (the profile ID)
+  const userId = user.user?.id || user.id;
+
+  // Get avatar from various possible sources
+  const avatar = user.avatarFile?.url || user.avatar || user.imageURL || '';
+
+  // Get gradient class for this user card
+  const gradientClass = GRADIENTS[(index || 0) % GRADIENTS.length];
 
   return (
     <Card
-      className="cursor-pointer transition-colors hover:bg-accent"
-      onClick={() => router.push(`/user/${user.id}`)}
+      className="group cursor-pointer overflow-hidden transition-all hover:shadow-lg"
+      onClick={() => router.push(`/user/${userId}`)}
     >
-      <CardHeader>
-        <div className="mb-2">
-          <Badge variant="default" className="text-xs">
+      {/* Gradient Header */}
+      <div className={`relative h-24 ${gradientClass}`}>
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/20" />
+      </div>
+
+      <CardHeader className="pb-3 pt-4">
+        <div className="mb-3 flex items-start gap-3">
+          {/* Avatar next to name */}
+          <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border-2 border-background shadow-md">
+            {avatar ? (
+              <img
+                src={avatar}
+                alt={user.name || 'User'}
+                className="h-full w-full object-cover transition-transform group-hover:scale-110"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 text-lg font-bold text-white">
+                {(user.name || 'U').charAt(0).toUpperCase()}
+              </div>
+            )}
+          </div>
+
+          {/* Name and handle */}
+          <div className="min-w-0 flex-1">
+            <CardTitle className="text-lg leading-tight">{user.name || 'Unknown User'}</CardTitle>
+            {user.handle && <CardDescription className="mt-0.5">@{user.handle}</CardDescription>}
+          </div>
+
+          {/* Badge */}
+          <Badge variant="secondary" className="flex-shrink-0 text-xs">
             <Users className="mr-1 h-3 w-3" />
             User
           </Badge>
         </div>
-        <CardTitle className="text-lg">{user.name || 'Unknown User'}</CardTitle>
-        {user.handle && <CardDescription>@{user.handle}</CardDescription>}
       </CardHeader>
-      <CardContent>
+
+      <CardContent className="pt-0">
         {user.bio && <p className="line-clamp-2 text-sm text-muted-foreground">{user.bio}</p>}
         {user.contactLocation && (
           <p className="mt-2 text-xs text-muted-foreground">{user.contactLocation}</p>
         )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function GroupCard({ group }: { group: any }) {
-  const router = useRouter();
-
-  return (
-    <Card
-      className="cursor-pointer transition-colors hover:bg-accent"
-      onClick={() => router.push(`/group/${group.id}`)}
-    >
-      <CardHeader>
-        <div className="mb-2 flex items-center justify-between">
-          <Badge variant="secondary" className="text-xs">
-            <Users className="mr-1 h-3 w-3" />
-            Group
-          </Badge>
-          {group.isPublic && (
-            <Badge variant="outline" className="text-xs">
-              Public
-            </Badge>
-          )}
-        </div>
-        <CardTitle className="text-lg">{group.name}</CardTitle>
-        <CardDescription>
-          {group.memberCount || 0} member{group.memberCount !== 1 ? 's' : ''}
-        </CardDescription>
-      </CardHeader>
-      {group.description && (
-        <CardContent>
-          <p className="line-clamp-2 text-sm text-muted-foreground">{group.description}</p>
-        </CardContent>
-      )}
-    </Card>
-  );
-}
-
-function StatementCard({ statement }: { statement: any }) {
-  const router = useRouter();
-
-  return (
-    <Card
-      className="cursor-pointer transition-colors hover:bg-accent"
-      onClick={() => router.push(`/statement/${statement.id}`)}
-    >
-      <CardHeader>
-        <div className="mb-2">
-          <Badge variant="outline" className="text-xs">
-            <FileText className="mr-1 h-3 w-3" />
-            Statement
-          </Badge>
-        </div>
-        <CardTitle className="line-clamp-3 text-base font-normal">{statement.text}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Badge variant="outline">{statement.tag}</Badge>
-      </CardContent>
-    </Card>
-  );
-}
-
-function BlogCard({ blog }: { blog: any }) {
-  const router = useRouter();
-
-  return (
-    <Card
-      className="cursor-pointer transition-colors hover:bg-accent"
-      onClick={() => router.push(`/blog/${blog.id}`)}
-    >
-      <CardHeader>
-        <div className="mb-2">
-          <Badge variant="default" className="text-xs">
-            <BookOpen className="mr-1 h-3 w-3" />
-            Blog
-          </Badge>
-        </div>
-        <CardTitle className="text-lg">{blog.title}</CardTitle>
-        <CardDescription>{blog.date}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex gap-4 text-sm text-muted-foreground">
-          <span>❤️ {blog.likes || 0} likes</span>
-          <span>💬 {blog.comments || 0} comments</span>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function AmendmentCard({ amendment }: { amendment: any }) {
-  const router = useRouter();
-
-  const statusColors: Record<string, string> = {
-    Passed: 'bg-green-500/10 text-green-500',
-    Rejected: 'bg-red-500/10 text-red-500',
-    'Under Review': 'bg-yellow-500/10 text-yellow-500',
-    Drafting: 'bg-blue-500/10 text-blue-500',
-  };
-
-  return (
-    <Card
-      className="cursor-pointer transition-colors hover:bg-accent"
-      onClick={() => router.push(`/amendment/${amendment.id}`)}
-    >
-      <CardHeader>
-        <div className="mb-2 flex items-center justify-between">
-          <Badge variant="secondary" className="text-xs">
-            <Scale className="mr-1 h-3 w-3" />
-            Amendment
-          </Badge>
-          <Badge className={statusColors[amendment.status] || ''}>{amendment.status}</Badge>
-        </div>
-        <CardTitle className="text-lg">{amendment.title}</CardTitle>
-        {amendment.subtitle && <CardDescription>{amendment.subtitle}</CardDescription>}
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>{amendment.date}</span>
-          <span>{amendment.supporters || 0} supporters</span>
-        </div>
       </CardContent>
     </Card>
   );

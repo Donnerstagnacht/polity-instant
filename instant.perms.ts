@@ -2,7 +2,9 @@
 // This file defines the permission rules for the Polity application
 // It controls who can create, read, update, and delete data
 
-export const permissions = {
+import type { InstantRules } from '@instantdb/react';
+
+const rules = {
   // Default: Deny all access unless explicitly allowed
   $default: {
     allow: {
@@ -20,10 +22,10 @@ export const permissions = {
       create: 'false',
       // Users can view other users' profiles if authenticated
       view: 'auth.id != null',
-      // Users can only update their own profile
-      update: 'auth.id == data.id',
-      // Users can only delete their own account
-      delete: 'auth.id == data.id',
+      // $users namespace is read-only - no updates allowed
+      update: 'false',
+      // $users namespace is read-only - no deletes allowed
+      delete: 'false',
     },
   },
 
@@ -48,41 +50,38 @@ export const permissions = {
       create: 'auth.id != null',
       // Public groups are visible to all authenticated users
       // Private groups are only visible to members and owners
-      view: `
-        data.isPublic == true || 
-        auth.id in data.memberships.user.id || 
-        auth.id == data.owner.id
-      `,
+      view: 'data.isPublic == true || isMember || isOwner',
       // Only group owners can update group details
-      update: 'auth.id == data.owner.id',
+      update: 'isOwner',
       // Only group owners can delete groups
-      delete: 'auth.id == data.owner.id',
+      delete: 'isOwner',
     },
+    bind: [
+      'isMember',
+      "auth.id in data.ref('memberships.user.id')",
+      'isOwner',
+      "auth.id in data.ref('owner.id')",
+    ],
   },
 
   // Group membership permissions
   groupMemberships: {
     allow: {
       // Users can join groups themselves, or owners can add members
-      create: `
-        auth.id != null && (
-          auth.id == data.user.id || 
-          auth.id == data.group.owner.id
-        )
-      `,
+      create: 'isMember || isGroupOwner',
       // Users can view memberships they're part of, or owners can view all
-      view: `
-        auth.id == data.user.id || 
-        auth.id == data.group.owner.id
-      `,
+      view: 'isMember || isGroupOwner',
       // Only group owners can update member roles
-      update: 'auth.id == data.group.owner.id',
+      update: 'isGroupOwner',
       // Users can leave groups, or owners can remove members
-      delete: `
-        auth.id == data.user.id || 
-        auth.id == data.group.owner.id
-      `,
+      delete: 'isMember || isGroupOwner',
     },
+    bind: [
+      'isMember',
+      "auth.id in data.ref('user.id')",
+      'isGroupOwner',
+      "auth.id in data.ref('group.owner.id')",
+    ],
   },
 
   // File permissions (for avatars, uploads, etc.)
@@ -103,125 +102,129 @@ export const permissions = {
   profiles: {
     allow: {
       // Users can create their own profile
-      create: 'auth.id == data.user.id',
+      create: 'isOwner',
       // Anyone authenticated can view profiles
       view: 'auth.id != null',
       // Users can only update their own profile
-      update: 'auth.id == data.user.id',
+      update: 'isOwner',
       // Users can only delete their own profile
-      delete: 'auth.id == data.user.id',
+      delete: 'isOwner',
     },
+    bind: ['isOwner', "auth.id in data.ref('user.id')"],
   },
 
   // User stats permissions
   stats: {
     allow: {
       // Users can create stats for themselves
-      create: 'auth.id == data.user.id',
+      create: 'isOwner',
       // Anyone authenticated can view stats
       view: 'auth.id != null',
       // Users can only update their own stats
-      update: 'auth.id == data.user.id',
+      update: 'isOwner',
       // Users can only delete their own stats
-      delete: 'auth.id == data.user.id',
+      delete: 'isOwner',
     },
+    bind: ['isOwner', "auth.id in data.ref('user.id')"],
   },
 
   // User statements permissions
   statements: {
     allow: {
       // Users can create their own statements
-      create: 'auth.id == data.user.id',
+      create: 'isOwner',
       // Anyone authenticated can view statements
       view: 'auth.id != null',
       // Users can only update their own statements
-      update: 'auth.id == data.user.id',
+      update: 'isOwner',
       // Users can only delete their own statements
-      delete: 'auth.id == data.user.id',
+      delete: 'isOwner',
     },
+    bind: ['isOwner', "auth.id in data.ref('user.id')"],
   },
 
   // User blogs permissions
   blogs: {
     allow: {
       // Users can create their own blogs
-      create: 'auth.id == data.user.id',
+      create: 'isOwner',
       // Anyone authenticated can view blogs
       view: 'auth.id != null',
       // Users can only update their own blogs
-      update: 'auth.id == data.user.id',
+      update: 'isOwner',
       // Users can only delete their own blogs
-      delete: 'auth.id == data.user.id',
+      delete: 'isOwner',
     },
+    bind: ['isOwner', "auth.id in data.ref('user.id')"],
   },
 
   // User amendments permissions
   amendments: {
     allow: {
       // Users can create their own amendments
-      create: 'auth.id == data.user.id',
+      create: 'isOwner',
       // Anyone authenticated can view amendments
       view: 'auth.id != null',
       // Users can only update their own amendments
-      update: 'auth.id == data.user.id',
+      update: 'isOwner',
       // Users can only delete their own amendments
-      delete: 'auth.id == data.user.id',
+      delete: 'isOwner',
     },
+    bind: ['isOwner', "auth.id in data.ref('user.id')"],
   },
 
   // User groups (user entity) permissions
   user: {
     allow: {
       // Users can create group entries for themselves
-      create: 'auth.id == data.user.id',
+      create: 'isOwner',
       // Anyone authenticated can view user groups
       view: 'auth.id != null',
       // Users can only update their own group entries
-      update: 'auth.id == data.user.id',
+      update: 'isOwner',
       // Users can only delete their own group entries
-      delete: 'auth.id == data.user.id',
+      delete: 'isOwner',
     },
+    bind: ['isOwner', "auth.id in data.ref('user.id')"],
   },
 
   // Follow/follower permissions
   follows: {
     allow: {
       // Users can follow other users (follower must be themselves)
-      create: 'auth.id == data.follower.id',
+      create: 'isFollower',
       // Anyone authenticated can view follow relationships
       view: 'auth.id != null',
       // No one can update follow relationships (delete and recreate instead)
       update: 'false',
       // Users can only unfollow themselves (delete their own follow records)
-      delete: 'auth.id == data.follower.id',
+      delete: 'isFollower',
     },
+    bind: ['isFollower', "auth.id in data.ref('follower.id')"],
   },
 
   // Group relationships permissions
   groupRelationships: {
     allow: {
       // Only group owners (of either parent or child) can create relationships
-      create: `
-        auth.id != null && (
-          auth.id == data.parentGroup.owner.id || 
-          auth.id == data.childGroup.owner.id
-        )
-      `,
+      create: 'isParentOwner || isChildOwner',
       // Anyone authenticated can view group relationships
       view: 'auth.id != null',
       // Only group owners can update relationships
-      update: `
-        auth.id == data.parentGroup.owner.id || 
-        auth.id == data.childGroup.owner.id
-      `,
+      update: 'isParentOwner || isChildOwner',
       // Only group owners can delete relationships
-      delete: `
-        auth.id == data.parentGroup.owner.id || 
-        auth.id == data.childGroup.owner.id
-      `,
+      delete: 'isParentOwner || isChildOwner',
     },
+    bind: [
+      'isParentOwner',
+      "auth.id in data.ref('parentGroup.owner.id')",
+      'isChildOwner',
+      "auth.id in data.ref('childGroup.owner.id')",
+    ],
   },
 
   // Additional security rules can be added here
   // For example, rate limiting, content filtering, etc.
-};
+} satisfies InstantRules;
+
+export default rules;

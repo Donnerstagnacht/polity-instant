@@ -70,6 +70,10 @@ const deTranslation: I18nLocale = {
         overview: 'Übersicht',
         agenda: 'Tagesordnung',
       },
+      user: {
+        profile: 'Profil',
+        edit: 'Profil bearbeiten',
+      },
     },
     toggles: {
       theme: {

@@ -2,7 +2,7 @@
 
 import { useEffect, ReactNode, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useAuthStore } from '@/features/auth/auth.ts';
+import { db } from '../../../db';
 import { Loader2 } from 'lucide-react';
 
 interface AuthGuardProps {
@@ -18,7 +18,8 @@ interface AuthGuardProps {
 export function AuthGuard({ children, requireAuth = true, redirectTo, fallback }: AuthGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, isLoading } = useAuthStore();
+  const { user, isLoading } = db.useAuth();
+  const isAuthenticated = !!user;
   const [isMounted, setIsMounted] = useState(false);
 
   // Track when component has mounted to avoid hydration issues

@@ -4,6 +4,7 @@ import { useInitialRoute } from '@/navigation/state/useInitialRoute';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from '@/hooks/use-translation';
 import { useUnreadNotificationsCount, useUnreadMessagesCount } from '@/hooks/use-unread-counts';
+import { db } from '../../../db';
 import type { NavigationItem } from '@/navigation/types/navigation.types';
 
 /**
@@ -16,6 +17,7 @@ export function useNavigation() {
   const pathname = usePathname();
   const [currentPrimaryRoute, setCurrentPrimaryRoute] = useState<string | null>(null);
   const { t } = useTranslation();
+  const { user: authUser } = db.useAuth();
 
   // Get unread counts for notifications and messages
   const { count: unreadNotificationsCount } = useUnreadNotificationsCount();
@@ -96,7 +98,24 @@ export function useNavigation() {
       }
     }
 
-    const baseSecondaryItems = baseGetSecondaryNavItems(currentPrimaryRoute, eventId);
+    // Extract user ID from pathname if on a user route
+    let userId: string | undefined;
+    let isOwnProfile = false;
+    if (pathname.startsWith('/user/')) {
+      const match = pathname.match(/^\/user\/([^/]+)/);
+      if (match) {
+        userId = match[1];
+        // Check if this is the current user's profile
+        isOwnProfile = authUser?.id === userId;
+      }
+    }
+
+    const baseSecondaryItems = baseGetSecondaryNavItems(
+      currentPrimaryRoute,
+      eventId,
+      userId,
+      isOwnProfile
+    );
     if (!baseSecondaryItems) return null;
 
     // Override labels with translations for secondary items
@@ -111,7 +130,9 @@ export function useNavigation() {
               ? t(`navigation.secondary.calendar.${item.id}`)
               : currentPrimaryRoute === 'event'
                 ? t(`navigation.secondary.event.${item.id}`)
-                : item.label,
+                : currentPrimaryRoute === 'user'
+                  ? t(`navigation.secondary.user.${item.id}`)
+                  : item.label,
     }));
   };
 

@@ -14,7 +14,7 @@ import type {
   NavigationView,
 } from '@/navigation/types/navigation.types';
 import { useNavigation } from '@/navigation/state/useNavigation';
-import { useAuthStore } from '@/features/auth/auth.ts';
+import { db } from '../db';
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   // Initialize theme, screen responsive detection, and auth state
@@ -24,7 +24,8 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   const { screenType, isMobileScreen } = useScreenStore();
   const { navigationType, navigationView } = useNavigationStore();
   const { primaryNavItems, secondaryNavItems, unauthenticatedNavItems } = useNavigation();
-  const { isAuthenticated } = useAuthStore();
+  const { user: authUser } = db.useAuth();
+  const isAuthenticated = !!authUser;
 
   // Determine navigation items based on authentication status
   const navigationItems = isAuthenticated ? primaryNavItems : unauthenticatedNavItems;

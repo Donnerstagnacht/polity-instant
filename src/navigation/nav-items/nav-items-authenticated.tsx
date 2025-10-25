@@ -242,15 +242,47 @@ export const navItemsAuthenticated = (
     },
   ];
 
+  // Function to create user profile secondary navigation items for a specific user
+  const getUserSecondaryNavItems = (userId: string, isOwnProfile: boolean): NavigationItem[] => {
+    const items: NavigationItem[] = [
+      {
+        id: 'profile',
+        label: 'Profile',
+        icon: 'User',
+        href: `/user/${userId}`,
+        onClick: () => router.push(`/user/${userId}`),
+      },
+    ];
+
+    // Add edit option only for own profile
+    if (isOwnProfile) {
+      items.push({
+        id: 'edit',
+        label: 'Edit Profile',
+        icon: 'Settings',
+        href: `/user/${userId}/edit`,
+        onClick: () => router.push(`/user/${userId}/edit`),
+      });
+    }
+
+    return items;
+  };
+
   return {
     primaryNavItems,
     projectSecondaryNavItems,
     dashboardSecondaryNavItems,
     calendarSecondaryNavItems,
     getEventSecondaryNavItems,
+    getUserSecondaryNavItems,
 
     // Utility function to get secondary items based on current route
-    getSecondaryNavItems: (currentPrimaryRoute: string | null, eventId?: string) => {
+    getSecondaryNavItems: (
+      currentPrimaryRoute: string | null,
+      eventId?: string,
+      userId?: string,
+      isOwnProfile?: boolean
+    ) => {
       switch (currentPrimaryRoute) {
         case 'projects':
           return projectSecondaryNavItems;
@@ -260,6 +292,8 @@ export const navItemsAuthenticated = (
           return calendarSecondaryNavItems;
         case 'event':
           return eventId ? getEventSecondaryNavItems(eventId) : null;
+        case 'user':
+          return userId ? getUserSecondaryNavItems(userId, isOwnProfile ?? false) : null;
         default:
           return null;
       }

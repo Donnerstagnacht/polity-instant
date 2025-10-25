@@ -68,6 +68,10 @@ const enTranslation = {
         overview: 'Overview',
         agenda: 'Agenda',
       },
+      user: {
+        profile: 'Profile',
+        edit: 'Edit Profile',
+      },
     },
     toggles: {
       theme: {

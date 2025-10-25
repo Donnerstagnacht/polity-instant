@@ -3,8 +3,6 @@ import { StatsBar } from '@/features/user/ui/StatsBar';
 import '@/styles/animations.css';
 import { SocialBar } from '@/features/user/ui/SocialBar';
 import { useUserWikiContentSearch } from './state/useUserWikiContentSearch';
-import type { User } from './types/user.types';
-import { USER } from './state/user.data';
 import { BADGE_COLORS } from './state/badgeColors';
 import { GRADIENTS } from './state/gradientColors';
 import { UserInfoTabs } from '@/features/user/ui/UserInfoTabs';
@@ -14,6 +12,7 @@ import { UserWikiHeader } from '@/features/user/ui/UserWikiHeader';
 import { useUserData } from './hooks/useUserData';
 import { useFollowUser } from './hooks/useFollowUser';
 import { useAuthStore } from '@/features/auth/auth.ts';
+import { SeedUserDataButton } from './ui/SeedUserDataButton';
 
 // --- UserWiki utility functions moved to utils/userWiki.utils.ts ---
 import {
@@ -52,9 +51,6 @@ export function UserWiki(_props: UserWikiProps) {
   // Follow/unfollow functionality
   const { isFollowing: following, followerCount, toggleFollow } = useFollowUser(userIdToFetch);
 
-  // Fallback to mock data if no database user is found (for development)
-  const user: User = dbUser || USER;
-
   // Function to handle follow/unfollow with animation
   const handleFollowClick = async () => {
     const wasFollowing = following;
@@ -71,18 +67,19 @@ export function UserWiki(_props: UserWikiProps) {
   };
 
   // Create a version of the stats array with the updated follower count
-  const displayStats = user.stats.map(stat => {
-    if (stat.label === 'Followers') {
-      // For followers, use the actual follower count from the database
-      const formatted = formatNumberWithUnit(followerCount);
-      return { ...stat, value: formatted.value, unit: formatted.unit };
-    } else if (stat.value >= 1000) {
-      // For other stats that are >= 1000, also apply the formatting
-      const formatted = formatNumberWithUnit(stat.value);
-      return { ...stat, value: formatted.value, unit: formatted.unit };
-    }
-    return stat;
-  });
+  const displayStats =
+    dbUser?.stats.map(stat => {
+      if (stat.label === 'Followers') {
+        // For followers, use the actual follower count from the database
+        const formatted = formatNumberWithUnit(followerCount);
+        return { ...stat, value: formatted.value, unit: formatted.unit };
+      } else if (stat.value >= 1000) {
+        // For other stats that are >= 1000, also apply the formatting
+        const formatted = formatNumberWithUnit(stat.value);
+        return { ...stat, value: formatted.value, unit: formatted.unit };
+      }
+      return stat;
+    }) || [];
 
   return (
     <>
@@ -102,12 +99,24 @@ export function UserWiki(_props: UserWikiProps) {
         </div>
       )}
 
-      {!isLoading && !error && (
+      {!isLoading && !error && !dbUser && (
+        <div className="container mx-auto max-w-6xl p-4">
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="mb-6 text-center">
+              <h2 className="mb-2 text-2xl font-semibold">Profile Not Found</h2>
+              <p className="text-muted-foreground">This user profile hasn't been created yet.</p>
+            </div>
+            <SeedUserDataButton />
+          </div>
+        </div>
+      )}
+
+      {!isLoading && !error && dbUser && (
         <div className="container mx-auto max-w-6xl p-4">
           <UserWikiHeader
-            name={user.name}
-            avatar={user.avatar}
-            subtitle={user.subtitle}
+            name={dbUser.name}
+            avatar={dbUser.avatar}
+            subtitle={dbUser.subtitle}
             following={following}
             onFollowClick={handleFollowClick}
           />
@@ -119,17 +128,17 @@ export function UserWiki(_props: UserWikiProps) {
             animationRef={animationRef}
           />
 
-          <SocialBar socialMedia={user.socialMedia} />
+          <SocialBar socialMedia={dbUser.socialMedia} />
 
-          <UserInfoTabs about={user.about} contact={user.contact} />
+          <UserInfoTabs about={dbUser.about} contact={dbUser.contact} />
 
           <StatementCarousel
-            statements={user.statements}
+            statements={dbUser.statements}
             getTagColor={(tag: string) => getTagColor(tag, BADGE_COLORS)}
           />
 
           <UserWikiContentTabs
-            user={user}
+            user={dbUser}
             searchTerms={searchTerms}
             handleSearchChange={handleSearchChange}
             getBlogGradient={(blogId: number) => getBlogGradient(blogId, GRADIENTS)}

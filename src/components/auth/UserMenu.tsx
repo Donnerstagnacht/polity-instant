@@ -23,39 +23,50 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { LogOut, User, Settings } from 'lucide-react';
-import { useAuthStore } from '@/features/auth/auth.ts';
+import { db } from '../../../db';
 import { useTranslation } from '@/hooks/use-translation';
 import { cn } from '@/utils/utils.ts';
+import type { User as UserType } from '@/features/user/types/user.types';
 
 interface UserMenuProps {
   className?: string;
   isMobile?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  profileUser?: UserType | null;
 }
 
-export function UserMenu({ className, isMobile, open, onOpenChange }: UserMenuProps) {
+export function UserMenu({ className, isMobile, open, onOpenChange, profileUser }: UserMenuProps) {
   const { t } = useTranslation();
   const router = useRouter();
-  const { user, logout } = useAuthStore();
+  const { user: authUser } = db.useAuth();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
-  if (!user) return null;
+  if (!authUser) return null;
 
-  const handleLogout = () => {
-    logout();
-    router.push('/');
-    setShowLogoutDialog(false);
+  // Prefer profile data, fallback to auth data
+  const displayName = profileUser?.name || authUser.email?.split('@')[0] || 'User';
+  const displayAvatar = profileUser?.avatar;
+  const displayEmail = authUser.email || '';
+
+  const handleLogout = async () => {
+    try {
+      await db.auth.signOut();
+      router.push('/');
+      setShowLogoutDialog(false);
+    } catch (error) {
+      console.error('Failed to sign out:', error);
+    }
   };
 
   const handleProfileClick = () => {
     // Navigate to the logged-in user's profile page
-    console.log('Profile click - user:', user);
-    if (user?.id) {
-      console.log('Navigating to /user/' + user.id);
-      router.push(`/user/${user.id}`);
+    console.log('Profile click - user:', authUser);
+    if (authUser?.id) {
+      console.log('Navigating to /user/' + authUser.id);
+      router.push(`/user/${authUser.id}`);
     } else {
-      console.error('User ID not found:', user);
+      console.error('User ID not found:', authUser);
     }
   };
 
@@ -63,13 +74,14 @@ export function UserMenu({ className, isMobile, open, onOpenChange }: UserMenuPr
     router.push('/settings');
   };
 
-  const userInitials = user.name
-    ? user.name
+  const userInitials = displayName
+    ? displayName
         .split(' ')
         .map((n: string) => n[0])
         .join('')
         .toUpperCase()
-    : user.email.substring(0, 2).toUpperCase();
+        .substring(0, 2)
+    : displayEmail.substring(0, 2).toUpperCase();
 
   return (
     <>
@@ -85,7 +97,7 @@ export function UserMenu({ className, isMobile, open, onOpenChange }: UserMenuPr
             )}
           >
             <Avatar className={cn('h-8 w-8', isMobile && 'h-10 w-10')}>
-              <AvatarImage src={user.avatar} alt={user.name || user.email} />
+              <AvatarImage src={displayAvatar} alt={displayName} />
               <AvatarFallback className="text-xs font-medium">{userInitials}</AvatarFallback>
             </Avatar>
           </Button>
@@ -94,10 +106,8 @@ export function UserMenu({ className, isMobile, open, onOpenChange }: UserMenuPr
         <DropdownMenuContent align="end" className="z-50 w-56">
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">
-                {user.name || user.email.split('@')[0]}
-              </p>
-              <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+              <p className="text-sm font-medium leading-none">{displayName}</p>
+              <p className="text-xs leading-none text-muted-foreground">{displayEmail}</p>
             </div>
           </DropdownMenuLabel>
 

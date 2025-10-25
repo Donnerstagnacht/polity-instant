@@ -41,6 +41,7 @@ const db = init({
 // Configuration
 const SEED_CONFIG = {
   mainTestUserId: 'f598596e-d379-413e-9c6e-c218e5e3cf17', // Your main test user
+  tobiasUserId: 'a1b2c3d4-e5f6-4789-a0b1-c2d3e4f5a6b7', // Tobias's user ID
   users: 20,
   groups: 8,
   membersPerGroup: { min: 3, max: 10 },
@@ -80,7 +81,7 @@ async function seedUsers() {
   const mainUserId = SEED_CONFIG.mainTestUserId;
   userIds.push(mainUserId);
 
-  // Update main user (will create if doesn't exist, update if it does)
+  // Create or update main user in $users table
   transactions.push(
     tx.$users[mainUserId].update({
       email: 'test@polity.app',
@@ -89,7 +90,7 @@ async function seedUsers() {
     })
   );
 
-  // Create or update profile for main user
+  // Create or update profile for main user - ALWAYS create profile
   const mainProfileId = id();
   userToProfileMap.set(mainUserId, mainProfileId);
   transactions.push(
@@ -106,6 +107,9 @@ async function seedUsers() {
         lastSeenAt: new Date(),
         about: 'Main test user for Polity development.',
         contactEmail: 'test@polity.app',
+        contactTwitter: '@testuser',
+        contactWebsite: 'https://polity.app',
+        contactLocation: 'Test City',
       })
       .link({ user: mainUserId })
   );
@@ -148,7 +152,82 @@ async function seedUsers() {
       .link({ user: mainUserId })
   );
 
-  // Now create other users
+  // Create Tobias's user account
+  const tobiasUserId = SEED_CONFIG.tobiasUserId;
+  userIds.push(tobiasUserId);
+
+  // Create Tobias in $users table
+  transactions.push(
+    tx.$users[tobiasUserId].update({
+      email: 'tobias.hassebrock@gmail.com',
+      imageURL: faker.image.avatar(),
+      type: 'user',
+    })
+  );
+
+  // Create profile for Tobias
+  const tobiasProfileId = id();
+  userToProfileMap.set(tobiasUserId, tobiasProfileId);
+  transactions.push(
+    tx.profiles[tobiasProfileId]
+      .update({
+        name: 'Tobias Hassebrock',
+        subtitle: 'Developer & Community Member',
+        avatar: faker.image.avatar(),
+        bio: 'Passionate about building better digital communities.',
+        handle: 'tobias',
+        isActive: true,
+        createdAt: faker.date.past({ years: 2 }),
+        updatedAt: new Date(),
+        lastSeenAt: new Date(),
+        about: 'Developer and community enthusiast working on Polity.',
+        contactEmail: 'tobias.hassebrock@gmail.com',
+        contactTwitter: '@tobias',
+        contactWebsite: 'https://polity.app',
+        contactLocation: 'Germany',
+      })
+      .link({ user: tobiasUserId })
+  );
+
+  // Add some stats for Tobias
+  for (let j = 0; j < 5; j++) {
+    const statId = id();
+    transactions.push(
+      tx.stats[statId]
+        .update({
+          label: ['Posts', 'Followers', 'Following', 'Groups', 'Events'][j],
+          value: randomInt(10, 100),
+          unit: 'count',
+        })
+        .link({ user: tobiasUserId })
+    );
+  }
+
+  // Add a statement for Tobias
+  const tobiasStatementId = id();
+  transactions.push(
+    tx.statements[tobiasStatementId]
+      .update({
+        text: 'Building the future of community engagement platforms.',
+        tag: 'technology',
+      })
+      .link({ user: tobiasUserId })
+  );
+
+  // Add a blog post for Tobias
+  const tobiasBlogId = id();
+  transactions.push(
+    tx.blogs[tobiasBlogId]
+      .update({
+        title: 'The Future of Digital Communities',
+        date: new Date().toISOString(),
+        likes: randomInt(20, 80),
+        comments: randomInt(10, 30),
+      })
+      .link({ user: tobiasUserId })
+  );
+
+  // Now create other users - EACH USER GETS A PROFILE
   for (let i = 0; i < SEED_CONFIG.users; i++) {
     const userId = id();
     const email = faker.internet.email().toLowerCase();
@@ -157,7 +236,7 @@ async function seedUsers() {
 
     userIds.push(userId);
 
-    // Create user
+    // Create user in $users table
     transactions.push(
       tx.$users[userId].update({
         email,
@@ -166,9 +245,11 @@ async function seedUsers() {
       })
     );
 
-    // Create profile
+    // Create profile - MANDATORY for every user
     const profileId = id();
     userToProfileMap.set(userId, profileId); // Track profile ID for this user
+    const createdAt = faker.date.past({ years: 2 });
+
     transactions.push(
       tx.profiles[profileId]
         .update({
@@ -178,7 +259,7 @@ async function seedUsers() {
           bio: faker.lorem.paragraph(),
           handle,
           isActive: faker.datatype.boolean(0.9), // 90% active
-          createdAt: faker.date.past({ years: 2 }),
+          createdAt,
           updatedAt: new Date(),
           lastSeenAt: faker.date.recent({ days: 7 }),
           about: faker.lorem.paragraphs(2),
@@ -268,7 +349,9 @@ async function seedUsers() {
     await db.transact(batch);
   }
 
-  console.log(`✓ Created 1 main test user + ${SEED_CONFIG.users} additional users with profiles`);
+  console.log(`✓ Created ${userIds.length} users (including main test user and Tobias)`);
+  console.log(`✓ Each user has a complete profile with all contact fields`);
+  console.log(`✓ Total profiles: ${userToProfileMap.size}`);
   return { userIds, userToProfileMap };
 }
 
@@ -1622,13 +1705,14 @@ async function seedDocuments(userIds: string[]) {
   );
 }
 
-// Delete all data except $users
+// Delete all data including $users
 async function cleanDatabase() {
-  console.log('🗑️  Cleaning existing data (keeping $users)...\n');
+  console.log('🗑️  Cleaning existing data (deleting all entities)...\n');
 
   try {
-    // Query all entities to delete (excluding $users and $files)
+    // Query all entities to delete (including $users)
     const query = {
+      $users: {},
       profiles: {},
       stats: {},
       statements: {},
@@ -1665,39 +1749,40 @@ async function cleanDatabase() {
     const data = await db.query(query);
     const deleteTransactions = [];
 
-    // Delete all entities
+    // Delete all entities (including $users)
     const entitiesToDelete = [
-      'profiles',
-      'stats',
-      'statements',
-      'blogs',
-      'amendments',
-      'user',
-      'groups',
-      'groupMemberships',
-      'groupRelationships', // New: include group relationships
-      'follows',
-      'conversations',
-      'conversationParticipants',
-      'messages',
-      'events',
-      'eventParticipants',
-      'notifications',
-      'todos',
-      'todoAssignments',
-      'magicCodes',
-      'agendaItems',
-      'elections',
-      'electionCandidates',
-      'electionVotes',
-      'amendmentVotes',
-      'changeRequests',
-      'changeRequestVotes',
-      'amendmentVoteEntries',
-      'positions',
       'documentCursors',
       'documentCollaborators',
       'documents',
+      'amendmentVoteEntries',
+      'changeRequestVotes',
+      'changeRequests',
+      'amendmentVotes',
+      'electionVotes',
+      'electionCandidates',
+      'elections',
+      'agendaItems',
+      'positions',
+      'todoAssignments',
+      'todos',
+      'notifications',
+      'eventParticipants',
+      'events',
+      'messages',
+      'conversationParticipants',
+      'conversations',
+      'follows',
+      'groupRelationships', // New: include group relationships
+      'groupMemberships',
+      'groups',
+      'user',
+      'amendments',
+      'blogs',
+      'statements',
+      'stats',
+      'profiles',
+      'magicCodes',
+      '$users', // Delete $users last to avoid foreign key issues
     ];
 
     for (const entityType of entitiesToDelete) {
@@ -1755,6 +1840,7 @@ async function seed() {
     console.log('\n✅ Database seeded successfully!\n');
     console.log('Summary:');
     console.log(`  - 1 main test user (${SEED_CONFIG.mainTestUserId})`);
+    console.log(`  - 1 Tobias user (${SEED_CONFIG.tobiasUserId})`);
     console.log(`  - ${SEED_CONFIG.users} additional users`);
     console.log(`  - ${SEED_CONFIG.groups} groups (2 owned by main user)`);
     console.log(`  - Group relationships with hierarchical structure`);
@@ -1772,6 +1858,10 @@ async function seed() {
     console.log(`  - Handle: @testuser`);
     console.log(`  - Owns 2 groups`);
     console.log(`  - Member of ~3 additional groups\n`);
+    console.log('Tobias user details:');
+    console.log(`  - ID: ${SEED_CONFIG.tobiasUserId}`);
+    console.log(`  - Email: tobias.hassebrock@gmail.com`);
+    console.log(`  - Handle: @tobias\n`);
   } catch (error) {
     console.error('\n❌ Error seeding database:', error);
     process.exit(1);
