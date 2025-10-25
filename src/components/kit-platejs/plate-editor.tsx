@@ -55,6 +55,7 @@ export function PlateEditor({
     };
 
     // Override discussion plugin options with real user data
+    // IMPORTANT: Only set initial discussions, don't override on every render
     if (currentUser && users) {
       config.override = {
         plugins: {
@@ -62,7 +63,7 @@ export function PlateEditor({
             options: {
               currentUserId: currentUser.id,
               users: users,
-              discussions: discussions || [],
+              discussions: discussions || [], // Initial discussions from DB
             },
           },
         },
@@ -70,18 +71,41 @@ export function PlateEditor({
     }
 
     return config;
-  }, [isControlled, value, initialValue, currentUser, users, discussions]);
+  }, [isControlled, value, initialValue, currentUser, users]); // Removed 'discussions' from deps!
 
   const editor = usePlateEditor(editorConfig);
+
+  // Load initial discussions from props on first mount
+  const hasLoadedInitialDiscussions = React.useRef(false);
+  React.useEffect(() => {
+    if (editor && discussions && discussions.length > 0 && !hasLoadedInitialDiscussions.current) {
+      editor.setOptions(discussionPlugin, {
+        discussions: discussions,
+      });
+      hasLoadedInitialDiscussions.current = true;
+    }
+  }, [editor, discussions]);
 
   // Update discussion plugin options when currentUser or users change
   React.useEffect(() => {
     if (currentUser && users && editor) {
+      // Get current discussions from editor
+      const currentEditorDiscussions = editor.getOption(discussionPlugin, 'discussions') || [];
+
+      // NEVER overwrite editor discussions with props if editor has more discussions
+      // The editor is the source of truth for new discussions until they're saved to DB
+      const shouldUpdateDiscussions =
+        discussions &&
+        discussions.length > 0 &&
+        discussions.length > currentEditorDiscussions.length && // Only if DB has MORE
+        JSON.stringify(currentEditorDiscussions) !== JSON.stringify(discussions);
+
       // Update discussion plugin options
       editor.setOptions(discussionPlugin, {
         currentUserId: currentUser.id,
         users: users,
-        discussions: discussions || [],
+        // Only override if DB has MORE discussions than editor (e.g., after page reload)
+        discussions: shouldUpdateDiscussions ? discussions : currentEditorDiscussions,
       });
 
       // Also update suggestion plugin's currentUserId
@@ -95,25 +119,58 @@ export function PlateEditor({
   React.useEffect(() => {
     if (!editor || !onDiscussionsChange) return;
 
-    // Create a stable reference to track the last saved discussions
-    let lastSavedDiscussions: any[] = discussions || [];
-
     // Set up an interval to check for discussion changes
     const interval = setInterval(() => {
       const currentDiscussions = editor.getOption(discussionPlugin, 'discussions');
 
-      // Only call onChange if discussions have actually changed
-      if (
-        currentDiscussions &&
-        JSON.stringify(currentDiscussions) !== JSON.stringify(lastSavedDiscussions)
-      ) {
-        lastSavedDiscussions = currentDiscussions;
+      // Clean up orphaned discussions (where the comment marks no longer exist in content)
+      if (currentDiscussions && currentDiscussions.length > 0) {
+        const activeDiscussionIds = new Set<string>();
+
+        // Scan the editor content for comment marks
+        const nodes = editor.api.nodes({
+          at: [],
+          match: (n: any) => {
+            if (!n) return false;
+            // Check if node has any comment_* properties
+            return Object.keys(n).some(key => key.startsWith('comment_') && key !== 'comment');
+          },
+        });
+
+        for (const [node] of nodes) {
+          Object.keys(node).forEach(key => {
+            if (key.startsWith('comment_') && key !== 'comment') {
+              const discussionId = key.replace('comment_', '');
+              activeDiscussionIds.add(discussionId);
+            }
+          });
+        }
+
+        // Filter discussions to only keep those with active marks
+        const cleanedDiscussions = currentDiscussions.filter((d: any) =>
+          activeDiscussionIds.has(d.id)
+        );
+
+        if (cleanedDiscussions.length !== currentDiscussions.length) {
+          editor.setOptions(discussionPlugin, {
+            discussions: cleanedDiscussions,
+          });
+
+          onDiscussionsChange(cleanedDiscussions);
+          return;
+        }
+      }
+
+      // Always call onChange with current discussions
+      if (currentDiscussions) {
         onDiscussionsChange(currentDiscussions);
       }
-    }, 1000); // Check every 1 second for more responsive updates
+    }, 2000); // Check every 2 seconds
 
-    return () => clearInterval(interval);
-  }, [editor, onDiscussionsChange, discussions]);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [editor, onDiscussionsChange]); // Removed 'discussions' from dependencies
 
   // Update editor value when controlled value changes (without destroying selection)
   React.useEffect(() => {
@@ -121,7 +178,6 @@ export function PlateEditor({
       // Only update if there's an actual change
       const valueChanged = JSON.stringify(prevValueRef.current) !== JSON.stringify(value);
       if (valueChanged) {
-        console.log('📝 Editor value changed, updating...');
         // Update the editor's children directly
         try {
           editor.children = value;

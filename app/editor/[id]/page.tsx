@@ -173,10 +173,6 @@ export default function DocumentEditorPage() {
       localDiscussionsStr !== remoteDiscussionsStr &&
       Date.now() - lastDiscussionsSave.current > 2000 // Wait 2 seconds after our last save
     ) {
-      console.log('📥 Remote discussions update detected, syncing...', {
-        localCount: discussions.length,
-        remoteCount: remoteDiscussions.length,
-      });
       setDiscussions(remoteDiscussions);
     }
   }, [(document as any)?.discussions]);
@@ -204,7 +200,6 @@ export default function DocumentEditorPage() {
       !isLocalChange.current &&
       Date.now() - lastSaveTime.current > 1500 // Wait 1.5 seconds after last local save
     ) {
-      console.log('📥 Remote update detected, syncing editor content');
       setEditorValue(remoteContent);
       lastRemoteUpdate.current = remoteUpdatedAt;
     }
@@ -316,7 +311,13 @@ export default function DocumentEditorPage() {
 
       // Debounce saves to max 1 per second to prevent race conditions
       const now = Date.now();
-      if (now - lastDiscussionsSave.current < 1000) {
+      const timeSinceLastSave = now - lastDiscussionsSave.current;
+
+      if (timeSinceLastSave < 1000) {
+        // Schedule a save after the throttle period
+        setTimeout(() => {
+          handleDiscussionsChange(newDiscussions);
+        }, 1000 - timeSinceLastSave);
         return;
       }
 
@@ -329,9 +330,13 @@ export default function DocumentEditorPage() {
             updatedAt: now,
           }),
         ]);
-        console.log('✅ Discussions saved:', newDiscussions.length);
       } catch (error) {
         console.error('❌ Discussions save failed:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to save comments',
+          variant: 'destructive',
+        });
       }
     },
     [documentId, user, discussions]
@@ -397,7 +402,6 @@ export default function DocumentEditorPage() {
           </Button>
 
           <div className="flex items-center gap-4">
-            {/* Invite collaborator button */}
             {document.owner?.id === user?.id && user?.id && (
               <InviteCollaboratorDialog
                 documentId={documentId}

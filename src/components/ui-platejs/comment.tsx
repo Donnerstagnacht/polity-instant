@@ -55,7 +55,6 @@ export function Comment(props: {
   setEditingId: React.Dispatch<React.SetStateAction<string | null>>;
   documentContent?: string;
   showDocumentContent?: boolean;
-  onEditorClick?: () => void;
 }) {
   const { t } = useTranslation();
   const {
@@ -66,7 +65,6 @@ export function Comment(props: {
     index,
     setEditingId,
     showDocumentContent = false,
-    onEditorClick,
   } = props;
 
   const editor = useEditorRef();
@@ -226,7 +224,7 @@ export function Comment(props: {
         {!isLast && <div className="absolute left-3 top-0 h-full w-0.5 shrink-0 bg-muted" />}
         <Plate readOnly={!isEditing} editor={commentEditor}>
           <EditorContainer variant="comment">
-            <Editor variant="comment" className="w-auto grow" onClick={() => onEditorClick?.()} />
+            <Editor variant="comment" className="w-auto grow cursor-pointer" />
 
             {isEditing && (
               <div className="ml-auto flex shrink-0 gap-1">
@@ -472,6 +470,10 @@ export function CommentCreateForm({
     const documentContent = commentsNodeEntry.map(([node]) => node.text).join('');
 
     const _discussionId = nanoid();
+
+    // Get CURRENT discussions from editor, not from stale hook value
+    const currentDiscussions = editor.getOption(discussionPlugin, 'discussions') || [];
+
     // Mock creating new discussion
     const newDiscussion: TDiscussion = {
       id: _discussionId,
@@ -491,7 +493,9 @@ export function CommentCreateForm({
       userId: editor.getOption(discussionPlugin, 'currentUserId'),
     };
 
-    editor.setOption(discussionPlugin, 'discussions', [...discussions, newDiscussion]);
+    const updatedDiscussions = [...currentDiscussions, newDiscussion];
+
+    editor.setOption(discussionPlugin, 'discussions', updatedDiscussions);
 
     const id = newDiscussion.id;
 
