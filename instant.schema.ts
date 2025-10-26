@@ -1241,6 +1241,18 @@ const _schema = i.schema({
         label: 'changeRequests',
       },
     },
+    amendmentsDocument: {
+      forward: {
+        on: 'amendments',
+        has: 'one',
+        label: 'document',
+      },
+      reverse: {
+        on: 'documents',
+        has: 'one',
+        label: 'amendment',
+      },
+    },
   },
   rooms: {
     editor: {

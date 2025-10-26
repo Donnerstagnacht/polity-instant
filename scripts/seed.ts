@@ -95,6 +95,53 @@ function createHashtagTransactions(
   return transactions;
 }
 
+// Helper function to create a document for an amendment
+function createAmendmentDocument(
+  amendmentId: string,
+  amendmentTitle: string,
+  ownerId: string
+): any[] {
+  const transactions = [];
+  const documentId = id();
+
+  // Create document content based on amendment
+  const documentContent = [
+    { type: 'h1', children: [{ text: amendmentTitle }] },
+    { type: 'h2', children: [{ text: 'Summary' }] },
+    {
+      type: 'p',
+      children: [
+        {
+          text: 'This is the full text of the amendment. Edit this document to modify the amendment text.',
+        },
+      ],
+    },
+    { type: 'h2', children: [{ text: 'Proposed Changes' }] },
+    { type: 'p', children: [{ text: faker.lorem.paragraphs(2) }] },
+    { type: 'h2', children: [{ text: 'Rationale' }] },
+    { type: 'p', children: [{ text: faker.lorem.paragraphs(1) }] },
+  ];
+
+  // Create the document
+  transactions.push(
+    tx.documents[documentId]
+      .update({
+        title: amendmentTitle,
+        content: documentContent,
+        createdAt: faker.date.past({ years: 0.5 }),
+        updatedAt: faker.date.recent({ days: 7 }),
+        isPublic: true, // Amendment documents are typically public
+        tags: ['amendment', 'proposal', 'policy'],
+      })
+      .link({ owner: ownerId })
+  );
+
+  // Link the document to the amendment
+  transactions.push(tx.amendments[amendmentId].link({ document: documentId }));
+
+  return transactions;
+}
+
 // Predefined hashtag pools
 const USER_HASHTAGS = [
   'activist',
@@ -493,10 +540,11 @@ async function seedUsers() {
     const amendmentCount = randomInt(0, 2);
     for (let j = 0; j < amendmentCount; j++) {
       const amendmentId = id();
+      const amendmentTitle = faker.lorem.sentence();
       transactions.push(
         tx.amendments[amendmentId]
           .update({
-            title: faker.lorem.sentence(),
+            title: amendmentTitle,
             subtitle: faker.lorem.sentence(),
             status: randomItem(['Passed', 'Rejected', 'Under Review', 'Drafting']),
             supporters: randomInt(10, 1000),
@@ -510,6 +558,9 @@ async function seedUsers() {
       // Add hashtags to amendment
       const amendmentHashtags = randomItems(AMENDMENT_HASHTAGS, randomInt(2, 4));
       transactions.push(...createHashtagTransactions(amendmentId, 'amendment', amendmentHashtags));
+
+      // Create a document for this amendment
+      transactions.push(...createAmendmentDocument(amendmentId, amendmentTitle, userId));
     }
   }
 
@@ -728,10 +779,11 @@ async function seedGroups(userIds: string[]) {
     const amendmentCount = randomInt(2, 4);
     for (let j = 0; j < amendmentCount; j++) {
       const amendmentId = id();
+      const amendmentTitle = faker.lorem.sentence();
       transactions.push(
         tx.amendments[amendmentId]
           .update({
-            title: faker.lorem.sentence(),
+            title: amendmentTitle,
             subtitle: faker.lorem.sentence(),
             status: randomItem(['Passed', 'Rejected', 'Under Review', 'Drafting']),
             supporters: randomInt(10, 500),
@@ -745,6 +797,9 @@ async function seedGroups(userIds: string[]) {
       // Add hashtags to amendment
       const amendmentHashtags = randomItems(AMENDMENT_HASHTAGS, randomInt(2, 4));
       transactions.push(...createHashtagTransactions(amendmentId, 'amendment', amendmentHashtags));
+
+      // Create a document for this amendment
+      transactions.push(...createAmendmentDocument(amendmentId, amendmentTitle, mainUserId));
     }
   }
 
@@ -872,10 +927,11 @@ async function seedGroups(userIds: string[]) {
     const amendmentCount = randomInt(2, 4);
     for (let j = 0; j < amendmentCount; j++) {
       const amendmentId = id();
+      const amendmentTitle = faker.lorem.sentence();
       transactions.push(
         tx.amendments[amendmentId]
           .update({
-            title: faker.lorem.sentence(),
+            title: amendmentTitle,
             subtitle: faker.lorem.sentence(),
             status: randomItem(['Passed', 'Rejected', 'Under Review', 'Drafting']),
             supporters: randomInt(10, 500),
@@ -889,6 +945,9 @@ async function seedGroups(userIds: string[]) {
       // Add hashtags to amendment
       const amendmentHashtags = randomItems(AMENDMENT_HASHTAGS, randomInt(2, 4));
       transactions.push(...createHashtagTransactions(amendmentId, 'amendment', amendmentHashtags));
+
+      // Create a document for this amendment
+      transactions.push(...createAmendmentDocument(amendmentId, amendmentTitle, ownerId));
     }
   }
 
