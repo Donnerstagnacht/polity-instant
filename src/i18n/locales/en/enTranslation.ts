@@ -67,6 +67,7 @@ const enTranslation = {
       event: {
         overview: 'Overview',
         agenda: 'Agenda',
+        stream: 'Stream',
       },
       user: {
         profile: 'Profile',

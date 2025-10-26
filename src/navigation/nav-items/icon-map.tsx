@@ -19,6 +19,7 @@ import {
   MessageSquare,
   Moon,
   PlusCircle,
+  Radio,
   Search,
   Settings,
   Sun,
@@ -55,6 +56,7 @@ export const iconMap = {
   PlusCircle,
   List,
   Grid3x3,
+  Radio,
 } as const;
 
 export type IconName = keyof typeof iconMap;

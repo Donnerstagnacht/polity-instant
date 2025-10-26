@@ -32,6 +32,8 @@ import {
   Trash2,
   BarChart3,
   AlertCircle,
+  Plus,
+  Mic,
 } from 'lucide-react';
 import { db, id, tx } from '../../../../../db';
 import Link from 'next/link';
@@ -56,6 +58,7 @@ export default function AgendaItemDetailPage() {
   const { user } = db.useAuth();
   const [votingLoading, setVotingLoading] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [addingSpeaker, setAddingSpeaker] = useState(false);
 
   // Query agenda item with all related data
   const { data, isLoading } = db.useQuery({
@@ -80,6 +83,11 @@ export default function AgendaItemDetailPage() {
       amendmentVote: {
         changeRequests: {},
         voteEntries: {},
+      },
+      speakerList: {
+        user: {
+          profile: {},
+        },
       },
     },
     electionVotes: {
@@ -211,6 +219,38 @@ export default function AgendaItemDetailPage() {
     }
   };
 
+  // Handle adding yourself to speakers list
+  const handleAddToSpeakerList = async () => {
+    if (!user?.id || !agendaItemId) return;
+
+    setAddingSpeaker(true);
+    try {
+      // Find the maximum order value
+      const speakerList = agendaItem?.speakerList || [];
+      const maxOrder =
+        speakerList.length > 0 ? Math.max(...speakerList.map((s: any) => s.order || 0)) : 0;
+
+      const speakerId = id();
+      await db.transact([
+        tx.speakerList[speakerId].update({
+          title: 'Speaker',
+          time: 3, // Default 3 minutes
+          completed: false,
+          order: maxOrder + 1,
+          createdAt: new Date(),
+        }),
+        tx.speakerList[speakerId].link({
+          user: user.id,
+          agendaItem: agendaItemId,
+        }),
+      ]);
+    } catch (error) {
+      console.error('Error adding to speaker list:', error);
+    } finally {
+      setAddingSpeaker(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
@@ -287,6 +327,10 @@ export default function AgendaItemDetailPage() {
   const isCreator = user?.id === agendaItem.creator?.id;
   const isEventOrganizer = user?.id === event.organizer?.id;
   const canEdit = isCreator || isEventOrganizer;
+
+  // Check if user is already in speaker list
+  const speakerList = agendaItem?.speakerList || [];
+  const isUserInSpeakerList = speakerList.some((speaker: any) => speaker.user?.id === user?.id);
 
   return (
     <AuthGuard>
@@ -401,6 +445,36 @@ export default function AgendaItemDetailPage() {
                   <Link href={`/event/${eventId}`} className="font-medium hover:underline">
                     {event.title}
                   </Link>
+                </div>
+              </div>
+
+              {/* Speaker List Button */}
+              <div className="w-full border-t pt-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Mic className="h-5 w-5 text-muted-foreground" />
+                    <span className="font-medium">Rednerliste</span>
+                    {speakerList.length > 0 && (
+                      <Badge variant="secondary">{speakerList.length} Redner</Badge>
+                    )}
+                  </div>
+                  <Button
+                    onClick={handleAddToSpeakerList}
+                    disabled={isUserInSpeakerList || !user || addingSpeaker}
+                    variant={isUserInSpeakerList ? 'outline' : 'default'}
+                  >
+                    {isUserInSpeakerList ? (
+                      <>
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                        Bereits eingetragen
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="mr-2 h-4 w-4" />
+                        {addingSpeaker ? 'Wird hinzugefügt...' : 'Zur Rednerliste hinzufügen'}
+                      </>
+                    )}
+                  </Button>
                 </div>
               </div>
             </CardFooter>

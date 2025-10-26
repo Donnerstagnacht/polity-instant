@@ -3,8 +3,9 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { cn } from '@/utils/utils';
-import { Calendar, FileText } from 'lucide-react';
+import { Calendar, FileText, Radio } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface EventNavProps {
   eventId: string;
@@ -14,6 +15,7 @@ interface EventNavProps {
 export function EventNav({ eventId, className }: EventNavProps) {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
+  const { t } = useTranslation();
 
   // Ensure component is mounted on client side
   useEffect(() => {
@@ -22,16 +24,22 @@ export function EventNav({ eventId, className }: EventNavProps) {
 
   const navItems = [
     {
-      label: 'Overview',
+      label: t('navigation.secondary.event.overview'),
       href: `/event/${eventId}`,
       icon: FileText,
       description: 'Event details and wiki',
     },
     {
-      label: 'Agenda',
+      label: t('navigation.secondary.event.agenda'),
       href: `/event/${eventId}/agenda`,
       icon: Calendar,
       description: 'Event agenda and voting items',
+    },
+    {
+      label: t('navigation.secondary.event.stream'),
+      href: `/event/${eventId}/stream`,
+      icon: Radio,
+      description: 'Live event stream with speaker list',
     },
   ];
 

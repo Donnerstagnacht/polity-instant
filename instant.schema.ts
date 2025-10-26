@@ -271,6 +271,13 @@ const _schema = i.schema({
       role: i.string(),
       tags: i.json().optional(),
     }),
+    speakerList: i.entity({
+      completed: i.boolean().indexed(),
+      createdAt: i.date().indexed(),
+      order: i.number().indexed(),
+      time: i.number(),
+      title: i.string(),
+    }),
   },
   links: {
     $usersLinkedPrimaryUser: {
@@ -1053,6 +1060,30 @@ const _schema = i.schema({
         on: '$users',
         has: 'many',
         label: 'groups',
+      },
+    },
+    speakerListAgendaItem: {
+      forward: {
+        on: 'speakerList',
+        has: 'one',
+        label: 'agendaItem',
+      },
+      reverse: {
+        on: 'agendaItems',
+        has: 'many',
+        label: 'speakerList',
+      },
+    },
+    speakerListUser: {
+      forward: {
+        on: 'speakerList',
+        has: 'one',
+        label: 'user',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'speakerList',
       },
     },
   },

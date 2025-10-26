@@ -58,7 +58,7 @@ export function useNavigation() {
 
   // Get navigation items from the navigation config
   const { primaryNavItems: basePrimaryNavItems, getSecondaryNavItems: baseGetSecondaryNavItems } =
-    navItemsAuthenticated(mockRouter, setCurrentPrimaryRoute);
+    navItemsAuthenticated(mockRouter, setCurrentPrimaryRoute, t);
 
   // Override labels with translations and add dynamic badge counts
   const primaryNavItems: NavigationItem[] = basePrimaryNavItems.map(item => {

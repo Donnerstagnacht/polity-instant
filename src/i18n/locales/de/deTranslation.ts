@@ -69,6 +69,7 @@ const deTranslation: I18nLocale = {
       event: {
         overview: 'Übersicht',
         agenda: 'Tagesordnung',
+        stream: 'Stream',
       },
       user: {
         profile: 'Profil',

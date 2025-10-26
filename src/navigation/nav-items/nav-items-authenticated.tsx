@@ -13,10 +13,12 @@ interface NextRouter {
 // This function factory creates navigation items with router integration
 export const navItemsAuthenticated = (
   router: NextRouter, // Use Next.js router type
-  setCurrentPrimaryRoute?: (route: string) => void
+  setCurrentPrimaryRoute?: (route: string) => void,
+  t?: (key: string) => string // Optional translation function
 ) => {
   // Note: useTranslation() hook removed to fix hook order issues
   // Using static strings temporarily until i18n is properly configured
+  // Translation function can be passed as parameter for i18n support
 
   // Define navigation items for primary navigation with Next.js router integration
   const primaryNavItems: NavigationItem[] = [
@@ -228,17 +230,24 @@ export const navItemsAuthenticated = (
   const getEventSecondaryNavItems = (eventId: string): NavigationItem[] => [
     {
       id: 'overview',
-      label: 'Overview',
+      label: t ? t('navigation.secondary.event.overview') : 'Overview',
       icon: 'FileText',
       href: `/event/${eventId}`,
       onClick: () => router.push(`/event/${eventId}`),
     },
     {
       id: 'agenda',
-      label: 'Agenda',
+      label: t ? t('navigation.secondary.event.agenda') : 'Agenda',
       icon: 'Calendar',
       href: `/event/${eventId}/agenda`,
       onClick: () => router.push(`/event/${eventId}/agenda`),
+    },
+    {
+      id: 'stream',
+      label: t ? t('navigation.secondary.event.stream') : 'Stream',
+      icon: 'Radio',
+      href: `/event/${eventId}/stream`,
+      onClick: () => router.push(`/event/${eventId}/stream`),
     },
   ];
 
