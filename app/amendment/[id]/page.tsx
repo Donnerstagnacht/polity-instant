@@ -7,8 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import db from '../../../db';
-import { Scale, Calendar, User, ThumbsUp, FileText } from 'lucide-react';
+import { Scale, Calendar, User, ThumbsUp, FileText, MessageSquare, FileEdit } from 'lucide-react';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
+import Link from 'next/link';
 
 export default function AmendmentPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -99,6 +100,34 @@ export default function AmendmentPage({ params }: { params: Promise<{ id: string
 
         <div className="grid gap-6 md:grid-cols-3">
           <div className="space-y-6 md:col-span-2">
+            {/* Quick Navigation */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Amendment Sections</CardTitle>
+                <CardDescription>Navigate to different sections of this amendment</CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-3 sm:grid-cols-3">
+                <Link href={`/amendment/${resolvedParams.id}/text`}>
+                  <Button variant="outline" className="w-full justify-start">
+                    <FileText className="mr-2 h-4 w-4" />
+                    Full Text
+                  </Button>
+                </Link>
+                <Link href={`/amendment/${resolvedParams.id}/change-requests`}>
+                  <Button variant="outline" className="w-full justify-start">
+                    <FileEdit className="mr-2 h-4 w-4" />
+                    Change Requests
+                  </Button>
+                </Link>
+                <Link href={`/amendment/${resolvedParams.id}/discussions`}>
+                  <Button variant="outline" className="w-full justify-start">
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    Discussions
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
             {/* Amendment Code */}
             {amendment.code && (
               <Card>

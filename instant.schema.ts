@@ -278,6 +278,29 @@ const _schema = i.schema({
       time: i.number(),
       title: i.string(),
     }),
+    threads: i.entity({
+      createdAt: i.date().indexed(),
+      description: i.string().optional(),
+      title: i.string().indexed(),
+      updatedAt: i.date().indexed(),
+      upvotes: i.number().optional(),
+      downvotes: i.number().optional(),
+    }),
+    comments: i.entity({
+      createdAt: i.date().indexed(),
+      text: i.string(),
+      updatedAt: i.date().indexed().optional(),
+      upvotes: i.number().optional(),
+      downvotes: i.number().optional(),
+    }),
+    threadVotes: i.entity({
+      createdAt: i.date().indexed(),
+      vote: i.number().indexed(), // 1 for upvote, -1 for downvote
+    }),
+    commentVotes: i.entity({
+      createdAt: i.date().indexed(),
+      vote: i.number().indexed(), // 1 for upvote, -1 for downvote
+    }),
   },
   links: {
     $usersLinkedPrimaryUser: {
@@ -1084,6 +1107,138 @@ const _schema = i.schema({
         on: '$users',
         has: 'many',
         label: 'speakerList',
+      },
+    },
+    threadsAmendment: {
+      forward: {
+        on: 'threads',
+        has: 'one',
+        label: 'amendment',
+      },
+      reverse: {
+        on: 'amendments',
+        has: 'many',
+        label: 'threads',
+      },
+    },
+    threadsCreator: {
+      forward: {
+        on: 'threads',
+        has: 'one',
+        label: 'creator',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'createdThreads',
+      },
+    },
+    threadsFile: {
+      forward: {
+        on: 'threads',
+        has: 'one',
+        label: 'file',
+      },
+      reverse: {
+        on: '$files',
+        has: 'many',
+        label: 'threads',
+      },
+    },
+    commentsThread: {
+      forward: {
+        on: 'comments',
+        has: 'one',
+        label: 'thread',
+      },
+      reverse: {
+        on: 'threads',
+        has: 'many',
+        label: 'comments',
+      },
+    },
+    commentsCreator: {
+      forward: {
+        on: 'comments',
+        has: 'one',
+        label: 'creator',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'createdComments',
+      },
+    },
+    commentsParentComment: {
+      forward: {
+        on: 'comments',
+        has: 'one',
+        label: 'parentComment',
+      },
+      reverse: {
+        on: 'comments',
+        has: 'many',
+        label: 'replies',
+      },
+    },
+    threadVotesThread: {
+      forward: {
+        on: 'threadVotes',
+        has: 'one',
+        label: 'thread',
+      },
+      reverse: {
+        on: 'threads',
+        has: 'many',
+        label: 'votes',
+      },
+    },
+    threadVotesUser: {
+      forward: {
+        on: 'threadVotes',
+        has: 'one',
+        label: 'user',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'threadVotes',
+      },
+    },
+    commentVotesComment: {
+      forward: {
+        on: 'commentVotes',
+        has: 'one',
+        label: 'comment',
+      },
+      reverse: {
+        on: 'comments',
+        has: 'many',
+        label: 'votes',
+      },
+    },
+    commentVotesUser: {
+      forward: {
+        on: 'commentVotes',
+        has: 'one',
+        label: 'user',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'commentVotes',
+      },
+    },
+    changeRequestsAmendment: {
+      forward: {
+        on: 'changeRequests',
+        has: 'one',
+        label: 'amendment',
+      },
+      reverse: {
+        on: 'amendments',
+        has: 'many',
+        label: 'changeRequests',
       },
     },
   },

@@ -309,6 +309,38 @@ export const navItemsAuthenticated = (
     },
   ];
 
+  // Function to create amendment secondary navigation items for a specific amendment
+  const getAmendmentSecondaryNavItems = (amendmentId: string): NavigationItem[] => [
+    {
+      id: 'overview',
+      label: t ? t('navigation.secondary.amendment.overview') : 'Overview',
+      icon: 'FileText',
+      href: `/amendment/${amendmentId}`,
+      onClick: () => router.push(`/amendment/${amendmentId}`),
+    },
+    {
+      id: 'text',
+      label: t ? t('navigation.secondary.amendment.text') : 'Full Text',
+      icon: 'File',
+      href: `/amendment/${amendmentId}/text`,
+      onClick: () => router.push(`/amendment/${amendmentId}/text`),
+    },
+    {
+      id: 'change-requests',
+      label: t ? t('navigation.secondary.amendment.changeRequests') : 'Change Requests',
+      icon: 'FileText',
+      href: `/amendment/${amendmentId}/change-requests`,
+      onClick: () => router.push(`/amendment/${amendmentId}/change-requests`),
+    },
+    {
+      id: 'discussions',
+      label: t ? t('navigation.secondary.amendment.discussions') : 'Discussions',
+      icon: 'MessageSquare',
+      href: `/amendment/${amendmentId}/discussions`,
+      onClick: () => router.push(`/amendment/${amendmentId}/discussions`),
+    },
+  ];
+
   return {
     primaryNavItems,
     projectSecondaryNavItems,
@@ -317,6 +349,7 @@ export const navItemsAuthenticated = (
     getEventSecondaryNavItems,
     getUserSecondaryNavItems,
     getGroupSecondaryNavItems,
+    getAmendmentSecondaryNavItems,
 
     // Utility function to get secondary items based on current route
     getSecondaryNavItems: (
@@ -324,7 +357,8 @@ export const navItemsAuthenticated = (
       eventId?: string,
       userId?: string,
       isOwnProfile?: boolean,
-      groupId?: string
+      groupId?: string,
+      amendmentId?: string
     ) => {
       switch (currentPrimaryRoute) {
         case 'projects':
@@ -339,6 +373,8 @@ export const navItemsAuthenticated = (
           return userId ? getUserSecondaryNavItems(userId, isOwnProfile ?? false) : null;
         case 'group':
           return groupId ? getGroupSecondaryNavItems(groupId) : null;
+        case 'amendment':
+          return amendmentId ? getAmendmentSecondaryNavItems(amendmentId) : null;
         default:
           return null;
       }

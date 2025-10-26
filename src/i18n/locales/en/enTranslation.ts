@@ -79,6 +79,12 @@ const enTranslation = {
         amendments: 'Amendments',
         operation: 'Operation',
       },
+      amendment: {
+        overview: 'Overview',
+        text: 'Full Text',
+        changeRequests: 'Change Requests',
+        discussions: 'Discussions',
+      },
     },
     toggles: {
       theme: {

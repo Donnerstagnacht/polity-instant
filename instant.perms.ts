@@ -225,6 +225,81 @@ const rules = {
     ],
   },
 
+  // Thread permissions (for discussions)
+  threads: {
+    allow: {
+      // Any authenticated user can create threads
+      create: 'auth.id != null',
+      // Anyone authenticated can view threads
+      view: 'auth.id != null',
+      // Only thread creator can update
+      update: 'isCreator',
+      // Only thread creator can delete
+      delete: 'isCreator',
+    },
+    bind: ['isCreator', "auth.id in data.ref('creator.id')"],
+  },
+
+  // Comment permissions
+  comments: {
+    allow: {
+      // Any authenticated user can create comments
+      create: 'auth.id != null',
+      // Anyone authenticated can view comments
+      view: 'auth.id != null',
+      // Only comment creator can update
+      update: 'isCreator',
+      // Only comment creator can delete
+      delete: 'isCreator',
+    },
+    bind: ['isCreator', "auth.id in data.ref('creator.id')"],
+  },
+
+  // Change requests permissions
+  changeRequests: {
+    allow: {
+      // Any authenticated user can create change requests
+      create: 'auth.id != null',
+      // Anyone authenticated can view change requests
+      view: 'auth.id != null',
+      // Only creator can update
+      update: 'isCreator',
+      // Only creator can delete
+      delete: 'isCreator',
+    },
+    bind: ['isCreator', "auth.id in data.ref('creator.id')"],
+  },
+
+  // Thread votes permissions
+  threadVotes: {
+    allow: {
+      // Any authenticated user can vote
+      create: 'auth.id != null',
+      // Anyone authenticated can view votes
+      view: 'auth.id != null',
+      // Users can update their own votes
+      update: 'isVoter',
+      // Users can delete their own votes
+      delete: 'isVoter',
+    },
+    bind: ['isVoter', "auth.id in data.ref('user.id')"],
+  },
+
+  // Comment votes permissions
+  commentVotes: {
+    allow: {
+      // Any authenticated user can vote
+      create: 'auth.id != null',
+      // Anyone authenticated can view votes
+      view: 'auth.id != null',
+      // Users can update their own votes
+      update: 'isVoter',
+      // Users can delete their own votes
+      delete: 'isVoter',
+    },
+    bind: ['isVoter', "auth.id in data.ref('user.id')"],
+  },
+
   // Additional security rules can be added here
   // For example, rate limiting, content filtering, etc.
 } satisfies InstantRules;

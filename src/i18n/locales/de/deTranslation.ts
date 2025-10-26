@@ -81,6 +81,12 @@ const deTranslation: I18nLocale = {
         amendments: 'Anträge',
         operation: 'Betrieb',
       },
+      amendment: {
+        overview: 'Übersicht',
+        text: 'Volltext',
+        changeRequests: 'Änderungsanträge',
+        discussions: 'Diskussionen',
+      },
     },
     toggles: {
       theme: {

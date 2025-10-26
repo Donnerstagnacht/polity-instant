@@ -119,12 +119,22 @@ export function useNavigation() {
       }
     }
 
+    // Extract amendment ID from pathname if on an amendment route
+    let amendmentId: string | undefined;
+    if (pathname.startsWith('/amendment/')) {
+      const match = pathname.match(/^\/amendment\/([^/]+)/);
+      if (match) {
+        amendmentId = match[1];
+      }
+    }
+
     const baseSecondaryItems = baseGetSecondaryNavItems(
       currentPrimaryRoute,
       eventId,
       userId,
       isOwnProfile,
-      groupId
+      groupId,
+      amendmentId
     );
     if (!baseSecondaryItems) return null;
 
@@ -144,7 +154,9 @@ export function useNavigation() {
                   ? t(`navigation.secondary.user.${item.id}`)
                   : currentPrimaryRoute === 'group'
                     ? t(`navigation.secondary.group.${item.id}`)
-                    : item.label,
+                    : currentPrimaryRoute === 'amendment'
+                      ? t(`navigation.secondary.amendment.${item.id}`)
+                      : item.label,
     }));
   };
 
