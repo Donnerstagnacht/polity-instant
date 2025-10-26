@@ -284,6 +284,9 @@ async function seedUsers() {
   const mainUserHashtags = randomItems(USER_HASHTAGS, randomInt(3, 5));
   transactions.push(...createHashtagTransactions(mainUserId, 'user', mainUserHashtags));
 
+  // Add some links for main user's groups (will be created later)
+  // This will be done after groups are created
+
   // Add a blog post for main user (no group link for user's personal blog)
   const blogId = id();
   transactions.push(
@@ -1561,6 +1564,49 @@ async function seedTodos(userIds: string[], groupIds: string[]) {
   const statuses = ['todo', 'in_progress', 'completed', 'cancelled'];
   const priorities = ['low', 'medium', 'high', 'urgent'];
 
+  // First, ensure every group has at least one todo
+  for (const groupId of groupIds) {
+    const todoId = id();
+    const creatorId = randomItem(userIds);
+    const status = randomItem(statuses);
+    const createdAt = faker.date.past({ years: 0.17 });
+    const dueDate = status === 'completed' ? null : faker.date.future({ years: 0.08 });
+    const completedAt =
+      status === 'completed' ? faker.date.between({ from: createdAt, to: new Date() }) : null;
+
+    // Create guaranteed todo for this group
+    let todoTx = tx.todos[todoId].update({
+      title: faker.lorem.words(randomInt(3, 6)),
+      description: faker.lorem.paragraph(),
+      status,
+      priority: randomItem(priorities),
+      dueDate,
+      completedAt,
+      tags: randomItems(
+        ['urgent', 'important', 'review', 'bug', 'feature', 'documentation'],
+        randomInt(1, 3)
+      ),
+      createdAt,
+      updatedAt: new Date(),
+    });
+
+    todoTx = todoTx.link({ creator: creatorId, group: groupId });
+    transactions.push(todoTx);
+
+    // Add assignment to creator
+    const assignmentId = id();
+    transactions.push(
+      tx.todoAssignments[assignmentId]
+        .update({
+          assignedAt: createdAt,
+          role: 'owner',
+        })
+        .link({ user: creatorId, todo: todoId })
+    );
+    totalAssignments++;
+    totalTodos++;
+  }
+
   // Create 5 todos for main user with varied statuses
   for (let i = 0; i < 5; i++) {
     const todoId = id();
@@ -1582,7 +1628,7 @@ async function seedTodos(userIds: string[], groupIds: string[]) {
     ];
 
     // Create todo
-    const todoTx = tx.todos[todoId].update({
+    let todoTx = tx.todos[todoId].update({
       title: titles[i],
       description: faker.lorem.paragraph(),
       status,
@@ -1595,9 +1641,9 @@ async function seedTodos(userIds: string[], groupIds: string[]) {
     });
 
     if (groupId) {
-      todoTx.link({ creator: mainUserId, group: groupId });
+      todoTx = todoTx.link({ creator: mainUserId, group: groupId });
     } else {
-      todoTx.link({ creator: mainUserId });
+      todoTx = todoTx.link({ creator: mainUserId });
     }
 
     transactions.push(todoTx);
@@ -1655,7 +1701,7 @@ async function seedTodos(userIds: string[], groupIds: string[]) {
         status === 'completed' ? faker.date.between({ from: createdAt, to: new Date() }) : null;
 
       // Create todo
-      const todoTx = tx.todos[todoId].update({
+      let todoTx = tx.todos[todoId].update({
         title: faker.lorem.words(randomInt(3, 6)),
         description: faker.lorem.paragraph(),
         status,
@@ -1671,9 +1717,9 @@ async function seedTodos(userIds: string[], groupIds: string[]) {
       });
 
       if (groupId) {
-        todoTx.link({ creator: userId, group: groupId });
+        todoTx = todoTx.link({ creator: userId, group: groupId });
       } else {
-        todoTx.link({ creator: userId });
+        todoTx = todoTx.link({ creator: userId });
       }
 
       transactions.push(todoTx);
@@ -1714,7 +1760,7 @@ async function seedTodos(userIds: string[], groupIds: string[]) {
   }
 
   console.log(
-    `✓ Created ${totalTodos} todos with ${totalAssignments} assignments (main user: 5 todos)`
+    `✓ Created ${totalTodos} todos with ${totalAssignments} assignments (each group has at least 1 todo, main user: 5 todos)`
   );
 }
 
@@ -1791,6 +1837,228 @@ async function seedPositions(groupIds: string[]) {
 
   console.log(`✓ Created ${totalPositions} positions across all groups`);
   return positionIds;
+}
+
+async function seedLinks(groupIds: string[]) {
+  console.log('Seeding links...');
+  const transactions = [];
+  let totalLinks = 0;
+
+  const linkLabels = [
+    'Website',
+    'Facebook Page',
+    'Twitter/X',
+    'Instagram',
+    'LinkedIn',
+    'Discord Server',
+    'Telegram Channel',
+    'YouTube Channel',
+    'GitHub Repository',
+    'Newsletter',
+    'Donation Page',
+    'Meeting Calendar',
+  ];
+
+  const linkUrls = [
+    'https://example.org',
+    'https://facebook.com/example',
+    'https://twitter.com/example',
+    'https://instagram.com/example',
+    'https://linkedin.com/company/example',
+    'https://discord.gg/example',
+    'https://t.me/example',
+    'https://youtube.com/@example',
+    'https://github.com/example',
+    'https://example.org/newsletter',
+    'https://donate.example.org',
+    'https://calendar.example.org',
+  ];
+
+  for (const groupId of groupIds) {
+    // Each group gets 2-5 links
+    const numLinks = randomInt(2, 5);
+    const selectedIndices = randomItems([...Array(linkLabels.length).keys()], numLinks);
+
+    for (const idx of selectedIndices) {
+      const linkId = id();
+      totalLinks++;
+
+      transactions.push(
+        tx.links[linkId]
+          .update({
+            label: linkLabels[idx],
+            url: linkUrls[idx],
+            createdAt: faker.date.past({ years: 1 }),
+          })
+          .link({ group: groupId })
+      );
+    }
+  }
+
+  // Execute in batches
+  const batchSize = 50;
+  for (let i = 0; i < transactions.length; i += batchSize) {
+    const batch = transactions.slice(i, i + batchSize);
+    await db.transact(batch);
+  }
+
+  console.log(`✓ Created ${totalLinks} links across all groups`);
+}
+
+async function seedPayments(userIds: string[], groupIds: string[]) {
+  console.log('Seeding payments...');
+  const transactions = [];
+  let totalPayments = 0;
+
+  const paymentTypes = [
+    'membership_fee',
+    'donation',
+    'subsidies',
+    'others',
+    'campaign',
+    'material',
+    'events',
+  ];
+
+  const paymentLabels = {
+    membership_fee: ['Annual Membership', 'Monthly Membership', 'Student Membership'],
+    donation: ['General Donation', 'Campaign Donation', 'Building Fund'],
+    subsidies: ['Government Grant', 'Foundation Grant', 'Corporate Sponsorship'],
+    others: ['Miscellaneous Payment', 'Reimbursement', 'Other Income'],
+    campaign: ['Campaign Contribution', 'Election Fund', 'Advertising Budget'],
+    material: ['Office Supplies', 'Promotional Materials', 'Equipment Purchase'],
+    events: ['Event Ticket', 'Conference Registration', 'Catering Payment'],
+  };
+
+  // Create payments for each group
+  for (const groupId of groupIds) {
+    // First, ensure at least one payment where this group is the receiver (income)
+    const incomePaymentId = id();
+    const incomeType = randomItem(['membership_fee', 'donation', 'subsidies']);
+    const incomeLabel = randomItem(paymentLabels[incomeType as keyof typeof paymentLabels]);
+    const incomeAmount = randomInt(100, 5000);
+    totalPayments++;
+
+    let incomeTransaction = tx.payments[incomePaymentId].update({
+      label: incomeLabel,
+      type: incomeType,
+      amount: incomeAmount,
+      createdAt: faker.date.past({ years: 2 }),
+    });
+
+    // Link payer (user or another group) and receiver (this group)
+    if (faker.datatype.boolean(0.7)) {
+      // 70% chance payer is a user
+      incomeTransaction = incomeTransaction.link({
+        payerUser: randomItem(userIds),
+        receiverGroup: groupId,
+      });
+    } else {
+      // 30% chance payer is another group
+      const otherGroups = groupIds.filter(gId => gId !== groupId);
+      incomeTransaction = incomeTransaction.link({
+        payerGroup: otherGroups.length > 0 ? randomItem(otherGroups) : randomItem(groupIds),
+        receiverGroup: groupId,
+      });
+    }
+    transactions.push(incomeTransaction);
+
+    // Second, ensure at least one payment where this group is the payer (expense)
+    const expensePaymentId = id();
+    const expenseType = randomItem(['campaign', 'material', 'events', 'others']);
+    const expenseLabel = randomItem(paymentLabels[expenseType as keyof typeof paymentLabels]);
+    const expenseAmount = randomInt(50, 3000);
+    totalPayments++;
+
+    let expenseTransaction = tx.payments[expensePaymentId].update({
+      label: expenseLabel,
+      type: expenseType,
+      amount: expenseAmount,
+      createdAt: faker.date.past({ years: 2 }),
+    });
+
+    // Link payer (this group) and receiver (user or another group)
+    if (faker.datatype.boolean(0.5)) {
+      // 50% chance receiver is a user
+      expenseTransaction = expenseTransaction.link({
+        payerGroup: groupId,
+        receiverUser: randomItem(userIds),
+      });
+    } else {
+      // 50% chance receiver is another group
+      const otherGroups = groupIds.filter(gId => gId !== groupId);
+      expenseTransaction = expenseTransaction.link({
+        payerGroup: groupId,
+        receiverGroup: otherGroups.length > 0 ? randomItem(otherGroups) : randomItem(groupIds),
+      });
+    }
+    transactions.push(expenseTransaction);
+
+    // Then create additional random payments (3-13 more)
+    const numAdditionalPayments = randomInt(3, 13);
+
+    for (let i = 0; i < numAdditionalPayments; i++) {
+      const paymentId = id();
+      const paymentType = randomItem(paymentTypes);
+      const label = randomItem(paymentLabels[paymentType as keyof typeof paymentLabels]);
+      const amount = randomInt(10, 5000);
+      totalPayments++;
+
+      let transaction = tx.payments[paymentId].update({
+        label,
+        type: paymentType,
+        amount,
+        createdAt: faker.date.past({ years: 2 }),
+      });
+
+      // Randomly decide the payment direction and participants
+      const direction = faker.datatype.boolean(0.6) ? 'income' : 'expense'; // 60% income, 40% expense
+
+      if (direction === 'income') {
+        // Group receives payment
+        const payerIsUser = faker.datatype.boolean(0.7); // 70% users, 30% groups
+        if (payerIsUser) {
+          transaction = transaction.link({
+            payerUser: randomItem(userIds),
+            receiverGroup: groupId,
+          });
+        } else {
+          const otherGroups = groupIds.filter(gId => gId !== groupId);
+          transaction = transaction.link({
+            payerGroup: otherGroups.length > 0 ? randomItem(otherGroups) : randomItem(groupIds),
+            receiverGroup: groupId,
+          });
+        }
+      } else {
+        // Group pays
+        const receiverIsUser = faker.datatype.boolean(0.5); // 50% users, 50% groups
+        if (receiverIsUser) {
+          transaction = transaction.link({
+            payerGroup: groupId,
+            receiverUser: randomItem(userIds),
+          });
+        } else {
+          const otherGroups = groupIds.filter(gId => gId !== groupId);
+          transaction = transaction.link({
+            payerGroup: groupId,
+            receiverGroup: otherGroups.length > 0 ? randomItem(otherGroups) : randomItem(groupIds),
+          });
+        }
+      }
+
+      transactions.push(transaction);
+    }
+  }
+
+  // Execute in batches
+  console.log(`  Creating ${transactions.length} payment records...`);
+  const batchSize = 50;
+  for (let i = 0; i < transactions.length; i += batchSize) {
+    const batch = transactions.slice(i, i + batchSize);
+    await db.transact(batch);
+  }
+
+  console.log(`✓ Created ${totalPayments} payments across all groups`);
 }
 
 async function seedDocuments(userIds: string[]) {
@@ -2012,6 +2280,8 @@ async function cleanDatabase() {
       documentCollaborators: {},
       documentCursors: {},
       hashtags: {}, // New: include hashtags
+      links: {}, // New: include links
+      payments: {}, // New: include payments
     };
 
     const data = await db.query(query);
@@ -2020,6 +2290,8 @@ async function cleanDatabase() {
     // Delete all entities (including $users)
     const entitiesToDelete = [
       'hashtags', // Delete hashtags first (they link to other entities)
+      'links', // Delete links
+      'payments', // Delete payments
       'documentCursors',
       'documentCollaborators',
       'documents',
@@ -2098,6 +2370,8 @@ async function seed() {
     const groupIds = await seedGroups(userIds);
     await seedGroupRelationships(groupIds); // New: seed group relationships
     const positionIds = await seedPositions(groupIds); // New: seed positions
+    await seedLinks(groupIds); // New: seed links
+    await seedPayments(userIds, groupIds); // New: seed payments
     await seedFollows(userIds);
     await seedConversationsAndMessages(userIds, userToProfileMap);
     const eventIds = await seedEvents(userIds, groupIds);
@@ -2114,6 +2388,8 @@ async function seed() {
     console.log(`  - ${SEED_CONFIG.groups} groups (2 owned by main user)`);
     console.log(`  - Group relationships with hierarchical structure`);
     console.log(`  - Positions across all groups`);
+    console.log(`  - Links for all groups`);
+    console.log(`  - Payments (income/expenditure) for all groups`);
     console.log(`  - Hashtags for all users, groups, events, and amendments`);
     console.log(`  - Follow relationships (main user: 10 following, 5 followers)`);
     console.log(`  - Conversations and messages (main user: 3 conversations)`);

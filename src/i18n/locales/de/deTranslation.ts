@@ -78,6 +78,7 @@ const deTranslation: I18nLocale = {
         overview: 'Übersicht',
         events: 'Veranstaltungen',
         amendments: 'Anträge',
+        operation: 'Betrieb',
       },
     },
     toggles: {

@@ -76,6 +76,7 @@ const enTranslation = {
         overview: 'Overview',
         events: 'Events',
         amendments: 'Amendments',
+        operation: 'Operation',
       },
     },
     toggles: {

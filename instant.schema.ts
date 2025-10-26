@@ -171,12 +171,23 @@ const _schema = i.schema({
       createdAt: i.date().indexed(),
       tag: i.string().indexed(),
     }),
+    links: i.entity({
+      createdAt: i.date().indexed(),
+      label: i.string().indexed(),
+      url: i.string(),
+    }),
     magicCodes: i.entity({
       code: i.string(),
       createdAt: i.date().indexed(),
       email: i.string().indexed(),
       expiresAt: i.date().indexed(),
       usedAt: i.date().optional(),
+    }),
+    payments: i.entity({
+      amount: i.number(),
+      createdAt: i.date().indexed(),
+      label: i.string().indexed(),
+      type: i.string().indexed(),
     }),
     messages: i.entity({
       content: i.string(),
@@ -804,6 +815,18 @@ const _schema = i.schema({
         label: 'hashtags',
       },
     },
+    linksGroup: {
+      forward: {
+        on: 'links',
+        has: 'one',
+        label: 'group',
+      },
+      reverse: {
+        on: 'groups',
+        has: 'many',
+        label: 'links',
+      },
+    },
     messagesConversation: {
       forward: {
         on: 'messages',
@@ -850,6 +873,54 @@ const _schema = i.schema({
         on: '$users',
         has: 'many',
         label: 'sentNotifications',
+      },
+    },
+    paymentsPayerUser: {
+      forward: {
+        on: 'payments',
+        has: 'one',
+        label: 'payerUser',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'paymentsMade',
+      },
+    },
+    paymentsPayerGroup: {
+      forward: {
+        on: 'payments',
+        has: 'one',
+        label: 'payerGroup',
+      },
+      reverse: {
+        on: 'groups',
+        has: 'many',
+        label: 'paymentsMade',
+      },
+    },
+    paymentsReceiverUser: {
+      forward: {
+        on: 'payments',
+        has: 'one',
+        label: 'receiverUser',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'paymentsReceived',
+      },
+    },
+    paymentsReceiverGroup: {
+      forward: {
+        on: 'payments',
+        has: 'one',
+        label: 'receiverGroup',
+      },
+      reverse: {
+        on: 'groups',
+        has: 'many',
+        label: 'paymentsReceived',
       },
     },
     positionsCurrentHolder: {

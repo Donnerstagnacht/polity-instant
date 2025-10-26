@@ -987,10 +987,24 @@ function CreateTodoForm({ isCarouselMode }: { isCarouselMode: boolean }) {
     priority: 'medium' as 'low' | 'medium' | 'high' | 'urgent',
     dueDate: '',
     tags: [] as string[],
+    groupId: '', // Add group ID field
   });
   const [tagInput, setTagInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const user = useAuthStore(state => state.user);
+
+  // Query user's groups for the dropdown
+  const { data: groupsData } = db.useQuery({
+    groups: {
+      $: {
+        where: {
+          or: [{ 'owner.id': user?.id }, { 'memberships.user.id': user?.id }],
+        },
+      },
+    },
+  });
+
+  const userGroups = groupsData?.groups || [];
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -1007,7 +1021,7 @@ function CreateTodoForm({ isCarouselMode }: { isCarouselMode: boolean }) {
       const assignmentId = id();
       const now = Date.now();
 
-      await db.transact([
+      const transactions = [
         tx.todos[todoId].update({
           title: formData.title,
           description: formData.description || '',
@@ -1025,7 +1039,14 @@ function CreateTodoForm({ isCarouselMode }: { isCarouselMode: boolean }) {
           role: 'assignee',
         }),
         tx.todoAssignments[assignmentId].link({ todo: todoId, user: user.id }),
-      ]);
+      ];
+
+      // Link to group if selected
+      if (formData.groupId) {
+        transactions.push(tx.todos[todoId].link({ group: formData.groupId }));
+      }
+
+      await db.transact(transactions);
 
       toast.success('Todo created successfully!');
       setTimeout(() => {
@@ -1142,6 +1163,22 @@ function CreateTodoForm({ isCarouselMode }: { isCarouselMode: boolean }) {
               value={formData.dueDate}
               onChange={e => setFormData({ ...formData, dueDate: e.target.value })}
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="todo-group">Link to Group (Optional)</Label>
+            <select
+              id="todo-group"
+              value={formData.groupId}
+              onChange={e => setFormData({ ...formData, groupId: e.target.value })}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="">No group</option>
+              {userGroups.map((group: any) => (
+                <option key={group.id} value={group.id}>
+                  {group.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="todo-tags">Tags</Label>
@@ -1441,6 +1478,19 @@ function GuidedTodoFlow({
   const [tagInput, setTagInput] = useState('');
   const user = useAuthStore(state => state.user);
 
+  // Query user's groups for the dropdown
+  const { data: groupsData } = db.useQuery({
+    groups: {
+      $: {
+        where: {
+          or: [{ 'owner.id': user?.id }, { 'memberships.user.id': user?.id }],
+        },
+      },
+    },
+  });
+
+  const userGroups = groupsData?.groups || [];
+
   const data = {
     title: formData.title || '',
     description: formData.description || '',
@@ -1448,6 +1498,7 @@ function GuidedTodoFlow({
     priority: formData.priority || ('medium' as 'low' | 'medium' | 'high' | 'urgent'),
     dueDate: formData.dueDate || '',
     tags: formData.tags || ([] as string[]),
+    groupId: formData.groupId || '',
   };
 
   useEffect(() => {
@@ -1486,7 +1537,7 @@ function GuidedTodoFlow({
       const assignmentId = id();
       const now = Date.now();
 
-      await db.transact([
+      const transactions = [
         tx.todos[todoId].update({
           title: data.title,
           description: data.description || '',
@@ -1504,7 +1555,14 @@ function GuidedTodoFlow({
           role: 'assignee',
         }),
         tx.todoAssignments[assignmentId].link({ todo: todoId, user: user.id }),
-      ]);
+      ];
+
+      // Link to group if selected
+      if (data.groupId) {
+        transactions.push(tx.todos[todoId].link({ group: data.groupId }));
+      }
+
+      await db.transact(transactions);
 
       toast.success('Todo created successfully!');
       setTimeout(() => (window.location.href = '/todos'), 500);
@@ -1626,6 +1684,31 @@ function GuidedTodoFlow({
                   />
                   <p className="text-sm text-muted-foreground">
                     Optional: Set a due date to keep yourself on track
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-todo-group" className="text-lg">
+                    Link to a Group (Optional)
+                  </Label>
+                  <select
+                    id="guided-todo-group"
+                    value={data.groupId}
+                    onChange={e => setFormData({ ...formData, groupId: e.target.value })}
+                    className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="">No group</option>
+                    {userGroups.map((group: any) => (
+                      <option key={group.id} value={group.id}>
+                        {group.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-sm text-muted-foreground">
+                    Optional: Link this todo to a specific group
                   </p>
                 </div>
               </div>

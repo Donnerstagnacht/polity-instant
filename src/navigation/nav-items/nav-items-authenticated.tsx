@@ -272,24 +272,31 @@ export const navItemsAuthenticated = (
   const getGroupSecondaryNavItems = (groupId: string): NavigationItem[] => [
     {
       id: 'overview',
-      label: 'Overview',
+      label: 'navigation.secondary.group.overview',
       icon: 'Home',
       href: `/group/${groupId}`,
       onClick: () => router.push(`/group/${groupId}`),
     },
     {
       id: 'events',
-      label: 'Events',
+      label: 'navigation.secondary.group.events',
       icon: 'Calendar',
       href: `/group/${groupId}/events`,
       onClick: () => router.push(`/group/${groupId}/events`),
     },
     {
       id: 'amendments',
-      label: 'Amendments',
+      label: 'navigation.secondary.group.amendments',
       icon: 'FileText',
       href: `/group/${groupId}/amendments`,
       onClick: () => router.push(`/group/${groupId}/amendments`),
+    },
+    {
+      id: 'operation',
+      label: 'navigation.secondary.group.operation',
+      icon: 'AreaChart',
+      href: `/group/${groupId}/operation`,
+      onClick: () => router.push(`/group/${groupId}/operation`),
     },
   ];
 
