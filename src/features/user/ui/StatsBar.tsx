@@ -31,9 +31,9 @@ export const StatsBar: React.FC<WikiStatsBarProps> = ({
         label={stat.label}
         value={stat.value}
         unit={stat.unit}
-        showAnimation={stat.label === 'Followers' ? showAnimation : false}
-        animationText={stat.label === 'Followers' ? animationText : undefined}
-        animationRef={stat.label === 'Followers' ? animationRef : undefined}
+        showAnimation={stat.label === 'Subscribers' ? showAnimation : false}
+        animationText={stat.label === 'Subscribers' ? animationText : undefined}
+        animationRef={stat.label === 'Subscribers' ? animationRef : undefined}
       />
     ))}
   </div>

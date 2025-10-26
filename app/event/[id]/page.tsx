@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useRef } from 'react';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { useParams, useRouter } from 'next/navigation';
@@ -12,6 +13,9 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Calendar, MapPin, Users, ArrowLeft, Check, X, HelpCircle } from 'lucide-react';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
+import { SubscriberStatsBar } from '@/components/ui/SubscriberStatsBar';
+import { EventSubscribeButton } from '@/features/events/ui/EventSubscribeButton';
+import { useSubscribeEvent } from '@/features/events/hooks/useSubscribeEvent';
 
 type EventStatus = 'going' | 'maybe' | 'declined' | 'invited';
 
@@ -20,6 +24,12 @@ export default function EventPage() {
   const router = useRouter();
   const eventId = params.id as string;
   const { user } = db.useAuth();
+  const [showAnimation, setShowAnimation] = useState(false);
+  const [animationText, setAnimationText] = useState('');
+  const animationRef = useRef<HTMLDivElement>(null);
+
+  // Subscribe hook
+  const { subscriberCount } = useSubscribeEvent(eventId);
 
   const { data, isLoading } = db.useQuery({
     events: {
@@ -131,11 +141,29 @@ export default function EventPage() {
     <AuthGuard requireAuth={true}>
       <PageWrapper>
         <div className="container mx-auto p-4">
-          <div className="mb-4">
+          <div className="mb-4 flex items-center justify-between">
             <Button variant="ghost" onClick={() => router.back()}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Button>
+            <EventSubscribeButton
+              eventId={eventId}
+              onSubscribeChange={async isNowSubscribed => {
+                setAnimationText(isNowSubscribed ? '+1' : '-1');
+                setShowAnimation(true);
+                setTimeout(() => setShowAnimation(false), 1000);
+              }}
+            />
+          </div>
+
+          {/* Subscriber Stats Bar */}
+          <div className="mb-4">
+            <SubscriberStatsBar
+              subscriberCount={subscriberCount}
+              showAnimation={showAnimation}
+              animationText={animationText}
+              animationRef={animationRef}
+            />
           </div>
 
           <div className="grid gap-6 lg:grid-cols-3">

@@ -1,0 +1,140 @@
+import { useState, useEffect } from 'react';
+import { db, tx, id } from '../../../../db';
+import { useAuthStore } from '@/features/auth/auth.ts';
+
+/**
+ * Hook to handle user subscription functionality
+ * @param targetUserId - The ID of the user to subscribe/unsubscribe
+ */
+export function useSubscribeUser(targetUserId?: string) {
+  const { user: authUser } = useAuthStore();
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [subscriberCount, setSubscriberCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Query to get all subscribers for the target user (we'll filter client-side)
+  const { data: subscriptionData, isLoading: subscriptionLoading } = db.useQuery(
+    targetUserId
+      ? {
+          subscribers: {
+            $: {
+              where: {
+                'user.id': targetUserId,
+              },
+            },
+            subscriber: {},
+            user: {},
+          },
+        }
+      : null
+  );
+
+  // Update subscription state when data changes
+  useEffect(() => {
+    const subscribers = subscriptionData?.subscribers || [];
+
+    // Check if the current user is subscribed by looking for their ID in the subscriber list
+    const subscribed = authUser?.id
+      ? subscribers.some(sub => sub.subscriber?.id === authUser.id)
+      : false;
+
+    console.log('🔔 SUBSCRIPTION CHECK:', {
+      authUserId: authUser?.id,
+      targetUserId,
+      subscribersArray: subscribers,
+      subscribersCount: subscribers.length,
+      isSubscribed: subscribed,
+      subscriptionLoading,
+      subscriberIds: subscribers.map(s => s.subscriber?.id),
+    });
+
+    setIsSubscribed(subscribed);
+    setSubscriberCount(subscribers.length);
+  }, [subscriptionData, authUser?.id, targetUserId, subscriptionLoading]);
+
+  // Subscribe to a user
+  const subscribe = async () => {
+    console.log('🔔 [subscribe] Attempting to subscribe:', {
+      authUserId: authUser?.id,
+      targetUserId,
+      currentSubscribed: isSubscribed,
+    });
+
+    if (!authUser?.id || !targetUserId || authUser.id === targetUserId) {
+      console.log('🔔 [subscribe] Validation failed');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await db.transact([
+        tx.subscribers[id()]
+          .update({
+            createdAt: new Date(),
+          })
+          .link({
+            subscriber: authUser.id,
+            user: targetUserId,
+          }),
+      ]);
+      console.log('🔔 [subscribe] Successfully subscribed');
+    } catch (error) {
+      console.error('🔔 [subscribe] Failed to subscribe:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Unsubscribe from a user
+  const unsubscribe = async () => {
+    console.log('🔔 [unsubscribe] Attempting to unsubscribe:', {
+      authUserId: authUser?.id,
+      targetUserId,
+      currentSubscribed: isSubscribed,
+      subscriptionData,
+    });
+
+    if (!authUser?.id || !targetUserId) {
+      console.log('🔔 [unsubscribe] Validation failed - missing user IDs');
+      return;
+    }
+
+    const subscribers = subscriptionData?.subscribers || [];
+    if (subscribers.length === 0) {
+      console.log('🔔 [unsubscribe] Validation failed - no subscription found');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const subscriptionId = subscribers[0].id;
+      console.log('🔔 [unsubscribe] Deleting subscription:', subscriptionId);
+      await db.transact([tx.subscribers[subscriptionId].delete()]);
+      console.log('🔔 [unsubscribe] Successfully unsubscribed');
+    } catch (error) {
+      console.error('🔔 [unsubscribe] Failed to unsubscribe:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Toggle subscribe/unsubscribe
+  const toggleSubscribe = async () => {
+    console.log('🔔 [toggleSubscribe] Current state:', { isSubscribed });
+    if (isSubscribed) {
+      await unsubscribe();
+    } else {
+      await subscribe();
+    }
+  };
+
+  return {
+    isSubscribed,
+    subscriberCount,
+    isLoading,
+    subscribe,
+    unsubscribe,
+    toggleSubscribe,
+    canSubscribe: authUser?.id && targetUserId && authUser.id !== targetUserId,
+  };
+}

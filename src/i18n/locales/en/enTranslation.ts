@@ -71,6 +71,7 @@ const enTranslation = {
       },
       user: {
         profile: 'Profile',
+        subscriptions: 'Subscriptions',
         edit: 'Edit Profile',
       },
       group: {

@@ -73,6 +73,7 @@ const deTranslation: I18nLocale = {
       },
       user: {
         profile: 'Profil',
+        subscriptions: 'Abonnements',
         edit: 'Profil bearbeiten',
       },
       group: {

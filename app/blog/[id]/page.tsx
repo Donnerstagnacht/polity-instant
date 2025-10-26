@@ -1,6 +1,6 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState, useRef } from 'react';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,9 +9,18 @@ import { Button } from '@/components/ui/button';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import db from '../../../db';
 import { BookOpen, User, Calendar, Heart, MessageSquare, Share2 } from 'lucide-react';
+import { SubscriberStatsBar } from '@/components/ui/SubscriberStatsBar';
+import { BlogSubscribeButton } from '@/features/blogs/ui/BlogSubscribeButton';
+import { useSubscribeBlog } from '@/features/blogs/hooks/useSubscribeBlog';
 
 export default function BlogPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
+  const [showAnimation, setShowAnimation] = useState(false);
+  const [animationText, setAnimationText] = useState('');
+  const animationRef = useRef<HTMLDivElement>(null);
+
+  // Subscribe hook
+  const { subscriberCount } = useSubscribeBlog(resolvedParams.id);
 
   // Fetch blog data from InstantDB
   const { data, isLoading } = db.useQuery({
@@ -21,6 +30,7 @@ export default function BlogPage({ params }: { params: Promise<{ id: string }> }
         profile: {},
       },
       hashtags: {},
+      subscribers: {},
     },
   });
 
@@ -66,9 +76,19 @@ export default function BlogPage({ params }: { params: Promise<{ id: string }> }
       <PageWrapper className="container mx-auto p-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="mb-4 flex items-center gap-3">
-            <BookOpen className="h-8 w-8" />
-            <Badge variant="default">Blog Post</Badge>
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <BookOpen className="h-8 w-8" />
+              <Badge variant="default">Blog Post</Badge>
+            </div>
+            <BlogSubscribeButton
+              blogId={resolvedParams.id}
+              onSubscribeChange={async isNowSubscribed => {
+                setAnimationText(isNowSubscribed ? '+1' : '-1');
+                setShowAnimation(true);
+                setTimeout(() => setShowAnimation(false), 1000);
+              }}
+            />
           </div>
           <h1 className="mb-4 text-4xl font-bold">{blog.title}</h1>
           <div className="flex items-center gap-4 text-muted-foreground">
@@ -86,6 +106,16 @@ export default function BlogPage({ params }: { params: Promise<{ id: string }> }
               <MessageSquare className="h-4 w-4" />
               <span>{blog.comments || 0} comments</span>
             </div>
+          </div>
+
+          {/* Subscriber Stats Bar */}
+          <div className="mt-4">
+            <SubscriberStatsBar
+              subscriberCount={subscriberCount}
+              showAnimation={showAnimation}
+              animationText={animationText}
+              animationRef={animationRef}
+            />
           </div>
         </div>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState, useRef } from 'react';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,11 +10,20 @@ import db from '../../../db';
 import { Scale, Calendar, User, ThumbsUp, FileText, MessageSquare, FileEdit } from 'lucide-react';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import Link from 'next/link';
+import { SubscriberStatsBar } from '@/components/ui/SubscriberStatsBar';
+import { AmendmentSubscribeButton } from '@/features/amendments/ui/AmendmentSubscribeButton';
+import { useSubscribeAmendment } from '@/features/amendments/hooks/useSubscribeAmendment';
 
 export default function AmendmentPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
+  const [showAnimation, setShowAnimation] = useState(false);
+  const [animationText, setAnimationText] = useState('');
+  const animationRef = useRef<HTMLDivElement>(null);
 
-  // Fetch amendment data from InstantDB
+  // Subscribe hook
+  const { subscriberCount } = useSubscribeAmendment(resolvedParams.id);
+
+  // Fetch amendment data from InstantDB with subscribers
   const { data, isLoading } = db.useQuery({
     amendments: {
       $: { where: { id: resolvedParams.id } },
@@ -22,6 +31,7 @@ export default function AmendmentPage({ params }: { params: Promise<{ id: string
         profile: {},
       },
       hashtags: {},
+      subscribers: {},
     },
   });
 
@@ -90,12 +100,28 @@ export default function AmendmentPage({ params }: { params: Promise<{ id: string
               </div>
             </div>
             <div className="flex gap-2">
+              <AmendmentSubscribeButton
+                amendmentId={resolvedParams.id}
+                onSubscribeChange={async isNowSubscribed => {
+                  setAnimationText(isNowSubscribed ? '+1' : '-1');
+                  setShowAnimation(true);
+                  setTimeout(() => setShowAnimation(false), 1000);
+                }}
+              />
               <Button>
                 <ThumbsUp className="mr-2 h-4 w-4" />
                 Support
               </Button>
             </div>
           </div>
+
+          {/* Subscriber Stats Bar */}
+          <SubscriberStatsBar
+            subscriberCount={subscriberCount}
+            showAnimation={showAnimation}
+            animationText={animationText}
+            animationRef={animationRef}
+          />
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">

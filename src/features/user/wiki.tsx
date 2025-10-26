@@ -1,5 +1,4 @@
 import { useState, useRef } from 'react';
-import { StatsBar } from '@/features/user/ui/StatsBar';
 import '@/styles/animations.css';
 import { SocialBar } from '@/features/user/ui/SocialBar';
 import { useUserWikiContentSearch } from './state/useUserWikiContentSearch';
@@ -10,15 +9,15 @@ import { StatementCarousel } from '@/features/user/ui/StatementCarousel';
 import { UserWikiContentTabs } from '@/features/user/ui/UserWikiContentTabs';
 import { UserWikiHeader } from '@/features/user/ui/UserWikiHeader';
 import { useUserData } from './hooks/useUserData';
-import { useFollowUser } from './hooks/useFollowUser';
+import { useSubscribeUser } from './hooks/useSubscribeUser';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { SeedUserDataButton } from './ui/SeedUserDataButton';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
+import { SubscriberStatsBar } from '@/components/ui/SubscriberStatsBar';
 
 // --- UserWiki utility functions moved to utils/userWiki.utils.ts ---
 import {
   getStatusStyles,
-  formatNumberWithUnit,
   getTagColor,
   getRoleBadgeColor,
   getBlogGradient,
@@ -49,38 +48,30 @@ export function UserWiki(_props: UserWikiProps) {
   // Fetch user data from Instant DB
   const { user: dbUser, isLoading, error } = useUserData(userIdToFetch);
 
-  // Follow/unfollow functionality
-  const { isFollowing: following, followerCount, toggleFollow } = useFollowUser(userIdToFetch);
+  // Subscribe/unsubscribe functionality
+  const {
+    isSubscribed: subscribed,
+    subscriberCount,
+    toggleSubscribe,
+  } = useSubscribeUser(userIdToFetch);
 
-  // Function to handle follow/unfollow with animation
-  const handleFollowClick = async () => {
-    const wasFollowing = following;
+  // Check if this is the user's own profile
+  const isOwnProfile = authUser?.id === userIdToFetch;
 
-    // Toggle the follow state
-    await toggleFollow();
+  // Function to handle subscribe/unsubscribe with animation
+  const handleSubscribeClick = async () => {
+    const wasSubscribed = subscribed;
+
+    // Toggle the subscription state
+    await toggleSubscribe();
 
     // Show animation
-    setAnimationText(wasFollowing ? '-1' : '+1');
+    setAnimationText(wasSubscribed ? '-1' : '+1');
     setShowAnimation(true);
 
     // Hide animation after it completes
     setTimeout(() => setShowAnimation(false), 1000);
   };
-
-  // Create a version of the stats array with the updated follower count
-  const displayStats =
-    dbUser?.stats.map(stat => {
-      if (stat.label === 'Followers') {
-        // For followers, use the actual follower count from the database
-        const formatted = formatNumberWithUnit(followerCount);
-        return { ...stat, value: formatted.value, unit: formatted.unit };
-      } else if (stat.value >= 1000) {
-        // For other stats that are >= 1000, also apply the formatting
-        const formatted = formatNumberWithUnit(stat.value);
-        return { ...stat, value: formatted.value, unit: formatted.unit };
-      }
-      return stat;
-    }) || [];
 
   return (
     <>
@@ -118,12 +109,13 @@ export function UserWiki(_props: UserWikiProps) {
             name={dbUser.name}
             avatar={dbUser.avatar}
             subtitle={dbUser.subtitle}
-            following={following}
-            onFollowClick={handleFollowClick}
+            subscribed={subscribed}
+            onSubscribeClick={handleSubscribeClick}
+            showSubscribeButton={!isOwnProfile}
           />
 
-          <StatsBar
-            stats={displayStats}
+          <SubscriberStatsBar
+            subscriberCount={subscriberCount}
             showAnimation={showAnimation}
             animationText={animationText}
             animationRef={animationRef}

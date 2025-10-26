@@ -262,6 +262,8 @@ const BLOG_HASHTAGS = [
 async function seedUsers() {
   console.log('Seeding users...');
   const userIds: string[] = [];
+  const blogIds: string[] = [];
+  const amendmentIds: string[] = [];
   const userToProfileMap = new Map<string, string>(); // Map user IDs to profile IDs
   const transactions = [];
 
@@ -308,7 +310,7 @@ async function seedUsers() {
     transactions.push(
       tx.stats[statId]
         .update({
-          label: ['Posts', 'Followers', 'Following', 'Groups', 'Events'][j],
+          label: ['Posts', 'Subscribers', 'Following', 'Groups', 'Events'][j],
           value: randomInt(10, 100),
           unit: 'count',
         })
@@ -336,6 +338,7 @@ async function seedUsers() {
 
   // Add a blog post for main user (no group link for user's personal blog)
   const blogId = id();
+  blogIds.push(blogId);
   transactions.push(
     tx.blogs[blogId]
       .update({
@@ -394,7 +397,7 @@ async function seedUsers() {
     transactions.push(
       tx.stats[statId]
         .update({
-          label: ['Posts', 'Followers', 'Following', 'Groups', 'Events'][j],
+          label: ['Posts', 'Subscribers', 'Following', 'Groups', 'Events'][j],
           value: randomInt(10, 100),
           unit: 'count',
         })
@@ -419,6 +422,7 @@ async function seedUsers() {
 
   // Add a blog post for Tobias (no group link for user's personal blog)
   const tobiasBlogId = id();
+  blogIds.push(tobiasBlogId);
   transactions.push(
     tx.blogs[tobiasBlogId]
       .update({
@@ -490,7 +494,7 @@ async function seedUsers() {
       transactions.push(
         tx.stats[statId]
           .update({
-            label: randomItem(['Posts', 'Followers', 'Following', 'Groups', 'Events']),
+            label: randomItem(['Posts', 'Subscribers', 'Following', 'Groups', 'Events']),
             value: randomInt(10, 1000),
             unit: randomItem(['count', 'points', 'score']),
           })
@@ -516,6 +520,7 @@ async function seedUsers() {
     const blogCount = randomInt(1, 4);
     for (let j = 0; j < blogCount; j++) {
       const blogId = id();
+      blogIds.push(blogId);
       transactions.push(
         tx.blogs[blogId]
           .update({
@@ -540,6 +545,7 @@ async function seedUsers() {
     const amendmentCount = randomInt(0, 2);
     for (let j = 0; j < amendmentCount; j++) {
       const amendmentId = id();
+      amendmentIds.push(amendmentId);
       const amendmentTitle = faker.lorem.sentence();
       transactions.push(
         tx.amendments[amendmentId]
@@ -575,7 +581,7 @@ async function seedUsers() {
   console.log(`✓ Created ${userIds.length} users (including main test user and Tobias)`);
   console.log(`✓ Each user has a complete profile with all contact fields`);
   console.log(`✓ Total profiles: ${userToProfileMap.size}`);
-  return { userIds, userToProfileMap };
+  return { userIds, userToProfileMap, blogIds, amendmentIds };
 }
 
 async function seedGroupRelationships(groupIds: string[]) {
@@ -830,6 +836,8 @@ async function seedGroupRelationships(groupIds: string[]) {
 async function seedGroups(userIds: string[]) {
   console.log('Seeding groups...');
   const groupIds: string[] = [];
+  const blogIds: string[] = [];
+  const amendmentIds: string[] = [];
   const transactions = [];
 
   const mainUserId = SEED_CONFIG.mainTestUserId;
@@ -923,6 +931,7 @@ async function seedGroups(userIds: string[]) {
     const groupBlogCount = randomInt(1, 3);
     for (let j = 0; j < groupBlogCount; j++) {
       const blogId = id();
+      blogIds.push(blogId);
       transactions.push(
         tx.blogs[blogId]
           .update({
@@ -943,6 +952,7 @@ async function seedGroups(userIds: string[]) {
     const amendmentCount = randomInt(2, 4);
     for (let j = 0; j < amendmentCount; j++) {
       const amendmentId = id();
+      amendmentIds.push(amendmentId);
       const amendmentTitle = faker.lorem.sentence();
       transactions.push(
         tx.amendments[amendmentId]
@@ -1071,6 +1081,7 @@ async function seedGroups(userIds: string[]) {
     const groupBlogCount = randomInt(1, 3);
     for (let j = 0; j < groupBlogCount; j++) {
       const blogId = id();
+      blogIds.push(blogId);
       transactions.push(
         tx.blogs[blogId]
           .update({
@@ -1091,6 +1102,7 @@ async function seedGroups(userIds: string[]) {
     const amendmentCount = randomInt(2, 4);
     for (let j = 0; j < amendmentCount; j++) {
       const amendmentId = id();
+      amendmentIds.push(amendmentId);
       const amendmentTitle = faker.lorem.sentence();
       transactions.push(
         tx.amendments[amendmentId]
@@ -1126,17 +1138,19 @@ async function seedGroups(userIds: string[]) {
   console.log(
     `✓ Created ${SEED_CONFIG.groups} groups with memberships (2 owned by main test user)`
   );
-  return groupIds;
+  return { groupIds, blogIds, amendmentIds };
 }
 
-async function seedFollows(userIds: string[]) {
-  console.log('Seeding follows...');
+async function seedFollows(userIds: string[], groupIds: string[]) {
+  console.log('Seeding follows and subscribers...');
   const transactions = [];
   let totalFollows = 0;
+  let totalSubscribers = 0;
+  let totalGroupSubscribers = 0;
 
   const mainUserId = SEED_CONFIG.mainTestUserId;
 
-  // Make main user follow 10 random users
+  // Make main user follow 10 random users (legacy follows)
   const usersToFollow = randomItems(
     userIds.filter(uid => uid !== mainUserId),
     10
@@ -1154,7 +1168,7 @@ async function seedFollows(userIds: string[]) {
     totalFollows++;
   }
 
-  // Make 5 random users follow the main user
+  // Make 5 random users follow the main user (legacy follows)
   const followers = randomItems(
     userIds.filter(uid => uid !== mainUserId && !usersToFollow.includes(uid)),
     5
@@ -1172,7 +1186,7 @@ async function seedFollows(userIds: string[]) {
     totalFollows++;
   }
 
-  // Create follows for other users
+  // Create follows for other users (legacy follows)
   for (const userId of userIds) {
     if (userId === mainUserId) continue; // Skip main user, already handled
 
@@ -1195,6 +1209,231 @@ async function seedFollows(userIds: string[]) {
     }
   }
 
+  // NEW: Create subscribers (the new system)
+  // Make main user subscribe to 10 random users
+  const usersToSubscribe = randomItems(
+    userIds.filter(uid => uid !== mainUserId),
+    10
+  );
+
+  for (const targetUserId of usersToSubscribe) {
+    const subscriberId = id();
+    transactions.push(
+      tx.subscribers[subscriberId]
+        .update({
+          createdAt: faker.date.past({ years: 0.5 }),
+        })
+        .link({ subscriber: mainUserId, user: targetUserId })
+    );
+    totalSubscribers++;
+  }
+
+  // Make 5 random users subscribe to the main user
+  const subscribersToMain = randomItems(
+    userIds.filter(uid => uid !== mainUserId && !usersToSubscribe.includes(uid)),
+    5
+  );
+
+  for (const subscriberId of subscribersToMain) {
+    const subscriptionId = id();
+    transactions.push(
+      tx.subscribers[subscriptionId]
+        .update({
+          createdAt: faker.date.past({ years: 0.5 }),
+        })
+        .link({ subscriber: subscriberId, user: mainUserId })
+    );
+    totalSubscribers++;
+  }
+
+  // Create subscribers for other users
+  for (const userId of userIds) {
+    if (userId === mainUserId) continue; // Skip main user, already handled
+
+    const subscribeCount = randomInt(
+      SEED_CONFIG.followsPerUser.min,
+      SEED_CONFIG.followsPerUser.max
+    );
+    const usersToSubscribe = randomItems(
+      userIds.filter(uid => uid !== userId),
+      subscribeCount
+    );
+
+    for (const targetUserId of usersToSubscribe) {
+      const subscriptionId = id();
+      transactions.push(
+        tx.subscribers[subscriptionId]
+          .update({
+            createdAt: faker.date.past({ years: 0.5 }),
+          })
+          .link({ subscriber: userId, user: targetUserId })
+      );
+      totalSubscribers++;
+    }
+  }
+
+  // Execute in batches
+  const batchSize = 50;
+  for (let i = 0; i < transactions.length; i += batchSize) {
+    const batch = transactions.slice(i, i + batchSize);
+    await db.transact(batch);
+  }
+
+  // NEW: Create group subscriptions
+  // Make main user subscribe to 3 random groups
+  const groupsToSubscribe = randomItems(groupIds, 3);
+
+  for (const targetGroupId of groupsToSubscribe) {
+    const subscriptionId = id();
+    transactions.push(
+      tx.subscribers[subscriptionId]
+        .update({
+          createdAt: faker.date.past({ years: 0.5 }),
+        })
+        .link({ subscriber: mainUserId, group: targetGroupId })
+    );
+    totalGroupSubscribers++;
+  }
+
+  // Make 3 random users subscribe to first 2 groups
+  const firstTwoGroups = groupIds.slice(0, 2);
+  for (const groupId of firstTwoGroups) {
+    const groupSubscribers = randomItems(userIds, 3);
+    for (const userId of groupSubscribers) {
+      const subscriptionId = id();
+      transactions.push(
+        tx.subscribers[subscriptionId]
+          .update({
+            createdAt: faker.date.past({ years: 0.5 }),
+          })
+          .link({ subscriber: userId, group: groupId })
+      );
+      totalGroupSubscribers++;
+    }
+  }
+
+  // Execute group subscription transactions in batches
+  for (let i = 0; i < transactions.length; i += batchSize) {
+    const batch = transactions.slice(i, i + batchSize);
+    await db.transact(batch);
+  }
+
+  console.log(
+    `✓ Created ${totalFollows} follow relationships (legacy), ${totalSubscribers} user subscriber relationships, and ${totalGroupSubscribers} group subscriber relationships`
+  );
+  console.log(`  Main user: 10 following, 5 followers (legacy)`);
+  console.log(
+    `  Main user: 10 user subscriptions, 5 subscribers, 3 group subscriptions (new system)`
+  );
+}
+
+async function seedEntitySubscriptions(
+  userIds: string[],
+  amendmentIds: string[],
+  eventIds: string[],
+  blogIds: string[]
+) {
+  console.log('Seeding amendments, events, and blogs subscriptions...');
+  const transactions = [];
+  let totalAmendmentSubscribers = 0;
+  let totalEventSubscribers = 0;
+  let totalBlogSubscribers = 0;
+
+  const mainUserId = SEED_CONFIG.mainTestUserId;
+
+  // Make main user subscribe to some amendments
+  const amendmentsToSubscribe = randomItems(amendmentIds, Math.min(3, amendmentIds.length));
+  for (const amendmentId of amendmentsToSubscribe) {
+    const subscriptionId = id();
+    transactions.push(
+      tx.subscribers[subscriptionId]
+        .update({
+          createdAt: faker.date.past({ years: 0.5 }),
+        })
+        .link({ subscriber: mainUserId, amendment: amendmentId })
+    );
+    totalAmendmentSubscribers++;
+  }
+
+  // Make 3 random users subscribe to first few amendments
+  const firstAmendments = amendmentIds.slice(0, Math.min(3, amendmentIds.length));
+  for (const amendmentId of firstAmendments) {
+    const subscribers = randomItems(userIds, 3);
+    for (const userId of subscribers) {
+      const subscriptionId = id();
+      transactions.push(
+        tx.subscribers[subscriptionId]
+          .update({
+            createdAt: faker.date.past({ years: 0.5 }),
+          })
+          .link({ subscriber: userId, amendment: amendmentId })
+      );
+      totalAmendmentSubscribers++;
+    }
+  }
+
+  // Make main user subscribe to some events
+  const eventsToSubscribe = randomItems(eventIds, Math.min(3, eventIds.length));
+  for (const eventId of eventsToSubscribe) {
+    const subscriptionId = id();
+    transactions.push(
+      tx.subscribers[subscriptionId]
+        .update({
+          createdAt: faker.date.past({ years: 0.5 }),
+        })
+        .link({ subscriber: mainUserId, event: eventId })
+    );
+    totalEventSubscribers++;
+  }
+
+  // Make 3 random users subscribe to first few events
+  const firstEvents = eventIds.slice(0, Math.min(3, eventIds.length));
+  for (const eventId of firstEvents) {
+    const subscribers = randomItems(userIds, 3);
+    for (const userId of subscribers) {
+      const subscriptionId = id();
+      transactions.push(
+        tx.subscribers[subscriptionId]
+          .update({
+            createdAt: faker.date.past({ years: 0.5 }),
+          })
+          .link({ subscriber: userId, event: eventId })
+      );
+      totalEventSubscribers++;
+    }
+  }
+
+  // Make main user subscribe to some blogs
+  const blogsToSubscribe = randomItems(blogIds, Math.min(3, blogIds.length));
+  for (const blogId of blogsToSubscribe) {
+    const subscriptionId = id();
+    transactions.push(
+      tx.subscribers[subscriptionId]
+        .update({
+          createdAt: faker.date.past({ years: 0.5 }),
+        })
+        .link({ subscriber: mainUserId, blog: blogId })
+    );
+    totalBlogSubscribers++;
+  }
+
+  // Make 3 random users subscribe to first few blogs
+  const firstBlogs = blogIds.slice(0, Math.min(3, blogIds.length));
+  for (const blogId of firstBlogs) {
+    const subscribers = randomItems(userIds, 3);
+    for (const userId of subscribers) {
+      const subscriptionId = id();
+      transactions.push(
+        tx.subscribers[subscriptionId]
+          .update({
+            createdAt: faker.date.past({ years: 0.5 }),
+          })
+          .link({ subscriber: userId, blog: blogId })
+      );
+      totalBlogSubscribers++;
+    }
+  }
+
   // Execute in batches
   const batchSize = 50;
   for (let i = 0; i < transactions.length; i += batchSize) {
@@ -1203,7 +1442,10 @@ async function seedFollows(userIds: string[]) {
   }
 
   console.log(
-    `✓ Created ${totalFollows} follow relationships (main user: 10 following, 5 followers)`
+    `✓ Created ${totalAmendmentSubscribers} amendment subscribers, ${totalEventSubscribers} event subscribers, and ${totalBlogSubscribers} blog subscribers`
+  );
+  console.log(
+    `  Main user: subscribed to ${amendmentsToSubscribe.length} amendments, ${eventsToSubscribe.length} events, ${blogsToSubscribe.length} blogs`
   );
 }
 
@@ -2481,6 +2723,7 @@ async function cleanDatabase() {
       groupMemberships: {},
       groupRelationships: {}, // New: include group relationships
       follows: {},
+      subscribers: {}, // New: include subscribers
       conversations: {},
       conversationParticipants: {},
       messages: {},
@@ -2535,6 +2778,7 @@ async function cleanDatabase() {
       'messages',
       'conversationParticipants',
       'conversations',
+      'subscribers', // Delete subscribers
       'follows',
       'groupRelationships', // New: include group relationships
       'groupMemberships',
@@ -2589,15 +2833,33 @@ async function seed() {
     await cleanDatabase();
 
     // Seed in order due to dependencies
-    const { userIds, userToProfileMap } = await seedUsers();
-    const groupIds = await seedGroups(userIds);
+    const {
+      userIds,
+      userToProfileMap,
+      blogIds: userBlogIds,
+      amendmentIds: userAmendmentIds,
+    } = await seedUsers();
+    const {
+      groupIds,
+      blogIds: groupBlogIds,
+      amendmentIds: groupAmendmentIds,
+    } = await seedGroups(userIds);
+
+    // Combine blog and amendment IDs from both functions
+    const allBlogIds = [...userBlogIds, ...groupBlogIds];
+    const allAmendmentIds = [...userAmendmentIds, ...groupAmendmentIds];
+
     await seedGroupRelationships(groupIds); // New: seed group relationships
     const positionIds = await seedPositions(groupIds); // New: seed positions
     await seedLinks(groupIds); // New: seed links
     await seedPayments(userIds, groupIds); // New: seed payments
-    await seedFollows(userIds);
+    await seedFollows(userIds, groupIds);
     await seedConversationsAndMessages(userIds, userToProfileMap);
     const eventIds = await seedEvents(userIds, groupIds);
+
+    // NEW: Seed subscriptions for amendments, events, and blogs
+    await seedEntitySubscriptions(userIds, allAmendmentIds, eventIds, allBlogIds);
+
     await seedAgendaAndVoting(userIds, eventIds, positionIds); // Pass positionIds
     await seedNotifications(userIds);
     await seedTodos(userIds, groupIds);
@@ -2616,7 +2878,8 @@ async function seed() {
     console.log(`  - Links for all groups`);
     console.log(`  - Payments (income/expenditure) for all groups`);
     console.log(`  - Hashtags for all users, groups, events, and amendments`);
-    console.log(`  - Follow relationships (main user: 10 following, 5 followers)`);
+    console.log(`  - Follow relationships (legacy) - main user: 10 following, 5 followers`);
+    console.log(`  - Subscriber relationships (new) - main user: 10 subscriptions, 5 subscribers`);
     console.log(`  - Conversations and messages (main user: 3 conversations)`);
     console.log(`  - Events and participants`);
     console.log(`  - Agenda items with elections and voting system (linked to positions)`);

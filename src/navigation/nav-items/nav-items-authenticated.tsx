@@ -256,10 +256,17 @@ export const navItemsAuthenticated = (
     const items: NavigationItem[] = [
       {
         id: 'profile',
-        label: 'Profile',
+        label: t ? t('navigation.secondary.user.profile') : 'Profile',
         icon: 'User',
         href: `/user/${userId}`,
         onClick: () => router.push(`/user/${userId}`),
+      },
+      {
+        id: 'subscriptions',
+        label: t ? t('navigation.secondary.user.subscriptions') : 'Subscriptions',
+        icon: 'Bell',
+        href: `/user/${userId}/subscriptions`,
+        onClick: () => router.push(`/user/${userId}/subscriptions`),
       },
     ];
 
@@ -267,7 +274,7 @@ export const navItemsAuthenticated = (
     if (isOwnProfile) {
       items.push({
         id: 'edit',
-        label: 'Edit Profile',
+        label: t ? t('navigation.secondary.user.edit') : 'Edit Profile',
         icon: 'Settings',
         href: `/user/${userId}/edit`,
         onClick: () => router.push(`/user/${userId}/edit`),

@@ -149,6 +149,9 @@ const _schema = i.schema({
     follows: i.entity({
       createdAt: i.date().indexed(),
     }),
+    subscribers: i.entity({
+      createdAt: i.date().indexed(),
+    }),
     groupMemberships: i.entity({
       joinedAt: i.date().indexed(),
       role: i.string().indexed(),
@@ -722,6 +725,78 @@ const _schema = i.schema({
         on: '$users',
         has: 'many',
         label: 'following',
+      },
+    },
+    subscribersSubscriber: {
+      forward: {
+        on: 'subscribers',
+        has: 'one',
+        label: 'subscriber',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'subscriptions',
+      },
+    },
+    subscribersUser: {
+      forward: {
+        on: 'subscribers',
+        has: 'one',
+        label: 'user',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'subscribers',
+      },
+    },
+    subscribersGroup: {
+      forward: {
+        on: 'subscribers',
+        has: 'one',
+        label: 'group',
+      },
+      reverse: {
+        on: 'groups',
+        has: 'many',
+        label: 'subscribers',
+      },
+    },
+    subscribersAmendment: {
+      forward: {
+        on: 'subscribers',
+        has: 'one',
+        label: 'amendment',
+      },
+      reverse: {
+        on: 'amendments',
+        has: 'many',
+        label: 'subscribers',
+      },
+    },
+    subscribersEvent: {
+      forward: {
+        on: 'subscribers',
+        has: 'one',
+        label: 'event',
+      },
+      reverse: {
+        on: 'events',
+        has: 'many',
+        label: 'subscribers',
+      },
+    },
+    subscribersBlog: {
+      forward: {
+        on: 'subscribers',
+        has: 'one',
+        label: 'blog',
+      },
+      reverse: {
+        on: 'blogs',
+        has: 'many',
+        label: 'subscribers',
       },
     },
     groupMembershipsGroup: {

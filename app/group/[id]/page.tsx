@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect } from 'react';
+import { use, useEffect, useState, useRef } from 'react';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,10 +20,24 @@ import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { BlogSearchCard } from '@/features/search/ui/BlogSearchCard';
 import { GRADIENTS } from '@/features/user/state/gradientColors';
 import { useNavigation } from '@/navigation/state/useNavigation';
+import { useSubscribeGroup } from '@/features/groups/hooks/useSubscribeGroup';
+import { GroupSubscribeButton } from '@/features/groups/ui/GroupSubscribeButton';
+import { SubscriberStatsBar } from '@/components/ui/SubscriberStatsBar';
 
 export default function GroupPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const { currentPrimaryRoute } = useNavigation();
+  const [showAnimation, setShowAnimation] = useState(false);
+  const [animationText, setAnimationText] = useState('');
+  const animationRef = useRef<HTMLDivElement>(null);
+
+  // Subscribe hook - must be called before any conditional returns
+  const {
+    isSubscribed,
+    subscriberCount,
+    isLoading: subscribeLoading,
+    toggleSubscribe,
+  } = useSubscribeGroup(resolvedParams.id);
 
   // Set current route to 'group' when this page is loaded
   useEffect(() => {
@@ -148,6 +162,11 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
                     {memberCount} member{memberCount !== 1 ? 's' : ''}
                   </span>
                 </div>
+                <div className="flex items-center gap-2">
+                  <span>
+                    {subscriberCount} subscriber{subscriberCount !== 1 ? 's' : ''}
+                  </span>
+                </div>
                 {group.createdAt && (
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
@@ -158,6 +177,17 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
             </div>
             <div className="flex gap-2">
               <LinkGroupDialog currentGroupId={resolvedParams.id} currentGroupName={group.name} />
+              <GroupSubscribeButton
+                subscribed={isSubscribed}
+                onClick={async () => {
+                  const wasSubscribed = isSubscribed;
+                  await toggleSubscribe();
+                  setAnimationText(wasSubscribed ? '-1' : '+1');
+                  setShowAnimation(true);
+                  setTimeout(() => setShowAnimation(false), 1000);
+                }}
+                isLoading={subscribeLoading}
+              />
               <Button>
                 <UserPlus className="mr-2 h-4 w-4" />
                 Join Group
@@ -168,6 +198,14 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
             </div>
           </div>
         </div>
+
+        {/* Subscriber Stats Bar */}
+        <SubscriberStatsBar
+          subscriberCount={subscriberCount}
+          showAnimation={showAnimation}
+          animationText={animationText}
+          animationRef={animationRef}
+        />
 
         {/* Description */}
         {group.description && (
