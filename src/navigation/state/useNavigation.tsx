@@ -23,11 +23,6 @@ export function useNavigation() {
   const { count: unreadNotificationsCount } = useUnreadNotificationsCount();
   const { count: unreadMessagesCount } = useUnreadMessagesCount();
 
-  console.log('🧭 [useNavigation] Unread counts:', {
-    notifications: unreadNotificationsCount,
-    messages: unreadMessagesCount,
-  });
-
   // Create unauthenticated navigation items with proper onClick handlers
   const unauthenticatedNavItems: NavigationItem[] = [
     {
@@ -67,18 +62,8 @@ export function useNavigation() {
     // Update badge counts for notifications and messages
     if (item.id === 'notifications') {
       badge = unreadNotificationsCount > 0 ? unreadNotificationsCount : undefined;
-      console.log('🔔 [useNavigation] Setting notifications badge:', {
-        itemId: item.id,
-        count: unreadNotificationsCount,
-        badge,
-      });
     } else if (item.id === 'messages') {
       badge = unreadMessagesCount > 0 ? unreadMessagesCount : undefined;
-      console.log('💬 [useNavigation] Setting messages badge:', {
-        itemId: item.id,
-        count: unreadMessagesCount,
-        badge,
-      });
     }
 
     return {
@@ -91,11 +76,34 @@ export function useNavigation() {
   const getSecondaryNavItems = (currentPrimaryRoute: string | null) => {
     // Extract event ID from pathname if on an event route
     let eventId: string | undefined;
+    let isEventAdmin = false;
     if (pathname.startsWith('/event/')) {
       const match = pathname.match(/^\/event\/([^/]+)/);
       if (match) {
         eventId = match[1];
       }
+    }
+
+    // Query event participation status if we're on an event page
+    const { data: eventParticipationData } = db.useQuery(
+      eventId && authUser?.id
+        ? {
+            eventParticipants: {
+              $: {
+                where: {
+                  'user.id': authUser.id,
+                  'event.id': eventId,
+                },
+              },
+            },
+          }
+        : { eventParticipants: {} }
+    );
+
+    // Check if user is admin of this event
+    if (eventId && authUser?.id && eventParticipationData?.eventParticipants?.[0]) {
+      const participation = eventParticipationData.eventParticipants[0];
+      isEventAdmin = participation.status === 'admin';
     }
 
     // Extract user ID from pathname if on a user route
@@ -112,6 +120,7 @@ export function useNavigation() {
 
     // Extract group ID from pathname if on a group route
     let groupId: string | undefined;
+    let isGroupAdmin = false;
     if (pathname.startsWith('/group/')) {
       const match = pathname.match(/^\/group\/([^/]+)/);
       if (match) {
@@ -119,13 +128,58 @@ export function useNavigation() {
       }
     }
 
+    // Query group membership status if we're on a group page
+    const { data: membershipData } = db.useQuery(
+      groupId && authUser?.id
+        ? {
+            groupMemberships: {
+              $: {
+                where: {
+                  'user.id': authUser.id,
+                  'group.id': groupId,
+                },
+              },
+            },
+          }
+        : { groupMemberships: {} }
+    );
+
+    // Check if user is admin of this group
+    if (groupId && authUser?.id && membershipData?.groupMemberships?.[0]) {
+      const membership = membershipData.groupMemberships[0];
+      isGroupAdmin = membership.status === 'admin';
+    }
+
     // Extract amendment ID from pathname if on an amendment route
     let amendmentId: string | undefined;
+    let isAmendmentAdmin = false;
     if (pathname.startsWith('/amendment/')) {
       const match = pathname.match(/^\/amendment\/([^/]+)/);
       if (match) {
         amendmentId = match[1];
       }
+    }
+
+    // Query amendment collaboration status if we're on an amendment page
+    const { data: amendmentCollaborationData } = db.useQuery(
+      amendmentId && authUser?.id
+        ? {
+            amendmentCollaborators: {
+              $: {
+                where: {
+                  'user.id': authUser.id,
+                  'amendment.id': amendmentId,
+                },
+              },
+            },
+          }
+        : { amendmentCollaborators: {} }
+    );
+
+    // Check if user is admin of this amendment
+    if (amendmentId && authUser?.id && amendmentCollaborationData?.amendmentCollaborators?.[0]) {
+      const collaboration = amendmentCollaborationData.amendmentCollaborators[0];
+      isAmendmentAdmin = collaboration.status === 'admin';
     }
 
     const baseSecondaryItems = baseGetSecondaryNavItems(
@@ -134,7 +188,10 @@ export function useNavigation() {
       userId,
       isOwnProfile,
       groupId,
-      amendmentId
+      amendmentId,
+      isGroupAdmin,
+      isEventAdmin,
+      isAmendmentAdmin
     );
     if (!baseSecondaryItems) return null;
 
@@ -161,13 +218,6 @@ export function useNavigation() {
   };
 
   const secondaryNavItems = getSecondaryNavItems(currentPrimaryRoute);
-
-  console.log('🔍 [useNavigation] Current state:', {
-    pathname,
-    currentPrimaryRoute,
-    hasSecondaryNav: !!secondaryNavItems,
-    secondaryNavCount: secondaryNavItems?.length || 0,
-  });
 
   // Use custom hook for initial route
   useInitialRoute(setCurrentPrimaryRoute);

@@ -68,10 +68,12 @@ const enTranslation = {
         overview: 'Overview',
         agenda: 'Agenda',
         stream: 'Stream',
+        participants: 'Participants',
       },
       user: {
         profile: 'Profile',
         subscriptions: 'Subscriptions',
+        memberships: 'Memberships',
         edit: 'Edit Profile',
       },
       group: {
@@ -80,12 +82,14 @@ const enTranslation = {
         amendments: 'Amendments',
         operation: 'Operation',
         network: 'Network',
+        memberships: 'Members',
       },
       amendment: {
         overview: 'Overview',
         text: 'Full Text',
         changeRequests: 'Change Requests',
         discussions: 'Discussions',
+        collaborators: 'Collaborators',
       },
     },
     toggles: {

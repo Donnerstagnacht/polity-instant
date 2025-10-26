@@ -129,9 +129,14 @@ const _schema = i.schema({
       updatedAt: i.date().optional(),
     }),
     eventParticipants: i.entity({
-      joinedAt: i.date().indexed(),
+      createdAt: i.date().indexed().optional(),
       role: i.string().optional(),
-      status: i.string().indexed(),
+      status: i.string().indexed().optional(), // invited, requested, member, admin
+    }),
+    amendmentCollaborators: i.entity({
+      createdAt: i.date().indexed().optional(),
+      role: i.string().optional(),
+      status: i.string().indexed().optional(), // invited, requested, member, admin
     }),
     events: i.entity({
       capacity: i.number().optional(),
@@ -153,8 +158,9 @@ const _schema = i.schema({
       createdAt: i.date().indexed(),
     }),
     groupMemberships: i.entity({
-      joinedAt: i.date().indexed(),
+      createdAt: i.date().indexed().optional(),
       role: i.string().indexed(),
+      status: i.string().indexed().optional(), // invited, requested, member, admin
     }),
     groupRelationships: i.entity({
       createdAt: i.date().indexed(),
@@ -677,6 +683,30 @@ const _schema = i.schema({
         on: '$users',
         has: 'many',
         label: 'eventParticipations',
+      },
+    },
+    amendmentCollaboratorsAmendment: {
+      forward: {
+        on: 'amendmentCollaborators',
+        has: 'one',
+        label: 'amendment',
+      },
+      reverse: {
+        on: 'amendments',
+        has: 'many',
+        label: 'collaborators',
+      },
+    },
+    amendmentCollaboratorsUser: {
+      forward: {
+        on: 'amendmentCollaborators',
+        has: 'one',
+        label: 'user',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'amendmentCollaborations',
       },
     },
     eventsGroup: {

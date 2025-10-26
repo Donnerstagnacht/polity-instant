@@ -116,6 +116,7 @@ export function UserWiki(_props: UserWikiProps) {
 
           <SubscriberStatsBar
             subscriberCount={subscriberCount}
+            memberCount={dbUser.groups?.length || 0}
             showAnimation={showAnimation}
             animationText={animationText}
             animationRef={animationRef}

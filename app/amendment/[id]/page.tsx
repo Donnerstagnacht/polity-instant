@@ -13,6 +13,8 @@ import Link from 'next/link';
 import { SubscriberStatsBar } from '@/components/ui/SubscriberStatsBar';
 import { AmendmentSubscribeButton } from '@/features/amendments/ui/AmendmentSubscribeButton';
 import { useSubscribeAmendment } from '@/features/amendments/hooks/useSubscribeAmendment';
+import { useAmendmentCollaboration } from '@/features/amendments/hooks/useAmendmentCollaboration';
+import { AmendmentCollaborationButton } from '@/features/amendments/ui/AmendmentCollaborationButton';
 
 export default function AmendmentPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -22,6 +24,19 @@ export default function AmendmentPage({ params }: { params: Promise<{ id: string
 
   // Subscribe hook
   const { subscriberCount } = useSubscribeAmendment(resolvedParams.id);
+
+  // Collaboration hook
+  const {
+    status,
+    isCollaborator,
+    hasRequested,
+    isInvited,
+    collaboratorCount,
+    isLoading: collaborationLoading,
+    requestCollaboration,
+    leaveCollaboration,
+    acceptInvitation,
+  } = useAmendmentCollaboration(resolvedParams.id);
 
   // Fetch amendment data from InstantDB with subscribers
   const { data, isLoading } = db.useQuery({
@@ -108,6 +123,16 @@ export default function AmendmentPage({ params }: { params: Promise<{ id: string
                   setTimeout(() => setShowAnimation(false), 1000);
                 }}
               />
+              <AmendmentCollaborationButton
+                status={status}
+                isCollaborator={isCollaborator}
+                hasRequested={hasRequested}
+                isInvited={isInvited}
+                onRequestCollaboration={requestCollaboration}
+                onLeave={leaveCollaboration}
+                onAcceptInvitation={acceptInvitation}
+                isLoading={collaborationLoading}
+              />
               <Button>
                 <ThumbsUp className="mr-2 h-4 w-4" />
                 Support
@@ -117,6 +142,7 @@ export default function AmendmentPage({ params }: { params: Promise<{ id: string
 
           {/* Subscriber Stats Bar */}
           <SubscriberStatsBar
+            collaboratorCount={collaboratorCount}
             subscriberCount={subscriberCount}
             showAnimation={showAnimation}
             animationText={animationText}

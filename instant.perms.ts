@@ -69,20 +69,72 @@ const rules = {
   // Group membership permissions
   groupMemberships: {
     allow: {
-      // Users can join groups themselves, or owners can add members
-      create: 'isMember || isGroupOwner',
-      // Users can view memberships they're part of, or owners can view all
-      view: 'isMember || isGroupOwner',
-      // Only group owners can update member roles
-      update: 'isGroupOwner',
-      // Users can leave groups, or owners can remove members
-      delete: 'isMember || isGroupOwner',
+      // Group owners can create memberships (invites), users can create their own requests, or existing admin members can invite
+      create: 'isGroupOwner || isSelfRequest || isGroupAdmin',
+      // Users can view memberships they're part of, group owners can view all, or group admins can view all
+      view: 'isMember || isGroupOwner || isGroupAdmin',
+      // Users can update their own membership (e.g., accepting invitations), group owners can update any, or group admins can update any
+      update: 'isMember || isGroupOwner || isGroupAdmin',
+      // Users can leave groups, group owners can remove members, or group admins can remove members
+      delete: 'isMember || isGroupOwner || isGroupAdmin',
     },
     bind: [
       'isMember',
       "auth.id in data.ref('user.id')",
       'isGroupOwner',
       "auth.id in data.ref('group.owner.id')",
+      'isSelfRequest',
+      "auth.id in data.ref('user.id') && data.status == 'requested'",
+      'isGroupAdmin',
+      "auth.id in data.ref('group.memberships.user.id') && 'admin' in data.ref('group.memberships.status')",
+    ],
+  },
+
+  // Event participant permissions
+  eventParticipants: {
+    allow: {
+      // Event organizers can create participations (invites), users can create their own requests, or existing admin participants can invite
+      create: 'isEventOrganizer || isSelfRequest || isEventAdmin',
+      // Users can view participations they're part of, event organizers can view all, or event admins can view all
+      view: 'isParticipant || isEventOrganizer || isEventAdmin',
+      // Users can update their own participation (e.g., accepting invitations), event organizers can update any, or event admins can update any
+      update: 'isParticipant || isEventOrganizer || isEventAdmin',
+      // Users can leave events, event organizers can remove participants, or event admins can remove participants
+      delete: 'isParticipant || isEventOrganizer || isEventAdmin',
+    },
+    bind: [
+      'isParticipant',
+      "auth.id in data.ref('user.id')",
+      'isEventOrganizer',
+      "auth.id in data.ref('event.organizer.id')",
+      'isSelfRequest',
+      "auth.id in data.ref('user.id') && data.status == 'requested'",
+      'isEventAdmin',
+      "auth.id in data.ref('event.participants.user.id') && 'admin' in data.ref('event.participants.status')",
+    ],
+  },
+
+  // Amendment collaborator permissions
+  amendmentCollaborators: {
+    allow: {
+      // Amendment owners can create collaborations (invites), users can create their own requests, or existing admin collaborators can invite
+      create: 'isAmendmentOwner || isSelfRequest || isAmendmentAdmin',
+      // Users can view collaborations they're part of, amendment owners can view all, or amendment admins can view all
+      view: 'isCollaborator || isAmendmentOwner || isAmendmentAdmin',
+      // Users can update their own collaboration (e.g., accepting invitations), amendment owners can update any, or amendment admins can update any
+      update: 'isCollaborator || isAmendmentOwner || isAmendmentAdmin',
+      // Users can leave amendments, amendment owners can remove collaborators, or amendment admins can remove collaborators
+      delete: 'isCollaborator || isAmendmentOwner || isAmendmentAdmin',
+    },
+    bind: [
+      'isCollaborator',
+      "auth.id in data.ref('user.id')",
+      'isAmendmentOwner',
+      "auth.id in data.ref('amendment.user.id')",
+      'isSelfRequest',
+      "auth.id in data.ref('user.id') && data.status == 'requested'",
+      'isAmendmentAdmin',
+      "auth.id in data.ref('amendment.collaborators.user.id') && 'admin' in data.ref('amendment.collaborators.status')",
     ],
   },
 

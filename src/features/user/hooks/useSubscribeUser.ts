@@ -120,7 +120,6 @@ export function useSubscribeUser(targetUserId?: string) {
 
   // Toggle subscribe/unsubscribe
   const toggleSubscribe = async () => {
-    console.log('🔔 [toggleSubscribe] Current state:', { isSubscribed });
     if (isSubscribed) {
       await unsubscribe();
     } else {

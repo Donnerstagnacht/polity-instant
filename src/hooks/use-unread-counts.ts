@@ -26,16 +26,6 @@ export function useUnreadNotificationsCount() {
     if (!user?.id) return 0;
     const notificationCount = data?.notifications?.length || 0;
 
-    // Only log when we have a valid userId
-    if (user.id) {
-      console.log('🔔 [useUnreadNotificationsCount] Debug:', {
-        userId: user.id,
-        notificationsData: data?.notifications,
-        count: notificationCount,
-        isLoading,
-      });
-    }
-
     return notificationCount;
   }, [data?.notifications, user?.id, isLoading, authLoading]);
 
@@ -95,16 +85,6 @@ export function useUnreadMessagesCount() {
       return 0;
     }
 
-    // Only log when we have a valid userId
-    if (user.id) {
-      console.log('💬 [useUnreadMessagesCount] Raw data:', {
-        userId: user.id,
-        userProfile: userProfile,
-        conversationsData: data?.conversations,
-        isLoading,
-      });
-    }
-
     if (!data?.conversations || !userProfile?.id) {
       if (user.id) {
         console.log('💬 [useUnreadMessagesCount] Early return - no data or userProfile');
@@ -113,32 +93,13 @@ export function useUnreadMessagesCount() {
     }
 
     let totalUnread = 0;
-    data.conversations.forEach((conversation: any, index: number) => {
+    data.conversations.forEach((conversation: any) => {
       // Use same logic as messages page: !msg.isRead && msg.sender?.id !== userProfile?.id
       const unreadInConversation = conversation.messages.filter(
         (msg: any) => !msg.isRead && msg.sender?.id !== userProfile.id
       ).length;
 
-      console.log(`💬 [useUnreadMessagesCount] Conversation ${index}:`, {
-        conversationId: conversation.id,
-        totalMessages: conversation.messages?.length || 0,
-        unreadMessages: unreadInConversation,
-        userProfileId: userProfile.id,
-        messages: conversation.messages?.map((msg: any) => ({
-          id: msg.id,
-          isRead: msg.isRead,
-          senderId: msg.sender?.id,
-          isFromCurrentUser: msg.sender?.id === userProfile.id,
-          content: msg.content?.substring(0, 20) + '...',
-        })),
-      });
-
       totalUnread += unreadInConversation;
-    });
-
-    console.log('💬 [useUnreadMessagesCount] Final count:', {
-      totalUnread,
-      conversationsCount: data.conversations.length,
     });
 
     return totalUnread;

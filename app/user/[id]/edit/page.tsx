@@ -114,11 +114,6 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
         return;
       }
 
-      console.log('📝 [UserEditPage] Updating profile:', {
-        profileId,
-        updates: formData,
-      });
-
       // Update the profile in Instant DB
       const transactions = [
         tx.profiles[profileId].update({

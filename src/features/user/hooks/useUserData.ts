@@ -34,18 +34,6 @@ export function useUserData(userId?: string) {
       : null
   );
 
-  // Only log when we actually have a userId to query
-  if (userId) {
-    console.log('👤 [useUserData] Query result:', {
-      userId,
-      hasData: !!data,
-      profiles: data?.profiles,
-      profileCount: data?.profiles?.length,
-      isLoading,
-      error,
-    });
-  }
-
   // Extract profile ID
   const profileId = useMemo(() => {
     if (!userId || !data?.profiles || data.profiles.length === 0) {
@@ -129,17 +117,19 @@ export function useUserData(userId?: string) {
 
       // Transform groups from memberships
       groups:
-        userData?.memberships?.map((membership: any) => ({
-          id: membership.group.id,
-          name: membership.group.name,
-          members: membership.group.memberCount,
-          role: membership.role,
-          description: membership.group.description,
-          tags: membership.group.tags,
-          amendments: membership.group.amendments,
-          events: membership.group.events,
-          abbr: membership.group.abbr,
-        })) || [],
+        userData?.memberships
+          ?.filter((membership: any) => membership.group) // Filter out memberships without group
+          ?.map((membership: any) => ({
+            id: membership.group.id,
+            name: membership.group.name,
+            members: membership.group.memberCount,
+            role: membership.role,
+            description: membership.group.description,
+            tags: membership.group.tags,
+            amendments: membership.group.amendments,
+            events: membership.group.events,
+            abbr: membership.group.abbr,
+          })) || [],
 
       // Transform amendments
       amendments:

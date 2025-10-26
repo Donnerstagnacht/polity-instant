@@ -70,10 +70,12 @@ const deTranslation: I18nLocale = {
         overview: 'Übersicht',
         agenda: 'Tagesordnung',
         stream: 'Stream',
+        participants: 'Teilnehmer',
       },
       user: {
         profile: 'Profil',
         subscriptions: 'Abonnements',
+        memberships: 'Mitgliedschaften',
         edit: 'Profil bearbeiten',
       },
       group: {
@@ -82,12 +84,14 @@ const deTranslation: I18nLocale = {
         amendments: 'Anträge',
         operation: 'Betrieb',
         network: 'Netzwerk',
+        memberships: 'Mitglieder',
       },
       amendment: {
         overview: 'Übersicht',
         text: 'Volltext',
         changeRequests: 'Änderungsanträge',
         discussions: 'Diskussionen',
+        collaborators: 'Mitarbeiter',
       },
     },
     toggles: {

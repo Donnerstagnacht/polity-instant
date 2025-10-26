@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/carousel';
 import { LinkGroupDialog } from '../../../src/components/groups/LinkGroupDialog';
 import db from '../../../db';
-import { Users, Calendar, Settings, UserPlus, UserCheck, BookOpen } from 'lucide-react';
+import { Users, Calendar, Settings, UserCheck, BookOpen } from 'lucide-react';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { BlogSearchCard } from '@/features/search/ui/BlogSearchCard';
 import { GRADIENTS } from '@/features/user/state/gradientColors';
@@ -23,6 +23,8 @@ import { useNavigation } from '@/navigation/state/useNavigation';
 import { useSubscribeGroup } from '@/features/groups/hooks/useSubscribeGroup';
 import { GroupSubscribeButton } from '@/features/groups/ui/GroupSubscribeButton';
 import { SubscriberStatsBar } from '@/components/ui/SubscriberStatsBar';
+import { useGroupMembership } from '@/features/groups/hooks/useGroupMembership';
+import { GroupMembershipButton } from '@/features/groups/ui/GroupMembershipButton';
 
 export default function GroupPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -38,6 +40,20 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
     isLoading: subscribeLoading,
     toggleSubscribe,
   } = useSubscribeGroup(resolvedParams.id);
+
+  // Membership hook
+  const {
+    status,
+    isMember,
+    isAdmin,
+    hasRequested,
+    isInvited,
+    memberCount: membershipCount,
+    isLoading: membershipLoading,
+    requestJoin,
+    leaveGroup,
+    acceptInvitation,
+  } = useGroupMembership(resolvedParams.id);
 
   // Set current route to 'group' when this page is loaded
   useEffect(() => {
@@ -105,7 +121,7 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
     );
   }
 
-  const memberCount = group.memberships?.length || group.memberCount || 0;
+  const memberCount = membershipCount || group.memberships?.length || group.memberCount || 0;
   const owner = group.owner?.profile;
 
   // Group relationships by target group
@@ -188,19 +204,28 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
                 }}
                 isLoading={subscribeLoading}
               />
-              <Button>
-                <UserPlus className="mr-2 h-4 w-4" />
-                Join Group
-              </Button>
-              <Button variant="outline" size="icon">
-                <Settings className="h-4 w-4" />
-              </Button>
+              <GroupMembershipButton
+                status={status}
+                isMember={isMember}
+                hasRequested={hasRequested}
+                isInvited={isInvited}
+                onRequestJoin={requestJoin}
+                onLeave={leaveGroup}
+                onAcceptInvitation={acceptInvitation}
+                isLoading={membershipLoading}
+              />
+              {isAdmin && (
+                <Button variant="outline" size="icon">
+                  <Settings className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
         </div>
 
         {/* Subscriber Stats Bar */}
         <SubscriberStatsBar
+          memberCount={membershipCount}
           subscriberCount={subscriberCount}
           showAnimation={showAnimation}
           animationText={animationText}

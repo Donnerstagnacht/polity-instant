@@ -227,29 +227,47 @@ export const navItemsAuthenticated = (
   ];
 
   // Function to create event secondary navigation items for a specific event
-  const getEventSecondaryNavItems = (eventId: string): NavigationItem[] => [
-    {
-      id: 'overview',
-      label: t ? t('navigation.secondary.event.overview') : 'Overview',
-      icon: 'FileText',
-      href: `/event/${eventId}`,
-      onClick: () => router.push(`/event/${eventId}`),
-    },
-    {
-      id: 'agenda',
-      label: t ? t('navigation.secondary.event.agenda') : 'Agenda',
-      icon: 'Calendar',
-      href: `/event/${eventId}/agenda`,
-      onClick: () => router.push(`/event/${eventId}/agenda`),
-    },
-    {
-      id: 'stream',
-      label: t ? t('navigation.secondary.event.stream') : 'Stream',
-      icon: 'Radio',
-      href: `/event/${eventId}/stream`,
-      onClick: () => router.push(`/event/${eventId}/stream`),
-    },
-  ];
+  const getEventSecondaryNavItems = (
+    eventId: string,
+    isAdmin = false
+  ): NavigationItem[] => {
+    const items: NavigationItem[] = [
+      {
+        id: 'overview',
+        label: t ? t('navigation.secondary.event.overview') : 'Overview',
+        icon: 'FileText',
+        href: `/event/${eventId}`,
+        onClick: () => router.push(`/event/${eventId}`),
+      },
+      {
+        id: 'agenda',
+        label: t ? t('navigation.secondary.event.agenda') : 'Agenda',
+        icon: 'Calendar',
+        href: `/event/${eventId}/agenda`,
+        onClick: () => router.push(`/event/${eventId}/agenda`),
+      },
+      {
+        id: 'stream',
+        label: t ? t('navigation.secondary.event.stream') : 'Stream',
+        icon: 'Radio',
+        href: `/event/${eventId}/stream`,
+        onClick: () => router.push(`/event/${eventId}/stream`),
+      },
+    ];
+
+    // Only add participants item if user is admin
+    if (isAdmin) {
+      items.push({
+        id: 'participants',
+        label: t ? t('navigation.secondary.event.participants') : 'Participants',
+        icon: 'Users',
+        href: `/event/${eventId}/participants`,
+        onClick: () => router.push(`/event/${eventId}/participants`),
+      });
+    }
+
+    return items;
+  };
 
   // Function to create user profile secondary navigation items for a specific user
   const getUserSecondaryNavItems = (userId: string, isOwnProfile: boolean): NavigationItem[] => {
@@ -268,6 +286,13 @@ export const navItemsAuthenticated = (
         href: `/user/${userId}/subscriptions`,
         onClick: () => router.push(`/user/${userId}/subscriptions`),
       },
+      {
+        id: 'memberships',
+        label: t ? t('navigation.secondary.user.memberships') : 'Memberships',
+        icon: 'Users',
+        href: `/user/${userId}/memberships`,
+        onClick: () => router.push(`/user/${userId}/memberships`),
+      },
     ];
 
     // Add edit option only for own profile
@@ -285,75 +310,111 @@ export const navItemsAuthenticated = (
   };
 
   // Function to create group secondary navigation items for a specific group
-  const getGroupSecondaryNavItems = (groupId: string): NavigationItem[] => [
-    {
-      id: 'overview',
-      label: 'navigation.secondary.group.overview',
-      icon: 'Home',
-      href: `/group/${groupId}`,
-      onClick: () => router.push(`/group/${groupId}`),
-    },
-    {
-      id: 'events',
-      label: 'navigation.secondary.group.events',
-      icon: 'Calendar',
-      href: `/group/${groupId}/events`,
-      onClick: () => router.push(`/group/${groupId}/events`),
-    },
-    {
-      id: 'amendments',
-      label: 'navigation.secondary.group.amendments',
-      icon: 'FileText',
-      href: `/group/${groupId}/amendments`,
-      onClick: () => router.push(`/group/${groupId}/amendments`),
-    },
-    {
-      id: 'operation',
-      label: 'navigation.secondary.group.operation',
-      icon: 'AreaChart',
-      href: `/group/${groupId}/operation`,
-      onClick: () => router.push(`/group/${groupId}/operation`),
-    },
-    {
-      id: 'network',
-      label: 'navigation.secondary.group.network',
-      icon: 'Network',
-      href: `/group/${groupId}/network`,
-      onClick: () => router.push(`/group/${groupId}/network`),
-    },
-  ];
+  const getGroupSecondaryNavItems = (
+    groupId: string,
+    isAdmin = false
+  ): NavigationItem[] => {
+    const items: NavigationItem[] = [
+      {
+        id: 'overview',
+        label: 'navigation.secondary.group.overview',
+        icon: 'Home',
+        href: `/group/${groupId}`,
+        onClick: () => router.push(`/group/${groupId}`),
+      },
+      {
+        id: 'events',
+        label: 'navigation.secondary.group.events',
+        icon: 'Calendar',
+        href: `/group/${groupId}/events`,
+        onClick: () => router.push(`/group/${groupId}/events`),
+      },
+      {
+        id: 'amendments',
+        label: 'navigation.secondary.group.amendments',
+        icon: 'FileText',
+        href: `/group/${groupId}/amendments`,
+        onClick: () => router.push(`/group/${groupId}/amendments`),
+      },
+      {
+        id: 'operation',
+        label: 'navigation.secondary.group.operation',
+        icon: 'AreaChart',
+        href: `/group/${groupId}/operation`,
+        onClick: () => router.push(`/group/${groupId}/operation`),
+      },
+      {
+        id: 'network',
+        label: 'navigation.secondary.group.network',
+        icon: 'Network',
+        href: `/group/${groupId}/network`,
+        onClick: () => router.push(`/group/${groupId}/network`),
+      },
+    ];
+
+    // Only add memberships item if user is admin
+    if (isAdmin) {
+      items.push({
+        id: 'memberships',
+        label: t ? t('navigation.secondary.group.memberships') : 'Members',
+        icon: 'Users',
+        href: `/group/${groupId}/memberships`,
+        onClick: () => router.push(`/group/${groupId}/memberships`),
+      });
+    }
+
+    return items;
+  };
 
   // Function to create amendment secondary navigation items for a specific amendment
-  const getAmendmentSecondaryNavItems = (amendmentId: string): NavigationItem[] => [
-    {
-      id: 'overview',
-      label: t ? t('navigation.secondary.amendment.overview') : 'Overview',
-      icon: 'FileText',
-      href: `/amendment/${amendmentId}`,
-      onClick: () => router.push(`/amendment/${amendmentId}`),
-    },
-    {
-      id: 'text',
-      label: t ? t('navigation.secondary.amendment.text') : 'Full Text',
-      icon: 'File',
-      href: `/amendment/${amendmentId}/text`,
-      onClick: () => router.push(`/amendment/${amendmentId}/text`),
-    },
-    {
-      id: 'change-requests',
-      label: t ? t('navigation.secondary.amendment.changeRequests') : 'Change Requests',
-      icon: 'FileText',
-      href: `/amendment/${amendmentId}/change-requests`,
-      onClick: () => router.push(`/amendment/${amendmentId}/change-requests`),
-    },
-    {
-      id: 'discussions',
-      label: t ? t('navigation.secondary.amendment.discussions') : 'Discussions',
-      icon: 'MessageSquare',
-      href: `/amendment/${amendmentId}/discussions`,
-      onClick: () => router.push(`/amendment/${amendmentId}/discussions`),
-    },
-  ];
+  const getAmendmentSecondaryNavItems = (
+    amendmentId: string,
+    isAdmin = false
+  ): NavigationItem[] => {
+    const items: NavigationItem[] = [
+      {
+        id: 'overview',
+        label: t ? t('navigation.secondary.amendment.overview') : 'Overview',
+        icon: 'FileText',
+        href: `/amendment/${amendmentId}`,
+        onClick: () => router.push(`/amendment/${amendmentId}`),
+      },
+      {
+        id: 'text',
+        label: t ? t('navigation.secondary.amendment.text') : 'Full Text',
+        icon: 'File',
+        href: `/amendment/${amendmentId}/text`,
+        onClick: () => router.push(`/amendment/${amendmentId}/text`),
+      },
+      {
+        id: 'change-requests',
+        label: t ? t('navigation.secondary.amendment.changeRequests') : 'Change Requests',
+        icon: 'FileText',
+        href: `/amendment/${amendmentId}/change-requests`,
+        onClick: () => router.push(`/amendment/${amendmentId}/change-requests`),
+      },
+      {
+        id: 'discussions',
+        label: t ? t('navigation.secondary.amendment.discussions') : 'Discussions',
+        icon: 'MessageSquare',
+        href: `/amendment/${amendmentId}/discussions`,
+        onClick: () => router.push(`/amendment/${amendmentId}/discussions`),
+      },
+    ];
+
+    // Only add collaborators item if user is admin
+    if (isAdmin) {
+      items.push({
+        id: 'collaborators',
+        label: t ? t('navigation.secondary.amendment.collaborators') : 'Collaborators',
+        icon: 'Users',
+        href: `/amendment/${amendmentId}/collaborators`,
+        onClick: () => router.push(`/amendment/${amendmentId}/collaborators`),
+      });
+    }
+
+    return items;
+  };
 
   return {
     primaryNavItems,
@@ -372,7 +433,10 @@ export const navItemsAuthenticated = (
       userId?: string,
       isOwnProfile?: boolean,
       groupId?: string,
-      amendmentId?: string
+      amendmentId?: string,
+      isGroupAdmin?: boolean,
+      isEventAdmin?: boolean,
+      isAmendmentAdmin?: boolean
     ) => {
       switch (currentPrimaryRoute) {
         case 'projects':
@@ -382,13 +446,15 @@ export const navItemsAuthenticated = (
         case 'calendar':
           return calendarSecondaryNavItems;
         case 'event':
-          return eventId ? getEventSecondaryNavItems(eventId) : null;
+          return eventId ? getEventSecondaryNavItems(eventId, isEventAdmin ?? false) : null;
         case 'user':
           return userId ? getUserSecondaryNavItems(userId, isOwnProfile ?? false) : null;
         case 'group':
-          return groupId ? getGroupSecondaryNavItems(groupId) : null;
+          return groupId ? getGroupSecondaryNavItems(groupId, isGroupAdmin ?? false) : null;
         case 'amendment':
-          return amendmentId ? getAmendmentSecondaryNavItems(amendmentId) : null;
+          return amendmentId
+            ? getAmendmentSecondaryNavItems(amendmentId, isAmendmentAdmin ?? false)
+            : null;
         default:
           return null;
       }

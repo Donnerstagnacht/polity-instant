@@ -891,8 +891,9 @@ async function seedGroups(userIds: string[]) {
     transactions.push(
       tx.groupMemberships[ownerMembershipId]
         .update({
-          role: 'owner',
-          joinedAt: faker.date.past({ years: 1 }),
+          role: 'admin',
+          status: 'admin',
+          createdAt: faker.date.past({ years: 1 }),
         })
         .link({ user: mainUserId, group: groupId })
     );
@@ -906,11 +907,13 @@ async function seedGroups(userIds: string[]) {
 
     for (const memberId of members) {
       const membershipId = id();
+      const status = randomItem(['member', 'member', 'member', 'requested', 'invited']);
       transactions.push(
         tx.groupMemberships[membershipId]
           .update({
-            role: randomItem(['admin', 'member', 'member', 'member']),
-            joinedAt: faker.date.past({ years: 0.5 }),
+            role: randomItem(['member', 'member', 'moderator']),
+            status: status,
+            createdAt: faker.date.past({ years: 0.5 }),
           })
           .link({ user: memberId, group: groupId })
       );
@@ -1034,8 +1037,9 @@ async function seedGroups(userIds: string[]) {
     transactions.push(
       tx.groupMemberships[ownerMembershipId]
         .update({
-          role: 'owner',
-          joinedAt: faker.date.past({ years: 1 }),
+          role: 'admin',
+          status: 'admin',
+          createdAt: faker.date.past({ years: 1 }),
         })
         .link({ user: ownerId, group: groupId })
     );
@@ -1046,8 +1050,9 @@ async function seedGroups(userIds: string[]) {
       transactions.push(
         tx.groupMemberships[mainUserMembershipId]
           .update({
-            role: randomItem(['admin', 'member']),
-            joinedAt: faker.date.past({ years: 0.5 }),
+            role: randomItem(['member', 'moderator']),
+            status: 'member',
+            createdAt: faker.date.past({ years: 0.5 }),
           })
           .link({ user: mainUserId, group: groupId })
       );
@@ -1056,11 +1061,13 @@ async function seedGroups(userIds: string[]) {
 
     for (const memberId of members) {
       const membershipId = id();
+      const status = randomItem(['member', 'member', 'member', 'requested', 'invited']);
       transactions.push(
         tx.groupMemberships[membershipId]
           .update({
-            role: randomItem(['admin', 'member', 'member', 'member']), // More members than admins
-            joinedAt: faker.date.past({ years: 0.5 }),
+            role: randomItem(['member', 'member', 'moderator']),
+            status: status,
+            createdAt: faker.date.past({ years: 0.5 }),
           })
           .link({ user: memberId, group: groupId })
       );
@@ -1139,6 +1146,254 @@ async function seedGroups(userIds: string[]) {
     `✓ Created ${SEED_CONFIG.groups} groups with memberships (2 owned by main test user)`
   );
   return { groupIds, blogIds, amendmentIds };
+}
+
+async function seedGroupInvitationsAndRequests(groupIds: string[], userIds: string[]) {
+  console.log('Seeding additional group invitations and requests...');
+  const transactions = [];
+  let totalInvitations = 0;
+  let totalRequests = 0;
+
+  // For each group, add 2-4 pending invitations and 2-4 pending requests
+  for (const groupId of groupIds) {
+    // Get users who might not already be members
+    const availableUsers = userIds.filter(() => {
+      // Simple filter - in production this would check existing memberships
+      return Math.random() > 0.3; // 70% chance a user is available
+    });
+
+    // Add 2-4 invitations
+    const invitationCount = randomInt(2, 4);
+    const invitedUsers = randomItems(availableUsers, invitationCount);
+
+    for (const invitedUserId of invitedUsers) {
+      const membershipId = id();
+      transactions.push(
+        tx.groupMemberships[membershipId]
+          .update({
+            role: 'member',
+            status: 'invited',
+            createdAt: faker.date.recent({ days: 30 }),
+          })
+          .link({ user: invitedUserId, group: groupId })
+      );
+      totalInvitations++;
+    }
+
+    // Add 2-4 requests (from different users)
+    const requestCount = randomInt(2, 4);
+    const requestingUsers = randomItems(
+      availableUsers.filter(u => !invitedUsers.includes(u)),
+      requestCount
+    );
+
+    for (const requestingUserId of requestingUsers) {
+      const membershipId = id();
+      transactions.push(
+        tx.groupMemberships[membershipId]
+          .update({
+            role: 'member',
+            status: 'requested',
+            createdAt: faker.date.recent({ days: 30 }),
+          })
+          .link({ user: requestingUserId, group: groupId })
+      );
+      totalRequests++;
+    }
+  }
+
+  // Execute in batches
+  const batchSize = 50;
+  for (let i = 0; i < transactions.length; i += batchSize) {
+    const batch = transactions.slice(i, i + batchSize);
+    await db.transact(batch);
+  }
+
+  console.log(
+    `✓ Created ${totalInvitations} pending invitations and ${totalRequests} pending requests`
+  );
+  console.log(`  Each group now has 2-4 invitations and 2-4 requests`);
+}
+
+async function seedEventParticipationRequestsAndInvites(eventIds: string[], userIds: string[]) {
+  console.log('Seeding event participation requests and invitations...');
+  const transactions = [];
+  let totalInvitations = 0;
+  let totalRequests = 0;
+  let totalAdmins = 0;
+
+  // For each event, add 2-4 pending invitations, 2-4 pending requests, and 1-2 admins
+  for (const eventId of eventIds) {
+    // Get users who might not already be participants
+    const availableUsers = userIds.filter(() => {
+      // Simple filter - in production this would check existing participants
+      return Math.random() > 0.3; // 70% chance a user is available
+    });
+
+    // Add 2-4 invitations
+    const invitationCount = randomInt(2, 4);
+    const invitedUsers = randomItems(availableUsers, invitationCount);
+
+    for (const invitedUserId of invitedUsers) {
+      const participantId = id();
+      transactions.push(
+        tx.eventParticipants[participantId]
+          .update({
+            role: 'attendee',
+            status: 'invited',
+            createdAt: faker.date.recent({ days: 30 }),
+          })
+          .link({ user: invitedUserId, event: eventId })
+      );
+      totalInvitations++;
+    }
+
+    // Add 2-4 requests (from different users)
+    const requestCount = randomInt(2, 4);
+    const requestingUsers = randomItems(
+      availableUsers.filter(u => !invitedUsers.includes(u)),
+      requestCount
+    );
+
+    for (const requestingUserId of requestingUsers) {
+      const participantId = id();
+      transactions.push(
+        tx.eventParticipants[participantId]
+          .update({
+            role: 'attendee',
+            status: 'requested',
+            createdAt: faker.date.recent({ days: 30 }),
+          })
+          .link({ user: requestingUserId, event: eventId })
+      );
+      totalRequests++;
+    }
+
+    // Add 1-2 admin participants
+    const adminCount = randomInt(1, 2);
+    const adminUsers = randomItems(
+      availableUsers.filter(u => !invitedUsers.includes(u) && !requestingUsers.includes(u)),
+      adminCount
+    );
+
+    for (const userId of adminUsers) {
+      const participantId = id();
+      transactions.push(
+        tx.eventParticipants[participantId]
+          .update({
+            role: 'organizer',
+            status: 'admin',
+            createdAt: faker.date.past({ years: 0.17 }),
+          })
+          .link({ user: userId, event: eventId })
+      );
+      totalAdmins++;
+    }
+  }
+
+  // Execute in batches
+  const batchSize = 50;
+  for (let i = 0; i < transactions.length; i += batchSize) {
+    const batch = transactions.slice(i, i + batchSize);
+    await db.transact(batch);
+  }
+
+  console.log(
+    `✓ Created ${totalInvitations} pending event invitations, ${totalRequests} pending requests, and ${totalAdmins} admin participants`
+  );
+  console.log(`  Each event now has 2-4 invitations, 2-4 requests, and 1-2 admins`);
+}
+
+async function seedAmendmentCollaborationRequestsAndInvites(
+  amendmentIds: string[],
+  userIds: string[]
+) {
+  console.log('Seeding amendment collaboration requests and invitations...');
+  const transactions = [];
+  let totalInvitations = 0;
+  let totalRequests = 0;
+  let totalAdmins = 0;
+
+  // For each amendment, add 2-4 pending invitations, 2-4 pending requests, and 1-2 admins
+  for (const amendmentId of amendmentIds) {
+    // Get users who might not already be collaborators
+    const availableUsers = userIds.filter(() => {
+      // Simple filter - in production this would check existing collaborators
+      return Math.random() > 0.3; // 70% chance a user is available
+    });
+
+    // Add 2-4 invitations
+    const invitationCount = randomInt(2, 4);
+    const invitedUsers = randomItems(availableUsers, invitationCount);
+
+    for (const invitedUserId of invitedUsers) {
+      const collaboratorId = id();
+      transactions.push(
+        tx.amendmentCollaborators[collaboratorId]
+          .update({
+            role: 'editor',
+            status: 'invited',
+            createdAt: faker.date.recent({ days: 30 }),
+          })
+          .link({ user: invitedUserId, amendment: amendmentId })
+      );
+      totalInvitations++;
+    }
+
+    // Add 2-4 requests (from different users)
+    const requestCount = randomInt(2, 4);
+    const requestingUsers = randomItems(
+      availableUsers.filter(u => !invitedUsers.includes(u)),
+      requestCount
+    );
+
+    for (const requestingUserId of requestingUsers) {
+      const collaboratorId = id();
+      transactions.push(
+        tx.amendmentCollaborators[collaboratorId]
+          .update({
+            role: 'editor',
+            status: 'requested',
+            createdAt: faker.date.recent({ days: 30 }),
+          })
+          .link({ user: requestingUserId, amendment: amendmentId })
+      );
+      totalRequests++;
+    }
+
+    // Add 1-2 admin collaborators
+    const adminCount = randomInt(1, 2);
+    const adminUsers = randomItems(
+      availableUsers.filter(u => !invitedUsers.includes(u) && !requestingUsers.includes(u)),
+      adminCount
+    );
+
+    for (const userId of adminUsers) {
+      const collaboratorId = id();
+      transactions.push(
+        tx.amendmentCollaborators[collaboratorId]
+          .update({
+            role: 'reviewer',
+            status: 'admin',
+            createdAt: faker.date.past({ years: 0.17 }),
+          })
+          .link({ user: userId, amendment: amendmentId })
+      );
+      totalAdmins++;
+    }
+  }
+
+  // Execute in batches
+  const batchSize = 50;
+  for (let i = 0; i < transactions.length; i += batchSize) {
+    const batch = transactions.slice(i, i + batchSize);
+    await db.transact(batch);
+  }
+
+  console.log(
+    `✓ Created ${totalInvitations} pending amendment invitations, ${totalRequests} pending requests, and ${totalAdmins} admin collaborators`
+  );
+  console.log(`  Each amendment now has 2-4 invitations, 2-4 requests, and 1-2 admins`);
 }
 
 async function seedFollows(userIds: string[], groupIds: string[]) {
@@ -1449,6 +1704,242 @@ async function seedEntitySubscriptions(
   );
 }
 
+/**
+ * Seed comprehensive subscriptions and memberships for Tobias user
+ */
+async function seedTobiasSubscriptionsAndMemberships(
+  userIds: string[],
+  groupIds: string[],
+  amendmentIds: string[],
+  eventIds: string[],
+  blogIds: string[]
+) {
+  console.log('Seeding comprehensive subscriptions and memberships for Tobias...');
+  const transactions = [];
+  const tobiasUserId = SEED_CONFIG.tobiasUserId;
+
+  // Subscribe Tobias to ALL users (except himself)
+  const otherUsers = userIds.filter(uid => uid !== tobiasUserId);
+  for (const userId of otherUsers) {
+    const subscriptionId = id();
+    transactions.push(
+      tx.subscribers[subscriptionId]
+        .update({
+          createdAt: faker.date.past({ years: 0.5 }),
+        })
+        .link({ subscriber: tobiasUserId, user: userId })
+    );
+  }
+
+  // Subscribe Tobias to ALL groups
+  for (const groupId of groupIds) {
+    const subscriptionId = id();
+    transactions.push(
+      tx.subscribers[subscriptionId]
+        .update({
+          createdAt: faker.date.past({ years: 0.5 }),
+        })
+        .link({ subscriber: tobiasUserId, group: groupId })
+    );
+  }
+
+  // Subscribe Tobias to ALL amendments
+  for (const amendmentId of amendmentIds) {
+    const subscriptionId = id();
+    transactions.push(
+      tx.subscribers[subscriptionId]
+        .update({
+          createdAt: faker.date.past({ years: 0.5 }),
+        })
+        .link({ subscriber: tobiasUserId, amendment: amendmentId })
+    );
+  }
+
+  // Subscribe Tobias to ALL events
+  for (const eventId of eventIds) {
+    const subscriptionId = id();
+    transactions.push(
+      tx.subscribers[subscriptionId]
+        .update({
+          createdAt: faker.date.past({ years: 0.5 }),
+        })
+        .link({ subscriber: tobiasUserId, event: eventId })
+    );
+  }
+
+  // Subscribe Tobias to ALL blogs
+  for (const blogId of blogIds) {
+    const subscriptionId = id();
+    transactions.push(
+      tx.subscribers[subscriptionId]
+        .update({
+          createdAt: faker.date.past({ years: 0.5 }),
+        })
+        .link({ subscriber: tobiasUserId, blog: blogId })
+    );
+  }
+
+  // Add Tobias as member to first 8 groups with different statuses
+  // Groups 0-2: admin status (3 groups)
+  // Groups 3-4: member status (2 groups)
+  // Groups 5-6: requested status (2 groups)
+  // Group 7: invited status (1 group)
+  const first8Groups = groupIds.slice(0, Math.min(8, groupIds.length));
+  for (let i = 0; i < first8Groups.length; i++) {
+    const groupId = first8Groups[i];
+    const membershipId = id();
+
+    let role = 'member';
+    let status = 'member';
+
+    if (i < 3) {
+      // First 3 groups: admin
+      role = 'admin';
+      status = 'admin';
+    } else if (i < 5) {
+      // Groups 3-4: regular member
+      role = 'member';
+      status = 'member';
+    } else if (i < 7) {
+      // Groups 5-6: requested
+      role = 'member';
+      status = 'requested';
+    } else {
+      // Group 7: invited
+      role = 'member';
+      status = 'invited';
+    }
+
+    transactions.push(
+      tx.groupMemberships[membershipId]
+        .update({
+          role: role,
+          status: status,
+          createdAt: faker.date.past({ years: 1 }),
+        })
+        .link({ user: tobiasUserId, group: groupId })
+    );
+  }
+
+  // Add Tobias as participant to events with different statuses
+  // Take first 8 events if available
+  // Events 0-2: admin status (3 events)
+  // Events 3-4: member status (2 events)
+  // Events 5-6: requested status (2 events)
+  // Event 7: invited status (1 event)
+  const first8Events = eventIds.slice(0, Math.min(8, eventIds.length));
+  for (let i = 0; i < first8Events.length; i++) {
+    const eventId = first8Events[i];
+    const participantId = id();
+
+    let role = 'attendee';
+    let status = 'member';
+
+    if (i < 3) {
+      // First 3 events: admin
+      role = 'organizer';
+      status = 'admin';
+    } else if (i < 5) {
+      // Events 3-4: regular participant
+      role = 'attendee';
+      status = 'member';
+    } else if (i < 7) {
+      // Events 5-6: requested
+      role = 'attendee';
+      status = 'requested';
+    } else {
+      // Event 7: invited
+      role = 'attendee';
+      status = 'invited';
+    }
+
+    transactions.push(
+      tx.eventParticipants[participantId]
+        .update({
+          role: role,
+          status: status,
+          createdAt: faker.date.past({ years: 0.5 }),
+        })
+        .link({ user: tobiasUserId, event: eventId })
+    );
+  }
+
+  // Add Tobias as collaborator to amendments with different statuses
+  // Take first 8 amendments if available
+  // Amendments 0-2: admin status (3 amendments)
+  // Amendments 3-4: member status (2 amendments)
+  // Amendments 5-6: requested status (2 amendments)
+  // Amendment 7: invited status (1 amendment)
+  const first8Amendments = amendmentIds.slice(0, Math.min(8, amendmentIds.length));
+  for (let i = 0; i < first8Amendments.length; i++) {
+    const amendmentId = first8Amendments[i];
+    const collaboratorId = id();
+
+    let role = 'editor';
+    let status = 'member';
+
+    if (i < 3) {
+      // First 3 amendments: admin
+      role = 'reviewer';
+      status = 'admin';
+    } else if (i < 5) {
+      // Amendments 3-4: regular collaborator
+      role = 'editor';
+      status = 'member';
+    } else if (i < 7) {
+      // Amendments 5-6: requested
+      role = 'editor';
+      status = 'requested';
+    } else {
+      // Amendment 7: invited
+      role = 'editor';
+      status = 'invited';
+    }
+
+    transactions.push(
+      tx.amendmentCollaborators[collaboratorId]
+        .update({
+          role: role,
+          status: status,
+          createdAt: faker.date.past({ years: 0.5 }),
+        })
+        .link({ user: tobiasUserId, amendment: amendmentId })
+    );
+  }
+
+  // Execute in batches
+  const batchSize = 50;
+  for (let i = 0; i < transactions.length; i += batchSize) {
+    const batch = transactions.slice(i, i + batchSize);
+    await db.transact(batch);
+  }
+
+  console.log(`✓ Tobias subscriptions created:`);
+  console.log(`  - Users: ${otherUsers.length}`);
+  console.log(`  - Groups: ${groupIds.length}`);
+  console.log(`  - Amendments: ${amendmentIds.length}`);
+  console.log(`  - Events: ${eventIds.length}`);
+  console.log(`  - Blogs: ${blogIds.length}`);
+  console.log(`✓ Tobias memberships created:`);
+  console.log(`  - Admin in first 3 groups`);
+  console.log(`  - Member in groups 4-5 (2 groups)`);
+  console.log(`  - Requested in groups 6-7 (2 groups)`);
+  console.log(`  - Invited to group 8 (1 group)`);
+  console.log(`  - Total: ${first8Groups.length} groups`);
+  console.log(`✓ Tobias event participations created:`);
+  console.log(`  - Admin in first 3 events`);
+  console.log(`  - Participant in events 4-5 (2 events)`);
+  console.log(`  - Requested in events 6-7 (2 events)`);
+  console.log(`  - Invited to event 8 (1 event)`);
+  console.log(`  - Total: ${first8Events.length} events`);
+  console.log(`✓ Tobias amendment collaborations created:`);
+  console.log(`  - Admin in first 3 amendments`);
+  console.log(`  - Collaborator in amendments 4-5 (2 amendments)`);
+  console.log(`  - Requested in amendments 6-7 (2 amendments)`);
+  console.log(`  - Invited to amendment 8 (1 amendment)`);
+  console.log(`  - Total: ${first8Amendments.length} amendments`);
+}
+
 async function seedConversationsAndMessages(
   userIds: string[],
   userToProfileMap: Map<string, string>
@@ -1681,7 +2172,7 @@ async function seedEvents(userIds: string[], groupIds: string[]) {
 
       for (const participantId of participants) {
         const eventParticipantId = id();
-        const status = randomItem(['going', 'going', 'going', 'maybe', 'declined']); // More "going"
+        const status = randomItem(['member', 'member', 'member', 'admin']); // Mostly members, some admins
         const role =
           participantId === organizerId
             ? 'organizer'
@@ -1691,7 +2182,7 @@ async function seedEvents(userIds: string[], groupIds: string[]) {
           tx.eventParticipants[eventParticipantId]
             .update({
               status,
-              joinedAt: faker.date.past({ years: 0.08 }),
+              createdAt: faker.date.past({ years: 0.08 }),
               role,
             })
             .link({ user: participantId, event: eventId })
@@ -2853,12 +3344,24 @@ async function seed() {
     const positionIds = await seedPositions(groupIds); // New: seed positions
     await seedLinks(groupIds); // New: seed links
     await seedPayments(userIds, groupIds); // New: seed payments
+    await seedGroupInvitationsAndRequests(groupIds, userIds); // New: seed pending invitations and requests
     await seedFollows(userIds, groupIds);
     await seedConversationsAndMessages(userIds, userToProfileMap);
     const eventIds = await seedEvents(userIds, groupIds);
+    await seedEventParticipationRequestsAndInvites(eventIds, userIds); // New: seed event requests, invites, and admins
+    await seedAmendmentCollaborationRequestsAndInvites(allAmendmentIds, userIds); // New: seed amendment requests, invites, and admins
 
     // NEW: Seed subscriptions for amendments, events, and blogs
     await seedEntitySubscriptions(userIds, allAmendmentIds, eventIds, allBlogIds);
+
+    // NEW: Seed comprehensive subscriptions and memberships for Tobias
+    await seedTobiasSubscriptionsAndMemberships(
+      userIds,
+      groupIds,
+      allAmendmentIds,
+      eventIds,
+      allBlogIds
+    );
 
     await seedAgendaAndVoting(userIds, eventIds, positionIds); // Pass positionIds
     await seedNotifications(userIds);

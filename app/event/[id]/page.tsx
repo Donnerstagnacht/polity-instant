@@ -4,32 +4,44 @@ import { useState, useRef } from 'react';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { useParams, useRouter } from 'next/navigation';
-import { db, tx, id } from '../../../db';
+import { db } from '../../../db';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Calendar, MapPin, Users, ArrowLeft, Check, X, HelpCircle } from 'lucide-react';
+import { Calendar, MapPin, Users, ArrowLeft } from 'lucide-react';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { SubscriberStatsBar } from '@/components/ui/SubscriberStatsBar';
 import { EventSubscribeButton } from '@/features/events/ui/EventSubscribeButton';
 import { useSubscribeEvent } from '@/features/events/hooks/useSubscribeEvent';
-
-type EventStatus = 'going' | 'maybe' | 'declined' | 'invited';
+import { useEventParticipation } from '@/features/events/hooks/useEventParticipation';
+import { EventParticipationButton } from '@/features/events/ui/EventParticipationButton';
 
 export default function EventPage() {
   const params = useParams();
   const router = useRouter();
   const eventId = params.id as string;
-  const { user } = db.useAuth();
   const [showAnimation, setShowAnimation] = useState(false);
   const [animationText, setAnimationText] = useState('');
   const animationRef = useRef<HTMLDivElement>(null);
 
   // Subscribe hook
   const { subscriberCount } = useSubscribeEvent(eventId);
+
+  // Participation hook
+  const {
+    status,
+    isParticipant,
+    hasRequested,
+    isInvited,
+    participantCount,
+    isLoading: participationLoading,
+    requestParticipation,
+    leaveEvent,
+    acceptInvitation,
+  } = useEventParticipation(eventId);
 
   const { data, isLoading } = db.useQuery({
     events: {
@@ -53,36 +65,6 @@ export default function EventPage() {
 
   const event = data?.events?.[0];
 
-  const handleStatusChange = async (status: EventStatus) => {
-    if (!user?.id || !eventId) return;
-
-    // Check if user already has a participation record
-    const existingParticipation = event?.participants?.find((p: any) => p.user?.id === user.id);
-
-    if (existingParticipation) {
-      // Update existing participation
-      await db.transact([
-        tx.eventParticipants[existingParticipation.id].update({
-          status,
-        }),
-      ]);
-    } else {
-      // Create new participation
-      const participantId = id();
-      await db.transact([
-        tx.eventParticipants[participantId].update({
-          status,
-          joinedAt: new Date(),
-          role: 'attendee',
-        }),
-        tx.eventParticipants[participantId].link({
-          event: eventId,
-          user: user.id,
-        }),
-      ]);
-    }
-  };
-
   const formatDate = (date: string | number) => {
     return new Date(date).toLocaleDateString('en-US', {
       weekday: 'long',
@@ -99,15 +81,10 @@ export default function EventPage() {
     });
   };
 
-  const getParticipantsByStatus = (status: EventStatus) => {
-    return event?.participants?.filter((p: any) => p.status === status) || [];
-  };
-
-  const userParticipation = event?.participants?.find((p: any) => p.user?.id === user?.id);
-  const userStatus = userParticipation?.status as EventStatus | undefined;
-
-  const goingCount = getParticipantsByStatus('going').length;
-  const maybeCount = getParticipantsByStatus('maybe').length;
+  // Count active participants (members and admins only)
+  const activeParticipants =
+    event?.participants?.filter((p: any) => p.status === 'member' || p.status === 'admin') || [];
+  const activeParticipantCount = activeParticipants.length;
 
   if (isLoading) {
     return (
@@ -146,19 +123,32 @@ export default function EventPage() {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Button>
-            <EventSubscribeButton
-              eventId={eventId}
-              onSubscribeChange={async isNowSubscribed => {
-                setAnimationText(isNowSubscribed ? '+1' : '-1');
-                setShowAnimation(true);
-                setTimeout(() => setShowAnimation(false), 1000);
-              }}
-            />
+            <div className="flex gap-2">
+              <EventSubscribeButton
+                eventId={eventId}
+                onSubscribeChange={async isNowSubscribed => {
+                  setAnimationText(isNowSubscribed ? '+1' : '-1');
+                  setShowAnimation(true);
+                  setTimeout(() => setShowAnimation(false), 1000);
+                }}
+              />
+              <EventParticipationButton
+                status={status}
+                isParticipant={isParticipant}
+                hasRequested={hasRequested}
+                isInvited={isInvited}
+                onRequestParticipation={requestParticipation}
+                onLeave={leaveEvent}
+                onAcceptInvitation={acceptInvitation}
+                isLoading={participationLoading}
+              />
+            </div>
           </div>
 
           {/* Subscriber Stats Bar */}
           <div className="mb-4">
             <SubscriberStatsBar
+              participantCount={participantCount}
               subscriberCount={subscriberCount}
               showAnimation={showAnimation}
               animationText={animationText}
@@ -242,12 +232,10 @@ export default function EventPage() {
                     <div className="flex items-start gap-3">
                       <Users className="mt-1 h-5 w-5 text-muted-foreground" />
                       <div>
-                        <p className="font-medium">
-                          {goingCount} Going · {maybeCount} Interested
-                        </p>
+                        <p className="font-medium">{activeParticipantCount} Participants</p>
                         {event.capacity && (
                           <p className="text-sm text-muted-foreground">
-                            Capacity: {goingCount}/{event.capacity}
+                            Capacity: {activeParticipantCount}/{event.capacity}
                           </p>
                         )}
                       </div>
@@ -273,52 +261,24 @@ export default function EventPage() {
                       </p>
                     </div>
                   )}
-
-                  {/* RSVP Buttons */}
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      variant={userStatus === 'going' ? 'default' : 'outline'}
-                      onClick={() => handleStatusChange('going')}
-                      className="flex-1"
-                    >
-                      <Check className="mr-2 h-4 w-4" />
-                      Going
-                    </Button>
-                    <Button
-                      variant={userStatus === 'maybe' ? 'default' : 'outline'}
-                      onClick={() => handleStatusChange('maybe')}
-                      className="flex-1"
-                    >
-                      <HelpCircle className="mr-2 h-4 w-4" />
-                      Maybe
-                    </Button>
-                    <Button
-                      variant={userStatus === 'declined' ? 'destructive' : 'outline'}
-                      onClick={() => handleStatusChange('declined')}
-                      className="flex-1"
-                    >
-                      <X className="mr-2 h-4 w-4" />
-                      Can't Go
-                    </Button>
-                  </div>
                 </CardContent>
               </Card>
             </div>
 
             {/* Sidebar */}
             <div className="space-y-4">
-              {/* Going */}
+              {/* Active Participants */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Going ({goingCount})</CardTitle>
+                  <CardTitle className="text-lg">Participants ({activeParticipantCount})</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ScrollArea className="max-h-[300px]">
+                  <ScrollArea className="max-h-[500px]">
                     <div className="space-y-3">
-                      {getParticipantsByStatus('going').length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No one yet</p>
+                      {activeParticipants.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No participants yet</p>
                       ) : (
-                        getParticipantsByStatus('going').map((participant: any) => (
+                        activeParticipants.map((participant: any) => (
                           <div
                             key={participant.id}
                             className="flex cursor-pointer items-center gap-3 rounded-lg p-2 transition-colors hover:bg-accent"
@@ -334,9 +294,9 @@ export default function EventPage() {
                               <p className="truncate text-sm font-medium">
                                 {participant.user?.profile?.name || 'Unknown User'}
                               </p>
-                              {participant.role && participant.role !== 'attendee' && (
-                                <Badge variant="outline" className="text-xs">
-                                  {participant.role}
+                              {participant.status === 'admin' && (
+                                <Badge variant="default" className="text-xs">
+                                  Admin
                                 </Badge>
                               )}
                             </div>
@@ -347,38 +307,6 @@ export default function EventPage() {
                   </ScrollArea>
                 </CardContent>
               </Card>
-
-              {/* Maybe */}
-              {maybeCount > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Maybe ({maybeCount})</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ScrollArea className="max-h-[200px]">
-                      <div className="space-y-3">
-                        {getParticipantsByStatus('maybe').map((participant: any) => (
-                          <div
-                            key={participant.id}
-                            className="flex cursor-pointer items-center gap-3 rounded-lg p-2 transition-colors hover:bg-accent"
-                            onClick={() => router.push(`/user/${participant.user?.id}`)}
-                          >
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={participant.user?.profile?.avatar} />
-                              <AvatarFallback>
-                                {participant.user?.profile?.name?.[0]?.toUpperCase() || 'U'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <p className="truncate text-sm font-medium">
-                              {participant.user?.profile?.name || 'Unknown User'}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </ScrollArea>
-                  </CardContent>
-                </Card>
-              )}
             </div>
           </div>
         </div>

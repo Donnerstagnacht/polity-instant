@@ -9,7 +9,6 @@ export function useInitialRoute(
 
   useEffect(() => {
     const route = pathname === '/' ? 'home' : pathname.split('/')[1];
-    console.log('🔄 [useInitialRoute] Updating route:', { pathname, route });
     setCurrentPrimaryRoute(route);
   }, [pathname, setCurrentPrimaryRoute]);
 }
