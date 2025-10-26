@@ -620,7 +620,163 @@ async function seedGroupRelationships(groupIds: string[]) {
     }
 
     // Create some additional cross-relationships
-    if (groupIds.length >= 5) {
+    if (groupIds.length >= 8) {
+      // Structure 1: Group 0 has multiple direct children (0 -> 3, 0 -> 4)
+      // This creates a "star" pattern from Group 0
+      const relationshipId3 = id();
+      transactions.push(
+        tx.groupRelationships[relationshipId3]
+          .update({
+            relationshipType: 'isParent',
+            withRight: randomItem(rights),
+            createdAt: faker.date.past({ years: 0.5 }),
+            updatedAt: new Date(),
+          })
+          .link({ parentGroup: groupIds[0], childGroup: groupIds[3] })
+      );
+      totalRelationships++;
+
+      const relationshipId4 = id();
+      transactions.push(
+        tx.groupRelationships[relationshipId4]
+          .update({
+            relationshipType: 'isParent',
+            withRight: randomItem(rights),
+            createdAt: faker.date.past({ years: 0.5 }),
+            updatedAt: new Date(),
+          })
+          .link({ parentGroup: groupIds[0], childGroup: groupIds[4] })
+      );
+      totalRelationships++;
+
+      // Structure 2: Group 3 has its own children (3 -> 5, 3 -> 6)
+      // This creates indirect relationships: 0 -> 3 -> 5 and 0 -> 3 -> 6
+      const relationshipId5 = id();
+      transactions.push(
+        tx.groupRelationships[relationshipId5]
+          .update({
+            relationshipType: 'isParent',
+            withRight: randomItem(rights),
+            createdAt: faker.date.past({ years: 0.5 }),
+            updatedAt: new Date(),
+          })
+          .link({ parentGroup: groupIds[3], childGroup: groupIds[5] })
+      );
+      totalRelationships++;
+
+      const relationshipId6 = id();
+      transactions.push(
+        tx.groupRelationships[relationshipId6]
+          .update({
+            relationshipType: 'isParent',
+            withRight: randomItem(rights),
+            createdAt: faker.date.past({ years: 0.5 }),
+            updatedAt: new Date(),
+          })
+          .link({ parentGroup: groupIds[3], childGroup: groupIds[6] })
+      );
+      totalRelationships++;
+
+      // Structure 3: Group 4 also has a child (4 -> 7)
+      // This creates another indirect path: 0 -> 4 -> 7
+      const relationshipId7 = id();
+      transactions.push(
+        tx.groupRelationships[relationshipId7]
+          .update({
+            relationshipType: 'isParent',
+            withRight: randomItem(rights),
+            createdAt: faker.date.past({ years: 0.5 }),
+            updatedAt: new Date(),
+          })
+          .link({ parentGroup: groupIds[4], childGroup: groupIds[7] })
+      );
+      totalRelationships++;
+
+      // Structure 4: Create cross-links for even more complex networks
+      // Group 1 is also parent of Group 5 (creating multiple paths to Group 5)
+      // This means Group 5 can be reached via: 0->1->5 OR 0->3->5
+      const relationshipId8 = id();
+      transactions.push(
+        tx.groupRelationships[relationshipId8]
+          .update({
+            relationshipType: 'isParent',
+            withRight: randomItem(rights),
+            createdAt: faker.date.past({ years: 0.5 }),
+            updatedAt: new Date(),
+          })
+          .link({ parentGroup: groupIds[1], childGroup: groupIds[5] })
+      );
+      totalRelationships++;
+
+      // Structure 5: Add some relationships with multiple rights
+      // Group 2 is parent of Group 6 with multiple rights
+      const multipleRights = randomItems(rights, randomInt(2, 3));
+      for (const right of multipleRights) {
+        const relationshipId = id();
+        transactions.push(
+          tx.groupRelationships[relationshipId]
+            .update({
+              relationshipType: 'isParent',
+              withRight: right,
+              createdAt: faker.date.past({ years: 0.5 }),
+              updatedAt: new Date(),
+            })
+            .link({ parentGroup: groupIds[2], childGroup: groupIds[6] })
+        );
+        totalRelationships++;
+      }
+
+      // NEW: Create a group with BOTH deep upward AND downward connections
+      // Make Group 3 the central node with complex relationships in both directions
+      // Group 3 already has:
+      //   - Parents: Group 0 (via Structure 1)
+      //   - Children: Group 5, Group 6 (via Structure 2)
+
+      // Add more parents to Group 3 to create deeper upward hierarchy
+      // Create a grandparent chain: Create new implicit parents through Group 2
+      // Group 2 -> Group 3 (in addition to existing 0 -> 3)
+      const relationshipId9 = id();
+      transactions.push(
+        tx.groupRelationships[relationshipId9]
+          .update({
+            relationshipType: 'isParent',
+            withRight: randomItem(rights),
+            createdAt: faker.date.past({ years: 0.5 }),
+            updatedAt: new Date(),
+          })
+          .link({ parentGroup: groupIds[2], childGroup: groupIds[3] })
+      );
+      totalRelationships++;
+
+      // Now Group 3 has multiple parent paths:
+      // - 0 -> 1 -> 2 -> 3 (deep indirect via Group 2)
+      // - 0 -> 3 (direct)
+
+      // Add more children to Group 3 to create deeper downward hierarchy
+      // Group 3 -> Group 7 (Group 7 already has parent Group 4, now also has parent Group 3)
+      const relationshipId10 = id();
+      transactions.push(
+        tx.groupRelationships[relationshipId10]
+          .update({
+            relationshipType: 'isParent',
+            withRight: randomItem(rights),
+            createdAt: faker.date.past({ years: 0.5 }),
+            updatedAt: new Date(),
+          })
+          .link({ parentGroup: groupIds[3], childGroup: groupIds[7] })
+      );
+      totalRelationships++;
+
+      // Now Group 3 has multiple child paths and levels:
+      // - 3 -> 5 (direct child)
+      // - 3 -> 6 (direct child)
+      // - 3 -> 7 (direct child)
+
+      // Summary for Group 3:
+      // Parents (upward): Group 0 (direct), Group 2 (direct) -> creates 0->1->2->3 path
+      // Children (downward): Group 5, 6, 7 (all direct)
+      // This makes Group 3 a central hub with both upward and downward connections
+    } else if (groupIds.length >= 5) {
       // Group 3 is parent of Group 4
       const relationshipId1 = id();
       transactions.push(
@@ -660,7 +816,15 @@ async function seedGroupRelationships(groupIds: string[]) {
     }
   }
 
-  console.log(`✓ Created ${totalRelationships} group relationships`);
+  console.log(`✓ Created ${totalRelationships} group relationships with complex network structure`);
+  if (groupIds.length >= 8) {
+    console.log(`  - Multi-level hierarchies (up to 3 levels deep)`);
+    console.log(`  - Multiple parent-child branches creating indirect relationships`);
+    console.log(`  - Some groups reachable via multiple paths`);
+    console.log(`  - Group 3 is a central hub with BOTH deep upward AND downward connections:`);
+    console.log(`    • Upward: Multiple parents (Group 0 direct, Group 2 direct -> 0→1→2→3 path)`);
+    console.log(`    • Downward: Multiple children (Groups 5, 6, 7)`);
+  }
 }
 
 async function seedGroups(userIds: string[]) {
@@ -2445,7 +2609,9 @@ async function seed() {
     console.log(`  - 1 Tobias user (${SEED_CONFIG.tobiasUserId})`);
     console.log(`  - ${SEED_CONFIG.users} additional users`);
     console.log(`  - ${SEED_CONFIG.groups} groups (2 owned by main user)`);
-    console.log(`  - Group relationships with hierarchical structure`);
+    console.log(
+      `  - Complex group relationship network with multi-level hierarchies and indirect paths`
+    );
     console.log(`  - Positions across all groups`);
     console.log(`  - Links for all groups`);
     console.log(`  - Payments (income/expenditure) for all groups`);

@@ -78,6 +78,7 @@ const enTranslation = {
         events: 'Events',
         amendments: 'Amendments',
         operation: 'Operation',
+        network: 'Network',
       },
       amendment: {
         overview: 'Overview',

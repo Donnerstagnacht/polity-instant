@@ -80,6 +80,7 @@ const deTranslation: I18nLocale = {
         events: 'Veranstaltungen',
         amendments: 'Anträge',
         operation: 'Betrieb',
+        network: 'Netzwerk',
       },
       amendment: {
         overview: 'Übersicht',

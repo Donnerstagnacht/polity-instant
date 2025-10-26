@@ -307,6 +307,13 @@ export const navItemsAuthenticated = (
       href: `/group/${groupId}/operation`,
       onClick: () => router.push(`/group/${groupId}/operation`),
     },
+    {
+      id: 'network',
+      label: 'navigation.secondary.group.network',
+      icon: 'Network',
+      href: `/group/${groupId}/network`,
+      onClick: () => router.push(`/group/${groupId}/network`),
+    },
   ];
 
   // Function to create amendment secondary navigation items for a specific amendment
