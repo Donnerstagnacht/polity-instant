@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   ReactFlow,
   Node,
@@ -54,13 +54,23 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
   const group = groupData?.groups?.[0];
   const relationships = relationshipsData?.groupRelationships || [];
 
+  // Memoize relationships to prevent infinite loops
+  // Only recreate when the actual relationship IDs change
+  const stableRelationships = useMemo(() => {
+    return relationships;
+  }, [
+    relationships.length,
+    // Create a stable key from relationship IDs
+    relationships.map(r => `${r.id}-${r.parentGroup?.id}-${r.childGroup?.id}`).join(','),
+  ]);
+
   // Build direct relationships
   const getDirectRelationships = useCallback(
     (targetGroupId: string) => {
       const parentsMap = new Map<string, { group: any; rights: string[] }>();
       const childrenMap = new Map<string, { group: any; rights: string[] }>();
 
-      relationships.forEach((rel: any) => {
+      stableRelationships.forEach((rel: any) => {
         if (rel.childGroup?.id === targetGroupId) {
           // This is a parent relationship
           const parentId = rel.parentGroup?.id;
@@ -94,7 +104,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         children: Array.from(childrenMap.values()),
       };
     },
-    [relationships]
+    [stableRelationships]
   );
 
   // Build indirect (recursive) relationships
@@ -103,18 +113,18 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
       const visited = new Set<string>();
       const parentsMap = new Map<
         string,
-        { group: any; rights: string[]; level: number; parentId?: string }
+        { group: any; rights: string[]; level: number; childId?: string }
       >();
       const childrenMap = new Map<
         string,
         { group: any; rights: string[]; level: number; parentId?: string }
       >();
 
-      const findParents = (id: string, level = 1, currentParentId?: string) => {
+      const findParents = (id: string, level = 1) => {
         if (visited.has(id)) return;
         visited.add(id);
 
-        relationships.forEach((rel: any) => {
+        stableRelationships.forEach((rel: any) => {
           if (rel.childGroup?.id === id && !visited.has(rel.parentGroup?.id)) {
             const parentId = rel.parentGroup?.id;
             if (!parentId) return;
@@ -124,20 +134,20 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
                 group: rel.parentGroup,
                 rights: [],
                 level,
-                parentId: currentParentId,
+                childId: id, // The child of this parent is always 'id' (the node we're searching from)
               });
             }
             const parentEntry = parentsMap.get(parentId);
             if (parentEntry) {
               parentEntry.rights.push(rel.withRight);
             }
-            findParents(parentId, level + 1, id);
+            findParents(parentId, level + 1);
           }
         });
       };
 
       const findChildren = (id: string, level = 1, currentParentId?: string) => {
-        relationships.forEach((rel: any) => {
+        stableRelationships.forEach((rel: any) => {
           if (rel.parentGroup?.id === id && !visited.has(rel.childGroup?.id)) {
             const childId = rel.childGroup?.id;
             if (!childId) return;
@@ -170,7 +180,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         children: Array.from(childrenMap.values()),
       };
     },
-    [relationships]
+    [stableRelationships]
   );
 
   // Helper to format rights for display
@@ -251,7 +261,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         },
       });
 
-      const edgeTarget = showIndirect && parent.parentId ? parent.parentId : groupId;
+      const edgeTarget = showIndirect && parent.childId ? parent.childId : groupId;
 
       newEdges.push({
         id: `edge-parent-${parent.group.id}-to-${edgeTarget}`,
@@ -337,15 +347,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
 
     setNodes(newNodes);
     setEdges(newEdges);
-  }, [
-    group,
-    groupId,
-    showIndirect,
-    getDirectRelationships,
-    getIndirectRelationships,
-    setNodes,
-    setEdges,
-  ]);
+  }, [group, groupId, showIndirect, getDirectRelationships, getIndirectRelationships]);
 
   // Generate flow chart when group or showIndirect changes
   useEffect(() => {
