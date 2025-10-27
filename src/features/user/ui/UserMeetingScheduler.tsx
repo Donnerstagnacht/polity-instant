@@ -17,11 +17,21 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/global-state/use-toast';
 import db from '../../../../db';
 import { id, tx } from '@instantdb/react';
-import { format, isSameDay, isPast, isFuture, addHours, startOfDay } from 'date-fns';
-import { Calendar as CalendarIcon, Clock, Users, Video, Plus, Trash2 } from 'lucide-react';
+import {
+  format,
+  isSameDay,
+  isPast,
+  isFuture,
+  addHours,
+  startOfDay,
+  addDays,
+  addMonths,
+} from 'date-fns';
+import { Calendar as CalendarIcon, Clock, Users, Video, Plus, Trash2, Repeat } from 'lucide-react';
 import { cn } from '@/utils/utils';
 
 interface UserMeetingSchedulerProps {
@@ -41,6 +51,13 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
   const [newSlotTime, setNewSlotTime] = useState('09:00');
   const [newSlotDuration, setNewSlotDuration] = useState('60');
   const [newSlotType, setNewSlotType] = useState<'one-on-one' | 'public-meeting'>('one-on-one');
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurringPattern, setRecurringPattern] = useState<'daily' | 'weekly' | 'monthly'>(
+    'weekly'
+  );
+  const [recurringEndDate, setRecurringEndDate] = useState<Date | undefined>(undefined);
+  const [numberOfSlots, setNumberOfSlots] = useState('4');
+  const [selectedWeekdays, setSelectedWeekdays] = useState<number[]>([1, 2, 3, 4, 5]); // Mon-Fri
 
   // Get current user
   const { user: currentUser } = db.useAuth();
@@ -141,35 +158,68 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
     if (!newSlotDate || !currentUser) return;
 
     const [hours, minutes] = newSlotTime.split(':');
-    const startTime = new Date(newSlotDate);
-    startTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-    const endTime = addHours(startTime, parseInt(newSlotDuration) / 60);
 
     try {
-      await db.transact([
-        tx.meetingSlots[id()]
-          .update({
-            startTime,
-            endTime,
-            isPublic: newSlotType === 'public-meeting',
-            isAvailable: true,
-            title:
-              newSlotTitle ||
-              (newSlotType === 'public-meeting' ? 'Public Office Hours' : '1-on-1 Meeting'),
-            description: newSlotDescription || 'Available for booking',
-            meetingType: newSlotType,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          })
-          .link({
-            owner: currentUser.id,
-          }),
-      ]);
+      if (isRecurring) {
+        // Generate recurring slots
+        const slots = generateRecurringSlots();
+        const transactions = slots.map(slotData => {
+          return tx.meetingSlots[id()]
+            .update({
+              startTime: slotData.startTime,
+              endTime: slotData.endTime,
+              isPublic: newSlotType === 'public-meeting',
+              isAvailable: true,
+              title:
+                newSlotTitle ||
+                (newSlotType === 'public-meeting' ? 'Public Office Hours' : '1-on-1 Meeting'),
+              description: newSlotDescription || 'Available for booking',
+              meetingType: newSlotType,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            })
+            .link({
+              owner: currentUser.id,
+            });
+        });
 
-      toast({
-        title: 'Time Slot Created',
-        description: `New ${newSlotType === 'public-meeting' ? 'public meeting' : 'meeting'} slot created for ${format(startTime, 'PPP')} at ${format(startTime, 'p')}.`,
-      });
+        await db.transact(transactions);
+
+        toast({
+          title: 'Recurring Slots Created',
+          description: `${slots.length} ${newSlotType === 'public-meeting' ? 'public meeting' : 'meeting'} slots created.`,
+        });
+      } else {
+        // Single slot creation
+        const startTime = new Date(newSlotDate);
+        startTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+        const endTime = addHours(startTime, parseInt(newSlotDuration) / 60);
+
+        await db.transact([
+          tx.meetingSlots[id()]
+            .update({
+              startTime,
+              endTime,
+              isPublic: newSlotType === 'public-meeting',
+              isAvailable: true,
+              title:
+                newSlotTitle ||
+                (newSlotType === 'public-meeting' ? 'Public Office Hours' : '1-on-1 Meeting'),
+              description: newSlotDescription || 'Available for booking',
+              meetingType: newSlotType,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            })
+            .link({
+              owner: currentUser.id,
+            }),
+        ]);
+
+        toast({
+          title: 'Time Slot Created',
+          description: `New ${newSlotType === 'public-meeting' ? 'public meeting' : 'meeting'} slot created for ${format(startTime, 'PPP')} at ${format(startTime, 'p')}.`,
+        });
+      }
 
       // Reset form
       setNewSlotTitle('');
@@ -178,14 +228,70 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
       setNewSlotTime('09:00');
       setNewSlotDuration('60');
       setNewSlotType('one-on-one');
+      setIsRecurring(false);
+      setRecurringPattern('weekly');
+      setRecurringEndDate(undefined);
+      setNumberOfSlots('4');
+      setSelectedWeekdays([1, 2, 3, 4, 5]);
       setIsManageDialogOpen(false);
     } catch {
       toast({
         title: 'Creation Failed',
-        description: 'Failed to create time slot. Please try again.',
+        description: 'Failed to create time slot(s). Please try again.',
         variant: 'destructive',
       });
     }
+  };
+
+  // Generate recurring slots based on pattern
+  const generateRecurringSlots = () => {
+    if (!newSlotDate) return [];
+
+    const [hours, minutes] = newSlotTime.split(':');
+    const slots: { startTime: Date; endTime: Date }[] = [];
+    const maxSlots = parseInt(numberOfSlots);
+    let currentDate = new Date(newSlotDate);
+    currentDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
+    let slotsCreated = 0;
+
+    while (slotsCreated < maxSlots) {
+      // Check if we've exceeded the end date (if specified)
+      if (recurringEndDate && currentDate > recurringEndDate) {
+        break;
+      }
+
+      // For weekly pattern, check if the day is selected
+      if (recurringPattern === 'weekly') {
+        const dayOfWeek = currentDate.getDay();
+        if (selectedWeekdays.includes(dayOfWeek)) {
+          const startTime = new Date(currentDate);
+          const endTime = addHours(startTime, parseInt(newSlotDuration) / 60);
+          slots.push({ startTime, endTime });
+          slotsCreated++;
+        }
+        currentDate = addDays(currentDate, 1);
+      } else if (recurringPattern === 'daily') {
+        const startTime = new Date(currentDate);
+        const endTime = addHours(startTime, parseInt(newSlotDuration) / 60);
+        slots.push({ startTime, endTime });
+        slotsCreated++;
+        currentDate = addDays(currentDate, 1);
+      } else if (recurringPattern === 'monthly') {
+        const startTime = new Date(currentDate);
+        const endTime = addHours(startTime, parseInt(newSlotDuration) / 60);
+        slots.push({ startTime, endTime });
+        slotsCreated++;
+        currentDate = addMonths(currentDate, 1);
+      }
+
+      // Safety break to avoid infinite loops
+      if (slotsCreated === 0 && slots.length === 0) {
+        currentDate = addDays(currentDate, 1);
+      }
+    }
+
+    return slots;
   };
 
   // Handle deleting a slot
@@ -618,16 +724,20 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
 
       {/* Manage Slot Dialog */}
       <Dialog open={isManageDialogOpen} onOpenChange={setIsManageDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Create Time Slot</DialogTitle>
-            <DialogDescription>Add a new available time slot for meetings</DialogDescription>
+            <DialogTitle>Create Time Slot{isRecurring ? 's' : ''}</DialogTitle>
+            <DialogDescription>
+              Add {isRecurring ? 'recurring' : 'a new'} available time slot
+              {isRecurring ? 's' : ''} for meetings
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="slot-type">Meeting Type</Label>
               <div className="flex gap-2">
                 <Button
+                  type="button"
                   variant={newSlotType === 'one-on-one' ? 'default' : 'outline'}
                   className="flex-1"
                   onClick={() => setNewSlotType('one-on-one')}
@@ -635,6 +745,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
                   1-on-1
                 </Button>
                 <Button
+                  type="button"
                   variant={newSlotType === 'public-meeting' ? 'default' : 'outline'}
                   className="flex-1"
                   onClick={() => setNewSlotType('public-meeting')}
@@ -644,6 +755,110 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
                 </Button>
               </div>
             </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Switch id="recurring" checked={isRecurring} onCheckedChange={setIsRecurring} />
+                <Label htmlFor="recurring" className="flex cursor-pointer items-center gap-2">
+                  <Repeat className="h-4 w-4" />
+                  Create Recurring Slots
+                </Label>
+              </div>
+            </div>
+
+            {isRecurring && (
+              <div className="space-y-4 rounded-lg border bg-muted/50 p-4">
+                <div className="space-y-2">
+                  <Label>Recurrence Pattern</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={recurringPattern === 'daily' ? 'default' : 'outline'}
+                      onClick={() => setRecurringPattern('daily')}
+                    >
+                      Daily
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={recurringPattern === 'weekly' ? 'default' : 'outline'}
+                      onClick={() => setRecurringPattern('weekly')}
+                    >
+                      Weekly
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={recurringPattern === 'monthly' ? 'default' : 'outline'}
+                      onClick={() => setRecurringPattern('monthly')}
+                    >
+                      Monthly
+                    </Button>
+                  </div>
+                </div>
+
+                {recurringPattern === 'weekly' && (
+                  <div className="space-y-2">
+                    <Label>Weekdays</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { label: 'Mon', value: 1 },
+                        { label: 'Tue', value: 2 },
+                        { label: 'Wed', value: 3 },
+                        { label: 'Thu', value: 4 },
+                        { label: 'Fri', value: 5 },
+                        { label: 'Sat', value: 6 },
+                        { label: 'Sun', value: 0 },
+                      ].map(day => (
+                        <Button
+                          key={day.value}
+                          type="button"
+                          size="sm"
+                          variant={selectedWeekdays.includes(day.value) ? 'default' : 'outline'}
+                          onClick={() => {
+                            setSelectedWeekdays(prev =>
+                              prev.includes(day.value)
+                                ? prev.filter(d => d !== day.value)
+                                : [...prev, day.value]
+                            );
+                          }}
+                        >
+                          {day.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="num-slots">Number of Slots</Label>
+                  <Input
+                    id="num-slots"
+                    type="number"
+                    min="1"
+                    max="50"
+                    value={numberOfSlots}
+                    onChange={e => setNumberOfSlots(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Maximum 50 slots can be created at once
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>End Date (Optional)</Label>
+                  <Calendar
+                    mode="single"
+                    selected={recurringEndDate}
+                    onSelect={setRecurringEndDate}
+                    className="rounded-md border"
+                    disabled={date => isPast(startOfDay(date))}
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="slot-title">Title</Label>
               <Input
@@ -666,7 +881,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label>Date</Label>
+              <Label>{isRecurring ? 'Start Date' : 'Date'}</Label>
               <Calendar
                 mode="single"
                 selected={newSlotDate}
@@ -702,7 +917,9 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
             <Button variant="outline" onClick={() => setIsManageDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleCreateSlot}>Create Slot</Button>
+            <Button onClick={handleCreateSlot}>
+              Create {isRecurring ? `${numberOfSlots} Slots` : 'Slot'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

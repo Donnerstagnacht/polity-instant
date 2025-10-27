@@ -232,6 +232,45 @@ const rules = {
       update: 'isOwner',
     },
   },
+  meetingSlots: {
+    bind: ['isOwner', "auth.id in data.ref('owner.id')"],
+    allow: {
+      view: 'data.isPublic == true || isOwner || auth.id != null',
+      create: 'isOwner',
+      delete: 'isOwner',
+      update: 'isOwner',
+    },
+  },
+  meetingBookings: {
+    bind: [
+      'isBooker',
+      "auth.id in data.ref('booker.id')",
+      'isSlotOwner',
+      "auth.id in data.ref('slot.owner.id')",
+    ],
+    allow: {
+      view: 'isBooker || isSlotOwner',
+      create: 'isBooker',
+      delete: 'isBooker || isSlotOwner',
+      update: 'isBooker || isSlotOwner',
+    },
+  },
+  links: {
+    bind: [
+      'isGroupOwner',
+      "auth.id in data.ref('group.owner.id')",
+      'isUserOwner',
+      "auth.id in data.ref('user.id')",
+      'isSlotOwner',
+      "auth.id in data.ref('meetingSlot.owner.id')",
+    ],
+    allow: {
+      view: 'auth.id != null',
+      create: 'isGroupOwner || isUserOwner || isSlotOwner',
+      delete: 'isGroupOwner || isUserOwner || isSlotOwner',
+      update: 'isGroupOwner || isUserOwner || isSlotOwner',
+    },
+  },
 } satisfies InstantRules;
 
 export default rules;

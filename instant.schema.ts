@@ -1421,6 +1421,30 @@ const _schema = i.schema({
         label: 'meetingBookings',
       },
     },
+    linksUser: {
+      forward: {
+        on: 'links',
+        has: 'one',
+        label: 'user',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'links',
+      },
+    },
+    linksMeetingSlot: {
+      forward: {
+        on: 'links',
+        has: 'one',
+        label: 'meetingSlot',
+      },
+      reverse: {
+        on: 'meetingSlots',
+        has: 'many',
+        label: 'links',
+      },
+    },
   },
   rooms: {
     editor: {
