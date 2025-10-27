@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState, useRef } from 'react';
+import { use } from 'react';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,15 +9,13 @@ import { Button } from '@/components/ui/button';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import db from '../../../db';
 import { BookOpen, User, Calendar, Heart, MessageSquare, Share2 } from 'lucide-react';
-import { SubscriberStatsBar } from '@/components/ui/SubscriberStatsBar';
+import { StatsBar } from '@/components/ui/StatsBar';
 import { BlogSubscribeButton } from '@/features/blogs/ui/BlogSubscribeButton';
 import { useSubscribeBlog } from '@/features/blogs/hooks/useSubscribeBlog';
+import { ActionBar } from '@/components/ui/ActionBar';
 
 export default function BlogPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
-  const [showAnimation, setShowAnimation] = useState(false);
-  const [animationText, setAnimationText] = useState('');
-  const animationRef = useRef<HTMLDivElement>(null);
 
   // Subscribe hook
   const { subscriberCount } = useSubscribeBlog(resolvedParams.id);
@@ -76,19 +74,9 @@ export default function BlogPage({ params }: { params: Promise<{ id: string }> }
       <PageWrapper className="container mx-auto p-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <BookOpen className="h-8 w-8" />
-              <Badge variant="default">Blog Post</Badge>
-            </div>
-            <BlogSubscribeButton
-              blogId={resolvedParams.id}
-              onSubscribeChange={async isNowSubscribed => {
-                setAnimationText(isNowSubscribed ? '+1' : '-1');
-                setShowAnimation(true);
-                setTimeout(() => setShowAnimation(false), 1000);
-              }}
-            />
+          <div className="mb-4 flex items-center gap-3">
+            <BookOpen className="h-8 w-8" />
+            <Badge variant="default">Blog Post</Badge>
           </div>
           <h1 className="mb-4 text-4xl font-bold">{blog.title}</h1>
           <div className="flex items-center gap-4 text-muted-foreground">
@@ -98,26 +86,31 @@ export default function BlogPage({ params }: { params: Promise<{ id: string }> }
                 <span>{blog.date}</span>
               </div>
             )}
-            <div className="flex items-center gap-2">
-              <Heart className="h-4 w-4" />
-              <span>{blog.likes || 0} likes</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4" />
-              <span>{blog.comments || 0} comments</span>
-            </div>
           </div>
 
-          {/* Subscriber Stats Bar */}
-          <div className="mt-4">
-            <SubscriberStatsBar
-              subscriberCount={subscriberCount}
-              showAnimation={showAnimation}
-              animationText={animationText}
-              animationRef={animationRef}
+          {/* Stats Bar */}
+          <div className="mt-6">
+            <StatsBar
+              stats={[
+                { value: subscriberCount, labelKey: 'components.labels.subscribers' },
+                { value: blog.likes || 0, labelKey: 'components.labels.likes' },
+                { value: blog.comments || 0, labelKey: 'components.labels.comments' },
+              ]}
             />
           </div>
+
+          {/* Action Bar */}
+          <ActionBar>
+            <BlogSubscribeButton blogId={resolvedParams.id} />
+          </ActionBar>
         </div>
+
+        {/* Hashtags */}
+        {blog.hashtags && blog.hashtags.length > 0 && (
+          <div className="mb-6">
+            <HashtagDisplay hashtags={blog.hashtags} centered />
+          </div>
+        )}
 
         <div className="grid gap-6 md:grid-cols-4">
           <div className="space-y-6 md:col-span-3">
@@ -236,18 +229,6 @@ export default function BlogPage({ params }: { params: Promise<{ id: string }> }
                 <p className="text-sm text-muted-foreground">No other posts yet.</p>
               </CardContent>
             </Card>
-
-            {/* Hashtags */}
-            {blog.hashtags && blog.hashtags.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Tags</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <HashtagDisplay hashtags={blog.hashtags} title="" />
-                </CardContent>
-              </Card>
-            )}
           </div>
         </div>
       </PageWrapper>

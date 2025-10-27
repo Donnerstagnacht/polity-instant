@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { GroupsCard } from './GroupsCard';
+import { GRADIENTS } from '@/features/user/state/gradientColors';
 
 import type { UserGroup } from '../types/user.types';
 
@@ -46,10 +47,20 @@ export const GroupsListTab: React.FC<GroupsListTabProps> = ({
         </p>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredGroups.map(group => {
+          {filteredGroups.map((group, index) => {
             const roleColor = getRoleBadgeColor(group.role);
             const badgeClasses = `${roleColor.bg} ${roleColor.text}`;
-            return <GroupsCard key={group.id} group={group} badgeClasses={badgeClasses} />;
+            const gradientClass = GRADIENTS[index % GRADIENTS.length];
+            const groupId = group.groupId || group.id; // Use groupId if available, fallback to id
+            return (
+              <a key={group.id} href={`/group/${groupId}`} className="block cursor-pointer">
+                <GroupsCard
+                  group={group}
+                  badgeClasses={badgeClasses}
+                  gradientClass={gradientClass}
+                />
+              </a>
+            );
           })}
         </div>
       )}

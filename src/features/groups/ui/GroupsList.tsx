@@ -2,6 +2,7 @@ import React from 'react';
 import { useGroupsStore } from '@/global-state/groups.store';
 import { GroupsCard } from '@/features/user/ui/GroupsCard';
 import { getRoleBadgeColor } from '@/features/user/utils/userWiki.utils';
+import { GRADIENTS } from '@/features/user/state/gradientColors';
 import { Loader2 } from 'lucide-react';
 
 export const GroupsList: React.FC = () => {
@@ -43,11 +44,19 @@ export const GroupsList: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredGroups.map(group => {
+        {filteredGroups.map((group, index) => {
           const roleColor = getRoleBadgeColor(group.role);
           const badgeClasses = `${roleColor.bg} ${roleColor.text}`;
+          const gradientClass = GRADIENTS[index % GRADIENTS.length];
 
-          return <GroupsCard key={group.id} group={group} badgeClasses={badgeClasses} />;
+          return (
+            <GroupsCard
+              key={group.id}
+              group={group}
+              badgeClasses={badgeClasses}
+              gradientClass={gradientClass}
+            />
+          );
         })}
       </div>
     </div>

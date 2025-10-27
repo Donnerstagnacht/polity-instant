@@ -431,8 +431,12 @@ function SearchContent() {
             <div className="py-8 text-center text-muted-foreground">No groups found.</div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {allResults.groups.map((group: any) => (
-                <GroupSearchCard key={group.id} group={group} />
+              {allResults.groups.map((group: any, index: number) => (
+                <GroupSearchCard
+                  key={group.id}
+                  group={group}
+                  gradientClass={GRADIENTS[index % GRADIENTS.length]}
+                />
               ))}
             </div>
           )}
@@ -495,8 +499,12 @@ function SearchContent() {
             <div className="py-8 text-center text-muted-foreground">No amendments found.</div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
-              {allResults.amendments.map((amendment: any) => (
-                <AmendmentSearchCard key={amendment.id} amendment={amendment} />
+              {allResults.amendments.map((amendment: any, index: number) => (
+                <AmendmentSearchCard
+                  key={amendment.id}
+                  amendment={amendment}
+                  gradientClass={GRADIENTS[index % GRADIENTS.length]}
+                />
               ))}
             </div>
           )}
@@ -516,10 +524,17 @@ function UnifiedResultCard({ item, index }: { item: any; index?: number }) {
       );
 
     case 'amendment':
-      return <AmendmentSearchCard amendment={item} />;
+      return (
+        <AmendmentSearchCard
+          amendment={item}
+          gradientClass={GRADIENTS[(index || 0) % GRADIENTS.length]}
+        />
+      );
 
     case 'group':
-      return <GroupSearchCard group={item} />;
+      return (
+        <GroupSearchCard group={item} gradientClass={GRADIENTS[(index || 0) % GRADIENTS.length]} />
+      );
 
     case 'user':
       return <UserCard user={item} index={index} />;

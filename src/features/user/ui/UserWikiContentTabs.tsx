@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BlogListTab } from './BlogListTab';
 import { GroupsListTab } from './GroupListTab';
 import { AmendmentListTab } from './AmendmentListTab';
+import { useTranslation } from '@/hooks/use-translation';
 import type { User, TabSearchState, UserAmendment } from '../types/user.types';
 
 interface UserWikiContentTabsProps {
@@ -21,41 +22,45 @@ export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
   getBlogGradient,
   getRoleBadgeColor,
   getStatusStyles,
-}) => (
-  <div className="mt-8">
-    <Tabs defaultValue="blogs">
-      <TabsList className="grid w-full grid-cols-3">
-        <TabsTrigger value="blogs">Blogs</TabsTrigger>
-        <TabsTrigger value="groups">Groups</TabsTrigger>
-        <TabsTrigger value="amendments">Amendments</TabsTrigger>
-      </TabsList>
+}) => {
+  const { t } = useTranslation();
 
-      <TabsContent value="blogs" className="mt-4">
-        <BlogListTab
-          blogs={user.blogs}
-          searchValue={searchTerms.blogs}
-          onSearchChange={(value: string) => handleSearchChange('blogs', value)}
-          getBlogGradient={getBlogGradient}
-        />
-      </TabsContent>
+  return (
+    <div className="mt-8">
+      <Tabs defaultValue="blogs">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="blogs">Blogs</TabsTrigger>
+          <TabsTrigger value="groups">{t('pages.users.groups.title')}</TabsTrigger>
+          <TabsTrigger value="amendments">Amendments</TabsTrigger>
+        </TabsList>
 
-      <TabsContent value="groups" className="mt-4">
-        <GroupsListTab
-          groups={user.groups}
-          searchValue={searchTerms.groups}
-          onSearchChange={(value: string) => handleSearchChange('groups', value)}
-          getRoleBadgeColor={getRoleBadgeColor}
-        />
-      </TabsContent>
+        <TabsContent value="blogs" className="mt-4">
+          <BlogListTab
+            blogs={user.blogs}
+            searchValue={searchTerms.blogs}
+            onSearchChange={(value: string) => handleSearchChange('blogs', value)}
+            getBlogGradient={getBlogGradient}
+          />
+        </TabsContent>
 
-      <TabsContent value="amendments" className="mt-4">
-        <AmendmentListTab
-          amendments={user.amendments}
-          searchValue={searchTerms.amendments}
-          onSearchChange={(value: string) => handleSearchChange('amendments', value)}
-          getStatusStyles={getStatusStyles}
-        />
-      </TabsContent>
-    </Tabs>
-  </div>
-);
+        <TabsContent value="groups" className="mt-4">
+          <GroupsListTab
+            groups={user.groups}
+            searchValue={searchTerms.groups}
+            onSearchChange={(value: string) => handleSearchChange('groups', value)}
+            getRoleBadgeColor={getRoleBadgeColor}
+          />
+        </TabsContent>
+
+        <TabsContent value="amendments" className="mt-4">
+          <AmendmentListTab
+            amendments={user.amendments}
+            searchValue={searchTerms.amendments}
+            onSearchChange={(value: string) => handleSearchChange('amendments', value)}
+            getStatusStyles={getStatusStyles}
+          />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};

@@ -69,11 +69,14 @@ const enTranslation = {
         agenda: 'Agenda',
         stream: 'Stream',
         participants: 'Participants',
+        edit: 'Edit Event',
       },
       user: {
         profile: 'Profile',
         subscriptions: 'Subscriptions',
         memberships: 'Memberships',
+        network: 'Network',
+        meet: 'Meet',
         edit: 'Edit Profile',
       },
       group: {
@@ -83,6 +86,7 @@ const enTranslation = {
         operation: 'Operation',
         network: 'Network',
         memberships: 'Members',
+        edit: 'Edit Group',
       },
       amendment: {
         overview: 'Overview',
@@ -90,6 +94,7 @@ const enTranslation = {
         changeRequests: 'Change Requests',
         discussions: 'Discussions',
         collaborators: 'Collaborators',
+        edit: 'Edit Amendment',
       },
     },
     toggles: {
@@ -523,6 +528,68 @@ const enTranslation = {
     goBack: 'Go Back',
     goHome: 'Go Home',
     search: 'Search',
+  },
+  pages: {
+    groups: {
+      childGroups: {
+        title: 'Child Groups',
+        description: 'Groups that are subordinate to this group',
+      },
+    },
+    users: {
+      groups: {
+        title: 'Groups',
+        description: 'Groups this user is a member of',
+      },
+    },
+  },
+  components: {
+    infoTabs: {
+      about: 'About',
+      contact: 'Contact',
+      noInformation: 'No information available',
+      noContact: 'No contact information available',
+      labels: {
+        email: 'Email',
+        twitter: 'Twitter',
+        website: 'Website',
+        location: 'Location',
+        region: 'Region',
+        country: 'Country',
+      },
+    },
+    actionBar: {
+      subscribe: 'Subscribe',
+      unsubscribe: 'Unsubscribe',
+      requestToJoin: 'Request to Join',
+      leaveGroup: 'Leave Group',
+      acceptInvitation: 'Accept Invitation',
+      requestPending: 'Request Pending',
+      linkGroup: 'Link Group',
+    },
+    badges: {
+      public: 'Public',
+      private: 'Private',
+    },
+    labels: {
+      organizedBy: 'Organized by',
+      proposedBy: 'Proposed by',
+      partOf: 'Part of',
+      participants: 'Participants',
+      subscribers: 'Subscribers',
+      collaborators: 'Collaborators',
+      supporters: 'Supporters',
+      members: 'Members',
+      events: 'Events',
+      amendments: 'Amendments',
+      groups: 'Groups',
+      likes: 'Likes',
+      comments: 'Comments',
+      capacity: 'Capacity',
+      eventDetails: 'Event Details',
+      location: 'Location',
+      processStatus: 'Process Status',
+    },
   },
   errors: {
     pageNotFound: {

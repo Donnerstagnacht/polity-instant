@@ -53,16 +53,6 @@ export const navItemsAuthenticated = (
       },
     },
     {
-      id: 'dashboard',
-      label: 'Dashboard',
-      icon: 'LayoutDashboard',
-      href: '/dashboard',
-      onClick: () => {
-        router.push('/dashboard');
-        if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('dashboard');
-      },
-    },
-    {
       id: 'messages',
       label: 'Messages',
       icon: 'MessageSquare',
@@ -70,26 +60,6 @@ export const navItemsAuthenticated = (
       onClick: () => {
         router.push('/messages');
         if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('messages');
-      },
-    },
-    {
-      id: 'settings',
-      label: 'Settings',
-      icon: 'Settings',
-      href: '/settings',
-      onClick: () => {
-        router.push('/settings');
-        if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('settings');
-      },
-    },
-    {
-      id: 'files',
-      label: 'Files',
-      icon: 'File',
-      href: '/files',
-      onClick: () => {
-        router.push('/files');
-        if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('files');
       },
     },
     {
@@ -110,16 +80,6 @@ export const navItemsAuthenticated = (
       onClick: () => {
         router.push('/flow');
         if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('flow');
-      },
-    },
-    {
-      id: 'projects',
-      label: 'Projects',
-      icon: 'FolderOpen',
-      href: '/projects',
-      onClick: () => {
-        router.push('/projects');
-        if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('projects');
       },
     },
     {
@@ -152,16 +112,6 @@ export const navItemsAuthenticated = (
         if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('notifications');
       },
     },
-    {
-      id: 'groups',
-      label: 'Groups',
-      icon: 'Users',
-      href: '/groups',
-      onClick: () => {
-        router.push('/groups');
-        if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('groups');
-      },
-    },
   ];
   // Define route-specific secondary navigation items
   const projectSecondaryNavItems: NavigationItem[] = [
@@ -180,24 +130,6 @@ export const navItemsAuthenticated = (
       badge: 2,
       href: '/projects/tests',
       onClick: () => router.push('/projects/tests'),
-    },
-  ];
-
-  // Define dashboard secondary navigation items
-  const dashboardSecondaryNavItems: NavigationItem[] = [
-    {
-      id: 'analytics',
-      label: 'Analytics',
-      icon: 'LineChart',
-      href: '/dashboard/analytics',
-      onClick: () => router.push('/dashboard/analytics'),
-    },
-    {
-      id: 'reports',
-      label: 'Reports',
-      icon: 'AreaChart',
-      href: '/dashboard/reports',
-      onClick: () => router.push('/dashboard/reports'),
     },
   ];
 
@@ -227,10 +159,7 @@ export const navItemsAuthenticated = (
   ];
 
   // Function to create event secondary navigation items for a specific event
-  const getEventSecondaryNavItems = (
-    eventId: string,
-    isAdmin = false
-  ): NavigationItem[] => {
+  const getEventSecondaryNavItems = (eventId: string, isAdmin = false): NavigationItem[] => {
     const items: NavigationItem[] = [
       {
         id: 'overview',
@@ -255,15 +184,24 @@ export const navItemsAuthenticated = (
       },
     ];
 
-    // Only add participants item if user is admin
+    // Only add participants and edit items if user is admin
     if (isAdmin) {
-      items.push({
-        id: 'participants',
-        label: t ? t('navigation.secondary.event.participants') : 'Participants',
-        icon: 'Users',
-        href: `/event/${eventId}/participants`,
-        onClick: () => router.push(`/event/${eventId}/participants`),
-      });
+      items.push(
+        {
+          id: 'participants',
+          label: t ? t('navigation.secondary.event.participants') : 'Participants',
+          icon: 'Users',
+          href: `/event/${eventId}/participants`,
+          onClick: () => router.push(`/event/${eventId}/participants`),
+        },
+        {
+          id: 'edit',
+          label: t ? t('navigation.secondary.event.edit') : 'Edit Event',
+          icon: 'Settings',
+          href: `/event/${eventId}/edit`,
+          onClick: () => router.push(`/event/${eventId}/edit`),
+        }
+      );
     }
 
     return items;
@@ -293,6 +231,20 @@ export const navItemsAuthenticated = (
         href: `/user/${userId}/memberships`,
         onClick: () => router.push(`/user/${userId}/memberships`),
       },
+      {
+        id: 'network',
+        label: t ? t('navigation.secondary.user.network') : 'Network',
+        icon: 'Network',
+        href: `/user/${userId}/network`,
+        onClick: () => router.push(`/user/${userId}/network`),
+      },
+      {
+        id: 'meet',
+        label: t ? t('navigation.secondary.user.meet') : 'Meet',
+        icon: 'Calendar',
+        href: `/user/${userId}/meet`,
+        onClick: () => router.push(`/user/${userId}/meet`),
+      },
     ];
 
     // Add edit option only for own profile
@@ -310,57 +262,63 @@ export const navItemsAuthenticated = (
   };
 
   // Function to create group secondary navigation items for a specific group
-  const getGroupSecondaryNavItems = (
-    groupId: string,
-    isAdmin = false
-  ): NavigationItem[] => {
+  const getGroupSecondaryNavItems = (groupId: string, isAdmin = false): NavigationItem[] => {
     const items: NavigationItem[] = [
       {
         id: 'overview',
-        label: 'navigation.secondary.group.overview',
+        label: t ? t('navigation.secondary.group.overview') : 'Overview',
         icon: 'Home',
         href: `/group/${groupId}`,
         onClick: () => router.push(`/group/${groupId}`),
       },
       {
         id: 'events',
-        label: 'navigation.secondary.group.events',
+        label: t ? t('navigation.secondary.group.events') : 'Events',
         icon: 'Calendar',
         href: `/group/${groupId}/events`,
         onClick: () => router.push(`/group/${groupId}/events`),
       },
       {
         id: 'amendments',
-        label: 'navigation.secondary.group.amendments',
+        label: t ? t('navigation.secondary.group.amendments') : 'Amendments',
         icon: 'FileText',
         href: `/group/${groupId}/amendments`,
         onClick: () => router.push(`/group/${groupId}/amendments`),
       },
       {
         id: 'operation',
-        label: 'navigation.secondary.group.operation',
+        label: t ? t('navigation.secondary.group.operation') : 'Operation',
         icon: 'AreaChart',
         href: `/group/${groupId}/operation`,
         onClick: () => router.push(`/group/${groupId}/operation`),
       },
       {
         id: 'network',
-        label: 'navigation.secondary.group.network',
+        label: t ? t('navigation.secondary.group.network') : 'Network',
         icon: 'Network',
         href: `/group/${groupId}/network`,
         onClick: () => router.push(`/group/${groupId}/network`),
       },
     ];
 
-    // Only add memberships item if user is admin
+    // Only add memberships and edit items if user is admin
     if (isAdmin) {
-      items.push({
-        id: 'memberships',
-        label: t ? t('navigation.secondary.group.memberships') : 'Members',
-        icon: 'Users',
-        href: `/group/${groupId}/memberships`,
-        onClick: () => router.push(`/group/${groupId}/memberships`),
-      });
+      items.push(
+        {
+          id: 'memberships',
+          label: t ? t('navigation.secondary.group.memberships') : 'Members',
+          icon: 'Users',
+          href: `/group/${groupId}/memberships`,
+          onClick: () => router.push(`/group/${groupId}/memberships`),
+        },
+        {
+          id: 'edit',
+          label: t ? t('navigation.secondary.group.edit') : 'Edit Group',
+          icon: 'Settings',
+          href: `/group/${groupId}/edit`,
+          onClick: () => router.push(`/group/${groupId}/edit`),
+        }
+      );
     }
 
     return items;
@@ -402,15 +360,24 @@ export const navItemsAuthenticated = (
       },
     ];
 
-    // Only add collaborators item if user is admin
+    // Only add collaborators and edit items if user is admin
     if (isAdmin) {
-      items.push({
-        id: 'collaborators',
-        label: t ? t('navigation.secondary.amendment.collaborators') : 'Collaborators',
-        icon: 'Users',
-        href: `/amendment/${amendmentId}/collaborators`,
-        onClick: () => router.push(`/amendment/${amendmentId}/collaborators`),
-      });
+      items.push(
+        {
+          id: 'collaborators',
+          label: t ? t('navigation.secondary.amendment.collaborators') : 'Collaborators',
+          icon: 'Users',
+          href: `/amendment/${amendmentId}/collaborators`,
+          onClick: () => router.push(`/amendment/${amendmentId}/collaborators`),
+        },
+        {
+          id: 'edit',
+          label: t ? t('navigation.secondary.amendment.edit') : 'Edit Amendment',
+          icon: 'Settings',
+          href: `/amendment/${amendmentId}/edit`,
+          onClick: () => router.push(`/amendment/${amendmentId}/edit`),
+        }
+      );
     }
 
     return items;
@@ -419,7 +386,6 @@ export const navItemsAuthenticated = (
   return {
     primaryNavItems,
     projectSecondaryNavItems,
-    dashboardSecondaryNavItems,
     calendarSecondaryNavItems,
     getEventSecondaryNavItems,
     getUserSecondaryNavItems,
@@ -441,8 +407,6 @@ export const navItemsAuthenticated = (
       switch (currentPrimaryRoute) {
         case 'projects':
           return projectSecondaryNavItems;
-        case 'dashboard':
-          return dashboardSecondaryNavItems;
         case 'calendar':
           return calendarSecondaryNavItems;
         case 'event':

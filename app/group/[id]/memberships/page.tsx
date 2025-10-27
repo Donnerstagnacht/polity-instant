@@ -139,7 +139,10 @@ export default function GroupMembershipsManagementPage({
     [filteredMemberships]
   );
   const activeMembers = useMemo(
-    () => filteredMemberships.filter((m: any) => m.status === 'member' || m.status === 'admin'),
+    () =>
+      filteredMemberships.filter(
+        (m: any) => m.status === 'member' || m.status === 'admin' || m.role === 'admin'
+      ),
     [filteredMemberships]
   );
   const pendingInvitations = useMemo(

@@ -27,6 +27,9 @@ export function useUserData(userId?: string) {
               memberships: {
                 group: {},
               },
+              amendmentCollaborations: {
+                amendment: {},
+              },
               hashtags: {}, // Add hashtags to the query
             },
           },
@@ -120,7 +123,8 @@ export function useUserData(userId?: string) {
         userData?.memberships
           ?.filter((membership: any) => membership.group) // Filter out memberships without group
           ?.map((membership: any) => ({
-            id: membership.group.id,
+            id: membership.id, // Use membership ID to ensure uniqueness
+            groupId: membership.group.id, // Keep the actual group ID for navigation
             name: membership.group.name,
             members: membership.group.memberCount,
             role: membership.role,
@@ -150,6 +154,12 @@ export function useUserData(userId?: string) {
           id: hashtag.id,
           tag: hashtag.tag,
         })) || [],
+
+      // Count amendment collaborations (where user is admin or collaborator)
+      amendmentCollaborationsCount:
+        userData?.amendmentCollaborations?.filter(
+          (collab: any) => collab.status === 'admin' || collab.status === 'collaborator'
+        )?.length || 0,
     };
   }, [data, userId]);
 

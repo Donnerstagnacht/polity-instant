@@ -19,21 +19,26 @@ export interface AmendmentsCardProps {
     textColor: string;
     badgeTextColor?: string;
   };
+  gradientClass?: string;
 }
 
-export const AmendmentsCard: React.FC<AmendmentsCardProps> = ({ amendment, statusStyle }) => (
+export const AmendmentsCard: React.FC<AmendmentsCardProps> = ({
+  amendment,
+  statusStyle,
+  gradientClass,
+}) => (
   <Card
     key={amendment.id}
-    className="overflow-hidden transition-transform duration-200 hover:scale-[1.01] hover:shadow-lg"
+    className={`overflow-hidden transition-transform duration-200 hover:scale-[1.01] hover:shadow-lg ${gradientClass || ''}`}
   >
     <div className="flex flex-col md:flex-row">
-      <div className={`flex-1 p-6 ${statusStyle.bgColor}`}>
+      <div className="flex-1 p-6">
         {amendment.code && (
           <Badge variant="secondary" className="mb-2">
             {amendment.code}
           </Badge>
         )}
-        <h3 className={`text-lg font-semibold ${statusStyle.textColor}`}>{amendment.title}</h3>
+        <h3 className="text-lg font-semibold">{amendment.title}</h3>
         {amendment.subtitle && (
           <p className="mb-2 text-sm text-muted-foreground">{amendment.subtitle}</p>
         )}
@@ -50,7 +55,7 @@ export const AmendmentsCard: React.FC<AmendmentsCardProps> = ({ amendment, statu
           </div>
         )}
       </div>
-      <div className={`flex items-center justify-center p-6 ${statusStyle.bgColor} border-l`}>
+      <div className="flex items-center justify-center border-l p-6">
         <Badge variant={statusStyle.badge as any} className={statusStyle.badgeTextColor || ''}>
           {amendment.status}
         </Badge>

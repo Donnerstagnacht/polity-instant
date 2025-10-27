@@ -8,12 +8,14 @@ interface HashtagDisplayProps {
   hashtags: { id: string; tag: string }[];
   title?: string;
   clickable?: boolean;
+  centered?: boolean;
 }
 
 export function HashtagDisplay({
   hashtags,
-  title = 'Hashtags',
+  title = '',
   clickable = true,
+  centered = false,
 }: HashtagDisplayProps) {
   const router = useRouter();
 
@@ -29,9 +31,9 @@ export function HashtagDisplay({
   };
 
   return (
-    <div className="space-y-2">
+    <div className={`space-y-2 ${centered ? 'flex flex-col items-center' : ''}`}>
       {title && <h3 className="text-sm font-semibold text-muted-foreground">{title}</h3>}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap justify-center gap-2">
         {hashtags.map(({ id, tag }) => (
           <Badge
             key={id}

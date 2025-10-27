@@ -6,6 +6,7 @@ interface SubscriberStatsBarProps {
   memberCount?: number;
   collaboratorCount?: number;
   participantCount?: number;
+  amendmentCollaborationsCount?: number;
   showAnimation?: boolean;
   animationText?: string;
   animationRef?: React.RefObject<HTMLDivElement | null>;
@@ -20,6 +21,7 @@ export const SubscriberStatsBar: React.FC<SubscriberStatsBarProps> = ({
   memberCount,
   collaboratorCount,
   participantCount,
+  amendmentCollaborationsCount,
   showAnimation = false,
   animationText = '',
   animationRef,
@@ -64,6 +66,21 @@ export const SubscriberStatsBar: React.FC<SubscriberStatsBarProps> = ({
       value:
         participantCount >= 1000 ? formatNumberWithUnit(participantCount).value : participantCount,
       unit: participantCount >= 1000 ? formatNumberWithUnit(participantCount).unit : '',
+    });
+  }
+
+  // Add amendment collaborations count if provided
+  if (amendmentCollaborationsCount !== undefined) {
+    displayStats.push({
+      label: 'Amendment Collab.',
+      value:
+        amendmentCollaborationsCount >= 1000
+          ? formatNumberWithUnit(amendmentCollaborationsCount).value
+          : amendmentCollaborationsCount,
+      unit:
+        amendmentCollaborationsCount >= 1000
+          ? formatNumberWithUnit(amendmentCollaborationsCount).unit
+          : '',
     });
   }
 

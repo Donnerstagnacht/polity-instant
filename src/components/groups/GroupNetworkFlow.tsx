@@ -1,20 +1,9 @@
 'use client';
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import {
-  ReactFlow,
-  Node,
-  Edge,
-  Controls,
-  Background,
-  MiniMap,
-  Panel,
-  useNodesState,
-  useEdgesState,
-  MarkerType,
-} from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
+import { Node, Edge, useNodesState, useEdgesState, MarkerType } from '@xyflow/react';
 import { Button } from '@/components/ui/button';
+import { NetworkFlowBase, Panel } from '@/components/shared/NetworkFlowBase';
 import db from '../../../db';
 
 interface GroupNode extends Node {
@@ -385,26 +374,24 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
   }
 
   return (
-    <div className="h-[600px] w-full rounded-lg border bg-background">
-      <ReactFlow
-        nodes={nodes.map(node => ({
-          ...node,
-          style: {
-            ...node.style,
-            boxShadow: selectedNodes.includes(node.id) ? '0 0 0 2px #ff0072' : undefined,
-          },
-        }))}
-        edges={edges}
-        nodesDraggable={isInteractive}
-        nodesFocusable={isInteractive}
-        nodesConnectable={isInteractive}
-        edgesFocusable={isInteractive}
-        onNodesChange={isInteractive ? onNodesChange : undefined}
-        onEdgesChange={isInteractive ? onEdgesChange : undefined}
-        onNodeClick={onNodeClick}
-        fitView
-      >
-        {/* Control Panel - top left */}
+    <NetworkFlowBase
+      nodes={nodes.map(node => ({
+        ...node,
+        style: {
+          ...node.style,
+          boxShadow: selectedNodes.includes(node.id) ? '0 0 0 2px #ff0072' : undefined,
+        },
+      }))}
+      edges={edges}
+      nodesDraggable={isInteractive}
+      nodesFocusable={isInteractive}
+      nodesConnectable={isInteractive}
+      edgesFocusable={isInteractive}
+      onNodesChange={isInteractive ? onNodesChange : undefined}
+      onEdgesChange={isInteractive ? onEdgesChange : undefined}
+      onNodeClick={onNodeClick}
+      onInteractiveChange={handleInteractiveChange}
+      panel={
         <Panel position="top-left" className="rounded bg-white p-4 shadow">
           <h2 className="mb-2 text-lg font-bold">Gruppennetzwerk</h2>
           <p className="mb-3 text-sm text-gray-600">
@@ -454,11 +441,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
             </div>
           </div>
         </Panel>
-
-        <Controls onInteractiveChange={handleInteractiveChange} />
-        <MiniMap zoomable pannable />
-        <Background color="#aaa" gap={16} />
-      </ReactFlow>
-    </div>
+      }
+    />
   );
 }

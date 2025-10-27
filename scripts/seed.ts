@@ -863,6 +863,18 @@ async function seedGroups(userIds: string[]) {
           description: i === 0 ? 'Main test group for development' : faker.lorem.paragraph(),
           isPublic: true,
           memberCount: 0,
+          location: faker.location.city(),
+          region: faker.location.state(),
+          country: faker.location.country(),
+          imageURL: faker.image.url(),
+          whatsapp: faker.helpers.maybe(() => faker.phone.number(), { probability: 0.7 }) || '',
+          instagram:
+            faker.helpers.maybe(() => `@${faker.internet.userName()}`, { probability: 0.7 }) || '',
+          twitter:
+            faker.helpers.maybe(() => `@${faker.internet.userName()}`, { probability: 0.7 }) || '',
+          facebook: faker.helpers.maybe(() => faker.internet.url(), { probability: 0.5 }) || '',
+          snapchat:
+            faker.helpers.maybe(() => faker.internet.userName(), { probability: 0.3 }) || '',
           createdAt: faker.date.past({ years: 1 }),
           updatedAt: new Date(),
         })
@@ -1002,6 +1014,18 @@ async function seedGroups(userIds: string[]) {
           description: faker.lorem.paragraph(),
           isPublic: faker.datatype.boolean(0.7),
           memberCount: 0,
+          location: faker.location.city(),
+          region: faker.location.state(),
+          country: faker.location.country(),
+          imageURL: faker.image.url(),
+          whatsapp: faker.helpers.maybe(() => faker.phone.number(), { probability: 0.7 }) || '',
+          instagram:
+            faker.helpers.maybe(() => `@${faker.internet.userName()}`, { probability: 0.7 }) || '',
+          twitter:
+            faker.helpers.maybe(() => `@${faker.internet.userName()}`, { probability: 0.7 }) || '',
+          facebook: faker.helpers.maybe(() => faker.internet.url(), { probability: 0.5 }) || '',
+          snapchat:
+            faker.helpers.maybe(() => faker.internet.userName(), { probability: 0.3 }) || '',
           createdAt: faker.date.past({ years: 1 }),
           updatedAt: new Date(),
         })
@@ -3197,6 +3221,194 @@ async function seedDocuments(userIds: string[]) {
 }
 
 // Delete all data including $users
+async function seedMeetingSlots(userIds: string[]) {
+  console.log('Seeding meeting slots and bookings...');
+  const transactions = [];
+  let totalSlots = 0;
+  let totalBookings = 0;
+
+  const mainUserId = SEED_CONFIG.mainTestUserId;
+  const tobiasUserId = SEED_CONFIG.tobiasUserId;
+
+  // Create meeting slots for main user and Tobias
+  const usersWithSlots = [mainUserId, tobiasUserId];
+
+  for (const userId of usersWithSlots) {
+    // Create 5 available time slots (next 2 weeks)
+    for (let i = 0; i < 5; i++) {
+      const slotId = id();
+      const startTime = faker.date.soon({ days: 14 });
+      const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1 hour slots
+
+      transactions.push(
+        tx.meetingSlots[slotId]
+          .update({
+            startTime,
+            endTime,
+            isPublic: false,
+            isAvailable: true,
+            title: `1-on-1 Meeting`,
+            description: 'Available for booking',
+            meetingType: 'one-on-one',
+            createdAt: faker.date.past({ years: 0.08 }),
+            updatedAt: new Date(),
+          })
+          .link({ owner: userId })
+      );
+      totalSlots++;
+    }
+
+    // Create 3 booked time slots (with bookings)
+    for (let i = 0; i < 3; i++) {
+      const slotId = id();
+      const startTime = faker.date.soon({ days: 7 });
+      const endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
+      const bookerId = randomItem(userIds.filter(uid => uid !== userId));
+
+      transactions.push(
+        tx.meetingSlots[slotId]
+          .update({
+            startTime,
+            endTime,
+            isPublic: false,
+            isAvailable: false, // Not available because it's booked
+            title: `1-on-1 Meeting`,
+            description: 'Booked',
+            meetingType: 'one-on-one',
+            createdAt: faker.date.past({ years: 0.08 }),
+            updatedAt: new Date(),
+          })
+          .link({ owner: userId })
+      );
+      totalSlots++;
+
+      // Create booking
+      const bookingId = id();
+      transactions.push(
+        tx.meetingBookings[bookingId]
+          .update({
+            status: 'confirmed',
+            notes: faker.lorem.sentence(),
+            createdAt: faker.date.past({ years: 0.04 }),
+            updatedAt: new Date(),
+          })
+          .link({ slot: slotId, booker: bookerId })
+      );
+      totalBookings++;
+    }
+
+    // Create 1 upcoming public meeting slot
+    const publicSlotId = id();
+    const publicStartTime = faker.date.soon({ days: 3 }); // Soon in next 3 days
+    const publicEndTime = new Date(publicStartTime.getTime() + 90 * 60 * 1000); // 90 minutes
+
+    transactions.push(
+      tx.meetingSlots[publicSlotId]
+        .update({
+          startTime: publicStartTime,
+          endTime: publicEndTime,
+          isPublic: true,
+          isAvailable: true,
+          title: 'Public Office Hours',
+          description: 'Open Q&A session - everyone welcome!',
+          meetingType: 'public-meeting',
+          createdAt: faker.date.past({ years: 0.08 }),
+          updatedAt: new Date(),
+        })
+        .link({ owner: userId })
+    );
+    totalSlots++;
+
+    // Add 2-4 bookings for the public meeting
+    const publicBookingCount = randomInt(2, 4);
+    const publicBookers = randomItems(
+      userIds.filter(uid => uid !== userId),
+      publicBookingCount
+    );
+
+    for (const bookerId of publicBookers) {
+      const bookingId = id();
+      transactions.push(
+        tx.meetingBookings[bookingId]
+          .update({
+            status: 'confirmed',
+            notes: faker.lorem.sentence(),
+            createdAt: faker.date.past({ years: 0.04 }),
+            updatedAt: new Date(),
+          })
+          .link({ slot: publicSlotId, booker: bookerId })
+      );
+      totalBookings++;
+    }
+
+    // Create 1 past public meeting slot
+    const pastPublicSlotId = id();
+    const pastPublicStartTime = faker.date.recent({ days: 7 }); // Recent past
+    const pastPublicEndTime = new Date(pastPublicStartTime.getTime() + 90 * 60 * 1000);
+
+    transactions.push(
+      tx.meetingSlots[pastPublicSlotId]
+        .update({
+          startTime: pastPublicStartTime,
+          endTime: pastPublicEndTime,
+          isPublic: true,
+          isAvailable: false, // Past meetings are not available
+          title: 'Past Public Office Hours',
+          description: 'Community discussion session (completed)',
+          meetingType: 'public-meeting',
+          createdAt: faker.date.past({ years: 0.17 }),
+          updatedAt: new Date(),
+        })
+        .link({ owner: userId })
+    );
+    totalSlots++;
+  }
+
+  // Create some slots for other random users
+  const otherUsersWithSlots = randomItems(
+    userIds.filter(uid => uid !== mainUserId && uid !== tobiasUserId),
+    3
+  );
+
+  for (const userId of otherUsersWithSlots) {
+    // Create 2-3 available slots
+    const slotCount = randomInt(2, 3);
+    for (let i = 0; i < slotCount; i++) {
+      const slotId = id();
+      const startTime = faker.date.soon({ days: 10 });
+      const endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
+
+      transactions.push(
+        tx.meetingSlots[slotId]
+          .update({
+            startTime,
+            endTime,
+            isPublic: false,
+            isAvailable: true,
+            title: `Meeting Slot`,
+            description: 'Available for booking',
+            meetingType: 'one-on-one',
+            createdAt: faker.date.past({ years: 0.08 }),
+            updatedAt: new Date(),
+          })
+          .link({ owner: userId })
+      );
+      totalSlots++;
+    }
+  }
+
+  // Execute in batches
+  const batchSize = 50;
+  for (let i = 0; i < transactions.length; i += batchSize) {
+    const batch = transactions.slice(i, i + batchSize);
+    await db.transact(batch);
+  }
+
+  console.log(`✓ Created ${totalSlots} meeting slots with ${totalBookings} bookings`);
+  console.log(`  Main user: 10 slots (5 available, 3 booked, 2 public meetings)`);
+  console.log(`  Tobias: 10 slots (5 available, 3 booked, 2 public meetings)`);
+}
+
 async function cleanDatabase() {
   console.log('🗑️  Cleaning existing data (deleting all entities)...\n');
 
@@ -3239,6 +3451,8 @@ async function cleanDatabase() {
       hashtags: {}, // New: include hashtags
       links: {}, // New: include links
       payments: {}, // New: include payments
+      meetingSlots: {}, // New: include meeting slots
+      meetingBookings: {}, // New: include meeting bookings
     };
 
     const data = await db.query(query);
@@ -3246,6 +3460,8 @@ async function cleanDatabase() {
 
     // Delete all entities (including $users)
     const entitiesToDelete = [
+      'meetingBookings', // Delete meeting bookings first
+      'meetingSlots', // Delete meeting slots
       'hashtags', // Delete hashtags first (they link to other entities)
       'links', // Delete links
       'payments', // Delete payments
@@ -3367,6 +3583,7 @@ async function seed() {
     await seedNotifications(userIds);
     await seedTodos(userIds, groupIds);
     await seedDocuments(userIds); // New: seed documents
+    await seedMeetingSlots(userIds); // New: seed meeting slots
 
     console.log('\n✅ Database seeded successfully!\n');
     console.log('Summary:');
@@ -3388,7 +3605,8 @@ async function seed() {
     console.log(`  - Agenda items with elections and voting system (linked to positions)`);
     console.log(`  - Notifications (main user: 10 total, 6 unread)`);
     console.log(`  - Todos and assignments (main user: 5 todos)`);
-    console.log(`  - Documents with collaborators (main user: 2 documents)\n`);
+    console.log(`  - Documents with collaborators (main user: 2 documents)`);
+    console.log(`  - Meeting slots and bookings (main user & Tobias: 10 slots each)\n`);
     console.log('Main test user details:');
     console.log(`  - ID: ${SEED_CONFIG.mainTestUserId}`);
     console.log(`  - Email: test@polity.app`);

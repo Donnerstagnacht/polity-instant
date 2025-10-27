@@ -34,7 +34,8 @@ export interface UserBlog {
 }
 
 export interface UserGroup {
-  id: number;
+  id: number | string; // Membership ID for unique keys
+  groupId?: string; // Actual group ID for navigation
   name: string;
   members: number;
   role: string;
@@ -74,6 +75,7 @@ export interface User {
   groups: UserGroup[];
   amendments: UserAmendment[];
   hashtags: UserHashtag[];
+  amendmentCollaborationsCount?: number;
 }
 
 export interface TabSearchState {

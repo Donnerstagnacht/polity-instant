@@ -71,11 +71,14 @@ const deTranslation: I18nLocale = {
         agenda: 'Tagesordnung',
         stream: 'Stream',
         participants: 'Teilnehmer',
+        edit: 'Veranstaltung bearbeiten',
       },
       user: {
         profile: 'Profil',
         subscriptions: 'Abonnements',
         memberships: 'Mitgliedschaften',
+        network: 'Netzwerk',
+        meet: 'Treffen',
         edit: 'Profil bearbeiten',
       },
       group: {
@@ -85,6 +88,7 @@ const deTranslation: I18nLocale = {
         operation: 'Betrieb',
         network: 'Netzwerk',
         memberships: 'Mitglieder',
+        edit: 'Gruppe bearbeiten',
       },
       amendment: {
         overview: 'Übersicht',
@@ -92,6 +96,7 @@ const deTranslation: I18nLocale = {
         changeRequests: 'Änderungsanträge',
         discussions: 'Diskussionen',
         collaborators: 'Mitarbeiter',
+        edit: 'Antrag bearbeiten',
       },
     },
     toggles: {
@@ -528,6 +533,68 @@ const deTranslation: I18nLocale = {
     goBack: 'Zurück',
     goHome: 'Zur Startseite',
     search: 'Suchen',
+  },
+  pages: {
+    groups: {
+      childGroups: {
+        title: 'Untergeordnete Gruppen',
+        description: 'Gruppen, die dieser Gruppe untergeordnet sind',
+      },
+    },
+    users: {
+      groups: {
+        title: 'Gruppen',
+        description: 'Gruppen, in denen dieser Benutzer Mitglied ist',
+      },
+    },
+  },
+  components: {
+    infoTabs: {
+      about: 'Über',
+      contact: 'Kontakt',
+      noInformation: 'Keine Informationen verfügbar',
+      noContact: 'Keine Kontaktinformationen verfügbar',
+      labels: {
+        email: 'E-Mail',
+        twitter: 'Twitter',
+        website: 'Webseite',
+        location: 'Standort',
+        region: 'Region',
+        country: 'Land',
+      },
+    },
+    actionBar: {
+      subscribe: 'Abonnieren',
+      unsubscribe: 'Abbestellen',
+      requestToJoin: 'Beitrittsanfrage',
+      leaveGroup: 'Gruppe verlassen',
+      acceptInvitation: 'Einladung annehmen',
+      requestPending: 'Anfrage ausstehend',
+      linkGroup: 'Gruppe verknüpfen',
+    },
+    badges: {
+      public: 'Öffentlich',
+      private: 'Privat',
+    },
+    labels: {
+      organizedBy: 'Organisiert von',
+      proposedBy: 'Vorgeschlagen von',
+      partOf: 'Teil von',
+      participants: 'Teilnehmer',
+      subscribers: 'Abonnenten',
+      collaborators: 'Mitarbeiter',
+      supporters: 'Unterstützer',
+      members: 'Mitglieder',
+      events: 'Veranstaltungen',
+      amendments: 'Anträge',
+      groups: 'Gruppen',
+      likes: 'Likes',
+      comments: 'Kommentare',
+      capacity: 'Kapazität',
+      eventDetails: 'Veranstaltungsdetails',
+      location: 'Standort',
+      processStatus: 'Prozessstatus',
+    },
   },
   errors: {
     pageNotFound: {

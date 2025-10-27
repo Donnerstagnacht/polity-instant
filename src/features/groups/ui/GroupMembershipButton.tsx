@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { UserPlus, UserMinus, Clock, Check } from 'lucide-react';
 import { MembershipStatus } from '../hooks/useGroupMembership';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface GroupMembershipButtonProps {
   status: MembershipStatus | null;
@@ -22,11 +23,13 @@ export function GroupMembershipButton({
   onAcceptInvitation,
   isLoading,
 }: GroupMembershipButtonProps) {
+  const { t } = useTranslation();
+
   if (isInvited) {
     return (
       <Button onClick={onAcceptInvitation} disabled={isLoading} variant="default">
         <Check className="mr-2 h-4 w-4" />
-        Accept Invitation
+        {t('components.actionBar.acceptInvitation')}
       </Button>
     );
   }
@@ -35,7 +38,7 @@ export function GroupMembershipButton({
     return (
       <Button onClick={onLeave} disabled={isLoading} variant="outline">
         <Clock className="mr-2 h-4 w-4" />
-        Request Pending
+        {t('components.actionBar.requestPending')}
       </Button>
     );
   }
@@ -44,7 +47,7 @@ export function GroupMembershipButton({
     return (
       <Button onClick={onLeave} disabled={isLoading} variant="outline">
         <UserMinus className="mr-2 h-4 w-4" />
-        Leave Group
+        {t('components.actionBar.leaveGroup')}
       </Button>
     );
   }
@@ -52,7 +55,7 @@ export function GroupMembershipButton({
   return (
     <Button onClick={onRequestJoin} disabled={isLoading}>
       <UserPlus className="mr-2 h-4 w-4" />
-      Request to Join
+      {t('components.actionBar.requestToJoin')}
     </Button>
   );
 }

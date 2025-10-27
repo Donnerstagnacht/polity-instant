@@ -4,9 +4,13 @@ import { getRoleBadgeColor } from '@/features/user/utils/userWiki.utils';
 
 interface GroupSearchCardProps {
   group: any;
+  gradientClass?: string;
 }
 
-export function GroupSearchCard({ group }: GroupSearchCardProps) {
+export function GroupSearchCard({
+  group,
+  gradientClass = 'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/50',
+}: GroupSearchCardProps) {
   // Default role or get from membership if available
   const role = group.role || 'Member';
   const roleColors = getRoleBadgeColor(role);
@@ -28,6 +32,7 @@ export function GroupSearchCard({ group }: GroupSearchCardProps) {
           tags: group.tags,
         }}
         badgeClasses={badgeClasses}
+        gradientClass={gradientClass}
       />
     </a>
   );

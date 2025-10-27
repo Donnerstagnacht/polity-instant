@@ -1,19 +1,19 @@
-import { useState, useRef } from 'react';
 import '@/styles/animations.css';
 import { SocialBar } from '@/features/user/ui/SocialBar';
 import { useUserWikiContentSearch } from './state/useUserWikiContentSearch';
 import { BADGE_COLORS } from './state/badgeColors';
 import { GRADIENTS } from './state/gradientColors';
-import { UserInfoTabs } from '@/features/user/ui/UserInfoTabs';
+import { InfoTabs } from '@/components/shared/InfoTabs';
 import { StatementCarousel } from '@/features/user/ui/StatementCarousel';
 import { UserWikiContentTabs } from '@/features/user/ui/UserWikiContentTabs';
-import { UserWikiHeader } from '@/features/user/ui/UserWikiHeader';
 import { useUserData } from './hooks/useUserData';
 import { useSubscribeUser } from './hooks/useSubscribeUser';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { SeedUserDataButton } from './ui/SeedUserDataButton';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
-import { SubscriberStatsBar } from '@/components/ui/SubscriberStatsBar';
+import { StatsBar } from '@/components/ui/StatsBar';
+import { ActionBar } from '@/components/ui/ActionBar';
+import { WikiSubscribeButton } from './ui/WikiSubscribeButton';
 
 // --- UserWiki utility functions moved to utils/userWiki.utils.ts ---
 import {
@@ -34,9 +34,6 @@ interface UserWikiProps {
 
 export function UserWiki(_props: UserWikiProps) {
   // Props available: _props.userId, _props.searchFilters
-  const [showAnimation, setShowAnimation] = useState(false);
-  const [animationText, setAnimationText] = useState('');
-  const animationRef = useRef<HTMLDivElement>(null);
 
   // Content search state and handler
   const { searchTerms, handleSearchChange } = useUserWikiContentSearch();
@@ -58,19 +55,10 @@ export function UserWiki(_props: UserWikiProps) {
   // Check if this is the user's own profile
   const isOwnProfile = authUser?.id === userIdToFetch;
 
-  // Function to handle subscribe/unsubscribe with animation
+  // Function to handle subscribe/unsubscribe
   const handleSubscribeClick = async () => {
-    const wasSubscribed = subscribed;
-
     // Toggle the subscription state
     await toggleSubscribe();
-
-    // Show animation
-    setAnimationText(wasSubscribed ? '-1' : '+1');
-    setShowAnimation(true);
-
-    // Hide animation after it completes
-    setTimeout(() => setShowAnimation(false), 1000);
   };
 
   return (
@@ -105,33 +93,52 @@ export function UserWiki(_props: UserWikiProps) {
 
       {!isLoading && !error && dbUser && (
         <div className="container mx-auto max-w-6xl p-4">
-          <UserWikiHeader
-            name={dbUser.name}
-            avatar={dbUser.avatar}
-            subtitle={dbUser.subtitle}
-            subscribed={subscribed}
-            onSubscribeClick={handleSubscribeClick}
-            showSubscribeButton={!isOwnProfile}
+          {/* Header with centered title and subtitle */}
+          <div className="mb-8 text-center">
+            <h1 className="text-4xl font-bold">{dbUser.name}</h1>
+            {dbUser.subtitle && <p className="text-muted-foreground">{dbUser.subtitle}</p>}
+          </div>
+
+          {/* User Image */}
+          {dbUser.avatar && (
+            <div className="mb-8">
+              <img
+                src={dbUser.avatar}
+                alt={dbUser.name}
+                className="mx-auto h-64 w-full max-w-4xl rounded-lg object-cover shadow-lg"
+              />
+            </div>
+          )}
+
+          {/* Stats Bar */}
+          <StatsBar
+            stats={[
+              { value: subscriberCount, labelKey: 'components.labels.subscribers' },
+              { value: dbUser.groups?.length || 0, labelKey: 'components.labels.groups' },
+              {
+                value: dbUser.amendmentCollaborationsCount || 0,
+                labelKey: 'components.labels.amendments',
+              },
+            ]}
           />
 
-          <SubscriberStatsBar
-            subscriberCount={subscriberCount}
-            memberCount={dbUser.groups?.length || 0}
-            showAnimation={showAnimation}
-            animationText={animationText}
-            animationRef={animationRef}
-          />
-
-          <SocialBar socialMedia={dbUser.socialMedia} />
+          {/* Action Bar */}
+          {!isOwnProfile && (
+            <ActionBar>
+              <WikiSubscribeButton subscribed={subscribed} onClick={handleSubscribeClick} />
+            </ActionBar>
+          )}
 
           {/* Hashtags */}
           {dbUser.hashtags && dbUser.hashtags.length > 0 && (
             <div className="mb-6">
-              <HashtagDisplay hashtags={dbUser.hashtags} title="User Tags" />
+              <HashtagDisplay hashtags={dbUser.hashtags} centered />
             </div>
           )}
 
-          <UserInfoTabs about={dbUser.about} contact={dbUser.contact} />
+          <SocialBar socialMedia={dbUser.socialMedia} />
+
+          <InfoTabs about={dbUser.about} contact={dbUser.contact} className="mb-12" />
 
           <StatementCarousel
             statements={dbUser.statements}

@@ -23,6 +23,7 @@ import { Link, Check } from 'lucide-react';
 import { cn } from '@/utils/utils';
 import db from '../../../db';
 import { id } from '@instantdb/react';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface LinkGroupDialogProps {
   currentGroupId: string;
@@ -66,6 +67,7 @@ const RIGHTS: { value: WithRight; label: string; description: string }[] = [
 ];
 
 export function LinkGroupDialog({ currentGroupId, currentGroupName }: LinkGroupDialogProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
   const [relationshipType, setRelationshipType] = useState<RelationshipType>('isParent');
@@ -158,7 +160,7 @@ export function LinkGroupDialog({ currentGroupId, currentGroupName }: LinkGroupD
       <DialogTrigger asChild>
         <Button variant="outline">
           <Link className="mr-2 h-4 w-4" />
-          Gruppe verknüpfen
+          {t('components.actionBar.linkGroup')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">

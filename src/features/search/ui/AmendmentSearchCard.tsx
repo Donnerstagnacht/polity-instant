@@ -4,9 +4,13 @@ import { getStatusStyles } from '@/features/user/utils/userWiki.utils';
 
 interface AmendmentSearchCardProps {
   amendment: any;
+  gradientClass?: string;
 }
 
-export function AmendmentSearchCard({ amendment }: AmendmentSearchCardProps) {
+export function AmendmentSearchCard({
+  amendment,
+  gradientClass = 'bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950',
+}: AmendmentSearchCardProps) {
   const statusStyle = getStatusStyles(amendment.status);
 
   return (
@@ -23,6 +27,7 @@ export function AmendmentSearchCard({ amendment }: AmendmentSearchCardProps) {
           tags: amendment.tags,
         }}
         statusStyle={statusStyle}
+        gradientClass={gradientClass}
       />
     </a>
   );

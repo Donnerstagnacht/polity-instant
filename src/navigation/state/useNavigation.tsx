@@ -145,9 +145,33 @@ export function useNavigation() {
     );
 
     // Check if user is admin of this group
-    if (groupId && authUser?.id && membershipData?.groupMemberships?.[0]) {
-      const membership = membershipData.groupMemberships[0];
-      isGroupAdmin = membership.status === 'admin';
+    if (
+      groupId &&
+      authUser?.id &&
+      membershipData?.groupMemberships &&
+      membershipData.groupMemberships.length > 0
+    ) {
+      // Check all memberships - user might have multiple records (shouldn't happen but handle it)
+      const memberships = membershipData.groupMemberships;
+      isGroupAdmin = memberships.some((m: any) => m.status === 'admin' || m.role === 'admin');
+
+      // Log membership data for debugging
+      console.log('Group Admin Check:', {
+        groupId,
+        userId: authUser.id,
+        memberships: memberships.map((m: any) => ({
+          id: m.id,
+          status: m.status,
+          role: m.role,
+        })),
+        isGroupAdmin,
+      });
+    } else if (groupId && authUser?.id) {
+      console.log('No membership found:', {
+        groupId,
+        userId: authUser.id,
+        membershipData: membershipData?.groupMemberships,
+      });
     }
 
     // Extract amendment ID from pathname if on an amendment route

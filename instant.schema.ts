@@ -32,6 +32,7 @@ const _schema = i.schema({
     amendments: i.entity({
       code: i.string().optional(),
       date: i.string(),
+      imageURL: i.string().optional(),
       status: i.string(),
       subtitle: i.string().optional(),
       supporters: i.number(),
@@ -175,6 +176,15 @@ const _schema = i.schema({
       memberCount: i.number().indexed(),
       name: i.string().indexed(),
       updatedAt: i.date().indexed(),
+      location: i.string().optional(),
+      region: i.string().optional(),
+      country: i.string().optional(),
+      imageURL: i.string().optional(),
+      whatsapp: i.string().optional(),
+      instagram: i.string().optional(),
+      twitter: i.string().optional(),
+      facebook: i.string().optional(),
+      snapchat: i.string().optional(),
     }),
     hashtags: i.entity({
       createdAt: i.date().indexed(),
@@ -309,6 +319,23 @@ const _schema = i.schema({
     commentVotes: i.entity({
       createdAt: i.date().indexed(),
       vote: i.number().indexed(), // 1 for upvote, -1 for downvote
+    }),
+    meetingSlots: i.entity({
+      createdAt: i.date().indexed(),
+      updatedAt: i.date().indexed(),
+      startTime: i.date().indexed(),
+      endTime: i.date().indexed(),
+      isPublic: i.boolean().indexed(),
+      isAvailable: i.boolean().indexed(),
+      title: i.string().optional(),
+      description: i.string().optional(),
+      meetingType: i.string().indexed(), // 'one-on-one', 'public-meeting'
+    }),
+    meetingBookings: i.entity({
+      createdAt: i.date().indexed(),
+      updatedAt: i.date().indexed(),
+      status: i.string().indexed(), // 'pending', 'confirmed', 'cancelled'
+      notes: i.string().optional(),
     }),
   },
   links: {
@@ -1356,6 +1383,42 @@ const _schema = i.schema({
         on: 'documents',
         has: 'one',
         label: 'amendment',
+      },
+    },
+    meetingSlotsOwner: {
+      forward: {
+        on: 'meetingSlots',
+        has: 'one',
+        label: 'owner',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'meetingSlots',
+      },
+    },
+    meetingBookingsSlot: {
+      forward: {
+        on: 'meetingBookings',
+        has: 'one',
+        label: 'slot',
+      },
+      reverse: {
+        on: 'meetingSlots',
+        has: 'many',
+        label: 'bookings',
+      },
+    },
+    meetingBookingsBooker: {
+      forward: {
+        on: 'meetingBookings',
+        has: 'one',
+        label: 'booker',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'meetingBookings',
       },
     },
   },

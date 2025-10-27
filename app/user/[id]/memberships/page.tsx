@@ -397,7 +397,9 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
                                     <span className="ml-2">Withdraw Request</span>
                                   </Button>
                                 )}
-                                {(status === 'member' || status === 'admin') && (
+                                {(status === 'member' ||
+                                  status === 'admin' ||
+                                  membership.role === 'admin') && (
                                   <Button
                                     variant="ghost"
                                     size="sm"
