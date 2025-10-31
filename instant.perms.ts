@@ -238,7 +238,7 @@ const rules = {
       view: 'data.isPublic == true || isOwner || auth.id != null',
       create: 'isOwner',
       delete: 'isOwner',
-      update: 'isOwner',
+      update: 'isOwner || auth.id != null', // Allow authenticated users to book slots
     },
   },
   meetingBookings: {
@@ -250,7 +250,7 @@ const rules = {
     ],
     allow: {
       view: 'isBooker || isSlotOwner',
-      create: 'isBooker',
+      create: 'auth.id != null', // Allow any authenticated user to create a booking
       delete: 'isBooker || isSlotOwner',
       update: 'isBooker || isSlotOwner',
     },
