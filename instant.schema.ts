@@ -106,6 +106,14 @@ const _schema = i.schema({
       title: i.string().indexed(),
       updatedAt: i.date().indexed(),
     }),
+    documentVersions: i.entity({
+      versionNumber: i.number().indexed(),
+      title: i.string(),
+      content: i.json(),
+      createdAt: i.date().indexed(),
+      createdBy: i.string().indexed(),
+      creationType: i.string().indexed(), // 'manual', 'suggestion_added', 'suggestion_accepted', 'suggestion_declined'
+    }),
     electionCandidates: i.entity({
       createdAt: i.date().indexed(),
       description: i.string().optional(),
@@ -602,6 +610,30 @@ const _schema = i.schema({
         on: '$users',
         has: 'many',
         label: 'ownedDocuments',
+      },
+    },
+    documentVersionsDocument: {
+      forward: {
+        on: 'documentVersions',
+        has: 'one',
+        label: 'document',
+      },
+      reverse: {
+        on: 'documents',
+        has: 'many',
+        label: 'versions',
+      },
+    },
+    documentVersionsCreator: {
+      forward: {
+        on: 'documentVersions',
+        has: 'one',
+        label: 'creator',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'createdDocumentVersions',
       },
     },
     electionCandidatesElection: {

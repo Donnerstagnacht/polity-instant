@@ -29,6 +29,7 @@ import { Button } from '@/components/ui/button.tsx';
 import { cn } from '@/utils/utils.ts';
 import { type TDiscussion, discussionPlugin } from '@/components/kit-platejs/discussion-kit.tsx';
 import { suggestionPlugin } from '@/components/kit-platejs/suggestion-kit.tsx';
+import { useSuggestionCallbacks } from '@/components/kit-platejs/suggestion-callbacks-context.tsx';
 
 import { type TComment, Comment, CommentCreateForm, formatCommentDate } from './comment';
 
@@ -103,6 +104,7 @@ export function BlockSuggestionCard({
 }) {
   const { t } = useTranslation();
   const { api, editor } = useEditorPlugin(SuggestionPlugin);
+  const { onSuggestionAccepted, onSuggestionDeclined } = useSuggestionCallbacks();
 
   const userInfo = usePluginOption(discussionPlugin, 'user', suggestion.userId);
 
@@ -110,12 +112,22 @@ export function BlockSuggestionCard({
     api.suggestion.withoutSuggestions(() => {
       acceptSuggestion(editor, suggestion);
     });
+
+    // Call the callback if provided
+    if (onSuggestionAccepted) {
+      onSuggestionAccepted(suggestion);
+    }
   };
 
   const reject = (suggestion: ResolvedSuggestion) => {
     api.suggestion.withoutSuggestions(() => {
       rejectSuggestion(editor, suggestion);
     });
+
+    // Call the callback if provided
+    if (onSuggestionDeclined) {
+      onSuggestionDeclined(suggestion);
+    }
   };
 
   const [hovering, setHovering] = React.useState(false);

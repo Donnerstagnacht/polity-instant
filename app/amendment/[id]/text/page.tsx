@@ -14,6 +14,8 @@ import { db, tx } from '../../../../db';
 import { Loader2, Users, Eye, ArrowLeft, FileText } from 'lucide-react';
 import { useToast } from '@/global-state/use-toast';
 import Link from 'next/link';
+import { VersionControl } from './version-control';
+import { createDocumentVersion } from './version-utils';
 
 const DEFAULT_CONTENT = [
   {
@@ -331,6 +333,80 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
     [document?.id, user, discussions, toast]
   );
 
+  // Restore a version - updates the editor content
+  const handleRestoreVersion = useCallback(
+    async (content: any[]) => {
+      if (!document?.id || !user) return;
+
+      try {
+        const now = Date.now();
+
+        // Update the document content
+        await db.transact([
+          tx.documents[document.id].merge({
+            content: content,
+            updatedAt: now,
+          }),
+        ]);
+
+        // Update local state
+        isLocalChange.current = true;
+        setEditorValue(content);
+        lastSaveTime.current = now;
+        lastRemoteUpdate.current = now;
+
+        toast({
+          title: 'Success',
+          description: 'Version restored successfully',
+        });
+      } catch (error) {
+        console.error('Failed to restore version:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to restore version',
+          variant: 'destructive',
+        });
+      }
+    },
+    [document?.id, user, toast]
+  );
+
+  // Handle suggestion accepted - create a version
+  const handleSuggestionAccepted = useCallback(async () => {
+    if (!document?.id || !user?.id || !editorValue) return;
+
+    try {
+      await createDocumentVersion({
+        documentId: document.id,
+        userId: user.id,
+        content: editorValue,
+        creationType: 'suggestion_accepted',
+      });
+
+      console.log('✅ Version created for accepted suggestion');
+    } catch (error) {
+      console.error('Failed to create version for accepted suggestion:', error);
+    }
+  }, [document?.id, user?.id, editorValue]);
+
+  // Handle suggestion declined - create a version
+  const handleSuggestionDeclined = useCallback(async () => {
+    if (!document?.id || !user?.id || !editorValue) return;
+
+    try {
+      await createDocumentVersion({
+        documentId: document.id,
+        userId: user.id,
+        content: editorValue,
+        creationType: 'suggestion_declined',
+      });
+
+      console.log('✅ Version created for declined suggestion');
+    } catch (error) {
+      console.error('Failed to create version for declined suggestion:', error);
+    }
+  }, [document?.id, user?.id, editorValue]);
+
   // Cleanup timeouts
   useEffect(() => {
     return () => {
@@ -413,6 +489,16 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
           </Link>
 
           <div className="flex items-center gap-4">
+            {/* Version Control */}
+            {user?.id && document?.id && (
+              <VersionControl
+                documentId={document.id}
+                currentContent={documentContent}
+                currentUserId={user.id}
+                onRestoreVersion={handleRestoreVersion}
+              />
+            )}
+
             {/* Active users indicator */}
             {onlinePeers.length > 0 && (
               <div className="flex items-center gap-2">
@@ -537,6 +623,8 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
                 users={editorUsers}
                 discussions={discussions}
                 onDiscussionsChange={handleDiscussionsChange}
+                onSuggestionAccepted={handleSuggestionAccepted}
+                onSuggestionDeclined={handleSuggestionDeclined}
               />
             </div>
           </CardContent>

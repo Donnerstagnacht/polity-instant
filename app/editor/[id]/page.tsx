@@ -14,6 +14,8 @@ import { db, tx } from '../../../db';
 import { Loader2, Users, Eye, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/global-state/use-toast';
 import { InviteCollaboratorDialog } from './invite-collaborator-dialog';
+import { VersionControl } from './version-control';
+import { createDocumentVersion } from './version-utils';
 
 const DEFAULT_CONTENT = [
   {
@@ -256,6 +258,80 @@ export default function DocumentEditorPage() {
     [documentId, user]
   );
 
+  // Restore a version - updates the editor content
+  const handleRestoreVersion = useCallback(
+    async (content: any[]) => {
+      if (!documentId || !user) return;
+
+      try {
+        const now = Date.now();
+
+        // Update the document content
+        await db.transact([
+          tx.documents[documentId].merge({
+            content: content,
+            updatedAt: now,
+          }),
+        ]);
+
+        // Update local state
+        isLocalChange.current = true;
+        setEditorValue(content);
+        lastSaveTime.current = now;
+        lastRemoteUpdate.current = now;
+
+        toast({
+          title: 'Success',
+          description: 'Version restored successfully',
+        });
+      } catch (error) {
+        console.error('Failed to restore version:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to restore version',
+          variant: 'destructive',
+        });
+      }
+    },
+    [documentId, user, toast]
+  );
+
+  // Handle suggestion accepted - create a version
+  const handleSuggestionAccepted = useCallback(async () => {
+    if (!documentId || !user?.id || !editorValue) return;
+
+    try {
+      await createDocumentVersion({
+        documentId,
+        userId: user.id,
+        content: editorValue,
+        creationType: 'suggestion_accepted',
+      });
+
+      console.log('✅ Version created for accepted suggestion');
+    } catch (error) {
+      console.error('Failed to create version for accepted suggestion:', error);
+    }
+  }, [documentId, user?.id, editorValue]);
+
+  // Handle suggestion declined - create a version
+  const handleSuggestionDeclined = useCallback(async () => {
+    if (!documentId || !user?.id || !editorValue) return;
+
+    try {
+      await createDocumentVersion({
+        documentId,
+        userId: user.id,
+        content: editorValue,
+        creationType: 'suggestion_declined',
+      });
+
+      console.log('✅ Version created for declined suggestion');
+    } catch (error) {
+      console.error('Failed to create version for declined suggestion:', error);
+    }
+  }, [documentId, user?.id, editorValue]);
+
   // Save document title (debounced)
   const handleTitleChange = useCallback(
     (newTitle: string) => {
@@ -402,6 +478,16 @@ export default function DocumentEditorPage() {
           </Button>
 
           <div className="flex items-center gap-4">
+            {/* Version Control */}
+            {user?.id && (
+              <VersionControl
+                documentId={documentId}
+                currentContent={documentContent}
+                currentUserId={user.id}
+                onRestoreVersion={handleRestoreVersion}
+              />
+            )}
+
             {document.owner?.id === user?.id && user?.id && (
               <InviteCollaboratorDialog
                 documentId={documentId}
@@ -514,6 +600,8 @@ export default function DocumentEditorPage() {
                 users={editorUsers}
                 discussions={discussions}
                 onDiscussionsChange={handleDiscussionsChange}
+                onSuggestionAccepted={handleSuggestionAccepted}
+                onSuggestionDeclined={handleSuggestionDeclined}
               />
             </div>
           </CardContent>

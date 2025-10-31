@@ -7,6 +7,7 @@ import { discussionPlugin } from '@/components/kit-platejs/discussion-kit.tsx';
 import { suggestionPlugin } from '@/components/kit-platejs/suggestion-kit.tsx';
 import { SettingsDialog } from '@/components/kit-platejs/settings-dialog.tsx';
 import { Editor, EditorContainer } from '@/components/ui-platejs/editor.tsx';
+import { SuggestionCallbacksProvider } from '@/components/kit-platejs/suggestion-callbacks-context.tsx';
 
 interface PlateEditorProps {
   initialValue?: any[];
@@ -26,6 +27,8 @@ interface PlateEditorProps {
   users?: Record<string, { id: string; name: string; avatarUrl: string }>;
   discussions?: any[]; // Discussions/comments data
   onDiscussionsChange?: (discussions: any[]) => void;
+  onSuggestionAccepted?: (suggestion: any) => void;
+  onSuggestionDeclined?: (suggestion: any) => void;
 }
 
 export function PlateEditor({
@@ -37,6 +40,8 @@ export function PlateEditor({
   users,
   discussions,
   onDiscussionsChange,
+  onSuggestionAccepted,
+  onSuggestionDeclined,
 }: PlateEditorProps) {
   const onChangeRef = React.useRef(onChange);
   const isControlled = value !== undefined;
@@ -201,36 +206,43 @@ export function PlateEditor({
   }, []);
 
   return (
-    <Plate editor={editor} onChange={handleEditorChange}>
-      <EditorContainer>
-        <Editor variant="demo" />
+    <SuggestionCallbacksProvider
+      callbacks={{
+        onSuggestionAccepted,
+        onSuggestionDeclined,
+      }}
+    >
+      <Plate editor={editor} onChange={handleEditorChange}>
+        <EditorContainer>
+          <Editor variant="demo" />
 
-        {/* Render other users' cursors */}
-        {cursors.map(cursor => (
-          <div
-            key={cursor.id}
-            className="pointer-events-none absolute z-50"
-            style={
-              {
-                // Position would be calculated based on cursor.position
-                // This is a simplified version - full implementation would need
-                // to convert Slate position to DOM position
-              }
-            }
-          >
-            <div className="h-5 w-0.5 animate-pulse" style={{ backgroundColor: cursor.color }} />
+          {/* Render other users' cursors */}
+          {cursors.map(cursor => (
             <div
-              className="mt-1 whitespace-nowrap rounded px-2 py-0.5 text-xs text-white"
-              style={{ backgroundColor: cursor.color }}
+              key={cursor.id}
+              className="pointer-events-none absolute z-50"
+              style={
+                {
+                  // Position would be calculated based on cursor.position
+                  // This is a simplified version - full implementation would need
+                  // to convert Slate position to DOM position
+                }
+              }
             >
-              {cursor.name}
+              <div className="h-5 w-0.5 animate-pulse" style={{ backgroundColor: cursor.color }} />
+              <div
+                className="mt-1 whitespace-nowrap rounded px-2 py-0.5 text-xs text-white"
+                style={{ backgroundColor: cursor.color }}
+              >
+                {cursor.name}
+              </div>
             </div>
-          </div>
-        ))}
-      </EditorContainer>
+          ))}
+        </EditorContainer>
 
-      <SettingsDialog />
-    </Plate>
+        <SettingsDialog />
+      </Plate>
+    </SuggestionCallbacksProvider>
   );
 }
 
