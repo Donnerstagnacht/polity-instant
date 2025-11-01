@@ -17,6 +17,9 @@ import Link from 'next/link';
 import { VersionControl } from './version-control';
 import { createDocumentVersion } from './version-utils';
 import { ShareButton } from '@/components/shared/ShareButton';
+import { useNavigationStore } from '@/navigation/state/navigation.store';
+import { useScreenStore } from '@/global-state/screen.store';
+import { useNavigation } from '@/navigation/state/useNavigation';
 
 const DEFAULT_CONTENT = [
   {
@@ -31,6 +34,11 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
   const { user } = db.useAuth();
   const { toast } = useToast();
   const amendmentId = resolvedParams.id;
+
+  // Navigation state
+  const { navigationView, navigationType } = useNavigationStore();
+  const { isMobileScreen } = useScreenStore();
+  const { secondaryNavItems } = useNavigation();
 
   // State
   const [documentTitle, setDocumentTitle] = useState('');
@@ -158,6 +166,23 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
 
     return users;
   }, [user, userProfile, document?.owner, document?.collaborators]);
+
+  // Calculate dynamic top margin based on secondary navigation
+  const getTopMargin = useMemo(() => {
+    // Check if secondary navigation should be visible
+    const isSecondaryNavVisible =
+      secondaryNavItems &&
+      secondaryNavItems.length > 0 &&
+      ['secondary', 'combined'].includes(navigationType);
+
+    // On mobile, when secondary nav is visible and displayed as top bar
+    if (isMobileScreen && isSecondaryNavVisible && navigationView !== 'asButton') {
+      if (navigationView === 'asButtonList') return 'mt-8'; // Base mt-8 + 64px for secondary nav
+      if (navigationView === 'asLabeledButtonList') return 'mt-8'; // Base mt-8 + 80px for secondary nav
+    }
+
+    return 'mt-8'; // Default margin
+  }, [isMobileScreen, secondaryNavItems, navigationType, navigationView]);
 
   // Initialize document data
   useEffect(() => {
@@ -482,7 +507,7 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
   return (
     <AuthGuard requireAuth={true}>
       <PageWrapper className="container mx-auto p-8">
-        <div className="mb-6 flex items-center justify-between">
+        <div className={`mb-6 flex items-center justify-between ${getTopMargin}`}>
           <Link href={`/amendment/${amendmentId}`}>
             <Button variant="ghost">
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -543,7 +568,7 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
           </div>
         </div>
 
-        <Card>
+        <Card className="mt-4">
           <CardHeader>
             <div className="flex items-center gap-4">
               <FileText className="h-8 w-8" />
