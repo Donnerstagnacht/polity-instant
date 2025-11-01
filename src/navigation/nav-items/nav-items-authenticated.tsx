@@ -345,7 +345,7 @@ export const navItemsAuthenticated = (
         onClick: () => router.push(`/amendment/${amendmentId}/text`),
       },
       {
-        id: 'change-requests',
+        id: 'changeRequests',
         label: t ? t('navigation.secondary.amendment.changeRequests') : 'Change Requests',
         icon: 'FileText',
         href: `/amendment/${amendmentId}/change-requests`,
