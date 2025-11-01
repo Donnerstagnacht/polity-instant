@@ -16,6 +16,7 @@ import { InfoTabs } from '@/components/shared/InfoTabs';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useTranslation } from '@/hooks/use-translation';
+import { ShareButton } from '@/components/shared/ShareButton';
 
 interface EventWikiProps {
   eventId: string;
@@ -164,6 +165,11 @@ export function EventWiki({ eventId }: EventWikiProps) {
           onLeave={leaveEvent}
           onAcceptInvitation={acceptInvitation}
           isLoading={participationLoading}
+        />
+        <ShareButton
+          url={`/event/${eventId}`}
+          title={event.title}
+          description={event.description || ''}
         />
         {isAdmin && (
           <Button

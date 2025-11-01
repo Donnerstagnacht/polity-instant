@@ -14,6 +14,7 @@ import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { StatsBar } from '@/components/ui/StatsBar';
 import { ActionBar } from '@/components/ui/ActionBar';
 import { WikiSubscribeButton } from './ui/WikiSubscribeButton';
+import { ShareButton } from '@/components/shared/ShareButton';
 
 // --- UserWiki utility functions moved to utils/userWiki.utils.ts ---
 import {
@@ -126,6 +127,11 @@ export function UserWiki(_props: UserWikiProps) {
           {!isOwnProfile && (
             <ActionBar>
               <WikiSubscribeButton subscribed={subscribed} onClick={handleSubscribeClick} />
+              <ShareButton
+                url={`/user/${userIdToFetch}`}
+                title={dbUser.name || 'User Profile'}
+                description={dbUser.about || ''}
+              />
             </ActionBar>
           )}
 

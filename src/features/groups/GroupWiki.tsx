@@ -28,6 +28,7 @@ import { useRouter } from 'next/navigation';
 import { GroupsCard } from '@/features/user/ui/GroupsCard';
 import Link from 'next/link';
 import { useTranslation } from '@/hooks/use-translation';
+import { ShareButton } from '@/components/shared/ShareButton';
 
 interface GroupWikiProps {
   groupId: string;
@@ -211,6 +212,11 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
           onLeave={leaveGroup}
           onAcceptInvitation={acceptInvitation}
           isLoading={membershipLoading}
+        />
+        <ShareButton
+          url={`/group/${groupId}`}
+          title={group.name}
+          description={group.description || ''}
         />
         {isAdmin && (
           <Button

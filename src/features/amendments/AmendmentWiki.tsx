@@ -16,6 +16,7 @@ import { InfoTabs } from '@/components/shared/InfoTabs';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useTranslation } from '@/hooks/use-translation';
+import { ShareButton } from '@/components/shared/ShareButton';
 
 interface AmendmentWikiProps {
   amendmentId: string;
@@ -215,6 +216,11 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
           <ThumbsUp className="mr-2 h-4 w-4" />
           Support
         </Button>
+        <ShareButton
+          url={`/amendment/${amendmentId}`}
+          title={amendment.title}
+          description={amendment.subtitle || amendment.code || ''}
+        />
         {isAdmin && (
           <Button
             variant="outline"

@@ -16,6 +16,7 @@ import { BlogSubscribeButton } from '@/features/blogs/ui/BlogSubscribeButton';
 import { useSubscribeBlog } from '@/features/blogs/hooks/useSubscribeBlog';
 import { ActionBar } from '@/components/ui/ActionBar';
 import { useAuthStore } from '@/features/auth/auth';
+import { ShareButton } from '@/components/shared/ShareButton';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/use-translation';
 import { CommentSortSelect, CommentSortBy } from '@/components/shared/CommentSortSelect';
@@ -343,6 +344,7 @@ export default function BlogPage({ params }: { params: Promise<{ id: string }> }
             <MessageSquare className="mr-2 h-4 w-4" />
             Comment
           </Button>
+          <ShareButton url={`/blog/${resolvedParams.id}`} title={blog.title} description="" />
         </ActionBar>
 
         {/* Hashtags */}

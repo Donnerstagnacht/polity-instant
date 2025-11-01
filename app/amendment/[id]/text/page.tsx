@@ -16,6 +16,7 @@ import { useToast } from '@/global-state/use-toast';
 import Link from 'next/link';
 import { VersionControl } from './version-control';
 import { createDocumentVersion } from './version-utils';
+import { ShareButton } from '@/components/shared/ShareButton';
 
 const DEFAULT_CONTENT = [
   {
@@ -489,6 +490,13 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
           </Link>
 
           <div className="flex items-center gap-4">
+            {/* Share Button */}
+            <ShareButton
+              url={`/amendment/${amendmentId}/text`}
+              title={documentTitle || amendment.title}
+              description={amendment.subtitle || amendment.code || ''}
+            />
+
             {/* Version Control */}
             {user?.id && document?.id && (
               <VersionControl
