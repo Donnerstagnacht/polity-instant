@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { db, tx } from '../../../../db';
+import { db, tx, id } from '../../../../db';
 import { Loader2, Users, Eye, ArrowLeft, FileText, Pencil } from 'lucide-react';
 import { useToast } from '@/global-state/use-toast';
 import Link from 'next/link';
@@ -406,10 +406,10 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
     [document?.id, user, toast]
   );
 
-  // Handle suggestion accepted - create a version
+  // Handle suggestion accepted - create a version and save to changeRequests entity
   const handleSuggestionAccepted = useCallback(
     async (suggestion: any) => {
-      if (!document?.id || !user?.id || !editorValue) return;
+      if (!document?.id || !user?.id || !editorValue || !amendment?.id) return;
 
       try {
         // Use the suggestion's crId as the version title if available
@@ -423,18 +423,67 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
           title: versionTitle,
         });
 
-        console.log('✅ Version created for accepted suggestion:', suggestion?.crId || 'unknown');
+        // Find the discussion for this suggestion
+        const discussion = discussions.find(
+          (d: any) => d.id === suggestion.suggestionId || d.id === suggestion.id
+        );
+
+        if (discussion) {
+          console.log('🔄 Creating changeRequest entity for accepted suggestion:', {
+            id: discussion.id,
+            crId: discussion.crId,
+          });
+
+          // Generate a new UUID for the changeRequest entity
+          const changeRequestId = id();
+
+          // Create a changeRequest entity to preserve the accepted suggestion
+          await db.transact([
+            tx.changeRequests[changeRequestId]
+              .update({
+                title: discussion.crId || 'Change Request',
+                description: discussion.description || '',
+                proposedChange: discussion.proposedChange || '',
+                justification: discussion.justification || '',
+                status: 'accepted',
+                createdAt: discussion.createdAt || Date.now(),
+                updatedAt: Date.now(),
+              })
+              .link({ creator: user.id })
+              .link({ amendment: amendment.id }),
+          ]);
+
+          console.log('✅ ChangeRequest entity created for:', discussion.crId);
+        }
+
+        // Remove the discussion from the array (it's now persisted as a changeRequest entity)
+        const updatedDiscussions = discussions.filter(
+          (d: any) => d.id !== suggestion.suggestionId && d.id !== suggestion.id
+        );
+
+        // Update discussions in the database
+        await db.transact([
+          tx.documents[document.id].update({
+            discussions: updatedDiscussions,
+            updatedAt: Date.now(),
+          }),
+        ]);
+
+        console.log(
+          '✅ Version created and changeRequest entity saved:',
+          suggestion?.crId || 'unknown'
+        );
       } catch (error) {
         console.error('Failed to create version for accepted suggestion:', error);
       }
     },
-    [document?.id, user?.id, editorValue]
+    [document?.id, user?.id, editorValue, discussions, amendment?.id]
   );
 
-  // Handle suggestion declined - create a version
+  // Handle suggestion declined - create a version and save to changeRequests entity
   const handleSuggestionDeclined = useCallback(
     async (suggestion: any) => {
-      if (!document?.id || !user?.id || !editorValue) return;
+      if (!document?.id || !user?.id || !editorValue || !amendment?.id) return;
 
       try {
         // Use the suggestion's crId as the version title if available
@@ -448,12 +497,61 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
           title: versionTitle,
         });
 
-        console.log('✅ Version created for declined suggestion:', suggestion?.crId || 'unknown');
+        // Find the discussion for this suggestion
+        const discussion = discussions.find(
+          (d: any) => d.id === suggestion.suggestionId || d.id === suggestion.id
+        );
+
+        if (discussion) {
+          console.log('🔄 Creating changeRequest entity for rejected suggestion:', {
+            id: discussion.id,
+            crId: discussion.crId,
+          });
+
+          // Generate a new UUID for the changeRequest entity
+          const changeRequestId = id();
+
+          // Create a changeRequest entity to preserve the rejected suggestion
+          await db.transact([
+            tx.changeRequests[changeRequestId]
+              .update({
+                title: discussion.crId || 'Change Request',
+                description: discussion.description || '',
+                proposedChange: discussion.proposedChange || '',
+                justification: discussion.justification || '',
+                status: 'rejected',
+                createdAt: discussion.createdAt || Date.now(),
+                updatedAt: Date.now(),
+              })
+              .link({ creator: user.id })
+              .link({ amendment: amendment.id }),
+          ]);
+
+          console.log('✅ ChangeRequest entity created for:', discussion.crId);
+        }
+
+        // Remove the discussion from the array (it's now persisted as a changeRequest entity)
+        const updatedDiscussions = discussions.filter(
+          (d: any) => d.id !== suggestion.suggestionId && d.id !== suggestion.id
+        );
+
+        // Update discussions in the database
+        await db.transact([
+          tx.documents[document.id].update({
+            discussions: updatedDiscussions,
+            updatedAt: Date.now(),
+          }),
+        ]);
+
+        console.log(
+          '✅ Version created and changeRequest entity saved:',
+          suggestion?.crId || 'unknown'
+        );
       } catch (error) {
         console.error('Failed to create version for declined suggestion:', error);
       }
     },
-    [document?.id, user?.id, editorValue]
+    [document?.id, user?.id, editorValue, discussions, amendment?.id]
   );
 
   // Cleanup timeouts
