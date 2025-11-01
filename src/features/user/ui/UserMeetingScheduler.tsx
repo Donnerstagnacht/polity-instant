@@ -23,11 +23,21 @@ import { useToast } from '@/global-state/use-toast';
 import db from '../../../../db';
 import { id, tx } from '@instantdb/react';
 import { addHours, startOfDay, addDays, addMonths, isPast, isFuture, format } from 'date-fns';
-import { Calendar as CalendarIcon, Clock, Users, Video, Plus, Trash2, Repeat } from 'lucide-react';
+import {
+  Calendar as CalendarIcon,
+  Clock,
+  Users,
+  Video,
+  Plus,
+  Trash2,
+  Repeat,
+  ExternalLink,
+} from 'lucide-react';
 import { CalendarViewSelector, CalendarView } from './CalendarViewSelector';
 import { DayView } from './DayView';
 import { WeekView } from './WeekView';
 import { MonthView } from './MonthView';
+import { useRouter } from 'next/navigation';
 import {
   isSameDay,
   isDateInRange,
@@ -48,6 +58,7 @@ interface UserMeetingSchedulerProps {
 
 export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
   const { toast } = useToast();
+  const router = useRouter();
   const [view, setView] = useState<CalendarView>('day');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
@@ -584,7 +595,11 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
                         new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
                     )
                     .map((slot: any) => (
-                      <div key={slot.id} className="rounded-lg border p-4">
+                      <div
+                        key={slot.id}
+                        className="cursor-pointer rounded-lg border p-4 transition-colors hover:bg-accent"
+                        onClick={() => router.push(`/meet/${slot.id}`)}
+                      >
                         <div className="flex items-start justify-between">
                           <div className="space-y-2">
                             <div className="flex items-center gap-2">
@@ -677,7 +692,11 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
                       new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
                   )
                   .map((slot: any) => (
-                    <div key={slot.id} className="rounded-lg border p-4">
+                    <div
+                      key={slot.id}
+                      className="cursor-pointer rounded-lg border p-4 transition-colors hover:bg-accent"
+                      onClick={() => router.push(`/meet/${slot.id}`)}
+                    >
                       <div className="space-y-3">
                         <div className="flex items-center gap-2">
                           <h4 className="font-semibold">{slot.title}</h4>
@@ -687,6 +706,17 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
                               Public
                             </Badge>
                           )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="ml-auto"
+                            onClick={e => {
+                              e.stopPropagation();
+                              router.push(`/meet/${slot.id}`);
+                            }}
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </Button>
                         </div>
                         <div className="flex items-center gap-4 text-sm">
                           <div className="flex items-center gap-1">

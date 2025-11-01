@@ -2155,19 +2155,39 @@ async function seedEvents(userIds: string[], groupIds: string[]) {
   let totalEvents = 0;
   let totalParticipants = 0;
 
+  // Ensure each user has at least 3 events in the upcoming week
+  const now = new Date();
+  const upcomingWeekStart = new Date(now);
+  upcomingWeekStart.setHours(0, 0, 0, 0);
+  const upcomingWeekEnd = new Date(upcomingWeekStart);
+  upcomingWeekEnd.setDate(upcomingWeekEnd.getDate() + 7);
+
+  // Track which users have events in the upcoming week
+  const userUpcomingEvents: Record<string, string[]> = {};
+  for (const userId of userIds) {
+    userUpcomingEvents[userId] = [];
+  }
+
+  // First, seed normal group events as before
   for (const groupId of groupIds) {
     const eventCount = randomInt(SEED_CONFIG.eventsPerGroup.min, SEED_CONFIG.eventsPerGroup.max);
-
     for (let i = 0; i < eventCount; i++) {
       const eventId = id();
       const organizerId = randomItem(userIds);
-      const startDate = faker.date.future({ years: 1 });
+      // Randomize event date, but some in upcoming week
+      let startDate;
+      if (faker.datatype.boolean(0.4)) {
+        // 40% chance event is in upcoming week
+        startDate = new Date(upcomingWeekStart);
+        startDate.setDate(startDate.getDate() + randomInt(0, 6));
+        startDate.setHours(randomInt(9, 18), randomInt(0, 3) * 15, 0, 0);
+      } else {
+        startDate = faker.date.future({ years: 1 });
+      }
       const endDate = new Date(startDate);
       endDate.setHours(endDate.getHours() + randomInt(1, 4));
 
       eventIds.push(eventId);
-
-      // Create event
       transactions.push(
         tx.events[eventId]
           .update({
@@ -2176,7 +2196,7 @@ async function seedEvents(userIds: string[], groupIds: string[]) {
             location: `${faker.location.streetAddress()}, ${faker.location.city()}`,
             startDate,
             endDate,
-            isPublic: faker.datatype.boolean(0.8), // 80% public
+            isPublic: faker.datatype.boolean(0.8),
             capacity: randomInt(20, 200),
             imageURL: faker.image.url(),
             tags: randomItems(
@@ -2195,15 +2215,13 @@ async function seedEvents(userIds: string[], groupIds: string[]) {
         SEED_CONFIG.participantsPerEvent.max
       );
       const participants = randomItems(userIds, participantCount);
-
       for (const participantId of participants) {
         const eventParticipantId = id();
-        const status = randomItem(['member', 'member', 'member', 'admin']); // Mostly members, some admins
+        const status = randomItem(['member', 'member', 'member', 'admin']);
         const role =
           participantId === organizerId
             ? 'organizer'
             : randomItem(['attendee', 'attendee', 'attendee', 'speaker']);
-
         transactions.push(
           tx.eventParticipants[eventParticipantId]
             .update({
@@ -2214,12 +2232,71 @@ async function seedEvents(userIds: string[], groupIds: string[]) {
             .link({ user: participantId, event: eventId })
         );
         totalParticipants++;
+        // Track if event is in upcoming week
+        if (startDate >= upcomingWeekStart && startDate < upcomingWeekEnd) {
+          userUpcomingEvents[participantId].push(eventId);
+        }
       }
-
+      // Track organizer
+      if (startDate >= upcomingWeekStart && startDate < upcomingWeekEnd) {
+        userUpcomingEvents[organizerId].push(eventId);
+      }
       // Add hashtags for this event
       const eventHashtags = randomItems(EVENT_HASHTAGS, randomInt(2, 4));
       transactions.push(...createHashtagTransactions(eventId, 'event', eventHashtags));
+      totalEvents++;
+    }
+  }
 
+  // For each user, ensure at least 3 events in upcoming week
+  for (const userId of userIds) {
+    let count = userUpcomingEvents[userId].length;
+    while (count < 3) {
+      // Create a new event in upcoming week for this user
+      const eventId = id();
+      const startDate = new Date(upcomingWeekStart);
+      startDate.setDate(startDate.getDate() + randomInt(0, 6));
+      startDate.setHours(randomInt(9, 18), randomInt(0, 3) * 15, 0, 0);
+      const endDate = new Date(startDate);
+      endDate.setHours(endDate.getHours() + randomInt(1, 4));
+      eventIds.push(eventId);
+      transactions.push(
+        tx.events[eventId]
+          .update({
+            title: faker.lorem.words(randomInt(3, 6)),
+            description: faker.lorem.paragraphs(2),
+            location: `${faker.location.streetAddress()}, ${faker.location.city()}`,
+            startDate,
+            endDate,
+            isPublic: faker.datatype.boolean(0.8),
+            capacity: randomInt(20, 200),
+            imageURL: faker.image.url(),
+            tags: randomItems(
+              ['conference', 'workshop', 'meetup', 'seminar', 'social', 'networking'],
+              randomInt(1, 3)
+            ),
+            createdAt: faker.date.past({ years: 0.17 }),
+            updatedAt: new Date(),
+          })
+          .link({ organizer: userId, group: randomItem(groupIds) })
+      );
+      // Add user as participant
+      const eventParticipantId = id();
+      transactions.push(
+        tx.eventParticipants[eventParticipantId]
+          .update({
+            status: 'member',
+            createdAt: faker.date.past({ years: 0.08 }),
+            role: 'attendee',
+          })
+          .link({ user: userId, event: eventId })
+      );
+      totalParticipants++;
+      userUpcomingEvents[userId].push(eventId);
+      count++;
+      // Add hashtags for this event
+      const eventHashtags = randomItems(EVENT_HASHTAGS, randomInt(2, 4));
+      transactions.push(...createHashtagTransactions(eventId, 'event', eventHashtags));
       totalEvents++;
     }
   }
@@ -3233,9 +3310,23 @@ async function seedMeetingSlots(userIds: string[]) {
   const tobiasUserId = SEED_CONFIG.tobiasUserId;
 
   // Create meeting slots for ALL users
+  // Also track meetings for calendar
+  const userMeetings: Record<
+    string,
+    {
+      slotId: string;
+      startTime: Date;
+      endTime: Date;
+      ownerId: string;
+      booked: boolean;
+      bookerId?: string;
+    }[]
+  > = {};
+  for (const userId of userIds) {
+    userMeetings[userId] = [];
+  }
   for (const userId of userIds) {
     const now = new Date();
-
     // Create 5-8 available time slots in the next week
     const availableSlotsCount = randomInt(5, 8);
     for (let i = 0; i < availableSlotsCount; i++) {
@@ -3243,10 +3334,9 @@ async function seedMeetingSlots(userIds: string[]) {
       const daysAhead = randomInt(0, 7); // Next 7 days
       const startTime = new Date(now);
       startTime.setDate(startTime.getDate() + daysAhead);
-      startTime.setHours(randomInt(9, 16), randomInt(0, 3) * 15, 0, 0); // 9 AM to 4 PM, 15-min intervals
-      const duration = randomInt(30, 90); // 30-90 minute slots
+      startTime.setHours(randomInt(9, 16), randomInt(0, 3) * 15, 0, 0);
+      const duration = randomInt(30, 90);
       const endTime = new Date(startTime.getTime() + duration * 60 * 1000);
-
       transactions.push(
         tx.meetingSlots[slotId]
           .update({
@@ -3263,8 +3353,8 @@ async function seedMeetingSlots(userIds: string[]) {
           .link({ owner: userId })
       );
       totalSlots++;
+      userMeetings[userId].push({ slotId, startTime, endTime, ownerId: userId, booked: false });
     }
-
     // Create 3-5 booked time slots in the next week
     const bookedSlotsCount = randomInt(3, 5);
     for (let i = 0; i < bookedSlotsCount; i++) {
@@ -3276,14 +3366,13 @@ async function seedMeetingSlots(userIds: string[]) {
       const duration = randomInt(30, 90);
       const endTime = new Date(startTime.getTime() + duration * 60 * 1000);
       const bookerId = randomItem(userIds.filter(uid => uid !== userId));
-
       transactions.push(
         tx.meetingSlots[slotId]
           .update({
             startTime,
             endTime,
             isPublic: false,
-            isAvailable: false, // Not available because it's booked
+            isAvailable: false,
             title: `1-on-1 Meeting`,
             description: 'Booked',
             meetingType: 'one-on-one',
@@ -3293,11 +3382,8 @@ async function seedMeetingSlots(userIds: string[]) {
           .link({ owner: userId })
       );
       totalSlots++;
-
-      // Create booking
-      const bookingId = id();
       transactions.push(
-        tx.meetingBookings[bookingId]
+        tx.meetingBookings[id()]
           .update({
             status: 'confirmed',
             notes: faker.lorem.sentence(),
@@ -3307,17 +3393,31 @@ async function seedMeetingSlots(userIds: string[]) {
           .link({ slot: slotId, booker: bookerId })
       );
       totalBookings++;
+      // Track for calendar: owner and booker
+      userMeetings[userId].push({
+        slotId,
+        startTime,
+        endTime,
+        ownerId: userId,
+        booked: true,
+        bookerId,
+      });
+      userMeetings[bookerId].push({
+        slotId,
+        startTime,
+        endTime,
+        ownerId: userId,
+        booked: true,
+        bookerId,
+      });
     }
-
     // For main user and Tobias, add public meeting slots
     if (userId === mainUserId || userId === tobiasUserId) {
-      // Create 1 upcoming public meeting slot
       const publicSlotId = id();
       const publicStartTime = new Date(now);
-      publicStartTime.setDate(publicStartTime.getDate() + randomInt(1, 3)); // 1-3 days ahead
-      publicStartTime.setHours(14, 0, 0, 0); // 2 PM
-      const publicEndTime = new Date(publicStartTime.getTime() + 90 * 60 * 1000); // 90 minutes
-
+      publicStartTime.setDate(publicStartTime.getDate() + randomInt(1, 3));
+      publicStartTime.setHours(14, 0, 0, 0);
+      const publicEndTime = new Date(publicStartTime.getTime() + 90 * 60 * 1000);
       transactions.push(
         tx.meetingSlots[publicSlotId]
           .update({
@@ -3334,18 +3434,15 @@ async function seedMeetingSlots(userIds: string[]) {
           .link({ owner: userId })
       );
       totalSlots++;
-
       // Add 2-4 bookings for the public meeting
       const publicBookingCount = randomInt(2, 4);
       const publicBookers = randomItems(
         userIds.filter(uid => uid !== userId),
         publicBookingCount
       );
-
       for (const bookerId of publicBookers) {
-        const bookingId = id();
         transactions.push(
-          tx.meetingBookings[bookingId]
+          tx.meetingBookings[id()]
             .update({
               status: 'confirmed',
               notes: faker.lorem.sentence(),
@@ -3355,20 +3452,35 @@ async function seedMeetingSlots(userIds: string[]) {
             .link({ slot: publicSlotId, booker: bookerId })
         );
         totalBookings++;
+        // Track for calendar
+        userMeetings[userId].push({
+          slotId: publicSlotId,
+          startTime: publicStartTime,
+          endTime: publicEndTime,
+          ownerId: userId,
+          booked: true,
+          bookerId,
+        });
+        userMeetings[bookerId].push({
+          slotId: publicSlotId,
+          startTime: publicStartTime,
+          endTime: publicEndTime,
+          ownerId: userId,
+          booked: true,
+          bookerId,
+        });
       }
-
       // Create 1 past public meeting slot
       const pastPublicSlotId = id();
-      const pastPublicStartTime = faker.date.recent({ days: 7 }); // Recent past
+      const pastPublicStartTime = faker.date.recent({ days: 7 });
       const pastPublicEndTime = new Date(pastPublicStartTime.getTime() + 90 * 60 * 1000);
-
       transactions.push(
         tx.meetingSlots[pastPublicSlotId]
           .update({
             startTime: pastPublicStartTime,
             endTime: pastPublicEndTime,
             isPublic: true,
-            isAvailable: false, // Past meetings are not available
+            isAvailable: false,
             title: 'Past Public Office Hours',
             description: 'Community discussion session (completed)',
             meetingType: 'public-meeting',

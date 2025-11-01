@@ -33,7 +33,7 @@ export default function CalendarPage() {
   const [view, setView] = useState<CalendarView>('day');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-  // Fetch events from the database
+  // Fetch events and meeting slots from the database
   const { data, isLoading } = db.useQuery({
     events: {
       organizer: {
@@ -46,9 +46,49 @@ export default function CalendarPage() {
         },
       },
     },
+    meetingSlots: {
+      owner: {
+        profile: {},
+      },
+      bookings: {
+        booker: {
+          profile: {},
+        },
+      },
+    },
   });
 
-  const events = data?.events || [];
+  // Filter events where user is a participant or organizer
+  const userEvents = (data?.events || []).filter((event: any) => {
+    const isOrganizer = event.organizer?.id === user?.id;
+    const isParticipant = event.participants?.some((p: any) => p.user?.id === user?.id);
+    return isOrganizer || isParticipant;
+  });
+
+  // Filter meeting slots where user is owner or has booked
+  const userMeetings = (data?.meetingSlots || []).filter((slot: any) => {
+    const isOwner = slot.owner?.id === user?.id;
+    const hasBooked = slot.bookings?.some((b: any) => b.booker?.id === user?.id);
+    return isOwner || hasBooked;
+  });
+
+  // Convert meetings to event-like format for unified display
+  const meetingEvents = userMeetings.map((slot: any) => ({
+    id: slot.id,
+    title: slot.title || 'Meeting',
+    description: slot.description || '',
+    location: slot.isPublic ? 'Public Meeting' : 'Private Meeting',
+    startDate: slot.startTime,
+    endDate: slot.endTime,
+    isPublic: slot.isPublic,
+    imageURL: null,
+    organizer: slot.owner,
+    participants: slot.bookings?.map((b: any) => ({ user: b.booker })) || [],
+    isMeeting: true, // Flag to distinguish meetings from events
+  }));
+
+  // Combine events and meetings
+  const events = [...userEvents, ...meetingEvents];
 
   // Helper functions for date manipulation
   const startOfWeek = (date: Date) => {
@@ -187,15 +227,23 @@ export default function CalendarPage() {
   const EventCard = ({ event }: { event: any }) => {
     const participantCount = event.participants?.length || 0;
     const userIsParticipant = event.participants?.some((p: any) => p.user?.id === user?.id);
+    const userIsOrganizer = event.organizer?.id === user?.id;
+    const isMeeting = event.isMeeting || false;
 
     return (
       <Card
         className="cursor-pointer transition-colors hover:bg-accent"
-        onClick={() => router.push(`/event/${event.id}`)}
+        onClick={() => {
+          if (isMeeting) {
+            router.push(`/meet/${event.id}`);
+          } else {
+            router.push(`/event/${event.id}`);
+          }
+        }}
       >
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            {event.imageURL && (
+            {event.imageURL && !isMeeting && (
               <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md">
                 <img
                   src={event.imageURL}
@@ -207,15 +255,22 @@ export default function CalendarPage() {
             <div className="flex-1 space-y-2">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="font-semibold">{event.title}</h3>
-                {event.isPublic ? (
-                  <Badge variant="secondary" className="text-xs">
-                    Public
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="text-xs">
-                    Private
-                  </Badge>
-                )}
+                <div className="flex gap-1">
+                  {isMeeting && (
+                    <Badge variant="outline" className="text-xs">
+                      Meeting
+                    </Badge>
+                  )}
+                  {event.isPublic ? (
+                    <Badge variant="secondary" className="text-xs">
+                      Public
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-xs">
+                      Private
+                    </Badge>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-1 text-sm text-muted-foreground">
@@ -229,12 +284,14 @@ export default function CalendarPage() {
                     <span className="truncate">{event.location}</span>
                   </div>
                 )}
-                <div className="flex items-center gap-2">
-                  <Users className="h-3.5 w-3.5" />
-                  <span>
-                    {participantCount} participant{participantCount !== 1 ? 's' : ''}
-                  </span>
-                </div>
+                {!isMeeting && (
+                  <div className="flex items-center gap-2">
+                    <Users className="h-3.5 w-3.5" />
+                    <span>
+                      {participantCount} participant{participantCount !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {event.organizer && (
@@ -251,9 +308,19 @@ export default function CalendarPage() {
                 </div>
               )}
 
-              {userIsParticipant && (
+              {!isMeeting && (userIsParticipant || userIsOrganizer) && (
                 <Badge variant="default" className="text-xs">
-                  You're attending
+                  {userIsOrganizer ? "You're organizing" : "You're attending"}
+                </Badge>
+              )}
+              {isMeeting && userIsOrganizer && (
+                <Badge variant="default" className="text-xs">
+                  Your meeting slot
+                </Badge>
+              )}
+              {isMeeting && !userIsOrganizer && (
+                <Badge variant="default" className="text-xs">
+                  You booked this
                 </Badge>
               )}
             </div>
@@ -458,9 +525,18 @@ export default function CalendarPage() {
                             <div
                               key={event.id}
                               className="cursor-pointer rounded border p-1.5 text-xs transition-colors hover:bg-accent"
-                              onClick={() => router.push(`/event/${event.id}`)}
+                              onClick={() => {
+                                if (event.isMeeting) {
+                                  router.push(`/meet/${event.id}`);
+                                } else {
+                                  router.push(`/event/${event.id}`);
+                                }
+                              }}
                             >
-                              <p className="truncate font-medium">{event.title}</p>
+                              <p className="truncate font-medium">
+                                {event.isMeeting && '📅 '}
+                                {event.title}
+                              </p>
                               <p className="text-muted-foreground">{formatTime(event.startDate)}</p>
                             </div>
                           ))}
@@ -529,14 +605,28 @@ export default function CalendarPage() {
                           <div
                             key={event.id}
                             className="cursor-pointer rounded-lg border p-3 transition-colors hover:bg-accent"
-                            onClick={() => router.push(`/event/${event.id}`)}
+                            onClick={() => {
+                              if (event.isMeeting) {
+                                router.push(`/meet/${event.id}`);
+                              } else {
+                                router.push(`/event/${event.id}`);
+                              }
+                            }}
                           >
-                            <h4 className="font-semibold">{event.title}</h4>
+                            <h4 className="font-semibold">
+                              {event.isMeeting && '📅 '}
+                              {event.title}
+                            </h4>
                             <p className="text-sm text-muted-foreground">
                               {formatTime(event.startDate)}
                             </p>
-                            {event.location && (
+                            {event.location && !event.isMeeting && (
                               <p className="mt-1 text-xs text-muted-foreground">{event.location}</p>
+                            )}
+                            {event.isMeeting && (
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                {event.isPublic ? 'Public Meeting' : 'Private Meeting'}
+                              </p>
                             )}
                           </div>
                         ))}
