@@ -588,6 +588,7 @@ async function seedGroupRelationships(groupIds: string[]) {
   console.log('Seeding group relationships...');
   const transactions = [];
   let totalRelationships = 0;
+  let amendmentRightChains = 0;
 
   const rights = [
     'informationRight',
@@ -597,19 +598,42 @@ async function seedGroupRelationships(groupIds: string[]) {
     'passiveVotingRight',
   ];
 
+  // Track amendmentRight connections per group (both parent and child)
+  const amendmentConnections = new Map<string, number>();
+  groupIds.forEach(gid => amendmentConnections.set(gid, 0));
+
+  // Helper to add an amendmentRight relationship
+  const addAmendmentRelationship = (parentId: string, childId: string) => {
+    const relationshipId = id();
+    transactions.push(
+      tx.groupRelationships[relationshipId]
+        .update({
+          relationshipType: 'isParent',
+          withRight: 'amendmentRight',
+          createdAt: faker.date.past({ years: 0.5 }),
+          updatedAt: new Date(),
+        })
+        .link({ parentGroup: parentId, childGroup: childId })
+    );
+    totalRelationships++;
+    amendmentRightChains++;
+    amendmentConnections.set(parentId, (amendmentConnections.get(parentId) || 0) + 1);
+    amendmentConnections.set(childId, (amendmentConnections.get(childId) || 0) + 1);
+  };
+
   // Create some relationships between groups
   // Make sure we have at least 3 groups to create relationships
   if (groupIds.length >= 3) {
-    // Create a hierarchy: Group 0 -> Group 1 -> Group 2
-    for (let i = 0; i < Math.min(3, groupIds.length - 1); i++) {
-      const parentGroupId = groupIds[i];
-      const childGroupId = groupIds[i + 1];
+    // Phase 1: Create core amendmentRight chains
+    for (let i = 0; i < Math.min(groupIds.length - 1, 7); i++) {
+      addAmendmentRelationship(groupIds[i], groupIds[i + 1]);
 
-      // Create 1-3 relationships with different rights
-      const relationshipCount = randomInt(1, 3);
-      const selectedRights = randomItems(rights, relationshipCount);
-
-      for (const right of selectedRights) {
+      // Also add some additional rights
+      const additionalRights = randomItems(
+        rights.filter(r => r !== 'amendmentRight'),
+        randomInt(0, 2)
+      );
+      for (const right of additionalRights) {
         const relationshipId = id();
         transactions.push(
           tx.groupRelationships[relationshipId]
@@ -619,22 +643,65 @@ async function seedGroupRelationships(groupIds: string[]) {
               createdAt: faker.date.past({ years: 0.5 }),
               updatedAt: new Date(),
             })
-            .link({ parentGroup: parentGroupId, childGroup: childGroupId })
+            .link({ parentGroup: groupIds[i], childGroup: groupIds[i + 1] })
         );
         totalRelationships++;
       }
     }
 
-    // Create some additional cross-relationships
+    // Phase 2: Create cross-connections to ensure EVERY group has at least 2 amendmentRight connections
     if (groupIds.length >= 8) {
-      // Structure 1: Group 0 has multiple direct children (0 -> 3, 0 -> 4)
-      // This creates a "star" pattern from Group 0
+      // Group 0 -> Group 3
+      addAmendmentRelationship(groupIds[0], groupIds[3]);
+      // Group 0 -> Group 4
+      addAmendmentRelationship(groupIds[0], groupIds[4]);
+      // Group 1 -> Group 5
+      addAmendmentRelationship(groupIds[1], groupIds[5]);
+      // Group 2 -> Group 6
+      addAmendmentRelationship(groupIds[2], groupIds[6]);
+      // Group 3 -> Group 5
+      addAmendmentRelationship(groupIds[3], groupIds[5]);
+      // Group 3 -> Group 6
+      addAmendmentRelationship(groupIds[3], groupIds[6]);
+      // Group 4 -> Group 7
+      addAmendmentRelationship(groupIds[4], groupIds[7]);
+      // Group 3 -> Group 7
+      addAmendmentRelationship(groupIds[3], groupIds[7]);
+      // Group 2 -> Group 3
+      addAmendmentRelationship(groupIds[2], groupIds[3]);
+
+      // Ensure every group has at least 2 amendmentRight connections
+      groupIds.forEach((groupId, idx) => {
+        const currentConnections = amendmentConnections.get(groupId) || 0;
+        if (currentConnections < 2) {
+          const needed = 2 - currentConnections;
+          for (let i = 0; i < needed; i++) {
+            const potentialPartners = groupIds.filter(
+              (otherId, otherIdx) =>
+                otherId !== groupId && Math.abs(idx - otherIdx) > 0 && Math.abs(idx - otherIdx) <= 3
+            );
+
+            if (potentialPartners.length > 0) {
+              const partner = randomItem(potentialPartners);
+              const partnerIdx = groupIds.indexOf(partner);
+
+              if (idx < partnerIdx) {
+                addAmendmentRelationship(groupId, partner);
+              } else {
+                addAmendmentRelationship(partner, groupId);
+              }
+            }
+          }
+        }
+      });
+
+      // Add some non-amendmentRight relationships for variety
       const relationshipId3 = id();
       transactions.push(
         tx.groupRelationships[relationshipId3]
           .update({
             relationshipType: 'isParent',
-            withRight: randomItem(rights),
+            withRight: 'informationRight',
             createdAt: faker.date.past({ years: 0.5 }),
             updatedAt: new Date(),
           })
@@ -647,7 +714,7 @@ async function seedGroupRelationships(groupIds: string[]) {
         tx.groupRelationships[relationshipId4]
           .update({
             relationshipType: 'isParent',
-            withRight: randomItem(rights),
+            withRight: 'rightToSpeak',
             createdAt: faker.date.past({ years: 0.5 }),
             updatedAt: new Date(),
           })
@@ -655,68 +722,10 @@ async function seedGroupRelationships(groupIds: string[]) {
       );
       totalRelationships++;
 
-      // Structure 2: Group 3 has its own children (3 -> 5, 3 -> 6)
-      // This creates indirect relationships: 0 -> 3 -> 5 and 0 -> 3 -> 6
-      const relationshipId5 = id();
-      transactions.push(
-        tx.groupRelationships[relationshipId5]
-          .update({
-            relationshipType: 'isParent',
-            withRight: randomItem(rights),
-            createdAt: faker.date.past({ years: 0.5 }),
-            updatedAt: new Date(),
-          })
-          .link({ parentGroup: groupIds[3], childGroup: groupIds[5] })
+      const multipleRights = randomItems(
+        rights.filter(r => r !== 'amendmentRight'),
+        randomInt(1, 2)
       );
-      totalRelationships++;
-
-      const relationshipId6 = id();
-      transactions.push(
-        tx.groupRelationships[relationshipId6]
-          .update({
-            relationshipType: 'isParent',
-            withRight: randomItem(rights),
-            createdAt: faker.date.past({ years: 0.5 }),
-            updatedAt: new Date(),
-          })
-          .link({ parentGroup: groupIds[3], childGroup: groupIds[6] })
-      );
-      totalRelationships++;
-
-      // Structure 3: Group 4 also has a child (4 -> 7)
-      // This creates another indirect path: 0 -> 4 -> 7
-      const relationshipId7 = id();
-      transactions.push(
-        tx.groupRelationships[relationshipId7]
-          .update({
-            relationshipType: 'isParent',
-            withRight: randomItem(rights),
-            createdAt: faker.date.past({ years: 0.5 }),
-            updatedAt: new Date(),
-          })
-          .link({ parentGroup: groupIds[4], childGroup: groupIds[7] })
-      );
-      totalRelationships++;
-
-      // Structure 4: Create cross-links for even more complex networks
-      // Group 1 is also parent of Group 5 (creating multiple paths to Group 5)
-      // This means Group 5 can be reached via: 0->1->5 OR 0->3->5
-      const relationshipId8 = id();
-      transactions.push(
-        tx.groupRelationships[relationshipId8]
-          .update({
-            relationshipType: 'isParent',
-            withRight: randomItem(rights),
-            createdAt: faker.date.past({ years: 0.5 }),
-            updatedAt: new Date(),
-          })
-          .link({ parentGroup: groupIds[1], childGroup: groupIds[5] })
-      );
-      totalRelationships++;
-
-      // Structure 5: Add some relationships with multiple rights
-      // Group 2 is parent of Group 6 with multiple rights
-      const multipleRights = randomItems(rights, randomInt(2, 3));
       for (const right of multipleRights) {
         const relationshipId = id();
         transactions.push(
@@ -731,90 +740,15 @@ async function seedGroupRelationships(groupIds: string[]) {
         );
         totalRelationships++;
       }
-
-      // NEW: Create a group with BOTH deep upward AND downward connections
-      // Make Group 3 the central node with complex relationships in both directions
-      // Group 3 already has:
-      //   - Parents: Group 0 (via Structure 1)
-      //   - Children: Group 5, Group 6 (via Structure 2)
-
-      // Add more parents to Group 3 to create deeper upward hierarchy
-      // Create a grandparent chain: Create new implicit parents through Group 2
-      // Group 2 -> Group 3 (in addition to existing 0 -> 3)
-      const relationshipId9 = id();
-      transactions.push(
-        tx.groupRelationships[relationshipId9]
-          .update({
-            relationshipType: 'isParent',
-            withRight: randomItem(rights),
-            createdAt: faker.date.past({ years: 0.5 }),
-            updatedAt: new Date(),
-          })
-          .link({ parentGroup: groupIds[2], childGroup: groupIds[3] })
-      );
-      totalRelationships++;
-
-      // Now Group 3 has multiple parent paths:
-      // - 0 -> 1 -> 2 -> 3 (deep indirect via Group 2)
-      // - 0 -> 3 (direct)
-
-      // Add more children to Group 3 to create deeper downward hierarchy
-      // Group 3 -> Group 7 (Group 7 already has parent Group 4, now also has parent Group 3)
-      const relationshipId10 = id();
-      transactions.push(
-        tx.groupRelationships[relationshipId10]
-          .update({
-            relationshipType: 'isParent',
-            withRight: randomItem(rights),
-            createdAt: faker.date.past({ years: 0.5 }),
-            updatedAt: new Date(),
-          })
-          .link({ parentGroup: groupIds[3], childGroup: groupIds[7] })
-      );
-      totalRelationships++;
-
-      // Now Group 3 has multiple child paths and levels:
-      // - 3 -> 5 (direct child)
-      // - 3 -> 6 (direct child)
-      // - 3 -> 7 (direct child)
-
-      // Summary for Group 3:
-      // Parents (upward): Group 0 (direct), Group 2 (direct) -> creates 0->1->2->3 path
-      // Children (downward): Group 5, 6, 7 (all direct)
-      // This makes Group 3 a central hub with both upward and downward connections
     } else if (groupIds.length >= 5) {
-      // Group 3 is parent of Group 4
-      const relationshipId1 = id();
-      transactions.push(
-        tx.groupRelationships[relationshipId1]
-          .update({
-            relationshipType: 'isParent',
-            withRight: randomItem(rights),
-            createdAt: faker.date.past({ years: 0.5 }),
-            updatedAt: new Date(),
-          })
-          .link({ parentGroup: groupIds[3], childGroup: groupIds[4] })
-      );
-      totalRelationships++;
-
-      // Group 0 is also parent of Group 3 (creating a deeper hierarchy)
-      const relationshipId2 = id();
-      transactions.push(
-        tx.groupRelationships[relationshipId2]
-          .update({
-            relationshipType: 'isParent',
-            withRight: randomItem(rights),
-            createdAt: faker.date.past({ years: 0.5 }),
-            updatedAt: new Date(),
-          })
-          .link({ parentGroup: groupIds[0], childGroup: groupIds[3] })
-      );
-      totalRelationships++;
+      // For smaller group counts
+      addAmendmentRelationship(groupIds[3], groupIds[4]);
+      addAmendmentRelationship(groupIds[0], groupIds[3]);
+      addAmendmentRelationship(groupIds[1], groupIds[4]);
     }
   }
 
   if (transactions.length > 0) {
-    // Execute in batches
     const batchSize = 50;
     for (let i = 0; i < transactions.length; i += batchSize) {
       const batch = transactions.slice(i, i + batchSize);
@@ -822,14 +756,28 @@ async function seedGroupRelationships(groupIds: string[]) {
     }
   }
 
+  let minConnections = Infinity;
+  let maxConnections = 0;
+  amendmentConnections.forEach(count => {
+    minConnections = Math.min(minConnections, count);
+    maxConnections = Math.max(maxConnections, count);
+  });
+
   console.log(`✓ Created ${totalRelationships} group relationships with complex network structure`);
+  console.log(`✓ Created ${amendmentRightChains} amendmentRight relationships for filtering`);
+  console.log(
+    `✓ AmendmentRight connections per group: min=${minConnections}, max=${maxConnections}`
+  );
   if (groupIds.length >= 8) {
-    console.log(`  - Multi-level hierarchies (up to 3 levels deep)`);
+    console.log(`  - Multi-level hierarchies (up to 3+ levels deep)`);
     console.log(`  - Multiple parent-child branches creating indirect relationships`);
     console.log(`  - Some groups reachable via multiple paths`);
-    console.log(`  - Group 3 is a central hub with BOTH deep upward AND downward connections:`);
-    console.log(`    • Upward: Multiple parents (Group 0 direct, Group 2 direct -> 0→1→2→3 path)`);
-    console.log(`    • Downward: Multiple children (Groups 5, 6, 7)`);
+    console.log(`  - EVERY group has at least TWO deep amendmentRight connections`);
+    console.log(`  - Group 0: Hub with multiple children (amendmentRight chains)`);
+    console.log(
+      `  - Group 3: Central node with both upward AND downward amendmentRight connections`
+    );
+    console.log(`  - Groups 5, 6, 7: Multiple parents creating redundant paths`);
   }
 }
 

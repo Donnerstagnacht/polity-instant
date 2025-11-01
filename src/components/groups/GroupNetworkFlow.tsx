@@ -4,6 +4,12 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Node, Edge, useNodesState, useEdgesState, MarkerType } from '@xyflow/react';
 import { Button } from '@/components/ui/button';
 import { NetworkFlowBase, Panel } from '@/components/shared/NetworkFlowBase';
+import {
+  RightFilters,
+  formatRights,
+  isEdgeVisible,
+  RIGHT_TYPES,
+} from '@/components/shared/RightFilters';
 import db from '../../../db';
 
 interface GroupNode extends Node {
@@ -24,6 +30,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
   const [isInteractive, setIsInteractive] = useState<boolean>(true);
+  const [selectedRights, setSelectedRights] = useState<Set<string>>(new Set(RIGHT_TYPES));
 
   // Fetch the specific group
   const { data: groupData } = db.useQuery({
@@ -172,17 +179,26 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
     [stableRelationships]
   );
 
-  // Helper to format rights for display
-  const formatRights = (rights: string[]) => {
-    const labels: Record<string, string> = {
-      informationRight: 'Info',
-      amendmentRight: 'Antrag',
-      rightToSpeak: 'Rede',
-      activeVotingRight: 'Aktiv',
-      passiveVotingRight: 'Passiv',
-    };
-    return rights.map(r => labels[r] || r).join(', ');
-  };
+  // Toggle right filter
+  const toggleRight = useCallback((right: string) => {
+    setSelectedRights(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(right)) {
+        newSet.delete(right);
+      } else {
+        newSet.add(right);
+      }
+      return newSet;
+    });
+  }, []);
+
+  // Check if edge should be visible based on selected rights
+  const checkEdgeVisible = useCallback(
+    (rights: string[]) => {
+      return isEdgeVisible(rights, selectedRights);
+    },
+    [selectedRights]
+  );
 
   // Generate flow chart
   const generateFlowChart = useCallback(() => {
@@ -275,6 +291,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
           type: MarkerType.ArrowClosed,
           color: '#66bb6a',
         },
+        data: { rights: parent.rights }, // Store rights in edge data
       });
     });
 
@@ -331,12 +348,21 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
           type: MarkerType.ArrowClosed,
           color: '#ffb74d',
         },
+        data: { rights: child.rights }, // Store rights in edge data
       });
     });
 
     setNodes(newNodes);
     setEdges(newEdges);
   }, [group, groupId, showIndirect, getDirectRelationships, getIndirectRelationships]);
+
+  // Filter edges based on selected rights
+  const filteredEdges = useMemo(() => {
+    return edges.filter(edge => {
+      if (!edge.data?.rights) return true; // Show edges without rights data
+      return checkEdgeVisible(edge.data.rights as string[]);
+    });
+  }, [edges, checkEdgeVisible]);
 
   // Generate flow chart when group or showIndirect changes
   useEffect(() => {
@@ -382,7 +408,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
           boxShadow: selectedNodes.includes(node.id) ? '0 0 0 2px #ff0072' : undefined,
         },
       }))}
-      edges={edges}
+      edges={filteredEdges}
       nodesDraggable={isInteractive}
       nodesFocusable={isInteractive}
       nodesConnectable={isInteractive}
@@ -424,6 +450,9 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
               {isInteractive ? 'Lock Editor' : 'Unlock Editor'}
             </Button>
           </div>
+
+          {/* Right type filters */}
+          <RightFilters selectedRights={selectedRights} onToggleRight={toggleRight} />
 
           {/* Color legend */}
           <div className="mt-3 space-y-2 text-sm">
