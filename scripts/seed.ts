@@ -1846,11 +1846,11 @@ async function seedTobiasSubscriptionsAndMemberships(
   }
 
   // Add Tobias as participant to events with different statuses
-  // Take first 8 events if available
-  // Events 0-2: admin status (3 events)
-  // Events 3-4: member status (2 events)
-  // Events 5-6: requested status (2 events)
-  // Event 7: invited status (1 event)
+  // Make Tobias admin for at least half of all events
+  const totalEvents = eventIds.length;
+  const halfEvents = Math.ceil(totalEvents / 2); // Round up to ensure "at least half"
+
+  // Take first 8 events if available for different participation statuses
   const first8Events = eventIds.slice(0, Math.min(8, eventIds.length));
   for (let i = 0; i < first8Events.length; i++) {
     const eventId = first8Events[i];
@@ -1859,20 +1859,20 @@ async function seedTobiasSubscriptionsAndMemberships(
     let role = 'attendee';
     let status = 'member';
 
-    if (i < 3) {
-      // First 3 events: admin
+    if (i < halfEvents) {
+      // Make Tobias admin for at least half of the events
       role = 'organizer';
       status = 'admin';
-    } else if (i < 5) {
-      // Events 3-4: regular participant
+    } else if (i < halfEvents + 2) {
+      // Next 2 events: regular participant
       role = 'attendee';
       status = 'member';
-    } else if (i < 7) {
-      // Events 5-6: requested
+    } else if (i < halfEvents + 4) {
+      // Next 2 events: requested
       role = 'attendee';
       status = 'requested';
     } else {
-      // Event 7: invited
+      // Remaining events: invited
       role = 'attendee';
       status = 'invited';
     }
@@ -1951,10 +1951,12 @@ async function seedTobiasSubscriptionsAndMemberships(
   console.log(`  - Invited to group 8 (1 group)`);
   console.log(`  - Total: ${first8Groups.length} groups`);
   console.log(`✓ Tobias event participations created:`);
-  console.log(`  - Admin in first 3 events`);
-  console.log(`  - Participant in events 4-5 (2 events)`);
-  console.log(`  - Requested in events 6-7 (2 events)`);
-  console.log(`  - Invited to event 8 (1 event)`);
+  console.log(
+    `  - Admin in ${Math.ceil(eventIds.length / 2)} events (at least half of ${eventIds.length} total)`
+  );
+  console.log(`  - Participant in next 2 events`);
+  console.log(`  - Requested in next 2 events`);
+  console.log(`  - Invited to remaining events`);
   console.log(`  - Total: ${first8Events.length} events`);
   console.log(`✓ Tobias amendment collaborations created:`);
   console.log(`  - Admin in first 3 amendments`);
