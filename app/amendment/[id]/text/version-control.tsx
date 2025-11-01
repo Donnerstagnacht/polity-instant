@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { GitBranch, Clock, User, Plus, History } from 'lucide-react';
+import { GitBranch, Clock, User, Plus, History, Search, Pencil, Check, X } from 'lucide-react';
 import { db, tx, id } from '../../../../db';
 import { useToast } from '@/global-state/use-toast';
 
@@ -55,6 +55,9 @@ export function VersionControl({
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
   const [versionTitle, setVersionTitle] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [editingVersionId, setEditingVersionId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
 
   // Query all versions for this document
   const { data: versionsData, isLoading } = db.useQuery({
@@ -70,6 +73,19 @@ export function VersionControl({
 
   const versions = (versionsData?.documentVersions || []) as Version[];
   const sortedVersions = [...versions].sort((a, b) => b.versionNumber - a.versionNumber);
+
+  // Filter versions based on search query
+  const filteredVersions = useMemo(() => {
+    if (!searchQuery.trim()) return sortedVersions;
+
+    const query = searchQuery.toLowerCase();
+    return sortedVersions.filter(
+      version =>
+        version.title.toLowerCase().includes(query) ||
+        version.versionNumber.toString().includes(query) ||
+        version.creator?.profile?.name?.toLowerCase().includes(query)
+    );
+  }, [sortedVersions, searchQuery]);
 
   // Create a new version manually
   const handleCreateVersion = async () => {
@@ -153,6 +169,41 @@ export function VersionControl({
     });
   };
 
+  // Update version title
+  const handleUpdateVersionTitle = async (versionId: string, newTitle: string) => {
+    if (!newTitle.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Version title cannot be empty',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      await db.transact([
+        tx.documentVersions[versionId].update({
+          title: newTitle,
+        }),
+      ]);
+
+      toast({
+        title: 'Success',
+        description: 'Version title updated successfully',
+      });
+
+      setEditingVersionId(null);
+      setEditingTitle('');
+    } catch (error) {
+      console.error('Failed to update version title:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update version title',
+        variant: 'destructive',
+      });
+    }
+  };
+
   // Get creation type badge
   const getCreationTypeBadge = (type: string) => {
     const variants: Record<
@@ -234,14 +285,26 @@ export function VersionControl({
               View and restore previous versions of this amendment.
             </DialogDescription>
           </DialogHeader>
+
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search by title, version number, or author..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
           <ScrollArea className="h-[400px] pr-4">
             {isLoading ? (
               <div className="flex items-center justify-center py-8 text-muted-foreground">
                 Loading versions...
               </div>
-            ) : sortedVersions.length > 0 ? (
+            ) : filteredVersions.length > 0 ? (
               <div className="space-y-4">
-                {sortedVersions.map(version => (
+                {filteredVersions.map(version => (
                   <div
                     key={version.id}
                     className="flex items-start justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
@@ -250,7 +313,60 @@ export function VersionControl({
                       <div className="flex items-center gap-2">
                         <GitBranch className="h-4 w-4 text-muted-foreground" />
                         <span className="font-semibold">v.{version.versionNumber}</span>
-                        <span className="text-sm font-medium">{version.title}</span>
+
+                        {editingVersionId === version.id ? (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              value={editingTitle}
+                              onChange={e => setEditingTitle(e.target.value)}
+                              className="h-7 text-sm"
+                              autoFocus
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') {
+                                  handleUpdateVersionTitle(version.id, editingTitle);
+                                } else if (e.key === 'Escape') {
+                                  setEditingVersionId(null);
+                                  setEditingTitle('');
+                                }
+                              }}
+                            />
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 px-2"
+                              onClick={() => handleUpdateVersionTitle(version.id, editingTitle)}
+                            >
+                              <Check className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 px-2"
+                              onClick={() => {
+                                setEditingVersionId(null);
+                                setEditingTitle('');
+                              }}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <>
+                            <span className="text-sm font-medium">{version.title}</span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 w-6 p-0"
+                              onClick={() => {
+                                setEditingVersionId(version.id);
+                                setEditingTitle(version.title);
+                              }}
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                          </>
+                        )}
+
                         {getCreationTypeBadge(version.creationType)}
                       </div>
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
@@ -277,10 +393,14 @@ export function VersionControl({
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <History className="mb-2 h-12 w-12 text-muted-foreground" />
-                <p className="text-muted-foreground">No versions yet</p>
-                <p className="text-sm text-muted-foreground">
-                  Create your first version to start tracking changes
+                <p className="text-muted-foreground">
+                  {searchQuery ? 'No versions found matching your search' : 'No versions yet'}
                 </p>
+                {!searchQuery && (
+                  <p className="text-sm text-muted-foreground">
+                    Create your first version to start tracking changes
+                  </p>
+                )}
               </div>
             )}
           </ScrollArea>

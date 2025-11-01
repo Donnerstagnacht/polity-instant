@@ -11,11 +11,13 @@ export interface TDiscussion {
   isResolved: boolean;
   userId: string;
   documentContent?: string;
+  title?: string;
 }
 
 const discussionsData: TDiscussion[] = [
   {
     id: 'discussion1',
+    title: 'Feedback on Comments Feature',
     comments: [
       {
         id: 'comment1',
@@ -59,6 +61,7 @@ const discussionsData: TDiscussion[] = [
   },
   {
     id: 'discussion2',
+    title: 'Overlapping Annotations Demo',
     comments: [
       {
         id: 'comment1',
@@ -133,6 +136,7 @@ export const discussionPlugin = createPlatePlugin({
     currentUserId: 'alice',
     discussions: discussionsData,
     users: defaultUsersData,
+    documentTitle: '',
   },
 })
   .configure({

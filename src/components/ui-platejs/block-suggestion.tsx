@@ -9,7 +9,7 @@ import {
   rejectSuggestion,
 } from '@platejs/suggestion';
 import { SuggestionPlugin } from '@platejs/suggestion/react';
-import { CheckIcon, XIcon } from 'lucide-react';
+import { CheckIcon, XIcon, Pencil, Check, X } from 'lucide-react';
 import {
   type NodeEntry,
   type Path,
@@ -26,6 +26,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx';
 import { Button } from '@/components/ui/button.tsx';
+import { Input } from '@/components/ui/input.tsx';
 import { cn } from '@/utils/utils.ts';
 import { type TDiscussion, discussionPlugin } from '@/components/kit-platejs/discussion-kit.tsx';
 import { suggestionPlugin } from '@/components/kit-platejs/suggestion-kit.tsx';
@@ -35,6 +36,7 @@ import { type TComment, Comment, CommentCreateForm, formatCommentDate } from './
 
 export interface ResolvedSuggestion extends TResolvedSuggestion {
   comments: TComment[];
+  title?: string;
 }
 
 const BLOCK_SUGGESTION = '__block__';
@@ -108,6 +110,54 @@ export function BlockSuggestionCard({
 
   const userInfo = usePluginOption(discussionPlugin, 'user', suggestion.userId);
 
+  const [editingTitle, setEditingTitle] = React.useState(false);
+  const [titleValue, setTitleValue] = React.useState(suggestion.title || '');
+
+  // Sync titleValue with suggestion.title when it changes
+  React.useEffect(() => {
+    setTitleValue(suggestion.title || '');
+  }, [suggestion.title]);
+
+  const handleSaveTitle = () => {
+    // Update the suggestion title in the discussions state (so it gets saved to DB)
+    // Important: The discussion ID is stored in keyId, not suggestionId!
+    const discussionId = suggestion.keyId.replace('suggestion_', '');
+
+    const currentDiscussions = editor.getOption(discussionPlugin, 'discussions') || [];
+
+    // Check if discussion exists
+    const existingDiscussion = currentDiscussions.find((d: TDiscussion) => d.id === discussionId);
+
+    if (existingDiscussion) {
+      // Update existing discussion
+      const updatedDiscussions = currentDiscussions.map((d: TDiscussion) => {
+        if (d.id === discussionId) {
+          return { ...d, title: titleValue };
+        }
+        return d;
+      });
+      editor.setOption(discussionPlugin, 'discussions', updatedDiscussions);
+    } else {
+      // Create new discussion if it doesn't exist (for suggestions without comments yet)
+      const newDiscussion: TDiscussion = {
+        id: discussionId,
+        comments: [],
+        createdAt: suggestion.createdAt,
+        isResolved: false,
+        userId: suggestion.userId,
+        title: titleValue,
+      };
+      editor.setOption(discussionPlugin, 'discussions', [...currentDiscussions, newDiscussion]);
+    }
+
+    setEditingTitle(false);
+  };
+
+  const handleCancelEdit = () => {
+    setTitleValue(suggestion.title || '');
+    setEditingTitle(false);
+  };
+
   const accept = (suggestion: ResolvedSuggestion) => {
     api.suggestion.withoutSuggestions(() => {
       acceptSuggestion(editor, suggestion);
@@ -158,6 +208,48 @@ export function BlockSuggestionCard({
           <div className="text-xs leading-none text-muted-foreground/80">
             <span className="mr-1">{formatCommentDate(new Date(suggestion.createdAt))}</span>
           </div>
+        </div>
+
+        {/* Suggestion Title */}
+        <div className="mb-3 mt-2 flex items-center gap-2">
+          {editingTitle ? (
+            <div className="flex flex-1 items-center gap-2">
+              <Input
+                value={titleValue}
+                onChange={e => setTitleValue(e.target.value)}
+                placeholder="Enter suggestion title..."
+                className="h-8 text-sm"
+                autoFocus
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    handleSaveTitle();
+                  } else if (e.key === 'Escape') {
+                    handleCancelEdit();
+                  }
+                }}
+              />
+              <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={handleSaveTitle}>
+                <Check className="h-3 w-3" />
+              </Button>
+              <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={handleCancelEdit}>
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-1 items-center gap-2 rounded-md bg-muted/30 px-3 py-2">
+              <span className="text-sm font-semibold">
+                {suggestion.title || 'Untitled Suggestion'}
+              </span>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="ml-auto h-6 w-6 p-0"
+                onClick={() => setEditingTitle(true)}
+              >
+                <Pencil className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
         </div>
 
         <div className="relative mb-4 mt-1 pl-[32px]">
@@ -434,8 +526,10 @@ export const useResolveSuggestion = (
 
       if (!nodeData) return;
 
-      // const comments = data?.discussions.find((d) => d.id === id)?.comments;
-      const comments = discussions.find((s: TDiscussion) => s.id === id)?.comments || [];
+      // Find the discussion for this suggestion to get comments AND title
+      const discussion = discussions.find((s: TDiscussion) => s.id === id);
+      const comments = discussion?.comments || [];
+      const title = discussion?.title; // Get the title from the discussion
       const createdAt = new Date(nodeData.createdAt);
 
       const keyId = getSuggestionKey(id);
@@ -449,6 +543,7 @@ export const useResolveSuggestion = (
           newText,
           properties,
           suggestionId: keyId2SuggestionId(id),
+          title, // Include the title
           type: 'update',
           userId: nodeData.userId,
         });
@@ -461,6 +556,7 @@ export const useResolveSuggestion = (
           newText,
           suggestionId: keyId2SuggestionId(id),
           text,
+          title, // Include the title
           type: 'replace',
           userId: nodeData.userId,
         });
@@ -472,6 +568,7 @@ export const useResolveSuggestion = (
           keyId,
           newText,
           suggestionId: keyId2SuggestionId(id),
+          title, // Include the title
           type: 'insert',
           userId: nodeData.userId,
         });
@@ -483,6 +580,7 @@ export const useResolveSuggestion = (
           keyId,
           suggestionId: keyId2SuggestionId(id),
           text,
+          title, // Include the title
           type: 'remove',
           userId: nodeData.userId,
         });

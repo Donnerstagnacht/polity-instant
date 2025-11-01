@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { db, tx } from '../../../../db';
-import { Loader2, Users, Eye, ArrowLeft, FileText } from 'lucide-react';
+import { Loader2, Users, Eye, ArrowLeft, FileText, Pencil } from 'lucide-react';
 import { useToast } from '@/global-state/use-toast';
 import Link from 'next/link';
 import { VersionControl } from './version-control';
@@ -35,6 +35,7 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
   // State
   const [documentTitle, setDocumentTitle] = useState('');
   const [isSavingTitle, setIsSavingTitle] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editorValue, setEditorValue] = useState<any[] | null>(null);
   const [discussions, setDiscussions] = useState<any[]>([]);
 
@@ -547,12 +548,33 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
             <div className="flex items-center gap-4">
               <FileText className="h-8 w-8" />
               <div className="flex-1">
-                <Input
-                  value={documentTitle}
-                  onChange={e => handleTitleChange(e.target.value)}
-                  className="border-none px-0 text-2xl font-bold shadow-none focus-visible:ring-0"
-                  placeholder="Amendment Title"
-                />
+                {isEditingTitle ? (
+                  <Input
+                    value={documentTitle}
+                    onChange={e => handleTitleChange(e.target.value)}
+                    className="border-none px-0 text-2xl font-bold shadow-none focus-visible:ring-0"
+                    placeholder="Amendment Title"
+                    autoFocus
+                    onBlur={() => setIsEditingTitle(false)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === 'Escape') {
+                        setIsEditingTitle(false);
+                      }
+                    }}
+                  />
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-2xl font-bold">{documentTitle || 'Untitled Amendment'}</h2>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0"
+                      onClick={() => setIsEditingTitle(true)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 {isSavingTitle ? (
@@ -619,6 +641,7 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
                 key={document.id}
                 value={documentContent}
                 onChange={handleContentChange}
+                documentTitle={documentTitle}
                 currentUser={
                   user && userProfile
                     ? {

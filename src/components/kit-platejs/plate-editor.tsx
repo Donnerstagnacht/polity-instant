@@ -29,6 +29,7 @@ interface PlateEditorProps {
   onDiscussionsChange?: (discussions: any[]) => void;
   onSuggestionAccepted?: (suggestion: any) => void;
   onSuggestionDeclined?: (suggestion: any) => void;
+  documentTitle?: string; // Document title to show in discussions/suggestions
 }
 
 export function PlateEditor({
@@ -42,6 +43,7 @@ export function PlateEditor({
   onDiscussionsChange,
   onSuggestionAccepted,
   onSuggestionDeclined,
+  documentTitle,
 }: PlateEditorProps) {
   const onChangeRef = React.useRef(onChange);
   const isControlled = value !== undefined;
@@ -69,6 +71,7 @@ export function PlateEditor({
               currentUserId: currentUser.id,
               users: users,
               discussions: discussions || [], // Initial discussions from DB
+              documentTitle: documentTitle || '', // Pass document title
             },
           },
         },
@@ -76,7 +79,7 @@ export function PlateEditor({
     }
 
     return config;
-  }, [isControlled, value, initialValue, currentUser, users]); // Removed 'discussions' from deps!
+  }, [isControlled, value, initialValue, currentUser, users, documentTitle]); // Added documentTitle to deps
 
   const editor = usePlateEditor(editorConfig);
 
@@ -109,6 +112,7 @@ export function PlateEditor({
       editor.setOptions(discussionPlugin, {
         currentUserId: currentUser.id,
         users: users,
+        documentTitle: documentTitle || '',
         // Only override if DB has MORE discussions than editor (e.g., after page reload)
         discussions: shouldUpdateDiscussions ? discussions : currentEditorDiscussions,
       });
@@ -118,7 +122,7 @@ export function PlateEditor({
         currentUserId: currentUser.id,
       });
     }
-  }, [currentUser, users, discussions, editor]);
+  }, [currentUser, users, discussions, documentTitle, editor]); // Added documentTitle
 
   // Watch for changes in discussions and call callback
   React.useEffect(() => {
@@ -128,12 +132,12 @@ export function PlateEditor({
     const interval = setInterval(() => {
       const currentDiscussions = editor.getOption(discussionPlugin, 'discussions');
 
-      // Clean up orphaned discussions (where the comment marks no longer exist in content)
+      // Clean up orphaned discussions (where the comment/suggestion marks no longer exist in content)
       if (currentDiscussions && currentDiscussions.length > 0) {
         const activeDiscussionIds = new Set<string>();
 
         // Scan the editor content for comment marks
-        const nodes = editor.api.nodes({
+        const commentNodes = editor.api.nodes({
           at: [],
           match: (n: any) => {
             if (!n) return false;
@@ -142,13 +146,38 @@ export function PlateEditor({
           },
         });
 
-        for (const [node] of nodes) {
+        for (const [node] of commentNodes) {
           Object.keys(node).forEach(key => {
             if (key.startsWith('comment_') && key !== 'comment') {
               const discussionId = key.replace('comment_', '');
               activeDiscussionIds.add(discussionId);
             }
           });
+        }
+
+        // Also scan for suggestion marks
+        const suggestionNodes = editor.api.nodes({
+          at: [],
+          match: (n: any) => {
+            if (!n) return false;
+            // Check if node has any suggestion_* properties or has suggestion data
+            return Object.keys(n).some(key => key.startsWith('suggestion_')) || n.suggestion;
+          },
+        });
+
+        for (const [node] of suggestionNodes) {
+          // Extract suggestion IDs from suggestion_* keys
+          Object.keys(node).forEach(key => {
+            if (key.startsWith('suggestion_')) {
+              const suggestionId = key.replace('suggestion_', '');
+              activeDiscussionIds.add(suggestionId);
+            }
+          });
+
+          // Also check the suggestion property for block suggestions
+          if (node.suggestion && typeof node.suggestion === 'object' && 'id' in node.suggestion) {
+            activeDiscussionIds.add(node.suggestion.id as string);
+          }
         }
 
         // Filter discussions to only keep those with active marks

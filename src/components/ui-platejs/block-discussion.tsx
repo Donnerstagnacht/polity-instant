@@ -5,7 +5,14 @@ import type { PlateElementProps, RenderNodeWrapper } from 'platejs/react';
 import { getDraftCommentKey } from '@platejs/comment';
 import { CommentPlugin } from '@platejs/comment/react';
 import { SuggestionPlugin } from '@platejs/suggestion/react';
-import { MessageSquareTextIcon, MessagesSquareIcon, PencilLineIcon } from 'lucide-react';
+import {
+  MessageSquareTextIcon,
+  MessagesSquareIcon,
+  PencilLineIcon,
+  Pencil,
+  Check,
+  X,
+} from 'lucide-react';
 import {
   type AnyPluginConfig,
   type NodeEntry,
@@ -19,6 +26,7 @@ import {
 import { useEditorPlugin, useEditorRef, usePluginOption } from 'platejs/react';
 
 import { Button } from '@/components/ui/button.tsx';
+import { Input } from '@/components/ui/input.tsx';
 import {
   Popover,
   PopoverAnchor,
@@ -250,10 +258,82 @@ const BlockCommentContent = ({
 
 function BlockComment({ discussion, isLast }: { discussion: TDiscussion; isLast: boolean }) {
   const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = React.useState(false);
+  const [titleValue, setTitleValue] = React.useState(discussion.title || '');
+  const documentTitle = usePluginOption(discussionPlugin, 'documentTitle');
+  const editor = useEditorRef();
+
+  const handleSaveTitle = () => {
+    const updatedDiscussions = editor
+      .getOption(discussionPlugin, 'discussions')
+      .map((d: TDiscussion) => {
+        if (d.id === discussion.id) {
+          return { ...d, title: titleValue };
+        }
+        return d;
+      });
+    editor.setOption(discussionPlugin, 'discussions', updatedDiscussions);
+    setEditingTitle(false);
+  };
+
+  const handleCancelEdit = () => {
+    setTitleValue(discussion.title || '');
+    setEditingTitle(false);
+  };
 
   return (
     <React.Fragment key={discussion.id}>
       <div className="p-4">
+        {/* Discussion Title */}
+        <div className="mb-3 flex items-center gap-2">
+          {editingTitle ? (
+            <div className="flex flex-1 items-center gap-2">
+              <Input
+                value={titleValue}
+                onChange={e => setTitleValue(e.target.value)}
+                placeholder="Enter discussion title..."
+                className="h-8 text-sm"
+                autoFocus
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    handleSaveTitle();
+                  } else if (e.key === 'Escape') {
+                    handleCancelEdit();
+                  }
+                }}
+              />
+              <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={handleSaveTitle}>
+                <Check className="h-3 w-3" />
+              </Button>
+              <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={handleCancelEdit}>
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-1 items-center gap-2 rounded-md bg-muted/30 px-3 py-2">
+              <span className="text-sm font-semibold">
+                {discussion.title || 'Untitled Discussion'}
+              </span>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="ml-auto h-6 w-6 p-0"
+                onClick={() => setEditingTitle(true)}
+              >
+                <Pencil className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Document Title Display */}
+        {documentTitle && (
+          <div className="mb-3 flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2">
+            <span className="text-xs font-medium text-muted-foreground">Document:</span>
+            <span className="text-xs font-semibold">{documentTitle}</span>
+          </div>
+        )}
+
         {discussion.comments.map((comment, index) => (
           <Comment
             key={comment.id ?? index}
