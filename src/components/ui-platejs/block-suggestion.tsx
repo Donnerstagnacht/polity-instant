@@ -37,6 +37,7 @@ import { type TComment, Comment, CommentCreateForm, formatCommentDate } from './
 export interface ResolvedSuggestion extends TResolvedSuggestion {
   comments: TComment[];
   title?: string;
+  crId?: string; // Format: CR-x (e.g., CR-1, CR-2, etc.)
 }
 
 const BLOCK_SUGGESTION = '__block__';
@@ -107,7 +108,7 @@ export function BlockSuggestionCard({
   const { t } = useTranslation();
   const { api, editor } = useEditorPlugin(SuggestionPlugin);
   const { onSuggestionAccepted, onSuggestionDeclined } = useSuggestionCallbacks();
-
+  // documentId is not used, removed to fix eslint error
   const userInfo = usePluginOption(discussionPlugin, 'user', suggestion.userId);
 
   const [editingTitle, setEditingTitle] = React.useState(false);
@@ -237,6 +238,12 @@ export function BlockSuggestionCard({
             </div>
           ) : (
             <div className="flex flex-1 items-center gap-2 rounded-md bg-muted/30 px-3 py-2">
+              {/* Display suggestion ID if available */}
+              {suggestion.crId && (
+                <span className="rounded bg-primary/10 px-2 py-1 font-mono text-xs text-primary">
+                  {suggestion.crId}
+                </span>
+              )}
               <span className="text-sm font-semibold">
                 {suggestion.title || 'Untitled Suggestion'}
               </span>
@@ -530,6 +537,7 @@ export const useResolveSuggestion = (
       const discussion = discussions.find((s: TDiscussion) => s.id === id);
       const comments = discussion?.comments || [];
       const title = discussion?.title; // Get the title from the discussion
+      const crId = discussion?.crId; // Get the CR-x ID from the discussion
       const createdAt = new Date(nodeData.createdAt);
 
       const keyId = getSuggestionKey(id);
@@ -537,6 +545,7 @@ export const useResolveSuggestion = (
       if (nodeData.type === 'update') {
         return res.push({
           comments,
+          crId, // Include the CR-x ID
           createdAt,
           keyId,
           newProperties,
@@ -551,6 +560,7 @@ export const useResolveSuggestion = (
       if (newText.length > 0 && text.length > 0) {
         return res.push({
           comments,
+          crId, // Include the CR-x ID
           createdAt,
           keyId,
           newText,
@@ -564,6 +574,7 @@ export const useResolveSuggestion = (
       if (newText.length > 0) {
         return res.push({
           comments,
+          crId, // Include the CR-x ID
           createdAt,
           keyId,
           newText,
@@ -576,6 +587,7 @@ export const useResolveSuggestion = (
       if (text.length > 0) {
         return res.push({
           comments,
+          crId, // Include the CR-x ID
           createdAt,
           keyId,
           suggestionId: keyId2SuggestionId(id),
@@ -589,6 +601,71 @@ export const useResolveSuggestion = (
 
     return res;
   }, [api.suggestion, blockPath, discussions, editor.api, getOption, suggestionNodes]);
+
+  // Effect to ensure all suggestions have CR IDs
+  React.useEffect(() => {
+    const documentId = editor.getOption(discussionPlugin, 'documentId');
+
+    if (!documentId || resolvedSuggestion.length === 0) return;
+
+    const assignMissingIds = async () => {
+      const currentDiscussions = editor.getOption(discussionPlugin, 'discussions') || [];
+      let needsUpdate = false;
+      const updatedDiscussions = [...currentDiscussions];
+
+      for (const suggestion of resolvedSuggestion) {
+        if (suggestion.crId) continue; // Already has CR ID
+
+        // Find or create discussion for this suggestion
+        const discussionId =
+          suggestion.keyId?.replace('suggestion_', '') || suggestion.suggestionId;
+        const discussion = updatedDiscussions.find((d: TDiscussion) => d.id === discussionId);
+
+        if (!discussion) {
+          // Create new discussion with CR ID
+          try {
+            const { getNextSuggestionId } = await import('../../utils/suggestion-utils');
+            const crId = await getNextSuggestionId(documentId);
+
+            const newDiscussion: TDiscussion = {
+              id: discussionId,
+              comments: [],
+              createdAt: suggestion.createdAt || new Date(),
+              isResolved: false,
+              userId: suggestion.userId,
+              crId,
+            };
+
+            updatedDiscussions.push(newDiscussion);
+            needsUpdate = true;
+          } catch (error) {
+            console.error('Failed to assign CR ID to suggestion:', error);
+          }
+        } else if (!discussion.crId) {
+          // Discussion exists but doesn't have crId
+          try {
+            const { getNextSuggestionId } = await import('../../utils/suggestion-utils');
+            const crId = await getNextSuggestionId(documentId);
+
+            const index = updatedDiscussions.findIndex(d => d.id === discussionId);
+            if (index !== -1) {
+              updatedDiscussions[index] = { ...updatedDiscussions[index], crId };
+              needsUpdate = true;
+            }
+          } catch (error) {
+            console.error('Failed to assign CR ID to discussion:', error);
+          }
+        }
+      }
+
+      if (needsUpdate) {
+        editor.setOption(discussionPlugin, 'discussions', updatedDiscussions);
+      }
+    };
+
+    // Run async assignment
+    assignMissingIds();
+  }, [resolvedSuggestion, editor]);
 
   return resolvedSuggestion;
 };

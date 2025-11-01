@@ -1,8 +1,10 @@
 import * as React from 'react';
 
+import type { ResolvedSuggestion } from '../ui-platejs/block-suggestion';
+
 export interface SuggestionCallbacks {
-  onSuggestionAccepted?: (suggestion: any) => void;
-  onSuggestionDeclined?: (suggestion: any) => void;
+  onSuggestionAccepted?: (suggestion: ResolvedSuggestion) => void;
+  onSuggestionDeclined?: (suggestion: ResolvedSuggestion) => void;
 }
 
 const SuggestionCallbacksContext = React.createContext<SuggestionCallbacks>({});

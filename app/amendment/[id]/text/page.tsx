@@ -19,6 +19,7 @@ import { createDocumentVersion } from './version-utils';
 import { ShareButton } from '@/components/shared/ShareButton';
 import { useNavigationStore } from '@/navigation/state/navigation.store';
 import { useScreenStore } from '@/global-state/screen.store';
+import { useSuggestionIdAssignment } from '@/hooks/use-suggestion-id-assignment';
 import { useNavigation } from '@/navigation/state/useNavigation';
 
 const DEFAULT_CONTENT = [
@@ -91,6 +92,13 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
 
   const amendment = amendmentData?.amendments?.[0];
   const document = amendment?.document;
+
+  // Auto-assign suggestion IDs
+  useSuggestionIdAssignment({
+    documentId: document?.id || '',
+    discussions,
+    onDiscussionsUpdate: setDiscussions,
+  });
 
   // Create room for presence using document ID (use a placeholder if no document yet)
   const room = db.room('editor', document?.id || 'placeholder');
@@ -399,40 +407,54 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
   );
 
   // Handle suggestion accepted - create a version
-  const handleSuggestionAccepted = useCallback(async () => {
-    if (!document?.id || !user?.id || !editorValue) return;
+  const handleSuggestionAccepted = useCallback(
+    async (suggestion: any) => {
+      if (!document?.id || !user?.id || !editorValue) return;
 
-    try {
-      await createDocumentVersion({
-        documentId: document.id,
-        userId: user.id,
-        content: editorValue,
-        creationType: 'suggestion_accepted',
-      });
+      try {
+        // Use the suggestion's crId as the version title if available
+        const versionTitle = suggestion?.crId ? `${suggestion.crId} accepted` : undefined;
 
-      console.log('✅ Version created for accepted suggestion');
-    } catch (error) {
-      console.error('Failed to create version for accepted suggestion:', error);
-    }
-  }, [document?.id, user?.id, editorValue]);
+        await createDocumentVersion({
+          documentId: document.id,
+          userId: user.id,
+          content: editorValue,
+          creationType: 'suggestion_accepted',
+          title: versionTitle,
+        });
+
+        console.log('✅ Version created for accepted suggestion:', suggestion?.crId || 'unknown');
+      } catch (error) {
+        console.error('Failed to create version for accepted suggestion:', error);
+      }
+    },
+    [document?.id, user?.id, editorValue]
+  );
 
   // Handle suggestion declined - create a version
-  const handleSuggestionDeclined = useCallback(async () => {
-    if (!document?.id || !user?.id || !editorValue) return;
+  const handleSuggestionDeclined = useCallback(
+    async (suggestion: any) => {
+      if (!document?.id || !user?.id || !editorValue) return;
 
-    try {
-      await createDocumentVersion({
-        documentId: document.id,
-        userId: user.id,
-        content: editorValue,
-        creationType: 'suggestion_declined',
-      });
+      try {
+        // Use the suggestion's crId as the version title if available
+        const versionTitle = suggestion?.crId ? `${suggestion.crId} declined` : undefined;
 
-      console.log('✅ Version created for declined suggestion');
-    } catch (error) {
-      console.error('Failed to create version for declined suggestion:', error);
-    }
-  }, [document?.id, user?.id, editorValue]);
+        await createDocumentVersion({
+          documentId: document.id,
+          userId: user.id,
+          content: editorValue,
+          creationType: 'suggestion_declined',
+          title: versionTitle,
+        });
+
+        console.log('✅ Version created for declined suggestion:', suggestion?.crId || 'unknown');
+      } catch (error) {
+        console.error('Failed to create version for declined suggestion:', error);
+      }
+    },
+    [document?.id, user?.id, editorValue]
+  );
 
   // Cleanup timeouts
   useEffect(() => {
@@ -666,6 +688,7 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
                 key={document.id}
                 value={documentContent}
                 onChange={handleContentChange}
+                documentId={document.id}
                 documentTitle={documentTitle}
                 currentUser={
                   user && userProfile

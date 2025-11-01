@@ -105,6 +105,7 @@ const _schema = i.schema({
       tags: i.json().optional(),
       title: i.string().indexed(),
       updatedAt: i.date().indexed(),
+      suggestionCounter: i.number().optional(), // Autoincrementing counter for suggestion IDs (CR-1, CR-2, etc.)
     }),
     documentVersions: i.entity({
       versionNumber: i.number().indexed(),

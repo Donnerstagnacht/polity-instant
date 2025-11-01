@@ -12,6 +12,7 @@ export interface TDiscussion {
   userId: string;
   documentContent?: string;
   title?: string;
+  crId?: string; // Format: CR-x (e.g., CR-1, CR-2, etc.)
 }
 
 const discussionsData: TDiscussion[] = [
@@ -137,6 +138,7 @@ export const discussionPlugin = createPlatePlugin({
     discussions: discussionsData,
     users: defaultUsersData,
     documentTitle: '',
+    documentId: '', // Document ID for suggestion ID generation
   },
 })
   .configure({

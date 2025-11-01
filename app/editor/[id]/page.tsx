@@ -16,6 +16,7 @@ import { useToast } from '@/global-state/use-toast';
 import { InviteCollaboratorDialog } from './invite-collaborator-dialog';
 import { VersionControl } from './version-control';
 import { createDocumentVersion } from './version-utils';
+import { useSuggestionIdAssignment } from '@/hooks/use-suggestion-id-assignment';
 
 const DEFAULT_CONTENT = [
   {
@@ -100,6 +101,13 @@ export default function DocumentEditorPage() {
   });
 
   const document = documentData?.documents?.[0];
+
+  // Auto-assign suggestion IDs
+  useSuggestionIdAssignment({
+    documentId: document?.id || '',
+    discussions,
+    onDiscussionsUpdate: setDiscussions,
+  });
 
   // Get online peers (excluding current user)
   const onlinePeers = useMemo(
@@ -297,40 +305,54 @@ export default function DocumentEditorPage() {
   );
 
   // Handle suggestion accepted - create a version
-  const handleSuggestionAccepted = useCallback(async () => {
-    if (!documentId || !user?.id || !editorValue) return;
+  const handleSuggestionAccepted = useCallback(
+    async (suggestion: any) => {
+      if (!documentId || !user?.id || !editorValue) return;
 
-    try {
-      await createDocumentVersion({
-        documentId,
-        userId: user.id,
-        content: editorValue,
-        creationType: 'suggestion_accepted',
-      });
+      try {
+        // Use the suggestion's crId as the version title if available
+        const versionTitle = suggestion?.crId ? `${suggestion.crId} accepted` : undefined;
 
-      console.log('✅ Version created for accepted suggestion');
-    } catch (error) {
-      console.error('Failed to create version for accepted suggestion:', error);
-    }
-  }, [documentId, user?.id, editorValue]);
+        await createDocumentVersion({
+          documentId,
+          userId: user.id,
+          content: editorValue,
+          creationType: 'suggestion_accepted',
+          title: versionTitle,
+        });
+
+        console.log('✅ Version created for accepted suggestion:', suggestion?.crId || 'unknown');
+      } catch (error) {
+        console.error('Failed to create version for accepted suggestion:', error);
+      }
+    },
+    [documentId, user?.id, editorValue]
+  );
 
   // Handle suggestion declined - create a version
-  const handleSuggestionDeclined = useCallback(async () => {
-    if (!documentId || !user?.id || !editorValue) return;
+  const handleSuggestionDeclined = useCallback(
+    async (suggestion: any) => {
+      if (!documentId || !user?.id || !editorValue) return;
 
-    try {
-      await createDocumentVersion({
-        documentId,
-        userId: user.id,
-        content: editorValue,
-        creationType: 'suggestion_declined',
-      });
+      try {
+        // Use the suggestion's crId as the version title if available
+        const versionTitle = suggestion?.crId ? `${suggestion.crId} declined` : undefined;
 
-      console.log('✅ Version created for declined suggestion');
-    } catch (error) {
-      console.error('Failed to create version for declined suggestion:', error);
-    }
-  }, [documentId, user?.id, editorValue]);
+        await createDocumentVersion({
+          documentId,
+          userId: user.id,
+          content: editorValue,
+          creationType: 'suggestion_declined',
+          title: versionTitle,
+        });
+
+        console.log('✅ Version created for declined suggestion:', suggestion?.crId || 'unknown');
+      } catch (error) {
+        console.error('Failed to create version for declined suggestion:', error);
+      }
+    },
+    [documentId, user?.id, editorValue]
+  );
 
   // Save document title (debounced)
   const handleTitleChange = useCallback(
@@ -588,6 +610,7 @@ export default function DocumentEditorPage() {
                 key={documentId}
                 value={documentContent}
                 onChange={handleContentChange}
+                documentId={documentId}
                 currentUser={
                   user && userProfile
                     ? {

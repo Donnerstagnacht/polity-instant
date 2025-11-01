@@ -29,6 +29,7 @@ interface PlateEditorProps {
   onDiscussionsChange?: (discussions: any[]) => void;
   onSuggestionAccepted?: (suggestion: any) => void;
   onSuggestionDeclined?: (suggestion: any) => void;
+  documentId?: string; // Document ID for suggestion ID generation
   documentTitle?: string; // Document title to show in discussions/suggestions
 }
 
@@ -43,6 +44,7 @@ export function PlateEditor({
   onDiscussionsChange,
   onSuggestionAccepted,
   onSuggestionDeclined,
+  documentId,
   documentTitle,
 }: PlateEditorProps) {
   const onChangeRef = React.useRef(onChange);
@@ -72,6 +74,7 @@ export function PlateEditor({
               users: users,
               discussions: discussions || [], // Initial discussions from DB
               documentTitle: documentTitle || '', // Pass document title
+              documentId: documentId || '', // Pass document ID for suggestion ID generation
             },
           },
         },
@@ -79,7 +82,7 @@ export function PlateEditor({
     }
 
     return config;
-  }, [isControlled, value, initialValue, currentUser, users, documentTitle]); // Added documentTitle to deps
+  }, [isControlled, value, initialValue, currentUser, users, documentTitle, documentId]); // Added documentId to deps
 
   const editor = usePlateEditor(editorConfig);
 
