@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { SuggestionPlugin } from '@platejs/suggestion/react';
 import { type DropdownMenuProps, DropdownMenuItemIndicator } from '@radix-ui/react-dropdown-menu';
-import { CheckIcon, EyeIcon, PencilLineIcon, PenIcon } from 'lucide-react';
+import { CheckIcon, EyeIcon, PencilLineIcon, PenIcon, Vote } from 'lucide-react';
 import { useEditorRef, usePlateState, usePluginOption } from 'platejs/react';
 import { useTranslation } from 'react-i18next';
 
@@ -16,7 +16,18 @@ import {
 
 import { ToolbarButton } from '../ui/toolbar.tsx';
 
-export function ModeToolbarButton(props: DropdownMenuProps) {
+interface ModeToolbarButtonProps extends DropdownMenuProps {
+  currentMode?: 'edit' | 'view' | 'suggest' | 'vote';
+  onModeChange?: (mode: 'edit' | 'view' | 'suggest' | 'vote') => void;
+  isOwnerOrCollaborator?: boolean;
+}
+
+export function ModeToolbarButton({
+  currentMode,
+  onModeChange,
+  isOwnerOrCollaborator = true,
+  ...props
+}: ModeToolbarButtonProps) {
   const editor = useEditorRef();
   const [readOnly, setReadOnly] = usePlateState('readOnly');
   const [open, setOpen] = React.useState(false);
@@ -25,11 +36,20 @@ export function ModeToolbarButton(props: DropdownMenuProps) {
 
   const { t } = useTranslation();
 
+  // Determine current mode based on either external prop or internal state
   let value = 'editing';
 
-  if (readOnly) value = 'viewing';
-
-  if (isSuggesting) value = 'suggestion';
+  if (currentMode) {
+    // Use external mode from database
+    if (currentMode === 'edit') value = 'editing';
+    if (currentMode === 'view') value = 'viewing';
+    if (currentMode === 'suggest') value = 'suggestion';
+    if (currentMode === 'vote') value = 'voting';
+  } else {
+    // Use internal PlateJS state
+    if (readOnly) value = 'viewing';
+    if (isSuggesting) value = 'suggestion';
+  }
 
   const item: Record<string, { icon: React.ReactNode; label: string }> = {
     editing: {
@@ -43,6 +63,10 @@ export function ModeToolbarButton(props: DropdownMenuProps) {
     viewing: {
       icon: <EyeIcon />,
       label: t('plateJs.toolbar.mode.viewing', 'Viewing'),
+    },
+    voting: {
+      icon: <Vote />,
+      label: t('plateJs.toolbar.mode.voting', 'Voting'),
     },
   };
 
@@ -60,35 +84,48 @@ export function ModeToolbarButton(props: DropdownMenuProps) {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent className="min-w-[180px]" align="start">
+        {!isOwnerOrCollaborator && (
+          <div className="px-2 py-1.5 text-xs text-muted-foreground">
+            {t('plateJs.toolbar.mode.viewOnly', 'View only - contact owner to change mode')}
+          </div>
+        )}
         <DropdownMenuRadioGroup
           value={value}
           onValueChange={newValue => {
-            if (newValue === 'viewing') {
-              setReadOnly(true);
-
+            // If external mode handler is provided, use it (synced with DB)
+            if (onModeChange) {
+              const modeMap: Record<string, 'edit' | 'view' | 'suggest' | 'vote'> = {
+                editing: 'edit',
+                viewing: 'view',
+                suggestion: 'suggest',
+                voting: 'vote',
+              };
+              onModeChange(modeMap[newValue]);
               return;
+            }
+
+            // Otherwise, use internal PlateJS state management
+            if (newValue === 'viewing' || newValue === 'voting') {
+              setReadOnly(true);
             } else {
               setReadOnly(false);
             }
 
             if (newValue === 'suggestion') {
               editor.setOption(SuggestionPlugin, 'isSuggesting', true);
-
-              return;
             } else {
               editor.setOption(SuggestionPlugin, 'isSuggesting', false);
             }
 
             if (newValue === 'editing') {
               editor.tf.focus();
-
-              return;
             }
           }}
         >
           <DropdownMenuRadioItem
-            className="*:[svg]:text-muted-foreground pl-2 *:first:[span]:hidden"
+            className="*:[svg]:text-muted-foreground *:first:[span]:hidden pl-2"
             value="editing"
+            disabled={!isOwnerOrCollaborator}
           >
             <Indicator />
             {item.editing.icon}
@@ -96,8 +133,9 @@ export function ModeToolbarButton(props: DropdownMenuProps) {
           </DropdownMenuRadioItem>
 
           <DropdownMenuRadioItem
-            className="*:[svg]:text-muted-foreground pl-2 *:first:[span]:hidden"
+            className="*:[svg]:text-muted-foreground *:first:[span]:hidden pl-2"
             value="viewing"
+            disabled={!isOwnerOrCollaborator}
           >
             <Indicator />
             {item.viewing.icon}
@@ -105,12 +143,23 @@ export function ModeToolbarButton(props: DropdownMenuProps) {
           </DropdownMenuRadioItem>
 
           <DropdownMenuRadioItem
-            className="*:[svg]:text-muted-foreground pl-2 *:first:[span]:hidden"
+            className="*:[svg]:text-muted-foreground *:first:[span]:hidden pl-2"
             value="suggestion"
+            disabled={!isOwnerOrCollaborator}
           >
             <Indicator />
             {item.suggestion.icon}
             {item.suggestion.label}
+          </DropdownMenuRadioItem>
+
+          <DropdownMenuRadioItem
+            className="*:[svg]:text-muted-foreground *:first:[span]:hidden pl-2"
+            value="voting"
+            disabled={!isOwnerOrCollaborator}
+          >
+            <Indicator />
+            {item.voting.icon}
+            {item.voting.label}
           </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
       </DropdownMenuContent>

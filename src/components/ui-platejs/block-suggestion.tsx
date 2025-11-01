@@ -31,13 +31,59 @@ import { cn } from '@/utils/utils.ts';
 import { type TDiscussion, discussionPlugin } from '@/components/kit-platejs/discussion-kit.tsx';
 import { suggestionPlugin } from '@/components/kit-platejs/suggestion-kit.tsx';
 import { useSuggestionCallbacks } from '@/components/kit-platejs/suggestion-callbacks-context.tsx';
+import { useModeContext } from '@/components/kit-platejs/mode-context.tsx';
 
 import { type TComment, Comment, CommentCreateForm, formatCommentDate } from './comment';
+
+// Import VoteControls interface to pass the required props
+export interface BlockSuggestionVoteProps {
+  changeRequestId: string;
+  currentUserId: string;
+  votes: {
+    id: string;
+    vote: string;
+    createdAt: number;
+    voter: {
+      id: string;
+      profile?: {
+        name?: string;
+        avatar?: string;
+      };
+    };
+  }[];
+  collaborators: {
+    id: string;
+    user: {
+      id: string;
+      profile?: {
+        name?: string;
+        avatar?: string;
+      };
+    };
+  }[];
+  status: string;
+  amendmentId: string;
+  documentId: string;
+  suggestionData?: {
+    crId: string;
+    description: string;
+    proposedChange: string;
+    justification: string;
+    userId: string;
+    createdAt: number;
+  };
+  onVoteComplete?: () => void;
+}
 
 export interface ResolvedSuggestion extends TResolvedSuggestion {
   comments: TComment[];
   title?: string;
   crId?: string; // Format: CR-x (e.g., CR-1, CR-2, etc.)
+  votes?: {
+    id: string;
+    vote: string;
+    voterId: string;
+  }[];
 }
 
 const BLOCK_SUGGESTION = '__block__';
@@ -107,9 +153,26 @@ export function BlockSuggestionCard({
 }) {
   const { t } = useTranslation();
   const { api, editor } = useEditorPlugin(SuggestionPlugin);
-  const { onSuggestionAccepted, onSuggestionDeclined } = useSuggestionCallbacks();
+  const { onSuggestionAccepted, onSuggestionDeclined, onVoteAccept, onVoteReject, onVoteAbstain } =
+    useSuggestionCallbacks();
+  const { currentMode } = useModeContext(); // Get current editing mode
   // documentId is not used, removed to fix eslint error
   const userInfo = usePluginOption(discussionPlugin, 'user', suggestion.userId);
+  const currentUserId = usePluginOption(discussionPlugin, 'currentUserId');
+
+  // Check if current user has already voted
+  const currentUserVote = suggestion.votes?.find((v: any) => v.voterId === currentUserId);
+  const hasVoted = !!currentUserVote;
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log('=== BLOCK SUGGESTION DEBUG ===');
+    console.log('suggestion.votes:', suggestion.votes);
+    console.log('currentUserId:', currentUserId);
+    console.log('currentUserVote:', currentUserVote);
+    console.log('hasVoted:', hasVoted);
+    console.log('currentMode:', currentMode);
+  }, [suggestion.votes, currentUserId, currentUserVote, hasVoted, currentMode]);
 
   const [editingTitle, setEditingTitle] = React.useState(false);
   const [titleValue, setTitleValue] = React.useState(suggestion.title || '');
@@ -355,7 +418,7 @@ export function BlockSuggestionCard({
           />
         ))}
 
-        {hovering && (
+        {hovering && currentMode !== 'vote' && (
           <div className="absolute right-4 top-4 flex gap-2">
             <Button
               variant="ghost"
@@ -372,6 +435,95 @@ export function BlockSuggestionCard({
             >
               <XIcon className="size-4" />
             </Button>
+          </div>
+        )}
+
+        {currentMode === 'vote' && (
+          <div className="mt-4 space-y-2">
+            {hasVoted ? (
+              <div className="rounded-md border border-blue-500/30 bg-blue-500/5 p-4">
+                <p className="mb-2 text-sm font-semibold text-blue-700 dark:text-blue-400">
+                  {t('plateJs.blockSuggestion.voteRecorded', 'Your Vote Recorded')}
+                </p>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">You voted to:</span>
+                  <span
+                    className={`inline-flex items-center rounded-md px-3 py-1 text-sm font-semibold ${
+                      currentUserVote?.vote === 'accept'
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                        : currentUserVote?.vote === 'reject'
+                          ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                          : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+                    }`}
+                  >
+                    {currentUserVote?.vote === 'accept' && (
+                      <>
+                        <CheckIcon className="mr-1 h-4 w-4" />
+                        Accept
+                      </>
+                    )}
+                    {currentUserVote?.vote === 'reject' && (
+                      <>
+                        <XIcon className="mr-1 h-4 w-4" />
+                        Reject
+                      </>
+                    )}
+                    {currentUserVote?.vote === 'abstain' && 'Abstain'}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="rounded-md border border-blue-500/30 bg-blue-500/5 p-3">
+                  <p className="mb-1 text-sm font-semibold text-blue-700 dark:text-blue-400">
+                    {t('plateJs.blockSuggestion.voteRequired', 'Voting Required')}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Cast your vote for this change request.
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="default"
+                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    onClick={() => {
+                      if (onVoteAccept) {
+                        onVoteAccept(suggestion);
+                      }
+                    }}
+                  >
+                    <CheckIcon className="mr-2 h-4 w-4" />
+                    Accept
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="flex-1"
+                    onClick={() => {
+                      if (onVoteReject) {
+                        onVoteReject(suggestion);
+                      }
+                    }}
+                  >
+                    <XIcon className="mr-2 h-4 w-4" />
+                    Reject
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      if (onVoteAbstain) {
+                        onVoteAbstain(suggestion);
+                      }
+                    }}
+                  >
+                    Abstain
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         )}
 
@@ -538,7 +690,17 @@ export const useResolveSuggestion = (
       const comments = discussion?.comments || [];
       const title = discussion?.title; // Get the title from the discussion
       const crId = discussion?.crId; // Get the CR-x ID from the discussion
+      const votes = (discussion as any)?.votes; // Get the votes from the discussion
       const createdAt = new Date(nodeData.createdAt);
+
+      // Debug logging for votes
+      if (crId) {
+        console.log(`useResolveSuggestion for ${crId}:`, {
+          discussionId: id,
+          discussion,
+          votes,
+        });
+      }
 
       const keyId = getSuggestionKey(id);
 
@@ -546,6 +708,7 @@ export const useResolveSuggestion = (
         return res.push({
           comments,
           crId, // Include the CR-x ID
+          votes, // Include the votes
           createdAt,
           keyId,
           newProperties,
@@ -561,6 +724,7 @@ export const useResolveSuggestion = (
         return res.push({
           comments,
           crId, // Include the CR-x ID
+          votes, // Include the votes
           createdAt,
           keyId,
           newText,
@@ -575,6 +739,7 @@ export const useResolveSuggestion = (
         return res.push({
           comments,
           crId, // Include the CR-x ID
+          votes, // Include the votes
           createdAt,
           keyId,
           newText,
@@ -588,6 +753,7 @@ export const useResolveSuggestion = (
         return res.push({
           comments,
           crId, // Include the CR-x ID
+          votes, // Include the votes
           createdAt,
           keyId,
           suggestionId: keyId2SuggestionId(id),

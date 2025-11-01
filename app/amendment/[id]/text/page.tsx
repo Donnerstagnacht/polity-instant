@@ -87,11 +87,36 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
           },
         },
       },
+      collaborators: {
+        user: {
+          profile: {},
+        },
+      },
     },
   });
 
   const amendment = amendmentData?.amendments?.[0];
   const document = amendment?.document;
+
+  // Fetch changeRequests with votes for this amendment
+  const { data: changeRequestsData } = db.useQuery(
+    amendment?.id
+      ? {
+          changeRequests: {
+            $: {
+              where: {
+                'amendment.id': amendment.id,
+              },
+            },
+            votes: {
+              voter: {},
+            },
+          },
+        }
+      : null
+  );
+
+  const changeRequests = changeRequestsData?.changeRequests || [];
 
   // Auto-assign suggestion IDs
   useSuggestionIdAssignment({
@@ -217,6 +242,43 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
       setDiscussions(remoteDiscussions);
     }
   }, [(document as any)?.discussions]);
+
+  // Merge votes into discussions for display in editor
+  const discussionsWithVotes = useMemo(() => {
+    console.log('=== DISCUSSIONS WITH VOTES DEBUG ===');
+    console.log('discussions:', discussions);
+    console.log('changeRequests:', changeRequests);
+
+    if (!discussions || discussions.length === 0) return discussions;
+
+    const enriched = discussions.map((discussion: any) => {
+      // Find matching changeRequest by crId (stored in title field)
+      const matchingChangeRequest = changeRequests.find((cr: any) => cr.title === discussion.crId);
+
+      console.log(`Discussion ${discussion.crId}:`, {
+        discussion,
+        matchingChangeRequest,
+        votes: matchingChangeRequest?.votes,
+      });
+
+      if (matchingChangeRequest && matchingChangeRequest.votes) {
+        // Add votes to the discussion
+        return {
+          ...discussion,
+          votes: matchingChangeRequest.votes.map((vote: any) => ({
+            id: vote.id,
+            vote: vote.vote,
+            voterId: vote.voter?.id,
+          })),
+        };
+      }
+
+      return discussion;
+    });
+
+    console.log('enriched discussions:', enriched);
+    return enriched;
+  }, [discussions, changeRequests]);
 
   // Sync remote updates without destroying local selection
   useEffect(() => {
@@ -411,6 +473,17 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
     async (suggestion: any) => {
       if (!document?.id || !user?.id || !editorValue || !amendment?.id) return;
 
+      // In vote mode, suggestions cannot be accepted directly
+      if (document.editingMode === 'vote') {
+        toast({
+          title: 'Voting Required',
+          description:
+            'This document is in voting mode. Changes must be approved by vote on the Change Requests page.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       try {
         // Use the suggestion's crId as the version title if available
         const versionTitle = suggestion?.crId ? `${suggestion.crId} accepted` : undefined;
@@ -477,13 +550,24 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
         console.error('Failed to create version for accepted suggestion:', error);
       }
     },
-    [document?.id, user?.id, editorValue, discussions, amendment?.id]
+    [document?.id, document?.editingMode, user?.id, editorValue, discussions, amendment?.id, toast]
   );
 
   // Handle suggestion declined - create a version and save to changeRequests entity
   const handleSuggestionDeclined = useCallback(
     async (suggestion: any) => {
       if (!document?.id || !user?.id || !editorValue || !amendment?.id) return;
+
+      // In vote mode, suggestions cannot be rejected directly
+      if (document.editingMode === 'vote') {
+        toast({
+          title: 'Voting Required',
+          description:
+            'This document is in voting mode. Changes must be rejected by vote on the Change Requests page.',
+          variant: 'destructive',
+        });
+        return;
+      }
 
       try {
         // Use the suggestion's crId as the version title if available
@@ -551,7 +635,145 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
         console.error('Failed to create version for declined suggestion:', error);
       }
     },
-    [document?.id, user?.id, editorValue, discussions, amendment?.id]
+    [document?.id, document?.editingMode, user?.id, editorValue, discussions, amendment?.id, toast]
+  );
+
+  // Handle mode change from PlateJS toolbar
+  const handleModeChange = useCallback(
+    async (newMode: 'edit' | 'view' | 'suggest' | 'vote') => {
+      if (!document?.id) return;
+
+      try {
+        await db.transact([
+          tx.documents[document.id].update({
+            editingMode: newMode,
+            updatedAt: Date.now(),
+          }),
+        ]);
+
+        toast({
+          title: 'Mode Changed',
+          description: `Document is now in ${newMode} mode.`,
+        });
+      } catch (error) {
+        console.error('Failed to change mode:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to change document mode.',
+          variant: 'destructive',
+        });
+      }
+    },
+    [document?.id, toast]
+  );
+
+  // Handle vote callbacks - create changeRequest entity and vote
+  const handleVote = useCallback(
+    async (suggestion: any, voteType: 'accept' | 'reject' | 'abstain') => {
+      if (!document?.id || !user?.id || !amendment?.id) return;
+
+      try {
+        // Find the discussion for this suggestion
+        const discussionId = suggestion.keyId.replace('suggestion_', '');
+        const discussion = discussions.find((d: any) => d.id === discussionId);
+
+        if (!discussion) {
+          toast({
+            title: 'Error',
+            description: 'Could not find suggestion data.',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        // Check if a changeRequest entity already exists for this discussion
+        const existingChangeRequestQuery = await db.queryOnce({
+          changeRequests: {
+            $: {
+              where: {
+                'amendment.id': amendment.id,
+                title: discussion.crId,
+              },
+            },
+          },
+        });
+
+        let changeRequestId: string;
+
+        if (
+          existingChangeRequestQuery?.data?.changeRequests &&
+          existingChangeRequestQuery.data.changeRequests.length > 0
+        ) {
+          // Use existing changeRequest
+          changeRequestId = existingChangeRequestQuery.data.changeRequests[0].id;
+          console.log('Using existing changeRequest:', changeRequestId);
+        } else {
+          // Create new changeRequest entity
+          changeRequestId = id();
+          console.log('Creating new changeRequest entity:', changeRequestId);
+
+          await db.transact([
+            tx.changeRequests[changeRequestId]
+              .update({
+                title: discussion.crId || 'Change Request',
+                description: discussion.description || '',
+                proposedChange: discussion.proposedChange || '',
+                justification: discussion.justification || '',
+                status: 'pending',
+                requiresVoting: true,
+                createdAt: discussion.createdAt || Date.now(),
+                updatedAt: Date.now(),
+              })
+              .link({ creator: discussion.userId })
+              .link({ amendment: amendment.id }),
+          ]);
+        }
+
+        // Create the vote
+        const voteId = id();
+        await db.transact([
+          tx.changeRequestVotes[voteId]
+            .update({
+              vote: voteType,
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+            })
+            .link({ changeRequest: changeRequestId })
+            .link({ voter: user.id }),
+        ]);
+
+        toast({
+          title: 'Vote Recorded',
+          description: `You voted to ${voteType} this change request.`,
+        });
+
+        console.log('✅ Vote recorded:', voteType, 'for', discussion.crId);
+      } catch (error) {
+        console.error('Failed to record vote:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to record your vote. Please try again.',
+          variant: 'destructive',
+        });
+      }
+    },
+    [document?.id, user?.id, amendment?.id, discussions, toast]
+  );
+
+  // Individual vote handlers
+  const handleVoteAccept = useCallback(
+    (suggestion: any) => handleVote(suggestion, 'accept'),
+    [handleVote]
+  );
+
+  const handleVoteReject = useCallback(
+    (suggestion: any) => handleVote(suggestion, 'reject'),
+    [handleVote]
+  );
+
+  const handleVoteAbstain = useCallback(
+    (suggestion: any) => handleVote(suggestion, 'abstain'),
+    [handleVote]
   );
 
   // Cleanup timeouts
@@ -569,6 +791,15 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
     (document.owner?.id === user?.id ||
       document.collaborators?.some((c: any) => c.user?.id === user?.id) ||
       document.isPublic);
+
+  // Check if user is owner or collaborator (can change modes)
+  // Include amendment owner and amendment admins as well
+  const isOwnerOrCollaborator =
+    (document &&
+      (document.owner?.id === user?.id ||
+        document.collaborators?.some((c: any) => c.user?.id === user?.id))) ||
+    amendment?.user?.id === user?.id ||
+    amendment?.collaborators?.some((c: any) => c.user?.id === user?.id && c.status === 'admin');
 
   if (amendmentLoading) {
     return (
@@ -788,6 +1019,9 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
                 onChange={handleContentChange}
                 documentId={document.id}
                 documentTitle={documentTitle}
+                currentMode={(document.editingMode as any) || 'suggest'}
+                onModeChange={handleModeChange}
+                isOwnerOrCollaborator={!!isOwnerOrCollaborator}
                 currentUser={
                   user && userProfile
                     ? {
@@ -798,10 +1032,13 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
                     : undefined
                 }
                 users={editorUsers}
-                discussions={discussions}
+                discussions={discussionsWithVotes}
                 onDiscussionsChange={handleDiscussionsChange}
                 onSuggestionAccepted={handleSuggestionAccepted}
                 onSuggestionDeclined={handleSuggestionDeclined}
+                onVoteAccept={handleVoteAccept}
+                onVoteReject={handleVoteReject}
+                onVoteAbstain={handleVoteAbstain}
               />
             </div>
           </CardContent>

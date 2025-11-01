@@ -8,6 +8,8 @@ import { suggestionPlugin } from '@/components/kit-platejs/suggestion-kit.tsx';
 import { SettingsDialog } from '@/components/kit-platejs/settings-dialog.tsx';
 import { Editor, EditorContainer } from '@/components/ui-platejs/editor.tsx';
 import { SuggestionCallbacksProvider } from '@/components/kit-platejs/suggestion-callbacks-context.tsx';
+import { ModeProvider } from '@/components/kit-platejs/mode-context.tsx';
+import { ModeSync } from '@/components/kit-platejs/mode-sync.tsx';
 
 interface PlateEditorProps {
   initialValue?: any[];
@@ -29,8 +31,14 @@ interface PlateEditorProps {
   onDiscussionsChange?: (discussions: any[]) => void;
   onSuggestionAccepted?: (suggestion: any) => void;
   onSuggestionDeclined?: (suggestion: any) => void;
+  onVoteAccept?: (suggestion: any) => void; // Vote accept callback
+  onVoteReject?: (suggestion: any) => void; // Vote reject callback
+  onVoteAbstain?: (suggestion: any) => void; // Vote abstain callback
   documentId?: string; // Document ID for suggestion ID generation
   documentTitle?: string; // Document title to show in discussions/suggestions
+  currentMode?: 'edit' | 'view' | 'suggest' | 'vote'; // Current editing mode from DB
+  onModeChange?: (mode: 'edit' | 'view' | 'suggest' | 'vote') => void; // Mode change callback
+  isOwnerOrCollaborator?: boolean; // Whether user can change modes
 }
 
 export function PlateEditor({
@@ -44,8 +52,14 @@ export function PlateEditor({
   onDiscussionsChange,
   onSuggestionAccepted,
   onSuggestionDeclined,
+  onVoteAccept,
+  onVoteReject,
+  onVoteAbstain,
   documentId,
   documentTitle,
+  currentMode,
+  onModeChange,
+  isOwnerOrCollaborator = true,
 }: PlateEditorProps) {
   const onChangeRef = React.useRef(onChange);
   const isControlled = value !== undefined;
@@ -103,21 +117,23 @@ export function PlateEditor({
       // Get current discussions from editor
       const currentEditorDiscussions = editor.getOption(discussionPlugin, 'discussions') || [];
 
-      // NEVER overwrite editor discussions with props if editor has more discussions
-      // The editor is the source of truth for new discussions until they're saved to DB
-      const shouldUpdateDiscussions =
-        discussions &&
-        discussions.length > 0 &&
-        discussions.length > currentEditorDiscussions.length && // Only if DB has MORE
-        JSON.stringify(currentEditorDiscussions) !== JSON.stringify(discussions);
+      // Check if discussions have changed
+      const propsDiscussionsStr = JSON.stringify(discussions || []);
+      const editorDiscussionsStr = JSON.stringify(currentEditorDiscussions);
+      const discussionsChanged = propsDiscussionsStr !== editorDiscussionsStr;
+
+      // Prefer editor discussions if they have more items (user may have added new discussions)
+      // Otherwise, use props discussions (which may have updated votes)
+      const shouldUsePropsDiscussions =
+        discussionsChanged && discussions && discussions.length >= currentEditorDiscussions.length;
 
       // Update discussion plugin options
       editor.setOptions(discussionPlugin, {
         currentUserId: currentUser.id,
         users: users,
         documentTitle: documentTitle || '',
-        // Only override if DB has MORE discussions than editor (e.g., after page reload)
-        discussions: shouldUpdateDiscussions ? discussions : currentEditorDiscussions,
+        // Use props discussions if they're newer/different and have at least as many items
+        discussions: shouldUsePropsDiscussions ? discussions : currentEditorDiscussions,
       });
 
       // Also update suggestion plugin's currentUserId
@@ -238,43 +254,58 @@ export function PlateEditor({
   }, []);
 
   return (
-    <SuggestionCallbacksProvider
-      callbacks={{
-        onSuggestionAccepted,
-        onSuggestionDeclined,
-      }}
+    <ModeProvider
+      currentMode={currentMode}
+      onModeChange={onModeChange}
+      isOwnerOrCollaborator={isOwnerOrCollaborator}
     >
-      <Plate editor={editor} onChange={handleEditorChange}>
-        <EditorContainer>
-          <Editor variant="demo" />
+      <SuggestionCallbacksProvider
+        callbacks={{
+          onSuggestionAccepted,
+          onSuggestionDeclined,
+          onVoteAccept,
+          onVoteReject,
+          onVoteAbstain,
+        }}
+      >
+        <Plate editor={editor} onChange={handleEditorChange}>
+          {/* Sync external mode with PlateJS internal state */}
+          <ModeSync currentMode={currentMode} />
 
-          {/* Render other users' cursors */}
-          {cursors.map(cursor => (
-            <div
-              key={cursor.id}
-              className="pointer-events-none absolute z-50"
-              style={
-                {
-                  // Position would be calculated based on cursor.position
-                  // This is a simplified version - full implementation would need
-                  // to convert Slate position to DOM position
-                }
-              }
-            >
-              <div className="h-5 w-0.5 animate-pulse" style={{ backgroundColor: cursor.color }} />
+          <EditorContainer>
+            <Editor variant="demo" />
+
+            {/* Render other users' cursors */}
+            {cursors.map(cursor => (
               <div
-                className="mt-1 whitespace-nowrap rounded px-2 py-0.5 text-xs text-white"
-                style={{ backgroundColor: cursor.color }}
+                key={cursor.id}
+                className="pointer-events-none absolute z-50"
+                style={
+                  {
+                    // Position would be calculated based on cursor.position
+                    // This is a simplified version - full implementation would need
+                    // to convert Slate position to DOM position
+                  }
+                }
               >
-                {cursor.name}
+                <div
+                  className="h-5 w-0.5 animate-pulse"
+                  style={{ backgroundColor: cursor.color }}
+                />
+                <div
+                  className="mt-1 whitespace-nowrap rounded px-2 py-0.5 text-xs text-white"
+                  style={{ backgroundColor: cursor.color }}
+                >
+                  {cursor.name}
+                </div>
               </div>
-            </div>
-          ))}
-        </EditorContainer>
+            ))}
+          </EditorContainer>
 
-        <SettingsDialog />
-      </Plate>
-    </SuggestionCallbacksProvider>
+          <SettingsDialog />
+        </Plate>
+      </SuggestionCallbacksProvider>
+    </ModeProvider>
   );
 }
 

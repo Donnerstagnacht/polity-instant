@@ -5,6 +5,9 @@ import type { ResolvedSuggestion } from '../ui-platejs/block-suggestion';
 export interface SuggestionCallbacks {
   onSuggestionAccepted?: (suggestion: ResolvedSuggestion) => void;
   onSuggestionDeclined?: (suggestion: ResolvedSuggestion) => void;
+  onVoteAccept?: (suggestion: ResolvedSuggestion) => void;
+  onVoteReject?: (suggestion: ResolvedSuggestion) => void;
+  onVoteAbstain?: (suggestion: ResolvedSuggestion) => void;
 }
 
 const SuggestionCallbacksContext = React.createContext<SuggestionCallbacks>({});

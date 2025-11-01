@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import db from '../../../../db';
 import { ArrowLeft, FileEdit, Clock, User, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+import { VoteControls } from './vote-controls';
 
 export default function AmendmentChangeRequestsPage({
   params,
@@ -17,18 +18,36 @@ export default function AmendmentChangeRequestsPage({
   params: Promise<{ id: string }>;
 }) {
   const resolvedParams = use(params);
+  const amendmentId = resolvedParams.id; // Extract amendmentId
   const [activeTab, setActiveTab] = useState<'open' | 'closed'>('open');
+  const { user } = db.useAuth();
 
   // Fetch amendment data with its document AND changeRequests
   const { data, isLoading } = db.useQuery({
     amendments: {
-      $: { where: { id: resolvedParams.id } },
+      $: { where: { id: amendmentId } },
       user: {
         profile: {},
       },
-      document: {},
+      document: {
+        collaborators: {
+          user: {
+            profile: {},
+          },
+        },
+      },
       changeRequests: {
         creator: {
+          profile: {},
+        },
+        votes: {
+          voter: {
+            profile: {},
+          },
+        },
+      },
+      collaborators: {
+        user: {
           profile: {},
         },
       },
@@ -38,6 +57,7 @@ export default function AmendmentChangeRequestsPage({
   const amendment = data?.amendments?.[0];
   const document = amendment?.document;
   const savedChangeRequests = amendment?.changeRequests || [];
+  const collaborators = amendment?.collaborators || [];
 
   // Debug logging
   console.log('=== CHANGE REQUESTS PAGE DEBUG ===');
@@ -134,6 +154,11 @@ export default function AmendmentChangeRequestsPage({
           .map((suggestion: any) => {
             const suggestionContent = extractSuggestionContent(suggestion.id);
 
+            // Check if a changeRequest entity exists for this discussion (by matching crId in title)
+            const matchingChangeRequest = savedChangeRequests.find(
+              (cr: any) => cr.title === suggestion.crId
+            );
+
             return {
               id: suggestion.id,
               crId: suggestion.crId,
@@ -148,43 +173,59 @@ export default function AmendmentChangeRequestsPage({
               proposedChange: suggestionContent.newText || suggestionContent.text,
               justification: suggestion.justification || '',
               isResolved: false,
-              status: 'open',
+              status: matchingChangeRequest?.status || 'open',
               resolution: null,
               resolvedAt: null,
               resolvedBy: null,
               createdAt: suggestion.createdAt,
               userId: suggestion.userId,
               comments: suggestion.comments || [],
+              votes: matchingChangeRequest?.votes || [], // Include votes from matching changeRequest entity
+              changeRequestEntityId: matchingChangeRequest?.id, // Store the entity ID for voting
             };
           })
       );
     }
 
     // Process closed change requests from savedChangeRequests entity
+    // Only include those that are truly closed (accepted/rejected), not pending votes
     if (savedChangeRequests && Array.isArray(savedChangeRequests)) {
+      // Get all crIds from open requests (discussions)
+      const openRequestCrIds = new Set(openRequests.map(r => r.crId));
+
       closedRequests.push(
-        ...savedChangeRequests.map((cr: any) => ({
-          id: cr.id,
-          crId: cr.title, // The title contains the CR-X identifier
-          crNumber: parseInt(cr.title?.replace('CR-', '') || '0'),
-          title: cr.title,
-          description: cr.description || '',
-          type: 'unknown', // We don't store type in changeRequests entity
-          text: cr.proposedChange || '',
-          newText: '',
-          properties: {},
-          newProperties: {},
-          proposedChange: cr.proposedChange || '',
-          justification: cr.justification || '',
-          isResolved: true,
-          status: cr.status, // 'accepted' or 'rejected'
-          resolution: cr.status, // 'accepted' or 'rejected'
-          resolvedAt: cr.updatedAt,
-          resolvedBy: cr.creator?.id,
-          createdAt: cr.createdAt,
-          userId: cr.creator?.id,
-          comments: [],
-        }))
+        ...savedChangeRequests
+          .filter((cr: any) => {
+            // Exclude if this changeRequest is already in openRequests
+            if (openRequestCrIds.has(cr.title)) {
+              return false;
+            }
+            // Only include if status is accepted or rejected (not pending)
+            return cr.status === 'accepted' || cr.status === 'rejected';
+          })
+          .map((cr: any) => ({
+            id: cr.id,
+            crId: cr.title, // The title contains the CR-X identifier
+            crNumber: parseInt(cr.title?.replace('CR-', '') || '0'),
+            title: cr.title,
+            description: cr.description || '',
+            type: 'unknown', // We don't store type in changeRequests entity
+            text: cr.proposedChange || '',
+            newText: '',
+            properties: {},
+            newProperties: {},
+            proposedChange: cr.proposedChange || '',
+            justification: cr.justification || '',
+            isResolved: true,
+            status: cr.status, // 'accepted' or 'rejected'
+            resolution: cr.status, // 'accepted' or 'rejected'
+            resolvedAt: cr.updatedAt,
+            resolvedBy: cr.creator?.id,
+            createdAt: cr.createdAt,
+            userId: cr.creator?.id,
+            comments: [],
+            votes: cr.votes || [],
+          }))
       );
     }
 
@@ -539,6 +580,44 @@ export default function AmendmentChangeRequestsPage({
                           </div>
                         )}
                       </div>
+
+                      {/* Voting Controls (only in vote mode) */}
+                      {document?.editingMode === 'vote' && user?.id && (
+                        <div className="mt-6 border-t pt-4">
+                          <VoteControls
+                            changeRequestId={request.changeRequestEntityId || request.id}
+                            currentUserId={user.id}
+                            votes={request.votes || []}
+                            collaborators={collaborators
+                              .filter(c => c.user?.id)
+                              .map(c => ({
+                                id: c.id,
+                                user: {
+                                  id: c.user?.id ?? '',
+                                  profile: {
+                                    name: c.user?.profile?.name ?? '',
+                                    avatar: c.user?.profile?.avatar ?? '',
+                                  },
+                                },
+                              }))}
+                            status={request.status}
+                            amendmentId={amendmentId}
+                            documentId={document?.id || ''}
+                            suggestionData={
+                              !request.changeRequestEntityId
+                                ? {
+                                    crId: request.crId || '',
+                                    description: request.description || '',
+                                    proposedChange: request.proposedChange || '',
+                                    justification: request.justification || '',
+                                    userId: request.userId || '',
+                                    createdAt: request.createdAt || Date.now(),
+                                  }
+                                : undefined
+                            }
+                          />
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

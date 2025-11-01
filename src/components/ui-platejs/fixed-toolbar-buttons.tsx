@@ -40,10 +40,12 @@ import { TableToolbarButton } from './table-toolbar-button.tsx';
 import { ToggleToolbarButton } from './toggle-toolbar-button.tsx';
 import { ToolbarGroup } from '../ui/toolbar.tsx';
 import { TurnIntoToolbarButton } from './turn-into-toolbar-button.tsx';
+import { useModeContext } from '@/components/kit-platejs/mode-context.tsx';
 
 export function FixedToolbarButtons() {
   const readOnly = useEditorReadOnly();
   const { t } = useTranslation();
+  const { currentMode, onModeChange, isOwnerOrCollaborator } = useModeContext();
 
   return (
     <div className="flex w-full">
@@ -58,7 +60,11 @@ export function FixedToolbarButtons() {
       </ToolbarGroup>
 
       <ToolbarGroup>
-        <ModeToolbarButton />
+        <ModeToolbarButton
+          currentMode={currentMode}
+          onModeChange={onModeChange}
+          isOwnerOrCollaborator={isOwnerOrCollaborator}
+        />
       </ToolbarGroup>
 
       {!readOnly && (

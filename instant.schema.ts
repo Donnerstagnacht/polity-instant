@@ -72,11 +72,13 @@ const _schema = i.schema({
       updatedAt: i.date().indexed(),
       votingEndTime: i.date().optional(),
       votingStartTime: i.date().optional(),
+      requiresVoting: i.boolean().optional(), // Whether this CR requires voting approval
+      votingThreshold: i.number().optional(), // Percentage needed to pass (default 50)
     }),
     changeRequestVotes: i.entity({
       createdAt: i.date().indexed(),
       updatedAt: i.date().optional(),
-      vote: i.string().indexed(),
+      vote: i.string().indexed(), // 'accept', 'reject', 'abstain'
     }),
     conversationParticipants: i.entity({
       joinedAt: i.date().indexed(),
@@ -106,6 +108,7 @@ const _schema = i.schema({
       title: i.string().indexed(),
       updatedAt: i.date().indexed(),
       suggestionCounter: i.number().optional(), // Autoincrementing counter for suggestion IDs (CR-1, CR-2, etc.)
+      editingMode: i.string().optional(), // 'edit', 'view', 'suggest', 'vote'
     }),
     documentVersions: i.entity({
       versionNumber: i.number().indexed(),
