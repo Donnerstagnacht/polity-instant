@@ -1,21 +1,20 @@
 import React, { useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
-import { AmendmentsCard } from './AmendmentsCard';
+import { AmendmentSearchCard } from '@/features/search/ui/AmendmentSearchCard';
+import { GRADIENTS } from '../state/gradientColors';
 import type { UserAmendment } from '../types/user.types';
 
 interface AmendmentListTabProps {
   amendments: UserAmendment[];
   searchValue: string;
   onSearchChange: (value: string) => void;
-  getStatusStyles: (status: UserAmendment['status']) => any;
 }
 
 export const AmendmentListTab: React.FC<AmendmentListTabProps> = ({
   amendments,
   searchValue,
   onSearchChange,
-  getStatusStyles,
 }) => {
   const filteredAmendments = useMemo(() => {
     const term = (searchValue ?? '').toLowerCase();
@@ -47,13 +46,14 @@ export const AmendmentListTab: React.FC<AmendmentListTabProps> = ({
           No amendments found matching your search.
         </p>
       ) : (
-        <div className="space-y-4">
-          {filteredAmendments.map(amendment => {
-            const statusStyle = getStatusStyles(amendment.status);
-            return (
-              <AmendmentsCard key={amendment.id} amendment={amendment} statusStyle={statusStyle} />
-            );
-          })}
+        <div className="grid gap-4 md:grid-cols-2">
+          {filteredAmendments.map((amendment, index) => (
+            <AmendmentSearchCard
+              key={amendment.id}
+              amendment={amendment}
+              gradientClass={GRADIENTS[index % GRADIENTS.length]}
+            />
+          ))}
         </div>
       )}
     </>
