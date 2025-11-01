@@ -1,27 +1,174 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState } from 'react';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+// import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
-import db from '../../../db';
-import { BookOpen, User, Calendar, Heart, MessageSquare, Share2 } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Textarea } from '@/components/ui/textarea';
+import db, { id } from '../../../db';
+import { BookOpen, Calendar, MessageSquare, Clock, ArrowUp, ArrowDown } from 'lucide-react';
 import { StatsBar } from '@/components/ui/StatsBar';
 import { BlogSubscribeButton } from '@/features/blogs/ui/BlogSubscribeButton';
 import { useSubscribeBlog } from '@/features/blogs/hooks/useSubscribeBlog';
 import { ActionBar } from '@/components/ui/ActionBar';
+import { useAuthStore } from '@/features/auth/auth';
+import { toast } from 'sonner';
+import { useTranslation } from '@/hooks/use-translation';
+import { CommentSortSelect, CommentSortBy } from '@/components/shared/CommentSortSelect';
+
+// Comment component for blog comments
+interface BlogComment {
+  id: string;
+  text: string;
+  createdAt: number;
+  updatedAt?: number;
+  upvotes?: number;
+  downvotes?: number;
+  parentComment?: any;
+  creator?: {
+    profile?: {
+      name?: string;
+      handle?: string;
+      avatar?: string;
+    };
+  };
+  votes?: {
+    id: string;
+    vote: number;
+    user?: {
+      id: string;
+    };
+  }[];
+  replies?: BlogComment[];
+}
+
+function CommentItem({ comment, blogId }: { comment: BlogComment; blogId: string }) {
+  const { user } = useAuthStore();
+
+  const userVote = comment.votes?.find(v => v.user?.id === user?.id);
+  const hasUpvoted = userVote?.vote === 1;
+  const hasDownvoted = userVote?.vote === -1;
+
+  // Calculate score from votes relation
+  const upvotesFromRelation = comment.votes?.filter(v => v.vote === 1).length || 0;
+  const downvotesFromRelation = comment.votes?.filter(v => v.vote === -1).length || 0;
+  const score = upvotesFromRelation - downvotesFromRelation;
+
+  const handleVote = async (voteValue: number) => {
+    if (!user?.id) {
+      toast.error('You must be logged in to vote');
+      return;
+    }
+
+    try {
+      if (userVote) {
+        if (userVote.vote === voteValue) {
+          // Remove vote
+          await db.transact([db.tx.commentVotes[userVote.id].delete()]);
+        } else {
+          // Change vote
+          await db.transact([db.tx.commentVotes[userVote.id].update({ vote: voteValue })]);
+        }
+      } else {
+        // Create new vote
+        const voteId = id();
+        await db.transact([
+          db.tx.commentVotes[voteId].update({
+            vote: voteValue,
+            createdAt: Date.now(),
+          }),
+          db.tx.commentVotes[voteId].link({
+            comment: comment.id,
+            user: user.id,
+          }),
+        ]);
+      }
+    } catch (error) {
+      console.error('Error voting:', error);
+      toast.error('Failed to vote');
+    }
+  };
+
+  return (
+    <div className="flex gap-4 rounded-lg border p-4">
+      {/* Vote buttons */}
+      <div className="flex flex-col items-center gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          className={`h-8 w-8 p-0 ${hasUpvoted ? 'text-orange-500' : ''}`}
+          onClick={() => handleVote(1)}
+        >
+          <ArrowUp className="h-4 w-4" />
+        </Button>
+        <span
+          className={`text-sm font-semibold ${score > 0 ? 'text-orange-500' : score < 0 ? 'text-blue-500' : ''}`}
+        >
+          {score}
+        </span>
+        <Button
+          variant="ghost"
+          size="sm"
+          className={`h-8 w-8 p-0 ${hasDownvoted ? 'text-blue-500' : ''}`}
+          onClick={() => handleVote(-1)}
+        >
+          <ArrowDown className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Comment content */}
+      <div className="flex-1">
+        <div className="mb-3 flex items-start justify-between">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Avatar className="h-6 w-6">
+              <AvatarImage src={comment.creator?.profile?.avatar} />
+              <AvatarFallback>
+                {comment.creator?.profile?.name?.[0]?.toUpperCase() || 'U'}
+              </AvatarFallback>
+            </Avatar>
+            <span className="font-medium">{comment.creator?.profile?.name || 'Anonymous'}</span>
+            {comment.creator?.profile?.handle && (
+              <span className="text-xs">@{comment.creator.profile.handle}</span>
+            )}
+            <span>•</span>
+            <Clock className="h-4 w-4" />
+            <span>{new Date(comment.createdAt).toLocaleDateString()}</span>
+          </div>
+        </div>
+        <p className="mb-3 whitespace-pre-wrap">{comment.text}</p>
+
+        {/* Replies */}
+        {comment.replies && comment.replies.length > 0 && (
+          <div className="mt-4 space-y-3 border-l-2 pl-4">
+            {comment.replies.map(reply => (
+              <CommentItem key={reply.id} comment={reply} blogId={blogId} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function BlogPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
+  const { user } = useAuthStore();
+  const { t } = useTranslation();
+  const [isCommenting, setIsCommenting] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sortBy, setSortBy] = useState<CommentSortBy>('votes');
 
   // Subscribe hook
   const { subscriberCount } = useSubscribeBlog(resolvedParams.id);
 
-  // Fetch blog data from InstantDB
-  const { data, isLoading } = db.useQuery({
+  // Fetch blog data from InstantDB with comments
+  // Note: We fetch all comments and filter later to avoid nested query issues
+  const { data, isLoading, error } = db.useQuery({
     blogs: {
       $: { where: { id: resolvedParams.id } },
       user: {
@@ -32,15 +179,92 @@ export default function BlogPage({ params }: { params: Promise<{ id: string }> }
     },
   });
 
-  const blog = data?.blogs?.[0];
-
-  // Debug: Log hashtags data
-  console.log('Blog data:', {
-    id: blog?.id,
-    title: blog?.title,
-    hashtags: blog?.hashtags,
-    hashtagCount: blog?.hashtags?.length,
+  // Separate query for comments to avoid nesting issues
+  const { data: commentsData } = db.useQuery({
+    comments: {
+      $: { where: { blog: resolvedParams.id } },
+      creator: {
+        profile: {},
+      },
+      votes: {
+        user: {},
+      },
+      parentComment: {},
+      replies: {
+        creator: {
+          profile: {},
+        },
+        votes: {
+          user: {},
+        },
+      },
+    },
   });
+
+  const blog = data?.blogs?.[0];
+  // Get comments from separate query and filter to only show top-level comments
+  const allComments = (commentsData?.comments || []) as BlogComment[];
+  const topLevelComments = allComments.filter(comment => !comment.parentComment);
+
+  // Sort comments based on selected sort method
+  const comments = [...topLevelComments].sort((a, b) => {
+    if (sortBy === 'votes') {
+      // Calculate scores from votes relation
+      const upvotesA = a.votes?.filter(v => v.vote === 1).length || 0;
+      const downvotesA = a.votes?.filter(v => v.vote === -1).length || 0;
+      const scoreA = upvotesA - downvotesA;
+
+      const upvotesB = b.votes?.filter(v => v.vote === 1).length || 0;
+      const downvotesB = b.votes?.filter(v => v.vote === -1).length || 0;
+      const scoreB = upvotesB - downvotesB;
+
+      return scoreB - scoreA; // Higher score first
+    } else {
+      return b.createdAt - a.createdAt; // Newer first
+    }
+  });
+
+  // Debug logging
+  console.log('Blog query data:', {
+    data,
+    blogId: resolvedParams.id,
+    blog,
+    isLoading,
+    error,
+    allBlogsCount: data?.blogs?.length,
+    commentsCount: allComments.length,
+  });
+
+  // Handle adding a comment
+  const handleAddComment = async () => {
+    if (!commentText.trim() || !user?.id) return;
+
+    setIsSubmitting(true);
+    try {
+      const commentId = id();
+      await db.transact([
+        db.tx.comments[commentId].update({
+          text: commentText,
+          createdAt: Date.now(),
+        }),
+        db.tx.comments[commentId].link({
+          blog: resolvedParams.id,
+          creator: user.id,
+        }),
+      ]);
+
+      toast.success('Comment posted successfully');
+      setCommentText('');
+      setIsCommenting(false);
+    } catch (error) {
+      console.error('Error posting comment:', error);
+      toast.error('Failed to post comment');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle like - removed, we use comment voting instead
 
   if (isLoading) {
     return (
@@ -71,39 +295,55 @@ export default function BlogPage({ params }: { params: Promise<{ id: string }> }
 
   return (
     <AuthGuard requireAuth={true}>
-      <PageWrapper className="container mx-auto p-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="mb-4 flex items-center gap-3">
+      <PageWrapper className="container mx-auto max-w-6xl p-4">
+        {/* Header with centered title */}
+        <div className="mb-8 text-center">
+          <div className="mb-2 flex items-center justify-center gap-3">
             <BookOpen className="h-8 w-8" />
-            <Badge variant="default">Blog Post</Badge>
+            <h1 className="text-4xl font-bold">{blog.title}</h1>
           </div>
-          <h1 className="mb-4 text-4xl font-bold">{blog.title}</h1>
-          <div className="flex items-center gap-4 text-muted-foreground">
-            {blog.date && (
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                <span>{blog.date}</span>
+
+          {/* Created By Section - Similar to Amendment's Proposed By */}
+          {author && (
+            <div className="mt-4 flex items-center justify-center gap-3">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={author.avatar || author.imageURL} />
+                <AvatarFallback>{author.name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+              </Avatar>
+              <div className="text-left">
+                <p className="text-sm font-medium">
+                  {t ? t('components.labels.createdBy') : 'Created by'} {author.name || 'Unknown'}
+                </p>
+                {author.handle && <p className="text-xs text-muted-foreground">@{author.handle}</p>}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* Stats Bar */}
-          <div className="mt-6">
-            <StatsBar
-              stats={[
-                { value: subscriberCount, labelKey: 'components.labels.subscribers' },
-                { value: blog.likes || 0, labelKey: 'components.labels.likes' },
-                { value: blog.comments || 0, labelKey: 'components.labels.comments' },
-              ]}
-            />
-          </div>
-
-          {/* Action Bar */}
-          <ActionBar>
-            <BlogSubscribeButton blogId={resolvedParams.id} />
-          </ActionBar>
+          {blog.date && (
+            <div className="mt-2 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <Calendar className="h-4 w-4" />
+              <span>{blog.date}</span>
+            </div>
+          )}
         </div>
+
+        {/* Stats Bar */}
+        <StatsBar
+          stats={[
+            { value: subscriberCount, labelKey: 'components.labels.subscribers' },
+            { value: blog.likes || 0, labelKey: 'components.labels.likes' },
+            { value: comments.length, labelKey: 'components.labels.comments' },
+          ]}
+        />
+
+        {/* Action Bar */}
+        <ActionBar>
+          <BlogSubscribeButton blogId={resolvedParams.id} />
+          <Button variant="outline" onClick={() => setIsCommenting(true)}>
+            <MessageSquare className="mr-2 h-4 w-4" />
+            Comment
+          </Button>
+        </ActionBar>
 
         {/* Hashtags */}
         {blog.hashtags && blog.hashtags.length > 0 && (
@@ -112,125 +352,84 @@ export default function BlogPage({ params }: { params: Promise<{ id: string }> }
           </div>
         )}
 
-        <div className="grid gap-6 md:grid-cols-4">
-          <div className="space-y-6 md:col-span-3">
-            {/* Blog Content */}
-            <Card>
-              <CardContent className="prose prose-slate max-w-none pt-6 dark:prose-invert">
-                <p className="lead text-muted-foreground">
-                  This is where the blog content would appear. The blog post can include rich text,
-                  images, and other media.
-                </p>
-                <p>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-                  incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-                  exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                </p>
-                <h2>Section Heading</h2>
-                <p>
-                  Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-                  fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-                  culpa qui officia deserunt mollit anim id est laborum.
-                </p>
-              </CardContent>
-            </Card>
+        {/* Blog Content */}
+        <Card className="mb-6">
+          <CardContent className="prose prose-slate max-w-none pt-6 dark:prose-invert">
+            <p className="lead text-muted-foreground">
+              This is where the blog content would appear. The blog post can include rich text,
+              images, and other media.
+            </p>
+            <p>
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
+              incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
+              exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+            </p>
+            <h2>Section Heading</h2>
+            <p>
+              Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat
+              nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui
+              officia deserunt mollit anim id est laborum.
+            </p>
+          </CardContent>
+        </Card>
 
-            {/* Engagement Actions */}
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Button variant="outline" size="sm">
-                      <Heart className="mr-2 h-4 w-4" />
-                      Like ({blog.likes || 0})
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <MessageSquare className="mr-2 h-4 w-4" />
-                      Comment ({blog.comments || 0})
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Share2 className="mr-2 h-4 w-4" />
-                      Share
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Comments Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Comments ({blog.comments || 0})</CardTitle>
-                <CardDescription>Join the discussion</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  No comments yet. Be the first to comment on this post.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Author Info */}
-            {author && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    Author
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p className="font-medium">{author.name || 'Unknown'}</p>
-                    {author.handle && (
-                      <p className="text-sm text-muted-foreground">@{author.handle}</p>
-                    )}
-                    {author.bio && (
-                      <p className="line-clamp-3 text-sm text-muted-foreground">{author.bio}</p>
-                    )}
-                    <Button variant="outline" size="sm" className="mt-2 w-full">
-                      View Profile
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+        {/* Comments Section */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Discussion ({comments.length})</CardTitle>
+                <CardDescription>Join the conversation</CardDescription>
+              </div>
+              <CommentSortSelect sortBy={sortBy} onSortChange={setSortBy} />
+            </div>
+          </CardHeader>
+          <CardContent>
+            {/* Add Comment Form */}
+            {!isCommenting && (
+              <Button
+                variant="outline"
+                onClick={() => setIsCommenting(true)}
+                className="mb-6 w-full"
+              >
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Add Comment
+              </Button>
             )}
 
-            {/* Stats */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Engagement</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Likes</span>
-                  <span className="font-medium">{blog.likes || 0}</span>
+            {isCommenting && (
+              <div className="mb-6 space-y-2 rounded-lg border p-4">
+                <Textarea
+                  placeholder="Write your comment..."
+                  value={commentText}
+                  onChange={e => setCommentText(e.target.value)}
+                  rows={3}
+                />
+                <div className="flex gap-2">
+                  <Button onClick={handleAddComment} disabled={isSubmitting || !commentText.trim()}>
+                    Post Comment
+                  </Button>
+                  <Button variant="outline" onClick={() => setIsCommenting(false)}>
+                    Cancel
+                  </Button>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Comments</span>
-                  <span className="font-medium">{blog.comments || 0}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Published</span>
-                  <span className="text-sm font-medium">{blog.date}</span>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            )}
 
-            {/* Related Posts */}
-            <Card>
-              <CardHeader>
-                <CardTitle>More from this author</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">No other posts yet.</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+            {/* Comments List */}
+            <div className="space-y-4">
+              {comments.length === 0 ? (
+                <p className="text-center text-sm text-muted-foreground">
+                  No comments yet. Be the first to comment on this post.
+                </p>
+              ) : (
+                comments.map(comment => (
+                  <CommentItem key={comment.id} comment={comment} blogId={resolvedParams.id} />
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </PageWrapper>
     </AuthGuard>
   );

@@ -3391,6 +3391,220 @@ async function seedMeetingSlots(userIds: string[]) {
   console.log(`  Main user & Tobias: additional public meetings`);
 }
 
+async function seedBlogCommentsAndLikes(blogIds: string[], userIds: string[]) {
+  console.log('Seeding blog comments and likes...');
+  const transactions = [];
+  let totalComments = 0;
+  let totalReplies = 0;
+  let totalVotes = 0;
+
+  // For each blog, create 3-8 comments
+  for (const blogId of blogIds) {
+    const commentCount = randomInt(3, 8);
+    const commenters = randomItems(userIds, commentCount);
+    const commentIds: string[] = [];
+
+    for (const commenterId of commenters) {
+      const commentId = id();
+      commentIds.push(commentId);
+
+      transactions.push(
+        tx.comments[commentId]
+          .update({
+            text: faker.lorem.paragraph(),
+            createdAt: faker.date.past({ years: 0.5 }),
+            updatedAt: faker.date.recent({ days: 7 }),
+            upvotes: randomInt(0, 25),
+            downvotes: randomInt(0, 5),
+          })
+          .link({ blog: blogId, creator: commenterId })
+      );
+      totalComments++;
+
+      // Add votes for this comment (1-5 voters per comment)
+      const voteCount = randomInt(1, 5);
+      const voters = randomItems(userIds, voteCount);
+
+      for (const voterId of voters) {
+        const voteId = id();
+        const voteValue = randomItem([1, 1, 1, -1]); // 75% upvotes, 25% downvotes
+
+        transactions.push(
+          tx.commentVotes[voteId]
+            .update({
+              vote: voteValue,
+              createdAt: faker.date.recent({ days: 30 }),
+            })
+            .link({ comment: commentId, user: voterId })
+        );
+        totalVotes++;
+      }
+    }
+
+    // Add 1-3 replies to random comments
+    const replyCount = Math.min(randomInt(1, 3), commentIds.length);
+    for (let i = 0; i < replyCount; i++) {
+      const parentCommentId = randomItem(commentIds);
+      const replyId = id();
+      const replierId = randomItem(userIds);
+
+      transactions.push(
+        tx.comments[replyId]
+          .update({
+            text: faker.lorem.sentence(),
+            createdAt: faker.date.recent({ days: 14 }),
+            updatedAt: faker.date.recent({ days: 7 }),
+            upvotes: randomInt(0, 10),
+            downvotes: randomInt(0, 2),
+          })
+          .link({
+            blog: blogId,
+            creator: replierId,
+            parentComment: parentCommentId,
+          })
+      );
+      totalReplies++;
+
+      // Add votes for replies (0-3 voters per reply)
+      const replyVoteCount = randomInt(0, 3);
+      const replyVoters = randomItems(userIds, replyVoteCount);
+
+      for (const voterId of replyVoters) {
+        const voteId = id();
+        const voteValue = randomItem([1, 1, 1, -1]); // 75% upvotes, 25% downvotes
+
+        transactions.push(
+          tx.commentVotes[voteId]
+            .update({
+              vote: voteValue,
+              createdAt: faker.date.recent({ days: 14 }),
+            })
+            .link({ comment: replyId, user: voterId })
+        );
+        totalVotes++;
+      }
+    }
+  }
+
+  // Execute in batches
+  const batchSize = 50;
+  for (let i = 0; i < transactions.length; i += batchSize) {
+    const batch = transactions.slice(i, i + batchSize);
+    await db.transact(batch);
+  }
+
+  console.log(`✓ Created ${totalComments} comments with ${totalReplies} replies`);
+  console.log(`✓ Created ${totalVotes} comment votes`);
+  console.log(`  Each blog has 3-8 comments with votes and some replies`);
+}
+
+async function seedAmendmentCommentsAndVotes(amendmentIds: string[], userIds: string[]) {
+  console.log('Seeding amendment comments and votes...');
+  const transactions = [];
+  let totalComments = 0;
+  let totalReplies = 0;
+  let totalVotes = 0;
+
+  // For each amendment, create 4-10 comments (more active discussion)
+  for (const amendmentId of amendmentIds) {
+    const commentCount = randomInt(4, 10);
+    const commenters = randomItems(userIds, commentCount);
+    const commentIds: string[] = [];
+
+    for (const commenterId of commenters) {
+      const commentId = id();
+      commentIds.push(commentId);
+
+      transactions.push(
+        tx.comments[commentId]
+          .update({
+            text: faker.lorem.paragraph(),
+            createdAt: faker.date.past({ years: 0.5 }),
+            updatedAt: faker.date.recent({ days: 7 }),
+            upvotes: randomInt(0, 30),
+            downvotes: randomInt(0, 8),
+          })
+          .link({ amendment: amendmentId, creator: commenterId })
+      );
+      totalComments++;
+
+      // Add votes for this comment (2-8 voters per comment - more engagement)
+      const voteCount = randomInt(2, 8);
+      const voters = randomItems(userIds, voteCount);
+
+      for (const voterId of voters) {
+        const voteId = id();
+        const voteValue = randomItem([1, 1, 1, -1]); // 75% upvotes, 25% downvotes
+
+        transactions.push(
+          tx.commentVotes[voteId]
+            .update({
+              vote: voteValue,
+              createdAt: faker.date.recent({ days: 30 }),
+            })
+            .link({ comment: commentId, user: voterId })
+        );
+        totalVotes++;
+      }
+    }
+
+    // Add 2-5 replies to random comments (amendments have more discussion)
+    const replyCount = Math.min(randomInt(2, 5), commentIds.length);
+    for (let i = 0; i < replyCount; i++) {
+      const parentCommentId = randomItem(commentIds);
+      const replyId = id();
+      const replierId = randomItem(userIds);
+
+      transactions.push(
+        tx.comments[replyId]
+          .update({
+            text: faker.lorem.sentence(),
+            createdAt: faker.date.recent({ days: 14 }),
+            updatedAt: faker.date.recent({ days: 7 }),
+            upvotes: randomInt(0, 15),
+            downvotes: randomInt(0, 3),
+          })
+          .link({
+            amendment: amendmentId,
+            creator: replierId,
+            parentComment: parentCommentId,
+          })
+      );
+      totalReplies++;
+
+      // Add votes for replies (1-4 voters per reply)
+      const replyVoteCount = randomInt(1, 4);
+      const replyVoters = randomItems(userIds, replyVoteCount);
+
+      for (const voterId of replyVoters) {
+        const voteId = id();
+        const voteValue = randomItem([1, 1, 1, -1]); // 75% upvotes, 25% downvotes
+
+        transactions.push(
+          tx.commentVotes[voteId]
+            .update({
+              vote: voteValue,
+              createdAt: faker.date.recent({ days: 14 }),
+            })
+            .link({ comment: replyId, user: voterId })
+        );
+        totalVotes++;
+      }
+    }
+  }
+
+  // Execute in batches
+  const batchSize = 50;
+  for (let i = 0; i < transactions.length; i += batchSize) {
+    const batch = transactions.slice(i, i + batchSize);
+    await db.transact(batch);
+  }
+
+  console.log(`✓ Created ${totalComments} amendment comments with ${totalReplies} replies`);
+  console.log(`✓ Created ${totalVotes} amendment comment votes`);
+  console.log(`  Each amendment has 4-10 comments with votes and replies`);
+}
+
 async function cleanDatabase() {
   console.log('🗑️  Cleaning existing data (deleting all entities)...\n');
 
@@ -3435,6 +3649,10 @@ async function cleanDatabase() {
       payments: {}, // New: include payments
       meetingSlots: {}, // New: include meeting slots
       meetingBookings: {}, // New: include meeting bookings
+      comments: {}, // New: include comments
+      commentVotes: {}, // New: include comment votes
+      threads: {}, // New: include threads
+      threadVotes: {}, // New: include thread votes
     };
 
     const data = await db.query(query);
@@ -3442,6 +3660,10 @@ async function cleanDatabase() {
 
     // Delete all entities (including $users)
     const entitiesToDelete = [
+      'commentVotes', // Delete comment votes first
+      'threadVotes', // Delete thread votes first
+      'comments', // Delete comments
+      'threads', // Delete threads
       'meetingBookings', // Delete meeting bookings first
       'meetingSlots', // Delete meeting slots
       'hashtags', // Delete hashtags first (they link to other entities)
@@ -3566,6 +3788,8 @@ async function seed() {
     await seedTodos(userIds, groupIds);
     await seedDocuments(userIds); // New: seed documents
     await seedMeetingSlots(userIds); // New: seed meeting slots
+    await seedBlogCommentsAndLikes(allBlogIds, userIds); // New: seed blog comments and likes
+    await seedAmendmentCommentsAndVotes(allAmendmentIds, userIds); // New: seed amendment comments and votes
 
     console.log('\n✅ Database seeded successfully!\n');
     console.log('Summary:');
@@ -3588,7 +3812,8 @@ async function seed() {
     console.log(`  - Notifications (main user: 10 total, 6 unread)`);
     console.log(`  - Todos and assignments (main user: 5 todos)`);
     console.log(`  - Documents with collaborators (main user: 2 documents)`);
-    console.log(`  - Meeting slots and bookings (main user & Tobias: 10 slots each)\n`);
+    console.log(`  - Meeting slots and bookings (main user & Tobias: 10 slots each)`);
+    console.log(`  - Blog comments and likes (3-8 comments per blog with votes and replies)\n`);
     console.log('Main test user details:');
     console.log(`  - ID: ${SEED_CONFIG.mainTestUserId}`);
     console.log(`  - Email: test@polity.app`);

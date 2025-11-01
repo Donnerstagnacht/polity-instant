@@ -1321,6 +1321,18 @@ const _schema = i.schema({
         label: 'comments',
       },
     },
+    commentsBlog: {
+      forward: {
+        on: 'comments',
+        has: 'one',
+        label: 'blog',
+      },
+      reverse: {
+        on: 'blogs',
+        has: 'many',
+        label: 'comments',
+      },
+    },
     commentsCreator: {
       forward: {
         on: 'comments',
