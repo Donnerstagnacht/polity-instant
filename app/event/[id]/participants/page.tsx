@@ -1,10 +1,11 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useMemo } from 'react';
 import { db, tx, id } from '../../../../db';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, UserPlus, UserX, Shield, Clock, Check, X, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ArrowLeft, UserPlus, UserX, Shield, Clock, Check, X, Loader2, Search } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -44,6 +45,7 @@ export default function EventParticipantsPage({ params }: PageParams) {
   const eventId = resolvedParams.id;
   const { toast } = useToast();
 
+  const [searchQuery, setSearchQuery] = useState('');
   const [inviteSearchQuery, setInviteSearchQuery] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
@@ -218,11 +220,37 @@ export default function EventParticipantsPage({ params }: PageParams) {
     }
   };
 
-  const pendingRequests = participants.filter((p: any) => p.status === 'requested');
-  const activeParticipants = participants.filter(
-    (p: any) => p.status === 'member' || p.status === 'admin'
+  // Filter participants based on search query
+  const filteredParticipants = useMemo(() => {
+    if (!searchQuery.trim()) return participants;
+
+    const query = searchQuery.toLowerCase();
+    return participants.filter((participant: any) => {
+      const userName = participant.user?.profile?.name?.toLowerCase() || '';
+      const userEmail = participant.user?.profile?.contactEmail?.toLowerCase() || '';
+      const userHandle = participant.user?.profile?.handle?.toLowerCase() || '';
+      const status = participant.status?.toLowerCase() || '';
+      return (
+        userName.includes(query) ||
+        userEmail.includes(query) ||
+        userHandle.includes(query) ||
+        status.includes(query)
+      );
+    });
+  }, [participants, searchQuery]);
+
+  const pendingRequests = useMemo(
+    () => filteredParticipants.filter((p: any) => p.status === 'requested'),
+    [filteredParticipants]
   );
-  const invitedUsers = participants.filter((p: any) => p.status === 'invited');
+  const activeParticipants = useMemo(
+    () => filteredParticipants.filter((p: any) => p.status === 'member' || p.status === 'admin'),
+    [filteredParticipants]
+  );
+  const invitedUsers = useMemo(
+    () => filteredParticipants.filter((p: any) => p.status === 'invited'),
+    [filteredParticipants]
+  );
 
   return (
     <div className="container mx-auto p-4">
@@ -236,6 +264,19 @@ export default function EventParticipantsPage({ params }: PageParams) {
       <div className="mb-6">
         <h1 className="mb-2 text-3xl font-bold">Manage Participants</h1>
         <p className="text-muted-foreground">Event: {event.title}</p>
+      </div>
+
+      {/* Search Bar */}
+      <div className="mb-6 flex gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search participants by name, email, or status..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
       </div>
 
       {/* Invite Section */}

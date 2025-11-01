@@ -184,7 +184,22 @@ export function useNavigation() {
       }
     }
 
-    // Query amendment collaboration status if we're on an amendment page
+    // Query user's owned amendments to check ownership
+    const { data: ownedAmendmentsData } = db.useQuery(
+      amendmentId && authUser?.id
+        ? {
+            amendments: {
+              $: {
+                where: {
+                  'user.id': authUser.id,
+                },
+              },
+            },
+          }
+        : { amendments: {} }
+    );
+
+    // Query user's collaboration status for this amendment
     const { data: amendmentCollaborationData } = db.useQuery(
       amendmentId && authUser?.id
         ? {
@@ -200,10 +215,12 @@ export function useNavigation() {
         : { amendmentCollaborators: {} }
     );
 
-    // Check if user is admin of this amendment
-    if (amendmentId && authUser?.id && amendmentCollaborationData?.amendmentCollaborators?.[0]) {
-      const collaboration = amendmentCollaborationData.amendmentCollaborators[0];
-      isAmendmentAdmin = collaboration.status === 'admin';
+    // Check if user is admin of this amendment (either owner or admin collaborator)
+    if (amendmentId && authUser?.id) {
+      const isOwner = ownedAmendmentsData?.amendments?.some((a: any) => a.id === amendmentId);
+      const collaboration = amendmentCollaborationData?.amendmentCollaborators?.[0];
+      const isAdminCollaborator = collaboration?.status === 'admin';
+      isAmendmentAdmin = isOwner || isAdminCollaborator;
     }
 
     const baseSecondaryItems = baseGetSecondaryNavItems(
