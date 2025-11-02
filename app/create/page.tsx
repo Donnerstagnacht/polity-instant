@@ -3419,7 +3419,7 @@ function CreateElectionForm() {
 
       toast.success('Election created successfully!');
       setTimeout(() => {
-        window.location.href = '/dashboard';
+        window.location.href = '/';
       }, 500);
     } catch (error) {
       console.error('Failed to create election:', error);
@@ -3640,7 +3640,7 @@ function GuidedElectionFlow({
 
       toast.success('Election created successfully!');
       setTimeout(() => {
-        window.location.href = '/dashboard';
+        window.location.href = '/';
       }, 500);
     } catch (error) {
       console.error('Failed to create election:', error);
@@ -3868,7 +3868,7 @@ function CreateAmendmentVoteForm() {
 
       toast.success('Amendment vote created successfully!');
       setTimeout(() => {
-        window.location.href = '/dashboard';
+        window.location.href = '/';
       }, 500);
     } catch (error) {
       console.error('Failed to create amendment vote:', error);
@@ -4047,7 +4047,7 @@ function GuidedAmendmentVoteFlow({
 
       toast.success('Amendment vote created successfully!');
       setTimeout(() => {
-        window.location.href = '/dashboard';
+        window.location.href = '/';
       }, 500);
     } catch (error) {
       console.error('Failed to create amendment vote:', error);
@@ -4233,7 +4233,7 @@ function CreateChangeRequestForm() {
 
       toast.success('Change request created successfully!');
       setTimeout(() => {
-        window.location.href = '/dashboard';
+        window.location.href = '/';
       }, 500);
     } catch (error) {
       console.error('Failed to create change request:', error);
@@ -4394,7 +4394,7 @@ function GuidedChangeRequestFlow({
 
       toast.success('Change request created successfully!');
       setTimeout(() => {
-        window.location.href = '/dashboard';
+        window.location.href = '/';
       }, 500);
     } catch (error) {
       console.error('Failed to create change request:', error);
@@ -4587,7 +4587,7 @@ function CreateElectionCandidateForm() {
 
       toast.success('Election candidate created successfully!');
       setTimeout(() => {
-        window.location.href = '/dashboard';
+        window.location.href = '/';
       }, 500);
     } catch (error) {
       console.error('Failed to create election candidate:', error);
@@ -4753,7 +4753,7 @@ function GuidedElectionCandidateFlow({
 
       toast.success('Election candidate created successfully!');
       setTimeout(() => {
-        window.location.href = '/dashboard';
+        window.location.href = '/';
       }, 500);
     } catch (error) {
       console.error('Failed to create election candidate:', error);

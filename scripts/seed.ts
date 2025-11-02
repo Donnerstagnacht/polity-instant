@@ -1104,6 +1104,47 @@ async function seedGroups(userIds: string[]) {
       // Create a document for this amendment
       transactions.push(...createAmendmentDocument(amendmentId, amendmentTitle, ownerId));
     }
+
+    // Add 2-4 documents for each group
+    const groupDocumentCount = randomInt(2, 4);
+    for (let j = 0; j < groupDocumentCount; j++) {
+      const docId = id();
+      const docTitle = faker.helpers.arrayElement([
+        `${name} Meeting Notes ${faker.date.month()}`,
+        `${name} Policy Draft`,
+        `${name} Project Proposal`,
+        `${name} Planning Document`,
+        `Budget Report - ${name}`,
+        `${name} Strategic Plan`,
+      ]);
+
+      const documentContent = [
+        { type: 'h1', children: [{ text: docTitle }] },
+        {
+          type: 'p',
+          children: [{ text: faker.lorem.paragraph() }],
+        },
+        { type: 'h2', children: [{ text: 'Overview' }] },
+        { type: 'p', children: [{ text: faker.lorem.paragraph() }] },
+        { type: 'h2', children: [{ text: 'Key Points' }] },
+        { type: 'p', children: [{ text: `• ${faker.lorem.sentence()}` }] },
+        { type: 'p', children: [{ text: `• ${faker.lorem.sentence()}` }] },
+        { type: 'p', children: [{ text: `• ${faker.lorem.sentence()}` }] },
+      ];
+
+      transactions.push(
+        tx.documents[docId]
+          .update({
+            title: docTitle,
+            content: documentContent,
+            createdAt: faker.date.past({ years: 0.3 }),
+            updatedAt: faker.date.recent({ days: 30 }),
+            isPublic: randomItem([true, false, false]), // 33% public
+            tags: ['group', 'collaboration'],
+          })
+          .link({ owner: ownerId, group: groupId })
+      );
+    }
   }
 
   // Execute in batches
@@ -1115,7 +1156,7 @@ async function seedGroups(userIds: string[]) {
   }
 
   console.log(
-    `✓ Created ${SEED_CONFIG.groups} groups with memberships (2 owned by main test user)`
+    `✓ Created ${SEED_CONFIG.groups} groups with memberships, blogs, amendments, and documents (2 owned by main test user)`
   );
   return { groupIds, blogIds, amendmentIds };
 }
@@ -3999,6 +4040,178 @@ async function seedAmendmentTargets(
   console.log(`  ${amendmentIds.length - totalAssigned} amendments without targets (drafts)`);
 }
 
+/**
+ * Seed timeline events for all entities
+ * Creates a rich activity feed showing various actions on subscribed content
+ */
+async function seedTimelineEvents(
+  userIds: string[],
+  groupIds: string[],
+  amendmentIds: string[],
+  eventIds: string[],
+  blogIds: string[]
+) {
+  console.log('Seeding timeline events...');
+  const transactions = [];
+
+  const entityConfigs = [
+    {
+      type: 'amendment',
+      ids: amendmentIds,
+      events: ['created', 'updated', 'comment_added', 'vote_started', 'status_changed'],
+      titles: () => [
+        `Amendment draft created`,
+        `Amendment updated with new changes`,
+        `New comment on amendment discussion`,
+        `Voting started for amendment`,
+        `Amendment status changed to approved`,
+      ],
+      descriptions: () => [
+        `A new amendment proposal has been drafted and is open for review`,
+        `The amendment text has been revised based on community feedback`,
+        `Community members are discussing the implications of this amendment`,
+        `The voting period has begun - make your voice heard`,
+        `This amendment has progressed to the next stage`,
+      ],
+    },
+    {
+      type: 'event',
+      ids: eventIds,
+      events: ['created', 'updated', 'participant_joined', 'status_changed'],
+      titles: () => [
+        `New event scheduled`,
+        `Event details updated`,
+        `New participant joined event`,
+        `Event status changed`,
+      ],
+      descriptions: () => [
+        `An exciting new event has been added to the calendar`,
+        `Important updates have been made to the event information`,
+        `Another member is attending this event`,
+        `The event status has been updated`,
+      ],
+    },
+    {
+      type: 'blog',
+      ids: blogIds,
+      events: ['created', 'updated', 'comment_added', 'published'],
+      titles: () => [
+        `New blog post published`,
+        `Blog post updated`,
+        `New comment on blog post`,
+        `Blog post now live`,
+      ],
+      descriptions: () => [
+        `Fresh insights and perspectives have been shared`,
+        `The author has added additional information to this post`,
+        `The community is engaging with this content`,
+        `This post is now available for everyone to read`,
+      ],
+    },
+    {
+      type: 'group',
+      ids: groupIds,
+      events: ['created', 'updated', 'member_added', 'status_changed'],
+      titles: () => [
+        `New group created`,
+        `Group information updated`,
+        `New member joined group`,
+        `Group settings changed`,
+      ],
+      descriptions: () => [
+        `A new community group has been established`,
+        `Group details and description have been refreshed`,
+        `The community is growing with new members`,
+        `Group administrators made updates to settings`,
+      ],
+    },
+    {
+      type: 'user',
+      ids: userIds.slice(0, 10), // Only create timeline events for some users
+      events: ['updated', 'status_changed'],
+      titles: () => [`Profile updated`, `User status changed`],
+      descriptions: () => [
+        `This user has updated their profile information`,
+        `Activity status has been updated`,
+      ],
+    },
+  ];
+
+  let eventsCreated = 0;
+
+  // Create timeline events for each entity type
+  for (const config of entityConfigs) {
+    const entitiesToProcess = config.ids.slice(0, Math.min(config.ids.length, 15)); // Process subset
+
+    for (const entityId of entitiesToProcess) {
+      // Create 2-4 events per entity
+      const numEvents = randomInt(2, 4);
+
+      for (let i = 0; i < numEvents; i++) {
+        const eventType = randomItem(config.events);
+        const eventIndex = config.events.indexOf(eventType);
+        const title = config.titles()[eventIndex];
+        const description = config.descriptions()[eventIndex];
+        const actorId = randomItem(userIds);
+
+        const timelineEventId = id();
+        const daysAgo = randomInt(1, 30);
+
+        // Create metadata based on event type
+        let metadata = {};
+        if (eventType === 'vote_started') {
+          metadata = {
+            votingEndTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+            expectedTurnout: randomInt(50, 200),
+          };
+        } else if (eventType === 'status_changed') {
+          metadata = {
+            oldStatus: randomItem(['draft', 'pending', 'active']),
+            newStatus: randomItem(['active', 'approved', 'published']),
+          };
+        } else if (eventType === 'comment_added') {
+          metadata = {
+            commentCount: randomInt(1, 25),
+            replyCount: randomInt(0, 10),
+          };
+        } else if (eventType === 'participant_joined') {
+          metadata = {
+            participantCount: randomInt(5, 50),
+            capacity: randomInt(50, 200),
+          };
+        }
+
+        transactions.push(
+          tx.timelineEvents[timelineEventId]
+            .update({
+              eventType,
+              entityType: config.type,
+              entityId,
+              title,
+              description,
+              metadata,
+              createdAt: faker.date.recent({ days: daysAgo }),
+            })
+            .link({
+              actor: actorId,
+              [config.type]: entityId,
+            })
+        );
+        eventsCreated++;
+      }
+    }
+  }
+
+  // Execute in batches
+  const batchSize = 50;
+  for (let i = 0; i < transactions.length; i += batchSize) {
+    const batch = transactions.slice(i, i + batchSize);
+    await db.transact(batch);
+  }
+
+  console.log(`✓ Created ${eventsCreated} timeline events across all entity types`);
+}
+
 // Main seed function
 async function seed() {
   console.log('\n🌱 Starting database seed...\n');
@@ -4060,6 +4273,9 @@ async function seed() {
     await seedBlogCommentsAndLikes(allBlogIds, userIds); // New: seed blog comments and likes
     await seedAmendmentCommentsAndVotes(allAmendmentIds, userIds); // New: seed amendment comments and votes
 
+    // Seed timeline events
+    await seedTimelineEvents(userIds, groupIds, allAmendmentIds, eventIds, allBlogIds);
+
     console.log('\n✅ Database seeded successfully!\n');
     console.log('Summary:');
     console.log(`  - 1 main test user (${SEED_CONFIG.mainTestUserId})`);
@@ -4084,8 +4300,9 @@ async function seed() {
     console.log(`  - Meeting slots and bookings (main user & Tobias: 10 slots each)`);
     console.log(`  - Blog comments and likes (3-8 comments per blog with votes and replies)`);
     console.log(
-      `  - Amendment targets (~60% of amendments have target groups, events, paths, and agenda items)\n`
+      `  - Amendment targets (~60% of amendments have target groups, events, paths, and agenda items)`
     );
+    console.log(`  - Timeline events showing activity across all subscribed entities\n`);
     console.log('Main test user details:');
     console.log(`  - ID: ${SEED_CONFIG.mainTestUserId}`);
     console.log(`  - Email: test@polity.app`);

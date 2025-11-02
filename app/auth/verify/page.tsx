@@ -83,7 +83,7 @@ function VerifyContent() {
 
     const success = await verifyMagicCode(email, verificationCode);
     if (success) {
-      router.push('/dashboard');
+      router.push('/');
     }
   };
 

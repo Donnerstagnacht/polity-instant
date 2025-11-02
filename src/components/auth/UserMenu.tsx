@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -42,6 +42,33 @@ export function UserMenu({ className, isMobile, open, onOpenChange, profileUser 
   const { user: authUser } = db.useAuth();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
+  // Query user's group memberships
+  const { data: membershipsData } = db.useQuery(
+    authUser?.id
+      ? {
+          groupMemberships: {
+            $: {
+              where: {
+                'user.id': authUser.id,
+              },
+            },
+            group: {},
+          },
+        }
+      : { groupMemberships: {} }
+  );
+
+  // Filter active memberships (member or admin)
+  const activeGroups = useMemo(() => {
+    const memberships = membershipsData?.groupMemberships || [];
+    return memberships
+      .filter(
+        (m: any) => m.group && (m.status === 'member' || m.status === 'admin' || m.role === 'admin')
+      )
+      .map((m: any) => m.group)
+      .slice(0, 5); // Limit to 5 groups to keep menu manageable
+  }, [membershipsData]);
+
   if (!authUser) return null;
 
   // Prefer profile data, fallback to auth data
@@ -71,7 +98,13 @@ export function UserMenu({ className, isMobile, open, onOpenChange, profileUser 
   };
 
   const handleSettingsClick = () => {
-    router.push('/settings');
+    if (authUser?.id) {
+      router.push(`/user/${authUser.id}/edit`);
+    }
+  };
+
+  const handleGroupClick = (groupId: string) => {
+    router.push(`/group/${groupId}`);
   };
 
   const userInitials = displayName
@@ -122,6 +155,32 @@ export function UserMenu({ className, isMobile, open, onOpenChange, profileUser 
             <Settings className="mr-2 h-4 w-4" />
             Settings
           </DropdownMenuItem>
+
+          {activeGroups.length > 0 && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                Groups
+              </DropdownMenuLabel>
+              {activeGroups.map((group: any) => (
+                <DropdownMenuItem
+                  key={group.id}
+                  onClick={() => handleGroupClick(group.id)}
+                  className="cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-5 w-5">
+                      <AvatarImage src={group.imageURL} alt={group.name} />
+                      <AvatarFallback className="text-[10px]">
+                        {group.name?.[0]?.toUpperCase() || 'G'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="truncate text-sm">{group.name}</span>
+                  </div>
+                </DropdownMenuItem>
+              ))}
+            </>
+          )}
 
           <DropdownMenuSeparator />
 

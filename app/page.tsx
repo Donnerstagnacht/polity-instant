@@ -11,19 +11,22 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PageWrapper } from '@/components/layout/page-wrapper';
-import { useAuthStore } from '@/features/auth/auth.ts';
 import { LogIn, UserPlus } from 'lucide-react';
+import { SubscriptionTimeline } from '@/features/timeline';
+import { db } from '../db';
 // import { useTranslation } from 'react-i18next'; // Temporarily disabled
 
 export default function HomePage() {
   // const { t } = useTranslation(); // Temporarily disabled
-  const { isAuthenticated, user } = useAuthStore();
+  // Use InstantDB's native auth hook for consistency with client-layout
+  const { user } = db.useAuth();
+  const isAuthenticated = !!user;
 
   return (
     <PageWrapper className="container mx-auto p-8">
       <div className="mb-8 text-center">
         <h1 className="mb-4 text-4xl font-bold">
-          {isAuthenticated ? `Welcome back, ${user?.name || user?.email}!` : 'Welcome to Polity'}
+          {isAuthenticated ? `Welcome back, ${user?.email}!` : 'Welcome to Polity'}
         </h1>
         <p className="text-lg text-muted-foreground">
           A modern political platform built with Next.js
@@ -57,73 +60,71 @@ export default function HomePage() {
         </div>
       )}
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>Navigation</CardTitle>
-            <CardDescription>Explore the platform</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p>Navigate through different sections of the platform</p>
-          </CardContent>
-          <CardFooter>
-            {isAuthenticated ? (
-              <Link href="/settings">
-                <Button>Go to Settings</Button>
-              </Link>
-            ) : (
+      {/* Timeline for authenticated users */}
+      {isAuthenticated && (
+        <div className="mb-8">
+          <SubscriptionTimeline />
+        </div>
+      )}
+
+      {/* Info cards for logged out users */}
+      {!isAuthenticated && (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>Navigation</CardTitle>
+              <CardDescription>Explore the platform</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p>Navigate through different sections of the platform</p>
+            </CardContent>
+            <CardFooter>
               <Link href="/auth">
                 <Button variant="outline">Login to Explore</Button>
               </Link>
-            )}
-          </CardFooter>
-        </Card>
+            </CardFooter>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Features</CardTitle>
-            <CardDescription>Platform capabilities</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="list-disc space-y-2 pl-5">
-              <li>User management</li>
-              <li>Group discussions</li>
-              <li>Project collaboration</li>
-            </ul>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Features</CardTitle>
+              <CardDescription>Platform capabilities</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="list-disc space-y-2 pl-5">
+                <li>User management</li>
+                <li>Group discussions</li>
+                <li>Project collaboration</li>
+              </ul>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Tech Stack</CardTitle>
-            <CardDescription>Built with modern technologies</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <p>
-                <strong>Frontend:</strong> React, Next.js, Lucide Icons
-              </p>
-              <p>
-                <strong>Styling:</strong> Tailwind CSS, Shadcn UI
-              </p>
-              <p>
-                <strong>Tooling:</strong> Next.js, TypeScript
-              </p>
-            </div>
-          </CardContent>
-          <CardFooter>
-            {isAuthenticated ? (
-              <Link href="/settings">
-                <Button variant="outline">Explore Settings</Button>
-              </Link>
-            ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Tech Stack</CardTitle>
+              <CardDescription>Built with modern technologies</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <p>
+                  <strong>Frontend:</strong> React, Next.js, Lucide Icons
+                </p>
+                <p>
+                  <strong>Styling:</strong> Tailwind CSS, Shadcn UI
+                </p>
+                <p>
+                  <strong>Tooling:</strong> Next.js, TypeScript
+                </p>
+              </div>
+            </CardContent>
+            <CardFooter>
               <Link href="/auth">
                 <Button variant="outline">Login to Access</Button>
               </Link>
-            )}
-          </CardFooter>
-        </Card>
-      </div>
+            </CardFooter>
+          </Card>
+        </div>
+      )}
     </PageWrapper>
   );
 }

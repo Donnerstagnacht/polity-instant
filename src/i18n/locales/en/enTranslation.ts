@@ -47,7 +47,6 @@ const enTranslation = {
       calendar: 'Calendar',
       todos: 'Todos',
       notifications: 'Notifications',
-      flow: 'Flow',
       groups: 'Groups',
     },
     secondary: {
@@ -81,6 +80,7 @@ const enTranslation = {
       },
       group: {
         overview: 'Overview',
+        editor: 'Documents',
         events: 'Events',
         amendments: 'Amendments',
         operation: 'Operation',

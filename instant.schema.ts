@@ -295,6 +295,15 @@ const _schema = i.schema({
       title: i.string().indexed(),
       updatedAt: i.date().indexed(),
     }),
+    timelineEvents: i.entity({
+      createdAt: i.date().indexed(),
+      eventType: i.string().indexed(), // 'created', 'updated', 'comment_added', 'vote_started', 'participant_joined', etc.
+      entityType: i.string().indexed(), // 'user', 'group', 'amendment', 'event', 'blog'
+      entityId: i.string().indexed(),
+      title: i.string().indexed(),
+      description: i.string().optional(),
+      metadata: i.json().optional(), // Additional context like old/new values, vote results, etc.
+    }),
     user: i.entity({
       abbr: i.string().optional(),
       amendments: i.number().optional(),
@@ -670,6 +679,18 @@ const _schema = i.schema({
         on: '$users',
         has: 'many',
         label: 'ownedDocuments',
+      },
+    },
+    documentsGroup: {
+      forward: {
+        on: 'documents',
+        has: 'one',
+        label: 'group',
+      },
+      reverse: {
+        on: 'groups',
+        has: 'many',
+        label: 'documents',
       },
     },
     documentVersionsDocument: {
@@ -1547,6 +1568,78 @@ const _schema = i.schema({
         on: 'meetingSlots',
         has: 'many',
         label: 'links',
+      },
+    },
+    timelineEventsUser: {
+      forward: {
+        on: 'timelineEvents',
+        has: 'one',
+        label: 'user',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'timelineEvents',
+      },
+    },
+    timelineEventsGroup: {
+      forward: {
+        on: 'timelineEvents',
+        has: 'one',
+        label: 'group',
+      },
+      reverse: {
+        on: 'groups',
+        has: 'many',
+        label: 'timelineEvents',
+      },
+    },
+    timelineEventsAmendment: {
+      forward: {
+        on: 'timelineEvents',
+        has: 'one',
+        label: 'amendment',
+      },
+      reverse: {
+        on: 'amendments',
+        has: 'many',
+        label: 'timelineEvents',
+      },
+    },
+    timelineEventsEvent: {
+      forward: {
+        on: 'timelineEvents',
+        has: 'one',
+        label: 'event',
+      },
+      reverse: {
+        on: 'events',
+        has: 'many',
+        label: 'timelineEvents',
+      },
+    },
+    timelineEventsBlog: {
+      forward: {
+        on: 'timelineEvents',
+        has: 'one',
+        label: 'blog',
+      },
+      reverse: {
+        on: 'blogs',
+        has: 'many',
+        label: 'timelineEvents',
+      },
+    },
+    timelineEventsActor: {
+      forward: {
+        on: 'timelineEvents',
+        has: 'one',
+        label: 'actor',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'performedTimelineEvents',
       },
     },
   },

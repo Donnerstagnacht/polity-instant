@@ -49,7 +49,6 @@ const deTranslation: I18nLocale = {
       calendar: 'Kalender',
       todos: 'Aufgaben',
       notifications: 'Benachrichtigungen',
-      flow: 'Flow',
       groups: 'Gruppen',
     },
     secondary: {
@@ -83,6 +82,7 @@ const deTranslation: I18nLocale = {
       },
       group: {
         overview: 'Übersicht',
+        editor: 'Dokumente',
         events: 'Veranstaltungen',
         amendments: 'Anträge',
         operation: 'Betrieb',

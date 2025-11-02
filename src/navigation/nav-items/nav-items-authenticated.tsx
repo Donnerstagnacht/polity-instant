@@ -33,13 +33,13 @@ export const navItemsAuthenticated = (
       },
     },
     {
-      id: 'create',
-      label: 'Create',
-      icon: 'PlusCircle',
-      href: '/create',
+      id: 'messages',
+      label: 'Messages',
+      icon: 'MessageSquare',
+      href: '/messages',
       onClick: () => {
-        router.push('/create');
-        if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('create');
+        router.push('/messages');
+        if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('messages');
       },
     },
     {
@@ -53,35 +53,16 @@ export const navItemsAuthenticated = (
       },
     },
     {
-      id: 'messages',
-      label: 'Messages',
-      icon: 'MessageSquare',
-      href: '/messages',
+      id: 'create',
+      label: 'Create',
+      icon: 'PlusCircle',
+      href: '/create',
       onClick: () => {
-        router.push('/messages');
-        if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('messages');
+        router.push('/create');
+        if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('create');
       },
     },
-    {
-      id: 'editor',
-      label: 'Editor',
-      icon: 'FileText',
-      href: '/editor',
-      onClick: () => {
-        router.push('/editor');
-        if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('editor');
-      },
-    },
-    {
-      id: 'flow',
-      label: 'Flow',
-      icon: 'Workflow',
-      href: '/flow',
-      onClick: () => {
-        router.push('/flow');
-        if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('flow');
-      },
-    },
+
     {
       id: 'calendar',
       label: 'Calendar',
@@ -270,6 +251,13 @@ export const navItemsAuthenticated = (
         icon: 'Home',
         href: `/group/${groupId}`,
         onClick: () => router.push(`/group/${groupId}`),
+      },
+      {
+        id: 'editor',
+        label: t ? t('navigation.secondary.group.editor') : 'Documents',
+        icon: 'FileText',
+        href: `/group/${groupId}/editor`,
+        onClick: () => router.push(`/group/${groupId}/editor`),
       },
       {
         id: 'events',

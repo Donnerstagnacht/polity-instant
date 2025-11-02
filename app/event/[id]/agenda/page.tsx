@@ -214,7 +214,7 @@ export default function EventAgendaPage() {
               The event you're looking for doesn't exist.
             </p>
             <Button asChild>
-              <Link href="/dashboard">Return to Dashboard</Link>
+              <Link href="/ dashboard">Return to Home</Link>
             </Button>
           </CardContent>
         </Card>

@@ -37,7 +37,7 @@ export function AuthGuard({ children, requireAuth = true, redirectTo, fallback }
       router.push(destination);
     } else if (!requireAuth && isAuthenticated) {
       // User should not be authenticated but is (e.g., on login page while logged in)
-      const destination = redirectTo || '/dashboard';
+      const destination = redirectTo || '/';
       router.push(destination);
     }
   }, [isAuthenticated, isLoading, requireAuth, router, pathname, redirectTo, isMounted]);
