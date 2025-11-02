@@ -1,7 +1,10 @@
 'use client';
 
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Card,
   CardContent,
@@ -11,9 +14,51 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { PageWrapper } from '@/components/layout/page-wrapper';
-import { Check, ArrowRight } from 'lucide-react';
+import { Check, ArrowRight, Euro } from 'lucide-react';
 
 export default function PricingPage() {
+  const [customAmount, setCustomAmount] = useState(['', '', '']);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const handleAmountChange = (index: number, value: string) => {
+    // Only allow digits
+    if (value && !/^\d$/.test(value)) return;
+
+    const newAmount = [...customAmount];
+    newAmount[index] = value;
+    setCustomAmount(newAmount);
+
+    // Auto-focus next input
+    if (value && index < 2 && inputRefs.current[index + 1]) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !customAmount[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowLeft' && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowRight' && index < 2) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData('text').replace(/\D/g, '');
+
+    if (pastedText.length <= 3) {
+      const newAmount = pastedText.padEnd(3, '').split('').slice(0, 3);
+      setCustomAmount(newAmount);
+    }
+  };
+
+  const getCustomAmountValue = () => {
+    const value = customAmount.join('').replace(/^0+/, '') || '0';
+    return value;
+  };
+
   const tiers = [
     {
       name: 'Free',
@@ -73,23 +118,24 @@ export default function PricingPage() {
       helpText: 'Help us build new features and improve the platform for everyone.',
     },
     {
-      name: 'Champion',
-      price: '€25',
+      name: 'Your Choice',
+      price: 'custom',
       period: '/month',
-      description: 'For those who can afford to contribute more - every bit helps!',
+      description: 'Choose your own contribution - pay what feels right for you',
       features: [
         'Everything in Development',
-        'Champion badge & recognition',
+        'Badge & recognition',
         'Direct line to founders',
         'Exclusive community access',
         'Monthly development updates',
         'Recognition on our website',
         'Invitation to quarterly strategy calls',
-        'Free swag & merch',
+        'Free swag & merch (for €25+)',
       ],
-      cta: 'Become a Champion',
+      cta: 'Choose Your Amount',
       highlighted: false,
-      helpText: 'If you can afford it, your extra support accelerates our mission tremendously.',
+      helpText: 'Pick an amount that works for you. Every contribution helps us grow!',
+      isCustom: true,
     },
   ];
 
@@ -118,8 +164,41 @@ export default function PricingPage() {
               <CardTitle className="text-2xl">{tier.name}</CardTitle>
               <CardDescription className="text-base">{tier.description}</CardDescription>
               <div className="mt-4">
-                <span className="text-4xl font-bold">{tier.price}</span>
-                {tier.period && <span className="text-muted-foreground">{tier.period}</span>}
+                {tier.isCustom ? (
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Your monthly contribution</Label>
+                    <div className="flex items-center justify-center gap-2">
+                      <Euro className="h-6 w-6 text-muted-foreground" />
+                      {customAmount.map((digit, idx) => (
+                        <Input
+                          key={idx}
+                          ref={el => {
+                            inputRefs.current[idx] = el;
+                          }}
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={1}
+                          className="h-12 w-12 text-center text-lg font-semibold"
+                          value={digit}
+                          onChange={e => handleAmountChange(idx, e.target.value)}
+                          onKeyDown={e => handleKeyDown(idx, e)}
+                          onPaste={idx === 0 ? handlePaste : undefined}
+                          placeholder="0"
+                        />
+                      ))}
+                    </div>
+                    {getCustomAmountValue() !== '0' && (
+                      <p className="text-center text-sm text-muted-foreground">
+                        €{getCustomAmountValue()}/month
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <span className="text-4xl font-bold">{tier.price}</span>
+                    {tier.period && <span className="text-muted-foreground">{tier.period}</span>}
+                  </>
+                )}
               </div>
               {tier.helpText && (
                 <p className="mt-3 text-xs italic text-muted-foreground">{tier.helpText}</p>
@@ -141,6 +220,7 @@ export default function PricingPage() {
                   className="w-full"
                   variant={tier.highlighted ? 'default' : 'outline'}
                   size="lg"
+                  disabled={tier.isCustom && getCustomAmountValue() === '0'}
                 >
                   {tier.cta}
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -180,9 +260,10 @@ export default function PricingPage() {
                 us develop the product further and faster.
               </li>
               <li>
-                <strong className="text-foreground">Champion (€25/month):</strong> For those who can
-                afford to contribute more - if you have the means, your extra support accelerates
-                our mission and helps us reach sustainability faster. Every bit helps!
+                <strong className="text-foreground">Your Choice (custom amount):</strong> Choose
+                your own monthly contribution - whether it's €1, €5, €15, or any amount that works
+                for you. Every contribution, big or small, helps us achieve our mission. You get
+                access to exclusive features and help us grow at your own pace.
               </li>
             </ul>
             <p className="rounded-lg border bg-accent/50 p-4">
