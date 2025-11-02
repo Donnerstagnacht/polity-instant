@@ -5,6 +5,13 @@ const deTranslation: I18nLocale = {
   home: {
     welcomeTitle: 'Willkommen bei Polity',
     welcomeSubtitle: 'Eine TanStack Router Demo mit dynamischer Navigation',
+    hero: {
+      title: 'Demokratie neu gedacht für das digitale Zeitalter',
+      subtitle:
+        'Gemeinschaften, Organisationen und Regierungen mit Werkzeugen für kollaborative Entscheidungsfindung stärken',
+      getStarted: 'Jetzt starten',
+      exploreFeatures: 'Funktionen erkunden',
+    },
     cards: {
       navigation: {
         title: 'Navigation Demo',
@@ -38,6 +45,9 @@ const deTranslation: I18nLocale = {
   navigation: {
     primary: {
       home: 'Startseite',
+      features: 'Funktionen',
+      solutions: 'Lösungen',
+      pricing: 'Preise',
       create: 'Erstellen',
       search: 'Suchen',
       dashboard: 'Dashboard',
@@ -534,6 +544,139 @@ const deTranslation: I18nLocale = {
     goBack: 'Zurück',
     goHome: 'Zur Startseite',
     search: 'Suchen',
+  },
+  landing: {
+    features: {
+      title: 'Funktionen',
+      subtitle: 'Alles was Sie für demokratische Zusammenarbeit und Entscheidungsfindung brauchen',
+      userProfiles: {
+        title: 'Benutzerprofile',
+        description:
+          'Erstellen Sie detaillierte Profile, bauen Sie Netzwerke auf und verbinden Sie sich mit Gleichgesinnten auf der Plattform.',
+      },
+      groups: {
+        title: 'Gruppen',
+        description:
+          'Bilden Sie Gemeinschaften, organisieren Sie Teams und arbeiten Sie an gemeinsamen Zielen mit leistungsstarken Gruppenverwaltungstools.',
+      },
+      events: {
+        title: 'Veranstaltungen',
+        description:
+          'Planen Sie Meetings, Bürgerversammlungen und Konferenzen mit integrierter Terminplanung und Teilnehmerverwaltung.',
+      },
+      amendments: {
+        title: 'Anträge',
+        description:
+          'Schlagen Sie vor, diskutieren Sie und verfolgen Sie politische Änderungen mit transparenten Antragsprozessen und Versionskontrolle.',
+      },
+      agendas: {
+        title: 'Tagesordnungen',
+        description:
+          'Strukturieren Sie Meetings und Veranstaltungen mit kollaborativem Tagesordnungsaufbau und Echtzeit-Updates.',
+      },
+      search: {
+        title: 'Erweiterte Suche',
+        description:
+          'Finden Sie Personen, Gruppen, Veranstaltungen und Dokumente schnell mit leistungsstarken semantischen Suchfunktionen.',
+      },
+      calendar: {
+        title: 'Kalender',
+        description:
+          'Verwalten Sie Ihren Zeitplan mit integrierten Kalenderansichten für alle Ihre Veranstaltungen und Meetings.',
+      },
+      tasks: {
+        title: 'Aufgaben',
+        description:
+          'Bleiben Sie organisiert mit persönlichem und geteiltem Aufgabenmanagement, das in die gesamte Plattform integriert ist.',
+      },
+      messages: {
+        title: 'Nachrichten',
+        description:
+          'Kommunizieren Sie direkt mit Einzelpersonen und Gruppen über Echtzeit-Messaging.',
+      },
+      notifications: {
+        title: 'Benachrichtigungen',
+        description:
+          'Bleiben Sie informiert mit intelligenten Benachrichtigungen über wichtige Updates und Aktivitäten.',
+      },
+      cta: {
+        title: 'Bereit loszulegen?',
+        subtitle:
+          'Schließen Sie sich Tausenden von Organisationen an, die Polity nutzen, um bessere Entscheidungen gemeinsam zu treffen',
+      },
+    },
+    solutions: {
+      title: 'Lösungen',
+      subtitle:
+        'Maßgeschneidert für jeden Organisationstyp und jede Person, die sich demokratischer Zusammenarbeit verschrieben hat',
+      humans: {
+        title: 'Für Menschen',
+        description:
+          'Befähigen Sie Einzelpersonen, an demokratischen Prozessen teilzunehmen, lokale Initiativen zu organisieren und mit Gemeinschaften zusammenzuarbeiten.',
+      },
+      parties: {
+        title: 'Für politische Parteien',
+        description:
+          'Modernisieren Sie Parteioperationen mit digitalen Tools für Mitgliederengagement, Politikentwicklung und Kampagnenkoordination.',
+      },
+      government: {
+        title: 'Für Regierungen',
+        description:
+          'Verbessern Sie Transparenz und Bürgerbeteiligung mit Tools für öffentliche Konsultation, Gesetzgebungsverfolgung und Gemeinschaftsengagement.',
+      },
+      ngos: {
+        title: 'Für NGOs',
+        description:
+          'Stärken Sie Advocacy-Bemühungen mit kollaborativen Tools für Koalitionsbildung, Kampagnenmanagement und Stakeholder-Engagement.',
+      },
+      corporations: {
+        title: 'Für Unternehmen',
+        description:
+          'Fördern Sie Mitarbeiterengagement und transparente Governance mit Tools für interne Demokratie und Stakeholder-Konsultation.',
+      },
+      media: {
+        title: 'Für Medien',
+        description:
+          'Ermöglichen Sie partizipativen Journalismus und Gemeinschaftsengagement mit Tools für kollaborative Berichterstattung und Publikumsinteraktion.',
+      },
+      cta: {
+        title: 'Finden Sie Ihre perfekte Lösung',
+        subtitle: 'Egal welche Organisationsart, Polity hat die Tools, die Sie brauchen',
+      },
+    },
+    pricing: {
+      title: 'Preise',
+      subtitle:
+        'Transparente Preise, die mit Ihren Bedürfnissen wachsen. Keine versteckten Gebühren.',
+      free: {
+        name: 'Kostenlos',
+        description: 'Perfekt für Einzelpersonen und kleine Gruppen zum Einstieg',
+        cta: 'Jetzt starten',
+      },
+      runningCosts: {
+        name: 'Betriebskosten',
+        price: '€2/Monat',
+        description: 'Unterstützen Sie unsere Infrastruktur und erhalten Sie erweiterte Funktionen',
+        cta: 'Beitragen',
+      },
+      development: {
+        name: 'Entwicklung',
+        price: '€10/Monat',
+        description: 'Helfen Sie uns, die Zukunft zu gestalten und alle Funktionen freizuschalten',
+        cta: 'Entwicklung unterstützen',
+      },
+      whySubscription: {
+        title: 'Warum Abonnementstufen?',
+        intro:
+          'Polity basiert auf Transparenz und Community-Unterstützung. Unsere Preise spiegeln unsere tatsächlichen Kosten und Entwicklungsbedürfnisse wider:',
+      },
+      enterprise: {
+        title: 'Enterprise & maßgeschneiderte Lösungen',
+        description:
+          'Benötigen Sie benutzerdefinierte Funktionen, dediziertes Hosting oder On-Premise-Bereitstellung? Wir bieten maßgeschneiderte Lösungen für größere Organisationen.',
+        cta: 'Vertrieb kontaktieren',
+      },
+    },
   },
   pages: {
     groups: {

@@ -28,9 +28,30 @@ export function useNavigation() {
     {
       id: 'home',
       icon: 'Home',
-      label: 'Home',
+      label: t('navigation.primary.home'),
       href: '/',
       onClick: () => router.push('/'),
+    },
+    {
+      id: 'features',
+      icon: 'Sparkles',
+      label: t('navigation.primary.features'),
+      href: '/features',
+      onClick: () => router.push('/features'),
+    },
+    {
+      id: 'solutions',
+      icon: 'Target',
+      label: t('navigation.primary.solutions'),
+      href: '/solutions',
+      onClick: () => router.push('/solutions'),
+    },
+    {
+      id: 'pricing',
+      icon: 'CreditCard',
+      label: t('navigation.primary.pricing'),
+      href: '/pricing',
+      onClick: () => router.push('/pricing'),
     },
     {
       id: 'auth',

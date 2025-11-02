@@ -4,6 +4,7 @@ import {
   Bookmark,
   Calendar,
   CheckSquare,
+  CreditCard,
   File,
   FileText,
   FolderOpen,
@@ -23,7 +24,9 @@ import {
   Radio,
   Search,
   Settings,
+  Sparkles,
   Sun,
+  Target,
   User,
   Users,
   Workflow,
@@ -59,6 +62,9 @@ export const iconMap = {
   Grid3x3,
   Radio,
   Network,
+  Sparkles,
+  Target,
+  CreditCard,
 } as const;
 
 export type IconName = keyof typeof iconMap;

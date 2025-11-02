@@ -1,17 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PageWrapper } from '@/components/layout/page-wrapper';
-import { LogIn, UserPlus } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { SubscriptionTimeline } from '@/features/timeline';
 import { db } from '../db';
 // import { useTranslation } from 'react-i18next'; // Temporarily disabled
@@ -22,109 +14,77 @@ export default function HomePage() {
   const { user } = db.useAuth();
   const isAuthenticated = !!user;
 
-  return (
-    <PageWrapper className="container mx-auto p-8">
-      <div className="mb-8 text-center">
-        <h1 className="mb-4 text-4xl font-bold">
-          {isAuthenticated ? `Welcome back, ${user?.email}!` : 'Welcome to Polity'}
-        </h1>
-        <p className="text-lg text-muted-foreground">
-          A modern political platform built with Next.js
-        </p>
-      </div>
-
-      {!isAuthenticated && (
-        <div className="mb-8">
-          <Card className="mx-auto max-w-md">
-            <CardHeader className="text-center">
-              <CardTitle className="flex items-center justify-center gap-2">
-                <LogIn className="h-5 w-5" />
-                Get Started
-              </CardTitle>
-              <CardDescription>
-                Join Polity to access all features and connect with the community
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Link href="/auth" className="block">
-                <Button className="w-full" size="lg">
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Sign Up / Login
-                </Button>
-              </Link>
-              <p className="text-center text-sm text-muted-foreground">
-                Use your email to get a magic code for instant access
-              </p>
-            </CardContent>
-          </Card>
+  // If authenticated, show the timeline
+  if (isAuthenticated) {
+    return (
+      <PageWrapper className="container mx-auto p-8">
+        <div className="mb-8 text-center">
+          <h1 className="mb-4 text-4xl font-bold">Welcome back, {user?.email}!</h1>
         </div>
-      )}
-
-      {/* Timeline for authenticated users */}
-      {isAuthenticated && (
         <div className="mb-8">
           <SubscriptionTimeline />
         </div>
-      )}
+      </PageWrapper>
+    );
+  }
 
-      {/* Info cards for logged out users */}
-      {!isAuthenticated && (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>Navigation</CardTitle>
-              <CardDescription>Explore the platform</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>Navigate through different sections of the platform</p>
-            </CardContent>
-            <CardFooter>
-              <Link href="/auth">
-                <Button variant="outline">Login to Explore</Button>
-              </Link>
-            </CardFooter>
-          </Card>
+  // Landing page for unauthenticated users
+  return (
+    <PageWrapper className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+      <div className="container mx-auto px-4 py-16">
+        <div className="mx-auto max-w-4xl text-center">
+          {/* Hero Section */}
+          <h1 className="mb-6 text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl">
+            Democracy Reimagined for the Digital Age
+          </h1>
+          <p className="mb-8 text-xl text-muted-foreground sm:text-2xl">
+            Empowering communities, organizations, and governments with collaborative
+            decision-making tools
+          </p>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Features</CardTitle>
-              <CardDescription>Platform capabilities</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="list-disc space-y-2 pl-5">
-                <li>User management</li>
-                <li>Group discussions</li>
-                <li>Project collaboration</li>
-              </ul>
-            </CardContent>
-          </Card>
+          {/* CTA Buttons */}
+          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <Link href="/auth">
+              <Button size="lg" className="w-full sm:w-auto">
+                Get Started
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+            <Link href="/features">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto">
+                Explore Features
+              </Button>
+            </Link>
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Tech Stack</CardTitle>
-              <CardDescription>Built with modern technologies</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <p>
-                  <strong>Frontend:</strong> React, Next.js, Lucide Icons
-                </p>
-                <p>
-                  <strong>Styling:</strong> Tailwind CSS, Shadcn UI
-                </p>
-                <p>
-                  <strong>Tooling:</strong> Next.js, TypeScript
-                </p>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Link href="/auth">
-                <Button variant="outline">Login to Access</Button>
-              </Link>
-            </CardFooter>
-          </Card>
+          {/* Quick Links */}
+          <div className="mt-16 grid gap-4 text-sm sm:grid-cols-3">
+            <Link
+              href="/solutions"
+              className="rounded-lg border bg-card p-4 transition-colors hover:bg-accent"
+            >
+              <h3 className="font-semibold">Solutions</h3>
+              <p className="mt-1 text-muted-foreground">For parties, governments, NGOs & more</p>
+            </Link>
+            <Link
+              href="/pricing"
+              className="rounded-lg border bg-card p-4 transition-colors hover:bg-accent"
+            >
+              <h3 className="font-semibold">Pricing</h3>
+              <p className="mt-1 text-muted-foreground">
+                Transparent pricing from free to enterprise
+              </p>
+            </Link>
+            <Link
+              href="/features"
+              className="rounded-lg border bg-card p-4 transition-colors hover:bg-accent"
+            >
+              <h3 className="font-semibold">Features</h3>
+              <p className="mt-1 text-muted-foreground">Full feature overview</p>
+            </Link>
+          </div>
         </div>
-      )}
+      </div>
     </PageWrapper>
   );
 }

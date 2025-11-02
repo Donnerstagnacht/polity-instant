@@ -4,6 +4,13 @@ const enTranslation = {
   home: {
     welcomeTitle: 'Welcome to Polity',
     welcomeSubtitle: 'A TanStack Router Demo with Dynamic Navigation',
+    hero: {
+      title: 'Democracy Reimagined for the Digital Age',
+      subtitle:
+        'Empowering communities, organizations, and governments with collaborative decision-making tools',
+      getStarted: 'Get Started',
+      exploreFeatures: 'Explore Features',
+    },
     cards: {
       navigation: {
         title: 'Navigation Demo',
@@ -36,6 +43,9 @@ const enTranslation = {
   navigation: {
     primary: {
       home: 'Home',
+      features: 'Features',
+      solutions: 'Solutions',
+      pricing: 'Pricing',
       create: 'Create',
       search: 'Search',
       dashboard: 'Dashboard',
@@ -529,6 +539,137 @@ const enTranslation = {
     goBack: 'Go Back',
     goHome: 'Go Home',
     search: 'Search',
+  },
+  landing: {
+    features: {
+      title: 'Features',
+      subtitle: 'Everything you need to facilitate democratic collaboration and decision-making',
+      userProfiles: {
+        title: 'User Profiles',
+        description:
+          'Create detailed profiles, build networks, and connect with like-minded individuals across the platform.',
+      },
+      groups: {
+        title: 'Groups',
+        description:
+          'Form communities, organize teams, and collaborate on shared goals with powerful group management tools.',
+      },
+      events: {
+        title: 'Events',
+        description:
+          'Plan meetings, town halls, and conferences with integrated scheduling and participant management.',
+      },
+      amendments: {
+        title: 'Amendments',
+        description:
+          'Propose, discuss, and track policy changes with transparent amendment processes and version control.',
+      },
+      agendas: {
+        title: 'Agendas',
+        description:
+          'Structure meetings and events with collaborative agenda building and real-time updates.',
+      },
+      search: {
+        title: 'Advanced Search',
+        description:
+          'Find people, groups, events, and documents quickly with powerful semantic search capabilities.',
+      },
+      calendar: {
+        title: 'Calendar',
+        description:
+          'Manage your schedule with integrated calendar views for all your events and meetings.',
+      },
+      tasks: {
+        title: 'Tasks',
+        description:
+          'Stay organized with personal and shared task management integrated across the platform.',
+      },
+      messages: {
+        title: 'Messages',
+        description:
+          'Communicate directly with individuals and groups through real-time messaging.',
+      },
+      notifications: {
+        title: 'Notifications',
+        description:
+          'Stay informed with intelligent notifications for important updates and activities.',
+      },
+      cta: {
+        title: 'Ready to get started?',
+        subtitle: 'Join thousands of organizations using Polity to make better decisions together',
+      },
+    },
+    solutions: {
+      title: 'Solutions',
+      subtitle:
+        'Tailored for every type of organization and individual committed to democratic collaboration',
+      humans: {
+        title: 'For Humans',
+        description:
+          'Empower individuals to participate in democratic processes, organize local initiatives, and collaborate with communities.',
+      },
+      parties: {
+        title: 'For Political Parties',
+        description:
+          'Modernize party operations with digital tools for member engagement, policy development, and campaign coordination.',
+      },
+      government: {
+        title: 'For Government',
+        description:
+          'Enhance transparency and citizen participation with tools for public consultation, legislative tracking, and community engagement.',
+      },
+      ngos: {
+        title: 'For NGOs',
+        description:
+          'Strengthen advocacy efforts with collaborative tools for coalition building, campaign management, and stakeholder engagement.',
+      },
+      corporations: {
+        title: 'For Corporations',
+        description:
+          'Foster employee engagement and transparent governance with tools for internal democracy and stakeholder consultation.',
+      },
+      media: {
+        title: 'For Media',
+        description:
+          'Enable participatory journalism and community engagement with tools for collaborative reporting and audience interaction.',
+      },
+      cta: {
+        title: 'Find your perfect solution',
+        subtitle: 'No matter your organization type, Polity has the tools you need',
+      },
+    },
+    pricing: {
+      title: 'Pricing',
+      subtitle: 'Transparent pricing that grows with your needs. No hidden fees.',
+      free: {
+        name: 'Free',
+        description: 'Perfect for individuals and small groups getting started',
+        cta: 'Get Started',
+      },
+      runningCosts: {
+        name: 'Running Costs',
+        price: '€2/month',
+        description: 'Support our infrastructure and get enhanced features',
+        cta: 'Start Contributing',
+      },
+      development: {
+        name: 'Development',
+        price: '€10/month',
+        description: 'Help us build the future and unlock all features',
+        cta: 'Support Development',
+      },
+      whySubscription: {
+        title: 'Why subscription tiers?',
+        intro:
+          'Polity is built on transparency and community support. Our pricing reflects our actual costs and development needs:',
+      },
+      enterprise: {
+        title: 'Enterprise & Custom Solutions',
+        description:
+          'Need custom features, dedicated hosting, or on-premise deployment? We offer tailored solutions for larger organizations.',
+        cta: 'Contact Sales',
+      },
+    },
   },
   pages: {
     groups: {
