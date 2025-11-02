@@ -10,6 +10,7 @@ import {
   isEdgeVisible,
   RIGHT_TYPES,
 } from '@/components/shared/RightFilters';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import db from '../../../../db';
 
 interface NetworkNode extends Node {
@@ -34,6 +35,8 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
   const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
   const [isInteractive, setIsInteractive] = useState<boolean>(true);
   const [selectedRights, setSelectedRights] = useState<Set<string>>(new Set(RIGHT_TYPES));
+  const [panelCollapsed, setPanelCollapsed] = useState(false);
+  const [legendCollapsed, setLegendCollapsed] = useState(false);
 
   // Fetch the specific user profile
   const { data: profileData } = db.useQuery({
@@ -573,61 +576,94 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
       onNodeClick={onNodeClick}
       onInteractiveChange={handleInteractiveChange}
       panel={
-        <Panel position="top-left" className="rounded bg-white p-4 shadow">
-          <h2 className="mb-2 text-lg font-bold">User Network</h2>
-          <p className="mb-3 text-sm text-gray-600">
-            Visualization of {profile.name}'s group network
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {isInteractive && (
-              <>
-                <Button
-                  size="sm"
-                  variant={!showIndirect ? 'default' : 'outline'}
-                  onClick={() => setShowIndirect(false)}
-                >
-                  Direct
-                </Button>
-                <Button
-                  size="sm"
-                  variant={showIndirect ? 'default' : 'outline'}
-                  onClick={() => setShowIndirect(true)}
-                >
-                  Indirect
-                </Button>
-              </>
-            )}
+        <Panel position="top-left" className="rounded bg-white p-4 shadow dark:bg-background">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-lg font-bold">User Network</h2>
             <Button
               size="sm"
-              variant={isInteractive ? 'outline' : 'default'}
-              onClick={() => setIsInteractive(!isInteractive)}
+              variant="ghost"
+              onClick={() => setPanelCollapsed(!panelCollapsed)}
+              className="h-6 w-6 p-0"
             >
-              {isInteractive ? 'Lock Editor' : 'Unlock Editor'}
+              {panelCollapsed ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronUp className="h-4 w-4" />
+              )}
             </Button>
           </div>
+          {!panelCollapsed && (
+            <>
+              <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
+                Visualization of {profile.name}'s group network
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {isInteractive && (
+                  <>
+                    <Button
+                      size="sm"
+                      variant={!showIndirect ? 'default' : 'outline'}
+                      onClick={() => setShowIndirect(false)}
+                    >
+                      Direct
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={showIndirect ? 'default' : 'outline'}
+                      onClick={() => setShowIndirect(true)}
+                    >
+                      Indirect
+                    </Button>
+                  </>
+                )}
+                <Button
+                  size="sm"
+                  variant={isInteractive ? 'outline' : 'default'}
+                  onClick={() => setIsInteractive(!isInteractive)}
+                >
+                  {isInteractive ? 'Lock Editor' : 'Unlock Editor'}
+                </Button>
+              </div>
 
-          {/* Right type filters */}
-          <RightFilters selectedRights={selectedRights} onToggleRight={toggleRight} />
+              {/* Right type filters */}
+              <RightFilters selectedRights={selectedRights} onToggleRight={toggleRight} />
 
-          {/* Color legend */}
-          <div className="mt-3 space-y-2 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="h-4 w-4 rounded-full border-2 border-[#2196f3] bg-[#e3f2fd]"></div>
-              <span>User</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-4 w-4 rounded border border-[#a5d6a7] bg-[#c8e6c9]"></div>
-              <span>User's Groups</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-4 w-4 rounded border border-[#80cbc4] bg-[#b2dfdb]"></div>
-              <span>Parent Groups</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-4 w-4 rounded border border-[#ffcc80] bg-[#ffe0b2]"></div>
-              <span>Child Groups</span>
-            </div>
-          </div>
+              {/* Color legend */}
+              <div className="mt-3">
+                <button
+                  onClick={() => setLegendCollapsed(!legendCollapsed)}
+                  className="flex w-full items-center justify-between text-sm font-medium hover:text-primary"
+                >
+                  <span>Legend</span>
+                  {legendCollapsed ? (
+                    <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronUp className="h-4 w-4" />
+                  )}
+                </button>
+                {!legendCollapsed && (
+                  <div className="mt-2 space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 rounded-full border-2 border-[#2196f3] bg-[#e3f2fd]"></div>
+                      <span>User</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 rounded border border-[#a5d6a7] bg-[#c8e6c9]"></div>
+                      <span>User's Groups</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 rounded border border-[#80cbc4] bg-[#b2dfdb]"></div>
+                      <span>Parent Groups</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 rounded border border-[#ffcc80] bg-[#ffe0b2]"></div>
+                      <span>Child Groups</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </Panel>
       }
     />
