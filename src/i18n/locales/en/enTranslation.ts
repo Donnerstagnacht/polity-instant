@@ -94,6 +94,7 @@ const enTranslation = {
         changeRequests: 'Change Requests',
         discussions: 'Discussions',
         collaborators: 'Collaborators',
+        process: 'Process',
         edit: 'Edit Amendment',
       },
     },

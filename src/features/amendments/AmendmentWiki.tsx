@@ -17,6 +17,8 @@ import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useTranslation } from '@/hooks/use-translation';
 import { ShareButton } from '@/components/shared/ShareButton';
+import { AmendmentPathVisualization } from '@/features/amendments/ui/AmendmentPathVisualization';
+import { useAuthStore } from '@/features/auth';
 
 interface AmendmentWikiProps {
   amendmentId: string;
@@ -84,6 +86,7 @@ function ProcessVisualization({ status }: { status: string }) {
 export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
   const router = useRouter();
   const { t } = useTranslation();
+  const user = useAuthStore((state: any) => state.user);
 
   // Subscribe hook
   const { subscriberCount } = useSubscribeAmendment(amendmentId);
@@ -241,6 +244,9 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
 
       {/* Process Visualization */}
       <ProcessVisualization status={amendment.status} />
+
+      {/* Amendment Process Path - Show shortest path to target group */}
+      {user && <AmendmentPathVisualization amendmentId={amendmentId} />}
 
       {/* About and Contact Tabs */}
       <InfoTabs

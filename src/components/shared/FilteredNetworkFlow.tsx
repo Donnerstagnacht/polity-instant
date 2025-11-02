@@ -10,7 +10,8 @@ import {
   isEdgeVisible,
   RIGHT_TYPES,
 } from '@/components/shared/RightFilters';
-import db from '../../../../db';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import db from '../../../db';
 
 interface NetworkNode extends Node {
   data: {
@@ -22,18 +23,29 @@ interface NetworkNode extends Node {
   };
 }
 
-interface UserNetworkFlowProps {
+interface FilteredNetworkFlowProps {
   userId: string;
+  filterRight?: string; // Filter by specific right type (e.g., 'amendmentRight')
   onGroupClick?: (groupId: string, groupData: any) => void;
+  title?: string;
+  description?: string;
 }
 
-export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) {
+export function FilteredNetworkFlow({
+  userId,
+  filterRight,
+  onGroupClick,
+  title = 'Network',
+  description,
+}: FilteredNetworkFlowProps) {
   const [showIndirect, setShowIndirect] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState<NetworkNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
   const [isInteractive, setIsInteractive] = useState<boolean>(true);
   const [selectedRights, setSelectedRights] = useState<Set<string>>(new Set(RIGHT_TYPES));
+  const [legendCollapsed, setLegendCollapsed] = useState(false);
+  const [panelCollapsed, setPanelCollapsed] = useState(false);
 
   // Fetch the specific user profile
   const { data: profileData } = db.useQuery({
@@ -60,7 +72,7 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
   const memberships = user?.memberships || [];
   const relationships = relationshipsData?.groupRelationships || [];
 
-  // Get all groups the user is a member of - use stable dependencies
+  // Get all groups the user is a member of
   const userGroups = useMemo(() => {
     if (!memberships.length) return [];
     return memberships
@@ -70,7 +82,7 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
       .map((m: any) => m.group);
   }, [memberships.length, memberships.map((m: any) => `${m.id}-${m.status}-${m.role}`).join(',')]);
 
-  // Memoize relationships to prevent infinite loops - use stable dependencies
+  // Memoize relationships to prevent infinite loops
   const stableRelationships = useMemo(() => {
     if (!relationships.length) return [];
     return relationships;
@@ -83,6 +95,11 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
       const childrenMap = new Map<string, { group: any; rights: string[] }>();
 
       stableRelationships.forEach((rel: any) => {
+        // Skip if filtering by right and this relationship doesn't have it
+        if (filterRight && rel.withRight !== filterRight) {
+          return;
+        }
+
         if (rel.childGroup?.id === groupId) {
           const parentId = rel.parentGroup?.id;
           if (!parentId) return;
@@ -114,7 +131,7 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
         children: Array.from(childrenMap.values()),
       };
     },
-    [stableRelationships]
+    [stableRelationships, filterRight]
   );
 
   // Build indirect (recursive) relationships for a group
@@ -135,6 +152,11 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
         visited.add(id);
 
         stableRelationships.forEach((rel: any) => {
+          // Skip if filtering by right and this relationship doesn't have it
+          if (filterRight && rel.withRight !== filterRight) {
+            return;
+          }
+
           if (rel.childGroup?.id === id && !visited.has(rel.parentGroup?.id)) {
             const parentId = rel.parentGroup?.id;
             if (!parentId) return;
@@ -158,6 +180,11 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
 
       const findChildren = (id: string, level = 1, currentParentId?: string) => {
         stableRelationships.forEach((rel: any) => {
+          // Skip if filtering by right and this relationship doesn't have it
+          if (filterRight && rel.withRight !== filterRight) {
+            return;
+          }
+
           if (rel.parentGroup?.id === id && !visited.has(rel.childGroup?.id)) {
             const childId = rel.childGroup?.id;
             if (!childId) return;
@@ -190,7 +217,7 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
         children: Array.from(childrenMap.values()),
       };
     },
-    [stableRelationships]
+    [stableRelationships, filterRight]
   );
 
   // Toggle right filter
@@ -214,8 +241,6 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
     [selectedRights]
   );
 
-  // Helper to format rights for display - removed, using shared function now
-
   // Generate flow chart
   const generateFlowChart = useCallback(() => {
     if (!profile || !user) {
@@ -225,7 +250,7 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
     }
 
     const newNodes: NetworkNode[] = [];
-    const allEdgesMap = new Map<string, Edge>(); // Use Map to prevent ALL duplicate edges
+    const allEdgesMap = new Map<string, Edge>();
 
     // Add center node (user)
     newNodes.push({
@@ -289,7 +314,7 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
         },
       });
 
-      // Add edge from user to group - check for duplicates
+      // Add edge from user to group
       const edgeId = `edge-user-${userId}-to-group-${group.id}`;
       if (!allEdgesMap.has(edgeId)) {
         allEdgesMap.set(edgeId, {
@@ -315,7 +340,7 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
             type: MarkerType.ArrowClosed,
             color: '#2196f3',
           },
-          data: { rights: [] }, // Member edge has no specific rights
+          data: { rights: [] },
         });
       }
     });
@@ -344,7 +369,6 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
         const edgeTarget = showIndirect && parent.childId ? parent.childId : group.id;
         const edgeId = `edge-parent-${parent.group.id}-to-${edgeTarget}`;
 
-        // Only add edge if it doesn't already exist
         if (!allEdgesMap.has(edgeId)) {
           allEdgesMap.set(edgeId, {
             id: edgeId,
@@ -390,7 +414,6 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
         const edgeSource = showIndirect && child.parentId ? child.parentId : group.id;
         const edgeId = `edge-${edgeSource}-to-child-${child.group.id}`;
 
-        // Only add edge if it doesn't already exist
         if (!allEdgesMap.has(edgeId)) {
           allEdgesMap.set(edgeId, {
             id: edgeId,
@@ -507,8 +530,8 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
   // Filter edges based on selected rights
   const filteredEdges = useMemo(() => {
     return edges.filter(edge => {
-      if (!edge.data?.rights) return true; // Show edges without rights data
-      if ((edge.data.rights as string[]).length === 0) return true; // Member edges
+      if (!edge.data?.rights) return true;
+      if ((edge.data.rights as string[]).length === 0) return true;
       return checkEdgeVisible(edge.data.rights as string[]);
     });
   }, [edges, checkEdgeVisible]);
@@ -549,7 +572,7 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
   if (!profile || !user) {
     return (
       <div className="flex h-[600px] w-full items-center justify-center rounded-lg border bg-background">
-        <p className="text-muted-foreground">Loading user network...</p>
+        <p className="text-muted-foreground">Loading network...</p>
       </div>
     );
   }
@@ -574,60 +597,105 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
       onInteractiveChange={handleInteractiveChange}
       panel={
         <Panel position="top-left" className="rounded bg-white p-4 shadow">
-          <h2 className="mb-2 text-lg font-bold">User Network</h2>
-          <p className="mb-3 text-sm text-gray-600">
-            Visualization of {profile.name}'s group network
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {isInteractive && (
-              <>
-                <Button
-                  size="sm"
-                  variant={!showIndirect ? 'default' : 'outline'}
-                  onClick={() => setShowIndirect(false)}
-                >
-                  Direct
-                </Button>
-                <Button
-                  size="sm"
-                  variant={showIndirect ? 'default' : 'outline'}
-                  onClick={() => setShowIndirect(true)}
-                >
-                  Indirect
-                </Button>
-              </>
-            )}
+          {panelCollapsed ? (
             <Button
               size="sm"
-              variant={isInteractive ? 'outline' : 'default'}
-              onClick={() => setIsInteractive(!isInteractive)}
+              variant="outline"
+              onClick={() => setPanelCollapsed(false)}
+              className="flex items-center gap-2"
             >
-              {isInteractive ? 'Lock Editor' : 'Unlock Editor'}
+              <ChevronDown className="h-4 w-4" />
+              Show Controls
             </Button>
-          </div>
+          ) : (
+            <>
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-lg font-bold">{title}</h2>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setPanelCollapsed(true)}
+                  className="h-6 w-6 p-0"
+                >
+                  <ChevronUp className="h-4 w-4" />
+                </Button>
+              </div>
+              {description && <p className="mb-3 text-sm text-gray-600">{description}</p>}
+              <div className="flex flex-wrap gap-2">
+                {isInteractive && (
+                  <>
+                    <Button
+                      size="sm"
+                      variant={!showIndirect ? 'default' : 'outline'}
+                      onClick={() => setShowIndirect(false)}
+                    >
+                      Direct
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={showIndirect ? 'default' : 'outline'}
+                      onClick={() => setShowIndirect(true)}
+                    >
+                      Indirect
+                    </Button>
+                  </>
+                )}
+                <Button
+                  size="sm"
+                  variant={isInteractive ? 'outline' : 'default'}
+                  onClick={() => setIsInteractive(!isInteractive)}
+                >
+                  {isInteractive ? 'Lock Editor' : 'Unlock Editor'}
+                </Button>
+              </div>
 
-          {/* Right type filters */}
-          <RightFilters selectedRights={selectedRights} onToggleRight={toggleRight} />
+              {/* Right type filters - only show if not filtering by specific right */}
+              {!filterRight && (
+                <RightFilters selectedRights={selectedRights} onToggleRight={toggleRight} />
+              )}
 
-          {/* Color legend */}
-          <div className="mt-3 space-y-2 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="h-4 w-4 rounded-full border-2 border-[#2196f3] bg-[#e3f2fd]"></div>
-              <span>User</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-4 w-4 rounded border border-[#a5d6a7] bg-[#c8e6c9]"></div>
-              <span>User's Groups</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-4 w-4 rounded border border-[#80cbc4] bg-[#b2dfdb]"></div>
-              <span>Parent Groups</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-4 w-4 rounded border border-[#ffcc80] bg-[#ffe0b2]"></div>
-              <span>Child Groups</span>
-            </div>
-          </div>
+              {filterRight && (
+                <div className="mt-3 text-sm text-muted-foreground">
+                  Filtered by: {filterRight.replace('Right', '')}
+                </div>
+              )}
+
+              {/* Color legend */}
+              <div className="mt-3">
+                <button
+                  onClick={() => setLegendCollapsed(!legendCollapsed)}
+                  className="flex w-full items-center justify-between text-sm font-medium hover:text-primary"
+                >
+                  <span>Legend</span>
+                  {legendCollapsed ? (
+                    <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronUp className="h-4 w-4" />
+                  )}
+                </button>
+                {!legendCollapsed && (
+                  <div className="mt-2 space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 rounded-full border-2 border-[#2196f3] bg-[#e3f2fd]"></div>
+                      <span>User</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 rounded border border-[#a5d6a7] bg-[#c8e6c9]"></div>
+                      <span>User's Groups</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 rounded border border-[#80cbc4] bg-[#b2dfdb]"></div>
+                      <span>Parent Groups</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 rounded border border-[#ffcc80] bg-[#ffe0b2]"></div>
+                      <span>Child Groups</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </Panel>
       }
     />

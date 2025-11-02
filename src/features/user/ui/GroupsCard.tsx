@@ -71,7 +71,11 @@ export const GroupsCard: React.FC<GroupsCardProps> = ({
       {group.tags && group.tags.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {group.tags.map((tag, idx) => (
-            <Badge key={idx} variant="outline" className="text-xs font-normal">
+            <Badge
+              key={`${group.id}-tag-${idx}-${tag}`}
+              variant="outline"
+              className="text-xs font-normal"
+            >
               #{tag}
             </Badge>
           ))}

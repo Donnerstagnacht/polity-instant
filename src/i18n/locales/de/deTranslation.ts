@@ -96,6 +96,7 @@ const deTranslation: I18nLocale = {
         changeRequests: 'Änderungsanträge',
         discussions: 'Diskussionen',
         collaborators: 'Mitarbeiter',
+        process: 'Prozess',
         edit: 'Antrag bearbeiten',
       },
     },

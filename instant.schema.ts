@@ -25,12 +25,14 @@ const _schema = i.schema({
       scheduledTime: i.string().optional(),
       startTime: i.date().optional(),
       status: i.string().indexed(),
+      forwardingStatus: i.string().indexed().optional(), // 'forward_confirmed', 'previous_decision_outstanding', 'rejected', 'approved'
       title: i.string().indexed(),
       type: i.string().indexed(),
       updatedAt: i.date().indexed(),
     }),
     amendments: i.entity({
       code: i.string().optional(),
+      createdAt: i.date().indexed().optional(),
       date: i.string(),
       imageURL: i.string().optional(),
       status: i.string(),
@@ -38,6 +40,7 @@ const _schema = i.schema({
       supporters: i.number(),
       tags: i.json().optional(),
       title: i.string(),
+      updatedAt: i.date().indexed().optional(),
     }),
     amendmentVoteEntries: i.entity({
       createdAt: i.date().indexed(),
@@ -57,9 +60,9 @@ const _schema = i.schema({
       votingStartTime: i.date().optional(),
     }),
     blogs: i.entity({
-      comments: i.number(),
+      commentCount: i.number(),
       date: i.string(),
-      likes: i.number(),
+      likeCount: i.number(),
       title: i.string(),
     }),
     changeRequests: i.entity({
@@ -349,6 +352,11 @@ const _schema = i.schema({
       status: i.string().indexed(), // 'pending', 'confirmed', 'cancelled'
       notes: i.string().optional(),
     }),
+    amendmentPaths: i.entity({
+      createdAt: i.date().indexed(),
+      pathData: i.json(), // Array of { groupId, groupName, eventId, eventTitle, eventStartDate, agendaItemId, amendmentVoteId, forwardingStatus }
+      pathLength: i.number().indexed(), // Number of groups in path
+    }),
   },
   links: {
     $usersLinkedPrimaryUser: {
@@ -388,6 +396,18 @@ const _schema = i.schema({
         label: 'agendaItems',
       },
     },
+    agendaItemsAmendment: {
+      forward: {
+        on: 'agendaItems',
+        has: 'one',
+        label: 'amendment',
+      },
+      reverse: {
+        on: 'amendments',
+        has: 'many',
+        label: 'agendaItems',
+      },
+    },
     amendmentsGroup: {
       forward: {
         on: 'amendments',
@@ -410,6 +430,42 @@ const _schema = i.schema({
         on: '$users',
         has: 'many',
         label: 'amendments',
+      },
+    },
+    amendmentsTargetGroup: {
+      forward: {
+        on: 'amendments',
+        has: 'one',
+        label: 'targetGroup',
+      },
+      reverse: {
+        on: 'groups',
+        has: 'many',
+        label: 'targetedAmendments',
+      },
+    },
+    amendmentsTargetEvent: {
+      forward: {
+        on: 'amendments',
+        has: 'one',
+        label: 'targetEvent',
+      },
+      reverse: {
+        on: 'events',
+        has: 'many',
+        label: 'targetedAmendments',
+      },
+    },
+    amendmentPathsAmendment: {
+      forward: {
+        on: 'amendmentPaths',
+        has: 'one',
+        label: 'amendment',
+      },
+      reverse: {
+        on: 'amendments',
+        has: 'one',
+        label: 'path',
       },
     },
     amendmentVoteEntriesAmendmentVote: {

@@ -358,6 +358,13 @@ export const navItemsAuthenticated = (
         href: `/amendment/${amendmentId}/discussions`,
         onClick: () => router.push(`/amendment/${amendmentId}/discussions`),
       },
+      {
+        id: 'process',
+        label: t ? t('navigation.secondary.amendment.process') : 'Process',
+        icon: 'Workflow',
+        href: `/amendment/${amendmentId}/process`,
+        onClick: () => router.push(`/amendment/${amendmentId}/process`),
+      },
     ];
 
     // Only add collaborators and edit items if user is admin

@@ -171,34 +171,65 @@ function SearchContent() {
 
   const filteredStatements =
     data?.statements?.filter((statement: any) => {
-      if (!filterByQuery(statement.text || '')) return false;
-      if (statement.tag && !filterByQuery(statement.tag)) return false;
-      return true;
+      // Search in text, tag (type), and user name
+      const matchesText = filterByQuery(statement.text || '');
+      const matchesTag = statement.tag && filterByQuery(statement.tag);
+      const matchesType = statement.type && filterByQuery(statement.type);
+      const matchesUser = statement.user?.name && filterByQuery(statement.user.name);
+
+      if (!queryParam) return true;
+      return matchesText || matchesTag || matchesType || matchesUser;
     }) || [];
 
   const filteredBlogs =
     data?.blogs?.filter((blog: any) => {
-      if (!filterByQuery(blog.title || '')) return false;
+      // Check hashtag filter first
       if (!matchesHashtag(blog)) return false;
-      return true;
+
+      // Search in title and content
+      const matchesTitle = filterByQuery(blog.title || '');
+      const matchesContent = blog.content && filterByQuery(blog.content);
+      const matchesUser = blog.user?.name && filterByQuery(blog.user.name);
+
+      if (!queryParam) return true;
+      return matchesTitle || matchesContent || matchesUser;
     }) || [];
 
   const filteredAmendments =
     data?.amendments?.filter((amendment: any) => {
-      if (!filterByQuery(amendment.title || '')) return false;
-      if (amendment.subtitle && !filterByQuery(amendment.subtitle)) return false;
+      // Check hashtag filter first
       if (!matchesHashtag(amendment)) return false;
-      return true;
+
+      // Search in title, subtitle, and content
+      const matchesTitle = filterByQuery(amendment.title || '');
+      const matchesSubtitle = amendment.subtitle && filterByQuery(amendment.subtitle);
+      const matchesContent = amendment.content && filterByQuery(amendment.content);
+      const matchesUser = amendment.user?.name && filterByQuery(amendment.user.name);
+
+      if (!queryParam) return true;
+      return matchesTitle || matchesSubtitle || matchesContent || matchesUser;
     }) || [];
 
   const filteredEvents =
     data?.events?.filter((event: any) => {
-      if (!filterByQuery(event.title || '')) return false;
-      if (event.description && !filterByQuery(event.description)) return false;
-      if (event.location && !filterByQuery(event.location)) return false;
+      // Check public filter first
       if (publicOnly && !event.isPublic) return false;
+
+      // Check hashtag filter
       if (!matchesHashtag(event)) return false;
-      return true;
+
+      // Search in title, description, location, and organizer name
+      const matchesTitle = filterByQuery(event.title || '');
+      const matchesDescription = event.description && filterByQuery(event.description);
+      const matchesLocation = event.location && filterByQuery(event.location);
+      const matchesOrganizer =
+        event.organizer?.profile?.name && filterByQuery(event.organizer.profile.name);
+      const matchesGroup = event.group?.name && filterByQuery(event.group.name);
+
+      if (!queryParam) return true;
+      return (
+        matchesTitle || matchesDescription || matchesLocation || matchesOrganizer || matchesGroup
+      );
     }) || [];
 
   // Sort results
@@ -256,8 +287,8 @@ function SearchContent() {
         </p>
       </div>
 
-      {/* Search Bar */}
-      <div className="mb-6 space-y-4">
+      {/* Search Bar - Fixed/Sticky */}
+      <div className="sticky top-0 z-10 mb-6 space-y-4 bg-background pb-4 pt-2">
         <div className="flex gap-2">
           <div className="relative flex-1">
             <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

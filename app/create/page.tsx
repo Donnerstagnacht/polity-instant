@@ -683,7 +683,12 @@ function GuidedBlogFlow({
       }
       const blogId = id();
       await db.transact([
-        tx.blogs[blogId].update({ title: data.title, date: data.date, likes: 0, comments: 0 }),
+        tx.blogs[blogId].update({
+          title: data.title,
+          date: data.date,
+          likeCount: 0,
+          commentCount: 0,
+        }),
         tx.blogs[blogId].link({ user: user.id }),
       ]);
       toast.success('Blog post created successfully!');
