@@ -56,7 +56,7 @@ type ItemType =
   | null;
 
 export default function CreatePage() {
-  const [isCarouselMode, setIsCarouselMode] = useState(false);
+  const [isCarouselMode, setIsCarouselMode] = useState(true);
   const [selectedItemType, setSelectedItemType] = useState<ItemType>('groups');
 
   // Guided mode uses a unified flow

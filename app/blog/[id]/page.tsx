@@ -332,7 +332,7 @@ export default function BlogPage({ params }: { params: Promise<{ id: string }> }
         <StatsBar
           stats={[
             { value: subscriberCount, labelKey: 'components.labels.subscribers' },
-            { value: blog.likes || 0, labelKey: 'components.labels.likes' },
+            { value: blog.likeCount || 0, labelKey: 'components.labels.likes' },
             { value: comments.length, labelKey: 'components.labels.comments' },
           ]}
         />
