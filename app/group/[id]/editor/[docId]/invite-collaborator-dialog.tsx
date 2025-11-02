@@ -44,7 +44,9 @@ export function InviteCollaboratorDialog({
 
   // Query all profiles for user search
   const { data: profilesData, isLoading } = db.useQuery({
-    profiles: {},
+    profiles: {
+      user: {},
+    },
   });
 
   // Filter profiles based on search query and exclude existing collaborators and current user

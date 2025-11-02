@@ -21,11 +21,6 @@ export const AmendmentListTabDefault: Story = {
         amendments={USER.amendments}
         searchValue={searchValue}
         onSearchChange={setSearchValue}
-        getStatusStyles={() => ({
-          badge: 'outline',
-          bgColor: 'bg-gray-100',
-          textColor: 'text-gray-800',
-        })}
         {...args}
       />
     );

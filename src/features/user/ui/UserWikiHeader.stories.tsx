@@ -12,18 +12,8 @@ type Story = StoryObj;
 
 export const UserWikiHeaderDefault: Story = {
   render: args => {
-    const handleFollowClick = () => {
-      // Storybook: Hier könnte ein Action-Logger oder State-Toggle stehen
-    };
     return (
-      <UserWikiHeader
-        name={USER.name}
-        avatar={USER.avatar}
-        subtitle={USER.subtitle}
-        following={false}
-        onFollowClick={handleFollowClick}
-        {...args}
-      />
+      <UserWikiHeader name={USER.name} avatar={USER.avatar} subtitle={USER.subtitle} {...args} />
     );
   },
 };

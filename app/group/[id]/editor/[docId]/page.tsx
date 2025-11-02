@@ -83,7 +83,9 @@ export default function GroupDocumentEditorPage() {
 
   // Query selected document with real-time updates
   const { data: documentData, isLoading: documentLoading } = db.useQuery({
-    documents: {},
+    documents: {
+      owner: {},
+    },
   });
 
   const document = documentData?.documents?.find((d: any) => d.id === documentId);

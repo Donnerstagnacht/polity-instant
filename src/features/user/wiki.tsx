@@ -17,12 +17,7 @@ import { WikiSubscribeButton } from './ui/WikiSubscribeButton';
 import { ShareButton } from '@/components/shared/ShareButton';
 
 // --- UserWiki utility functions moved to utils/userWiki.utils.ts ---
-import {
-  getStatusStyles,
-  getTagColor,
-  getRoleBadgeColor,
-  getBlogGradient,
-} from './utils/userWiki.utils';
+import { getTagColor, getRoleBadgeColor, getBlogGradient } from './utils/userWiki.utils';
 
 interface UserWikiProps {
   userId?: string;
@@ -157,7 +152,6 @@ export function UserWiki(_props: UserWikiProps) {
             handleSearchChange={handleSearchChange}
             getBlogGradient={(blogId: number) => getBlogGradient(blogId, GRADIENTS)}
             getRoleBadgeColor={getRoleBadgeColor}
-            getStatusStyles={getStatusStyles}
           />
         </div>
       )}

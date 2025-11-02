@@ -4,7 +4,7 @@ import { BlogListTab } from './BlogListTab';
 import { GroupsListTab } from './GroupListTab';
 import { AmendmentListTab } from './AmendmentListTab';
 import { useTranslation } from '@/hooks/use-translation';
-import type { User, TabSearchState, UserAmendment } from '../types/user.types';
+import type { User, TabSearchState } from '../types/user.types';
 
 interface UserWikiContentTabsProps {
   user: User;
@@ -12,7 +12,6 @@ interface UserWikiContentTabsProps {
   handleSearchChange: (tab: keyof TabSearchState, value: string) => void;
   getBlogGradient: (blogId: number) => string;
   getRoleBadgeColor: (role: string) => { bg: string; text: string; badge: string };
-  getStatusStyles: (status: UserAmendment['status']) => any;
 }
 
 export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
@@ -21,7 +20,6 @@ export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
   handleSearchChange,
   getBlogGradient,
   getRoleBadgeColor,
-  getStatusStyles,
 }) => {
   const { t } = useTranslation();
 
@@ -57,7 +55,6 @@ export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
             amendments={user.amendments}
             searchValue={searchTerms.amendments}
             onSearchChange={(value: string) => handleSearchChange('amendments', value)}
-            getStatusStyles={getStatusStyles}
           />
         </TabsContent>
       </Tabs>

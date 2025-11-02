@@ -142,4 +142,10 @@ export const USER: User = {
       tags: ['term-limits', 'judiciary', 'court-reform', 'accountability'],
     },
   ],
+  hashtags: [
+    { id: '1', tag: 'constitutional-law' },
+    { id: '2', tag: 'democracy' },
+    { id: '3', tag: 'judicial-reform' },
+    { id: '4', tag: 'governance' },
+  ],
 };
