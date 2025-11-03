@@ -4212,6 +4212,151 @@ async function seedTimelineEvents(
   console.log(`✓ Created ${eventsCreated} timeline events across all entity types`);
 }
 
+async function seedStripeData(userIds: string[]) {
+  console.log('Seeding Stripe customers, subscriptions, and payments...');
+  const transactions = [];
+  let totalCustomers = 0;
+  let totalSubscriptions = 0;
+  let totalPayments = 0;
+
+  // Plan amounts in cents
+  const plans = [
+    { name: 'running', amount: 200, currency: 'eur' }, // €2
+    { name: 'development', amount: 1000, currency: 'eur' }, // €10
+  ];
+
+  // Create Stripe data for each user
+  for (const userId of userIds) {
+    const customerId = id();
+    const stripeCustomerId = `cus_${faker.string.alphanumeric(14)}`;
+    const hasSubscription = faker.datatype.boolean(0.8); // 80% of users have a subscription
+
+    // Create customer
+    transactions.push(
+      tx.stripeCustomers[customerId]
+        .update({
+          stripeCustomerId,
+          email: faker.internet.email().toLowerCase(),
+          createdAt: faker.date.past({ years: 1 }),
+          updatedAt: new Date(),
+        })
+        .link({ user: userId })
+    );
+    totalCustomers++;
+
+    if (hasSubscription) {
+      // Choose a random plan (running or development)
+      const plan = randomItem(plans);
+      const subscriptionId = id();
+      const stripeSubscriptionId = `sub_${faker.string.alphanumeric(14)}`;
+
+      const createdAt = faker.date.past({ years: 0.8 });
+      const currentPeriodStart = faker.date.recent({ days: 15 });
+      const currentPeriodEnd = new Date(currentPeriodStart);
+      currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + 1);
+
+      // 90% active, 10% canceled/past_due
+      const statuses = [
+        'active',
+        'active',
+        'active',
+        'active',
+        'active',
+        'active',
+        'active',
+        'active',
+        'active',
+        'canceled',
+        'past_due',
+      ];
+      const status = randomItem(statuses);
+
+      transactions.push(
+        tx.stripeSubscriptions[subscriptionId]
+          .update({
+            stripeSubscriptionId,
+            stripeCustomerId,
+            status,
+            currentPeriodStart: currentPeriodStart.toISOString(),
+            currentPeriodEnd: currentPeriodEnd.toISOString(),
+            cancelAtPeriodEnd: status === 'canceled' ? faker.datatype.boolean(0.5) : false,
+            amount: plan.amount,
+            currency: plan.currency,
+            interval: 'month',
+            createdAt: createdAt.toISOString(),
+            updatedAt: new Date().toISOString(),
+            canceledAt:
+              status === 'canceled' ? faker.date.recent({ days: 30 }).toISOString() : undefined,
+          })
+          .link({ customer: customerId })
+      );
+      totalSubscriptions++;
+
+      // Create 1-5 past payments for this subscription
+      const paymentCount = randomInt(1, 5);
+      for (let i = 0; i < paymentCount; i++) {
+        const paymentId = id();
+        const stripeInvoiceId = `in_${faker.string.alphanumeric(14)}`;
+
+        // Generate payment dates between subscription creation and now
+        // Make sure we have at least 1 day between createdAt and currentPeriodStart
+        const minDate = new Date(createdAt);
+        const maxDate = new Date(currentPeriodStart);
+
+        // If dates are too close, use a date range from createdAt
+        let paymentCreatedAt;
+        if (maxDate.getTime() - minDate.getTime() < 86400000) {
+          // Less than 1 day
+          // Use a date between subscription creation and now
+          paymentCreatedAt = faker.date.between({
+            from: minDate,
+            to: new Date(),
+          });
+        } else {
+          paymentCreatedAt = faker.date.between({
+            from: minDate,
+            to: maxDate,
+          });
+        }
+
+        // 95% paid, 5% failed
+        const paymentStatus = faker.datatype.boolean(0.95) ? 'paid' : 'failed';
+
+        transactions.push(
+          tx.stripePayments[paymentId]
+            .update({
+              stripeInvoiceId,
+              stripeCustomerId,
+              stripeSubscriptionId,
+              amount: plan.amount,
+              currency: plan.currency,
+              status: paymentStatus,
+              createdAt: paymentCreatedAt.toISOString(),
+              paidAt: paymentStatus === 'paid' ? paymentCreatedAt.toISOString() : undefined,
+            })
+            .link({ customer: customerId })
+        );
+        totalPayments++;
+      }
+    }
+  }
+
+  // Execute in batches
+  const batchSize = 50;
+  for (let i = 0; i < transactions.length; i += batchSize) {
+    const batch = transactions.slice(i, i + batchSize);
+    await db.transact(batch);
+  }
+
+  console.log(`✓ Created ${totalCustomers} Stripe customers`);
+  console.log(`✓ Created ${totalSubscriptions} Stripe subscriptions (80% of users)`);
+  console.log(`✓ Created ${totalPayments} Stripe payments (1-5 per subscription)`);
+  console.log(`  - Running plan (€2/month): ~50% of subscriptions`);
+  console.log(`  - Development plan (€10/month): ~50% of subscriptions`);
+  console.log(`  - Active: ~90%, Canceled/Past Due: ~10%`);
+  console.log(`  - Payment success rate: ~95%`);
+}
+
 // Main seed function
 async function seed() {
   console.log('\n🌱 Starting database seed...\n');
@@ -4273,6 +4418,9 @@ async function seed() {
     await seedBlogCommentsAndLikes(allBlogIds, userIds); // New: seed blog comments and likes
     await seedAmendmentCommentsAndVotes(allAmendmentIds, userIds); // New: seed amendment comments and votes
 
+    // Seed Stripe data
+    await seedStripeData(userIds);
+
     // Seed timeline events
     await seedTimelineEvents(userIds, groupIds, allAmendmentIds, eventIds, allBlogIds);
 
@@ -4302,6 +4450,7 @@ async function seed() {
     console.log(
       `  - Amendment targets (~60% of amendments have target groups, events, paths, and agenda items)`
     );
+    console.log(`  - Stripe customers, subscriptions, and payments (80% of users subscribed)`);
     console.log(`  - Timeline events showing activity across all subscribed entities\n`);
     console.log('Main test user details:');
     console.log(`  - ID: ${SEED_CONFIG.mainTestUserId}`);
