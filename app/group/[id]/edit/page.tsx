@@ -296,7 +296,7 @@ export default function GroupEditPage({ params }: { params: Promise<{ id: string
                     id="instagram"
                     value={formData.instagram}
                     onChange={e => setFormData({ ...formData, instagram: e.target.value })}
-                    placeholder="@username or profile URL"
+                    placeholder="@username or user URL"
                   />
                 </div>
                 <div className="space-y-2">
@@ -305,7 +305,7 @@ export default function GroupEditPage({ params }: { params: Promise<{ id: string
                     id="twitter"
                     value={formData.twitter}
                     onChange={e => setFormData({ ...formData, twitter: e.target.value })}
-                    placeholder="@username or profile URL"
+                    placeholder="@username or user URL"
                   />
                 </div>
                 <div className="space-y-2">
@@ -314,7 +314,7 @@ export default function GroupEditPage({ params }: { params: Promise<{ id: string
                     id="facebook"
                     value={formData.facebook}
                     onChange={e => setFormData({ ...formData, facebook: e.target.value })}
-                    placeholder="Profile or page URL"
+                    placeholder="User or page URL"
                   />
                 </div>
                 <div className="space-y-2">

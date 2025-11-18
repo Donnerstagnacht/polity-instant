@@ -55,12 +55,13 @@ export default function NotificationsPage() {
           serverCreatedAt: 'desc' as const,
         },
       },
-      recipient: {
-        profile: {},
-      },
-      sender: {
-        profile: {},
-      },
+      recipient: {},
+      sender: {},
+      relatedUser: {},
+      relatedGroup: {},
+      relatedEvent: {},
+      relatedAmendment: {},
+      relatedBlog: {},
     },
   });
 
@@ -81,25 +82,35 @@ export default function NotificationsPage() {
     // Navigate based on related entity
     if (notification.actionUrl) {
       router.push(notification.actionUrl);
-    } else if (notification.relatedEntityType && notification.relatedEntityId) {
+    } else if (notification.relatedEntityType) {
       switch (notification.relatedEntityType) {
         case 'group':
-          router.push(`/group/${notification.relatedEntityId}`);
+          if (notification.relatedGroup?.id) {
+            router.push(`/group/${notification.relatedGroup.id}`);
+          }
           break;
         case 'event':
-          router.push(`/event/${notification.relatedEntityId}`);
+          if (notification.relatedEvent?.id) {
+            router.push(`/event/${notification.relatedEvent.id}`);
+          }
           break;
         case 'user':
-          router.push(`/user/${notification.relatedEntityId}`);
+          if (notification.relatedUser?.id) {
+            router.push(`/user/${notification.relatedUser.id}`);
+          }
           break;
         case 'message':
           router.push('/messages');
           break;
         case 'blog':
-          router.push(`/blog/${notification.relatedEntityId}`);
+          if (notification.relatedBlog?.id) {
+            router.push(`/blog/${notification.relatedBlog.id}`);
+          }
           break;
         case 'amendment':
-          router.push(`/amendment/${notification.relatedEntityId}`);
+          if (notification.relatedAmendment?.id) {
+            router.push(`/amendment/${notification.relatedAmendment.id}`);
+          }
           break;
         default:
           break;
@@ -168,10 +179,8 @@ export default function NotificationsPage() {
           {/* Sender Avatar (if available) */}
           {notification.sender && (
             <Avatar className="h-10 w-10">
-              <AvatarImage src={notification.sender.profile?.avatar} />
-              <AvatarFallback>
-                {notification.sender.profile?.name?.[0]?.toUpperCase() || 'U'}
-              </AvatarFallback>
+              <AvatarImage src={notification.sender.avatar} />
+              <AvatarFallback>{notification.sender.name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
             </Avatar>
           )}
 

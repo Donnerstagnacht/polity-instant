@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { seedCompleteUserProfile } from '../utils/seedUserData';
+import { seedCompleteUser } from '../utils/seedUserData';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { Loader2, Database } from 'lucide-react';
 
@@ -25,8 +25,8 @@ export function SeedUserDataButton() {
     setMessage(null);
 
     try {
-      await seedCompleteUserProfile(user.id);
-      setMessage('✅ Profile data seeded successfully! Refresh the page to see changes.');
+      await seedCompleteUser(user.id);
+      setMessage('✅ User data seeded successfully! Refresh the page to see changes.');
     } catch (error) {
       console.error('Failed to seed data:', error);
       setMessage('❌ Failed to seed data. Check console for details.');
@@ -63,7 +63,7 @@ export function SeedUserDataButton() {
           ) : (
             <>
               <Database className="mr-2 h-4 w-4" />
-              Seed Profile Data
+              Seed use Data
             </>
           )}
         </Button>

@@ -39,15 +39,13 @@ export function useGroupMembership(groupId: string) {
   const memberships = data?.groupMemberships || [];
   let membership = memberships[0];
 
-  // If there are multiple memberships, prioritize by status
+  // If there are multiple memberships, prioritize by role/status
   if (memberships.length > 1) {
-    const adminMembership = memberships.find(
-      (m: any) => m.status === 'admin' || m.role === 'admin'
-    );
+    const boardMemberMembership = memberships.find((m: any) => m.role === 'Board Member');
     const memberMembership = memberships.find((m: any) => m.status === 'member');
     const invitedMembership = memberships.find((m: any) => m.status === 'invited');
 
-    membership = adminMembership || memberMembership || invitedMembership || membership;
+    membership = boardMemberMembership || memberMembership || invitedMembership || membership;
 
     console.warn('Multiple memberships found for user in group:', {
       groupId,
@@ -58,15 +56,15 @@ export function useGroupMembership(groupId: string) {
     });
   }
 
-  // Filter to count only members and admins (excluding invited and requested)
+  // Filter to count only members and board members (excluding invited and requested)
   const memberCount =
     allMembershipsData?.groupMemberships?.filter(
-      (m: any) => m.status === 'member' || m.status === 'admin' || m.role === 'admin'
+      (m: any) => m.status === 'member' || m.role === 'Board Member'
     ).length || 0;
   const status: MembershipStatus | null = (membership?.status as MembershipStatus) || null;
   const role = membership?.role;
-  const isMember = status === 'member' || status === 'admin' || role === 'admin';
-  const isAdmin = status === 'admin' || role === 'admin';
+  const isMember = status === 'member' || role === 'Board Member' || role === 'Member';
+  const isAdmin = role === 'Board Member';
   const hasRequested = status === 'requested';
   const isInvited = status === 'invited';
 

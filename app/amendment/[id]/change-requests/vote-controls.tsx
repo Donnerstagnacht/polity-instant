@@ -18,7 +18,7 @@ interface VoteControlsProps {
     createdAt: number;
     voter: {
       id: string;
-      profile?: {
+      user?: {
         name?: string;
         avatar?: string;
       };
@@ -28,10 +28,8 @@ interface VoteControlsProps {
     id: string;
     user: {
       id: string;
-      profile?: {
-        name?: string;
-        avatar?: string;
-      };
+      name?: string;
+      avatar?: string;
     };
   }[];
   status: string;
@@ -306,17 +304,14 @@ export function VoteControls({
                   className="flex items-center gap-1 rounded-full bg-background px-2 py-1 text-xs"
                 >
                   <Avatar className="h-5 w-5">
-                    {vote.voter?.profile?.avatar ? (
-                      <AvatarImage
-                        src={vote.voter.profile.avatar}
-                        alt={vote.voter.profile.name || ''}
-                      />
+                    {vote.voter?.user ? (
+                      <AvatarImage src={vote.voter.user.avatar} alt={vote.voter.user.name || ''} />
                     ) : null}
                     <AvatarFallback className="text-xs">
-                      {vote.voter?.profile?.name?.[0]?.toUpperCase() || '?'}
+                      {vote.voter?.user?.name?.[0]?.toUpperCase() || '?'}
                     </AvatarFallback>
                   </Avatar>
-                  <span>{vote.voter?.profile?.name || 'Unknown'}</span>
+                  <span>{vote.voter?.user?.name || 'Unknown'}</span>
                   <Badge
                     variant="outline"
                     className={`ml-1 ${
@@ -348,17 +343,14 @@ export function VoteControls({
                   className="flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-xs opacity-60"
                 >
                   <Avatar className="h-5 w-5">
-                    {collab.user?.profile?.avatar ? (
-                      <AvatarImage
-                        src={collab.user.profile.avatar}
-                        alt={collab.user.profile.name || ''}
-                      />
+                    {collab.user?.avatar ? (
+                      <AvatarImage src={collab.user.avatar} alt={collab.user.name || ''} />
                     ) : null}
                     <AvatarFallback className="text-xs">
-                      {collab.user?.profile?.name?.[0]?.toUpperCase() || '?'}
+                      {collab.user?.name?.[0]?.toUpperCase() || '?'}
                     </AvatarFallback>
                   </Avatar>
-                  <span>{collab.user?.profile?.name || 'Unknown'}</span>
+                  <span>{collab.user?.name || 'Unknown'}</span>
                 </div>
               ))}
             </div>

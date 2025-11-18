@@ -8,7 +8,7 @@ import { useScreenResponsiveDetector, useScreenStore } from '@/global-state/scre
 import { useNavigationStore } from '@/navigation/state/navigation.store';
 import { useThemeInitializer } from '@/global-state/theme.store';
 import { I18nSyncProvider } from '@/i18n/i18n-sync-provider.tsx';
-import { EnsureProfile } from '@/features/auth';
+import { EnsureUser } from '@/features/auth';
 import type {
   NavigationItem,
   NavigationType,
@@ -62,8 +62,8 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
             secondaryNavItems,
           })}`}
         >
-          {/* Wrap children with EnsureProfile when authenticated */}
-          {isAuthenticated ? <EnsureProfile>{children}</EnsureProfile> : children}
+          {/* Wrap children with EnsureUser when authenticated */}
+          {isAuthenticated ? <EnsureUser>{children}</EnsureUser> : children}
         </main>
 
         {/* Command Dialog for global search */}

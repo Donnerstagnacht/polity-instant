@@ -31,11 +31,10 @@ interface BlogComment {
   downvotes?: number;
   parentComment?: any;
   creator?: {
-    profile?: {
-      name?: string;
-      handle?: string;
-      avatar?: string;
-    };
+    id?: string;
+    name?: string;
+    handle?: string;
+    avatar?: string;
   };
   votes?: {
     id: string;
@@ -125,16 +124,12 @@ function CommentItem({ comment, blogId }: { comment: BlogComment; blogId: string
       <div className="flex-1">
         <div className="mb-3 flex items-start justify-between">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Avatar className="h-6 w-6">
-              <AvatarImage src={comment.creator?.profile?.avatar} />
-              <AvatarFallback>
-                {comment.creator?.profile?.name?.[0]?.toUpperCase() || 'U'}
-              </AvatarFallback>
+            <Avatar>
+              <AvatarImage src={comment.creator?.avatar} />
+              <AvatarFallback>{comment.creator?.name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
             </Avatar>
-            <span className="font-medium">{comment.creator?.profile?.name || 'Anonymous'}</span>
-            {comment.creator?.profile?.handle && (
-              <span className="text-xs">@{comment.creator.profile.handle}</span>
-            )}
+            <span className="font-medium">{comment.creator?.name || 'Anonymous'}</span>
+            {comment.creator?.handle && <span className="text-xs">@{comment.creator.handle}</span>}
             <span>•</span>
             <Clock className="h-4 w-4" />
             <span>{new Date(comment.createdAt).toLocaleDateString()}</span>
@@ -172,9 +167,7 @@ export default function BlogPage({ params }: { params: Promise<{ id: string }> }
   const { data, isLoading, error } = db.useQuery({
     blogs: {
       $: { where: { id: resolvedParams.id } },
-      user: {
-        profile: {},
-      },
+      user: {},
       hashtags: {},
       subscribers: {},
     },
@@ -184,17 +177,13 @@ export default function BlogPage({ params }: { params: Promise<{ id: string }> }
   const { data: commentsData } = db.useQuery({
     comments: {
       $: { where: { blog: resolvedParams.id } },
-      creator: {
-        profile: {},
-      },
+      creator: {},
       votes: {
         user: {},
       },
       parentComment: {},
       replies: {
-        creator: {
-          profile: {},
-        },
+        creator: {},
         votes: {
           user: {},
         },
@@ -292,7 +281,7 @@ export default function BlogPage({ params }: { params: Promise<{ id: string }> }
     );
   }
 
-  const author = blog.user?.profile;
+  const author = blog.user;
 
   return (
     <AuthGuard requireAuth={true}>

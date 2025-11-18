@@ -38,14 +38,12 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [legendCollapsed, setLegendCollapsed] = useState(false);
 
-  // Fetch the specific user profile
-  const { data: profileData } = db.useQuery({
-    profiles: {
-      $: { where: { 'user.id': userId } },
-      user: {
-        memberships: {
-          group: {},
-        },
+  // Fetch the specific user
+  const { data: userData } = db.useQuery({
+    $users: {
+      $: { where: { id: userId } },
+      memberships: {
+        group: {},
       },
     },
   });
@@ -58,8 +56,7 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
     },
   });
 
-  const profile = profileData?.profiles?.[0];
-  const user = profile?.user;
+  const user = userData?.$users?.[0];
   const memberships = user?.memberships || [];
   const relationships = relationshipsData?.groupRelationships || [];
 
@@ -221,7 +218,7 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
 
   // Generate flow chart
   const generateFlowChart = useCallback(() => {
-    if (!profile || !user) {
+    if (!user) {
       setNodes([]);
       setEdges([]);
       return;
@@ -236,8 +233,8 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
       type: 'default',
       position: { x: 400, y: 300 },
       data: {
-        label: profile.name || 'User',
-        description: profile.subtitle,
+        label: user.name || 'User',
+        description: user.subtitle,
         level: 0,
         type: 'user',
       },
@@ -497,7 +494,6 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
     setNodes(newNodes);
     setEdges(Array.from(allEdgesMap.values()));
   }, [
-    profile,
     user,
     userId,
     userGroups,
@@ -549,7 +545,7 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
     }
   }, []);
 
-  if (!profile || !user) {
+  if (!user) {
     return (
       <div className="flex h-[600px] w-full items-center justify-center rounded-lg border bg-background">
         <p className="text-muted-foreground">Loading user network...</p>
@@ -595,7 +591,7 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
           {!panelCollapsed && (
             <>
               <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
-                Visualization of {profile.name}'s group network
+                Visualization of {user.name}'s group network
               </p>
               <div className="flex flex-wrap gap-2">
                 {isInteractive && (

@@ -39,14 +39,14 @@ export default function FeaturesPage() {
   const features: Feature[] = [
     {
       icon: Users,
-      title: 'User Profiles',
+      title: 'User',
       description:
-        'Create detailed profiles, build networks, and connect with like-minded individuals across the platform.',
+        'Create detailed users, build networks, and connect with like-minded individuals across the platform.',
       details: {
         overview:
-          'User profiles are the foundation of your presence on Polity. Build a comprehensive professional or civic identity that represents your interests, expertise, and involvement in democratic processes.',
+          'User users are the foundation of your presence on Polity. Build a comprehensive professional or civic identity that represents your interests, expertise, and involvement in democratic processes.',
         capabilities: [
-          'Customizable profile pages with bio, avatar, and cover images',
+          'Customizable user pages with bio, avatar, and cover images',
           'Follow other users and build your network',
           'Track subscriptions to groups, events, and amendments',
           'Display memberships and participation history',

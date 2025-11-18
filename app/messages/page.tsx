@@ -33,12 +33,9 @@ interface Conversation {
     id: string;
     user?: {
       id: string;
-      profile?: {
-        id: string;
-        name?: string;
-        avatar?: string;
-        handle?: string;
-      };
+      name?: string;
+      avatar?: string;
+      handle?: string;
     };
   }[];
   messages: Message[];
@@ -51,7 +48,7 @@ export default function MessagesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Get user profile for sending messages
+  // Get user data for sending messages
   const { data: userData } = db.useQuery({
     $users: {
       $: {
@@ -59,19 +56,16 @@ export default function MessagesPage() {
           id: user?.id,
         },
       },
-      profile: {},
     },
   });
 
-  const userProfile = userData?.$users?.[0]?.profile;
+  const currentUser = userData?.$users?.[0];
 
   // Query all conversations where the user is a participant
   const { data, isLoading } = db.useQuery({
     conversations: {
       participants: {
-        user: {
-          profile: {},
-        },
+        user: {},
       },
       messages: {
         $: {
@@ -79,7 +73,7 @@ export default function MessagesPage() {
             createdAt: 'asc' as const, // Sort oldest to newest (newest at bottom like WhatsApp)
           },
         },
-        sender: {}, // sender is now a profile, not a user
+        sender: {},
       },
     },
   });
@@ -101,8 +95,8 @@ export default function MessagesPage() {
       .filter((conv: Conversation) => {
         // Search in participant names
         const participantMatch = conv.participants.some((p: any) => {
-          const name = p.user?.profile?.name?.toLowerCase() || '';
-          const handle = p.user?.profile?.handle?.toLowerCase() || '';
+          const name = p.user?.name?.toLowerCase() || '';
+          const handle = p.user?.handle?.toLowerCase() || '';
           return (
             name.includes(searchQuery.toLowerCase()) || handle.includes(searchQuery.toLowerCase())
           );
@@ -155,7 +149,7 @@ export default function MessagesPage() {
 
   // Send a message
   const handleSendMessage = async () => {
-    if (!messageText.trim() || !selectedConversationId || !user?.id || !userProfile?.id) return;
+    if (!messageText.trim() || !selectedConversationId || !user?.id) return;
 
     const messageId = id();
 
@@ -168,7 +162,7 @@ export default function MessagesPage() {
         }),
         tx.messages[messageId].link({
           conversation: selectedConversationId,
-          sender: userProfile.id, // Use profile ID
+          sender: user.id,
         }),
         tx.conversations[selectedConversationId].update({
           lastMessageAt: new Date().toISOString(),
@@ -183,10 +177,10 @@ export default function MessagesPage() {
 
   // Mark messages as read when viewing a conversation
   useEffect(() => {
-    if (!selectedConversation || !userProfile?.id) return;
+    if (!selectedConversation || !currentUser?.id) return;
 
     const unreadMessages = selectedConversation.messages.filter(
-      (msg: Message) => !msg.isRead && msg.sender?.id !== userProfile.id
+      (msg: Message) => !msg.isRead && msg.sender?.id !== currentUser.id
     );
 
     if (unreadMessages.length > 0) {
@@ -198,7 +192,7 @@ export default function MessagesPage() {
         )
       );
     }
-  }, [selectedConversation, userProfile?.id]);
+  }, [selectedConversation, currentUser?.id]);
 
   // Format date/time - show time if today, date if before today
   const formatTime = (date: string | number) => {
@@ -228,7 +222,7 @@ export default function MessagesPage() {
 
   // Get unread count for a conversation
   const getUnreadCount = (conversation: Conversation) => {
-    return conversation.messages.filter(msg => !msg.isRead && msg.sender?.id !== userProfile?.id)
+    return conversation.messages.filter(msg => !msg.isRead && msg.sender?.id !== currentUser?.id)
       .length;
   };
 
@@ -294,15 +288,15 @@ export default function MessagesPage() {
                         )}
                       >
                         <Avatar className="h-12 w-12 flex-shrink-0">
-                          <AvatarImage src={otherUser?.profile?.avatar} />
+                          <AvatarImage src={otherUser?.avatar} />
                           <AvatarFallback>
-                            {otherUser?.profile?.name?.[0]?.toUpperCase() || 'U'}
+                            {otherUser?.name?.[0]?.toUpperCase() || 'U'}
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0 flex-1">
                           <div className="mb-1 flex items-center justify-between gap-2">
                             <p className="truncate font-semibold">
-                              {otherUser?.profile?.name || 'Unknown User'}
+                              {otherUser?.name || 'Unknown User'}
                             </p>
                             {lastMessage && (
                               <span className="flex-shrink-0 whitespace-nowrap text-xs text-muted-foreground">
@@ -356,20 +350,18 @@ export default function MessagesPage() {
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={getOtherParticipant(selectedConversation)?.profile?.avatar} />
+                    <AvatarImage src={getOtherParticipant(selectedConversation)?.avatar} />
                     <AvatarFallback>
-                      {getOtherParticipant(
-                        selectedConversation
-                      )?.profile?.name?.[0]?.toUpperCase() || 'U'}
+                      {getOtherParticipant(selectedConversation)?.name?.[0]?.toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
                   <div className="ml-3">
                     <h3 className="font-semibold">
-                      {getOtherParticipant(selectedConversation)?.profile?.name || 'Unknown User'}
+                      {getOtherParticipant(selectedConversation)?.name || 'Unknown User'}
                     </h3>
-                    {getOtherParticipant(selectedConversation)?.profile?.handle && (
+                    {getOtherParticipant(selectedConversation)?.handle && (
                       <p className="text-sm text-muted-foreground">
-                        @{getOtherParticipant(selectedConversation)?.profile?.handle}
+                        @{getOtherParticipant(selectedConversation)?.handle}
                       </p>
                     )}
                   </div>
@@ -386,7 +378,7 @@ export default function MessagesPage() {
                       </div>
                     ) : (
                       selectedConversation.messages.map((message: Message) => {
-                        const isOwnMessage = message.sender?.id === userProfile?.id;
+                        const isOwnMessage = message.sender?.id === currentUser?.id;
 
                         return (
                           <div

@@ -42,28 +42,32 @@ export function InviteCollaboratorDialog({
   const [isInviting, setIsInviting] = useState(false);
   const { toast } = useToast();
 
-  // Query all profiles for user search
-  const { data: profilesData, isLoading } = db.useQuery({
-    profiles: {
-      user: {},
+  // Query all users for user search
+  const { data: usersData, isLoading } = db.useQuery({
+    $users: {
+      $: {
+        where: {
+          isActive: true,
+        },
+      },
     },
   });
 
-  // Filter profiles based on search query and exclude existing collaborators and current user
+  // Filter users based on search query and exclude existing collaborators and current user
   const existingCollaboratorIds = existingCollaborators
     .map(c => c.user?.id)
     .filter(Boolean) as string[];
 
-  const filteredProfiles = profilesData?.profiles?.filter(profile => {
-    if (!profile.user?.id) return false;
-    if (profile.user.id === currentUserId) return false;
-    if (existingCollaboratorIds.includes(profile.user.id)) return false;
+  const filteredUsers = usersData?.$users?.filter(user => {
+    if (!user?.id) return false;
+    if (user.id === currentUserId) return false;
+    if (existingCollaboratorIds.includes(user.id)) return false;
 
     const query = searchQuery.toLowerCase();
     return (
-      profile.name?.toLowerCase().includes(query) ||
-      profile.handle?.toLowerCase().includes(query) ||
-      profile.contactEmail?.toLowerCase().includes(query)
+      user.name?.toLowerCase().includes(query) ||
+      user.handle?.toLowerCase().includes(query) ||
+      user.contactEmail?.toLowerCase().includes(query)
     );
   });
 
@@ -150,30 +154,30 @@ export function InviteCollaboratorDialog({
                 <>
                   <CommandEmpty>No users found.</CommandEmpty>
                   <CommandGroup>
-                    {filteredProfiles?.map(profile => {
-                      if (!profile.user?.id) return null;
-                      const userId = profile.user.id;
+                    {filteredUsers?.map(user => {
+                      if (!user?.id) return null;
+                      const userId = user.id;
                       const isSelected = selectedUsers.includes(userId);
                       return (
                         <CommandItem
-                          key={profile.id}
-                          value={`${profile.name} ${profile.handle} ${profile.contactEmail}`}
+                          key={user.id}
+                          value={`${user.name} ${user.handle} ${user.contactEmail}`}
                           onSelect={() => toggleUserSelection(userId)}
                           className="cursor-pointer"
                         >
                           <div className="flex flex-1 items-center gap-3">
                             <Avatar className="h-8 w-8">
-                              {profile.avatar ? (
-                                <AvatarImage src={profile.avatar} alt={profile.name || ''} />
+                              {user.avatar ? (
+                                <AvatarImage src={user.avatar} alt={user.name || ''} />
                               ) : null}
                               <AvatarFallback>
-                                {profile.name?.[0]?.toUpperCase() || '?'}
+                                {user.name?.[0]?.toUpperCase() || '?'}
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
-                              <div className="font-medium">{profile.name || 'Unnamed User'}</div>
+                              <div className="font-medium">{user.name || 'Unnamed User'}</div>
                               <div className="text-xs text-muted-foreground">
-                                {profile.handle ? `@${profile.handle}` : profile.contactEmail}
+                                {user.handle ? `@${user.handle}` : user.contactEmail}
                               </div>
                             </div>
                           </div>
@@ -195,12 +199,12 @@ export function InviteCollaboratorDialog({
               <div className="mb-2 text-sm font-medium">Selected ({selectedUsers.length})</div>
               <div className="flex flex-wrap gap-2">
                 {selectedUsers.map(userId => {
-                  const profile = profilesData?.profiles?.find(p => p.user?.id === userId);
-                  if (!profile) return null;
+                  const user = usersData?.$users?.find(u => u?.id === userId);
+                  if (!user) return null;
 
                   return (
                     <Badge key={userId} variant="secondary" className="gap-1 pr-1">
-                      <span>{profile.name || 'Unnamed User'}</span>
+                      <span>{user.name || 'Unnamed User'}</span>
                       <button
                         onClick={() => toggleUserSelection(userId)}
                         className="ml-1 rounded-full p-0.5 hover:bg-muted"

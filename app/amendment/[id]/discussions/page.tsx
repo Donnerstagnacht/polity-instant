@@ -54,10 +54,9 @@ interface CommentWithReplies {
   upvotes?: number;
   downvotes?: number;
   creator?: {
-    profile?: {
-      name?: string;
-      handle?: string;
-    };
+    id?: string;
+    name?: string;
+    handle?: string;
   };
   votes?: {
     id: string;
@@ -78,10 +77,9 @@ interface Thread {
   upvotes?: number;
   downvotes?: number;
   creator?: {
-    profile?: {
-      name?: string;
-      handle?: string;
-    };
+    id: string;
+    name?: string;
+    handle?: string;
   };
   file?: {
     url?: string;
@@ -230,9 +228,9 @@ function CommentTree({ comment, threadId }: { comment: CommentWithReplies; threa
               <div className="mb-3 flex items-start justify-between">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <User className="h-4 w-4" />
-                  <span>{comment.creator?.profile?.name || 'Anonymous'}</span>
-                  {comment.creator?.profile?.handle && (
-                    <span className="text-xs">@{comment.creator.profile.handle}</span>
+                  <span>{comment.creator?.name || 'Anonymous'}</span>
+                  {comment.creator?.handle && (
+                    <span className="text-xs">@{comment.creator.handle}</span>
                   )}
                   <span>•</span>
                   <Clock className="h-4 w-4" />
@@ -454,7 +452,7 @@ function ThreadCard({ thread, sortBy }: { thread: Thread; sortBy: 'votes' | 'tim
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4" />
-                  <span>{thread.creator?.profile?.name || 'Anonymous'}</span>
+                  <span>{thread.creator?.name || 'Anonymous'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4" />
@@ -676,24 +674,18 @@ export default function AmendmentDiscussionsPage({ params }: { params: Promise<{
     amendments: {
       $: { where: { id: resolvedParams.id } },
       threads: {
-        creator: {
-          profile: {},
-        },
+        creator: {},
         file: {},
         votes: {
           user: {},
         },
         comments: {
-          creator: {
-            profile: {},
-          },
+          creator: {},
           votes: {
             user: {},
           },
           replies: {
-            creator: {
-              profile: {},
-            },
+            creator: {},
             votes: {
               user: {},
             },

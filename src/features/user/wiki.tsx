@@ -48,8 +48,7 @@ export function UserWiki(_props: UserWikiProps) {
     toggleSubscribe,
   } = useSubscribeUser(userIdToFetch);
 
-  // Check if this is the user's own profile
-  const isOwnProfile = authUser?.id === userIdToFetch;
+  const isOwnUser = authUser?.id === userIdToFetch;
 
   // Function to handle subscribe/unsubscribe
   const handleSubscribeClick = async () => {
@@ -62,7 +61,7 @@ export function UserWiki(_props: UserWikiProps) {
       {isLoading && (
         <div className="container mx-auto max-w-6xl p-4">
           <div className="flex items-center justify-center py-12">
-            <div className="text-lg text-muted-foreground">Loading user profile...</div>
+            <div className="text-lg text-muted-foreground">Loading user...</div>
           </div>
         </div>
       )}
@@ -70,7 +69,7 @@ export function UserWiki(_props: UserWikiProps) {
       {error && (
         <div className="container mx-auto max-w-6xl p-4">
           <div className="flex items-center justify-center py-12">
-            <div className="text-lg text-red-500">Error loading profile: {error}</div>
+            <div className="text-lg text-red-500">Error loading user: {error}</div>
           </div>
         </div>
       )}
@@ -79,8 +78,8 @@ export function UserWiki(_props: UserWikiProps) {
         <div className="container mx-auto max-w-6xl p-4">
           <div className="flex flex-col items-center justify-center py-12">
             <div className="mb-6 text-center">
-              <h2 className="mb-2 text-2xl font-semibold">Profile Not Found</h2>
-              <p className="text-muted-foreground">This user profile hasn't been created yet.</p>
+              <h2 className="mb-2 text-2xl font-semibold">User Not Found</h2>
+              <p className="text-muted-foreground">This user hasn't been created yet.</p>
             </div>
             <SeedUserDataButton />
           </div>
@@ -119,12 +118,12 @@ export function UserWiki(_props: UserWikiProps) {
           />
 
           {/* Action Bar */}
-          {!isOwnProfile && (
+          {!isOwnUser && (
             <ActionBar>
               <WikiSubscribeButton subscribed={subscribed} onClick={handleSubscribeClick} />
               <ShareButton
                 url={`/user/${userIdToFetch}`}
-                title={dbUser.name || 'User Profile'}
+                title={dbUser.name || 'User'}
                 description={dbUser.about || ''}
               />
             </ActionBar>

@@ -49,9 +49,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
           id: eventId,
         },
       },
-      organizer: {
-        profile: {},
-      },
+      organizer: {},
       group: {},
       hashtags: {},
     },
@@ -116,14 +114,12 @@ export function EventWiki({ eventId }: EventWikiProps) {
         {/* Organizer Info */}
         <div className="mt-4 flex items-center justify-center gap-3">
           <Avatar className="h-10 w-10">
-            <AvatarImage src={event.organizer?.profile?.avatar} />
-            <AvatarFallback>
-              {event.organizer?.profile?.name?.[0]?.toUpperCase() || 'O'}
-            </AvatarFallback>
+            <AvatarImage src={event.organizer?.avatar} />
+            <AvatarFallback>{event.organizer?.name?.[0]?.toUpperCase() || 'O'}</AvatarFallback>
           </Avatar>
           <div className="text-left">
             <p className="text-sm font-medium">
-              {t('components.labels.organizedBy')} {event.organizer?.profile?.name || 'Unknown'}
+              {t('components.labels.organizedBy')} {event.organizer?.name || 'Unknown'}
             </p>
             {event.group && (
               <p className="text-xs text-muted-foreground">

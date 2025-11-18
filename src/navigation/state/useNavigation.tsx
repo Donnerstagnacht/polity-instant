@@ -6,6 +6,14 @@ import { useTranslation } from '@/hooks/use-translation';
 import { useUnreadNotificationsCount, useUnreadMessagesCount } from '@/hooks/use-unread-counts';
 import { db } from '../../../db';
 import type { NavigationItem } from '@/navigation/types/navigation.types';
+import {
+  hasEventPermission,
+  hasGroupPermission,
+  hasAmendmentPermission,
+  type Participation,
+  type Membership,
+  type Amendment,
+} from '../../../instant.helpers';
 
 /**
  * Custom hook that manages navigation items for primary and secondary navigation
@@ -105,37 +113,39 @@ export function useNavigation() {
       }
     }
 
-    // Query event participation status if we're on an event page
+    // Query event participation with role and action rights if we're on an event page
     const { data: eventParticipationData } = db.useQuery(
       eventId && authUser?.id
         ? {
-            eventParticipants: {
+            participants: {
               $: {
                 where: {
                   'user.id': authUser.id,
                   'event.id': eventId,
                 },
               },
+              role: {
+                actionRights: {},
+              },
             },
           }
-        : { eventParticipants: {} }
+        : { participants: {} }
     );
 
-    // Check if user is admin of this event
-    if (eventId && authUser?.id && eventParticipationData?.eventParticipants?.[0]) {
-      const participation = eventParticipationData.eventParticipants[0];
-      isEventAdmin = participation.status === 'admin';
+    // Check if user has manage_participants permission for this event
+    if (eventId && authUser?.id && eventParticipationData?.participants) {
+      const participations = eventParticipationData.participants as Participation[];
+      isEventAdmin = hasEventPermission(participations, eventId, 'events', 'manage_participants');
     }
 
     // Extract user ID from pathname if on a user route
     let userId: string | undefined;
-    let isOwnProfile = false;
+    let isOwnUser = false;
     if (pathname.startsWith('/user/')) {
       const match = pathname.match(/^\/user\/([^/]+)/);
       if (match) {
         userId = match[1];
-        // Check if this is the current user's profile
-        isOwnProfile = authUser?.id === userId;
+        isOwnUser = authUser?.id === userId;
       }
     }
 
@@ -149,7 +159,7 @@ export function useNavigation() {
       }
     }
 
-    // Query group membership status if we're on a group page
+    // Query group membership with group roles and action rights if we're on a group page
     const { data: membershipData } = db.useQuery(
       groupId && authUser?.id
         ? {
@@ -160,39 +170,20 @@ export function useNavigation() {
                   'group.id': groupId,
                 },
               },
+              group: {
+                roles: {
+                  actionRights: {},
+                },
+              },
             },
           }
         : { groupMemberships: {} }
     );
 
-    // Check if user is admin of this group
-    if (
-      groupId &&
-      authUser?.id &&
-      membershipData?.groupMemberships &&
-      membershipData.groupMemberships.length > 0
-    ) {
-      // Check all memberships - user might have multiple records (shouldn't happen but handle it)
-      const memberships = membershipData.groupMemberships;
-      isGroupAdmin = memberships.some((m: any) => m.status === 'admin' || m.role === 'admin');
-
-      // Log membership data for debugging
-      console.log('Group Admin Check:', {
-        groupId,
-        userId: authUser.id,
-        memberships: memberships.map((m: any) => ({
-          id: m.id,
-          status: m.status,
-          role: m.role,
-        })),
-        isGroupAdmin,
-      });
-    } else if (groupId && authUser?.id) {
-      console.log('No membership found:', {
-        groupId,
-        userId: authUser.id,
-        membershipData: membershipData?.groupMemberships,
-      });
+    // Check if user has manage_members permission for this group
+    if (groupId && authUser?.id && membershipData?.groupMemberships) {
+      const memberships = membershipData.groupMemberships as Membership[];
+      isGroupAdmin = hasGroupPermission(memberships, groupId, 'groupMemberships', 'manage');
     }
 
     // Extract amendment ID from pathname if on an amendment route
@@ -205,55 +196,84 @@ export function useNavigation() {
       }
     }
 
-    // Query user's owned amendments to check ownership
-    const { data: ownedAmendmentsData } = db.useQuery(
-      amendmentId && authUser?.id
+    // Query amendment with roles and collaborators if we're on an amendment page
+    const { data: amendmentData } = db.useQuery(
+      amendmentId
         ? {
             amendments: {
               $: {
                 where: {
-                  'user.id': authUser.id,
+                  id: amendmentId,
                 },
+              },
+              amendmentRoleCollaborators: {
+                user: {},
+                role: {},
+              },
+              roles: {
+                actionRights: {},
               },
             },
           }
         : { amendments: {} }
     );
 
-    // Query user's collaboration status for this amendment
-    const { data: amendmentCollaborationData } = db.useQuery(
-      amendmentId && authUser?.id
+    // Check if user has manage permission for this amendment
+    if (amendmentId && authUser?.id && amendmentData?.amendments?.[0]) {
+      const amendment = amendmentData.amendments[0] as Amendment;
+      isAmendmentAdmin = hasAmendmentPermission(
+        amendment,
+        authUser.id,
+        'amendmentCollaborators',
+        'manage'
+      );
+    }
+
+    // Extract blog ID from pathname if on a blog route
+    let blogId: string | undefined;
+    let isBlogOwner = false;
+    if (pathname.startsWith('/blog/')) {
+      const match = pathname.match(/^\/blog\/([^/]+)/);
+      if (match) {
+        blogId = match[1];
+      }
+    }
+
+    // Query user's blogger status for this blog
+    const { data: blogBloggerData } = db.useQuery(
+      blogId && authUser?.id
         ? {
-            amendmentCollaborators: {
+            blogBloggers: {
               $: {
                 where: {
                   'user.id': authUser.id,
-                  'amendment.id': amendmentId,
+                  'blog.id': blogId,
                 },
               },
+              role: {},
             },
           }
-        : { amendmentCollaborators: {} }
+        : { blogBloggers: {} }
     );
 
-    // Check if user is admin of this amendment (either owner or admin collaborator)
-    if (amendmentId && authUser?.id) {
-      const isOwner = ownedAmendmentsData?.amendments?.some((a: any) => a.id === amendmentId);
-      const collaboration = amendmentCollaborationData?.amendmentCollaborators?.[0];
-      const isAdminCollaborator = collaboration?.status === 'admin';
-      isAmendmentAdmin = isOwner || isAdminCollaborator;
+    // Check if user is owner of this blog
+    if (blogId && authUser?.id && blogBloggerData?.blogBloggers?.[0]) {
+      const blogger = blogBloggerData.blogBloggers[0];
+      isBlogOwner = blogger.role?.name === 'Owner';
     }
 
     const baseSecondaryItems = baseGetSecondaryNavItems(
       currentPrimaryRoute,
       eventId,
       userId,
-      isOwnProfile,
+      isOwnUser,
       groupId,
       amendmentId,
       isGroupAdmin,
       isEventAdmin,
-      isAmendmentAdmin
+      isAmendmentAdmin,
+      blogId,
+      isBlogOwner
     );
     if (!baseSecondaryItems) return null;
 
@@ -275,7 +295,9 @@ export function useNavigation() {
                     ? t(`navigation.secondary.group.${item.id}`)
                     : currentPrimaryRoute === 'amendment'
                       ? t(`navigation.secondary.amendment.${item.id}`)
-                      : item.label,
+                      : currentPrimaryRoute === 'blog'
+                        ? t(`navigation.secondary.blog.${item.id}`)
+                        : item.label,
     }));
   };
 

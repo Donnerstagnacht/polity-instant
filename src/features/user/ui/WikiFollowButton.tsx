@@ -8,7 +8,7 @@ interface WikiFollowButtonProps {
 }
 
 /**
- * Dumb follow button for the user wiki profile.
+ * Dumb follow button for the user wiki.
  * Handles only display and click, not state.
  */
 export const WikiFollowButton: React.FC<WikiFollowButtonProps> = ({

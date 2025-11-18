@@ -45,7 +45,7 @@ export interface BlockSuggestionVoteProps {
     createdAt: number;
     voter: {
       id: string;
-      profile?: {
+      user?: {
         name?: string;
         avatar?: string;
       };
@@ -55,7 +55,7 @@ export interface BlockSuggestionVoteProps {
     id: string;
     user: {
       id: string;
-      profile?: {
+      user?: {
         name?: string;
         avatar?: string;
       };

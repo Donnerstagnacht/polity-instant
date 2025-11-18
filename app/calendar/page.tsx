@@ -36,24 +36,16 @@ export default function CalendarPage() {
   // Fetch events and meeting slots from the database
   const { data, isLoading } = db.useQuery({
     events: {
-      organizer: {
-        profile: {},
-      },
+      organizer: {},
       group: {},
       participants: {
-        user: {
-          profile: {},
-        },
+        user: {},
       },
     },
     meetingSlots: {
-      owner: {
-        profile: {},
-      },
+      owner: {},
       bookings: {
-        booker: {
-          profile: {},
-        },
+        booker: {},
       },
     },
   });
@@ -297,13 +289,13 @@ export default function CalendarPage() {
               {event.organizer && (
                 <div className="flex items-center gap-2">
                   <Avatar className="h-6 w-6">
-                    <AvatarImage src={event.organizer.profile?.avatar} />
+                    <AvatarImage src={event.organizer.avatar} />
                     <AvatarFallback className="text-xs">
-                      {event.organizer.profile?.name?.[0]?.toUpperCase() || 'O'}
+                      {event.organizer.name?.[0]?.toUpperCase() || 'O'}
                     </AvatarFallback>
                   </Avatar>
                   <span className="text-xs text-muted-foreground">
-                    {event.organizer.profile?.name || 'Unknown'}
+                    {event.organizer.name || 'Unknown'}
                   </span>
                 </div>
               )}

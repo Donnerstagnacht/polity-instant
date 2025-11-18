@@ -44,11 +44,12 @@ export default function GroupDocumentEditorPage() {
   const lastRemoteUpdate = useRef<number>(0);
   const lastDiscussionsSave = useRef<number>(0);
 
-  // Get user profile for presence data
-  const { data: profileData } = db.useQuery({
-    profiles: {},
+  // Get user data for presence
+  const { data: userData } = db.useQuery({
+    $users: { $: { where: { id: user?.id } } },
   });
-  const userProfile = profileData?.profiles?.find((p: any) => (p as any).user?.id === user?.id);
+
+  const currentUser = userData?.$users?.[0];
 
   // Generate a consistent color for this user
   const userColor = useMemo(
@@ -62,24 +63,23 @@ export default function GroupDocumentEditorPage() {
   // Presence hook - show who's online
   const { peers, publishPresence } = db.rooms.usePresence(room, {
     initialData: {
-      name: userProfile?.name || user?.email || 'Anonymous',
-      avatar: userProfile?.avatar,
+      name: currentUser?.name || user?.email || 'Anonymous',
+      avatar: currentUser?.avatar,
       color: userColor,
       userId: user?.id || '',
     },
   });
 
-  // Update presence when profile changes
   useEffect(() => {
-    if (userProfile && publishPresence) {
+    if (user && publishPresence && currentUser) {
       publishPresence({
-        name: userProfile.name || user?.email || 'Anonymous',
-        avatar: userProfile.avatar,
+        name: currentUser.name || user.email || 'Anonymous',
+        avatar: currentUser.avatar,
         color: userColor,
-        userId: user?.id || '',
+        userId: user.id || '',
       });
     }
-  }, [userProfile, publishPresence, userColor, user?.email, user?.id]);
+  }, [user, publishPresence, userColor, currentUser]);
 
   // Query selected document with real-time updates
   const { data: documentData, isLoading: documentLoading } = db.useQuery({
@@ -108,16 +108,16 @@ export default function GroupDocumentEditorPage() {
     const users: Record<string, { id: string; name: string; avatarUrl: string }> = {};
 
     // Add current user
-    if (user && userProfile) {
+    if (user && currentUser) {
       users[user.id] = {
         id: user.id,
-        name: userProfile.name || user.email || 'Anonymous',
-        avatarUrl: userProfile.avatar || `https://api.dicebear.com/9.x/glass/svg?seed=${user.id}`,
+        name: currentUser.name || user.email || 'Anonymous',
+        avatarUrl: currentUser.avatar || `https://api.dicebear.com/9.x/glass/svg?seed=${user.id}`,
       };
     }
 
     return users;
-  }, [user, userProfile]);
+  }, [user, currentUser]);
 
   // Initialize document data
   useEffect(() => {
@@ -368,11 +368,11 @@ export default function GroupDocumentEditorPage() {
                 onChange={handleContentChange}
                 documentId={documentId}
                 currentUser={
-                  user && userProfile
+                  user && currentUser
                     ? {
                         id: user.id,
-                        name: userProfile.name || user.email || 'Anonymous',
-                        avatar: userProfile.avatar,
+                        name: currentUser.name || user.email || 'Anonymous',
+                        avatar: currentUser.avatar,
                       }
                     : undefined
                 }

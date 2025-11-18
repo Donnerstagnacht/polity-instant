@@ -32,24 +32,22 @@ export const queries = {
     // Get current user
     me: () => db.useAuth(),
 
-    // Get user by ID with profile
+    // Get user by ID
     byId: (userId: string) =>
       db.useQuery({
         $users: {
           $: { where: { id: userId } },
-          profile: {},
         },
       }),
 
     // Get user by email
     byEmail: (email: string) => db.useQuery({ $users: { $: { where: { email } } } }),
 
-    // Get active users (users with active profiles)
+    // Get active users
     active: () =>
       db.useQuery({
-        profiles: {
+        $users: {
           $: { where: { isActive: true } },
-          user: {},
         },
       }),
   },
@@ -141,7 +139,7 @@ export const mutations = {
         })
       ),
 
-    // Update user profile
+    // Update user
     update: (
       userId: string,
       updates: {

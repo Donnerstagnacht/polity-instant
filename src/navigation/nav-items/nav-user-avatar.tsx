@@ -21,16 +21,14 @@ export function NavUserAvatar({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load profile data from the database
-  const { user: profileUser } = useUserData(authUser?.id);
+  const { user: user } = useUserData(authUser?.id);
 
   if (!authUser) {
     return null;
   }
 
-  // Prefer profile data, fallback to auth data
-  const displayName = profileUser?.name || authUser.email?.split('@')[0] || 'User';
-  const displayAvatar = profileUser?.avatar;
+  const displayName = user?.name || authUser.email?.split('@')[0] || 'User';
+  const displayAvatar = user?.avatar;
 
   const userInitials = displayName
     ? displayName
@@ -42,7 +40,6 @@ export function NavUserAvatar({
     : (authUser.email?.substring(0, 2) || 'U').toUpperCase();
 
   if (navigationView === 'asButton') {
-    // Fullscreen overlay mode - click goes directly to profile
     const handleClick = () => {
       if (authUser?.id) {
         router.push(`/user/${authUser.id}`);
@@ -70,7 +67,7 @@ export function NavUserAvatar({
     // Both mobile and desktop: just show UserMenu (which has its own popover with logout, etc.)
     return (
       <div className={cn('flex items-center justify-center', className)}>
-        <UserMenu isMobile={isMobile} profileUser={profileUser} />
+        <UserMenu isMobile={isMobile} user={user} />
       </div>
     );
   }
@@ -78,7 +75,7 @@ export function NavUserAvatar({
   if (navigationView === 'asLabeledButtonList' && isMobile) {
     return (
       <div className={cn('flex items-center justify-center', className)}>
-        <UserMenu isMobile={isMobile} profileUser={profileUser} />
+        <UserMenu isMobile={isMobile} user={user} />
       </div>
     );
   }
@@ -101,7 +98,7 @@ export function NavUserAvatar({
         isMobile={isMobile}
         open={isDropdownOpen}
         onOpenChange={handleDropdownOpenChange}
-        profileUser={profileUser}
+        user={user}
       />
       <span className="cursor-pointer truncate text-sm font-medium" onClick={handleNameClick}>
         {displayName}

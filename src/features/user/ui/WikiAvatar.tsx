@@ -8,7 +8,7 @@ interface WikiAvatarProps {
 }
 
 /**
- * Dumb avatar component for the user wiki profile.
+ * Dumb avatar component for the user wiki.
  * Shows the user's avatar image, or initials fallback.
  */
 export const WikiAvatar: React.FC<WikiAvatarProps> = ({ name, avatar, className }) => (

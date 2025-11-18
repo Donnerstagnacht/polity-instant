@@ -107,6 +107,10 @@ const enTranslation = {
         process: 'Process',
         edit: 'Edit Amendment',
       },
+      blog: {
+        overview: 'Overview',
+        bloggers: 'Bloggers',
+      },
     },
     toggles: {
       theme: {
@@ -128,6 +132,10 @@ const enTranslation = {
         asButtonList: 'Button list view',
         asLabeledButtonList: 'Labeled button list view',
       },
+    },
+    userMenu: {
+      profile: 'Profile',
+      settings: 'Settings',
     },
   },
   loading: {
@@ -544,7 +552,7 @@ const enTranslation = {
     features: {
       title: 'Features',
       subtitle: 'Everything you need to facilitate democratic collaboration and decision-making',
-      userProfiles: {
+      userPages: {
         title: 'User Profiles',
         description:
           'Create detailed profiles, build networks, and connect with like-minded individuals across the platform.',

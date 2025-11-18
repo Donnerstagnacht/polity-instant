@@ -53,13 +53,13 @@ The User Meeting Scheduler is a comprehensive feature that allows users to manag
 
 ### Accessing the Feature
 
-Navigate to any user's profile and click the "Meet" tab in the secondary navigation.
+Navigate to any user's user and click the "Meet" tab in the secondary navigation.
 
 **URL Pattern**: `/user/:id/meet`
 
 ### Creating Time Slots (Owner View)
 
-1. Go to your profile's Meet page
+1. Go to your users's Meet page
 2. Click "Manage Slots" tab
 3. Click "Add New Slot" button
 4. Choose meeting type (1-on-1 or Public)

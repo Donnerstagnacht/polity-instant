@@ -107,7 +107,11 @@ const deTranslation: I18nLocale = {
         discussions: 'Diskussionen',
         collaborators: 'Mitarbeiter',
         process: 'Prozess',
-        edit: 'Antrag bearbeiten',
+        edit: 'Amendment bearbeiten',
+      },
+      blog: {
+        overview: 'Übersicht',
+        bloggers: 'Blogger',
       },
     },
     toggles: {
@@ -130,6 +134,10 @@ const deTranslation: I18nLocale = {
         asButtonList: 'Button-Listen-Ansicht',
         asLabeledButtonList: 'Beschriftete Button-Listen-Ansicht',
       },
+    },
+    userMenu: {
+      profile: 'Profil',
+      settings: 'Einstellungen',
     },
   },
   loading: {
@@ -549,10 +557,10 @@ const deTranslation: I18nLocale = {
     features: {
       title: 'Funktionen',
       subtitle: 'Alles was Sie für demokratische Zusammenarbeit und Entscheidungsfindung brauchen',
-      userProfiles: {
+      userPages: {
         title: 'Benutzerprofile',
         description:
-          'Erstellen Sie detaillierte Profile, bauen Sie Netzwerke auf und verbinden Sie sich mit Gleichgesinnten auf der Plattform.',
+          'Erstellen Sie detaillierte Benutzerseiten, bauen Sie Netzwerke auf und verbinden Sie sich mit Gleichgesinnten auf der Plattform.',
       },
       groups: {
         title: 'Gruppen',

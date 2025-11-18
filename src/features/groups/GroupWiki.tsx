@@ -64,15 +64,11 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
   const { data, isLoading } = db.useQuery({
     groups: {
       $: { where: { id: groupId } },
-      owner: {
-        profile: {},
-      },
+      owner: {},
       events: {},
       amendments: {},
       memberships: {
-        user: {
-          profile: {},
-        },
+        user: {},
       },
       childRelationships: {
         childGroup: {
@@ -83,14 +79,9 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
       },
       hashtags: {},
       positions: {
-        currentHolder: {
-          profile: {},
-        },
+        currentHolder: {},
       },
       blogs: {
-        user: {
-          profile: {},
-        },
         hashtags: {},
       },
     },
@@ -325,20 +316,20 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
                                 Current Holder
                               </p>
                               <div className="flex items-center gap-3">
-                                {position.currentHolder.profile?.imageURL && (
+                                {position.currentHolder.imageURL && (
                                   <img
-                                    src={position.currentHolder.profile.imageURL}
-                                    alt={position.currentHolder.profile?.name || 'User'}
+                                    src={position.currentHolder.imageURL}
+                                    alt={position.currentHolder?.name || 'User'}
                                     className="h-10 w-10 rounded-full object-cover ring-2 ring-background"
                                   />
                                 )}
                                 <div className="min-w-0 flex-1">
                                   <p className="truncate font-semibold">
-                                    {position.currentHolder.profile?.name || 'Unknown'}
+                                    {position.currentHolder?.name || 'Unknown'}
                                   </p>
-                                  {position.currentHolder.profile?.handle && (
+                                  {position.currentHolder?.handle && (
                                     <p className="truncate text-sm text-muted-foreground">
-                                      @{position.currentHolder.profile.handle}
+                                      @{position.currentHolder.handle}
                                     </p>
                                   )}
                                 </div>

@@ -29,7 +29,7 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user: authUser } = useAuthStore();
-  const { user: dbUser, profileId, isLoading, error } = useUserData(resolvedParams.id);
+  const { user: dbUser, userId: userId, isLoading, error } = useUserData(resolvedParams.id);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -113,7 +113,6 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
     }
   }, [dbUser]);
 
-  // Check if the current user is authorized to edit this profile
   const isAuthorized = authUser?.id === resolvedParams.id;
 
   console.log('🔐 [UserEditPage] Authorization check:', {
@@ -126,7 +125,7 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !authUser?.id || !profileId) return;
+    if (!file || !authUser?.id || !userId) return;
 
     try {
       // Upload to InstantDB Storage using user ID as path
@@ -135,9 +134,9 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
         contentType: file.type,
       });
 
-      // Link the uploaded file to the profile
+      // Link the uploaded file to the user
       if (result?.data?.id) {
-        await db.transact([tx.profiles[profileId].link({ avatarFile: result.data.id })]);
+        await db.transact([tx.$users[authUser.id].link({ avatarFile: result.data.id })]);
 
         toast.success('Avatar uploaded successfully');
 
@@ -155,18 +154,36 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
 
     try {
       if (!dbUser) {
-        toast.error('No profile data to update');
+        toast.error('No user data to update');
         return;
       }
 
-      if (!profileId) {
-        toast.error('Could not find profile to update');
+      if (!authUser?.id) {
+        toast.error('Could not find user to update');
         return;
       }
 
-      // Update the profile in Instant DB
+      // DEBUG: Log permission-relevant data
+      console.log('🔍 [Permission Debug] Auth User:', {
+        'auth.id': authUser.id,
+        'auth.email': authUser.email,
+        authUser: authUser,
+      });
+
+      console.log('🔍 [Permission Debug] DB User:', {
+        'data.id': dbUser.id,
+        dbUser: dbUser,
+      });
+
+      console.log('🔍 [Permission Debug] Update Target:', {
+        targetUserId: authUser.id,
+        isSelf: authUser.id === dbUser.id,
+        match: authUser.id === resolvedParams.id,
+      });
+
+      // Update the user in Instant DB
       const transactions = [
-        tx.profiles[profileId].update({
+        tx.$users[authUser.id].update({
           name: formData.name,
           subtitle: formData.subtitle,
           about: formData.about,
@@ -193,14 +210,14 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
 
       await db.transact(transactions);
 
-      toast.success('Profile updated successfully');
+      toast.success('User updated successfully');
 
       // Wait a moment for the DB to update, then navigate
       setTimeout(() => {
         router.push(`/user/${resolvedParams.id}`);
       }, 500);
     } catch (error) {
-      toast.error('Failed to update profile');
+      toast.error('Failed to update user');
       console.error('Update error:', error);
     } finally {
       setIsSubmitting(false);
@@ -340,7 +357,7 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
         <PageWrapper>
           <div className="flex flex-col items-center justify-center gap-4 py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-muted-foreground">Loading profile data...</p>
+            <p className="text-muted-foreground">Loading user data...</p>
           </div>
         </PageWrapper>
       </AuthGuard>
@@ -354,16 +371,16 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
         <PageWrapper>
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <p className="text-lg font-semibold">Profile not found</p>
-              <p className="text-muted-foreground">No profile data exists for this user yet</p>
+              <p className="text-lg font-semibold">User not found</p>
+              <p className="text-muted-foreground">No user data exists for this user yet</p>
               {error && <p className="mt-2 text-sm text-red-500">Error: {error}</p>}
               <div className="mt-6 space-y-3">
                 <p className="text-sm text-muted-foreground">
-                  You need to create a profile first by clicking the "Seed Profile Data" button on
-                  the profile page
+                  You need to create a user first by clicking the "Seed User Data" button on the
+                  user page
                 </p>
                 <Button onClick={() => router.push(`/user/${resolvedParams.id}`)} variant="default">
-                  Go to Profile Page
+                  Go to User Page
                 </Button>
               </div>
             </div>
@@ -381,13 +398,13 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <p className="text-lg font-semibold text-red-500">Unauthorized</p>
-              <p className="text-muted-foreground">You are not authorized to edit this profile</p>
+              <p className="text-muted-foreground">You are not authorized to edit this user</p>
               <Button
                 variant="outline"
                 onClick={() => router.push(`/user/${resolvedParams.id}`)}
                 className="mt-4"
               >
-                View Profile
+                View User
               </Button>
             </div>
           </div>
@@ -401,16 +418,16 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
       <PageWrapper>
         <div className="container mx-auto max-w-4xl p-4">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold">Edit Profile</h1>
-            <p className="text-muted-foreground">Update your profile information</p>
+            <h1 className="text-3xl font-bold">Edit User</h1>
+            <p className="text-muted-foreground">Update your user information</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Avatar Section */}
             <Card>
               <CardHeader>
-                <CardTitle>Profile Picture</CardTitle>
-                <CardDescription>Update your profile picture</CardDescription>
+                <CardTitle>User Picture</CardTitle>
+                <CardDescription>Update your user picture</CardDescription>
               </CardHeader>
               <CardContent className="flex items-center gap-6">
                 <div className="relative">
@@ -455,7 +472,7 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
             <Card>
               <CardHeader>
                 <CardTitle>Basic Information</CardTitle>
-                <CardDescription>Your public profile information</CardDescription>
+                <CardDescription>Your public user information</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">

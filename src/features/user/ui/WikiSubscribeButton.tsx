@@ -8,7 +8,7 @@ interface WikiSubscribeButtonProps {
 }
 
 /**
- * Subscribe button for the user wiki profile.
+ * Subscribe button for the user wiki.
  * Handles only display and click, not state.
  */
 export const WikiSubscribeButton: React.FC<WikiSubscribeButtonProps> = ({

@@ -15,6 +15,26 @@ const _schema = i.schema({
       email: i.string().unique().indexed().optional(),
       imageURL: i.string().optional(),
       type: i.string().optional(),
+      about: i.string().optional(),
+      avatar: i.string().optional(),
+      bio: i.string().optional(),
+      contactEmail: i.string().indexed().optional(),
+      contactLocation: i.string().optional(),
+      contactTwitter: i.string().optional(),
+      contactWebsite: i.string().optional(),
+      facebook: i.string().optional(),
+      handle: i.string().unique().indexed().optional(),
+      instagram: i.string().optional(),
+      isActive: i.boolean().indexed().optional(),
+      lastSeenAt: i.date().indexed().optional(),
+      name: i.string().optional(),
+      snapchat: i.string().optional(),
+      subtitle: i.string().optional(),
+      twitter: i.string().optional(),
+      whatsapp: i.string().optional(),
+      createdAt: i.date().indexed().optional(),
+      updatedAt: i.date().indexed().optional(),
+      visibility: i.string().indexed().optional(), // 'public', 'authenticated', 'private'
     }),
     agendaItems: i.entity({
       createdAt: i.date().indexed(),
@@ -41,6 +61,7 @@ const _schema = i.schema({
       tags: i.json().optional(),
       title: i.string(),
       updatedAt: i.date().indexed().optional(),
+      visibility: i.string().indexed().optional(), // 'public', 'authenticated', 'private'
     }),
     amendmentVoteEntries: i.entity({
       createdAt: i.date().indexed(),
@@ -64,6 +85,12 @@ const _schema = i.schema({
       date: i.string(),
       likeCount: i.number(),
       title: i.string(),
+      visibility: i.string().indexed().optional(), // 'public', 'authenticated', 'private'
+    }),
+    blogBloggers: i.entity({
+      createdAt: i.date().indexed().optional(),
+      status: i.string().indexed().optional(), // invited, requested, writer, owner
+      visibility: i.string().indexed().optional(), // 'public', 'authenticated', 'private'
     }),
     changeRequests: i.entity({
       createdAt: i.date().indexed(),
@@ -95,6 +122,7 @@ const _schema = i.schema({
     documentCollaborators: i.entity({
       addedAt: i.date().indexed(),
       canEdit: i.boolean(),
+      visibility: i.string().indexed().optional(), // 'public', 'authenticated', 'private'
     }),
     documentCursors: i.entity({
       color: i.string(),
@@ -118,7 +146,6 @@ const _schema = i.schema({
       title: i.string(),
       content: i.json(),
       createdAt: i.date().indexed(),
-      createdBy: i.string().indexed(),
       creationType: i.string().indexed(), // 'manual', 'suggestion_added', 'suggestion_accepted', 'suggestion_declined'
     }),
     electionCandidates: i.entity({
@@ -146,13 +173,13 @@ const _schema = i.schema({
     }),
     eventParticipants: i.entity({
       createdAt: i.date().indexed().optional(),
-      role: i.string().optional(),
       status: i.string().indexed().optional(), // invited, requested, member, admin
+      visibility: i.string().indexed().optional(), // 'public', 'authenticated', 'private'
     }),
     amendmentCollaborators: i.entity({
       createdAt: i.date().indexed().optional(),
-      role: i.string().optional(),
       status: i.string().indexed().optional(), // invited, requested, member, admin
+      visibility: i.string().indexed().optional(), // 'public', 'authenticated', 'private'
     }),
     events: i.entity({
       capacity: i.number().optional(),
@@ -166,6 +193,7 @@ const _schema = i.schema({
       tags: i.json().optional(),
       title: i.string().indexed(),
       updatedAt: i.date().indexed(),
+      visibility: i.string().indexed().optional(), // 'public', 'authenticated', 'private'
     }),
     follows: i.entity({
       createdAt: i.date().indexed(),
@@ -177,6 +205,19 @@ const _schema = i.schema({
       createdAt: i.date().indexed().optional(),
       role: i.string().indexed(),
       status: i.string().indexed().optional(), // invited, requested, member, admin
+      visibility: i.string().indexed().optional(), // 'public', 'authenticated', 'private'
+    }),
+    roles: i.entity({
+      name: i.string(),
+      description: i.string().optional(),
+      scope: i.string().indexed(), // 'group', 'event', 'amendment', or 'blog'
+    }),
+    actionRights: i.entity({
+      resource: i.string().indexed(),
+      action: i.string().indexed(),
+    }),
+    participants: i.entity({
+      status: i.string().optional(), // 'invited', 'accepted', 'declined'
     }),
     groupRelationships: i.entity({
       createdAt: i.date().indexed(),
@@ -200,6 +241,7 @@ const _schema = i.schema({
       twitter: i.string().optional(),
       facebook: i.string().optional(),
       snapchat: i.string().optional(),
+      visibility: i.string().indexed().optional(), // 'public', 'authenticated', 'private'
     }),
     hashtags: i.entity({
       createdAt: i.date().indexed(),
@@ -235,7 +277,6 @@ const _schema = i.schema({
       createdAt: i.date().indexed(),
       isRead: i.boolean().indexed(),
       message: i.string(),
-      relatedEntityId: i.string().optional(),
       relatedEntityType: i.string().optional(),
       title: i.string(),
       type: i.string().indexed(),
@@ -248,32 +289,11 @@ const _schema = i.schema({
       title: i.string().indexed(),
       updatedAt: i.date().indexed(),
     }),
-    profiles: i.entity({
-      about: i.string().optional(),
-      avatar: i.string().optional(),
-      bio: i.string().optional(),
-      contactEmail: i.string().indexed().optional(),
-      contactLocation: i.string().optional(),
-      contactTwitter: i.string().optional(),
-      contactWebsite: i.string().optional(),
-      createdAt: i.date().indexed(),
-      facebook: i.string().optional(),
-      handle: i.string().unique().indexed().optional(),
-      imageURL: i.string().optional(),
-      instagram: i.string().optional(),
-      isActive: i.boolean().indexed(),
-      lastSeenAt: i.date().indexed().optional(),
-      name: i.string().optional(),
-      snapchat: i.string().optional(),
-      subtitle: i.string().optional(),
-      twitter: i.string().optional(),
-      type: i.string().optional(),
-      updatedAt: i.date().indexed(),
-      whatsapp: i.string().optional(),
-    }),
+
     statements: i.entity({
       tag: i.string(),
       text: i.string(),
+      visibility: i.string().indexed().optional(), // 'public', 'authenticated', 'private'
     }),
     stats: i.entity({
       label: i.string(),
@@ -294,6 +314,7 @@ const _schema = i.schema({
       tags: i.json().optional(),
       title: i.string().indexed(),
       updatedAt: i.date().indexed(),
+      visibility: i.string().indexed().optional(), // 'public', 'authenticated', 'private'
     }),
     timelineEvents: i.entity({
       createdAt: i.date().indexed(),
@@ -303,16 +324,6 @@ const _schema = i.schema({
       title: i.string().indexed(),
       description: i.string().optional(),
       metadata: i.json().optional(), // Additional context like old/new values, vote results, etc.
-    }),
-    user: i.entity({
-      abbr: i.string().optional(),
-      amendments: i.number().optional(),
-      description: i.string().optional(),
-      events: i.number().optional(),
-      members: i.number(),
-      name: i.string(),
-      role: i.string(),
-      tags: i.json().optional(),
     }),
     speakerList: i.entity({
       completed: i.boolean().indexed(),
@@ -563,18 +574,6 @@ const _schema = i.schema({
       },
       reverse: {
         on: 'groups',
-        has: 'many',
-        label: 'blogs',
-      },
-    },
-    blogsUser: {
-      forward: {
-        on: 'blogs',
-        has: 'one',
-        label: 'user',
-      },
-      reverse: {
-        on: '$users',
         has: 'many',
         label: 'blogs',
       },
@@ -855,30 +854,6 @@ const _schema = i.schema({
         label: 'eventParticipations',
       },
     },
-    amendmentCollaboratorsAmendment: {
-      forward: {
-        on: 'amendmentCollaborators',
-        has: 'one',
-        label: 'amendment',
-      },
-      reverse: {
-        on: 'amendments',
-        has: 'many',
-        label: 'collaborators',
-      },
-    },
-    amendmentCollaboratorsUser: {
-      forward: {
-        on: 'amendmentCollaborators',
-        has: 'one',
-        label: 'user',
-      },
-      reverse: {
-        on: '$users',
-        has: 'many',
-        label: 'amendmentCollaborations',
-      },
-    },
     eventsGroup: {
       forward: {
         on: 'events',
@@ -1023,6 +998,90 @@ const _schema = i.schema({
         label: 'memberships',
       },
     },
+    roleGroup: {
+      forward: { on: 'roles', has: 'one', label: 'group' },
+      reverse: { on: 'groups', has: 'many', label: 'roles' },
+    },
+    roleEvent: {
+      forward: { on: 'roles', has: 'one', label: 'event' },
+      reverse: { on: 'events', has: 'many', label: 'roles' },
+    },
+    roleAmendment: {
+      forward: { on: 'roles', has: 'one', label: 'amendment' },
+      reverse: { on: 'amendments', has: 'many', label: 'roles' },
+    },
+    roleBlog: {
+      forward: { on: 'roles', has: 'one', label: 'blog' },
+      reverse: { on: 'blogs', has: 'many', label: 'roles' },
+    },
+    actionRightRole: {
+      forward: { on: 'actionRights', has: 'many', label: 'roles' },
+      reverse: { on: 'roles', has: 'many', label: 'actionRights' },
+    },
+    actionRightGroup: {
+      forward: { on: 'actionRights', has: 'one', label: 'group' },
+      reverse: { on: 'groups', has: 'many', label: 'scopedActionRights' },
+    },
+    actionRightEvent: {
+      forward: { on: 'actionRights', has: 'one', label: 'event' },
+      reverse: { on: 'events', has: 'many', label: 'scopedActionRights' },
+    },
+    actionRightAmendment: {
+      forward: { on: 'actionRights', has: 'one', label: 'amendment' },
+      reverse: { on: 'amendments', has: 'many', label: 'scopedActionRights' },
+    },
+    actionRightBlog: {
+      forward: { on: 'actionRights', has: 'one', label: 'blog' },
+      reverse: { on: 'blogs', has: 'many', label: 'scopedActionRights' },
+    },
+    participantEvent: {
+      forward: { on: 'participants', has: 'one', label: 'event' },
+      reverse: { on: 'events', has: 'many', label: 'eventRoleParticipants' },
+    },
+    participantUser: {
+      forward: { on: 'participants', has: 'one', label: 'user' },
+      reverse: { on: '$users', has: 'many', label: 'participations' },
+    },
+    participantRole: {
+      forward: { on: 'participants', has: 'one', label: 'role' },
+      reverse: { on: 'roles', has: 'many', label: 'participants' },
+    },
+    collaboratorRole: {
+      forward: { on: 'amendmentCollaborators', has: 'one', label: 'role' },
+      reverse: { on: 'roles', has: 'many', label: 'collaborators' },
+    },
+    collaboratorAmendment: {
+      forward: { on: 'amendmentCollaborators', has: 'one', label: 'amendment' },
+      reverse: { on: 'amendments', has: 'many', label: 'amendmentRoleCollaborators' },
+    },
+    collaboratorUser: {
+      forward: { on: 'amendmentCollaborators', has: 'one', label: 'user' },
+      reverse: { on: '$users', has: 'many', label: 'collaborations' },
+    },
+    blogBloggersRole: {
+      forward: { on: 'blogBloggers', has: 'one', label: 'role' },
+      reverse: { on: 'roles', has: 'many', label: 'bloggers' },
+    },
+    blogBloggersBlog: {
+      forward: { on: 'blogBloggers', has: 'one', label: 'blog' },
+      reverse: { on: 'blogs', has: 'many', label: 'blogRoleBloggers' },
+    },
+    blogBloggersUser: {
+      forward: { on: 'blogBloggers', has: 'one', label: 'user' },
+      reverse: { on: '$users', has: 'many', label: 'bloggerRelations' },
+    },
+    eventsCreator: {
+      forward: {
+        on: 'events',
+        has: 'one',
+        label: 'creator',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'createdEvents',
+      },
+    },
     groupRelationshipsChildGroup: {
       forward: {
         on: 'groupRelationships',
@@ -1151,7 +1210,7 @@ const _schema = i.schema({
         label: 'sender',
       },
       reverse: {
-        on: 'profiles',
+        on: '$users',
         has: 'many',
         label: 'sentMessages',
       },
@@ -1178,6 +1237,66 @@ const _schema = i.schema({
         on: '$users',
         has: 'many',
         label: 'sentNotifications',
+      },
+    },
+    notificationsRelatedUser: {
+      forward: {
+        on: 'notifications',
+        has: 'one',
+        label: 'relatedUser',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'relatedNotifications',
+      },
+    },
+    notificationsRelatedGroup: {
+      forward: {
+        on: 'notifications',
+        has: 'one',
+        label: 'relatedGroup',
+      },
+      reverse: {
+        on: 'groups',
+        has: 'many',
+        label: 'relatedNotifications',
+      },
+    },
+    notificationsRelatedAmendment: {
+      forward: {
+        on: 'notifications',
+        has: 'one',
+        label: 'relatedAmendment',
+      },
+      reverse: {
+        on: 'amendments',
+        has: 'many',
+        label: 'relatedNotifications',
+      },
+    },
+    notificationsRelatedEvent: {
+      forward: {
+        on: 'notifications',
+        has: 'one',
+        label: 'relatedEvent',
+      },
+      reverse: {
+        on: 'events',
+        has: 'many',
+        label: 'relatedNotifications',
+      },
+    },
+    notificationsRelatedBlog: {
+      forward: {
+        on: 'notifications',
+        has: 'one',
+        label: 'relatedBlog',
+      },
+      reverse: {
+        on: 'blogs',
+        has: 'many',
+        label: 'relatedNotifications',
       },
     },
     paymentsPayerUser: {
@@ -1252,28 +1371,16 @@ const _schema = i.schema({
         label: 'positions',
       },
     },
-    profilesAvatarFile: {
+    $usersAvatarFile: {
       forward: {
-        on: 'profiles',
+        on: '$users',
         has: 'one',
         label: 'avatarFile',
       },
       reverse: {
         on: '$files',
         has: 'one',
-        label: 'profileAvatar',
-      },
-    },
-    profilesUser: {
-      forward: {
-        on: 'profiles',
-        has: 'one',
-        label: 'user',
-      },
-      reverse: {
-        on: '$users',
-        has: 'one',
-        label: 'profile',
+        label: 'userAvatar',
       },
     },
     statementsUser: {
@@ -1346,18 +1453,6 @@ const _schema = i.schema({
         on: 'groups',
         has: 'many',
         label: 'todos',
-      },
-    },
-    userUser: {
-      forward: {
-        on: 'user',
-        has: 'one',
-        label: 'user',
-      },
-      reverse: {
-        on: '$users',
-        has: 'many',
-        label: 'groups',
       },
     },
     speakerListAgendaItem: {

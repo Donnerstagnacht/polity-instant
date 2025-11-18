@@ -41,9 +41,7 @@ export default function GroupAmendmentsPage({ params }: { params: Promise<{ id: 
     groups: {
       $: { where: { id: resolvedParams.id } },
       amendments: {
-        user: {
-          profile: {},
-        },
+        user: {},
         hashtags: {},
       },
     },
@@ -291,9 +289,9 @@ export default function GroupAmendmentsPage({ params }: { params: Promise<{ id: 
                         </div>
                       )}
                     </div>
-                    {amendment.user?.profile && (
+                    {amendment.user && (
                       <p className="text-xs text-muted-foreground">
-                        By {amendment.user.profile.name || 'Unknown'}
+                        By {amendment.user.name || 'Unknown'}
                       </p>
                     )}
                     {amendment.hashtags && amendment.hashtags.length > 0 && (

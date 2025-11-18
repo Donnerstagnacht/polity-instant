@@ -70,6 +70,16 @@ function randomItems<T>(array: T[], count: number): T[] {
   return shuffled.slice(0, Math.min(count, array.length));
 }
 
+// Helper function to get random visibility
+function randomVisibility(): 'public' | 'authenticated' | 'private' {
+  const visibilities: ('public' | 'authenticated' | 'private')[] = [
+    'public',
+    'authenticated',
+    'private',
+  ];
+  return randomItem(visibilities);
+}
+
 // Helper function to create hashtags
 function createHashtagTransactions(
   entityId: string,
@@ -264,7 +274,6 @@ async function seedUsers() {
   const userIds: string[] = [];
   const blogIds: string[] = [];
   const amendmentIds: string[] = [];
-  const userToProfileMap = new Map<string, string>(); // Map user IDs to profile IDs
   const transactions = [];
 
   // First, ensure the main test user exists and update it
@@ -277,31 +286,22 @@ async function seedUsers() {
       email: 'test@polity.app',
       imageURL: faker.image.avatar(),
       type: 'user',
+      name: 'Test User',
+      subtitle: 'Main Test Account',
+      avatar: faker.image.avatar(),
+      bio: 'This is the main test user account for development.',
+      handle: 'testuser',
+      isActive: true,
+      createdAt: faker.date.past({ years: 2 }),
+      updatedAt: new Date(),
+      lastSeenAt: new Date(),
+      about: 'Main test user for Polity development.',
+      contactEmail: 'test@polity.app',
+      contactTwitter: '@testuser',
+      contactWebsite: 'https://polity.app',
+      contactLocation: 'Test City',
+      visibility: 'public',
     })
-  );
-
-  // Create or update profile for main user - ALWAYS create profile
-  const mainProfileId = id();
-  userToProfileMap.set(mainUserId, mainProfileId);
-  transactions.push(
-    tx.profiles[mainProfileId]
-      .update({
-        name: 'Test User',
-        subtitle: 'Main Test Account',
-        avatar: faker.image.avatar(),
-        bio: 'This is the main test user account for development.',
-        handle: 'testuser',
-        isActive: true,
-        createdAt: faker.date.past({ years: 2 }),
-        updatedAt: new Date(),
-        lastSeenAt: new Date(),
-        about: 'Main test user for Polity development.',
-        contactEmail: 'test@polity.app',
-        contactTwitter: '@testuser',
-        contactWebsite: 'https://polity.app',
-        contactLocation: 'Test City',
-      })
-      .link({ user: mainUserId })
   );
 
   // Add some stats for main user
@@ -325,6 +325,7 @@ async function seedUsers() {
       .update({
         text: 'Passionate about building better communities through technology.',
         tag: 'politics',
+        visibility: 'public',
       })
       .link({ user: mainUserId })
   );
@@ -346,6 +347,7 @@ async function seedUsers() {
         date: new Date().toISOString(),
         likeCount: randomInt(10, 50),
         commentCount: randomInt(5, 20),
+        visibility: 'public',
       })
       .link({ user: mainUserId })
   );
@@ -364,31 +366,22 @@ async function seedUsers() {
       email: 'tobias.hassebrock@gmail.com',
       imageURL: faker.image.avatar(),
       type: 'user',
+      name: 'Tobias Hassebrock',
+      subtitle: 'Developer & Community Member',
+      avatar: faker.image.avatar(),
+      bio: 'Passionate about building better digital communities.',
+      handle: 'tobias',
+      isActive: true,
+      createdAt: faker.date.past({ years: 2 }),
+      updatedAt: new Date(),
+      lastSeenAt: new Date(),
+      about: 'Developer and community enthusiast working on Polity.',
+      contactEmail: 'tobias.hassebrock@gmail.com',
+      contactTwitter: '@tobias',
+      contactWebsite: 'https://polity.app',
+      contactLocation: 'Germany',
+      visibility: 'public',
     })
-  );
-
-  // Create profile for Tobias
-  const tobiasProfileId = id();
-  userToProfileMap.set(tobiasUserId, tobiasProfileId);
-  transactions.push(
-    tx.profiles[tobiasProfileId]
-      .update({
-        name: 'Tobias Hassebrock',
-        subtitle: 'Developer & Community Member',
-        avatar: faker.image.avatar(),
-        bio: 'Passionate about building better digital communities.',
-        handle: 'tobias',
-        isActive: true,
-        createdAt: faker.date.past({ years: 2 }),
-        updatedAt: new Date(),
-        lastSeenAt: new Date(),
-        about: 'Developer and community enthusiast working on Polity.',
-        contactEmail: 'tobias.hassebrock@gmail.com',
-        contactTwitter: '@tobias',
-        contactWebsite: 'https://polity.app',
-        contactLocation: 'Germany',
-      })
-      .link({ user: tobiasUserId })
   );
 
   // Add some stats for Tobias
@@ -412,6 +405,7 @@ async function seedUsers() {
       .update({
         text: 'Building the future of community engagement platforms.',
         tag: 'technology',
+        visibility: 'public',
       })
       .link({ user: tobiasUserId })
   );
@@ -430,6 +424,7 @@ async function seedUsers() {
         date: new Date().toISOString(),
         likeCount: randomInt(20, 80),
         commentCount: randomInt(10, 30),
+        visibility: 'public',
       })
       .link({ user: tobiasUserId })
   );
@@ -438,53 +433,292 @@ async function seedUsers() {
   const tobiasBlogHashtags = randomItems(BLOG_HASHTAGS, randomInt(1, 4));
   transactions.push(...createHashtagTransactions(tobiasBlogId, 'blog', tobiasBlogHashtags));
 
-  // Now create other users - EACH USER GETS A PROFILE
+  // Add additional statements for Tobias with different visibility values
+  const tobiasStatement2Id = id();
+  transactions.push(
+    tx.statements[tobiasStatement2Id]
+      .update({
+        text: 'Privacy is fundamental to digital freedom.',
+        tag: 'privacy',
+        visibility: 'authenticated',
+      })
+      .link({ user: tobiasUserId })
+  );
+
+  const tobiasStatement3Id = id();
+  transactions.push(
+    tx.statements[tobiasStatement3Id]
+      .update({
+        text: 'Personal thoughts on upcoming platform features.',
+        tag: 'technology',
+        visibility: 'private',
+      })
+      .link({ user: tobiasUserId })
+  );
+
+  // Add additional blogs for Tobias with different visibility values
+  const tobiasBlog2Id = id();
+  blogIds.push(tobiasBlog2Id);
+  transactions.push(
+    tx.blogs[tobiasBlog2Id]
+      .update({
+        title: 'Understanding Open Source Governance',
+        date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
+        likeCount: randomInt(15, 50),
+        commentCount: randomInt(5, 20),
+        visibility: 'authenticated',
+      })
+      .link({ user: tobiasUserId })
+  );
+  const tobiasBlog2Hashtags = randomItems(BLOG_HASHTAGS, randomInt(1, 4));
+  transactions.push(...createHashtagTransactions(tobiasBlog2Id, 'blog', tobiasBlog2Hashtags));
+
+  const tobiasBlog3Id = id();
+  blogIds.push(tobiasBlog3Id);
+  transactions.push(
+    tx.blogs[tobiasBlog3Id]
+      .update({
+        title: 'Draft: Platform Architecture Redesign',
+        date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+        likeCount: randomInt(0, 5),
+        commentCount: 0,
+        visibility: 'private',
+      })
+      .link({ user: tobiasUserId })
+  );
+  const tobiasBlog3Hashtags = randomItems(BLOG_HASHTAGS, randomInt(1, 4));
+  transactions.push(...createHashtagTransactions(tobiasBlog3Id, 'blog', tobiasBlog3Hashtags));
+
+  // Add todos for Tobias with different visibility values
+  const tobiasTodo1Id = id();
+  transactions.push(
+    tx.todos[tobiasTodo1Id]
+      .update({
+        title: 'Review community feedback',
+        description: 'Go through latest community suggestions and feedback',
+        status: 'in_progress',
+        priority: 'high',
+        dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days from now
+        completedAt: null,
+        tags: ['community', 'feedback'],
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(),
+        visibility: 'public',
+      })
+      .link({ creator: tobiasUserId })
+  );
+
+  const tobiasTodo2Id = id();
+  transactions.push(
+    tx.todos[tobiasTodo2Id]
+      .update({
+        title: 'Team meeting preparation',
+        description: 'Prepare agenda and materials for team sync',
+        status: 'todo',
+        priority: 'medium',
+        dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+        completedAt: null,
+        tags: ['meeting', 'team'],
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(),
+        visibility: 'authenticated',
+      })
+      .link({ creator: tobiasUserId })
+  );
+
+  const tobiasTodo3Id = id();
+  transactions.push(
+    tx.todos[tobiasTodo3Id]
+      .update({
+        title: 'Personal project ideas',
+        description: 'Brainstorm new features and experiments',
+        status: 'todo',
+        priority: 'low',
+        dueDate: null,
+        completedAt: null,
+        tags: ['ideas', 'personal'],
+        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(),
+        visibility: 'private',
+      })
+      .link({ creator: tobiasUserId })
+  );
+
+  // Add events for Tobias with different visibility values
+  const tobiasEvent1Id = id();
+  const event1Start = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000);
+  const event1End = new Date(event1Start.getTime() + 2 * 60 * 60 * 1000);
+  transactions.push(
+    tx.events[tobiasEvent1Id]
+      .update({
+        title: 'Public Tech Meetup',
+        description: 'Monthly community tech meetup - all welcome!',
+        location: 'Community Center, Main Street',
+        startDate: event1Start,
+        endDate: event1End,
+        isPublic: true,
+        capacity: 100,
+        imageURL: faker.image.url(),
+        tags: ['meetup', 'community', 'technology'],
+        createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(),
+        visibility: 'public',
+      })
+      .link({ organizer: tobiasUserId })
+  );
+
+  const tobiasEvent2Id = id();
+  const event2Start = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
+  const event2End = new Date(event2Start.getTime() + 3 * 60 * 60 * 1000);
+  transactions.push(
+    tx.events[tobiasEvent2Id]
+      .update({
+        title: 'Members Workshop',
+        description: 'Workshop for registered members on platform features',
+        location: 'Online via Zoom',
+        startDate: event2Start,
+        endDate: event2End,
+        isPublic: false,
+        capacity: 50,
+        imageURL: faker.image.url(),
+        tags: ['workshop', 'members', 'training'],
+        createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(),
+        visibility: 'authenticated',
+      })
+      .link({ organizer: tobiasUserId })
+  );
+
+  const tobiasEvent3Id = id();
+  const event3Start = new Date(Date.now() + 20 * 24 * 60 * 60 * 1000);
+  const event3End = new Date(event3Start.getTime() + 1 * 60 * 60 * 1000);
+  transactions.push(
+    tx.events[tobiasEvent3Id]
+      .update({
+        title: 'Private Planning Session',
+        description: 'Internal planning for Q2 strategy',
+        location: 'Office Conference Room',
+        startDate: event3Start,
+        endDate: event3End,
+        isPublic: false,
+        capacity: 10,
+        imageURL: faker.image.url(),
+        tags: ['planning', 'internal', 'strategy'],
+        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(),
+        visibility: 'private',
+      })
+      .link({ organizer: tobiasUserId })
+  );
+
+  // Add amendments for Tobias with different visibility values
+  const tobiasAmendment1Id = id();
+  amendmentIds.push(tobiasAmendment1Id);
+  transactions.push(
+    tx.amendments[tobiasAmendment1Id]
+      .update({
+        title: 'Community Guidelines Update',
+        subtitle: 'Proposed changes to community standards',
+        status: 'Under Review',
+        supporters: randomInt(50, 150),
+        date: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+        code: `AMN-${faker.string.alphanumeric(6).toUpperCase()}`,
+        tags: ['policy', 'community'],
+        visibility: 'public',
+      })
+      .link({ user: tobiasUserId })
+  );
+  const tobiasAmend1Hashtags = randomItems(AMENDMENT_HASHTAGS, randomInt(2, 4));
+  transactions.push(
+    ...createHashtagTransactions(tobiasAmendment1Id, 'amendment', tobiasAmend1Hashtags)
+  );
+  transactions.push(
+    ...createAmendmentDocument(tobiasAmendment1Id, 'Community Guidelines Update', tobiasUserId)
+  );
+
+  const tobiasAmendment2Id = id();
+  amendmentIds.push(tobiasAmendment2Id);
+  transactions.push(
+    tx.amendments[tobiasAmendment2Id]
+      .update({
+        title: 'Member Voting Process Reform',
+        subtitle: 'Improving voting mechanisms for members',
+        status: 'Drafting',
+        supporters: randomInt(20, 60),
+        date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+        code: `AMN-${faker.string.alphanumeric(6).toUpperCase()}`,
+        tags: ['reform', 'voting'],
+        visibility: 'authenticated',
+      })
+      .link({ user: tobiasUserId })
+  );
+  const tobiasAmend2Hashtags = randomItems(AMENDMENT_HASHTAGS, randomInt(2, 4));
+  transactions.push(
+    ...createHashtagTransactions(tobiasAmendment2Id, 'amendment', tobiasAmend2Hashtags)
+  );
+  transactions.push(
+    ...createAmendmentDocument(tobiasAmendment2Id, 'Member Voting Process Reform', tobiasUserId)
+  );
+
+  const tobiasAmendment3Id = id();
+  amendmentIds.push(tobiasAmendment3Id);
+  transactions.push(
+    tx.amendments[tobiasAmendment3Id]
+      .update({
+        title: 'Internal Policy Draft',
+        subtitle: 'Draft policy for internal review only',
+        status: 'Drafting',
+        supporters: randomInt(5, 15),
+        date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+        code: `AMN-${faker.string.alphanumeric(6).toUpperCase()}`,
+        tags: ['policy', 'draft'],
+        visibility: 'private',
+      })
+      .link({ user: tobiasUserId })
+  );
+  const tobiasAmend3Hashtags = randomItems(AMENDMENT_HASHTAGS, randomInt(2, 4));
+  transactions.push(
+    ...createHashtagTransactions(tobiasAmendment3Id, 'amendment', tobiasAmend3Hashtags)
+  );
+  transactions.push(
+    ...createAmendmentDocument(tobiasAmendment3Id, 'Internal Policy Draft', tobiasUserId)
+  );
+
   for (let i = 0; i < SEED_CONFIG.users; i++) {
     const userId = id();
-    const email = faker.internet.email().toLowerCase();
+    const email = faker.internet.username().toLowerCase();
     const handle = faker.internet.username().toLowerCase();
     const name = faker.person.fullName();
 
     userIds.push(userId);
 
-    // Create user in $users table
+    const createdAt = faker.date.past({ years: 2 });
     transactions.push(
       tx.$users[userId].update({
         email,
         imageURL: faker.image.avatar(),
         type: 'user',
+        name,
+        subtitle: faker.person.jobTitle(),
+        avatar: faker.image.avatar(),
+        bio: faker.lorem.paragraph(),
+        handle,
+        isActive: faker.datatype.boolean(0.9), // 90% active
+        createdAt,
+        updatedAt: new Date(),
+        lastSeenAt: faker.date.recent({ days: 7 }),
+        about: faker.lorem.paragraphs(2),
+        contactEmail: email,
+        contactTwitter: `@${faker.internet.username()}`,
+        contactWebsite: faker.internet.url(),
+        contactLocation: faker.location.city(),
+        whatsapp: faker.phone.number(),
+        instagram: `@${faker.internet.username()}`,
+        twitter: `@${faker.internet.username()}`,
+        facebook: faker.internet.username(),
+        snapchat: faker.internet.username(),
+        visibility: randomVisibility(),
       })
-    );
-
-    // Create profile - MANDATORY for every user
-    const profileId = id();
-    userToProfileMap.set(userId, profileId); // Track profile ID for this user
-    const createdAt = faker.date.past({ years: 2 });
-
-    transactions.push(
-      tx.profiles[profileId]
-        .update({
-          name,
-          subtitle: faker.person.jobTitle(),
-          avatar: faker.image.avatar(),
-          bio: faker.lorem.paragraph(),
-          handle,
-          isActive: faker.datatype.boolean(0.9), // 90% active
-          createdAt,
-          updatedAt: new Date(),
-          lastSeenAt: faker.date.recent({ days: 7 }),
-          about: faker.lorem.paragraphs(2),
-          contactEmail: email,
-          contactTwitter: `@${faker.internet.username()}`,
-          contactWebsite: faker.internet.url(),
-          contactLocation: faker.location.city(),
-          whatsapp: faker.phone.number(),
-          instagram: `@${faker.internet.username()}`,
-          twitter: `@${faker.internet.username()}`,
-          facebook: faker.internet.username(),
-          snapchat: faker.internet.username(),
-        })
-        .link({ user: userId })
     );
 
     // Add some stats
@@ -511,6 +745,7 @@ async function seedUsers() {
           .update({
             text: faker.lorem.sentence(),
             tag: randomItem(['politics', 'environment', 'education', 'healthcare', 'economy']),
+            visibility: randomVisibility(),
           })
           .link({ user: userId })
       );
@@ -528,6 +763,7 @@ async function seedUsers() {
             date: faker.date.past({ years: 1 }).toISOString(),
             likeCount: randomInt(0, 500),
             commentCount: randomInt(0, 100),
+            visibility: randomVisibility(),
           })
           .link({ user: userId })
       );
@@ -557,6 +793,7 @@ async function seedUsers() {
             date: faker.date.past({ years: 1 }).toISOString(),
             code: `AMN-${faker.string.alphanumeric(6).toUpperCase()}`,
             tags: [randomItem(['policy', 'reform', 'legislation', 'amendment', 'proposal'])],
+            visibility: randomVisibility(),
           })
           .link({ user: userId })
       );
@@ -579,9 +816,8 @@ async function seedUsers() {
   }
 
   console.log(`✓ Created ${userIds.length} users (including main test user and Tobias)`);
-  console.log(`✓ Each user has a complete profile with all contact fields`);
-  console.log(`✓ Total profiles: ${userToProfileMap.size}`);
-  return { userIds, userToProfileMap, blogIds, amendmentIds };
+  console.log(`✓ All user data stored in $users entity`);
+  return { userIds, blogIds, amendmentIds };
 }
 
 async function seedGroupRelationships(groupIds: string[]) {
@@ -794,12 +1030,6 @@ async function seedGroups(userIds: string[]) {
   for (let i = 0; i < 2; i++) {
     const groupId = id();
     const name = i === 0 ? 'Test Main Group' : faker.company.name();
-    const abbr = name
-      .split(' ')
-      .map(word => word[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 3);
 
     groupIds.push(groupId);
 
@@ -825,25 +1055,9 @@ async function seedGroups(userIds: string[]) {
             faker.helpers.maybe(() => faker.internet.userName(), { probability: 0.3 }) || '',
           createdAt: faker.date.past({ years: 1 }),
           updatedAt: new Date(),
+          visibility: 'public',
         })
         .link({ owner: mainUserId })
-    );
-
-    // Create user group entry
-    const userGroupId = id();
-    transactions.push(
-      tx.user[userGroupId]
-        .update({
-          name,
-          members: randomInt(10, 100),
-          role: 'Owner',
-          description: i === 0 ? 'Main test group for development' : faker.lorem.paragraph(),
-          tags: ['community', 'test'],
-          amendments: randomInt(0, 10),
-          events: randomInt(0, 5),
-          abbr,
-        })
-        .link({ user: mainUserId })
     );
 
     // Add main user as owner member
@@ -851,9 +1065,10 @@ async function seedGroups(userIds: string[]) {
     transactions.push(
       tx.groupMemberships[ownerMembershipId]
         .update({
-          role: 'admin',
-          status: 'admin',
+          role: 'Board Member',
+          status: 'member',
           createdAt: faker.date.past({ years: 1 }),
+          visibility: 'public',
         })
         .link({ user: mainUserId, group: groupId })
     );
@@ -871,7 +1086,7 @@ async function seedGroups(userIds: string[]) {
       transactions.push(
         tx.groupMemberships[membershipId]
           .update({
-            role: randomItem(['member', 'member', 'moderator']),
+            role: randomItem(['Member', 'Member', 'Board Member']),
             status: status,
             createdAt: faker.date.past({ years: 0.5 }),
           })
@@ -902,6 +1117,7 @@ async function seedGroups(userIds: string[]) {
             date: faker.date.past({ years: 0.5 }).toISOString(),
             likeCount: randomInt(5, 100),
             commentCount: randomInt(0, 50),
+            visibility: randomVisibility(),
           })
           .link({ user: mainUserId, group: groupId })
       );
@@ -927,6 +1143,7 @@ async function seedGroups(userIds: string[]) {
             date: faker.date.past({ years: 1 }).toISOString(),
             code: `AMN-${faker.string.alphanumeric(6).toUpperCase()}`,
             tags: [randomItem(['policy', 'reform', 'legislation', 'amendment', 'proposal'])],
+            visibility: randomVisibility(),
           })
           .link({ user: mainUserId, group: groupId })
       );
@@ -945,12 +1162,6 @@ async function seedGroups(userIds: string[]) {
     const groupId = id();
     const ownerId = randomItem(userIds.filter(uid => uid !== mainUserId));
     const name = faker.company.name();
-    const abbr = name
-      .split(' ')
-      .map(word => word[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 3);
 
     groupIds.push(groupId);
 
@@ -976,25 +1187,9 @@ async function seedGroups(userIds: string[]) {
             faker.helpers.maybe(() => faker.internet.userName(), { probability: 0.3 }) || '',
           createdAt: faker.date.past({ years: 1 }),
           updatedAt: new Date(),
+          visibility: randomVisibility(),
         })
         .link({ owner: ownerId })
-    );
-
-    // Create user group entry
-    const userGroupId = id();
-    transactions.push(
-      tx.user[userGroupId]
-        .update({
-          name,
-          members: randomInt(10, 100),
-          role: 'Owner',
-          description: faker.lorem.paragraph(),
-          tags: [randomItem(['community', 'organization', 'political', 'social', 'activism'])],
-          amendments: randomInt(0, 10),
-          events: randomInt(0, 5),
-          abbr,
-        })
-        .link({ user: ownerId })
     );
 
     // Add group memberships
@@ -1009,9 +1204,10 @@ async function seedGroups(userIds: string[]) {
     transactions.push(
       tx.groupMemberships[ownerMembershipId]
         .update({
-          role: 'admin',
-          status: 'admin',
+          role: 'Board Member',
+          status: 'member',
           createdAt: faker.date.past({ years: 1 }),
+          visibility: randomVisibility(),
         })
         .link({ user: ownerId, group: groupId })
     );
@@ -1022,9 +1218,10 @@ async function seedGroups(userIds: string[]) {
       transactions.push(
         tx.groupMemberships[mainUserMembershipId]
           .update({
-            role: randomItem(['member', 'moderator']),
+            role: randomItem(['Member', 'Board Member']),
             status: 'member',
             createdAt: faker.date.past({ years: 0.5 }),
+            visibility: randomVisibility(),
           })
           .link({ user: mainUserId, group: groupId })
       );
@@ -1037,9 +1234,10 @@ async function seedGroups(userIds: string[]) {
       transactions.push(
         tx.groupMemberships[membershipId]
           .update({
-            role: randomItem(['member', 'member', 'moderator']),
+            role: randomItem(['Member', 'Member', 'Board Member']),
             status: status,
             createdAt: faker.date.past({ years: 0.5 }),
+            visibility: randomVisibility(),
           })
           .link({ user: memberId, group: groupId })
       );
@@ -1068,6 +1266,7 @@ async function seedGroups(userIds: string[]) {
             date: faker.date.past({ years: 0.5 }).toISOString(),
             likeCount: randomInt(5, 100),
             commentCount: randomInt(0, 50),
+            visibility: randomVisibility(),
           })
           .link({ user: ownerId, group: groupId })
       );
@@ -1093,6 +1292,7 @@ async function seedGroups(userIds: string[]) {
             date: faker.date.past({ years: 1 }).toISOString(),
             code: `AMN-${faker.string.alphanumeric(6).toUpperCase()}`,
             tags: [randomItem(['policy', 'reform', 'legislation', 'amendment', 'proposal'])],
+            visibility: randomVisibility(),
           })
           .link({ user: ownerId, group: groupId })
       );
@@ -1252,7 +1452,6 @@ async function seedEventParticipationRequestsAndInvites(eventIds: string[], user
       transactions.push(
         tx.eventParticipants[participantId]
           .update({
-            role: 'attendee',
             status: 'invited',
             createdAt: faker.date.recent({ days: 30 }),
           })
@@ -1273,7 +1472,6 @@ async function seedEventParticipationRequestsAndInvites(eventIds: string[], user
       transactions.push(
         tx.eventParticipants[participantId]
           .update({
-            role: 'attendee',
             status: 'requested',
             createdAt: faker.date.recent({ days: 30 }),
           })
@@ -1294,8 +1492,7 @@ async function seedEventParticipationRequestsAndInvites(eventIds: string[], user
       transactions.push(
         tx.eventParticipants[participantId]
           .update({
-            role: 'organizer',
-            status: 'admin',
+            status: 'member',
             createdAt: faker.date.past({ years: 0.17 }),
           })
           .link({ user: userId, event: eventId })
@@ -1344,9 +1541,9 @@ async function seedAmendmentCollaborationRequestsAndInvites(
       transactions.push(
         tx.amendmentCollaborators[collaboratorId]
           .update({
-            role: 'editor',
             status: 'invited',
             createdAt: faker.date.recent({ days: 30 }),
+            visibility: randomVisibility(),
           })
           .link({ user: invitedUserId, amendment: amendmentId })
       );
@@ -1365,9 +1562,9 @@ async function seedAmendmentCollaborationRequestsAndInvites(
       transactions.push(
         tx.amendmentCollaborators[collaboratorId]
           .update({
-            role: 'editor',
             status: 'requested',
             createdAt: faker.date.recent({ days: 30 }),
+            visibility: randomVisibility(),
           })
           .link({ user: requestingUserId, amendment: amendmentId })
       );
@@ -1386,9 +1583,9 @@ async function seedAmendmentCollaborationRequestsAndInvites(
       transactions.push(
         tx.amendmentCollaborators[collaboratorId]
           .update({
-            role: 'reviewer',
-            status: 'admin',
+            status: 'member',
             createdAt: faker.date.past({ years: 0.17 }),
+            visibility: randomVisibility(),
           })
           .link({ user: userId, amendment: amendmentId })
       );
@@ -1793,8 +1990,8 @@ async function seedTobiasSubscriptionsAndMemberships(
   }
 
   // Add Tobias as member to first 8 groups with different statuses
-  // Groups 0-2: admin status (3 groups)
-  // Groups 3-4: member status (2 groups)
+  // Groups 0-2: Board Member role with full permissions (3 groups)
+  // Groups 3-4: Member role with basic permissions (2 groups)
   // Groups 5-6: requested status (2 groups)
   // Group 7: invited status (1 group)
   const first8Groups = groupIds.slice(0, Math.min(8, groupIds.length));
@@ -1802,36 +1999,57 @@ async function seedTobiasSubscriptionsAndMemberships(
     const groupId = first8Groups[i];
     const membershipId = id();
 
-    let role = 'member';
+    let roleName = 'Member';
     let status = 'member';
 
     if (i < 3) {
-      // First 3 groups: admin
-      role = 'admin';
-      status = 'admin';
+      // First 3 groups: Board Member with full permissions
+      roleName = 'Board Member';
+      status = 'member';
     } else if (i < 5) {
       // Groups 3-4: regular member
-      role = 'member';
+      roleName = 'Member';
       status = 'member';
     } else if (i < 7) {
       // Groups 5-6: requested
-      role = 'member';
+      roleName = 'Member';
       status = 'requested';
     } else {
       // Group 7: invited
-      role = 'member';
+      roleName = 'Member';
       status = 'invited';
     }
 
-    transactions.push(
-      tx.groupMemberships[membershipId]
-        .update({
-          role: role,
-          status: status,
-          createdAt: faker.date.past({ years: 1 }),
-        })
-        .link({ user: tobiasUserId, group: groupId })
-    );
+    // Query the role ID for this group
+    const groupRoles = await db.query({
+      roles: {
+        $: {
+          where: {
+            and: [{ name: roleName }, { scope: 'group' }],
+          },
+        },
+        group: {
+          $: {
+            where: {
+              id: groupId,
+            },
+          },
+        },
+      },
+    });
+
+    const roleId = groupRoles?.roles?.[0]?.id;
+
+    if (roleId) {
+      transactions.push(
+        tx.groupMemberships[membershipId]
+          .update({
+            status: status,
+            createdAt: faker.date.past({ years: 1 }),
+          })
+          .link({ user: tobiasUserId, group: groupId, role: roleId })
+      );
+    }
   }
 
   // Add Tobias as participant to events with different statuses
@@ -1845,42 +2063,63 @@ async function seedTobiasSubscriptionsAndMemberships(
     const eventId = first8Events[i];
     const participantId = id();
 
-    let role = 'attendee';
+    let roleName = 'Participant';
     let status = 'member';
 
     if (i < halfEvents) {
-      // Make Tobias admin for at least half of the events
-      role = 'organizer';
-      status = 'admin';
+      // Make Tobias Organizer for at least half of the events
+      roleName = 'Organizer';
+      status = 'member';
     } else if (i < halfEvents + 2) {
       // Next 2 events: regular participant
-      role = 'attendee';
+      roleName = 'Participant';
       status = 'member';
     } else if (i < halfEvents + 4) {
       // Next 2 events: requested
-      role = 'attendee';
+      roleName = 'Participant';
       status = 'requested';
     } else {
       // Remaining events: invited
-      role = 'attendee';
+      roleName = 'Participant';
       status = 'invited';
     }
 
-    transactions.push(
-      tx.eventParticipants[participantId]
-        .update({
-          role: role,
-          status: status,
-          createdAt: faker.date.past({ years: 0.5 }),
-        })
-        .link({ user: tobiasUserId, event: eventId })
-    );
+    // Query the role ID for this event
+    const eventRoles = await db.query({
+      roles: {
+        $: {
+          where: {
+            and: [{ name: roleName }, { scope: 'event' }],
+          },
+        },
+        event: {
+          $: {
+            where: {
+              id: eventId,
+            },
+          },
+        },
+      },
+    });
+
+    const roleId = eventRoles?.roles?.[0]?.id;
+
+    if (roleId) {
+      transactions.push(
+        tx.eventParticipants[participantId]
+          .update({
+            status: status,
+            createdAt: faker.date.past({ years: 0.5 }),
+          })
+          .link({ user: tobiasUserId, event: eventId, role: roleId })
+      );
+    }
   }
 
   // Add Tobias as collaborator to amendments with different statuses
   // Take first 8 amendments if available
-  // Amendments 0-2: admin status (3 amendments)
-  // Amendments 3-4: member status (2 amendments)
+  // Amendments 0-2: Applicant role (3 amendments)
+  // Amendments 3-4: Collaborator role (2 amendments)
   // Amendments 5-6: requested status (2 amendments)
   // Amendment 7: invited status (1 amendment)
   const first8Amendments = amendmentIds.slice(0, Math.min(8, amendmentIds.length));
@@ -1888,36 +2127,113 @@ async function seedTobiasSubscriptionsAndMemberships(
     const amendmentId = first8Amendments[i];
     const collaboratorId = id();
 
-    let role = 'editor';
+    let roleName = 'Collaborator';
     let status = 'member';
 
     if (i < 3) {
-      // First 3 amendments: admin
-      role = 'reviewer';
-      status = 'admin';
+      // First 3 amendments: Applicant
+      roleName = 'Applicant';
+      status = 'member';
     } else if (i < 5) {
       // Amendments 3-4: regular collaborator
-      role = 'editor';
+      roleName = 'Collaborator';
       status = 'member';
     } else if (i < 7) {
       // Amendments 5-6: requested
-      role = 'editor';
+      roleName = 'Collaborator';
       status = 'requested';
     } else {
       // Amendment 7: invited
-      role = 'editor';
+      roleName = 'Collaborator';
       status = 'invited';
     }
 
-    transactions.push(
-      tx.amendmentCollaborators[collaboratorId]
-        .update({
-          role: role,
-          status: status,
-          createdAt: faker.date.past({ years: 0.5 }),
-        })
-        .link({ user: tobiasUserId, amendment: amendmentId })
-    );
+    // Query the role ID for this amendment
+    const amendmentRoles = await db.query({
+      roles: {
+        $: {
+          where: {
+            and: [{ name: roleName }, { scope: 'amendment' }],
+          },
+        },
+        amendment: {
+          $: {
+            where: {
+              id: amendmentId,
+            },
+          },
+        },
+      },
+    });
+
+    const roleId = amendmentRoles?.roles?.[0]?.id;
+
+    if (roleId) {
+      transactions.push(
+        tx.amendmentCollaborators[collaboratorId]
+          .update({
+            status: status,
+            createdAt: faker.date.past({ years: 0.5 }),
+            visibility: randomVisibility(),
+          })
+          .link({ user: tobiasUserId, amendment: amendmentId, role: roleId })
+      );
+    }
+  }
+
+  // Add Tobias as blogger to blogs with different roles
+  // Take first 8 blogs if available
+  // Blogs 0-2: Owner role (3 blogs)
+  // Blogs 3-7: Writer role (5 blogs)
+  const first8Blogs = blogIds.slice(0, Math.min(8, blogIds.length));
+  for (let i = 0; i < first8Blogs.length; i++) {
+    const blogId = first8Blogs[i];
+    const bloggerId = id();
+
+    let roleName = 'Writer';
+    let status = 'member';
+
+    if (i < 3) {
+      // First 3 blogs: Owner
+      roleName = 'Owner';
+      status = 'member';
+    } else {
+      // Blogs 3-7: Writer
+      roleName = 'Writer';
+      status = 'member';
+    }
+
+    // Query the role ID for this blog
+    const blogRoles = await db.query({
+      roles: {
+        $: {
+          where: {
+            and: [{ name: roleName }, { scope: 'blog' }],
+          },
+        },
+        blog: {
+          $: {
+            where: {
+              id: blogId,
+            },
+          },
+        },
+      },
+    });
+
+    const roleId = blogRoles?.roles?.[0]?.id;
+
+    if (roleId) {
+      transactions.push(
+        tx.blogBloggers[bloggerId]
+          .update({
+            status: status,
+            createdAt: faker.date.past({ years: 0.5 }),
+            visibility: randomVisibility(),
+          })
+          .link({ user: tobiasUserId, blog: blogId, role: roleId })
+      );
+    }
   }
 
   // Execute in batches
@@ -1934,31 +2250,32 @@ async function seedTobiasSubscriptionsAndMemberships(
   console.log(`  - Events: ${eventIds.length}`);
   console.log(`  - Blogs: ${blogIds.length}`);
   console.log(`✓ Tobias memberships created:`);
-  console.log(`  - Admin in first 3 groups`);
+  console.log(`  - Board Member in first 3 groups`);
   console.log(`  - Member in groups 4-5 (2 groups)`);
   console.log(`  - Requested in groups 6-7 (2 groups)`);
   console.log(`  - Invited to group 8 (1 group)`);
   console.log(`  - Total: ${first8Groups.length} groups`);
   console.log(`✓ Tobias event participations created:`);
   console.log(
-    `  - Admin in ${Math.ceil(eventIds.length / 2)} events (at least half of ${eventIds.length} total)`
+    `  - Organizer in ${Math.ceil(eventIds.length / 2)} events (at least half of ${eventIds.length} total)`
   );
   console.log(`  - Participant in next 2 events`);
   console.log(`  - Requested in next 2 events`);
   console.log(`  - Invited to remaining events`);
   console.log(`  - Total: ${first8Events.length} events`);
   console.log(`✓ Tobias amendment collaborations created:`);
-  console.log(`  - Admin in first 3 amendments`);
+  console.log(`  - Applicant in first 3 amendments`);
   console.log(`  - Collaborator in amendments 4-5 (2 amendments)`);
   console.log(`  - Requested in amendments 6-7 (2 amendments)`);
   console.log(`  - Invited to amendment 8 (1 amendment)`);
   console.log(`  - Total: ${first8Amendments.length} amendments`);
+  console.log(`✓ Tobias blog bloggers created:`);
+  console.log(`  - Owner in first 3 blogs`);
+  console.log(`  - Writer in blogs 4-8 (5 blogs)`);
+  console.log(`  - Total: ${first8Blogs.length} blogs`);
 }
 
-async function seedConversationsAndMessages(
-  userIds: string[],
-  userToProfileMap: Map<string, string>
-) {
+async function seedConversationsAndMessages(userIds: string[]) {
   console.log('Seeding conversations and messages...');
   const transactions = [];
   let totalConversations = 0;
@@ -2013,16 +2330,10 @@ async function seedConversationsAndMessages(
     for (let j = 0; j < messageCount; j++) {
       const messageId = id();
       const senderUserId = randomItem([mainUserId, otherUser]);
-      const senderProfileId = userToProfileMap.get(senderUserId);
       const messageCreatedAt = faker.date.between({
         from: createdAt,
         to: new Date(),
       });
-
-      if (!senderProfileId) {
-        console.warn(`Warning: No profile found for user ${senderUserId}`);
-        continue;
-      }
 
       transactions.push(
         tx.messages[messageId]
@@ -2033,7 +2344,7 @@ async function seedConversationsAndMessages(
             updatedAt: null,
             deletedAt: null,
           })
-          .link({ conversation: conversationId, sender: senderProfileId })
+          .link({ conversation: conversationId, sender: senderUserId })
       );
       totalMessages++;
     }
@@ -2095,16 +2406,10 @@ async function seedConversationsAndMessages(
       for (let j = 0; j < messageCount; j++) {
         const messageId = id();
         const senderUserId = randomItem([userId, otherUser]);
-        const senderProfileId = userToProfileMap.get(senderUserId);
         const messageCreatedAt = faker.date.between({
           from: createdAt,
           to: new Date(),
         });
-
-        if (!senderProfileId) {
-          console.warn(`Warning: No profile found for user ${senderUserId}`);
-          continue;
-        }
 
         transactions.push(
           tx.messages[messageId]
@@ -2115,7 +2420,7 @@ async function seedConversationsAndMessages(
               updatedAt: null,
               deletedAt: null,
             })
-            .link({ conversation: conversationId, sender: senderProfileId })
+            .link({ conversation: conversationId, sender: senderUserId })
         );
         totalMessages++;
       }
@@ -2194,6 +2499,7 @@ async function seedEvents(userIds: string[], groupIds: string[]) {
             ),
             createdAt: faker.date.past({ years: 0.17 }),
             updatedAt: new Date(),
+            visibility: randomVisibility(),
           })
           .link({ organizer: organizerId, group: groupId })
       );
@@ -2217,6 +2523,7 @@ async function seedEvents(userIds: string[], groupIds: string[]) {
               status,
               createdAt: faker.date.past({ years: 0.08 }),
               role,
+              visibility: randomVisibility(),
             })
             .link({ user: participantId, event: eventId })
         );
@@ -2266,6 +2573,7 @@ async function seedEvents(userIds: string[], groupIds: string[]) {
             ),
             createdAt: faker.date.past({ years: 0.17 }),
             updatedAt: new Date(),
+            visibility: randomVisibility(),
           })
           .link({ organizer: userId, group: randomItem(groupIds) })
       );
@@ -2276,7 +2584,7 @@ async function seedEvents(userIds: string[], groupIds: string[]) {
           .update({
             status: 'member',
             createdAt: faker.date.past({ years: 0.08 }),
-            role: 'attendee',
+            visibility: randomVisibility(),
           })
           .link({ user: userId, event: eventId })
       );
@@ -2301,7 +2609,13 @@ async function seedEvents(userIds: string[], groupIds: string[]) {
   return eventIds;
 }
 
-async function seedNotifications(userIds: string[]) {
+async function seedNotifications(
+  userIds: string[],
+  groupIds: string[],
+  amendmentIds: string[],
+  eventIds: string[],
+  blogIds: string[]
+) {
   console.log('Seeding notifications...');
   const transactions = [];
   let totalNotifications = 0;
@@ -2324,6 +2638,18 @@ async function seedNotifications(userIds: string[]) {
     const notificationId = id();
     const senderId = randomItem(userIds.filter(uid => uid !== mainUserId));
     const type = randomItem(notificationTypes);
+    const relatedType = randomItem(['group', 'event', 'user', 'amendment', 'blog']);
+    const relatedEntityId = randomItem(
+      relatedType === 'group'
+        ? groupIds
+        : relatedType === 'event'
+          ? eventIds
+          : relatedType === 'amendment'
+            ? amendmentIds
+            : relatedType === 'blog'
+              ? blogIds
+              : userIds
+    );
 
     transactions.push(
       tx.notifications[notificationId]
@@ -2333,11 +2659,22 @@ async function seedNotifications(userIds: string[]) {
           message: faker.lorem.sentence(),
           isRead: i < 4, // First 4 are read, rest are unread
           createdAt: faker.date.recent({ days: i < 4 ? 7 : 2 }), // Recent ones are unread
-          relatedEntityType: randomItem(['group', 'event', 'user', 'message', 'post']),
-          relatedEntityId: id(),
+          relatedEntityType: relatedType,
           actionUrl: faker.internet.url(),
         })
-        .link({ recipient: mainUserId, sender: senderId })
+        .link({
+          recipient: mainUserId,
+          sender: senderId,
+          ...(relatedType === 'group'
+            ? { relatedGroup: relatedEntityId }
+            : relatedType === 'event'
+              ? { relatedEvent: relatedEntityId }
+              : relatedType === 'amendment'
+                ? { relatedAmendment: relatedEntityId }
+                : relatedType === 'blog'
+                  ? { relatedBlog: relatedEntityId }
+                  : { relatedUser: relatedEntityId }),
+        })
     );
     totalNotifications++;
   }
@@ -2355,6 +2692,18 @@ async function seedNotifications(userIds: string[]) {
       const notificationId = id();
       const senderId = randomItem(userIds.filter(uid => uid !== userId));
       const type = randomItem(notificationTypes);
+      const relatedType = randomItem(['group', 'event', 'user', 'amendment', 'blog']);
+      const relatedEntityId = randomItem(
+        relatedType === 'group'
+          ? groupIds
+          : relatedType === 'event'
+            ? eventIds
+            : relatedType === 'amendment'
+              ? amendmentIds
+              : relatedType === 'blog'
+                ? blogIds
+                : userIds
+      );
 
       transactions.push(
         tx.notifications[notificationId]
@@ -2364,11 +2713,22 @@ async function seedNotifications(userIds: string[]) {
             message: faker.lorem.sentence(),
             isRead: faker.datatype.boolean(0.4), // 40% read
             createdAt: faker.date.recent({ days: 7 }),
-            relatedEntityType: randomItem(['group', 'event', 'user', 'message', 'post']),
-            relatedEntityId: id(), // Random ID for demonstration
+            relatedEntityType: relatedType,
             actionUrl: faker.internet.url(),
           })
-          .link({ recipient: userId, sender: senderId })
+          .link({
+            recipient: userId,
+            sender: senderId,
+            ...(relatedType === 'group'
+              ? { relatedGroup: relatedEntityId }
+              : relatedType === 'event'
+                ? { relatedEvent: relatedEntityId }
+                : relatedType === 'amendment'
+                  ? { relatedAmendment: relatedEntityId }
+                  : relatedType === 'blog'
+                    ? { relatedBlog: relatedEntityId }
+                    : { relatedUser: relatedEntityId }),
+          })
       );
       totalNotifications++;
     }
@@ -2636,6 +2996,7 @@ async function seedTodos(userIds: string[], groupIds: string[]) {
       ),
       createdAt,
       updatedAt: new Date(),
+      visibility: randomVisibility(),
     });
 
     todoTx = todoTx.link({ creator: creatorId, group: groupId });
@@ -2686,6 +3047,7 @@ async function seedTodos(userIds: string[], groupIds: string[]) {
       tags: i < 2 ? ['urgent', 'important'] : ['feature', 'review'],
       createdAt,
       updatedAt: new Date(),
+      visibility: randomVisibility(),
     });
 
     if (groupId) {
@@ -3224,6 +3586,7 @@ async function seedDocuments(userIds: string[]) {
             .update({
               canEdit: faker.datatype.boolean(0.7), // 70% can edit, 30% view-only
               addedAt: faker.date.past({ years: 0.3 }),
+              visibility: randomVisibility(),
             })
             .link({ document: docId, user: collaboratorId })
         );
@@ -3268,6 +3631,7 @@ async function seedDocuments(userIds: string[]) {
             .update({
               canEdit: faker.datatype.boolean(0.6),
               addedAt: faker.date.past({ years: 0.5 }),
+              visibility: randomVisibility(),
             })
             .link({ document: docId, user: collaboratorId })
         );
@@ -3715,17 +4079,18 @@ async function cleanDatabase() {
     // Query all entities to delete (including $users)
     const query = {
       $users: {},
-      profiles: {},
       stats: {},
       statements: {},
       blogs: {},
+      blogBloggers: {},
       amendments: {},
+      amendmentCollaborators: {},
       user: {},
       groups: {},
       groupMemberships: {},
-      groupRelationships: {}, // New: include group relationships
+      groupRelationships: {},
       follows: {},
-      subscribers: {}, // New: include subscribers
+      subscribers: {},
       conversations: {},
       conversationParticipants: {},
       messages: {},
@@ -3747,15 +4112,25 @@ async function cleanDatabase() {
       documents: {},
       documentCollaborators: {},
       documentCursors: {},
-      hashtags: {}, // New: include hashtags
-      links: {}, // New: include links
-      payments: {}, // New: include payments
-      meetingSlots: {}, // New: include meeting slots
-      meetingBookings: {}, // New: include meeting bookings
-      comments: {}, // New: include comments
-      commentVotes: {}, // New: include comment votes
-      threads: {}, // New: include threads
-      threadVotes: {}, // New: include thread votes
+      documentVersions: {},
+      hashtags: {},
+      links: {},
+      payments: {},
+      meetingSlots: {},
+      meetingBookings: {},
+      comments: {},
+      commentVotes: {},
+      threads: {},
+      threadVotes: {},
+      timelineEvents: {},
+      speakerList: {},
+      amendmentPaths: {},
+      roles: {},
+      actionRights: {},
+      participants: {},
+      stripeCustomers: {},
+      stripeSubscriptions: {},
+      stripePayments: {},
     };
 
     const data = await db.query(query);
@@ -3763,6 +4138,9 @@ async function cleanDatabase() {
 
     // Delete all entities (including $users)
     const entitiesToDelete = [
+      'stripePayments', // Delete Stripe payments first
+      'stripeSubscriptions', // Delete Stripe subscriptions
+      'stripeCustomers', // Delete Stripe customers
       'commentVotes', // Delete comment votes first
       'threadVotes', // Delete thread votes first
       'comments', // Delete comments
@@ -3772,6 +4150,10 @@ async function cleanDatabase() {
       'hashtags', // Delete hashtags first (they link to other entities)
       'links', // Delete links
       'payments', // Delete payments
+      'timelineEvents', // Delete timeline events
+      'speakerList', // Delete speaker list
+      'amendmentPaths', // Delete amendment paths
+      'documentVersions', // Delete document versions
       'documentCursors',
       'documentCollaborators',
       'documents',
@@ -3787,6 +4169,10 @@ async function cleanDatabase() {
       'todoAssignments',
       'todos',
       'notifications',
+      'participants', // Delete participants
+      'actionRights', // Delete action rights before roles
+      'blogBloggers', // Delete blog bloggers
+      'amendmentCollaborators', // Delete amendment collaborators
       'eventParticipants',
       'events',
       'messages',
@@ -3794,7 +4180,7 @@ async function cleanDatabase() {
       'conversations',
       'subscribers', // Delete subscribers
       'follows',
-      'groupRelationships', // New: include group relationships
+      'groupRelationships', // Delete group relationships
       'groupMemberships',
       'groups',
       'user',
@@ -3802,7 +4188,7 @@ async function cleanDatabase() {
       'blogs',
       'statements',
       'stats',
-      'profiles',
+      'roles', // Delete roles after action rights but before users
       'magicCodes',
       '$users', // Delete $users last to avoid foreign key issues
     ];
@@ -4129,9 +4515,9 @@ async function seedTimelineEvents(
       type: 'user',
       ids: userIds.slice(0, 10), // Only create timeline events for some users
       events: ['updated', 'status_changed'],
-      titles: () => [`Profile updated`, `User status changed`],
+      titles: () => [`User updated`, `User status changed`],
       descriptions: () => [
-        `This user has updated their profile information`,
+        `This user has updated their information`,
         `Activity status has been updated`,
       ],
     },
@@ -4357,6 +4743,411 @@ async function seedStripeData(userIds: string[]) {
   console.log(`  - Payment success rate: ~95%`);
 }
 
+/**
+ * Seed RBAC entities: roles, actionRights, posts, and participants
+ */
+async function seedRBAC(
+  userIds: string[],
+  groupIds: string[],
+  eventIds: string[],
+  amendmentIds: string[],
+  blogIds: string[]
+) {
+  console.log('Seeding RBAC entities (roles, actionRights, participants)...');
+  const transactions = [];
+  let totalRoles = 0;
+  let totalActionRights = 0;
+  let totalParticipants = 0;
+
+  // Define common roles for groups
+  const groupRoleDefinitions = [
+    {
+      name: 'Board Member',
+      description: 'Board member with administrative access',
+      scope: 'group' as const,
+    },
+    { name: 'Member', description: 'Regular group member', scope: 'group' as const },
+  ];
+
+  // Define common roles for events
+  const eventRoleDefinitions = [
+    {
+      name: 'Organizer',
+      description: 'Event organizer with full permissions',
+      scope: 'event' as const,
+    },
+    { name: 'Participant', description: 'Regular event participant', scope: 'event' as const },
+  ];
+
+  // Define common roles for amendments
+  const amendmentRoleDefinitions = [
+    {
+      name: 'Applicant',
+      description: 'Amendment applicant with administrative access',
+      scope: 'amendment' as const,
+    },
+    { name: 'Collaborator', description: 'Amendment collaborator', scope: 'amendment' as const },
+  ];
+
+  // Define common roles for blogs
+  const blogRoleDefinitions = [
+    { name: 'Owner', description: 'Blog owner with full permissions', scope: 'blog' as const },
+    { name: 'Writer', description: 'Blog writer with edit access', scope: 'blog' as const },
+  ];
+
+  // Define action rights for different resources
+  const resourceActions = {
+    events: ['create', 'read', 'update', 'delete', 'manage_participants'],
+    amendments: ['create', 'read', 'update', 'delete'],
+    amendmentCollaborators: ['manage'],
+    agendaItems: ['create', 'read', 'update', 'delete', 'manage'],
+    blogs: ['create', 'read', 'update', 'delete'],
+    documents: ['create', 'read', 'update', 'delete'],
+    todos: ['create', 'read', 'update', 'delete'],
+    links: ['create', 'read', 'update', 'delete'],
+    payments: ['create', 'read', 'update', 'delete'],
+    groupMemberships: ['manage'],
+    comments: ['create', 'read', 'update', 'delete'],
+  };
+
+  // Create roles and action rights for each group
+  for (const groupId of groupIds) {
+    const groupRoleIds: Record<string, string> = {};
+
+    // Create group-level roles
+    for (const roleDef of groupRoleDefinitions) {
+      const roleId = id();
+      groupRoleIds[roleDef.name] = roleId;
+
+      transactions.push(
+        tx.roles[roleId]
+          .update({
+            name: roleDef.name,
+            description: roleDef.description,
+            scope: roleDef.scope,
+            createdAt: faker.date.past({ years: 1 }),
+            updatedAt: new Date(),
+          })
+          .link({ group: groupId })
+      );
+      totalRoles++;
+    }
+
+    // Create action rights for Board Member role (full access to all resources)
+    const boardMemberRoleId = groupRoleIds['Board Member'];
+    for (const [resource, actions] of Object.entries(resourceActions)) {
+      for (const action of actions) {
+        const actionRightId = id();
+        transactions.push(
+          tx.actionRights[actionRightId]
+            .update({
+              resource,
+              action,
+            })
+            .link({ roles: [boardMemberRoleId], group: groupId })
+        );
+        totalActionRights++;
+      }
+    }
+
+    // Create action rights for Member role (basic access)
+    const memberRoleId = groupRoleIds['Member'];
+    const memberResources = ['events', 'blogs', 'amendments'];
+    for (const resource of memberResources) {
+      const actions = ['read'];
+      for (const action of actions) {
+        const actionRightId = id();
+        transactions.push(
+          tx.actionRights[actionRightId]
+            .update({
+              resource,
+              action,
+            })
+            .link({ roles: [memberRoleId], group: groupId })
+        );
+        totalActionRights++;
+      }
+    }
+  }
+
+  // Create event-level roles and participants
+  for (const eventId of eventIds) {
+    const eventRoleIds: Record<string, string> = {};
+
+    // Create event-level roles
+    for (const roleDef of eventRoleDefinitions) {
+      const roleId = id();
+      eventRoleIds[roleDef.name] = roleId;
+
+      transactions.push(
+        tx.roles[roleId]
+          .update({
+            name: roleDef.name,
+            description: roleDef.description,
+            scope: roleDef.scope,
+            createdAt: faker.date.past({ years: 0.5 }),
+            updatedAt: new Date(),
+          })
+          .link({ event: eventId })
+      );
+      totalRoles++;
+    }
+
+    // Create action rights for Organizer role (full event control)
+    const organizerRoleId = eventRoleIds['Organizer'];
+    const organizerActions = ['update', 'delete', 'manage_participants'];
+    for (const action of organizerActions) {
+      const actionRightId = id();
+      transactions.push(
+        tx.actionRights[actionRightId]
+          .update({
+            resource: 'events',
+            action,
+          })
+          .link({ roles: [organizerRoleId], event: eventId })
+      );
+      totalActionRights++;
+    }
+
+    // Add action rights for Organizer to manage participants
+    const manageParticipantsRight = id();
+    transactions.push(
+      tx.actionRights[manageParticipantsRight]
+        .update({
+          resource: 'eventParticipants',
+          action: 'manage',
+        })
+        .link({ roles: [organizerRoleId], event: eventId })
+    );
+    totalActionRights++;
+
+    // Create action rights for Participant role (read access)
+    const participantRoleId = eventRoleIds['Participant'];
+    const actionRightId = id();
+    transactions.push(
+      tx.actionRights[actionRightId]
+        .update({
+          resource: 'events',
+          action: 'read',
+        })
+        .link({ roles: [participantRoleId], event: eventId })
+    );
+    totalActionRights++;
+
+    // Create participants with roles
+    const participantCount = randomInt(3, 8);
+    const participantUsers = randomItems(userIds, participantCount);
+
+    for (let i = 0; i < participantUsers.length; i++) {
+      const userId = participantUsers[i];
+      const participantId = id();
+
+      // Assign roles: first is Organizer, rest are Participants
+      let roleId;
+      if (i === 0) {
+        roleId = organizerRoleId;
+      } else {
+        roleId = participantRoleId;
+      }
+
+      transactions.push(
+        tx.participants[participantId]
+          .update({
+            status: randomItem(['accepted', 'accepted', 'accepted', 'pending', 'invited']),
+            createdAt: faker.date.past({ years: 0.3 }),
+            updatedAt: new Date(),
+          })
+          .link({
+            event: eventId,
+            user: userId,
+            role: roleId,
+          })
+      );
+      totalParticipants++;
+    }
+  }
+
+  // Create amendment-level roles
+  for (const amendmentId of amendmentIds) {
+    const amendmentRoleIds: Record<string, string> = {};
+
+    // Create amendment-level roles
+    for (const roleDef of amendmentRoleDefinitions) {
+      const roleId = id();
+      amendmentRoleIds[roleDef.name] = roleId;
+
+      transactions.push(
+        tx.roles[roleId]
+          .update({
+            name: roleDef.name,
+            description: roleDef.description,
+            scope: roleDef.scope,
+            createdAt: faker.date.past({ years: 0.5 }),
+            updatedAt: new Date(),
+          })
+          .link({ amendment: amendmentId })
+      );
+      totalRoles++;
+    }
+
+    // Create action rights for Applicant role (full amendment control including collaborator management)
+    const applicantRoleId = amendmentRoleIds['Applicant'];
+    const applicantActions = ['update', 'delete'];
+    for (const action of applicantActions) {
+      const actionRightIdAR = id();
+      transactions.push(
+        tx.actionRights[actionRightIdAR]
+          .update({
+            resource: 'amendments',
+            action,
+          })
+          .link({ roles: [applicantRoleId], amendment: amendmentId })
+      );
+      totalActionRights++;
+    }
+
+    // Add manage permission for amendment collaborators to Applicant role
+    const manageCollaboratorsRight = id();
+    transactions.push(
+      tx.actionRights[manageCollaboratorsRight]
+        .update({
+          resource: 'amendmentCollaborators',
+          action: 'manage',
+        })
+        .link({ roles: [applicantRoleId], amendment: amendmentId })
+    );
+    totalActionRights++;
+
+    // Create action rights for Collaborator role (read and comment access)
+    const collaboratorRoleId = amendmentRoleIds['Collaborator'];
+    const collaboratorActions = ['read', 'update'];
+    for (const action of collaboratorActions) {
+      const collaboratorActionId = id();
+      transactions.push(
+        tx.actionRights[collaboratorActionId]
+          .update({
+            resource: 'amendments',
+            action,
+          })
+          .link({ roles: [collaboratorRoleId], amendment: amendmentId })
+      );
+      totalActionRights++;
+    }
+  }
+
+  // Create blog-level roles and bloggers
+  let totalBloggers = 0;
+  for (const blogId of blogIds) {
+    const blogRoleIds: Record<string, string> = {};
+
+    // Create blog-level roles
+    for (const roleDef of blogRoleDefinitions) {
+      const roleId = id();
+      blogRoleIds[roleDef.name] = roleId;
+
+      transactions.push(
+        tx.roles[roleId]
+          .update({
+            name: roleDef.name,
+            description: roleDef.description,
+            scope: roleDef.scope,
+            createdAt: faker.date.past({ years: 0.5 }),
+            updatedAt: new Date(),
+          })
+          .link({ blog: blogId })
+      );
+      totalRoles++;
+    }
+
+    // Create action rights for Owner role (full blog control)
+    const ownerRoleId = blogRoleIds['Owner'];
+    const ownerActions = ['update', 'delete'];
+    for (const action of ownerActions) {
+      const actionRightIdBlog = id();
+      transactions.push(
+        tx.actionRights[actionRightIdBlog]
+          .update({
+            resource: 'blogs',
+            action,
+          })
+          .link({ roles: [ownerRoleId], blog: blogId })
+      );
+      totalActionRights++;
+    }
+
+    // Create action rights for Writer role (update and delete access)
+    const writerRoleId = blogRoleIds['Writer'];
+    const writerActions = ['update', 'delete'];
+    for (const action of writerActions) {
+      const writerActionId = id();
+      transactions.push(
+        tx.actionRights[writerActionId]
+          .update({
+            resource: 'blogs',
+            action,
+          })
+          .link({ roles: [writerRoleId], blog: blogId })
+      );
+      totalActionRights++;
+    }
+
+    // Create bloggers with roles (1 owner, 1-3 writers)
+    const bloggerCount = randomInt(2, 4);
+    const bloggerUsers = randomItems(userIds, bloggerCount);
+
+    for (let i = 0; i < bloggerUsers.length; i++) {
+      const userId = bloggerUsers[i];
+      const bloggerId = id();
+
+      // Assign roles: first is Owner, rest are Writers
+      let roleId;
+      if (i === 0) {
+        roleId = ownerRoleId;
+      } else {
+        roleId = writerRoleId;
+      }
+
+      transactions.push(
+        tx.blogBloggers[bloggerId]
+          .update({
+            status: 'member',
+            createdAt: faker.date.past({ years: 0.3 }),
+            updatedAt: new Date(),
+            visibility: randomVisibility(),
+          })
+          .link({
+            blog: blogId,
+            user: userId,
+            role: roleId,
+          })
+      );
+      totalBloggers++;
+    }
+  }
+
+  // Execute in batches
+  const batchSize = 50;
+  for (let i = 0; i < transactions.length; i += batchSize) {
+    const batch = transactions.slice(i, i + batchSize);
+    await db.transact(batch);
+  }
+
+  console.log(
+    `✓ Created ${totalRoles} roles (group-level, event-level, amendment-level, and blog-level)`
+  );
+  console.log(`✓ Created ${totalActionRights} action rights with RBAC permissions`);
+  console.log(`✓ Created ${totalParticipants} event participants with role assignments`);
+  console.log(`✓ Created ${totalBloggers} blog bloggers with role assignments`);
+  console.log(`  - Each group has 2 roles: Board Member, Member`);
+  console.log(`  - Each event has 2 roles: Organizer, Participant`);
+  console.log(`  - Each amendment has 2 roles: Applicant, Collaborator`);
+  console.log(`  - Each blog has 2 roles: Owner, Writer`);
+  console.log(`  - Board Members have full access to group resources`);
+  console.log(`  - Organizers have full access to event resources and participant management`);
+  console.log(`  - Applicants have full access to amendment resources and collaborator management`);
+  console.log(`  - Blog Owners and Writers have update/delete access to blog resources`);
+}
+
 // Main seed function
 async function seed() {
   console.log('\n🌱 Starting database seed...\n');
@@ -4367,12 +5158,7 @@ async function seed() {
     await cleanDatabase();
 
     // Seed in order due to dependencies
-    const {
-      userIds,
-      userToProfileMap,
-      blogIds: userBlogIds,
-      amendmentIds: userAmendmentIds,
-    } = await seedUsers();
+    const { userIds, blogIds: userBlogIds, amendmentIds: userAmendmentIds } = await seedUsers();
     const {
       groupIds,
       blogIds: groupBlogIds,
@@ -4389,8 +5175,11 @@ async function seed() {
     await seedPayments(userIds, groupIds); // New: seed payments
     await seedGroupInvitationsAndRequests(groupIds, userIds); // New: seed pending invitations and requests
     await seedFollows(userIds, groupIds);
-    await seedConversationsAndMessages(userIds, userToProfileMap);
+    await seedConversationsAndMessages(userIds);
     const eventIds = await seedEvents(userIds, groupIds);
+
+    // NEW: Seed RBAC entities (roles, actionRights, posts, participants, bloggers)
+    await seedRBAC(userIds, groupIds, eventIds, allAmendmentIds, allBlogIds);
 
     // NEW: Assign target groups and events to amendments
     await seedAmendmentTargets(allAmendmentIds, groupIds, eventIds, userIds);
@@ -4411,7 +5200,7 @@ async function seed() {
     );
 
     await seedAgendaAndVoting(userIds, eventIds, positionIds); // Pass positionIds
-    await seedNotifications(userIds);
+    await seedNotifications(userIds, groupIds, allAmendmentIds, eventIds, allBlogIds);
     await seedTodos(userIds, groupIds);
     await seedDocuments(userIds); // New: seed documents
     await seedMeetingSlots(userIds); // New: seed meeting slots
@@ -4436,6 +5225,7 @@ async function seed() {
     console.log(`  - Positions across all groups`);
     console.log(`  - Links for all groups`);
     console.log(`  - Payments (income/expenditure) for all groups`);
+    console.log(`  - RBAC: Roles, action rights, posts, and participants with permissions`);
     console.log(`  - Hashtags for all users, groups, events, and amendments`);
     console.log(`  - Follow relationships (legacy) - main user: 10 following, 5 followers`);
     console.log(`  - Subscriber relationships (new) - main user: 10 subscriptions, 5 subscribers`);

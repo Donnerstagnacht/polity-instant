@@ -68,13 +68,9 @@ export default function AgendaItemDetailPage() {
           id: agendaItemId,
         },
       },
-      creator: {
-        profile: {},
-      },
+      creator: {},
       event: {
-        organizer: {
-          profile: {},
-        },
+        organizer: {},
       },
       election: {
         candidates: {},
@@ -85,22 +81,16 @@ export default function AgendaItemDetailPage() {
         voteEntries: {},
       },
       speakerList: {
-        user: {
-          profile: {},
-        },
+        user: {},
       },
     },
     electionVotes: {
-      voter: {
-        profile: {},
-      },
+      voter: {},
       candidate: {},
       election: {},
     },
     amendmentVoteEntries: {
-      voter: {
-        profile: {},
-      },
+      voter: {},
       amendmentVote: {},
     },
   });
@@ -427,7 +417,7 @@ export default function AgendaItemDetailPage() {
                   <User className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Erstellt von:</span>
                   <span className="font-medium">
-                    {agendaItem.creator?.profile?.name || agendaItem.creator?.email || 'Unbekannt'}
+                    {agendaItem.creator?.name || agendaItem.creator?.email || 'Unbekannt'}
                   </span>
                 </div>
                 {agendaItem.startTime && (

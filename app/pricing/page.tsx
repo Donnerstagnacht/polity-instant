@@ -65,7 +65,7 @@ export default function PricingPage() {
       price: '€0',
       description: 'Full access to all features - democratic tools should be free for everyone',
       features: [
-        'Full user profile',
+        'Full user page',
         'Create unlimited groups',
         'Join public groups',
         'Organize events',
@@ -90,7 +90,7 @@ export default function PricingPage() {
         'Everything in Free',
         'Priority support',
         'No ads (when we add them)',
-        'Custom profile themes',
+        'Custom user themes',
         'Supporter badge',
         'Our eternal gratitude ❤️',
       ],

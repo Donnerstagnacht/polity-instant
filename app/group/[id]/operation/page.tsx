@@ -609,15 +609,14 @@ function AddPaymentDialog({
     type: 'user' | 'group';
   } | null>(null);
 
-  // Query users (profiles) and groups
-  const { data: profilesData } = db.useQuery({
-    profiles: {
+  // Query users and groups
+  const { data: usersData } = db.useQuery({
+    $users: {
       $: {
         where: {
           isActive: true,
         },
       },
-      user: {},
     },
   });
 
@@ -628,13 +627,13 @@ function AddPaymentDialog({
   // Filter entities based on search query and selected entity type
   const filteredUsers =
     entityType === 'user'
-      ? profilesData?.profiles?.filter(profile => {
-          if (!profile.user?.id) return false;
+      ? usersData?.$users?.filter(user => {
+          if (!user?.id) return false;
           const query = searchQuery.toLowerCase();
           return (
-            profile.name?.toLowerCase().includes(query) ||
-            profile.handle?.toLowerCase().includes(query) ||
-            profile.contactEmail?.toLowerCase().includes(query)
+            user.name?.toLowerCase().includes(query) ||
+            user.handle?.toLowerCase().includes(query) ||
+            user.contactEmail?.toLowerCase().includes(query)
           );
         })
       : [];
@@ -825,9 +824,9 @@ function AddPaymentDialog({
                       </CommandEmpty>
                       {filteredUsers && filteredUsers.length > 0 && (
                         <CommandGroup heading="Users">
-                          {filteredUsers.map(profile => {
-                            if (!profile.user?.id) return null;
-                            const userId = profile.user.id;
+                          {filteredUsers.map(user => {
+                            if (!user?.id) return null;
+                            const userId = user.id;
                             const isSelected = selectedEntity?.id === userId;
                             return (
                               <CommandItem
@@ -836,7 +835,7 @@ function AddPaymentDialog({
                                 onSelect={() => {
                                   setSelectedEntity({
                                     id: userId,
-                                    name: profile.name || 'Unnamed User',
+                                    name: user.name || 'Unnamed User',
                                     type: 'user',
                                   });
                                   setPopoverOpen(false);
@@ -845,19 +844,19 @@ function AddPaymentDialog({
                               >
                                 <div className="flex flex-1 items-center gap-2">
                                   <Avatar className="h-6 w-6">
-                                    {profile.avatar ? (
-                                      <AvatarImage src={profile.avatar} alt={profile.name || ''} />
+                                    {user.avatar ? (
+                                      <AvatarImage src={user.avatar} alt={user.name || ''} />
                                     ) : null}
                                     <AvatarFallback className="text-xs">
-                                      {profile.name?.[0]?.toUpperCase() || '?'}
+                                      {user.name?.[0]?.toUpperCase() || '?'}
                                     </AvatarFallback>
                                   </Avatar>
                                   <div className="flex-1">
                                     <div className="text-sm font-medium">
-                                      {profile.name || 'Unnamed User'}
+                                      {user.name || 'Unnamed User'}
                                     </div>
                                     <div className="text-xs text-muted-foreground">
-                                      {profile.handle ? `@${profile.handle}` : profile.contactEmail}
+                                      {user.handle ? `@${user.handle}` : user.contactEmail}
                                     </div>
                                   </div>
                                 </div>

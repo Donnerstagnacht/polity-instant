@@ -46,13 +46,13 @@ export default function DocumentEditorPage() {
   const lastRemoteUpdate = useRef<number>(0);
   const lastDiscussionsSave = useRef<number>(0);
 
-  // Get user profile for presence data
-  const { data: profileData } = db.useQuery({
-    profiles: {
-      $: { where: { 'user.id': user?.id } },
+  // Get user data for presence
+  const { data: userData } = db.useQuery({
+    $users: {
+      $: { where: { id: user?.id } },
     },
   });
-  const userProfile = profileData?.profiles?.[0];
+  const currentUser = userData?.$users?.[0];
 
   // Generate a consistent color for this user
   const userColor = useMemo(
@@ -66,36 +66,32 @@ export default function DocumentEditorPage() {
   // Presence hook - show who's online
   const { peers, publishPresence } = db.rooms.usePresence(room, {
     initialData: {
-      name: userProfile?.name || user?.email || 'Anonymous',
-      avatar: userProfile?.avatar,
+      name: currentUser?.name || user?.email || 'Anonymous',
+      avatar: currentUser?.avatar,
       color: userColor,
       userId: user?.id || '',
     },
   });
 
-  // Update presence when profile changes
+  // Update presence when user data changes
   useEffect(() => {
-    if (userProfile && publishPresence) {
+    if (currentUser && publishPresence) {
       publishPresence({
-        name: userProfile.name || user?.email || 'Anonymous',
-        avatar: userProfile.avatar,
+        name: currentUser.name || user?.email || 'Anonymous',
+        avatar: currentUser.avatar,
         color: userColor,
         userId: user?.id || '',
       });
     }
-  }, [userProfile, publishPresence, userColor, user?.email, user?.id]);
+  }, [currentUser, publishPresence, userColor, user?.email, user?.id]);
 
   // Query selected document with real-time updates
   const { data: documentData, isLoading: documentLoading } = db.useQuery({
     documents: {
       $: { where: { id: documentId } },
-      owner: {
-        profile: {},
-      },
+      owner: {},
       collaborators: {
-        user: {
-          profile: {},
-        },
+        user: {},
       },
     },
   });
@@ -120,44 +116,41 @@ export default function DocumentEditorPage() {
     const users: Record<string, { id: string; name: string; avatarUrl: string }> = {};
 
     // Add current user
-    if (user && userProfile) {
+    if (user && currentUser) {
       users[user.id] = {
         id: user.id,
-        name: userProfile.name || user.email || 'Anonymous',
-        avatarUrl: userProfile.avatar || `https://api.dicebear.com/9.x/glass/svg?seed=${user.id}`,
+        name: currentUser.name || user.email || 'Anonymous',
+        avatarUrl: currentUser.avatar || `https://api.dicebear.com/9.x/glass/svg?seed=${user.id}`,
       };
     }
 
     // Add document owner
     if (document?.owner) {
       const owner = document.owner;
-      const ownerProfile = owner.profile;
       users[owner.id] = {
         id: owner.id,
-        name: ownerProfile?.name || owner.email || 'Owner',
-        avatarUrl:
-          ownerProfile?.avatar || `https://api.dicebear.com/9.x/glass/svg?seed=${owner.id}`,
+        name: owner.name || owner.email || 'Owner',
+        avatarUrl: owner.avatar || `https://api.dicebear.com/9.x/glass/svg?seed=${owner.id}`,
       };
     }
 
     // Add all collaborators
     if (document?.collaborators) {
       document.collaborators.forEach((collab: any) => {
-        const collabUser = collab.user;
-        const profile = collabUser?.profile;
-        if (collabUser?.id) {
-          users[collabUser.id] = {
-            id: collabUser.id,
-            name: profile?.name || collabUser.email || 'Collaborator',
+        if (collab.user?.id) {
+          users[collab.user.id] = {
+            id: collab.user.id,
+            name: collab.user?.name || collab.user.email || 'Collaborator',
             avatarUrl:
-              profile?.avatar || `https://api.dicebear.com/9.x/glass/svg?seed=${collabUser.id}`,
+              collab.user?.avatar ||
+              `https://api.dicebear.com/9.x/glass/svg?seed=${collab.user.id}`,
           };
         }
       });
     }
 
     return users;
-  }, [user, userProfile, document?.owner, document?.collaborators]);
+  }, [user, currentUser, document?.owner, document?.collaborators]);
 
   // Initialize document data
   useEffect(() => {
@@ -583,21 +576,20 @@ export default function DocumentEditorPage() {
               <div className="mt-4 flex flex-wrap items-center gap-2">
                 <span className="text-sm text-muted-foreground">Collaborators:</span>
                 {document.collaborators.map((collab: any) => {
-                  const profile = collab.user?.profile;
                   return (
                     <div
                       key={collab.id}
                       className="flex items-center gap-1 rounded-full bg-muted px-2 py-1"
                     >
                       <Avatar className="h-5 w-5">
-                        {profile?.avatar ? (
-                          <AvatarImage src={profile.avatar} alt={profile.name || ''} />
+                        {collab.user?.avatar ? (
+                          <AvatarImage src={collab.user.avatar} alt={collab.user.name || ''} />
                         ) : null}
                         <AvatarFallback className="text-xs">
-                          {profile?.name?.[0]?.toUpperCase() || '?'}
+                          {collab.user?.name?.[0]?.toUpperCase() || '?'}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="text-xs">{profile?.name || 'Unknown'}</span>
+                      <span className="text-xs">{collab.user?.name || 'Unknown'}</span>
                     </div>
                   );
                 })}
@@ -612,11 +604,11 @@ export default function DocumentEditorPage() {
                 onChange={handleContentChange}
                 documentId={documentId}
                 currentUser={
-                  user && userProfile
+                  user && currentUser
                     ? {
                         id: user.id,
-                        name: userProfile.name || user.email || 'Anonymous',
-                        avatar: userProfile.avatar,
+                        name: currentUser.name || user.email || 'Anonymous',
+                        avatar: currentUser.avatar,
                       }
                     : undefined
                 }

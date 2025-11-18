@@ -16,9 +16,7 @@ export default function StatementPage({ params }: { params: Promise<{ id: string
   const { data, isLoading } = db.useQuery({
     statements: {
       $: { where: { id: resolvedParams.id } },
-      user: {
-        profile: {},
-      },
+      user: {},
     },
   });
 
@@ -49,7 +47,7 @@ export default function StatementPage({ params }: { params: Promise<{ id: string
     );
   }
 
-  const author = statement.user?.profile;
+  const author = statement.user;
 
   return (
     <AuthGuard requireAuth={true}>

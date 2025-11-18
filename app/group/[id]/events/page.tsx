@@ -35,9 +35,7 @@ export default function GroupEventsPage({ params }: { params: Promise<{ id: stri
     groups: {
       $: { where: { id: resolvedParams.id } },
       events: {
-        organizer: {
-          profile: {},
-        },
+        organizer: {},
         participants: {},
         hashtags: {},
       },

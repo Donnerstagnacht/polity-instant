@@ -17,8 +17,8 @@ interface ImageUploadProps {
 export const ImageUpload: React.FC<ImageUploadProps> = ({
   currentImage,
   onImageChange,
-  label = 'Profile Image',
-  description = 'Upload a profile image or provide a URL',
+  label = 'User Image',
+  description = 'Upload a user image or provide a URL',
   className,
 }) => {
   const [previewUrl, setPreviewUrl] = useState<string>(currentImage || '');

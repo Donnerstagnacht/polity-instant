@@ -58,13 +58,13 @@ export function MeetingSlotCard({
           {isBooked && slot.bookings && slot.bookings.length > 0 && (
             <div className="mt-2 flex items-center gap-2">
               <Avatar className="h-6 w-6">
-                <AvatarImage src={slot.bookings[0].booker?.profile?.avatar} />
+                <AvatarImage src={slot.bookings[0].booker?.avatar} />
                 <AvatarFallback className="text-xs">
-                  {slot.bookings[0].booker?.profile?.name?.[0]?.toUpperCase() || 'U'}
+                  {slot.bookings[0].booker?.name?.[0]?.toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
               <span className="text-sm text-muted-foreground">
-                Booked by {slot.bookings[0].booker?.profile?.name || 'Unknown'}
+                Booked by {slot.bookings[0].booker?.name || 'Unknown'}
               </span>
             </div>
           )}

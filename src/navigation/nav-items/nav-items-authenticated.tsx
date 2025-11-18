@@ -188,12 +188,11 @@ export const navItemsAuthenticated = (
     return items;
   };
 
-  // Function to create user profile secondary navigation items for a specific user
-  const getUserSecondaryNavItems = (userId: string, isOwnProfile: boolean): NavigationItem[] => {
+  const getUserSecondaryNavItems = (userId: string, isOwnUser: boolean): NavigationItem[] => {
     const items: NavigationItem[] = [
       {
-        id: 'profile',
-        label: t ? t('navigation.secondary.user.profile') : 'Profile',
+        id: 'user',
+        label: t ? t('navigation.secondary.user') : 'User',
         icon: 'User',
         href: `/user/${userId}`,
         onClick: () => router.push(`/user/${userId}`),
@@ -228,11 +227,10 @@ export const navItemsAuthenticated = (
       },
     ];
 
-    // Add edit option only for own profile
-    if (isOwnProfile) {
+    if (isOwnUser) {
       items.push({
         id: 'edit',
-        label: t ? t('navigation.secondary.user.edit') : 'Edit Profile',
+        label: t ? t('navigation.secondary.user.edit') : 'Edit User',
         icon: 'Settings',
         href: `/user/${userId}/edit`,
         onClick: () => router.push(`/user/${userId}/edit`),
@@ -378,6 +376,31 @@ export const navItemsAuthenticated = (
     return items;
   };
 
+  const getBlogSecondaryNavItems = (blogId: string, isOwner = false): NavigationItem[] => {
+    const items: NavigationItem[] = [
+      {
+        id: 'overview',
+        label: t ? t('navigation.secondary.blog.overview') : 'Overview',
+        icon: 'FileText',
+        href: `/blog/${blogId}`,
+        onClick: () => router.push(`/blog/${blogId}`),
+      },
+    ];
+
+    // Only add bloggers item if user is owner
+    if (isOwner) {
+      items.push({
+        id: 'bloggers',
+        label: t ? t('navigation.secondary.blog.bloggers') : 'Bloggers',
+        icon: 'Users',
+        href: `/blog/${blogId}/bloggers`,
+        onClick: () => router.push(`/blog/${blogId}/bloggers`),
+      });
+    }
+
+    return items;
+  };
+
   return {
     primaryNavItems,
     projectSecondaryNavItems,
@@ -386,18 +409,21 @@ export const navItemsAuthenticated = (
     getUserSecondaryNavItems,
     getGroupSecondaryNavItems,
     getAmendmentSecondaryNavItems,
+    getBlogSecondaryNavItems,
 
     // Utility function to get secondary items based on current route
     getSecondaryNavItems: (
       currentPrimaryRoute: string | null,
       eventId?: string,
       userId?: string,
-      isOwnProfile?: boolean,
+      isOwnUser?: boolean,
       groupId?: string,
       amendmentId?: string,
       isGroupAdmin?: boolean,
       isEventAdmin?: boolean,
-      isAmendmentAdmin?: boolean
+      isAmendmentAdmin?: boolean,
+      blogId?: string,
+      isBlogOwner?: boolean
     ) => {
       switch (currentPrimaryRoute) {
         case 'projects':
@@ -407,13 +433,15 @@ export const navItemsAuthenticated = (
         case 'event':
           return eventId ? getEventSecondaryNavItems(eventId, isEventAdmin ?? false) : null;
         case 'user':
-          return userId ? getUserSecondaryNavItems(userId, isOwnProfile ?? false) : null;
+          return userId ? getUserSecondaryNavItems(userId, isOwnUser ?? false) : null;
         case 'group':
           return groupId ? getGroupSecondaryNavItems(groupId, isGroupAdmin ?? false) : null;
         case 'amendment':
           return amendmentId
             ? getAmendmentSecondaryNavItems(amendmentId, isAmendmentAdmin ?? false)
             : null;
+        case 'blog':
+          return blogId ? getBlogSecondaryNavItems(blogId, isBlogOwner ?? false) : null;
         default:
           return null;
       }

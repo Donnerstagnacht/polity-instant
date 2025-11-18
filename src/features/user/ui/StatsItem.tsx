@@ -10,7 +10,7 @@ interface WikiStatsItemProps {
 }
 
 /**
- * Dumb stat item for the user wiki profile.
+ * Dumb stat item for the user wiki user.
  * Handles display and animation overlay for a single stat.
  */
 export const StatsItem: React.FC<WikiStatsItemProps> = ({

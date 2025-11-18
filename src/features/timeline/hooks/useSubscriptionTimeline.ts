@@ -20,11 +20,11 @@ export function useSubscriptionTimeline() {
                 'subscriber.id': authUser.id,
               },
             },
-            user: { profile: {} },
+            user: {},
             group: {},
-            amendment: { user: { profile: {} } },
-            event: { organizer: { profile: {} } },
-            blog: { user: { profile: {} } },
+            amendment: { user: {} },
+            event: { organizer: {} },
+            blog: {}, // Blogs don't have a direct user link - they use blogBloggers junction table
           },
         }
       : null
@@ -89,12 +89,12 @@ export function useSubscriptionTimeline() {
             $: {
               where: whereClause,
             },
-            actor: { profile: {} },
-            user: { profile: {} },
+            actor: {},
+            user: {},
             group: {},
-            amendment: { user: { profile: {} }, document: {} },
-            event: { organizer: { profile: {} } },
-            blog: { user: { profile: {} } },
+            amendment: { user: {}, document: {} },
+            event: { organizer: {} },
+            blog: {}, // Blogs don't have a direct user link - they use blogBloggers junction table
           },
         }
       : null

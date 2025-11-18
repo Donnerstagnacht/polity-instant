@@ -18,9 +18,7 @@ export function GroupEventsList({ groupId, onEventClick }: GroupEventsListProps)
           'group.id': groupId,
         },
       },
-      organizer: {
-        profile: {},
-      },
+      organizer: {},
       participants: {},
       hashtags: {},
     },

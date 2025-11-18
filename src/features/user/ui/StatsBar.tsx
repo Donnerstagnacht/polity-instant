@@ -15,7 +15,7 @@ interface WikiStatsBarProps {
 }
 
 /**
- * Dumb stats bar for the user wiki profile.
+ * Dumb stats bar for the user wiki users.
  * Renders a row of WikiStatsItem ui.
  */
 export const StatsBar: React.FC<WikiStatsBarProps> = ({

@@ -132,25 +132,22 @@ interface TimelineEventCardProps {
     id: string;
     eventType: keyof typeof eventTypeConfig;
     entityType: keyof typeof entityTypeConfig;
-    entityId: string;
     title: string;
     description?: string;
     createdAt: Date | string;
     metadata?: Record<string, unknown>;
     actor?: {
       id: string;
-      profile?: {
-        name?: string;
-        avatar?: string;
-      };
+      name?: string;
+      avatar?: string;
     };
-    user?: { id: string; profile?: { name?: string; avatar?: string } };
+    user?: { id: string; name?: string; avatar?: string };
     group?: { id: string; name?: string; imageURL?: string; memberCount?: number };
     amendment?: {
       id: string;
       title?: string;
       status?: string;
-      user?: { profile?: { name?: string } };
+      user?: { name?: string };
     };
     event?: {
       id: string;
@@ -164,7 +161,7 @@ interface TimelineEventCardProps {
       title?: string;
       likeCount?: number;
       commentCount?: number;
-      user?: { profile?: { name?: string } };
+      user?: { name?: string };
     };
   };
   index?: number;
@@ -177,9 +174,8 @@ export function TimelineEventCard({ event, index = 0 }: TimelineEventCardProps) 
   const EventIcon = eventConfig.icon;
   const EntityIcon = entityConfig.icon;
 
-  const actorProfile = event.actor?.profile;
-  const actorName = actorProfile?.name || 'Unknown User';
-  const actorAvatar = actorProfile?.avatar;
+  const actorName = event.actor?.name || 'Unknown User';
+  const actorAvatar = event.actor?.avatar;
 
   // Get entity-specific information
   const getEntityInfo = () => {
@@ -187,9 +183,7 @@ export function TimelineEventCard({ event, index = 0 }: TimelineEventCardProps) 
       case 'amendment':
         return {
           name: event.amendment?.title || 'Amendment',
-          subtitle: event.amendment?.user?.profile?.name
-            ? `by ${event.amendment.user.profile.name}`
-            : undefined,
+          subtitle: event.amendment?.user?.name ? `by ${event.amendment.user.name}` : undefined,
         };
       case 'event':
         return {
@@ -205,9 +199,7 @@ export function TimelineEventCard({ event, index = 0 }: TimelineEventCardProps) 
       case 'blog':
         return {
           name: event.blog?.title || 'Blog Post',
-          subtitle: event.blog?.user?.profile?.name
-            ? `by ${event.blog.user.profile.name}`
-            : undefined,
+          subtitle: event.blog?.user?.name ? `by ${event.blog.user.name}` : undefined,
         };
       case 'group':
         return {
@@ -216,7 +208,7 @@ export function TimelineEventCard({ event, index = 0 }: TimelineEventCardProps) 
         };
       case 'user':
         return {
-          name: event.user?.profile?.name || 'User',
+          name: event.user?.name || 'User',
           subtitle: undefined,
         };
       default:
@@ -230,15 +222,15 @@ export function TimelineEventCard({ event, index = 0 }: TimelineEventCardProps) 
   const getEntityLink = () => {
     switch (event.entityType) {
       case 'amendment':
-        return `/amendment/${event.entityId}`;
+        return event.amendment?.id ? `/amendment/${event.amendment.id}` : null;
       case 'event':
-        return `/event/${event.entityId}`;
+        return event.event?.id ? `/event/${event.event.id}` : null;
       case 'blog':
-        return `/blog/${event.entityId}`;
+        return event.blog?.id ? `/blog/${event.blog.id}` : null;
       case 'group':
-        return `/group/${event.entityId}`;
+        return event.group?.id ? `/group/${event.group.id}` : null;
       case 'user':
-        return `/user/${event.entityId}`;
+        return event.user?.id ? `/user/${event.user.id}` : null;
       default:
         return null;
     }

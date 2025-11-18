@@ -26,30 +26,20 @@ export default function AmendmentChangeRequestsPage({
   const { data, isLoading } = db.useQuery({
     amendments: {
       $: { where: { id: amendmentId } },
-      user: {
-        profile: {},
-      },
+      user: {},
       document: {
         collaborators: {
-          user: {
-            profile: {},
-          },
+          user: {},
         },
       },
       changeRequests: {
-        creator: {
-          profile: {},
-        },
+        creator: {},
         votes: {
-          voter: {
-            profile: {},
-          },
+          voter: {},
         },
       },
-      collaborators: {
-        user: {
-          profile: {},
-        },
+      amendmentRoleCollaborators: {
+        user: {},
       },
     },
   });
@@ -57,7 +47,7 @@ export default function AmendmentChangeRequestsPage({
   const amendment = data?.amendments?.[0];
   const document = amendment?.document;
   const savedChangeRequests = amendment?.changeRequests || [];
-  const collaborators = amendment?.collaborators || [];
+  const collaborators = amendment?.amendmentRoleCollaborators || [];
 
   // Debug logging
   console.log('=== CHANGE REQUESTS PAGE DEBUG ===');
@@ -258,33 +248,33 @@ export default function AmendmentChangeRequestsPage({
     return Array.from(new Set(changeRequests.map((cr: any) => cr.userId).filter(Boolean)));
   }, [changeRequests]);
 
-  // Fetch user profiles for all creators
-  const { data: profilesData } = db.useQuery(
+  // Fetch users for all creators
+  const { data: usersData } = db.useQuery(
     userIds.length > 0
       ? {
-          profiles: {
+          $users: {
             $: {
               where: {
-                'user.id': { in: userIds },
+                id: { in: userIds },
               },
             },
           },
         }
-      : { profiles: {} }
+      : { $users: {} }
   );
 
-  // Create a map of userId to profile
-  const userProfiles = useMemo(() => {
+  // Create a map of userId to user
+  const users = useMemo(() => {
     const map: Record<string, any> = {};
-    if (profilesData?.profiles) {
-      profilesData.profiles.forEach((profile: any) => {
-        if (profile.user?.id) {
-          map[profile.user.id] = profile;
+    if (usersData?.$users) {
+      usersData.$users.forEach((user: any) => {
+        if (user?.id) {
+          map[user.id] = user;
         }
       });
     }
     return map;
-  }, [profilesData]);
+  }, [usersData]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -542,9 +532,9 @@ export default function AmendmentChangeRequestsPage({
                                 <p className="text-muted-foreground">
                                   {comment.text || comment.value}
                                 </p>
-                                {comment.userId && userProfiles[comment.userId] && (
+                                {comment.userId && users[comment.userId] && (
                                   <p className="mt-1 text-xs text-muted-foreground">
-                                    — {userProfiles[comment.userId].name}
+                                    — {users[comment.userId].name}
                                   </p>
                                 )}
                               </div>
@@ -560,10 +550,10 @@ export default function AmendmentChangeRequestsPage({
 
                       {/* Metadata */}
                       <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                        {request.userId && userProfiles[request.userId] && (
+                        {request.userId && users[request.userId] && (
                           <div className="flex items-center gap-2">
                             <User className="h-4 w-4" />
-                            <span>{userProfiles[request.userId].name || 'Unknown User'}</span>
+                            <span>{users[request.userId].name || 'Unknown User'}</span>
                           </div>
                         )}
                         {request.crId && (
@@ -594,9 +584,9 @@ export default function AmendmentChangeRequestsPage({
                                 id: c.id,
                                 user: {
                                   id: c.user?.id ?? '',
-                                  profile: {
-                                    name: c.user?.profile?.name ?? '',
-                                    avatar: c.user?.profile?.avatar ?? '',
+                                  user: {
+                                    name: c.user?.name ?? '',
+                                    avatar: c.user?.avatar ?? '',
                                   },
                                 },
                               }))}

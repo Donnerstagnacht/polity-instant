@@ -33,10 +33,16 @@ interface UserMenuProps {
   isMobile?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  profileUser?: UserType | null;
+  user?: UserType | null;
 }
 
-export function UserMenu({ className, isMobile, open, onOpenChange, profileUser }: UserMenuProps) {
+export function UserMenu({
+  className,
+  isMobile,
+  open,
+  onOpenChange,
+  user: userData,
+}: UserMenuProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const { user: authUser } = db.useAuth();
@@ -71,9 +77,9 @@ export function UserMenu({ className, isMobile, open, onOpenChange, profileUser 
 
   if (!authUser) return null;
 
-  // Prefer profile data, fallback to auth data
-  const displayName = profileUser?.name || authUser.email?.split('@')[0] || 'User';
-  const displayAvatar = profileUser?.avatar;
+  // Prefer user data, fallback to auth data
+  const displayName = userData?.name || authUser.email?.split('@')[0] || 'User';
+  const displayAvatar = userData?.avatar;
   const displayEmail = authUser.email || '';
 
   const handleLogout = async () => {
@@ -86,11 +92,8 @@ export function UserMenu({ className, isMobile, open, onOpenChange, profileUser 
     }
   };
 
-  const handleProfileClick = () => {
-    // Navigate to the logged-in user's profile page
-    console.log('Profile click - user:', authUser);
+  const handleUserClick = () => {
     if (authUser?.id) {
-      console.log('Navigating to /user/' + authUser.id);
       router.push(`/user/${authUser.id}`);
     } else {
       console.error('User ID not found:', authUser);
@@ -146,14 +149,14 @@ export function UserMenu({ className, isMobile, open, onOpenChange, profileUser 
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuItem onClick={handleProfileClick}>
+          <DropdownMenuItem onClick={handleUserClick}>
             <User className="mr-2 h-4 w-4" />
-            Profile
+            {t('navigation.userMenu.profile')}
           </DropdownMenuItem>
 
           <DropdownMenuItem onClick={handleSettingsClick}>
             <Settings className="mr-2 h-4 w-4" />
-            Settings
+            {t('navigation.userMenu.settings')}
           </DropdownMenuItem>
 
           {activeGroups.length > 0 && (

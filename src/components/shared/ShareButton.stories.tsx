@@ -63,8 +63,8 @@ export const DefaultVariant: Story = {
 export const GhostVariant: Story = {
   args: {
     url: '/user/202',
-    title: 'User Profile',
-    description: 'Check out this user profile.',
+    title: 'User',
+    description: 'Check out this user.',
     variant: 'ghost',
     size: 'default',
   },

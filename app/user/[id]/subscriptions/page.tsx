@@ -43,25 +43,15 @@ export default function SubscriptionsPage({ params }: { params: Promise<{ id: st
                 'subscriber.id': resolvedParams.id,
               },
             },
-            user: {
-              profile: {},
-            },
+            user: {},
             group: {},
             amendment: {
-              user: {
-                profile: {},
-              },
+              user: {},
             },
             event: {
-              organizer: {
-                profile: {},
-              },
+              organizer: {},
             },
-            blog: {
-              user: {
-                profile: {},
-              },
-            },
+            blog: {},
           },
         }
       : { subscribers: {} }
@@ -77,9 +67,7 @@ export default function SubscriptionsPage({ params }: { params: Promise<{ id: st
                 'user.id': resolvedParams.id,
               },
             },
-            subscriber: {
-              profile: {},
-            },
+            subscriber: {},
           },
         }
       : { subscribers: {} }
@@ -118,9 +106,8 @@ export default function SubscriptionsPage({ params }: { params: Promise<{ id: st
     const query = searchQuery.toLowerCase();
     return filtered.filter((sub: any) => {
       if (sub.user) {
-        const profile = sub.user.profile;
-        const name = profile?.name?.toLowerCase() || '';
-        const handle = profile?.handle?.toLowerCase() || '';
+        const name = sub.user.name?.toLowerCase() || '';
+        const handle = sub.user.handle?.toLowerCase() || '';
         return name.includes(query) || handle.includes(query);
       } else if (sub.group) {
         const name = sub.group.name?.toLowerCase() || '';
@@ -160,9 +147,8 @@ export default function SubscriptionsPage({ params }: { params: Promise<{ id: st
 
     const query = searchQuery.toLowerCase();
     return subscribers.filter((sub: any) => {
-      const profile = sub.subscriber?.profile;
-      const name = profile?.name?.toLowerCase() || '';
-      const handle = profile?.handle?.toLowerCase() || '';
+      const name = sub.subscriber?.name?.toLowerCase() || '';
+      const handle = sub.subscriber?.handle?.toLowerCase() || '';
       return name.includes(query) || handle.includes(query);
     });
   }, [subscribers, searchQuery]);
@@ -318,10 +304,9 @@ export default function SubscriptionsPage({ params }: { params: Promise<{ id: st
 
                         if (isUser) {
                           const targetUser = subscription.user;
-                          const profile = targetUser?.profile;
-                          const userName = profile?.name || 'Unknown User';
-                          const userAvatar = profile?.avatar || '';
-                          const userHandle = profile?.handle || '';
+                          const userName = targetUser?.name || 'Unknown User';
+                          const userAvatar = targetUser?.avatar || '';
+                          const userHandle = targetUser?.handle || '';
 
                           return (
                             <TableRow key={subscription.id}>
@@ -559,10 +544,9 @@ export default function SubscriptionsPage({ params }: { params: Promise<{ id: st
                     <TableBody>
                       {filteredSubscribers.map((subscription: any) => {
                         const subscriberUser = subscription.subscriber;
-                        const profile = subscriberUser?.profile;
-                        const userName = profile?.name || 'Unknown User';
-                        const userAvatar = profile?.avatar || '';
-                        const userHandle = profile?.handle || '';
+                        const userName = subscriberUser?.name || 'Unknown User';
+                        const userAvatar = subscriberUser?.avatar || '';
+                        const userHandle = subscriberUser?.handle || '';
 
                         if (!subscriberUser) return null;
 

@@ -48,14 +48,10 @@ export default function EventAgendaPage() {
           id: eventId,
         },
       },
-      organizer: {
-        profile: {},
-      },
+      organizer: {},
     },
     agendaItems: {
-      creator: {
-        profile: {},
-      },
+      creator: {},
       event: {},
       election: {
         candidates: {},
@@ -283,8 +279,7 @@ export default function EventAgendaPage() {
                   <div className="flex items-center gap-1">
                     <Users className="h-4 w-4" />
                     <span>
-                      Erstellt von{' '}
-                      {event.organizer?.profile?.name || event.organizer?.email || 'Unbekannt'}
+                      Erstellt von {event.organizer?.name || event.organizer?.email || 'Unbekannt'}
                     </span>
                   </div>
                 </div>

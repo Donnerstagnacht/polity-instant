@@ -54,7 +54,6 @@ export function createTimelineEvent({
     .update({
       eventType,
       entityType,
-      entityId,
       title,
       description,
       metadata,

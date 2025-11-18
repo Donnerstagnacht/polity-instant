@@ -28,7 +28,7 @@ export default function SolutionsPage() {
       description:
         'Empower individuals to participate in democratic processes, organize local initiatives, and collaborate with communities. Every voice matters in shaping the future of our society.',
       features: [
-        'Personal profile and network building',
+        'Personal user and network building',
         'Join and create grassroots movements',
         'Participate in local decision-making',
         'Connect with representatives',

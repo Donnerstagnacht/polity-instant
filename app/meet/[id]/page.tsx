@@ -28,13 +28,9 @@ export default function MeetingPage({ params }: { params: Promise<{ id: string }
           id: resolvedParams.id,
         },
       },
-      owner: {
-        profile: {},
-      },
+      owner: {},
       bookings: {
-        booker: {
-          profile: {},
-        },
+        booker: {},
       },
     },
   });
@@ -122,14 +118,12 @@ export default function MeetingPage({ params }: { params: Promise<{ id: string }
           {/* Owner Info */}
           <div className="mt-4 flex items-center justify-center gap-3">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={meetingSlot.owner?.profile?.avatar} />
-              <AvatarFallback>
-                {meetingSlot.owner?.profile?.name?.[0]?.toUpperCase() || 'O'}
-              </AvatarFallback>
+              <AvatarImage src={meetingSlot.owner?.avatar} />
+              <AvatarFallback>{meetingSlot.owner?.name?.[0]?.toUpperCase() || 'O'}</AvatarFallback>
             </Avatar>
             <div className="text-left">
               <p className="text-sm font-medium">
-                Hosted by {meetingSlot.owner?.profile?.name || 'Unknown'}
+                Hosted by {meetingSlot.owner?.name || 'Unknown'}
               </p>
               <p className="text-xs text-muted-foreground">
                 {meetingSlot.meetingType.replace('-', ' ')}
@@ -235,15 +229,15 @@ export default function MeetingPage({ params }: { params: Promise<{ id: string }
                 {meetingSlot.bookings?.map((booking: any) => (
                   <div key={booking.id} className="flex items-start gap-3">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={booking.booker?.profile?.avatar} />
+                      <AvatarImage src={booking.booker?.avatar} />
                       <AvatarFallback>
-                        {booking.booker?.profile?.name?.[0]?.toUpperCase() || 'U'}
+                        {booking.booker?.name?.[0]?.toUpperCase() || 'U'}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <p className="font-medium">{booking.booker?.profile?.name || 'Unknown'}</p>
+                      <p className="font-medium">{booking.booker?.name || 'Unknown'}</p>
                       <p className="text-sm text-muted-foreground">
-                        @{booking.booker?.profile?.handle || 'unknown'}
+                        @{booking.booker?.handle || 'unknown'}
                       </p>
                       {booking.notes && (
                         <p className="mt-1 text-sm text-muted-foreground">

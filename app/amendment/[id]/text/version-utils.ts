@@ -50,7 +50,6 @@ export async function createDocumentVersion({
           title: versionTitle,
           content: content,
           createdAt: Date.now(),
-          createdBy: userId,
           creationType,
         })
         .link({ document: documentId, creator: userId }),

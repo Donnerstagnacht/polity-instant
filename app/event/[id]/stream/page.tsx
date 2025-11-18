@@ -49,17 +49,11 @@ export default function EventStreamPage() {
           id: eventId,
         },
       },
-      organizer: {
-        profile: {},
-      },
+      organizer: {},
       agendaItems: {
-        creator: {
-          profile: {},
-        },
+        creator: {},
         speakerList: {
-          user: {
-            profile: {},
-          },
+          user: {},
         },
         election: {
           candidates: {},
@@ -72,16 +66,12 @@ export default function EventStreamPage() {
       },
     },
     electionVotes: {
-      voter: {
-        profile: {},
-      },
+      voter: {},
       candidate: {},
       election: {},
     },
     amendmentVoteEntries: {
-      voter: {
-        profile: {},
-      },
+      voter: {},
       amendmentVote: {},
     },
   });
@@ -855,9 +845,8 @@ export default function EventStreamPage() {
                     >
                       {speakerList.map((speaker: any, index: number) => {
                         const speakerTime = calculateSpeakerTime(index);
-                        const speakerName =
-                          speaker.user?.profile?.name || speaker.user?.email || 'Unknown';
-                        const speakerAvatar = speaker.user?.profile?.avatar;
+                        const speakerName = speaker.user?.name || speaker.user?.email || 'Unknown';
+                        const speakerAvatar = speaker.user?.avatar;
                         const isCurrentUser = speaker.user?.id === user?.id;
 
                         return (

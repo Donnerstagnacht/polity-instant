@@ -95,19 +95,15 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
           'owner.id': userId,
         },
       },
-      owner: {
-        profile: {},
-      },
+      owner: {},
       bookings: {
-        booker: {
-          profile: {},
-        },
+        booker: {},
       },
     },
   });
 
   const meetingSlots = data?.meetingSlots || [];
-  const ownerProfile = meetingSlots[0]?.owner?.profile;
+  const owner = meetingSlots[0]?.owner;
 
   // Navigation functions
   const goToPrevious = () => {
@@ -437,7 +433,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
     <div className="container mx-auto max-w-7xl py-8">
       <div className="mb-8">
         <h1 className="mb-2 text-3xl font-bold">
-          {isOwner ? 'Manage Your Meetings' : `Book a Meeting with ${ownerProfile?.name || 'User'}`}
+          {isOwner ? 'Manage Your Meetings' : `Book a Meeting with ${owner?.name || 'User'}`}
         </h1>
         <p className="text-muted-foreground">
           {isOwner
@@ -490,9 +486,9 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
                     <div className="flex -space-x-2">
                       {nextPublicMeeting.bookings.slice(0, 5).map((booking: any) => (
                         <Avatar key={booking.id} className="h-8 w-8 border-2 border-background">
-                          <AvatarImage src={booking.booker?.profile?.avatar} />
+                          <AvatarImage src={booking.booker?.avatar} />
                           <AvatarFallback className="text-xs">
-                            {booking.booker?.profile?.name?.[0]?.toUpperCase() || 'U'}
+                            {booking.booker?.name?.[0]?.toUpperCase() || 'U'}
                           </AvatarFallback>
                         </Avatar>
                       ))}
@@ -630,13 +626,13 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
                                 {slot.bookings.slice(0, 3).map((booking: any) => (
                                   <div key={booking.id} className="flex items-center gap-2">
                                     <Avatar className="h-6 w-6">
-                                      <AvatarImage src={booking.booker?.profile?.avatar} />
+                                      <AvatarImage src={booking.booker?.avatar} />
                                       <AvatarFallback className="text-xs">
-                                        {booking.booker?.profile?.name?.[0]?.toUpperCase() || 'U'}
+                                        {booking.booker?.name?.[0]?.toUpperCase() || 'U'}
                                       </AvatarFallback>
                                     </Avatar>
                                     <span className="text-sm text-muted-foreground">
-                                      {booking.booker?.profile?.name || 'Unknown'}
+                                      {booking.booker?.name || 'Unknown'}
                                     </span>
                                   </div>
                                 ))}
@@ -735,16 +731,16 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
                               <div key={booking.id} className="rounded-md bg-muted p-3">
                                 <div className="flex items-center gap-3">
                                   <Avatar className="h-8 w-8">
-                                    <AvatarImage src={booking.booker?.profile?.avatar} />
+                                    <AvatarImage src={booking.booker?.avatar} />
                                     <AvatarFallback className="text-xs">
-                                      {booking.booker?.profile?.name?.[0]?.toUpperCase() || 'U'}
+                                      {booking.booker?.name?.[0]?.toUpperCase() || 'U'}
                                     </AvatarFallback>
                                   </Avatar>
                                   <div className="flex-1">
                                     <div className="text-sm font-medium">
                                       {isOwner
-                                        ? `${booking.booker?.profile?.name || 'Unknown'}`
-                                        : `${ownerProfile?.name || 'Unknown'}`}
+                                        ? `${booking.booker?.name || 'Unknown'}`
+                                        : `${owner?.name || 'Unknown'}`}
                                     </div>
                                     {booking.notes && (
                                       <div className="mt-1 text-xs text-muted-foreground">

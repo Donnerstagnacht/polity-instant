@@ -46,7 +46,7 @@ export default function AmendmentEditPage({ params }: { params: Promise<{ id: st
   const { data, isLoading } = db.useQuery({
     amendments: {
       $: { where: { id: resolvedParams.id } },
-      collaborators: {
+      amendmentRoleCollaborators: {
         $: { where: { status: 'admin' } },
         user: {},
       },
@@ -77,7 +77,7 @@ export default function AmendmentEditPage({ params }: { params: Promise<{ id: st
       });
 
       // Check if current user is an admin collaborator or the author
-      const adminCollaborators = amendment.collaborators || [];
+      const adminCollaborators = amendment.amendmentRoleCollaborators || [];
       const userIsAdmin = adminCollaborators.some(
         (c: any) => c.user?.id === authUser?.id && c.status === 'admin'
       );

@@ -40,9 +40,7 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
               },
             },
             group: {
-              owner: {
-                profile: {},
-              },
+              owner: {},
             },
           },
           eventParticipants: {

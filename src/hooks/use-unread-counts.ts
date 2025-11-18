@@ -39,7 +39,7 @@ export function useUnreadNotificationsCount() {
 export function useUnreadMessagesCount() {
   const { user, isLoading: authLoading } = db.useAuth();
 
-  // Get user profile (like in messages page)
+  // Get user data (like in messages page)
   const { data: userData } = db.useQuery(
     user?.id
       ? {
@@ -49,13 +49,12 @@ export function useUnreadMessagesCount() {
                 id: user.id,
               },
             },
-            profile: {},
           },
         }
       : null
   );
 
-  const userProfile = userData?.$users?.[0]?.profile;
+  const currentUser = userData?.$users?.[0];
 
   // Query conversations (exactly like messages page)
   const { data, isLoading } = db.useQuery(
@@ -63,9 +62,7 @@ export function useUnreadMessagesCount() {
       ? {
           conversations: {
             participants: {
-              user: {
-                profile: {},
-              },
+              user: {},
             },
             messages: {
               $: {
@@ -73,7 +70,7 @@ export function useUnreadMessagesCount() {
                   createdAt: 'asc' as const,
                 },
               },
-              sender: {}, // sender is now a profile, not a user
+              sender: {},
             },
           },
         }
@@ -85,25 +82,25 @@ export function useUnreadMessagesCount() {
       return 0;
     }
 
-    if (!data?.conversations || !userProfile?.id) {
+    if (!data?.conversations || !currentUser?.id) {
       if (user.id) {
-        console.log('💬 [useUnreadMessagesCount] Early return - no data or userProfile');
+        console.log('💬 [useUnreadMessagesCount] Early return - no data or currentUser');
       }
       return 0;
     }
 
     let totalUnread = 0;
     data.conversations.forEach((conversation: any) => {
-      // Use same logic as messages page: !msg.isRead && msg.sender?.id !== userProfile?.id
+      // Use same logic as messages page: !msg.isRead && msg.sender?.id !== currentUser?.id
       const unreadInConversation = conversation.messages.filter(
-        (msg: any) => !msg.isRead && msg.sender?.id !== userProfile.id
+        (msg: any) => !msg.isRead && msg.sender?.id !== currentUser.id
       ).length;
 
       totalUnread += unreadInConversation;
     });
 
     return totalUnread;
-  }, [data?.conversations, userProfile?.id, user?.id, authLoading]);
+  }, [data?.conversations, currentUser?.id, user?.id, authLoading]);
 
   return { count, isLoading: authLoading || isLoading };
 }

@@ -56,13 +56,13 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
   const lastRemoteUpdate = useRef<number>(0);
   const lastDiscussionsSave = useRef<number>(0);
 
-  // Get user profile for presence data
-  const { data: profileData } = db.useQuery({
-    profiles: {
-      $: { where: { 'user.id': user?.id } },
+  // Get user data for presence
+  const { data: userData } = db.useQuery({
+    $users: {
+      $: { where: { id: user?.id } },
     },
   });
-  const userProfile = profileData?.profiles?.[0];
+  const userRecord = userData?.$users?.[0];
 
   // Generate a consistent color for this user
   const userColor = useMemo(
@@ -74,23 +74,15 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
   const { data: amendmentData, isLoading: amendmentLoading } = db.useQuery({
     amendments: {
       $: { where: { id: amendmentId } },
-      user: {
-        profile: {},
-      },
+      user: {},
       document: {
-        owner: {
-          profile: {},
-        },
+        owner: {},
         collaborators: {
-          user: {
-            profile: {},
-          },
+          user: {},
         },
       },
-      collaborators: {
-        user: {
-          profile: {},
-        },
+      amendmentRoleCollaborators: {
+        user: {},
       },
     },
   });
@@ -131,24 +123,24 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
   // Presence hook - show who's online (always call the hook)
   const { peers, publishPresence } = db.rooms.usePresence(room, {
     initialData: {
-      name: userProfile?.name || user?.email || 'Anonymous',
-      avatar: userProfile?.avatar,
+      name: userRecord?.name || user?.email || 'Anonymous',
+      avatar: userRecord?.avatar,
       color: userColor,
       userId: user?.id || '',
     },
   });
 
-  // Update presence when profile changes
+  // Update presence when user changes
   useEffect(() => {
-    if (userProfile && publishPresence) {
+    if (userRecord && publishPresence) {
       publishPresence({
-        name: userProfile.name || user?.email || 'Anonymous',
-        avatar: userProfile.avatar,
+        name: userRecord.name || user?.email || 'Anonymous',
+        avatar: userRecord.avatar,
         color: userColor,
         userId: user?.id || '',
       });
     }
-  }, [userProfile, publishPresence, userColor, user?.email, user?.id]);
+  }, [userRecord, publishPresence, userColor, user?.email, user?.id]);
 
   // Get online peers (excluding current user)
   const onlinePeers = useMemo(
@@ -161,23 +153,21 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
     const users: Record<string, { id: string; name: string; avatarUrl: string }> = {};
 
     // Add current user
-    if (user && userProfile) {
+    if (user && userRecord) {
       users[user.id] = {
         id: user.id,
-        name: userProfile.name || user.email || 'Anonymous',
-        avatarUrl: userProfile.avatar || `https://api.dicebear.com/9.x/glass/svg?seed=${user.id}`,
+        name: userRecord.name || user.email || 'Anonymous',
+        avatarUrl: userRecord.avatar || `https://api.dicebear.com/9.x/glass/svg?seed=${user.id}`,
       };
     }
 
     // Add document owner
     if (document?.owner) {
       const owner = document.owner;
-      const ownerProfile = owner.profile;
       users[owner.id] = {
         id: owner.id,
-        name: ownerProfile?.name || owner.email || 'Owner',
-        avatarUrl:
-          ownerProfile?.avatar || `https://api.dicebear.com/9.x/glass/svg?seed=${owner.id}`,
+        name: owner?.name || owner.email || 'Owner',
+        avatarUrl: owner?.avatar || `https://api.dicebear.com/9.x/glass/svg?seed=${owner.id}`,
       };
     }
 
@@ -185,20 +175,19 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
     if (document?.collaborators) {
       document.collaborators.forEach((collab: any) => {
         const collabUser = collab.user;
-        const profile = collabUser?.profile;
         if (collabUser?.id) {
           users[collabUser.id] = {
             id: collabUser.id,
-            name: profile?.name || collabUser.email || 'Collaborator',
+            name: collabUser?.name || collabUser.email || 'Collaborator',
             avatarUrl:
-              profile?.avatar || `https://api.dicebear.com/9.x/glass/svg?seed=${collabUser.id}`,
+              collabUser?.avatar || `https://api.dicebear.com/9.x/glass/svg?seed=${collabUser.id}`,
           };
         }
       });
     }
 
     return users;
-  }, [user, userProfile, document?.owner, document?.collaborators]);
+  }, [user, userRecord, document?.owner, document?.collaborators]);
 
   // Calculate dynamic top margin based on secondary navigation
   const getTopMargin = useMemo(() => {
@@ -799,7 +788,9 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
       (document.owner?.id === user?.id ||
         document.collaborators?.some((c: any) => c.user?.id === user?.id))) ||
     amendment?.user?.id === user?.id ||
-    amendment?.collaborators?.some((c: any) => c.user?.id === user?.id && c.status === 'admin');
+    amendment?.amendmentRoleCollaborators?.some(
+      (c: any) => c.user?.id === user?.id && c.status === 'admin'
+    );
 
   if (amendmentLoading) {
     return (
@@ -990,21 +981,20 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
               <div className="mt-4 flex flex-wrap items-center gap-2">
                 <span className="text-sm text-muted-foreground">Collaborators:</span>
                 {document.collaborators.map((collab: any) => {
-                  const profile = collab.user?.profile;
                   return (
                     <div
                       key={collab.id}
                       className="flex items-center gap-1 rounded-full bg-muted px-2 py-1"
                     >
                       <Avatar className="h-5 w-5">
-                        {profile?.avatar ? (
-                          <AvatarImage src={profile.avatar} alt={profile.name || ''} />
+                        {collab.user?.avatar ? (
+                          <AvatarImage src={collab.user.avatar} alt={collab.user.name || ''} />
                         ) : null}
                         <AvatarFallback className="text-xs">
-                          {profile?.name?.[0]?.toUpperCase() || '?'}
+                          {collab.user?.name?.[0]?.toUpperCase() || '?'}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="text-xs">{profile?.name || 'Unknown'}</span>
+                      <span className="text-xs">{collab.user?.name || 'Unknown'}</span>
                     </div>
                   );
                 })}
@@ -1023,11 +1013,11 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
                 onModeChange={handleModeChange}
                 isOwnerOrCollaborator={!!isOwnerOrCollaborator}
                 currentUser={
-                  user && userProfile
+                  user && userRecord
                     ? {
                         id: user.id,
-                        name: userProfile.name || user.email || 'Anonymous',
-                        avatar: userProfile.avatar,
+                        name: userRecord.name || user.email || 'Anonymous',
+                        avatar: userRecord.avatar,
                       }
                     : undefined
                 }

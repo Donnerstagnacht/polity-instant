@@ -109,9 +109,9 @@ const _schema = i.schema({
     }),
     $users: i.entity({
       email: i.string().unique().indexed().optional(),
-    }),
-    profiles: i.entity({
-      handle: i.string(),
+      handle: i.string().optional(),
+      name: i.string().optional(),
+      avatar: i.string().optional(),
     }),
     posts: i.entity({
       text: i.string(),
@@ -119,17 +119,13 @@ const _schema = i.schema({
     }),
   },
   links: {
-    userProfiles: {
-      forward: { on: 'profiles', has: 'one', label: 'user' },
-      reverse: { on: '$users', has: 'one', label: 'profile' },
-    },
     postAuthors: {
       forward: { on: 'posts', has: 'one', label: 'author' },
-      reverse: { on: 'profiles', has: 'many', label: 'posts' },
+      reverse: { on: '$users', has: 'many', label: 'posts' },
     },
-    profileAvatars: {
-      forward: { on: 'profiles', has: 'one', label: 'avatar' },
-      reverse: { on: '$files', has: 'one', label: 'profile' },
+    userAvatars: {
+      forward: { on: '$users', has: 'one', label: 'avatarFile' },
+      reverse: { on: '$files', has: 'one', label: 'user' },
     },
   },
   rooms: {
@@ -166,10 +162,10 @@ import db from '../lib/db';
 import schema from '../instant.schema';
 
 // Instant utility types for query results
-type PostsWithProfile = InstaQLEntity<
+type PostsWithAuthor = InstaQLEntity<
   typeof schema,
   'posts',
-  { author: { avatar: {} } }
+  { author: { avatarFile: {} } }
 >;
 
 function randomHandle() {
@@ -184,15 +180,13 @@ function randomHandle() {
 
 // Write Data
 // ---------
-async function createProfile(userId: string) {
+async function initializeUserUser(userId: string) {
   // CRITICAL: transact is how you write data to the database
-  // We want to block until the profile is created, so we use await
+  // We want to block until the User is created, so we use await
   await db.transact(
-    db.tx.profiles[userId]
-      .update({
-        handle: randomHandle(),
-      })
-      .link({ user: userId }),
+    db.tx.$users[userId].update({
+      handle: randomHandle(),
+    }),
   );
 }
 
@@ -266,27 +260,27 @@ function addShout({
 
 // Instant query Hooks
 // ---------
-function useProfile() {
+function useCurrentUser() {
   // CRITICAL: useUser can only be used inside a db.SignedIn component
   const user = db.useUser();
   const { data, isLoading, error } = db.useQuery({
-    profiles: {
-      $: { where: { 'user.id': user.id } },
-      avatar: {},
+    $users: {
+      $: { where: { id: user.id } },
+      avatarFile: {},
     },
   });
-  const profile = data?.profiles?.[0];
+  const currentUser = data?.$users?.[0];
 
-  return { profile, isLoading, error };
+  return { currentUser, isLoading, error };
 }
 
-function useRequiredProfile() {
-  const { profile } = useProfile();
-  if (!profile) {
-    throw new Error('useRequiredProfile must be used inside EnsureProfile');
+function useRequiredCurrentUser() {
+  const { currentUser } = useCurrentUser();
+  if (!currentUser) {
+    throw new Error('useRequiredCurrentUser must be used inside EnsureUser');
   }
 
-  return profile;
+  return currentUser;
 }
 
 function usePosts(pageNumber: number, pageSize: number) {
@@ -298,7 +292,7 @@ function usePosts(pageNumber: number, pageSize: number) {
         offset: (pageNumber - 1) * pageSize,
       },
       author: {
-        avatar: {},
+        avatarFile: {},
       },
     },
   });
@@ -409,23 +403,23 @@ function CodeStep({ sentEmail }: { sentEmail: string }) {
   );
 }
 
-function EnsureProfile({ children }: { children: React.ReactNode }) {
+function EnsureUser({ children }: { children: React.ReactNode }) {
   const user = db.useUser();
 
-  const { isLoading, profile, error } = useProfile();
+  const { isLoading, currentUser, error } = useCurrentUser();
 
   useEffect(() => {
-    if (!isLoading && !profile) {
-      createProfile(user.id);
+    if (!isLoading && currentUser && !currentUser.handle) {
+      initializeUserUser(user.id);
     }
-  }, [isLoading, profile, user.id]);
+  }, [isLoading, currentUser, user.id]);
 
   if (isLoading) return null;
   if (error)
     return (
-      <div className="p-4 text-red-500">Profile error: {error.message}</div>
+      <div className="p-4 text-red-500">User error: {error.message}</div>
     );
-  if (!profile) return null; // Still creating profile...
+  if (!currentUser) return null; // Still loading user...
 
   return <>{children}</>;
 }
@@ -466,7 +460,7 @@ function Main() {
     <div className="min-h-screen p-4">
       <div className="mx-auto max-w-4xl rounded-lg bg-white p-6">
         <div className="mb-6 flex items-start justify-between">
-          <ProfileAvatar />
+          <UserAvatar />
           <button
             onClick={() => db.auth.signOut()}
             className="text-sm text-gray-600 hover:text-gray-800"
@@ -510,14 +504,14 @@ function Main() {
   );
 }
 
-function ProfileAvatar() {
+function UserAvatar() {
   const user = db.useUser();
-  const profile = useRequiredProfile();
+  const currentUser = useRequiredCurrentUser();
   const [isUploading, setIsUploading] = useState(false);
   const avatarPath = `${user.id}/avatar`;
 
   const handleAvatarDelete = async () => {
-    if (!profile.avatar) return;
+    if (!currentUser.avatarFile) return;
     db.transact(db.tx.$files[lookup('path', avatarPath)].delete());
   };
 
@@ -528,7 +522,7 @@ function ProfileAvatar() {
     setIsUploading(true);
     try {
       const { data } = await db.storage.uploadFile(avatarPath, file);
-      await db.transact(db.tx.profiles[profile.id].link({ avatar: data.id }));
+      await db.transact(db.tx.$users[user.id].link({ avatarFile: data.id }));
     } catch (error) {
       console.error('Upload failed:', error);
     }
@@ -538,15 +532,15 @@ function ProfileAvatar() {
   return (
     <div className="flex items-center gap-4">
       <label className="relative cursor-pointer">
-        {profile.avatar ? (
+        {currentUser.avatarFile ? (
           <img
-            src={profile.avatar.url}
-            alt={profile.handle}
+            src={currentUser.avatarFile.url}
+            alt={currentUser.handle || currentUser.name}
             className="h-16 w-16 rounded-full border-2 border-gray-800 object-cover"
           />
         ) : (
           <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-gray-800 bg-white text-xl font-bold text-gray-800">
-            {profile.handle[0].toUpperCase()}
+            {(currentUser.handle || currentUser.name || 'U')[0].toUpperCase()}
           </div>
         )}
 
@@ -565,12 +559,12 @@ function ProfileAvatar() {
         />
       </label>
       <div className="flex flex-col">
-        <div className="font-medium">handle: {profile.handle}</div>
+        <div className="font-medium">handle: {currentUser.handle}</div>
         <div className="text-sm">email: {user.email}</div>
         <button
           onClick={handleAvatarDelete}
           className="text-left text-sm text-gray-500 hover:text-gray-700 disabled:text-gray-400"
-          disabled={!profile.avatar || isUploading}
+          disabled={!currentUser.avatarFile || isUploading}
         >
           Delete Avatar
         </button>
@@ -627,7 +621,7 @@ function PostForm() {
   );
 }
 
-function PostList({ posts }: { posts: PostsWithProfile[] }) {
+function PostList({ posts }: { posts: PostsWithAuthor[] }) {
   const user = db.useUser();
   return (
     <div className="space-y-3">
@@ -638,21 +632,21 @@ function PostList({ posts }: { posts: PostsWithProfile[] }) {
         >
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border-2 border-gray-800 bg-white font-bold text-gray-800">
-              {post.author?.avatar ? (
+              {post.author?.avatarFile ? (
                 <img
                   className="h-full w-full rounded-full object-cover"
-                  src={post.author.avatar.url}
-                  alt={post.author.handle}
+                  src={post.author.avatarFile.url}
+                  alt={post.author.handle || post.author.name}
                 />
               ) : (
-                <span>{post.author?.handle[0].toUpperCase()}</span>
+                <span>{(post.author?.handle || post.author?.name || 'U')[0].toUpperCase()}</span>
               )}
             </div>
             <div className="flex-1">
               <div className="flex items-start justify-between">
                 <div>
                   <div className="font-medium">
-                    {post.author?.handle || 'Unknown'}
+                    {post.author?.handle || post.author?.name || 'Unknown'}
                   </div>
                   <div className="text-xs text-gray-500">
                     {new Date(post.createdAt).toLocaleString()}
@@ -681,9 +675,9 @@ function App() {
   return (
     <div>
       <db.SignedIn>
-        <EnsureProfile>
+        <EnsureUser>
           <Main />
-        </EnsureProfile>
+        </EnsureUser>
       </db.SignedIn>
       <db.SignedOut>
         <Login />

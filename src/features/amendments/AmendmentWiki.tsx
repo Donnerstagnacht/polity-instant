@@ -111,9 +111,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
           id: amendmentId,
         },
       },
-      user: {
-        profile: {},
-      },
+      user: {},
       hashtags: {},
     },
   });
@@ -144,7 +142,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
   }
 
   const isAdmin = status === 'admin';
-  const author = amendment.user?.profile;
+  const author = amendment.user;
 
   const statusColors: Record<string, string> = {
     Passed: 'bg-green-500/10 text-green-500 border-green-500/20',

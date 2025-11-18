@@ -6,11 +6,11 @@
 import { db, tx, id } from '../../../../db';
 
 /**
- * Create a sample user profile with all related data
+ * Create a sample user with all related data
  * @param userId - The ID of the $users record (from auth)
- * @param userData - The user profile data
+ * @param userData - The user data
  */
-export async function seedUserProfile(
+export async function seedUser(
   userId: string,
   userData: {
     name: string;
@@ -29,20 +29,16 @@ export async function seedUserProfile(
     snapchat?: string;
   }
 ) {
-  const profileId = id();
-
-  // Create profile
+  // Update user with user data
   await db.transact([
-    tx.profiles[profileId].update({
+    tx.$users[userId].update({
       ...userData,
       isActive: true,
-      createdAt: new Date(),
       updatedAt: new Date(),
-      user: userId,
     }),
   ]);
 
-  return profileId;
+  return userId;
 }
 
 /**
@@ -134,11 +130,10 @@ export async function seedUserAmendments(
 }
 
 /**
- * Complete seed function - creates a full user profile with all data
+ * Complete seed function - creates a full user  with all data
  */
-export async function seedCompleteUserProfile(userId: string) {
-  // Create profile
-  await seedUserProfile(userId, {
+export async function seedCompleteUser(userId: string) {
+  await seedUser(userId, {
     name: 'Sarah Johnson',
     subtitle: 'Constitutional Law Expert',
     avatar: 'https://i.pravatar.cc/150?u=sarah',
@@ -229,24 +224,5 @@ export async function seedCompleteUserProfile(userId: string) {
     },
   ]);
 
-  console.log('✅ Complete user profile seeded successfully!');
+  console.log('✅ Complete user seeded successfully!');
 }
-
-/**
- * Example usage in a React component:
- *
- * import { seedCompleteUserProfile } from '@/features/user/utils/seedUserData';
- * import { useAuthStore } from '@/lib/instant/auth';
- *
- * function SeedButton() {
- *   const { user } = useAuthStore();
- *
- *   const handleSeed = async () => {
- *     if (user?.id) {
- *       await seedCompleteUserProfile(user.id);
- *     }
- *   };
- *
- *   return <button onClick={handleSeed}>Seed My Profile</button>;
- * }
- */

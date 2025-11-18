@@ -59,10 +59,8 @@ function SearchContent() {
 
   // Fetch data from InstantDB
   const { data, isLoading } = db.useQuery({
-    profiles: {
-      user: {
-        hashtags: {}, // Load hashtags for users
-      },
+    $users: {
+      hashtags: {}, // Load hashtags for users
     },
     groups: {
       owner: {},
@@ -72,7 +70,6 @@ function SearchContent() {
       user: {},
     },
     blogs: {
-      user: {},
       hashtags: {},
     },
     amendments: {
@@ -80,9 +77,7 @@ function SearchContent() {
       hashtags: {},
     },
     events: {
-      organizer: {
-        profile: {},
-      },
+      organizer: {},
       group: {},
       participants: {},
       hashtags: {},
@@ -152,11 +147,11 @@ function SearchContent() {
   };
 
   const filteredUsers =
-    data?.profiles?.filter((profile: any) => {
-      if (!filterByQuery(profile.name || '')) return false;
-      // Check hashtags from the linked user
-      if (hashtagFilter && profile.user?.hashtags) {
-        if (!matchesHashtag({ hashtags: profile.user.hashtags })) return false;
+    data?.$users?.filter((user: any) => {
+      if (!filterByQuery(user.name || '')) return false;
+      // Check hashtags
+      if (hashtagFilter && user?.hashtags) {
+        if (!matchesHashtag({ hashtags: user.hashtags })) return false;
       }
       return true;
     }) || [];
@@ -222,8 +217,7 @@ function SearchContent() {
       const matchesTitle = filterByQuery(event.title || '');
       const matchesDescription = event.description && filterByQuery(event.description);
       const matchesLocation = event.location && filterByQuery(event.location);
-      const matchesOrganizer =
-        event.organizer?.profile?.name && filterByQuery(event.organizer.profile.name);
+      const matchesOrganizer = event.organizer?.name && filterByQuery(event.organizer.name);
       const matchesGroup = event.group?.name && filterByQuery(event.group.name);
 
       if (!queryParam) return true;
@@ -583,8 +577,8 @@ function UnifiedResultCard({ item, index }: { item: any; index?: number }) {
 
 // Result Card Components (for individual tabs)
 function UserCard({ user, index }: { user: any; index?: number }) {
-  // Use user.user.id (the actual user ID) instead of user.id (the profile ID)
-  const userId = user.user?.id || user.id;
+  // User ID is now directly on the $users entity
+  const userId = user.id;
 
   // Get avatar from various possible sources
   const avatar = user.avatarFile?.url || user.avatar || user.imageURL || '';

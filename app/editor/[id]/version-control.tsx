@@ -25,15 +25,12 @@ interface Version {
   title: string;
   content: any[];
   createdAt: number | Date;
-  createdBy: string;
   creationType: string;
   creator?: {
     id: string;
     email?: string;
-    profile?: {
-      name?: string;
-      avatar?: string;
-    };
+    name?: string;
+    avatar?: string;
   };
 }
 
@@ -62,9 +59,7 @@ export function VersionControl({
       $: {
         where: { 'document.id': documentId },
       },
-      creator: {
-        profile: {},
-      },
+      creator: {},
     },
   });
 
@@ -95,7 +90,6 @@ export function VersionControl({
             title: versionTitle,
             content: currentContent,
             createdAt: Date.now(),
-            createdBy: currentUserId,
             creationType: 'manual',
           })
           .link({ document: documentId, creator: currentUserId }),
@@ -260,7 +254,7 @@ export function VersionControl({
                         </div>
                         <div className="flex items-center gap-1">
                           <User className="h-3 w-3" />
-                          {version.creator?.profile?.name || version.creator?.email || 'Unknown'}
+                          {version.creator?.name || version.creator?.email || 'Unknown'}
                         </div>
                       </div>
                     </div>

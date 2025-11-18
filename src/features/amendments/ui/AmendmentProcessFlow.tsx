@@ -547,7 +547,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
         type: 'default',
         position: { x: 100, y: 200 },
         data: {
-          label: user?.profile?.name || 'You',
+          label: user?.name || 'You',
           description: 'Your starting point',
           type: 'user',
         },

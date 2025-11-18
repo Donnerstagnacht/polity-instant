@@ -45,6 +45,7 @@ import { HashtagInput } from '@/components/ui/hashtag-input';
 
 type ItemType =
   | 'groups'
+  | 'events'
   | 'statements'
   | 'blogs'
   | 'amendments'
@@ -127,10 +128,14 @@ export default function CreatePage() {
           onValueChange={v => setSelectedItemType(v as ItemType)}
           className="w-full"
         >
-          <TabsList className="grid w-full grid-cols-9">
+          <TabsList className="grid w-full grid-cols-10">
             <TabsTrigger value="groups" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Groups
+            </TabsTrigger>
+            <TabsTrigger value="events" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Events
             </TabsTrigger>
             <TabsTrigger value="statements" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
@@ -168,6 +173,10 @@ export default function CreatePage() {
 
           <TabsContent value="groups">
             <CreateGroupForm isCarouselMode={false} />
+          </TabsContent>
+
+          <TabsContent value="events">
+            <CreateEventForm isCarouselMode={false} />
           </TabsContent>
 
           <TabsContent value="statements">
@@ -225,6 +234,8 @@ function GuidedCreateFlow() {
   switch (selectedType) {
     case 'groups':
       return <GuidedGroupFlow {...commonProps} />;
+    case 'events':
+      return <GuidedEventFlow {...commonProps} />;
     case 'statements':
       return <GuidedStatementFlow {...commonProps} />;
     case 'blogs':
@@ -254,6 +265,12 @@ function ItemTypeSelector({ onSelect }: { onSelect: (type: ItemType) => void }) 
       icon: Users,
       title: 'Group',
       description: 'Organize members around common interests or goals',
+    },
+    {
+      type: 'events' as ItemType,
+      icon: Calendar,
+      title: 'Event',
+      description: 'Create and manage events for your community',
     },
     {
       type: 'statements' as ItemType,
@@ -380,7 +397,11 @@ function GuidedGroupFlow({
       }
       const groupId = id();
       const membershipId = id();
+      const boardMemberRoleId = id();
+      const memberRoleId = id();
+
       await db.transact([
+        // Create the group
         tx.groups[groupId].update({
           name: data.name,
           description: data.description || '',
@@ -390,7 +411,29 @@ function GuidedGroupFlow({
           updatedAt: new Date(),
         }),
         tx.groups[groupId].link({ owner: user.id }),
-        tx.groupMemberships[membershipId].update({ role: 'owner', joinedAt: new Date() }),
+
+        // Create Board Member role with admin permissions
+        tx.roles[boardMemberRoleId].update({
+          name: 'Board Member',
+          scope: 'group',
+          createdAt: new Date(),
+        }),
+        tx.roles[boardMemberRoleId].link({ group: groupId }),
+
+        // Create Member role with basic permissions
+        tx.roles[memberRoleId].update({
+          name: 'Member',
+          scope: 'group',
+          createdAt: new Date(),
+        }),
+        tx.roles[memberRoleId].link({ group: groupId }),
+
+        // Create membership for creator as Board Member
+        tx.groupMemberships[membershipId].update({
+          role: 'Board Member',
+          status: 'member',
+          joinedAt: new Date(),
+        }),
         tx.groupMemberships[membershipId].link({ group: groupId, user: user.id }),
       ]);
       toast.success('Group created successfully!');
@@ -658,6 +701,7 @@ function GuidedBlogFlow({
   const data = {
     title: formData.title || '',
     date: formData.date || new Date().toISOString().split('T')[0],
+    visibility: formData.visibility || ('public' as 'public' | 'authenticated' | 'private'),
   };
 
   useEffect(() => {
@@ -682,14 +726,89 @@ function GuidedBlogFlow({
         return;
       }
       const blogId = id();
+
+      // Create roles for the blog
+      const ownerRoleId = id();
+      const writerRoleId = id();
+
+      // Create the blogger entry for the creator (as Owner)
+      const bloggerId = id();
+
+      // Create action rights for Owner role
+      const ownerUpdateRightId = id();
+      const ownerDeleteRightId = id();
+      const ownerManageRightId = id();
+
+      // Create action right for Writer role
+      const writerUpdateRightId = id();
+
       await db.transact([
+        // Create the blog
         tx.blogs[blogId].update({
           title: data.title,
           date: data.date,
           likeCount: 0,
           commentCount: 0,
+          visibility: data.visibility,
         }),
         tx.blogs[blogId].link({ user: user.id }),
+
+        // Create Owner role
+        tx.roles[ownerRoleId].update({
+          name: 'Owner',
+          description: 'Blog owner with full permissions',
+          scope: 'blog',
+        }),
+        tx.roles[ownerRoleId].link({ blog: blogId }),
+
+        // Create Writer role
+        tx.roles[writerRoleId].update({
+          name: 'Writer',
+          description: 'Blog writer with edit access',
+          scope: 'blog',
+        }),
+        tx.roles[writerRoleId].link({ blog: blogId }),
+
+        // Create action rights for Owner role
+        tx.actionRights[ownerUpdateRightId].update({
+          resource: 'blogs',
+          action: 'update',
+          blogId: blogId,
+        }),
+        tx.actionRights[ownerUpdateRightId].link({ roles: [ownerRoleId] }),
+
+        tx.actionRights[ownerDeleteRightId].update({
+          resource: 'blogs',
+          action: 'delete',
+          blogId: blogId,
+        }),
+        tx.actionRights[ownerDeleteRightId].link({ roles: [ownerRoleId] }),
+
+        tx.actionRights[ownerManageRightId].update({
+          resource: 'blogBloggers',
+          action: 'manage',
+          blogId: blogId,
+        }),
+        tx.actionRights[ownerManageRightId].link({ roles: [ownerRoleId] }),
+
+        // Create action right for Writer role
+        tx.actionRights[writerUpdateRightId].update({
+          resource: 'blogs',
+          action: 'update',
+          blogId: blogId,
+        }),
+        tx.actionRights[writerUpdateRightId].link({ roles: [writerRoleId] }),
+
+        // Assign creator as Owner
+        tx.blogBloggers[bloggerId].update({
+          status: 'member',
+          createdAt: new Date(),
+        }),
+        tx.blogBloggers[bloggerId].link({
+          blog: blogId,
+          user: user.id,
+          role: ownerRoleId,
+        }),
       ]);
       toast.success('Blog post created successfully!');
       setTimeout(() => (window.location.href = '/'), 500);
@@ -801,6 +920,7 @@ function GuidedAmendmentFlow({
     status: formData.status || 'Drafting',
     code: formData.code || '',
     date: formData.date || new Date().toISOString().split('T')[0],
+    visibility: formData.visibility || ('public' as 'public' | 'authenticated' | 'private'),
   };
 
   useEffect(() => {
@@ -825,7 +945,12 @@ function GuidedAmendmentFlow({
         return;
       }
       const amendmentId = id();
+      const collaboratorId = id();
+      const applicantRoleId = id();
+      const collaboratorRoleId = id();
+
       await db.transact([
+        // Create the amendment
         tx.amendments[amendmentId].update({
           title: data.title,
           subtitle: data.subtitle || '',
@@ -833,8 +958,33 @@ function GuidedAmendmentFlow({
           supporters: 0,
           date: data.date,
           code: data.code || '',
+          visibility: data.visibility,
         }),
         tx.amendments[amendmentId].link({ user: user.id }),
+
+        // Create Applicant role with admin permissions
+        tx.roles[applicantRoleId].update({
+          name: 'Applicant',
+          scope: 'amendment',
+          createdAt: new Date(),
+        }),
+        tx.roles[applicantRoleId].link({ amendment: amendmentId }),
+
+        // Create Collaborator role with basic permissions
+        tx.roles[collaboratorRoleId].update({
+          name: 'Collaborator',
+          scope: 'amendment',
+          createdAt: new Date(),
+        }),
+        tx.roles[collaboratorRoleId].link({ amendment: amendmentId }),
+
+        // Create collaboration for creator as Applicant
+        tx.amendmentCollaborators[collaboratorId].update({
+          role: 'Applicant',
+          status: 'member',
+          createdAt: new Date(),
+        }),
+        tx.amendmentCollaborators[collaboratorId].link({ user: user.id, amendment: amendmentId }),
       ]);
       toast.success('Amendment created successfully!');
       setTimeout(() => (window.location.href = '/'), 500);
@@ -1037,6 +1187,7 @@ function CreateTodoForm({ isCarouselMode }: { isCarouselMode: boolean }) {
           tags: formData.tags.length > 0 ? formData.tags : null,
           createdAt: now,
           updatedAt: now,
+          visibility: formData.visibility,
         }),
         tx.todos[todoId].link({ creator: user.id }),
         tx.todoAssignments[assignmentId].update({
@@ -1504,6 +1655,7 @@ function GuidedTodoFlow({
     dueDate: formData.dueDate || '',
     tags: formData.tags || ([] as string[]),
     groupId: formData.groupId || '',
+    visibility: formData.visibility || ('public' as 'public' | 'authenticated' | 'private'),
   };
 
   useEffect(() => {
@@ -1553,6 +1705,7 @@ function GuidedTodoFlow({
           tags: data.tags.length > 0 ? data.tags : null,
           createdAt: now,
           updatedAt: now,
+          visibility: data.visibility,
         }),
         tx.todos[todoId].link({ creator: user.id }),
         tx.todoAssignments[assignmentId].update({
@@ -1801,6 +1954,7 @@ function CreateGroupForm({ isCarouselMode }: { isCarouselMode: boolean }) {
     description: '',
     isPublic: true,
     hashtags: [] as string[],
+    visibility: 'public' as 'public' | 'authenticated' | 'private',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const user = useAuthStore(state => state.user);
@@ -1818,8 +1972,11 @@ function CreateGroupForm({ isCarouselMode }: { isCarouselMode: boolean }) {
 
       const groupId = id();
       const membershipId = id();
+      const boardMemberRoleId = id();
+      const memberRoleId = id();
 
       const transactions = [
+        // Create the group
         tx.groups[groupId].update({
           name: formData.name,
           description: formData.description || '',
@@ -1827,10 +1984,30 @@ function CreateGroupForm({ isCarouselMode }: { isCarouselMode: boolean }) {
           memberCount: 1,
           createdAt: new Date(),
           updatedAt: new Date(),
+          visibility: formData.visibility,
         }),
         tx.groups[groupId].link({ owner: user.id }),
+
+        // Create Board Member role with admin permissions
+        tx.roles[boardMemberRoleId].update({
+          name: 'Board Member',
+          scope: 'group',
+          createdAt: new Date(),
+        }),
+        tx.roles[boardMemberRoleId].link({ group: groupId }),
+
+        // Create Member role with basic permissions
+        tx.roles[memberRoleId].update({
+          name: 'Member',
+          scope: 'group',
+          createdAt: new Date(),
+        }),
+        tx.roles[memberRoleId].link({ group: groupId }),
+
+        // Create membership for creator as Board Member
         tx.groupMemberships[membershipId].update({
-          role: 'owner',
+          role: 'Board Member',
+          status: 'member',
           joinedAt: new Date(),
         }),
         tx.groupMemberships[membershipId].link({
@@ -1914,6 +2091,24 @@ function CreateGroupForm({ isCarouselMode }: { isCarouselMode: boolean }) {
             <Label htmlFor="group-public" className="cursor-pointer">
               Make this group public
             </Label>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="group-visibility">Visibility</Label>
+            <select
+              id="group-visibility"
+              value={formData.visibility}
+              onChange={e =>
+                setFormData({
+                  ...formData,
+                  visibility: e.target.value as 'public' | 'authenticated' | 'private',
+                })
+              }
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="public">Public - Anyone can see</option>
+              <option value="authenticated">Authenticated - Only logged-in users</option>
+              <option value="private">Private - Only members</option>
+            </select>
           </div>
           <HashtagInput
             value={formData.hashtags}
@@ -2063,6 +2258,7 @@ function CreateStatementForm({ isCarouselMode }: { isCarouselMode: boolean }) {
   const [formData, setFormData] = useState({
     text: '',
     tag: '',
+    visibility: 'public' as 'public' | 'authenticated' | 'private',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const user = useAuthStore(state => state.user);
@@ -2084,6 +2280,7 @@ function CreateStatementForm({ isCarouselMode }: { isCarouselMode: boolean }) {
         tx.statements[statementId].update({
           text: formData.text,
           tag: formData.tag,
+          visibility: formData.visibility,
         }),
         tx.statements[statementId].link({ user: user.id }),
       ]);
@@ -2138,6 +2335,24 @@ function CreateStatementForm({ isCarouselMode }: { isCarouselMode: boolean }) {
               onChange={e => setFormData({ ...formData, tag: e.target.value })}
               required
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="statement-visibility">Visibility</Label>
+            <select
+              id="statement-visibility"
+              value={formData.visibility}
+              onChange={e =>
+                setFormData({
+                  ...formData,
+                  visibility: e.target.value as 'public' | 'authenticated' | 'private',
+                })
+              }
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="public">Public - Anyone can see</option>
+              <option value="authenticated">Authenticated - Only logged-in users</option>
+              <option value="private">Private - Only you</option>
+            </select>
           </div>
         </CardContent>
         <CardFooter>
@@ -2267,6 +2482,7 @@ function CreateBlogForm({ isCarouselMode }: { isCarouselMode: boolean }) {
   const [formData, setFormData] = useState({
     title: '',
     date: new Date().toISOString().split('T')[0],
+    visibility: 'public' as 'public' | 'authenticated' | 'private',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const user = useAuthStore(state => state.user);
@@ -2284,14 +2500,88 @@ function CreateBlogForm({ isCarouselMode }: { isCarouselMode: boolean }) {
 
       const blogId = id();
 
+      // Create roles for the blog
+      const ownerRoleId = id();
+      const writerRoleId = id();
+
+      // Create the blogger entry for the creator (as Owner)
+      const bloggerId = id();
+
+      // Create action rights for Owner role
+      const ownerUpdateRightId = id();
+      const ownerDeleteRightId = id();
+      const ownerManageRightId = id();
+
+      // Create action right for Writer role
+      const writerUpdateRightId = id();
+
       await db.transact([
+        // Create the blog
         tx.blogs[blogId].update({
           title: formData.title,
           date: formData.date,
           likes: 0,
           comments: 0,
+          visibility: formData.visibility,
         }),
         tx.blogs[blogId].link({ user: user.id }),
+
+        // Create Owner role
+        tx.roles[ownerRoleId].update({
+          name: 'Owner',
+          description: 'Blog owner with full permissions',
+          scope: 'blog',
+        }),
+        tx.roles[ownerRoleId].link({ blog: blogId }),
+
+        // Create Writer role
+        tx.roles[writerRoleId].update({
+          name: 'Writer',
+          description: 'Blog writer with edit access',
+          scope: 'blog',
+        }),
+        tx.roles[writerRoleId].link({ blog: blogId }),
+
+        // Create action rights for Owner role
+        tx.actionRights[ownerUpdateRightId].update({
+          resource: 'blogs',
+          action: 'update',
+          blogId: blogId,
+        }),
+        tx.actionRights[ownerUpdateRightId].link({ roles: [ownerRoleId] }),
+
+        tx.actionRights[ownerDeleteRightId].update({
+          resource: 'blogs',
+          action: 'delete',
+          blogId: blogId,
+        }),
+        tx.actionRights[ownerDeleteRightId].link({ roles: [ownerRoleId] }),
+
+        tx.actionRights[ownerManageRightId].update({
+          resource: 'blogBloggers',
+          action: 'manage',
+          blogId: blogId,
+        }),
+        tx.actionRights[ownerManageRightId].link({ roles: [ownerRoleId] }),
+
+        // Create action right for Writer role
+        tx.actionRights[writerUpdateRightId].update({
+          resource: 'blogs',
+          action: 'update',
+          blogId: blogId,
+        }),
+        tx.actionRights[writerUpdateRightId].link({ roles: [writerRoleId] }),
+
+        // Assign creator as Owner
+        tx.blogBloggers[bloggerId].update({
+          status: 'member',
+          createdAt: new Date(),
+        }),
+        tx.blogBloggers[bloggerId].link({
+          blog: blogId,
+          user: user.id,
+          role: ownerRoleId,
+        }),
       ]);
 
       toast.success('Blog post created successfully!');
@@ -2463,6 +2753,599 @@ function CarouselBlogForm({
   );
 }
 
+// ====== EVENT FORMS ======
+function GuidedEventFlow({
+  formData,
+  setFormData,
+  onBack,
+}: {
+  formData: any;
+  setFormData: (data: any) => void;
+  onBack: () => void;
+}) {
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
+  const [count, setCount] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const user = useAuthStore(state => state.user);
+
+  const data = {
+    title: formData.title || '',
+    description: formData.description || '',
+    location: formData.location || '',
+    startDate: formData.startDate || new Date().toISOString().split('T')[0],
+    startTime: formData.startTime || '09:00',
+    endDate: formData.endDate || new Date().toISOString().split('T')[0],
+    endTime: formData.endTime || '17:00',
+    capacity: formData.capacity || 50,
+    isPublic: formData.isPublic ?? true,
+    groupId: formData.groupId || '',
+    visibility: formData.visibility || ('public' as 'public' | 'authenticated' | 'private'),
+  };
+
+  // Query user's groups for the dropdown
+  const { data: groupsData } = db.useQuery({
+    groups: {
+      $: {
+        where: {
+          or: [{ 'owner.id': user?.id }, { 'memberships.user.id': user?.id }],
+        },
+      },
+    },
+  });
+
+  const userGroups = groupsData?.groups || [];
+
+  useEffect(() => {
+    if (!api) return;
+    setCount(api.scrollSnapList().length);
+    setCurrent(api.selectedScrollSnap());
+    api.on('select', () => setCurrent(api.selectedScrollSnap()));
+  }, [api]);
+
+  const handleKeyDown = (e: React.KeyboardEvent, canProceed: boolean) => {
+    if (e.key === 'Enter' && canProceed && api && api.canScrollNext()) {
+      e.preventDefault();
+      api.scrollNext();
+    }
+  };
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      if (!user?.id) {
+        toast.error('You must be logged in to create an event');
+        return;
+      }
+
+      if (!data.groupId) {
+        toast.error('Please select a group for this event');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const eventId = id();
+      const participantId = id();
+      const organizerRoleId = id();
+      const participantRoleId = id();
+
+      const startDateTime = new Date(`${data.startDate}T${data.startTime}`);
+      const endDateTime = new Date(`${data.endDate}T${data.endTime}`);
+
+      await db.transact([
+        // Create the event
+        tx.events[eventId].update({
+          title: data.title,
+          description: data.description || '',
+          location: data.location || '',
+          startDate: startDateTime,
+          endDate: endDateTime,
+          isPublic: data.isPublic,
+          capacity: data.capacity,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          visibility: data.visibility,
+        }),
+        tx.events[eventId].link({ organizer: user.id, group: data.groupId }),
+
+        // Create Organizer role with admin permissions
+        tx.roles[organizerRoleId].update({
+          name: 'Organizer',
+          scope: 'event',
+          createdAt: new Date(),
+        }),
+        tx.roles[organizerRoleId].link({ event: eventId }),
+
+        // Create Participant role with basic permissions
+        tx.roles[participantRoleId].update({
+          name: 'Participant',
+          scope: 'event',
+          createdAt: new Date(),
+        }),
+        tx.roles[participantRoleId].link({ event: eventId }),
+
+        // Create participation for creator as Organizer
+        tx.eventParticipants[participantId].update({
+          role: 'Organizer',
+          status: 'member',
+          createdAt: new Date(),
+        }),
+        tx.eventParticipants[participantId].link({ user: user.id, event: eventId }),
+      ]);
+
+      toast.success('Event created successfully!');
+      setTimeout(() => (window.location.href = '/calendar'), 500);
+    } catch (error) {
+      console.error('Failed to create event:', error);
+      toast.error('Failed to create event. Please try again.');
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Create a New Event</CardTitle>
+        <CardDescription>
+          Step {current + 1} of {count}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Carousel setApi={setApi} className="w-full">
+          <CarouselContent>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-event-title" className="text-lg">
+                    What's the event title?
+                  </Label>
+                  <Input
+                    id="guided-event-title"
+                    placeholder="Enter event title"
+                    value={data.title}
+                    onChange={e => setFormData({ ...formData, title: e.target.value })}
+                    onKeyDown={e => handleKeyDown(e, data.title.trim() !== '')}
+                    className="text-lg"
+                    autoFocus
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Press Enter to continue • Choose a clear, descriptive title
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-event-description" className="text-lg">
+                    Describe your event (optional)
+                  </Label>
+                  <Textarea
+                    id="guided-event-description"
+                    placeholder="What's the purpose of this event?"
+                    value={data.description}
+                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                    onKeyDown={e => handleKeyDown(e, true)}
+                    rows={6}
+                    className="text-base"
+                  />
+                  <p className="text-sm text-muted-foreground">Press Enter to continue</p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-event-group" className="text-lg">
+                    Select a Group
+                  </Label>
+                  <select
+                    id="guided-event-group"
+                    value={data.groupId}
+                    onChange={e => setFormData({ ...formData, groupId: e.target.value })}
+                    className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="">Select a group...</option>
+                    {userGroups.map((group: any) => (
+                      <option key={group.id} value={group.id}>
+                        {group.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-sm text-muted-foreground">
+                    Events must be associated with a group
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-event-location" className="text-lg">
+                    Event Location
+                  </Label>
+                  <Input
+                    id="guided-event-location"
+                    placeholder="Enter location or virtual link"
+                    value={data.location}
+                    onChange={e => setFormData({ ...formData, location: e.target.value })}
+                    onKeyDown={e => handleKeyDown(e, true)}
+                    className="text-lg"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Physical address or virtual meeting link
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-4">
+                  <Label className="text-lg">Start Date & Time</Label>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="guided-event-start-date">Date</Label>
+                      <Input
+                        id="guided-event-start-date"
+                        type="date"
+                        value={data.startDate}
+                        onChange={e => setFormData({ ...formData, startDate: e.target.value })}
+                        className="text-base"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="guided-event-start-time">Time</Label>
+                      <Input
+                        id="guided-event-start-time"
+                        type="time"
+                        value={data.startTime}
+                        onChange={e => setFormData({ ...formData, startTime: e.target.value })}
+                        className="text-base"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-4">
+                  <Label className="text-lg">End Date & Time</Label>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="guided-event-end-date">Date</Label>
+                      <Input
+                        id="guided-event-end-date"
+                        type="date"
+                        value={data.endDate}
+                        onChange={e => setFormData({ ...formData, endDate: e.target.value })}
+                        className="text-base"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="guided-event-end-time">Time</Label>
+                      <Input
+                        id="guided-event-end-time"
+                        type="time"
+                        value={data.endTime}
+                        onChange={e => setFormData({ ...formData, endTime: e.target.value })}
+                        className="text-base"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="guided-event-capacity" className="text-lg">
+                      Event Capacity
+                    </Label>
+                    <Input
+                      id="guided-event-capacity"
+                      type="number"
+                      min="1"
+                      value={data.capacity}
+                      onChange={e =>
+                        setFormData({ ...formData, capacity: parseInt(e.target.value) || 50 })
+                      }
+                      className="text-lg"
+                    />
+                    <p className="text-sm text-muted-foreground">Maximum number of participants</p>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div>
+                      <p className="font-medium">Public Event</p>
+                      <p className="text-sm text-muted-foreground">
+                        Anyone can find and join this event
+                      </p>
+                    </div>
+                    <Switch
+                      checked={data.isPublic}
+                      onCheckedChange={checked => setFormData({ ...formData, isPublic: checked })}
+                    />
+                  </div>
+                </div>
+              </div>
+            </CarouselItem>
+          </CarouselContent>
+          <div className="absolute -left-12 right-12 top-1/2 flex -translate-y-1/2 justify-between">
+            <CarouselPrevious />
+            <CarouselNext disabled={current === 0 && !data.title.trim()} />
+          </div>
+        </Carousel>
+      </CardContent>
+      <CardFooter className="flex justify-between">
+        <Button variant="outline" onClick={onBack}>
+          Change Type
+        </Button>
+        <div className="flex items-center gap-4">
+          <div className="flex gap-1">
+            {Array.from({ length: count }).map((_, i) => (
+              <div
+                key={i}
+                className={`h-2 w-2 rounded-full ${i === current ? 'bg-primary' : 'bg-muted'}`}
+              />
+            ))}
+          </div>
+          {current === count - 1 && (
+            <Button
+              onClick={handleSubmit}
+              disabled={isSubmitting || !data.title.trim() || !data.groupId}
+            >
+              {isSubmitting ? 'Creating...' : 'Create Event'}
+            </Button>
+          )}
+        </div>
+      </CardFooter>
+    </Card>
+  );
+}
+
+function CreateEventForm({ isCarouselMode }: { isCarouselMode: boolean }) {
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    location: '',
+    startDate: new Date().toISOString().split('T')[0],
+    startTime: '09:00',
+    endDate: new Date().toISOString().split('T')[0],
+    endTime: '17:00',
+    capacity: 50,
+    isPublic: true,
+    groupId: '',
+    visibility: 'public' as 'public' | 'authenticated' | 'private',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const user = useAuthStore(state => state.user);
+
+  // Query user's groups for the dropdown
+  const { data: groupsData } = db.useQuery({
+    groups: {
+      $: {
+        where: {
+          or: [{ 'owner.id': user?.id }, { 'memberships.user.id': user?.id }],
+        },
+      },
+    },
+  });
+
+  const userGroups = groupsData?.groups || [];
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      if (!user?.id) {
+        toast.error('You must be logged in to create an event');
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.groupId) {
+        toast.error('Please select a group for this event');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const eventId = id();
+      const participantId = id();
+      const organizerRoleId = id();
+      const participantRoleId = id();
+
+      const startDateTime = new Date(`${formData.startDate}T${formData.startTime}`);
+      const endDateTime = new Date(`${formData.endDate}T${formData.endTime}`);
+
+      await db.transact([
+        // Create the event
+        tx.events[eventId].update({
+          title: formData.title,
+          description: formData.description || '',
+          location: formData.location || '',
+          startDate: startDateTime,
+          endDate: endDateTime,
+          isPublic: formData.isPublic,
+          capacity: formData.capacity,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          visibility: formData.visibility,
+        }),
+        tx.events[eventId].link({ organizer: user.id, group: formData.groupId }),
+
+        // Create Organizer role with admin permissions
+        tx.roles[organizerRoleId].update({
+          name: 'Organizer',
+          scope: 'event',
+          createdAt: new Date(),
+        }),
+        tx.roles[organizerRoleId].link({ event: eventId }),
+
+        // Create Participant role with basic permissions
+        tx.roles[participantRoleId].update({
+          name: 'Participant',
+          scope: 'event',
+          createdAt: new Date(),
+        }),
+        tx.roles[participantRoleId].link({ event: eventId }),
+
+        // Create participation for creator as Organizer
+        tx.eventParticipants[participantId].update({
+          role: 'Organizer',
+          status: 'member',
+          createdAt: new Date(),
+        }),
+        tx.eventParticipants[participantId].link({ user: user.id, event: eventId }),
+      ]);
+
+      toast.success('Event created successfully!');
+      setTimeout(() => {
+        window.location.href = '/calendar';
+      }, 500);
+    } catch (error) {
+      console.error('Failed to create event:', error);
+      toast.error('Failed to create event. Please try again.');
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isCarouselMode) {
+    return null; // Carousel mode uses GuidedEventFlow
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Create a New Event</CardTitle>
+        <CardDescription>Create and manage events for your community</CardDescription>
+      </CardHeader>
+      <form onSubmit={handleSubmit}>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="event-title">Event Title</Label>
+            <Input
+              id="event-title"
+              placeholder="Enter event title"
+              value={formData.title}
+              onChange={e => setFormData({ ...formData, title: e.target.value })}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="event-description">Description</Label>
+            <Textarea
+              id="event-description"
+              placeholder="Describe the purpose of this event"
+              value={formData.description}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
+              rows={4}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="event-group">Group</Label>
+            <select
+              id="event-group"
+              value={formData.groupId}
+              onChange={e => setFormData({ ...formData, groupId: e.target.value })}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              required
+            >
+              <option value="">Select a group...</option>
+              {userGroups.map((group: any) => (
+                <option key={group.id} value={group.id}>
+                  {group.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="event-location">Location</Label>
+            <Input
+              id="event-location"
+              placeholder="Physical address or virtual meeting link"
+              value={formData.location}
+              onChange={e => setFormData({ ...formData, location: e.target.value })}
+            />
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="event-start-date">Start Date</Label>
+              <Input
+                id="event-start-date"
+                type="date"
+                value={formData.startDate}
+                onChange={e => setFormData({ ...formData, startDate: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="event-start-time">Start Time</Label>
+              <Input
+                id="event-start-time"
+                type="time"
+                value={formData.startTime}
+                onChange={e => setFormData({ ...formData, startTime: e.target.value })}
+                required
+              />
+            </div>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="event-end-date">End Date</Label>
+              <Input
+                id="event-end-date"
+                type="date"
+                value={formData.endDate}
+                onChange={e => setFormData({ ...formData, endDate: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="event-end-time">End Time</Label>
+              <Input
+                id="event-end-time"
+                type="time"
+                value={formData.endTime}
+                onChange={e => setFormData({ ...formData, endTime: e.target.value })}
+                required
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="event-capacity">Event Capacity</Label>
+            <Input
+              id="event-capacity"
+              type="number"
+              min="1"
+              placeholder="Maximum number of participants"
+              value={formData.capacity}
+              onChange={e => setFormData({ ...formData, capacity: parseInt(e.target.value) || 50 })}
+              required
+            />
+          </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="event-public"
+              checked={formData.isPublic}
+              onCheckedChange={checked => setFormData({ ...formData, isPublic: checked })}
+            />
+            <Label htmlFor="event-public" className="cursor-pointer">
+              Make this event public
+            </Label>
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? 'Creating...' : 'Create Event'}
+          </Button>
+        </CardFooter>
+      </form>
+    </Card>
+  );
+}
+
 // ====== AMENDMENT FORMS ======
 function CreateAmendmentForm({ isCarouselMode }: { isCarouselMode: boolean }) {
   const [formData, setFormData] = useState({
@@ -2472,6 +3355,7 @@ function CreateAmendmentForm({ isCarouselMode }: { isCarouselMode: boolean }) {
     code: '',
     date: new Date().toISOString().split('T')[0],
     hashtags: [] as string[],
+    visibility: 'public' as 'public' | 'authenticated' | 'private',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const user = useAuthStore(state => state.user);
@@ -2488,8 +3372,12 @@ function CreateAmendmentForm({ isCarouselMode }: { isCarouselMode: boolean }) {
       }
 
       const amendmentId = id();
+      const collaboratorId = id();
+      const applicantRoleId = id();
+      const collaboratorRoleId = id();
 
       const transactions = [
+        // Create the amendment
         tx.amendments[amendmentId].update({
           title: formData.title,
           subtitle: formData.subtitle || '',
@@ -2497,8 +3385,33 @@ function CreateAmendmentForm({ isCarouselMode }: { isCarouselMode: boolean }) {
           supporters: 0,
           date: formData.date,
           code: formData.code || '',
+          visibility: formData.visibility,
         }),
         tx.amendments[amendmentId].link({ user: user.id }),
+
+        // Create Applicant role with admin permissions
+        tx.roles[applicantRoleId].update({
+          name: 'Applicant',
+          scope: 'amendment',
+          createdAt: new Date(),
+        }),
+        tx.roles[applicantRoleId].link({ amendment: amendmentId }),
+
+        // Create Collaborator role with basic permissions
+        tx.roles[collaboratorRoleId].update({
+          name: 'Collaborator',
+          scope: 'amendment',
+          createdAt: new Date(),
+        }),
+        tx.roles[collaboratorRoleId].link({ amendment: amendmentId }),
+
+        // Create collaboration for creator as Applicant
+        tx.amendmentCollaborators[collaboratorId].update({
+          role: 'Applicant',
+          status: 'member',
+          createdAt: new Date(),
+        }),
+        tx.amendmentCollaborators[collaboratorId].link({ user: user.id, amendment: amendmentId }),
       ];
 
       // Add hashtags

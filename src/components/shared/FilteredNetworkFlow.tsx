@@ -47,14 +47,12 @@ export function FilteredNetworkFlow({
   const [legendCollapsed, setLegendCollapsed] = useState(false);
   const [panelCollapsed, setPanelCollapsed] = useState(false);
 
-  // Fetch the specific user profile
-  const { data: profileData } = db.useQuery({
-    profiles: {
-      $: { where: { 'user.id': userId } },
-      user: {
-        memberships: {
-          group: {},
-        },
+  // Fetch the specific user
+  const { data: userData } = db.useQuery({
+    $users: {
+      $: { where: { id: userId } },
+      memberships: {
+        group: {},
       },
     },
   });
@@ -67,8 +65,7 @@ export function FilteredNetworkFlow({
     },
   });
 
-  const profile = profileData?.profiles?.[0];
-  const user = profile?.user;
+  const user = userData?.$users?.[0];
   const memberships = user?.memberships || [];
   const relationships = relationshipsData?.groupRelationships || [];
 
@@ -243,7 +240,7 @@ export function FilteredNetworkFlow({
 
   // Generate flow chart
   const generateFlowChart = useCallback(() => {
-    if (!profile || !user) {
+    if (!user) {
       setNodes([]);
       setEdges([]);
       return;
@@ -258,8 +255,8 @@ export function FilteredNetworkFlow({
       type: 'default',
       position: { x: 400, y: 300 },
       data: {
-        label: profile.name || 'User',
-        description: profile.subtitle,
+        label: user.name || 'User',
+        description: user.subtitle,
         level: 0,
         type: 'user',
       },
@@ -517,7 +514,6 @@ export function FilteredNetworkFlow({
     setNodes(newNodes);
     setEdges(Array.from(allEdgesMap.values()));
   }, [
-    profile,
     user,
     userId,
     userGroups,
@@ -569,7 +565,7 @@ export function FilteredNetworkFlow({
     }
   }, []);
 
-  if (!profile || !user) {
+  if (!user) {
     return (
       <div className="flex h-[600px] w-full items-center justify-center rounded-lg border bg-background">
         <p className="text-muted-foreground">Loading network...</p>

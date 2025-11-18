@@ -8,42 +8,55 @@ import type { User } from '../types/user.types';
  * @returns User data with loading and error states
  */
 export function useUserData(userId?: string) {
-  // Query user profile and related data
+  // Query user data directly from $users
+  console.log('🔍 [useUserData] Fetching data for userId:', userId);
   const { data, isLoading, error } = db.useQuery(
     userId
       ? {
-          profiles: {
+          $users: {
             $: {
               where: {
-                'user.id': userId,
+                id: userId,
               },
             },
             avatarFile: {}, // Query the linked avatar file to get URL
-            user: {
-              stats: {},
-              statements: {},
-              blogs: {},
-              amendments: {},
-              memberships: {
-                group: {},
-              },
-              amendmentCollaborations: {
-                amendment: {},
-              },
-              hashtags: {}, // Add hashtags to the query
+            stats: {},
+            statements: {},
+            memberships: {
+              group: {},
             },
+            bloggerRelations: {
+              blog: {},
+              role: {
+                actionRights: {},
+              },
+            },
+            hashtags: {}, // Add hashtags to the query
           },
         }
       : null
   );
 
-  // Extract profile ID
-  const profileId = useMemo(() => {
-    if (!userId || !data?.profiles || data.profiles.length === 0) {
-      return null;
-    }
-    return data.profiles[0].id;
-  }, [data, userId]);
+  console.log('🔍 [useUserData] Query result:', { data, isLoading, error });
+
+  // Separate query for amendment collaborations
+  const { data: collaborationsData } = db.useQuery(
+    userId
+      ? {
+          amendmentCollaborators: {
+            $: {
+              where: {
+                'user.id': userId,
+              },
+            },
+            amendment: {
+              user: {},
+              group: {},
+            },
+          },
+        }
+      : null
+  );
 
   // Transform Instant DB data to match User type
   const user: User | null = useMemo(() => {
@@ -52,25 +65,25 @@ export function useUserData(userId?: string) {
       return null;
     }
 
-    if (!data?.profiles || data.profiles.length === 0) {
-      console.log('❌ [useUserData] No profiles found for userId:', userId);
+    if (!data?.$users || data.$users.length === 0) {
+      console.log('❌ [useUserData] No user found for userId:', userId);
       return null;
     }
 
-    const profile = data.profiles[0];
-    const userData = profile.user;
+    const userData = data.$users[0];
 
-    console.log('✅ [useUserData] Found profile data:', {
-      profileName: profile.name,
-      hasUserData: !!userData,
+    console.log('✅ [useUserData] Found user data:', {
+      userName: userData.name,
+      hasData: !!userData,
     });
 
-    // Transform profile and related data
+    // Transform user and related data
     return {
-      name: profile.name || '',
-      subtitle: profile.subtitle || '',
+      id: userData.id, // Add the user ID!
+      name: userData.name || '',
+      subtitle: userData.subtitle || '',
       // Use avatarFile URL if available, otherwise fall back to avatar string or imageURL
-      avatar: profile.avatarFile?.url || profile.avatar || profile.imageURL || '',
+      avatar: userData.avatarFile?.url || userData.avatar || userData.imageURL || '',
 
       // Transform stats
       stats:
@@ -82,23 +95,23 @@ export function useUserData(userId?: string) {
 
       // Contact information
       contact: {
-        email: profile.contactEmail || '',
-        twitter: profile.contactTwitter || '',
-        website: profile.contactWebsite || '',
-        location: profile.contactLocation || '',
+        email: userData.contactEmail || '',
+        twitter: userData.contactTwitter || '',
+        website: userData.contactWebsite || '',
+        location: userData.contactLocation || '',
       },
 
       // Social media
       socialMedia: {
-        whatsapp: profile.whatsapp,
-        instagram: profile.instagram,
-        twitter: profile.twitter,
-        facebook: profile.facebook,
-        snapchat: profile.snapchat,
+        whatsapp: userData.whatsapp,
+        instagram: userData.instagram,
+        twitter: userData.twitter,
+        facebook: userData.facebook,
+        snapchat: userData.snapchat,
       },
 
       // About
-      about: profile.about || '',
+      about: userData.about || '',
 
       // Transform statements
       statements:
@@ -108,65 +121,103 @@ export function useUserData(userId?: string) {
           tag: statement.tag,
         })) || [],
 
-      // Transform blogs
+      // Transform blogs - only from blogger relations with update rights
       blogs:
-        userData?.blogs?.map((blog: any) => ({
-          id: blog.id,
-          title: blog.title,
-          date: blog.date,
-          likes: blog.likes,
-          comments: blog.comments,
-        })) || [],
+        userData?.bloggerRelations
+          ?.filter((relation: any) => {
+            // Check if this blogger relation has a role with update rights for blogs
+            const hasUpdateRight = relation.role?.actionRights?.some(
+              (right: any) => right.resource === 'blogs' && right.action === 'update'
+            );
+            return hasUpdateRight && relation.blog;
+          })
+          ?.reduce((acc: any[], relation: any) => {
+            // Deduplicate by blog ID
+            const existingIndex = acc.findIndex(b => b.id === relation.blog.id);
+            if (existingIndex === -1) {
+              acc.push({
+                id: relation.blog.id,
+                title: relation.blog.title,
+                date: relation.blog.date,
+                likes: relation.blog.likeCount || 0,
+                comments: relation.blog.commentCount || 0,
+                role: relation.status, // Include the blogger role status
+              });
+            }
+            return acc;
+          }, []) || [],
 
       // Transform groups from memberships
       groups:
         userData?.memberships
           ?.filter((membership: any) => membership.group) // Filter out memberships without group
-          ?.map((membership: any) => ({
-            id: membership.id, // Use membership ID to ensure uniqueness
-            groupId: membership.group.id, // Keep the actual group ID for navigation
-            name: membership.group.name,
-            members: membership.group.memberCount,
-            role: membership.role,
-            description: membership.group.description,
-            tags: membership.group.tags,
-            amendments: membership.group.amendments,
-            events: membership.group.events,
-            abbr: membership.group.abbr,
-          })) || [],
+          ?.reduce((acc: any[], membership: any) => {
+            // Use membership ID as the primary key, but ensure uniqueness by checking if it already exists
+            const existingIndex = acc.findIndex(g => g.id === membership.id);
+            if (existingIndex === -1) {
+              acc.push({
+                id: membership.id, // Use membership ID to ensure uniqueness
+                groupId: membership.group.id, // Keep the actual group ID for navigation
+                name: membership.group.name,
+                members: membership.group.memberCount,
+                role: membership.role,
+                description: membership.group.description,
+                tags: membership.group.tags,
+                // Amendment and event counts not available in this query - set to undefined
+                amendments: undefined,
+                events: undefined,
+                abbr: membership.group.abbr,
+              });
+            }
+            return acc;
+          }, []) || [],
 
-      // Transform amendments
+      // Get amendments from collaborations instead (no direct user->amendments link)
       amendments:
-        userData?.amendments?.map((amendment: any) => ({
-          id: amendment.id,
-          title: amendment.title,
-          subtitle: amendment.subtitle,
-          status: amendment.status,
-          supporters: amendment.supporters,
-          date: amendment.date,
-          code: amendment.code,
-          tags: amendment.tags,
-        })) || [],
+        collaborationsData?.amendmentCollaborators?.reduce((acc: any[], collab: any) => {
+          // Deduplicate by amendment ID
+          const existingIndex = acc.findIndex(a => a.id === collab.amendment.id);
+          if (existingIndex === -1) {
+            acc.push({
+              id: collab.amendment.id,
+              title: collab.amendment.title,
+              subtitle: collab.amendment.subtitle,
+              status: collab.amendment.status,
+              supporters: collab.amendment.supporters,
+              date: collab.amendment.date,
+              code: collab.amendment.code,
+              tags: collab.amendment.tags,
+            });
+          }
+          return acc;
+        }, []) || [],
 
       // Transform hashtags
       hashtags:
-        userData?.hashtags?.map((hashtag: any) => ({
-          id: hashtag.id,
-          tag: hashtag.tag,
-        })) || [],
+        userData?.hashtags?.reduce((acc: any[], hashtag: any) => {
+          // Deduplicate by hashtag ID
+          const existingIndex = acc.findIndex(h => h.id === hashtag.id);
+          if (existingIndex === -1) {
+            acc.push({
+              id: hashtag.id,
+              tag: hashtag.tag,
+            });
+          }
+          return acc;
+        }, []) || [],
 
       // Count amendment collaborations (where user is admin or collaborator)
       amendmentCollaborationsCount:
-        userData?.amendmentCollaborations?.filter(
+        collaborationsData?.amendmentCollaborators?.filter(
           (collab: any) => collab.status === 'admin' || collab.status === 'collaborator'
         )?.length || 0,
     };
-  }, [data, userId]);
+  }, [data, userId, collaborationsData]);
 
   return {
     user,
-    profileId,
+    userId: userId,
     isLoading,
-    error: error ? String(error) : null,
+    error: error ? (error instanceof Error ? error.message : JSON.stringify(error)) : null,
   };
 }

@@ -63,6 +63,7 @@ export interface UserHashtag {
 }
 
 export interface User {
+  id: string; // Add the user ID
   name: string;
   subtitle: string;
   avatar: string;
