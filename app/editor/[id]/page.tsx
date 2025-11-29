@@ -500,11 +500,7 @@ export default function DocumentEditorPage() {
             )}
 
             {document.owner?.id === user?.id && user?.id && (
-              <InviteCollaboratorDialog
-                documentId={documentId}
-                currentUserId={user.id}
-                existingCollaborators={document.collaborators || []}
-              />
+              <InviteCollaboratorDialog documentId={documentId} currentUserId={user.id} />
             )}
 
             {/* Active users indicator */}
