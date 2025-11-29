@@ -99,6 +99,7 @@ export default function EventParticipantsPage({ params }: PageParams) {
       },
       participants: {
         user: {},
+        role: {},
       },
       group: {
         roles: {
@@ -127,7 +128,7 @@ export default function EventParticipantsPage({ params }: PageParams) {
   const rolesData = { roles: event?.group?.roles || [] };
 
   const currentUserParticipation = participants.find((p: any) => p.user?.id === currentUserId);
-  const isAdmin = currentUserParticipation?.role === 'Organizer';
+  const isAdmin = currentUserParticipation?.role?.name === 'Organizer';
 
   // Get existing participant IDs to exclude from invite search
   const existingParticipantIds = participants.map(p => p.user?.id).filter(Boolean) as string[];
@@ -203,7 +204,7 @@ export default function EventParticipantsPage({ params }: PageParams) {
   const handleChangeRole = async (participantId: string, newRole: string) => {
     try {
       await db.transact(
-        db.tx.eventParticipants[participantId].update({
+        db.tx.eventParticipants[participantId].link({
           role: newRole,
         })
       );

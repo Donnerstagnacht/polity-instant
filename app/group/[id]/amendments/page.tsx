@@ -40,15 +40,22 @@ export default function GroupAmendmentsPage({ params }: { params: Promise<{ id: 
   const { data, isLoading } = db.useQuery({
     groups: {
       $: { where: { id: resolvedParams.id } },
-      amendments: {
-        user: {},
-        hashtags: {},
+    },
+  });
+
+  const { data: amendmentsData, isLoading: amendmentsLoading } = db.useQuery({
+    amendments: {
+      $: {
+        where: {
+          'groups.id': resolvedParams.id,
+        },
       },
+      hashtags: {},
     },
   });
 
   const group = data?.groups?.[0];
-  const amendments = group?.amendments || [];
+  const amendments = amendmentsData?.amendments || [];
 
   // Filter by hashtag
   const matchesHashtag = (amendment: any) => {
@@ -104,7 +111,7 @@ export default function GroupAmendmentsPage({ params }: { params: Promise<{ id: 
     }
   };
 
-  if (isLoading) {
+  if (isLoading || amendmentsLoading) {
     return (
       <AuthGuard requireAuth={true}>
         <PageWrapper className="container mx-auto p-8">

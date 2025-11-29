@@ -85,7 +85,6 @@ function ProcessVisualization({ status }: { status: string }) {
 
 export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
   const router = useRouter();
-  const { t } = useTranslation();
   const user = useAuthStore((state: any) => state.user);
 
   // Subscribe hook
@@ -111,7 +110,10 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
           id: amendmentId,
         },
       },
-      user: {},
+      amendmentRoleCollaborators: {
+        user: {},
+        role: {},
+      },
       hashtags: {},
     },
   });
@@ -142,7 +144,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
   }
 
   const isAdmin = status === 'admin';
-  const author = amendment.user;
+  const collaborators = amendment.amendmentRoleCollaborators || [];
 
   const statusColors: Record<string, string> = {
     Passed: 'bg-green-500/10 text-green-500 border-green-500/20',
@@ -163,18 +165,32 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
           <p className="text-xl text-muted-foreground">{amendment.subtitle}</p>
         )}
 
-        {/* Proposed By Section - Similar to Event's Organized By */}
-        {author && (
+        {/* Collaborators Section */}
+        {collaborators.length > 0 && (
           <div className="mt-4 flex items-center justify-center gap-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={author.avatar || author.imageURL} />
-              <AvatarFallback>{author.name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
-            </Avatar>
+            <div className="flex -space-x-2">
+              {collaborators.slice(0, 3).map((collab: any) => (
+                <Avatar key={collab.user?.id} className="h-10 w-10 border-2 border-background">
+                  <AvatarImage src={collab.user?.avatar || collab.user?.imageURL} />
+                  <AvatarFallback>{collab.user?.name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+                </Avatar>
+              ))}
+              {collaborators.length > 3 && (
+                <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-background bg-muted text-xs font-medium">
+                  +{collaborators.length - 3}
+                </div>
+              )}
+            </div>
             <div className="text-left">
               <p className="text-sm font-medium">
-                {t('components.labels.proposedBy')} {author.name || 'Unknown'}
+                {collaborators.length}{' '}
+                {collaborators.length === 1 ? 'Collaborator' : 'Collaborators'}
               </p>
-              {author.handle && <p className="text-xs text-muted-foreground">@{author.handle}</p>}
+              <p className="text-xs text-muted-foreground">
+                {collaborators[0]?.user?.name || 'Unknown'}
+                {collaborators.length > 1 &&
+                  ` and ${collaborators.length - 1} other${collaborators.length > 2 ? 's' : ''}`}
+              </p>
             </div>
           </div>
         )}
