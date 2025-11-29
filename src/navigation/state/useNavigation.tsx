@@ -197,26 +197,29 @@ export function useNavigation() {
     }
 
     // Query amendment with roles and collaborators if we're on an amendment page
-    const { data: amendmentData } = db.useQuery(
-      amendmentId
-        ? {
-            amendments: {
-              $: {
-                where: {
-                  id: amendmentId,
-                },
-              },
-              amendmentRoleCollaborators: {
-                user: {},
-                role: {},
-              },
-              roles: {
-                actionRights: {},
-              },
+    let amendmentData;
+    if (amendmentId) {
+      const result = db.useQuery({
+        amendments: {
+          $: {
+            where: {
+              id: amendmentId,
             },
-          }
-        : { amendments: {} }
-    );
+          },
+          amendmentRoleCollaborators: {
+            user: {},
+            role: {},
+          },
+          roles: {
+            actionRights: {},
+          },
+        },
+      });
+      amendmentData = result.data;
+    } else {
+      const result = db.useQuery({ amendments: {} });
+      amendmentData = result.data;
+    }
 
     // Check if user has manage permission for this amendment
     if (amendmentId && authUser?.id && amendmentData?.amendments?.[0]) {
