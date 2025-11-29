@@ -164,16 +164,6 @@ export function BlockSuggestionCard({
   const currentUserVote = suggestion.votes?.find((v: any) => v.voterId === currentUserId);
   const hasVoted = !!currentUserVote;
 
-  // Debug logging
-  React.useEffect(() => {
-    console.log('=== BLOCK SUGGESTION DEBUG ===');
-    console.log('suggestion.votes:', suggestion.votes);
-    console.log('currentUserId:', currentUserId);
-    console.log('currentUserVote:', currentUserVote);
-    console.log('hasVoted:', hasVoted);
-    console.log('currentMode:', currentMode);
-  }, [suggestion.votes, currentUserId, currentUserVote, hasVoted, currentMode]);
-
   const [editingTitle, setEditingTitle] = React.useState(false);
   const [titleValue, setTitleValue] = React.useState(suggestion.title || '');
 
@@ -693,13 +683,9 @@ export const useResolveSuggestion = (
       const votes = (discussion as any)?.votes; // Get the votes from the discussion
       const createdAt = new Date(nodeData.createdAt);
 
-      // Debug logging for votes
+      // Debug logging for votes (currently disabled)
       if (crId) {
-        console.log(`useResolveSuggestion for ${crId}:`, {
-          discussionId: id,
-          discussion,
-          votes,
-        });
+        // TODO: Add debug logging if needed
       }
 
       const keyId = getSuggestionKey(id);

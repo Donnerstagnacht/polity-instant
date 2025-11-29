@@ -9,7 +9,6 @@ import type { User } from '../types/user.types';
  */
 export function useUserData(userId?: string) {
   // Query user data directly from $users
-  console.log('🔍 [useUserData] Fetching data for userId:', userId);
   const { data, isLoading, error } = db.useQuery(
     userId
       ? {
@@ -24,6 +23,7 @@ export function useUserData(userId?: string) {
             statements: {},
             memberships: {
               group: {},
+              role: {},
             },
             bloggerRelations: {
               blog: {},
@@ -37,8 +37,6 @@ export function useUserData(userId?: string) {
       : null
   );
 
-  console.log('🔍 [useUserData] Query result:', { data, isLoading, error });
-
   // Separate query for amendment collaborations
   const { data: collaborationsData } = db.useQuery(
     userId
@@ -49,10 +47,7 @@ export function useUserData(userId?: string) {
                 'user.id': userId,
               },
             },
-            amendment: {
-              user: {},
-              group: {},
-            },
+            amendment: {},
           },
         }
       : null
@@ -66,16 +61,10 @@ export function useUserData(userId?: string) {
     }
 
     if (!data?.$users || data.$users.length === 0) {
-      console.log('❌ [useUserData] No user found for userId:', userId);
       return null;
     }
 
     const userData = data.$users[0];
-
-    console.log('✅ [useUserData] Found user data:', {
-      userName: userData.name,
-      hasData: !!userData,
-    });
 
     // Transform user and related data
     return {
@@ -160,7 +149,7 @@ export function useUserData(userId?: string) {
                 groupId: membership.group.id, // Keep the actual group ID for navigation
                 name: membership.group.name,
                 members: membership.group.memberCount,
-                role: membership.role,
+                role: membership.role?.name || 'Member', // Default to 'Member' if role is undefined
                 description: membership.group.description,
                 tags: membership.group.tags,
                 // Amendment and event counts not available in this query - set to undefined

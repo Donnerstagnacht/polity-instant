@@ -20,7 +20,7 @@ export function NavUserAvatar({
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
   const clickHandler = () => {
-    console.log('User avatar clicked');
+    // Placeholder for click handling
   };
 
   const avatarUrl = '/placeholder-user.jpg';

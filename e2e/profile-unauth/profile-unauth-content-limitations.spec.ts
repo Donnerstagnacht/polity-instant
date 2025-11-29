@@ -31,7 +31,7 @@ test.describe('Public Profile Viewing', () => {
       const bioSection = page.locator('[class*="bio"]').or(page.getByText(/bio/i).locator('..'));
       const bioCount = await bioSection.count();
       if (bioCount > 0) {
-        console.log('Bio section found on public profile');
+        // Bio section is visible
       }
 
       // Verify social stats visibility
@@ -40,11 +40,10 @@ test.describe('Public Profile Viewing', () => {
         .or(page.getByText(/followers|following/i).first());
       const statsCount = await statsSection.count();
       if (statsCount > 0) {
-        console.log('Social stats visible on public profile');
+        // Stats section is visible
       }
     } else {
       // 4. If redirected to auth, mark as N/A
-      console.log('Redirected to auth - test marked as N/A');
     }
   });
 });

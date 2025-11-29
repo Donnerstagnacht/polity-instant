@@ -54,8 +54,6 @@ export async function createDocumentVersion({
         })
         .link({ document: documentId, creator: userId }),
     ]);
-
-    console.log(`✅ Version ${nextVersionNumber} created: ${versionTitle}`);
   } catch (error) {
     console.error('❌ Failed to create document version:', error);
     throw error;

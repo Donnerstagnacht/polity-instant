@@ -217,7 +217,7 @@ export function hasAmendmentPermission(
 
   return role.actionRights.some(
     right =>
-      right.resource === resource && right.action === action && right.amendmentId === amendment.id
+      right.resource === resource && right.action === action && right.amendment?.id === amendment.id
   );
 }
 
@@ -278,7 +278,6 @@ export function hasPermission(
  *
  * @example
  * const permissions = getGroupPermissions(user.memberships, groupId);
- * console.log(permissions); // [{ resource: 'events', action: 'create', ... }, ...]
  */
 export function getGroupPermissions(
   memberships: Membership[] | undefined,
@@ -309,7 +308,6 @@ export function getGroupPermissions(
  *
  * @example
  * const permissions = getEventPermissions(user.participations, eventId);
- * console.log(permissions); // [{ resource: 'events', action: 'update', ... }, ...]
  */
 export function getEventPermissions(
   participations: Participation[] | undefined,
@@ -332,7 +330,6 @@ export function getEventPermissions(
  *
  * @example
  * const permissions = getAmendmentPermissions(amendment, userId);
- * console.log(permissions); // [{ resource: 'documents', action: 'update', ... }, ...]
  */
 export function getAmendmentPermissions(
   amendment: Amendment | undefined,
@@ -346,7 +343,7 @@ export function getAmendmentPermissions(
   const role = amendment.roles.find(r => r.name === collaboration.role);
   if (!role?.actionRights) return [];
 
-  return role.actionRights.filter(right => right.amendmentId === amendment.id);
+  return role.actionRights.filter(right => right.amendment?.id === amendment.id);
 }
 
 /**
@@ -942,7 +939,6 @@ export function hasBlogPermission(
  *
  * @example
  * const permissions = getBlogPermissions(user.bloggerRelations, blogId);
- * console.log(permissions); // [{ resource: 'blogs', action: 'update', ... }, ...]
  */
 export function getBlogPermissions(
   bloggerRelations: BloggerRelation[] | undefined,

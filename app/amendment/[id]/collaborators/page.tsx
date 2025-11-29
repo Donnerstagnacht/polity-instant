@@ -90,6 +90,7 @@ export default function AmendmentCollaboratorsPage({ params }: PageParams) {
       },
       amendmentRoleCollaborators: {
         user: {},
+        role: {},
       },
       roles: {
         $: {
@@ -99,28 +100,12 @@ export default function AmendmentCollaboratorsPage({ params }: PageParams) {
         },
         actionRights: {},
       },
-      group: {
-        roles: {
-          $: {
-            where: {
-              scope: 'group',
-            },
-          },
-          actionRights: {},
-        },
-      },
     },
   });
 
   // Query all users for user search
   const { data: usersData, isLoading: isLoadingUsers } = db.useQuery({
-    $users: {
-      $: {
-        where: {
-          isActive: true,
-        },
-      },
-    },
+    $users: {},
   });
 
   // Check if current user is admin
@@ -130,14 +115,15 @@ export default function AmendmentCollaboratorsPage({ params }: PageParams) {
   const amendment = data?.amendments?.[0];
   const collaborators = amendment?.amendmentRoleCollaborators || [];
   const amendmentRoles = amendment?.roles || [];
-  const groupRoles = amendment?.group?.roles || [];
-  const rolesData = { roles: [...amendmentRoles, ...groupRoles] };
+  const rolesData = { roles: amendmentRoles };
 
   const currentUserCollaboration = collaborators.find((c: any) => c.user?.id === currentUserId);
-  const isAdmin = currentUserCollaboration?.role === 'Applicant';
+  const isAdmin = currentUserCollaboration?.role?.name === 'Applicant';
 
   // Get existing collaborator IDs to exclude from invite search
-  const existingCollaboratorIds = collaborators.map(c => c.user?.id).filter(Boolean) as string[];
+  const existingCollaboratorIds = collaborators
+    .map((c: any) => c.user?.id)
+    .filter(Boolean) as string[];
 
   // Filter users for invite search
   const filteredUsers = usersData?.$users?.filter(user => {
@@ -345,8 +331,6 @@ export default function AmendmentCollaboratorsPage({ params }: PageParams) {
         const updateData: any = { resource, action };
         if (role?.scope === 'amendment') {
           updateData.amendmentId = amendmentId;
-        } else if (role?.scope === 'group' && amendment?.group?.id) {
-          updateData.groupId = amendment.group.id;
         }
 
         await db.transact([

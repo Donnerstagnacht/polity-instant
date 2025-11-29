@@ -24,7 +24,5 @@ test.describe('Authentication State Detection', () => {
 
     // 5. Verify no session cookies exist
     expect(authCookies.length).toBe(0);
-
-    console.log(`Total cookies: ${cookies.length}, Auth cookies: ${authCookies.length}`);
   });
 });

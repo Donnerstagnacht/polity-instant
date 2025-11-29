@@ -26,7 +26,7 @@ test.describe('Access Control for Edit Pages', () => {
       const authHeading = page.getByRole('heading', { name: /sign in|log in/i });
       await expect(authHeading).toBeVisible();
     } else {
-      console.log('/user route is accessible without authentication');
+      // User page accessible - verify expected behavior
     }
   });
 });

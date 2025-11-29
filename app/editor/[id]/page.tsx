@@ -313,8 +313,6 @@ export default function DocumentEditorPage() {
           creationType: 'suggestion_accepted',
           title: versionTitle,
         });
-
-        console.log('✅ Version created for accepted suggestion:', suggestion?.crId || 'unknown');
       } catch (error) {
         console.error('Failed to create version for accepted suggestion:', error);
       }
@@ -338,8 +336,6 @@ export default function DocumentEditorPage() {
           creationType: 'suggestion_declined',
           title: versionTitle,
         });
-
-        console.log('✅ Version created for declined suggestion:', suggestion?.crId || 'unknown');
       } catch (error) {
         console.error('Failed to create version for declined suggestion:', error);
       }

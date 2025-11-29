@@ -54,7 +54,6 @@ test.describe('Edit Profile Information', () => {
       // Still on edit page - verify no errors and field still has new value
       const nameField = page.getByLabel(/name/i);
       await expect(nameField).toHaveValue(newName);
-      console.log('Save completed but stayed on edit page');
     }
   });
 });

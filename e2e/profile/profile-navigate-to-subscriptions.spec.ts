@@ -28,7 +28,6 @@ test.describe('Navigation and URL Handling', () => {
       await expect(heading).toBeVisible({ timeout: 5000 });
     } else {
       // 4. If link not visible, mark as not applicable for this user
-      console.log('Subscriptions link not visible - not applicable for this user');
     }
   });
 });

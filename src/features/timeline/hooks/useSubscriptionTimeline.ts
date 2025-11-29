@@ -22,7 +22,7 @@ export function useSubscriptionTimeline() {
             },
             user: {},
             group: {},
-            amendment: { user: {} },
+            amendment: {},
             event: { organizer: {} },
             blog: {}, // Blogs don't have a direct user link - they use blogBloggers junction table
           },
@@ -92,7 +92,7 @@ export function useSubscriptionTimeline() {
             actor: {},
             user: {},
             group: {},
-            amendment: { user: {}, document: {} },
+            amendment: { document: {} },
             event: { organizer: {} },
             blog: {}, // Blogs don't have a direct user link - they use blogBloggers junction table
           },

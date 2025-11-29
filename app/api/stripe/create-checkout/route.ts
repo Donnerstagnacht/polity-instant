@@ -20,8 +20,6 @@ export async function POST(req: Request): Promise<NextResponse> {
     const { priceId, amount, userId } = (await req.json()) as CheckoutRequestBody;
     const origin = req.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL;
 
-    console.log('Creating checkout session:', { priceId, amount, userId, origin });
-
     // Validate Stripe is configured
     if (!process.env.STRIPE_SECRET_KEY) {
       console.error('STRIPE_SECRET_KEY is not configured');
@@ -57,8 +55,6 @@ export async function POST(req: Request): Promise<NextResponse> {
         }
 
         if (existingCustomer) {
-          console.log('Found existing customer:', existingCustomer.id);
-
           // Check for active subscriptions
           const subscriptions = await stripe.subscriptions.list({
             customer: existingCustomer.id,
@@ -67,17 +63,13 @@ export async function POST(req: Request): Promise<NextResponse> {
           });
 
           if (subscriptions.data.length > 0) {
-            console.log('Customer has', subscriptions.data.length, 'active subscription(s)');
-
             // Cancel all existing active subscriptions
             for (const sub of subscriptions.data) {
-              console.log('Canceling existing subscription:', sub.id);
               await stripe.subscriptions.cancel(sub.id);
             }
           }
         }
-      } catch (error) {
-        console.error('Error checking existing customer:', error);
+      } catch {
         // Continue with checkout creation even if this fails
       }
     }
@@ -101,11 +93,9 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     if (priceId) {
       // Fixed price subscription (€2 or €10)
-      console.log('Creating subscription with priceId:', priceId);
       sessionParams.line_items = [{ price: priceId, quantity: 1 }];
     } else if (amount) {
       // Custom amount subscription
-      console.log('Creating subscription with custom amount:', amount);
       sessionParams.line_items = [
         {
           price_data: {
@@ -122,7 +112,6 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
 
     const session = await stripe.checkout.sessions.create(sessionParams);
-    console.log('Checkout session created successfully:', session.id);
     return NextResponse.json({ url: session.url });
   } catch (err) {
     const error = err as Error;

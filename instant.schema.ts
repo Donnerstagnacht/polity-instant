@@ -25,7 +25,6 @@ const _schema = i.schema({
       facebook: i.string().optional(),
       handle: i.string().unique().indexed().optional(),
       instagram: i.string().optional(),
-      isActive: i.boolean().indexed().optional(),
       lastSeenAt: i.date().indexed().optional(),
       name: i.string().optional(),
       snapchat: i.string().optional(),
@@ -203,7 +202,6 @@ const _schema = i.schema({
     }),
     groupMemberships: i.entity({
       createdAt: i.date().indexed().optional(),
-      role: i.string().indexed(),
       status: i.string().indexed().optional(), // invited, requested, member, admin
       visibility: i.string().indexed().optional(), // 'public', 'authenticated', 'private'
     }),
@@ -409,19 +407,6 @@ const _schema = i.schema({
     }),
   },
   links: {
-    $usersLinkedPrimaryUser: {
-      forward: {
-        on: '$users',
-        has: 'one',
-        label: 'linkedPrimaryUser',
-        onDelete: 'cascade',
-      },
-      reverse: {
-        on: '$users',
-        has: 'many',
-        label: 'linkedGuestUsers',
-      },
-    },
     agendaItemsCreator: {
       forward: {
         on: 'agendaItems',
@@ -461,23 +446,11 @@ const _schema = i.schema({
     amendmentsGroup: {
       forward: {
         on: 'amendments',
-        has: 'one',
-        label: 'group',
+        has: 'many',
+        label: 'groups',
       },
       reverse: {
         on: 'groups',
-        has: 'many',
-        label: 'amendments',
-      },
-    },
-    amendmentsUser: {
-      forward: {
-        on: 'amendments',
-        has: 'one',
-        label: 'user',
-      },
-      reverse: {
-        on: '$users',
         has: 'many',
         label: 'amendments',
       },
@@ -854,6 +827,18 @@ const _schema = i.schema({
         label: 'eventParticipations',
       },
     },
+    eventParticipantRole: {
+      forward: {
+        on: 'eventParticipants',
+        has: 'one',
+        label: 'role',
+      },
+      reverse: {
+        on: 'roles',
+        has: 'many',
+        label: 'eventParticipants',
+      },
+    },
     eventsGroup: {
       forward: {
         on: 'events',
@@ -996,6 +981,18 @@ const _schema = i.schema({
         on: '$users',
         has: 'many',
         label: 'memberships',
+      },
+    },
+    groupMembershipRole: {
+      forward: {
+        on: 'groupMemberships',
+        has: 'one',
+        label: 'role',
+      },
+      reverse: {
+        on: 'roles',
+        has: 'many',
+        label: 'groupMemberships',
       },
     },
     roleGroup: {

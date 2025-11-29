@@ -25,7 +25,7 @@ test.describe('Edge Cases and Security Considerations', () => {
 
     // 4. Verify invalid authentication is detected
     // Should either redirect to auth or show as unauthenticated
-    const isAuthPage = currentUrl.includes('/auth');
+    const isAuthRedirect = currentUrl.includes('/auth');
     const editButton = page
       .getByRole('link', { name: /edit/i })
       .or(page.getByRole('button', { name: /edit/i }));
@@ -34,7 +34,9 @@ test.describe('Edge Cases and Security Considerations', () => {
     // 5. Verify proper re-authentication flow
     // User should not have edit access with invalid token
     expect(hasEditAccess).toBe(false);
-
-    console.log(`Invalid token handling: redirected to auth=${isAuthPage}`);
+    // Document whether auth redirect occurred
+    if (isAuthRedirect) {
+      expect(currentUrl).toContain('/auth');
+    }
   });
 });

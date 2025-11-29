@@ -291,7 +291,6 @@ async function seedUsers() {
       avatar: faker.image.avatar(),
       bio: 'This is the main test user account for development.',
       handle: 'testuser',
-      isActive: true,
       createdAt: faker.date.past({ years: 2 }),
       updatedAt: new Date(),
       lastSeenAt: new Date(),
@@ -371,7 +370,6 @@ async function seedUsers() {
       avatar: faker.image.avatar(),
       bio: 'Passionate about building better digital communities.',
       handle: 'tobias',
-      isActive: true,
       createdAt: faker.date.past({ years: 2 }),
       updatedAt: new Date(),
       lastSeenAt: new Date(),
@@ -703,7 +701,6 @@ async function seedUsers() {
         avatar: faker.image.avatar(),
         bio: faker.lorem.paragraph(),
         handle,
-        isActive: faker.datatype.boolean(0.9), // 90% active
         createdAt,
         updatedAt: new Date(),
         lastSeenAt: faker.date.recent({ days: 7 }),
@@ -1023,6 +1020,7 @@ async function seedGroups(userIds: string[]) {
   const blogIds: string[] = [];
   const amendmentIds: string[] = [];
   const transactions = [];
+  const groupRoleMap: Record<string, { boardMemberId: string; memberId: string }> = {};
 
   const mainUserId = SEED_CONFIG.mainTestUserId;
 
@@ -1060,17 +1058,38 @@ async function seedGroups(userIds: string[]) {
         .link({ owner: mainUserId })
     );
 
+    // Create roles for this group
+    const boardMemberRoleId = id();
+    const memberRoleId = id();
+    groupRoleMap[groupId] = { boardMemberId: boardMemberRoleId, memberId: memberRoleId };
+
+    transactions.push(
+      tx.roles[boardMemberRoleId]
+        .update({
+          name: 'Board Member',
+          description: 'Board member with administrative access',
+          scope: 'group',
+        })
+        .link({ group: groupId }),
+      tx.roles[memberRoleId]
+        .update({
+          name: 'Member',
+          description: 'Regular group member',
+          scope: 'group',
+        })
+        .link({ group: groupId })
+    );
+
     // Add main user as owner member
     const ownerMembershipId = id();
     transactions.push(
       tx.groupMemberships[ownerMembershipId]
         .update({
-          role: 'Board Member',
           status: 'member',
           createdAt: faker.date.past({ years: 1 }),
           visibility: 'public',
         })
-        .link({ user: mainUserId, group: groupId })
+        .link({ user: mainUserId, group: groupId, role: boardMemberRoleId })
     );
 
     // Add some members to main user's groups
@@ -1083,14 +1102,14 @@ async function seedGroups(userIds: string[]) {
     for (const memberId of members) {
       const membershipId = id();
       const status = randomItem(['member', 'member', 'member', 'requested', 'invited']);
+      const roleId = randomItem([memberRoleId, memberRoleId, boardMemberRoleId]); // Mostly members, occasionally board member
       transactions.push(
         tx.groupMemberships[membershipId]
           .update({
-            role: randomItem(['Member', 'Member', 'Board Member']),
             status: status,
             createdAt: faker.date.past({ years: 0.5 }),
           })
-          .link({ user: memberId, group: groupId })
+          .link({ user: memberId, group: groupId, role: roleId })
       );
     }
 
@@ -1192,6 +1211,28 @@ async function seedGroups(userIds: string[]) {
         .link({ owner: ownerId })
     );
 
+    // Create roles for this group
+    const boardMemberRoleId = id();
+    const memberRoleId = id();
+    groupRoleMap[groupId] = { boardMemberId: boardMemberRoleId, memberId: memberRoleId };
+
+    transactions.push(
+      tx.roles[boardMemberRoleId]
+        .update({
+          name: 'Board Member',
+          description: 'Board member with administrative access',
+          scope: 'group',
+        })
+        .link({ group: groupId }),
+      tx.roles[memberRoleId]
+        .update({
+          name: 'Member',
+          description: 'Regular group member',
+          scope: 'group',
+        })
+        .link({ group: groupId })
+    );
+
     // Add group memberships
     const memberCount = randomInt(SEED_CONFIG.membersPerGroup.min, SEED_CONFIG.membersPerGroup.max);
     const members = randomItems(
@@ -1204,26 +1245,25 @@ async function seedGroups(userIds: string[]) {
     transactions.push(
       tx.groupMemberships[ownerMembershipId]
         .update({
-          role: 'Board Member',
           status: 'member',
           createdAt: faker.date.past({ years: 1 }),
           visibility: randomVisibility(),
         })
-        .link({ user: ownerId, group: groupId })
+        .link({ user: ownerId, group: groupId, role: boardMemberRoleId })
     );
 
     // Maybe add main user as member to some groups
     if (i < 5 && !members.includes(mainUserId)) {
       const mainUserMembershipId = id();
+      const roleId = randomItem([memberRoleId, boardMemberRoleId]);
       transactions.push(
         tx.groupMemberships[mainUserMembershipId]
           .update({
-            role: randomItem(['Member', 'Board Member']),
             status: 'member',
             createdAt: faker.date.past({ years: 0.5 }),
             visibility: randomVisibility(),
           })
-          .link({ user: mainUserId, group: groupId })
+          .link({ user: mainUserId, group: groupId, role: roleId })
       );
       members.push(mainUserId);
     }
@@ -1231,15 +1271,15 @@ async function seedGroups(userIds: string[]) {
     for (const memberId of members) {
       const membershipId = id();
       const status = randomItem(['member', 'member', 'member', 'requested', 'invited']);
+      const roleId = randomItem([memberRoleId, memberRoleId, boardMemberRoleId]); // Mostly members, occasionally board member
       transactions.push(
         tx.groupMemberships[membershipId]
           .update({
-            role: randomItem(['Member', 'Member', 'Board Member']),
             status: status,
             createdAt: faker.date.past({ years: 0.5 }),
             visibility: randomVisibility(),
           })
-          .link({ user: memberId, group: groupId })
+          .link({ user: memberId, group: groupId, role: roleId })
       );
     }
 
@@ -1384,7 +1424,6 @@ async function seedGroupInvitationsAndRequests(groupIds: string[], userIds: stri
       transactions.push(
         tx.groupMemberships[membershipId]
           .update({
-            role: 'member',
             status: 'invited',
             createdAt: faker.date.recent({ days: 30 }),
           })
@@ -1405,7 +1444,6 @@ async function seedGroupInvitationsAndRequests(groupIds: string[], userIds: stri
       transactions.push(
         tx.groupMemberships[membershipId]
           .update({
-            role: 'member',
             status: 'requested',
             createdAt: faker.date.recent({ days: 30 }),
           })
@@ -2513,16 +2551,11 @@ async function seedEvents(userIds: string[], groupIds: string[]) {
       for (const participantId of participants) {
         const eventParticipantId = id();
         const status = randomItem(['member', 'member', 'member', 'admin']);
-        const role =
-          participantId === organizerId
-            ? 'organizer'
-            : randomItem(['attendee', 'attendee', 'attendee', 'speaker']);
         transactions.push(
           tx.eventParticipants[eventParticipantId]
             .update({
               status,
               createdAt: faker.date.past({ years: 0.08 }),
-              role,
               visibility: randomVisibility(),
             })
             .link({ user: participantId, event: eventId })
@@ -4759,16 +4792,6 @@ async function seedRBAC(
   let totalActionRights = 0;
   let totalParticipants = 0;
 
-  // Define common roles for groups
-  const groupRoleDefinitions = [
-    {
-      name: 'Board Member',
-      description: 'Board member with administrative access',
-      scope: 'group' as const,
-    },
-    { name: 'Member', description: 'Regular group member', scope: 'group' as const },
-  ];
-
   // Define common roles for events
   const eventRoleDefinitions = [
     {
@@ -4795,80 +4818,12 @@ async function seedRBAC(
     { name: 'Writer', description: 'Blog writer with edit access', scope: 'blog' as const },
   ];
 
-  // Define action rights for different resources
-  const resourceActions = {
-    events: ['create', 'read', 'update', 'delete', 'manage_participants'],
-    amendments: ['create', 'read', 'update', 'delete'],
-    amendmentCollaborators: ['manage'],
-    agendaItems: ['create', 'read', 'update', 'delete', 'manage'],
-    blogs: ['create', 'read', 'update', 'delete'],
-    documents: ['create', 'read', 'update', 'delete'],
-    todos: ['create', 'read', 'update', 'delete'],
-    links: ['create', 'read', 'update', 'delete'],
-    payments: ['create', 'read', 'update', 'delete'],
-    groupMemberships: ['manage'],
-    comments: ['create', 'read', 'update', 'delete'],
-  };
+  // Note: Role definitions and action rights are defined per resource below
 
   // Create roles and action rights for each group
-  for (const groupId of groupIds) {
-    const groupRoleIds: Record<string, string> = {};
-
-    // Create group-level roles
-    for (const roleDef of groupRoleDefinitions) {
-      const roleId = id();
-      groupRoleIds[roleDef.name] = roleId;
-
-      transactions.push(
-        tx.roles[roleId]
-          .update({
-            name: roleDef.name,
-            description: roleDef.description,
-            scope: roleDef.scope,
-            createdAt: faker.date.past({ years: 1 }),
-            updatedAt: new Date(),
-          })
-          .link({ group: groupId })
-      );
-      totalRoles++;
-    }
-
-    // Create action rights for Board Member role (full access to all resources)
-    const boardMemberRoleId = groupRoleIds['Board Member'];
-    for (const [resource, actions] of Object.entries(resourceActions)) {
-      for (const action of actions) {
-        const actionRightId = id();
-        transactions.push(
-          tx.actionRights[actionRightId]
-            .update({
-              resource,
-              action,
-            })
-            .link({ roles: [boardMemberRoleId], group: groupId })
-        );
-        totalActionRights++;
-      }
-    }
-
-    // Create action rights for Member role (basic access)
-    const memberRoleId = groupRoleIds['Member'];
-    const memberResources = ['events', 'blogs', 'amendments'];
-    for (const resource of memberResources) {
-      const actions = ['read'];
-      for (const action of actions) {
-        const actionRightId = id();
-        transactions.push(
-          tx.actionRights[actionRightId]
-            .update({
-              resource,
-              action,
-            })
-            .link({ roles: [memberRoleId], group: groupId })
-        );
-        totalActionRights++;
-      }
-    }
-  }
+  // NOTE: Group roles are now created in seedGroups() to allow memberships to link to them immediately
+  // We skip creating duplicate group roles here
+  // Group action rights can be added in a future update if needed
 
   // Create event-level roles and participants
   for (const eventId of eventIds) {

@@ -26,7 +26,6 @@ export default function AmendmentChangeRequestsPage({
   const { data, isLoading } = db.useQuery({
     amendments: {
       $: { where: { id: amendmentId } },
-      user: {},
       document: {
         collaborators: {
           user: {},
@@ -48,16 +47,6 @@ export default function AmendmentChangeRequestsPage({
   const document = amendment?.document;
   const savedChangeRequests = amendment?.changeRequests || [];
   const collaborators = amendment?.amendmentRoleCollaborators || [];
-
-  // Debug logging
-  console.log('=== CHANGE REQUESTS PAGE DEBUG ===');
-  console.log('Amendment:', amendment);
-  console.log('Document:', document);
-  console.log('Document discussions:', document?.discussions);
-  console.log('Saved changeRequests:', savedChangeRequests);
-  console.log('Is discussions an array?', Array.isArray(document?.discussions));
-  console.log('Discussions length:', document?.discussions?.length);
-  console.log('SavedChangeRequests length:', savedChangeRequests?.length);
 
   // Extract open change requests from document discussions AND closed ones from changeRequests entity
   const changeRequests = useMemo(() => {
@@ -125,20 +114,12 @@ export default function AmendmentChangeRequestsPage({
 
     // Process open change requests from document.discussions
     if (document?.discussions && Array.isArray(document.discussions)) {
-      console.log('Raw discussions:', document.discussions);
-      console.log('Document content:', document.content);
-
       // Filter for suggestions (change requests) that have crId
       openRequests.push(
         ...document.discussions
           .filter((discussion: any) => {
             // Only include items with crId (these are change requests/suggestions)
             const hasChangeRequestId = !!discussion.crId;
-
-            console.log('Discussion:', discussion);
-            console.log('  - hasChangeRequestId:', hasChangeRequestId);
-            console.log('  - crId:', discussion.crId);
-
             return hasChangeRequestId;
           })
           .map((suggestion: any) => {
@@ -224,22 +205,17 @@ export default function AmendmentChangeRequestsPage({
       (a, b) => a.crNumber - b.crNumber
     );
 
-    console.log('All change requests (open + closed):', allRequests);
-    console.log('Open:', openRequests.length, 'Closed:', closedRequests.length);
-
     return allRequests;
   }, [document?.discussions, document?.content, savedChangeRequests]);
 
   // Separate open and closed requests
   const openChangeRequests = useMemo(() => {
     const open = changeRequests.filter(req => !req.isResolved);
-    console.log('🟢 Open change requests:', open.length, open);
     return open;
   }, [changeRequests]);
 
   const closedChangeRequests = useMemo(() => {
     const closed = changeRequests.filter(req => req.isResolved);
-    console.log('🔴 Closed change requests:', closed.length, closed);
     return closed;
   }, [changeRequests]);
 

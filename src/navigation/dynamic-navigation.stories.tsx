@@ -26,10 +26,10 @@ const NavigationStory = (args: any) => {
   // Create router and nav items inside the component using the function
   const mockRouter = {
     navigate: () => {
-      console.log('Navigating...');
+      // Mock navigation for Storybook
     },
     push: () => {
-      console.log('Pushing...');
+      // Mock push for Storybook
     },
   } as any;
   const { primaryNavItems } = navItemsAuthenticated(mockRouter);

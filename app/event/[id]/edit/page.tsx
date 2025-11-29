@@ -54,12 +54,6 @@ export default function EventEditPage({ params }: { params: Promise<{ id: string
   // Initialize form data when event data loads
   useEffect(() => {
     if (event) {
-      console.log('📝 [EventEditPage] Populating form with event data:', {
-        title: event.title,
-        description: event.description?.substring(0, 50) + '...',
-        location: event.location,
-      });
-
       // Format dates for datetime-local input
       const formatDateForInput = (date: any) => {
         if (!date) return '';
@@ -85,14 +79,6 @@ export default function EventEditPage({ params }: { params: Promise<{ id: string
         (p: any) => p.user?.id === authUser?.id && p.status === 'admin'
       );
       const userIsOrganizer = event.organizer?.id === authUser?.id;
-
-      console.log('🔐 [EventEditPage] Authorization check:', {
-        authUserId: authUser?.id,
-        eventId: resolvedParams.id,
-        userIsAdmin,
-        userIsOrganizer,
-        adminCount: adminParticipants.length,
-      });
 
       setIsAuthorized(userIsAdmin || userIsOrganizer);
     }

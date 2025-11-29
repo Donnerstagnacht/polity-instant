@@ -26,7 +26,8 @@ test.describe('Navigation Behavior While Unauthenticated', () => {
       const authHeading = page.getByRole('heading', { name: /sign in|log in/i });
       await expect(authHeading).toBeVisible();
     } else {
-      console.log('Subscriptions page is accessible without authentication');
+      // Subscriptions page is accessible
+      expect(isSubscriptionsPage).toBeTruthy();
     }
   });
 });

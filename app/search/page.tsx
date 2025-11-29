@@ -60,6 +60,11 @@ function SearchContent() {
   // Fetch data from InstantDB
   const { data, isLoading } = db.useQuery({
     $users: {
+      $: {
+        where: {
+          visibility: 'public',
+        },
+      },
       hashtags: {}, // Load hashtags for users
     },
     groups: {
@@ -73,7 +78,6 @@ function SearchContent() {
       hashtags: {},
     },
     amendments: {
-      user: {},
       hashtags: {},
     },
     events: {
@@ -83,7 +87,6 @@ function SearchContent() {
       hashtags: {},
     },
   });
-
   // Update URL when search parameters change
   const updateURL = (updates: Record<string, string>) => {
     const params = new URLSearchParams(searchParams.toString());

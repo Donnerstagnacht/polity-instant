@@ -38,10 +38,6 @@ test.describe('View Own Profile (Authenticated)', () => {
       // Filter for visible panel since there are multiple panels (some hidden)
       const tabPanel = page.locator('[role="tabpanel"]:visible');
       await expect(tabPanel.first()).toBeVisible({ timeout: 5000 });
-
-      // Log tab name for verification
-      const tabName = await tab.textContent();
-      console.log(`Tab ${i + 1}: ${tabName}`);
     }
   });
 });

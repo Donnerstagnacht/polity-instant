@@ -84,7 +84,7 @@ export function useUnreadMessagesCount() {
 
     if (!data?.conversations || !currentUser?.id) {
       if (user.id) {
-        console.log('💬 [useUnreadMessagesCount] Early return - no data or currentUser');
+        // User exists but no conversation data available yet
       }
       return 0;
     }

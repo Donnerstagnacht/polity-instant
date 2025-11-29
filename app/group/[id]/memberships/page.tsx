@@ -107,6 +107,7 @@ export default function GroupMembershipsManagementPage({
         },
       },
       user: {},
+      role: {},
     },
   });
 
@@ -132,13 +133,7 @@ export default function GroupMembershipsManagementPage({
 
   // Query all users for user search
   const { data: usersData, isLoading: isLoadingUsers } = db.useQuery({
-    $users: {
-      $: {
-        where: {
-          isActive: true,
-        },
-      },
-    },
+    $users: {},
   });
 
   const memberships = membershipsData?.groupMemberships || [];
@@ -168,7 +163,7 @@ export default function GroupMembershipsManagementPage({
     return memberships.filter((membership: any) => {
       const userName = membership.user?.name?.toLowerCase() || '';
       const userHandle = membership.user?.handle?.toLowerCase() || '';
-      const role = membership.role?.toLowerCase() || '';
+      const role = membership.role?.name?.toLowerCase() || '';
       const status = membership.status?.toLowerCase() || '';
       return (
         userName.includes(query) ||
@@ -204,13 +199,13 @@ export default function GroupMembershipsManagementPage({
     }
   };
 
-  const handleChangeRole = async (membershipId: string, newRole: string) => {
+  const handleChangeRole = async (membershipId: string, newRoleId: string) => {
     if (!isAdmin) return;
 
     try {
       await db.transact([
-        tx.groupMemberships[membershipId].update({
-          role: newRole,
+        tx.groupMemberships[membershipId].link({
+          role: newRoleId,
         }),
       ]);
     } catch (error) {
@@ -244,12 +239,18 @@ export default function GroupMembershipsManagementPage({
 
   const handlePromoteToAdmin = async (membershipId: string) => {
     if (!isAdmin) return;
-    await handleChangeRole(membershipId, 'Board Member');
+    const boardMemberRole = rolesData?.roles?.find((r: any) => r.name === 'Board Member');
+    if (boardMemberRole) {
+      await db.transact([tx.groupMemberships[membershipId].link({ role: boardMemberRole.id })]);
+    }
   };
 
   const handleDemoteToMember = async (membershipId: string) => {
     if (!isAdmin) return;
-    await handleChangeRole(membershipId, 'Member');
+    const memberRole = rolesData?.roles?.find((r: any) => r.name === 'Member');
+    if (memberRole) {
+      await db.transact([tx.groupMemberships[membershipId].link({ role: memberRole.id })]);
+    }
   };
 
   const handleWithdrawInvitation = async (membershipId: string) => {
@@ -304,8 +305,6 @@ export default function GroupMembershipsManagementPage({
 
   // Role management handlers
   const handleAddRole = async () => {
-    console.log('handleAddRole called', { newRoleName, newRoleDescription });
-
     if (!newRoleName.trim()) {
       toast({
         title: 'Error',
@@ -317,7 +316,6 @@ export default function GroupMembershipsManagementPage({
 
     try {
       const roleId = id();
-      console.log('Creating role with id:', roleId);
 
       await db.transact([
         tx.roles[roleId]
@@ -329,8 +327,6 @@ export default function GroupMembershipsManagementPage({
           .link({ group: resolvedParams.id }),
       ]);
 
-      console.log('Role created successfully');
-
       toast({
         title: 'Success',
         description: 'Role created successfully',
@@ -339,8 +335,7 @@ export default function GroupMembershipsManagementPage({
       setNewRoleName('');
       setNewRoleDescription('');
       setAddRoleDialogOpen(false);
-    } catch (error) {
-      console.error('Failed to create role:', error);
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to create role. Please try again.',
@@ -700,7 +695,8 @@ export default function GroupMembershipsManagementPage({
                         const userName = user?.name || 'Unknown User';
                         const userAvatar = user?.avatar || '';
                         const userHandle = user?.handle || '';
-                        const role = membership.role || 'member';
+                        const role = membership.role?.name || 'Member';
+                        const roleId = membership.role?.id || '';
                         const createdAt = membership.createdAt
                           ? new Date(membership.createdAt).toLocaleDateString()
                           : 'N/A';
@@ -737,15 +733,17 @@ export default function GroupMembershipsManagementPage({
                             </TableCell>
                             <TableCell>
                               <Select
-                                value={role}
-                                onValueChange={newRole => handleChangeRole(membership.id, newRole)}
+                                value={roleId}
+                                onValueChange={newRoleId =>
+                                  handleChangeRole(membership.id, newRoleId)
+                                }
                               >
                                 <SelectTrigger className="w-40">
-                                  <SelectValue />
+                                  <SelectValue placeholder={role} />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {rolesData?.roles?.map((roleOption: any) => (
-                                    <SelectItem key={roleOption.id} value={roleOption.name}>
+                                    <SelectItem key={roleOption.id} value={roleOption.id}>
                                       {roleOption.name}
                                     </SelectItem>
                                   ))}

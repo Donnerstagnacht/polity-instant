@@ -42,14 +42,6 @@ export const queries = {
 
     // Get user by email
     byEmail: (email: string) => db.useQuery({ $users: { $: { where: { email } } } }),
-
-    // Get active users
-    active: () =>
-      db.useQuery({
-        $users: {
-          $: { where: { isActive: true } },
-        },
-      }),
   },
 
   // Group queries
@@ -133,7 +125,6 @@ export const mutations = {
       db.transact(
         tx.users[id()].update({
           ...userData,
-          isActive: true,
           createdAt: new Date(),
           updatedAt: new Date(),
         })
@@ -161,15 +152,6 @@ export const mutations = {
       db.transact(
         tx.users[userId].update({
           lastSeenAt: new Date(),
-        })
-      ),
-
-    // Deactivate user
-    deactivate: (userId: string) =>
-      db.transact(
-        tx.users[userId].update({
-          isActive: false,
-          updatedAt: new Date(),
         })
       ),
   },
@@ -260,8 +242,8 @@ export const mutations = {
       ]),
 
     // Update member role
-    updateRole: (membershipId: string, role: string) =>
-      db.transact(tx.groupMemberships[membershipId].update({ role })),
+    updateRole: (membershipId: string, roleId: string) =>
+      db.transact([tx.groupMemberships[membershipId].link({ role: roleId })]),
   },
 
   // Magic code mutations

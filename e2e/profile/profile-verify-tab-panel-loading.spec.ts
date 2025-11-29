@@ -38,8 +38,6 @@ test.describe('Responsive Behavior and Visual Elements', () => {
       // 6. Verify tab panel contains content or empty state message
       const panelContent = await tabPanel.first().textContent();
       expect(panelContent).toBeTruthy();
-
-      console.log(`Tab ${i + 1} panel loaded with content`);
     }
   });
 });

@@ -22,11 +22,10 @@ test.describe('View Own Profile (Authenticated)', () => {
       // 4. Count number of hashtags displayed (if any)
       const hashtags = page.locator('[class*="hashtag"]');
       const count = await hashtags.count();
-      console.log(`Hashtags found: ${count}`);
 
       expect(count).toBeGreaterThan(0);
     } else {
-      console.log('No hashtags found for this user');
+      // No hashtags container found - user may not have hashtags
     }
   });
 });

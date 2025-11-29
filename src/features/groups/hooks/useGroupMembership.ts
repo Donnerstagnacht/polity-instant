@@ -19,6 +19,7 @@ export function useGroupMembership(groupId: string) {
                 'group.id': groupId,
               },
             },
+            role: {},
           },
         }
       : { groupMemberships: {} }
@@ -41,7 +42,7 @@ export function useGroupMembership(groupId: string) {
 
   // If there are multiple memberships, prioritize by role/status
   if (memberships.length > 1) {
-    const boardMemberMembership = memberships.find((m: any) => m.role === 'Board Member');
+    const boardMemberMembership = memberships.find((m: any) => m.role?.name === 'Board Member');
     const memberMembership = memberships.find((m: any) => m.status === 'member');
     const invitedMembership = memberships.find((m: any) => m.status === 'invited');
 
@@ -51,18 +52,22 @@ export function useGroupMembership(groupId: string) {
       groupId,
       userId: user?.id,
       count: memberships.length,
-      memberships: memberships.map((m: any) => ({ id: m.id, status: m.status, role: m.role })),
-      selected: { id: membership?.id, status: membership?.status, role: membership?.role },
+      memberships: memberships.map((m: any) => ({
+        id: m.id,
+        status: m.status,
+        role: m.role?.name,
+      })),
+      selected: { id: membership?.id, status: membership?.status, role: membership?.role?.name },
     });
   }
 
   // Filter to count only members and board members (excluding invited and requested)
   const memberCount =
     allMembershipsData?.groupMemberships?.filter(
-      (m: any) => m.status === 'member' || m.role === 'Board Member'
+      (m: any) => m.status === 'member' || m.role?.name === 'Board Member'
     ).length || 0;
   const status: MembershipStatus | null = (membership?.status as MembershipStatus) || null;
-  const role = membership?.role;
+  const role = membership?.role?.name;
   const isMember = status === 'member' || role === 'Board Member' || role === 'Member';
   const isAdmin = role === 'Board Member';
   const hasRequested = status === 'requested';
@@ -79,7 +84,6 @@ export function useGroupMembership(groupId: string) {
         tx.groupMemberships[newMembershipId]
           .update({
             createdAt: new Date().toISOString(),
-            role: 'member',
             status: 'requested',
           })
           .link({

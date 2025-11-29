@@ -30,58 +30,40 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     switch (event.type) {
       case 'checkout.session.completed': {
-        const session = event.data.object as Stripe.Checkout.Session;
         // TODO: Store customer/subscription in your database
-        console.log('Checkout completed:', {
-          sessionId: session.id,
-          customerId: session.customer,
-          subscriptionId: session.subscription,
-        });
+        // const session = event.data.object as Stripe.Checkout.Session;
         break;
       }
       case 'customer.subscription.updated': {
-        const subscription = event.data.object as Stripe.Subscription;
         // TODO: Update subscription status in your database
-        console.log('Subscription updated:', {
-          subscriptionId: subscription.id,
-          status: subscription.status,
-        });
+        // const subscription = event.data.object as Stripe.Subscription;
         break;
       }
       case 'customer.subscription.deleted': {
-        const subscription = event.data.object as Stripe.Subscription;
         // TODO: Handle subscription cancellation in your database
-        console.log('Subscription deleted:', {
-          subscriptionId: subscription.id,
-        });
+        // const subscription = event.data.object as Stripe.Subscription;
         break;
       }
       case 'invoice.payment_succeeded': {
-        const invoice = event.data.object as Stripe.Invoice;
-        const subscriptionId = (invoice as any).subscription;
-        console.log('Payment succeeded:', {
-          invoiceId: invoice.id,
-          subscriptionId:
-            typeof subscriptionId === 'string' ? subscriptionId : subscriptionId?.id || null,
-        });
+        // TODO: Handle successful payment
+        // const invoice = event.data.object as Stripe.Invoice;
+        // const subscriptionId = (invoice as any).subscription;
         break;
       }
       case 'invoice.payment_failed': {
-        const invoice = event.data.object as Stripe.Invoice;
-        const subscriptionId = (invoice as any).subscription;
-        console.log('Payment failed:', {
-          invoiceId: invoice.id,
-          subscriptionId:
-            typeof subscriptionId === 'string' ? subscriptionId : subscriptionId?.id || null,
-        });
+        // TODO: Handle failed payment
+        // const invoice = event.data.object as Stripe.Invoice;
+        // const subscriptionId = (invoice as any).subscription;
         break;
       }
     }
 
     return NextResponse.json({ received: true });
   } catch (err) {
-    const error = err as Error;
-    console.error('Webhook error:', error.message);
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    console.error('Webhook error:', err instanceof Error ? err.message : String(err));
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Unknown error' },
+      { status: 400 }
+    );
   }
 }

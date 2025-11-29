@@ -31,14 +31,6 @@ test.describe('Error Handling and User Feedback', () => {
     );
     const hasCrash = await crashIndicator.count();
 
-    if (hasCrash > 0) {
-      const errorText = await crashIndicator.first().textContent();
-      console.log(`Application showed error: ${errorText}`);
-    }
-
-    // Application should handle gracefully
-    console.log(
-      `Invalid user ID handled: auth redirect=${isAuthRedirect}, error page=${hasErrorPage}`
-    );
+    expect(hasCrash).toBe(0);
   });
 });

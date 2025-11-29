@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Trash2, Search, Users, Check, X, Calendar, FileEdit } from 'lucide-react';
+import { Trash2, Search, Users, Check, X, Calendar, FileEdit, BookOpen } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -30,42 +30,59 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
   const canView = authUser?.id === resolvedParams.id;
 
   // Query for all memberships, participations, and collaborations
-  const { data } = db.useQuery(
-    canView
+  const { data } = db.useQuery({
+    groupMemberships: canView
       ? {
-          groupMemberships: {
-            $: {
-              where: {
-                'user.id': resolvedParams.id,
-              },
-            },
-            group: {
-              owner: {},
+          $: {
+            where: {
+              'user.id': resolvedParams.id,
             },
           },
-          eventParticipants: {
-            $: {
-              where: {
-                'user.id': resolvedParams.id,
-              },
-            },
-            event: {},
+          group: {
+            owner: {},
           },
-          amendmentCollaborators: {
-            $: {
-              where: {
-                'user.id': resolvedParams.id,
-              },
-            },
-            amendment: {},
-          },
+          role: {},
         }
-      : { groupMemberships: {}, eventParticipants: {}, amendmentCollaborators: {} }
-  );
+      : {},
+    eventParticipants: canView
+      ? {
+          $: {
+            where: {
+              'user.id': resolvedParams.id,
+            },
+          },
+          event: {},
+          role: {},
+        }
+      : {},
+    amendmentCollaborators: canView
+      ? {
+          $: {
+            where: {
+              'user.id': resolvedParams.id,
+            },
+          },
+          amendment: {},
+          role: {},
+        }
+      : {},
+    blogBloggers: canView
+      ? {
+          $: {
+            where: {
+              'user.id': resolvedParams.id,
+            },
+          },
+          blog: {},
+          role: {},
+        }
+      : {},
+  });
 
   const memberships = data?.groupMemberships || [];
   const participations = data?.eventParticipants || [];
   const collaborations = data?.amendmentCollaborators || [];
+  const blogRelations = data?.blogBloggers || [];
 
   // Filter memberships based on search query
   const filteredMemberships = useMemo(() => {
@@ -75,7 +92,7 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
     return memberships.filter((membership: any) => {
       const groupName = membership.group?.name?.toLowerCase() || '';
       const groupDescription = membership.group?.description?.toLowerCase() || '';
-      const role = membership.role?.toLowerCase() || '';
+      const role = membership.role?.name?.toLowerCase() || '';
       const status = membership.status?.toLowerCase() || '';
       return (
         groupName.includes(query) ||
@@ -109,6 +126,76 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
       return amendmentTitle.includes(query) || status.includes(query);
     });
   }, [collaborations, searchQuery]);
+
+  // Filter blog relations
+  const filteredBlogRelations = useMemo(() => {
+    if (!searchQuery.trim()) return blogRelations;
+
+    const query = searchQuery.toLowerCase();
+    return blogRelations.filter((relation: any) => {
+      const blogTitle = relation.blog?.title?.toLowerCase() || '';
+      const role = relation.role?.name?.toLowerCase() || '';
+      const status = relation.status?.toLowerCase() || '';
+      return blogTitle.includes(query) || role.includes(query) || status.includes(query);
+    });
+  }, [blogRelations, searchQuery]);
+
+  // Separate memberships by status
+  const invitedMemberships = useMemo(
+    () => filteredMemberships.filter((m: any) => m.status === 'invited'),
+    [filteredMemberships]
+  );
+  const activeMemberships = useMemo(
+    () => filteredMemberships.filter((m: any) => m.status === 'member' || m.status === 'admin'),
+    [filteredMemberships]
+  );
+  const requestedMemberships = useMemo(
+    () => filteredMemberships.filter((m: any) => m.status === 'requested'),
+    [filteredMemberships]
+  );
+
+  // Separate participations by status
+  const invitedParticipations = useMemo(
+    () => filteredParticipations.filter((p: any) => p.status === 'invited'),
+    [filteredParticipations]
+  );
+  const activeParticipations = useMemo(
+    () => filteredParticipations.filter((p: any) => p.status === 'member' || p.status === 'admin'),
+    [filteredParticipations]
+  );
+  const requestedParticipations = useMemo(
+    () => filteredParticipations.filter((p: any) => p.status === 'requested'),
+    [filteredParticipations]
+  );
+
+  // Separate collaborations by status
+  const invitedCollaborations = useMemo(
+    () => filteredCollaborations.filter((c: any) => c.status === 'invited'),
+    [filteredCollaborations]
+  );
+  const activeCollaborations = useMemo(
+    () =>
+      filteredCollaborations.filter((c: any) => c.status === 'member' || c.role === 'Applicant'),
+    [filteredCollaborations]
+  );
+  const requestedCollaborations = useMemo(
+    () => filteredCollaborations.filter((c: any) => c.status === 'requested'),
+    [filteredCollaborations]
+  );
+
+  // Separate blog relations by status
+  const invitedBlogRelations = useMemo(
+    () => filteredBlogRelations.filter((b: any) => b.status === 'invited'),
+    [filteredBlogRelations]
+  );
+  const activeBlogRelations = useMemo(
+    () => filteredBlogRelations.filter((b: any) => b.status === 'writer' || b.status === 'owner'),
+    [filteredBlogRelations]
+  );
+  const requestedBlogRelations = useMemo(
+    () => filteredBlogRelations.filter((b: any) => b.status === 'requested'),
+    [filteredBlogRelations]
+  );
 
   const handleLeaveMembership = async (membershipId: string) => {
     try {
@@ -232,18 +319,44 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
     router.push(`/amendment/${amendmentId}`);
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'member':
-        return <Badge variant="default">Member</Badge>;
-      case 'admin':
-        return <Badge variant="destructive">Admin</Badge>;
-      case 'requested':
-        return <Badge variant="secondary">Pending Request</Badge>;
-      case 'invited':
-        return <Badge variant="outline">Invited</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
+  const navigateToBlog = (blogId: string) => {
+    router.push(`/blog/${blogId}`);
+  };
+
+  // Blog handlers
+  const handleLeaveBlog = async (blogRelationId: string) => {
+    try {
+      await db.transact([tx.blogBloggers[blogRelationId].delete()]);
+    } catch (error) {
+      console.error('Failed to leave blog:', error);
+    }
+  };
+
+  const handleAcceptBlogInvitation = async (blogRelationId: string) => {
+    try {
+      await db.transact([
+        tx.blogBloggers[blogRelationId].update({
+          status: 'writer',
+        }),
+      ]);
+    } catch (error) {
+      console.error('Failed to accept blog invitation:', error);
+    }
+  };
+
+  const handleDeclineBlogInvitation = async (blogRelationId: string) => {
+    try {
+      await db.transact([tx.blogBloggers[blogRelationId].delete()]);
+    } catch (error) {
+      console.error('Failed to decline blog invitation:', error);
+    }
+  };
+
+  const handleWithdrawBlogRequest = async (blogRelationId: string) => {
+    try {
+      await db.transact([tx.blogBloggers[blogRelationId].delete()]);
+    } catch (error) {
+      console.error('Failed to withdraw blog request:', error);
     }
   };
 
@@ -300,26 +413,94 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
               <FileEdit className="h-4 w-4" />
               Amendments ({filteredCollaborations.length})
             </TabsTrigger>
+            <TabsTrigger value="blogs" className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              Blogs ({filteredBlogRelations.length})
+            </TabsTrigger>
           </TabsList>
 
           {/* Groups Tab */}
           <TabsContent value="groups">
-            <Card>
+            {/* Pending Invitations */}
+            {invitedMemberships.length > 0 && (
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Pending Invitations ({invitedMemberships.length})
+                  </CardTitle>
+                  <CardDescription>Group invitations you've received</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Group</TableHead>
+                        <TableHead>Invited</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {invitedMemberships.map((membership: any) => {
+                        const group = membership.group;
+                        const groupName = group?.name || 'Unknown Group';
+                        const createdAt = membership.createdAt
+                          ? new Date(membership.createdAt).toLocaleDateString()
+                          : 'N/A';
+
+                        return (
+                          <TableRow key={membership.id}>
+                            <TableCell>
+                              <div
+                                className="cursor-pointer hover:underline"
+                                onClick={() => navigateToGroup(group.id)}
+                              >
+                                <div className="font-medium">{groupName}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">{createdAt}</TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  onClick={() => handleAcceptInvitation(membership.id)}
+                                >
+                                  <Check className="mr-1 h-4 w-4" />
+                                  Accept
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDeclineInvitation(membership.id)}
+                                >
+                                  <X className="mr-1 h-4 w-4" />
+                                  Decline
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Active Memberships */}
+            <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5" />
-                  Your Group Memberships
+                  Active Memberships ({activeMemberships.length})
                 </CardTitle>
-                <CardDescription>
-                  Groups you're a member of, have requested to join, or been invited to
-                </CardDescription>
+                <CardDescription>Groups you're currently a member of</CardDescription>
               </CardHeader>
               <CardContent>
-                {filteredMemberships.length === 0 ? (
+                {activeMemberships.length === 0 ? (
                   <p className="py-8 text-center text-muted-foreground">
-                    {memberships.length === 0
-                      ? "You don't have any group memberships yet"
-                      : 'No memberships match your search'}
+                    No active memberships found
                   </p>
                 ) : (
                   <Table>
@@ -327,18 +508,16 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
                       <TableRow>
                         <TableHead>Group</TableHead>
                         <TableHead>Role</TableHead>
-                        <TableHead>Status</TableHead>
                         <TableHead>Joined</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredMemberships.map((membership: any) => {
+                      {activeMemberships.map((membership: any) => {
                         const group = membership.group;
                         const groupName = group?.name || 'Unknown Group';
                         const groupDescription = group?.description || '';
-                        const status = membership.status || 'member';
-                        const role = membership.role || 'member';
+                        const role = membership.role?.name || 'Member';
                         const createdAt = membership.createdAt
                           ? new Date(membership.createdAt).toLocaleDateString()
                           : 'N/A';
@@ -361,53 +540,16 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
                             <TableCell>
                               <Badge variant="outline">{role}</Badge>
                             </TableCell>
-                            <TableCell>{getStatusBadge(status)}</TableCell>
                             <TableCell className="text-muted-foreground">{createdAt}</TableCell>
                             <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
-                                {status === 'invited' && (
-                                  <>
-                                    <Button
-                                      variant="default"
-                                      size="sm"
-                                      onClick={() => handleAcceptInvitation(membership.id)}
-                                    >
-                                      <Check className="mr-1 h-4 w-4" />
-                                      Accept
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => handleDeclineInvitation(membership.id)}
-                                    >
-                                      <X className="mr-1 h-4 w-4" />
-                                      Decline
-                                    </Button>
-                                  </>
-                                )}
-                                {status === 'requested' && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleWithdrawRequest(membership.id)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                    <span className="ml-2">Withdraw Request</span>
-                                  </Button>
-                                )}
-                                {(status === 'member' ||
-                                  status === 'admin' ||
-                                  membership.role === 'admin') && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleLeaveMembership(membership.id)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                    <span className="ml-2">Leave</span>
-                                  </Button>
-                                )}
-                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleLeaveMembership(membership.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span className="ml-2">Leave</span>
+                              </Button>
                             </TableCell>
                           </TableRow>
                         );
@@ -417,43 +559,169 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
                 )}
               </CardContent>
             </Card>
+
+            {/* Pending Requests */}
+            {requestedMemberships.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Pending Requests ({requestedMemberships.length})
+                  </CardTitle>
+                  <CardDescription>Your pending requests to join groups</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Group</TableHead>
+                        <TableHead>Requested</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {requestedMemberships.map((membership: any) => {
+                        const group = membership.group;
+                        const groupName = group?.name || 'Unknown Group';
+                        const createdAt = membership.createdAt
+                          ? new Date(membership.createdAt).toLocaleDateString()
+                          : 'N/A';
+
+                        return (
+                          <TableRow key={membership.id}>
+                            <TableCell>
+                              <div
+                                className="cursor-pointer hover:underline"
+                                onClick={() => navigateToGroup(group.id)}
+                              >
+                                <div className="font-medium">{groupName}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">{createdAt}</TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleWithdrawRequest(membership.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span className="ml-2">Withdraw Request</span>
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* Events Tab */}
           <TabsContent value="events">
-            <Card>
+            {/* Pending Invitations */}
+            {invitedParticipations.length > 0 && (
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    Pending Invitations ({invitedParticipations.length})
+                  </CardTitle>
+                  <CardDescription>Event invitations you've received</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Event</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Invited</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {invitedParticipations.map((participation: any) => {
+                        const event = participation.event;
+                        const eventTitle = event?.title || 'Unknown Event';
+                        const role = participation.role?.name || 'Participant';
+                        const createdAt = participation.createdAt
+                          ? new Date(participation.createdAt).toLocaleDateString()
+                          : 'N/A';
+
+                        return (
+                          <TableRow key={participation.id}>
+                            <TableCell>
+                              <div
+                                className="cursor-pointer hover:underline"
+                                onClick={() => navigateToEvent(event.id)}
+                              >
+                                <div className="font-medium">{eventTitle}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{role}</Badge>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">{createdAt}</TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  onClick={() => handleAcceptEventInvitation(participation.id)}
+                                >
+                                  <Check className="mr-1 h-4 w-4" />
+                                  Accept
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDeclineEventInvitation(participation.id)}
+                                >
+                                  <X className="mr-1 h-4 w-4" />
+                                  Decline
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Active Participations */}
+            <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Calendar className="h-5 w-5" />
-                  Your Event Participations
+                  Active Participations ({activeParticipations.length})
                 </CardTitle>
-                <CardDescription>
-                  Events you're participating in, have requested to join, or been invited to
-                </CardDescription>
+                <CardDescription>Events you're currently participating in</CardDescription>
               </CardHeader>
               <CardContent>
-                {filteredParticipations.length === 0 ? (
+                {activeParticipations.length === 0 ? (
                   <p className="py-8 text-center text-muted-foreground">
-                    {participations.length === 0
-                      ? "You're not participating in any events yet"
-                      : 'No participations match your search'}
+                    No active participations found
                   </p>
                 ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Event</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead>Role</TableHead>
                         <TableHead>Joined</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredParticipations.map((participation: any) => {
+                      {activeParticipations.map((participation: any) => {
                         const event = participation.event;
                         const eventTitle = event?.title || 'Unknown Event';
                         const eventDescription = event?.description || '';
-                        const status = participation.status || 'member';
+                        const role = participation.role?.name || 'Participant';
                         const createdAt = participation.createdAt
                           ? new Date(participation.createdAt).toLocaleDateString()
                           : 'N/A';
@@ -473,51 +741,19 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
                                 )}
                               </div>
                             </TableCell>
-                            <TableCell>{getStatusBadge(status)}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{role}</Badge>
+                            </TableCell>
                             <TableCell className="text-muted-foreground">{createdAt}</TableCell>
                             <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
-                                {status === 'invited' && (
-                                  <>
-                                    <Button
-                                      variant="default"
-                                      size="sm"
-                                      onClick={() => handleAcceptEventInvitation(participation.id)}
-                                    >
-                                      <Check className="mr-1 h-4 w-4" />
-                                      Accept
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => handleDeclineEventInvitation(participation.id)}
-                                    >
-                                      <X className="mr-1 h-4 w-4" />
-                                      Decline
-                                    </Button>
-                                  </>
-                                )}
-                                {status === 'requested' && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleWithdrawEventRequest(participation.id)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                    <span className="ml-2">Withdraw Request</span>
-                                  </Button>
-                                )}
-                                {(status === 'member' || status === 'admin') && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleLeaveEvent(participation.id)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                    <span className="ml-2">Leave</span>
-                                  </Button>
-                                )}
-                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleLeaveEvent(participation.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span className="ml-2">Leave</span>
+                              </Button>
                             </TableCell>
                           </TableRow>
                         );
@@ -527,26 +763,163 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
                 )}
               </CardContent>
             </Card>
+
+            {/* Pending Requests */}
+            {requestedParticipations.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    Pending Requests ({requestedParticipations.length})
+                  </CardTitle>
+                  <CardDescription>Your pending requests to join events</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Event</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Requested</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {requestedParticipations.map((participation: any) => {
+                        const event = participation.event;
+                        const eventTitle = event?.title || 'Unknown Event';
+                        const role = participation.role?.name || 'Participant';
+                        const createdAt = participation.createdAt
+                          ? new Date(participation.createdAt).toLocaleDateString()
+                          : 'N/A';
+
+                        return (
+                          <TableRow key={participation.id}>
+                            <TableCell>
+                              <div
+                                className="cursor-pointer hover:underline"
+                                onClick={() => navigateToEvent(event.id)}
+                              >
+                                <div className="font-medium">{eventTitle}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{role}</Badge>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">{createdAt}</TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleWithdrawEventRequest(participation.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span className="ml-2">Withdraw Request</span>
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* Amendments Tab */}
           <TabsContent value="amendments">
-            <Card>
+            {/* Pending Invitations */}
+            {invitedCollaborations.length > 0 && (
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileEdit className="h-5 w-5" />
+                    Pending Invitations ({invitedCollaborations.length})
+                  </CardTitle>
+                  <CardDescription>
+                    Amendment collaboration invitations you've received
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Amendment</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Invited</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {invitedCollaborations.map((collaboration: any) => {
+                        const amendment = collaboration.amendment;
+                        const amendmentTitle = amendment?.title || 'Unknown Amendment';
+                        const role = collaboration.role?.name || 'Collaborator';
+                        const createdAt = collaboration.createdAt
+                          ? new Date(collaboration.createdAt).toLocaleDateString()
+                          : 'N/A';
+
+                        return (
+                          <TableRow key={collaboration.id}>
+                            <TableCell>
+                              <div
+                                className="cursor-pointer hover:underline"
+                                onClick={() => navigateToAmendment(amendment.id)}
+                              >
+                                <div className="font-medium">{amendmentTitle}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{role}</Badge>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">{createdAt}</TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleAcceptCollaborationInvitation(collaboration.id)
+                                  }
+                                >
+                                  <Check className="mr-1 h-4 w-4" />
+                                  Accept
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleDeclineCollaborationInvitation(collaboration.id)
+                                  }
+                                >
+                                  <X className="mr-1 h-4 w-4" />
+                                  Decline
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Active Collaborations */}
+            <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileEdit className="h-5 w-5" />
-                  Your Amendment Collaborations
+                  Active Collaborations ({activeCollaborations.length})
                 </CardTitle>
-                <CardDescription>
-                  Amendments you're collaborating on, have requested to join, or been invited to
-                </CardDescription>
+                <CardDescription>Amendments you're currently collaborating on</CardDescription>
               </CardHeader>
               <CardContent>
-                {filteredCollaborations.length === 0 ? (
+                {activeCollaborations.length === 0 ? (
                   <p className="py-8 text-center text-muted-foreground">
-                    {collaborations.length === 0
-                      ? "You're not collaborating on any amendments yet"
-                      : 'No collaborations match your search'}
+                    No active collaborations found
                   </p>
                 ) : (
                   <Table>
@@ -554,18 +927,16 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
                       <TableRow>
                         <TableHead>Amendment</TableHead>
                         <TableHead>Role</TableHead>
-                        <TableHead>Status</TableHead>
                         <TableHead>Joined</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredCollaborations.map((collaboration: any) => {
+                      {activeCollaborations.map((collaboration: any) => {
                         const amendment = collaboration.amendment;
                         const amendmentTitle = amendment?.title || 'Unknown Amendment';
                         const amendmentDescription = amendment?.description || '';
-                        const status = collaboration.status || 'member';
-                        const role = collaboration.role || 'collaborator';
+                        const role = collaboration.role?.name || 'Collaborator';
                         const createdAt = collaboration.createdAt
                           ? new Date(collaboration.createdAt).toLocaleDateString()
                           : 'N/A';
@@ -588,57 +959,16 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
                             <TableCell>
                               <Badge variant="outline">{role}</Badge>
                             </TableCell>
-                            <TableCell>{getStatusBadge(status)}</TableCell>
                             <TableCell className="text-muted-foreground">{createdAt}</TableCell>
                             <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
-                                {status === 'invited' && (
-                                  <>
-                                    <Button
-                                      variant="default"
-                                      size="sm"
-                                      onClick={() =>
-                                        handleAcceptCollaborationInvitation(collaboration.id)
-                                      }
-                                    >
-                                      <Check className="mr-1 h-4 w-4" />
-                                      Accept
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() =>
-                                        handleDeclineCollaborationInvitation(collaboration.id)
-                                      }
-                                    >
-                                      <X className="mr-1 h-4 w-4" />
-                                      Decline
-                                    </Button>
-                                  </>
-                                )}
-                                {status === 'requested' && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() =>
-                                      handleWithdrawCollaborationRequest(collaboration.id)
-                                    }
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                    <span className="ml-2">Withdraw Request</span>
-                                  </Button>
-                                )}
-                                {(status === 'member' || status === 'admin') && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleLeaveCollaboration(collaboration.id)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                    <span className="ml-2">Leave</span>
-                                  </Button>
-                                )}
-                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleLeaveCollaboration(collaboration.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span className="ml-2">Leave</span>
+                              </Button>
                             </TableCell>
                           </TableRow>
                         );
@@ -648,6 +978,279 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
                 )}
               </CardContent>
             </Card>
+
+            {/* Pending Requests */}
+            {requestedCollaborations.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileEdit className="h-5 w-5" />
+                    Pending Requests ({requestedCollaborations.length})
+                  </CardTitle>
+                  <CardDescription>
+                    Your pending requests to collaborate on amendments
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Amendment</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Requested</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {requestedCollaborations.map((collaboration: any) => {
+                        const amendment = collaboration.amendment;
+                        const amendmentTitle = amendment?.title || 'Unknown Amendment';
+                        const role = collaboration.role?.name || 'Collaborator';
+                        const createdAt = collaboration.createdAt
+                          ? new Date(collaboration.createdAt).toLocaleDateString()
+                          : 'N/A';
+
+                        return (
+                          <TableRow key={collaboration.id}>
+                            <TableCell>
+                              <div
+                                className="cursor-pointer hover:underline"
+                                onClick={() => navigateToAmendment(amendment.id)}
+                              >
+                                <div className="font-medium">{amendmentTitle}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{role}</Badge>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">{createdAt}</TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleWithdrawCollaborationRequest(collaboration.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span className="ml-2">Withdraw Request</span>
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* Blogs Tab */}
+          <TabsContent value="blogs">
+            {/* Pending Invitations */}
+            {invitedBlogRelations.length > 0 && (
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="h-5 w-5" />
+                    Pending Invitations ({invitedBlogRelations.length})
+                  </CardTitle>
+                  <CardDescription>Blog invitations you've received</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Blog</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Invited</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {invitedBlogRelations.map((relation: any) => {
+                        const blog = relation.blog;
+                        const blogTitle = blog?.title || 'Unknown Blog';
+                        const role = relation.role?.name || 'Writer';
+                        const createdAt = relation.createdAt
+                          ? new Date(relation.createdAt).toLocaleDateString()
+                          : 'N/A';
+
+                        return (
+                          <TableRow key={relation.id}>
+                            <TableCell>
+                              <div
+                                className="cursor-pointer hover:underline"
+                                onClick={() => navigateToBlog(blog.id)}
+                              >
+                                <div className="font-medium">{blogTitle}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{role}</Badge>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">{createdAt}</TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  onClick={() => handleAcceptBlogInvitation(relation.id)}
+                                >
+                                  <Check className="mr-1 h-4 w-4" />
+                                  Accept
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDeclineBlogInvitation(relation.id)}
+                                >
+                                  <X className="mr-1 h-4 w-4" />
+                                  Decline
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Active Blog Relations */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5" />
+                  Active Blogs ({activeBlogRelations.length})
+                </CardTitle>
+                <CardDescription>Blogs you're currently writing for</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {activeBlogRelations.length === 0 ? (
+                  <p className="py-8 text-center text-muted-foreground">
+                    No active blog relations found
+                  </p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Blog</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Joined</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {activeBlogRelations.map((relation: any) => {
+                        const blog = relation.blog;
+                        const blogTitle = blog?.title || 'Unknown Blog';
+                        const blogDescription = blog?.description || '';
+                        const role = relation.role?.name || 'Writer';
+                        const createdAt = relation.createdAt
+                          ? new Date(relation.createdAt).toLocaleDateString()
+                          : 'N/A';
+
+                        return (
+                          <TableRow key={relation.id}>
+                            <TableCell>
+                              <div
+                                className="cursor-pointer hover:underline"
+                                onClick={() => navigateToBlog(blog.id)}
+                              >
+                                <div className="font-medium">{blogTitle}</div>
+                                {blogDescription && (
+                                  <div className="line-clamp-1 text-sm text-muted-foreground">
+                                    {blogDescription}
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{role}</Badge>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">{createdAt}</TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleLeaveBlog(relation.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span className="ml-2">Leave</span>
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Pending Requests */}
+            {requestedBlogRelations.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="h-5 w-5" />
+                    Pending Requests ({requestedBlogRelations.length})
+                  </CardTitle>
+                  <CardDescription>Your pending requests to write for blogs</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Blog</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Requested</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {requestedBlogRelations.map((relation: any) => {
+                        const blog = relation.blog;
+                        const blogTitle = blog?.title || 'Unknown Blog';
+                        const role = relation.role?.name || 'Writer';
+                        const createdAt = relation.createdAt
+                          ? new Date(relation.createdAt).toLocaleDateString()
+                          : 'N/A';
+
+                        return (
+                          <TableRow key={relation.id}>
+                            <TableCell>
+                              <div
+                                className="cursor-pointer hover:underline"
+                                onClick={() => navigateToBlog(blog.id)}
+                              >
+                                <div className="font-medium">{blogTitle}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{role}</Badge>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">{createdAt}</TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleWithdrawBlogRequest(relation.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span className="ml-2">Withdraw Request</span>
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>

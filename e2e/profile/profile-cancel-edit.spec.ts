@@ -32,7 +32,7 @@ test.describe('Edit Profile Information', () => {
       const headingText = await heading.textContent();
       expect(headingText).not.toContain('Changed Name Not To Be Saved');
     } else {
-      console.log('Cancel button not found - test skipped');
+      // No cancel button found - test scenario not applicable
     }
   });
 });

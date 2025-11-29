@@ -23,40 +23,17 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { db, tx, id } from '../../../db';
 import { UserPlus, X, Loader2, Check } from 'lucide-react';
-import { useToast } from '@/global-state/use-toast';
 
 interface InviteCollaboratorDialogProps {
   documentId: string;
   currentUserId: string;
-  existingCollaborators: { user?: { id: string } }[];
 }
 
 export function InviteCollaboratorDialog({
   documentId,
   currentUserId,
-  existingCollaborators,
 }: InviteCollaboratorDialogProps) {
   const [open, setOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [isInviting, setIsInviting] = useState(false);
-  const { toast } = useToast();
-
-  // Query all users for user search
-  const { data: usersData, isLoading } = db.useQuery({
-    $users: {
-      $: {
-        where: {
-          isActive: true,
-        },
-      },
-    },
-  });
-
-  // Filter users based on search query and exclude existing collaborators and current user
-  const existingCollaboratorIds = existingCollaborators
-    .map(c => c.user?.id)
-    .filter(Boolean) as string[];
 
   const filteredUsers = usersData?.$users?.filter(user => {
     if (!user?.id) return false;

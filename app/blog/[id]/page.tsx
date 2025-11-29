@@ -164,10 +164,13 @@ export default function BlogPage({ params }: { params: Promise<{ id: string }> }
 
   // Fetch blog data from InstantDB with comments
   // Note: We fetch all comments and filter later to avoid nested query issues
-  const { data, isLoading, error } = db.useQuery({
+  const { data, isLoading } = db.useQuery({
     blogs: {
       $: { where: { id: resolvedParams.id } },
-      user: {},
+      blogRoleBloggers: {
+        user: {},
+        role: {},
+      },
       hashtags: {},
       subscribers: {},
     },
@@ -212,17 +215,6 @@ export default function BlogPage({ params }: { params: Promise<{ id: string }> }
     } else {
       return b.createdAt - a.createdAt; // Newer first
     }
-  });
-
-  // Debug logging
-  console.log('Blog query data:', {
-    data,
-    blogId: resolvedParams.id,
-    blog,
-    isLoading,
-    error,
-    allBlogsCount: data?.blogs?.length,
-    commentsCount: allComments.length,
   });
 
   // Handle adding a comment
@@ -281,7 +273,10 @@ export default function BlogPage({ params }: { params: Promise<{ id: string }> }
     );
   }
 
-  const author = blog.user;
+  // Get the blog author - find the owner or first blogger
+  const author =
+    blog.blogRoleBloggers?.find((blogger: any) => blogger.status === 'owner')?.user ||
+    blog.blogRoleBloggers?.[0]?.user;
 
   return (
     <AuthGuard requireAuth={true}>

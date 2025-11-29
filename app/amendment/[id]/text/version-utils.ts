@@ -25,41 +25,34 @@ export async function createDocumentVersion({
   creationType,
   title,
 }: CreateVersionParams): Promise<void> {
-  try {
-    // Query existing versions to determine next version number
-    const { data: versionsData } = await db.queryOnce({
-      documentVersions: {
-        $: {
-          where: { 'document.id': documentId },
-        },
+  // Query existing versions to determine next version number
+  const { data: versionsData } = await db.queryOnce({
+    documentVersions: {
+      $: {
+        where: { 'document.id': documentId },
       },
-    });
+    },
+  });
 
-    const versions = versionsData?.documentVersions || [];
-    const nextVersionNumber =
-      versions.length > 0 ? Math.max(...versions.map((v: any) => v.versionNumber)) + 1 : 1;
+  const versions = versionsData?.documentVersions || [];
+  const nextVersionNumber =
+    versions.length > 0 ? Math.max(...versions.map((v: any) => v.versionNumber)) + 1 : 1;
 
-    // Generate title based on creation type if not provided
-    const versionTitle = title || getDefaultVersionTitle(creationType);
+  // Generate title based on creation type if not provided
+  const versionTitle = title || getDefaultVersionTitle(creationType);
 
-    const versionId = id();
-    await db.transact([
-      tx.documentVersions[versionId]
-        .update({
-          versionNumber: nextVersionNumber,
-          title: versionTitle,
-          content: content,
-          createdAt: Date.now(),
-          creationType,
-        })
-        .link({ document: documentId, creator: userId }),
-    ]);
-
-    console.log(`✅ Version ${nextVersionNumber} created: ${versionTitle}`);
-  } catch (error) {
-    console.error('❌ Failed to create document version:', error);
-    throw error;
-  }
+  const versionId = id();
+  await db.transact([
+    tx.documentVersions[versionId]
+      .update({
+        versionNumber: nextVersionNumber,
+        title: versionTitle,
+        content: content,
+        createdAt: Date.now(),
+        creationType,
+      })
+      .link({ document: documentId, creator: userId }),
+  ]);
 }
 
 /**

@@ -41,12 +41,9 @@ test.describe('Navigation Behavior While Unauthenticated', () => {
         finalUrl,
         redirectedToAuth,
       });
-
-      console.log(`Route: ${route.name} -> ${finalUrl} (Auth redirect: ${redirectedToAuth})`);
     }
 
-    // Verify consistent behavior pattern
-    const authRedirects = results.filter(r => r.redirectedToAuth).length;
-    console.log(`${authRedirects} out of ${routes.length} routes redirected to auth`);
+    // Verify at least one result was collected
+    expect(results.length).toBeGreaterThan(0);
   });
 });

@@ -50,7 +50,6 @@ export default function AmendmentEditPage({ params }: { params: Promise<{ id: st
         $: { where: { status: 'admin' } },
         user: {},
       },
-      user: {},
     },
   });
 
@@ -59,12 +58,6 @@ export default function AmendmentEditPage({ params }: { params: Promise<{ id: st
   // Initialize form data when amendment data loads
   useEffect(() => {
     if (amendment) {
-      console.log('📝 [AmendmentEditPage] Populating form with amendment data:', {
-        title: amendment.title,
-        subtitle: amendment.subtitle,
-        status: amendment.status,
-      });
-
       setFormData({
         title: amendment.title || '',
         subtitle: amendment.subtitle || '',
@@ -76,22 +69,13 @@ export default function AmendmentEditPage({ params }: { params: Promise<{ id: st
         tags: Array.isArray(amendment.tags) ? amendment.tags : [],
       });
 
-      // Check if current user is an admin collaborator or the author
+      // Check if current user is an admin collaborator
       const adminCollaborators = amendment.amendmentRoleCollaborators || [];
       const userIsAdmin = adminCollaborators.some(
         (c: any) => c.user?.id === authUser?.id && c.status === 'admin'
       );
-      const userIsAuthor = amendment.user?.id === authUser?.id;
 
-      console.log('🔐 [AmendmentEditPage] Authorization check:', {
-        authUserId: authUser?.id,
-        amendmentId: resolvedParams.id,
-        userIsAdmin,
-        userIsAuthor,
-        adminCount: adminCollaborators.length,
-      });
-
-      setIsAuthorized(userIsAdmin || userIsAuthor);
+      setIsAuthorized(userIsAdmin);
     }
   }, [amendment, authUser?.id]);
 

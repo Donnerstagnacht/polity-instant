@@ -74,8 +74,6 @@ export const useAuthStore = create<AuthState>()(
           // Use InstantDB's built-in magic code system
           await db.auth.sendMagicCode({ email });
 
-          console.log('🔐 Magic code sent to:', email);
-
           set(state => {
             state.isLoading = false;
           });

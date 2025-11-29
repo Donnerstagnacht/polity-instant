@@ -55,8 +55,6 @@ export function useSuggestionIdAssignment({
 
             // Mark as processed to avoid re-processing
             processedDiscussions.current.add(discussion.id);
-
-            console.log(`✅ Assigned ${crId} to suggestion ${discussion.id}`);
           }
         } catch (error) {
           console.error(`Failed to assign ID to suggestion ${discussion.id}:`, error);

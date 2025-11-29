@@ -17,12 +17,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       return NextResponse.json({ error: 'subscriptionId is required' }, { status: 400 });
     }
 
-    console.log('Canceling subscription:', subscriptionId);
-
     // Cancel the subscription immediately
     const canceledSubscription = await stripe.subscriptions.cancel(subscriptionId);
-
-    console.log('Subscription canceled successfully:', canceledSubscription.id);
 
     return NextResponse.json({
       success: true,

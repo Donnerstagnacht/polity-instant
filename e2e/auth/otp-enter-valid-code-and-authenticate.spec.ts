@@ -19,7 +19,6 @@ test.describe('OTP Code Verification', () => {
     const code = await generateTestMagicCode(email);
 
     // 3. Log the generated code
-    console.log(`🔐 Generated magic code: ${code}`);
 
     // 4. Split code into digits
     const codeDigits = code.split('');

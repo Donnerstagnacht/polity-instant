@@ -92,13 +92,6 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
   // Initialize form data when user data loads
   useEffect(() => {
     if (dbUser) {
-      console.log('📝 [UserEditPage] Populating form with user data:', {
-        name: dbUser.name,
-        subtitle: dbUser.subtitle,
-        about: dbUser.about?.substring(0, 50) + '...',
-        contact: dbUser.contact,
-      });
-
       setFormData({
         name: dbUser.name || '',
         subtitle: dbUser.subtitle || '',
@@ -114,14 +107,6 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
   }, [dbUser]);
 
   const isAuthorized = authUser?.id === resolvedParams.id;
-
-  console.log('🔐 [UserEditPage] Authorization check:', {
-    authUserId: authUser?.id,
-    paramUserId: resolvedParams.id,
-    isAuthorized,
-    isLoading,
-    hasDbUser: !!dbUser,
-  });
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -162,24 +147,6 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
         toast.error('Could not find user to update');
         return;
       }
-
-      // DEBUG: Log permission-relevant data
-      console.log('🔍 [Permission Debug] Auth User:', {
-        'auth.id': authUser.id,
-        'auth.email': authUser.email,
-        authUser: authUser,
-      });
-
-      console.log('🔍 [Permission Debug] DB User:', {
-        'data.id': dbUser.id,
-        dbUser: dbUser,
-      });
-
-      console.log('🔍 [Permission Debug] Update Target:', {
-        targetUserId: authUser.id,
-        isSelf: authUser.id === dbUser.id,
-        match: authUser.id === resolvedParams.id,
-      });
 
       // Update the user in Instant DB
       const transactions = [
@@ -227,7 +194,6 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
   const handleSubscribe = async (priceId: string) => {
     setIsCheckoutLoading(true);
     try {
-      console.log('Creating checkout with priceId:', priceId);
       const response = await fetch('/api/stripe/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -235,7 +201,6 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
       });
 
       const data = await response.json();
-      console.log('Checkout response:', data);
 
       if (data.url) {
         window.location.href = data.url;
@@ -258,7 +223,6 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
 
     setIsCheckoutLoading(true);
     try {
-      console.log('Creating checkout with custom amount:', euros);
       const response = await fetch('/api/stripe/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -266,7 +230,6 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
       });
 
       const data = await response.json();
-      console.log('Checkout response:', data);
 
       if (data.url) {
         window.location.href = data.url;
@@ -288,7 +251,6 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
 
     setIsCheckoutLoading(true);
     try {
-      console.log('Canceling subscription:', activeSubscription.id);
       const response = await fetch('/api/stripe/cancel-subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -296,7 +258,6 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
       });
 
       const data = await response.json();
-      console.log('Cancel response:', data);
 
       if (data.success) {
         toast.success('Subscription canceled successfully');

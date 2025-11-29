@@ -59,13 +59,6 @@ export async function POST(req: Request): Promise<NextResponse> {
           }
         }
 
-        console.log('Checkout completed:', {
-          sessionId: session.id,
-          customerId: session.customer,
-          subscriptionId: session.subscription,
-          userId,
-        });
-
         // Update the Stripe customer with userId in metadata
         if (userId && session.customer) {
           const customerId =
@@ -75,9 +68,8 @@ export async function POST(req: Request): Promise<NextResponse> {
             await stripe.customers.update(customerId, {
               metadata: { userId },
             });
-            console.log('Updated Stripe customer metadata with userId:', customerId);
-          } catch (error) {
-            console.error('Error updating customer metadata:', error);
+          } catch {
+            // Ignore customer metadata update errors
           }
         }
 
@@ -162,10 +154,6 @@ export async function POST(req: Request): Promise<NextResponse> {
       }
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
-        console.log('Subscription updated:', {
-          subscriptionId: subscription.id,
-          status: subscription.status,
-        });
 
         try {
           // Find and update the subscription
@@ -205,9 +193,6 @@ export async function POST(req: Request): Promise<NextResponse> {
       }
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
-        console.log('Subscription deleted:', {
-          subscriptionId: subscription.id,
-        });
 
         try {
           const existingSubs = await db.query({
@@ -238,12 +223,6 @@ export async function POST(req: Request): Promise<NextResponse> {
       case 'invoice.payment_succeeded': {
         const invoice = event.data.object as Stripe.Invoice;
         const subscriptionId = (invoice as any).subscription;
-        console.log('Payment succeeded:', {
-          invoiceId: invoice.id,
-          subscriptionId:
-            typeof subscriptionId === 'string' ? subscriptionId : subscriptionId?.id || null,
-        });
-
         try {
           const customerId =
             typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id || '';
@@ -289,11 +268,6 @@ export async function POST(req: Request): Promise<NextResponse> {
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice;
         const subscriptionId = (invoice as any).subscription;
-        console.log('Payment failed:', {
-          invoiceId: invoice.id,
-          subscriptionId:
-            typeof subscriptionId === 'string' ? subscriptionId : subscriptionId?.id || null,
-        });
 
         try {
           const customerId =

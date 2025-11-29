@@ -57,27 +57,20 @@ async function globalSetup() {
         try {
           await adminDB.transact([
             adminDB.tx.$users[user.id].update({
-              isActive: true,
+              linkedGuestUsers: true,
               updatedAt: new Date(),
               lastSeenAt: new Date(),
             }),
           ]);
-          console.log(`   ✅ User activated in $users table`);
         } catch {
-          console.log(`   ℹ️  Could not update $users table (user record may not exist yet)`);
+          // Ignore errors updating user - may not have permissions
         }
-      } else {
-        console.log(`   ⚠️  User object is null or missing ID`);
       }
-
-      console.log('');
     } catch (error) {
       console.error(`   ❌ Failed to setup user ${testUser.email}:`, error);
       // Don't throw - continue with other users
     }
   }
-
-  console.log('✅ Global test setup complete\n');
 }
 
 export default globalSetup;

@@ -38,12 +38,10 @@ export const useThemeStore = create<ThemeState & ThemeActions>()(
     // Actions
     setTheme: newTheme => {
       set(state => {
-        console.log('Setting theme:', newTheme);
         state.theme = newTheme;
         // Update isDark whenever theme changes
         state.isDark =
           newTheme === 'dark' || (newTheme === 'system' && state.systemTheme === 'dark');
-        console.log('Updated isDark:', state.isDark);
       });
 
       // Apply the theme to the document

@@ -40,11 +40,7 @@ test.describe('Public Profile Viewing', () => {
       // Verify profile content loads
       await expect(heading).not.toBeEmpty();
 
-      // Check edit link presence
-      const editLink = page.locator('a[href*="/edit"]');
-      const editCount = await editLink.count();
-
-      console.log(`Edit link ${editCount > 0 ? 'is' : 'is not'} present`);
+      // Profile is accessible without authentication
     }
   });
 });

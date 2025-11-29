@@ -430,11 +430,14 @@ function GuidedGroupFlow({
 
         // Create membership for creator as Board Member
         tx.groupMemberships[membershipId].update({
-          role: 'Board Member',
           status: 'member',
           joinedAt: new Date(),
         }),
-        tx.groupMemberships[membershipId].link({ group: groupId, user: user.id }),
+        tx.groupMemberships[membershipId].link({
+          group: groupId,
+          user: user.id,
+          role: boardMemberRoleId,
+        }),
       ]);
       toast.success('Group created successfully!');
       setTimeout(() => (window.location.href = '/'), 500);
@@ -1187,7 +1190,6 @@ function CreateTodoForm({ isCarouselMode }: { isCarouselMode: boolean }) {
           tags: formData.tags.length > 0 ? formData.tags : null,
           createdAt: now,
           updatedAt: now,
-          visibility: formData.visibility,
         }),
         tx.todos[todoId].link({ creator: user.id }),
         tx.todoAssignments[assignmentId].update({
@@ -2006,13 +2008,13 @@ function CreateGroupForm({ isCarouselMode }: { isCarouselMode: boolean }) {
 
         // Create membership for creator as Board Member
         tx.groupMemberships[membershipId].update({
-          role: 'Board Member',
           status: 'member',
           joinedAt: new Date(),
         }),
         tx.groupMemberships[membershipId].link({
           group: groupId,
           user: user.id,
+          role: boardMemberRoleId,
         }),
       ];
 
@@ -3733,11 +3735,6 @@ function CreateAgendaItemForm() {
     },
   });
 
-  console.log('Events Data:', eventsData);
-  console.log('Amendments Data:', amendmentsData);
-  console.log('Positions Data:', positionsData);
-  console.log('Current User ID:', user?.id);
-
   const userEvents = eventsData?.events || [];
 
   const userAmendments = amendmentsData?.amendments || [];
@@ -3981,10 +3978,6 @@ function GuidedAgendaItemFlow({
       group: {},
     },
   });
-
-  console.log('Guided - Events Data:', eventsData);
-  console.log('Guided - Amendments Data:', amendmentsData);
-  console.log('Guided - Positions Data:', positionsData);
 
   const userEvents = eventsData?.events || [];
 
@@ -4279,10 +4272,6 @@ function CreateElectionForm() {
     positions: {},
   });
 
-  console.log('Election Agenda Items Data:', agendaData);
-  console.log('Positions Data:', positionsData);
-  console.log('Current User ID:', user?.id);
-
   const userElectionAgendaItems = agendaData?.agendaItems || [];
   const allPositions = positionsData?.positions || [];
 
@@ -4487,9 +4476,6 @@ function GuidedElectionFlow({
   const { data: positionsData } = db.useQuery({
     positions: {},
   });
-
-  console.log('Guided - Election Agenda Items Data:', agendaData);
-  console.log('Guided - Positions Data:', positionsData);
 
   const userElectionAgendaItems = agendaData?.agendaItems || [];
   const allPositions = positionsData?.positions || [];
@@ -4735,9 +4721,6 @@ function CreateAmendmentVoteForm() {
     },
   });
 
-  console.log('Vote Agenda Items Data:', agendaData);
-  console.log('Current User ID:', user?.id);
-
   const userVoteAgendaItems = agendaData?.agendaItems || [];
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -4902,8 +4885,6 @@ function GuidedAmendmentVoteFlow({
       },
     },
   });
-
-  console.log('Guided - Vote Agenda Items Data:', agendaData);
 
   const userVoteAgendaItems = agendaData?.agendaItems || [];
 
@@ -5101,9 +5082,6 @@ function CreateChangeRequestForm() {
     amendmentVotes: {},
   });
 
-  console.log('Amendment Votes Data:', amendmentVotesData);
-  console.log('Current User ID:', user?.id);
-
   const userAmendmentVotes = amendmentVotesData?.amendmentVotes || [];
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -5251,8 +5229,6 @@ function GuidedChangeRequestFlow({
   const { data: amendmentVotesData } = db.useQuery({
     amendmentVotes: {},
   });
-
-  console.log('Guided - Amendment Votes Data:', amendmentVotesData);
 
   const userAmendmentVotes = amendmentVotesData?.amendmentVotes || [];
 
@@ -5449,9 +5425,6 @@ function CreateElectionCandidateForm() {
     elections: {},
   });
 
-  console.log('Elections Data:', electionsData);
-  console.log('Current User ID:', user?.id);
-
   const userElections = electionsData?.elections || [];
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -5604,8 +5577,6 @@ function GuidedElectionCandidateFlow({
   const { data: electionsData } = db.useQuery({
     elections: {},
   });
-
-  console.log('Guided - Elections Data:', electionsData);
 
   const userElections = electionsData?.elections || [];
 

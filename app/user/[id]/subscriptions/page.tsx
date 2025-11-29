@@ -45,9 +45,7 @@ export default function SubscriptionsPage({ params }: { params: Promise<{ id: st
             },
             user: {},
             group: {},
-            amendment: {
-              user: {},
-            },
+            amendment: {},
             event: {
               organizer: {},
             },

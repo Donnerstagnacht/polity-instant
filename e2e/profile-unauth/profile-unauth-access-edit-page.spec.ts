@@ -25,7 +25,7 @@ test.describe('Access Control for Edit Pages', () => {
       const authHeading = page.getByRole('heading', { name: /sign in|log in|authenticate/i });
       await expect(authHeading).toBeVisible({ timeout: 5000 });
     } else if (isEditPage) {
-      console.log('Edit page is publicly accessible');
+      // Edit page accessible - document behavior
     }
   });
 });

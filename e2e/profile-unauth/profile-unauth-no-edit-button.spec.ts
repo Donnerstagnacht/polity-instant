@@ -28,7 +28,6 @@ test.describe('Access Control for Edit Pages', () => {
       expect(editButtonCount).toBe(0);
     } else {
       // 4. If redirected to auth page, skip edit button check
-      console.log('Redirected to auth page - edit button check skipped');
     }
   });
 });

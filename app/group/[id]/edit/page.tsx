@@ -53,12 +53,6 @@ export default function GroupEditPage({ params }: { params: Promise<{ id: string
   // Initialize form data when group data loads
   useEffect(() => {
     if (group) {
-      console.log('📝 [GroupEditPage] Populating form with group data:', {
-        name: group.name,
-        description: group.description?.substring(0, 50) + '...',
-        location: group.location,
-      });
-
       setFormData({
         name: group.name || '',
         description: group.description || '',
@@ -78,13 +72,6 @@ export default function GroupEditPage({ params }: { params: Promise<{ id: string
       const userIsAdmin = adminMemberships.some(
         (m: any) => m.user?.id === authUser?.id && m.role === 'admin'
       );
-
-      console.log('🔐 [GroupEditPage] Authorization check:', {
-        authUserId: authUser?.id,
-        groupId: resolvedParams.id,
-        userIsAdmin,
-        adminCount: adminMemberships.length,
-      });
 
       setIsAuthorized(userIsAdmin);
     }

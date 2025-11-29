@@ -25,13 +25,12 @@ test.describe('Return URL Preservation (Deep Link)', () => {
 
       // 5. Note the presence and value of return URL parameter
       if (redirectParam) {
-        console.log(`Return URL parameter found: ${redirectParam}`);
         expect(redirectParam).toContain('/user/');
       } else {
-        console.log('No return URL parameter found in auth redirect');
+        // No redirect parameter present
       }
     } else {
-      console.log('Profile is publicly accessible - no auth redirect');
+      // Not redirected to auth page
     }
   });
 });

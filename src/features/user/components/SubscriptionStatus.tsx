@@ -51,15 +51,12 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
     async function fetchSubscriptionStatus() {
       try {
         setIsLoading(true);
-        console.log('[SubscriptionStatus] Fetching for userId:', userId);
 
         const response = await fetch('/api/stripe/subscription-status', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId }),
         });
-
-        console.log('[SubscriptionStatus] Response status:', response.status);
 
         if (!response.ok) {
           const errorText = await response.text();
@@ -68,7 +65,6 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
         }
 
         const result = await response.json();
-        console.log('[SubscriptionStatus] Data received:', result);
         setData(result);
       } catch (err) {
         console.error('[SubscriptionStatus] Fetch error:', err);

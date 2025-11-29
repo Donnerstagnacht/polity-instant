@@ -77,12 +77,6 @@ export function NavItemList({
                         variant="default"
                       >
                         {(() => {
-                          console.log('🏷️ [NavItemList] Rendering badge:', {
-                            itemId: item.id,
-                            itemLabel: item.label,
-                            badge: item.badge,
-                            navigationView: 'asButton',
-                          });
                           return item.badge;
                         })()}
                       </Badge>
@@ -179,12 +173,6 @@ export function NavItemList({
                         variant="default"
                       >
                         {(() => {
-                          console.log('🏷️ [NavItemList] Rendering badge (grid):', {
-                            itemId: item.id,
-                            itemLabel: item.label,
-                            badge: item.badge,
-                            navigationView: 'asButton-grid',
-                          });
                           return item.badge;
                         })()}
                       </Badge>

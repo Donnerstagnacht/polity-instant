@@ -34,17 +34,11 @@ const adminDB = init({
  * @returns The generated magic code
  */
 export async function generateTestMagicCode(email: string): Promise<string> {
-  try {
-    // First, ensure the user is active
-    await ensureUserActive(email);
+  // First, ensure the user is active
+  await ensureUserActive(email);
 
-    const { code } = await adminDB.auth.generateMagicCode(email);
-    console.log(`✅ Generated magic code for ${email}: ${code}`);
-    return code;
-  } catch (error) {
-    console.error('❌ Failed to generate magic code:', error);
-    throw error;
-  }
+  const { code } = await adminDB.auth.generateMagicCode(email);
+  return code;
 }
 
 /**
@@ -57,14 +51,11 @@ async function ensureUserActive(email: string): Promise<void> {
     let user;
     try {
       user = await adminDB.auth.getUser({ email });
-      console.log(`ℹ️ Found existing user: ${email} (${user?.id})`);
     } catch (error: any) {
       // User doesn't exist, create them
       if (error?.message?.includes('not found') || error?.status === 404) {
-        console.log(`ℹ️ Creating new user: ${email}`);
         const token = await adminDB.auth.createToken(email);
         user = await adminDB.auth.verifyToken(token);
-        console.log(`✅ User created: ${email} (${user?.id})`);
       } else {
         throw error;
       }
@@ -74,11 +65,9 @@ async function ensureUserActive(email: string): Promise<void> {
     if (user?.id) {
       await adminDB.transact([
         adminDB.tx.$users[user.id].update({
-          isActive: true,
           updatedAt: new Date(),
         }),
       ]);
-      console.log(`✅ User activated: ${email}`);
     }
   } catch (error) {
     console.error(`❌ Failed to ensure user is active:`, error);
@@ -92,14 +81,8 @@ async function ensureUserActive(email: string): Promise<void> {
  * @returns Authentication token
  */
 export async function createTestToken(email: string): Promise<string> {
-  try {
-    const token = await adminDB.auth.createToken(email);
-    console.log(`✅ Created auth token for ${email}`);
-    return token;
-  } catch (error) {
-    console.error('❌ Failed to create token:', error);
-    throw error;
-  }
+  const token = await adminDB.auth.createToken(email);
+  return token;
 }
 
 /**
@@ -111,7 +94,6 @@ export async function createTestToken(email: string): Promise<string> {
 export async function verifyTestMagicCode(email: string, code: string) {
   try {
     const user = await adminDB.auth.verifyMagicCode(email, code);
-    console.log(`✅ Verified magic code for ${email}`);
     return user;
   } catch (error) {
     console.error('❌ Failed to verify magic code:', error);

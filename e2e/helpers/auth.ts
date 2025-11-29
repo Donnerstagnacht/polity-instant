@@ -44,11 +44,9 @@ export async function login(page: Page, email: string, generateCode = true) {
   let code: string;
   if (generateCode) {
     code = await generateTestMagicCode(email);
-    console.log(`🔐 Using generated magic code: ${code}`);
   } else {
     // Fallback to default test code (might not work)
     code = '123456';
-    console.log('⚠️ Using default magic code (may fail)');
   }
 
   // Enter the 6-digit OTP code

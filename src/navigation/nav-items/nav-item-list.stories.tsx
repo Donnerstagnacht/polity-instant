@@ -8,10 +8,10 @@ import { fn } from 'storybook/test';
 function AuthenticatedNavItemWrapper(args: any) {
   const router = {
     navigate: fn(() => {
-      console.log('Navigate called');
+      // Mock navigation for Storybook
     }),
     push: fn(() => {
-      console.log('Push called');
+      // Mock push for Storybook
     }),
   } as any;
 

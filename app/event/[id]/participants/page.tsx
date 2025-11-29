@@ -115,13 +115,7 @@ export default function EventParticipantsPage({ params }: PageParams) {
 
   // Query all users for user search
   const { data: usersData, isLoading: isLoadingUsers } = db.useQuery({
-    $users: {
-      $: {
-        where: {
-          isActive: true,
-        },
-      },
-    },
+    $users: {},
   });
 
   // Check if current user is admin

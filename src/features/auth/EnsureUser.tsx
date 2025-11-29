@@ -42,14 +42,11 @@ async function createUser(userId: string, email: string): Promise<void> {
     tx.$users[userId].update({
       handle: randomHandle(),
       name: email.split('@')[0], // Use email username as initial name
-      isActive: true,
       createdAt: now,
       updatedAt: now,
       lastSeenAt: now,
     }),
   ]);
-
-  console.log('✅ User attributes updated for user:', userId);
 }
 
 /**

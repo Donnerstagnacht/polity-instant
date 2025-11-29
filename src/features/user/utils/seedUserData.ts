@@ -33,7 +33,6 @@ export async function seedUser(
   await db.transact([
     tx.$users[userId].update({
       ...userData,
-      isActive: true,
       updatedAt: new Date(),
     }),
   ]);
@@ -223,6 +222,4 @@ export async function seedCompleteUser(userId: string) {
       tags: ['electoral', 'voting', 'democracy', 'representation'],
     },
   ]);
-
-  console.log('✅ Complete user seeded successfully!');
 }

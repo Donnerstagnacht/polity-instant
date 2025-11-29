@@ -28,7 +28,6 @@ test.describe('Complete Authentication Flow End-to-End', () => {
 
     // 7. Generate magic code
     const code = await generateTestMagicCode(email);
-    console.log(`🔐 Generated magic code: ${code}`);
 
     // 8. Split code into digits
     const codeDigits = code.split('');

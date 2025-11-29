@@ -231,8 +231,6 @@ export default function GroupOperationPage() {
         links.receiverGroup = formData.receiverGroupId;
       }
 
-      console.log('Creating payment with links:', links);
-
       // Apply links
       if (Object.keys(links).length > 0) {
         transaction = transaction.link(links);
@@ -243,7 +241,6 @@ export default function GroupOperationPage() {
       }
 
       await db.transact([transaction]);
-      console.log('Payment created successfully');
       toast.success('Payment added successfully!');
       setIsAddPaymentOpen(false);
       setIsAddExpenseOpen(false);
@@ -609,17 +606,12 @@ function AddPaymentDialog({
     type: 'user' | 'group';
   } | null>(null);
 
-  // Query users and groups
+  // Query all users for user search
   const { data: usersData } = db.useQuery({
-    $users: {
-      $: {
-        where: {
-          isActive: true,
-        },
-      },
-    },
+    $users: {},
   });
 
+  // Query all groups for group search
   const { data: groupsData } = db.useQuery({
     groups: {},
   });

@@ -38,7 +38,5 @@ test.describe('Edge Cases and Security Considerations', () => {
       const saveCount = await saveButton.count();
       expect(saveCount).toBe(0);
     }
-
-    console.log(`Final URL after rapid switching: ${finalUrl}`);
   });
 });

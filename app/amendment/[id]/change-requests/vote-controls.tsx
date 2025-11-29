@@ -54,7 +54,6 @@ export function VoteControls({
   collaborators,
   status,
   amendmentId,
-  documentId,
   suggestionData,
   onVoteComplete,
 }: VoteControlsProps) {
@@ -87,14 +86,6 @@ export function VoteControls({
   const notVotedYet = collaborators.filter(c => !votedUserIds.has(c.user?.id));
 
   const handleVote = async (voteType: 'accept' | 'reject' | 'abstain') => {
-    console.log('=== VOTE CONTROLS handleVote ===');
-    console.log('voteType:', voteType);
-    console.log('hasVoted:', hasVoted);
-    console.log('suggestionData:', suggestionData);
-    console.log('actualChangeRequestId:', actualChangeRequestId);
-    console.log('amendmentId:', amendmentId);
-    console.log('documentId:', documentId);
-
     if (hasVoted) {
       toast({
         title: 'Already Voted',
@@ -113,7 +104,6 @@ export function VoteControls({
       if (suggestionData && !actualChangeRequestId) {
         // Create the changeRequest entity
         crId = id(); // Generate a new UUID
-        console.log('Creating changeRequest entity with UUID:', crId);
 
         await db.transact([
           tx.changeRequests[crId]
@@ -131,7 +121,6 @@ export function VoteControls({
             .link({ amendment: amendmentId }),
         ]);
 
-        console.log('ChangeRequest entity created successfully');
         setActualChangeRequestId(crId);
       }
 
@@ -140,7 +129,6 @@ export function VoteControls({
       }
 
       const voteId = id();
-      console.log('Creating vote with ID:', voteId, 'for changeRequest:', crId);
 
       await db.transact([
         tx.changeRequestVotes[voteId]
@@ -152,8 +140,6 @@ export function VoteControls({
           .link({ changeRequest: crId })
           .link({ voter: currentUserId }),
       ]);
-
-      console.log('Vote created successfully');
 
       toast({
         title: 'Vote Recorded',

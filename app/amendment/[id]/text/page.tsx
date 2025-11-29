@@ -74,7 +74,6 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
   const { data: amendmentData, isLoading: amendmentLoading } = db.useQuery({
     amendments: {
       $: { where: { id: amendmentId } },
-      user: {},
       document: {
         owner: {},
         collaborators: {
@@ -234,21 +233,11 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
 
   // Merge votes into discussions for display in editor
   const discussionsWithVotes = useMemo(() => {
-    console.log('=== DISCUSSIONS WITH VOTES DEBUG ===');
-    console.log('discussions:', discussions);
-    console.log('changeRequests:', changeRequests);
-
     if (!discussions || discussions.length === 0) return discussions;
 
     const enriched = discussions.map((discussion: any) => {
       // Find matching changeRequest by crId (stored in title field)
       const matchingChangeRequest = changeRequests.find((cr: any) => cr.title === discussion.crId);
-
-      console.log(`Discussion ${discussion.crId}:`, {
-        discussion,
-        matchingChangeRequest,
-        votes: matchingChangeRequest?.votes,
-      });
 
       if (matchingChangeRequest && matchingChangeRequest.votes) {
         // Add votes to the discussion
@@ -264,8 +253,6 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
 
       return discussion;
     });
-
-    console.log('enriched discussions:', enriched);
     return enriched;
   }, [discussions, changeRequests]);
 
@@ -491,11 +478,6 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
         );
 
         if (discussion) {
-          console.log('🔄 Creating changeRequest entity for accepted suggestion:', {
-            id: discussion.id,
-            crId: discussion.crId,
-          });
-
           // Generate a new UUID for the changeRequest entity
           const changeRequestId = id();
 
@@ -514,8 +496,6 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
               .link({ creator: user.id })
               .link({ amendment: amendment.id }),
           ]);
-
-          console.log('✅ ChangeRequest entity created for:', discussion.crId);
         }
 
         // Remove the discussion from the array (it's now persisted as a changeRequest entity)
@@ -530,11 +510,6 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
             updatedAt: Date.now(),
           }),
         ]);
-
-        console.log(
-          '✅ Version created and changeRequest entity saved:',
-          suggestion?.crId || 'unknown'
-        );
       } catch (error) {
         console.error('Failed to create version for accepted suggestion:', error);
       }
@@ -576,11 +551,6 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
         );
 
         if (discussion) {
-          console.log('🔄 Creating changeRequest entity for rejected suggestion:', {
-            id: discussion.id,
-            crId: discussion.crId,
-          });
-
           // Generate a new UUID for the changeRequest entity
           const changeRequestId = id();
 
@@ -599,8 +569,6 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
               .link({ creator: user.id })
               .link({ amendment: amendment.id }),
           ]);
-
-          console.log('✅ ChangeRequest entity created for:', discussion.crId);
         }
 
         // Remove the discussion from the array (it's now persisted as a changeRequest entity)
@@ -615,11 +583,6 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
             updatedAt: Date.now(),
           }),
         ]);
-
-        console.log(
-          '✅ Version created and changeRequest entity saved:',
-          suggestion?.crId || 'unknown'
-        );
       } catch (error) {
         console.error('Failed to create version for declined suggestion:', error);
       }
@@ -695,11 +658,9 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
         ) {
           // Use existing changeRequest
           changeRequestId = existingChangeRequestQuery.data.changeRequests[0].id;
-          console.log('Using existing changeRequest:', changeRequestId);
         } else {
           // Create new changeRequest entity
           changeRequestId = id();
-          console.log('Creating new changeRequest entity:', changeRequestId);
 
           await db.transact([
             tx.changeRequests[changeRequestId]
@@ -735,10 +696,7 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
           title: 'Vote Recorded',
           description: `You voted to ${voteType} this change request.`,
         });
-
-        console.log('✅ Vote recorded:', voteType, 'for', discussion.crId);
-      } catch (error) {
-        console.error('Failed to record vote:', error);
+      } catch {
         toast({
           title: 'Error',
           description: 'Failed to record your vote. Please try again.',
@@ -782,12 +740,11 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
       document.isPublic);
 
   // Check if user is owner or collaborator (can change modes)
-  // Include amendment owner and amendment admins as well
+  // Include amendment admins as well
   const isOwnerOrCollaborator =
     (document &&
       (document.owner?.id === user?.id ||
         document.collaborators?.some((c: any) => c.user?.id === user?.id))) ||
-    amendment?.user?.id === user?.id ||
     amendment?.amendmentRoleCollaborators?.some(
       (c: any) => c.user?.id === user?.id && c.status === 'admin'
     );

@@ -13,8 +13,6 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     const { userId } = await req.json();
 
-    console.log('[API] Subscription status request for userId:', userId);
-
     if (!userId) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });
     }
@@ -24,22 +22,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     const customers = await stripe.customers.list({
       limit: 100,
     });
-
-    console.log('[API] Found', customers.data.length, 'total Stripe customers');
-    console.log(
-      '[API] Customers with metadata:',
-      customers.data
-        .filter(c => c.metadata?.userId)
-        .map(c => ({ id: c.id, userId: c.metadata.userId }))
-    );
-
     // Find customer by checking metadata for userId
     let customer = customers.data.find(c => c.metadata?.userId === userId);
 
     // If not found by metadata, check recent checkout sessions for this userId
     if (!customer) {
-      console.log('[API] Customer not found by metadata, checking recent checkout sessions...');
-
       try {
         const sessions = await stripe.checkout.sessions.list({
           limit: 100,
@@ -55,23 +42,18 @@ export async function POST(req: Request): Promise<NextResponse> {
           customer = customers.data.find(c => c.id === customerId);
 
           if (customer) {
-            console.log('[API] Found customer via checkout session:', customerId);
             // Update customer metadata for future lookups
             await stripe.customers.update(customerId, {
               metadata: { userId },
             });
-            console.log('[API] Updated customer metadata for future lookups');
           }
         }
-      } catch (error) {
-        console.error('[API] Error searching checkout sessions:', error);
+      } catch {
+        // Ignore metadata update errors
       }
     }
 
-    console.log('[API] Customer found for userId:', userId, '?', !!customer);
-
     if (!customer) {
-      console.log('[API] No customer found - returning empty subscription data');
       return NextResponse.json({
         hasSubscription: false,
         subscription: null,
@@ -88,18 +70,6 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
 
     const activeSubscription = subscriptions.data.find(sub => sub.status === 'active');
-
-    console.log(
-      '[API] Active subscription:',
-      activeSubscription
-        ? {
-            id: activeSubscription.id,
-            status: activeSubscription.status,
-            current_period_start: (activeSubscription as any).current_period_start,
-            current_period_end: (activeSubscription as any).current_period_end,
-          }
-        : 'none'
-    );
 
     // Get recent invoices/payments
     const invoices = await stripe.invoices.list({

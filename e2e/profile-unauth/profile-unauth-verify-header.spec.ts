@@ -21,9 +21,8 @@ test.describe('Authentication State Detection', () => {
 
     if (signInCount > 0) {
       await expect(signInButton.first()).toBeVisible();
-      console.log('Sign in button found in header');
     } else {
-      console.log('No sign in button displayed');
+      // Alternative unauthenticated state - no sign in button visible
     }
 
     // Check that authenticated user menu is NOT present

@@ -58,6 +58,15 @@ export function getTagColor(
 
 // Helper function to get badge color based on role
 export function getRoleBadgeColor(role: string) {
+  // Handle undefined or null role
+  if (!role) {
+    return {
+      bg: 'bg-gray-100 dark:bg-gray-800/40',
+      text: 'text-gray-800 dark:text-gray-300',
+      badge: 'gray',
+    };
+  }
+
   switch (role.toLowerCase()) {
     case 'founder':
       return {
