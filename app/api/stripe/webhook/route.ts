@@ -2,24 +2,27 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { init, id as generateId } from '@instantdb/admin';
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is not defined');
-}
-if (!process.env.NEXT_PUBLIC_INSTANT_APP_ID) {
-  throw new Error('NEXT_PUBLIC_INSTANT_APP_ID is not defined');
-}
-if (!process.env.INSTANT_ADMIN_TOKEN) {
-  throw new Error('INSTANT_ADMIN_TOKEN is not defined');
+function getStripe() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not defined');
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-10-29.clover',
+  });
 }
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2025-10-29.clover',
-});
-
-const db = init({
-  appId: process.env.NEXT_PUBLIC_INSTANT_APP_ID,
-  adminToken: process.env.INSTANT_ADMIN_TOKEN,
-});
+function getDB() {
+  if (!process.env.NEXT_PUBLIC_INSTANT_APP_ID) {
+    throw new Error('NEXT_PUBLIC_INSTANT_APP_ID is not defined');
+  }
+  if (!process.env.INSTANT_ADMIN_TOKEN) {
+    throw new Error('INSTANT_ADMIN_TOKEN is not defined');
+  }
+  return init({
+    appId: process.env.NEXT_PUBLIC_INSTANT_APP_ID,
+    adminToken: process.env.INSTANT_ADMIN_TOKEN,
+  });
+}
 
 export async function POST(req: Request): Promise<NextResponse> {
   const body = await req.text();
@@ -30,6 +33,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
+    const stripe = getStripe();
+    const db = getDB();
+
     if (!process.env.STRIPE_WEBHOOK_SECRET) {
       throw new Error('STRIPE_WEBHOOK_SECRET is not defined');
     }
