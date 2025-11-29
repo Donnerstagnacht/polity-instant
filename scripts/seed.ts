@@ -613,18 +613,16 @@ async function seedUsers() {
   const tobiasAmendment1Id = id();
   amendmentIds.push(tobiasAmendment1Id);
   transactions.push(
-    tx.amendments[tobiasAmendment1Id]
-      .update({
-        title: 'Community Guidelines Update',
-        subtitle: 'Proposed changes to community standards',
-        status: 'Under Review',
-        supporters: randomInt(50, 150),
-        date: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
-        code: `AMN-${faker.string.alphanumeric(6).toUpperCase()}`,
-        tags: ['policy', 'community'],
-        visibility: 'public',
-      })
-      .link({ user: tobiasUserId })
+    tx.amendments[tobiasAmendment1Id].update({
+      title: 'Community Guidelines Update',
+      subtitle: 'Proposed changes to community standards',
+      status: 'Under Review',
+      supporters: randomInt(50, 150),
+      date: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+      code: `AMN-${faker.string.alphanumeric(6).toUpperCase()}`,
+      tags: ['policy', 'community'],
+      visibility: 'public',
+    })
   );
   const tobiasAmend1Hashtags = randomItems(AMENDMENT_HASHTAGS, randomInt(2, 4));
   transactions.push(
@@ -637,18 +635,16 @@ async function seedUsers() {
   const tobiasAmendment2Id = id();
   amendmentIds.push(tobiasAmendment2Id);
   transactions.push(
-    tx.amendments[tobiasAmendment2Id]
-      .update({
-        title: 'Member Voting Process Reform',
-        subtitle: 'Improving voting mechanisms for members',
-        status: 'Drafting',
-        supporters: randomInt(20, 60),
-        date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-        code: `AMN-${faker.string.alphanumeric(6).toUpperCase()}`,
-        tags: ['reform', 'voting'],
-        visibility: 'authenticated',
-      })
-      .link({ user: tobiasUserId })
+    tx.amendments[tobiasAmendment2Id].update({
+      title: 'Member Voting Process Reform',
+      subtitle: 'Improving voting mechanisms for members',
+      status: 'Drafting',
+      supporters: randomInt(20, 60),
+      date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+      code: `AMN-${faker.string.alphanumeric(6).toUpperCase()}`,
+      tags: ['reform', 'voting'],
+      visibility: 'authenticated',
+    })
   );
   const tobiasAmend2Hashtags = randomItems(AMENDMENT_HASHTAGS, randomInt(2, 4));
   transactions.push(
@@ -661,18 +657,16 @@ async function seedUsers() {
   const tobiasAmendment3Id = id();
   amendmentIds.push(tobiasAmendment3Id);
   transactions.push(
-    tx.amendments[tobiasAmendment3Id]
-      .update({
-        title: 'Internal Policy Draft',
-        subtitle: 'Draft policy for internal review only',
-        status: 'Drafting',
-        supporters: randomInt(5, 15),
-        date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-        code: `AMN-${faker.string.alphanumeric(6).toUpperCase()}`,
-        tags: ['policy', 'draft'],
-        visibility: 'private',
-      })
-      .link({ user: tobiasUserId })
+    tx.amendments[tobiasAmendment3Id].update({
+      title: 'Internal Policy Draft',
+      subtitle: 'Draft policy for internal review only',
+      status: 'Drafting',
+      supporters: randomInt(5, 15),
+      date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      code: `AMN-${faker.string.alphanumeric(6).toUpperCase()}`,
+      tags: ['policy', 'draft'],
+      visibility: 'private',
+    })
   );
   const tobiasAmend3Hashtags = randomItems(AMENDMENT_HASHTAGS, randomInt(2, 4));
   transactions.push(
@@ -781,18 +775,16 @@ async function seedUsers() {
       amendmentIds.push(amendmentId);
       const amendmentTitle = faker.lorem.sentence();
       transactions.push(
-        tx.amendments[amendmentId]
-          .update({
-            title: amendmentTitle,
-            subtitle: faker.lorem.sentence(),
-            status: randomItem(['Passed', 'Rejected', 'Under Review', 'Drafting']),
-            supporters: randomInt(10, 1000),
-            date: faker.date.past({ years: 1 }).toISOString(),
-            code: `AMN-${faker.string.alphanumeric(6).toUpperCase()}`,
-            tags: [randomItem(['policy', 'reform', 'legislation', 'amendment', 'proposal'])],
-            visibility: randomVisibility(),
-          })
-          .link({ user: userId })
+        tx.amendments[amendmentId].update({
+          title: amendmentTitle,
+          subtitle: faker.lorem.sentence(),
+          status: randomItem(['Passed', 'Rejected', 'Under Review', 'Drafting']),
+          supporters: randomInt(10, 1000),
+          date: faker.date.past({ years: 1 }).toISOString(),
+          code: `AMN-${faker.string.alphanumeric(6).toUpperCase()}`,
+          tags: [randomItem(['policy', 'reform', 'legislation', 'amendment', 'proposal'])],
+          visibility: randomVisibility(),
+        })
       );
 
       // Add hashtags to amendment

@@ -1,6 +1,7 @@
 import type { User } from '../types/user.types';
 
 export const USER: User = {
+  id: 'user-123',
   name: 'Sarah Johnson',
   subtitle: 'Constitutional Law Expert',
   avatar: 'https://i.pravatar.cc/150?u=sarah',
