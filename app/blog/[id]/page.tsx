@@ -12,11 +12,11 @@ import { Textarea } from '@/components/ui/textarea';
 import db, { id } from '../../../db';
 import { BookOpen, Calendar, MessageSquare, Clock, ArrowUp, ArrowDown } from 'lucide-react';
 import { StatsBar } from '@/components/ui/StatsBar';
-import { BlogSubscribeButton } from '@/features/blogs/ui/BlogSubscribeButton';
 import { useSubscribeBlog } from '@/features/blogs/hooks/useSubscribeBlog';
 import { ActionBar } from '@/components/ui/ActionBar';
 import { useAuthStore } from '@/features/auth/auth';
 import { ShareButton } from '@/components/shared/ShareButton';
+import { SubscribeButton } from '@/components/shared/action-buttons';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/use-translation';
 import { CommentSortSelect, CommentSortBy } from '@/components/shared/CommentSortSelect';
@@ -160,7 +160,12 @@ export default function BlogPage({ params }: { params: Promise<{ id: string }> }
   const [sortBy, setSortBy] = useState<CommentSortBy>('votes');
 
   // Subscribe hook
-  const { subscriberCount } = useSubscribeBlog(resolvedParams.id);
+  const {
+    isSubscribed,
+    subscriberCount,
+    toggleSubscribe,
+    isLoading: subscribeLoading,
+  } = useSubscribeBlog(resolvedParams.id);
 
   // Fetch blog data from InstantDB with comments
   // Note: We fetch all comments and filter later to avoid nested query issues
@@ -323,7 +328,13 @@ export default function BlogPage({ params }: { params: Promise<{ id: string }> }
 
         {/* Action Bar */}
         <ActionBar>
-          <BlogSubscribeButton blogId={resolvedParams.id} />
+          <SubscribeButton
+            entityType="blog"
+            entityId={resolvedParams.id}
+            isSubscribed={isSubscribed}
+            onToggleSubscribe={toggleSubscribe}
+            isLoading={subscribeLoading}
+          />
           <Button variant="outline" onClick={() => setIsCommenting(true)}>
             <MessageSquare className="mr-2 h-4 w-4" />
             Comment

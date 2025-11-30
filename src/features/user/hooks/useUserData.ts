@@ -164,6 +164,9 @@ export function useUserData(userId?: string) {
       // Get amendments from collaborations instead (no direct user->amendments link)
       amendments:
         collaborationsData?.amendmentCollaborators?.reduce((acc: any[], collab: any) => {
+          // Skip if amendment is undefined
+          if (!collab.amendment) return acc;
+
           // Deduplicate by amendment ID
           const existingIndex = acc.findIndex(a => a.id === collab.amendment.id);
           if (existingIndex === -1) {

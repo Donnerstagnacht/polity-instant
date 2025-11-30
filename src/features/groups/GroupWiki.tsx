@@ -17,11 +17,10 @@ import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { BlogSearchCard } from '@/features/search/ui/BlogSearchCard';
 import { GRADIENTS } from '@/features/user/state/gradientColors';
 import { useSubscribeGroup } from '@/features/groups/hooks/useSubscribeGroup';
-import { GroupSubscribeButton } from '@/features/groups/ui/GroupSubscribeButton';
 import { StatsBar } from '@/components/ui/StatsBar';
 import { useGroupMembership } from '@/features/groups/hooks/useGroupMembership';
-import { GroupMembershipButton } from '@/features/groups/ui/GroupMembershipButton';
 import { ActionBar } from '@/components/ui/ActionBar';
+import { SubscribeButton, MembershipButton } from '@/components/shared/action-buttons';
 import { SocialBar } from '@/features/user/ui/SocialBar';
 import { InfoTabs } from '@/components/shared/InfoTabs';
 import { useRouter } from 'next/navigation';
@@ -189,17 +188,20 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
       {/* Action Bar */}
       <ActionBar>
         <LinkGroupDialog currentGroupId={groupId} currentGroupName={group.name} />
-        <GroupSubscribeButton
-          subscribed={isSubscribed}
-          onClick={toggleSubscribe}
+        <SubscribeButton
+          entityType="group"
+          entityId={groupId}
+          isSubscribed={isSubscribed}
+          onToggleSubscribe={toggleSubscribe}
           isLoading={subscribeLoading}
         />
-        <GroupMembershipButton
+        <MembershipButton
+          actionType="join"
           status={status}
           isMember={isMember}
           hasRequested={hasRequested}
           isInvited={isInvited}
-          onRequestJoin={requestJoin}
+          onRequest={requestJoin}
           onLeave={leaveGroup}
           onAcceptInvitation={acceptInvitation}
           isLoading={membershipLoading}

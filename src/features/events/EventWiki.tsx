@@ -7,11 +7,10 @@ import db from '../../../db';
 import { Calendar, MapPin, Settings } from 'lucide-react';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { StatsBar } from '@/components/ui/StatsBar';
-import { EventSubscribeButton } from '@/features/events/ui/EventSubscribeButton';
 import { useSubscribeEvent } from '@/features/events/hooks/useSubscribeEvent';
 import { useEventParticipation } from '@/features/events/hooks/useEventParticipation';
-import { EventParticipationButton } from '@/features/events/ui/EventParticipationButton';
 import { ActionBar } from '@/components/ui/ActionBar';
+import { SubscribeButton, MembershipButton } from '@/components/shared/action-buttons';
 import { InfoTabs } from '@/components/shared/InfoTabs';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -27,7 +26,12 @@ export function EventWiki({ eventId }: EventWikiProps) {
   const { t } = useTranslation();
 
   // Subscribe hook
-  const { subscriberCount } = useSubscribeEvent(eventId);
+  const {
+    isSubscribed,
+    subscriberCount,
+    toggleSubscribe,
+    isLoading: subscribeLoading,
+  } = useSubscribeEvent(eventId);
 
   // Participation hook
   const {
@@ -151,13 +155,20 @@ export function EventWiki({ eventId }: EventWikiProps) {
 
       {/* Action Bar */}
       <ActionBar>
-        <EventSubscribeButton eventId={eventId} />
-        <EventParticipationButton
+        <SubscribeButton
+          entityType="event"
+          entityId={eventId}
+          isSubscribed={isSubscribed}
+          onToggleSubscribe={toggleSubscribe}
+          isLoading={subscribeLoading}
+        />
+        <MembershipButton
+          actionType="participate"
           status={status}
-          isParticipant={isParticipant}
+          isMember={isParticipant}
           hasRequested={hasRequested}
           isInvited={isInvited}
-          onRequestParticipation={requestParticipation}
+          onRequest={requestParticipation}
           onLeave={leaveEvent}
           onAcceptInvitation={acceptInvitation}
           isLoading={participationLoading}

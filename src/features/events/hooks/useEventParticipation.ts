@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import db, { tx } from '../../../../db';
+import db, { tx, id } from '../../../../db';
 import { useAuthStore } from '@/features/auth/auth';
 
 export type ParticipationStatus = 'invited' | 'requested' | 'member' | 'admin';
@@ -54,14 +54,19 @@ export function useEventParticipation(eventId: string) {
   const requestParticipation = async () => {
     if (!user?.id || participation) return;
 
+    // Validate eventId is a valid UUID
+    if (!eventId || typeof eventId !== 'string') {
+      console.error('Invalid eventId:', eventId);
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const newParticipationId = crypto.randomUUID();
+      const newParticipationId = id();
       await db.transact([
         tx.eventParticipants[newParticipationId]
           .update({
             createdAt: new Date().toISOString(),
-            role: 'participant',
             status: 'requested',
           })
           .link({
@@ -71,6 +76,8 @@ export function useEventParticipation(eventId: string) {
       ]);
     } catch (error) {
       console.error('Failed to request participation:', error);
+      console.error('Event ID:', eventId);
+      console.error('User ID:', user?.id);
     } finally {
       setIsLoading(false);
     }

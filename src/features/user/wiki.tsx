@@ -13,7 +13,7 @@ import { SeedUserDataButton } from './ui/SeedUserDataButton';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { StatsBar } from '@/components/ui/StatsBar';
 import { ActionBar } from '@/components/ui/ActionBar';
-import { WikiSubscribeButton } from './ui/WikiSubscribeButton';
+import { SubscribeButton } from '@/components/shared/action-buttons';
 import { ShareButton } from '@/components/shared/ShareButton';
 
 // --- UserWiki utility functions moved to utils/userWiki.utils.ts ---
@@ -46,15 +46,10 @@ export function UserWiki(_props: UserWikiProps) {
     isSubscribed: subscribed,
     subscriberCount,
     toggleSubscribe,
+    isLoading: subscribeLoading,
   } = useSubscribeUser(userIdToFetch);
 
   const isOwnUser = authUser?.id === userIdToFetch;
-
-  // Function to handle subscribe/unsubscribe
-  const handleSubscribeClick = async () => {
-    // Toggle the subscription state
-    await toggleSubscribe();
-  };
 
   return (
     <>
@@ -120,7 +115,13 @@ export function UserWiki(_props: UserWikiProps) {
           {/* Action Bar */}
           {!isOwnUser && (
             <ActionBar>
-              <WikiSubscribeButton subscribed={subscribed} onClick={handleSubscribeClick} />
+              <SubscribeButton
+                entityType="user"
+                entityId={userIdToFetch || ''}
+                isSubscribed={subscribed}
+                onToggleSubscribe={toggleSubscribe}
+                isLoading={subscribeLoading}
+              />
               <ShareButton
                 url={`/user/${userIdToFetch}`}
                 title={dbUser.name || 'User'}

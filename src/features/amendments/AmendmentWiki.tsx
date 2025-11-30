@@ -7,11 +7,10 @@ import db from '../../../db';
 import { Settings, ThumbsUp } from 'lucide-react';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { StatsBar } from '@/components/ui/StatsBar';
-import { AmendmentSubscribeButton } from '@/features/amendments/ui/AmendmentSubscribeButton';
 import { useSubscribeAmendment } from '@/features/amendments/hooks/useSubscribeAmendment';
 import { useAmendmentCollaboration } from '@/features/amendments/hooks/useAmendmentCollaboration';
-import { AmendmentCollaborationButton } from '@/features/amendments/ui/AmendmentCollaborationButton';
 import { ActionBar } from '@/components/ui/ActionBar';
+import { SubscribeButton, MembershipButton } from '@/components/shared/action-buttons';
 import { InfoTabs } from '@/components/shared/InfoTabs';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -88,7 +87,12 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
   const user = useAuthStore((state: any) => state.user);
 
   // Subscribe hook
-  const { subscriberCount } = useSubscribeAmendment(amendmentId);
+  const {
+    isSubscribed,
+    subscriberCount,
+    toggleSubscribe,
+    isLoading: subscribeLoading,
+  } = useSubscribeAmendment(amendmentId);
 
   // Collaboration hook
   const {
@@ -218,13 +222,20 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
 
       {/* Action Bar */}
       <ActionBar>
-        <AmendmentSubscribeButton amendmentId={amendmentId} />
-        <AmendmentCollaborationButton
+        <SubscribeButton
+          entityType="amendment"
+          entityId={amendmentId}
+          isSubscribed={isSubscribed}
+          onToggleSubscribe={toggleSubscribe}
+          isLoading={subscribeLoading}
+        />
+        <MembershipButton
+          actionType="collaborate"
           status={status}
-          isCollaborator={isCollaborator}
+          isMember={isCollaborator}
           hasRequested={hasRequested}
           isInvited={isInvited}
-          onRequestCollaboration={requestCollaboration}
+          onRequest={requestCollaboration}
           onLeave={leaveCollaboration}
           onAcceptInvitation={acceptInvitation}
           isLoading={collaborationLoading}

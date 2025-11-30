@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import db, { tx } from '../../../../db';
+import db, { tx, id } from '../../../../db';
 import { useAuthStore } from '@/features/auth/auth';
 
 export type CollaborationStatus = 'invited' | 'requested' | 'member' | 'admin';
@@ -51,14 +51,19 @@ export function useAmendmentCollaboration(amendmentId: string) {
   const requestCollaboration = async () => {
     if (!user?.id || collaboration) return;
 
+    // Validate amendmentId is a valid UUID
+    if (!amendmentId || typeof amendmentId !== 'string') {
+      console.error('Invalid amendmentId:', amendmentId);
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const newCollaborationId = crypto.randomUUID();
+      const newCollaborationId = id();
       await db.transact([
         tx.amendmentCollaborators[newCollaborationId]
           .update({
             createdAt: new Date().toISOString(),
-            role: 'collaborator',
             status: 'requested',
           })
           .link({
@@ -68,6 +73,8 @@ export function useAmendmentCollaboration(amendmentId: string) {
       ]);
     } catch (error) {
       console.error('Failed to request collaboration:', error);
+      console.error('Amendment ID:', amendmentId);
+      console.error('User ID:', user?.id);
     } finally {
       setIsLoading(false);
     }
