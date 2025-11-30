@@ -13,6 +13,7 @@ import { init, tx, id } from '@instantdb/admin';
 import { faker } from '@faker-js/faker';
 import { config } from 'dotenv';
 import { resolve } from 'path';
+import { TEST_ENTITY_IDS } from '../e2e/test-entity-ids';
 
 // Load environment variables from .env and .env.local
 config({ path: resolve(process.cwd(), '.env') });
@@ -40,8 +41,8 @@ const db = init({
 
 // Configuration
 const SEED_CONFIG = {
-  mainTestUserId: 'f598596e-d379-413e-9c6e-c218e5e3cf17', // Your main test user
-  tobiasUserId: 'a1b2c3d4-e5f6-4789-a0b1-c2d3e4f5a6b7', // Tobias's user ID
+  mainTestUserId: TEST_ENTITY_IDS.mainTestUser,
+  tobiasUserId: TEST_ENTITY_IDS.tobiasUser,
   users: 20,
   groups: 8,
   membersPerGroup: { min: 3, max: 10 },
@@ -330,7 +331,7 @@ async function seedUsers() {
   );
 
   // Add hashtags for main user
-  const mainUserHashtags = randomItems(USER_HASHTAGS, randomInt(3, 5));
+  const mainUserHashtags = randomItems(USER_HASHTAGS, 2);
   transactions.push(...createHashtagTransactions(mainUserId, 'user', mainUserHashtags));
 
   // Add some links for main user's groups (will be created later)
@@ -351,8 +352,8 @@ async function seedUsers() {
       .link({ user: mainUserId })
   );
 
-  // Add hashtags to main user's blog (minimum 1, maximum 4)
-  const mainBlogHashtags = randomItems(BLOG_HASHTAGS, randomInt(1, 4));
+  // Add hashtags to main user's blog (minimum 1, maximum 2)
+  const mainBlogHashtags = randomItems(BLOG_HASHTAGS, randomInt(1, 2));
   transactions.push(...createHashtagTransactions(blogId, 'blog', mainBlogHashtags));
 
   // Create Tobias's user account
@@ -409,7 +410,7 @@ async function seedUsers() {
   );
 
   // Add hashtags for Tobias
-  const tobiasHashtags = randomItems(USER_HASHTAGS, randomInt(3, 5));
+  const tobiasHashtags = randomItems(USER_HASHTAGS, 2);
   transactions.push(...createHashtagTransactions(tobiasUserId, 'user', tobiasHashtags));
 
   // Add a blog post for Tobias (no group link for user's personal blog)
@@ -427,8 +428,8 @@ async function seedUsers() {
       .link({ user: tobiasUserId })
   );
 
-  // Add hashtags to Tobias's blog (minimum 1, maximum 4)
-  const tobiasBlogHashtags = randomItems(BLOG_HASHTAGS, randomInt(1, 4));
+  // Add hashtags to Tobias's blog (minimum 1, maximum 2)
+  const tobiasBlogHashtags = randomItems(BLOG_HASHTAGS, randomInt(1, 2));
   transactions.push(...createHashtagTransactions(tobiasBlogId, 'blog', tobiasBlogHashtags));
 
   // Add additional statements for Tobias with different visibility values
@@ -468,7 +469,7 @@ async function seedUsers() {
       })
       .link({ user: tobiasUserId })
   );
-  const tobiasBlog2Hashtags = randomItems(BLOG_HASHTAGS, randomInt(1, 4));
+  const tobiasBlog2Hashtags = randomItems(BLOG_HASHTAGS, randomInt(1, 2));
   transactions.push(...createHashtagTransactions(tobiasBlog2Id, 'blog', tobiasBlog2Hashtags));
 
   const tobiasBlog3Id = id();
@@ -484,7 +485,7 @@ async function seedUsers() {
       })
       .link({ user: tobiasUserId })
   );
-  const tobiasBlog3Hashtags = randomItems(BLOG_HASHTAGS, randomInt(1, 4));
+  const tobiasBlog3Hashtags = randomItems(BLOG_HASHTAGS, randomInt(1, 2));
   transactions.push(...createHashtagTransactions(tobiasBlog3Id, 'blog', tobiasBlog3Hashtags));
 
   // Add todos for Tobias with different visibility values
@@ -675,6 +676,260 @@ async function seedUsers() {
   transactions.push(
     ...createAmendmentDocument(tobiasAmendment3Id, 'Internal Policy Draft', tobiasUserId)
   );
+
+  // ========== FLUSH MAIN AND TOBIAS USER TRANSACTIONS ==========
+  // Flush all transactions from mainTestUser and tobiasUser before creating E2E test entities
+  console.log(
+    `  Flushing ${transactions.length} pending transactions (mainTestUser + tobiasUser)...`
+  );
+  for (let i = 0; i < transactions.length; i += 50) {
+    const batch = transactions.slice(i, i + 50);
+    await db.transact(batch);
+  }
+  transactions.length = 0; // Clear the array
+
+  // ========== CREATE DETERMINISTIC E2E TEST ENTITIES IN BATCHES ==========
+  console.log('  Creating deterministic E2E test entities...');
+
+  // Test User 1
+  const testUser1Id = TEST_ENTITY_IDS.testUser1;
+  userIds.push(testUser1Id);
+
+  console.log(`  Creating testUser1 (${testUser1Id})...`);
+  // Create user first
+  try {
+    await db.transact([
+      tx.$users[testUser1Id].update({
+        email: 'e2etest1@polity.app',
+        imageURL: faker.image.avatar(),
+        type: 'user',
+        name: 'E2E Test User 1',
+        subtitle: 'First E2E Test User',
+        avatar: faker.image.avatar(),
+        bio: 'This user is used for E2E subscription tests.',
+        handle: 'e2etest1',
+        createdAt: faker.date.past({ years: 1 }),
+        updatedAt: new Date(),
+        lastSeenAt: new Date(),
+        about: 'E2E test user #1 for subscription testing.',
+        contactEmail: 'e2etest1@polity.app',
+        visibility: 'public',
+      }),
+    ]);
+    console.log(`  ✓ testUser1 user record created`);
+  } catch (error: any) {
+    console.error(`  ✗ Failed to create testUser1:`, error.message);
+    if (error.hint) {
+      console.error(`  Hint:`, JSON.stringify(error.hint, null, 2));
+    }
+    throw error;
+  }
+
+  // Then create stats that link to the user
+  const testUser1StatsTxs = [];
+  for (let j = 0; j < 3; j++) {
+    testUser1StatsTxs.push(
+      tx.stats[id()]
+        .update({
+          label: ['Posts', 'Contributions', 'Supporters'][j],
+          value: randomInt(10, 100),
+        })
+        .link({ user: testUser1Id })
+    );
+  }
+  await db.transact(testUser1StatsTxs);
+
+  // Test User 2
+  const testUser2Id = TEST_ENTITY_IDS.testUser2;
+  userIds.push(testUser2Id);
+
+  await db.transact([
+    tx.$users[testUser2Id].update({
+      email: 'e2etest2@polity.app',
+      imageURL: faker.image.avatar(),
+      type: 'user',
+      name: 'E2E Test User 2',
+      subtitle: 'Second E2E Test User',
+      avatar: faker.image.avatar(),
+      bio: 'Another user for E2E subscription tests.',
+      handle: 'e2etest2',
+      createdAt: faker.date.past({ years: 1 }),
+      updatedAt: new Date(),
+      lastSeenAt: new Date(),
+      about: 'E2E test user #2 for subscription testing.',
+      contactEmail: 'e2etest2@polity.app',
+      visibility: 'public',
+    }),
+  ]);
+
+  const testUser2StatsTxs = [];
+  for (let j = 0; j < 3; j++) {
+    testUser2StatsTxs.push(
+      tx.stats[id()]
+        .update({
+          label: ['Posts', 'Contributions', 'Supporters'][j],
+          value: randomInt(5, 50),
+        })
+        .link({ user: testUser2Id })
+    );
+  }
+  await db.transact(testUser2StatsTxs);
+
+  // Test User 3
+  const testUser3Id = TEST_ENTITY_IDS.testUser3;
+  userIds.push(testUser3Id);
+
+  await db.transact([
+    tx.$users[testUser3Id].update({
+      email: 'e2etest3@polity.app',
+      imageURL: faker.image.avatar(),
+      type: 'user',
+      name: 'E2E Test User 3',
+      subtitle: 'Third E2E Test User',
+      avatar: faker.image.avatar(),
+      bio: 'Third user for E2E subscription tests.',
+      handle: 'e2etest3',
+      createdAt: faker.date.past({ years: 1 }),
+      updatedAt: new Date(),
+      lastSeenAt: new Date(),
+      about: 'E2E test user #3 for subscription testing.',
+      contactEmail: 'e2etest3@polity.app',
+      visibility: 'public',
+    }),
+  ]);
+
+  const testUser3StatsTxs = [];
+  for (let j = 0; j < 3; j++) {
+    testUser3StatsTxs.push(
+      tx.stats[id()]
+        .update({
+          label: ['Posts', 'Contributions', 'Supporters'][j],
+          value: randomInt(15, 75),
+        })
+        .link({ user: testUser3Id })
+    );
+  }
+  await db.transact(testUser3StatsTxs);
+
+  // Test Blogs
+  const testBlog1Id = TEST_ENTITY_IDS.testBlog1;
+  blogIds.push(testBlog1Id);
+  const testBlog1Txs = [];
+  testBlog1Txs.push(
+    tx.blogs[testBlog1Id]
+      .update({
+        title: 'E2E Test Blog Post 1',
+        date: new Date().toISOString(),
+        likeCount: 0,
+        commentCount: 0,
+        visibility: 'public',
+      })
+      .link({ user: testUser1Id })
+  );
+  testBlog1Txs.push(...createHashtagTransactions(testBlog1Id, 'blog', ['test', 'e2e']));
+  await db.transact(testBlog1Txs);
+
+  const testBlog2Id = TEST_ENTITY_IDS.testBlog2;
+  blogIds.push(testBlog2Id);
+  const testBlog2Txs = [];
+  testBlog2Txs.push(
+    tx.blogs[testBlog2Id]
+      .update({
+        title: 'E2E Test Blog Post 2',
+        date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+        likeCount: 5,
+        commentCount: 2,
+        visibility: 'public',
+      })
+      .link({ user: testUser2Id })
+  );
+  testBlog2Txs.push(...createHashtagTransactions(testBlog2Id, 'blog', ['testing', 'qa']));
+  await db.transact(testBlog2Txs);
+
+  const testBlog3Id = TEST_ENTITY_IDS.testBlog3;
+  blogIds.push(testBlog3Id);
+  const testBlog3Txs = [];
+  testBlog3Txs.push(
+    tx.blogs[testBlog3Id]
+      .update({
+        title: 'E2E Test Blog Post 3',
+        date: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+        likeCount: 10,
+        commentCount: 5,
+        visibility: 'public',
+      })
+      .link({ user: testUser3Id })
+  );
+  testBlog3Txs.push(...createHashtagTransactions(testBlog3Id, 'blog', ['e2e', 'testing']));
+  await db.transact(testBlog3Txs);
+
+  // Test Amendments
+  const testAmendment1Id = TEST_ENTITY_IDS.testAmendment1;
+  amendmentIds.push(testAmendment1Id);
+  const testAmend1Txs = [];
+  testAmend1Txs.push(
+    tx.amendments[testAmendment1Id].update({
+      title: 'E2E Test Amendment 1',
+      subtitle: 'First amendment for E2E subscription testing',
+      status: 'Under Review',
+      supporters: 0,
+      date: new Date().toISOString(),
+      code: 'E2E-TEST-001',
+      tags: ['test', 'e2e'],
+      visibility: 'public',
+    })
+  );
+  testAmend1Txs.push(...createHashtagTransactions(testAmendment1Id, 'amendment', ['test', 'e2e']));
+  testAmend1Txs.push(
+    ...createAmendmentDocument(testAmendment1Id, 'E2E Test Amendment 1', testUser1Id)
+  );
+  await db.transact(testAmend1Txs);
+
+  const testAmendment2Id = TEST_ENTITY_IDS.testAmendment2;
+  amendmentIds.push(testAmendment2Id);
+  const testAmend2Txs = [];
+  testAmend2Txs.push(
+    tx.amendments[testAmendment2Id].update({
+      title: 'E2E Test Amendment 2',
+      subtitle: 'Second amendment for E2E subscription testing',
+      status: 'Drafting',
+      supporters: 3,
+      date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      code: 'E2E-TEST-002',
+      tags: ['test', 'e2e'],
+      visibility: 'public',
+    })
+  );
+  testAmend2Txs.push(
+    ...createHashtagTransactions(testAmendment2Id, 'amendment', ['testing', 'qa'])
+  );
+  testAmend2Txs.push(
+    ...createAmendmentDocument(testAmendment2Id, 'E2E Test Amendment 2', testUser2Id)
+  );
+  await db.transact(testAmend2Txs);
+
+  const testAmendment3Id = TEST_ENTITY_IDS.testAmendment3;
+  amendmentIds.push(testAmendment3Id);
+  const testAmend3Txs = [];
+  testAmend3Txs.push(
+    tx.amendments[testAmendment3Id].update({
+      title: 'E2E Test Amendment 3',
+      subtitle: 'Third amendment for E2E subscription testing',
+      status: 'Approved',
+      supporters: 15,
+      date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+      code: 'E2E-TEST-003',
+      tags: ['test', 'e2e'],
+      visibility: 'public',
+    })
+  );
+  testAmend3Txs.push(
+    ...createHashtagTransactions(testAmendment3Id, 'amendment', ['e2e', 'testing'])
+  );
+  testAmend3Txs.push(
+    ...createAmendmentDocument(testAmendment3Id, 'E2E Test Amendment 3', testUser3Id)
+  );
+  await db.transact(testAmend3Txs);
 
   for (let i = 0; i < SEED_CONFIG.users; i++) {
     const userId = id();
@@ -1167,6 +1422,184 @@ async function seedGroups(userIds: string[]) {
       transactions.push(...createAmendmentDocument(amendmentId, amendmentTitle, mainUserId));
     }
   }
+
+  // ========== CREATE DETERMINISTIC E2E TEST GROUPS ==========
+  console.log('  Creating deterministic E2E test groups...');
+
+  // Flush transactions before creating groups
+  if (transactions.length > 0) {
+    console.log(`  Flushing ${transactions.length} pending transactions...`);
+    for (let i = 0; i < transactions.length; i += 50) {
+      const batch = transactions.slice(i, i + 50);
+      await db.transact(batch);
+    }
+    transactions.length = 0;
+  }
+
+  // Test Group 1
+  const testGroup1Id = TEST_ENTITY_IDS.testGroup1;
+  groupIds.push(testGroup1Id);
+  const testGroup1Txs = [];
+  testGroup1Txs.push(
+    tx.groups[testGroup1Id]
+      .update({
+        name: 'E2E Test Group 1',
+        description: 'First group for E2E subscription testing',
+        isPublic: true,
+        memberCount: 1,
+        location: 'Test City',
+        region: 'Test Region',
+        country: 'Test Country',
+        imageURL: faker.image.url(),
+        createdAt: faker.date.past({ years: 1 }),
+        updatedAt: new Date(),
+        visibility: 'public',
+      })
+      .link({ owner: TEST_ENTITY_IDS.testUser1 })
+  );
+  const testGroup1BoardRoleId = id();
+  const testGroup1MemberRoleId = id();
+  groupRoleMap[testGroup1Id] = {
+    boardMemberId: testGroup1BoardRoleId,
+    memberId: testGroup1MemberRoleId,
+  };
+  testGroup1Txs.push(
+    tx.roles[testGroup1BoardRoleId]
+      .update({
+        name: 'Board Member',
+        description: 'Board member with administrative access',
+        scope: 'group',
+      })
+      .link({ group: testGroup1Id }),
+    tx.roles[testGroup1MemberRoleId]
+      .update({
+        name: 'Member',
+        description: 'Regular group member',
+        scope: 'group',
+      })
+      .link({ group: testGroup1Id })
+  );
+  testGroup1Txs.push(
+    tx.groupMemberships[id()]
+      .update({
+        status: 'member',
+        createdAt: new Date(),
+        visibility: 'public',
+      })
+      .link({ user: TEST_ENTITY_IDS.testUser1, group: testGroup1Id, role: testGroup1BoardRoleId })
+  );
+  testGroup1Txs.push(...createHashtagTransactions(testGroup1Id, 'group', ['test', 'e2e']));
+  await db.transact(testGroup1Txs);
+
+  // Test Group 2
+  const testGroup2Id = TEST_ENTITY_IDS.testGroup2;
+  groupIds.push(testGroup2Id);
+  const testGroup2Txs = [];
+  testGroup2Txs.push(
+    tx.groups[testGroup2Id]
+      .update({
+        name: 'E2E Test Group 2',
+        description: 'Second group for E2E subscription testing',
+        isPublic: true,
+        memberCount: 1,
+        location: 'Test City 2',
+        region: 'Test Region 2',
+        country: 'Test Country',
+        imageURL: faker.image.url(),
+        createdAt: faker.date.past({ years: 1 }),
+        updatedAt: new Date(),
+        visibility: 'public',
+      })
+      .link({ owner: TEST_ENTITY_IDS.testUser2 })
+  );
+  const testGroup2BoardRoleId = id();
+  const testGroup2MemberRoleId = id();
+  groupRoleMap[testGroup2Id] = {
+    boardMemberId: testGroup2BoardRoleId,
+    memberId: testGroup2MemberRoleId,
+  };
+  testGroup2Txs.push(
+    tx.roles[testGroup2BoardRoleId]
+      .update({
+        name: 'Board Member',
+        description: 'Board member with administrative access',
+        scope: 'group',
+      })
+      .link({ group: testGroup2Id }),
+    tx.roles[testGroup2MemberRoleId]
+      .update({
+        name: 'Member',
+        description: 'Regular group member',
+        scope: 'group',
+      })
+      .link({ group: testGroup2Id })
+  );
+  testGroup2Txs.push(
+    tx.groupMemberships[id()]
+      .update({
+        status: 'member',
+        createdAt: new Date(),
+        visibility: 'public',
+      })
+      .link({ user: TEST_ENTITY_IDS.testUser2, group: testGroup2Id, role: testGroup2BoardRoleId })
+  );
+  testGroup2Txs.push(...createHashtagTransactions(testGroup2Id, 'group', ['testing', 'qa']));
+  await db.transact(testGroup2Txs);
+
+  // Test Group 3
+  const testGroup3Id = TEST_ENTITY_IDS.testGroup3;
+  groupIds.push(testGroup3Id);
+  const testGroup3Txs = [];
+  testGroup3Txs.push(
+    tx.groups[testGroup3Id]
+      .update({
+        name: 'E2E Test Group 3',
+        description: 'Third group for E2E subscription testing',
+        isPublic: true,
+        memberCount: 1,
+        location: 'Test City 3',
+        region: 'Test Region 3',
+        country: 'Test Country',
+        imageURL: faker.image.url(),
+        createdAt: faker.date.past({ years: 1 }),
+        updatedAt: new Date(),
+        visibility: 'public',
+      })
+      .link({ owner: TEST_ENTITY_IDS.testUser3 })
+  );
+  const testGroup3BoardRoleId = id();
+  const testGroup3MemberRoleId = id();
+  groupRoleMap[testGroup3Id] = {
+    boardMemberId: testGroup3BoardRoleId,
+    memberId: testGroup3MemberRoleId,
+  };
+  testGroup3Txs.push(
+    tx.roles[testGroup3BoardRoleId]
+      .update({
+        name: 'Board Member',
+        description: 'Board member with administrative access',
+        scope: 'group',
+      })
+      .link({ group: testGroup3Id }),
+    tx.roles[testGroup3MemberRoleId]
+      .update({
+        name: 'Member',
+        description: 'Regular group member',
+        scope: 'group',
+      })
+      .link({ group: testGroup3Id })
+  );
+  testGroup3Txs.push(
+    tx.groupMemberships[id()]
+      .update({
+        status: 'member',
+        createdAt: new Date(),
+        visibility: 'public',
+      })
+      .link({ user: TEST_ENTITY_IDS.testUser3, group: testGroup3Id, role: testGroup3MemberRoleId })
+  );
+  testGroup3Txs.push(...createHashtagTransactions(testGroup3Id, 'group', ['e2e', 'testing']));
+  await db.transact(testGroup3Txs);
 
   // Create remaining groups
   for (let i = 2; i < SEED_CONFIG.groups; i++) {
@@ -2479,8 +2912,648 @@ async function seedEvents(userIds: string[], groupIds: string[]) {
   let totalEvents = 0;
   let totalParticipants = 0;
 
-  // Ensure each user has at least 3 events in the upcoming week
+  // ========== CREATE DETERMINISTIC E2E TEST EVENTS ==========
+  console.log('  Creating deterministic E2E test events...');
+
+  // Flush transactions before creating events
+  if (transactions.length > 0) {
+    console.log(`  Flushing ${transactions.length} pending transactions...`);
+    for (let i = 0; i < transactions.length; i += 50) {
+      const batch = transactions.slice(i, i + 50);
+      await db.transact(batch);
+    }
+    transactions.length = 0;
+  }
+
   const now = new Date();
+
+  // Test Event 1 - Future event
+  const testEvent1Id = TEST_ENTITY_IDS.testEvent1;
+  const testEvent1Start = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const testEvent1End = new Date(testEvent1Start.getTime() + 2 * 60 * 60 * 1000);
+  eventIds.push(testEvent1Id);
+  const testEvent1Txs = [];
+  testEvent1Txs.push(
+    tx.events[testEvent1Id]
+      .update({
+        title: 'E2E Test Event 1',
+        description: 'First event for E2E subscription testing',
+        location: 'Test Location 1',
+        startDate: testEvent1Start,
+        endDate: testEvent1End,
+        isPublic: true,
+        capacity: 100,
+        imageURL: faker.image.url(),
+        tags: ['test', 'e2e'],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        visibility: 'public',
+      })
+      .link({ organizer: TEST_ENTITY_IDS.testUser1 })
+  );
+  testEvent1Txs.push(...createHashtagTransactions(testEvent1Id, 'event', ['test', 'e2e']));
+  await db.transact(testEvent1Txs);
+
+  // Test Event 2 - Upcoming week event
+  const testEvent2Id = TEST_ENTITY_IDS.testEvent2;
+  const testEvent2Start = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
+  const testEvent2End = new Date(testEvent2Start.getTime() + 3 * 60 * 60 * 1000);
+  eventIds.push(testEvent2Id);
+  const testEvent2Txs = [];
+  testEvent2Txs.push(
+    tx.events[testEvent2Id]
+      .update({
+        title: 'E2E Test Event 2',
+        description: 'Second event for E2E subscription testing',
+        location: 'Test Location 2',
+        startDate: testEvent2Start,
+        endDate: testEvent2End,
+        isPublic: true,
+        capacity: 50,
+        imageURL: faker.image.url(),
+        tags: ['test', 'e2e'],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        visibility: 'public',
+      })
+      .link({ organizer: TEST_ENTITY_IDS.testUser2 })
+  );
+  testEvent2Txs.push(...createHashtagTransactions(testEvent2Id, 'event', ['testing', 'qa']));
+  await db.transact(testEvent2Txs);
+
+  // Test Event 3 - Far future event
+  const testEvent3Id = TEST_ENTITY_IDS.testEvent3;
+  const testEvent3Start = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
+  const testEvent3End = new Date(testEvent3Start.getTime() + 4 * 60 * 60 * 1000);
+  eventIds.push(testEvent3Id);
+  const testEvent3Txs = [];
+  testEvent3Txs.push(
+    tx.events[testEvent3Id]
+      .update({
+        title: 'E2E Test Event 3',
+        description: 'Third event for E2E subscription testing',
+        location: 'Test Location 3',
+        startDate: testEvent3Start,
+        endDate: testEvent3End,
+        isPublic: true,
+        capacity: 75,
+        imageURL: faker.image.url(),
+        tags: ['test', 'e2e'],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        visibility: 'public',
+      })
+      .link({ organizer: TEST_ENTITY_IDS.testUser3 })
+  );
+  testEvent3Txs.push(...createHashtagTransactions(testEvent3Id, 'event', ['e2e', 'testing']));
+  await db.transact(testEvent3Txs);
+
+  // ========== CREATE DETERMINISTIC E2E TEST DOCUMENTS ==========
+  console.log('  Creating deterministic E2E test documents...');
+
+  // Test Document 1
+  const testDoc1Id = TEST_ENTITY_IDS.testDocument1;
+  await db.transact([
+    tx.documents[testDoc1Id]
+      .update({
+        title: 'E2E Test Document 1',
+        content: [
+          { type: 'h1', children: [{ text: 'E2E Test Document 1' }] },
+          { type: 'p', children: [{ text: 'This is a test document for E2E testing purposes.' }] },
+        ],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        isPublic: true,
+        tags: ['test', 'e2e', 'document'],
+      })
+      .link({ owner: TEST_ENTITY_IDS.testUser1 }),
+  ]);
+
+  // Test Document 2
+  const testDoc2Id = TEST_ENTITY_IDS.testDocument2;
+  await db.transact([
+    tx.documents[testDoc2Id]
+      .update({
+        title: 'E2E Test Document 2',
+        content: [
+          { type: 'h1', children: [{ text: 'E2E Test Document 2' }] },
+          { type: 'p', children: [{ text: 'Second test document for E2E testing.' }] },
+        ],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        isPublic: true,
+        tags: ['test', 'e2e', 'document'],
+      })
+      .link({ owner: TEST_ENTITY_IDS.testUser2 }),
+  ]);
+
+  // Test Document 3
+  const testDoc3Id = TEST_ENTITY_IDS.testDocument3;
+  await db.transact([
+    tx.documents[testDoc3Id]
+      .update({
+        title: 'E2E Test Document 3',
+        content: [
+          { type: 'h1', children: [{ text: 'E2E Test Document 3' }] },
+          { type: 'p', children: [{ text: 'Third test document for E2E testing.' }] },
+        ],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        isPublic: false,
+        tags: ['test', 'e2e', 'document'],
+      })
+      .link({ owner: TEST_ENTITY_IDS.testUser3 }),
+  ]);
+
+  // ========== CREATE DETERMINISTIC E2E TEST TODOS ==========
+  console.log('  Creating deterministic E2E test todos...');
+
+  // Test Todo 1 - In Progress
+  const testTodo1Id = TEST_ENTITY_IDS.testTodo1;
+  await db.transact([
+    tx.todos[testTodo1Id]
+      .update({
+        title: 'E2E Test Todo 1',
+        description: 'First test todo - in progress',
+        status: 'in-progress',
+        priority: 'high',
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        completedAt: null,
+        tags: ['test', 'e2e'],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        visibility: 'public',
+      })
+      .link({ creator: TEST_ENTITY_IDS.testUser1 }),
+  ]);
+
+  // Test Todo 2 - Completed
+  const testTodo2Id = TEST_ENTITY_IDS.testTodo2;
+  await db.transact([
+    tx.todos[testTodo2Id]
+      .update({
+        title: 'E2E Test Todo 2',
+        description: 'Second test todo - completed',
+        status: 'done',
+        priority: 'medium',
+        dueDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        completedAt: new Date().toISOString(),
+        tags: ['test', 'e2e'],
+        createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(),
+        visibility: 'public',
+      })
+      .link({ creator: TEST_ENTITY_IDS.testUser2 }),
+  ]);
+
+  // Test Todo 3 - Not Started
+  const testTodo3Id = TEST_ENTITY_IDS.testTodo3;
+  await db.transact([
+    tx.todos[testTodo3Id]
+      .update({
+        title: 'E2E Test Todo 3',
+        description: 'Third test todo - not started',
+        status: 'todo',
+        priority: 'low',
+        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+        completedAt: null,
+        tags: ['test', 'e2e'],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        visibility: 'private',
+      })
+      .link({ creator: TEST_ENTITY_IDS.testUser3 }),
+  ]);
+
+  // ========== CREATE DETERMINISTIC E2E TEST NOTIFICATIONS ==========
+  console.log('  Creating deterministic E2E test notifications...');
+
+  // Test Notification 1
+  const testNotif1Id = TEST_ENTITY_IDS.testNotification1;
+  await db.transact([
+    tx.notifications[testNotif1Id]
+      .update({
+        type: 'subscription',
+        title: 'New Content Available',
+        message: 'E2E Test Notification 1 - New content available',
+        isRead: false,
+        createdAt: new Date(),
+      })
+      .link({ user: TEST_ENTITY_IDS.testUser1 }),
+  ]);
+
+  // Test Notification 2
+  const testNotif2Id = TEST_ENTITY_IDS.testNotification2;
+  await db.transact([
+    tx.notifications[testNotif2Id]
+      .update({
+        type: 'mention',
+        title: 'You Were Mentioned',
+        message: 'E2E Test Notification 2 - You were mentioned',
+        isRead: true,
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+      })
+      .link({ user: TEST_ENTITY_IDS.testUser2 }),
+  ]);
+
+  // Test Notification 3
+  const testNotif3Id = TEST_ENTITY_IDS.testNotification3;
+  await db.transact([
+    tx.notifications[testNotif3Id]
+      .update({
+        type: 'event',
+        title: 'Event Reminder',
+        message: 'E2E Test Notification 3 - Event reminder',
+        isRead: false,
+        createdAt: new Date(),
+      })
+      .link({ user: TEST_ENTITY_IDS.testUser3 }),
+  ]);
+
+  // ========== CREATE DETERMINISTIC E2E TEST POSITIONS ==========
+  console.log('  Creating deterministic E2E test positions...');
+
+  // Test Position 1 - Linked to testGroup1
+  const testPos1Id = TEST_ENTITY_IDS.testPosition1;
+  await db.transact([
+    tx.positions[testPos1Id]
+      .update({
+        title: 'E2E Test Position 1 - Board Member',
+        description: 'First test position for E2E testing',
+        term: 2,
+        firstTermStart: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .link({ group: TEST_ENTITY_IDS.testGroup1 }),
+  ]);
+
+  // Test Position 2 - Linked to testGroup2
+  const testPos2Id = TEST_ENTITY_IDS.testPosition2;
+  await db.transact([
+    tx.positions[testPos2Id]
+      .update({
+        title: 'E2E Test Position 2 - Treasurer',
+        description: 'Second test position for E2E testing',
+        term: 1,
+        firstTermStart: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .link({ group: TEST_ENTITY_IDS.testGroup2 }),
+  ]);
+
+  // Test Position 3 - Linked to testGroup3
+  const testPos3Id = TEST_ENTITY_IDS.testPosition3;
+  await db.transact([
+    tx.positions[testPos3Id]
+      .update({
+        title: 'E2E Test Position 3 - Secretary',
+        description: 'Third test position for E2E testing',
+        term: 3,
+        firstTermStart: new Date(Date.now() - 730 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .link({ group: TEST_ENTITY_IDS.testGroup3 }),
+  ]);
+
+  // ========== CREATE DETERMINISTIC E2E TEST CONVERSATIONS ==========
+  console.log('  Creating deterministic E2E test conversations...');
+
+  // Test Conversation 1 - Between testUser1 and testUser2
+  const testConv1Id = TEST_ENTITY_IDS.testConversation1;
+  await db.transact([
+    tx.conversations[testConv1Id].update({
+      createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+      lastMessageAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+    }),
+  ]);
+
+  // Add participants
+  await db.transact([
+    tx.conversationParticipants[id()]
+      .update({
+        joinedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+        lastReadAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+      })
+      .link({ conversation: testConv1Id, user: TEST_ENTITY_IDS.testUser1 }),
+    tx.conversationParticipants[id()]
+      .update({
+        joinedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+        lastReadAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+      })
+      .link({ conversation: testConv1Id, user: TEST_ENTITY_IDS.testUser2 }),
+  ]);
+
+  // Test Conversation 2
+  const testConv2Id = TEST_ENTITY_IDS.testConversation2;
+  await db.transact([
+    tx.conversations[testConv2Id].update({
+      createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+      lastMessageAt: new Date(),
+    }),
+  ]);
+
+  await db.transact([
+    tx.conversationParticipants[id()]
+      .update({
+        joinedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+        lastReadAt: new Date(),
+      })
+      .link({ conversation: testConv2Id, user: TEST_ENTITY_IDS.testUser2 }),
+    tx.conversationParticipants[id()]
+      .update({
+        joinedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+        lastReadAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
+      })
+      .link({ conversation: testConv2Id, user: TEST_ENTITY_IDS.testUser3 }),
+  ]);
+
+  // Test Conversation 3
+  const testConv3Id = TEST_ENTITY_IDS.testConversation3;
+  await db.transact([
+    tx.conversations[testConv3Id].update({
+      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+      lastMessageAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
+    }),
+  ]);
+
+  await db.transact([
+    tx.conversationParticipants[id()]
+      .update({
+        joinedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+        lastReadAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
+      })
+      .link({ conversation: testConv3Id, user: TEST_ENTITY_IDS.testUser1 }),
+    tx.conversationParticipants[id()]
+      .update({
+        joinedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+        lastReadAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
+      })
+      .link({ conversation: testConv3Id, user: TEST_ENTITY_IDS.testUser3 }),
+  ]);
+
+  // ========== CREATE DETERMINISTIC E2E TEST THREADS ==========
+  console.log('  Creating deterministic E2E test threads...');
+
+  // Test Thread 1
+  const testThread1Id = TEST_ENTITY_IDS.testThread1;
+  await db.transact([
+    tx.threads[testThread1Id]
+      .update({
+        title: 'E2E Test Thread 1 - General Discussion',
+        description: 'First test thread for E2E testing',
+        upvotes: 5,
+        downvotes: 1,
+        createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+      })
+      .link({ creator: TEST_ENTITY_IDS.testUser1, group: TEST_ENTITY_IDS.testGroup1 }),
+  ]);
+
+  // Test Thread 2
+  const testThread2Id = TEST_ENTITY_IDS.testThread2;
+  await db.transact([
+    tx.threads[testThread2Id]
+      .update({
+        title: 'E2E Test Thread 2 - Feature Request',
+        description: 'Second test thread for E2E testing',
+        upvotes: 12,
+        downvotes: 3,
+        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+      })
+      .link({ creator: TEST_ENTITY_IDS.testUser2, group: TEST_ENTITY_IDS.testGroup2 }),
+  ]);
+
+  // Test Thread 3
+  const testThread3Id = TEST_ENTITY_IDS.testThread3;
+  await db.transact([
+    tx.threads[testThread3Id]
+      .update({
+        title: 'E2E Test Thread 3 - Bug Report',
+        description: 'Third test thread for E2E testing',
+        upvotes: 8,
+        downvotes: 2,
+        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(),
+      })
+      .link({ creator: TEST_ENTITY_IDS.testUser3, group: TEST_ENTITY_IDS.testGroup3 }),
+  ]);
+
+  // ========== CREATE DETERMINISTIC E2E TEST AGENDA ITEMS ==========
+  console.log('  Creating deterministic E2E test agenda items...');
+
+  // Test Agenda Item 1 - Linked to testEvent1
+  const testAgenda1Id = TEST_ENTITY_IDS.testAgendaItem1;
+  await db.transact([
+    tx.agendaItems[testAgenda1Id]
+      .update({
+        title: 'E2E Test Agenda Item 1',
+        description: 'First test agenda item',
+        order: 1,
+        status: 'pending',
+        type: 'discussion',
+        duration: 30,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .link({ event: TEST_ENTITY_IDS.testEvent1 }),
+  ]);
+
+  // Test Agenda Item 2 - Linked to testEvent2
+  const testAgenda2Id = TEST_ENTITY_IDS.testAgendaItem2;
+  await db.transact([
+    tx.agendaItems[testAgenda2Id]
+      .update({
+        title: 'E2E Test Agenda Item 2',
+        description: 'Second test agenda item',
+        order: 1,
+        status: 'in-progress',
+        type: 'vote',
+        duration: 45,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .link({ event: TEST_ENTITY_IDS.testEvent2 }),
+  ]);
+
+  // Test Agenda Item 3 - Linked to testEvent3
+  const testAgenda3Id = TEST_ENTITY_IDS.testAgendaItem3;
+  await db.transact([
+    tx.agendaItems[testAgenda3Id]
+      .update({
+        title: 'E2E Test Agenda Item 3',
+        description: 'Third test agenda item',
+        order: 1,
+        status: 'completed',
+        type: 'presentation',
+        duration: 60,
+        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+      })
+      .link({ event: TEST_ENTITY_IDS.testEvent3 }),
+  ]);
+
+  // ========== CREATE DETERMINISTIC E2E TEST ELECTIONS ==========
+  console.log('  Creating deterministic E2E test elections...');
+
+  // Test Election 1 - Active
+  const testElection1Id = TEST_ENTITY_IDS.testElection1;
+  await db.transact([
+    tx.elections[testElection1Id]
+      .update({
+        title: 'E2E Test Election 1 - Board Member Election',
+        description: 'First test election for E2E testing',
+        status: 'active',
+        isMultipleChoice: false,
+        majorityType: 'simple',
+        votingStartTime: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+        votingEndTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(),
+      })
+      .link({ group: TEST_ENTITY_IDS.testGroup1 }),
+  ]);
+
+  // Test Election 2 - Completed
+  const testElection2Id = TEST_ENTITY_IDS.testElection2;
+  await db.transact([
+    tx.elections[testElection2Id]
+      .update({
+        title: 'E2E Test Election 2 - Policy Vote',
+        description: 'Second test election for E2E testing',
+        status: 'completed',
+        isMultipleChoice: true,
+        majorityType: 'absolute',
+        maxSelections: 3,
+        votingStartTime: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+        votingEndTime: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(Date.now() - 11 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+      })
+      .link({ group: TEST_ENTITY_IDS.testGroup2 }),
+  ]);
+
+  // Test Election 3 - Pending
+  const testElection3Id = TEST_ENTITY_IDS.testElection3;
+  await db.transact([
+    tx.elections[testElection3Id]
+      .update({
+        title: 'E2E Test Election 3 - Future Vote',
+        description: 'Third test election for E2E testing',
+        status: 'pending',
+        isMultipleChoice: false,
+        majorityType: 'simple',
+        votingStartTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+        votingEndTime: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .link({ group: TEST_ENTITY_IDS.testGroup3 }),
+  ]);
+
+  // ========== CREATE DETERMINISTIC E2E TEST MEETING SLOTS ==========
+  console.log('  Creating deterministic E2E test meeting slots...');
+
+  // Test Meeting Slot 1 - Available
+  const testMeeting1Id = TEST_ENTITY_IDS.testMeetingSlot1;
+  await db.transact([
+    tx.meetingSlots[testMeeting1Id]
+      .update({
+        title: 'E2E Test Meeting Slot 1',
+        description: 'First test meeting slot',
+        startTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+        endTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000),
+        isPublic: true,
+        isAvailable: true,
+        meetingType: 'one-on-one',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .link({ user: TEST_ENTITY_IDS.testUser1 }),
+  ]);
+
+  // Test Meeting Slot 2 - Booked
+  const testMeeting2Id = TEST_ENTITY_IDS.testMeetingSlot2;
+  await db.transact([
+    tx.meetingSlots[testMeeting2Id]
+      .update({
+        title: 'E2E Test Meeting Slot 2',
+        description: 'Second test meeting slot',
+        startTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+        endTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000 + 90 * 60 * 1000),
+        isPublic: false,
+        isAvailable: false,
+        meetingType: 'public-meeting',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .link({ user: TEST_ENTITY_IDS.testUser2 }),
+  ]);
+
+  // Test Meeting Slot 3 - Available
+  const testMeeting3Id = TEST_ENTITY_IDS.testMeetingSlot3;
+  await db.transact([
+    tx.meetingSlots[testMeeting3Id]
+      .update({
+        title: 'E2E Test Meeting Slot 3',
+        description: 'Third test meeting slot',
+        startTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        endTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 45 * 60 * 1000),
+        isPublic: true,
+        isAvailable: true,
+        meetingType: 'one-on-one',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .link({ user: TEST_ENTITY_IDS.testUser3 }),
+  ]);
+
+  // ========== CREATE DETERMINISTIC E2E TEST PAYMENTS ==========
+  console.log('  Creating deterministic E2E test payments...');
+
+  // Test Payment 1
+  const testPayment1Id = TEST_ENTITY_IDS.testPayment1;
+  await db.transact([
+    tx.payments[testPayment1Id]
+      .update({
+        label: 'E2E Test Payment 1 - Membership Fee',
+        amount: 5000, // $50.00
+        type: 'membership',
+        createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+      })
+      .link({ user: TEST_ENTITY_IDS.testUser1 }),
+  ]);
+
+  // Test Payment 2
+  const testPayment2Id = TEST_ENTITY_IDS.testPayment2;
+  await db.transact([
+    tx.payments[testPayment2Id]
+      .update({
+        label: 'E2E Test Payment 2 - Donation',
+        amount: 10000, // $100.00
+        type: 'donation',
+        createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
+      })
+      .link({ user: TEST_ENTITY_IDS.testUser2 }),
+  ]);
+
+  // Test Payment 3
+  const testPayment3Id = TEST_ENTITY_IDS.testPayment3;
+  await db.transact([
+    tx.payments[testPayment3Id]
+      .update({
+        label: 'E2E Test Payment 3 - Event Ticket',
+        amount: 2500, // $25.00
+        type: 'ticket',
+        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+      })
+      .link({ user: TEST_ENTITY_IDS.testUser3 }),
+  ]);
+
+  // Ensure each user has at least 3 events in the upcoming week
   const upcomingWeekStart = new Date(now);
   upcomingWeekStart.setHours(0, 0, 0, 0);
   const upcomingWeekEnd = new Date(upcomingWeekStart);
