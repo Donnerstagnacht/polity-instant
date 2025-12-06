@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { db, tx, id } from '../../../../db';
 import { useAuthStore } from '@/features/auth/auth.ts';
+import { createNotification } from '@/utils/notification-helpers';
 
 /**
  * Hook to handle amendment subscription functionality
@@ -50,8 +51,21 @@ export function useSubscribeAmendment(targetAmendmentId?: string) {
 
     setIsLoading(true);
     try {
+      const subscriptionId = id();
+      const notification = createNotification({
+        senderId: authUser.id,
+        recipientEntityType: 'amendment',
+        recipientEntityId: targetAmendmentId,
+        type: 'group_update',
+        title: 'New Subscriber',
+        message: `${authUser.name || 'A user'} subscribed to this amendment`,
+        actionUrl: `/user/${authUser.id}`,
+        relatedEntityType: 'amendment',
+        relatedAmendmentId: targetAmendmentId,
+      });
+
       await db.transact([
-        tx.subscribers[id()]
+        tx.subscribers[subscriptionId]
           .update({
             createdAt: new Date(),
           })
@@ -59,6 +73,7 @@ export function useSubscribeAmendment(targetAmendmentId?: string) {
             subscriber: authUser.id,
             amendment: targetAmendmentId,
           }),
+        ...notification,
       ]);
     } catch (error) {
       console.error('Failed to subscribe to amendment:', error);

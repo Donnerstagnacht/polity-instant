@@ -104,7 +104,36 @@ export function useGroupMembership(groupId: string) {
 
     setIsLoading(true);
     try {
-      await db.transact([tx.groupMemberships[membership.id].delete()]);
+      // Query to get the group's conversation and user's participant record
+      const conversationQuery = await db.queryOnce({
+        conversations: {
+          $: {
+            where: {
+              'group.id': groupId,
+              type: 'group',
+            },
+          },
+          participants: {
+            $: {
+              where: {
+                'user.id': user?.id,
+              },
+            },
+          },
+        },
+      });
+
+      const groupConversation = conversationQuery?.data?.conversations?.[0];
+      const participant = groupConversation?.participants?.[0];
+
+      const transactions = [tx.groupMemberships[membership.id].delete()];
+
+      // Remove user from group conversation if participant exists
+      if (participant) {
+        transactions.push(tx.conversationParticipants[participant.id].delete());
+      }
+
+      await db.transact(transactions);
     } catch (error) {
       console.error('Failed to leave group:', error);
     } finally {
@@ -114,15 +143,46 @@ export function useGroupMembership(groupId: string) {
 
   // Accept invitation
   const acceptInvitation = async () => {
-    if (!membership?.id || status !== 'invited') return;
+    if (!membership?.id || status !== 'invited' || !user?.id) return;
 
     setIsLoading(true);
     try {
-      await db.transact([
+      // Query to get the group's conversation
+      const conversationQuery = await db.queryOnce({
+        conversations: {
+          $: {
+            where: {
+              'group.id': groupId,
+              type: 'group',
+            },
+          },
+        },
+      });
+
+      const groupConversation = conversationQuery?.data?.conversations?.[0];
+      const conversationParticipantId = crypto.randomUUID();
+
+      const transactions = [
         tx.groupMemberships[membership.id].update({
           status: 'member',
         }),
-      ]);
+      ];
+
+      // Add user to group conversation if it exists
+      if (groupConversation) {
+        transactions.push(
+          tx.conversationParticipants[conversationParticipantId]
+            .update({
+              joinedAt: new Date().toISOString(),
+            })
+            .link({
+              conversation: groupConversation.id,
+              user: user.id,
+            })
+        );
+      }
+
+      await db.transact(transactions);
     } catch (error) {
       console.error('Failed to accept invitation:', error);
     } finally {

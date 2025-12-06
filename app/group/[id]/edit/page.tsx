@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { ImageUpload } from '@/components/shared/ImageUpload';
 import db, { tx } from '../../../../db';
+import { syncGroupNameToConversation } from '@/utils/groupConversationSync';
 
 export default function GroupEditPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -87,6 +88,9 @@ export default function GroupEditPage({ params }: { params: Promise<{ id: string
         return;
       }
 
+      // Check if name changed
+      const nameChanged = formData.name !== group.name;
+
       // Update the group in Instant DB
       await db.transact([
         tx.groups[resolvedParams.id].update({
@@ -104,6 +108,11 @@ export default function GroupEditPage({ params }: { params: Promise<{ id: string
           updatedAt: new Date(),
         }),
       ]);
+
+      // Sync name to group conversation if it changed
+      if (nameChanged) {
+        await syncGroupNameToConversation(resolvedParams.id, formData.name);
+      }
 
       toast.success('Group updated successfully');
 

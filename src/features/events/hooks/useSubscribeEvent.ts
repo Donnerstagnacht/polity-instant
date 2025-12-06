@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { db, tx, id } from '../../../../db';
 import { useAuthStore } from '@/features/auth/auth.ts';
+import { createNotification } from '@/utils/notification-helpers';
 
 /**
  * Hook to handle event subscription functionality
@@ -50,8 +51,21 @@ export function useSubscribeEvent(targetEventId?: string) {
 
     setIsLoading(true);
     try {
+      const subscriptionId = id();
+      const notification = createNotification({
+        senderId: authUser.id,
+        recipientEntityType: 'event',
+        recipientEntityId: targetEventId,
+        type: 'event_update',
+        title: 'New Subscriber',
+        message: `${authUser.name || 'A user'} subscribed to this event`,
+        actionUrl: `/user/${authUser.id}`,
+        relatedEntityType: 'event',
+        relatedEventId: targetEventId,
+      });
+
       await db.transact([
-        tx.subscribers[id()]
+        tx.subscribers[subscriptionId]
           .update({
             createdAt: new Date(),
           })
@@ -59,6 +73,7 @@ export function useSubscribeEvent(targetEventId?: string) {
             subscriber: authUser.id,
             event: targetEventId,
           }),
+        ...notification,
       ]);
     } catch (error) {
       console.error('Failed to subscribe to event:', error);

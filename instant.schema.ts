@@ -117,6 +117,10 @@ const _schema = i.schema({
     conversations: i.entity({
       createdAt: i.date().indexed(),
       lastMessageAt: i.date().indexed(),
+      pinned: i.boolean().indexed().optional(), // Track pinned conversations
+      status: i.string().indexed().optional(), // 'pending', 'accepted', 'rejected'
+      type: i.string().indexed().optional(), // 'direct', 'group'
+      name: i.string().indexed().optional(), // For group conversations, synced with group name
     }),
     documentCollaborators: i.entity({
       addedAt: i.date().indexed(),
@@ -278,6 +282,11 @@ const _schema = i.schema({
       relatedEntityType: i.string().optional(),
       title: i.string(),
       type: i.string().indexed(),
+      // Fields for entity-based notifications
+      onBehalfOfEntityType: i.string().indexed().optional(), // 'group', 'event', 'amendment', 'blog'
+      onBehalfOfEntityId: i.string().indexed().optional(),
+      recipientEntityType: i.string().indexed().optional(), // 'group', 'event', 'amendment', 'blog'
+      recipientEntityId: i.string().indexed().optional(),
     }),
     positions: i.entity({
       createdAt: i.date().indexed(),
@@ -621,6 +630,30 @@ const _schema = i.schema({
         on: '$users',
         has: 'many',
         label: 'conversationParticipants',
+      },
+    },
+    conversationsGroup: {
+      forward: {
+        on: 'conversations',
+        has: 'one',
+        label: 'group',
+      },
+      reverse: {
+        on: 'groups',
+        has: 'one',
+        label: 'conversation',
+      },
+    },
+    conversationsRequestedBy: {
+      forward: {
+        on: 'conversations',
+        has: 'one',
+        label: 'requestedBy',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'requestedConversations',
       },
     },
     documentCollaboratorsDocument: {
@@ -1294,6 +1327,102 @@ const _schema = i.schema({
         on: 'blogs',
         has: 'many',
         label: 'relatedNotifications',
+      },
+    },
+    notificationsOnBehalfOfGroup: {
+      forward: {
+        on: 'notifications',
+        has: 'one',
+        label: 'onBehalfOfGroup',
+      },
+      reverse: {
+        on: 'groups',
+        has: 'many',
+        label: 'sentNotifications',
+      },
+    },
+    notificationsOnBehalfOfEvent: {
+      forward: {
+        on: 'notifications',
+        has: 'one',
+        label: 'onBehalfOfEvent',
+      },
+      reverse: {
+        on: 'events',
+        has: 'many',
+        label: 'sentNotifications',
+      },
+    },
+    notificationsOnBehalfOfAmendment: {
+      forward: {
+        on: 'notifications',
+        has: 'one',
+        label: 'onBehalfOfAmendment',
+      },
+      reverse: {
+        on: 'amendments',
+        has: 'many',
+        label: 'sentNotifications',
+      },
+    },
+    notificationsOnBehalfOfBlog: {
+      forward: {
+        on: 'notifications',
+        has: 'one',
+        label: 'onBehalfOfBlog',
+      },
+      reverse: {
+        on: 'blogs',
+        has: 'many',
+        label: 'sentNotifications',
+      },
+    },
+    notificationsRecipientGroup: {
+      forward: {
+        on: 'notifications',
+        has: 'one',
+        label: 'recipientGroup',
+      },
+      reverse: {
+        on: 'groups',
+        has: 'many',
+        label: 'receivedNotifications',
+      },
+    },
+    notificationsRecipientEvent: {
+      forward: {
+        on: 'notifications',
+        has: 'one',
+        label: 'recipientEvent',
+      },
+      reverse: {
+        on: 'events',
+        has: 'many',
+        label: 'receivedNotifications',
+      },
+    },
+    notificationsRecipientAmendment: {
+      forward: {
+        on: 'notifications',
+        has: 'one',
+        label: 'recipientAmendment',
+      },
+      reverse: {
+        on: 'amendments',
+        has: 'many',
+        label: 'receivedNotifications',
+      },
+    },
+    notificationsRecipientBlog: {
+      forward: {
+        on: 'notifications',
+        has: 'one',
+        label: 'recipientBlog',
+      },
+      reverse: {
+        on: 'blogs',
+        has: 'many',
+        label: 'receivedNotifications',
       },
     },
     paymentsPayerUser: {

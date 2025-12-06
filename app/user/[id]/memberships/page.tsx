@@ -19,6 +19,11 @@ import {
 import { Trash2, Search, Users, Check, X, Calendar, FileEdit, BookOpen } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  notifyMembershipWithdrawn,
+  notifyParticipationWithdrawn,
+  notifyCollaborationWithdrawn,
+} from '@/utils/notification-helpers';
 
 export default function MembershipsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -55,7 +60,7 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
           role: {},
         }
       : {},
-    amendmentCollaborators: canView
+    amendmentRoleCollaborators: canView
       ? {
           $: {
             where: {
@@ -66,7 +71,7 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
           role: {},
         }
       : {},
-    blogBloggers: canView
+    blogRoleBloggers: canView
       ? {
           $: {
             where: {
@@ -81,8 +86,8 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
 
   const memberships = data?.groupMemberships || [];
   const participations = data?.eventParticipants || [];
-  const collaborations = data?.amendmentCollaborators || [];
-  const blogRelations = data?.blogBloggers || [];
+  const collaborations = data?.amendmentRoleCollaborators || [];
+  const blogRelations = data?.blogRoleBloggers || [];
 
   // Filter memberships based on search query
   const filteredMemberships = useMemo(() => {
@@ -199,7 +204,23 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
 
   const handleLeaveMembership = async (membershipId: string) => {
     try {
-      await db.transact([tx.groupMemberships[membershipId].delete()]);
+      const membership = memberships.find((m: any) => m.id === membershipId);
+      if (!membership) return;
+
+      const transactions = [tx.groupMemberships[membershipId].delete()];
+
+      // Send notification to the group
+      if (authUser?.name && membership.group) {
+        const notificationTxs = notifyMembershipWithdrawn({
+          senderId: authUser.id,
+          senderName: authUser.name,
+          groupId: membership.group.id,
+          groupName: membership.group.name || 'Unknown Group',
+        });
+        transactions.push(...notificationTxs);
+      }
+
+      await db.transact(transactions);
     } catch (error) {
       console.error('Failed to leave group:', error);
     }
@@ -236,7 +257,23 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
   // Event participation handlers
   const handleLeaveEvent = async (participationId: string) => {
     try {
-      await db.transact([tx.eventParticipants[participationId].delete()]);
+      const participation = participations.find((p: any) => p.id === participationId);
+      if (!participation) return;
+
+      const transactions = [tx.eventParticipants[participationId].delete()];
+
+      // Send notification to the event
+      if (authUser?.name && participation.event) {
+        const notificationTxs = notifyParticipationWithdrawn({
+          senderId: authUser.id,
+          senderName: authUser.name,
+          eventId: participation.event.id,
+          eventTitle: participation.event.title || 'Unknown Event',
+        });
+        transactions.push(...notificationTxs);
+      }
+
+      await db.transact(transactions);
     } catch (error) {
       console.error('Failed to leave event:', error);
     }
@@ -273,7 +310,23 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
   // Amendment collaboration handlers
   const handleLeaveCollaboration = async (collaborationId: string) => {
     try {
-      await db.transact([tx.amendmentCollaborators[collaborationId].delete()]);
+      const collaboration = collaborations.find((c: any) => c.id === collaborationId);
+      if (!collaboration) return;
+
+      const transactions = [tx.amendmentRoleCollaborators[collaborationId].delete()];
+
+      // Send notification to the amendment
+      if (authUser?.name && collaboration.amendment) {
+        const notificationTxs = notifyCollaborationWithdrawn({
+          senderId: authUser.id,
+          senderName: authUser.name,
+          amendmentId: collaboration.amendment.id,
+          amendmentTitle: collaboration.amendment.title || 'Unknown Amendment',
+        });
+        transactions.push(...notificationTxs);
+      }
+
+      await db.transact(transactions);
     } catch (error) {
       console.error('Failed to leave collaboration:', error);
     }
@@ -282,7 +335,7 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
   const handleAcceptCollaborationInvitation = async (collaborationId: string) => {
     try {
       await db.transact([
-        tx.amendmentCollaborators[collaborationId].update({
+        tx.amendmentRoleCollaborators[collaborationId].update({
           status: 'member',
         }),
       ]);
@@ -293,7 +346,7 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
 
   const handleDeclineCollaborationInvitation = async (collaborationId: string) => {
     try {
-      await db.transact([tx.amendmentCollaborators[collaborationId].delete()]);
+      await db.transact([tx.amendmentRoleCollaborators[collaborationId].delete()]);
     } catch (error) {
       console.error('Failed to decline collaboration invitation:', error);
     }
@@ -301,7 +354,7 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
 
   const handleWithdrawCollaborationRequest = async (collaborationId: string) => {
     try {
-      await db.transact([tx.amendmentCollaborators[collaborationId].delete()]);
+      await db.transact([tx.amendmentRoleCollaborators[collaborationId].delete()]);
     } catch (error) {
       console.error('Failed to withdraw collaboration request:', error);
     }
@@ -326,7 +379,7 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
   // Blog handlers
   const handleLeaveBlog = async (blogRelationId: string) => {
     try {
-      await db.transact([tx.blogBloggers[blogRelationId].delete()]);
+      await db.transact([tx.blogRoleBloggers[blogRelationId].delete()]);
     } catch (error) {
       console.error('Failed to leave blog:', error);
     }
@@ -335,7 +388,7 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
   const handleAcceptBlogInvitation = async (blogRelationId: string) => {
     try {
       await db.transact([
-        tx.blogBloggers[blogRelationId].update({
+        tx.blogRoleBloggers[blogRelationId].update({
           status: 'writer',
         }),
       ]);
@@ -346,7 +399,7 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
 
   const handleDeclineBlogInvitation = async (blogRelationId: string) => {
     try {
-      await db.transact([tx.blogBloggers[blogRelationId].delete()]);
+      await db.transact([tx.blogRoleBloggers[blogRelationId].delete()]);
     } catch (error) {
       console.error('Failed to decline blog invitation:', error);
     }
@@ -354,7 +407,7 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
 
   const handleWithdrawBlogRequest = async (blogRelationId: string) => {
     try {
-      await db.transact([tx.blogBloggers[blogRelationId].delete()]);
+      await db.transact([tx.blogRoleBloggers[blogRelationId].delete()]);
     } catch (error) {
       console.error('Failed to withdraw blog request:', error);
     }

@@ -176,6 +176,13 @@ export const navItemsAuthenticated = (
           onClick: () => router.push(`/event/${eventId}/participants`),
         },
         {
+          id: 'notifications',
+          label: t ? t('navigation.secondary.event.notifications') : 'Notifications',
+          icon: 'Bell',
+          href: `/event/${eventId}/notifications`,
+          onClick: () => router.push(`/event/${eventId}/notifications`),
+        },
+        {
           id: 'edit',
           label: t ? t('navigation.secondary.event.edit') : 'Edit Event',
           icon: 'Settings',
@@ -298,6 +305,13 @@ export const navItemsAuthenticated = (
           onClick: () => router.push(`/group/${groupId}/memberships`),
         },
         {
+          id: 'notifications',
+          label: t ? t('navigation.secondary.group.notifications') : 'Notifications',
+          icon: 'Bell',
+          href: `/group/${groupId}/notifications`,
+          onClick: () => router.push(`/group/${groupId}/notifications`),
+        },
+        {
           id: 'edit',
           label: t ? t('navigation.secondary.group.edit') : 'Edit Group',
           icon: 'Settings',
@@ -364,6 +378,13 @@ export const navItemsAuthenticated = (
           onClick: () => router.push(`/amendment/${amendmentId}/collaborators`),
         },
         {
+          id: 'notifications',
+          label: t ? t('navigation.secondary.amendment.notifications') : 'Notifications',
+          icon: 'Bell',
+          href: `/amendment/${amendmentId}/notifications`,
+          onClick: () => router.push(`/amendment/${amendmentId}/notifications`),
+        },
+        {
           id: 'edit',
           label: t ? t('navigation.secondary.amendment.edit') : 'Edit Amendment',
           icon: 'Settings',
@@ -389,13 +410,22 @@ export const navItemsAuthenticated = (
 
     // Only add bloggers item if user is owner
     if (isOwner) {
-      items.push({
-        id: 'bloggers',
-        label: t ? t('navigation.secondary.blog.bloggers') : 'Bloggers',
-        icon: 'Users',
-        href: `/blog/${blogId}/bloggers`,
-        onClick: () => router.push(`/blog/${blogId}/bloggers`),
-      });
+      items.push(
+        {
+          id: 'bloggers',
+          label: t ? t('navigation.secondary.blog.bloggers') : 'Bloggers',
+          icon: 'Users',
+          href: `/blog/${blogId}/bloggers`,
+          onClick: () => router.push(`/blog/${blogId}/bloggers`),
+        },
+        {
+          id: 'notifications',
+          label: t ? t('navigation.secondary.blog.notifications') : 'Notifications',
+          icon: 'Bell',
+          href: `/blog/${blogId}/notifications`,
+          onClick: () => router.push(`/blog/${blogId}/notifications`),
+        }
+      );
     }
 
     return items;

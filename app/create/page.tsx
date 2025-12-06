@@ -399,6 +399,8 @@ function GuidedGroupFlow({
       const membershipId = id();
       const boardMemberRoleId = id();
       const memberRoleId = id();
+      const conversationId = id();
+      const conversationParticipantId = id();
 
       await db.transact([
         // Create the group
@@ -411,6 +413,26 @@ function GuidedGroupFlow({
           updatedAt: new Date(),
         }),
         tx.groups[groupId].link({ owner: user.id }),
+
+        // Create group conversation
+        tx.conversations[conversationId]
+          .update({
+            createdAt: new Date().toISOString(),
+            lastMessageAt: new Date().toISOString(),
+            type: 'group',
+            name: data.name,
+            status: 'accepted',
+          })
+          .link({ group: groupId, requestedBy: user.id }),
+
+        // Add creator as first conversation participant
+        tx.conversationParticipants[conversationParticipantId].update({
+          joinedAt: new Date().toISOString(),
+        }),
+        tx.conversationParticipants[conversationParticipantId].link({
+          conversation: conversationId,
+          user: user.id,
+        }),
 
         // Create Board Member role with admin permissions
         tx.roles[boardMemberRoleId].update({
@@ -1976,6 +1998,8 @@ function CreateGroupForm({ isCarouselMode }: { isCarouselMode: boolean }) {
       const membershipId = id();
       const boardMemberRoleId = id();
       const memberRoleId = id();
+      const conversationId = id();
+      const conversationParticipantId = id();
 
       const transactions = [
         // Create the group
@@ -1989,6 +2013,26 @@ function CreateGroupForm({ isCarouselMode }: { isCarouselMode: boolean }) {
           visibility: formData.visibility,
         }),
         tx.groups[groupId].link({ owner: user.id }),
+
+        // Create group conversation
+        tx.conversations[conversationId]
+          .update({
+            createdAt: new Date().toISOString(),
+            lastMessageAt: new Date().toISOString(),
+            type: 'group',
+            name: formData.name,
+            status: 'accepted',
+          })
+          .link({ group: groupId, requestedBy: user.id }),
+
+        // Add creator as first conversation participant
+        tx.conversationParticipants[conversationParticipantId].update({
+          joinedAt: new Date().toISOString(),
+        }),
+        tx.conversationParticipants[conversationParticipantId].link({
+          conversation: conversationId,
+          user: user.id,
+        }),
 
         // Create Board Member role with admin permissions
         tx.roles[boardMemberRoleId].update({

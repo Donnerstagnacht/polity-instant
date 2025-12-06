@@ -67,6 +67,7 @@ const ACTION_RIGHTS = [
   { resource: 'agendaItems', action: 'update', label: 'Update Agenda Items' },
   { resource: 'agendaItems', action: 'delete', label: 'Delete Agenda Items' },
   { resource: 'agendaItems', action: 'manage', label: 'Manage Agenda' },
+  { resource: 'notifications', action: 'manageNotifications', label: 'Manage Notifications' },
 ];
 
 interface PageParams {

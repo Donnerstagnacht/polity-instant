@@ -46,9 +46,22 @@ import { Trash2, Search, Users, UserPlus, Shield, Check, X, Loader2, Plus } from
 import { useRouter } from 'next/navigation';
 import { useGroupMembership } from '@/features/groups/hooks/useGroupMembership';
 import { useToast } from '@/global-state/use-toast';
+import { addUserToGroupConversation } from '@/utils/groupConversationSync';
+import {
+  notifyGroupInvite,
+  notifyMembershipApproved,
+  notifyMembershipRejected,
+  notifyMembershipRoleChanged,
+  notifyMembershipRemoved,
+} from '@/utils/notification-helpers';
+import { useAuthStore } from '@/features/auth/auth';
 
 // Define available action rights
 const ACTION_RIGHTS = [
+  { resource: 'messages', action: 'create', label: 'Create Messages' },
+  { resource: 'messages', action: 'read', label: 'Read Messages' },
+  { resource: 'messages', action: 'update', label: 'Update Messages' },
+  { resource: 'messages', action: 'delete', label: 'Delete Messages' },
   { resource: 'events', action: 'create', label: 'Create Events' },
   { resource: 'events', action: 'update', label: 'Update Events' },
   { resource: 'events', action: 'delete', label: 'Delete Events' },
@@ -70,6 +83,7 @@ const ACTION_RIGHTS = [
   { resource: 'elections', action: 'manage', label: 'Manage Elections' },
   { resource: 'positions', action: 'manage', label: 'Manage Positions' },
   { resource: 'payments', action: 'create', label: 'Create Payments' },
+  { resource: 'notifications', action: 'manageNotifications', label: 'Manage Notifications' },
   { resource: 'payments', action: 'update', label: 'Update Payments' },
   { resource: 'payments', action: 'delete', label: 'Delete Payments' },
   { resource: 'links', action: 'create', label: 'Create Links' },
@@ -94,6 +108,7 @@ export default function GroupMembershipsManagementPage({
   const [newRoleDescription, setNewRoleDescription] = useState('');
   const [addRoleDialogOpen, setAddRoleDialogOpen] = useState(false);
   const { toast } = useToast();
+  const { user: authUser } = useAuthStore();
 
   // Check if current user is admin
   const { isAdmin } = useGroupMembership(resolvedParams.id);
@@ -115,6 +130,11 @@ export default function GroupMembershipsManagementPage({
   const { data: groupData } = db.useQuery({
     groups: {
       $: { where: { id: resolvedParams.id } },
+      conversation: {
+        participants: {
+          user: {},
+        },
+      },
     },
   });
 
@@ -193,7 +213,36 @@ export default function GroupMembershipsManagementPage({
     if (!isAdmin) return;
 
     try {
-      await db.transact([tx.groupMemberships[membershipId].delete()]);
+      // Find the membership to get user ID
+      const membership = memberships.find((m: any) => m.id === membershipId);
+      const userId = membership?.user?.id;
+
+      // Find the group's conversation
+      const groupConversation = group?.conversation;
+
+      // Build delete transactions
+      const transactions = [tx.groupMemberships[membershipId].delete()];
+
+      // If there's a group conversation and user ID, also remove from conversation participants
+      if (groupConversation && userId) {
+        const participant = groupConversation.participants?.find((p: any) => p.user?.id === userId);
+        if (participant) {
+          transactions.push(tx.conversationParticipants[participant.id].delete());
+        }
+      }
+
+      // Send notification to removed member
+      if (authUser && userId && group) {
+        const notificationTxs = notifyMembershipRemoved({
+          senderId: authUser.id,
+          recipientUserId: userId,
+          groupId: resolvedParams.id,
+          groupName: group.name || 'Unknown Group',
+        });
+        transactions.push(...notificationTxs);
+      }
+
+      await db.transact(transactions);
     } catch (error) {
       console.error('Failed to remove member:', error);
     }
@@ -203,38 +252,94 @@ export default function GroupMembershipsManagementPage({
     if (!isAdmin) return;
 
     try {
-      await db.transact([
+      const membership = memberships.find((m: any) => m.id === membershipId);
+      const userId = membership?.user?.id;
+      const newRole = rolesData?.roles?.find((r: any) => r.id === newRoleId);
+
+      const transactions = [
         tx.groupMemberships[membershipId].link({
           role: newRoleId,
         }),
-      ]);
+      ];
+
+      // Send notification about role change
+      if (authUser && userId && group && newRole) {
+        const notificationTxs = notifyMembershipRoleChanged({
+          senderId: authUser.id,
+          recipientUserId: userId,
+          groupId: resolvedParams.id,
+          groupName: group.name || 'Unknown Group',
+          newRole: newRole.name || 'Unknown Role',
+        });
+        transactions.push(...notificationTxs);
+      }
+
+      await db.transact(transactions);
     } catch (error) {
       console.error('Failed to change role:', error);
     }
   };
 
-  const handleChangeStatus = async (membershipId: string, newStatus: string) => {
+  const handleApproveRequest = async (membershipId: string) => {
     if (!isAdmin) return;
 
     try {
-      await db.transact([
-        tx.groupMemberships[membershipId].update({
-          status: newStatus,
-        }),
-      ]);
-    } catch (error) {
-      console.error('Failed to change status:', error);
-    }
-  };
+      // Find the membership to get user ID
+      const membership = memberships.find((m: any) => m.id === membershipId);
+      const userId = membership?.user?.id;
 
-  const handleApproveRequest = async (membershipId: string) => {
-    if (!isAdmin) return;
-    await handleChangeStatus(membershipId, 'member');
+      const transactions = [
+        tx.groupMemberships[membershipId].update({
+          status: 'member',
+        }),
+      ];
+
+      // Send notification about approval
+      if (authUser && userId && group) {
+        const notificationTxs = notifyMembershipApproved({
+          senderId: authUser.id,
+          recipientUserId: userId,
+          groupId: resolvedParams.id,
+          groupName: group.name || 'Unknown Group',
+        });
+        transactions.push(...notificationTxs);
+      }
+
+      await db.transact(transactions);
+
+      // Add user to group conversation
+      if (userId) {
+        await addUserToGroupConversation(resolvedParams.id, userId);
+      }
+    } catch (error) {
+      console.error('Failed to approve request:', error);
+    }
   };
 
   const handleRejectRequest = async (membershipId: string) => {
     if (!isAdmin) return;
-    await handleRemoveMember(membershipId);
+
+    try {
+      const membership = memberships.find((m: any) => m.id === membershipId);
+      const userId = membership?.user?.id;
+
+      const transactions = [tx.groupMemberships[membershipId].delete()];
+
+      // Send notification about rejection
+      if (authUser && userId && group) {
+        const notificationTxs = notifyMembershipRejected({
+          senderId: authUser.id,
+          recipientUserId: userId,
+          groupId: resolvedParams.id,
+          groupName: group.name || 'Unknown Group',
+        });
+        transactions.push(...notificationTxs);
+      }
+
+      await db.transact(transactions);
+    } catch (error) {
+      console.error('Failed to reject request:', error);
+    }
   };
 
   const handlePromoteToAdmin = async (membershipId: string) => {
@@ -269,15 +374,30 @@ export default function GroupMembershipsManagementPage({
 
     setIsInviting(true);
     try {
-      const inviteTransactions = selectedUsers.map(userId => {
+      const inviteTransactions = selectedUsers.flatMap(userId => {
         const membershipId = id();
-        return tx.groupMemberships[membershipId]
-          .create({
-            role: 'member',
-            status: 'invited',
-            createdAt: Date.now(),
-          })
-          .link({ user: userId, group: resolvedParams.id });
+        const txs = [
+          tx.groupMemberships[membershipId]
+            .create({
+              role: 'member',
+              status: 'invited',
+              createdAt: Date.now(),
+            })
+            .link({ user: userId, group: resolvedParams.id }),
+        ];
+
+        // Send notification to invited user
+        if (authUser && group) {
+          const notificationTxs = notifyGroupInvite({
+            senderId: authUser.id,
+            recipientUserId: userId,
+            groupId: resolvedParams.id,
+            groupName: group.name || 'Unknown Group',
+          });
+          txs.push(...notificationTxs);
+        }
+
+        return txs;
       });
 
       await db.transact(inviteTransactions);

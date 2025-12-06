@@ -57,6 +57,31 @@ const SEED_CONFIG = {
   positionsPerGroup: { min: 2, max: 5 },
 };
 
+// Helper function to batch transactions with retry logic
+async function batchTransact(transactions: any[], batchSize = 20) {
+  for (let i = 0; i < transactions.length; i += batchSize) {
+    const batch = transactions.slice(i, i + batchSize);
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        await db.transact(batch);
+        break; // Success, exit retry loop
+      } catch (error: any) {
+        retries--;
+        if (retries === 0 || !error.body?.hint?.condition?.includes('deadlock')) {
+          throw error; // Re-throw if out of retries or not a deadlock
+        }
+        // Wait before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, (4 - retries) * 500));
+      }
+    }
+    // Small delay between batches to avoid overwhelming the database
+    if (i + batchSize < transactions.length) {
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+  }
+}
+
 // Helper functions
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -682,10 +707,7 @@ async function seedUsers() {
   console.log(
     `  Flushing ${transactions.length} pending transactions (mainTestUser + tobiasUser)...`
   );
-  for (let i = 0; i < transactions.length; i += 50) {
-    const batch = transactions.slice(i, i + 50);
-    await db.transact(batch);
-  }
+  await batchTransact(transactions);
   transactions.length = 0; // Clear the array
 
   // ========== CREATE DETERMINISTIC E2E TEST ENTITIES IN BATCHES ==========
@@ -1053,11 +1075,7 @@ async function seedUsers() {
 
   // Execute in batches to avoid timeout
   console.log(`  Creating ${transactions.length} user-related records...`);
-  const batchSize = 50;
-  for (let i = 0; i < transactions.length; i += batchSize) {
-    const batch = transactions.slice(i, i + batchSize);
-    await db.transact(batch);
-  }
+  await batchTransact(transactions);
 
   console.log(`✓ Created ${userIds.length} users (including main test user and Tobias)`);
   console.log(`✓ All user data stored in $users entity`);
@@ -1229,11 +1247,7 @@ async function seedGroupRelationships(groupIds: string[]) {
   }
 
   if (transactions.length > 0) {
-    const batchSize = 50;
-    for (let i = 0; i < transactions.length; i += batchSize) {
-      const batch = transactions.slice(i, i + batchSize);
-      await db.transact(batch);
-    }
+    await batchTransact(transactions);
   }
 
   let minConnections = Infinity;
@@ -1327,6 +1341,45 @@ async function seedGroups(userIds: string[]) {
         .link({ group: groupId })
     );
 
+    // Add conversation rights to both roles
+    const conversationRights = [
+      { resource: 'messages', action: 'create' },
+      { resource: 'messages', action: 'read' },
+      { resource: 'messages', action: 'update' },
+      { resource: 'messages', action: 'delete' },
+    ];
+
+    for (const right of conversationRights) {
+      const boardRightId = id();
+      const memberRightId = id();
+
+      transactions.push(
+        tx.actionRights[boardRightId]
+          .update({
+            resource: right.resource,
+            action: right.action,
+          })
+          .link({ roles: boardMemberRoleId, groupId: groupId }),
+        tx.actionRights[memberRightId]
+          .update({
+            resource: right.resource,
+            action: right.action,
+          })
+          .link({ roles: memberRoleId, groupId: groupId })
+      );
+    }
+
+    // Add manageNotifications right to board member role
+    const manageNotificationsRightId = id();
+    transactions.push(
+      tx.actionRights[manageNotificationsRightId]
+        .update({
+          resource: 'notifications',
+          action: 'manageNotifications',
+        })
+        .link({ roles: boardMemberRoleId, groupId: groupId })
+    );
+
     // Add main user as owner member
     const ownerMembershipId = id();
     transactions.push(
@@ -1366,6 +1419,70 @@ async function seedGroups(userIds: string[]) {
         memberCount: members.length + 1,
       })
     );
+
+    // Create group conversation with all members as participants
+    const conversationId = id();
+    const groupCreatedAt = faker.date.past({ years: 1 });
+    console.log(`  Creating conversation ${conversationId} for group ${groupId} (${name})`);
+    transactions.push(
+      tx.conversations[conversationId]
+        .update({
+          type: 'group',
+          name: name,
+          status: 'accepted',
+          createdAt: groupCreatedAt,
+          lastMessageAt: groupCreatedAt,
+        })
+        .link({ group: groupId, requestedBy: mainUserId })
+    );
+
+    // Add owner as conversation participant
+    const ownerParticipantId = id();
+    transactions.push(
+      tx.conversationParticipants[ownerParticipantId]
+        .update({
+          joinedAt: groupCreatedAt,
+          lastReadAt: faker.date.recent({ days: 1 }),
+        })
+        .link({ conversation: conversationId, user: mainUserId })
+    );
+
+    // Add all group members as conversation participants
+    for (const memberId of members) {
+      const participantId = id();
+      transactions.push(
+        tx.conversationParticipants[participantId]
+          .update({
+            joinedAt: groupCreatedAt,
+            lastReadAt: faker.date.recent({ days: 2 }),
+          })
+          .link({ conversation: conversationId, user: memberId })
+      );
+    }
+
+    // Add messages from different group members
+    const allParticipants = [mainUserId, ...members];
+    const messageCount = randomInt(10, 20);
+    for (let j = 0; j < messageCount; j++) {
+      const messageId = id();
+      const senderUserId = randomItem(allParticipants);
+      const messageCreatedAt = faker.date.between({
+        from: groupCreatedAt,
+        to: new Date(),
+      });
+
+      transactions.push(
+        tx.messages[messageId]
+          .update({
+            content: faker.lorem.sentences(randomInt(1, 3)),
+            isRead: faker.datatype.boolean(0.8), // 80% read
+            createdAt: messageCreatedAt,
+            updatedAt: null,
+            deletedAt: null,
+          })
+          .link({ conversation: conversationId, sender: senderUserId })
+      );
+    }
 
     // Add hashtags for this group
     const groupHashtags = randomItems(GROUP_HASHTAGS, randomInt(3, 5));
@@ -1488,6 +1605,29 @@ async function seedGroups(userIds: string[]) {
       })
       .link({ user: TEST_ENTITY_IDS.testUser1, group: testGroup1Id, role: testGroup1BoardRoleId })
   );
+
+  // Create conversation for test group 1
+  const testGroup1ConvId = id();
+  const testGroup1ConvParticipantId = id();
+  console.log(`  Creating conversation ${testGroup1ConvId} for test group ${testGroup1Id}`);
+  testGroup1Txs.push(
+    tx.conversations[testGroup1ConvId]
+      .update({
+        type: 'group',
+        name: 'E2E Test Group 1',
+        status: 'accepted',
+        createdAt: new Date().toISOString(),
+        lastMessageAt: new Date().toISOString(),
+      })
+      .link({ group: testGroup1Id, requestedBy: TEST_ENTITY_IDS.testUser1 }),
+    tx.conversationParticipants[testGroup1ConvParticipantId]
+      .update({
+        joinedAt: new Date().toISOString(),
+        lastReadAt: new Date().toISOString(),
+      })
+      .link({ conversation: testGroup1ConvId, user: TEST_ENTITY_IDS.testUser1 })
+  );
+
   testGroup1Txs.push(...createHashtagTransactions(testGroup1Id, 'group', ['test', 'e2e']));
   await db.transact(testGroup1Txs);
 
@@ -1543,6 +1683,29 @@ async function seedGroups(userIds: string[]) {
       })
       .link({ user: TEST_ENTITY_IDS.testUser2, group: testGroup2Id, role: testGroup2BoardRoleId })
   );
+
+  // Create conversation for test group 2
+  const testGroup2ConvId = id();
+  const testGroup2ConvParticipantId = id();
+  console.log(`  Creating conversation ${testGroup2ConvId} for test group ${testGroup2Id}`);
+  testGroup2Txs.push(
+    tx.conversations[testGroup2ConvId]
+      .update({
+        type: 'group',
+        name: 'E2E Test Group 2',
+        status: 'accepted',
+        createdAt: new Date().toISOString(),
+        lastMessageAt: new Date().toISOString(),
+      })
+      .link({ group: testGroup2Id, requestedBy: TEST_ENTITY_IDS.testUser2 }),
+    tx.conversationParticipants[testGroup2ConvParticipantId]
+      .update({
+        joinedAt: new Date().toISOString(),
+        lastReadAt: new Date().toISOString(),
+      })
+      .link({ conversation: testGroup2ConvId, user: TEST_ENTITY_IDS.testUser2 })
+  );
+
   testGroup2Txs.push(...createHashtagTransactions(testGroup2Id, 'group', ['testing', 'qa']));
   await db.transact(testGroup2Txs);
 
@@ -1598,6 +1761,29 @@ async function seedGroups(userIds: string[]) {
       })
       .link({ user: TEST_ENTITY_IDS.testUser3, group: testGroup3Id, role: testGroup3MemberRoleId })
   );
+
+  // Create conversation for test group 3
+  const testGroup3ConvId = id();
+  const testGroup3ConvParticipantId = id();
+  console.log(`  Creating conversation ${testGroup3ConvId} for test group ${testGroup3Id}`);
+  testGroup3Txs.push(
+    tx.conversations[testGroup3ConvId]
+      .update({
+        type: 'group',
+        name: 'E2E Test Group 3',
+        status: 'accepted',
+        createdAt: new Date().toISOString(),
+        lastMessageAt: new Date().toISOString(),
+      })
+      .link({ group: testGroup3Id, requestedBy: TEST_ENTITY_IDS.testUser3 }),
+    tx.conversationParticipants[testGroup3ConvParticipantId]
+      .update({
+        joinedAt: new Date().toISOString(),
+        lastReadAt: new Date().toISOString(),
+      })
+      .link({ conversation: testGroup3ConvId, user: TEST_ENTITY_IDS.testUser3 })
+  );
+
   testGroup3Txs.push(...createHashtagTransactions(testGroup3Id, 'group', ['e2e', 'testing']));
   await db.transact(testGroup3Txs);
 
@@ -1693,9 +1879,13 @@ async function seedGroups(userIds: string[]) {
       members.push(mainUserId);
     }
 
+    // Track member statuses to sync with conversation participants
+    const memberStatuses: Record<string, string> = {};
+
     for (const memberId of members) {
       const membershipId = id();
       const status = randomItem(['member', 'member', 'member', 'requested', 'invited']);
+      memberStatuses[memberId] = status; // Track the status for later
       const roleId = randomItem([memberRoleId, memberRoleId, boardMemberRoleId]); // Mostly members, occasionally board member
       transactions.push(
         tx.groupMemberships[membershipId]
@@ -1714,6 +1904,73 @@ async function seedGroups(userIds: string[]) {
         memberCount: members.length + 1, // +1 for owner
       })
     );
+
+    // Create group conversation with all members as participants
+    const conversationId = id();
+    const groupCreatedAt = faker.date.past({ years: 1 });
+    console.log(`  Creating conversation ${conversationId} for group ${groupId} (${name})`);
+    transactions.push(
+      tx.conversations[conversationId]
+        .update({
+          type: 'group',
+          name: name,
+          status: 'accepted',
+          createdAt: groupCreatedAt,
+          lastMessageAt: groupCreatedAt,
+        })
+        .link({ group: groupId, requestedBy: ownerId })
+    );
+
+    // Add owner as conversation participant
+    const ownerConvParticipantId = id();
+    transactions.push(
+      tx.conversationParticipants[ownerConvParticipantId]
+        .update({
+          joinedAt: groupCreatedAt,
+          lastReadAt: faker.date.recent({ days: 1 }),
+        })
+        .link({ conversation: conversationId, user: ownerId })
+    );
+
+    // Only add members with 'member' status to conversation (not invited/requested)
+    for (const memberId of members) {
+      if (memberStatuses[memberId] === 'member') {
+        const participantId = id();
+        transactions.push(
+          tx.conversationParticipants[participantId]
+            .update({
+              joinedAt: groupCreatedAt,
+              lastReadAt: faker.date.recent({ days: 2 }),
+            })
+            .link({ conversation: conversationId, user: memberId })
+        );
+      }
+    }
+
+    // Add messages from different group members (only accepted members)
+    const acceptedMembers = members.filter(memberId => memberStatuses[memberId] === 'member');
+    const allParticipants = [ownerId, ...acceptedMembers];
+    const messageCount = randomInt(10, 20);
+    for (let j = 0; j < messageCount; j++) {
+      const messageId = id();
+      const senderUserId = randomItem(allParticipants);
+      const messageCreatedAt = faker.date.between({
+        from: groupCreatedAt,
+        to: new Date(),
+      });
+
+      transactions.push(
+        tx.messages[messageId]
+          .update({
+            content: faker.lorem.sentences(randomInt(1, 3)),
+            isRead: faker.datatype.boolean(0.8), // 80% read
+            createdAt: messageCreatedAt,
+            updatedAt: null,
+            deletedAt: null,
+          })
+          .link({ conversation: conversationId, sender: senderUserId })
+      );
+    }
 
     // Add hashtags for this group
     const groupHashtags = randomItems(GROUP_HASHTAGS, randomInt(3, 5));
@@ -1814,11 +2071,7 @@ async function seedGroups(userIds: string[]) {
 
   // Execute in batches
   console.log(`  Creating ${transactions.length} group-related records...`);
-  const batchSize = 50;
-  for (let i = 0; i < transactions.length; i += batchSize) {
-    const batch = transactions.slice(i, i + batchSize);
-    await db.transact(batch);
-  }
+  await batchTransact(transactions);
 
   console.log(
     `✓ Created ${SEED_CONFIG.groups} groups with memberships, blogs, amendments, and documents (2 owned by main test user)`
@@ -1879,11 +2132,7 @@ async function seedGroupInvitationsAndRequests(groupIds: string[], userIds: stri
   }
 
   // Execute in batches
-  const batchSize = 50;
-  for (let i = 0; i < transactions.length; i += batchSize) {
-    const batch = transactions.slice(i, i + batchSize);
-    await db.transact(batch);
-  }
+  await batchTransact(transactions);
 
   console.log(
     `✓ Created ${totalInvitations} pending invitations and ${totalRequests} pending requests`
@@ -1965,11 +2214,7 @@ async function seedEventParticipationRequestsAndInvites(eventIds: string[], user
   }
 
   // Execute in batches
-  const batchSize = 50;
-  for (let i = 0; i < transactions.length; i += batchSize) {
-    const batch = transactions.slice(i, i + batchSize);
-    await db.transact(batch);
-  }
+  await batchTransact(transactions);
 
   console.log(
     `✓ Created ${totalInvitations} pending event invitations, ${totalRequests} pending requests, and ${totalAdmins} admin participants`
@@ -2057,11 +2302,7 @@ async function seedAmendmentCollaborationRequestsAndInvites(
   }
 
   // Execute in batches
-  const batchSize = 50;
-  for (let i = 0; i < transactions.length; i += batchSize) {
-    const batch = transactions.slice(i, i + batchSize);
-    await db.transact(batch);
-  }
+  await batchTransact(transactions);
 
   console.log(
     `✓ Created ${totalInvitations} pending amendment invitations, ${totalRequests} pending requests, and ${totalAdmins} admin collaborators`
@@ -2201,11 +2442,7 @@ async function seedFollows(userIds: string[], groupIds: string[]) {
   }
 
   // Execute in batches
-  const batchSize = 50;
-  for (let i = 0; i < transactions.length; i += batchSize) {
-    const batch = transactions.slice(i, i + batchSize);
-    await db.transact(batch);
-  }
+  await batchTransact(transactions);
 
   // NEW: Create group subscriptions
   // Make main user subscribe to 3 random groups
@@ -2241,10 +2478,7 @@ async function seedFollows(userIds: string[], groupIds: string[]) {
   }
 
   // Execute group subscription transactions in batches
-  for (let i = 0; i < transactions.length; i += batchSize) {
-    const batch = transactions.slice(i, i + batchSize);
-    await db.transact(batch);
-  }
+  await batchTransact(transactions);
 
   console.log(
     `✓ Created ${totalFollows} follow relationships (legacy), ${totalSubscribers} user subscriber relationships, and ${totalGroupSubscribers} group subscriber relationships`
@@ -2363,11 +2597,7 @@ async function seedEntitySubscriptions(
   }
 
   // Execute in batches
-  const batchSize = 50;
-  for (let i = 0; i < transactions.length; i += batchSize) {
-    const batch = transactions.slice(i, i + batchSize);
-    await db.transact(batch);
-  }
+  await batchTransact(transactions);
 
   console.log(
     `✓ Created ${totalAmendmentSubscribers} amendment subscribers, ${totalEventSubscribers} event subscribers, and ${totalBlogSubscribers} blog subscribers`
@@ -2700,11 +2930,7 @@ async function seedTobiasSubscriptionsAndMemberships(
   }
 
   // Execute in batches
-  const batchSize = 50;
-  for (let i = 0; i < transactions.length; i += batchSize) {
-    const batch = transactions.slice(i, i + batchSize);
-    await db.transact(batch);
-  }
+  await batchTransact(transactions);
 
   console.log(`✓ Tobias subscriptions created:`);
   console.log(`  - Users: ${otherUsers.length}`);
@@ -2761,6 +2987,15 @@ async function seedConversationsAndMessages(userIds: string[]) {
       tx.conversations[conversationId].update({
         lastMessageAt: faker.date.recent({ days: 7 }),
         createdAt,
+        type: 'direct',
+        status: 'accepted',
+      })
+    );
+
+    // Link requestedBy to main user
+    transactions.push(
+      tx.conversations[conversationId].link({
+        requestedBy: mainUserId,
       })
     );
 
@@ -2834,6 +3069,15 @@ async function seedConversationsAndMessages(userIds: string[]) {
         tx.conversations[conversationId].update({
           lastMessageAt: faker.date.recent({ days: 7 }),
           createdAt,
+          type: 'direct',
+          status: 'accepted',
+        })
+      );
+
+      // Link requestedBy to the first user
+      transactions.push(
+        tx.conversations[conversationId].link({
+          requestedBy: userId,
         })
       );
 
@@ -2894,11 +3138,7 @@ async function seedConversationsAndMessages(userIds: string[]) {
 
   // Execute in batches
   console.log(`  Creating ${transactions.length} conversation-related records...`);
-  const batchSize = 50;
-  for (let i = 0; i < transactions.length; i += batchSize) {
-    const batch = transactions.slice(i, i + batchSize);
-    await db.transact(batch);
-  }
+  await batchTransact(transactions);
 
   console.log(
     `✓ Created ${totalConversations} conversations with ${totalMessages} messages (main user: 3 conversations)`
@@ -2907,7 +3147,7 @@ async function seedConversationsAndMessages(userIds: string[]) {
 
 async function seedEvents(userIds: string[], groupIds: string[]) {
   console.log('Seeding events...');
-  const transactions = [];
+  const transactions: any[] = [];
   const eventIds: string[] = [];
   let totalEvents = 0;
   let totalParticipants = 0;
@@ -3227,6 +3467,11 @@ async function seedEvents(userIds: string[], groupIds: string[]) {
     tx.conversations[testConv1Id].update({
       createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
       lastMessageAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+      type: 'direct',
+      status: 'accepted',
+    }),
+    tx.conversations[testConv1Id].link({
+      requestedBy: TEST_ENTITY_IDS.testUser1,
     }),
   ]);
 
@@ -3252,6 +3497,11 @@ async function seedEvents(userIds: string[], groupIds: string[]) {
     tx.conversations[testConv2Id].update({
       createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
       lastMessageAt: new Date(),
+      type: 'direct',
+      status: 'accepted',
+    }),
+    tx.conversations[testConv2Id].link({
+      requestedBy: TEST_ENTITY_IDS.testUser2,
     }),
   ]);
 
@@ -3276,6 +3526,11 @@ async function seedEvents(userIds: string[], groupIds: string[]) {
     tx.conversations[testConv3Id].update({
       createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
       lastMessageAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
+      type: 'direct',
+      status: 'accepted',
+    }),
+    tx.conversations[testConv3Id].link({
+      requestedBy: TEST_ENTITY_IDS.testUser1,
     }),
   ]);
 
@@ -3697,11 +3952,7 @@ async function seedEvents(userIds: string[], groupIds: string[]) {
   }
 
   // Execute in batches
-  const batchSize = 50;
-  for (let i = 0; i < transactions.length; i += batchSize) {
-    const batch = transactions.slice(i, i + batchSize);
-    await db.transact(batch);
-  }
+  await batchTransact(transactions);
 
   console.log(`✓ Created ${totalEvents} events with ${totalParticipants} participants`);
   return eventIds;
@@ -3729,6 +3980,15 @@ async function seedNotifications(
     'like',
     'comment',
     'amendment_update',
+  ];
+
+  const entityNotificationTypes = [
+    'membership_request',
+    'membership_withdrawn',
+    'participation_request',
+    'participation_withdrawn',
+    'collaboration_request',
+    'collaboration_withdrawn',
   ];
 
   // Create 10 notifications for main user (mix of read/unread)
@@ -3775,6 +4035,106 @@ async function seedNotifications(
         })
     );
     totalNotifications++;
+  }
+
+  // Create entity-based notifications (sent to entities, not users)
+  // Group notifications
+  for (const groupId of groupIds.slice(0, 3)) {
+    const notificationCount = randomInt(2, 5);
+
+    for (let i = 0; i < notificationCount; i++) {
+      const notificationId = id();
+      const senderId = randomItem(userIds);
+      const type = randomItem(entityNotificationTypes.filter(t => t.includes('membership')));
+
+      transactions.push(
+        tx.notifications[notificationId]
+          .update({
+            type,
+            title: faker.lorem.words(randomInt(3, 5)),
+            message: faker.lorem.sentence(),
+            isRead: faker.datatype.boolean(0.3), // 30% read
+            createdAt: faker.date.recent({ days: 7 }),
+            relatedEntityType: 'group',
+            recipientEntityType: 'group',
+            recipientEntityId: groupId,
+            actionUrl: `/group/${groupId}/memberships`,
+          })
+          .link({
+            sender: senderId,
+            relatedGroup: groupId,
+            recipientGroup: groupId,
+            relatedUser: senderId,
+          })
+      );
+      totalNotifications++;
+    }
+  }
+
+  // Event notifications
+  for (const eventId of eventIds.slice(0, 3)) {
+    const notificationCount = randomInt(1, 3);
+
+    for (let i = 0; i < notificationCount; i++) {
+      const notificationId = id();
+      const senderId = randomItem(userIds);
+      const type = randomItem(entityNotificationTypes.filter(t => t.includes('participation')));
+
+      transactions.push(
+        tx.notifications[notificationId]
+          .update({
+            type,
+            title: faker.lorem.words(randomInt(3, 5)),
+            message: faker.lorem.sentence(),
+            isRead: faker.datatype.boolean(0.3), // 30% read
+            createdAt: faker.date.recent({ days: 7 }),
+            relatedEntityType: 'event',
+            recipientEntityType: 'event',
+            recipientEntityId: eventId,
+            actionUrl: `/event/${eventId}/participants`,
+          })
+          .link({
+            sender: senderId,
+            relatedEvent: eventId,
+            recipientEvent: eventId,
+            relatedUser: senderId,
+          })
+      );
+      totalNotifications++;
+    }
+  }
+
+  // Amendment notifications
+  for (const amendmentId of amendmentIds.slice(0, 3)) {
+    const notificationCount = randomInt(1, 3);
+
+    for (let i = 0; i < notificationCount; i++) {
+      const notificationId = id();
+      const senderId = randomItem(userIds);
+      const type = randomItem(entityNotificationTypes.filter(t => t.includes('collaboration')));
+
+      transactions.push(
+        tx.notifications[notificationId]
+          .update({
+            type,
+            title: faker.lorem.words(randomInt(3, 5)),
+            message: faker.lorem.sentence(),
+            isRead: faker.datatype.boolean(0.3), // 30% read
+            createdAt: faker.date.recent({ days: 7 }),
+            relatedEntityType: 'amendment',
+            recipientEntityType: 'amendment',
+            recipientEntityId: amendmentId,
+            actionUrl: `/amendment/${amendmentId}/collaborators`,
+          })
+          .link({
+            sender: senderId,
+            relatedAmendment: amendmentId,
+            recipientAmendment: amendmentId,
+            relatedUser: senderId,
+          })
+      );
+      totalNotifications++;
+    }
   }
 
   // Create notifications for other users
@@ -3833,13 +4193,9 @@ async function seedNotifications(
   }
 
   // Execute in batches
-  const batchSize = 50;
-  for (let i = 0; i < transactions.length; i += batchSize) {
-    const batch = transactions.slice(i, i + batchSize);
-    await db.transact(batch);
-  }
+  await batchTransact(transactions);
 
-  console.log(`✓ Created ${totalNotifications} notifications (main user: 10, 6 unread)`);
+  console.log(`✓ Created ${totalNotifications} notifications (including entity notifications)`);
 }
 
 async function seedAgendaAndVoting(userIds: string[], eventIds: string[], positionIds: string[]) {
@@ -4046,11 +4402,7 @@ async function seedAgendaAndVoting(userIds: string[], eventIds: string[], positi
 
   // Execute in batches
   console.log(`  Creating ${transactions.length} agenda and voting records...`);
-  const batchSize = 50;
-  for (let i = 0; i < transactions.length; i += batchSize) {
-    const batch = transactions.slice(i, i + batchSize);
-    await db.transact(batch);
-  }
+  await batchTransact(transactions);
 
   console.log(`✓ Created ${totalAgendaItems} agenda items with:`);
   console.log(`  - ${totalElections} elections`);
@@ -4261,11 +4613,7 @@ async function seedTodos(userIds: string[], groupIds: string[]) {
 
   // Execute in batches
   console.log(`  Creating ${transactions.length} todo-related records...`);
-  const batchSize = 50;
-  for (let i = 0; i < transactions.length; i += batchSize) {
-    const batch = transactions.slice(i, i + batchSize);
-    await db.transact(batch);
-  }
+  await batchTransact(transactions);
 
   console.log(
     `✓ Created ${totalTodos} todos with ${totalAssignments} assignments (each group has at least 1 todo, main user: 5 todos)`
@@ -4337,11 +4685,7 @@ async function seedPositions(groupIds: string[]) {
 
   // Execute in batches
   console.log(`  Creating ${transactions.length} position records...`);
-  const batchSize = 50;
-  for (let i = 0; i < transactions.length; i += batchSize) {
-    const batch = transactions.slice(i, i + batchSize);
-    await db.transact(batch);
-  }
+  await batchTransact(transactions);
 
   console.log(`✓ Created ${totalPositions} positions across all groups`);
   return positionIds;
@@ -4404,11 +4748,7 @@ async function seedLinks(groupIds: string[]) {
   }
 
   // Execute in batches
-  const batchSize = 50;
-  for (let i = 0; i < transactions.length; i += batchSize) {
-    const batch = transactions.slice(i, i + batchSize);
-    await db.transact(batch);
-  }
+  await batchTransact(transactions);
 
   console.log(`✓ Created ${totalLinks} links across all groups`);
 }
@@ -4560,11 +4900,7 @@ async function seedPayments(userIds: string[], groupIds: string[]) {
 
   // Execute in batches
   console.log(`  Creating ${transactions.length} payment records...`);
-  const batchSize = 50;
-  for (let i = 0; i < transactions.length; i += batchSize) {
-    const batch = transactions.slice(i, i + batchSize);
-    await db.transact(batch);
-  }
+  await batchTransact(transactions);
 
   console.log(`✓ Created ${totalPayments} payments across all groups`);
 }
@@ -4739,11 +5075,7 @@ async function seedDocuments(userIds: string[]) {
 
   // Execute in batches
   console.log(`  Creating ${transactions.length} document-related records...`);
-  const batchSize = 50;
-  for (let i = 0; i < transactions.length; i += batchSize) {
-    const batch = transactions.slice(i, i + batchSize);
-    await db.transact(batch);
-  }
+  await batchTransact(transactions);
 
   console.log(
     `✓ Created ${totalDocuments} documents with ${totalCollaborators} collaborators (main user: 2 documents)`
@@ -4945,11 +5277,7 @@ async function seedMeetingSlots(userIds: string[]) {
   }
 
   // Execute in batches
-  const batchSize = 50;
-  for (let i = 0; i < transactions.length; i += batchSize) {
-    const batch = transactions.slice(i, i + batchSize);
-    await db.transact(batch);
-  }
+  await batchTransact(transactions);
 
   console.log(`✓ Created ${totalSlots} meeting slots with ${totalBookings} bookings`);
   console.log(`  ${userIds.length} users with 8-13 slots each (5-8 available, 3-5 booked)`);
@@ -5052,11 +5380,7 @@ async function seedBlogCommentsAndLikes(blogIds: string[], userIds: string[]) {
   }
 
   // Execute in batches
-  const batchSize = 50;
-  for (let i = 0; i < transactions.length; i += batchSize) {
-    const batch = transactions.slice(i, i + batchSize);
-    await db.transact(batch);
-  }
+  await batchTransact(transactions);
 
   console.log(`✓ Created ${totalComments} comments with ${totalReplies} replies`);
   console.log(`✓ Created ${totalVotes} comment votes`);
@@ -5159,11 +5483,7 @@ async function seedAmendmentCommentsAndVotes(amendmentIds: string[], userIds: st
   }
 
   // Execute in batches
-  const batchSize = 50;
-  for (let i = 0; i < transactions.length; i += batchSize) {
-    const batch = transactions.slice(i, i + batchSize);
-    await db.transact(batch);
-  }
+  await batchTransact(transactions);
 
   console.log(`✓ Created ${totalComments} amendment comments with ${totalReplies} replies`);
   console.log(`✓ Created ${totalVotes} amendment comment votes`);
@@ -5511,11 +5831,7 @@ async function seedAmendmentTargets(
   }
 
   // Execute in batches
-  const batchSize = 50;
-  for (let i = 0; i < transactions.length; i += batchSize) {
-    const batch = transactions.slice(i, i + batchSize);
-    await db.transact(batch);
-  }
+  await batchTransact(transactions);
 
   console.log(`✓ Assigned targets to ${totalAssigned} amendments`);
   console.log(`✓ Created ${agendaItemsCreated} agenda items across all path events`);
@@ -5687,11 +6003,7 @@ async function seedTimelineEvents(
   }
 
   // Execute in batches
-  const batchSize = 50;
-  for (let i = 0; i < transactions.length; i += batchSize) {
-    const batch = transactions.slice(i, i + batchSize);
-    await db.transact(batch);
-  }
+  await batchTransact(transactions);
 
   console.log(`✓ Created ${eventsCreated} timeline events across all entity types`);
 }
@@ -5826,11 +6138,7 @@ async function seedStripeData(userIds: string[]) {
   }
 
   // Execute in batches
-  const batchSize = 50;
-  for (let i = 0; i < transactions.length; i += batchSize) {
-    const batch = transactions.slice(i, i + batchSize);
-    await db.transact(batch);
-  }
+  await batchTransact(transactions);
 
   console.log(`✓ Created ${totalCustomers} Stripe customers`);
   console.log(`✓ Created ${totalSubscriptions} Stripe subscriptions (80% of users)`);
@@ -5941,6 +6249,30 @@ async function seedRBAC(
     );
     totalActionRights++;
 
+    // Add manageNotifications right to Organizer role
+    const manageEventNotificationsRight = id();
+    transactions.push(
+      tx.actionRights[manageEventNotificationsRight]
+        .update({
+          resource: 'notifications',
+          action: 'manageNotifications',
+        })
+        .link({ roles: [organizerRoleId], event: eventId })
+    );
+    totalActionRights++;
+
+    // Add manageNotifications right to Organizer role
+    const manageNotificationsRight = id();
+    transactions.push(
+      tx.actionRights[manageNotificationsRight]
+        .update({
+          resource: 'notifications',
+          action: 'manageNotifications',
+        })
+        .link({ roles: [organizerRoleId], event: eventId })
+    );
+    totalActionRights++;
+
     // Create action rights for Participant role (read access)
     const participantRoleId = eventRoleIds['Participant'];
     const actionRightId = id();
@@ -6038,6 +6370,18 @@ async function seedRBAC(
     );
     totalActionRights++;
 
+    // Add manageNotifications right to Applicant role
+    const manageAmendmentNotificationsRight = id();
+    transactions.push(
+      tx.actionRights[manageAmendmentNotificationsRight]
+        .update({
+          resource: 'notifications',
+          action: 'manageNotifications',
+        })
+        .link({ roles: [applicantRoleId], amendment: amendmentId })
+    );
+    totalActionRights++;
+
     // Create action rights for Collaborator role (read and comment access)
     const collaboratorRoleId = amendmentRoleIds['Collaborator'];
     const collaboratorActions = ['read', 'update'];
@@ -6095,6 +6439,18 @@ async function seedRBAC(
       totalActionRights++;
     }
 
+    // Add manageNotifications right to Owner role
+    const manageBlogNotificationsRight = id();
+    transactions.push(
+      tx.actionRights[manageBlogNotificationsRight]
+        .update({
+          resource: 'notifications',
+          action: 'manageNotifications',
+        })
+        .link({ roles: [ownerRoleId], blog: blogId })
+    );
+    totalActionRights++;
+
     // Create action rights for Writer role (update and delete access)
     const writerRoleId = blogRoleIds['Writer'];
     const writerActions = ['update', 'delete'];
@@ -6146,11 +6502,7 @@ async function seedRBAC(
   }
 
   // Execute in batches
-  const batchSize = 50;
-  for (let i = 0; i < transactions.length; i += batchSize) {
-    const batch = transactions.slice(i, i + batchSize);
-    await db.transact(batch);
-  }
+  await batchTransact(transactions);
 
   console.log(
     `✓ Created ${totalRoles} roles (group-level, event-level, amendment-level, and blog-level)`

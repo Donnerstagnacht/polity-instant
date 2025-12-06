@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { db, tx, id } from '../../../../db';
 import { useAuthStore } from '@/features/auth/auth.ts';
+import { createNotification } from '@/utils/notification-helpers';
 
 /**
  * Hook to handle group subscription functionality
@@ -50,8 +51,21 @@ export function useSubscribeGroup(targetGroupId?: string) {
 
     setIsLoading(true);
     try {
+      const subscriptionId = id();
+      const notification = createNotification({
+        senderId: authUser.id,
+        recipientEntityType: 'group',
+        recipientEntityId: targetGroupId,
+        type: 'group_update',
+        title: 'New Subscriber',
+        message: `${authUser.name || 'A user'} subscribed to this group`,
+        actionUrl: `/user/${authUser.id}`,
+        relatedEntityType: 'group',
+        relatedGroupId: targetGroupId,
+      });
+
       await db.transact([
-        tx.subscribers[id()]
+        tx.subscribers[subscriptionId]
           .update({
             createdAt: new Date(),
           })
@@ -59,6 +73,7 @@ export function useSubscribeGroup(targetGroupId?: string) {
             subscriber: authUser.id,
             group: targetGroupId,
           }),
+        ...notification,
       ]);
     } catch (error) {
       console.error('Failed to subscribe to group:', error);

@@ -58,6 +58,7 @@ const ACTION_RIGHTS = [
   { resource: 'comments', action: 'create', label: 'Create Comments' },
   { resource: 'comments', action: 'update', label: 'Update Comments' },
   { resource: 'comments', action: 'delete', label: 'Delete Comments' },
+  { resource: 'notifications', action: 'manageNotifications', label: 'Manage Notifications' },
 ];
 
 interface PageParams {
