@@ -70,9 +70,8 @@ export function useUser() {
         }
       : null
   );
-  const userRecord = data?.$users?.[0];
 
-  return { user: userRecord, isLoading, error };
+  return { user: data?.$users?.[0], isLoading, error };
 }
 
 /**

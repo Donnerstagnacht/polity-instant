@@ -1,10 +1,12 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { ArrowRight } from 'lucide-react';
 import { SubscriptionTimeline } from '@/features/timeline';
+import { AriaKaiWelcomeDialog } from '@/components/dialogs/AriaKaiWelcomeDialog';
 import { db } from '../db';
 // import { useTranslation } from 'react-i18next'; // Temporarily disabled
 
@@ -13,11 +15,37 @@ export default function HomePage() {
   // Use InstantDB's native auth hook for consistency with client-layout
   const { user } = db.useAuth();
   const isAuthenticated = !!user;
+  const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
+
+  // Query user data to check assistantIntroduction flag
+  const { data } = db.useQuery(
+    user?.id
+      ? {
+          $users: {
+            $: {
+              where: {
+                id: user.id,
+              },
+            },
+          },
+        }
+      : null
+  );
+
+  const userData = data?.$users?.[0];
+  const shouldShowDialog = userData?.assistantIntroduction !== false;
+
+  useEffect(() => {
+    if (isAuthenticated && shouldShowDialog) {
+      setShowWelcomeDialog(true);
+    }
+  }, [isAuthenticated, shouldShowDialog]);
 
   // If authenticated, show the timeline
   if (isAuthenticated) {
     return (
       <PageWrapper className="container mx-auto p-8">
+        <AriaKaiWelcomeDialog open={showWelcomeDialog} onOpenChange={setShowWelcomeDialog} />
         <div className="mb-8 text-center">
           <h1 className="mb-4 text-4xl font-bold">Welcome back, {user?.email}!</h1>
         </div>

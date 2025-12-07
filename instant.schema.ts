@@ -34,6 +34,8 @@ const _schema = i.schema({
       createdAt: i.date().indexed().optional(),
       updatedAt: i.date().indexed().optional(),
       visibility: i.string().indexed().optional(), // 'public', 'authenticated', 'private'
+      tutorialStep: i.string().indexed().optional(), // 'welcome', 'overview', 'groups', 'events', 'amendments', 'blogs', 'elections', 'completed'
+      assistantIntroduction: i.boolean().optional(), // Whether to show the Aria & Kai introduction dialog
     }),
     agendaItems: i.entity({
       createdAt: i.date().indexed(),

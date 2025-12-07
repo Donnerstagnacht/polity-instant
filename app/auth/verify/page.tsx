@@ -13,6 +13,7 @@ import { useAuthStore } from '@/features/auth/auth.ts';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { db, tx, id } from '../../../db';
 import { ARIA_KAI_USER_ID, ARIA_KAI_WELCOME_MESSAGE } from '@/constants/aria-kai';
+import { AriaKaiWelcomeDialog } from '@/components/dialogs/AriaKaiWelcomeDialog';
 
 function VerifyContent() {
   const { t } = useTranslation();
@@ -23,6 +24,7 @@ function VerifyContent() {
   const email = searchParams.get('email') || '';
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [isResending, setIsResending] = useState(false);
+  const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
@@ -101,6 +103,13 @@ function VerifyContent() {
           });
 
           const userRecord = data?.$users?.[0];
+
+          console.log('🔍 First-time user check:', {
+            userId: user.id,
+            hasHandle: !!userRecord?.handle,
+            handle: userRecord?.handle,
+            willShowDialog: !userRecord?.handle,
+          });
 
           if (!userRecord?.handle) {
             const now = Date.now();
@@ -190,13 +199,27 @@ function VerifyContent() {
                 })
                 .link({ conversation: conversationId, sender: ARIA_KAI_USER_ID }),
             ]);
+
+            console.log('✅ Aria & Kai conversation created:', {
+              conversationId,
+              messageId,
+              userId: user.id,
+              ariaKaiId: ARIA_KAI_USER_ID,
+            });
+
+            // Show welcome dialog for new users
+            console.log('🎉 Setting showWelcomeDialog to true');
+            setShowWelcomeDialog(true);
+          } else {
+            // Existing user, redirect normally
+            router.push('/');
           }
         }
       } catch (error) {
         console.error('❌ Error initializing user:', error);
         // Don't block login on initialization failure
+        router.push('/');
       }
-      router.push('/');
     }
   };
 
@@ -313,6 +336,9 @@ function VerifyContent() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Welcome Dialog for new users */}
+      <AriaKaiWelcomeDialog open={showWelcomeDialog} onOpenChange={setShowWelcomeDialog} />
     </div>
   );
 }

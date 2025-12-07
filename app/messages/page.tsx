@@ -13,6 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import { Search, Send, ArrowLeft, Plus, Pin, PinOff, Trash2, X, Check } from 'lucide-react';
 import { cn } from '@/utils/utils';
 import { MessageContent } from '@/components/messages/MessageContent';
+import { AriaKaiMessageActions } from '@/components/messages/AriaKaiMessageActions';
+import { ARIA_KAI_USER_ID } from '@/constants/aria-kai';
 import {
   Dialog,
   DialogContent,
@@ -114,6 +116,27 @@ export default function MessagesPage() {
   });
 
   const conversations = (data?.conversations || []) as Conversation[];
+
+  // Check URL params for auto-opening Aria & Kai conversation
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const shouldOpenAriaKai = params.get('openAriaKai') === 'true';
+
+      if (shouldOpenAriaKai && conversations.length > 0) {
+        // Find Aria & Kai conversation
+        const ariaKaiConversation = conversations.find((conv: Conversation) =>
+          conv.participants.some((p: any) => p.user?.id === ARIA_KAI_USER_ID)
+        );
+
+        if (ariaKaiConversation) {
+          setSelectedConversationId(ariaKaiConversation.id);
+          // Clean up URL
+          window.history.replaceState({}, '', '/messages');
+        }
+      }
+    }
+  }, [conversations]);
 
   // Filter conversations and messages based on search query
   const filteredConversations = useMemo(() => {
@@ -761,6 +784,17 @@ export default function MessagesPage() {
                         );
                       })
                     )}
+
+                    {/* Aria & Kai Tutorial Actions - Show only in Aria & Kai conversation */}
+                    {selectedConversation.participants.some(
+                      (p: any) => p.user?.id === ARIA_KAI_USER_ID
+                    ) &&
+                      currentUser?.id && (
+                        <AriaKaiMessageActions
+                          conversationId={selectedConversation.id}
+                          currentUserId={currentUser.id}
+                        />
+                      )}
 
                     {/* Conversation Request Accept/Reject - Show if pending and user is recipient - Only for direct messages */}
                     {selectedConversation.type !== 'group' &&
