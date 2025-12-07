@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Search, Send, ArrowLeft, Plus, Pin, PinOff, Trash2, X, Check } from 'lucide-react';
 import { cn } from '@/utils/utils';
+import { MessageContent } from '@/components/messages/MessageContent';
 import {
   Dialog,
   DialogContent,
@@ -744,7 +745,7 @@ export default function MessagesPage() {
                                 isOwnMessage ? 'bg-primary text-primary-foreground' : 'bg-muted'
                               )}
                             >
-                              <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+                              <MessageContent content={message.content} />
                               <p
                                 className={cn(
                                   'mt-1 text-xs',
