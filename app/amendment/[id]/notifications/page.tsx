@@ -17,20 +17,24 @@ export default function AmendmentNotificationsPage({
   const { user: authUser } = useAuthStore();
 
   // Query for amendment details and check if user is admin
-  const { data: amendmentData } = db.useQuery({
-    amendments: {
-      $: { where: { id: resolvedParams.id } },
-    },
-    amendmentRoleCollaborators: {
-      $: {
-        where: {
-          'amendment.id': resolvedParams.id,
-          'user.id': authUser?.id,
-        },
-      },
-      role: {},
-    },
-  });
+  const { data: amendmentData } = db.useQuery(
+    (authUser?.id
+      ? {
+          amendments: {
+            $: { where: { id: resolvedParams.id } },
+          },
+          amendmentRoleCollaborators: {
+            $: {
+              where: {
+                'amendment.id': resolvedParams.id,
+                'user.id': authUser.id,
+              },
+            },
+            role: {},
+          },
+        }
+      : null) as any
+  ) as any;
 
   const amendment = amendmentData?.amendments?.[0];
   const collaboration = amendmentData?.amendmentRoleCollaborators?.[0];
