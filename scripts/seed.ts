@@ -43,6 +43,7 @@ const db = init({
 const SEED_CONFIG = {
   mainTestUserId: TEST_ENTITY_IDS.mainTestUser,
   tobiasUserId: TEST_ENTITY_IDS.tobiasUser,
+  ariaKaiUserId: '00000000-0000-0000-0000-000000000001', // Static UUID for Aria & Kai assistant
   users: 20,
   groups: 8,
   membersPerGroup: { min: 3, max: 10 },
@@ -437,6 +438,57 @@ async function seedUsers() {
   // Add hashtags for Tobias
   const tobiasHashtags = randomItems(USER_HASHTAGS, 2);
   transactions.push(...createHashtagTransactions(tobiasUserId, 'user', tobiasHashtags));
+
+  // Create Aria & Kai assistant user
+  const ariaKaiUserId = SEED_CONFIG.ariaKaiUserId;
+  userIds.push(ariaKaiUserId);
+
+  // Create Aria & Kai in $users table
+  transactions.push(
+    tx.$users[ariaKaiUserId].update({
+      email: 'aria-kai-assistants@polity.com',
+      imageURL: faker.image.avatar(),
+      type: 'user',
+      name: 'Aria & Kai',
+      subtitle: 'Your Personal Assistants',
+      avatar: faker.image.avatar(),
+      bio: 'We are your personal assistants, here to help you navigate Polity and make the most of your experience.',
+      handle: 'ariakai',
+      createdAt: faker.date.past({ years: 3 }), // Created before all other users
+      updatedAt: new Date(),
+      lastSeenAt: new Date(),
+      about:
+        'Aria & Kai are your personal AI assistants dedicated to helping you get the most out of Polity.',
+      contactEmail: 'aria-kai-assistants@polity.com',
+      visibility: 'public',
+    })
+  );
+
+  // Add some stats for Aria & Kai
+  for (let j = 0; j < 3; j++) {
+    const statId = id();
+    transactions.push(
+      tx.stats[statId]
+        .update({
+          label: ['Conversations', 'Messages Sent', 'Users Helped'][j],
+          value: randomInt(100, 1000),
+          unit: 'count',
+        })
+        .link({ user: ariaKaiUserId })
+    );
+  }
+
+  // Add a statement for Aria & Kai
+  const ariaKaiStatementId = id();
+  transactions.push(
+    tx.statements[ariaKaiStatementId]
+      .update({
+        text: 'Here to help you navigate and thrive in the Polity community.',
+        tag: 'support',
+        visibility: 'public',
+      })
+      .link({ user: ariaKaiUserId })
+  );
 
   // Add a blog post for Tobias (no group link for user's personal blog)
   const tobiasBlogId = id();
@@ -2971,6 +3023,71 @@ async function seedConversationsAndMessages(userIds: string[]) {
   let totalMessages = 0;
 
   const mainUserId = SEED_CONFIG.mainTestUserId;
+  const ariaKaiUserId = SEED_CONFIG.ariaKaiUserId;
+
+  // Create a conversation between Aria & Kai and every user (except Aria & Kai itself)
+  const usersForAriaKai = userIds.filter(uid => uid !== ariaKaiUserId);
+  for (const userId of usersForAriaKai) {
+    const conversationId = id();
+    const createdAt = faker.date.past({ years: 0.1 }); // Recent conversation
+
+    // Create conversation
+    transactions.push(
+      tx.conversations[conversationId].update({
+        lastMessageAt: createdAt,
+        createdAt,
+        type: 'direct',
+        status: 'accepted',
+      })
+    );
+
+    // Link requestedBy to Aria & Kai
+    transactions.push(
+      tx.conversations[conversationId].link({
+        requestedBy: ariaKaiUserId,
+      })
+    );
+
+    // Add participants
+    const participant1Id = id();
+    transactions.push(
+      tx.conversationParticipants[participant1Id]
+        .update({
+          lastReadAt: null, // User hasn't read the message yet
+          joinedAt: createdAt,
+          leftAt: null,
+        })
+        .link({ user: userId, conversation: conversationId })
+    );
+
+    const participant2Id = id();
+    transactions.push(
+      tx.conversationParticipants[participant2Id]
+        .update({
+          lastReadAt: createdAt, // Aria & Kai has read their own message
+          joinedAt: createdAt,
+          leftAt: null,
+        })
+        .link({ user: ariaKaiUserId, conversation: conversationId })
+    );
+
+    // Add welcome message from Aria & Kai
+    const messageId = id();
+    transactions.push(
+      tx.messages[messageId]
+        .update({
+          content:
+            'Hey, we are Aria & Kai - your personal assistants! Welcome to Polity! We would love to show you around in the app. Shall we?',
+          isRead: false, // Unread by the user
+          createdAt: createdAt,
+          updatedAt: null,
+          deletedAt: null,
+        })
+        .link({ conversation: conversationId, sender: ariaKaiUserId })
+    );
+    totalMessages++;
+    totalConversations++;
+  }
 
   // Create 3 conversations for main test user
   const conversationPartners = randomItems(
@@ -3140,9 +3257,9 @@ async function seedConversationsAndMessages(userIds: string[]) {
   console.log(`  Creating ${transactions.length} conversation-related records...`);
   await batchTransact(transactions);
 
-  console.log(
-    `✓ Created ${totalConversations} conversations with ${totalMessages} messages (main user: 3 conversations)`
-  );
+  console.log(`✓ Created ${totalConversations} conversations with ${totalMessages} messages`);
+  console.log(`  - Aria & Kai: ${usersForAriaKai.length} welcome conversations with all users`);
+  console.log(`  - Main user: 3 additional conversations`);
 }
 
 async function seedEvents(userIds: string[], groupIds: string[]) {
