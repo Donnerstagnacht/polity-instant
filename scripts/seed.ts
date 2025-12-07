@@ -14,6 +14,11 @@ import { faker } from '@faker-js/faker';
 import { config } from 'dotenv';
 import { resolve } from 'path';
 import { TEST_ENTITY_IDS } from '../e2e/test-entity-ids';
+import {
+  ARIA_KAI_USER_ID,
+  ARIA_KAI_EMAIL,
+  ARIA_KAI_WELCOME_MESSAGE,
+} from '../src/constants/aria-kai';
 
 // Load environment variables from .env and .env.local
 config({ path: resolve(process.cwd(), '.env') });
@@ -43,7 +48,7 @@ const db = init({
 const SEED_CONFIG = {
   mainTestUserId: TEST_ENTITY_IDS.mainTestUser,
   tobiasUserId: TEST_ENTITY_IDS.tobiasUser,
-  ariaKaiUserId: '00000000-0000-0000-0000-000000000001', // Static UUID for Aria & Kai assistant
+  ariaKaiUserId: ARIA_KAI_USER_ID,
   users: 20,
   groups: 8,
   membersPerGroup: { min: 3, max: 10 },
@@ -446,7 +451,7 @@ async function seedUsers() {
   // Create Aria & Kai in $users table
   transactions.push(
     tx.$users[ariaKaiUserId].update({
-      email: 'aria-kai-assistants@polity.com',
+      email: ARIA_KAI_EMAIL,
       imageURL: faker.image.avatar(),
       type: 'user',
       name: 'Aria & Kai',
@@ -459,7 +464,7 @@ async function seedUsers() {
       lastSeenAt: new Date(),
       about:
         'Aria & Kai are your personal AI assistants dedicated to helping you get the most out of Polity.',
-      contactEmail: 'aria-kai-assistants@polity.com',
+      contactEmail: ARIA_KAI_EMAIL,
       visibility: 'public',
     })
   );
@@ -3076,8 +3081,7 @@ async function seedConversationsAndMessages(userIds: string[]) {
     transactions.push(
       tx.messages[messageId]
         .update({
-          content:
-            'Hey, we are Aria & Kai - your personal assistants! Welcome to Polity! We would love to show you around in the app. Shall we?',
+          content: ARIA_KAI_WELCOME_MESSAGE,
           isRead: false, // Unread by the user
           createdAt: createdAt,
           updatedAt: null,

@@ -22,13 +22,25 @@ export default function AuthPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    console.log('📧 handleSubmit called');
+    console.log('📧 Email:', email);
 
+    if (!email) {
+      console.log('❌ No email provided');
+      return;
+    }
+
+    console.log('📤 Requesting magic code for:', email);
     const success = await requestMagicCode(email);
+    console.log('📤 Request magic code result:', success);
+
     if (success) {
+      console.log('✅ Code sent successfully, redirecting to verify page');
       setIsCodeSent(true);
       // Redirect to verification page with email parameter
       router.push(`/auth/verify?email=${encodeURIComponent(email)}`);
+    } else {
+      console.log('❌ Failed to send code');
     }
   };
 

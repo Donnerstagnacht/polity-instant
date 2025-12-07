@@ -11,6 +11,8 @@ import { Loader2, Shield, ArrowLeft, RotateCcw } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
+import { db, tx, id } from '../../../db';
+import { ARIA_KAI_USER_ID, ARIA_KAI_WELCOME_MESSAGE } from '@/constants/aria-kai';
 
 function VerifyContent() {
   const { t } = useTranslation();
@@ -79,10 +81,121 @@ function VerifyContent() {
 
   const handleVerify = async (codeToVerify?: string) => {
     const verificationCode = codeToVerify || code.join('');
-    if (verificationCode.length !== 6) return;
+    if (verificationCode.length !== 6) {
+      return;
+    }
 
     const success = await verifyMagicCode(email, verificationCode);
+
     if (success) {
+      // Initialize first-time users with Aria & Kai conversation
+      try {
+        const { user } = useAuthStore.getState();
+
+        if (user?.id) {
+          // Check if user already has a handle
+          const { data } = await db.queryOnce({
+            $users: {
+              $: { where: { id: user.id } },
+            },
+          });
+
+          const userRecord = data?.$users?.[0];
+
+          if (!userRecord?.handle) {
+            const now = Date.now();
+            const threeYearsAgo = now - 3 * 365 * 24 * 60 * 60 * 1000;
+            const conversationId = id();
+            const messageId = id();
+
+            // First ensure Aria & Kai exists
+            await db.transact([
+              tx.$users[ARIA_KAI_USER_ID].update({
+                name: 'Aria & Kai',
+                handle: '@ariakai',
+                subtitle: 'Your Personal Assistants',
+                bio: 'Aria & Kai are your personal AI assistants dedicated to helping you get the most out of Polity.',
+                createdAt: threeYearsAgo,
+                updatedAt: threeYearsAgo,
+                lastSeenAt: now,
+                visibility: 'public',
+              }),
+            ]);
+
+            // Generate random handle
+            const adjectives = [
+              'Quick',
+              'Lazy',
+              'Happy',
+              'Sad',
+              'Bright',
+              'Dark',
+              'Clever',
+              'Bold',
+              'Swift',
+              'Calm',
+            ];
+            const nouns = [
+              'Fox',
+              'Dog',
+              'Cat',
+              'Bird',
+              'Fish',
+              'Mouse',
+              'Lion',
+              'Bear',
+              'Wolf',
+              'Eagle',
+            ];
+            const randomHandle = `${adjectives[Math.floor(Math.random() * adjectives.length)]}${nouns[Math.floor(Math.random() * nouns.length)]}${Math.floor(Math.random() * 9000) + 1000}`;
+
+            // Initialize user and create conversation
+            await db.transact([
+              tx.$users[user.id].update({
+                handle: randomHandle,
+                name: email.split('@')[0],
+                updatedAt: now,
+                lastSeenAt: now,
+              }),
+              tx.conversations[conversationId].update({
+                lastMessageAt: now,
+                createdAt: now,
+                type: 'direct',
+                status: 'accepted',
+              }),
+              tx.conversations[conversationId].link({
+                requestedBy: ARIA_KAI_USER_ID,
+              }),
+              tx.conversationParticipants[id()]
+                .update({
+                  lastReadAt: null,
+                  joinedAt: now,
+                  leftAt: null,
+                })
+                .link({ user: user.id, conversation: conversationId }),
+              tx.conversationParticipants[id()]
+                .update({
+                  lastReadAt: now,
+                  joinedAt: now,
+                  leftAt: null,
+                })
+                .link({ user: ARIA_KAI_USER_ID, conversation: conversationId }),
+              tx.messages[messageId]
+                .update({
+                  content: ARIA_KAI_WELCOME_MESSAGE,
+                  isRead: false,
+                  createdAt: now,
+                  updatedAt: null,
+                  deletedAt: null,
+                })
+                .link({ conversation: conversationId, sender: ARIA_KAI_USER_ID }),
+            ]);
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error initializing user:', error);
+        // Don't block login on initialization failure
+      }
       router.push('/');
     }
   };
