@@ -28,14 +28,31 @@ interface TodoCardProps {
   todo: any;
   onToggleComplete: (todo: any) => void;
   onUpdateStatus: (todoId: string, status: TodoStatus) => void;
+  onClick?: (todo: any) => void;
 }
 
-export function TodoCard({ todo, onToggleComplete, onUpdateStatus }: TodoCardProps) {
+export function TodoCard({ todo, onToggleComplete, onUpdateStatus, onClick }: TodoCardProps) {
   const isCompleted = todo.status === 'completed';
   const isOverdue = todo.dueDate && todo.status !== 'completed' && todo.dueDate < Date.now();
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't trigger if clicking on interactive elements
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('button') ||
+      target.closest('[role="combobox"]') ||
+      target.closest('select')
+    ) {
+      return;
+    }
+    onClick?.(todo);
+  };
+
   return (
-    <Card className={`transition-opacity ${isCompleted ? 'opacity-60' : ''}`}>
+    <Card
+      className={`cursor-pointer transition-opacity ${isCompleted ? 'opacity-60' : ''}`}
+      onClick={handleCardClick}
+    >
       <CardContent className="p-4">
         <div className="flex items-start gap-4">
           {/* Checkbox */}

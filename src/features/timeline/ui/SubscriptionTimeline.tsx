@@ -99,7 +99,7 @@ export function SubscriptionTimeline() {
 
       {/* Filter Tabs */}
       <Tabs value={filterType} onValueChange={setFilterType}>
-        <TabsList className="w-full justify-start overflow-x-auto">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="all" className="gap-2">
             All
             <Badge variant="secondary">{events.length}</Badge>

@@ -32,6 +32,7 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { KanbanBoard } from '@/components/todos/kanban-board';
 import { TodoList } from '@/components/todos/todo-list';
+import { TodoDetailDialog } from '@/components/todos/todo-detail-dialog';
 
 type TodoStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 type TodoPriority = 'low' | 'medium' | 'high' | 'urgent';
@@ -45,6 +46,8 @@ export default function TodosPage() {
   const [sortBy, setSortBy] = useState<SortBy>('dueDate');
   const [filterPriority, setFilterPriority] = useState<'all' | TodoPriority>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
+  const [selectedTodo, setSelectedTodo] = useState<any>(null);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
 
   // Query todos with assignments and creator
   const { data, isLoading } = db.useQuery({
@@ -53,6 +56,7 @@ export default function TodosPage() {
       assignments: {
         user: {},
       },
+      group: {},
     },
   });
 
@@ -178,6 +182,11 @@ export default function TodosPage() {
       console.error('Failed to update status:', error);
       toast.error('Failed to update status');
     }
+  };
+
+  const handleTodoClick = (todo: any) => {
+    setSelectedTodo(todo);
+    setIsDetailDialogOpen(true);
   };
 
   if (!user) {
@@ -329,11 +338,20 @@ export default function TodosPage() {
                   todos={filteredTodos}
                   onToggleComplete={handleToggleComplete}
                   onUpdateStatus={handleUpdateStatus}
+                  onTodoClick={handleTodoClick}
                 />
               </ScrollArea>
             )}
           </TabsContent>
         </Tabs>
+
+        {selectedTodo && (
+          <TodoDetailDialog
+            todo={selectedTodo}
+            open={isDetailDialogOpen}
+            onOpenChange={setIsDetailDialogOpen}
+          />
+        )}
       </PageWrapper>
     </AuthGuard>
   );

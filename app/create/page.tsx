@@ -42,6 +42,16 @@ import { db, tx, id } from '@/../../db.ts';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { toast } from 'sonner';
 import { HashtagInput } from '@/components/ui/hashtag-input';
+import { TypeAheadSelect } from '@/components/ui/type-ahead-select';
+import {
+  EventSelectCard,
+  GroupSelectCard,
+  AmendmentSelectCard,
+  ElectionSelectCard,
+  PositionSelectCard,
+  AmendmentVoteSelectCard,
+  AgendaItemSelectCard,
+} from '@/components/ui/entity-select-cards';
 
 type ItemType =
   | 'groups'
@@ -372,6 +382,8 @@ function GuidedGroupFlow({
     name: formData.name || '',
     description: formData.description || '',
     isPublic: formData.isPublic ?? true,
+    hashtags: formData.hashtags || ([] as string[]),
+    visibility: formData.visibility || ('public' as 'public' | 'authenticated' | 'private'),
   };
 
   useEffect(() => {
@@ -402,7 +414,7 @@ function GuidedGroupFlow({
       const conversationId = id();
       const conversationParticipantId = id();
 
-      await db.transact([
+      const transactions = [
         // Create the group
         tx.groups[groupId].update({
           name: data.name,
@@ -411,6 +423,7 @@ function GuidedGroupFlow({
           memberCount: 1,
           createdAt: new Date(),
           updatedAt: new Date(),
+          visibility: data.visibility,
         }),
         tx.groups[groupId].link({ owner: user.id }),
 
@@ -453,16 +466,30 @@ function GuidedGroupFlow({
         // Create membership for creator as Board Member
         tx.groupMemberships[membershipId].update({
           status: 'member',
-          joinedAt: new Date(),
+          createdAt: new Date(),
         }),
         tx.groupMemberships[membershipId].link({
           group: groupId,
           user: user.id,
           role: boardMemberRoleId,
         }),
-      ]);
+      ];
+
+      // Add hashtags
+      data.hashtags.forEach((tag: string) => {
+        const hashtagId = id();
+        transactions.push(
+          tx.hashtags[hashtagId].update({
+            tag,
+            createdAt: new Date(),
+          }),
+          tx.hashtags[hashtagId].link({ group: groupId })
+        );
+      });
+
+      await db.transact(transactions);
       toast.success('Group created successfully!');
-      setTimeout(() => (window.location.href = '/'), 500);
+      setTimeout(() => (window.location.href = `/group/${groupId}`), 500);
     } catch (error) {
       console.error('Failed to create group:', error);
       toast.error('Failed to create group. Please try again.');
@@ -525,6 +552,24 @@ function GuidedGroupFlow({
               <div className="space-y-4 p-4">
                 <div className="space-y-4">
                   <Label className="text-lg">Privacy Settings</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="guided-group-visibility">Visibility</Label>
+                    <select
+                      id="guided-group-visibility"
+                      value={data.visibility}
+                      onChange={e =>
+                        setFormData({
+                          ...formData,
+                          visibility: e.target.value as 'public' | 'authenticated' | 'private',
+                        })
+                      }
+                      className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <option value="public">Public - Anyone can see</option>
+                      <option value="authenticated">Authenticated - Only logged-in users</option>
+                      <option value="private">Private - Only members</option>
+                    </select>
+                  </div>
                   <div className="flex items-center justify-between rounded-lg border p-4">
                     <div>
                       <p className="font-medium">Public Group</p>
@@ -535,6 +580,21 @@ function GuidedGroupFlow({
                       onCheckedChange={checked => setFormData({ ...formData, isPublic: checked })}
                     />
                   </div>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label className="text-lg">Add Hashtags (Optional)</Label>
+                  <HashtagInput
+                    value={data.hashtags}
+                    onChange={hashtags => setFormData({ ...formData, hashtags })}
+                    placeholder="Add hashtags (e.g., politics, community)"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Optional: Help others discover your group with hashtags
+                  </p>
                 </div>
               </div>
             </CarouselItem>
@@ -584,7 +644,11 @@ function GuidedStatementFlow({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const user = useAuthStore(state => state.user);
 
-  const data = { text: formData.text || '', tag: formData.tag || '' };
+  const data = {
+    text: formData.text || '',
+    tag: formData.tag || '',
+    visibility: formData.visibility || ('public' as 'public' | 'authenticated' | 'private'),
+  };
 
   useEffect(() => {
     if (!api) return;
@@ -609,11 +673,15 @@ function GuidedStatementFlow({
       }
       const statementId = id();
       await db.transact([
-        tx.statements[statementId].update({ text: data.text, tag: data.tag }),
+        tx.statements[statementId].update({
+          text: data.text,
+          tag: data.tag,
+          visibility: data.visibility,
+        }),
         tx.statements[statementId].link({ user: user.id }),
       ]);
       toast.success('Statement created successfully!');
-      setTimeout(() => (window.location.href = '/'), 500);
+      setTimeout(() => (window.location.href = `/statement/${statementId}`), 500);
     } catch (error) {
       console.error('Failed to create statement:', error);
       toast.error('Failed to create statement. Please try again.');
@@ -670,6 +738,33 @@ function GuidedStatementFlow({
                   />
                   <p className="text-sm text-muted-foreground">
                     Help others categorize your statement
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-statement-visibility" className="text-lg">
+                    Who can see this statement?
+                  </Label>
+                  <select
+                    id="guided-statement-visibility"
+                    value={data.visibility}
+                    onChange={e =>
+                      setFormData({
+                        ...formData,
+                        visibility: e.target.value as 'public' | 'authenticated' | 'private',
+                      })
+                    }
+                    className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="public">Public - Anyone can see</option>
+                    <option value="authenticated">Authenticated - Only logged-in users</option>
+                    <option value="private">Private - Only you</option>
+                  </select>
+                  <p className="text-sm text-muted-foreground">
+                    Choose who can view your statement
                   </p>
                 </div>
               </div>
@@ -776,7 +871,6 @@ function GuidedBlogFlow({
           commentCount: 0,
           visibility: data.visibility,
         }),
-        tx.blogs[blogId].link({ user: user.id }),
 
         // Create Owner role
         tx.roles[ownerRoleId].update({
@@ -798,31 +892,27 @@ function GuidedBlogFlow({
         tx.actionRights[ownerUpdateRightId].update({
           resource: 'blogs',
           action: 'update',
-          blogId: blogId,
         }),
-        tx.actionRights[ownerUpdateRightId].link({ roles: [ownerRoleId] }),
+        tx.actionRights[ownerUpdateRightId].link({ roles: [ownerRoleId], blog: blogId }),
 
         tx.actionRights[ownerDeleteRightId].update({
           resource: 'blogs',
           action: 'delete',
-          blogId: blogId,
         }),
-        tx.actionRights[ownerDeleteRightId].link({ roles: [ownerRoleId] }),
+        tx.actionRights[ownerDeleteRightId].link({ roles: [ownerRoleId], blog: blogId }),
 
         tx.actionRights[ownerManageRightId].update({
           resource: 'blogBloggers',
           action: 'manage',
-          blogId: blogId,
         }),
-        tx.actionRights[ownerManageRightId].link({ roles: [ownerRoleId] }),
+        tx.actionRights[ownerManageRightId].link({ roles: [ownerRoleId], blog: blogId }),
 
         // Create action right for Writer role
         tx.actionRights[writerUpdateRightId].update({
           resource: 'blogs',
           action: 'update',
-          blogId: blogId,
         }),
-        tx.actionRights[writerUpdateRightId].link({ roles: [writerRoleId] }),
+        tx.actionRights[writerUpdateRightId].link({ roles: [writerRoleId], blog: blogId }),
 
         // Assign creator as Owner
         tx.blogBloggers[bloggerId].update({
@@ -836,7 +926,7 @@ function GuidedBlogFlow({
         }),
       ]);
       toast.success('Blog post created successfully!');
-      setTimeout(() => (window.location.href = '/'), 500);
+      setTimeout(() => (window.location.href = `/blog/${blogId}`), 500);
     } catch (error) {
       console.error('Failed to create blog post:', error);
       toast.error('Failed to create blog post. Please try again.');
@@ -945,6 +1035,7 @@ function GuidedAmendmentFlow({
     status: formData.status || 'Drafting',
     code: formData.code || '',
     date: formData.date || new Date().toISOString().split('T')[0],
+    hashtags: formData.hashtags || ([] as string[]),
     visibility: formData.visibility || ('public' as 'public' | 'authenticated' | 'private'),
   };
 
@@ -974,7 +1065,7 @@ function GuidedAmendmentFlow({
       const applicantRoleId = id();
       const collaboratorRoleId = id();
 
-      await db.transact([
+      const transactions = [
         // Create the amendment
         tx.amendments[amendmentId].update({
           title: data.title,
@@ -985,7 +1076,6 @@ function GuidedAmendmentFlow({
           code: data.code || '',
           visibility: data.visibility,
         }),
-        tx.amendments[amendmentId].link({ user: user.id }),
 
         // Create Applicant role with admin permissions
         tx.roles[applicantRoleId].update({
@@ -1005,14 +1095,31 @@ function GuidedAmendmentFlow({
 
         // Create collaboration for creator as Applicant
         tx.amendmentCollaborators[collaboratorId].update({
-          role: 'Applicant',
           status: 'member',
           createdAt: new Date(),
         }),
-        tx.amendmentCollaborators[collaboratorId].link({ user: user.id, amendment: amendmentId }),
-      ]);
+        tx.amendmentCollaborators[collaboratorId].link({
+          user: user.id,
+          amendment: amendmentId,
+          role: applicantRoleId,
+        }),
+      ];
+
+      // Add hashtags
+      data.hashtags.forEach((tag: string) => {
+        const hashtagId = id();
+        transactions.push(
+          tx.hashtags[hashtagId].update({
+            tag,
+            createdAt: new Date(),
+          }),
+          tx.hashtags[hashtagId].link({ amendment: amendmentId })
+        );
+      });
+
+      await db.transact(transactions);
       toast.success('Amendment created successfully!');
-      setTimeout(() => (window.location.href = '/'), 500);
+      setTimeout(() => (window.location.href = `/amendment/${amendmentId}`), 500);
     } catch (error) {
       console.error('Failed to create amendment:', error);
       toast.error('Failed to create amendment. Please try again.');
@@ -1124,6 +1231,48 @@ function GuidedAmendmentFlow({
                     className="text-lg"
                   />
                   <p className="text-sm text-muted-foreground">When was this proposed?</p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-amendment-visibility" className="text-lg">
+                    Who can see this amendment?
+                  </Label>
+                  <select
+                    id="guided-amendment-visibility"
+                    value={data.visibility}
+                    onChange={e =>
+                      setFormData({
+                        ...formData,
+                        visibility: e.target.value as 'public' | 'authenticated' | 'private',
+                      })
+                    }
+                    className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="public">Public - Anyone can see</option>
+                    <option value="authenticated">Authenticated - Only logged-in users</option>
+                    <option value="private">Private - Only collaborators</option>
+                  </select>
+                  <p className="text-sm text-muted-foreground">
+                    Choose who can view this amendment
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label className="text-lg">Add Hashtags (Optional)</Label>
+                  <HashtagInput
+                    value={data.hashtags}
+                    onChange={hashtags => setFormData({ ...formData, hashtags })}
+                    placeholder="Add hashtags (e.g., policy, reform)"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Optional: Add hashtags to help categorize your amendment
+                  </p>
                 </div>
               </div>
             </CarouselItem>
@@ -1346,19 +1495,15 @@ function CreateTodoForm({ isCarouselMode }: { isCarouselMode: boolean }) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="todo-group">Link to Group (Optional)</Label>
-            <select
-              id="todo-group"
+            <TypeAheadSelect
+              items={userGroups}
               value={formData.groupId}
-              onChange={e => setFormData({ ...formData, groupId: e.target.value })}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <option value="">No group</option>
-              {userGroups.map((group: any) => (
-                <option key={group.id} value={group.id}>
-                  {group.name}
-                </option>
-              ))}
-            </select>
+              onChange={value => setFormData({ ...formData, groupId: value })}
+              placeholder="Search for a group..."
+              searchKeys={['name', 'description']}
+              renderItem={group => <GroupSelectCard group={group} />}
+              getItemId={group => group.id}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="todo-tags">Tags</Label>
@@ -1873,22 +2018,16 @@ function GuidedTodoFlow({
             <CarouselItem>
               <div className="space-y-4 p-4">
                 <div className="space-y-2">
-                  <Label htmlFor="guided-todo-group" className="text-lg">
-                    Link to a Group (Optional)
-                  </Label>
-                  <select
-                    id="guided-todo-group"
+                  <Label className="text-lg">Link to a Group (Optional)</Label>
+                  <TypeAheadSelect
+                    items={userGroups}
                     value={data.groupId}
-                    onChange={e => setFormData({ ...formData, groupId: e.target.value })}
-                    className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <option value="">No group</option>
-                    {userGroups.map((group: any) => (
-                      <option key={group.id} value={group.id}>
-                        {group.name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={value => setFormData({ ...formData, groupId: value })}
+                    placeholder="Search for a group..."
+                    searchKeys={['name', 'description']}
+                    renderItem={group => <GroupSelectCard group={group} />}
+                    getItemId={group => group.id}
+                  />
                   <p className="text-sm text-muted-foreground">
                     Optional: Link this todo to a specific group
                   </p>
@@ -2053,7 +2192,7 @@ function CreateGroupForm({ isCarouselMode }: { isCarouselMode: boolean }) {
         // Create membership for creator as Board Member
         tx.groupMemberships[membershipId].update({
           status: 'member',
-          joinedAt: new Date(),
+          createdAt: new Date(),
         }),
         tx.groupMemberships[membershipId].link({
           group: groupId,
@@ -2078,7 +2217,7 @@ function CreateGroupForm({ isCarouselMode }: { isCarouselMode: boolean }) {
 
       toast.success('Group created successfully!');
       setTimeout(() => {
-        window.location.href = '/';
+        window.location.href = `/group/${groupId}`;
       }, 500);
     } catch (error) {
       console.error('Failed to create group:', error);
@@ -2333,7 +2472,7 @@ function CreateStatementForm({ isCarouselMode }: { isCarouselMode: boolean }) {
 
       toast.success('Statement created successfully!');
       setTimeout(() => {
-        window.location.href = '/';
+        window.location.href = `/statement/${statementId}`;
       }, 500);
     } catch (error) {
       console.error('Failed to create statement:', error);
@@ -2566,11 +2705,10 @@ function CreateBlogForm({ isCarouselMode }: { isCarouselMode: boolean }) {
         tx.blogs[blogId].update({
           title: formData.title,
           date: formData.date,
-          likes: 0,
-          comments: 0,
+          likeCount: 0,
+          commentCount: 0,
           visibility: formData.visibility,
         }),
-        tx.blogs[blogId].link({ user: user.id }),
 
         // Create Owner role
         tx.roles[ownerRoleId].update({
@@ -2592,31 +2730,27 @@ function CreateBlogForm({ isCarouselMode }: { isCarouselMode: boolean }) {
         tx.actionRights[ownerUpdateRightId].update({
           resource: 'blogs',
           action: 'update',
-          blogId: blogId,
         }),
-        tx.actionRights[ownerUpdateRightId].link({ roles: [ownerRoleId] }),
+        tx.actionRights[ownerUpdateRightId].link({ roles: [ownerRoleId], blog: blogId }),
 
         tx.actionRights[ownerDeleteRightId].update({
           resource: 'blogs',
           action: 'delete',
-          blogId: blogId,
         }),
-        tx.actionRights[ownerDeleteRightId].link({ roles: [ownerRoleId] }),
+        tx.actionRights[ownerDeleteRightId].link({ roles: [ownerRoleId], blog: blogId }),
 
         tx.actionRights[ownerManageRightId].update({
           resource: 'blogBloggers',
           action: 'manage',
-          blogId: blogId,
         }),
-        tx.actionRights[ownerManageRightId].link({ roles: [ownerRoleId] }),
+        tx.actionRights[ownerManageRightId].link({ roles: [ownerRoleId], blog: blogId }),
 
         // Create action right for Writer role
         tx.actionRights[writerUpdateRightId].update({
           resource: 'blogs',
           action: 'update',
-          blogId: blogId,
         }),
-        tx.actionRights[writerUpdateRightId].link({ roles: [writerRoleId] }),
+        tx.actionRights[writerUpdateRightId].link({ roles: [writerRoleId], blog: blogId }),
 
         // Assign creator as Owner
         tx.blogBloggers[bloggerId].update({
@@ -2632,7 +2766,7 @@ function CreateBlogForm({ isCarouselMode }: { isCarouselMode: boolean }) {
 
       toast.success('Blog post created successfully!');
       setTimeout(() => {
-        window.location.href = '/';
+        window.location.href = `/blog/${blogId}`;
       }, 500);
     } catch (error) {
       console.error('Failed to create blog post:', error);
@@ -2912,15 +3046,18 @@ function GuidedEventFlow({
 
         // Create participation for creator as Organizer
         tx.eventParticipants[participantId].update({
-          role: 'Organizer',
           status: 'member',
           createdAt: new Date(),
         }),
-        tx.eventParticipants[participantId].link({ user: user.id, event: eventId }),
+        tx.eventParticipants[participantId].link({
+          user: user.id,
+          event: eventId,
+          role: organizerRoleId,
+        }),
       ]);
 
       toast.success('Event created successfully!');
-      setTimeout(() => (window.location.href = '/calendar'), 500);
+      setTimeout(() => (window.location.href = `/event/${eventId}`), 500);
     } catch (error) {
       console.error('Failed to create event:', error);
       toast.error('Failed to create event. Please try again.');
@@ -2982,22 +3119,16 @@ function GuidedEventFlow({
             <CarouselItem>
               <div className="space-y-4 p-4">
                 <div className="space-y-2">
-                  <Label htmlFor="guided-event-group" className="text-lg">
-                    Select a Group
-                  </Label>
-                  <select
-                    id="guided-event-group"
+                  <Label className="text-lg">Select a Group</Label>
+                  <TypeAheadSelect
+                    items={userGroups}
                     value={data.groupId}
-                    onChange={e => setFormData({ ...formData, groupId: e.target.value })}
-                    className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <option value="">Select a group...</option>
-                    {userGroups.map((group: any) => (
-                      <option key={group.id} value={group.id}>
-                        {group.name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={value => setFormData({ ...formData, groupId: value })}
+                    placeholder="Search for a group..."
+                    searchKeys={['name', 'description']}
+                    renderItem={group => <GroupSelectCard group={group} />}
+                    getItemId={group => group.id}
+                  />
                   <p className="text-sm text-muted-foreground">
                     Events must be associated with a group
                   </p>
@@ -3239,16 +3370,19 @@ function CreateEventForm({ isCarouselMode }: { isCarouselMode: boolean }) {
 
         // Create participation for creator as Organizer
         tx.eventParticipants[participantId].update({
-          role: 'Organizer',
           status: 'member',
           createdAt: new Date(),
         }),
-        tx.eventParticipants[participantId].link({ user: user.id, event: eventId }),
+        tx.eventParticipants[participantId].link({
+          user: user.id,
+          event: eventId,
+          role: organizerRoleId,
+        }),
       ]);
 
       toast.success('Event created successfully!');
       setTimeout(() => {
-        window.location.href = '/calendar';
+        window.location.href = `/event/${eventId}`;
       }, 500);
     } catch (error) {
       console.error('Failed to create event:', error);
@@ -3291,20 +3425,15 @@ function CreateEventForm({ isCarouselMode }: { isCarouselMode: boolean }) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="event-group">Group</Label>
-            <select
-              id="event-group"
+            <TypeAheadSelect
+              items={userGroups}
               value={formData.groupId}
-              onChange={e => setFormData({ ...formData, groupId: e.target.value })}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              required
-            >
-              <option value="">Select a group...</option>
-              {userGroups.map((group: any) => (
-                <option key={group.id} value={group.id}>
-                  {group.name}
-                </option>
-              ))}
-            </select>
+              onChange={value => setFormData({ ...formData, groupId: value })}
+              placeholder="Search for a group..."
+              searchKeys={['name', 'description']}
+              renderItem={group => <GroupSelectCard group={group} />}
+              getItemId={group => group.id}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="event-location">Location</Label>
@@ -3433,7 +3562,6 @@ function CreateAmendmentForm({ isCarouselMode }: { isCarouselMode: boolean }) {
           code: formData.code || '',
           visibility: formData.visibility,
         }),
-        tx.amendments[amendmentId].link({ user: user.id }),
 
         // Create Applicant role with admin permissions
         tx.roles[applicantRoleId].update({
@@ -3453,11 +3581,14 @@ function CreateAmendmentForm({ isCarouselMode }: { isCarouselMode: boolean }) {
 
         // Create collaboration for creator as Applicant
         tx.amendmentCollaborators[collaboratorId].update({
-          role: 'Applicant',
           status: 'member',
           createdAt: new Date(),
         }),
-        tx.amendmentCollaborators[collaboratorId].link({ user: user.id, amendment: amendmentId }),
+        tx.amendmentCollaborators[collaboratorId].link({
+          user: user.id,
+          amendment: amendmentId,
+          role: applicantRoleId,
+        }),
       ];
 
       // Add hashtags
@@ -3476,7 +3607,7 @@ function CreateAmendmentForm({ isCarouselMode }: { isCarouselMode: boolean }) {
 
       toast.success('Amendment created successfully!');
       setTimeout(() => {
-        window.location.href = '/';
+        window.location.href = `/amendment/${amendmentId}`;
       }, 500);
     } catch (error) {
       console.error('Failed to create amendment:', error);
@@ -3870,20 +4001,15 @@ function CreateAgendaItemForm() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="agenda-event">Event</Label>
-            <select
-              id="agenda-event"
+            <TypeAheadSelect
+              items={userEvents}
               value={formData.eventId}
-              onChange={e => setFormData({ ...formData, eventId: e.target.value })}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              required
-            >
-              <option value="">Select an event</option>
-              {userEvents.map((event: any) => (
-                <option key={event.id} value={event.id}>
-                  {event.title}
-                </option>
-              ))}
-            </select>
+              onChange={value => setFormData({ ...formData, eventId: value })}
+              placeholder="Search for an event..."
+              searchKeys={['title', 'description', 'location']}
+              renderItem={event => <EventSelectCard event={event} />}
+              getItemId={event => event.id}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="agenda-title">Title</Label>
@@ -3939,37 +4065,29 @@ function CreateAgendaItemForm() {
           {formData.type === 'vote' && (
             <div className="space-y-2">
               <Label htmlFor="agenda-amendment">Amendment (optional)</Label>
-              <select
-                id="agenda-amendment"
+              <TypeAheadSelect
+                items={userAmendments}
                 value={formData.amendmentId}
-                onChange={e => setFormData({ ...formData, amendmentId: e.target.value })}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <option value="">Select an amendment</option>
-                {userAmendments.map((amendment: any) => (
-                  <option key={amendment.id} value={amendment.id}>
-                    {amendment.title}
-                  </option>
-                ))}
-              </select>
+                onChange={value => setFormData({ ...formData, amendmentId: value })}
+                placeholder="Search for an amendment..."
+                searchKeys={['title', 'subtitle']}
+                renderItem={amendment => <AmendmentSelectCard amendment={amendment} />}
+                getItemId={amendment => amendment.id}
+              />
             </div>
           )}
           {formData.type === 'election' && (
             <div className="space-y-2">
               <Label htmlFor="agenda-position">Position (optional)</Label>
-              <select
-                id="agenda-position"
+              <TypeAheadSelect
+                items={userPositions}
                 value={formData.positionId}
-                onChange={e => setFormData({ ...formData, positionId: e.target.value })}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <option value="">Select a position</option>
-                {userPositions.map((position: any) => (
-                  <option key={position.id} value={position.id}>
-                    {position.title} {position.group?.name ? `(${position.group.name})` : ''}
-                  </option>
-                ))}
-              </select>
+                onChange={value => setFormData({ ...formData, positionId: value })}
+                placeholder="Search for a position..."
+                searchKeys={['title', 'description']}
+                renderItem={position => <PositionSelectCard position={position} />}
+                getItemId={position => position.id}
+              />
             </div>
           )}
           <div className="space-y-2">
@@ -4046,6 +4164,13 @@ function GuidedAgendaItemFlow({
     setCurrent(api.selectedScrollSnap());
     api.on('select', () => setCurrent(api.selectedScrollSnap()));
   }, [api]);
+
+  const handleKeyDown = (e: React.KeyboardEvent, canProceed: boolean) => {
+    if (e.key === 'Enter' && canProceed && api?.canScrollNext()) {
+      e.preventDefault();
+      api.scrollNext();
+    }
+  };
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -4132,22 +4257,16 @@ function GuidedAgendaItemFlow({
             <CarouselItem>
               <div className="space-y-4 p-4">
                 <div className="space-y-2">
-                  <Label htmlFor="guided-agenda-event" className="text-lg">
-                    Which event is this for?
-                  </Label>
-                  <select
-                    id="guided-agenda-event"
+                  <Label className="text-lg">Which event is this for?</Label>
+                  <TypeAheadSelect
+                    items={userEvents}
                     value={data.eventId}
-                    onChange={e => setFormData({ ...formData, eventId: e.target.value })}
-                    className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <option value="">Select an event</option>
-                    {userEvents.map((event: any) => (
-                      <option key={event.id} value={event.id}>
-                        {event.title}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={value => setFormData({ ...formData, eventId: value })}
+                    placeholder="Search for an event..."
+                    searchKeys={['title', 'description', 'location']}
+                    renderItem={event => <EventSelectCard event={event} />}
+                    getItemId={event => event.id}
+                  />
                   <p className="text-sm text-muted-foreground">
                     Choose which event this agenda item belongs to
                   </p>
@@ -4165,8 +4284,8 @@ function GuidedAgendaItemFlow({
                     placeholder="Enter agenda item title"
                     value={data.title}
                     onChange={e => setFormData({ ...formData, title: e.target.value })}
+                    onKeyDown={e => handleKeyDown(e, data.title.trim() !== '')}
                     className="text-lg"
-                    autoFocus
                   />
                   <p className="text-sm text-muted-foreground">
                     Be specific about what will be discussed or decided
@@ -4177,22 +4296,74 @@ function GuidedAgendaItemFlow({
             <CarouselItem>
               <div className="space-y-4 p-4">
                 <div className="space-y-2">
-                  <Label htmlFor="guided-agenda-type" className="text-lg">
-                    What type of agenda item is this?
+                  <Label htmlFor="guided-agenda-description" className="text-lg">
+                    Describe this agenda item (optional)
                   </Label>
-                  <select
-                    id="guided-agenda-type"
-                    value={data.type}
-                    onChange={e => setFormData({ ...formData, type: e.target.value })}
-                    className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <option value="discussion">Discussion</option>
-                    <option value="speech">Speech</option>
-                    <option value="election">Election</option>
-                    <option value="vote">Vote</option>
-                  </select>
+                  <Textarea
+                    id="guided-agenda-description"
+                    placeholder="Describe this agenda item"
+                    value={data.description}
+                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                    rows={6}
+                    className="text-base"
+                  />
                   <p className="text-sm text-muted-foreground">
-                    Choose the type that best describes this agenda item
+                    Optional: Add more details about this item
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-4">
+                  <Label className="text-lg">Type and Order</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="guided-agenda-type">Type</Label>
+                    <select
+                      id="guided-agenda-type"
+                      value={data.type}
+                      onChange={e => setFormData({ ...formData, type: e.target.value })}
+                      className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <option value="discussion">Discussion</option>
+                      <option value="speech">Speech</option>
+                      <option value="election">Election</option>
+                      <option value="vote">Vote</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="guided-agenda-order">Order</Label>
+                    <Input
+                      id="guided-agenda-order"
+                      type="number"
+                      min="1"
+                      value={data.order}
+                      onChange={e =>
+                        setFormData({ ...formData, order: parseInt(e.target.value) || 1 })
+                      }
+                      className="text-base"
+                    />
+                  </div>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-agenda-duration" className="text-lg">
+                    Duration (minutes, optional)
+                  </Label>
+                  <Input
+                    id="guided-agenda-duration"
+                    type="number"
+                    min="1"
+                    placeholder="Enter duration in minutes"
+                    value={data.duration}
+                    onChange={e => setFormData({ ...formData, duration: e.target.value })}
+                    className="text-lg"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Optional: How long should this agenda item take?
                   </p>
                 </div>
               </div>
@@ -4201,22 +4372,16 @@ function GuidedAgendaItemFlow({
               <CarouselItem>
                 <div className="space-y-4 p-4">
                   <div className="space-y-2">
-                    <Label htmlFor="guided-agenda-amendment" className="text-lg">
-                      Which amendment is this vote for? (optional)
-                    </Label>
-                    <select
-                      id="guided-agenda-amendment"
+                    <Label className="text-lg">Which amendment is this vote for? (optional)</Label>
+                    <TypeAheadSelect
+                      items={userAmendments}
                       value={data.amendmentId}
-                      onChange={e => setFormData({ ...formData, amendmentId: e.target.value })}
-                      className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <option value="">Select an amendment</option>
-                      {userAmendments.map((amendment: any) => (
-                        <option key={amendment.id} value={amendment.id}>
-                          {amendment.title}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={value => setFormData({ ...formData, amendmentId: value })}
+                      placeholder="Search for an amendment..."
+                      searchKeys={['title', 'subtitle']}
+                      renderItem={amendment => <AmendmentSelectCard amendment={amendment} />}
+                      getItemId={amendment => amendment.id}
+                    />
                     <p className="text-sm text-muted-foreground">
                       Optional: Link this vote to a specific amendment
                     </p>
@@ -4228,22 +4393,18 @@ function GuidedAgendaItemFlow({
               <CarouselItem>
                 <div className="space-y-4 p-4">
                   <div className="space-y-2">
-                    <Label htmlFor="guided-agenda-position" className="text-lg">
+                    <Label className="text-lg">
                       Which position is this election for? (optional)
                     </Label>
-                    <select
-                      id="guided-agenda-position"
+                    <TypeAheadSelect
+                      items={userPositions}
                       value={data.positionId}
-                      onChange={e => setFormData({ ...formData, positionId: e.target.value })}
-                      className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <option value="">Select a position</option>
-                      {userPositions.map((position: any) => (
-                        <option key={position.id} value={position.id}>
-                          {position.title} {position.group?.name ? `(${position.group.name})` : ''}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={value => setFormData({ ...formData, positionId: value })}
+                      placeholder="Search for a position..."
+                      searchKeys={['title', 'description']}
+                      renderItem={position => <PositionSelectCard position={position} />}
+                      getItemId={position => position.id}
+                    />
                     <p className="text-sm text-muted-foreground">
                       Optional: Link this election to a specific position
                     </p>
@@ -4384,36 +4545,27 @@ function CreateElectionForm() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="election-agenda">Agenda Item</Label>
-            <select
-              id="election-agenda"
+            <TypeAheadSelect
+              items={userElectionAgendaItems}
               value={formData.agendaItemId}
-              onChange={e => setFormData({ ...formData, agendaItemId: e.target.value })}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              required
-            >
-              <option value="">Select an election agenda item</option>
-              {userElectionAgendaItems.map((item: any) => (
-                <option key={item.id} value={item.id}>
-                  {item.title} ({item.event?.title})
-                </option>
-              ))}
-            </select>
+              onChange={value => setFormData({ ...formData, agendaItemId: value })}
+              placeholder="Search for an agenda item..."
+              searchKeys={['title', 'description']}
+              renderItem={item => <AgendaItemSelectCard agendaItem={item} />}
+              getItemId={item => item.id}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="election-position">Position (optional)</Label>
-            <select
-              id="election-position"
+            <TypeAheadSelect
+              items={allPositions}
               value={formData.positionId}
-              onChange={e => setFormData({ ...formData, positionId: e.target.value })}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <option value="">No specific position</option>
-              {allPositions.map((position: any) => (
-                <option key={position.id} value={position.id}>
-                  {position.title} - {position.group?.name} ({position.term} months)
-                </option>
-              ))}
-            </select>
+              onChange={value => setFormData({ ...formData, positionId: value })}
+              placeholder="Search for a position..."
+              searchKeys={['title', 'description']}
+              renderItem={position => <PositionSelectCard position={position} />}
+              getItemId={position => position.id}
+            />
             <p className="text-sm text-muted-foreground">
               Link this election to a specific position being elected
             </p>
@@ -4541,6 +4693,13 @@ function GuidedElectionFlow({
     api.on('select', () => setCurrent(api.selectedScrollSnap()));
   }, [api]);
 
+  const handleKeyDown = (e: React.KeyboardEvent, canProceed: boolean) => {
+    if (e.key === 'Enter' && canProceed && api?.canScrollNext()) {
+      e.preventDefault();
+      api.scrollNext();
+    }
+  };
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
@@ -4606,22 +4765,16 @@ function GuidedElectionFlow({
             <CarouselItem>
               <div className="space-y-4 p-4">
                 <div className="space-y-2">
-                  <Label htmlFor="guided-election-agenda" className="text-lg">
-                    Which agenda item is this election for?
-                  </Label>
-                  <select
-                    id="guided-election-agenda"
+                  <Label className="text-lg">Which agenda item is this election for?</Label>
+                  <TypeAheadSelect
+                    items={userElectionAgendaItems}
                     value={data.agendaItemId}
-                    onChange={e => setFormData({ ...formData, agendaItemId: e.target.value })}
-                    className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <option value="">Select an election agenda item</option>
-                    {userElectionAgendaItems.map((item: any) => (
-                      <option key={item.id} value={item.id}>
-                        {item.title} ({item.event?.title})
-                      </option>
-                    ))}
-                  </select>
+                    onChange={value => setFormData({ ...formData, agendaItemId: value })}
+                    placeholder="Search for an agenda item..."
+                    searchKeys={['title', 'description']}
+                    renderItem={item => <AgendaItemSelectCard agendaItem={item} />}
+                    getItemId={item => item.id}
+                  />
                   <p className="text-sm text-muted-foreground">
                     Choose which election agenda item this belongs to
                   </p>
@@ -4631,22 +4784,18 @@ function GuidedElectionFlow({
             <CarouselItem>
               <div className="space-y-4 p-4">
                 <div className="space-y-2">
-                  <Label htmlFor="guided-election-position" className="text-lg">
+                  <Label className="text-lg">
                     Is this election for a specific position? (optional)
                   </Label>
-                  <select
-                    id="guided-election-position"
+                  <TypeAheadSelect
+                    items={allPositions}
                     value={data.positionId}
-                    onChange={e => setFormData({ ...formData, positionId: e.target.value })}
-                    className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <option value="">No specific position</option>
-                    {allPositions.map((position: any) => (
-                      <option key={position.id} value={position.id}>
-                        {position.title} - {position.group?.name} ({position.term} months)
-                      </option>
-                    ))}
-                  </select>
+                    onChange={value => setFormData({ ...formData, positionId: value })}
+                    placeholder="Search for a position..."
+                    searchKeys={['title', 'description']}
+                    renderItem={position => <PositionSelectCard position={position} />}
+                    getItemId={position => position.id}
+                  />
                   <p className="text-sm text-muted-foreground">
                     Link this election to a specific position being elected
                   </p>
@@ -4664,8 +4813,8 @@ function GuidedElectionFlow({
                     placeholder="Enter election title"
                     value={data.title}
                     onChange={e => setFormData({ ...formData, title: e.target.value })}
+                    onKeyDown={e => handleKeyDown(e, data.title.trim() !== '')}
                     className="text-lg"
-                    autoFocus
                   />
                   <p className="text-sm text-muted-foreground">
                     Be clear about what position or decision is being voted on
@@ -4827,20 +4976,15 @@ function CreateAmendmentVoteForm() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="amendment-vote-agenda">Agenda Item</Label>
-            <select
-              id="amendment-vote-agenda"
+            <TypeAheadSelect
+              items={userVoteAgendaItems}
               value={formData.agendaItemId}
-              onChange={e => setFormData({ ...formData, agendaItemId: e.target.value })}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              required
-            >
-              <option value="">Select a vote agenda item</option>
-              {userVoteAgendaItems.map((item: any) => (
-                <option key={item.id} value={item.id}>
-                  {item.title} ({item.event?.title})
-                </option>
-              ))}
-            </select>
+              onChange={value => setFormData({ ...formData, agendaItemId: value })}
+              placeholder="Search for a vote agenda item..."
+              searchKeys={['title', 'description']}
+              renderItem={item => <AgendaItemSelectCard agendaItem={item} />}
+              getItemId={item => item.id}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="amendment-vote-title">Title</Label>
@@ -5011,19 +5155,15 @@ function GuidedAmendmentVoteFlow({
                   <Label htmlFor="guided-amendment-vote-agenda" className="text-lg">
                     Which agenda item is this amendment for?
                   </Label>
-                  <select
-                    id="guided-amendment-vote-agenda"
+                  <TypeAheadSelect
+                    items={userVoteAgendaItems}
                     value={data.agendaItemId}
-                    onChange={e => setFormData({ ...formData, agendaItemId: e.target.value })}
-                    className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <option value="">Select a vote agenda item</option>
-                    {userVoteAgendaItems.map((item: any) => (
-                      <option key={item.id} value={item.id}>
-                        {item.title} ({item.event?.title})
-                      </option>
-                    ))}
-                  </select>
+                    onChange={value => setFormData({ ...formData, agendaItemId: value })}
+                    placeholder="Search for a vote agenda item..."
+                    searchKeys={['title', 'description']}
+                    renderItem={item => <AgendaItemSelectCard agendaItem={item} />}
+                    getItemId={item => item.id}
+                  />
                   <p className="text-sm text-muted-foreground">
                     Choose which vote agenda item this amendment belongs to
                   </p>
@@ -5187,20 +5327,15 @@ function CreateChangeRequestForm() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="change-request-amendment">Amendment</Label>
-            <select
-              id="change-request-amendment"
+            <TypeAheadSelect
+              items={userAmendmentVotes}
               value={formData.amendmentId}
-              onChange={e => setFormData({ ...formData, amendmentId: e.target.value })}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              required
-            >
-              <option value="">Select an amendment</option>
-              {userAmendmentVotes.map((amendment: any) => (
-                <option key={amendment.id} value={amendment.id}>
-                  {amendment.title}
-                </option>
-              ))}
-            </select>
+              onChange={value => setFormData({ ...formData, amendmentId: value })}
+              placeholder="Search for an amendment..."
+              searchKeys={['title', 'description']}
+              renderItem={amendment => <AmendmentVoteSelectCard amendmentVote={amendment} />}
+              getItemId={amendment => amendment.id}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="change-request-title">Title</Label>
@@ -5291,6 +5426,13 @@ function GuidedChangeRequestFlow({
     api.on('select', () => setCurrent(api.selectedScrollSnap()));
   }, [api]);
 
+  const handleKeyDown = (e: React.KeyboardEvent, canProceed: boolean) => {
+    if (e.key === 'Enter' && canProceed && api?.canScrollNext()) {
+      e.preventDefault();
+      api.scrollNext();
+    }
+  };
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
@@ -5350,22 +5492,16 @@ function GuidedChangeRequestFlow({
             <CarouselItem>
               <div className="space-y-4 p-4">
                 <div className="space-y-2">
-                  <Label htmlFor="guided-change-request-amendment" className="text-lg">
-                    Which amendment is this change request for?
-                  </Label>
-                  <select
-                    id="guided-change-request-amendment"
+                  <Label className="text-lg">Which amendment is this change request for?</Label>
+                  <TypeAheadSelect
+                    items={userAmendmentVotes}
                     value={data.amendmentId}
-                    onChange={e => setFormData({ ...formData, amendmentId: e.target.value })}
-                    className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <option value="">Select an amendment</option>
-                    {userAmendmentVotes.map((amendment: any) => (
-                      <option key={amendment.id} value={amendment.id}>
-                        {amendment.title}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={value => setFormData({ ...formData, amendmentId: value })}
+                    placeholder="Search for an amendment..."
+                    searchKeys={['title', 'description']}
+                    renderItem={amendment => <AmendmentVoteSelectCard amendmentVote={amendment} />}
+                    getItemId={amendment => amendment.id}
+                  />
                   <p className="text-sm text-muted-foreground">
                     Choose which amendment you want to propose changes to
                   </p>
@@ -5383,11 +5519,31 @@ function GuidedChangeRequestFlow({
                     placeholder="Enter change request title"
                     value={data.title}
                     onChange={e => setFormData({ ...formData, title: e.target.value })}
+                    onKeyDown={e => handleKeyDown(e, data.title.trim() !== '')}
                     className="text-lg"
-                    autoFocus
                   />
                   <p className="text-sm text-muted-foreground">
                     Be clear about what you want to change
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-change-request-description" className="text-lg">
+                    Describe this change request
+                  </Label>
+                  <Textarea
+                    id="guided-change-request-description"
+                    placeholder="Describe this change request"
+                    value={data.description}
+                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                    rows={6}
+                    className="text-base"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Explain the context and need for this change
                   </p>
                 </div>
               </div>
@@ -5408,6 +5564,26 @@ function GuidedChangeRequestFlow({
                   />
                   <p className="text-sm text-muted-foreground">
                     Describe the specific changes you are proposing
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-change-request-justification" className="text-lg">
+                    Justification (optional)
+                  </Label>
+                  <Textarea
+                    id="guided-change-request-justification"
+                    placeholder="Explain why this change is needed"
+                    value={data.justification}
+                    onChange={e => setFormData({ ...formData, justification: e.target.value })}
+                    rows={6}
+                    className="text-base"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Optional: Provide reasoning for this change
                   </p>
                 </div>
               </div>
@@ -5536,20 +5712,15 @@ function CreateElectionCandidateForm() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="election-candidate-election">Election</Label>
-            <select
-              id="election-candidate-election"
+            <TypeAheadSelect
+              items={userElections}
               value={formData.electionId}
-              onChange={e => setFormData({ ...formData, electionId: e.target.value })}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              required
-            >
-              <option value="">Select an election</option>
-              {userElections.map((election: any) => (
-                <option key={election.id} value={election.id}>
-                  {election.title}
-                </option>
-              ))}
-            </select>
+              onChange={value => setFormData({ ...formData, electionId: value })}
+              placeholder="Search for an election..."
+              searchKeys={['title', 'description']}
+              renderItem={election => <ElectionSelectCard election={election} />}
+              getItemId={election => election.id}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="election-candidate-name">Name</Label>
@@ -5640,6 +5811,13 @@ function GuidedElectionCandidateFlow({
     api.on('select', () => setCurrent(api.selectedScrollSnap()));
   }, [api]);
 
+  const handleKeyDown = (e: React.KeyboardEvent, canProceed: boolean) => {
+    if (e.key === 'Enter' && canProceed && api?.canScrollNext()) {
+      e.preventDefault();
+      api.scrollNext();
+    }
+  };
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
@@ -5704,22 +5882,16 @@ function GuidedElectionCandidateFlow({
             <CarouselItem>
               <div className="space-y-4 p-4">
                 <div className="space-y-2">
-                  <Label htmlFor="guided-election-candidate-election" className="text-lg">
-                    Which election is this candidate for?
-                  </Label>
-                  <select
-                    id="guided-election-candidate-election"
+                  <Label className="text-lg">Which election is this candidate for?</Label>
+                  <TypeAheadSelect
+                    items={userElections}
                     value={data.electionId}
-                    onChange={e => setFormData({ ...formData, electionId: e.target.value })}
-                    className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <option value="">Select an election</option>
-                    {userElections.map((election: any) => (
-                      <option key={election.id} value={election.id}>
-                        {election.title}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={value => setFormData({ ...formData, electionId: value })}
+                    placeholder="Search for an election..."
+                    searchKeys={['title', 'description']}
+                    renderItem={election => <ElectionSelectCard election={election} />}
+                    getItemId={election => election.id}
+                  />
                   <p className="text-sm text-muted-foreground">
                     Choose which election this candidate will participate in
                   </p>
@@ -5737,8 +5909,8 @@ function GuidedElectionCandidateFlow({
                     placeholder="Enter candidate name"
                     value={data.name}
                     onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    onKeyDown={e => handleKeyDown(e, data.name.trim() !== '')}
                     className="text-lg"
-                    autoFocus
                   />
                   <p className="text-sm text-muted-foreground">
                     Enter the full name of the candidate
@@ -5762,6 +5934,47 @@ function GuidedElectionCandidateFlow({
                   />
                   <p className="text-sm text-muted-foreground">
                     Optional: Add background information or qualifications
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-election-candidate-imageURL" className="text-lg">
+                    Image URL (optional)
+                  </Label>
+                  <Input
+                    id="guided-election-candidate-imageURL"
+                    placeholder="Enter image URL"
+                    value={data.imageURL}
+                    onChange={e => setFormData({ ...formData, imageURL: e.target.value })}
+                    className="text-lg"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Optional: Provide a URL for the candidate's photo
+                  </p>
+                </div>
+              </div>
+            </CarouselItem>
+            <CarouselItem>
+              <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guided-election-candidate-order" className="text-lg">
+                    Display Order
+                  </Label>
+                  <Input
+                    id="guided-election-candidate-order"
+                    type="number"
+                    min="1"
+                    value={data.order}
+                    onChange={e =>
+                      setFormData({ ...formData, order: parseInt(e.target.value) || 1 })
+                    }
+                    className="text-lg"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Order in which this candidate appears in the list
                   </p>
                 </div>
               </div>
@@ -5879,20 +6092,15 @@ function CreatePositionForm() {
             {isLoading ? (
               <p className="text-sm text-muted-foreground">Loading groups...</p>
             ) : data?.groups && data.groups.length > 0 ? (
-              <select
-                id="position-group"
+              <TypeAheadSelect
+                items={data.groups}
                 value={formData.groupId}
-                onChange={e => setFormData({ ...formData, groupId: e.target.value })}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                required
-              >
-                <option value="">Select a group</option>
-                {data.groups.map((group: any) => (
-                  <option key={group.id} value={group.id}>
-                    {group.name}
-                  </option>
-                ))}
-              </select>
+                onChange={value => setFormData({ ...formData, groupId: value })}
+                placeholder="Search for a group..."
+                searchKeys={['name', 'description']}
+                renderItem={group => <GroupSelectCard group={group} />}
+                getItemId={group => group.id}
+              />
             ) : (
               <p className="text-sm text-muted-foreground">
                 No groups found. You need to create or own a group first.
@@ -6066,25 +6274,19 @@ function GuidedPositionFlow({
             <CarouselItem>
               <div className="space-y-4 p-4">
                 <div className="space-y-2">
-                  <Label htmlFor="guided-position-group" className="text-lg">
-                    Which group is this position for?
-                  </Label>
+                  <Label className="text-lg">Which group is this position for?</Label>
                   {isLoading ? (
                     <p className="text-sm text-muted-foreground">Loading groups...</p>
                   ) : data?.groups && data.groups.length > 0 ? (
-                    <select
-                      id="guided-position-group"
+                    <TypeAheadSelect
+                      items={data.groups}
                       value={positionData.groupId}
-                      onChange={e => setFormData({ ...formData, groupId: e.target.value })}
-                      className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <option value="">Select a group</option>
-                      {data.groups.map((group: any) => (
-                        <option key={group.id} value={group.id}>
-                          {group.name}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={value => setFormData({ ...formData, groupId: value })}
+                      placeholder="Search for a group..."
+                      searchKeys={['name', 'description']}
+                      renderItem={group => <GroupSelectCard group={group} />}
+                      getItemId={group => group.id}
+                    />
                   ) : (
                     <p className="text-sm text-muted-foreground">
                       No groups found. You need to create or own a group first.
@@ -6109,7 +6311,6 @@ function GuidedPositionFlow({
                     onChange={e => setFormData({ ...formData, title: e.target.value })}
                     onKeyDown={e => handleKeyDown(e, positionData.title.trim() !== '')}
                     className="text-lg"
-                    autoFocus
                   />
                   <p className="text-sm text-muted-foreground">
                     Press Enter to continue • Name the elected position

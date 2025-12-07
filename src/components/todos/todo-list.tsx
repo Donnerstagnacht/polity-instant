@@ -6,9 +6,10 @@ interface TodoListProps {
   todos: any[];
   onToggleComplete: (todo: any) => void;
   onUpdateStatus: (todoId: string, status: TodoStatus) => void;
+  onTodoClick?: (todo: any) => void;
 }
 
-export function TodoList({ todos, onToggleComplete, onUpdateStatus }: TodoListProps) {
+export function TodoList({ todos, onToggleComplete, onUpdateStatus, onTodoClick }: TodoListProps) {
   return (
     <div className="space-y-3">
       {todos.map((todo: any) => (
@@ -17,6 +18,7 @@ export function TodoList({ todos, onToggleComplete, onUpdateStatus }: TodoListPr
           todo={todo}
           onToggleComplete={onToggleComplete}
           onUpdateStatus={onUpdateStatus}
+          onClick={onTodoClick}
         />
       ))}
     </div>
