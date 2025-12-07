@@ -38,7 +38,7 @@ import {
   UserCheck,
   Briefcase,
 } from 'lucide-react';
-import { db, tx, id } from '@/../../db.ts';
+import { db, tx, id } from '@/../db';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { toast } from 'sonner';
 import { HashtagInput } from '@/components/ui/hashtag-input';

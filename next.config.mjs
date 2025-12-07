@@ -2,8 +2,11 @@
 const nextConfig = {
   serverExternalPackages: [],
   images: {
-    domains: ['localhost'],
     remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
       {
         protocol: 'https',
         hostname: '**',
@@ -20,6 +23,8 @@ const nextConfig = {
     }
     return config;
   },
+  // Add Turbopack config for Next.js 16
+  turbopack: {},
 };
 
 export default nextConfig;

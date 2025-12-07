@@ -2,7 +2,7 @@
 
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
-import { db, tx } from '@/../../db.ts';
+import { db, tx } from '@/../db';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
