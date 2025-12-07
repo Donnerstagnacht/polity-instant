@@ -132,7 +132,7 @@ export function EntityNotifications({
       relatedBlog: {},
       [recipientKey]: {},
     },
-  });
+  } as any) as any;
 
   const notifications = data?.notifications || [];
   const unreadNotifications = notifications.filter((n: any) => !n.isRead);

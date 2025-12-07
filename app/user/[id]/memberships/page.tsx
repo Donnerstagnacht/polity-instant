@@ -35,54 +35,50 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
   const canView = authUser?.id === resolvedParams.id;
 
   // Query for all memberships, participations, and collaborations
-  const { data } = db.useQuery({
-    groupMemberships: canView
+  const { data } = db.useQuery(
+    (canView
       ? {
-          $: {
-            where: {
-              'user.id': resolvedParams.id,
+          groupMemberships: {
+            $: {
+              where: {
+                'user.id': resolvedParams.id,
+              },
             },
-          },
-          group: {
-            owner: {},
-          },
-          role: {},
-        }
-      : {},
-    eventParticipants: canView
-      ? {
-          $: {
-            where: {
-              'user.id': resolvedParams.id,
+            group: {
+              owner: {},
             },
+            role: {},
           },
-          event: {},
-          role: {},
-        }
-      : {},
-    amendmentRoleCollaborators: canView
-      ? {
-          $: {
-            where: {
-              'user.id': resolvedParams.id,
+          eventParticipants: {
+            $: {
+              where: {
+                'user.id': resolvedParams.id,
+              },
             },
+            event: {},
+            role: {},
           },
-          amendment: {},
-          role: {},
-        }
-      : {},
-    blogRoleBloggers: canView
-      ? {
-          $: {
-            where: {
-              'user.id': resolvedParams.id,
+          amendmentRoleCollaborators: {
+            $: {
+              where: {
+                'user.id': resolvedParams.id,
+              },
             },
+            amendment: {},
+            role: {},
           },
-          blog: {},
-          role: {},
+          blogRoleBloggers: {
+            $: {
+              where: {
+                'user.id': resolvedParams.id,
+              },
+            },
+            blog: {},
+            role: {},
+          },
         }
-      : {},
-  });
+      : null) as any
+  ) as any;
 
   const memberships = data?.groupMemberships || [];
   const participations = data?.eventParticipants || [];

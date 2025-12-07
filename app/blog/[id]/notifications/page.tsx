@@ -13,20 +13,24 @@ export default function BlogNotificationsPage({ params }: { params: Promise<{ id
   const { user: authUser } = useAuthStore();
 
   // Query for blog details and check if user is admin
-  const { data: blogData } = db.useQuery({
-    blogs: {
-      $: { where: { id: resolvedParams.id } },
-    },
-    blogRoleBloggers: {
-      $: {
-        where: {
-          'blog.id': resolvedParams.id,
-          'user.id': authUser?.id,
-        },
-      },
-      role: {},
-    },
-  });
+  const { data: blogData } = db.useQuery(
+    (authUser?.id
+      ? {
+          blogs: {
+            $: { where: { id: resolvedParams.id } },
+          },
+          blogRoleBloggers: {
+            $: {
+              where: {
+                'blog.id': resolvedParams.id,
+                'user.id': authUser.id,
+              },
+            },
+            role: {},
+          },
+        }
+      : null) as any
+  ) as any;
 
   const blog = blogData?.blogs?.[0];
   const blogRelation = blogData?.blogRoleBloggers?.[0];
