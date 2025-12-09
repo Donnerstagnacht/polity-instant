@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollableTabsList } from '@/components/ui/scrollable-tabs';
 import { Badge } from '@/components/ui/badge';
 import db from '../../db';
 import {
@@ -387,7 +388,7 @@ function SearchContent() {
 
       {/* Tabs for different search types */}
       <Tabs value={searchType} onValueChange={value => handleTypeChange(value as SearchType)}>
-        <TabsList className="grid w-full grid-cols-7">
+        <ScrollableTabsList>
           <TabsTrigger value="all">All ({totalResults})</TabsTrigger>
           <TabsTrigger value="users">
             <Users className="mr-2 h-4 w-4" />
@@ -413,7 +414,7 @@ function SearchContent() {
             <Scale className="mr-2 h-4 w-4" />
             Amendments ({allResults.amendments.length})
           </TabsTrigger>
-        </TabsList>
+        </ScrollableTabsList>
 
         {/* All Results - Unified Mosaic */}
         <TabsContent value="all">

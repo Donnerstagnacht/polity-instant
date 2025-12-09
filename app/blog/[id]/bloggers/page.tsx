@@ -25,7 +25,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollableTabsList } from '@/components/ui/scrollable-tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -473,10 +474,10 @@ export default function BlogBloggersPage({ params }: PageParams) {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
+        <ScrollableTabsList>
           <TabsTrigger value="bloggers">Bloggers ({filteredBloggers.length})</TabsTrigger>
           <TabsTrigger value="roles">Roles ({rolesData.roles.length})</TabsTrigger>
-        </TabsList>
+        </ScrollableTabsList>
 
         <TabsContent value="bloggers" className="space-y-4">
           {/* Invited Bloggers */}

@@ -8,7 +8,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollableTabsList } from '@/components/ui/scrollable-tabs';
 import { Bell, Check, CheckCheck, Users, Calendar, MessageSquare, UserPlus, X } from 'lucide-react';
 import { cn } from '@/utils/utils';
 
@@ -413,7 +414,7 @@ export default function NotificationsPage() {
               )}
             </div>
 
-            <TabsList className="grid w-full grid-cols-5">
+            <ScrollableTabsList>
               <TabsTrigger value="all">
                 All
                 <Badge variant="secondary" className="ml-2">
@@ -441,7 +442,7 @@ export default function NotificationsPage() {
                   {entityNotifications.length}
                 </Badge>
               </TabsTrigger>
-            </TabsList>
+            </ScrollableTabsList>
           </div>
 
           <TabsContent value="all" className="mt-0">

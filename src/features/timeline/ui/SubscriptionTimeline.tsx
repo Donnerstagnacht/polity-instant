@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollableTabsList } from '@/components/ui/scrollable-tabs';
 import { Badge } from '@/components/ui/badge';
 import { Rss, Calendar, Users, Scale, BookOpen, User } from 'lucide-react';
 import { TimelineEventCard } from './TimelineEventCard';
@@ -99,7 +100,7 @@ export function SubscriptionTimeline() {
 
       {/* Filter Tabs */}
       <Tabs value={filterType} onValueChange={setFilterType}>
-        <TabsList className="grid w-full grid-cols-6">
+        <ScrollableTabsList>
           <TabsTrigger value="all" className="gap-2">
             All
             <Badge variant="secondary">{events.length}</Badge>
@@ -131,7 +132,7 @@ export function SubscriptionTimeline() {
             Users
             <Badge variant="secondary">{events.filter(e => e.entityType === 'user').length}</Badge>
           </TabsTrigger>
-        </TabsList>
+        </ScrollableTabsList>
 
         <TabsContent value={filterType} className="mt-6">
           {filteredEvents.length === 0 ? (

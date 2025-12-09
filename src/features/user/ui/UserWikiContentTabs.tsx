@@ -1,5 +1,6 @@
 import React from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollableTabsList } from '@/components/ui/scrollable-tabs';
 import { BlogListTab } from './BlogListTab';
 import { GroupsListTab } from './GroupListTab';
 import { AmendmentListTab } from './AmendmentListTab';
@@ -26,11 +27,11 @@ export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
   return (
     <div className="mt-8">
       <Tabs defaultValue="blogs">
-        <TabsList className="grid w-full grid-cols-3">
+        <ScrollableTabsList>
           <TabsTrigger value="blogs">Blogs</TabsTrigger>
           <TabsTrigger value="groups">{t('pages.users.groups.title')}</TabsTrigger>
           <TabsTrigger value="amendments">Amendments</TabsTrigger>
-        </TabsList>
+        </ScrollableTabsList>
 
         <TabsContent value="blogs" className="mt-4">
           <BlogListTab

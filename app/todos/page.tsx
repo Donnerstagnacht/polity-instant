@@ -8,7 +8,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollableTabsList } from '@/components/ui/scrollable-tabs';
 import {
   Select,
   SelectContent,
@@ -282,7 +283,7 @@ export default function TodosPage() {
 
         {/* Tabs */}
         <Tabs value={selectedTab} onValueChange={(v: any) => setSelectedTab(v)}>
-          <TabsList className="mb-6 grid w-full grid-cols-5">
+          <ScrollableTabsList className="mb-6">
             <TabsTrigger value="all" className="flex items-center gap-2">
               <CheckSquare className="h-4 w-4" />
               All ({statusCounts.all})
@@ -303,7 +304,7 @@ export default function TodosPage() {
               <XCircle className="h-4 w-4" />
               Cancelled ({statusCounts.cancelled})
             </TabsTrigger>
-          </TabsList>
+          </ScrollableTabsList>
 
           <TabsContent value={selectedTab}>
             {isLoading ? (

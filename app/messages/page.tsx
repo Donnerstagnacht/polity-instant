@@ -282,15 +282,18 @@ export default function MessagesPage() {
     );
 
     if (unreadMessages.length > 0) {
+      // Mark messages as read immediately
       db.transact(
         unreadMessages.map((msg: Message) =>
           tx.messages[msg.id].update({
             isRead: true,
           })
         )
-      );
+      ).catch(error => {
+        console.error('Failed to mark messages as read:', error);
+      });
     }
-  }, [selectedConversation, currentUser?.id]);
+  }, [selectedConversation?.id, selectedConversation?.messages, currentUser?.id]);
 
   // Format date/time - show time if today, date if before today
   const formatTime = (date: string | number) => {

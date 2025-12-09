@@ -17,7 +17,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollableTabsList } from '@/components/ui/scrollable-tabs';
 import { Trash2, Search, User, Users, Scale, Calendar, BookOpen } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -226,14 +227,14 @@ export default function SubscriptionsPage({ params }: { params: Promise<{ id: st
         </div>
 
         <Tabs defaultValue="subscriptions" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <ScrollableTabsList>
             <TabsTrigger value="subscriptions">
               My Subscriptions ({filteredSubscriptions.length})
             </TabsTrigger>
             <TabsTrigger value="subscribers">
               My Subscribers ({filteredSubscribers.length})
             </TabsTrigger>
-          </TabsList>
+          </ScrollableTabsList>
 
           <TabsContent value="subscriptions" className="mt-6">
             <Card>
@@ -251,7 +252,7 @@ export default function SubscriptionsPage({ params }: { params: Promise<{ id: st
                     onValueChange={value => setFilterType(value as any)}
                     className="w-full"
                   >
-                    <TabsList className="grid w-full grid-cols-6">
+                    <ScrollableTabsList>
                       <TabsTrigger value="all">All ({subscriptionCounts.all})</TabsTrigger>
                       <TabsTrigger value="users">
                         <User className="mr-1 h-3 w-3" />
@@ -273,7 +274,7 @@ export default function SubscriptionsPage({ params }: { params: Promise<{ id: st
                         <BookOpen className="mr-1 h-3 w-3" />
                         Blogs ({subscriptionCounts.blogs})
                       </TabsTrigger>
-                    </TabsList>
+                    </ScrollableTabsList>
                   </Tabs>
                 </div>
 

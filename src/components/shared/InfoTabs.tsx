@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollableTabsList } from '@/components/ui/scrollable-tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { useTranslation } from '@/hooks/use-translation';
 
@@ -30,10 +31,10 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({ about, contact, className })
 
   return (
     <Tabs defaultValue="about" className={className}>
-      <TabsList className="grid w-full grid-cols-2">
+      <ScrollableTabsList>
         <TabsTrigger value="about">{t('components.infoTabs.about')}</TabsTrigger>
         <TabsTrigger value="contact">{t('components.infoTabs.contact')}</TabsTrigger>
-      </TabsList>
+      </ScrollableTabsList>
 
       <TabsContent value="about" className="mt-4">
         <Card>

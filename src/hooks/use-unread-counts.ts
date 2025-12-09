@@ -56,11 +56,16 @@ export function useUnreadMessagesCount() {
 
   const currentUser = userData?.$users?.[0];
 
-  // Query conversations (exactly like messages page)
+  // Query conversations (exactly like messages page) - only where user is a participant
   const { data, isLoading } = db.useQuery(
     user?.id
       ? {
           conversations: {
+            $: {
+              where: {
+                'participants.user.id': user.id,
+              },
+            },
             participants: {
               user: {},
             },
