@@ -15,6 +15,13 @@ export const subscriptionsSeeder: EntitySeeder = {
     const transactions = [];
     const subscriptionIds: string[] = [];
 
+    // Link counters
+    let subscriptionsToSubscribers = 0;
+    let subscriptionsToSubscribedUsers = 0;
+    let subscriptionsToSubscribedGroups = 0;
+    let subscriptionsToSubscribedEvents = 0;
+    let subscriptionsToSubscribedAmendments = 0;
+
     const mainUserId = SEED_CONFIG.mainTestUserId;
 
     // Main user subscriptions
@@ -33,6 +40,8 @@ export const subscriptionsSeeder: EntitySeeder = {
           })
           .link({ subscriber: mainUserId, subscribedToUser: subscribedId })
       );
+      subscriptionsToSubscribers++;
+      subscriptionsToSubscribedUsers++;
     }
 
     // Main user group subscriptions
@@ -48,6 +57,8 @@ export const subscriptionsSeeder: EntitySeeder = {
           })
           .link({ subscriber: mainUserId, subscribedToGroup: groupId })
       );
+      subscriptionsToSubscribers++;
+      subscriptionsToSubscribedGroups++;
     }
 
     // Main user event subscriptions
@@ -64,6 +75,8 @@ export const subscriptionsSeeder: EntitySeeder = {
             })
             .link({ subscriber: mainUserId, subscribedToEvent: eventId })
         );
+        subscriptionsToSubscribers++;
+        subscriptionsToSubscribedEvents++;
       }
     }
 
@@ -81,6 +94,8 @@ export const subscriptionsSeeder: EntitySeeder = {
             })
             .link({ subscriber: mainUserId, subscribedToAmendment: amendmentId })
         );
+        subscriptionsToSubscribers++;
+        subscriptionsToSubscribedAmendments++;
       }
     }
 
@@ -103,6 +118,8 @@ export const subscriptionsSeeder: EntitySeeder = {
             })
             .link({ subscriber: userId, subscribedToUser: subscribedId })
         );
+        subscriptionsToSubscribers++;
+        subscriptionsToSubscribedUsers++;
       }
 
       // Group subscriptions
@@ -118,12 +135,40 @@ export const subscriptionsSeeder: EntitySeeder = {
             })
             .link({ subscriber: userId, subscribedToGroup: subscribedGroup })
         );
+        subscriptionsToSubscribers++;
+        subscriptionsToSubscribedGroups++;
       }
     }
 
     await batchTransact(db, transactions);
     console.log(`✅ Seeded ${subscriptionIds.length} subscriptions`);
+    console.log(`   Links created:`);
+    console.log(`   - subscriptionsToSubscribers: ${subscriptionsToSubscribers}`);
+    console.log(`   - subscriptionsToSubscribedUsers: ${subscriptionsToSubscribedUsers}`);
+    console.log(`   - subscriptionsToSubscribedGroups: ${subscriptionsToSubscribedGroups}`);
+    console.log(`   - subscriptionsToSubscribedEvents: ${subscriptionsToSubscribedEvents}`);
+    console.log(`   - subscriptionsToSubscribedAmendments: ${subscriptionsToSubscribedAmendments}`);
 
-    return { ...context, subscriptionIds };
+    return {
+      ...context,
+      subscriptionIds,
+      linkCounts: {
+        ...context.linkCounts,
+        subscriptionsToSubscribers:
+          (context.linkCounts?.subscriptionsToSubscribers || 0) + subscriptionsToSubscribers,
+        subscriptionsToSubscribedUsers:
+          (context.linkCounts?.subscriptionsToSubscribedUsers || 0) +
+          subscriptionsToSubscribedUsers,
+        subscriptionsToSubscribedGroups:
+          (context.linkCounts?.subscriptionsToSubscribedGroups || 0) +
+          subscriptionsToSubscribedGroups,
+        subscriptionsToSubscribedEvents:
+          (context.linkCounts?.subscriptionsToSubscribedEvents || 0) +
+          subscriptionsToSubscribedEvents,
+        subscriptionsToSubscribedAmendments:
+          (context.linkCounts?.subscriptionsToSubscribedAmendments || 0) +
+          subscriptionsToSubscribedAmendments,
+      },
+    };
   },
 };

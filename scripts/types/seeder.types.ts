@@ -47,6 +47,184 @@ export interface SeedContext {
   amendmentPathIds?: string[];
   amendmentVoteIds?: string[];
   groupRelationshipIds?: string[];
+
+  // Link counters
+  linkCounts?: {
+    // Amendments
+    amendmentsToUsers?: number;
+    amendmentsToGroups?: number;
+
+    // Blogs
+    blogsToUsers?: number;
+    blogsToGroups?: number;
+
+    // Events
+    eventsToOrganizers?: number;
+    eventsToGroups?: number;
+    participantsToEvents?: number;
+    participantsToUsers?: number;
+
+    // Follows
+    followsToFollowers?: number;
+    followsToFollowed?: number;
+
+    // Groups
+    groupsToOwners?: number;
+    groupMembershipsToUsers?: number;
+    groupMembershipsToGroups?: number;
+    groupMembershipsToRoles?: number;
+    rolesToGroups?: number;
+    actionRightsToRoles?: number;
+    actionRightsToGroups?: number;
+    conversationsToGroups?: number;
+    conversationsToRequestedBy?: number;
+    conversationParticipantsToConversations?: number;
+    conversationParticipantsToUsers?: number;
+    messagesToConversations?: number;
+    messagesToSenders?: number;
+
+    // Invitations
+    groupInvitationsToUsers?: number;
+    groupInvitationsToGroups?: number;
+    groupRequestsToUsers?: number;
+    groupRequestsToGroups?: number;
+    eventInvitationsToUsers?: number;
+    eventInvitationsToEvents?: number;
+    eventRequestsToUsers?: number;
+    eventRequestsToEvents?: number;
+    eventAdminsToUsers?: number;
+    eventAdminsToEvents?: number;
+    amendmentInvitationsToUsers?: number;
+    amendmentInvitationsToAmendments?: number;
+    amendmentRequestsToUsers?: number;
+    amendmentRequestsToAmendments?: number;
+    amendmentAdminsToUsers?: number;
+    amendmentAdminsToAmendments?: number;
+
+    // Positions
+    positionsToGroups?: number;
+    positionsToHolders?: number;
+
+    // Stripe
+    stripeCustomersToUsers?: number;
+    stripeSubscriptionsToCustomers?: number;
+    stripePaymentsToSubscriptions?: number;
+
+    // Conversations
+    directConversationsToRequestedBy?: number;
+    directParticipantsToConversations?: number;
+    directParticipantsToUsers?: number;
+    directMessagesToConversations?: number;
+    directMessagesToSenders?: number;
+    // Group Relationships
+    groupRelationshipsToParentGroups?: number;
+    groupRelationshipsToChildGroups?: number;
+
+    // Payments
+    paymentsToGroups?: number;
+    paymentsToPayerUsers?: number;
+    paymentsToReceiverUsers?: number;
+
+    // Todos
+    todosToCreators?: number;
+    todosToGroups?: number;
+
+    // Documents
+    documentsToOwners?: number;
+
+    // Links
+    linksToGroups?: number;
+
+    // Notifications
+    notificationsToRecipients?: number;
+    notificationsToSenders?: number;
+    notificationsToRelatedGroups?: number;
+    notificationsToRelatedEvents?: number;
+    notificationsToRelatedAmendments?: number;
+    notificationsToRelatedUsers?: number;
+
+    // Subscriptions
+    subscriptionsToSubscribers?: number;
+    subscriptionsToSubscribedUsers?: number;
+    subscriptionsToSubscribedGroups?: number;
+    subscriptionsToSubscribedEvents?: number;
+    subscriptionsToSubscribedAmendments?: number;
+
+    // Meeting Slots
+    meetingSlotsToOwners?: number;
+    meetingBookingsToSlots?: number;
+    meetingBookingsToBookers?: number;
+
+    // Users
+    statsToUsers?: number;
+    statementsToUsers?: number;
+    hashtagsToUsers?: number;
+
+    // Timeline Events
+    timelineEventsToActors?: number;
+    timelineEventsToAmendments?: number;
+    timelineEventsToEvents?: number;
+    timelineEventsToBlogs?: number;
+    timelineEventsToGroups?: number;
+    timelineEventsToUsers?: number;
+
+    // Tobias Subscriptions
+    tobiasSubscribersToUsers?: number;
+    tobiasSubscribersToGroups?: number;
+    tobiasSubscribersToAmendments?: number;
+    tobiasSubscribersToEvents?: number;
+    tobiasSubscribersToBlogs?: number;
+
+    // RBAC
+    rolesToEvents?: number;
+    rolesToAmendments?: number;
+    rolesToBlogs?: number;
+    actionRightsToEvents?: number;
+    actionRightsToAmendments?: number;
+    actionRightsToBlogs?: number;
+    eventParticipantsToEvents?: number;
+    eventParticipantsToUsers?: number;
+    eventParticipantsToRoles?: number;
+    blogBloggersToBlogs?: number;
+    blogBloggersToUsers?: number;
+    blogBloggersToRoles?: number;
+
+    // Amendment Targets
+    amendmentTargetsAgendaItemsToEvents?: number;
+    amendmentTargetsAgendaItemsToCreators?: number;
+    amendmentTargetsAgendaItemsToAmendments?: number;
+    amendmentTargetsAmendmentVotesToAgendaItems?: number;
+    amendmentTargetsAmendmentVotesToCreators?: number;
+    amendmentTargetsAmendmentVoteEntriesToAmendmentVotes?: number;
+    amendmentTargetsAmendmentVoteEntriesToVoters?: number;
+    amendmentPathsToAmendments?: number;
+
+    // Blog Comments
+    commentsToBlogs?: number;
+    commentsToCreators?: number;
+    commentsToParentComments?: number;
+    commentVotesToComments?: number;
+    commentVotesToUsers?: number;
+
+    // Agenda and Voting
+    agendaItemsToCreators?: number;
+    agendaItemsToEvents?: number;
+    agendaItemsToAmendments?: number;
+    electionsToAgendaItems?: number;
+    electionsToPositions?: number;
+    electionCandidatesToElections?: number;
+    electionCandidatesToUsers?: number;
+    electionVotesToElections?: number;
+    electionVotesToVoters?: number;
+    electionVotesToCandidates?: number;
+    agendaAmendmentVotesToAgendaItems?: number;
+    changeRequestsToAmendmentVotes?: number;
+    changeRequestsToCreators?: number;
+    changeRequestVotesToChangeRequests?: number;
+    changeRequestVotesToVoters?: number;
+    agendaAmendmentVoteEntriesToAmendmentVotes?: number;
+    agendaAmendmentVoteEntriesToVoters?: number;
+  };
 }
 
 /**

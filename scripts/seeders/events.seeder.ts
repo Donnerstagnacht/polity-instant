@@ -15,6 +15,10 @@ export const eventsSeeder: EntitySeeder = {
     const { db, userIds, groupIds } = context;
     const eventIds: string[] = [];
     const transactions = [];
+    let eventsToOrganizers = 0;
+    let eventsToGroups = 0;
+    let participantsToEvents = 0;
+    let participantsToUsers = 0;
 
     const now = new Date();
 
@@ -57,8 +61,11 @@ export const eventsSeeder: EntitySeeder = {
 
       if (groupId) {
         transactions.push(eventTx.link({ organizer: organizerId, group: groupId }));
+        eventsToOrganizers++;
+        eventsToGroups++;
       } else {
         transactions.push(eventTx.link({ organizer: organizerId }));
+        eventsToOrganizers++;
       }
 
       // Add hashtags for this event
@@ -80,13 +87,30 @@ export const eventsSeeder: EntitySeeder = {
             .update({ status })
             .link({ event: eventId, user: participantId })
         );
+        participantsToEvents++;
+        participantsToUsers++;
       }
     }
 
     // Batch transact
     await batchTransact(db, transactions);
     console.log(`✅ Seeded ${eventIds.length} events`);
+    console.log(`  - Event-to-organizer links: ${eventsToOrganizers}`);
+    console.log(`  - Event-to-group links: ${eventsToGroups}`);
+    console.log(`  - Participant-to-event links: ${participantsToEvents}`);
+    console.log(`  - Participant-to-user links: ${participantsToUsers}`);
 
-    return { ...context, eventIds };
+    return {
+      ...context,
+      eventIds,
+      linkCounts: {
+        ...context.linkCounts,
+        eventsToOrganizers: (context.linkCounts?.eventsToOrganizers || 0) + eventsToOrganizers,
+        eventsToGroups: (context.linkCounts?.eventsToGroups || 0) + eventsToGroups,
+        participantsToEvents:
+          (context.linkCounts?.participantsToEvents || 0) + participantsToEvents,
+        participantsToUsers: (context.linkCounts?.participantsToUsers || 0) + participantsToUsers,
+      },
+    };
   },
 };

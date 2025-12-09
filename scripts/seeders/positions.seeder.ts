@@ -14,6 +14,8 @@ export const positionsSeeder: EntitySeeder = {
     const { db, userIds, groupIds } = context;
     const positionIds: string[] = [];
     const transactions = [];
+    let positionsToGroups = 0;
+    let positionsToHolders = 0;
 
     const positionTitles = [
       'President',
@@ -52,15 +54,28 @@ export const positionsSeeder: EntitySeeder = {
 
         if (holderUserId) {
           transactions.push(positionTx.link({ group: groupId, holder: holderUserId }));
+          positionsToGroups++;
+          positionsToHolders++;
         } else {
           transactions.push(positionTx.link({ group: groupId }));
+          positionsToGroups++;
         }
       }
     }
 
     await batchTransact(db, transactions);
     console.log(`✅ Seeded ${positionIds.length} positions`);
+    console.log(`  - Position-to-group links: ${positionsToGroups}`);
+    console.log(`  - Position-to-holder links: ${positionsToHolders}`);
 
-    return { ...context, positionIds };
+    return {
+      ...context,
+      positionIds,
+      linkCounts: {
+        ...context.linkCounts,
+        positionsToGroups: (context.linkCounts?.positionsToGroups || 0) + positionsToGroups,
+        positionsToHolders: (context.linkCounts?.positionsToHolders || 0) + positionsToHolders,
+      },
+    };
   },
 };

@@ -16,6 +16,11 @@ export const usersSeeder: EntitySeeder = {
     const userIds: string[] = [];
     const transactions = [];
 
+    // Initialize link tracking counters
+    let statsToUsers = 0;
+    let statementsToUsers = 0;
+    let hashtagsToUsers = 0;
+
     // First, ensure the main test user exists and update it
     const mainUserId = SEED_CONFIG.mainTestUserId;
     userIds.push(mainUserId);
@@ -55,6 +60,7 @@ export const usersSeeder: EntitySeeder = {
           })
           .link({ user: mainUserId })
       );
+      statsToUsers++;
     }
 
     // Add a statement for main user
@@ -68,10 +74,12 @@ export const usersSeeder: EntitySeeder = {
         })
         .link({ user: mainUserId })
     );
+    statementsToUsers++;
 
     // Add hashtags for main user
     const mainUserHashtags = randomItems(USER_HASHTAGS, 2);
     transactions.push(...createHashtagTransactions(mainUserId, 'user', mainUserHashtags));
+    hashtagsToUsers += mainUserHashtags.length;
 
     // Create Tobias's user account
     const tobiasUserId = SEED_CONFIG.tobiasUserId;
@@ -111,6 +119,7 @@ export const usersSeeder: EntitySeeder = {
           })
           .link({ user: tobiasUserId })
       );
+      statsToUsers++;
     }
 
     const tobiasStatementId = id();
@@ -123,9 +132,11 @@ export const usersSeeder: EntitySeeder = {
         })
         .link({ user: tobiasUserId })
     );
+    statementsToUsers++;
 
     const tobiasHashtags = randomItems(USER_HASHTAGS, 2);
     transactions.push(...createHashtagTransactions(tobiasUserId, 'user', tobiasHashtags));
+    hashtagsToUsers += tobiasHashtags.length;
 
     // Create Aria & Kai assistant user
     const ariaKaiUserId = SEED_CONFIG.ariaKaiUserId;
@@ -162,6 +173,7 @@ export const usersSeeder: EntitySeeder = {
           })
           .link({ user: ariaKaiUserId })
       );
+      statsToUsers++;
     }
 
     // Create random additional users
@@ -210,6 +222,7 @@ export const usersSeeder: EntitySeeder = {
             })
             .link({ user: userId })
         );
+        statsToUsers++;
       }
 
       // Add a statement (50% chance)
@@ -224,18 +237,29 @@ export const usersSeeder: EntitySeeder = {
             })
             .link({ user: userId })
         );
+        statementsToUsers++;
       }
 
       // Add hashtags
       const numHashtags = randomInt(1, 3);
       const userHashtags = randomItems(USER_HASHTAGS, numHashtags);
       transactions.push(...createHashtagTransactions(userId, 'user', userHashtags));
+      hashtagsToUsers += userHashtags.length;
     }
 
     // Batch transact
     await batchTransact(db, transactions);
     console.log(`✅ Seeded ${userIds.length} users`);
 
-    return { ...context, userIds };
+    return {
+      ...context,
+      userIds,
+      linkCounts: {
+        ...(context.linkCounts || {}),
+        statsToUsers,
+        statementsToUsers,
+        hashtagsToUsers,
+      },
+    };
   },
 };

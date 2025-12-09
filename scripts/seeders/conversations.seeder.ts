@@ -15,6 +15,11 @@ export const conversationsSeeder: EntitySeeder = {
     const conversationIds: string[] = [...(context.conversationIds || [])];
     const messageIds: string[] = [];
     const transactions = [];
+    let directConversationsToRequestedBy = 0;
+    let directParticipantsToConversations = 0;
+    let directParticipantsToUsers = 0;
+    let directMessagesToConversations = 0;
+    let directMessagesToSenders = 0;
 
     const mainUserId = SEED_CONFIG.mainTestUserId;
 
@@ -44,6 +49,7 @@ export const conversationsSeeder: EntitySeeder = {
           })
           .link({ requestedBy: mainUserId })
       );
+      directConversationsToRequestedBy++;
 
       // Add participants
       transactions.push(
@@ -54,6 +60,8 @@ export const conversationsSeeder: EntitySeeder = {
           })
           .link({ conversation: conversationId, user: mainUserId })
       );
+      directParticipantsToConversations++;
+      directParticipantsToUsers++;
 
       transactions.push(
         tx.conversationParticipants[id()]
@@ -63,6 +71,8 @@ export const conversationsSeeder: EntitySeeder = {
           })
           .link({ conversation: conversationId, user: partnerId })
       );
+      directParticipantsToConversations++;
+      directParticipantsToUsers++;
 
       // Add messages
       const numMessages = randomInt(
@@ -86,6 +96,8 @@ export const conversationsSeeder: EntitySeeder = {
             })
             .link({ conversation: conversationId, sender: senderId })
         );
+        directMessagesToConversations++;
+        directMessagesToSenders++;
       }
     }
 
@@ -93,7 +105,35 @@ export const conversationsSeeder: EntitySeeder = {
     console.log(
       `✅ Seeded ${conversationIds.length} conversations with ${messageIds.length} messages`
     );
+    console.log(
+      `  - Direct conversation-to-requestedBy links: ${directConversationsToRequestedBy}`
+    );
+    console.log(
+      `  - Direct participant-to-conversation links: ${directParticipantsToConversations}`
+    );
+    console.log(`  - Direct participant-to-user links: ${directParticipantsToUsers}`);
+    console.log(`  - Direct message-to-conversation links: ${directMessagesToConversations}`);
+    console.log(`  - Direct message-to-sender links: ${directMessagesToSenders}`);
 
-    return { ...context, conversationIds, messageIds };
+    return {
+      ...context,
+      conversationIds,
+      messageIds,
+      linkCounts: {
+        ...context.linkCounts,
+        directConversationsToRequestedBy:
+          (context.linkCounts?.directConversationsToRequestedBy || 0) +
+          directConversationsToRequestedBy,
+        directParticipantsToConversations:
+          (context.linkCounts?.directParticipantsToConversations || 0) +
+          directParticipantsToConversations,
+        directParticipantsToUsers:
+          (context.linkCounts?.directParticipantsToUsers || 0) + directParticipantsToUsers,
+        directMessagesToConversations:
+          (context.linkCounts?.directMessagesToConversations || 0) + directMessagesToConversations,
+        directMessagesToSenders:
+          (context.linkCounts?.directMessagesToSenders || 0) + directMessagesToSenders,
+      },
+    };
   },
 };

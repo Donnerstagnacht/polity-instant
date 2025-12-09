@@ -21,6 +21,11 @@ export const meetingSlotsSeeder: EntitySeeder = {
     let totalSlots = 0;
     let totalBookings = 0;
 
+    // Link counters
+    let meetingSlotsToOwners = 0;
+    let meetingBookingsToSlots = 0;
+    let meetingBookingsToBookers = 0;
+
     const meetingSlotIds: string[] = [];
     const bookingIds: string[] = [];
 
@@ -54,6 +59,7 @@ export const meetingSlotsSeeder: EntitySeeder = {
             })
             .link({ owner: userId })
         );
+        meetingSlotsToOwners++;
         totalSlots++;
       }
 
@@ -85,6 +91,7 @@ export const meetingSlotsSeeder: EntitySeeder = {
             })
             .link({ owner: userId })
         );
+        meetingSlotsToOwners++;
         totalSlots++;
 
         const bookingId = id();
@@ -99,6 +106,8 @@ export const meetingSlotsSeeder: EntitySeeder = {
             })
             .link({ slot: slotId, booker: bookerId })
         );
+        meetingBookingsToSlots++;
+        meetingBookingsToBookers++;
         totalBookings++;
       }
     }
@@ -114,7 +123,23 @@ export const meetingSlotsSeeder: EntitySeeder = {
 
     console.log(`✓ Created ${totalSlots} meeting slots with ${totalBookings} bookings`);
     console.log(`  Each user has 5-8 available slots and 3-5 booked slots`);
+    console.log(`  - Meeting slot-to-owner links: ${meetingSlotsToOwners}`);
+    console.log(`  - Meeting booking-to-slot links: ${meetingBookingsToSlots}`);
+    console.log(`  - Meeting booking-to-booker links: ${meetingBookingsToBookers}`);
 
-    return { ...context, meetingSlotIds, bookingIds };
+    return {
+      ...context,
+      meetingSlotIds,
+      bookingIds,
+      linkCounts: {
+        ...context.linkCounts,
+        meetingSlotsToOwners:
+          (context.linkCounts?.meetingSlotsToOwners || 0) + meetingSlotsToOwners,
+        meetingBookingsToSlots:
+          (context.linkCounts?.meetingBookingsToSlots || 0) + meetingBookingsToSlots,
+        meetingBookingsToBookers:
+          (context.linkCounts?.meetingBookingsToBookers || 0) + meetingBookingsToBookers,
+      },
+    };
   },
 };

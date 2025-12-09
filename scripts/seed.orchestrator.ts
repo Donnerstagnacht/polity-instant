@@ -159,6 +159,7 @@ export class SeedOrchestrator {
       hashtagIds: [],
       documentIds: [],
       todoIds: [],
+      linkCounts: {},
     };
 
     // Execute seeders in order
@@ -235,6 +236,330 @@ export class SeedOrchestrator {
 
     const total = stats.reduce((sum, { count }) => sum + count, 0);
     console.log(`   Total: ${total} entities`);
+
+    // Print link statistics
+    if (context.linkCounts) {
+      console.log('\n🔗 Link Statistics:');
+      const linkStats = [
+        // Amendments
+        { label: 'Amendments → Users', count: context.linkCounts.amendmentsToUsers },
+        { label: 'Amendments → Groups', count: context.linkCounts.amendmentsToGroups },
+        // Blogs
+        { label: 'Blogs → Users', count: context.linkCounts.blogsToUsers },
+        { label: 'Blogs → Groups', count: context.linkCounts.blogsToGroups },
+        // Events
+        { label: 'Events → Organizers', count: context.linkCounts.eventsToOrganizers },
+        { label: 'Events → Groups', count: context.linkCounts.eventsToGroups },
+        { label: 'Participants → Events', count: context.linkCounts.participantsToEvents },
+        { label: 'Participants → Users', count: context.linkCounts.participantsToUsers },
+        // Follows
+        { label: 'Follows → Followers', count: context.linkCounts.followsToFollowers },
+        { label: 'Follows → Followed', count: context.linkCounts.followsToFollowed },
+        // Groups
+        { label: 'Groups → Owners', count: context.linkCounts.groupsToOwners },
+        { label: 'Group Memberships → Users', count: context.linkCounts.groupMembershipsToUsers },
+        { label: 'Group Memberships → Groups', count: context.linkCounts.groupMembershipsToGroups },
+        { label: 'Group Memberships → Roles', count: context.linkCounts.groupMembershipsToRoles },
+        { label: 'Roles → Groups', count: context.linkCounts.rolesToGroups },
+        { label: 'Action Rights → Roles', count: context.linkCounts.actionRightsToRoles },
+        { label: 'Action Rights → Groups', count: context.linkCounts.actionRightsToGroups },
+        { label: 'Conversations → Groups', count: context.linkCounts.conversationsToGroups },
+        {
+          label: 'Conversations → RequestedBy',
+          count: context.linkCounts.conversationsToRequestedBy,
+        },
+        {
+          label: 'Conversation Participants → Conversations',
+          count: context.linkCounts.conversationParticipantsToConversations,
+        },
+        {
+          label: 'Conversation Participants → Users',
+          count: context.linkCounts.conversationParticipantsToUsers,
+        },
+        { label: 'Messages → Conversations', count: context.linkCounts.messagesToConversations },
+        { label: 'Messages → Senders', count: context.linkCounts.messagesToSenders },
+        // Invitations
+        { label: 'Group Invitations → Users', count: context.linkCounts.groupInvitationsToUsers },
+        { label: 'Group Invitations → Groups', count: context.linkCounts.groupInvitationsToGroups },
+        { label: 'Group Requests → Users', count: context.linkCounts.groupRequestsToUsers },
+        { label: 'Group Requests → Groups', count: context.linkCounts.groupRequestsToGroups },
+        { label: 'Event Invitations → Users', count: context.linkCounts.eventInvitationsToUsers },
+        { label: 'Event Invitations → Events', count: context.linkCounts.eventInvitationsToEvents },
+        { label: 'Event Requests → Users', count: context.linkCounts.eventRequestsToUsers },
+        { label: 'Event Requests → Events', count: context.linkCounts.eventRequestsToEvents },
+        { label: 'Event Admins → Users', count: context.linkCounts.eventAdminsToUsers },
+        { label: 'Event Admins → Events', count: context.linkCounts.eventAdminsToEvents },
+        {
+          label: 'Amendment Invitations → Users',
+          count: context.linkCounts.amendmentInvitationsToUsers,
+        },
+        {
+          label: 'Amendment Invitations → Amendments',
+          count: context.linkCounts.amendmentInvitationsToAmendments,
+        },
+        { label: 'Amendment Requests → Users', count: context.linkCounts.amendmentRequestsToUsers },
+        {
+          label: 'Amendment Requests → Amendments',
+          count: context.linkCounts.amendmentRequestsToAmendments,
+        },
+        { label: 'Amendment Admins → Users', count: context.linkCounts.amendmentAdminsToUsers },
+        {
+          label: 'Amendment Admins → Amendments',
+          count: context.linkCounts.amendmentAdminsToAmendments,
+        },
+        // Positions
+        { label: 'Positions → Groups', count: context.linkCounts.positionsToGroups },
+        { label: 'Positions → Holders', count: context.linkCounts.positionsToHolders },
+        // Stripe
+        { label: 'Stripe Customers → Users', count: context.linkCounts.stripeCustomersToUsers },
+        {
+          label: 'Stripe Subscriptions → Customers',
+          count: context.linkCounts.stripeSubscriptionsToCustomers,
+        },
+        {
+          label: 'Stripe Payments → Subscriptions',
+          count: context.linkCounts.stripePaymentsToSubscriptions,
+        },
+        // Direct Conversations
+        {
+          label: 'Direct Conversations → RequestedBy',
+          count: context.linkCounts.directConversationsToRequestedBy,
+        },
+        {
+          label: 'Direct Participants → Conversations',
+          count: context.linkCounts.directParticipantsToConversations,
+        },
+        {
+          label: 'Direct Participants → Users',
+          count: context.linkCounts.directParticipantsToUsers,
+        },
+        {
+          label: 'Direct Messages → Conversations',
+          count: context.linkCounts.directMessagesToConversations,
+        },
+        { label: 'Direct Messages → Senders', count: context.linkCounts.directMessagesToSenders },
+
+        // Group Relationships
+        {
+          label: 'Group Relationships → Parent Groups',
+          count: context.linkCounts.groupRelationshipsToParentGroups,
+        },
+        {
+          label: 'Group Relationships → Child Groups',
+          count: context.linkCounts.groupRelationshipsToChildGroups,
+        },
+
+        // Payments
+        { label: 'Payments → Groups', count: context.linkCounts.paymentsToGroups },
+        { label: 'Payments → Payer Users', count: context.linkCounts.paymentsToPayerUsers },
+        { label: 'Payments → Receiver Users', count: context.linkCounts.paymentsToReceiverUsers },
+
+        // Todos
+        { label: 'Todos → Creators', count: context.linkCounts.todosToCreators },
+        { label: 'Todos → Groups', count: context.linkCounts.todosToGroups },
+
+        // Documents
+        { label: 'Documents → Owners', count: context.linkCounts.documentsToOwners },
+
+        // Links
+        { label: 'Links → Groups', count: context.linkCounts.linksToGroups },
+
+        // Notifications
+        {
+          label: 'Notifications → Recipients',
+          count: context.linkCounts.notificationsToRecipients,
+        },
+        { label: 'Notifications → Senders', count: context.linkCounts.notificationsToSenders },
+        {
+          label: 'Notifications → Related Groups',
+          count: context.linkCounts.notificationsToRelatedGroups,
+        },
+        {
+          label: 'Notifications → Related Events',
+          count: context.linkCounts.notificationsToRelatedEvents,
+        },
+        {
+          label: 'Notifications → Related Amendments',
+          count: context.linkCounts.notificationsToRelatedAmendments,
+        },
+        {
+          label: 'Notifications → Related Users',
+          count: context.linkCounts.notificationsToRelatedUsers,
+        },
+
+        // Subscriptions
+        {
+          label: 'Subscriptions → Subscribers',
+          count: context.linkCounts.subscriptionsToSubscribers,
+        },
+        {
+          label: 'Subscriptions → Subscribed Users',
+          count: context.linkCounts.subscriptionsToSubscribedUsers,
+        },
+        {
+          label: 'Subscriptions → Subscribed Groups',
+          count: context.linkCounts.subscriptionsToSubscribedGroups,
+        },
+        {
+          label: 'Subscriptions → Subscribed Events',
+          count: context.linkCounts.subscriptionsToSubscribedEvents,
+        },
+        {
+          label: 'Subscriptions → Subscribed Amendments',
+          count: context.linkCounts.subscriptionsToSubscribedAmendments,
+        },
+
+        // Meeting Slots
+        { label: 'Meeting Slots → Owners', count: context.linkCounts.meetingSlotsToOwners },
+        { label: 'Meeting Bookings → Slots', count: context.linkCounts.meetingBookingsToSlots },
+        { label: 'Meeting Bookings → Bookers', count: context.linkCounts.meetingBookingsToBookers },
+
+        // Users
+        { label: 'Stats → Users', count: context.linkCounts.statsToUsers },
+        { label: 'Statements → Users', count: context.linkCounts.statementsToUsers },
+        { label: 'Hashtags → Users', count: context.linkCounts.hashtagsToUsers },
+
+        // Timeline Events
+        { label: 'Timeline Events → Actors', count: context.linkCounts.timelineEventsToActors },
+        {
+          label: 'Timeline Events → Amendments',
+          count: context.linkCounts.timelineEventsToAmendments,
+        },
+        { label: 'Timeline Events → Events', count: context.linkCounts.timelineEventsToEvents },
+        { label: 'Timeline Events → Blogs', count: context.linkCounts.timelineEventsToBlogs },
+        { label: 'Timeline Events → Groups', count: context.linkCounts.timelineEventsToGroups },
+        { label: 'Timeline Events → Users', count: context.linkCounts.timelineEventsToUsers },
+
+        // Tobias Subscriptions
+        { label: 'Tobias Subscribers → Users', count: context.linkCounts.tobiasSubscribersToUsers },
+        {
+          label: 'Tobias Subscribers → Groups',
+          count: context.linkCounts.tobiasSubscribersToGroups,
+        },
+        {
+          label: 'Tobias Subscribers → Amendments',
+          count: context.linkCounts.tobiasSubscribersToAmendments,
+        },
+        {
+          label: 'Tobias Subscribers → Events',
+          count: context.linkCounts.tobiasSubscribersToEvents,
+        },
+        { label: 'Tobias Subscribers → Blogs', count: context.linkCounts.tobiasSubscribersToBlogs },
+
+        // Blog Comments
+        { label: 'Comments → Blogs', count: context.linkCounts.commentsToBlogs },
+        { label: 'Comments → Creators', count: context.linkCounts.commentsToCreators },
+        { label: 'Comments → Parent Comments', count: context.linkCounts.commentsToParentComments },
+        { label: 'Comment Votes → Comments', count: context.linkCounts.commentVotesToComments },
+        { label: 'Comment Votes → Users', count: context.linkCounts.commentVotesToUsers },
+
+        // RBAC
+        { label: 'Roles → Events', count: context.linkCounts.rolesToEvents },
+        { label: 'Roles → Amendments', count: context.linkCounts.rolesToAmendments },
+        { label: 'Roles → Blogs', count: context.linkCounts.rolesToBlogs },
+        { label: 'Action Rights → Events', count: context.linkCounts.actionRightsToEvents },
+        { label: 'Action Rights → Amendments', count: context.linkCounts.actionRightsToAmendments },
+        { label: 'Action Rights → Blogs', count: context.linkCounts.actionRightsToBlogs },
+        {
+          label: 'Event Participants → Events',
+          count: context.linkCounts.eventParticipantsToEvents,
+        },
+        { label: 'Event Participants → Users', count: context.linkCounts.eventParticipantsToUsers },
+        { label: 'Event Participants → Roles', count: context.linkCounts.eventParticipantsToRoles },
+        { label: 'Blog Bloggers → Blogs', count: context.linkCounts.blogBloggersToBlogs },
+        { label: 'Blog Bloggers → Users', count: context.linkCounts.blogBloggersToUsers },
+        { label: 'Blog Bloggers → Roles', count: context.linkCounts.blogBloggersToRoles },
+
+        // Amendment Targets
+        {
+          label: 'Amendment Targets Agenda Items → Events',
+          count: context.linkCounts.amendmentTargetsAgendaItemsToEvents,
+        },
+        {
+          label: 'Amendment Targets Agenda Items → Creators',
+          count: context.linkCounts.amendmentTargetsAgendaItemsToCreators,
+        },
+        {
+          label: 'Amendment Targets Agenda Items → Amendments',
+          count: context.linkCounts.amendmentTargetsAgendaItemsToAmendments,
+        },
+        {
+          label: 'Amendment Targets Amendment Votes → Agenda Items',
+          count: context.linkCounts.amendmentTargetsAmendmentVotesToAgendaItems,
+        },
+        {
+          label: 'Amendment Targets Amendment Votes → Creators',
+          count: context.linkCounts.amendmentTargetsAmendmentVotesToCreators,
+        },
+        {
+          label: 'Amendment Targets Amendment Vote Entries → Amendment Votes',
+          count: context.linkCounts.amendmentTargetsAmendmentVoteEntriesToAmendmentVotes,
+        },
+        {
+          label: 'Amendment Targets Amendment Vote Entries → Voters',
+          count: context.linkCounts.amendmentTargetsAmendmentVoteEntriesToVoters,
+        },
+        {
+          label: 'Amendment Paths → Amendments',
+          count: context.linkCounts.amendmentPathsToAmendments,
+        },
+
+        // Agenda and Voting
+        { label: 'Agenda Items → Creators', count: context.linkCounts.agendaItemsToCreators },
+        { label: 'Agenda Items → Events', count: context.linkCounts.agendaItemsToEvents },
+        { label: 'Agenda Items → Amendments', count: context.linkCounts.agendaItemsToAmendments },
+        { label: 'Elections → Agenda Items', count: context.linkCounts.electionsToAgendaItems },
+        { label: 'Elections → Positions', count: context.linkCounts.electionsToPositions },
+        {
+          label: 'Election Candidates → Elections',
+          count: context.linkCounts.electionCandidatesToElections,
+        },
+        {
+          label: 'Election Candidates → Users',
+          count: context.linkCounts.electionCandidatesToUsers,
+        },
+        { label: 'Election Votes → Elections', count: context.linkCounts.electionVotesToElections },
+        { label: 'Election Votes → Voters', count: context.linkCounts.electionVotesToVoters },
+        {
+          label: 'Election Votes → Candidates',
+          count: context.linkCounts.electionVotesToCandidates,
+        },
+        {
+          label: 'Agenda Amendment Votes → Agenda Items',
+          count: context.linkCounts.agendaAmendmentVotesToAgendaItems,
+        },
+        {
+          label: 'Change Requests → Amendment Votes',
+          count: context.linkCounts.changeRequestsToAmendmentVotes,
+        },
+        { label: 'Change Requests → Creators', count: context.linkCounts.changeRequestsToCreators },
+        {
+          label: 'Change Request Votes → Change Requests',
+          count: context.linkCounts.changeRequestVotesToChangeRequests,
+        },
+        {
+          label: 'Change Request Votes → Voters',
+          count: context.linkCounts.changeRequestVotesToVoters,
+        },
+        {
+          label: 'Agenda Amendment Vote Entries → Amendment Votes',
+          count: context.linkCounts.agendaAmendmentVoteEntriesToAmendmentVotes,
+        },
+        {
+          label: 'Agenda Amendment Vote Entries → Voters',
+          count: context.linkCounts.agendaAmendmentVoteEntriesToVoters,
+        },
+      ];
+
+      linkStats.forEach(({ label, count }) => {
+        if (count && count > 0) {
+          console.log(`   ${label}: ${count}`);
+        }
+      });
+
+      const totalLinks = linkStats.reduce((sum, { count }) => sum + (count || 0), 0);
+      console.log(`   Total Links: ${totalLinks}`);
+    }
   }
 
   /**

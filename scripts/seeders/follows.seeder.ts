@@ -15,6 +15,8 @@ export const followsSeeder: EntitySeeder = {
     const transactions = [];
     const followIds: string[] = [];
     const mainUserId = SEED_CONFIG.mainTestUserId;
+    let followsToFollowers = 0;
+    let followsToFollowed = 0;
 
     // Main user following 10 random users
     const mainUserFollowing = randomItems(
@@ -29,6 +31,8 @@ export const followsSeeder: EntitySeeder = {
           .update({ createdAt: faker.date.past({ years: 1 }) })
           .link({ follower: mainUserId, followed: followedId })
       );
+      followsToFollowers++;
+      followsToFollowed++;
     }
 
     // 5 random users following main user
@@ -44,6 +48,8 @@ export const followsSeeder: EntitySeeder = {
           .update({ createdAt: faker.date.past({ years: 1 }) })
           .link({ follower: followerId, followed: mainUserId })
       );
+      followsToFollowers++;
+      followsToFollowed++;
     }
 
     // Random follows between other users
@@ -65,12 +71,24 @@ export const followsSeeder: EntitySeeder = {
             .update({ createdAt: faker.date.past({ years: 1 }) })
             .link({ follower: userId, followed: followedId })
         );
+        followsToFollowers++;
+        followsToFollowed++;
       }
     }
 
     await batchTransact(db, transactions);
     console.log(`✅ Seeded ${followIds.length} follows`);
+    console.log(`  - Follow-to-follower links: ${followsToFollowers}`);
+    console.log(`  - Follow-to-followed links: ${followsToFollowed}`);
 
-    return { ...context, followIds };
+    return {
+      ...context,
+      followIds,
+      linkCounts: {
+        ...context.linkCounts,
+        followsToFollowers: (context.linkCounts?.followsToFollowers || 0) + followsToFollowers,
+        followsToFollowed: (context.linkCounts?.followsToFollowed || 0) + followsToFollowed,
+      },
+    };
   },
 };

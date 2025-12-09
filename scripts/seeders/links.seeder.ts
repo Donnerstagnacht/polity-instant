@@ -14,6 +14,7 @@ export const linksSeeder: EntitySeeder = {
     const transactions = [];
     const linkIds: string[] = [];
     let totalLinks = 0;
+    let linksToGroups = 0;
 
     const linkLabels = [
       'Website',
@@ -63,12 +64,21 @@ export const linksSeeder: EntitySeeder = {
             })
             .link({ group: groupId })
         );
+        linksToGroups++;
       }
     }
 
     await batchTransact(db, transactions);
     console.log(`✅ Seeded ${totalLinks} links`);
+    console.log(`  - Link-to-group links: ${linksToGroups}`);
 
-    return { ...context, linkIds };
+    return {
+      ...context,
+      linkIds,
+      linkCounts: {
+        ...context.linkCounts,
+        linksToGroups: (context.linkCounts?.linksToGroups || 0) + linksToGroups,
+      },
+    };
   },
 };

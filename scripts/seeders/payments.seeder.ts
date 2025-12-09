@@ -13,6 +13,9 @@ export const paymentsSeeder: EntitySeeder = {
     const { db, userIds, groupIds } = context;
     const paymentIds: string[] = [];
     const transactions = [];
+    let paymentsToGroups = 0;
+    let paymentsToPayerUsers = 0;
+    let paymentsToReceiverUsers = 0;
 
     for (const groupId of groupIds) {
       const numPayments = randomInt(5, 15);
@@ -39,12 +42,29 @@ export const paymentsSeeder: EntitySeeder = {
               receiverUser: receiverUserId,
             })
         );
+        paymentsToGroups++;
+        paymentsToPayerUsers++;
+        paymentsToReceiverUsers++;
       }
     }
 
     await batchTransact(db, transactions);
     console.log(`✅ Seeded ${paymentIds.length} payments`);
+    console.log(`  - Payment-to-group links: ${paymentsToGroups}`);
+    console.log(`  - Payment-to-payer links: ${paymentsToPayerUsers}`);
+    console.log(`  - Payment-to-receiver links: ${paymentsToReceiverUsers}`);
 
-    return { ...context, paymentIds };
+    return {
+      ...context,
+      paymentIds,
+      linkCounts: {
+        ...context.linkCounts,
+        paymentsToGroups: (context.linkCounts?.paymentsToGroups || 0) + paymentsToGroups,
+        paymentsToPayerUsers:
+          (context.linkCounts?.paymentsToPayerUsers || 0) + paymentsToPayerUsers,
+        paymentsToReceiverUsers:
+          (context.linkCounts?.paymentsToReceiverUsers || 0) + paymentsToReceiverUsers,
+      },
+    };
   },
 };

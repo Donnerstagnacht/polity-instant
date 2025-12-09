@@ -24,6 +24,14 @@ export const timelineEventsSeeder: EntitySeeder = {
     const transactions = [];
     const timelineEventIds: string[] = [];
 
+    // Initialize link counters
+    let timelineEventsToActors = 0;
+    let timelineEventsToAmendments = 0;
+    let timelineEventsToEvents = 0;
+    let timelineEventsToBlogs = 0;
+    let timelineEventsToGroups = 0;
+    let timelineEventsToUsers = 0;
+
     const entityConfigs = [
       {
         type: 'amendment',
@@ -169,6 +177,22 @@ export const timelineEventsSeeder: EntitySeeder = {
               })
           );
           eventsCreated++;
+
+          // Track link creations
+          timelineEventsToActors++; // All timeline events link to actor
+
+          // Increment counter based on entity type
+          if (config.type === 'amendment') {
+            timelineEventsToAmendments++;
+          } else if (config.type === 'event') {
+            timelineEventsToEvents++;
+          } else if (config.type === 'blog') {
+            timelineEventsToBlogs++;
+          } else if (config.type === 'group') {
+            timelineEventsToGroups++;
+          } else if (config.type === 'user') {
+            timelineEventsToUsers++;
+          }
         }
       }
     }
@@ -184,6 +208,18 @@ export const timelineEventsSeeder: EntitySeeder = {
 
     console.log(`✓ Created ${eventsCreated} timeline events across all entity types`);
 
-    return { ...context, timelineEventIds };
+    return {
+      ...context,
+      timelineEventIds,
+      linkCounts: {
+        ...(context.linkCounts || {}),
+        timelineEventsToActors,
+        timelineEventsToAmendments,
+        timelineEventsToEvents,
+        timelineEventsToBlogs,
+        timelineEventsToGroups,
+        timelineEventsToUsers,
+      },
+    };
   },
 };

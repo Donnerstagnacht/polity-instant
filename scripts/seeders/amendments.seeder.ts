@@ -20,6 +20,8 @@ export const amendmentsSeeder: EntitySeeder = {
     const groupIds = context.groupIds || [];
     const amendmentIds: string[] = [...(context.amendmentIds || [])];
     const transactions = [];
+    let userLinks = 0;
+    let groupLinks = 0;
 
     console.log('Seeding amendments...');
 
@@ -36,20 +38,38 @@ export const amendmentsSeeder: EntitySeeder = {
         amendmentIds.push(amendmentId);
         const amendmentTitle = faker.lorem.sentence();
 
+        // Create amendment entity (no user link on amendment itself)
         transactions.push(
-          tx.amendments[amendmentId]
+          tx.amendments[amendmentId].update({
+            title: amendmentTitle,
+            subtitle: faker.lorem.sentence(),
+            status: randomItem(['Passed', 'Rejected', 'Under Review', 'Drafting'] as const),
+            supporters: randomInt(10, 500),
+            date: faker.date.past({ years: 1 }).toISOString(),
+            code: `AMN-${faker.string.alphanumeric(6).toUpperCase()}`,
+            tags: [randomItem(['policy', 'reform', 'legislation', 'amendment', 'proposal'])],
+            visibility: randomVisibility(),
+          })
+        );
+
+        // Create amendmentCollaborator to link user to amendment (as owner/admin)
+        const collaboratorId = id();
+        transactions.push(
+          tx.amendmentCollaborators[collaboratorId]
             .update({
-              title: amendmentTitle,
-              subtitle: faker.lorem.sentence(),
-              status: randomItem(['Passed', 'Rejected', 'Under Review', 'Drafting'] as const),
-              supporters: randomInt(10, 500),
-              date: faker.date.past({ years: 1 }).toISOString(),
-              code: `AMN-${faker.string.alphanumeric(6).toUpperCase()}`,
-              tags: [randomItem(['policy', 'reform', 'legislation', 'amendment', 'proposal'])],
+              status: 'admin', // Owner is admin
+              createdAt: faker.date.past({ years: 1 }),
               visibility: randomVisibility(),
             })
-            .link({ user: ownerId, group: groupId })
+            .link({ amendment: amendmentId, user: ownerId })
         );
+
+        // Link amendment to group
+        transactions.push(tx.amendments[amendmentId].link({ groups: groupId }));
+
+        // Track links
+        userLinks++;
+        groupLinks++;
 
         // Add hashtags
         const amendmentHashtags = randomItems(AMENDMENT_HASHTAGS, randomInt(2, 4));
@@ -72,10 +92,17 @@ export const amendmentsSeeder: EntitySeeder = {
     }
 
     console.log(`✓ Created ${amendmentIds.length} amendments`);
+    console.log(`  - User links: ${userLinks}`);
+    console.log(`  - Group links: ${groupLinks}`);
 
     return {
       ...context,
       amendmentIds,
+      linkCounts: {
+        ...context.linkCounts,
+        amendmentsToUsers: (context.linkCounts?.amendmentsToUsers || 0) + userLinks,
+        amendmentsToGroups: (context.linkCounts?.amendmentsToGroups || 0) + groupLinks,
+      },
     };
   },
 };

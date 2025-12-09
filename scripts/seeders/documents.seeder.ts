@@ -13,6 +13,7 @@ export const documentsSeeder: EntitySeeder = {
     const { db, userIds } = context;
     const documentIds: string[] = [];
     const transactions = [];
+    let documentsToOwners = 0;
 
     const numDocuments = randomInt(10, 20);
 
@@ -40,11 +41,20 @@ export const documentsSeeder: EntitySeeder = {
           })
           .link({ owner: ownerId })
       );
+      documentsToOwners++;
     }
 
     await batchTransact(db, transactions);
     console.log(`✅ Seeded ${documentIds.length} documents`);
+    console.log(`  - Document-to-owner links: ${documentsToOwners}`);
 
-    return { ...context, documentIds };
+    return {
+      ...context,
+      documentIds,
+      linkCounts: {
+        ...context.linkCounts,
+        documentsToOwners: (context.linkCounts?.documentsToOwners || 0) + documentsToOwners,
+      },
+    };
   },
 };

@@ -27,6 +27,16 @@ export const amendmentTargetsSeeder: EntitySeeder = {
     let agendaItemsCreated = 0;
     let amendmentVotesCreated = 0;
 
+    // Link counters
+    let amendmentTargetsAgendaItemsToEvents = 0;
+    let amendmentTargetsAgendaItemsToCreators = 0;
+    let amendmentTargetsAgendaItemsToAmendments = 0;
+    let amendmentTargetsAmendmentVotesToAgendaItems = 0;
+    let amendmentTargetsAmendmentVotesToCreators = 0;
+    let amendmentTargetsAmendmentVoteEntriesToAmendmentVotes = 0;
+    let amendmentTargetsAmendmentVoteEntriesToVoters = 0;
+    let amendmentPathsToAmendments = 0;
+
     const amendmentPathIds: string[] = [];
     const amendmentVoteIds: string[] = [];
 
@@ -86,6 +96,9 @@ export const amendmentTargetsSeeder: EntitySeeder = {
               })
           );
           agendaItemsCreated++;
+          amendmentTargetsAgendaItemsToEvents++;
+          amendmentTargetsAgendaItemsToCreators++;
+          amendmentTargetsAgendaItemsToAmendments++;
 
           // Create amendment vote linked to the agenda item
           const voteStatus = isFirst ? randomItem(['pending', 'active']) : 'pending';
@@ -109,6 +122,8 @@ export const amendmentTargetsSeeder: EntitySeeder = {
               })
           );
           amendmentVotesCreated++;
+          amendmentTargetsAmendmentVotesToAgendaItems++;
+          amendmentTargetsAmendmentVotesToCreators++;
 
           // Add some vote entries if the vote is active
           if (voteStatus === 'active') {
@@ -130,6 +145,8 @@ export const amendmentTargetsSeeder: EntitySeeder = {
                     voter: voterId,
                   })
               );
+              amendmentTargetsAmendmentVoteEntriesToAmendmentVotes++;
+              amendmentTargetsAmendmentVoteEntriesToVoters++;
             }
           }
 
@@ -174,6 +191,7 @@ export const amendmentTargetsSeeder: EntitySeeder = {
           })
       );
       pathsCreated++;
+      amendmentPathsToAmendments++;
 
       // Update amendment with timestamp
       transactions.push(
@@ -199,6 +217,21 @@ export const amendmentTargetsSeeder: EntitySeeder = {
     console.log(`✓ Created ${pathsCreated} amendment paths`);
     console.log(`  ${amendmentIds.length - totalAssigned} amendments without targets (drafts)`);
 
-    return { ...context, amendmentPathIds, amendmentVoteIds };
+    return {
+      ...context,
+      amendmentPathIds,
+      amendmentVoteIds,
+      linkCounts: {
+        ...(context.linkCounts || {}),
+        amendmentTargetsAgendaItemsToEvents,
+        amendmentTargetsAgendaItemsToCreators,
+        amendmentTargetsAgendaItemsToAmendments,
+        amendmentTargetsAmendmentVotesToAgendaItems,
+        amendmentTargetsAmendmentVotesToCreators,
+        amendmentTargetsAmendmentVoteEntriesToAmendmentVotes,
+        amendmentTargetsAmendmentVoteEntriesToVoters,
+        amendmentPathsToAmendments,
+      },
+    };
   },
 };

@@ -24,6 +24,13 @@ export const tobiasSubscriptionsSeeder: EntitySeeder = {
     const transactions = [];
     const tobiasUserId = SEED_CONFIG.tobiasUserId;
 
+    // Initialize link counters
+    let tobiasSubscribersToUsers = 0;
+    let tobiasSubscribersToGroups = 0;
+    let tobiasSubscribersToAmendments = 0;
+    let tobiasSubscribersToEvents = 0;
+    let tobiasSubscribersToBlogs = 0;
+
     // Subscribe Tobias to ALL users (except himself)
     const otherUsers = userIds.filter(uid => uid !== tobiasUserId);
     for (const userId of otherUsers) {
@@ -35,6 +42,7 @@ export const tobiasSubscriptionsSeeder: EntitySeeder = {
           })
           .link({ subscriber: tobiasUserId, user: userId })
       );
+      tobiasSubscribersToUsers++;
     }
 
     // Subscribe Tobias to ALL groups
@@ -47,6 +55,7 @@ export const tobiasSubscriptionsSeeder: EntitySeeder = {
           })
           .link({ subscriber: tobiasUserId, group: groupId })
       );
+      tobiasSubscribersToGroups++;
     }
 
     // Subscribe Tobias to ALL amendments
@@ -59,6 +68,7 @@ export const tobiasSubscriptionsSeeder: EntitySeeder = {
           })
           .link({ subscriber: tobiasUserId, amendment: amendmentId })
       );
+      tobiasSubscribersToAmendments++;
     }
 
     // Subscribe Tobias to ALL events
@@ -71,6 +81,7 @@ export const tobiasSubscriptionsSeeder: EntitySeeder = {
           })
           .link({ subscriber: tobiasUserId, event: eventId })
       );
+      tobiasSubscribersToEvents++;
     }
 
     // Subscribe Tobias to ALL blogs
@@ -83,6 +94,7 @@ export const tobiasSubscriptionsSeeder: EntitySeeder = {
           })
           .link({ subscriber: tobiasUserId, blog: blogId })
       );
+      tobiasSubscribersToBlogs++;
     }
 
     // Execute in batches
@@ -103,6 +115,16 @@ export const tobiasSubscriptionsSeeder: EntitySeeder = {
     console.log(`  - ${eventIds.length} event subscriptions`);
     console.log(`  - ${blogIds.length} blog subscriptions`);
 
-    return context;
+    return {
+      ...context,
+      linkCounts: {
+        ...(context.linkCounts || {}),
+        tobiasSubscribersToUsers,
+        tobiasSubscribersToGroups,
+        tobiasSubscribersToAmendments,
+        tobiasSubscribersToEvents,
+        tobiasSubscribersToBlogs,
+      },
+    };
   },
 };

@@ -21,6 +21,9 @@ export const stripeDataSeeder: EntitySeeder = {
     let totalCustomers = 0;
     let totalSubscriptions = 0;
     let totalPayments = 0;
+    let stripeCustomersToUsers = 0;
+    let stripeSubscriptionsToCustomers = 0;
+    let stripePaymentsToSubscriptions = 0;
 
     const stripeCustomerIds: string[] = [];
     const stripeSubscriptionIds: string[] = [];
@@ -51,6 +54,7 @@ export const stripeDataSeeder: EntitySeeder = {
           .link({ user: userId })
       );
       totalCustomers++;
+      stripeCustomersToUsers++;
 
       if (hasSubscription) {
         // Choose a random plan (running or development)
@@ -100,6 +104,7 @@ export const stripeDataSeeder: EntitySeeder = {
             .link({ customer: customerId })
         );
         totalSubscriptions++;
+        stripeSubscriptionsToCustomers++;
 
         // Create 1-5 past payments for this subscription
         const paymentCount = randomInt(1, 5);
@@ -145,6 +150,7 @@ export const stripeDataSeeder: EntitySeeder = {
               .link({ subscription: subscriptionId })
           );
           totalPayments++;
+          stripePaymentsToSubscriptions++;
         }
       }
     }
@@ -161,7 +167,25 @@ export const stripeDataSeeder: EntitySeeder = {
     console.log(`✓ Created ${totalCustomers} Stripe customers`);
     console.log(`✓ Created ${totalSubscriptions} active subscriptions (80% of users)`);
     console.log(`✓ Created ${totalPayments} payment records`);
+    console.log(`  - Stripe customer-to-user links: ${stripeCustomersToUsers}`);
+    console.log(`  - Stripe subscription-to-customer links: ${stripeSubscriptionsToCustomers}`);
+    console.log(`  - Stripe payment-to-subscription links: ${stripePaymentsToSubscriptions}`);
 
-    return { ...context, stripeCustomerIds, stripeSubscriptionIds, stripePaymentIds };
+    return {
+      ...context,
+      stripeCustomerIds,
+      stripeSubscriptionIds,
+      stripePaymentIds,
+      linkCounts: {
+        ...context.linkCounts,
+        stripeCustomersToUsers:
+          (context.linkCounts?.stripeCustomersToUsers || 0) + stripeCustomersToUsers,
+        stripeSubscriptionsToCustomers:
+          (context.linkCounts?.stripeSubscriptionsToCustomers || 0) +
+          stripeSubscriptionsToCustomers,
+        stripePaymentsToSubscriptions:
+          (context.linkCounts?.stripePaymentsToSubscriptions || 0) + stripePaymentsToSubscriptions,
+      },
+    };
   },
 };

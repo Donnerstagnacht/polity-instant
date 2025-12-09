@@ -26,6 +26,25 @@ export const agendaAndVotingSeeder: EntitySeeder = {
     let totalChangeRequests = 0;
     let totalVotes = 0;
 
+    // Link tracking counters
+    let agendaItemsToCreators = 0;
+    let agendaItemsToEvents = 0;
+    const agendaItemsToAmendments = 0;
+    let electionsToAgendaItems = 0;
+    let electionsToPositions = 0;
+    let electionCandidatesToElections = 0;
+    let electionCandidatesToUsers = 0;
+    let electionVotesToElections = 0;
+    let electionVotesToVoters = 0;
+    let electionVotesToCandidates = 0;
+    let agendaAmendmentVotesToAgendaItems = 0;
+    let changeRequestsToAmendmentVotes = 0;
+    let changeRequestsToCreators = 0;
+    let changeRequestVotesToChangeRequests = 0;
+    let changeRequestVotesToVoters = 0;
+    let agendaAmendmentVoteEntriesToAmendmentVotes = 0;
+    let agendaAmendmentVoteEntriesToVoters = 0;
+
     const agendaTypes = ['election', 'vote', 'speech', 'discussion'];
     const voteStatuses = ['planned', 'active', 'completed'];
     const majorityTypes = ['relative', 'absolute'];
@@ -56,6 +75,8 @@ export const agendaAndVotingSeeder: EntitySeeder = {
             .link({ creator: creatorId, event: eventId })
         );
         totalAgendaItems++;
+        agendaItemsToCreators++;
+        agendaItemsToEvents++;
 
         // Create elections for election-type agenda items
         if (type === 'election' || faker.datatype.boolean(0.3)) {
@@ -79,6 +100,8 @@ export const agendaAndVotingSeeder: EntitySeeder = {
 
           transactions.push(electionTx);
           totalElections++;
+          electionsToAgendaItems++;
+          electionsToPositions++;
 
           // Add election candidates
           const candidateCount = randomInt(2, 5);
@@ -96,6 +119,8 @@ export const agendaAndVotingSeeder: EntitySeeder = {
                 })
                 .link({ election: electionId, user: candidateUserId })
             );
+            electionCandidatesToElections++;
+            electionCandidatesToUsers++;
           }
 
           // Add election votes
@@ -119,6 +144,9 @@ export const agendaAndVotingSeeder: EntitySeeder = {
                   })
               );
               totalVotes++;
+              electionVotesToElections++;
+              electionVotesToVoters++;
+              electionVotesToCandidates++;
             }
           }
         }
@@ -143,6 +171,7 @@ export const agendaAndVotingSeeder: EntitySeeder = {
               .link({ agendaItem: agendaItemId })
           );
           totalAmendmentVotes++;
+          agendaAmendmentVotesToAgendaItems++;
 
           // Add change requests
           const changeRequestCount = randomInt(0, 3);
@@ -163,6 +192,8 @@ export const agendaAndVotingSeeder: EntitySeeder = {
                 .link({ amendmentVote: amendmentVoteId, creator: submitterId })
             );
             totalChangeRequests++;
+            changeRequestsToAmendmentVotes++;
+            changeRequestsToCreators++;
 
             // Add votes on change requests
             if (faker.datatype.boolean(0.5)) {
@@ -180,6 +211,8 @@ export const agendaAndVotingSeeder: EntitySeeder = {
                     .link({ changeRequest: changeRequestId, voter: voterId })
                 );
                 totalVotes++;
+                changeRequestVotesToChangeRequests++;
+                changeRequestVotesToVoters++;
               }
             }
           }
@@ -201,6 +234,8 @@ export const agendaAndVotingSeeder: EntitySeeder = {
                   .link({ amendmentVote: amendmentVoteId, voter: voterId })
               );
               totalVotes++;
+              agendaAmendmentVoteEntriesToAmendmentVotes++;
+              agendaAmendmentVoteEntriesToVoters++;
             }
           }
         }
@@ -222,6 +257,28 @@ export const agendaAndVotingSeeder: EntitySeeder = {
     console.log(`  - ${totalChangeRequests} change requests`);
     console.log(`  - ${totalVotes} total votes across all voting types`);
 
-    return context;
+    return {
+      ...context,
+      linkCounts: {
+        ...(context.linkCounts || {}),
+        agendaItemsToCreators,
+        agendaItemsToEvents,
+        agendaItemsToAmendments,
+        electionsToAgendaItems,
+        electionsToPositions,
+        electionCandidatesToElections,
+        electionCandidatesToUsers,
+        electionVotesToElections,
+        electionVotesToVoters,
+        electionVotesToCandidates,
+        agendaAmendmentVotesToAgendaItems,
+        changeRequestsToAmendmentVotes,
+        changeRequestsToCreators,
+        changeRequestVotesToChangeRequests,
+        changeRequestVotesToVoters,
+        agendaAmendmentVoteEntriesToAmendmentVotes,
+        agendaAmendmentVoteEntriesToVoters,
+      },
+    };
   },
 };

@@ -14,6 +14,14 @@ export const notificationsSeeder: EntitySeeder = {
     const notificationIds: string[] = [];
     const transactions = [];
 
+    // Link counters
+    let notificationsToRecipients = 0;
+    let notificationsToSenders = 0;
+    let notificationsToRelatedGroups = 0;
+    let notificationsToRelatedEvents = 0;
+    let notificationsToRelatedAmendments = 0;
+    let notificationsToRelatedUsers = 0;
+
     const notificationTypes = [
       'group_invitation',
       'group_request_approved',
@@ -51,18 +59,27 @@ export const notificationsSeeder: EntitySeeder = {
             sender: senderId,
             relatedGroup: randomItem(groupIds),
           });
+          notificationsToRecipients++;
+          notificationsToSenders++;
+          notificationsToRelatedGroups++;
         } else if (type.includes('event') && eventIds.length > 0) {
           notifTx = notifTx.link({
             recipient: userId,
             sender: senderId,
             relatedEvent: randomItem(eventIds),
           });
+          notificationsToRecipients++;
+          notificationsToSenders++;
+          notificationsToRelatedEvents++;
         } else if (type.includes('amendment') && amendmentIds.length > 0) {
           notifTx = notifTx.link({
             recipient: userId,
             sender: senderId,
             relatedAmendment: randomItem(amendmentIds),
           });
+          notificationsToRecipients++;
+          notificationsToSenders++;
+          notificationsToRelatedAmendments++;
         } else {
           if (relatedUserId) {
             notifTx = notifTx.link({
@@ -70,8 +87,13 @@ export const notificationsSeeder: EntitySeeder = {
               sender: senderId,
               relatedUser: relatedUserId,
             });
+            notificationsToRecipients++;
+            notificationsToSenders++;
+            notificationsToRelatedUsers++;
           } else {
             notifTx = notifTx.link({ recipient: userId, sender: senderId });
+            notificationsToRecipients++;
+            notificationsToSenders++;
           }
         }
 
@@ -81,7 +103,32 @@ export const notificationsSeeder: EntitySeeder = {
 
     await batchTransact(db, transactions);
     console.log(`✅ Seeded ${notificationIds.length} notifications`);
+    console.log(`   - notificationsToRecipients: ${notificationsToRecipients}`);
+    console.log(`   - notificationsToSenders: ${notificationsToSenders}`);
+    console.log(`   - notificationsToRelatedGroups: ${notificationsToRelatedGroups}`);
+    console.log(`   - notificationsToRelatedEvents: ${notificationsToRelatedEvents}`);
+    console.log(`   - notificationsToRelatedAmendments: ${notificationsToRelatedAmendments}`);
+    console.log(`   - notificationsToRelatedUsers: ${notificationsToRelatedUsers}`);
 
-    return { ...context, notificationIds };
+    return {
+      ...context,
+      notificationIds,
+      linkCounts: {
+        ...(context.linkCounts || {}),
+        notificationsToRecipients:
+          (context.linkCounts?.notificationsToRecipients || 0) + notificationsToRecipients,
+        notificationsToSenders:
+          (context.linkCounts?.notificationsToSenders || 0) + notificationsToSenders,
+        notificationsToRelatedGroups:
+          (context.linkCounts?.notificationsToRelatedGroups || 0) + notificationsToRelatedGroups,
+        notificationsToRelatedEvents:
+          (context.linkCounts?.notificationsToRelatedEvents || 0) + notificationsToRelatedEvents,
+        notificationsToRelatedAmendments:
+          (context.linkCounts?.notificationsToRelatedAmendments || 0) +
+          notificationsToRelatedAmendments,
+        notificationsToRelatedUsers:
+          (context.linkCounts?.notificationsToRelatedUsers || 0) + notificationsToRelatedUsers,
+      },
+    };
   },
 };

@@ -44,6 +44,24 @@ export const invitationsSeeder: EntitySeeder = {
     let totalAmendmentRequests = 0;
     let totalAmendmentAdmins = 0;
 
+    // Link counters
+    let groupInvitationsToUsers = 0;
+    let groupInvitationsToGroups = 0;
+    let groupRequestsToUsers = 0;
+    let groupRequestsToGroups = 0;
+    let eventInvitationsToUsers = 0;
+    let eventInvitationsToEvents = 0;
+    let eventRequestsToUsers = 0;
+    let eventRequestsToEvents = 0;
+    let eventAdminsToUsers = 0;
+    let eventAdminsToEvents = 0;
+    let amendmentInvitationsToUsers = 0;
+    let amendmentInvitationsToAmendments = 0;
+    let amendmentRequestsToUsers = 0;
+    let amendmentRequestsToAmendments = 0;
+    let amendmentAdminsToUsers = 0;
+    let amendmentAdminsToAmendments = 0;
+
     // 1. Seed group invitations and requests
     console.log('Seeding group invitations and requests...');
     for (const groupId of groupIds) {
@@ -69,6 +87,8 @@ export const invitationsSeeder: EntitySeeder = {
             .link({ user: invitedUserId, group: groupId })
         );
         totalGroupInvitations++;
+        groupInvitationsToUsers++;
+        groupInvitationsToGroups++;
       }
 
       // Add 2-4 requests (from different users)
@@ -90,6 +110,8 @@ export const invitationsSeeder: EntitySeeder = {
             .link({ user: requestingUserId, group: groupId })
         );
         totalGroupRequests++;
+        groupRequestsToUsers++;
+        groupRequestsToGroups++;
       }
     }
 
@@ -122,6 +144,8 @@ export const invitationsSeeder: EntitySeeder = {
             .link({ user: invitedUserId, event: eventId })
         );
         totalEventInvitations++;
+        eventInvitationsToUsers++;
+        eventInvitationsToEvents++;
       }
 
       // Add 2-4 requests (from different users)
@@ -143,6 +167,8 @@ export const invitationsSeeder: EntitySeeder = {
             .link({ user: requestingUserId, event: eventId })
         );
         totalEventRequests++;
+        eventRequestsToUsers++;
+        eventRequestsToEvents++;
       }
 
       // Add 1-2 admin participants
@@ -163,6 +189,8 @@ export const invitationsSeeder: EntitySeeder = {
             .link({ user: userId, event: eventId })
         );
         totalEventAdmins++;
+        eventAdminsToUsers++;
+        eventAdminsToEvents++;
       }
     }
 
@@ -196,6 +224,8 @@ export const invitationsSeeder: EntitySeeder = {
             .link({ user: invitedUserId, amendment: amendmentId })
         );
         totalAmendmentInvitations++;
+        amendmentInvitationsToUsers++;
+        amendmentInvitationsToAmendments++;
       }
 
       // Add 2-4 requests (from different users)
@@ -218,6 +248,8 @@ export const invitationsSeeder: EntitySeeder = {
             .link({ user: requestingUserId, amendment: amendmentId })
         );
         totalAmendmentRequests++;
+        amendmentRequestsToUsers++;
+        amendmentRequestsToAmendments++;
       }
 
       // Add 1-2 admin collaborators
@@ -239,6 +271,8 @@ export const invitationsSeeder: EntitySeeder = {
             .link({ user: userId, amendment: amendmentId })
         );
         totalAmendmentAdmins++;
+        amendmentAdminsToUsers++;
+        amendmentAdminsToAmendments++;
       }
     }
 
@@ -259,6 +293,89 @@ export const invitationsSeeder: EntitySeeder = {
       `✓ Created total of ${totalGroupInvitations + totalEventInvitations + totalAmendmentInvitations} invitations and ${totalGroupRequests + totalEventRequests + totalAmendmentRequests} requests`
     );
 
-    return { ...context, invitationIds, requestIds };
+    // Log link counts
+    console.log('\n📊 Link Counts:');
+    console.log(
+      `  Group Invitations: ${groupInvitationsToUsers} to users, ${groupInvitationsToGroups} to groups`
+    );
+    console.log(
+      `  Group Requests: ${groupRequestsToUsers} to users, ${groupRequestsToGroups} to groups`
+    );
+    console.log(
+      `  Event Invitations: ${eventInvitationsToUsers} to users, ${eventInvitationsToEvents} to events`
+    );
+    console.log(
+      `  Event Requests: ${eventRequestsToUsers} to users, ${eventRequestsToEvents} to events`
+    );
+    console.log(`  Event Admins: ${eventAdminsToUsers} to users, ${eventAdminsToEvents} to events`);
+    console.log(
+      `  Amendment Invitations: ${amendmentInvitationsToUsers} to users, ${amendmentInvitationsToAmendments} to amendments`
+    );
+    console.log(
+      `  Amendment Requests: ${amendmentRequestsToUsers} to users, ${amendmentRequestsToAmendments} to amendments`
+    );
+    console.log(
+      `  Amendment Admins: ${amendmentAdminsToUsers} to users, ${amendmentAdminsToAmendments} to amendments`
+    );
+
+    const totalLinks =
+      groupInvitationsToUsers +
+      groupInvitationsToGroups +
+      groupRequestsToUsers +
+      groupRequestsToGroups +
+      eventInvitationsToUsers +
+      eventInvitationsToEvents +
+      eventRequestsToUsers +
+      eventRequestsToEvents +
+      eventAdminsToUsers +
+      eventAdminsToEvents +
+      amendmentInvitationsToUsers +
+      amendmentInvitationsToAmendments +
+      amendmentRequestsToUsers +
+      amendmentRequestsToAmendments +
+      amendmentAdminsToUsers +
+      amendmentAdminsToAmendments;
+
+    console.log(`  Total Links: ${totalLinks}`);
+
+    return {
+      ...context,
+      invitationIds,
+      requestIds,
+      linkCounts: {
+        ...(context.linkCounts || {}),
+        groupInvitationsToUsers:
+          (context.linkCounts?.groupInvitationsToUsers || 0) + groupInvitationsToUsers,
+        groupInvitationsToGroups:
+          (context.linkCounts?.groupInvitationsToGroups || 0) + groupInvitationsToGroups,
+        groupRequestsToUsers:
+          (context.linkCounts?.groupRequestsToUsers || 0) + groupRequestsToUsers,
+        groupRequestsToGroups:
+          (context.linkCounts?.groupRequestsToGroups || 0) + groupRequestsToGroups,
+        eventInvitationsToUsers:
+          (context.linkCounts?.eventInvitationsToUsers || 0) + eventInvitationsToUsers,
+        eventInvitationsToEvents:
+          (context.linkCounts?.eventInvitationsToEvents || 0) + eventInvitationsToEvents,
+        eventRequestsToUsers:
+          (context.linkCounts?.eventRequestsToUsers || 0) + eventRequestsToUsers,
+        eventRequestsToEvents:
+          (context.linkCounts?.eventRequestsToEvents || 0) + eventRequestsToEvents,
+        eventAdminsToUsers: (context.linkCounts?.eventAdminsToUsers || 0) + eventAdminsToUsers,
+        eventAdminsToEvents: (context.linkCounts?.eventAdminsToEvents || 0) + eventAdminsToEvents,
+        amendmentInvitationsToUsers:
+          (context.linkCounts?.amendmentInvitationsToUsers || 0) + amendmentInvitationsToUsers,
+        amendmentInvitationsToAmendments:
+          (context.linkCounts?.amendmentInvitationsToAmendments || 0) +
+          amendmentInvitationsToAmendments,
+        amendmentRequestsToUsers:
+          (context.linkCounts?.amendmentRequestsToUsers || 0) + amendmentRequestsToUsers,
+        amendmentRequestsToAmendments:
+          (context.linkCounts?.amendmentRequestsToAmendments || 0) + amendmentRequestsToAmendments,
+        amendmentAdminsToUsers:
+          (context.linkCounts?.amendmentAdminsToUsers || 0) + amendmentAdminsToUsers,
+        amendmentAdminsToAmendments:
+          (context.linkCounts?.amendmentAdminsToAmendments || 0) + amendmentAdminsToAmendments,
+      },
+    };
   },
 };

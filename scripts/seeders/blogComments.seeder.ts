@@ -23,6 +23,13 @@ export const blogCommentsSeeder: EntitySeeder = {
     let totalReplies = 0;
     let totalVotes = 0;
 
+    // Link tracking counters
+    let commentsToBlogs = 0;
+    let commentsToCreators = 0;
+    let commentsToParentComments = 0;
+    let commentVotesToComments = 0;
+    let commentVotesToUsers = 0;
+
     const allCommentIds: string[] = [];
     const commentVoteIds: string[] = [];
 
@@ -49,6 +56,8 @@ export const blogCommentsSeeder: EntitySeeder = {
             .link({ blog: blogId, creator: commenterId })
         );
         totalComments++;
+        commentsToBlogs++;
+        commentsToCreators++;
 
         // Add votes for this comment (1-5 voters per comment)
         const voteCount = randomInt(1, 5);
@@ -68,6 +77,8 @@ export const blogCommentsSeeder: EntitySeeder = {
               .link({ comment: commentId, user: voterId })
           );
           totalVotes++;
+          commentVotesToComments++;
+          commentVotesToUsers++;
         }
       }
 
@@ -95,6 +106,9 @@ export const blogCommentsSeeder: EntitySeeder = {
             })
         );
         totalReplies++;
+        commentsToBlogs++;
+        commentsToCreators++;
+        commentsToParentComments++;
 
         // Add votes for replies (0-3 voters per reply)
         const replyVoteCount = randomInt(0, 3);
@@ -114,6 +128,8 @@ export const blogCommentsSeeder: EntitySeeder = {
               .link({ comment: replyId, user: voterId })
           );
           totalVotes++;
+          commentVotesToComments++;
+          commentVotesToUsers++;
         }
       }
     }
@@ -131,6 +147,18 @@ export const blogCommentsSeeder: EntitySeeder = {
     console.log(`✓ Created ${totalVotes} comment votes`);
     console.log(`  Each blog has 3-8 comments with votes and some replies`);
 
-    return { ...context, commentIds: allCommentIds, commentVoteIds };
+    return {
+      ...context,
+      commentIds: allCommentIds,
+      commentVoteIds,
+      linkCounts: {
+        ...(context.linkCounts || {}),
+        commentsToBlogs,
+        commentsToCreators,
+        commentsToParentComments,
+        commentVotesToComments,
+        commentVotesToUsers,
+      },
+    };
   },
 };

@@ -30,6 +30,21 @@ export const rbacSeeder: EntitySeeder = {
     let totalParticipants = 0;
     let totalBloggers = 0;
 
+    // Link tracking counters
+    let rolesToEvents = 0;
+    let rolesToAmendments = 0;
+    let rolesToBlogs = 0;
+    let actionRightsToRoles = 0;
+    let actionRightsToEvents = 0;
+    let actionRightsToAmendments = 0;
+    let actionRightsToBlogs = 0;
+    let eventParticipantsToEvents = 0;
+    let eventParticipantsToUsers = 0;
+    let eventParticipantsToRoles = 0;
+    let blogBloggersToBlogs = 0;
+    let blogBloggersToUsers = 0;
+    let blogBloggersToRoles = 0;
+
     const roleIds: string[] = [];
     const actionRightIds: string[] = [];
     const bloggerIds: string[] = [];
@@ -82,6 +97,7 @@ export const rbacSeeder: EntitySeeder = {
             .link({ event: eventId })
         );
         totalRoles++;
+        rolesToEvents++;
       }
 
       // Create action rights for Organizer role (full event control)
@@ -99,6 +115,8 @@ export const rbacSeeder: EntitySeeder = {
             .link({ roles: [organizerRoleId], event: eventId })
         );
         totalActionRights++;
+        actionRightsToRoles++;
+        actionRightsToEvents++;
       }
 
       // Add action rights for Organizer to manage participants
@@ -113,6 +131,8 @@ export const rbacSeeder: EntitySeeder = {
           .link({ roles: [organizerRoleId], event: eventId })
       );
       totalActionRights++;
+      actionRightsToRoles++;
+      actionRightsToEvents++;
 
       // Add manageNotifications right to Organizer role
       const manageNotificationsRight = id();
@@ -126,6 +146,8 @@ export const rbacSeeder: EntitySeeder = {
           .link({ roles: [organizerRoleId], event: eventId })
       );
       totalActionRights++;
+      actionRightsToRoles++;
+      actionRightsToEvents++;
 
       // Create action rights for Participant role (read access)
       const participantRoleId = eventRoleIds['Participant'];
@@ -140,6 +162,8 @@ export const rbacSeeder: EntitySeeder = {
           .link({ roles: [participantRoleId], event: eventId })
       );
       totalActionRights++;
+      actionRightsToRoles++;
+      actionRightsToEvents++;
 
       // Create participants with roles
       const participantCount = randomInt(3, 8);
@@ -169,6 +193,9 @@ export const rbacSeeder: EntitySeeder = {
             })
         );
         totalParticipants++;
+        eventParticipantsToEvents++;
+        eventParticipantsToUsers++;
+        eventParticipantsToRoles++;
       }
     }
 
@@ -194,6 +221,7 @@ export const rbacSeeder: EntitySeeder = {
             .link({ amendment: amendmentId })
         );
         totalRoles++;
+        rolesToAmendments++;
       }
 
       // Create action rights for Applicant role (full amendment control)
@@ -211,6 +239,8 @@ export const rbacSeeder: EntitySeeder = {
             .link({ roles: [applicantRoleId], amendment: amendmentId })
         );
         totalActionRights++;
+        actionRightsToRoles++;
+        actionRightsToAmendments++;
       }
 
       // Add manage permission for amendment collaborators to Applicant role
@@ -225,6 +255,8 @@ export const rbacSeeder: EntitySeeder = {
           .link({ roles: [applicantRoleId], amendment: amendmentId })
       );
       totalActionRights++;
+      actionRightsToRoles++;
+      actionRightsToAmendments++;
 
       // Add manageNotifications right to Applicant role
       const manageAmendmentNotificationsRight = id();
@@ -238,6 +270,8 @@ export const rbacSeeder: EntitySeeder = {
           .link({ roles: [applicantRoleId], amendment: amendmentId })
       );
       totalActionRights++;
+      actionRightsToRoles++;
+      actionRightsToAmendments++;
 
       // Create action rights for Collaborator role (read and comment access)
       const collaboratorRoleId = amendmentRoleIds['Collaborator'];
@@ -254,6 +288,8 @@ export const rbacSeeder: EntitySeeder = {
             .link({ roles: [collaboratorRoleId], amendment: amendmentId })
         );
         totalActionRights++;
+        actionRightsToRoles++;
+        actionRightsToAmendments++;
       }
     }
 
@@ -279,6 +315,7 @@ export const rbacSeeder: EntitySeeder = {
             .link({ blog: blogId })
         );
         totalRoles++;
+        rolesToBlogs++;
       }
 
       // Create action rights for Owner role (full blog control)
@@ -296,6 +333,8 @@ export const rbacSeeder: EntitySeeder = {
             .link({ roles: [ownerRoleId], blog: blogId })
         );
         totalActionRights++;
+        actionRightsToRoles++;
+        actionRightsToBlogs++;
       }
 
       // Add manageNotifications right to Owner role
@@ -310,6 +349,8 @@ export const rbacSeeder: EntitySeeder = {
           .link({ roles: [ownerRoleId], blog: blogId })
       );
       totalActionRights++;
+      actionRightsToRoles++;
+      actionRightsToBlogs++;
 
       // Create action rights for Writer role (update and delete access)
       const writerRoleId = blogRoleIds['Writer'];
@@ -326,6 +367,8 @@ export const rbacSeeder: EntitySeeder = {
             .link({ roles: [writerRoleId], blog: blogId })
         );
         totalActionRights++;
+        actionRightsToRoles++;
+        actionRightsToBlogs++;
       }
 
       // Create bloggers with roles (1 owner, 1-3 writers)
@@ -359,6 +402,9 @@ export const rbacSeeder: EntitySeeder = {
             })
         );
         totalBloggers++;
+        blogBloggersToBlogs++;
+        blogBloggersToUsers++;
+        blogBloggersToRoles++;
       }
     }
 
@@ -379,6 +425,27 @@ export const rbacSeeder: EntitySeeder = {
     console.log(`  - Each amendment has 2 roles: Applicant, Collaborator`);
     console.log(`  - Each blog has 2 roles: Owner, Writer`);
 
-    return { ...context, roleIds, actionRightIds, bloggerIds };
+    return {
+      ...context,
+      roleIds,
+      actionRightIds,
+      bloggerIds,
+      linkCounts: {
+        ...(context.linkCounts || {}),
+        rolesToEvents,
+        rolesToAmendments,
+        rolesToBlogs,
+        actionRightsToRoles,
+        actionRightsToEvents,
+        actionRightsToAmendments,
+        actionRightsToBlogs,
+        eventParticipantsToEvents,
+        eventParticipantsToUsers,
+        eventParticipantsToRoles,
+        blogBloggersToBlogs,
+        blogBloggersToUsers,
+        blogBloggersToRoles,
+      },
+    };
   },
 };

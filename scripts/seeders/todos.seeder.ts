@@ -14,6 +14,8 @@ export const todosSeeder: EntitySeeder = {
     const { db, userIds, groupIds } = context;
     const todoIds: string[] = [];
     const transactions = [];
+    let todosToCreators = 0;
+    let todosToGroups = 0;
 
     for (const userId of userIds) {
       const numTodos = randomInt(SEED_CONFIG.todosPerUser.min, SEED_CONFIG.todosPerUser.max);
@@ -41,15 +43,28 @@ export const todosSeeder: EntitySeeder = {
 
         if (hasGroup) {
           transactions.push(todoTx.link({ creator: userId, group: randomItem(groupIds) }));
+          todosToCreators++;
+          todosToGroups++;
         } else {
           transactions.push(todoTx.link({ creator: userId }));
+          todosToCreators++;
         }
       }
     }
 
     await batchTransact(db, transactions);
     console.log(`✅ Seeded ${todoIds.length} todos`);
+    console.log(`  - Todo-to-creator links: ${todosToCreators}`);
+    console.log(`  - Todo-to-group links: ${todosToGroups}`);
 
-    return { ...context, todoIds };
+    return {
+      ...context,
+      todoIds,
+      linkCounts: {
+        ...context.linkCounts,
+        todosToCreators: (context.linkCounts?.todosToCreators || 0) + todosToCreators,
+        todosToGroups: (context.linkCounts?.todosToGroups || 0) + todosToGroups,
+      },
+    };
   },
 };

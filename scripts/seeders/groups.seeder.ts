@@ -18,6 +18,21 @@ export const groupsSeeder: EntitySeeder = {
     const transactions = [];
     const mainUserId = SEED_CONFIG.mainTestUserId;
 
+    // Link counters
+    let groupsToOwners = 0;
+    let rolesToGroups = 0;
+    let actionRightsToRoles = 0;
+    let actionRightsToGroups = 0;
+    let groupMembershipsToUsers = 0;
+    let groupMembershipsToGroups = 0;
+    let groupMembershipsToRoles = 0;
+    let conversationsToGroups = 0;
+    let conversationsToRequestedBy = 0;
+    let conversationParticipantsToConversations = 0;
+    let conversationParticipantsToUsers = 0;
+    let messagesToConversations = 0;
+    let messagesToSenders = 0;
+
     // Create groups owned by main test user
     for (let i = 0; i < 2; i++) {
       const groupId = id();
@@ -52,6 +67,7 @@ export const groupsSeeder: EntitySeeder = {
           })
           .link({ owner: mainUserId })
       );
+      groupsToOwners++;
 
       // Create roles for this group
       const boardMemberRoleId = id();
@@ -94,6 +110,8 @@ export const groupsSeeder: EntitySeeder = {
             .update({ resource: right.resource, action: right.action })
             .link({ roles: memberRoleId, groupId: groupId })
         );
+        actionRightsToRoles += 2;
+        actionRightsToGroups += 2;
       }
 
       // Add manageNotifications right to board member role
@@ -103,6 +121,8 @@ export const groupsSeeder: EntitySeeder = {
           .update({ resource: 'notifications', action: 'manageNotifications' })
           .link({ roles: boardMemberRoleId, groupId: groupId })
       );
+      actionRightsToRoles++;
+      actionRightsToGroups++;
 
       // Add main user as owner member
       const ownerMembershipId = id();
@@ -115,6 +135,9 @@ export const groupsSeeder: EntitySeeder = {
           })
           .link({ user: mainUserId, group: groupId, role: boardMemberRoleId })
       );
+      groupMembershipsToUsers++;
+      groupMembershipsToGroups++;
+      groupMembershipsToRoles++;
 
       // Add some members to main user's groups
       const memberCount = randomInt(5, 8);
@@ -135,6 +158,9 @@ export const groupsSeeder: EntitySeeder = {
             })
             .link({ user: memberId, group: groupId, role: roleId })
         );
+        groupMembershipsToUsers++;
+        groupMembershipsToGroups++;
+        groupMembershipsToRoles++;
       }
 
       // Update member count
@@ -156,6 +182,8 @@ export const groupsSeeder: EntitySeeder = {
           })
           .link({ group: groupId, requestedBy: mainUserId })
       );
+      conversationsToGroups++;
+      conversationsToRequestedBy++;
 
       // Add owner as conversation participant
       const ownerParticipantId = id();
@@ -167,6 +195,8 @@ export const groupsSeeder: EntitySeeder = {
           })
           .link({ conversation: conversationId, user: mainUserId })
       );
+      conversationParticipantsToConversations++;
+      conversationParticipantsToUsers++;
 
       // Add all group members as conversation participants
       for (const memberId of members) {
@@ -179,6 +209,8 @@ export const groupsSeeder: EntitySeeder = {
             })
             .link({ conversation: conversationId, user: memberId })
         );
+        conversationParticipantsToConversations++;
+        conversationParticipantsToUsers++;
       }
 
       // Add messages from different group members
@@ -203,6 +235,8 @@ export const groupsSeeder: EntitySeeder = {
             })
             .link({ conversation: conversationId, sender: senderUserId })
         );
+        messagesToConversations++;
+        messagesToSenders++;
       }
 
       // Add hashtags for this group
@@ -244,6 +278,7 @@ export const groupsSeeder: EntitySeeder = {
           })
           .link({ owner: ownerId })
       );
+      groupsToOwners++;
 
       // Create roles for this group
       const boardMemberRoleId = id();
@@ -265,6 +300,7 @@ export const groupsSeeder: EntitySeeder = {
           })
           .link({ group: groupId })
       );
+      rolesToGroups += 2;
 
       // Add owner as member
       const ownerMembershipId = id();
@@ -277,6 +313,9 @@ export const groupsSeeder: EntitySeeder = {
           })
           .link({ user: ownerId, group: groupId, role: boardMemberRoleId })
       );
+      groupMembershipsToUsers++;
+      groupMembershipsToGroups++;
+      groupMembershipsToRoles++;
 
       // Add random members
       const memberCount = randomInt(3, 10);
@@ -300,6 +339,9 @@ export const groupsSeeder: EntitySeeder = {
               role: randomItem([memberRoleId, boardMemberRoleId]),
             })
         );
+        groupMembershipsToUsers++;
+        groupMembershipsToGroups++;
+        groupMembershipsToRoles++;
       }
 
       // Update member count
@@ -313,11 +355,54 @@ export const groupsSeeder: EntitySeeder = {
     // Batch transact
     await batchTransact(db, transactions);
     console.log(`✅ Seeded ${groupIds.length} groups`);
+    console.log(`   Links created:`);
+    console.log(`   - Groups to Owners: ${groupsToOwners}`);
+    console.log(`   - Roles to Groups: ${rolesToGroups}`);
+    console.log(`   - Action Rights to Roles: ${actionRightsToRoles}`);
+    console.log(`   - Action Rights to Groups: ${actionRightsToGroups}`);
+    console.log(`   - Group Memberships to Users: ${groupMembershipsToUsers}`);
+    console.log(`   - Group Memberships to Groups: ${groupMembershipsToGroups}`);
+    console.log(`   - Group Memberships to Roles: ${groupMembershipsToRoles}`);
+    console.log(`   - Conversations to Groups: ${conversationsToGroups}`);
+    console.log(`   - Conversations to Requested By: ${conversationsToRequestedBy}`);
+    console.log(
+      `   - Conversation Participants to Conversations: ${conversationParticipantsToConversations}`
+    );
+    console.log(`   - Conversation Participants to Users: ${conversationParticipantsToUsers}`);
+    console.log(`   - Messages to Conversations: ${messagesToConversations}`);
+    console.log(`   - Messages to Senders: ${messagesToSenders}`);
 
     return {
       ...context,
       groupIds,
       conversationIds,
+      linkCounts: {
+        ...context.linkCounts,
+        groupsToOwners: (context.linkCounts?.groupsToOwners || 0) + groupsToOwners,
+        rolesToGroups: (context.linkCounts?.rolesToGroups || 0) + rolesToGroups,
+        actionRightsToRoles: (context.linkCounts?.actionRightsToRoles || 0) + actionRightsToRoles,
+        actionRightsToGroups:
+          (context.linkCounts?.actionRightsToGroups || 0) + actionRightsToGroups,
+        groupMembershipsToUsers:
+          (context.linkCounts?.groupMembershipsToUsers || 0) + groupMembershipsToUsers,
+        groupMembershipsToGroups:
+          (context.linkCounts?.groupMembershipsToGroups || 0) + groupMembershipsToGroups,
+        groupMembershipsToRoles:
+          (context.linkCounts?.groupMembershipsToRoles || 0) + groupMembershipsToRoles,
+        conversationsToGroups:
+          (context.linkCounts?.conversationsToGroups || 0) + conversationsToGroups,
+        conversationsToRequestedBy:
+          (context.linkCounts?.conversationsToRequestedBy || 0) + conversationsToRequestedBy,
+        conversationParticipantsToConversations:
+          (context.linkCounts?.conversationParticipantsToConversations || 0) +
+          conversationParticipantsToConversations,
+        conversationParticipantsToUsers:
+          (context.linkCounts?.conversationParticipantsToUsers || 0) +
+          conversationParticipantsToUsers,
+        messagesToConversations:
+          (context.linkCounts?.messagesToConversations || 0) + messagesToConversations,
+        messagesToSenders: (context.linkCounts?.messagesToSenders || 0) + messagesToSenders,
+      },
     };
   },
 };

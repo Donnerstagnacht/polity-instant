@@ -19,6 +19,8 @@ export const blogsSeeder: EntitySeeder = {
     const groupIds = context.groupIds || [];
     const blogIds: string[] = [...(context.blogIds || [])];
     const transactions = [];
+    let userLinks = 0;
+    let groupLinks = 0;
 
     console.log('Seeding blogs...');
 
@@ -28,17 +30,30 @@ export const blogsSeeder: EntitySeeder = {
     const mainBlogId = id();
     blogIds.push(mainBlogId);
 
+    // Create blog entity (no user link on blog itself)
     transactions.push(
-      tx.blogs[mainBlogId]
+      tx.blogs[mainBlogId].update({
+        title: 'Welcome to Polity Test Environment',
+        date: new Date().toISOString(),
+        likeCount: randomInt(10, 50),
+        commentCount: randomInt(5, 20),
+        visibility: 'public',
+      })
+    );
+
+    // Create blogBlogger to link user to blog (as owner)
+    const mainBlogBloggerId = id();
+    transactions.push(
+      tx.blogBloggers[mainBlogBloggerId]
         .update({
-          title: 'Welcome to Polity Test Environment',
-          date: new Date().toISOString(),
-          likeCount: randomInt(10, 50),
-          commentCount: randomInt(5, 20),
+          status: 'owner',
+          createdAt: new Date(),
           visibility: 'public',
         })
-        .link({ user: mainUserId })
+        .link({ blog: mainBlogId, user: mainUserId })
     );
+
+    userLinks++;
 
     const mainBlogHashtags = randomItems(BLOG_HASHTAGS, randomInt(1, 2));
     transactions.push(...createHashtagTransactions(mainBlogId, 'blog', mainBlogHashtags));
@@ -49,17 +64,35 @@ export const blogsSeeder: EntitySeeder = {
       for (let j = 0; j < groupBlogCount; j++) {
         const blogId = id();
         blogIds.push(blogId);
+
+        // Create blog entity (no user link on blog itself)
         transactions.push(
-          tx.blogs[blogId]
+          tx.blogs[blogId].update({
+            title: faker.lorem.sentence(),
+            date: faker.date.past({ years: 0.5 }).toISOString(),
+            likeCount: randomInt(5, 100),
+            commentCount: randomInt(0, 50),
+            visibility: randomVisibility(),
+          })
+        );
+
+        // Create blogBlogger to link user to blog
+        const blogBloggerId = id();
+        transactions.push(
+          tx.blogBloggers[blogBloggerId]
             .update({
-              title: faker.lorem.sentence(),
-              date: faker.date.past({ years: 0.5 }).toISOString(),
-              likeCount: randomInt(5, 100),
-              commentCount: randomInt(0, 50),
+              status: 'owner',
+              createdAt: faker.date.past({ years: 0.5 }),
               visibility: randomVisibility(),
             })
-            .link({ user: mainUserId, group: groupId })
+            .link({ blog: blogId, user: mainUserId })
         );
+
+        // Link blog to group
+        transactions.push(tx.blogs[blogId].link({ group: groupId }));
+
+        userLinks++;
+        groupLinks++;
 
         const blogHashtags = randomItems(BLOG_HASHTAGS, randomInt(1, 4));
         transactions.push(...createHashtagTransactions(blogId, 'blog', blogHashtags));
@@ -76,10 +109,17 @@ export const blogsSeeder: EntitySeeder = {
     }
 
     console.log(`✓ Created ${blogIds.length} blog posts`);
+    console.log(`  - User links: ${userLinks}`);
+    console.log(`  - Group links: ${groupLinks}`);
 
     return {
       ...context,
       blogIds,
+      linkCounts: {
+        ...context.linkCounts,
+        blogsToUsers: (context.linkCounts?.blogsToUsers || 0) + userLinks,
+        blogsToGroups: (context.linkCounts?.blogsToGroups || 0) + groupLinks,
+      },
     };
   },
 };

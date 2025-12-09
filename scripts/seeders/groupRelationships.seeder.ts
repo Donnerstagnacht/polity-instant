@@ -27,6 +27,8 @@ export const groupRelationshipsSeeder: EntitySeeder = {
     let totalRelationships = 0;
     let amendmentRightChains = 0;
     const groupRelationshipIds: string[] = [];
+    let parentGroupLinks = 0;
+    let childGroupLinks = 0;
 
     const rights = [
       'informationRight',
@@ -56,6 +58,8 @@ export const groupRelationshipsSeeder: EntitySeeder = {
       );
       totalRelationships++;
       amendmentRightChains++;
+      parentGroupLinks++;
+      childGroupLinks++;
       amendmentConnections.set(parentId, (amendmentConnections.get(parentId) || 0) + 1);
       amendmentConnections.set(childId, (amendmentConnections.get(childId) || 0) + 1);
     };
@@ -83,6 +87,8 @@ export const groupRelationshipsSeeder: EntitySeeder = {
             .link({ parentGroup: groupIds[i], childGroup: groupIds[i + 1] })
         );
         totalRelationships++;
+        parentGroupLinks++;
+        childGroupLinks++;
       }
     }
 
@@ -145,6 +151,8 @@ export const groupRelationshipsSeeder: EntitySeeder = {
           .link({ parentGroup: groupIds[0], childGroup: groupIds[3] })
       );
       totalRelationships++;
+      parentGroupLinks++;
+      childGroupLinks++;
 
       const relationshipId4 = id();
       transactions.push(
@@ -158,6 +166,8 @@ export const groupRelationshipsSeeder: EntitySeeder = {
           .link({ parentGroup: groupIds[0], childGroup: groupIds[4] })
       );
       totalRelationships++;
+      parentGroupLinks++;
+      childGroupLinks++;
 
       const multipleRights = randomItems(
         rights.filter(r => r !== 'amendmentRight'),
@@ -177,6 +187,8 @@ export const groupRelationshipsSeeder: EntitySeeder = {
             .link({ parentGroup: groupIds[2], childGroup: groupIds[6] })
         );
         totalRelationships++;
+        parentGroupLinks++;
+        childGroupLinks++;
       }
     } else if (groupIds.length >= 5) {
       // For smaller group counts
@@ -203,7 +215,19 @@ export const groupRelationshipsSeeder: EntitySeeder = {
     console.log(
       `✓ AmendmentRight connections per group: min=${minConnections}, max=${maxConnections}`
     );
+    console.log(`  - Parent group links: ${parentGroupLinks}`);
+    console.log(`  - Child group links: ${childGroupLinks}`);
 
-    return { ...context, groupRelationshipIds };
+    return {
+      ...context,
+      groupRelationshipIds,
+      linkCounts: {
+        ...context.linkCounts,
+        groupRelationshipsToParentGroups:
+          (context.linkCounts?.groupRelationshipsToParentGroups || 0) + parentGroupLinks,
+        groupRelationshipsToChildGroups:
+          (context.linkCounts?.groupRelationshipsToChildGroups || 0) + childGroupLinks,
+      },
+    };
   },
 };
