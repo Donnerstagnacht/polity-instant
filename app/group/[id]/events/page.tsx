@@ -60,17 +60,34 @@ export default function GroupEventsPage({ params }: { params: Promise<{ id: stri
     });
   };
 
-  // Filter by search query
-  const filterByQuery = (text: string) => {
+  // Filter by search query - returns true if search query matches title, description, location, or hashtags
+  const matchesSearchQuery = (event: any) => {
     if (!searchQuery) return true;
-    return text.toLowerCase().includes(searchQuery.toLowerCase());
+    const query = searchQuery.toLowerCase();
+
+    // Check if query matches title, description, or location
+    if (
+      (event.title && event.title.toLowerCase().includes(query)) ||
+      (event.description && event.description.toLowerCase().includes(query)) ||
+      (event.location && event.location.toLowerCase().includes(query))
+    ) {
+      return true;
+    }
+
+    // Check if query matches any hashtag
+    if (event.hashtags && event.hashtags.length > 0) {
+      return event.hashtags.some((h: any) => {
+        if (!h || !h.tag) return false;
+        return h.tag.toLowerCase().includes(query);
+      });
+    }
+
+    return false;
   };
 
   // Apply all filters
   const filteredEvents = events.filter((event: any) => {
-    if (!filterByQuery(event.title || '')) return false;
-    if (event.description && !filterByQuery(event.description)) return false;
-    if (event.location && !filterByQuery(event.location)) return false;
+    if (!matchesSearchQuery(event)) return false;
     if (publicOnly && !event.isPublic) return false;
     if (!matchesHashtag(event)) return false;
     return true;

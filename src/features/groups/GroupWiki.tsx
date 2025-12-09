@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/carousel';
 import { LinkGroupDialog } from '@/components/groups/LinkGroupDialog';
 import db from '../../../db';
-import { Settings, UserCheck, BookOpen } from 'lucide-react';
+import { Settings, UserCheck, BookOpen, Network } from 'lucide-react';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { BlogSearchCard } from '@/features/search/ui/BlogSearchCard';
 import { GRADIENTS } from '@/features/user/state/gradientColors';
@@ -251,30 +251,6 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
         className="mb-12"
       />
 
-      {/* Blogs Section */}
-      {group.blogs && group.blogs.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5" />
-              Blog Posts
-            </CardTitle>
-            <CardDescription>Recent posts from this group</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {group.blogs.map((blog: any, index: number) => (
-                <BlogSearchCard
-                  key={blog.id}
-                  blog={blog}
-                  gradientClass={GRADIENTS[index % GRADIENTS.length]}
-                />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Positions Carousel */}
       {group.positions && group.positions.length > 0 && (
         <Card className="mb-6">
@@ -379,9 +355,12 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
 
       {/* Parent & Child Groups */}
       {group.childRelationships && group.childRelationships.length > 0 && (
-        <Card>
+        <Card className="mb-6">
           <CardHeader>
-            <CardTitle>{t('pages.groups.childGroups.title')}</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Network className="h-5 w-5" />
+              {t('pages.groups.childGroups.title')}
+            </CardTitle>
             <CardDescription>{t('pages.groups.childGroups.description')}</CardDescription>
           </CardHeader>
           <CardContent>
@@ -409,6 +388,30 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
                   </Link>
                 )
               )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Blogs Section */}
+      {group.blogs && group.blogs.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5" />
+              Blog Posts
+            </CardTitle>
+            <CardDescription>Recent posts from this group</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {group.blogs.map((blog: any, index: number) => (
+                <BlogSearchCard
+                  key={blog.id}
+                  blog={blog}
+                  gradientClass={GRADIENTS[index % GRADIENTS.length]}
+                />
+              ))}
             </div>
           </CardContent>
         </Card>

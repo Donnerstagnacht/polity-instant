@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import db, { tx, id } from '../../../../db';
 import { useAuthStore } from '@/features/auth/auth';
+import { toast } from 'sonner';
 
 export type CollaborationStatus = 'invited' | 'requested' | 'member' | 'admin';
 
@@ -71,10 +72,12 @@ export function useAmendmentCollaboration(amendmentId: string) {
             amendment: amendmentId,
           }),
       ]);
+      toast.success('Collaboration request sent successfully');
     } catch (error) {
       console.error('Failed to request collaboration:', error);
       console.error('Amendment ID:', amendmentId);
       console.error('User ID:', user?.id);
+      toast.error('Failed to request collaboration. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -87,8 +90,10 @@ export function useAmendmentCollaboration(amendmentId: string) {
     setIsLoading(true);
     try {
       await db.transact([tx.amendmentCollaborators[collaboration.id].delete()]);
+      toast.success('Successfully left the collaboration');
     } catch (error) {
       console.error('Failed to leave collaboration:', error);
+      toast.error('Failed to leave collaboration. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -105,8 +110,10 @@ export function useAmendmentCollaboration(amendmentId: string) {
           status: 'member',
         }),
       ]);
+      toast.success('Successfully joined the collaboration');
     } catch (error) {
       console.error('Failed to accept invitation:', error);
+      toast.error('Failed to accept invitation. Please try again.');
     } finally {
       setIsLoading(false);
     }

@@ -72,16 +72,34 @@ export default function GroupAmendmentsPage({ params }: { params: Promise<{ id: 
     });
   };
 
-  // Filter by search query
-  const filterByQuery = (text: string) => {
+  // Filter by search query - returns true if search query matches title, subtitle, code, or hashtags
+  const matchesSearchQuery = (amendment: any) => {
     if (!searchQuery) return true;
-    return text.toLowerCase().includes(searchQuery.toLowerCase());
+    const query = searchQuery.toLowerCase();
+
+    // Check if query matches title, subtitle, or code
+    if (
+      (amendment.title && amendment.title.toLowerCase().includes(query)) ||
+      (amendment.subtitle && amendment.subtitle.toLowerCase().includes(query)) ||
+      (amendment.code && amendment.code.toLowerCase().includes(query))
+    ) {
+      return true;
+    }
+
+    // Check if query matches any hashtag
+    if (amendment.hashtags && amendment.hashtags.length > 0) {
+      return amendment.hashtags.some((h: any) => {
+        if (!h || !h.tag) return false;
+        return h.tag.toLowerCase().includes(query);
+      });
+    }
+
+    return false;
   };
 
   // Apply all filters
   const filteredAmendments = amendments.filter((amendment: any) => {
-    if (!filterByQuery(amendment.title || '')) return false;
-    if (amendment.subtitle && !filterByQuery(amendment.subtitle)) return false;
+    if (!matchesSearchQuery(amendment)) return false;
     if (statusFilter !== 'all' && amendment.status !== statusFilter) return false;
     if (!matchesHashtag(amendment)) return false;
     return true;

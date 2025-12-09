@@ -12,7 +12,7 @@ import { useTranslation } from '@/hooks/use-translation';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { db, tx, id } from '../../../db';
-import { ARIA_KAI_USER_ID, ARIA_KAI_WELCOME_MESSAGE } from '@/constants/aria-kai';
+import { ARIA_KAI_USER_ID, ARIA_KAI_WELCOME_MESSAGE } from 'e2e/aria-kai';
 import { AriaKaiWelcomeDialog } from '@/components/dialogs/AriaKaiWelcomeDialog';
 
 function VerifyContent() {

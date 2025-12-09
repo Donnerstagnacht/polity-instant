@@ -24,6 +24,7 @@ import { cn } from '@/utils/utils';
 import db from '../../../db';
 import { id } from '@instantdb/react';
 import { useTranslation } from '@/hooks/use-translation';
+import { toast } from 'sonner';
 
 interface LinkGroupDialogProps {
   currentGroupId: string;
@@ -135,6 +136,11 @@ export function LinkGroupDialog({ currentGroupId, currentGroupName }: LinkGroupD
 
       await db.transact(transactions);
 
+      // Show success toast
+      toast.success(
+        `${selectedRights.size} ${selectedRights.size === 1 ? 'Beziehung wurde' : 'Beziehungen wurden'} erfolgreich erstellt.`
+      );
+
       // Reset form and close dialog
       setSelectedGroupId('');
       setRelationshipType('isParent');
@@ -142,6 +148,8 @@ export function LinkGroupDialog({ currentGroupId, currentGroupName }: LinkGroupD
       setOpen(false);
     } catch (error) {
       console.error('Error creating group relationships:', error);
+      // Show error toast
+      toast.error('Die Beziehungen konnten nicht erstellt werden. Bitte versuchen Sie es erneut.');
     } finally {
       setIsSubmitting(false);
     }

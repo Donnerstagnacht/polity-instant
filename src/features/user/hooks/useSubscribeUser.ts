@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { db, tx, id } from '../../../../db';
 import { useAuthStore } from '@/features/auth/auth.ts';
+import { toast } from 'sonner';
 
 /**
  * Hook to handle user subscription functionality
@@ -59,8 +60,10 @@ export function useSubscribeUser(targetUserId?: string) {
             user: targetUserId,
           }),
       ]);
+      toast.success('Successfully subscribed to user');
     } catch (error) {
       console.error('🔔 [subscribe] Failed to subscribe:', error);
+      toast.error('Failed to subscribe to user. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -81,8 +84,10 @@ export function useSubscribeUser(targetUserId?: string) {
     try {
       const subscriptionId = subscribers[0].id;
       await db.transact([tx.subscribers[subscriptionId].delete()]);
+      toast.success('Successfully unsubscribed from user');
     } catch (error) {
       console.error('🔔 [unsubscribe] Failed to unsubscribe:', error);
+      toast.error('Failed to unsubscribe from user. Please try again.');
     } finally {
       setIsLoading(false);
     }

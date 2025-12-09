@@ -14,7 +14,7 @@ import { Search, Send, ArrowLeft, Plus, Pin, PinOff, Trash2, X, Check } from 'lu
 import { cn } from '@/utils/utils';
 import { MessageContent } from '@/components/messages/MessageContent';
 import { AriaKaiMessageActions } from '@/components/messages/AriaKaiMessageActions';
-import { ARIA_KAI_USER_ID } from '@/constants/aria-kai';
+import { ARIA_KAI_USER_ID } from 'e2e/aria-kai';
 import {
   Dialog,
   DialogContent,

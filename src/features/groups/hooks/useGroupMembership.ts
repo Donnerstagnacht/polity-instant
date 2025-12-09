@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import db, { tx } from '../../../../db';
 import { useAuthStore } from '@/features/auth/auth';
+import { toast } from 'sonner';
 
 export type MembershipStatus = 'invited' | 'requested' | 'member' | 'admin';
 
@@ -91,8 +92,10 @@ export function useGroupMembership(groupId: string) {
             group: groupId,
           }),
       ]);
+      toast.success('Membership request sent successfully');
     } catch (error) {
       console.error('Failed to request membership:', error);
+      toast.error('Failed to request membership. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -134,8 +137,10 @@ export function useGroupMembership(groupId: string) {
       }
 
       await db.transact(transactions);
+      toast.success('Successfully left the group');
     } catch (error) {
       console.error('Failed to leave group:', error);
+      toast.error('Failed to leave group. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -183,8 +188,10 @@ export function useGroupMembership(groupId: string) {
       }
 
       await db.transact(transactions);
+      toast.success('Successfully joined the group');
     } catch (error) {
       console.error('Failed to accept invitation:', error);
+      toast.error('Failed to accept invitation. Please try again.');
     } finally {
       setIsLoading(false);
     }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { db, tx, id } from '../../../../db';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { createNotification } from '@/utils/notification-helpers';
+import { toast } from 'sonner';
 
 /**
  * Hook to handle group subscription functionality
@@ -75,8 +76,10 @@ export function useSubscribeGroup(targetGroupId?: string) {
           }),
         ...notification,
       ]);
+      toast.success('Successfully subscribed to group');
     } catch (error) {
       console.error('Failed to subscribe to group:', error);
+      toast.error('Failed to subscribe to group. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -98,9 +101,11 @@ export function useSubscribeGroup(targetGroupId?: string) {
       const subscription = subscribers.find(sub => sub.subscriber?.id === authUser.id);
       if (subscription) {
         await db.transact([tx.subscribers[subscription.id].delete()]);
+        toast.success('Successfully unsubscribed from group');
       }
     } catch (error) {
       console.error('Failed to unsubscribe from group:', error);
+      toast.error('Failed to unsubscribe from group. Please try again.');
     } finally {
       setIsLoading(false);
     }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import db, { tx, id } from '../../../../db';
 import { useAuthStore } from '@/features/auth/auth';
+import { toast } from 'sonner';
 
 export type ParticipationStatus = 'invited' | 'requested' | 'member' | 'admin';
 
@@ -74,10 +75,12 @@ export function useEventParticipation(eventId: string) {
             event: eventId,
           }),
       ]);
+      toast.success('Participation request sent successfully');
     } catch (error) {
       console.error('Failed to request participation:', error);
       console.error('Event ID:', eventId);
       console.error('User ID:', user?.id);
+      toast.error('Failed to request participation. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -90,8 +93,10 @@ export function useEventParticipation(eventId: string) {
     setIsLoading(true);
     try {
       await db.transact([tx.eventParticipants[participation.id].delete()]);
+      toast.success('Successfully left the event');
     } catch (error) {
       console.error('Failed to leave event:', error);
+      toast.error('Failed to leave event. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -108,8 +113,10 @@ export function useEventParticipation(eventId: string) {
           status: 'member',
         }),
       ]);
+      toast.success('Successfully joined the event');
     } catch (error) {
       console.error('Failed to accept invitation:', error);
+      toast.error('Failed to accept invitation. Please try again.');
     } finally {
       setIsLoading(false);
     }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { db, tx, id } from '../../../../db';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { createNotification } from '@/utils/notification-helpers';
+import { toast } from 'sonner';
 
 /**
  * Hook to handle event subscription functionality
@@ -75,8 +76,10 @@ export function useSubscribeEvent(targetEventId?: string) {
           }),
         ...notification,
       ]);
+      toast.success('Successfully subscribed to event');
     } catch (error) {
       console.error('Failed to subscribe to event:', error);
+      toast.error('Failed to subscribe to event. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -98,9 +101,11 @@ export function useSubscribeEvent(targetEventId?: string) {
       const subscription = subscribers.find(sub => sub.subscriber?.id === authUser.id);
       if (subscription) {
         await db.transact([tx.subscribers[subscription.id].delete()]);
+        toast.success('Successfully unsubscribed from event');
       }
     } catch (error) {
       console.error('Failed to unsubscribe from event:', error);
+      toast.error('Failed to unsubscribe from event. Please try again.');
     } finally {
       setIsLoading(false);
     }

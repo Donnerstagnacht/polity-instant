@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { db, tx, id } from '../../../../db';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { createNotification } from '@/utils/notification-helpers';
+import { toast } from 'sonner';
 
 /**
  * Hook to handle blog subscription functionality
@@ -75,8 +76,10 @@ export function useSubscribeBlog(targetBlogId?: string) {
           }),
         ...notification,
       ]);
+      toast.success('Successfully subscribed to blog');
     } catch (error) {
       console.error('Failed to subscribe to blog:', error);
+      toast.error('Failed to subscribe to blog. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -98,9 +101,11 @@ export function useSubscribeBlog(targetBlogId?: string) {
       const subscription = subscribers.find(sub => sub.subscriber?.id === authUser.id);
       if (subscription) {
         await db.transact([tx.subscribers[subscription.id].delete()]);
+        toast.success('Successfully unsubscribed from blog');
       }
     } catch (error) {
       console.error('Failed to unsubscribe from blog:', error);
+      toast.error('Failed to unsubscribe from blog. Please try again.');
     } finally {
       setIsLoading(false);
     }
