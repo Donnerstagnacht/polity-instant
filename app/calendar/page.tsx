@@ -343,7 +343,7 @@ export default function CalendarPage() {
             <h1 className="text-3xl font-bold">Calendar</h1>
             <p className="text-muted-foreground">View and manage your events</p>
           </div>
-          <Button onClick={() => router.push('/create')}>
+          <Button onClick={() => router.push('/create/event')}>
             <Plus className="mr-2 h-4 w-4" />
             Create Event
           </Button>

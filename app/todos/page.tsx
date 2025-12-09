@@ -228,7 +228,7 @@ export default function TodosPage() {
                 <LayoutGrid className="h-4 w-4" />
               </Button>
             </div>
-            <Link href="/create">
+            <Link href="/create/todo">
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
                 New Todo
@@ -323,7 +323,7 @@ export default function TodosPage() {
                         ? "You haven't created any todos yet"
                         : `You have no ${selectedTab.replace('_', ' ')} todos`}
                   </p>
-                  <Link href="/create">
+                  <Link href="/create/todo">
                     <Button>
                       <Plus className="mr-2 h-4 w-4" />
                       Create Your First Todo
