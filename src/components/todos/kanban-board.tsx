@@ -9,7 +9,7 @@ import { db, tx } from '../../../db';
 import { toast } from 'sonner';
 import { TodoDetailDialog } from './todo-detail-dialog';
 
-type TodoStatus = 'todo' | 'in_progress' | 'completed' | 'cancelled';
+type TodoStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 type TodoPriority = 'low' | 'medium' | 'high' | 'urgent';
 
 interface Todo {
@@ -30,7 +30,7 @@ interface KanbanBoardProps {
 }
 
 const COLUMNS: { id: TodoStatus; title: string; color: string }[] = [
-  { id: 'todo', title: 'To Do', color: 'bg-slate-100 dark:bg-slate-800' },
+  { id: 'pending', title: 'To Do', color: 'bg-slate-100 dark:bg-slate-800' },
   { id: 'in_progress', title: 'In Progress', color: 'bg-blue-50 dark:bg-blue-950' },
   { id: 'completed', title: 'Completed', color: 'bg-green-50 dark:bg-green-950' },
   { id: 'cancelled', title: 'Cancelled', color: 'bg-red-50 dark:bg-red-950' },

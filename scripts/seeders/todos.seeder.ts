@@ -24,8 +24,8 @@ export const todosSeeder: EntitySeeder = {
         const todoId = id();
         todoIds.push(todoId);
 
-        const status = randomItem(['todo', 'in_progress', 'done'] as const);
-        const priority = randomItem(['low', 'medium', 'high'] as const);
+        const status = randomItem(['pending', 'in_progress', 'completed', 'cancelled'] as const);
+        const priority = randomItem(['low', 'medium', 'high', 'urgent'] as const);
         const hasGroup = Math.random() > 0.6;
 
         const todoTx = tx.todos[todoId].update({
@@ -34,7 +34,7 @@ export const todosSeeder: EntitySeeder = {
           status,
           priority,
           dueDate: faker.date.future({ years: 0.2 }).toISOString(),
-          completedAt: status === 'done' ? faker.date.recent({ days: 7 }).toISOString() : null,
+          completedAt: status === 'completed' ? faker.date.recent({ days: 7 }).toISOString() : null,
           tags: [randomItem(['work', 'personal', 'urgent', 'meeting', 'review'])],
           createdAt: faker.date.past({ years: 0.3 }),
           updatedAt: faker.date.recent({ days: 7 }),
