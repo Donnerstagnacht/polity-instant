@@ -13,6 +13,111 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { useNavigation } from '@/navigation/state/useNavigation';
+import { useEventParticipation } from '@/features/events/hooks/useEventParticipation';
+import { MembershipButton } from '@/components/shared/action-buttons/MembershipButton';
+
+// Event Card Component with Participation Button
+function EventCard({
+  event,
+  formatEventDate,
+  formatEventTime,
+}: {
+  event: any;
+  formatEventDate: (date: string | number) => string;
+  formatEventTime: (date: string | number) => string;
+}) {
+  // Use the same hook as the event detail page
+  const {
+    status,
+    isParticipant,
+    hasRequested,
+    isInvited,
+    participantCount,
+    isLoading: participationLoading,
+    requestParticipation,
+    leaveEvent,
+    acceptInvitation,
+  } = useEventParticipation(event.id);
+
+  return (
+    <Card className="group relative overflow-hidden transition-colors hover:bg-accent">
+      {/* Clickable overlay for the entire card */}
+      <a
+        href={`/event/${event.id}`}
+        className="absolute inset-0 z-0"
+        aria-label={`View ${event.title}`}
+      />
+
+      {/* Image */}
+      {event.imageURL && (
+        <div className="aspect-video w-full overflow-hidden">
+          <img src={event.imageURL} alt={event.title} className="h-full w-full object-cover" />
+        </div>
+      )}
+
+      <CardHeader className="relative">
+        <div className="mb-2 flex items-center justify-between">
+          <Badge variant="default" className="text-xs">
+            <Calendar className="mr-1 h-3 w-3" />
+            Event
+          </Badge>
+          <div className="flex gap-2">
+            {event.isPublic && (
+              <Badge variant="outline" className="text-xs">
+                Public
+              </Badge>
+            )}
+            {(status === 'member' || status === 'admin') && (
+              <Badge variant="default" className="bg-green-500 text-xs">
+                Participating
+              </Badge>
+            )}
+          </div>
+        </div>
+        <CardTitle className="text-lg">{event.title}</CardTitle>
+        <CardDescription>
+          {formatEventDate(event.startDate)} at {formatEventTime(event.startDate)}
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="relative space-y-3">
+        {event.description && (
+          <p className="line-clamp-2 text-sm text-muted-foreground">{event.description}</p>
+        )}
+        {event.location && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <MapPin className="h-4 w-4" />
+            <span className="truncate">{event.location}</span>
+          </div>
+        )}
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Users className="h-4 w-4" />
+          <span>{participantCount} participants</span>
+        </div>
+        {event.hashtags && event.hashtags.length > 0 && (
+          <div className="relative z-10 pt-2">
+            <HashtagDisplay hashtags={event.hashtags.slice(0, 3)} />
+          </div>
+        )}
+        {/* Participation Button */}
+        <div className="relative z-10 pt-2">
+          <MembershipButton
+            actionType="participate"
+            status={status}
+            isMember={isParticipant}
+            hasRequested={hasRequested}
+            isInvited={isInvited}
+            onRequest={requestParticipation}
+            onLeave={leaveEvent}
+            onAcceptInvitation={acceptInvitation}
+            isLoading={participationLoading}
+            className="w-full"
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function GroupEventsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -145,11 +250,19 @@ export default function GroupEventsPage({ params }: { params: Promise<{ id: stri
     <AuthGuard requireAuth={true}>
       <PageWrapper className="container mx-auto p-8">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="mb-2 text-3xl font-bold">{group.name} - Events</h1>
-          <p className="text-muted-foreground">
-            {sortedEvents.length} event{sortedEvents.length !== 1 ? 's' : ''} found
-          </p>
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h1 className="mb-2 text-3xl font-bold">{group.name} - Events</h1>
+            <p className="text-muted-foreground">
+              {sortedEvents.length} event{sortedEvents.length !== 1 ? 's' : ''} found
+            </p>
+          </div>
+          <Button asChild>
+            <a href={`/create/event?groupId=${resolvedParams.id}`}>
+              <Calendar className="mr-2 h-4 w-4" />
+              New Event
+            </a>
+          </Button>
         </div>
 
         {/* Search Bar */}
@@ -235,58 +348,12 @@ export default function GroupEventsPage({ params }: { params: Promise<{ id: stri
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {sortedEvents.map((event: any) => (
-              <a href={`/event/${event.id}`} key={event.id} className="block">
-                <Card className="cursor-pointer transition-colors hover:bg-accent">
-                  {event.imageURL && (
-                    <div className="aspect-video w-full overflow-hidden">
-                      <img
-                        src={event.imageURL}
-                        alt={event.title}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                  )}
-                  <CardHeader>
-                    <div className="mb-2 flex items-center justify-between">
-                      <Badge variant="default" className="text-xs">
-                        <Calendar className="mr-1 h-3 w-3" />
-                        Event
-                      </Badge>
-                      {event.isPublic && (
-                        <Badge variant="outline" className="text-xs">
-                          Public
-                        </Badge>
-                      )}
-                    </div>
-                    <CardTitle className="text-lg">{event.title}</CardTitle>
-                    <CardDescription>
-                      {formatEventDate(event.startDate)} at {formatEventTime(event.startDate)}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {event.description && (
-                      <p className="line-clamp-2 text-sm text-muted-foreground">
-                        {event.description}
-                      </p>
-                    )}
-                    {event.location && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <MapPin className="h-4 w-4" />
-                        <span className="truncate">{event.location}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Users className="h-4 w-4" />
-                      <span>{event.participants?.length || 0} participants</span>
-                    </div>
-                    {event.hashtags && event.hashtags.length > 0 && (
-                      <div className="pt-2">
-                        <HashtagDisplay hashtags={event.hashtags.slice(0, 3)} />
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </a>
+              <EventCard
+                key={event.id}
+                event={event}
+                formatEventDate={formatEventDate}
+                formatEventTime={formatEventTime}
+              />
             ))}
           </div>
         )}

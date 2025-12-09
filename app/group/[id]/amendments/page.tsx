@@ -8,7 +8,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import db from '../../../../db';
-import { FileText, Search as SearchIcon, Filter, Hash, Calendar } from 'lucide-react';
+import {
+  FileText,
+  Search as SearchIcon,
+  Filter,
+  Hash,
+  Calendar,
+  ChevronDown,
+  ChevronRight,
+  Scale,
+} from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import {
@@ -19,6 +28,73 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useNavigation } from '@/navigation/state/useNavigation';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+
+// Amendment Card Component
+function AmendmentCard({ amendment }: { amendment: any }) {
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'draft':
+        return 'bg-gray-500';
+      case 'pending':
+        return 'bg-yellow-500';
+      case 'approved':
+        return 'bg-green-500';
+      case 'rejected':
+        return 'bg-red-500';
+      case 'active':
+        return 'bg-blue-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
+  return (
+    <a href={`/amendment/${amendment.id}`} className="block">
+      <Card className="cursor-pointer transition-colors hover:bg-accent">
+        <CardHeader>
+          <div className="mb-2 flex items-center justify-between">
+            <Badge variant="default" className="text-xs">
+              <FileText className="mr-1 h-3 w-3" />
+              Amendment
+            </Badge>
+            <Badge className={`text-xs ${getStatusColor(amendment.status)}`}>
+              {amendment.status}
+            </Badge>
+          </div>
+          <CardTitle className="text-lg">{amendment.title}</CardTitle>
+          {amendment.subtitle && (
+            <CardDescription className="line-clamp-2">{amendment.subtitle}</CardDescription>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {amendment.code && (
+            <div className="font-mono text-sm text-muted-foreground">Code: {amendment.code}</div>
+          )}
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Calendar className="h-4 w-4" />
+              <span>{new Date(amendment.date).toLocaleDateString()}</span>
+            </div>
+            {amendment.supporters !== undefined && (
+              <div className="flex items-center gap-1">
+                <span>{amendment.supporters} supporters</span>
+              </div>
+            )}
+          </div>
+          {amendment.user && (
+            <p className="text-xs text-muted-foreground">By {amendment.user.name || 'Unknown'}</p>
+          )}
+          {amendment.hashtags && amendment.hashtags.length > 0 && (
+            <div className="pt-2">
+              <HashtagDisplay hashtags={amendment.hashtags.slice(0, 3)} />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </a>
+  );
+}
 
 export default function GroupAmendmentsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -35,6 +111,14 @@ export default function GroupAmendmentsPage({ params }: { params: Promise<{ id: 
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [hashtagFilter, setHashtagFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+
+  // State for collapsible sections
+  const [openSections, setOpenSections] = useState({
+    passed: true,
+    underReview: true,
+    drafting: true,
+    rejected: true,
+  });
 
   // Fetch group and amendments data from InstantDB
   const { data, isLoading } = db.useQuery({
@@ -112,21 +196,24 @@ export default function GroupAmendmentsPage({ params }: { params: Promise<{ id: 
     return dateB - dateA;
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'draft':
-        return 'bg-gray-500';
-      case 'pending':
-        return 'bg-yellow-500';
-      case 'approved':
-        return 'bg-green-500';
-      case 'rejected':
-        return 'bg-red-500';
-      case 'active':
-        return 'bg-blue-500';
-      default:
-        return 'bg-gray-500';
-    }
+  // Group amendments by status
+  const groupedAmendments = {
+    passed: sortedAmendments.filter((a: any) => {
+      const status = a.status?.toLowerCase();
+      return status === 'approved' || status === 'passed' || status === 'active';
+    }),
+    underReview: sortedAmendments.filter((a: any) => {
+      const status = a.status?.toLowerCase();
+      return status === 'pending' || status === 'under review' || status === 'review';
+    }),
+    drafting: sortedAmendments.filter((a: any) => {
+      const status = a.status?.toLowerCase();
+      return status === 'draft' || status === 'drafting';
+    }),
+    rejected: sortedAmendments.filter((a: any) => {
+      const status = a.status?.toLowerCase();
+      return status === 'rejected' || status === 'denied';
+    }),
   };
 
   if (isLoading || amendmentsLoading) {
@@ -158,11 +245,32 @@ export default function GroupAmendmentsPage({ params }: { params: Promise<{ id: 
     <AuthGuard requireAuth={true}>
       <PageWrapper className="container mx-auto p-8">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="mb-2 text-3xl font-bold">{group.name} - Amendments</h1>
-          <p className="text-muted-foreground">
-            {sortedAmendments.length} amendment{sortedAmendments.length !== 1 ? 's' : ''} found
-          </p>
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h1 className="mb-2 text-3xl font-bold">{group.name} - Amendments</h1>
+            <p className="text-muted-foreground">
+              {sortedAmendments.length} amendment{sortedAmendments.length !== 1 ? 's' : ''} found
+            </p>
+            {/* Debug: Show status breakdown */}
+            {sortedAmendments.length > 0 && (
+              <div className="mt-2 text-sm text-muted-foreground">
+                Passed: {groupedAmendments.passed.length}, Under Review:{' '}
+                {groupedAmendments.underReview.length}, Drafting:{' '}
+                {groupedAmendments.drafting.length}, Rejected: {groupedAmendments.rejected.length}
+                {/* Show unique statuses for debugging */}
+                <div className="mt-1">
+                  All statuses:{' '}
+                  {Array.from(new Set(sortedAmendments.map((a: any) => a.status))).join(', ')}
+                </div>
+              </div>
+            )}
+          </div>
+          <Button asChild>
+            <a href={`/create/amendment?groupId=${resolvedParams.id}`}>
+              <Scale className="mr-2 h-4 w-4" />
+              New Amendment
+            </a>
+          </Button>
         </div>
 
         {/* Search Bar */}
@@ -276,58 +384,122 @@ export default function GroupAmendmentsPage({ params }: { params: Promise<{ id: 
               : 'No amendments match your search criteria.'}
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
-            {sortedAmendments.map((amendment: any) => (
-              <a href={`/amendment/${amendment.id}`} key={amendment.id} className="block">
-                <Card className="cursor-pointer transition-colors hover:bg-accent">
-                  <CardHeader>
-                    <div className="mb-2 flex items-center justify-between">
-                      <Badge variant="default" className="text-xs">
-                        <FileText className="mr-1 h-3 w-3" />
-                        Amendment
-                      </Badge>
-                      <Badge className={`text-xs ${getStatusColor(amendment.status)}`}>
-                        {amendment.status}
-                      </Badge>
-                    </div>
-                    <CardTitle className="text-lg">{amendment.title}</CardTitle>
-                    {amendment.subtitle && (
-                      <CardDescription className="line-clamp-2">
-                        {amendment.subtitle}
-                      </CardDescription>
-                    )}
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {amendment.code && (
-                      <div className="font-mono text-sm text-muted-foreground">
-                        Code: {amendment.code}
-                      </div>
-                    )}
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        <span>{new Date(amendment.date).toLocaleDateString()}</span>
-                      </div>
-                      {amendment.supporters !== undefined && (
-                        <div className="flex items-center gap-1">
-                          <span>{amendment.supporters} supporters</span>
-                        </div>
+          <div className="space-y-6">
+            {/* Passed Section */}
+            {groupedAmendments.passed.length > 0 && (
+              <Collapsible
+                open={openSections.passed}
+                onOpenChange={open => setOpenSections(prev => ({ ...prev, passed: open }))}
+              >
+                <div className="rounded-lg border bg-card">
+                  <CollapsibleTrigger className="flex w-full items-center justify-between p-4 hover:bg-accent">
+                    <div className="flex items-center gap-2">
+                      {openSections.passed ? (
+                        <ChevronDown className="h-5 w-5" />
+                      ) : (
+                        <ChevronRight className="h-5 w-5" />
                       )}
+                      <h2 className="text-xl font-semibold">Passed</h2>
+                      <Badge variant="secondary">{groupedAmendments.passed.length}</Badge>
                     </div>
-                    {amendment.user && (
-                      <p className="text-xs text-muted-foreground">
-                        By {amendment.user.name || 'Unknown'}
-                      </p>
-                    )}
-                    {amendment.hashtags && amendment.hashtags.length > 0 && (
-                      <div className="pt-2">
-                        <HashtagDisplay hashtags={amendment.hashtags.slice(0, 3)} />
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </a>
-            ))}
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="grid gap-4 p-4 md:grid-cols-2">
+                      {groupedAmendments.passed.map((amendment: any) => (
+                        <AmendmentCard key={amendment.id} amendment={amendment} />
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </div>
+              </Collapsible>
+            )}
+
+            {/* Under Review Section */}
+            {groupedAmendments.underReview.length > 0 && (
+              <Collapsible
+                open={openSections.underReview}
+                onOpenChange={open => setOpenSections(prev => ({ ...prev, underReview: open }))}
+              >
+                <div className="rounded-lg border bg-card">
+                  <CollapsibleTrigger className="flex w-full items-center justify-between p-4 hover:bg-accent">
+                    <div className="flex items-center gap-2">
+                      {openSections.underReview ? (
+                        <ChevronDown className="h-5 w-5" />
+                      ) : (
+                        <ChevronRight className="h-5 w-5" />
+                      )}
+                      <h2 className="text-xl font-semibold">Under Review</h2>
+                      <Badge variant="secondary">{groupedAmendments.underReview.length}</Badge>
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="grid gap-4 p-4 md:grid-cols-2">
+                      {groupedAmendments.underReview.map((amendment: any) => (
+                        <AmendmentCard key={amendment.id} amendment={amendment} />
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </div>
+              </Collapsible>
+            )}
+
+            {/* Drafting Section */}
+            {groupedAmendments.drafting.length > 0 && (
+              <Collapsible
+                open={openSections.drafting}
+                onOpenChange={open => setOpenSections(prev => ({ ...prev, drafting: open }))}
+              >
+                <div className="rounded-lg border bg-card">
+                  <CollapsibleTrigger className="flex w-full items-center justify-between p-4 hover:bg-accent">
+                    <div className="flex items-center gap-2">
+                      {openSections.drafting ? (
+                        <ChevronDown className="h-5 w-5" />
+                      ) : (
+                        <ChevronRight className="h-5 w-5" />
+                      )}
+                      <h2 className="text-xl font-semibold">Drafting</h2>
+                      <Badge variant="secondary">{groupedAmendments.drafting.length}</Badge>
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="grid gap-4 p-4 md:grid-cols-2">
+                      {groupedAmendments.drafting.map((amendment: any) => (
+                        <AmendmentCard key={amendment.id} amendment={amendment} />
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </div>
+              </Collapsible>
+            )}
+
+            {/* Rejected Section */}
+            {groupedAmendments.rejected.length > 0 && (
+              <Collapsible
+                open={openSections.rejected}
+                onOpenChange={open => setOpenSections(prev => ({ ...prev, rejected: open }))}
+              >
+                <div className="rounded-lg border bg-card">
+                  <CollapsibleTrigger className="flex w-full items-center justify-between p-4 hover:bg-accent">
+                    <div className="flex items-center gap-2">
+                      {openSections.rejected ? (
+                        <ChevronDown className="h-5 w-5" />
+                      ) : (
+                        <ChevronRight className="h-5 w-5" />
+                      )}
+                      <h2 className="text-xl font-semibold">Rejected</h2>
+                      <Badge variant="secondary">{groupedAmendments.rejected.length}</Badge>
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="grid gap-4 p-4 md:grid-cols-2">
+                      {groupedAmendments.rejected.map((amendment: any) => (
+                        <AmendmentCard key={amendment.id} amendment={amendment} />
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </div>
+              </Collapsible>
+            )}
           </div>
         )}
       </PageWrapper>
