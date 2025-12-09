@@ -98,22 +98,32 @@ export default function MessagesPage() {
   const allUsers = allUsersData?.$users || [];
 
   // Query all conversations where the user is a participant
-  const { data, isLoading } = db.useQuery({
-    conversations: {
-      group: {}, // Load group data for group conversations
-      participants: {
-        user: {},
-      },
-      messages: {
-        $: {
-          order: {
-            createdAt: 'asc' as const, // Sort oldest to newest (newest at bottom like WhatsApp)
+  const { data, isLoading } = db.useQuery(
+    user?.id
+      ? {
+          conversations: {
+            $: {
+              where: {
+                'participants.user.id': user.id,
+              },
+            },
+            group: {}, // Load group data for group conversations
+            requestedBy: {}, // Load user who requested the conversation
+            participants: {
+              user: {},
+            },
+            messages: {
+              $: {
+                order: {
+                  createdAt: 'asc' as const, // Sort oldest to newest (newest at bottom like WhatsApp)
+                },
+              },
+              sender: {},
+            },
           },
-        },
-        sender: {},
-      },
-    },
-  });
+        }
+      : null
+  );
 
   const conversations = (data?.conversations || []) as Conversation[];
 
@@ -317,10 +327,10 @@ export default function MessagesPage() {
   // Filter users in search dialog
   const filteredUsers = useMemo(() => {
     if (!userSearchQuery.trim()) {
-      return allUsers.filter(u => u.id !== user?.id); // Exclude current user
+      return allUsers.filter(u => u.id !== user?.id && u.id !== ARIA_KAI_USER_ID); // Exclude current user and Aria & Kai
     }
     return allUsers
-      .filter(u => u.id !== user?.id) // Exclude current user
+      .filter(u => u.id !== user?.id && u.id !== ARIA_KAI_USER_ID) // Exclude current user and Aria & Kai
       .filter((u: any) => {
         const name = u.name?.toLowerCase() || '';
         const handle = u.handle?.toLowerCase() || '';
@@ -335,10 +345,15 @@ export default function MessagesPage() {
   const handleCreateConversationRequest = async (otherUserId: string) => {
     if (!user?.id) return;
 
-    // Check if conversation already exists between these users
+    // Check if direct conversation already exists between these users
     const existingConversation = conversations.find((conv: Conversation) => {
+      if (conv.type === 'group') return false; // Ignore group conversations
       const participantIds = conv.participants.map((p: any) => p.user?.id);
-      return participantIds.includes(user.id) && participantIds.includes(otherUserId);
+      return (
+        participantIds.length === 2 &&
+        participantIds.includes(user.id) &&
+        participantIds.includes(otherUserId)
+      );
     });
 
     if (existingConversation) {
@@ -695,9 +710,10 @@ export default function MessagesPage() {
                     })()}
                   </div>
 
-                  {/* Action Bar - Only show for accepted conversations */}
-                  {selectedConversation.status === 'accepted' && (
-                    <div className="flex items-center gap-1">
+                  {/* Action Bar */}
+                  <div className="flex items-center gap-1">
+                    {/* Only show pin for accepted conversations */}
+                    {selectedConversation.status === 'accepted' && (
                       <Button
                         variant="ghost"
                         size="icon"
@@ -717,8 +733,12 @@ export default function MessagesPage() {
                           <Pin className="h-4 w-4" />
                         )}
                       </Button>
-                      {/* Only show delete for direct messages, not group chats */}
-                      {selectedConversation.type !== 'group' && (
+                    )}
+                    {/* Show delete for direct messages, not group chats or Aria & Kai conversation */}
+                    {selectedConversation.type !== 'group' &&
+                      !selectedConversation.participants.some(
+                        (p: any) => p.user?.id === ARIA_KAI_USER_ID
+                      ) && (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -726,13 +746,16 @@ export default function MessagesPage() {
                             setConversationToDelete(selectedConversation.id);
                             setDeleteDialogOpen(true);
                           }}
-                          title="Delete conversation"
+                          title={
+                            selectedConversation.status === 'pending'
+                              ? 'Cancel request'
+                              : 'Delete conversation'
+                          }
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       )}
-                    </div>
-                  )}
+                  </div>
                 </CardHeader>
 
                 {/* Messages - Scrollable Area */}

@@ -5,6 +5,7 @@ import { SEED_CONFIG, USER_HASHTAGS, ARIA_KAI_EMAIL } from '../config/seed.confi
 import { randomInt, randomItem, randomItems } from '../helpers/random.helpers';
 import { batchTransact } from '../helpers/transaction.helpers';
 import { createHashtagTransactions } from '../helpers/entity.helpers';
+import { ARIA_KAI_USER_ID, ARIA_KAI_WELCOME_MESSAGE } from '../../e2e/aria-kai';
 
 export const usersSeeder: EntitySeeder = {
   name: 'users',
@@ -14,12 +15,23 @@ export const usersSeeder: EntitySeeder = {
     console.log('Seeding users...');
     const { db } = context;
     const userIds: string[] = [];
+    const conversationIds: string[] = [];
+    const messageIds: string[] = [];
     const transactions = [];
+
+    // Time constants for consistent timestamps
+    const now = Date.now();
+    const threeYearsAgo = now - 3 * 365 * 24 * 60 * 60 * 1000;
 
     // Initialize link tracking counters
     let statsToUsers = 0;
     let statementsToUsers = 0;
     let hashtagsToUsers = 0;
+    let directConversationsToRequestedBy = 0;
+    let directParticipantsToConversations = 0;
+    let directParticipantsToUsers = 0;
+    let directMessagesToConversations = 0;
+    let directMessagesToSenders = 0;
 
     // First, ensure the main test user exists and update it
     const mainUserId = SEED_CONFIG.mainTestUserId;
@@ -81,6 +93,53 @@ export const usersSeeder: EntitySeeder = {
     transactions.push(...createHashtagTransactions(mainUserId, 'user', mainUserHashtags));
     hashtagsToUsers += mainUserHashtags.length;
 
+    // Create Aria & Kai welcome conversation for main user
+    const mainUserConversationId = id();
+    const mainUserMessageId = id();
+    conversationIds.push(mainUserConversationId);
+    messageIds.push(mainUserMessageId);
+
+    transactions.push(
+      tx.conversations[mainUserConversationId].update({
+        lastMessageAt: now,
+        createdAt: now,
+        type: 'direct',
+        status: 'accepted',
+      }),
+      tx.conversations[mainUserConversationId].link({
+        requestedBy: ARIA_KAI_USER_ID,
+      }),
+      tx.conversationParticipants[id()]
+        .update({
+          lastReadAt: null,
+          joinedAt: now,
+          leftAt: null,
+        })
+        .link({ user: mainUserId, conversation: mainUserConversationId }),
+      tx.conversationParticipants[id()]
+        .update({
+          lastReadAt: now,
+          joinedAt: now,
+          leftAt: null,
+        })
+        .link({ user: ARIA_KAI_USER_ID, conversation: mainUserConversationId }),
+      tx.messages[mainUserMessageId]
+        .update({
+          content: ARIA_KAI_WELCOME_MESSAGE,
+          isRead: false,
+          createdAt: now,
+          updatedAt: null,
+          deletedAt: null,
+        })
+        .link({ conversation: mainUserConversationId, sender: ARIA_KAI_USER_ID })
+    );
+
+    directConversationsToRequestedBy++;
+    directParticipantsToConversations += 2;
+    directParticipantsToUsers += 2;
+    directMessagesToConversations++;
+    directMessagesToSenders++;
+
     // Create Tobias's user account
     const tobiasUserId = SEED_CONFIG.tobiasUserId;
     userIds.push(tobiasUserId);
@@ -138,8 +197,56 @@ export const usersSeeder: EntitySeeder = {
     transactions.push(...createHashtagTransactions(tobiasUserId, 'user', tobiasHashtags));
     hashtagsToUsers += tobiasHashtags.length;
 
-    // Create Aria & Kai assistant user
+    // Create Aria & Kai welcome conversation for Tobias
+    const tobiasConversationId = id();
+    const tobiasMessageId = id();
+    conversationIds.push(tobiasConversationId);
+    messageIds.push(tobiasMessageId);
+
+    transactions.push(
+      tx.conversations[tobiasConversationId].update({
+        lastMessageAt: now,
+        createdAt: now,
+        type: 'direct',
+        status: 'accepted',
+      }),
+      tx.conversations[tobiasConversationId].link({
+        requestedBy: ARIA_KAI_USER_ID,
+      }),
+      tx.conversationParticipants[id()]
+        .update({
+          lastReadAt: null,
+          joinedAt: now,
+          leftAt: null,
+        })
+        .link({ user: tobiasUserId, conversation: tobiasConversationId }),
+      tx.conversationParticipants[id()]
+        .update({
+          lastReadAt: now,
+          joinedAt: now,
+          leftAt: null,
+        })
+        .link({ user: ARIA_KAI_USER_ID, conversation: tobiasConversationId }),
+      tx.messages[tobiasMessageId]
+        .update({
+          content: ARIA_KAI_WELCOME_MESSAGE,
+          isRead: false,
+          createdAt: now,
+          updatedAt: null,
+          deletedAt: null,
+        })
+        .link({ conversation: tobiasConversationId, sender: ARIA_KAI_USER_ID })
+    );
+
+    directConversationsToRequestedBy++;
+    directParticipantsToConversations += 2;
+    directParticipantsToUsers += 2;
+    directMessagesToConversations++;
+    directMessagesToSenders++;
+
+    // Create Aria & Kai assistant user (must be created first for conversations)
     const ariaKaiUserId = SEED_CONFIG.ariaKaiUserId;
+
     userIds.push(ariaKaiUserId);
 
     transactions.push(
@@ -152,9 +259,9 @@ export const usersSeeder: EntitySeeder = {
         avatar: faker.image.avatar(),
         bio: 'We are your personal assistants, here to help you navigate Polity.',
         handle: 'ariakai',
-        createdAt: faker.date.past({ years: 3 }),
-        updatedAt: new Date(),
-        lastSeenAt: new Date(),
+        createdAt: threeYearsAgo,
+        updatedAt: now,
+        lastSeenAt: now,
         about: 'Aria & Kai are your personal AI assistants.',
         contactEmail: ARIA_KAI_EMAIL,
         visibility: 'public',
@@ -245,20 +352,82 @@ export const usersSeeder: EntitySeeder = {
       const userHashtags = randomItems(USER_HASHTAGS, numHashtags);
       transactions.push(...createHashtagTransactions(userId, 'user', userHashtags));
       hashtagsToUsers += userHashtags.length;
+
+      // Create Aria & Kai welcome conversation for this user
+      const userConversationId = id();
+      const userMessageId = id();
+      conversationIds.push(userConversationId);
+      messageIds.push(userMessageId);
+
+      transactions.push(
+        tx.conversations[userConversationId].update({
+          lastMessageAt: now,
+          createdAt: now,
+          type: 'direct',
+          status: 'accepted',
+        }),
+        tx.conversations[userConversationId].link({
+          requestedBy: ARIA_KAI_USER_ID,
+        }),
+        tx.conversationParticipants[id()]
+          .update({
+            lastReadAt: null,
+            joinedAt: now,
+            leftAt: null,
+          })
+          .link({ user: userId, conversation: userConversationId }),
+        tx.conversationParticipants[id()]
+          .update({
+            lastReadAt: now,
+            joinedAt: now,
+            leftAt: null,
+          })
+          .link({ user: ARIA_KAI_USER_ID, conversation: userConversationId }),
+        tx.messages[userMessageId]
+          .update({
+            content: ARIA_KAI_WELCOME_MESSAGE,
+            isRead: false,
+            createdAt: now,
+            updatedAt: null,
+            deletedAt: null,
+          })
+          .link({ conversation: userConversationId, sender: ARIA_KAI_USER_ID })
+      );
+
+      directConversationsToRequestedBy++;
+      directParticipantsToConversations += 2;
+      directParticipantsToUsers += 2;
+      directMessagesToConversations++;
+      directMessagesToSenders++;
     }
 
     // Batch transact
     await batchTransact(db, transactions);
     console.log(`✅ Seeded ${userIds.length} users`);
+    console.log(`✅ Created ${conversationIds.length} Aria & Kai welcome conversations`);
 
     return {
       ...context,
       userIds,
+      conversationIds: [...(context.conversationIds || []), ...conversationIds],
+      messageIds: [...(context.messageIds || []), ...messageIds],
       linkCounts: {
         ...(context.linkCounts || {}),
         statsToUsers,
         statementsToUsers,
         hashtagsToUsers,
+        directConversationsToRequestedBy:
+          (context.linkCounts?.directConversationsToRequestedBy || 0) +
+          directConversationsToRequestedBy,
+        directParticipantsToConversations:
+          (context.linkCounts?.directParticipantsToConversations || 0) +
+          directParticipantsToConversations,
+        directParticipantsToUsers:
+          (context.linkCounts?.directParticipantsToUsers || 0) + directParticipantsToUsers,
+        directMessagesToConversations:
+          (context.linkCounts?.directMessagesToConversations || 0) + directMessagesToConversations,
+        directMessagesToSenders:
+          (context.linkCounts?.directMessagesToSenders || 0) + directMessagesToSenders,
       },
     };
   },
