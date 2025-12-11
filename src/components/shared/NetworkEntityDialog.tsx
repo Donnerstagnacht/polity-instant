@@ -19,7 +19,7 @@ interface NetworkEntityDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   entity: {
-    type: 'group' | 'relationship' | 'user';
+    type: 'group' | 'relationship' | 'user' | 'event';
     data: any;
   } | null;
 }
@@ -38,14 +38,18 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
               ? 'Group Details'
               : entity.type === 'user'
                 ? 'User Details'
-                : 'Relationship Details'}
+                : entity.type === 'event'
+                  ? 'Event Details'
+                  : 'Relationship Details'}
           </DialogTitle>
           <DialogDescription>
             {entity.type === 'group'
               ? 'View information about this group'
               : entity.type === 'user'
                 ? 'View information about this user'
-                : 'View information about this relationship'}
+                : entity.type === 'event'
+                  ? 'View information about this event'
+                  : 'View information about this relationship'}
           </DialogDescription>
         </DialogHeader>
 
@@ -68,6 +72,38 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
                     onOpenChange(false);
                   }}
                 />
+              </div>
+            </div>
+          )}
+
+          {/* Event Details */}
+          {entity.type === 'event' && entity.data && (
+            <div className="rounded-lg border p-4">
+              <div className="space-y-3">
+                {entity.data.imageURL && (
+                  <img
+                    src={entity.data.imageURL}
+                    alt={entity.data.title}
+                    className="h-32 w-full rounded-md object-cover"
+                  />
+                )}
+                <div>
+                  <h3 className="text-xl font-semibold">{entity.data.title}</h3>
+                  {entity.data.description && (
+                    <p className="mt-2 text-sm text-muted-foreground">{entity.data.description}</p>
+                  )}
+                  {entity.data.startDate && (
+                    <p className="mt-2 text-sm">
+                      <span className="font-medium">Date:</span>{' '}
+                      {new Date(entity.data.startDate).toLocaleDateString()}
+                    </p>
+                  )}
+                  {entity.data.location && (
+                    <p className="text-sm">
+                      <span className="font-medium">Location:</span> {entity.data.location}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -169,6 +205,16 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
               }}
             >
               Show User
+            </Button>
+          )}
+          {entity.type === 'event' && entity.data?.id && (
+            <Button
+              onClick={() => {
+                router.push(`/event/${entity.data.id}`);
+                onOpenChange(false);
+              }}
+            >
+              Show Event
             </Button>
           )}
         </DialogFooter>

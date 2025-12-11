@@ -163,6 +163,13 @@ export const navItemsAuthenticated = (
         href: `/event/${eventId}/stream`,
         onClick: () => router.push(`/event/${eventId}/stream`),
       },
+      {
+        id: 'network',
+        label: t ? t('navigation.secondary.event.network') : 'Network',
+        icon: 'Network',
+        href: `/event/${eventId}/network`,
+        onClick: () => router.push(`/event/${eventId}/network`),
+      },
     ];
 
     // Only add participants and edit items if user is admin
@@ -199,7 +206,7 @@ export const navItemsAuthenticated = (
     const items: NavigationItem[] = [
       {
         id: 'user',
-        label: t ? t('navigation.secondary.user') : 'User',
+        label: t ? t('navigation.secondary.user.profile') : 'User',
         icon: 'User',
         href: `/user/${userId}`,
         onClick: () => router.push(`/user/${userId}`),

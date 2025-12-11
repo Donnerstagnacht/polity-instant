@@ -80,6 +80,7 @@ const deTranslation: I18nLocale = {
         agenda: 'Tagesordnung',
         stream: 'Stream',
         participants: 'Teilnehmer',
+        network: 'Netzwerk',
         edit: 'Veranstaltung bearbeiten',
       },
       user: {

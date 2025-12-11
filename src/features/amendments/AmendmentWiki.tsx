@@ -174,7 +174,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
           <div className="mt-4 flex items-center justify-center gap-3">
             <div className="flex -space-x-2">
               {collaborators.slice(0, 3).map((collab: any) => (
-                <Avatar key={collab.user?.id} className="h-10 w-10 border-2 border-background">
+                <Avatar key={collab.id} className="h-10 w-10 border-2 border-background">
                   <AvatarImage src={collab.user?.avatar || collab.user?.imageURL} />
                   <AvatarFallback>{collab.user?.name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
                 </Avatar>

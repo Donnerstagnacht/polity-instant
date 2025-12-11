@@ -680,7 +680,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
                     }
                     return (
                       slot.bookings &&
-                      slot.bookings.some((b: any) => b.booker.id === currentUser?.id)
+                      slot.bookings.some((b: any) => b.booker?.id === currentUser?.id)
                     );
                   })
                   .sort(

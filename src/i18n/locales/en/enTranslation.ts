@@ -78,6 +78,7 @@ const enTranslation = {
         agenda: 'Agenda',
         stream: 'Stream',
         participants: 'Participants',
+        network: 'Network',
         edit: 'Edit Event',
       },
       user: {
