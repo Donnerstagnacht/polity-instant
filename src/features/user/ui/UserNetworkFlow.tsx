@@ -4,13 +4,9 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Node, Edge, useNodesState, useEdgesState, MarkerType } from '@xyflow/react';
 import { Button } from '@/components/ui/button';
 import { NetworkFlowBase, Panel } from '@/components/shared/NetworkFlowBase';
-import {
-  RightFilters,
-  formatRights,
-  isEdgeVisible,
-  RIGHT_TYPES,
-} from '@/components/shared/RightFilters';
+import { RightFilters, formatRights, RIGHT_TYPES } from '@/components/shared/RightFilters';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { NetworkEntityDialog } from '@/components/shared/NetworkEntityDialog';
 import db from '../../../../db';
 
 interface NetworkNode extends Node {
@@ -37,6 +33,11 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
   const [selectedRights, setSelectedRights] = useState<Set<string>>(new Set(RIGHT_TYPES));
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [legendCollapsed, setLegendCollapsed] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedEntity, setSelectedEntity] = useState<{
+    type: 'group' | 'relationship' | 'user';
+    data: any;
+  } | null>(null);
 
   // Fetch the specific user
   const { data: userData } = db.useQuery({
@@ -120,7 +121,6 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
   // Build indirect (recursive) relationships for a group
   const getIndirectGroupRelationships = useCallback(
     (groupId: string) => {
-      const visited = new Set<string>();
       const parentsMap = new Map<
         string,
         { group: any; rights: string[]; level: number; childId?: string }
@@ -130,67 +130,121 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
         { group: any; rights: string[]; level: number; parentId?: string }
       >();
 
-      const findParents = (id: string, level = 1) => {
-        if (visited.has(id)) return;
-        visited.add(id);
+      // First, get all direct relationships and their rights
+      const directRels = getDirectGroupRelationships(groupId);
 
-        stableRelationships.forEach((rel: any) => {
-          if (rel.childGroup?.id === id && !visited.has(rel.parentGroup?.id)) {
-            const parentId = rel.parentGroup?.id;
-            if (!parentId) return;
-
-            if (!parentsMap.has(parentId)) {
-              parentsMap.set(parentId, {
-                group: rel.parentGroup,
-                rights: [],
-                level,
-                childId: id,
-              });
-            }
-            const parentEntry = parentsMap.get(parentId);
-            if (parentEntry) {
-              parentEntry.rights.push(rel.withRight);
-            }
-            findParents(parentId, level + 1);
-          }
+      // For parents: Add direct parents first (level 1), then follow chains for each right type
+      directRels.parents.forEach(parent => {
+        // Add the direct parent at level 1 with all its rights
+        parentsMap.set(parent.group.id, {
+          group: parent.group,
+          rights: [...parent.rights],
+          level: 1,
+          childId: groupId,
         });
-      };
 
-      const findChildren = (id: string, level = 1, currentParentId?: string) => {
-        stableRelationships.forEach((rel: any) => {
-          if (rel.parentGroup?.id === id && !visited.has(rel.childGroup?.id)) {
-            const childId = rel.childGroup?.id;
-            if (!childId) return;
+        // Now follow each right type chain separately
+        parent.rights.forEach(right => {
+          const visited = new Set<string>();
+          visited.add(groupId);
+          visited.add(parent.group.id); // Mark direct parent as visited
 
-            visited.add(childId);
-            if (!childrenMap.has(childId)) {
-              childrenMap.set(childId, {
-                group: rel.childGroup,
-                rights: [],
-                level,
-                parentId: currentParentId,
-              });
-            }
-            const childEntry = childrenMap.get(childId);
-            if (childEntry) {
-              childEntry.rights.push(rel.withRight);
-            }
-            findChildren(childId, level + 1, childId);
-          }
+          const findParentsForRight = (id: string, level: number) => {
+            stableRelationships.forEach((rel: any) => {
+              if (
+                rel.childGroup?.id === id &&
+                rel.withRight === right &&
+                !visited.has(rel.parentGroup?.id)
+              ) {
+                const parentId = rel.parentGroup?.id;
+                if (!parentId) return;
+
+                visited.add(parentId);
+
+                // Add or update parent in map
+                if (!parentsMap.has(parentId)) {
+                  parentsMap.set(parentId, {
+                    group: rel.parentGroup,
+                    rights: [],
+                    level,
+                    childId: id,
+                  });
+                }
+                const parentEntry = parentsMap.get(parentId);
+                if (parentEntry && !parentEntry.rights.includes(right)) {
+                  parentEntry.rights.push(right);
+                }
+
+                // Continue searching with the same right type
+                findParentsForRight(parentId, level + 1);
+              }
+            });
+          };
+
+          // Start from the direct parent to find its ancestors
+          findParentsForRight(parent.group.id, 2);
         });
-      };
+      });
 
-      findParents(groupId);
-      visited.clear();
-      visited.add(groupId);
-      findChildren(groupId);
+      // For children: Add direct children first (level 1), then follow chains for each right type
+      directRels.children.forEach(child => {
+        // Add the direct child at level 1 with all its rights
+        childrenMap.set(child.group.id, {
+          group: child.group,
+          rights: [...child.rights],
+          level: 1,
+          parentId: groupId,
+        });
+
+        // Now follow each right type chain separately
+        child.rights.forEach(right => {
+          const visited = new Set<string>();
+          visited.add(groupId);
+          visited.add(child.group.id); // Mark direct child as visited
+
+          const findChildrenForRight = (id: string, level: number, currentParentId: string) => {
+            stableRelationships.forEach((rel: any) => {
+              if (
+                rel.parentGroup?.id === id &&
+                rel.withRight === right &&
+                !visited.has(rel.childGroup?.id)
+              ) {
+                const childId = rel.childGroup?.id;
+                if (!childId) return;
+
+                visited.add(childId);
+
+                // Add or update child in map
+                if (!childrenMap.has(childId)) {
+                  childrenMap.set(childId, {
+                    group: rel.childGroup,
+                    rights: [],
+                    level,
+                    parentId: currentParentId,
+                  });
+                }
+                const childEntry = childrenMap.get(childId);
+                if (childEntry && !childEntry.rights.includes(right)) {
+                  childEntry.rights.push(right);
+                }
+
+                // Continue searching with the same right type
+                findChildrenForRight(childId, level + 1, childId);
+              }
+            });
+          };
+
+          // Start from the direct child to find its descendants
+          findChildrenForRight(child.group.id, 2, child.group.id);
+        });
+      });
 
       return {
         parents: Array.from(parentsMap.values()),
         children: Array.from(childrenMap.values()),
       };
     },
-    [stableRelationships]
+    [stableRelationships, getDirectGroupRelationships]
   );
 
   // Toggle right filter
@@ -205,16 +259,6 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
       return newSet;
     });
   }, []);
-
-  // Check if edge should be visible based on selected rights
-  const checkEdgeVisible = useCallback(
-    (rights: string[]) => {
-      return isEdgeVisible(rights, selectedRights);
-    },
-    [selectedRights]
-  );
-
-  // Helper to format rights for display - removed, using shared function now
 
   // Generate flow chart
   const generateFlowChart = useCallback(() => {
@@ -505,12 +549,45 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
 
   // Filter edges based on selected rights
   const filteredEdges = useMemo(() => {
-    return edges.filter(edge => {
-      if (!edge.data?.rights) return true; // Show edges without rights data
-      if ((edge.data.rights as string[]).length === 0) return true; // Member edges
-      return checkEdgeVisible(edge.data.rights as string[]);
+    return edges
+      .map(edge => {
+        if (!edge.data?.rights) return edge;
+        if ((edge.data.rights as string[]).length === 0) return edge; // Member edges
+
+        // Filter to only show selected rights
+        const visibleRights = (edge.data.rights as string[]).filter(right =>
+          selectedRights.has(right)
+        );
+
+        // If no rights are visible, don't show this edge
+        if (visibleRights.length === 0) return null;
+
+        // Return edge with filtered label
+        return {
+          ...edge,
+          label: formatRights(visibleRights),
+          data: { ...edge.data, visibleRights },
+        };
+      })
+      .filter((edge): edge is Edge => edge !== null);
+  }, [edges, selectedRights]);
+
+  // Filter nodes to only show those connected via visible edges
+  const filteredNodes = useMemo(() => {
+    // Build a set of node IDs that have at least one visible edge
+    const connectedNodeIds = new Set<string>();
+
+    // Always include the center node (userId)
+    connectedNodeIds.add(userId);
+
+    // Add nodes that are source or target of visible edges
+    filteredEdges.forEach(edge => {
+      connectedNodeIds.add(edge.source);
+      connectedNodeIds.add(edge.target);
     });
-  }, [edges, checkEdgeVisible]);
+
+    return nodes.filter(node => connectedNodeIds.has(node.id));
+  }, [nodes, filteredEdges, userId]);
 
   // Generate flow chart when data or showIndirect changes
   useEffect(() => {
@@ -522,19 +599,40 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
     (_event: any, node: Node) => {
       if (!isInteractive) return;
 
-      // If this is a group and onGroupClick is provided, call it
-      if (node.data.type === 'group' && onGroupClick) {
-        onGroupClick(node.id, node.data.groupData);
-      }
+      // Open dialog with entity data
+      if (node.data.type === 'group' && node.data.groupData) {
+        setSelectedEntity({ type: 'group', data: node.data.groupData });
+        setDialogOpen(true);
 
-      setSelectedNodes(prev => {
-        if (prev.includes(node.id)) {
-          return prev.filter(id => id !== node.id);
+        // Still call onGroupClick if provided
+        if (onGroupClick) {
+          onGroupClick(node.id, node.data.groupData);
         }
-        return [...prev, node.id];
-      });
+      } else if (node.data.type === 'user') {
+        setSelectedEntity({ type: 'user', data: user });
+        setDialogOpen(true);
+      }
     },
-    [isInteractive, onGroupClick]
+    [isInteractive, onGroupClick, user]
+  );
+
+  // Handle edge click
+  const onEdgeClick = useCallback(
+    (_event: any, edge: Edge) => {
+      if (!isInteractive) return;
+
+      setSelectedEntity({
+        type: 'relationship',
+        data: {
+          source: edge.source,
+          target: edge.target,
+          rights: edge.data?.rights || [],
+          label: edge.label,
+        },
+      });
+      setDialogOpen(true);
+    },
+    [isInteractive]
   );
 
   // Handle interactive mode changes
@@ -555,7 +653,7 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
 
   return (
     <NetworkFlowBase
-      nodes={nodes.map(node => ({
+      nodes={filteredNodes.map(node => ({
         ...node,
         style: {
           ...node.style,
@@ -570,6 +668,7 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
       onNodesChange={isInteractive ? onNodesChange : undefined}
       onEdgesChange={isInteractive ? onEdgesChange : undefined}
       onNodeClick={onNodeClick}
+      onEdgeClick={onEdgeClick}
       onInteractiveChange={handleInteractiveChange}
       panel={
         <Panel position="top-left" className="rounded bg-white p-4 shadow dark:bg-background">
@@ -662,6 +761,8 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
           )}
         </Panel>
       }
-    />
+    >
+      <NetworkEntityDialog open={dialogOpen} onOpenChange={setDialogOpen} entity={selectedEntity} />
+    </NetworkFlowBase>
   );
 }

@@ -20,12 +20,14 @@ interface NetworkFlowBaseProps<T extends Node = Node> {
   onNodesChange?: OnNodesChange<T>;
   onEdgesChange?: OnEdgesChange;
   onNodeClick?: (event: any, node: Node) => void;
+  onEdgeClick?: (event: any, edge: Edge) => void;
   nodesDraggable?: boolean;
   nodesFocusable?: boolean;
   nodesConnectable?: boolean;
   edgesFocusable?: boolean;
   panel: ReactNode;
   onInteractiveChange?: (interactive: boolean) => void;
+  children?: ReactNode;
 }
 
 export function NetworkFlowBase<T extends Node = Node>({
@@ -34,12 +36,14 @@ export function NetworkFlowBase<T extends Node = Node>({
   onNodesChange,
   onEdgesChange,
   onNodeClick,
+  onEdgeClick,
   nodesDraggable = true,
   nodesFocusable = true,
   nodesConnectable = true,
   edgesFocusable = true,
   panel,
   onInteractiveChange,
+  children,
 }: NetworkFlowBaseProps<T>) {
   return (
     <div className="h-[600px] w-full rounded-lg border bg-background">
@@ -88,6 +92,7 @@ export function NetworkFlowBase<T extends Node = Node>({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick}
+        onEdgeClick={onEdgeClick}
         fitView
       >
         {panel}
@@ -95,6 +100,7 @@ export function NetworkFlowBase<T extends Node = Node>({
         <MiniMap zoomable pannable />
         <Background color="#aaa" gap={16} />
       </ReactFlow>
+      {children}
     </div>
   );
 }
