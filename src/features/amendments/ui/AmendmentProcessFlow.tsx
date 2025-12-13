@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { FilteredNetworkFlow } from '@/components/shared/FilteredNetworkFlow';
-import { GroupDetailsWithEvents } from '@/components/shared/GroupDetailsWithEvents';
+import { UserNetworkFlow } from '@/features/user/ui/UserNetworkFlow';
+import { NetworkEntityDialog } from '@/components/shared/NetworkEntityDialog';
 import {
   Dialog,
   DialogContent,
@@ -13,16 +13,18 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import db, { tx, id } from '../../../../db';
 import { useAuthStore } from '@/features/auth';
 import { toast } from 'sonner';
 import { findShortestPath } from '@/utils/path-finding';
 import { NetworkFlowBase } from '@/components/shared/NetworkFlowBase';
-import { CalendarIcon, Target, X, RefreshCw } from 'lucide-react';
+import { CalendarIcon, Target, X, RefreshCw, User } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { TypeAheadSelect } from '@/components/ui/type-ahead-select';
 
 interface AmendmentProcessFlowProps {
   amendmentId: string;
@@ -31,15 +33,18 @@ interface AmendmentProcessFlowProps {
 export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps) {
   const user = useAuthStore((state: any) => state.user);
   const router = useRouter();
-  const [selectedGroup, setSelectedGroup] = useState<{
-    id: string;
+  const [entityDialogOpen, setEntityDialogOpen] = useState(false);
+  const [selectedEntity, setSelectedEntity] = useState<{
+    type: 'group' | 'event' | 'relationship' | 'user';
     data: any;
   } | null>(null);
   const [targetDialogOpen, setTargetDialogOpen] = useState(false);
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<{
-    id: string;
-    data: any;
+  const [pendingTarget, setPendingTarget] = useState<{
+    groupId: string;
+    groupData: any;
+    eventId: string;
+    eventData: any;
   } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'path' | 'network'>('network');
@@ -49,6 +54,13 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
     groupName: string;
     currentEventId: string | null;
   } | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [targetSelectionDialog, setTargetSelectionDialog] = useState(false);
+  const [selectedTargetGroup, setSelectedTargetGroup] = useState<{
+    id: string;
+    data: any;
+  } | null>(null);
+  const [targetCollaboratorUserId, setTargetCollaboratorUserId] = useState<string>('');
 
   // Query events for the group in the event change dialog
   const { data: groupEventsData } = db.useQuery(
@@ -66,16 +78,42 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
       : { events: {} }
   );
 
-  // Fetch amendment data with target and path
+  // Query events for selected target group in the new dialog
+  const { data: targetGroupEventsData } = db.useQuery(
+    selectedTargetGroup?.id
+      ? {
+          events: {
+            $: {
+              where: {
+                'group.id': selectedTargetGroup.id,
+              },
+            },
+            group: {},
+          },
+        }
+      : { events: {} }
+  );
+
+  // Fetch amendment data with target and path (now with segments!)
   const { data: amendmentData, isLoading } = db.useQuery({
     amendments: {
       $: { where: { id: amendmentId } },
       targetGroup: {},
       targetEvent: {},
       agendaItems: {
-        amendmentVote: {}, // Fetch the related amendment vote
+        amendmentVote: {},
       },
-      path: {},
+      path: {
+        user: {}, // Include the user whose network was used for the path
+        segments: {
+          group: {},
+          event: {},
+          agendaItem: {
+            amendmentVote: {},
+          },
+          amendmentVote: {},
+        },
+      },
     },
   } as any);
 
@@ -87,16 +125,53 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
       childGroup: {},
     },
     groupMemberships: {
-      $: { where: { user: user?.id || '' } },
       group: {},
+      user: {},
     },
     events: {
       group: {},
     },
   } as any);
 
+  // Fetch collaborators for this specific amendment
+  const { data: collaboratorsData } = db.useQuery({
+    amendmentCollaborators: {
+      $: { where: { 'amendment.id': amendmentId } },
+      user: {},
+    },
+  } as any);
+
+  const allUsers =
+    (collaboratorsData as any)?.amendmentCollaborators
+      ?.map((collab: any) => collab.user)
+      .filter((user: any) => user?.id) || [];
+
   const amendment = (amendmentData as any)?.amendments?.[0];
-  const hasTarget = Boolean(amendment?.targetGroup && amendment?.targetEvent);
+
+  // Default to the user stored on the path, or fallback to current user
+  const pathUserId = amendment?.path?.user?.id;
+  const displayUserId = selectedUserId || pathUserId || user?.id || '';
+
+  // Check if targetGroup/targetEvent exist (they should be objects with at least an id)
+  const hasTarget = Boolean(amendment?.targetGroup?.id && amendment?.targetEvent?.id);
+
+  // Use path segments directly and sort them by order field
+  const pathSegments = (amendment?.path?.segments || []).sort(
+    (a: any, b: any) => a.order - b.order
+  );
+
+  // Create enrichedPathData from segments for backward compatibility
+  const enrichedPathData = pathSegments.map((segment: any) => ({
+    groupId: segment.group?.id,
+    groupName: segment.group?.name || 'Unknown Group',
+    eventId: segment.event?.id || null,
+    eventTitle: segment.event?.title || 'No Event',
+    eventStartDate: segment.event?.startDate || null,
+    agendaItemId: segment.agendaItem?.id || null,
+    amendmentVoteId: segment.amendmentVote?.id || null,
+    forwardingStatus: segment.forwardingStatus,
+    order: segment.order,
+  }));
 
   // Set default tab based on whether target exists
   useEffect(() => {
@@ -108,23 +183,36 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
   }, [hasTarget]);
 
   // Handle group click from network
-  const handleGroupClick = (groupId: string, groupData: any) => {
-    setSelectedGroup({ id: groupId, data: groupData });
-  };
-
-  // Handle event click from events list
-  const handleEventClick = (eventId: string, eventData: any) => {
-    setSelectedEvent({ id: eventId, data: eventData });
-    setTargetDialogOpen(true);
-  };
+  const handleGroupClick = useCallback((groupId: string, groupData: any) => {
+    // Set entity with custom event selection handler
+    setSelectedEntity({
+      type: 'group',
+      data: {
+        ...groupData,
+        onEventSelect: (eventId: string, eventData: any) => {
+          // When an event is selected from the dialog, set it as pending target
+          setPendingTarget({
+            groupId: groupData.id,
+            groupData: groupData,
+            eventId,
+            eventData,
+          });
+          setEntityDialogOpen(false);
+          setTargetDialogOpen(true);
+        },
+      },
+    });
+    setEntityDialogOpen(true);
+  }, []);
 
   // Calculate path from user to target group with events for each step
   const calculatePathWithEvents = (targetGroupId: string) => {
     if (!user || !networkData) return null;
 
+    const selectedUserId = targetCollaboratorUserId || user.id;
     const userMemberships =
       (networkData as any)?.groupMemberships?.filter(
-        (m: any) => m.status === 'member' || m.status === 'admin'
+        (m: any) => (m.status === 'member' || m.status === 'admin') && m.user?.id === selectedUserId
       ) || [];
 
     const userGroupIds = userMemberships.map((m: any) => m.group.id);
@@ -184,36 +272,53 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
 
   // Handle target confirmation (new or update)
   const handleConfirmTarget = async () => {
-    if (!selectedGroup || !selectedEvent || !user) return;
+    if (!pendingTarget || !user) return;
+
+    const { groupId, groupData, eventId, eventData } = pendingTarget;
 
     setIsSaving(true);
     try {
       const transactions: any[] = [];
 
-      // If there's an existing target, remove old agenda items, votes, and path
-      if (hasTarget && amendment.path?.pathData) {
-        // Delete all agenda items and votes from the previous path
-        for (const segment of amendment.path.pathData) {
-          if (segment.agendaItemId) {
-            // First delete the vote if it exists
-            if (segment.amendmentVoteId) {
-              transactions.push(tx.amendmentVotes[segment.amendmentVoteId].delete());
+      // If there's an existing target, remove old agenda items, votes, path segments, and path
+      if (hasTarget && amendment.path?.id) {
+        // Delete all path segments first
+        if (pathSegments && pathSegments.length > 0) {
+          for (const segment of pathSegments) {
+            // Delete the segment itself
+            if (segment.id) {
+              transactions.push(tx.amendmentPathSegments[segment.id].delete());
             }
-            // Then delete the agenda item
-            transactions.push(tx.agendaItems[segment.agendaItemId].delete());
+            // Delete agenda item if it exists
+            if (segment.agendaItem?.id) {
+              // First delete the vote if it exists
+              if (segment.amendmentVote?.id) {
+                transactions.push(tx.amendmentVotes[segment.amendmentVote.id].delete());
+              }
+              // Then delete the agenda item
+              transactions.push(tx.agendaItems[segment.agendaItem.id].delete());
+            }
           }
         }
-        // Delete the path
+        // Delete the path itself
         transactions.push(tx.amendmentPaths[amendment.path.id].delete());
       }
 
       // Calculate shortest path with events
-      const pathWithEvents = calculatePathWithEvents(selectedGroup.id);
+      const pathWithEvents = calculatePathWithEvents(groupId);
 
       if (!pathWithEvents || pathWithEvents.length === 0) {
         toast.error('No valid path found to target group');
         setIsSaving(false);
         return;
+      }
+
+      // Override the last segment's event with the user-selected event
+      const lastSegment = pathWithEvents[pathWithEvents.length - 1];
+      if (lastSegment && lastSegment.groupId === groupId) {
+        lastSegment.eventId = eventId;
+        lastSegment.eventTitle = eventData.title;
+        lastSegment.eventStartDate = eventData.startDate;
       }
 
       // Find the closest event (earliest start date) in the path
@@ -293,19 +398,44 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
         });
       }
 
-      // Create path record with enriched data
+      // Create path record
+      const pathUserId = targetCollaboratorUserId || user.id;
       const pathId = id();
       transactions.push(
         tx.amendmentPaths[pathId]
           .update({
-            pathData: enrichedPath,
             pathLength: enrichedPath.length,
             createdAt: new Date(),
           })
           .link({
             amendment: amendmentId,
+            user: pathUserId,
           })
       );
+
+      // Create path segments
+      enrichedPath.forEach((segment, index) => {
+        const segmentId = id();
+        const segmentLinks: any = {
+          path: pathId,
+          group: segment.groupId,
+        };
+
+        // Add optional links if they exist
+        if (segment.eventId) segmentLinks.event = segment.eventId;
+        if (segment.agendaItemId) segmentLinks.agendaItem = segment.agendaItemId;
+        if (segment.amendmentVoteId) segmentLinks.amendmentVote = segment.amendmentVoteId;
+
+        transactions.push(
+          tx.amendmentPathSegments[segmentId]
+            .update({
+              order: index,
+              forwardingStatus: segment.forwardingStatus,
+              createdAt: new Date(),
+            })
+            .link(segmentLinks)
+        );
+      });
 
       // Update amendment with target group and event
       transactions.push(
@@ -314,20 +444,19 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
             updatedAt: new Date(),
           })
           .link({
-            targetGroup: selectedGroup.id,
-            targetEvent: selectedEvent.id,
+            targetGroup: groupId,
+            targetEvent: eventId,
           })
       );
 
       await db.transact(transactions);
 
       toast.success(hasTarget ? 'Target updated successfully' : 'Target set successfully', {
-        description: `Amendment will be processed through ${selectedGroup.data.name} with ${enrichedPath.length} events in the path`,
+        description: `Amendment will be processed through ${groupData.name} with ${enrichedPath.length} events in the path`,
       });
 
       setTargetDialogOpen(false);
-      setSelectedGroup(null);
-      setSelectedEvent(null);
+      setPendingTarget(null);
     } catch (error) {
       console.error('Error setting target:', error);
       toast.error('Failed to set target', {
@@ -347,8 +476,8 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
       const transactions: any[] = [];
 
       // Remove all agenda items and votes from the path
-      if (amendment.path?.pathData) {
-        for (const segment of amendment.path.pathData) {
+      if (enrichedPathData && enrichedPathData.length > 0) {
+        for (const segment of enrichedPathData) {
           if (segment.agendaItemId) {
             // First delete the vote if it exists
             if (segment.amendmentVoteId) {
@@ -388,12 +517,12 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
 
   // Handle changing event for a specific group in the path
   const handleChangeEvent = async (groupId: string, newEventId: string) => {
-    if (!amendment || !amendment.path || !amendment.path.pathData) return;
+    if (!amendment || !amendment.path || !enrichedPathData || enrichedPathData.length === 0) return;
 
     try {
       setIsSaving(true);
 
-      const pathData = Array.isArray(amendment.path.pathData) ? amendment.path.pathData : [];
+      const pathData = enrichedPathData;
       const segmentIndex = pathData.findIndex((s: any) => s.groupId === groupId);
 
       if (segmentIndex === -1) {
@@ -459,27 +588,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
           })
       );
 
-      // Look up the new event details from networkData
-      const allEvents = (networkData as any)?.events || [];
-      const newEvent = allEvents.find((e: any) => e.id === newEventId);
-
-      // Update path data with the new event information
-      pathData[segmentIndex] = {
-        ...segment,
-        eventId: newEventId,
-        eventTitle: newEvent?.title || 'Event',
-        eventStartDate: newEvent?.startDate || null,
-        agendaItemId: newAgendaItemId,
-        amendmentVoteId: newAmendmentVoteId,
-        forwardingStatus: forwardingStatus,
-      };
-
-      // Update amendment path
-      transactions.push(
-        tx.amendmentPaths[amendment.path.id].update({
-          pathData: pathData, // Store as JSON directly, not stringified
-        })
-      );
+      // Note: Segment is updated through the entity system, no need to update pathData
 
       // If this is the target group, also update the amendment's targetEvent
       if (isTarget) {
@@ -504,6 +613,17 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
     }
   };
 
+  // Handle node click in path visualization
+  const handlePathNodeClick = useCallback(
+    (event: any, node: any) => {
+      // Only handle clicks on the target node with an event
+      if (node.data.eventId) {
+        router.push(`/event/${node.data.eventId}`);
+      }
+    },
+    [router]
+  );
+
   if (!user) {
     return (
       <div className="flex h-[600px] items-center justify-center">
@@ -520,24 +640,16 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
     );
   }
 
-  // Handle node click in path visualization
-  const handlePathNodeClick = useCallback(
-    (event: any, node: any) => {
-      // Only handle clicks on the target node with an event
-      if (node.data.eventId) {
-        router.push(`/event/${node.data.eventId}`);
-      }
-    },
-    [router]
-  );
-
   // Render path visualization
   const renderPathVisualization = () => {
-    if (!amendment?.path?.pathData || amendment.path.pathData.length === 0) {
+    if (!enrichedPathData || enrichedPathData.length === 0) {
       return null;
     }
 
-    const pathData = amendment.path.pathData;
+    const pathData = enrichedPathData;
+
+    // Get the user from the path, or fallback to current user
+    const pathUser = amendment?.path?.user || user;
 
     // Start with user node
     const nodes = [
@@ -547,8 +659,8 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
         type: 'default',
         position: { x: 100, y: 200 },
         data: {
-          label: user?.name || 'You',
-          description: 'Your starting point',
+          label: pathUser?.name || 'You',
+          description: 'Starting point',
           type: 'user',
         },
         style: {
@@ -780,9 +892,35 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => {
-                    setSelectedGroup({ id: amendment.targetGroup.id, data: amendment.targetGroup });
-                    // Open the group to see events and update
+                  onClick={async () => {
+                    // Remove currently associated agenda item if it exists
+                    if (amendment?.agendaItems && amendment.agendaItems.length > 0) {
+                      try {
+                        const transactions: any[] = [];
+
+                        for (const agendaItem of amendment.agendaItems) {
+                          // Delete the amendment vote if it exists
+                          if (agendaItem.amendmentVote?.id) {
+                            transactions.push(
+                              tx.amendmentVotes[agendaItem.amendmentVote.id].delete()
+                            );
+                          }
+                          // Delete the agenda item
+                          transactions.push(tx.agendaItems[agendaItem.id].delete());
+                        }
+
+                        if (transactions.length > 0) {
+                          await db.transact(transactions);
+                        }
+                      } catch (error) {
+                        console.error('Error removing agenda items:', error);
+                      }
+                    }
+
+                    // Pre-select the user from the existing path
+                    setTargetCollaboratorUserId(amendment?.path?.user?.id || '');
+                    setTargetSelectionDialog(true);
+                    setSelectedTargetGroup(null);
                   }}
                 >
                   <RefreshCw className="mr-2 h-3 w-3" />
@@ -797,12 +935,10 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
           </CardHeader>
           <CardContent>
             {/* Path Overview - Timeline Style */}
-            {amendment.path && amendment.path.pathData && (
+            {amendment.path && enrichedPathData && enrichedPathData.length > 0 && (
               <div className="space-y-4">
                 <div className="text-xs font-semibold uppercase text-muted-foreground">
-                  Amendment Path (
-                  {Array.isArray(amendment.path.pathData) ? amendment.path.pathData.length : 0}{' '}
-                  groups)
+                  Amendment Path ({enrichedPathData.length} groups)
                 </div>
 
                 {/* Timeline */}
@@ -812,169 +948,154 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
 
                   {/* Timeline items */}
                   <div className="space-y-6">
-                    {(Array.isArray(amendment.path.pathData) ? amendment.path.pathData : []).map(
-                      (segment: any, index: number) => {
-                        const isTarget = segment.groupId === amendment.targetGroup.id;
-                        const isNextEvent = segment.forwardingStatus === 'forward_confirmed';
-                        const isPending =
-                          segment.forwardingStatus === 'previous_decision_outstanding';
+                    {enrichedPathData.map((segment: any, index: number) => {
+                      const isTarget = segment.groupId === amendment.targetGroup.id;
+                      const isNextEvent = segment.forwardingStatus === 'forward_confirmed';
+                      const isPending =
+                        segment.forwardingStatus === 'previous_decision_outstanding';
 
-                        return (
-                          <div key={segment.groupId} className="relative">
-                            {/* Timeline dot */}
-                            <div
-                              className={`absolute -left-[22px] top-2 flex h-5 w-5 items-center justify-center rounded-full border-2 ${
-                                isNextEvent
-                                  ? 'border-cyan-600 bg-cyan-500 shadow-lg shadow-cyan-500/50'
-                                  : isTarget
-                                    ? 'border-red-600 bg-red-500 shadow-lg shadow-red-500/50'
-                                    : isPending
-                                      ? 'border-yellow-400 bg-yellow-100'
-                                      : 'border-green-600 bg-green-500'
-                              }`}
-                            >
-                              <span className="text-[10px] font-bold text-white">{index + 1}</span>
-                            </div>
+                      return (
+                        <div key={segment.groupId} className="relative">
+                          {/* Timeline dot */}
+                          <div
+                            className={`absolute -left-[22px] top-2 flex h-5 w-5 items-center justify-center rounded-full border-2 ${
+                              isNextEvent
+                                ? 'border-cyan-600 bg-cyan-500 shadow-lg shadow-cyan-500/50'
+                                : isTarget
+                                  ? 'border-red-600 bg-red-500 shadow-lg shadow-red-500/50'
+                                  : isPending
+                                    ? 'border-yellow-400 bg-yellow-100'
+                                    : 'border-green-600 bg-green-500'
+                            }`}
+                          >
+                            <span className="text-[10px] font-bold text-white">{index + 1}</span>
+                          </div>
 
-                            {/* Content */}
-                            <div
-                              className={`rounded-lg border-2 p-4 transition-all ${
-                                isNextEvent
-                                  ? 'border-cyan-500 bg-cyan-50 shadow-md dark:bg-cyan-950/20'
-                                  : isTarget
-                                    ? 'border-red-300 bg-red-50 shadow-md dark:bg-red-950/20'
-                                    : isPending
-                                      ? 'border-yellow-300 bg-yellow-50/50 opacity-75 dark:bg-yellow-950/10'
-                                      : 'border-border bg-muted/30'
-                              }`}
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0 flex-1">
-                                  {/* Group name */}
-                                  <div className="mb-2 flex items-center gap-2">
-                                    <h4 className="text-base font-semibold">{segment.groupName}</h4>
-                                    {isNextEvent && (
-                                      <Badge className="bg-cyan-500 text-xs hover:bg-cyan-600">
-                                        Next Event
-                                      </Badge>
-                                    )}
-                                    {isTarget && (
-                                      <Badge className="bg-red-500 text-xs hover:bg-red-600">
-                                        Target
-                                      </Badge>
-                                    )}
-                                    {isPending && (
-                                      <Badge
-                                        variant="outline"
-                                        className="border-yellow-600 text-xs text-yellow-700"
-                                      >
-                                        Awaiting Previous
-                                      </Badge>
-                                    )}
-                                  </div>
-
-                                  {/* Event mapping - Arrow style */}
-                                  {segment.eventId && segment.eventTitle ? (
-                                    <div className="mt-3 flex items-center gap-2 rounded-md border border-gray-200 bg-white/60 p-3 dark:border-gray-700 dark:bg-black/20">
-                                      <div className="flex min-w-0 flex-1 items-center gap-2">
-                                        <div className="text-2xl">→</div>
-                                        <div className="min-w-0 flex-1">
-                                          <div className="flex items-center gap-2">
-                                            <CalendarIcon className="h-4 w-4 flex-shrink-0 text-blue-600" />
-                                            <span className="truncate text-sm font-medium">
-                                              {segment.eventTitle}
-                                            </span>
-                                          </div>
-                                          {segment.eventStartDate && (
-                                            <div className="ml-6 mt-1 text-xs text-muted-foreground">
-                                              {new Date(segment.eventStartDate).toLocaleDateString(
-                                                'en-US',
-                                                {
-                                                  weekday: 'long',
-                                                  month: 'long',
-                                                  day: 'numeric',
-                                                  year: 'numeric',
-                                                  hour: 'numeric',
-                                                  minute: '2-digit',
-                                                }
-                                              )}
-                                            </div>
-                                          )}
-                                        </div>
-                                      </div>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() =>
-                                          setEventChangeDialog({
-                                            open: true,
-                                            groupId: segment.groupId,
-                                            groupName: segment.groupName,
-                                            currentEventId: segment.eventId,
-                                          })
-                                        }
-                                        className="flex-shrink-0"
-                                      >
-                                        <RefreshCw className="h-3 w-3" />
-                                      </Button>
-                                    </div>
-                                  ) : (
-                                    <div className="mt-3 flex items-center gap-2 rounded-md border border-dashed border-gray-300 bg-gray-100 p-3 dark:border-gray-700 dark:bg-gray-900">
-                                      <div className="text-2xl opacity-50">→</div>
-                                      <div className="flex-1">
-                                        <span className="text-sm italic text-muted-foreground">
-                                          No upcoming event
-                                        </span>
-                                      </div>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() =>
-                                          setEventChangeDialog({
-                                            open: true,
-                                            groupId: segment.groupId,
-                                            groupName: segment.groupName,
-                                            currentEventId: null,
-                                          })
-                                        }
-                                        className="flex-shrink-0"
-                                      >
-                                        <RefreshCw className="h-3 w-3" />
-                                      </Button>
-                                    </div>
+                          {/* Content */}
+                          <div
+                            className={`rounded-lg border-2 p-4 transition-all ${
+                              isNextEvent
+                                ? 'border-cyan-500 bg-cyan-50 shadow-md dark:bg-cyan-950/20'
+                                : isTarget
+                                  ? 'border-red-300 bg-red-50 shadow-md dark:bg-red-950/20'
+                                  : isPending
+                                    ? 'border-yellow-300 bg-yellow-50/50 opacity-75 dark:bg-yellow-950/10'
+                                    : 'border-border bg-muted/30'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0 flex-1">
+                                {/* Group name */}
+                                <div className="mb-2 flex items-center gap-2">
+                                  <h4 className="text-base font-semibold">{segment.groupName}</h4>
+                                  {isNextEvent && (
+                                    <Badge className="bg-cyan-500 text-xs hover:bg-cyan-600">
+                                      Next Event
+                                    </Badge>
+                                  )}
+                                  {isTarget && (
+                                    <Badge className="bg-red-500 text-xs hover:bg-red-600">
+                                      Target
+                                    </Badge>
+                                  )}
+                                  {isPending && (
+                                    <Badge
+                                      variant="outline"
+                                      className="border-yellow-600 text-xs text-yellow-700"
+                                    >
+                                      Awaiting Previous
+                                    </Badge>
                                   )}
                                 </div>
+
+                                {/* Event mapping - Arrow style */}
+                                {segment.eventId && segment.eventTitle ? (
+                                  <div className="mt-3 flex items-center gap-2 rounded-md border border-gray-200 bg-white/60 p-3 dark:border-gray-700 dark:bg-black/20">
+                                    <div className="flex min-w-0 flex-1 items-center gap-2">
+                                      <div className="text-2xl">→</div>
+                                      <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-2">
+                                          <CalendarIcon className="h-4 w-4 flex-shrink-0 text-blue-600" />
+                                          <span className="truncate text-sm font-medium">
+                                            {segment.eventTitle}
+                                          </span>
+                                        </div>
+                                        {segment.eventStartDate && (
+                                          <div className="ml-6 mt-1 text-xs text-muted-foreground">
+                                            {new Date(segment.eventStartDate).toLocaleDateString(
+                                              'en-US',
+                                              {
+                                                weekday: 'long',
+                                                month: 'long',
+                                                day: 'numeric',
+                                                year: 'numeric',
+                                                hour: 'numeric',
+                                                minute: '2-digit',
+                                              }
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() =>
+                                        setEventChangeDialog({
+                                          open: true,
+                                          groupId: segment.groupId,
+                                          groupName: segment.groupName,
+                                          currentEventId: segment.eventId,
+                                        })
+                                      }
+                                      className="flex-shrink-0"
+                                    >
+                                      <RefreshCw className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <div className="mt-3 flex items-center gap-2 rounded-md border border-dashed border-gray-300 bg-gray-100 p-3 dark:border-gray-700 dark:bg-gray-900">
+                                    <div className="text-2xl opacity-50">→</div>
+                                    <div className="flex-1">
+                                      <span className="text-sm italic text-muted-foreground">
+                                        No upcoming event
+                                      </span>
+                                    </div>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() =>
+                                        setEventChangeDialog({
+                                          open: true,
+                                          groupId: segment.groupId,
+                                          groupName: segment.groupName,
+                                          currentEventId: null,
+                                        })
+                                      }
+                                      className="flex-shrink-0"
+                                    >
+                                      <RefreshCw className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
-                        );
-                      }
-                    )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
                 {/* Summary */}
                 <div className="mt-4 flex items-center gap-2 border-t pt-4">
                   <Badge variant="secondary">
-                    {
-                      (Array.isArray(amendment.path.pathData)
-                        ? amendment.path.pathData
-                        : []
-                      ).filter((s: any) => s.agendaItemId).length
-                    }{' '}
-                    agenda items created
+                    {enrichedPathData.filter((s: any) => s.agendaItemId).length} agenda items
+                    created
                   </Badge>
-                  {(Array.isArray(amendment.path.pathData) ? amendment.path.pathData : []).filter(
-                    (s: any) => s.amendmentVoteId
-                  ).length > 0 && (
+                  {enrichedPathData.filter((s: any) => s.amendmentVoteId).length > 0 && (
                     <Badge variant="secondary">
-                      {
-                        (Array.isArray(amendment.path.pathData)
-                          ? amendment.path.pathData
-                          : []
-                        ).filter((s: any) => s.amendmentVoteId).length
-                      }{' '}
-                      votes created
+                      {enrichedPathData.filter((s: any) => s.amendmentVoteId).length} votes created
                     </Badge>
                   )}
                 </div>
@@ -997,80 +1118,129 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
         </Card>
       )}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Network Flow - Takes 2 columns */}
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle>Amendment Network</CardTitle>
-                <Tabs value={activeTab} onValueChange={v => setActiveTab(v as 'path' | 'network')}>
-                  <TabsList>
-                    <TabsTrigger value="network">Available Targets</TabsTrigger>
-                    <TabsTrigger value="path" disabled={!hasTarget}>
-                      Target Path
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="h-[600px]">
-                {activeTab === 'network' ? (
-                  <FilteredNetworkFlow
-                    userId={user.id}
-                    filterRight="amendmentRight"
-                    onGroupClick={handleGroupClick}
-                    title="Amendment Network"
-                    description="Click on a group to view details and upcoming events"
-                  />
-                ) : (
-                  <>
-                    {(() => {
-                      const pathViz = renderPathVisualization();
-                      if (!pathViz) {
-                        return (
-                          <div className="flex h-full items-center justify-center">
-                            <p className="text-muted-foreground">No path available</p>
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <CardTitle>Amendment Network</CardTitle>
+              <Tabs value={activeTab} onValueChange={v => setActiveTab(v as 'path' | 'network')}>
+                <TabsList>
+                  <TabsTrigger value="network">Available Targets</TabsTrigger>
+                  <TabsTrigger value="path" disabled={!hasTarget}>
+                    Target Path
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+
+            {/* User Selection for Network View */}
+            {activeTab === 'network' && (
+              <div className="flex items-center gap-3">
+                <User className="h-4 w-4 text-muted-foreground" />
+                <div className="flex-1">
+                  <TypeAheadSelect
+                    items={allUsers}
+                    value={selectedUserId}
+                    onChange={setSelectedUserId}
+                    placeholder="Search users to view their network..."
+                    searchKeys={['name', 'email']}
+                    getItemId={(user: any) => user.id}
+                    renderItem={(user: any) => (
+                      <div className="flex items-center gap-3 p-2">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={user.avatar || undefined} alt={user.name} />
+                          <AvatarFallback>
+                            {user.name
+                              ?.split(' ')
+                              .map((n: string) => n[0])
+                              .join('')
+                              .toUpperCase()
+                              .slice(0, 2) || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="font-medium">{user.name}</div>
+                          {user.email && (
+                            <div className="text-xs text-muted-foreground">{user.email}</div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    renderSelected={(user: any) => (
+                      <div className="flex items-center justify-between rounded-md border bg-background p-3">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={user.avatar || undefined} alt={user.name} />
+                            <AvatarFallback>
+                              {user.name
+                                ?.split(' ')
+                                .map((n: string) => n[0])
+                                .join('')
+                                .toUpperCase()
+                                .slice(0, 2) || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">{user.name}</div>
+                            {user.email && (
+                              <div className="text-xs text-muted-foreground">{user.email}</div>
+                            )}
                           </div>
-                        );
-                      }
-                      return (
-                        <NetworkFlowBase
-                          nodes={pathViz.nodes}
-                          edges={pathViz.edges}
-                          panel={<div />}
-                          onNodeClick={handlePathNodeClick}
-                        />
-                      );
-                    })()}
-                  </>
+                        </div>
+                      </div>
+                    )}
+                    label="View Network For:"
+                  />
+                </div>
+                {selectedUserId && selectedUserId !== pathUserId && (
+                  <Button variant="outline" size="sm" onClick={() => setSelectedUserId('')}>
+                    {pathUserId ? 'View Path User Network' : 'View My Network'}
+                  </Button>
                 )}
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="h-[600px]">
+            {activeTab === 'network' ? (
+              <UserNetworkFlow
+                userId={displayUserId}
+                filterRight="amendmentRight"
+                onGroupClick={handleGroupClick}
+              />
+            ) : (
+              <>
+                {(() => {
+                  const pathViz = renderPathVisualization();
+                  if (!pathViz) {
+                    return (
+                      <div className="flex h-full items-center justify-center">
+                        <p className="text-muted-foreground">No path available</p>
+                      </div>
+                    );
+                  }
+                  return (
+                    <NetworkFlowBase
+                      nodes={pathViz.nodes}
+                      edges={pathViz.edges}
+                      panel={<div />}
+                      onNodeClick={handlePathNodeClick}
+                    />
+                  );
+                })()}
+              </>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Group Details and Events - Takes 1 column */}
-        <div className="lg:col-span-1">
-          {selectedGroup ? (
-            <GroupDetailsWithEvents
-              groupId={selectedGroup.id}
-              groupData={selectedGroup.data}
-              onEventClick={handleEventClick}
-              onClose={() => setSelectedGroup(null)}
-            />
-          ) : (
-            <Card className="h-full">
-              <CardContent className="flex h-[600px] items-center justify-center">
-                <p className="text-center text-sm text-muted-foreground">
-                  Click on a group in the network to view its details and upcoming events
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
+      {/* Entity Dialog (Groups, Events, and Relationships) */}
+      <NetworkEntityDialog
+        open={entityDialogOpen}
+        onOpenChange={setEntityDialogOpen}
+        entity={selectedEntity}
+      />
 
       {/* Target Selection Dialog */}
       <Dialog open={targetDialogOpen} onOpenChange={setTargetDialogOpen}>
@@ -1086,33 +1256,116 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
             </DialogDescription>
           </DialogHeader>
 
-          {selectedGroup && selectedEvent && (
+          {pendingTarget && (
             <div className="space-y-4 py-4">
+              {/* Group Card (matching GroupsCard design) */}
               <div>
-                <h4 className="mb-2 text-sm font-semibold">Target Group</h4>
-                <p className="text-sm">{selectedGroup.data.name}</p>
-                {selectedGroup.data.description && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {selectedGroup.data.description}
-                  </p>
-                )}
+                <h4 className="mb-2 text-sm font-semibold uppercase text-muted-foreground">
+                  Target Group
+                </h4>
+                <Card className="overflow-hidden border-2 bg-gradient-to-br from-blue-100 to-purple-100 transition-all duration-300 dark:from-blue-900/40 dark:to-purple-900/50">
+                  <CardHeader className="space-y-3 pb-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        {pendingTarget.groupData.abbr && (
+                          <Badge variant="secondary" className="mb-2 w-fit font-semibold">
+                            {pendingTarget.groupData.abbr}
+                          </Badge>
+                        )}
+                        <CardTitle className="line-clamp-1 text-xl">
+                          {pendingTarget.groupData.name}
+                        </CardTitle>
+                        {pendingTarget.groupData.description && (
+                          <CardDescription className="mt-1.5 line-clamp-2">
+                            {pendingTarget.groupData.description}
+                          </CardDescription>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3 pt-0">
+                    <div className="flex flex-wrap gap-3 border-t border-border/50 pt-3">
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <User className="h-4 w-4" />
+                        <span className="font-medium">
+                          {pendingTarget.groupData.memberCount || 0} members
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
 
+              {/* Event Card (matching GroupEventsList design) */}
               <div>
-                <h4 className="mb-2 text-sm font-semibold">Target Event</h4>
-                <p className="text-sm">{selectedEvent.data.title}</p>
-                {selectedEvent.data.startDate && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {new Date(selectedEvent.data.startDate).toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      month: 'long',
-                      day: 'numeric',
-                      year: 'numeric',
-                      hour: 'numeric',
-                      minute: '2-digit',
-                    })}
-                  </p>
-                )}
+                <h4 className="mb-2 text-sm font-semibold uppercase text-muted-foreground">
+                  Target Event
+                </h4>
+                <div className="rounded-lg border-2 bg-gradient-to-br from-green-100 to-blue-100 p-4 dark:from-green-900/40 dark:to-blue-900/50">
+                  {/* Header with title and badges */}
+                  <div className="mb-3 flex items-start justify-between gap-2">
+                    <h4 className="flex-1 text-lg font-semibold leading-tight">
+                      {pendingTarget.eventData.title}
+                    </h4>
+                    <div className="flex gap-1">
+                      {pendingTarget.eventData.isPublic && (
+                        <Badge variant="outline" className="text-xs">
+                          Public
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Event details */}
+                  <div className="space-y-1.5 text-xs text-muted-foreground">
+                    {/* Date and time */}
+                    {pendingTarget.eventData.startDate && (
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1.5">
+                          <CalendarIcon className="h-3.5 w-3.5" />
+                          <span>
+                            {new Date(pendingTarget.eventData.startDate).toLocaleDateString(
+                              'en-US',
+                              {
+                                weekday: 'short',
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              }
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <CalendarIcon className="h-3.5 w-3.5" />
+                          <span>
+                            {new Date(pendingTarget.eventData.startDate).toLocaleTimeString(
+                              'en-US',
+                              {
+                                hour: 'numeric',
+                                minute: '2-digit',
+                              }
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Location */}
+                    {pendingTarget.eventData.location && (
+                      <div className="flex items-center gap-1.5">
+                        <Target className="h-3.5 w-3.5" />
+                        <span className="truncate">{pendingTarget.eventData.location}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Description */}
+                  {pendingTarget.eventData.description && (
+                    <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">
+                      {pendingTarget.eventData.description}
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
@@ -1208,50 +1461,79 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                     );
                   }
 
-                  return upcomingEvents.map((event: any) => (
-                    <div
-                      key={event.id}
-                      className={`flex items-center justify-between rounded-lg border p-3 transition-all ${
-                        event.id === eventChangeDialog?.currentEventId
-                          ? 'border-primary bg-primary/5'
-                          : 'hover:bg-muted'
-                      }`}
-                    >
-                      <div className="flex-1">
-                        <div className="text-sm font-medium">{event.title}</div>
-                        <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                          <CalendarIcon className="h-3 w-3" />
-                          <span>
-                            {new Date(event.startDate).toLocaleDateString('en-US', {
-                              weekday: 'short',
-                              month: 'short',
-                              day: 'numeric',
-                              hour: 'numeric',
-                              minute: '2-digit',
-                            })}
-                          </span>
+                  // Gradient classes for events (matching GroupEventsList style)
+                  const gradients = [
+                    'bg-gradient-to-br from-pink-100 to-blue-100 dark:from-pink-900/40 dark:to-blue-900/50',
+                    'bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/40 dark:to-purple-900/50',
+                    'bg-gradient-to-br from-green-100 to-blue-100 dark:from-green-900/40 dark:to-blue-900/50',
+                    'bg-gradient-to-br from-yellow-100 to-orange-100 dark:from-yellow-900/40 dark:to-orange-900/50',
+                    'bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/50',
+                    'bg-gradient-to-br from-red-100 to-yellow-100 dark:from-red-900/40 dark:to-yellow-900/50',
+                    'bg-gradient-to-br from-teal-100 to-green-100 dark:from-teal-900/40 dark:to-green-900/50',
+                  ];
+
+                  return upcomingEvents.map((event: any, index: number) => {
+                    const gradientClass = gradients[index % gradients.length];
+                    const isCurrentEvent = event.id === eventChangeDialog?.currentEventId;
+
+                    return (
+                      <div
+                        key={event.id}
+                        className={`group rounded-lg border p-4 transition-all ${gradientClass} ${
+                          isCurrentEvent
+                            ? 'border-primary ring-2 ring-primary/20'
+                            : 'cursor-pointer hover:border-primary hover:shadow-md'
+                        }`}
+                        onClick={() => {
+                          if (!isCurrentEvent && !isSaving && eventChangeDialog) {
+                            handleChangeEvent(eventChangeDialog.groupId, event.id);
+                          }
+                        }}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-semibold group-hover:text-primary">
+                                {event.title}
+                              </h4>
+                              {isCurrentEvent && <Badge variant="secondary">Current</Badge>}
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <CalendarIcon className="h-3 w-3" />
+                              <span>
+                                {new Date(event.startDate).toLocaleDateString('en-US', {
+                                  weekday: 'short',
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: 'numeric',
+                                  minute: '2-digit',
+                                })}
+                              </span>
+                            </div>
+                            {event.description && (
+                              <p className="line-clamp-2 text-xs text-muted-foreground">
+                                {event.description}
+                              </p>
+                            )}
+                          </div>
+                          {!isCurrentEvent && (
+                            <Button
+                              size="sm"
+                              disabled={isSaving}
+                              onClick={e => {
+                                e.stopPropagation();
+                                if (eventChangeDialog) {
+                                  handleChangeEvent(eventChangeDialog.groupId, event.id);
+                                }
+                              }}
+                            >
+                              {isSaving ? 'Updating...' : 'Select'}
+                            </Button>
+                          )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {event.id === eventChangeDialog?.currentEventId && (
-                          <Badge variant="secondary">Current</Badge>
-                        )}
-                        <Button
-                          size="sm"
-                          variant={
-                            event.id === eventChangeDialog?.currentEventId ? 'outline' : 'default'
-                          }
-                          disabled={event.id === eventChangeDialog?.currentEventId || isSaving}
-                          onClick={() =>
-                            eventChangeDialog &&
-                            handleChangeEvent(eventChangeDialog.groupId, event.id)
-                          }
-                        >
-                          {isSaving ? 'Updating...' : 'Select'}
-                        </Button>
-                      </div>
-                    </div>
-                  ));
+                    );
+                  });
                 })()}
               </div>
             </ScrollArea>
@@ -1264,6 +1546,310 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Target Selection Dialog - Connected Groups & Events */}
+      <Dialog open={targetSelectionDialog} onOpenChange={setTargetSelectionDialog}>
+        <DialogContent className="flex h-[85vh] max-w-4xl flex-col">
+          <DialogHeader>
+            <DialogTitle>Select Target Group and Event</DialogTitle>
+            <DialogDescription>
+              Choose a collaborator to view their network, then select a group and event
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="border-b px-6 py-3">
+            <div className="flex items-center gap-3">
+              <User className="h-4 w-4 text-muted-foreground" />
+              <div className="flex-1">
+                <TypeAheadSelect
+                  items={allUsers}
+                  value={targetCollaboratorUserId}
+                  onChange={setTargetCollaboratorUserId}
+                  placeholder="Select collaborator to view their network..."
+                  searchKeys={['name', 'email']}
+                  getItemId={(user: any) => user.id}
+                  renderItem={(user: any) => (
+                    <div className="flex items-center gap-3 p-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user.avatar || undefined} alt={user.name} />
+                        <AvatarFallback>
+                          {user.name
+                            ?.split(' ')
+                            .map((n: string) => n[0])
+                            .join('')
+                            .toUpperCase()
+                            .slice(0, 2) || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="font-medium">{user.name}</div>
+                        {user.email && (
+                          <div className="text-xs text-muted-foreground">{user.email}</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  renderSelected={(user: any) => (
+                    <div className="flex items-center justify-between rounded-md border bg-background p-3">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={user.avatar || undefined} alt={user.name} />
+                          <AvatarFallback>
+                            {user.name
+                              ?.split(' ')
+                              .map((n: string) => n[0])
+                              .join('')
+                              .toUpperCase()
+                              .slice(0, 2) || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium">{user.name}</div>
+                          {user.email && (
+                            <div className="text-xs text-muted-foreground">{user.email}</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  label="Select Network For:"
+                />
+              </div>
+            </div>
+          </div>
+
+          <ScrollArea className="min-h-0 flex-1 pr-4">
+            <div className="space-y-2 pb-20">
+              {(() => {
+                const targetUserId = targetCollaboratorUserId || user?.id;
+
+                if (!targetUserId || !networkData) {
+                  return (
+                    <p className="px-6 text-sm text-muted-foreground">
+                      {!targetCollaboratorUserId
+                        ? 'Please select a collaborator to view their network'
+                        : 'Loading groups...'}
+                    </p>
+                  );
+                }
+
+                const userMemberships =
+                  (networkData as any)?.groupMemberships?.filter(
+                    (m: any) =>
+                      (m.status === 'member' || m.status === 'admin') && m.user?.id === targetUserId
+                  ) || [];
+
+                const userGroupIds = userMemberships.map((m: any) => m.group.id);
+                const allGroups = (networkData as any)?.groups || [];
+                const relationships = (networkData as any)?.groupRelationships || [];
+
+                // Filter for amendmentRight relationships
+                const amendmentRelationships = relationships.filter(
+                  (r: any) => r.withRight === 'amendmentRight'
+                );
+
+                // Build set of connected groups (direct and indirect)
+                const connectedGroupIds = new Set<string>(userGroupIds);
+
+                // Add directly connected groups
+                amendmentRelationships.forEach((rel: any) => {
+                  if (userGroupIds.includes(rel.parentGroup?.id)) {
+                    connectedGroupIds.add(rel.childGroup?.id);
+                  }
+                  if (userGroupIds.includes(rel.childGroup?.id)) {
+                    connectedGroupIds.add(rel.parentGroup?.id);
+                  }
+                });
+
+                // Add indirectly connected groups (2 hops)
+                const firstHopGroups = Array.from(connectedGroupIds);
+                amendmentRelationships.forEach((rel: any) => {
+                  if (firstHopGroups.includes(rel.parentGroup?.id)) {
+                    connectedGroupIds.add(rel.childGroup?.id);
+                  }
+                  if (firstHopGroups.includes(rel.childGroup?.id)) {
+                    connectedGroupIds.add(rel.parentGroup?.id);
+                  }
+                });
+
+                const connectedGroups = allGroups.filter((g: any) => connectedGroupIds.has(g.id));
+
+                if (connectedGroups.length === 0) {
+                  return (
+                    <p className="text-sm text-muted-foreground">
+                      No connected groups found. You need to be a member of groups with amendment
+                      rights.
+                    </p>
+                  );
+                }
+
+                // Gradient classes for groups
+                const gradients = [
+                  'bg-gradient-to-br from-pink-100 to-blue-100 dark:from-pink-900/40 dark:to-blue-900/50',
+                  'bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/40 dark:to-purple-900/50',
+                  'bg-gradient-to-br from-green-100 to-blue-100 dark:from-green-900/40 dark:to-blue-900/50',
+                  'bg-gradient-to-br from-yellow-100 to-orange-100 dark:from-yellow-900/40 dark:to-orange-900/50',
+                  'bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/50',
+                  'bg-gradient-to-br from-red-100 to-yellow-100 dark:from-red-900/40 dark:to-yellow-900/50',
+                  'bg-gradient-to-br from-teal-100 to-green-100 dark:from-teal-900/40 dark:to-green-900/50',
+                ];
+
+                return connectedGroups.map((group: any, index: number) => {
+                  const gradientClass = gradients[index % gradients.length];
+                  const isSelected = selectedTargetGroup?.id === group.id;
+                  const isMemberGroup = userGroupIds.includes(group.id);
+
+                  return (
+                    <div key={group.id}>
+                      {/* Group Card */}
+                      <div
+                        className={`cursor-pointer rounded-lg border p-3 transition-all ${
+                          gradientClass
+                        } ${
+                          isSelected
+                            ? 'border-primary ring-2 ring-primary/20'
+                            : 'hover:border-primary hover:shadow-md'
+                        }`}
+                        onClick={() => setSelectedTargetGroup({ id: group.id, data: group })}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <h4 className="truncate font-semibold">{group.name}</h4>
+                            {group.description && (
+                              <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
+                                {group.description}
+                              </p>
+                            )}
+                            <div className="mt-2 flex items-center gap-2">
+                              {isMemberGroup && (
+                                <Badge variant="secondary" className="text-xs">
+                                  Member
+                                </Badge>
+                              )}
+                              <span className="text-xs text-muted-foreground">
+                                {group.memberCount || 0} members
+                              </span>
+                            </div>
+                          </div>
+                          {isSelected && (
+                            <div className="shrink-0">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary">
+                                <CalendarIcon className="h-4 w-4 text-primary-foreground" />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Events (shown inline below selected group) */}
+                      {isSelected && (
+                        <div className="ml-6 mt-2 space-y-2 border-l-2 border-primary/30 pl-4">
+                          {(() => {
+                            const events = (targetGroupEventsData as any)?.events || [];
+                            const upcomingEvents = events
+                              .filter((e: any) => new Date(e.startDate) > new Date())
+                              .sort(
+                                (a: any, b: any) =>
+                                  new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+                              );
+
+                            if (upcomingEvents.length === 0) {
+                              return (
+                                <p className="py-2 text-sm text-muted-foreground">
+                                  No upcoming events for this group
+                                </p>
+                              );
+                            }
+
+                            const eventGradients = [
+                              'bg-gradient-to-br from-pink-100 to-blue-100 dark:from-pink-900/40 dark:to-blue-900/50',
+                              'bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/40 dark:to-purple-900/50',
+                              'bg-gradient-to-br from-green-100 to-blue-100 dark:from-green-900/40 dark:to-blue-900/50',
+                              'bg-gradient-to-br from-yellow-100 to-orange-100 dark:from-yellow-900/40 dark:to-orange-900/50',
+                              'bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/50',
+                              'bg-gradient-to-br from-red-100 to-yellow-100 dark:from-red-900/40 dark:to-yellow-900/50',
+                              'bg-gradient-to-br from-teal-100 to-green-100 dark:from-teal-900/40 dark:to-green-900/50',
+                            ];
+
+                            return upcomingEvents.map((event: any, eventIndex: number) => {
+                              const eventGradientClass =
+                                eventGradients[eventIndex % eventGradients.length];
+
+                              return (
+                                <div
+                                  key={event.id}
+                                  className={`cursor-pointer rounded-lg border p-3 transition-all ${eventGradientClass} ${
+                                    pendingTarget?.eventId === event.id
+                                      ? 'border-primary ring-2 ring-primary/20'
+                                      : 'hover:border-primary hover:shadow-md'
+                                  }`}
+                                  onClick={() => {
+                                    if (!isSaving) {
+                                      setPendingTarget({
+                                        groupId: group.id,
+                                        groupData: group,
+                                        eventId: event.id,
+                                        eventData: event,
+                                      });
+                                    }
+                                  }}
+                                >
+                                  <div className="space-y-2">
+                                    <h4 className="font-semibold">{event.title}</h4>
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                      <CalendarIcon className="h-3 w-3" />
+                                      <span>
+                                        {new Date(event.startDate).toLocaleDateString('en-US', {
+                                          weekday: 'short',
+                                          month: 'short',
+                                          day: 'numeric',
+                                          hour: 'numeric',
+                                          minute: '2-digit',
+                                        })}
+                                      </span>
+                                    </div>
+                                    {event.description && (
+                                      <p className="line-clamp-2 text-xs text-muted-foreground">
+                                        {event.description}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            });
+                          })()}
+                        </div>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          </ScrollArea>
+
+          <DialogFooter className="border-t pt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setTargetSelectionDialog(false);
+                setPendingTarget(null);
+              }}
+            >
+              Cancel
+            </Button>
+            {pendingTarget && (
+              <Button
+                onClick={() => {
+                  setTargetSelectionDialog(false);
+                  setTargetDialogOpen(true);
+                }}
+              >
+                Confirm Selection
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

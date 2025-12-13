@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect } from 'react';
 import { Node, Edge, useNodesState, useEdgesState, MarkerType } from '@xyflow/react';
 import { NetworkFlowBase, Panel } from '@/components/shared/NetworkFlowBase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,23 +16,34 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
   const [nodes, setNodes] = useNodesState<Node>([]);
   const [edges, setEdges] = useEdgesState<Edge>([]);
 
-  // Fetch amendment data with target, event, and path
+  // Fetch amendment data with target, event, and path segments
   const { data: amendmentData, isLoading } = db.useQuery({
     amendments: {
       $: { where: { id: amendmentId } },
       targetGroup: {},
       targetEvent: {},
-      path: {},
+      path: {
+        segments: {
+          group: {},
+          event: {},
+        },
+      },
     },
   } as any);
 
   const amendment = (amendmentData as any)?.amendments?.[0];
   const hasTarget = amendment?.targetGroup && amendment?.targetEvent;
-  const pathData = amendment?.path?.pathData;
+
+  // Derive pathSegments for use in JSX
+  const pathSegments = (amendment?.path?.segments || []).sort(
+    (a: any, b: any) => a.order - b.order
+  );
 
   // Generate visualization nodes and edges
-  useMemo(() => {
-    if (!pathData || pathData.length === 0) {
+  useEffect(() => {
+    const segments = (amendment?.path?.segments || []).sort((a: any, b: any) => a.order - b.order);
+
+    if (!segments || segments.length === 0) {
       setNodes([]);
       setEdges([]);
       return;
@@ -42,19 +53,19 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
     const newEdges: Edge[] = [];
 
     // Create nodes for each step in the path
-    pathData.forEach((segment: any, index: number) => {
+    segments.forEach((segment: any, index: number) => {
       const xPos = 100 + index * 250;
       const yPos = 200;
       const isFirst = index === 0;
-      const isTarget = index === pathData.length - 1;
+      const isTarget = index === segments.length - 1;
 
       newNodes.push({
         id: `path-node-${index}`,
         type: 'default',
         position: { x: xPos, y: yPos },
         data: {
-          label: segment.groupName,
-          event: segment.eventTitle,
+          label: segment.group?.name || 'Unknown Group',
+          event: segment.event?.title || 'No Event',
           type: 'group',
         },
         style: {
@@ -72,8 +83,8 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
     });
 
     // Create edges between groups
-    pathData.forEach((segment: any, index: number) => {
-      if (index < pathData.length - 1) {
+    segments.forEach((segment: any, index: number) => {
+      if (index < segments.length - 1) {
         newEdges.push({
           id: `path-edge-${index}`,
           source: `path-node-${index}`,
@@ -103,7 +114,7 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
 
     setNodes(newNodes);
     setEdges(newEdges);
-  }, [pathData, setNodes, setEdges]);
+  }, [amendment?.path?.segments, setNodes, setEdges]);
 
   if (isLoading) {
     return (
@@ -140,7 +151,7 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
     );
   }
 
-  if (!pathData || pathData.length === 0) {
+  if (!pathSegments || pathSegments.length === 0) {
     return (
       <Card>
         <CardHeader>
@@ -176,8 +187,8 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
             Amendment Process Path
           </CardTitle>
           <CardDescription>
-            Shortest path to target group ({pathData.length} step
-            {pathData.length !== 1 ? 's' : ''})
+            Shortest path to target group ({pathSegments.length} step
+            {pathSegments.length !== 1 ? 's' : ''})
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -240,25 +251,27 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
 
           {/* Path details list */}
           <div className="mt-6 space-y-3">
-            {pathData?.map((segment: any, index: number) => (
-              <div key={segment.groupId} className="flex items-start gap-3">
+            {pathSegments?.map((segment: any, index: number) => (
+              <div key={segment.group?.id || index} className="flex items-start gap-3">
                 <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
                   {index + 1}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <h4 className="font-semibold">{segment.groupName}</h4>
+                    <h4 className="font-semibold">{segment.group?.name || 'Unknown Group'}</h4>
                     {index === 0 && <Badge variant="secondary">Start</Badge>}
-                    {index === pathData.length - 1 && <Badge variant="destructive">Target</Badge>}
+                    {index === pathSegments.length - 1 && (
+                      <Badge variant="destructive">Target</Badge>
+                    )}
                   </div>
-                  {segment.eventTitle && (
+                  {segment.event?.title && (
                     <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4" />
-                      <span>{segment.eventTitle}</span>
+                      <span>{segment.event.title}</span>
                     </div>
                   )}
                 </div>
-                {index < pathData.length - 1 && (
+                {index < pathSegments.length - 1 && (
                   <ArrowRight className="mt-2 h-5 w-5 flex-shrink-0 text-muted-foreground" />
                 )}
               </div>

@@ -383,8 +383,12 @@ const _schema = i.schema({
     }),
     amendmentPaths: i.entity({
       createdAt: i.date().indexed(),
-      pathData: i.json(), // Array of { groupId, groupName, eventId, eventTitle, eventStartDate, agendaItemId, amendmentVoteId, forwardingStatus }
-      pathLength: i.number().indexed(), // Number of groups in path
+      pathLength: i.number().indexed(),
+    }),
+    amendmentPathSegments: i.entity({
+      order: i.number().indexed(), // Position in path (0 = first, 1 = second, etc.)
+      forwardingStatus: i.string().indexed(), // 'forward_confirmed' | 'previous_decision_outstanding'
+      createdAt: i.date().indexed(),
     }),
     stripeCustomers: i.entity({
       stripeCustomerId: i.string().unique().indexed(),
@@ -500,6 +504,78 @@ const _schema = i.schema({
         on: 'amendments',
         has: 'one',
         label: 'path',
+      },
+    },
+    amendmentPathsUser: {
+      forward: {
+        on: 'amendmentPaths',
+        has: 'one',
+        label: 'user',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'amendmentPaths',
+      },
+    },
+    amendmentPathSegmentsPath: {
+      forward: {
+        on: 'amendmentPathSegments',
+        has: 'one',
+        label: 'path',
+      },
+      reverse: {
+        on: 'amendmentPaths',
+        has: 'many',
+        label: 'segments',
+      },
+    },
+    amendmentPathSegmentsGroup: {
+      forward: {
+        on: 'amendmentPathSegments',
+        has: 'one',
+        label: 'group',
+      },
+      reverse: {
+        on: 'groups',
+        has: 'many',
+        label: 'pathSegments',
+      },
+    },
+    amendmentPathSegmentsEvent: {
+      forward: {
+        on: 'amendmentPathSegments',
+        has: 'one',
+        label: 'event',
+      },
+      reverse: {
+        on: 'events',
+        has: 'many',
+        label: 'pathSegments',
+      },
+    },
+    amendmentPathSegmentsAgendaItem: {
+      forward: {
+        on: 'amendmentPathSegments',
+        has: 'one',
+        label: 'agendaItem',
+      },
+      reverse: {
+        on: 'agendaItems',
+        has: 'one',
+        label: 'pathSegment',
+      },
+    },
+    amendmentPathSegmentsAmendmentVote: {
+      forward: {
+        on: 'amendmentPathSegments',
+        has: 'one',
+        label: 'amendmentVote',
+      },
+      reverse: {
+        on: 'amendmentVotes',
+        has: 'one',
+        label: 'pathSegment',
       },
     },
     amendmentVoteEntriesAmendmentVote: {

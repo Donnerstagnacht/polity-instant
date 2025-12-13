@@ -30,7 +30,6 @@ import { paymentsSeeder } from './seeders/payments.seeder';
 import { subscriptionsSeeder } from './seeders/subscriptions.seeder';
 import { invitationsSeeder } from './seeders/invitations.seeder';
 import { rbacSeeder } from './seeders/rbac.seeder';
-import { amendmentTargetsSeeder } from './seeders/amendmentTargets.seeder';
 import { agendaAndVotingSeeder } from './seeders/agendaAndVoting.seeder';
 import { meetingSlotsSeeder } from './seeders/meetingSlots.seeder';
 import { blogCommentsSeeder } from './seeders/blogComments.seeder';
@@ -94,7 +93,6 @@ async function main() {
     conversationsSeeder,
     eventsSeeder,
     rbacSeeder,
-    amendmentTargetsSeeder,
     agendaAndVotingSeeder,
     subscriptionsSeeder,
     notificationsSeeder,

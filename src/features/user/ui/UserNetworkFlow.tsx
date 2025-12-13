@@ -22,9 +22,10 @@ interface NetworkNode extends Node {
 interface UserNetworkFlowProps {
   userId: string;
   onGroupClick?: (groupId: string, groupData: any) => void;
+  filterRight?: string; // Optional filter by specific right type
 }
 
-export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) {
+export function UserNetworkFlow({ userId, onGroupClick, filterRight }: UserNetworkFlowProps) {
   const [showIndirect, setShowIndirect] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState<NetworkNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -84,6 +85,11 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
       const childrenMap = new Map<string, { group: any; rights: string[] }>();
 
       stableRelationships.forEach((rel: any) => {
+        // Skip if filtering by right and this relationship doesn't have it
+        if (filterRight && rel.withRight !== filterRight) {
+          return;
+        }
+
         if (rel.childGroup?.id === groupId) {
           const parentId = rel.parentGroup?.id;
           if (!parentId) return;
@@ -115,7 +121,7 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
         children: Array.from(childrenMap.values()),
       };
     },
-    [stableRelationships]
+    [stableRelationships, filterRight]
   );
 
   // Build indirect (recursive) relationships for a group
@@ -151,6 +157,11 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
 
           const findParentsForRight = (id: string, level: number) => {
             stableRelationships.forEach((rel: any) => {
+              // Skip if filtering and doesn't match
+              if (filterRight && rel.withRight !== filterRight) {
+                return;
+              }
+
               if (
                 rel.childGroup?.id === id &&
                 rel.withRight === right &&
@@ -204,6 +215,11 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
 
           const findChildrenForRight = (id: string, level: number, currentParentId: string) => {
             stableRelationships.forEach((rel: any) => {
+              // Skip if filtering and doesn't match
+              if (filterRight && rel.withRight !== filterRight) {
+                return;
+              }
+
               if (
                 rel.parentGroup?.id === id &&
                 rel.withRight === right &&
@@ -244,7 +260,7 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
         children: Array.from(childrenMap.values()),
       };
     },
-    [stableRelationships, getDirectGroupRelationships]
+    [stableRelationships, getDirectGroupRelationships, filterRight]
   );
 
   // Toggle right filter
@@ -720,8 +736,19 @@ export function UserNetworkFlow({ userId, onGroupClick }: UserNetworkFlowProps) 
                 </Button>
               </div>
 
-              {/* Right type filters */}
-              <RightFilters selectedRights={selectedRights} onToggleRight={toggleRight} />
+              {/* Right type filters - only show if not filtering by specific right */}
+              {!filterRight && (
+                <RightFilters selectedRights={selectedRights} onToggleRight={toggleRight} />
+              )}
+
+              {filterRight && (
+                <div className="mt-3 rounded-md bg-blue-50 p-2 text-sm dark:bg-blue-950/20">
+                  <span className="font-medium">Filtered by:</span>{' '}
+                  <span className="text-blue-700 dark:text-blue-300">
+                    {filterRight.replace('Right', '')}
+                  </span>
+                </div>
+              )}
 
               {/* Color legend */}
               <div className="mt-3">

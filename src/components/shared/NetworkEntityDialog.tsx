@@ -67,9 +67,15 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
                 <h4 className="mb-3 text-sm font-semibold">Upcoming Events</h4>
                 <GroupEventsList
                   groupId={entity.data.id}
-                  onEventClick={eventId => {
-                    router.push(`/event/${eventId}`);
-                    onOpenChange(false);
+                  onEventClick={(eventId, eventData) => {
+                    // If custom onEventSelect handler provided, use it
+                    if (entity.data.onEventSelect) {
+                      entity.data.onEventSelect(eventId, eventData);
+                    } else {
+                      // Default behavior: navigate to event page
+                      router.push(`/event/${eventId}`);
+                      onOpenChange(false);
+                    }
                   }}
                 />
               </div>

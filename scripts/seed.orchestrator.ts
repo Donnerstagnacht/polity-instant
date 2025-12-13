@@ -191,7 +191,7 @@ export class SeedOrchestrator {
       { label: 'Users', count: context.userIds?.length || 0 },
       { label: 'Groups', count: context.groupIds?.length || 0 },
       { label: 'Events', count: context.eventIds?.length || 0 },
-      { label: 'Amendments', count: context.amendmentIds?.length || 0 },
+      { label: 'Amendments (all with targets & paths)', count: context.amendmentIds?.length || 0 },
       { label: 'Blogs', count: context.blogIds?.length || 0 },
       { label: 'Positions', count: context.positionIds?.length || 0 },
       { label: 'Statements', count: context.statementIds?.length || 0 },
