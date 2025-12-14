@@ -400,7 +400,7 @@ export default function NotificationsPage() {
           <div className="sticky top-0 z-10 mb-6 border-b bg-background/95 pb-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="mb-6 flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold">Notifications</h1>
+                <h1 className="text-3xl font-bold">Notifications v1</h1>
                 <p className="text-muted-foreground">
                   {unreadNotifications.length > 0
                     ? `${unreadNotifications.length} unread notification${unreadNotifications.length !== 1 ? 's' : ''}`
