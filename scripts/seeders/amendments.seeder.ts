@@ -44,6 +44,9 @@ export const amendmentsSeeder: EntitySeeder = {
     // Get the main user (first user)
     const mainUserId = userIds[0];
 
+    // Store amendments for cloning
+    const amendmentsToClone: { id: string; title: string; ownerId: string }[] = [];
+
     // Create amendments for each group (2-4 amendments per group)
     for (const groupId of groupIds) {
       const amendmentCount = randomInt(2, 4);
@@ -53,6 +56,11 @@ export const amendmentsSeeder: EntitySeeder = {
         const amendmentId = id();
         amendmentIds.push(amendmentId);
         const amendmentTitle = faker.lorem.sentence();
+
+        // Store for potential cloning (50% chance to be cloned later)
+        if (Math.random() < 0.5) {
+          amendmentsToClone.push({ id: amendmentId, title: amendmentTitle, ownerId });
+        }
 
         // === Create target group and event FIRST ===
         const targetGroupId = randomItem(groupIds);
@@ -102,6 +110,18 @@ export const amendmentsSeeder: EntitySeeder = {
 
         // Link amendment to group
         transactions.push(tx.amendments[amendmentId].link({ groups: groupId }));
+
+        // Add group supporters (2-5 random groups supporting this amendment)
+        const supportingGroupsCount = randomInt(2, 5);
+        const supportingGroups = randomItems(
+          groupIds,
+          Math.min(supportingGroupsCount, groupIds.length)
+        );
+        for (const supportingGroupId of supportingGroups) {
+          transactions.push(
+            tx.amendments[amendmentId].link({ groupSupporters: supportingGroupId })
+          );
+        }
 
         // Track links
         userLinks++;
@@ -307,6 +327,55 @@ export const amendmentsSeeder: EntitySeeder = {
       }
     }
 
+    // Create clones (1-3 clones from random amendments in the collection)
+    let clonesCreated = 0;
+    const cloneCount = Math.min(randomInt(1, 3), amendmentsToClone.length);
+
+    for (let i = 0; i < cloneCount; i++) {
+      const originalAmendment = randomItem(amendmentsToClone);
+      const cloneId = id();
+      const cloneOwnerId = randomItem(userIds);
+
+      amendmentIds.push(cloneId);
+
+      // Clone the amendment with modified title
+      transactions.push(
+        tx.amendments[cloneId]
+          .update({
+            title: `${originalAmendment.title} (Clone)`,
+            subtitle: faker.lorem.sentence(),
+            status: 'Drafting',
+            supporters: 0,
+            date: new Date().toISOString(),
+            code: `AMN-${faker.string.alphanumeric(6).toUpperCase()}`,
+            tags: [randomItem(['policy', 'reform', 'legislation', 'amendment', 'proposal'])],
+            visibility: randomVisibility(),
+          })
+          .link({
+            clonedFrom: originalAmendment.id,
+          })
+      );
+
+      // Add clone owner as admin collaborator
+      const collaboratorId = id();
+      transactions.push(
+        tx.amendmentCollaborators[collaboratorId]
+          .update({
+            status: 'admin',
+            createdAt: new Date(),
+            visibility: randomVisibility(),
+          })
+          .link({ amendment: cloneId, user: cloneOwnerId })
+      );
+
+      // Clone the document (find original document and create a copy)
+      transactions.push(
+        ...createAmendmentDocument(cloneId, `${originalAmendment.title} (Clone)`, cloneOwnerId)
+      );
+
+      clonesCreated++;
+    }
+
     // Execute in batches
     if (transactions.length > 0) {
       const batchSize = 20;
@@ -320,6 +389,7 @@ export const amendmentsSeeder: EntitySeeder = {
     console.log(`  - User links: ${userLinks}`);
     console.log(`  - Group links: ${groupLinks}`);
     console.log(`  - Amendment paths: ${pathsCreated}`);
+    console.log(`  - Clones created: ${clonesCreated}`);
     console.log(`  - Agenda items: ${agendaItemsCreated}`);
     console.log(`  - Amendment votes: ${amendmentVotesCreated}`);
 

@@ -19,7 +19,7 @@ export function StatsBar({ stats, className = '' }: StatsBarProps) {
 
   return (
     <div className={`mb-6 ${className}`}>
-      <div className="flex items-center justify-center gap-8 text-center">
+      <div className="flex flex-wrap items-center justify-center gap-8 text-center">
         {visibleStats.map((stat, index) => (
           <div key={index}>
             <div className="text-2xl font-bold">{stat.value}</div>

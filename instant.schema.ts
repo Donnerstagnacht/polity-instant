@@ -502,6 +502,30 @@ const _schema = i.schema({
         label: 'targetedAmendments',
       },
     },
+    amendmentsGroupSupporters: {
+      forward: {
+        on: 'amendments',
+        has: 'many',
+        label: 'groupSupporters',
+      },
+      reverse: {
+        on: 'groups',
+        has: 'many',
+        label: 'supportedAmendments',
+      },
+    },
+    amendmentsClonedFrom: {
+      forward: {
+        on: 'amendments',
+        has: 'one',
+        label: 'clonedFrom',
+      },
+      reverse: {
+        on: 'amendments',
+        has: 'many',
+        label: 'clones',
+      },
+    },
     amendmentPathsAmendment: {
       forward: {
         on: 'amendmentPaths',
