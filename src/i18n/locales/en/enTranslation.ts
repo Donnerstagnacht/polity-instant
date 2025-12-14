@@ -698,6 +698,7 @@ const enTranslation = {
     infoTabs: {
       about: 'About',
       contact: 'Contact',
+      locationAndDate: 'Location & Date',
       noInformation: 'No information available',
       noContact: 'No contact information available',
       labels: {
@@ -744,6 +745,8 @@ const enTranslation = {
       location: 'Location',
       processStatus: 'Process Status',
       changeRequests: 'Change Requests',
+      elections: 'Elections',
+      openChangeRequests: 'Open Change Requests',
     },
   },
   errors: {

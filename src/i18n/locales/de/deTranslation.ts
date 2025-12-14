@@ -705,6 +705,7 @@ const deTranslation: I18nLocale = {
     infoTabs: {
       about: 'Über',
       contact: 'Kontakt',
+      locationAndDate: 'Ort & Zeit',
       noInformation: 'Keine Informationen verfügbar',
       noContact: 'Keine Kontaktinformationen verfügbar',
       labels: {
@@ -751,6 +752,8 @@ const deTranslation: I18nLocale = {
       location: 'Standort',
       processStatus: 'Prozessstatus',
       changeRequests: 'Änderungsanträge',
+      elections: 'Wahlen',
+      openChangeRequests: 'Offene Änderungsanträge',
     },
   },
   errors: {

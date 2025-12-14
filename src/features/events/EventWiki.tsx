@@ -1,10 +1,30 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import db from '../../../db';
-import { Calendar, MapPin, Settings } from 'lucide-react';
+import db, { id, tx } from '../../../db';
+import { Settings, Trophy } from 'lucide-react';
+import { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { GRADIENTS } from '@/features/user/state/gradientColors';
+import { toast } from 'sonner';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { StatsBar } from '@/components/ui/StatsBar';
 import { useSubscribeEvent } from '@/features/events/hooks/useSubscribeEvent';
@@ -24,6 +44,10 @@ interface EventWikiProps {
 export function EventWiki({ eventId }: EventWikiProps) {
   const router = useRouter();
   const { t } = useTranslation();
+  const [electionsDialogOpen, setElectionsDialogOpen] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [selectedElection, setSelectedElection] = useState<any>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Subscribe hook
   const {
@@ -57,25 +81,39 @@ export function EventWiki({ eventId }: EventWikiProps) {
       group: {},
       hashtags: {},
     },
+    agendaItems: {
+      event: {},
+      election: {
+        candidates: {
+          user: {},
+        },
+        position: {},
+      },
+      amendmentVote: {
+        changeRequests: {},
+      },
+    },
+    $users: {},
   });
+
+  const { user } = db.useAuth();
+
+  // Get current user's profile
+  const currentUserProfile = user ? (data?.$users || []).find((u: any) => u.id === user.id) : null;
 
   const event = data?.events?.[0];
 
-  const formatDate = (date: string | number) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
-
-  const formatTime = (date: string | number) => {
-    return new Date(date).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-    });
-  };
+  // Calculate agenda statistics
+  const agendaItems = (data?.agendaItems || []).filter((item: any) => item.event?.id === eventId);
+  const electionsCount = agendaItems.filter((item: any) => item.election).length;
+  const amendmentsCount = agendaItems.filter((item: any) => item.amendmentVote).length;
+  const openChangeRequestsCount = agendaItems.reduce(
+    (count: number, item: any) =>
+      count +
+      (item.amendmentVote?.changeRequests?.filter((cr: any) => cr.status === 'open' || !cr.status)
+        .length || 0),
+    0
+  );
 
   if (isLoading) {
     return (
@@ -101,6 +139,73 @@ export function EventWiki({ eventId }: EventWikiProps) {
   }
 
   const isAdmin = status === 'admin';
+
+  // Get elections for this event
+  const elections = (agendaItems || [])
+    .filter((item: any) => item.election)
+    .map((item: any) => item.election);
+
+  // Check if user is already a candidate in any election
+  const getUserCandidacy = (election: any) => {
+    return election.candidates?.find((c: any) => c.user?.id === user?.id);
+  };
+
+  // Handle election selection
+  const handleElectionClick = (election: any) => {
+    setSelectedElection(election);
+    setElectionsDialogOpen(false);
+    setConfirmDialogOpen(true);
+  };
+
+  // Handle candidate submission
+  const handleConfirmCandidacy = async () => {
+    if (!user || !selectedElection) return;
+
+    setIsSubmitting(true);
+    try {
+      // Check if user is already a candidate
+      const existingCandidacy = getUserCandidacy(selectedElection);
+      if (existingCandidacy) {
+        toast.error('Sie sind bereits Kandidat für diese Wahl');
+        setConfirmDialogOpen(false);
+        setIsSubmitting(false);
+        return;
+      }
+
+      const candidateId = id();
+      const now = Date.now();
+
+      // Get the next order number
+      const maxOrder = Math.max(
+        0,
+        ...(selectedElection.candidates || []).map((c: any) => c.order || 0)
+      );
+
+      await db.transact([
+        tx.electionCandidates[candidateId]
+          .update({
+            name: currentUserProfile?.name || user.email || 'Unbenannt',
+            description: '',
+            imageURL: currentUserProfile?.avatar || '',
+            order: maxOrder + 1,
+            createdAt: now,
+          })
+          .link({
+            election: selectedElection.id,
+            user: user.id,
+          }),
+      ]);
+
+      toast.success('Sie wurden erfolgreich als Kandidat hinzugefügt!');
+      setConfirmDialogOpen(false);
+      setSelectedElection(null);
+    } catch (error) {
+      console.error('Failed to add candidate:', error);
+      toast.error('Fehler beim Hinzufügen des Kandidaten. Bitte versuchen Sie es erneut.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="container mx-auto max-w-6xl p-4">
@@ -150,6 +255,9 @@ export function EventWiki({ eventId }: EventWikiProps) {
         stats={[
           { value: participantCount, labelKey: 'components.labels.participants' },
           { value: subscriberCount, labelKey: 'components.labels.subscribers' },
+          { value: electionsCount, labelKey: 'components.labels.elections' },
+          { value: amendmentsCount, labelKey: 'components.labels.amendments' },
+          { value: openChangeRequestsCount, labelKey: 'components.labels.openChangeRequests' },
         ]}
       />
 
@@ -173,6 +281,12 @@ export function EventWiki({ eventId }: EventWikiProps) {
           onAcceptInvitation={acceptInvitation}
           isLoading={participationLoading}
         />
+        {elections.length > 0 && user && (
+          <Button variant="outline" onClick={() => setElectionsDialogOpen(true)}>
+            <Trophy className="mr-2 h-4 w-4" />
+            Kandidieren
+          </Button>
+        )}
         <ShareButton
           url={`/event/${eventId}`}
           title={event.title}
@@ -196,59 +310,142 @@ export function EventWiki({ eventId }: EventWikiProps) {
         </div>
       )}
 
-      {/* Event Details Card */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>{t('components.labels.eventDetails')}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Time and Location side by side */}
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="flex items-start gap-3">
-              <Calendar className="mt-1 h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="font-medium">{formatDate(event.startDate)}</p>
-                <p className="text-sm text-muted-foreground">
-                  {formatTime(event.startDate)}
-                  {event.endDate && ` - ${formatTime(event.endDate)}`}
-                </p>
-              </div>
-            </div>
-
-            {event.location && (
-              <div className="flex items-start gap-3">
-                <MapPin className="mt-1 h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">{t('components.labels.location')}</p>
-                  <p className="text-sm text-muted-foreground">{event.location}</p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Tags */}
-          {event.tags && Array.isArray(event.tags) && event.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {event.tags.map((tag: string, index: number) => (
-                <Badge key={index} variant="outline">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* About Tab */}
+      {/* About Tab with Event Details */}
       {event.description && (
         <InfoTabs
           about={event.description}
+          eventDetails={{
+            startDate: event.startDate,
+            endDate: event.endDate,
+            location: event.location,
+            tags: event.tags,
+          }}
           contact={{
             location: event.location,
           }}
           className="mb-12"
         />
       )}
+
+      {/* Elections Selection Dialog */}
+      <Dialog open={electionsDialogOpen} onOpenChange={setElectionsDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Wählen Sie eine Wahl aus</DialogTitle>
+            <DialogDescription>
+              Wählen Sie eine Wahl aus, für die Sie kandidieren möchten.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4 sm:grid-cols-2">
+            {elections.map((election: any, index: number) => {
+              const existingCandidacy = getUserCandidacy(election);
+              const gradientClass = GRADIENTS[index % GRADIENTS.length];
+
+              return (
+                <Card
+                  key={election.id}
+                  className={`cursor-pointer overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${gradientClass} ${existingCandidacy ? 'opacity-60' : ''}`}
+                  onClick={() => !existingCandidacy && handleElectionClick(election)}
+                >
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>{election.title}</span>
+                      {existingCandidacy && (
+                        <Badge variant="secondary" className="text-xs">
+                          Bereits Kandidat
+                        </Badge>
+                      )}
+                    </CardTitle>
+                    {election.description && (
+                      <CardDescription>{election.description}</CardDescription>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    {election.position && (
+                      <div className="rounded-md border bg-background/50 p-3">
+                        <div className="text-sm font-medium">{election.position.title}</div>
+                        {election.position.description && (
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            {election.position.description}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
+                      <span>Kandidaten: {election.candidates?.length || 0}</span>
+                      {election.majorityType && (
+                        <Badge variant="outline" className="text-xs">
+                          {election.majorityType}
+                        </Badge>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Kandidatur bestätigen</AlertDialogTitle>
+            <AlertDialogDescription>
+              Möchten Sie wirklich für diese Wahl kandidieren?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {selectedElection && (
+            <Card
+              className={`overflow-hidden ${GRADIENTS[elections.indexOf(selectedElection) % GRADIENTS.length]}`}
+            >
+              <CardHeader>
+                <CardTitle>{selectedElection.title}</CardTitle>
+                {selectedElection.description && (
+                  <CardDescription>{selectedElection.description}</CardDescription>
+                )}
+              </CardHeader>
+              <CardContent>
+                {selectedElection.position && (
+                  <div className="rounded-md border bg-background/50 p-3">
+                    <div className="text-sm font-semibold">
+                      Position: {selectedElection.position.title}
+                    </div>
+                    {selectedElection.position.description && (
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        {selectedElection.position.description}
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div className="mt-3 space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Aktuelle Kandidaten:</span>
+                    <span className="font-medium">{selectedElection.candidates?.length || 0}</span>
+                  </div>
+                  {selectedElection.majorityType && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Wahlverfahren:</span>
+                      <Badge variant="outline" className="text-xs">
+                        {selectedElection.majorityType}
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSubmitting}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmCandidacy} disabled={isSubmitting}>
+              {isSubmitting ? 'Wird hinzugefügt...' : 'Kandidatur bestätigen'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

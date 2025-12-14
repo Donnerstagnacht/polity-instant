@@ -299,6 +299,70 @@ export default function EventAgendaPage() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Agenda Statistics */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Agenda Statistiken</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-3">
+                  {/* Elections Count */}
+                  <div className="flex items-center gap-3 rounded-lg border p-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900">
+                      <Vote className="h-5 w-5 text-purple-600 dark:text-purple-300" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">
+                        {agendaItems.filter((item: any) => item.election).length}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {agendaItems.filter((item: any) => item.election).length === 1
+                          ? 'Wahl'
+                          : 'Wahlen'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Amendments Count */}
+                  <div className="flex items-center gap-3 rounded-lg border p-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900">
+                      <Gavel className="h-5 w-5 text-orange-600 dark:text-orange-300" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">
+                        {agendaItems.filter((item: any) => item.amendmentVote).length}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {agendaItems.filter((item: any) => item.amendmentVote).length === 1
+                          ? 'Abstimmung'
+                          : 'Abstimmungen'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Open Change Requests Count */}
+                  <div className="flex items-center gap-3 rounded-lg border p-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
+                      <FileText className="h-5 w-5 text-blue-600 dark:text-blue-300" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">
+                        {agendaItems.reduce(
+                          (count: number, item: any) =>
+                            count +
+                            (item.amendmentVote?.changeRequests?.filter(
+                              (cr: any) => cr.status === 'open' || !cr.status
+                            ).length || 0),
+                          0
+                        )}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Offene Änderungsanträge</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Agenda Items */}
