@@ -747,6 +747,7 @@ const deTranslation: I18nLocale = {
       eventDetails: 'Veranstaltungsdetails',
       location: 'Standort',
       processStatus: 'Prozessstatus',
+      changeRequests: 'Änderungsanträge',
     },
   },
   errors: {

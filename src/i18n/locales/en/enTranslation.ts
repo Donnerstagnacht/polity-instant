@@ -740,6 +740,7 @@ const enTranslation = {
       eventDetails: 'Event Details',
       location: 'Location',
       processStatus: 'Process Status',
+      changeRequests: 'Change Requests',
     },
   },
   errors: {

@@ -56,6 +56,8 @@ const _schema = i.schema({
       createdAt: i.date().indexed().optional(),
       date: i.string(),
       imageURL: i.string().optional(),
+      videoURL: i.string().optional(),
+      videoThumbnailURL: i.string().optional(),
       status: i.string(),
       subtitle: i.string().optional(),
       supporters: i.number(),
@@ -63,11 +65,17 @@ const _schema = i.schema({
       title: i.string(),
       updatedAt: i.date().indexed().optional(),
       visibility: i.string().indexed().optional(), // 'public', 'authenticated', 'private'
+      upvotes: i.number().optional(),
+      downvotes: i.number().optional(),
     }),
     amendmentVoteEntries: i.entity({
       createdAt: i.date().indexed(),
       updatedAt: i.date().optional(),
       vote: i.string().indexed(),
+    }),
+    amendmentSupportVotes: i.entity({
+      createdAt: i.date().indexed(),
+      vote: i.number().indexed(), // 1 for upvote, -1 for downvote
     }),
     amendmentVotes: i.entity({
       createdAt: i.date().indexed(),
@@ -1813,6 +1821,30 @@ const _schema = i.schema({
         on: '$users',
         has: 'many',
         label: 'commentVotes',
+      },
+    },
+    amendmentSupportVotesAmendment: {
+      forward: {
+        on: 'amendmentSupportVotes',
+        has: 'one',
+        label: 'amendment',
+      },
+      reverse: {
+        on: 'amendments',
+        has: 'many',
+        label: 'votes',
+      },
+    },
+    amendmentSupportVotesUser: {
+      forward: {
+        on: 'amendmentSupportVotes',
+        has: 'one',
+        label: 'user',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'amendmentSupportVotes',
       },
     },
     changeRequestsAmendment: {

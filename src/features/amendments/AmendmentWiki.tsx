@@ -1,10 +1,10 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import db from '../../../db';
-import { Settings, ThumbsUp } from 'lucide-react';
+import db, { id } from '../../../db';
+import { Settings, ArrowUp, ArrowDown } from 'lucide-react';
+import { toast } from 'sonner';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { StatsBar } from '@/components/ui/StatsBar';
 import { useSubscribeAmendment } from '@/features/amendments/hooks/useSubscribeAmendment';
@@ -14,72 +14,11 @@ import { SubscribeButton, MembershipButton } from '@/components/shared/action-bu
 import { InfoTabs } from '@/components/shared/InfoTabs';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useTranslation } from '@/hooks/use-translation';
 import { ShareButton } from '@/components/shared/ShareButton';
-import { AmendmentPathVisualization } from '@/features/amendments/ui/AmendmentPathVisualization';
 import { useAuthStore } from '@/features/auth';
 
 interface AmendmentWikiProps {
   amendmentId: string;
-}
-
-// Simple process visualization component
-function ProcessVisualization({ status }: { status: string }) {
-  const { t } = useTranslation();
-  const steps = [
-    { id: 'drafting', label: 'Drafting' },
-    { id: 'review', label: 'Under Review' },
-    { id: 'decision', label: 'Decision' },
-  ];
-
-  const getStepStatus = (stepId: string) => {
-    if (status === 'Drafting' && stepId === 'drafting') return 'active';
-    if (status === 'Under Review' && stepId === 'review') return 'active';
-    if ((status === 'Passed' || status === 'Rejected') && stepId === 'decision') return 'active';
-    if (status === 'Under Review' && stepId === 'drafting') return 'completed';
-    if ((status === 'Passed' || status === 'Rejected') && stepId !== 'decision') return 'completed';
-    return 'pending';
-  };
-
-  return (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle>{t('components.labels.processStatus')}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center justify-between">
-          {steps.map((step, index) => {
-            const stepStatus = getStepStatus(step.id);
-            return (
-              <div key={step.id} className="flex flex-1 items-center">
-                <div className="flex flex-col items-center">
-                  <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-full border-2 ${
-                      stepStatus === 'active'
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : stepStatus === 'completed'
-                          ? 'border-green-500 bg-green-500 text-white'
-                          : 'border-muted bg-muted text-muted-foreground'
-                    }`}
-                  >
-                    {stepStatus === 'completed' ? '✓' : index + 1}
-                  </div>
-                  <span className="mt-2 text-xs font-medium">{step.label}</span>
-                </div>
-                {index < steps.length - 1 && (
-                  <div
-                    className={`mx-2 h-0.5 flex-1 ${
-                      stepStatus === 'completed' ? 'bg-green-500' : 'bg-muted'
-                    }`}
-                  />
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
-  );
 }
 
 export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
@@ -119,6 +58,10 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
         role: {},
       },
       hashtags: {},
+      votes: {
+        user: {},
+      },
+      changeRequests: {},
     },
   });
 
@@ -149,6 +92,70 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
 
   const isAdmin = status === 'admin';
   const collaborators = amendment.amendmentRoleCollaborators || [];
+
+  // Vote handling
+  const score = (amendment.upvotes || 0) - (amendment.downvotes || 0);
+  const userVote = amendment.votes?.find((v: any) => v.user?.id === user?.id);
+  const hasUpvoted = userVote?.vote === 1;
+  const hasDownvoted = userVote?.vote === -1;
+
+  const handleVote = async (voteValue: number) => {
+    if (!user?.id) {
+      toast.error('Please log in to vote');
+      return;
+    }
+
+    try {
+      if (userVote) {
+        // Update or remove existing vote
+        if (userVote.vote === voteValue) {
+          // Remove vote
+          await db.transact([
+            db.tx.amendmentSupportVotes[userVote.id].delete(),
+            db.tx.amendments[amendmentId].update({
+              upvotes: voteValue === 1 ? (amendment.upvotes || 1) - 1 : amendment.upvotes,
+              downvotes: voteValue === -1 ? (amendment.downvotes || 1) - 1 : amendment.downvotes,
+            }),
+          ]);
+        } else {
+          // Change vote
+          await db.transact([
+            db.tx.amendmentSupportVotes[userVote.id].update({ vote: voteValue }),
+            db.tx.amendments[amendmentId].update({
+              upvotes:
+                voteValue === 1
+                  ? (amendment.upvotes || 0) + 1
+                  : Math.max(0, (amendment.upvotes || 1) - 1),
+              downvotes:
+                voteValue === -1
+                  ? (amendment.downvotes || 0) + 1
+                  : Math.max(0, (amendment.downvotes || 1) - 1),
+            }),
+          ]);
+        }
+      } else {
+        // Create new vote
+        const voteId = id();
+        await db.transact([
+          db.tx.amendmentSupportVotes[voteId].update({
+            vote: voteValue,
+            createdAt: Date.now(),
+          }),
+          db.tx.amendmentSupportVotes[voteId].link({
+            amendment: amendmentId,
+            user: user.id,
+          }),
+          db.tx.amendments[amendmentId].update({
+            upvotes: voteValue === 1 ? (amendment.upvotes || 0) + 1 : amendment.upvotes,
+            downvotes: voteValue === -1 ? (amendment.downvotes || 0) + 1 : amendment.downvotes,
+          }),
+        ]);
+      }
+    } catch (error) {
+      console.error('Error voting:', error);
+      toast.error('Failed to vote');
+    }
+  };
 
   const statusColors: Record<string, string> = {
     Passed: 'bg-green-500/10 text-green-500 border-green-500/20',
@@ -211,12 +218,38 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
         </div>
       )}
 
+      {/* Amendment Video */}
+      {amendment.videoURL && (
+        <div className="mb-8">
+          <video
+            controls
+            preload="metadata"
+            poster={amendment.videoThumbnailURL || undefined}
+            className="mx-auto w-full max-w-4xl rounded-lg shadow-lg"
+            src={amendment.videoURL}
+            onLoadedMetadata={e => {
+              const video = e.currentTarget;
+              // Only set currentTime if no poster is provided
+              if (!amendment.videoThumbnailURL) {
+                video.currentTime = 0.1;
+              }
+            }}
+          >
+            Your browser does not support the video tag.
+          </video>
+        </div>
+      )}
+
       {/* Stats Bar */}
       <StatsBar
         stats={[
           { value: collaboratorCount, labelKey: 'components.labels.collaborators' },
           { value: subscriberCount, labelKey: 'components.labels.subscribers' },
-          { value: amendment.supporters || 0, labelKey: 'components.labels.supporters' },
+          { value: score, labelKey: 'components.labels.supporters' },
+          {
+            value: amendment.changeRequests?.length || 0,
+            labelKey: 'components.labels.changeRequests',
+          },
         ]}
       />
 
@@ -240,10 +273,24 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
           onAcceptInvitation={acceptInvitation}
           isLoading={collaborationLoading}
         />
-        <Button>
-          <ThumbsUp className="mr-2 h-4 w-4" />
-          Support
-        </Button>
+        <div className="flex h-10 items-center gap-1 rounded-lg border bg-card px-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`h-8 w-8 p-0 ${hasUpvoted ? 'text-orange-500' : ''}`}
+            onClick={() => handleVote(1)}
+          >
+            <ArrowUp className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`h-8 w-8 p-0 ${hasDownvoted ? 'text-blue-500' : ''}`}
+            onClick={() => handleVote(-1)}
+          >
+            <ArrowDown className="h-4 w-4" />
+          </Button>
+        </div>
         <ShareButton
           url={`/amendment/${amendmentId}`}
           title={amendment.title}
@@ -266,12 +313,6 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
           <HashtagDisplay hashtags={amendment.hashtags} centered />
         </div>
       )}
-
-      {/* Process Visualization */}
-      <ProcessVisualization status={amendment.status} />
-
-      {/* Amendment Process Path - Show shortest path to target group */}
-      {user && <AmendmentPathVisualization amendmentId={amendmentId} />}
 
       {/* About and Contact Tabs */}
       <InfoTabs

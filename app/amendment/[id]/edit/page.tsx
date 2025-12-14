@@ -13,6 +13,7 @@ import { useAuthStore } from '@/features/auth/auth.ts';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { ImageUpload } from '@/components/shared/ImageUpload';
+import { VideoUpload } from '@/components/shared/VideoUpload';
 import {
   Select,
   SelectContent,
@@ -32,6 +33,8 @@ export default function AmendmentEditPage({ params }: { params: Promise<{ id: st
     subtitle: '',
     code: '',
     imageURL: '',
+    videoURL: '',
+    videoThumbnailURL: '',
     status: 'Drafting',
     date: '',
     supporters: 0,
@@ -63,6 +66,8 @@ export default function AmendmentEditPage({ params }: { params: Promise<{ id: st
         subtitle: amendment.subtitle || '',
         code: amendment.code || '',
         imageURL: amendment.imageURL || '',
+        videoURL: amendment.videoURL || '',
+        videoThumbnailURL: amendment.videoThumbnailURL || '',
         status: amendment.status || 'Drafting',
         date: amendment.date || new Date().toLocaleDateString(),
         supporters: amendment.supporters || 0,
@@ -107,6 +112,8 @@ export default function AmendmentEditPage({ params }: { params: Promise<{ id: st
           subtitle: formData.subtitle,
           code: formData.code,
           imageURL: formData.imageURL,
+          videoURL: formData.videoURL,
+          videoThumbnailURL: formData.videoThumbnailURL,
           status: formData.status,
           date: formData.date,
           supporters: formData.supporters,
@@ -204,6 +211,27 @@ export default function AmendmentEditPage({ params }: { params: Promise<{ id: st
               label="Amendment Image"
               description="Upload an amendment image or provide a URL"
             />
+
+            {/* Amendment Video Section */}
+            <VideoUpload
+              currentVideo={formData.videoURL}
+              currentThumbnail={formData.videoThumbnailURL}
+              onVideoChange={(url: string) => setFormData({ ...formData, videoURL: url })}
+              label="Amendment Video"
+              description="Upload a video file or provide a URL (max 100MB)"
+            />
+
+            {/* Video Thumbnail Section */}
+            {formData.videoURL && (
+              <ImageUpload
+                currentImage={formData.videoThumbnailURL}
+                onImageChange={(url: string) =>
+                  setFormData({ ...formData, videoThumbnailURL: url })
+                }
+                label="Video Thumbnail"
+                description="Upload a thumbnail image for the video (optional)"
+              />
+            )}
 
             {/* Basic Information */}
             <Card>

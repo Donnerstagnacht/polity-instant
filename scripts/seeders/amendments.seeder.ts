@@ -59,6 +59,15 @@ export const amendmentsSeeder: EntitySeeder = {
         const targetEventId = randomItem(eventIds); // Pick any event as target
 
         // Create amendment entity with target links in one transaction
+        // Add video URL for some amendments (30% probability)
+        const hasVideo = Math.random() < 0.3;
+        const videoURL = hasVideo
+          ? 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+          : undefined;
+        const videoThumbnailURL = hasVideo
+          ? 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg'
+          : undefined;
+
         transactions.push(
           tx.amendments[amendmentId]
             .update({
@@ -70,6 +79,8 @@ export const amendmentsSeeder: EntitySeeder = {
               code: `AMN-${faker.string.alphanumeric(6).toUpperCase()}`,
               tags: [randomItem(['policy', 'reform', 'legislation', 'amendment', 'proposal'])],
               visibility: randomVisibility(),
+              videoURL,
+              videoThumbnailURL,
             })
             .link({
               targetGroup: targetGroupId,
