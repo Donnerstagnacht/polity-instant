@@ -65,7 +65,7 @@ export interface NotificationConfig {
 }
 
 /**
- * Creates a notification transaction
+ * Creates a notification transaction and triggers push notification
  */
 export function createNotification(config: NotificationConfig) {
   const notificationId = id();
@@ -138,7 +138,63 @@ export function createNotification(config: NotificationConfig) {
     transactions.push(tx.notifications[notificationId].link({ relatedUser: config.relatedUserId }));
   }
 
+  // Trigger push notification if recipient is a user (client-side only)
+  if (typeof window !== 'undefined' && config.recipientUserId) {
+    // Use setTimeout to not block the notification creation
+    const userId = config.recipientUserId;
+    setTimeout(() => {
+      sendPushNotification(userId, {
+        title: config.title,
+        message: config.message,
+        actionUrl: config.actionUrl,
+        notificationId,
+        type: config.type,
+      }).catch((error) => {
+        console.error('[Notification] Failed to send push notification:', error);
+        // Don't throw - notification was already created in DB
+      });
+    }, 0);
+  }
+
   return transactions;
+}
+
+/**
+ * Send push notification via API
+ */
+async function sendPushNotification(
+  userId: string,
+  notification: {
+    title: string;
+    message: string;
+    actionUrl?: string;
+    notificationId?: string;
+    type?: string;
+  }
+): Promise<void> {
+  try {
+    const response = await fetch('/api/push/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId,
+        notification,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to send push notification');
+    }
+
+    const result = await response.json();
+    console.log('[Notification] Push notification sent:', result);
+  } catch (error) {
+    console.error('[Notification] Error sending push notification:', error);
+    throw error;
+  }
 }
 
 /**

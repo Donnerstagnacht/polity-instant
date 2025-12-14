@@ -440,6 +440,14 @@ const _schema = i.schema({
       createdAt: i.date().indexed(),
       paidAt: i.date().optional(),
     }),
+    pushSubscriptions: i.entity({
+      endpoint: i.string().unique().indexed(),
+      auth: i.string(),
+      p256dh: i.string(),
+      userAgent: i.string().optional(),
+      createdAt: i.date().indexed(),
+      updatedAt: i.date().indexed(),
+    }),
   },
   links: {
     agendaItemsCreator: {
@@ -2133,6 +2141,18 @@ const _schema = i.schema({
         on: 'stripeSubscriptions',
         has: 'many',
         label: 'payments',
+      },
+    },
+    pushSubscriptionsUser: {
+      forward: {
+        on: 'pushSubscriptions',
+        has: 'one',
+        label: 'user',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'pushSubscriptions',
       },
     },
   },

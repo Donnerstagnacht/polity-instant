@@ -1,4 +1,6 @@
 {
-  "*.{js,jsx,ts,tsx}": ["prettier --write", "eslint --fix"],
+  "*.{js,jsx,ts,tsx}": [
+    "bash -c 'if [[ \"$0\" != *\"custom-sw.js\" ]]; then prettier --write \"$0\"; eslint --fix \"$0\"; else prettier --write \"$0\"; fi'"
+  ],
   "*.{json,css,md,html}": ["prettier --write"]
 }

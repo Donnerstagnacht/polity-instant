@@ -135,6 +135,7 @@
     "tailwindcss-animate": "^1.0.7",
     "use-file-picker": "^2.1.2",
     "vaul": "^1.1.2",
+    "web-push": "^3.6.7",
     "zod": "^3.25.67",
     "zustand": "^5.0.5"
   },
@@ -155,6 +156,7 @@
     "@types/node": "^20.10.0",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
+    "@types/web-push": "^3.6.4",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
     "@typescript-eslint/parser": "^8.34.1",
     "@vitest/browser": "3.2.3",

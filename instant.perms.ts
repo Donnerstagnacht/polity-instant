@@ -1068,6 +1068,20 @@ const rules = {
       'auth.id == data.ref("customer.user.id")',
     ],
   },
+  pushSubscriptions: {
+    allow: {
+      view: 'isSelf',
+      create: 'isSelf',
+      update: 'isSelf',
+      delete: 'isSelf',
+    },
+    bind: [
+      'isAuthenticated',
+      'auth.id != null',
+      'isSelf',
+      'auth.id == data.ref("user.id")',
+    ],
+  },
 } satisfies InstantRules;
 
 export default rules;
