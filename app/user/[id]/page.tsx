@@ -3,12 +3,11 @@
 import { UserWiki } from '@/features/user/wiki';
 import { SeedUserDataButton } from '@/features/user/ui/SeedUserDataButton';
 import { useSearchParams } from 'next/navigation';
-import { use, useEffect } from 'react';
+import { use, useEffect, Suspense } from 'react';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { useNavigation } from '@/navigation/state/useNavigation';
 
-export default function UserPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = use(params);
+function UserPageContent({ userId }: { userId: string }) {
   const searchParams = useSearchParams();
   const { currentPrimaryRoute } = useNavigation();
 
@@ -27,9 +26,9 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
   // Pass them as props or use a custom hook to access them
 
   return (
-    <AuthGuard requireAuth={true}>
+    <>
       <UserWiki
-        userId={resolvedParams.id}
+        userId={userId}
         searchFilters={{
           blogs,
           groups,
@@ -37,6 +36,18 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
         }}
       />
       <SeedUserDataButton />
+    </>
+  );
+}
+
+export default function UserPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params);
+
+  return (
+    <AuthGuard requireAuth={true}>
+      <Suspense fallback={<div>Loading...</div>}>
+        <UserPageContent userId={resolvedParams.id} />
+      </Suspense>
     </AuthGuard>
   );
 }

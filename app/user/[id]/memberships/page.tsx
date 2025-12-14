@@ -19,6 +19,7 @@ import {
 import { Trash2, Search, Users, Check, X, Calendar, FileEdit, BookOpen } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   notifyMembershipWithdrawn,
   notifyParticipationWithdrawn,
@@ -58,7 +59,7 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
             event: {},
             role: {},
           },
-          amendmentRoleCollaborators: {
+          amendmentCollaborators: {
             $: {
               where: {
                 'user.id': resolvedParams.id,
@@ -67,7 +68,7 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
             amendment: {},
             role: {},
           },
-          blogRoleBloggers: {
+          blogBloggers: {
             $: {
               where: {
                 'user.id': resolvedParams.id,
@@ -82,8 +83,8 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
 
   const memberships = data?.groupMemberships || [];
   const participations = data?.eventParticipants || [];
-  const collaborations = data?.amendmentRoleCollaborators || [];
-  const blogRelations = data?.blogRoleBloggers || [];
+  const collaborations = data?.amendmentCollaborators || [];
+  const blogRelations = data?.blogBloggers || [];
 
   // Filter memberships based on search query
   const filteredMemberships = useMemo(() => {
@@ -190,7 +191,10 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
     [filteredBlogRelations]
   );
   const activeBlogRelations = useMemo(
-    () => filteredBlogRelations.filter((b: any) => b.status === 'writer' || b.status === 'owner'),
+    () =>
+      filteredBlogRelations.filter(
+        (b: any) => b.status === 'writer' || b.status === 'owner' || b.status === 'member'
+      ),
     [filteredBlogRelations]
   );
   const requestedBlogRelations = useMemo(
@@ -309,7 +313,7 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
       const collaboration = collaborations.find((c: any) => c.id === collaborationId);
       if (!collaboration) return;
 
-      const transactions = [tx.amendmentRoleCollaborators[collaborationId].delete()];
+      const transactions = [tx.amendmentCollaborators[collaborationId].delete()];
 
       // Send notification to the amendment
       if (authUser?.name && collaboration.amendment) {
@@ -331,7 +335,7 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
   const handleAcceptCollaborationInvitation = async (collaborationId: string) => {
     try {
       await db.transact([
-        tx.amendmentRoleCollaborators[collaborationId].update({
+        tx.amendmentCollaborators[collaborationId].update({
           status: 'member',
         }),
       ]);
@@ -342,7 +346,7 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
 
   const handleDeclineCollaborationInvitation = async (collaborationId: string) => {
     try {
-      await db.transact([tx.amendmentRoleCollaborators[collaborationId].delete()]);
+      await db.transact([tx.amendmentCollaborators[collaborationId].delete()]);
     } catch (error) {
       console.error('Failed to decline collaboration invitation:', error);
     }
@@ -350,7 +354,7 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
 
   const handleWithdrawCollaborationRequest = async (collaborationId: string) => {
     try {
-      await db.transact([tx.amendmentRoleCollaborators[collaborationId].delete()]);
+      await db.transact([tx.amendmentCollaborators[collaborationId].delete()]);
     } catch (error) {
       console.error('Failed to withdraw collaboration request:', error);
     }
@@ -375,7 +379,7 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
   // Blog handlers
   const handleLeaveBlog = async (blogRelationId: string) => {
     try {
-      await db.transact([tx.blogRoleBloggers[blogRelationId].delete()]);
+      await db.transact([tx.blogBloggers[blogRelationId].delete()]);
     } catch (error) {
       console.error('Failed to leave blog:', error);
     }
@@ -384,7 +388,7 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
   const handleAcceptBlogInvitation = async (blogRelationId: string) => {
     try {
       await db.transact([
-        tx.blogRoleBloggers[blogRelationId].update({
+        tx.blogBloggers[blogRelationId].update({
           status: 'writer',
         }),
       ]);
@@ -395,7 +399,7 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
 
   const handleDeclineBlogInvitation = async (blogRelationId: string) => {
     try {
-      await db.transact([tx.blogRoleBloggers[blogRelationId].delete()]);
+      await db.transact([tx.blogBloggers[blogRelationId].delete()]);
     } catch (error) {
       console.error('Failed to decline blog invitation:', error);
     }
@@ -403,7 +407,7 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
 
   const handleWithdrawBlogRequest = async (blogRelationId: string) => {
     try {
-      await db.transact([tx.blogRoleBloggers[blogRelationId].delete()]);
+      await db.transact([tx.blogBloggers[blogRelationId].delete()]);
     } catch (error) {
       console.error('Failed to withdraw blog request:', error);
     }
@@ -426,7 +430,7 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
 
   return (
     <AuthGuard requireAuth={true}>
-      <div className="container mx-auto max-w-6xl p-8">
+      <div className="container mx-auto max-w-7xl p-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold">My Memberships & Participation</h1>
           <p className="mt-2 text-muted-foreground">
@@ -436,8 +440,8 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
         </div>
 
         {/* Search Bar */}
-        <div className="mb-6">
-          <div className="relative">
+        <div className="mb-6 flex gap-4">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search by name, role, or status..."
@@ -469,7 +473,7 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
           </TabsList>
 
           {/* Groups Tab */}
-          <TabsContent value="groups">
+          <TabsContent value="groups" className="space-y-6">
             {/* Pending Invitations */}
             {invitedMemberships.length > 0 && (
               <Card className="mb-6">
@@ -500,11 +504,24 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
                         return (
                           <TableRow key={membership.id}>
                             <TableCell>
-                              <div
-                                className="cursor-pointer hover:underline"
-                                onClick={() => navigateToGroup(group.id)}
-                              >
-                                <div className="font-medium">{groupName}</div>
+                              <div className="flex items-center gap-3">
+                                <Avatar
+                                  className="h-10 w-10 cursor-pointer"
+                                  onClick={() => navigateToGroup(group.id)}
+                                >
+                                  {group?.imageURL && (
+                                    <AvatarImage src={group.imageURL} alt={groupName} />
+                                  )}
+                                  <AvatarFallback>
+                                    <Users className="h-5 w-5" />
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div
+                                  className="cursor-pointer hover:underline"
+                                  onClick={() => navigateToGroup(group.id)}
+                                >
+                                  <div className="font-medium">{groupName}</div>
+                                </div>
                               </div>
                             </TableCell>
                             <TableCell className="text-muted-foreground">{createdAt}</TableCell>
@@ -574,16 +591,29 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
                         return (
                           <TableRow key={membership.id}>
                             <TableCell>
-                              <div
-                                className="cursor-pointer hover:underline"
-                                onClick={() => navigateToGroup(group.id)}
-                              >
-                                <div className="font-medium">{groupName}</div>
-                                {groupDescription && (
-                                  <div className="line-clamp-1 text-sm text-muted-foreground">
-                                    {groupDescription}
-                                  </div>
-                                )}
+                              <div className="flex items-center gap-3">
+                                <Avatar
+                                  className="h-10 w-10 cursor-pointer"
+                                  onClick={() => navigateToGroup(group.id)}
+                                >
+                                  {group?.imageURL && (
+                                    <AvatarImage src={group.imageURL} alt={groupName} />
+                                  )}
+                                  <AvatarFallback>
+                                    <Users className="h-5 w-5" />
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div
+                                  className="cursor-pointer hover:underline"
+                                  onClick={() => navigateToGroup(group.id)}
+                                >
+                                  <div className="font-medium">{groupName}</div>
+                                  {groupDescription && (
+                                    <div className="line-clamp-1 text-sm text-muted-foreground">
+                                      {groupDescription}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </TableCell>
                             <TableCell>
@@ -639,11 +669,24 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
                         return (
                           <TableRow key={membership.id}>
                             <TableCell>
-                              <div
-                                className="cursor-pointer hover:underline"
-                                onClick={() => navigateToGroup(group.id)}
-                              >
-                                <div className="font-medium">{groupName}</div>
+                              <div className="flex items-center gap-3">
+                                <Avatar
+                                  className="h-10 w-10 cursor-pointer"
+                                  onClick={() => navigateToGroup(group.id)}
+                                >
+                                  {group?.imageURL && (
+                                    <AvatarImage src={group.imageURL} alt={groupName} />
+                                  )}
+                                  <AvatarFallback>
+                                    <Users className="h-5 w-5" />
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div
+                                  className="cursor-pointer hover:underline"
+                                  onClick={() => navigateToGroup(group.id)}
+                                >
+                                  <div className="font-medium">{groupName}</div>
+                                </div>
                               </div>
                             </TableCell>
                             <TableCell className="text-muted-foreground">{createdAt}</TableCell>
@@ -668,7 +711,7 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
           </TabsContent>
 
           {/* Events Tab */}
-          <TabsContent value="events">
+          <TabsContent value="events" className="space-y-6">
             {/* Pending Invitations */}
             {invitedParticipations.length > 0 && (
               <Card className="mb-6">
@@ -701,11 +744,24 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
                         return (
                           <TableRow key={participation.id}>
                             <TableCell>
-                              <div
-                                className="cursor-pointer hover:underline"
-                                onClick={() => navigateToEvent(event.id)}
-                              >
-                                <div className="font-medium">{eventTitle}</div>
+                              <div className="flex items-center gap-3">
+                                <Avatar
+                                  className="h-10 w-10 cursor-pointer"
+                                  onClick={() => navigateToEvent(event.id)}
+                                >
+                                  {event?.imageURL && (
+                                    <AvatarImage src={event.imageURL} alt={eventTitle} />
+                                  )}
+                                  <AvatarFallback>
+                                    <Calendar className="h-5 w-5" />
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div
+                                  className="cursor-pointer hover:underline"
+                                  onClick={() => navigateToEvent(event.id)}
+                                >
+                                  <div className="font-medium">{eventTitle}</div>
+                                </div>
                               </div>
                             </TableCell>
                             <TableCell>
@@ -778,16 +834,29 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
                         return (
                           <TableRow key={participation.id}>
                             <TableCell>
-                              <div
-                                className="cursor-pointer hover:underline"
-                                onClick={() => navigateToEvent(event.id)}
-                              >
-                                <div className="font-medium">{eventTitle}</div>
-                                {eventDescription && (
-                                  <div className="line-clamp-1 text-sm text-muted-foreground">
-                                    {eventDescription}
-                                  </div>
-                                )}
+                              <div className="flex items-center gap-3">
+                                <Avatar
+                                  className="h-10 w-10 cursor-pointer"
+                                  onClick={() => navigateToEvent(event.id)}
+                                >
+                                  {event?.imageURL && (
+                                    <AvatarImage src={event.imageURL} alt={eventTitle} />
+                                  )}
+                                  <AvatarFallback>
+                                    <Calendar className="h-5 w-5" />
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div
+                                  className="cursor-pointer hover:underline"
+                                  onClick={() => navigateToEvent(event.id)}
+                                >
+                                  <div className="font-medium">{eventTitle}</div>
+                                  {eventDescription && (
+                                    <div className="line-clamp-1 text-sm text-muted-foreground">
+                                      {eventDescription}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </TableCell>
                             <TableCell>
@@ -845,11 +914,24 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
                         return (
                           <TableRow key={participation.id}>
                             <TableCell>
-                              <div
-                                className="cursor-pointer hover:underline"
-                                onClick={() => navigateToEvent(event.id)}
-                              >
-                                <div className="font-medium">{eventTitle}</div>
+                              <div className="flex items-center gap-3">
+                                <Avatar
+                                  className="h-10 w-10 cursor-pointer"
+                                  onClick={() => navigateToEvent(event.id)}
+                                >
+                                  {event?.imageURL && (
+                                    <AvatarImage src={event.imageURL} alt={eventTitle} />
+                                  )}
+                                  <AvatarFallback>
+                                    <Calendar className="h-5 w-5" />
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div
+                                  className="cursor-pointer hover:underline"
+                                  onClick={() => navigateToEvent(event.id)}
+                                >
+                                  <div className="font-medium">{eventTitle}</div>
+                                </div>
                               </div>
                             </TableCell>
                             <TableCell>
@@ -877,7 +959,7 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
           </TabsContent>
 
           {/* Amendments Tab */}
-          <TabsContent value="amendments">
+          <TabsContent value="amendments" className="space-y-6">
             {/* Pending Invitations */}
             {invitedCollaborations.length > 0 && (
               <Card className="mb-6">
@@ -912,11 +994,24 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
                         return (
                           <TableRow key={collaboration.id}>
                             <TableCell>
-                              <div
-                                className="cursor-pointer hover:underline"
-                                onClick={() => navigateToAmendment(amendment.id)}
-                              >
-                                <div className="font-medium">{amendmentTitle}</div>
+                              <div className="flex items-center gap-3">
+                                <Avatar
+                                  className="h-10 w-10 cursor-pointer"
+                                  onClick={() => navigateToAmendment(amendment.id)}
+                                >
+                                  {amendment?.imageURL && (
+                                    <AvatarImage src={amendment.imageURL} alt={amendmentTitle} />
+                                  )}
+                                  <AvatarFallback>
+                                    <FileEdit className="h-5 w-5" />
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div
+                                  className="cursor-pointer hover:underline"
+                                  onClick={() => navigateToAmendment(amendment.id)}
+                                >
+                                  <div className="font-medium">{amendmentTitle}</div>
+                                </div>
                               </div>
                             </TableCell>
                             <TableCell>
@@ -993,16 +1088,29 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
                         return (
                           <TableRow key={collaboration.id}>
                             <TableCell>
-                              <div
-                                className="cursor-pointer hover:underline"
-                                onClick={() => navigateToAmendment(amendment.id)}
-                              >
-                                <div className="font-medium">{amendmentTitle}</div>
-                                {amendmentDescription && (
-                                  <div className="line-clamp-1 text-sm text-muted-foreground">
-                                    {amendmentDescription}
-                                  </div>
-                                )}
+                              <div className="flex items-center gap-3">
+                                <Avatar
+                                  className="h-10 w-10 cursor-pointer"
+                                  onClick={() => navigateToAmendment(amendment.id)}
+                                >
+                                  {amendment?.imageURL && (
+                                    <AvatarImage src={amendment.imageURL} alt={amendmentTitle} />
+                                  )}
+                                  <AvatarFallback>
+                                    <FileEdit className="h-5 w-5" />
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div
+                                  className="cursor-pointer hover:underline"
+                                  onClick={() => navigateToAmendment(amendment.id)}
+                                >
+                                  <div className="font-medium">{amendmentTitle}</div>
+                                  {amendmentDescription && (
+                                    <div className="line-clamp-1 text-sm text-muted-foreground">
+                                      {amendmentDescription}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </TableCell>
                             <TableCell>
@@ -1062,11 +1170,24 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
                         return (
                           <TableRow key={collaboration.id}>
                             <TableCell>
-                              <div
-                                className="cursor-pointer hover:underline"
-                                onClick={() => navigateToAmendment(amendment.id)}
-                              >
-                                <div className="font-medium">{amendmentTitle}</div>
+                              <div className="flex items-center gap-3">
+                                <Avatar
+                                  className="h-10 w-10 cursor-pointer"
+                                  onClick={() => navigateToAmendment(amendment.id)}
+                                >
+                                  {amendment?.imageURL && (
+                                    <AvatarImage src={amendment.imageURL} alt={amendmentTitle} />
+                                  )}
+                                  <AvatarFallback>
+                                    <FileEdit className="h-5 w-5" />
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div
+                                  className="cursor-pointer hover:underline"
+                                  onClick={() => navigateToAmendment(amendment.id)}
+                                >
+                                  <div className="font-medium">{amendmentTitle}</div>
+                                </div>
                               </div>
                             </TableCell>
                             <TableCell>
@@ -1094,7 +1215,7 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
           </TabsContent>
 
           {/* Blogs Tab */}
-          <TabsContent value="blogs">
+          <TabsContent value="blogs" className="space-y-6">
             {/* Pending Invitations */}
             {invitedBlogRelations.length > 0 && (
               <Card className="mb-6">
@@ -1120,6 +1241,8 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
                         const blog = relation.blog;
                         const blogTitle = blog?.title || 'Unknown Blog';
                         const role = relation.role?.name || 'Writer';
+                        const blogImageUrl =
+                          blog?.imageURL || blog?.imageUrl || blog?.image || blog?.thumbnailURL;
                         const createdAt = relation.createdAt
                           ? new Date(relation.createdAt).toLocaleDateString()
                           : 'N/A';
@@ -1127,11 +1250,24 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
                         return (
                           <TableRow key={relation.id}>
                             <TableCell>
-                              <div
-                                className="cursor-pointer hover:underline"
-                                onClick={() => navigateToBlog(blog.id)}
-                              >
-                                <div className="font-medium">{blogTitle}</div>
+                              <div className="flex items-center gap-3">
+                                <Avatar
+                                  className="h-10 w-10 cursor-pointer"
+                                  onClick={() => navigateToBlog(blog.id)}
+                                >
+                                  {blogImageUrl ? (
+                                    <AvatarImage src={blogImageUrl} alt={blogTitle} />
+                                  ) : null}
+                                  <AvatarFallback>
+                                    <BookOpen className="h-5 w-5" />
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div
+                                  className="cursor-pointer hover:underline"
+                                  onClick={() => navigateToBlog(blog.id)}
+                                >
+                                  <div className="font-medium">{blogTitle}</div>
+                                </div>
                               </div>
                             </TableCell>
                             <TableCell>
@@ -1197,6 +1333,8 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
                         const blogTitle = blog?.title || 'Unknown Blog';
                         const blogDescription = blog?.description || '';
                         const role = relation.role?.name || 'Writer';
+                        const blogImageUrl =
+                          blog?.imageURL || blog?.imageUrl || blog?.image || blog?.thumbnailURL;
                         const createdAt = relation.createdAt
                           ? new Date(relation.createdAt).toLocaleDateString()
                           : 'N/A';
@@ -1204,16 +1342,29 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
                         return (
                           <TableRow key={relation.id}>
                             <TableCell>
-                              <div
-                                className="cursor-pointer hover:underline"
-                                onClick={() => navigateToBlog(blog.id)}
-                              >
-                                <div className="font-medium">{blogTitle}</div>
-                                {blogDescription && (
-                                  <div className="line-clamp-1 text-sm text-muted-foreground">
-                                    {blogDescription}
-                                  </div>
-                                )}
+                              <div className="flex items-center gap-3">
+                                <Avatar
+                                  className="h-10 w-10 cursor-pointer"
+                                  onClick={() => navigateToBlog(blog.id)}
+                                >
+                                  {blogImageUrl ? (
+                                    <AvatarImage src={blogImageUrl} alt={blogTitle} />
+                                  ) : null}
+                                  <AvatarFallback>
+                                    <BookOpen className="h-5 w-5" />
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div
+                                  className="cursor-pointer hover:underline"
+                                  onClick={() => navigateToBlog(blog.id)}
+                                >
+                                  <div className="font-medium">{blogTitle}</div>
+                                  {blogDescription && (
+                                    <div className="line-clamp-1 text-sm text-muted-foreground">
+                                      {blogDescription}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </TableCell>
                             <TableCell>
@@ -1264,6 +1415,8 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
                         const blog = relation.blog;
                         const blogTitle = blog?.title || 'Unknown Blog';
                         const role = relation.role?.name || 'Writer';
+                        const blogImageUrl =
+                          blog?.imageURL || blog?.imageUrl || blog?.image || blog?.thumbnailURL;
                         const createdAt = relation.createdAt
                           ? new Date(relation.createdAt).toLocaleDateString()
                           : 'N/A';
@@ -1271,11 +1424,24 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
                         return (
                           <TableRow key={relation.id}>
                             <TableCell>
-                              <div
-                                className="cursor-pointer hover:underline"
-                                onClick={() => navigateToBlog(blog.id)}
-                              >
-                                <div className="font-medium">{blogTitle}</div>
+                              <div className="flex items-center gap-3">
+                                <Avatar
+                                  className="h-10 w-10 cursor-pointer"
+                                  onClick={() => navigateToBlog(blog.id)}
+                                >
+                                  {blogImageUrl ? (
+                                    <AvatarImage src={blogImageUrl} alt={blogTitle} />
+                                  ) : null}
+                                  <AvatarFallback>
+                                    <BookOpen className="h-5 w-5" />
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div
+                                  className="cursor-pointer hover:underline"
+                                  onClick={() => navigateToBlog(blog.id)}
+                                >
+                                  <div className="font-medium">{blogTitle}</div>
+                                </div>
                               </div>
                             </TableCell>
                             <TableCell>

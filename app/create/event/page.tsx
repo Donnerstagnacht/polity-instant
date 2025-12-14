@@ -18,7 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel';
 import { Calendar, MapPin, Clock, Users } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { db, tx, id } from '@/../db';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { toast } from 'sonner';
@@ -26,7 +26,7 @@ import { TypeAheadSelect } from '@/components/ui/type-ahead-select';
 import { GroupSelectCard } from '@/components/ui/entity-select-cards';
 import { useSearchParams } from 'next/navigation';
 
-export default function CreateEventPage() {
+function CreateEventForm() {
   const searchParams = useSearchParams();
   const groupIdParam = searchParams.get('groupId');
 
@@ -398,5 +398,23 @@ export default function CreateEventPage() {
         </Card>
       </PageWrapper>
     </AuthGuard>
+  );
+}
+
+export default function CreateEventPage() {
+  return (
+    <Suspense
+      fallback={
+        <PageWrapper className="flex min-h-screen items-center justify-center p-8">
+          <Card className="w-full max-w-2xl">
+            <CardHeader>
+              <CardTitle>Loading...</CardTitle>
+            </CardHeader>
+          </Card>
+        </PageWrapper>
+      }
+    >
+      <CreateEventForm />
+    </Suspense>
   );
 }

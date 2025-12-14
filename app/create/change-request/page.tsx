@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Card,
@@ -24,7 +24,7 @@ import { toast } from 'sonner';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 
-export default function CreateChangeRequestPage() {
+function CreateChangeRequestForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const user = useAuthStore(state => state.user);
@@ -282,5 +282,23 @@ export default function CreateChangeRequestPage() {
         </Card>
       </PageWrapper>
     </AuthGuard>
+  );
+}
+
+export default function CreateChangeRequestPage() {
+  return (
+    <Suspense
+      fallback={
+        <PageWrapper className="flex min-h-screen items-center justify-center p-8">
+          <Card className="w-full max-w-2xl">
+            <CardHeader>
+              <CardTitle>Loading...</CardTitle>
+            </CardHeader>
+          </Card>
+        </PageWrapper>
+      }
+    >
+      <CreateChangeRequestForm />
+    </Suspense>
   );
 }

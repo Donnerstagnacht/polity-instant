@@ -16,14 +16,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { db, tx, id } from '@/../db';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { toast } from 'sonner';
 import { HashtagInput } from '@/components/ui/hashtag-input';
 import { useSearchParams } from 'next/navigation';
 
-export default function CreateAmendmentPage() {
+function CreateAmendmentForm() {
   const searchParams = useSearchParams();
   const groupIdParam = searchParams.get('groupId');
 
@@ -341,5 +341,23 @@ export default function CreateAmendmentPage() {
         </Card>
       </PageWrapper>
     </AuthGuard>
+  );
+}
+
+export default function CreateAmendmentPage() {
+  return (
+    <Suspense
+      fallback={
+        <PageWrapper className="flex min-h-screen items-center justify-center p-8">
+          <Card className="w-full max-w-2xl">
+            <CardHeader>
+              <CardTitle>Loading...</CardTitle>
+            </CardHeader>
+          </Card>
+        </PageWrapper>
+      }
+    >
+      <CreateAmendmentForm />
+    </Suspense>
   );
 }

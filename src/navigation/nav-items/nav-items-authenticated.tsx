@@ -218,20 +218,29 @@ export const navItemsAuthenticated = (
         href: `/user/${userId}`,
         onClick: () => router.push(`/user/${userId}`),
       },
-      {
-        id: 'subscriptions',
-        label: t ? t('navigation.secondary.user.subscriptions') : 'Subscriptions',
-        icon: 'Bell',
-        href: `/user/${userId}/subscriptions`,
-        onClick: () => router.push(`/user/${userId}/subscriptions`),
-      },
-      {
-        id: 'memberships',
-        label: t ? t('navigation.secondary.user.memberships') : 'Memberships',
-        icon: 'Users',
-        href: `/user/${userId}/memberships`,
-        onClick: () => router.push(`/user/${userId}/memberships`),
-      },
+    ];
+
+    // Only show subscriptions and memberships for own user profile
+    if (isOwnUser) {
+      items.push(
+        {
+          id: 'subscriptions',
+          label: t ? t('navigation.secondary.user.subscriptions') : 'Subscriptions',
+          icon: 'Bell',
+          href: `/user/${userId}/subscriptions`,
+          onClick: () => router.push(`/user/${userId}/subscriptions`),
+        },
+        {
+          id: 'memberships',
+          label: t ? t('navigation.secondary.user.memberships') : 'Memberships',
+          icon: 'Users',
+          href: `/user/${userId}/memberships`,
+          onClick: () => router.push(`/user/${userId}/memberships`),
+        }
+      );
+    }
+
+    items.push(
       {
         id: 'network',
         label: t ? t('navigation.secondary.user.network') : 'Network',
@@ -245,8 +254,8 @@ export const navItemsAuthenticated = (
         icon: 'Calendar',
         href: `/user/${userId}/meet`,
         onClick: () => router.push(`/user/${userId}/meet`),
-      },
-    ];
+      }
+    );
 
     if (isOwnUser) {
       items.push({

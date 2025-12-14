@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState, useEffect } from 'react';
+import { use, useState, useEffect, Suspense } from 'react';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,10 +26,31 @@ const PRICE_IDS = {
 
 export default function UserEditPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
+
+  return (
+    <Suspense
+      fallback={
+        <AuthGuard requireAuth={true}>
+          <PageWrapper className="container mx-auto max-w-4xl py-8">
+            <Card>
+              <CardHeader>
+                <CardTitle>Loading...</CardTitle>
+              </CardHeader>
+            </Card>
+          </PageWrapper>
+        </AuthGuard>
+      }
+    >
+      <UserEditContent userId={resolvedParams.id} />
+    </Suspense>
+  );
+}
+
+function UserEditContent({ userId }: { userId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user: authUser } = useAuthStore();
-  const { user: dbUser, userId: userId, isLoading, error } = useUserData(resolvedParams.id);
+  const { user: dbUser, isLoading, error } = useUserData(userId);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -106,7 +127,7 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
     }
   }, [dbUser]);
 
-  const isAuthorized = authUser?.id === resolvedParams.id;
+  const isAuthorized = authUser?.id === userId;
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -181,7 +202,7 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
 
       // Wait a moment for the DB to update, then navigate
       setTimeout(() => {
-        router.push(`/user/${resolvedParams.id}`);
+        router.push(`/user/${userId}`);
       }, 500);
     } catch (error) {
       toast.error('Failed to update user');
@@ -340,7 +361,7 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
                   You need to create a user first by clicking the "Seed User Data" button on the
                   user page
                 </p>
-                <Button onClick={() => router.push(`/user/${resolvedParams.id}`)} variant="default">
+                <Button onClick={() => router.push(`/user/${userId}`)} variant="default">
                   Go to User Page
                 </Button>
               </div>
@@ -362,7 +383,7 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
               <p className="text-muted-foreground">You are not authorized to edit this user</p>
               <Button
                 variant="outline"
-                onClick={() => router.push(`/user/${resolvedParams.id}`)}
+                onClick={() => router.push(`/user/${userId}`)}
                 className="mt-4"
               >
                 View User
@@ -545,7 +566,7 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
             </Card>
 
             {/* Subscription Management */}
-            <SubscriptionStatus userId={resolvedParams.id} />
+            <SubscriptionStatus userId={userId} />
 
             <Card>
               <CardHeader>
@@ -774,7 +795,7 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => router.push(`/user/${resolvedParams.id}`)}
+                onClick={() => router.push(`/user/${userId}`)}
                 disabled={isSubmitting}
               >
                 Cancel
