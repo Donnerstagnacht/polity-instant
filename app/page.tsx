@@ -7,6 +7,15 @@ import { PageWrapper } from '@/components/layout/page-wrapper';
 import { ArrowRight } from 'lucide-react';
 import { SubscriptionTimeline } from '@/features/timeline';
 import { AriaKaiWelcomeDialog } from '@/components/dialogs/AriaKaiWelcomeDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { db } from '../db';
 // import { useTranslation } from 'react-i18next'; // Temporarily disabled
 
@@ -16,6 +25,7 @@ export default function HomePage() {
   const { user } = db.useAuth();
   const isAuthenticated = !!user;
   const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
+  const [showAlphaWarning, setShowAlphaWarning] = useState(false);
 
   // Query user data to check assistantIntroduction flag
   const { data } = db.useQuery(
@@ -41,6 +51,21 @@ export default function HomePage() {
     }
   }, [isAuthenticated, shouldShowDialog]);
 
+  // Show alpha warning for unauthenticated users
+  useEffect(() => {
+    if (!isAuthenticated) {
+      const hasSeenWarning = localStorage.getItem('alpha-warning-dismissed');
+      if (!hasSeenWarning) {
+        setShowAlphaWarning(true);
+      }
+    }
+  }, [isAuthenticated]);
+
+  const handleDismissWarning = () => {
+    localStorage.setItem('alpha-warning-dismissed', 'true');
+    setShowAlphaWarning(false);
+  };
+
   // If authenticated, show the timeline
   if (isAuthenticated) {
     return (
@@ -59,6 +84,27 @@ export default function HomePage() {
   // Landing page for unauthenticated users
   return (
     <PageWrapper className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+      <AlertDialog open={showAlphaWarning} onOpenChange={setShowAlphaWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Early Alpha Version</AlertDialogTitle>
+            <AlertDialogDescription>
+              This is an early apha version. Database overwrites can happen and delete your data. In
+              case you would like to be an early tester, contact{' '}
+              <a
+                href="mailto:tobias.hassebrock@gmail.com"
+                className="font-medium text-primary underline hover:text-primary/80"
+              >
+                tobias.hassebrock@gmail.com
+              </a>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={handleDismissWarning}>I Understand</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="container mx-auto px-4 py-16">
         <div className="mx-auto max-w-4xl text-center">
           {/* Hero Section */}

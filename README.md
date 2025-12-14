@@ -1,323 +1,129 @@
-Welcome to your new TanStack app!
+# 🏛️ Polity - Democracy Reimagined
 
-# Getting Started
+> **Empowering communities, organizations, and governments with collaborative decision-making tools for the digital age.**
 
-To run this application:
+[![Open Source](https://img.shields.io/badge/Open%20Source-%E2%9D%A4%EF%B8%8F-green)](https://github.com/Donnerstagnacht/polity-instant)
+[![Early Alpha](https://img.shields.io/badge/Status-Early%20Alpha-orange)](#)
+
+## 🚀 What is Polity?
+
+Polity is a modern platform for democratic processes, enabling:
+
+- 📝 **Collaborative Document Editing** - Work together on amendments and proposals
+- 🗳️ **Democratic Voting** - Conduct transparent and secure voting processes
+- 👥 **Group Management** - Organize parties, NGOs, and communities
+- 📅 **Event Planning** - Schedule meetings and democratic assemblies
+- 💬 **AI-Powered Assistant** - Get help from Aria & Kai, your democratic companions
+- 🔐 **Secure & Transparent** - Open source with privacy-first approach
+
+## ⚡ Quick Start
+
+### Prerequisites
+
+- Node.js 18+
+- npm or pnpm
+
+### Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/Donnerstagnacht/polity-instant.git
+cd polity-instant
+
+# Install dependencies
 npm install
-npm run start
+
+# Run development server
+npm run dev
 ```
 
-# Building For Production
+Open [http://localhost:3000](http://localhost:3000) in your browser 🎉
 
-To build this application for production:
+## 🛠️ Development
+
+### Building for Production
 
 ```bash
 npm run build
 ```
 
-## Testing
+### 🧪 Testing
 
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
+Run tests with [Vitest](https://vitest.dev/) and [Playwright](https://playwright.dev/):
 
 ```bash
+# Unit tests
 npm run test
+
+# E2E tests
+npm run test:e2e
 ```
 
-## Styling
-
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
-
-## Code Formatting
-
-This project uses [Prettier](https://prettier.io/) for code formatting. You can format your code by running:
+### 🎨 Code Quality
 
 ```bash
+# Format code with Prettier
 npm run format
-```
-
-To check if your code is properly formatted without making changes:
-
-```bash
 npm run format:check
-```
 
-Prettier is configured to work with VSCode's format on save feature. The configuration is in the `.prettierrc.json` file.
-
-## Code Linting
-
-This project uses [ESLint](https://eslint.org/) with TypeScript support for code linting. You can lint your code by running:
-
-```bash
+# Lint with ESLint
 npm run lint
-```
-
-To automatically fix linting issues:
-
-```bash
 npm run lint:fix
 ```
 
-ESLint is configured to work with VSCode's save actions feature. Linting errors will be automatically fixed when you save files.
+### 🎭 UI Components
 
-## Shadcn
-
-Add components using the latest version of [Shadcn](https://ui.shadcn.com/).
+Add components using [Shadcn UI](https://ui.shadcn.com/):
 
 ```bash
 pnpx shadcn@latest add button
 ```
 
-## Routing
+## 🏗️ Tech Stack
 
-This project uses [TanStack Router](https://tanstack.com/router). The initial setup is a file based router. Which means that the routes are managed as files in `src/routes`.
+- **Framework**: [Next.js 14](https://nextjs.org/) with App Router
+- **Database**: [InstantDB](https://instantdb.com/) - Realtime database with permissions
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) + [Shadcn UI](https://ui.shadcn.com/)
+- **Editor**: [Plate.js](https://platejs.org/) - Rich text collaborative editor
+- **AI**: Custom AI assistants (Aria & Kai) for democratic guidance
+- **Auth**: Magic link authentication via InstantDB
+- **Testing**: Vitest + Playwright
 
-### Adding A Route
+## 🤝 Contributing
 
-To add a new route to your application just add another a new file in the `./src/routes` directory.
+We welcome contributions! There are multiple ways to help:
 
-TanStack will automatically generate the content of the route file for you.
+- 💻 **Code**: Fix bugs, add features, improve tests
+- 🎨 **Design**: Improve UX/UI, create flows ([Figma](https://www.figma.com/proto/cAT8Aonu8P7ojwgnKcVlkz/Polity))
+- 📝 **Documentation**: Write guides, tutorials, API docs
+- 🐛 **Testing**: Report bugs, write test cases
+- 💰 **Support**: Help sustain the project ([Support Page](/support))
 
-Now that you have two routes you can use a `Link` component to navigate between them.
+Check out our [GitHub repository](https://github.com/Donnerstagnacht/polity-instant) to get started!
 
-### Adding Links
+## 📄 Project Structure
 
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from '@tanstack/react-router';
+```
+app/              # Next.js App Router pages
+src/
+  components/     # Reusable UI components
+  features/       # Feature-specific code
+  hooks/          # Custom React hooks
+  utils/          # Utility functions
+e2e/              # End-to-end tests
+scripts/          # Database seeding scripts
+instant.*.ts      # InstantDB configuration
 ```
 
-Then anywhere in your JSX you can use it like so:
+## 📜 License
 
-```tsx
-<Link to="/about">About</Link>
-```
+Open Source - Building tools for democracy, together.
 
-This will create a link that will navigate to the `/about` route.
+## 💬 Community
 
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
+- **Email**: tobias.hassebrock@gmail.com
+- **GitHub**: [Donnerstagnacht/polity-instant](https://github.com/Donnerstagnacht/polity-instant)
 
-### Using A Layout
+---
 
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you use the `<Outlet />` component.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { Outlet, createRootRoute } from '@tanstack/react-router';
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
-
-import { Link } from '@tanstack/react-router';
-
-export const Route = createRootRoute({
-  component: () => (
-    <>
-      <header>
-        <nav>
-          <Link to="/">Home</Link>
-          <Link to="/about">About</Link>
-        </nav>
-      </header>
-      <Outlet />
-      <TanStackRouterDevtools />
-    </>
-  ),
-});
-```
-
-The `<TanStackRouterDevtools />` component is not required so you can remove it if you don't want it in your layout.
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-const peopleRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/people',
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people');
-    return response.json() as Promise<{
-      results: {
-        name: string;
-      }[];
-    }>;
-  },
-  component: () => {
-    const data = peopleRoute.useLoaderData();
-    return (
-      <ul>
-        {data.results.map(person => (
-          <li key={person.name}>{person.name}</li>
-        ))}
-      </ul>
-    );
-  },
-});
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-### React-Query
-
-React-Query is an excellent addition or alternative to route loading and integrating it into you application is a breeze.
-
-First add your dependencies:
-
-```bash
-npm install @tanstack/react-query @tanstack/react-query-devtools
-```
-
-Next we'll need to create a query client and provider. We recommend putting those in `main.tsx`.
-
-```tsx
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-
-// ...
-
-const queryClient = new QueryClient();
-
-// ...
-
-if (!rootElement.innerHTML) {
-  const root = ReactDOM.createRoot(rootElement);
-
-  root.render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
-  );
-}
-```
-
-You can also add TanStack Query Devtools to the root route (optional).
-
-```tsx
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-
-const rootRoute = createRootRoute({
-  component: () => (
-    <>
-      <Outlet />
-      <ReactQueryDevtools buttonPosition="top-right" />
-      <TanStackRouterDevtools />
-    </>
-  ),
-});
-```
-
-Now you can use `useQuery` to fetch your data.
-
-```tsx
-import { useQuery } from '@tanstack/react-query';
-
-import './App.css';
-
-function App() {
-  const { data } = useQuery({
-    queryKey: ['people'],
-    queryFn: () =>
-      fetch('https://swapi.dev/api/people')
-        .then(res => res.json())
-        .then(data => data.results as { name: string }[]),
-    initialData: [],
-  });
-
-  return (
-    <div>
-      <ul>
-        {data.map(person => (
-          <li key={person.name}>{person.name}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-export default App;
-```
-
-You can find out everything you need to know on how to use React-Query in the [React-Query documentation](https://tanstack.com/query/latest/docs/framework/react/overview).
-
-## State Management
-
-Another common requirement for React applications is state management. There are many options for state management in React. TanStack Store provides a great starting point for your project.
-
-First you need to add TanStack Store as a dependency:
-
-```bash
-npm install @tanstack/store
-```
-
-Now let's create a simple counter in the `src/App.tsx` file as a demonstration.
-
-```tsx
-import { useStore } from '@tanstack/react-store';
-import { Store } from '@tanstack/store';
-import './App.css';
-
-const countStore = new Store(0);
-
-function App() {
-  const count = useStore(countStore);
-  return (
-    <div>
-      <button onClick={() => countStore.setState(n => n + 1)}>Increment - {count}</button>
-    </div>
-  );
-}
-
-export default App;
-```
-
-One of the many nice features of TanStack Store is the ability to derive state from other state. That derived state will update when the base state updates.
-
-Let's check this out by doubling the count using derived state.
-
-```tsx
-import { useStore } from '@tanstack/react-store';
-import { Store, Derived } from '@tanstack/store';
-import './App.css';
-
-const countStore = new Store(0);
-
-const doubledStore = new Derived({
-  fn: () => countStore.state * 2,
-  deps: [countStore],
-});
-doubledStore.mount();
-
-function App() {
-  const count = useStore(countStore);
-  const doubledCount = useStore(doubledStore);
-
-  return (
-    <div>
-      <button onClick={() => countStore.setState(n => n + 1)}>Increment - {count}</button>
-      <div>Doubled - {doubledCount}</div>
-    </div>
-  );
-}
-
-export default App;
-```
-
-We use the `Derived` class to create a new store that is derived from another store. The `Derived` class has a `mount` method that will start the derived store updating.
-
-Once we've created the derived store we can use it in the `App` component just like we would any other store using the `useStore` hook.
-
-You can find out everything you need to know on how to use TanStack Store in the [TanStack Store documentation](https://tanstack.com/store/latest).
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
+**⚠️ Note**: This is an early alpha version. Database overwrites can happen. Use with caution!
