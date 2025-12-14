@@ -15,6 +15,7 @@ export interface SeedContext {
   amendmentIds: string[];
   blogIds: string[];
   positionIds: string[];
+  eventPositionIds?: string[];
   statementIds: string[];
   agendaItemIds: string[];
   electionCandidateIds: string[];
@@ -104,6 +105,8 @@ export interface SeedContext {
     // Positions
     positionsToGroups?: number;
     positionsToHolders?: number;
+    eventPositionsToEvents?: number;
+    eventPositionHoldersCount?: number;
 
     // Stripe
     stripeCustomersToUsers?: number;

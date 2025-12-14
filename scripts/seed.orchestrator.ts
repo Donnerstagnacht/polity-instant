@@ -144,6 +144,7 @@ export class SeedOrchestrator {
       amendmentIds: [],
       blogIds: [],
       positionIds: [],
+      eventPositionIds: [],
       statementIds: [],
       agendaItemIds: [],
       electionCandidateIds: [],
@@ -194,6 +195,7 @@ export class SeedOrchestrator {
       { label: 'Amendments (all with targets & paths)', count: context.amendmentIds?.length || 0 },
       { label: 'Blogs', count: context.blogIds?.length || 0 },
       { label: 'Positions', count: context.positionIds?.length || 0 },
+      { label: 'Event Positions', count: context.eventPositionIds?.length || 0 },
       { label: 'Statements', count: context.statementIds?.length || 0 },
       { label: 'Agenda Items', count: context.agendaItemIds?.length || 0 },
       { label: 'Elections', count: context.electionCandidateIds?.length || 0 },
@@ -310,6 +312,8 @@ export class SeedOrchestrator {
         // Positions
         { label: 'Positions → Groups', count: context.linkCounts.positionsToGroups },
         { label: 'Positions → Holders', count: context.linkCounts.positionsToHolders },
+        { label: 'Event Positions → Events', count: context.linkCounts.eventPositionsToEvents },
+        { label: 'Event Position Holders', count: context.linkCounts.eventPositionHoldersCount },
         // Stripe
         { label: 'Stripe Customers → Users', count: context.linkCounts.stripeCustomersToUsers },
         {

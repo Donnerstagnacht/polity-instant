@@ -176,6 +176,13 @@ export const navItemsAuthenticated = (
     if (isAdmin) {
       items.push(
         {
+          id: 'positions',
+          label: t ? t('navigation.secondary.event.positions') : 'Positions',
+          icon: 'UserCheck',
+          href: `/event/${eventId}/positions`,
+          onClick: () => router.push(`/event/${eventId}/positions`),
+        },
+        {
           id: 'participants',
           label: t ? t('navigation.secondary.event.participants') : 'Participants',
           icon: 'Users',

@@ -3,7 +3,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import db, { id, tx } from '../../../db';
-import { Settings, Trophy } from 'lucide-react';
+import { Settings, Trophy, UserCheck } from 'lucide-react';
 import { useState } from 'react';
 import {
   Dialog,
@@ -36,6 +36,13 @@ import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useTranslation } from '@/hooks/use-translation';
 import { ShareButton } from '@/components/shared/ShareButton';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel';
 
 interface EventWikiProps {
   eventId: string;
@@ -80,6 +87,12 @@ export function EventWiki({ eventId }: EventWikiProps) {
       organizer: {},
       group: {},
       hashtags: {},
+      eventPositions: {
+        holders: {
+          user: {},
+        },
+        election: {},
+      },
     },
     agendaItems: {
       event: {},
@@ -325,6 +338,124 @@ export function EventWiki({ eventId }: EventWikiProps) {
           }}
           className="mb-12"
         />
+      )}
+
+      {/* Event Positions Carousel */}
+      {event.eventPositions && event.eventPositions.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserCheck className="h-5 w-5" />
+              Positions
+            </CardTitle>
+            <CardDescription>Positions for this event</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Carousel
+              opts={{
+                align: 'start',
+                loop: true,
+              }}
+              className="w-full"
+            >
+              <CarouselContent className="-ml-2 md:-ml-4">
+                {event.eventPositions.map((position: any, index: number) => {
+                  const holders = position.holders || [];
+                  const filledSlots = holders.length;
+                  const totalSlots = position.capacity || 1;
+
+                  return (
+                    <CarouselItem
+                      key={position.id}
+                      className="pl-2 md:basis-1/2 md:pl-4 lg:basis-1/3"
+                    >
+                      <Card
+                        className={`h-full overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${GRADIENTS[index % GRADIENTS.length]}`}
+                      >
+                        <CardHeader className="space-y-3 pb-4">
+                          <div className="flex items-start justify-between">
+                            <CardTitle className="line-clamp-1 flex-1 text-xl">
+                              {position.title}
+                            </CardTitle>
+                            <Badge variant="outline" className="ml-2 shrink-0">
+                              {filledSlots}/{totalSlots}
+                            </Badge>
+                          </div>
+                          {position.description && (
+                            <CardDescription className="line-clamp-2">
+                              {position.description}
+                            </CardDescription>
+                          )}
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <div className="space-y-3">
+                            {/* Display holders */}
+                            {holders.length > 0 ? (
+                              <div className="space-y-2">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                  Current {holders.length === 1 ? 'Holder' : 'Holders'}
+                                </p>
+                                {holders.map((holder: any) => (
+                                  <div
+                                    key={holder.id}
+                                    className="rounded-lg border bg-background/80 p-3 shadow-sm backdrop-blur-sm"
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <Avatar className="h-10 w-10 ring-2 ring-background">
+                                        <AvatarImage
+                                          src={holder.user?.avatar}
+                                          alt={holder.user?.name || 'User'}
+                                        />
+                                        <AvatarFallback>
+                                          {holder.user?.name?.[0]?.toUpperCase() || '?'}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <div className="min-w-0 flex-1">
+                                        <p className="truncate font-semibold">
+                                          {holder.user?.name || 'Unknown'}
+                                        </p>
+                                        {holder.user?.handle && (
+                                          <p className="truncate text-sm text-muted-foreground">
+                                            @{holder.user.handle}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="rounded-lg border border-dashed border-border/50 bg-background/50 p-4 text-center">
+                                <p className="text-sm font-medium text-muted-foreground">
+                                  Vacant Position
+                                </p>
+                              </div>
+                            )}
+                            {/* Show election info if exists */}
+                            {position.election && (
+                              <div className="rounded-lg border border-border/50 bg-background/50 p-3 text-sm">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-medium text-muted-foreground">
+                                    Election:
+                                  </span>
+                                  <Badge variant="secondary" className="text-xs">
+                                    {position.election.status || 'Scheduled'}
+                                  </Badge>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </CarouselItem>
+                  );
+                })}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          </CardContent>
+        </Card>
       )}
 
       {/* Elections Selection Dialog */}

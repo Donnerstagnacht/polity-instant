@@ -10,7 +10,7 @@ import { randomInt, randomItem, randomItems } from '../helpers/random.helpers';
 
 export const agendaAndVotingSeeder: EntitySeeder = {
   name: 'agendaAndVoting',
-  dependencies: ['users', 'groups', 'events', 'positions'],
+  dependencies: ['users', 'groups', 'events', 'positions', 'eventPositions'],
 
   async seed(context: SeedContext): Promise<SeedContext> {
     const { db } = context;
@@ -49,7 +49,88 @@ export const agendaAndVotingSeeder: EntitySeeder = {
     const voteStatuses = ['planned', 'active', 'completed'];
     const majorityTypes = ['relative', 'absolute'];
 
+    // Query event positions that need elections created
+    const eventPositionsQuery = await db.query({
+      eventPositions: {},
+    });
+    const allEventPositions = eventPositionsQuery?.eventPositions || [];
+
     for (const eventId of eventIds) {
+      let orderCounter = 1;
+
+      // Create elections for event positions with createElectionOnAgenda=true
+      const eventPositionsForThisEvent = allEventPositions.filter(
+        (p: any) => p.event?.id === eventId && p.createElectionOnAgenda === true
+      );
+
+      for (const eventPosition of eventPositionsForThisEvent) {
+        const agendaItemId = id();
+        const creatorId = randomItem(userIds);
+        const startTime = faker.date.future({ years: 0.5 });
+
+        // Create agenda item for the election
+        transactions.push(
+          tx.agendaItems[agendaItemId]
+            .update({
+              title: `Wahl: ${eventPosition.title}`,
+              description: eventPosition.description || `Election for ${eventPosition.title}`,
+              type: 'election',
+              scheduledTime: startTime,
+              duration: randomInt(15, 45), // 15-45 minutes for elections
+              status: 'planned',
+              order: orderCounter++,
+              createdAt: faker.date.past({ years: 0.08 }),
+              updatedAt: new Date(),
+            })
+            .link({ creator: creatorId, event: eventId })
+        );
+        totalAgendaItems++;
+        agendaItemsToCreators++;
+        agendaItemsToEvents++;
+
+        // Create the election linked to this event position
+        const electionId = id();
+        const majorityType = randomItem(majorityTypes);
+
+        const electionTx = tx.elections[electionId]
+          .update({
+            title: `${eventPosition.title} Wahl`,
+            description: eventPosition.description || `Election for ${eventPosition.title}`,
+            majorityType,
+            isMultipleChoice: false,
+            status: 'planned',
+            votingStartTime: startTime,
+            votingEndTime: new Date(startTime.getTime() + randomInt(30, 60) * 60000),
+            createdAt: faker.date.past({ years: 0.08 }),
+            updatedAt: new Date(),
+          })
+          .link({ agendaItem: agendaItemId, eventPosition: eventPosition.id });
+
+        transactions.push(electionTx);
+        totalElections++;
+        electionsToAgendaItems++;
+
+        // Add election candidates
+        const candidateCount = Math.min(randomInt(2, 4), userIds.length);
+        const candidates = randomItems(userIds, candidateCount);
+
+        for (const candidateUserId of candidates) {
+          const candidateId = id();
+          transactions.push(
+            tx.electionCandidates[candidateId]
+              .update({
+                name: faker.person.fullName(),
+                description: faker.lorem.sentence(),
+                order: faker.number.int({ min: 1, max: 10 }),
+                createdAt: faker.date.past({ years: 0.08 }),
+              })
+              .link({ election: electionId, user: candidateUserId })
+          );
+          electionCandidatesToElections++;
+          electionCandidatesToUsers++;
+        }
+      }
+
       const agendaItemCount = randomInt(2, 5); // 2-5 agenda items per event
 
       for (let i = 0; i < agendaItemCount; i++) {
@@ -68,7 +149,7 @@ export const agendaAndVotingSeeder: EntitySeeder = {
               scheduledTime: startTime,
               duration: randomInt(15, 120), // 15-120 minutes
               status: randomItem(voteStatuses),
-              order: i + 1,
+              order: orderCounter++,
               createdAt: faker.date.past({ years: 0.08 }),
               updatedAt: new Date(),
             })

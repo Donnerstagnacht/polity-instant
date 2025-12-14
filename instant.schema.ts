@@ -306,6 +306,17 @@ const _schema = i.schema({
       title: i.string().indexed(),
       updatedAt: i.date().indexed(),
     }),
+    eventPositions: i.entity({
+      title: i.string().indexed(),
+      description: i.string().optional(),
+      capacity: i.number(), // How many participants can hold this position
+      createElectionOnAgenda: i.boolean().indexed(), // Whether to auto-create election agenda item
+      createdAt: i.date().indexed(),
+      updatedAt: i.date().indexed(),
+    }),
+    eventPositionHolders: i.entity({
+      createdAt: i.date().indexed(),
+    }),
 
     statements: i.entity({
       tag: i.string(),
@@ -1605,6 +1616,54 @@ const _schema = i.schema({
         on: 'groups',
         has: 'many',
         label: 'positions',
+      },
+    },
+    eventPositionsEvent: {
+      forward: {
+        on: 'eventPositions',
+        has: 'one',
+        label: 'event',
+      },
+      reverse: {
+        on: 'events',
+        has: 'many',
+        label: 'eventPositions',
+      },
+    },
+    eventPositionHoldersPosition: {
+      forward: {
+        on: 'eventPositionHolders',
+        has: 'one',
+        label: 'position',
+      },
+      reverse: {
+        on: 'eventPositions',
+        has: 'many',
+        label: 'holders',
+      },
+    },
+    eventPositionHoldersUser: {
+      forward: {
+        on: 'eventPositionHolders',
+        has: 'one',
+        label: 'user',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'eventPositionHolders',
+      },
+    },
+    eventPositionsElection: {
+      forward: {
+        on: 'eventPositions',
+        has: 'one',
+        label: 'election',
+      },
+      reverse: {
+        on: 'elections',
+        has: 'one',
+        label: 'eventPosition',
       },
     },
     $usersAvatarFile: {
