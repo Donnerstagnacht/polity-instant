@@ -4,13 +4,7 @@ import { Bell, BellOff, Loader2 } from 'lucide-react';
 import { usePushSubscription } from '@/hooks/usePushSubscription';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface PushNotificationToggleProps {
@@ -20,12 +14,12 @@ interface PushNotificationToggleProps {
 
 /**
  * Component to enable/disable push notifications
- * 
+ *
  * @example
  * ```tsx
  * // In a settings page
  * <PushNotificationToggle variant="card" showDescription />
- * 
+ *
  * // In a header/toolbar
  * <PushNotificationToggle variant="minimal" />
  * ```
@@ -34,15 +28,8 @@ export function PushNotificationToggle({
   variant = 'default',
   showDescription = true,
 }: PushNotificationToggleProps) {
-  const {
-    isSupported,
-    isSubscribed,
-    isLoading,
-    permission,
-    error,
-    subscribe,
-    unsubscribe,
-  } = usePushSubscription();
+  const { isSupported, isSubscribed, isLoading, permission, error, subscribe, unsubscribe } =
+    usePushSubscription();
 
   const handleToggle = async () => {
     try {
@@ -60,21 +47,41 @@ export function PushNotificationToggle({
 
   // Browser doesn't support push notifications
   if (!isSupported) {
-    if (variant === 'minimal') return null;
+    if (variant === 'minimal') {
+      return (
+        <Button
+          variant="outline"
+          size="sm"
+          disabled
+          title="Ihr Browser unterstützt keine Push-Benachrichtigungen"
+        >
+          <BellOff className="h-4 w-4" />
+        </Button>
+      );
+    }
 
     return (
       <Alert>
         <BellOff className="h-4 w-4" />
-        <AlertDescription>
-          Ihr Browser unterstützt keine Push-Benachrichtigungen.
-        </AlertDescription>
+        <AlertDescription>Ihr Browser unterstützt keine Push-Benachrichtigungen.</AlertDescription>
       </Alert>
     );
   }
 
   // Permission denied
   if (permission === 'denied') {
-    if (variant === 'minimal') return null;
+    if (variant === 'minimal') {
+      return (
+        <Button
+          variant="outline"
+          size="sm"
+          disabled
+          title="Benachrichtigungen blockiert. Bitte in den Browser-Einstellungen aktivieren."
+        >
+          <BellOff className="h-4 w-4" />
+        </Button>
+      );
+    }
 
     return (
       <Alert variant="destructive">
@@ -100,12 +107,12 @@ export function PushNotificationToggle({
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : isSubscribed ? (
           <>
-            <Bell className="h-4 w-4 mr-2" />
+            <Bell className="mr-2 h-4 w-4" />
             Benachrichtigungen aktiv
           </>
         ) : (
           <>
-            <BellOff className="h-4 w-4 mr-2" />
+            <BellOff className="mr-2 h-4 w-4" />
             Benachrichtigungen aktivieren
           </>
         )}
@@ -119,11 +126,7 @@ export function PushNotificationToggle({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            {isSubscribed ? (
-              <Bell className="h-5 w-5" />
-            ) : (
-              <BellOff className="h-5 w-5" />
-            )}
+            {isSubscribed ? <Bell className="h-5 w-5" /> : <BellOff className="h-5 w-5" />}
             Push-Benachrichtigungen
           </CardTitle>
           {showDescription && (
@@ -174,12 +177,8 @@ export function PushNotificationToggle({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="space-y-0.5">
-          <div className="text-sm font-medium flex items-center gap-2">
-            {isSubscribed ? (
-              <Bell className="h-4 w-4" />
-            ) : (
-              <BellOff className="h-4 w-4" />
-            )}
+          <div className="flex items-center gap-2 text-sm font-medium">
+            {isSubscribed ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
             Push-Benachrichtigungen
           </div>
           {showDescription && (
