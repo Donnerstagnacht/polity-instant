@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { navItemsAuthenticated } from '@/navigation/nav-items/nav-items-authenticated';
+import { createNavItemsUnauthenticated } from '@/navigation/nav-items/nav-items-unauthenticated';
 import { useInitialRoute } from '@/navigation/state/useInitialRoute';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from '@/hooks/use-translation';
@@ -31,44 +32,8 @@ export function useNavigation() {
   const { count: unreadNotificationsCount } = useUnreadNotificationsCount();
   const { count: unreadMessagesCount } = useUnreadMessagesCount();
 
-  // Create unauthenticated navigation items with proper onClick handlers
-  const unauthenticatedNavItems: NavigationItem[] = [
-    {
-      id: 'home',
-      icon: 'Home',
-      label: t('navigation.primary.home'),
-      href: '/',
-      onClick: () => router.push('/'),
-    },
-    {
-      id: 'features',
-      icon: 'Sparkles',
-      label: t('navigation.primary.features'),
-      href: '/features',
-      onClick: () => router.push('/features'),
-    },
-    {
-      id: 'solutions',
-      icon: 'Target',
-      label: t('navigation.primary.solutions'),
-      href: '/solutions',
-      onClick: () => router.push('/solutions'),
-    },
-    {
-      id: 'pricing',
-      icon: 'CreditCard',
-      label: t('navigation.primary.pricing'),
-      href: '/pricing',
-      onClick: () => router.push('/pricing'),
-    },
-    {
-      id: 'auth',
-      icon: 'User',
-      label: 'Login',
-      href: '/auth',
-      onClick: () => router.push('/auth'),
-    },
-  ];
+  // Create unauthenticated navigation items using the factory function
+  const unauthenticatedNavItems = createNavItemsUnauthenticated(router, t);
 
   // Create a mock router object that matches the expected interface
   const mockRouter = {

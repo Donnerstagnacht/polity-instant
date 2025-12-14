@@ -28,6 +28,7 @@ import {
   Sun,
   Target,
   User,
+  UserCheck,
   Users,
   Workflow,
 } from 'lucide-react';
@@ -37,6 +38,7 @@ export const iconMap = {
   Home,
   Settings,
   User,
+  UserCheck,
   Users,
   Mail,
   Search,

@@ -48,6 +48,7 @@ const deTranslation: I18nLocale = {
       features: 'Funktionen',
       solutions: 'Lösungen',
       pricing: 'Preise',
+      support: 'Unterstützen',
       create: 'Erstellen',
       search: 'Suchen',
       dashboard: 'Dashboard',

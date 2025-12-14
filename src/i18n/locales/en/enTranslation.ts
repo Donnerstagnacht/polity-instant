@@ -46,6 +46,7 @@ const enTranslation = {
       features: 'Features',
       solutions: 'Solutions',
       pricing: 'Pricing',
+      support: 'Support',
       create: 'Create',
       search: 'Search',
       dashboard: 'Dashboard',
