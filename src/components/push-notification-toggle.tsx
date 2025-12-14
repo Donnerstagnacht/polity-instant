@@ -38,9 +38,11 @@ export function PushNotificationToggle({
         toast.success('Push-Benachrichtigungen deaktiviert');
       } else {
         await subscribe();
+        // Only show success if subscribe didn't throw
         toast.success('Push-Benachrichtigungen aktiviert');
       }
     } catch (err: any) {
+      console.error('[PushNotificationToggle] Error:', err);
       toast.error(err.message || 'Fehler beim Ändern der Einstellung');
     }
   };

@@ -44,10 +44,19 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
         'PushManager' in window &&
         'Notification' in window;
 
+      console.log('[usePushSubscription] Browser support check:', {
+        serviceWorker: 'serviceWorker' in navigator,
+        pushManager: 'PushManager' in window,
+        notification: 'Notification' in window,
+        supported,
+      });
+
       setIsSupported(supported);
 
       if (supported && 'Notification' in window) {
-        setPermission(Notification.permission);
+        const currentPermission = Notification.permission;
+        console.log('[usePushSubscription] Current notification permission:', currentPermission);
+        setPermission(currentPermission);
       }
 
       setIsLoading(false);
@@ -89,12 +98,24 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
     }
 
     try {
+      console.log('[usePushSubscription] ===== REQUESTING PERMISSION =====');
+      console.log('[usePushSubscription] Current state:', {
+        permission: Notification.permission,
+        isSupported,
+        hasNotification: 'Notification' in window,
+      });
+      
+      // Show an alert to confirm we're actually calling this
+      console.log('[usePushSubscription] About to call Notification.requestPermission()...');
+      
       const result = await Notification.requestPermission();
+      
+      console.log('[usePushSubscription] ===== PERMISSION RESULT:', result, '=====');
       setPermission(result);
       return result;
     } catch (err) {
       console.error('[usePushSubscription] Error requesting permission:', err);
-      throw new Error('Failed to request notification permission');
+      throw new Error('Fehler beim Anfordern der Benachrichtigungsberechtigung');
     }
   }, [isSupported]);
 
@@ -118,22 +139,27 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
     try {
       // Request permission if not already granted
       let currentPermission = permission;
+      console.log('[usePushSubscription] Current permission:', currentPermission);
+      
       if (currentPermission !== 'granted') {
+        console.log('[usePushSubscription] Requesting permission...');
         currentPermission = await requestPermission();
+        console.log('[usePushSubscription] Permission result:', currentPermission);
       }
 
       if (currentPermission !== 'granted') {
-        setError(
-          currentPermission === 'denied' 
-            ? 'Notification permission denied. Please enable notifications in your browser settings.'
-            : 'Notification permission required to enable push notifications.'
-        );
+        const errorMsg = currentPermission === 'denied' 
+          ? 'Benachrichtigungen wurden blockiert. Bitte in den Browser-Einstellungen aktivieren.'
+          : 'Bitte erlauben Sie Benachrichtigungen im Browser-Dialog.';
+        setError(errorMsg);
         setIsLoading(false);
-        return;
+        throw new Error(errorMsg);
       }
 
+      console.log('[usePushSubscription] Permission granted, getting service worker...');
       // Get service worker registration
       const registration = await navigator.serviceWorker.ready;
+      console.log('[usePushSubscription] Service worker ready');
 
       // Check if already subscribed
       let subscription = await registration.pushManager.getSubscription();
@@ -182,8 +208,11 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
       setError(null);
     } catch (err: any) {
       console.error('[usePushSubscription] Error subscribing:', err);
-      setError(err.message || 'Failed to enable push notifications');
+      const errorMsg = err.message || 'Fehler beim Aktivieren der Push-Benachrichtigungen';
+      setError(errorMsg);
       setIsSubscribed(false);
+      setIsLoading(false);
+      throw err;
     } finally {
       setIsLoading(false);
     }
