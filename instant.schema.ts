@@ -203,6 +203,7 @@ const _schema = i.schema({
       isPublic: i.boolean().indexed(),
       location: i.string().optional(),
       startDate: i.date().indexed(),
+      streamURL: i.string().optional(), // YouTube live stream URL for the event stream page
       tags: i.json().optional(),
       title: i.string().indexed(),
       updatedAt: i.date().indexed(),

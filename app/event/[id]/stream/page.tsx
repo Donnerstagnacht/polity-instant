@@ -16,7 +16,6 @@ import {
   X,
   ArrowLeft,
   FileText,
-  Calendar,
   Users,
   Vote,
   UserCheck,
@@ -28,6 +27,23 @@ import {
 import { db, id, tx } from '../../../../db';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+
+// Helper function to extract YouTube video ID from URL
+function getYouTubeVideoId(url: string): string | null {
+  if (!url) return null;
+
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+    /^([a-zA-Z0-9_-]{11})$/, // Direct video ID
+  ];
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+
+  return null;
+}
 
 export default function EventStreamPage() {
   const params = useParams();
@@ -373,28 +389,25 @@ export default function EventStreamPage() {
     <AuthGuard requireAuth={true}>
       <PageWrapper>
         <div className="container mx-auto p-6">
-          <div className="mb-4">
-            <Button variant="ghost" onClick={() => router.push(`/event/${eventId}`)}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Event
-            </Button>
-          </div>
-
           <div className="space-y-6">
-            {/* Event Header */}
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold">{event.title} - Live Stream</h1>
-              <div className="flex items-center gap-4 text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-4 w-4" />
-                  <span>{new Date(event.startDate).toLocaleDateString('de-DE')}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
-                  <span>{new Date(event.startDate).toLocaleTimeString('de-DE')}</span>
-                </div>
-              </div>
-            </div>
+            {/* Live Stream Video */}
+            {event.streamURL &&
+              (() => {
+                const videoId = getYouTubeVideoId(event.streamURL);
+                return videoId ? (
+                  <div className="relative w-full overflow-hidden rounded-lg bg-black shadow-xl">
+                    <div className="aspect-video">
+                      <iframe
+                        className="h-full w-full"
+                        src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&rel=0&modestbranding=1`}
+                        title="Event Live Stream"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                      />
+                    </div>
+                  </div>
+                ) : null;
+              })()}
 
             {/* Current Agenda Item */}
             <Card>

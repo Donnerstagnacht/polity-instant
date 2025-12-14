@@ -13,6 +13,15 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Calendar,
   Clock,
@@ -29,6 +38,8 @@ import {
   ThumbsDown,
   Minus,
   CheckCircle2,
+  Search as SearchIcon,
+  Filter,
 } from 'lucide-react';
 import { db, id, tx } from '../../../../db';
 import Link from 'next/link';
@@ -39,6 +50,12 @@ export default function EventAgendaPage() {
   const eventId = params.id as string;
   const { user } = db.useAuth();
   const [votingLoading, setVotingLoading] = useState<string | null>(null);
+
+  // Search and filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [showFilters, setShowFilters] = useState(false);
 
   // Query event and its agenda items
   const { data, isLoading } = db.useQuery({
@@ -80,6 +97,45 @@ export default function EventAgendaPage() {
   const agendaItems = (data?.agendaItems || [])
     .filter((item: any) => item.event?.id === eventId)
     .sort((a: any, b: any) => a.order - b.order);
+
+  // Calculate start and end times for each agenda item based on event start time
+  const agendaItemsWithTimes = agendaItems.map((item: any, index: number) => {
+    const eventStartTime = event?.startDate ? new Date(event.startDate).getTime() : Date.now();
+
+    // Calculate cumulative time from previous items
+    let cumulativeMinutes = 0;
+    for (let i = 0; i < index; i++) {
+      cumulativeMinutes += agendaItems[i].duration || 30; // Default 30 min if no duration
+    }
+
+    const startTime = new Date(eventStartTime + cumulativeMinutes * 60000);
+    const duration = item.duration || 30; // Default 30 minutes
+    const endTime = new Date(startTime.getTime() + duration * 60000);
+
+    return {
+      ...item,
+      calculatedStartTime: startTime,
+      calculatedEndTime: endTime,
+      calculatedDuration: duration,
+    };
+  });
+
+  // Apply search and filters
+  const filteredAgendaItems = agendaItemsWithTimes.filter((item: any) => {
+    // Search filter
+    const matchesSearch =
+      !searchQuery ||
+      item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.description?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    // Type filter
+    const matchesType = typeFilter === 'all' || item.type === typeFilter;
+
+    // Status filter
+    const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
+
+    return matchesSearch && matchesType && matchesStatus;
+  });
 
   // Get user's existing votes
   const userElectionVotes = (data?.electionVotes || []).filter(
@@ -264,42 +320,6 @@ export default function EventAgendaPage() {
         <div className="space-y-6">
           {/* Event Header */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold">{event.title} - Tagesordnung</h1>
-                <div className="mt-2 flex items-center gap-4 text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    <span>{new Date(event.startDate).toLocaleDateString('de-DE')}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    <span>{new Date(event.startDate).toLocaleTimeString('de-DE')}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Users className="h-4 w-4" />
-                    <span>
-                      Erstellt von {event.organizer?.name || event.organizer?.email || 'Unbekannt'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <Button asChild>
-                <Link href="/create?type=agenda-item">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Tagesordnungspunkt hinzufügen
-                </Link>
-              </Button>
-            </div>
-
-            {event.description && (
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-muted-foreground">{event.description}</p>
-                </CardContent>
-              </Card>
-            )}
-
             {/* Agenda Statistics */}
             <Card>
               <CardHeader>
@@ -367,9 +387,94 @@ export default function EventAgendaPage() {
 
           {/* Agenda Items */}
           <div className="space-y-4">
-            <h2 className="text-2xl font-semibold">Tagesordnungspunkte ({agendaItems.length})</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-semibold">
+                Tagesordnungspunkte ({filteredAgendaItems.length})
+              </h2>
+            </div>
 
-            {agendaItems.length === 0 ? (
+            {/* Search Bar and Filters */}
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search agenda items..."
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Button variant="outline" size="icon" onClick={() => setShowFilters(!showFilters)}>
+                  <Filter className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Filters */}
+              {showFilters && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Filters</CardTitle>
+                    <CardDescription>Refine the agenda items</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="type-filter">Type</Label>
+                        <Select value={typeFilter} onValueChange={setTypeFilter}>
+                          <SelectTrigger id="type-filter">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Types</SelectItem>
+                            <SelectItem value="election">Election</SelectItem>
+                            <SelectItem value="vote">Vote</SelectItem>
+                            <SelectItem value="speech">Speech</SelectItem>
+                            <SelectItem value="discussion">Discussion</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="status-filter">Status</Label>
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                          <SelectTrigger id="status-filter">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Status</SelectItem>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="in-progress">In Progress</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                            <SelectItem value="planned">Planned</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            {filteredAgendaItems.length === 0 && searchQuery ? (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <SearchIcon className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                  <h3 className="mb-2 text-lg font-semibold">No matching agenda items</h3>
+                  <p className="mb-4 text-muted-foreground">Try adjusting your search or filters</p>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setTypeFilter('all');
+                      setStatusFilter('all');
+                    }}
+                  >
+                    Clear filters
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : filteredAgendaItems.length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center">
                   <Calendar className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
@@ -386,26 +491,59 @@ export default function EventAgendaPage() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-4">
-                {agendaItems.map((item: any, index: number) => {
+              <div className="space-y-6">
+                {filteredAgendaItems.map((item: any) => {
                   const isPendingPreviousDecision =
                     item.forwardingStatus === 'previous_decision_outstanding';
+
+                  const formatTime = (date: Date) => {
+                    return date.toLocaleTimeString('de-DE', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    });
+                  };
+
                   return (
-                    <Card
-                      key={item.id}
-                      className={`transition-shadow hover:shadow-md ${
-                        isPendingPreviousDecision ? 'pointer-events-none opacity-50' : ''
-                      }`}
-                    >
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-start gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-semibold">
-                              {index + 1}
-                            </div>
-                            <div className="space-y-1">
+                    <div key={item.id} className="relative flex gap-4">
+                      {/* Time Column (outside card, no background) */}
+                      <div className="relative flex w-24 flex-shrink-0 flex-col items-center pt-4">
+                        {/* Timeline dot */}
+                        <div className="h-3 w-3 rounded-full border-2 border-background bg-primary" />
+
+                        {/* Order number */}
+                        <div className="mb-2 mt-2 flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-semibold">
+                          {item.order}
+                        </div>
+
+                        {/* Start time */}
+                        <div className="mt-2 text-center">
+                          <div className="text-sm font-semibold">
+                            {formatTime(item.calculatedStartTime)}
+                          </div>
+
+                          {/* End time (less prominent) */}
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            {formatTime(item.calculatedEndTime)}
+                          </div>
+
+                          {/* Duration badge */}
+                          <Badge variant="outline" className="mt-2 text-xs">
+                            {item.calculatedDuration}m
+                          </Badge>
+                        </div>
+                      </div>
+
+                      {/* Card with agenda item content */}
+                      <Card
+                        className={`flex-1 transition-shadow hover:shadow-md ${
+                          isPendingPreviousDecision ? 'pointer-events-none opacity-50' : ''
+                        }`}
+                      >
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 space-y-1">
                               <CardTitle className="text-lg">{item.title}</CardTitle>
-                              <div className="flex items-center gap-2">
+                              <div className="flex flex-wrap items-center gap-2">
                                 <Badge className={getTypeColor(item.type)}>
                                   {getAgendaItemIcon(item.type)}
                                   <span className="ml-1 capitalize">{item.type}</span>
@@ -419,414 +557,409 @@ export default function EventAgendaPage() {
                                     Ausstehende Vorentscheidung
                                   </Badge>
                                 )}
-                                {item.duration && (
-                                  <Badge variant="outline">
-                                    <Clock className="mr-1 h-3 w-3" />
-                                    {item.duration} Min
-                                  </Badge>
-                                )}
                               </div>
                             </div>
+                            <Button asChild variant="outline" size="sm">
+                              <Link href={`/event/${eventId}/agenda/${item.id}`}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                Details
+                              </Link>
+                            </Button>
                           </div>
-                          <Button asChild variant="outline" size="sm">
-                            <Link href={`/event/${eventId}/agenda/${item.id}`}>
-                              <Eye className="mr-2 h-4 w-4" />
-                              Details anzeigen
-                            </Link>
-                          </Button>
-                        </div>
-                      </CardHeader>
+                        </CardHeader>
 
-                      {item.description && (
+                        {item.description && (
+                          <CardContent className="pt-0">
+                            <p className="text-muted-foreground">{item.description}</p>
+                          </CardContent>
+                        )}
+
                         <CardContent className="pt-0">
-                          <p className="text-muted-foreground">{item.description}</p>
-                        </CardContent>
-                      )}
+                          <div className="space-y-4">
+                            {/* Election */}
+                            {item.election && (
+                              <div>
+                                <h4 className="mb-2 font-medium">Wahl</h4>
+                                <div className="space-y-2">
+                                  {(() => {
+                                    const election = item.election;
+                                    const userVote = userElectionVotes.find(
+                                      (vote: any) => vote.election?.id === election.id
+                                    );
+                                    const candidates = election.candidates || [];
+                                    const voteCounts: Record<string, number> = {};
 
-                      <CardContent className="pt-0">
-                        <div className="space-y-4">
-                          {/* Election */}
-                          {item.election && (
-                            <div>
-                              <h4 className="mb-2 font-medium">Wahl</h4>
-                              <div className="space-y-2">
-                                {(() => {
-                                  const election = item.election;
-                                  const userVote = userElectionVotes.find(
-                                    (vote: any) => vote.election?.id === election.id
-                                  );
-                                  const candidates = election.candidates || [];
-                                  const voteCounts: Record<string, number> = {};
-
-                                  // Count votes for each candidate from all election votes
-                                  (data?.electionVotes || []).forEach((vote: any) => {
-                                    if (vote.election?.id === election.id) {
-                                      const candId = vote.candidate?.id;
-                                      if (candId) {
-                                        voteCounts[candId] = (voteCounts[candId] || 0) + 1;
+                                    // Count votes for each candidate from all election votes
+                                    (data?.electionVotes || []).forEach((vote: any) => {
+                                      if (vote.election?.id === election.id) {
+                                        const candId = vote.candidate?.id;
+                                        if (candId) {
+                                          voteCounts[candId] = (voteCounts[candId] || 0) + 1;
+                                        }
                                       }
-                                    }
-                                  });
+                                    });
 
-                                  // Get total votes for this election
-                                  const totalVotes = (data?.electionVotes || []).filter(
-                                    (vote: any) => vote.election?.id === election.id
-                                  ).length;
+                                    // Get total votes for this election
+                                    const totalVotes = (data?.electionVotes || []).filter(
+                                      (vote: any) => vote.election?.id === election.id
+                                    ).length;
 
-                                  return (
-                                    <div className="rounded-lg border bg-card p-4">
-                                      <div className="mb-3 flex items-start justify-between">
-                                        <div className="flex-1">
-                                          <h5 className="font-semibold">{election.title}</h5>
-                                          {election.description && (
-                                            <p className="mt-1 text-sm text-muted-foreground">
-                                              {election.description}
-                                            </p>
-                                          )}
-                                          {/* Position Details */}
-                                          {election.position && (
-                                            <div className="mt-3 rounded-md border bg-muted/30 p-3">
-                                              <div className="mb-1 flex items-center gap-2">
-                                                <Badge variant="secondary" className="text-xs">
-                                                  Position
-                                                </Badge>
-                                                <span className="font-semibold">
-                                                  {election.position.title}
-                                                </span>
-                                              </div>
-                                              {election.position.description && (
-                                                <p className="text-sm text-muted-foreground">
-                                                  {election.position.description}
-                                                </p>
-                                              )}
-                                              <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
-                                                <div className="flex items-center gap-1">
-                                                  <Calendar className="h-3 w-3" />
-                                                  <span>
-                                                    Amtszeit: {election.position.term}{' '}
-                                                    {election.position.term === 1
-                                                      ? 'Monat'
-                                                      : 'Monate'}
+                                    return (
+                                      <div className="rounded-lg border bg-card p-4">
+                                        <div className="mb-3 flex items-start justify-between">
+                                          <div className="flex-1">
+                                            <h5 className="font-semibold">{election.title}</h5>
+                                            {election.description && (
+                                              <p className="mt-1 text-sm text-muted-foreground">
+                                                {election.description}
+                                              </p>
+                                            )}
+                                            {/* Position Details */}
+                                            {election.position && (
+                                              <div className="mt-3 rounded-md border bg-muted/30 p-3">
+                                                <div className="mb-1 flex items-center gap-2">
+                                                  <Badge variant="secondary" className="text-xs">
+                                                    Position
+                                                  </Badge>
+                                                  <span className="font-semibold">
+                                                    {election.position.title}
                                                   </span>
                                                 </div>
-                                                <div className="flex items-center gap-1">
-                                                  <Clock className="h-3 w-3" />
-                                                  <span>
-                                                    Start:{' '}
-                                                    {new Date(
-                                                      election.position.firstTermStart
-                                                    ).toLocaleDateString('de-DE')}
-                                                  </span>
-                                                </div>
-                                                {election.position.group && (
-                                                  <div className="flex items-center gap-1">
-                                                    <Users className="h-3 w-3" />
-                                                    <span>{election.position.group.name}</span>
-                                                  </div>
+                                                {election.position.description && (
+                                                  <p className="text-sm text-muted-foreground">
+                                                    {election.position.description}
+                                                  </p>
                                                 )}
+                                                <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+                                                  <div className="flex items-center gap-1">
+                                                    <Calendar className="h-3 w-3" />
+                                                    <span>
+                                                      Amtszeit: {election.position.term}{' '}
+                                                      {election.position.term === 1
+                                                        ? 'Monat'
+                                                        : 'Monate'}
+                                                    </span>
+                                                  </div>
+                                                  <div className="flex items-center gap-1">
+                                                    <Clock className="h-3 w-3" />
+                                                    <span>
+                                                      Start:{' '}
+                                                      {new Date(
+                                                        election.position.firstTermStart
+                                                      ).toLocaleDateString('de-DE')}
+                                                    </span>
+                                                  </div>
+                                                  {election.position.group && (
+                                                    <div className="flex items-center gap-1">
+                                                      <Users className="h-3 w-3" />
+                                                      <span>{election.position.group.name}</span>
+                                                    </div>
+                                                  )}
+                                                </div>
                                               </div>
-                                            </div>
-                                          )}
+                                            )}
+                                          </div>
+                                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                            <Users className="h-4 w-4" />
+                                            <span>{candidates.length} Kandidaten</span>
+                                            <Vote className="h-4 w-4" />
+                                            <span>{totalVotes} Stimmen</span>
+                                          </div>
                                         </div>
-                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                          <Users className="h-4 w-4" />
-                                          <span>{candidates.length} Kandidaten</span>
-                                          <Vote className="h-4 w-4" />
-                                          <span>{totalVotes} Stimmen</span>
+
+                                        <div className="mt-3 flex items-center gap-2">
+                                          <Badge variant="secondary" className="text-xs">
+                                            {election.majorityType === 'absolute'
+                                              ? 'Absolute Mehrheit'
+                                              : 'Relative Mehrheit'}
+                                          </Badge>
+                                          <Badge variant="outline" className="text-xs">
+                                            {election.status || 'Geplant'}
+                                          </Badge>
                                         </div>
-                                      </div>
 
-                                      <div className="mt-3 flex items-center gap-2">
-                                        <Badge variant="secondary" className="text-xs">
-                                          {election.majorityType === 'absolute'
-                                            ? 'Absolute Mehrheit'
-                                            : 'Relative Mehrheit'}
-                                        </Badge>
-                                        <Badge variant="outline" className="text-xs">
-                                          {election.status || 'Geplant'}
-                                        </Badge>
-                                      </div>
+                                        {/* Candidates and Voting */}
+                                        {candidates.length > 0 && (
+                                          <div className="mt-4 space-y-2">
+                                            <p className="text-sm font-medium">Kandidaten:</p>
+                                            <div className="grid gap-2">
+                                              {candidates
+                                                .sort(
+                                                  (a: any, b: any) =>
+                                                    (a.order || 0) - (b.order || 0)
+                                                )
+                                                .map((candidate: any) => {
+                                                  const voteCount = voteCounts[candidate.id] || 0;
+                                                  const isVoted =
+                                                    userVote?.candidate?.id === candidate.id;
 
-                                      {/* Candidates and Voting */}
-                                      {candidates.length > 0 && (
-                                        <div className="mt-4 space-y-2">
-                                          <p className="text-sm font-medium">Kandidaten:</p>
-                                          <div className="grid gap-2">
-                                            {candidates
-                                              .sort(
-                                                (a: any, b: any) => (a.order || 0) - (b.order || 0)
-                                              )
-                                              .map((candidate: any) => {
-                                                const voteCount = voteCounts[candidate.id] || 0;
-                                                const isVoted =
-                                                  userVote?.candidate?.id === candidate.id;
-
-                                                return (
-                                                  <div
-                                                    key={candidate.id}
-                                                    className={`flex items-center justify-between rounded-lg border p-3 transition-colors ${
-                                                      isVoted ? 'border-primary bg-primary/5' : ''
-                                                    }`}
-                                                  >
-                                                    <div className="flex-1">
-                                                      <div className="flex items-center gap-2">
-                                                        <span className="font-medium">
-                                                          {candidate.name}
-                                                        </span>
-                                                        {isVoted && (
-                                                          <Badge
-                                                            variant="default"
-                                                            className="text-xs"
-                                                          >
-                                                            <CheckCircle2 className="mr-1 h-3 w-3" />
-                                                            Gewählt
-                                                          </Badge>
+                                                  return (
+                                                    <div
+                                                      key={candidate.id}
+                                                      className={`flex items-center justify-between rounded-lg border p-3 transition-colors ${
+                                                        isVoted ? 'border-primary bg-primary/5' : ''
+                                                      }`}
+                                                    >
+                                                      <div className="flex-1">
+                                                        <div className="flex items-center gap-2">
+                                                          <span className="font-medium">
+                                                            {candidate.name}
+                                                          </span>
+                                                          {isVoted && (
+                                                            <Badge
+                                                              variant="default"
+                                                              className="text-xs"
+                                                            >
+                                                              <CheckCircle2 className="mr-1 h-3 w-3" />
+                                                              Gewählt
+                                                            </Badge>
+                                                          )}
+                                                        </div>
+                                                        {candidate.description && (
+                                                          <p className="mt-1 text-sm text-muted-foreground">
+                                                            {candidate.description}
+                                                          </p>
                                                         )}
                                                       </div>
-                                                      {candidate.description && (
-                                                        <p className="mt-1 text-sm text-muted-foreground">
-                                                          {candidate.description}
-                                                        </p>
-                                                      )}
+                                                      <div className="flex items-center gap-3">
+                                                        <Badge variant="outline">
+                                                          {voteCount}{' '}
+                                                          {voteCount === 1 ? 'Stimme' : 'Stimmen'}
+                                                        </Badge>
+                                                        <Button
+                                                          size="sm"
+                                                          variant={isVoted ? 'default' : 'outline'}
+                                                          onClick={() =>
+                                                            handleElectionVote(
+                                                              election.id,
+                                                              candidate.id
+                                                            )
+                                                          }
+                                                          disabled={
+                                                            votingLoading === election.id || !user
+                                                          }
+                                                        >
+                                                          <Vote className="mr-2 h-4 w-4" />
+                                                          {isVoted ? 'Gewählt' : 'Wählen'}
+                                                        </Button>
+                                                      </div>
                                                     </div>
-                                                    <div className="flex items-center gap-3">
-                                                      <Badge variant="outline">
-                                                        {voteCount}{' '}
-                                                        {voteCount === 1 ? 'Stimme' : 'Stimmen'}
-                                                      </Badge>
-                                                      <Button
-                                                        size="sm"
-                                                        variant={isVoted ? 'default' : 'outline'}
-                                                        onClick={() =>
-                                                          handleElectionVote(
-                                                            election.id,
-                                                            candidate.id
-                                                          )
-                                                        }
-                                                        disabled={
-                                                          votingLoading === election.id || !user
-                                                        }
-                                                      >
-                                                        <Vote className="mr-2 h-4 w-4" />
-                                                        {isVoted ? 'Gewählt' : 'Wählen'}
-                                                      </Button>
-                                                    </div>
-                                                  </div>
-                                                );
-                                              })}
+                                                  );
+                                                })}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })()}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Amendment Vote */}
+                            {item.amendmentVote && (
+                              <div>
+                                <h4 className="mb-2 font-medium">Abstimmung</h4>
+                                <div className="space-y-2">
+                                  {(() => {
+                                    const amendmentVote = item.amendmentVote;
+                                    const userVote = userAmendmentVotes.find(
+                                      (entry: any) => entry.amendmentVote?.id === amendmentVote.id
+                                    );
+
+                                    // Get all vote entries for this amendment vote from the query data
+                                    const voteEntries = (data?.amendmentVoteEntries || []).filter(
+                                      (entry: any) => entry.amendmentVote?.id === amendmentVote.id
+                                    );
+
+                                    // Count votes
+                                    const voteCounts = {
+                                      yes: voteEntries.filter((e: any) => e.vote === 'yes').length,
+                                      no: voteEntries.filter((e: any) => e.vote === 'no').length,
+                                      abstain: voteEntries.filter((e: any) => e.vote === 'abstain')
+                                        .length,
+                                    };
+                                    const totalVotes =
+                                      voteCounts.yes + voteCounts.no + voteCounts.abstain;
+
+                                    return (
+                                      <div className="rounded-lg border bg-card p-4">
+                                        <div className="mb-3 flex items-start justify-between">
+                                          <div className="flex-1">
+                                            <h5 className="font-semibold">{amendmentVote.title}</h5>
+                                            {amendmentVote.description && (
+                                              <p className="mt-1 text-sm text-muted-foreground">
+                                                {amendmentVote.description}
+                                              </p>
+                                            )}
+                                          </div>
+                                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                            <Vote className="h-4 w-4" />
+                                            <span>{totalVotes} Stimmen</span>
+                                            <FileText className="h-4 w-4" />
+                                            <span>
+                                              {amendmentVote.changeRequests?.length || 0}{' '}
+                                              Änderungsanträge
+                                            </span>
                                           </div>
                                         </div>
-                                      )}
-                                    </div>
-                                  );
-                                })()}
-                              </div>
-                            </div>
-                          )}
 
-                          {/* Amendment Vote */}
-                          {item.amendmentVote && (
-                            <div>
-                              <h4 className="mb-2 font-medium">Abstimmung</h4>
-                              <div className="space-y-2">
-                                {(() => {
-                                  const amendmentVote = item.amendmentVote;
-                                  const userVote = userAmendmentVotes.find(
-                                    (entry: any) => entry.amendmentVote?.id === amendmentVote.id
-                                  );
+                                        <div className="mt-2 flex items-center gap-2">
+                                          <Badge variant="outline" className="text-xs">
+                                            {amendmentVote.status || 'Geplant'}
+                                          </Badge>
+                                        </div>
 
-                                  // Get all vote entries for this amendment vote from the query data
-                                  const voteEntries = (data?.amendmentVoteEntries || []).filter(
-                                    (entry: any) => entry.amendmentVote?.id === amendmentVote.id
-                                  );
+                                        {/* Vote Results */}
+                                        {totalVotes > 0 && (
+                                          <div className="mt-4 space-y-2">
+                                            <p className="text-sm font-medium">Ergebnisse:</p>
+                                            <div className="grid grid-cols-3 gap-2">
+                                              <div className="rounded-lg bg-green-50 p-2 text-center dark:bg-green-950">
+                                                <div className="text-lg font-bold text-green-700 dark:text-green-300">
+                                                  {voteCounts.yes}
+                                                </div>
+                                                <div className="text-xs text-green-600 dark:text-green-400">
+                                                  Ja
+                                                </div>
+                                              </div>
+                                              <div className="rounded-lg bg-red-50 p-2 text-center dark:bg-red-950">
+                                                <div className="text-lg font-bold text-red-700 dark:text-red-300">
+                                                  {voteCounts.no}
+                                                </div>
+                                                <div className="text-xs text-red-600 dark:text-red-400">
+                                                  Nein
+                                                </div>
+                                              </div>
+                                              <div className="rounded-lg bg-gray-50 p-2 text-center dark:bg-gray-900">
+                                                <div className="text-lg font-bold text-gray-700 dark:text-gray-300">
+                                                  {voteCounts.abstain}
+                                                </div>
+                                                <div className="text-xs text-gray-600 dark:text-gray-400">
+                                                  Enthalten
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        )}
 
-                                  // Count votes
-                                  const voteCounts = {
-                                    yes: voteEntries.filter((e: any) => e.vote === 'yes').length,
-                                    no: voteEntries.filter((e: any) => e.vote === 'no').length,
-                                    abstain: voteEntries.filter((e: any) => e.vote === 'abstain')
-                                      .length,
-                                  };
-                                  const totalVotes =
-                                    voteCounts.yes + voteCounts.no + voteCounts.abstain;
-
-                                  return (
-                                    <div className="rounded-lg border bg-card p-4">
-                                      <div className="mb-3 flex items-start justify-between">
-                                        <div className="flex-1">
-                                          <h5 className="font-semibold">{amendmentVote.title}</h5>
-                                          {amendmentVote.description && (
-                                            <p className="mt-1 text-sm text-muted-foreground">
-                                              {amendmentVote.description}
+                                        {/* Voting Buttons */}
+                                        <div className="mt-4 space-y-2">
+                                          <p className="text-sm font-medium">Ihre Stimme:</p>
+                                          <div className="grid grid-cols-3 gap-2">
+                                            <Button
+                                              variant={
+                                                userVote?.vote === 'yes' ? 'default' : 'outline'
+                                              }
+                                              size="sm"
+                                              onClick={() =>
+                                                handleAmendmentVote(amendmentVote.id, 'yes')
+                                              }
+                                              disabled={votingLoading === amendmentVote.id || !user}
+                                              className={
+                                                userVote?.vote === 'yes'
+                                                  ? 'bg-green-600 hover:bg-green-700'
+                                                  : ''
+                                              }
+                                            >
+                                              <ThumbsUp className="mr-2 h-4 w-4" />
+                                              Ja
+                                            </Button>
+                                            <Button
+                                              variant={
+                                                userVote?.vote === 'no' ? 'default' : 'outline'
+                                              }
+                                              size="sm"
+                                              onClick={() =>
+                                                handleAmendmentVote(amendmentVote.id, 'no')
+                                              }
+                                              disabled={votingLoading === amendmentVote.id || !user}
+                                              className={
+                                                userVote?.vote === 'no'
+                                                  ? 'bg-red-600 hover:bg-red-700'
+                                                  : ''
+                                              }
+                                            >
+                                              <ThumbsDown className="mr-2 h-4 w-4" />
+                                              Nein
+                                            </Button>
+                                            <Button
+                                              variant={
+                                                userVote?.vote === 'abstain' ? 'default' : 'outline'
+                                              }
+                                              size="sm"
+                                              onClick={() =>
+                                                handleAmendmentVote(amendmentVote.id, 'abstain')
+                                              }
+                                              disabled={votingLoading === amendmentVote.id || !user}
+                                              className={
+                                                userVote?.vote === 'abstain'
+                                                  ? 'bg-gray-600 hover:bg-gray-700'
+                                                  : ''
+                                              }
+                                            >
+                                              <Minus className="mr-2 h-4 w-4" />
+                                              Enthalten
+                                            </Button>
+                                          </div>
+                                          {userVote && (
+                                            <p className="text-xs text-muted-foreground">
+                                              Sie haben mit{' '}
+                                              <span className="font-medium">
+                                                {userVote.vote === 'yes'
+                                                  ? 'Ja'
+                                                  : userVote.vote === 'no'
+                                                    ? 'Nein'
+                                                    : 'Enthalten'}
+                                              </span>{' '}
+                                              gestimmt
                                             </p>
                                           )}
                                         </div>
-                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                          <Vote className="h-4 w-4" />
-                                          <span>{totalVotes} Stimmen</span>
-                                          <FileText className="h-4 w-4" />
-                                          <span>
-                                            {amendmentVote.changeRequests?.length || 0}{' '}
-                                            Änderungsanträge
-                                          </span>
-                                        </div>
                                       </div>
-
-                                      <div className="mt-2 flex items-center gap-2">
-                                        <Badge variant="outline" className="text-xs">
-                                          {amendmentVote.status || 'Geplant'}
-                                        </Badge>
-                                      </div>
-
-                                      {/* Vote Results */}
-                                      {totalVotes > 0 && (
-                                        <div className="mt-4 space-y-2">
-                                          <p className="text-sm font-medium">Ergebnisse:</p>
-                                          <div className="grid grid-cols-3 gap-2">
-                                            <div className="rounded-lg bg-green-50 p-2 text-center dark:bg-green-950">
-                                              <div className="text-lg font-bold text-green-700 dark:text-green-300">
-                                                {voteCounts.yes}
-                                              </div>
-                                              <div className="text-xs text-green-600 dark:text-green-400">
-                                                Ja
-                                              </div>
-                                            </div>
-                                            <div className="rounded-lg bg-red-50 p-2 text-center dark:bg-red-950">
-                                              <div className="text-lg font-bold text-red-700 dark:text-red-300">
-                                                {voteCounts.no}
-                                              </div>
-                                              <div className="text-xs text-red-600 dark:text-red-400">
-                                                Nein
-                                              </div>
-                                            </div>
-                                            <div className="rounded-lg bg-gray-50 p-2 text-center dark:bg-gray-900">
-                                              <div className="text-lg font-bold text-gray-700 dark:text-gray-300">
-                                                {voteCounts.abstain}
-                                              </div>
-                                              <div className="text-xs text-gray-600 dark:text-gray-400">
-                                                Enthalten
-                                              </div>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      )}
-
-                                      {/* Voting Buttons */}
-                                      <div className="mt-4 space-y-2">
-                                        <p className="text-sm font-medium">Ihre Stimme:</p>
-                                        <div className="grid grid-cols-3 gap-2">
-                                          <Button
-                                            variant={
-                                              userVote?.vote === 'yes' ? 'default' : 'outline'
-                                            }
-                                            size="sm"
-                                            onClick={() =>
-                                              handleAmendmentVote(amendmentVote.id, 'yes')
-                                            }
-                                            disabled={votingLoading === amendmentVote.id || !user}
-                                            className={
-                                              userVote?.vote === 'yes'
-                                                ? 'bg-green-600 hover:bg-green-700'
-                                                : ''
-                                            }
-                                          >
-                                            <ThumbsUp className="mr-2 h-4 w-4" />
-                                            Ja
-                                          </Button>
-                                          <Button
-                                            variant={
-                                              userVote?.vote === 'no' ? 'default' : 'outline'
-                                            }
-                                            size="sm"
-                                            onClick={() =>
-                                              handleAmendmentVote(amendmentVote.id, 'no')
-                                            }
-                                            disabled={votingLoading === amendmentVote.id || !user}
-                                            className={
-                                              userVote?.vote === 'no'
-                                                ? 'bg-red-600 hover:bg-red-700'
-                                                : ''
-                                            }
-                                          >
-                                            <ThumbsDown className="mr-2 h-4 w-4" />
-                                            Nein
-                                          </Button>
-                                          <Button
-                                            variant={
-                                              userVote?.vote === 'abstain' ? 'default' : 'outline'
-                                            }
-                                            size="sm"
-                                            onClick={() =>
-                                              handleAmendmentVote(amendmentVote.id, 'abstain')
-                                            }
-                                            disabled={votingLoading === amendmentVote.id || !user}
-                                            className={
-                                              userVote?.vote === 'abstain'
-                                                ? 'bg-gray-600 hover:bg-gray-700'
-                                                : ''
-                                            }
-                                          >
-                                            <Minus className="mr-2 h-4 w-4" />
-                                            Enthalten
-                                          </Button>
-                                        </div>
-                                        {userVote && (
-                                          <p className="text-xs text-muted-foreground">
-                                            Sie haben mit{' '}
-                                            <span className="font-medium">
-                                              {userVote.vote === 'yes'
-                                                ? 'Ja'
-                                                : userVote.vote === 'no'
-                                                  ? 'Nein'
-                                                  : 'Enthalten'}
-                                            </span>{' '}
-                                            gestimmt
-                                          </p>
-                                        )}
-                                      </div>
-                                    </div>
-                                  );
-                                })()}
+                                    );
+                                  })()}
+                                </div>
                               </div>
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
+                            )}
+                          </div>
+                        </CardContent>
 
-                      <CardFooter className="pt-3">
-                        <div className="flex w-full items-center justify-between">
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <User className="h-4 w-4" />
-                              <span>
-                                Von {item.creator?.name || item.creator?.email || 'Unbekannt'}
-                              </span>
-                            </div>
-                            {item.scheduledTime && (
+                        <CardFooter className="pt-3">
+                          <div className="flex w-full items-center justify-between">
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
-                                <Clock className="h-4 w-4" />
+                                <User className="h-4 w-4" />
                                 <span>
-                                  Geplant: {new Date(item.scheduledTime).toLocaleString('de-DE')}
+                                  Von {item.creator?.name || item.creator?.email || 'Unbekannt'}
                                 </span>
                               </div>
-                            )}
-                          </div>
+                              {item.scheduledTime && (
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-4 w-4" />
+                                  <span>
+                                    Geplant: {new Date(item.scheduledTime).toLocaleString('de-DE')}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
 
-                          <div className="flex items-center gap-2">
-                            {item.election && (
-                              <Badge variant="outline">
-                                <Vote className="mr-1 h-3 w-3" />1 Wahl
-                              </Badge>
-                            )}
-                            {item.amendmentVote && (
-                              <Badge variant="outline">
-                                <Gavel className="mr-1 h-3 w-3" />1 Abstimmung
-                              </Badge>
-                            )}
+                            <div className="flex items-center gap-2">
+                              {item.election && (
+                                <Badge variant="outline">
+                                  <Vote className="mr-1 h-3 w-3" />1 Wahl
+                                </Badge>
+                              )}
+                              {item.amendmentVote && (
+                                <Badge variant="outline">
+                                  <Gavel className="mr-1 h-3 w-3" />1 Abstimmung
+                                </Badge>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </CardFooter>
-                    </Card>
+                        </CardFooter>
+                      </Card>
+                    </div>
                   );
                 })}
               </div>

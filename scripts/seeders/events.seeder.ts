@@ -50,6 +50,7 @@ export const eventsSeeder: EntitySeeder = {
         isPublic: faker.datatype.boolean(0.7),
         capacity: randomInt(10, 200),
         imageURL: faker.image.url(),
+        streamURL: i === 0 ? 'https://www.youtube.com/watch?v=9UMxZofMNbA' : undefined, // Add stream URL to first event
         tags: randomItems(
           ['meetup', 'workshop', 'conference', 'social', 'training'],
           randomInt(1, 3)
