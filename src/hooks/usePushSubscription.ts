@@ -123,7 +123,13 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
       }
 
       if (currentPermission !== 'granted') {
-        throw new Error('Notification permission denied');
+        setError(
+          currentPermission === 'denied' 
+            ? 'Notification permission denied. Please enable notifications in your browser settings.'
+            : 'Notification permission required to enable push notifications.'
+        );
+        setIsLoading(false);
+        return;
       }
 
       // Get service worker registration

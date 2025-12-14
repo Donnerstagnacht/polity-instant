@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollableTabsList } from '@/components/ui/scrollable-tabs';
 import { Bell, Check, CheckCheck, Users, Calendar, MessageSquare, UserPlus, X } from 'lucide-react';
 import { cn } from '@/utils/utils';
+import { PushNotificationToggle } from '@/components/push-notification-toggle';
 
 type NotificationType =
   | 'group_invite'
@@ -406,12 +407,15 @@ export default function NotificationsPage() {
                     : 'All caught up!'}
                 </p>
               </div>
-              {unreadNotifications.length > 0 && (
-                <Button onClick={markAllAsRead} variant="outline">
-                  <CheckCheck className="mr-2 h-4 w-4" />
-                  Mark all as read
-                </Button>
-              )}
+              <div className="flex items-center gap-2">
+                <PushNotificationToggle variant="minimal" />
+                {unreadNotifications.length > 0 && (
+                  <Button onClick={markAllAsRead} variant="outline">
+                    <CheckCheck className="mr-2 h-4 w-4" />
+                    Mark all as read
+                  </Button>
+                )}
+              </div>
             </div>
 
             <ScrollableTabsList>
