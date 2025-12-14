@@ -9,6 +9,7 @@ import { useNavigationStore } from '@/navigation/state/navigation.store';
 import { useThemeInitializer } from '@/global-state/theme.store';
 import { I18nSyncProvider } from '@/i18n/i18n-sync-provider.tsx';
 import { EnsureUser } from '@/features/auth';
+import { PWAInstallPrompt } from '@/components/pwa/pwa-install-prompt';
 import type {
   NavigationItem,
   NavigationType,
@@ -73,6 +74,9 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
         />
 
         <Toaster richColors position="top-right" />
+
+        {/* PWA Install Prompt */}
+        <PWAInstallPrompt />
       </div>
     </I18nSyncProvider>
   );
