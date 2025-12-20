@@ -1,8 +1,10 @@
 'use client';
 
 import { use, useState, useMemo } from 'react';
-import { db, tx, id } from '../../../../db';
+import { db, tx, id } from '../../../../db/db';
 import { useRouter } from 'next/navigation';
+import { useEventData } from '@/features/events/hooks/useEventData';
+import { useEventMutations } from '@/features/events/hooks/useEventMutations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -90,30 +92,8 @@ export default function EventParticipantsPage({ params }: PageParams) {
   const [newRoleDescription, setNewRoleDescription] = useState('');
   const [addRoleDialogOpen, setAddRoleDialogOpen] = useState(false);
 
-  // Query event and participants
-  const { data, isLoading, error } = db.useQuery({
-    events: {
-      $: {
-        where: {
-          id: eventId,
-        },
-      },
-      participants: {
-        user: {},
-        role: {},
-      },
-      group: {
-        roles: {
-          $: {
-            where: {
-              scope: 'event',
-            },
-          },
-          actionRights: {},
-        },
-      },
-    },
-  });
+  // Query event and participants using hook
+  const { event, participants, isLoading, error } = useEventData(eventId);
 
   // Query all users for user search
   const { data: usersData, isLoading: isLoadingUsers } = db.useQuery({
@@ -124,8 +104,6 @@ export default function EventParticipantsPage({ params }: PageParams) {
   const { user } = db.useAuth();
   const currentUserId = user?.id;
 
-  const event = data?.events?.[0];
-  const participants = event?.participants || [];
   const rolesData = { roles: event?.group?.roles || [] };
 
   const currentUserParticipation = participants.find((p: any) => p.user?.id === currentUserId);
@@ -153,28 +131,15 @@ export default function EventParticipantsPage({ params }: PageParams) {
     );
   };
 
+  // Initialize event mutations hook
+  const { inviteParticipants, removeParticipant, changeParticipantRole, approveParticipation } = useEventMutations(eventId);
+
   const handleInviteUsers = async () => {
     if (selectedUsers.length === 0) return;
 
     setIsInviting(true);
     try {
-      const inviteTransactions = selectedUsers.map(userId => {
-        const participantId = id();
-        return tx.eventParticipants[participantId]
-          .create({
-            role: 'member',
-            status: 'invited',
-            createdAt: Date.now(),
-          })
-          .link({ user: userId, event: eventId });
-      });
-
-      await db.transact(inviteTransactions);
-
-      toast({
-        title: 'Success',
-        description: `Invited ${selectedUsers.length} ${selectedUsers.length === 1 ? 'participant' : 'participants'}`,
-      });
+      await inviteParticipants(selectedUsers);
 
       // Reset state
       setSelectedUsers([]);
@@ -182,11 +147,6 @@ export default function EventParticipantsPage({ params }: PageParams) {
       setInviteDialogOpen(false);
     } catch (error) {
       console.error('Failed to invite participants:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to invite participants. Please try again.',
-        variant: 'destructive',
-      });
     } finally {
       setIsInviting(false);
     }
@@ -195,7 +155,7 @@ export default function EventParticipantsPage({ params }: PageParams) {
   // Handle removing participant
   const handleRemoveParticipant = async (participantId: string) => {
     try {
-      await db.transact(db.tx.eventParticipants[participantId].delete());
+      await removeParticipant(participantId);
     } catch (err) {
       console.error('Error removing participant:', err);
     }
@@ -204,11 +164,7 @@ export default function EventParticipantsPage({ params }: PageParams) {
   // Handle changing participant role
   const handleChangeRole = async (participantId: string, newRole: string) => {
     try {
-      await db.transact(
-        db.tx.eventParticipants[participantId].link({
-          role: newRole,
-        })
-      );
+      await changeParticipantRole(participantId, newRole);
     } catch (err) {
       console.error('Error changing role:', err);
     }
@@ -217,11 +173,7 @@ export default function EventParticipantsPage({ params }: PageParams) {
   // Handle accepting request
   const handleAcceptRequest = async (participantId: string) => {
     try {
-      await db.transact(
-        db.tx.eventParticipants[participantId].update({
-          status: 'member',
-        })
-      );
+      await approveParticipation(participantId);
     } catch (err) {
       console.error('Error accepting request:', err);
     }

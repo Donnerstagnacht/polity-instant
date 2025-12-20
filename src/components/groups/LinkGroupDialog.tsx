@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/select';
 import { Link, Check } from 'lucide-react';
 import { cn } from '@/utils/utils';
-import db from '../../../db';
+import db from '../../../db/db';
 import { id } from '@instantdb/react';
 import { useTranslation } from '@/hooks/use-translation';
 import { toast } from 'sonner';

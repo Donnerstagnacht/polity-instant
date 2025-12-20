@@ -2,7 +2,8 @@
 
 import { use, useState } from 'react';
 import { AuthGuard } from '@/features/auth/AuthGuard';
-import db, { tx, id } from '../../../../db';
+import db, { tx, id } from '../../../../db/db';
+import { useEventMutations } from '@/features/events/hooks/useEventMutations';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -47,6 +48,9 @@ export default function EventPositionsPage({ params }: { params: Promise<{ id: s
   const resolvedParams = use(params);
   const { toast } = useToast();
   const { user: authUser } = useAuthStore();
+
+  // Initialize event mutations hook
+  const mutations = useEventMutations(resolvedParams.id);
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);

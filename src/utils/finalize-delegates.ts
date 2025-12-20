@@ -3,7 +3,7 @@
  * Note: These functions should be called from server-side contexts (API routes with Admin SDK)
  */
 
-import { tx } from '@/../db';
+import { tx } from 'db/db';
 import {
   getDirectSubgroups,
   calculateDelegateAllocations,

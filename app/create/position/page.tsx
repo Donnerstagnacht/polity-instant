@@ -18,7 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel';
 import { TypeAheadSelect } from '@/components/ui/type-ahead-select';
 import { GroupSelectCard } from '@/components/ui/entity-select-cards';
-import { db, tx, id } from '@/../db';
+import { db, tx, id } from 'db/db';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { toast } from 'sonner';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';

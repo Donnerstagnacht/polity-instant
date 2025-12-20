@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { db } from '../../../db';
+import { db } from '../../../db/db';
 import { Loader2 } from 'lucide-react';
 
 interface EnsureUserProps {

@@ -2,7 +2,9 @@
 
 import { use, useState, useMemo } from 'react';
 import { AuthGuard } from '@/features/auth/AuthGuard';
-import db, { tx, id } from '../../../../db';
+import { PermissionGuard } from '@/features/auth/PermissionGuard';
+import { useGroupData, useGroupMemberships, useGroupRoles, useUserSearch } from '@/features/groups/hooks/useGroupData';
+import { useGroupMutations } from '@/features/groups/hooks/useGroupMutations';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -46,14 +48,6 @@ import { Trash2, Search, Users, UserPlus, Shield, Check, X, Loader2, Plus } from
 import { useRouter } from 'next/navigation';
 import { useGroupMembership } from '@/features/groups/hooks/useGroupMembership';
 import { useToast } from '@/global-state/use-toast';
-import { addUserToGroupConversation } from '@/utils/groupConversationSync';
-import {
-  notifyGroupInvite,
-  notifyMembershipApproved,
-  notifyMembershipRejected,
-  notifyMembershipRoleChanged,
-  notifyMembershipRemoved,
-} from '@/utils/notification-helpers';
 import { useAuthStore } from '@/features/auth/auth';
 
 // Define available action rights
@@ -113,41 +107,12 @@ export default function GroupMembershipsManagementPage({
   // Check if current user is admin
   const { isAdmin } = useGroupMembership(resolvedParams.id);
 
-  // Query for all memberships
-  const { data: membershipsData } = db.useQuery({
-    groupMemberships: {
-      $: {
-        where: {
-          'group.id': resolvedParams.id,
-        },
-      },
-      user: {},
-      role: {},
-    },
-  });
-
-  // Query for group details
-  const { data: groupData } = db.useQuery({
-    groups: {
-      $: { where: { id: resolvedParams.id } },
-      conversation: {
-        participants: {
-          user: {},
-        },
-      },
-    },
-  });
-
-  // Query for roles and action rights
-  const { data: rolesData } = db.useQuery({
-    roles: {
-      $: {
-        where: {
-          'group.id': resolvedParams.id,
-          scope: 'group',
-        },
-      },
-      actionRights: {},
+  // Use the new hooks
+  const { group } = useGroupData(resolvedParams.id);
+  const { memberships, activeMemberships, invitedMemberships, requestedMemberships } = useGroupMemberships(resolvedParams.id);
+  const { roles } = useGroupRoles(resolvedParams.id);
+  const { users: searchedUsers } = useUserSearch(inviteSearchQuery);
+  const groupMutations = useGroupMutations(resolvedParams.id);
     },
   });
 
@@ -194,14 +159,14 @@ export default function GroupMembershipsManagementPage({
     });
   }, [memberships, searchQuery]);
 
-  // Separate by status
+  // Separate by status (use filtered results)
   const pendingRequests = useMemo(
     () => filteredMemberships.filter((m: any) => m.status === 'requested'),
     [filteredMemberships]
   );
   const activeMembers = useMemo(
     () =>
-      filteredMemberships.filter((m: any) => m.status === 'member' || m.role === 'Board Member'),
+      filteredMemberships.filter((m: any) => m.status === 'member' || m.role?.name === 'Board Member'),
     [filteredMemberships]
   );
   const pendingInvitations = useMemo(
@@ -212,72 +177,33 @@ export default function GroupMembershipsManagementPage({
   const handleRemoveMember = async (membershipId: string) => {
     if (!isAdmin) return;
 
-    try {
-      // Find the membership to get user ID
-      const membership = memberships.find((m: any) => m.id === membershipId);
-      const userId = membership?.user?.id;
+    const membership = memberships.find((m: any) => m.id === membershipId);
+    const userId = membership?.user?.id;
+    if (!userId) return;
 
-      // Find the group's conversation
-      const groupConversation = group?.conversation;
-
-      // Build delete transactions
-      const transactions = [tx.groupMemberships[membershipId].delete()];
-
-      // If there's a group conversation and user ID, also remove from conversation participants
-      if (groupConversation && userId) {
-        const participant = groupConversation.participants?.find((p: any) => p.user?.id === userId);
-        if (participant) {
-          transactions.push(tx.conversationParticipants[participant.id].delete());
-        }
-      }
-
-      // Send notification to removed member
-      if (authUser && userId && group) {
-        const notificationTxs = notifyMembershipRemoved({
-          senderId: authUser.id,
-          recipientUserId: userId,
-          groupId: resolvedParams.id,
-          groupName: group.name || 'Unknown Group',
-        });
-        transactions.push(...notificationTxs);
-      }
-
-      await db.transact(transactions);
-    } catch (error) {
-      console.error('Failed to remove member:', error);
-    }
+    await groupMutations.removeMember(
+      membershipId,
+      userId,
+      group?.conversation?.id,
+      authUser?.id,
+      authUser?.name
+    );
   };
 
   const handleChangeRole = async (membershipId: string, newRoleId: string) => {
     if (!isAdmin) return;
 
-    try {
-      const membership = memberships.find((m: any) => m.id === membershipId);
-      const userId = membership?.user?.id;
-      const newRole = rolesData?.roles?.find((r: any) => r.id === newRoleId);
+    const membership = memberships.find((m: any) => m.id === membershipId);
+    const userId = membership?.user?.id;
+    if (!userId) return;
 
-      const transactions = [
-        tx.groupMemberships[membershipId].link({
-          role: newRoleId,
-        }),
-      ];
-
-      // Send notification about role change
-      if (authUser && userId && group && newRole) {
-        const notificationTxs = notifyMembershipRoleChanged({
-          senderId: authUser.id,
-          recipientUserId: userId,
-          groupId: resolvedParams.id,
-          groupName: group.name || 'Unknown Group',
-          newRole: newRole.name || 'Unknown Role',
-        });
-        transactions.push(...notificationTxs);
-      }
-
-      await db.transact(transactions);
-    } catch (error) {
-      console.error('Failed to change role:', error);
-    }
+    await groupMutations.changeMemberRole(
+      membershipId,
+      newRoleId,
+      userId,
+      authUser?.id,
+      authUser?.name
+    );
   };
 
   const handleApproveRequest = async (membershipId: string) => {
@@ -319,42 +245,31 @@ export default function GroupMembershipsManagementPage({
   const handleRejectRequest = async (membershipId: string) => {
     if (!isAdmin) return;
 
-    try {
-      const membership = memberships.find((m: any) => m.id === membershipId);
-      const userId = membership?.user?.id;
+    const membership = memberships.find((m: any) => m.id === membershipId);
+    const userId = membership?.user?.id;
+    if (!userId) return;
 
-      const transactions = [tx.groupMemberships[membershipId].delete()];
-
-      // Send notification about rejection
-      if (authUser && userId && group) {
-        const notificationTxs = notifyMembershipRejected({
-          senderId: authUser.id,
-          recipientUserId: userId,
-          groupId: resolvedParams.id,
-          groupName: group.name || 'Unknown Group',
-        });
-        transactions.push(...notificationTxs);
-      }
-
-      await db.transact(transactions);
-    } catch (error) {
-      console.error('Failed to reject request:', error);
-    }
+    await groupMutations.rejectMembership(
+      membershipId,
+      userId,
+      authUser?.id,
+      authUser?.name
+    );
   };
 
   const handlePromoteToAdmin = async (membershipId: string) => {
     if (!isAdmin) return;
-    const boardMemberRole = rolesData?.roles?.find((r: any) => r.name === 'Board Member');
+    const boardMemberRole = roles.find((r: any) => r.name === 'Board Member');
     if (boardMemberRole) {
-      await db.transact([tx.groupMemberships[membershipId].link({ role: boardMemberRole.id })]);
+      await groupMutations.promoteToAdmin(membershipId, boardMemberRole.id);
     }
   };
 
   const handleDemoteToMember = async (membershipId: string) => {
     if (!isAdmin) return;
-    const memberRole = rolesData?.roles?.find((r: any) => r.name === 'Member');
+    const memberRole = roles.find((r: any) => r.name === 'Member');
     if (memberRole) {
-      await db.transact([tx.groupMemberships[membershipId].link({ role: memberRole.id })]);
+      await groupMutations.demoteToMember(membershipId);
     }
   };
 
@@ -374,38 +289,12 @@ export default function GroupMembershipsManagementPage({
 
     setIsInviting(true);
     try {
-      const inviteTransactions = selectedUsers.flatMap(userId => {
-        const membershipId = id();
-        const txs = [
-          tx.groupMemberships[membershipId]
-            .create({
-              role: 'member',
-              status: 'invited',
-              createdAt: Date.now(),
-            })
-            .link({ user: userId, group: resolvedParams.id }),
-        ];
-
-        // Send notification to invited user
-        if (authUser && group) {
-          const notificationTxs = notifyGroupInvite({
-            senderId: authUser.id,
-            recipientUserId: userId,
-            groupId: resolvedParams.id,
-            groupName: group.name || 'Unknown Group',
-          });
-          txs.push(...notificationTxs);
-        }
-
-        return txs;
-      });
-
-      await db.transact(inviteTransactions);
-
-      toast({
-        title: 'Success',
-        description: `Invited ${selectedUsers.length} ${selectedUsers.length === 1 ? 'member' : 'members'}`,
-      });
+      await groupMutations.inviteUsers(
+        selectedUsers,
+        undefined,
+        authUser?.id,
+        authUser?.name
+      );
 
       // Reset state
       setSelectedUsers([]);
@@ -413,11 +302,6 @@ export default function GroupMembershipsManagementPage({
       setInviteDialogOpen(false);
     } catch (error) {
       console.error('Failed to invite members:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to invite members. Please try again.',
-        variant: 'destructive',
-      });
     } finally {
       setIsInviting(false);
     }
@@ -430,7 +314,7 @@ export default function GroupMembershipsManagementPage({
         title: 'Error',
         description: 'Role name is required',
         variant: 'destructive',
-      });
+        });
       return;
     }
 
@@ -524,30 +408,20 @@ export default function GroupMembershipsManagementPage({
     router.push(`/user/${userId}`);
   };
 
-  if (!isAdmin) {
-    return (
-      <AuthGuard requireAuth={true}>
-        <div className="container mx-auto max-w-4xl p-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Access Denied</CardTitle>
-              <CardDescription>Only group administrators can manage memberships.</CardDescription>
-            </CardHeader>
-          </Card>
-        </div>
-      </AuthGuard>
-    );
-  }
-
   return (
     <AuthGuard requireAuth={true}>
-      <div className="container mx-auto max-w-7xl p-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">Manage Group Memberships</h1>
-          <p className="mt-2 text-muted-foreground">
-            {group?.name || 'Group'} - Manage members, requests, and invitations
-          </p>
-        </div>
+      <PermissionGuard
+        action="manage"
+        resource="groupMemberships"
+        context={{ groupId: resolvedParams.id }}
+      >
+        <div className="container mx-auto max-w-7xl p-8">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold">Manage Group Memberships</h1>
+            <p className="mt-2 text-muted-foreground">
+              {group?.name || 'Group'} - Manage members, requests, and invitations
+            </p>
+          </div>
 
         {/* Search Bar */}
         <div className="mb-6 flex gap-4">
@@ -1136,7 +1010,8 @@ export default function GroupMembershipsManagementPage({
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
+        </div>
+      </PermissionGuard>
     </AuthGuard>
   );
 }

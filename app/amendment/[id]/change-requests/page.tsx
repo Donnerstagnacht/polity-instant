@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import db from '../../../../db';
+import db from '../../../../db/db';
+import { useAmendmentData } from '@/features/amendments/hooks/useAmendmentData';
 import { ArrowLeft, FileEdit, Clock, User, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { VoteControls } from './vote-controls';
@@ -22,31 +23,22 @@ export default function AmendmentChangeRequestsPage({
   const [activeTab, setActiveTab] = useState<'open' | 'closed'>('open');
   const { user } = db.useAuth();
 
-  // Fetch amendment data with its document AND changeRequests
-  const { data, isLoading } = db.useQuery({
-    amendments: {
-      $: { where: { id: amendmentId } },
-      document: {
-        collaborators: {
-          user: {},
-        },
-      },
-      changeRequests: {
-        creator: {},
-        votes: {
-          voter: {},
-        },
-      },
-      amendmentRoleCollaborators: {
-        user: {},
-      },
+  // Fetch amendment data using hook
+  const {
+    amendment,
+    changeRequests: savedChangeRequests,
+    collaborators,
+    isLoading,
+  } = useAmendmentData(amendmentId);
+
+  // Fetch document with discussions separately (not in hook)
+  const { data: docData } = db.useQuery({
+    documents: {
+      $: { where: { 'amendment.id': amendmentId } },
     },
   });
 
-  const amendment = data?.amendments?.[0];
-  const document = amendment?.document;
-  const savedChangeRequests = amendment?.changeRequests || [];
-  const collaborators = amendment?.amendmentRoleCollaborators || [];
+  const document = docData?.documents?.[0];
 
   // Extract open change requests from document discussions AND closed ones from changeRequests entity
   const changeRequests = useMemo(() => {

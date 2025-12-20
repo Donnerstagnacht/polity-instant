@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Users, CheckCircle2, Clock } from 'lucide-react';
-import db from '../../../../db';
+import db from '../../../../db/db';
 import { getDirectSubgroups } from '@/utils/delegate-calculations';
 
 interface DelegatesOverviewProps {

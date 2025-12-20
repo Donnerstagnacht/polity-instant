@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import db, { tx } from '../../../db';
+import db, { tx } from '../../../db/db';
 
 /**
  * Temporary utility component to clean up duplicate memberships

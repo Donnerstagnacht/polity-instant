@@ -11,7 +11,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
-import db, { id, tx } from '../../../db';
+import db, { id, tx } from '../../../db/db';
 import { Settings, ArrowUp, ArrowDown, Users, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';

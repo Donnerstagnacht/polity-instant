@@ -2,7 +2,7 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import db, { id, tx } from '../../../db';
+import db, { id, tx } from '../../../db/db';
 import { Settings, Trophy, UserCheck, Users, Calendar } from 'lucide-react';
 import { useState } from 'react';
 import {

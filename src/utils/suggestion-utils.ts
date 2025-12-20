@@ -1,7 +1,7 @@
 // suggestion-utils.ts
 // Utilities for handling suggestion IDs and counters
 
-import { db, tx } from '../../db';
+import { db, tx } from '../../db/db';
 
 /**
  * Generates the next suggestion ID (CR-x format) for a document

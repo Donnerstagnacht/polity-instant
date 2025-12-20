@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { db } from '../../db';
+import { db } from '../../db/db';
 
 export interface UploadedFile {
   url: string;

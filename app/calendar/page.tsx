@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { db } from '../../db';
+import { db } from '../../db/db';
 import { useRouter } from 'next/navigation';
 import {
   Calendar as CalendarIcon,

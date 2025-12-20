@@ -9,22 +9,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel';
-import { db, tx, id } from '@/../db';
 import { useAuthStore } from '@/features/auth/auth.ts';
-import { toast } from 'sonner';
+import { useStatementMutations } from '@/features/statements/hooks/useStatementData';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 
 export default function CreateStatementPage() {
   const router = useRouter();
   const user = useAuthStore(state => state.user);
+  const { createStatement, isLoading: isSubmitting } = useStatementMutations();
 
   const [formData, setFormData] = useState({
     text: '',
     tag: '',
     visibility: 'public' as 'public' | 'authenticated' | 'private',
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -40,32 +39,14 @@ export default function CreateStatementPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
 
-    try {
-      if (!user?.id) {
-        toast.error('You must be logged in to create a statement');
-        setIsSubmitting(false);
-        return;
-      }
+    if (!user?.id) {
+      return;
+    }
 
-      const statementId = id();
-
-      await db.transact([
-        tx.statements[statementId].update({
-          text: formData.text,
-          tag: formData.tag,
-          visibility: formData.visibility,
-        }),
-        tx.statements[statementId].link({ user: user.id }),
-      ]);
-
-      toast.success('Statement created successfully!');
-      router.push(`/statement/${statementId}`);
-    } catch (error) {
-      console.error('Failed to create statement:', error);
-      toast.error('Failed to create statement. Please try again.');
-      setIsSubmitting(false);
+    const result = await createStatement(user.id, formData.text, formData.tag);
+    if (result.success && result.statementId) {
+      router.push(`/statement/${result.statementId}`);
     }
   };
 

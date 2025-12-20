@@ -11,6 +11,11 @@ import { id, tx } from '@instantdb/admin';
 import { faker } from '@faker-js/faker';
 import type { EntitySeeder, SeedContext } from '../types/seeder.types';
 import { randomInt, randomItem, randomItems, randomVisibility } from '../helpers/random.helpers';
+import {
+  DEFAULT_EVENT_ROLES,
+  DEFAULT_AMENDMENT_ROLES,
+  DEFAULT_BLOG_ROLES,
+} from '../../db/rbac/constants';
 
 export const rbacSeeder: EntitySeeder = {
   name: 'rbac',
@@ -49,38 +54,12 @@ export const rbacSeeder: EntitySeeder = {
     const actionRightIds: string[] = [];
     const bloggerIds: string[] = [];
 
-    // Define common roles for events
-    const eventRoleDefinitions = [
-      {
-        name: 'Organizer',
-        description: 'Event organizer with full permissions',
-        scope: 'event' as const,
-      },
-      { name: 'Participant', description: 'Regular event participant', scope: 'event' as const },
-    ];
-
-    // Define common roles for amendments
-    const amendmentRoleDefinitions = [
-      {
-        name: 'Applicant',
-        description: 'Amendment applicant with administrative access',
-        scope: 'amendment' as const,
-      },
-      { name: 'Collaborator', description: 'Amendment collaborator', scope: 'amendment' as const },
-    ];
-
-    // Define common roles for blogs
-    const blogRoleDefinitions = [
-      { name: 'Owner', description: 'Blog owner with full permissions', scope: 'blog' as const },
-      { name: 'Writer', description: 'Blog writer with edit access', scope: 'blog' as const },
-    ];
-
     // 1. Create event-level roles and participants
     for (const eventId of eventIds) {
       const eventRoleIds: Record<string, string> = {};
 
-      // Create event-level roles
-      for (const roleDef of eventRoleDefinitions) {
+      // Create event-level roles from constants
+      for (const roleDef of DEFAULT_EVENT_ROLES) {
         const roleId = id();
         roleIds.push(roleId);
         eventRoleIds[roleDef.name] = roleId;
@@ -90,7 +69,7 @@ export const rbacSeeder: EntitySeeder = {
             .update({
               name: roleDef.name,
               description: roleDef.description,
-              scope: roleDef.scope,
+              scope: 'event',
               createdAt: faker.date.past({ years: 0.5 }),
               updatedAt: new Date(),
             })
@@ -98,76 +77,31 @@ export const rbacSeeder: EntitySeeder = {
         );
         totalRoles++;
         rolesToEvents++;
+
+        // Create action rights for this role
+        for (const perm of roleDef.permissions) {
+          const actionRightId = id();
+          actionRightIds.push(actionRightId);
+          transactions.push(
+            tx.actionRights[actionRightId]
+              .update({
+                resource: perm.resource,
+                action: perm.action,
+              })
+              .link({ roles: [roleId], event: eventId })
+          );
+          totalActionRights++;
+          actionRightsToRoles++;
+          actionRightsToEvents++;
+        }
       }
-
-      // Create action rights for Organizer role (full event control)
-      const organizerRoleId = eventRoleIds['Organizer'];
-      const organizerActions = ['update', 'delete', 'manage_participants'];
-      for (const action of organizerActions) {
-        const actionRightId = id();
-        actionRightIds.push(actionRightId);
-        transactions.push(
-          tx.actionRights[actionRightId]
-            .update({
-              resource: 'events',
-              action,
-            })
-            .link({ roles: [organizerRoleId], event: eventId })
-        );
-        totalActionRights++;
-        actionRightsToRoles++;
-        actionRightsToEvents++;
-      }
-
-      // Add action rights for Organizer to manage participants
-      const manageParticipantsRight = id();
-      actionRightIds.push(manageParticipantsRight);
-      transactions.push(
-        tx.actionRights[manageParticipantsRight]
-          .update({
-            resource: 'eventParticipants',
-            action: 'manage',
-          })
-          .link({ roles: [organizerRoleId], event: eventId })
-      );
-      totalActionRights++;
-      actionRightsToRoles++;
-      actionRightsToEvents++;
-
-      // Add manageNotifications right to Organizer role
-      const manageNotificationsRight = id();
-      actionRightIds.push(manageNotificationsRight);
-      transactions.push(
-        tx.actionRights[manageNotificationsRight]
-          .update({
-            resource: 'notifications',
-            action: 'manageNotifications',
-          })
-          .link({ roles: [organizerRoleId], event: eventId })
-      );
-      totalActionRights++;
-      actionRightsToRoles++;
-      actionRightsToEvents++;
-
-      // Create action rights for Participant role (read access)
-      const participantRoleId = eventRoleIds['Participant'];
-      const actionRightId = id();
-      actionRightIds.push(actionRightId);
-      transactions.push(
-        tx.actionRights[actionRightId]
-          .update({
-            resource: 'events',
-            action: 'read',
-          })
-          .link({ roles: [participantRoleId], event: eventId })
-      );
-      totalActionRights++;
-      actionRightsToRoles++;
-      actionRightsToEvents++;
 
       // Create participants with roles
       const participantCount = randomInt(3, 8);
       const participantUsers = randomItems(userIds, participantCount);
+
+      const organizerRoleId = eventRoleIds['Organizer'];
+      const participantRoleId = eventRoleIds['Participant'];
 
       for (let i = 0; i < participantUsers.length; i++) {
         const userId = participantUsers[i];
@@ -203,8 +137,8 @@ export const rbacSeeder: EntitySeeder = {
     for (const amendmentId of amendmentIds) {
       const amendmentRoleIds: Record<string, string> = {};
 
-      // Create amendment-level roles
-      for (const roleDef of amendmentRoleDefinitions) {
+      // Create amendment-level roles from constants
+      for (const roleDef of DEFAULT_AMENDMENT_ROLES) {
         const roleId = id();
         roleIds.push(roleId);
         amendmentRoleIds[roleDef.name] = roleId;
@@ -214,7 +148,7 @@ export const rbacSeeder: EntitySeeder = {
             .update({
               name: roleDef.name,
               description: roleDef.description,
-              scope: roleDef.scope,
+              scope: 'amendment',
               createdAt: faker.date.past({ years: 0.5 }),
               updatedAt: new Date(),
             })
@@ -222,74 +156,23 @@ export const rbacSeeder: EntitySeeder = {
         );
         totalRoles++;
         rolesToAmendments++;
-      }
 
-      // Create action rights for Applicant role (full amendment control)
-      const applicantRoleId = amendmentRoleIds['Applicant'];
-      const applicantActions = ['update', 'delete'];
-      for (const action of applicantActions) {
-        const actionRightIdAR = id();
-        actionRightIds.push(actionRightIdAR);
-        transactions.push(
-          tx.actionRights[actionRightIdAR]
-            .update({
-              resource: 'amendments',
-              action,
-            })
-            .link({ roles: [applicantRoleId], amendment: amendmentId })
-        );
-        totalActionRights++;
-        actionRightsToRoles++;
-        actionRightsToAmendments++;
-      }
-
-      // Add manage permission for amendment collaborators to Applicant role
-      const manageCollaboratorsRight = id();
-      actionRightIds.push(manageCollaboratorsRight);
-      transactions.push(
-        tx.actionRights[manageCollaboratorsRight]
-          .update({
-            resource: 'amendmentCollaborators',
-            action: 'manage',
-          })
-          .link({ roles: [applicantRoleId], amendment: amendmentId })
-      );
-      totalActionRights++;
-      actionRightsToRoles++;
-      actionRightsToAmendments++;
-
-      // Add manageNotifications right to Applicant role
-      const manageAmendmentNotificationsRight = id();
-      actionRightIds.push(manageAmendmentNotificationsRight);
-      transactions.push(
-        tx.actionRights[manageAmendmentNotificationsRight]
-          .update({
-            resource: 'notifications',
-            action: 'manageNotifications',
-          })
-          .link({ roles: [applicantRoleId], amendment: amendmentId })
-      );
-      totalActionRights++;
-      actionRightsToRoles++;
-      actionRightsToAmendments++;
-
-      // Create action rights for Collaborator role (read and comment access)
-      const collaboratorRoleId = amendmentRoleIds['Collaborator'];
-      const collaboratorActions = ['read', 'update'];
-      for (const action of collaboratorActions) {
-        const collaboratorActionId = id();
-        actionRightIds.push(collaboratorActionId);
-        transactions.push(
-          tx.actionRights[collaboratorActionId]
-            .update({
-              resource: 'amendments',
-              action,
-            })
-            .link({ roles: [collaboratorRoleId], amendment: amendmentId })
-        );
-        totalActionRights++;
-        actionRightsToRoles++;
-        actionRightsToAmendments++;
+        // Create action rights for this role
+        for (const perm of roleDef.permissions) {
+          const actionRightId = id();
+          actionRightIds.push(actionRightId);
+          transactions.push(
+            tx.actionRights[actionRightId]
+              .update({
+                resource: perm.resource,
+                action: perm.action,
+              })
+              .link({ roles: [roleId], amendment: amendmentId })
+          );
+          totalActionRights++;
+          actionRightsToRoles++;
+          actionRightsToAmendments++;
+        }
       }
     }
 
@@ -297,8 +180,8 @@ export const rbacSeeder: EntitySeeder = {
     for (const blogId of blogIds) {
       const blogRoleIds: Record<string, string> = {};
 
-      // Create blog-level roles
-      for (const roleDef of blogRoleDefinitions) {
+      // Create blog-level roles from constants
+      for (const roleDef of DEFAULT_BLOG_ROLES) {
         const roleId = id();
         roleIds.push(roleId);
         blogRoleIds[roleDef.name] = roleId;
@@ -308,7 +191,7 @@ export const rbacSeeder: EntitySeeder = {
             .update({
               name: roleDef.name,
               description: roleDef.description,
-              scope: roleDef.scope,
+              scope: 'blog',
               createdAt: faker.date.past({ years: 0.5 }),
               updatedAt: new Date(),
             })
@@ -316,64 +199,31 @@ export const rbacSeeder: EntitySeeder = {
         );
         totalRoles++;
         rolesToBlogs++;
-      }
 
-      // Create action rights for Owner role (full blog control)
-      const ownerRoleId = blogRoleIds['Owner'];
-      const ownerActions = ['update', 'delete'];
-      for (const action of ownerActions) {
-        const actionRightIdBlog = id();
-        actionRightIds.push(actionRightIdBlog);
-        transactions.push(
-          tx.actionRights[actionRightIdBlog]
-            .update({
-              resource: 'blogs',
-              action,
-            })
-            .link({ roles: [ownerRoleId], blog: blogId })
-        );
-        totalActionRights++;
-        actionRightsToRoles++;
-        actionRightsToBlogs++;
-      }
-
-      // Add manageNotifications right to Owner role
-      const manageBlogNotificationsRight = id();
-      actionRightIds.push(manageBlogNotificationsRight);
-      transactions.push(
-        tx.actionRights[manageBlogNotificationsRight]
-          .update({
-            resource: 'notifications',
-            action: 'manageNotifications',
-          })
-          .link({ roles: [ownerRoleId], blog: blogId })
-      );
-      totalActionRights++;
-      actionRightsToRoles++;
-      actionRightsToBlogs++;
-
-      // Create action rights for Writer role (update and delete access)
-      const writerRoleId = blogRoleIds['Writer'];
-      const writerActions = ['update', 'delete'];
-      for (const action of writerActions) {
-        const writerActionId = id();
-        actionRightIds.push(writerActionId);
-        transactions.push(
-          tx.actionRights[writerActionId]
-            .update({
-              resource: 'blogs',
-              action,
-            })
-            .link({ roles: [writerRoleId], blog: blogId })
-        );
-        totalActionRights++;
-        actionRightsToRoles++;
-        actionRightsToBlogs++;
+        // Create action rights for this role
+        for (const perm of roleDef.permissions) {
+          const actionRightId = id();
+          actionRightIds.push(actionRightId);
+          transactions.push(
+            tx.actionRights[actionRightId]
+              .update({
+                resource: perm.resource,
+                action: perm.action,
+              })
+              .link({ roles: [roleId], blog: blogId })
+          );
+          totalActionRights++;
+          actionRightsToRoles++;
+          actionRightsToBlogs++;
+        }
       }
 
       // Create bloggers with roles (1 owner, 1-3 writers)
       const bloggerCount = randomInt(2, 4);
       const bloggerUsers = randomItems(userIds, bloggerCount);
+
+      const ownerRoleId = blogRoleIds['Owner'];
+      const writerRoleId = blogRoleIds['Writer'];
 
       for (let i = 0; i < bloggerUsers.length; i++) {
         const userId = bloggerUsers[i];
@@ -422,7 +272,7 @@ export const rbacSeeder: EntitySeeder = {
     console.log(`✓ Created ${totalParticipants} event participants with role assignments`);
     console.log(`✓ Created ${totalBloggers} blog bloggers with role assignments`);
     console.log(`  - Each event has 2 roles: Organizer, Participant`);
-    console.log(`  - Each amendment has 2 roles: Applicant, Collaborator`);
+    console.log(`  - Each amendment has 2 roles: Author, Collaborator`);
     console.log(`  - Each blog has 2 roles: Owner, Writer`);
 
     return {

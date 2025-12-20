@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
-import db, { id } from '../../../db';
+import db, { id } from '../../../db/db';
 import { BookOpen, Calendar, MessageSquare, Clock, ArrowUp, ArrowDown } from 'lucide-react';
 import { StatsBar } from '@/components/ui/StatsBar';
 import { useSubscribeBlog } from '@/features/blogs/hooks/useSubscribeBlog';

@@ -16,7 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { db } from '../db';
+import { db } from '../db/db';
 // import { useTranslation } from 'react-i18next'; // Temporarily disabled
 
 export default function HomePage() {

@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNodesState, useEdgesState, type Node, type Edge } from '@xyflow/react';
-import db from '../../../../db';
+import db from '../../../../db/db';
 import { NetworkFlowBase } from '@/components/shared/NetworkFlowBase';
 import { NetworkEntityDialog } from '@/components/shared/NetworkEntityDialog';
 import { RIGHT_TYPES, formatRights } from '@/components/shared/RightFilters';

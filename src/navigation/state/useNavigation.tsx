@@ -5,16 +5,10 @@ import { useInitialRoute } from '@/navigation/state/useInitialRoute';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from '@/hooks/use-translation';
 import { useUnreadNotificationsCount, useUnreadMessagesCount } from '@/hooks/use-unread-counts';
-import { db } from '../../../db';
+import { db } from '../../../db/db';
 import type { NavigationItem } from '@/navigation/types/navigation.types';
-import {
-  hasEventPermission,
-  hasGroupPermission,
-  hasAmendmentPermission,
-  type Participation,
-  type Membership,
-  type Amendment,
-} from '../../../instant.helpers';
+import { usePermissions } from '../../../db/rbac/usePermissions.ts';
+import type { Amendment } from '../../../db/rbac/types';
 
 /**
  * Custom hook that manages navigation items for primary and secondary navigation
@@ -26,7 +20,6 @@ export function useNavigation() {
   const pathname = usePathname();
   const [currentPrimaryRoute, setCurrentPrimaryRoute] = useState<string | null>(null);
   const { t } = useTranslation();
-  const { user: authUser } = db.useAuth();
 
   // Get unread counts for notifications and messages
   const { count: unreadNotificationsCount } = useUnreadNotificationsCount();
@@ -67,168 +60,65 @@ export function useNavigation() {
     };
   });
 
+  // Extract IDs from pathname
+  const eventId = pathname.match(/^\/event\/([^/]+)/)?.[1];
+  const userId = pathname.match(/^\/user\/([^/]+)/)?.[1];
+  const groupId = pathname.match(/^\/group\/([^/]+)/)?.[1];
+  const amendmentId = pathname.match(/^\/amendment\/([^/]+)/)?.[1];
+  const blogId = pathname.match(/^\/blog\/([^/]+)/)?.[1];
+
+  // Fetch amendment data if needed for permission context
+  const { data: amendmentData } = db.useQuery(
+    amendmentId
+      ? {
+          amendments: {
+            $: { where: { id: amendmentId } },
+            amendmentRoleCollaborators: { user: {} },
+            roles: { actionRights: {} },
+          },
+        }
+      : null
+  );
+  
+  // Map the query result to match the Amendment interface expected by usePermissions
+  const amendment = amendmentData?.amendments?.[0] 
+    ? {
+        ...amendmentData.amendments[0],
+        collaborators: amendmentData.amendments[0].amendmentRoleCollaborators?.map((c: any) => ({
+          ...c,
+          roleName: c.role // Assuming the role name is stored in 'role' field of collaborator
+        }))
+      } as unknown as Amendment
+    : undefined;
+  
+  // Let's use the permission hook
+  const { 
+    canManage, 
+    isMe, 
+    isABlogger,
+    isAuthor: isAmendmentAuthor 
+  } = usePermissions({
+    groupId,
+    eventId,
+    blogId,
+    amendmentId,
+    amendment
+  });
+
   const getSecondaryNavItems = (currentPrimaryRoute: string | null) => {
-    // Extract event ID from pathname if on an event route
-    let eventId: string | undefined;
-    let isEventAdmin = false;
-    if (pathname.startsWith('/event/')) {
-      const match = pathname.match(/^\/event\/([^/]+)/);
-      if (match) {
-        eventId = match[1];
-      }
-    }
+    // Determine permissions based on the hook results
+    const isEventAdmin = canManage('events') || canManage('eventParticipants'); // 'manage_participants' implies manage
+    const isGroupAdmin = canManage('groups') || canManage('groupMemberships');
+    
+    // For amendment, we check if user can manage it
+    const isAmendmentAdmin = canManage('amendments');
 
-    // Query event participation with role and action rights if we're on an event page
-    const { data: eventParticipationData } = db.useQuery(
-      eventId && authUser?.id
-        ? {
-            participants: {
-              $: {
-                where: {
-                  'user.id': authUser.id,
-                  'event.id': eventId,
-                },
-              },
-              role: {
-                actionRights: {},
-              },
-            },
-          }
-        : { participants: {} }
-    );
+    // For blog, we check if user is owner (which usually implies manage permission)
+    // The original code checked for 'Owner' role specifically.
+    // `canManage('blogs')` should cover this if the Owner role has manage permission.
+    const isBlogOwner = canManage('blogs');
 
-    // Check if user has manage_participants permission for this event
-    if (eventId && authUser?.id && eventParticipationData?.participants) {
-      const participations = eventParticipationData.participants as Participation[];
-      isEventAdmin = hasEventPermission(participations, eventId, 'events', 'manage_participants');
-    }
-
-    // Extract user ID from pathname if on a user route
-    let userId: string | undefined;
-    let isOwnUser = false;
-    if (pathname.startsWith('/user/')) {
-      const match = pathname.match(/^\/user\/([^/]+)/);
-      if (match) {
-        userId = match[1];
-        isOwnUser = authUser?.id === userId;
-      }
-    }
-
-    // Extract group ID from pathname if on a group route
-    let groupId: string | undefined;
-    let isGroupAdmin = false;
-    if (pathname.startsWith('/group/')) {
-      const match = pathname.match(/^\/group\/([^/]+)/);
-      if (match) {
-        groupId = match[1];
-      }
-    }
-
-    // Query group membership with group roles and action rights if we're on a group page
-    const { data: membershipData } = db.useQuery(
-      groupId && authUser?.id
-        ? {
-            groupMemberships: {
-              $: {
-                where: {
-                  'user.id': authUser.id,
-                  'group.id': groupId,
-                },
-              },
-              group: {
-                roles: {
-                  actionRights: {},
-                },
-              },
-            },
-          }
-        : { groupMemberships: {} }
-    );
-
-    // Check if user has manage_members permission for this group
-    if (groupId && authUser?.id && membershipData?.groupMemberships) {
-      const memberships = membershipData.groupMemberships as Membership[];
-      isGroupAdmin = hasGroupPermission(memberships, groupId, 'groupMemberships', 'manage');
-    }
-
-    // Extract amendment ID from pathname if on an amendment route
-    let amendmentId: string | undefined;
-    let isAmendmentAdmin = false;
-    if (pathname.startsWith('/amendment/')) {
-      const match = pathname.match(/^\/amendment\/([^/]+)/);
-      if (match) {
-        amendmentId = match[1];
-      }
-    }
-
-    // Query amendment with roles and collaborators if we're on an amendment page
-    let amendmentData;
-    if (amendmentId) {
-      const result = db.useQuery({
-        amendments: {
-          $: {
-            where: {
-              id: amendmentId,
-            },
-          },
-          amendmentRoleCollaborators: {
-            user: {},
-            role: {},
-          },
-          roles: {
-            actionRights: {},
-          },
-        },
-      });
-      amendmentData = result.data;
-    } else {
-      const result = db.useQuery({ amendments: {} });
-      amendmentData = result.data;
-    }
-
-    // Check if user has manage permission for this amendment
-    if (amendmentId && authUser?.id && amendmentData?.amendments?.[0]) {
-      const amendment = amendmentData.amendments[0] as Amendment;
-      isAmendmentAdmin = hasAmendmentPermission(
-        amendment,
-        authUser.id,
-        'amendmentCollaborators',
-        'manage'
-      );
-    }
-
-    // Extract blog ID from pathname if on a blog route
-    let blogId: string | undefined;
-    let isBlogOwner = false;
-    if (pathname.startsWith('/blog/')) {
-      const match = pathname.match(/^\/blog\/([^/]+)/);
-      if (match) {
-        blogId = match[1];
-      }
-    }
-
-    // Query user's blogger status for this blog
-    const { data: blogBloggerData } = db.useQuery(
-      blogId && authUser?.id
-        ? {
-            blogBloggers: {
-              $: {
-                where: {
-                  'user.id': authUser.id,
-                  'blog.id': blogId,
-                },
-              },
-              role: {},
-            },
-          }
-        : { blogBloggers: {} }
-    );
-
-    // Check if user is owner of this blog
-    if (blogId && authUser?.id && blogBloggerData?.blogBloggers?.[0]) {
-      const blogger = blogBloggerData.blogBloggers[0];
-      isBlogOwner = blogger.role?.name === 'Owner';
-    }
+    const isOwnUser = isMe(userId);
 
     const baseSecondaryItems = baseGetSecondaryNavItems(
       currentPrimaryRoute,

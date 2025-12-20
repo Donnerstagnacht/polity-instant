@@ -17,15 +17,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel';
 import { Calendar } from 'lucide-react';
-import { db, tx, id } from '@/../db';
 import { useAuthStore } from '@/features/auth/auth.ts';
-import { toast } from 'sonner';
+import { useTodoMutations } from '@/features/todos/hooks/useTodoData';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 
 export default function CreateTodoPage() {
   const router = useRouter();
   const user = useAuthStore(state => state.user);
+  const { createTodo, isLoading: isSubmitting } = useTodoMutations();
 
   const [formData, setFormData] = useState({
     title: '',
@@ -36,7 +36,6 @@ export default function CreateTodoPage() {
     tags: [] as string[],
     visibility: 'private' as 'public' | 'authenticated' | 'private',
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [currentStep, setCurrentStep] = useState(0);
   const [tagInput, setTagInput] = useState('');
@@ -64,38 +63,22 @@ export default function CreateTodoPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
 
-    try {
-      if (!user?.id) {
-        toast.error('You must be logged in to create a todo');
-        setIsSubmitting(false);
-        return;
-      }
+    if (!user?.id) {
+      return;
+    }
 
-      const todoId = id();
+    const result = await createTodo({
+      title: formData.title,
+      description: formData.description || undefined,
+      ownerId: user.id,
+      priority: formData.priority,
+      status: formData.status === 'todo' ? 'open' : formData.status,
+      dueDate: formData.dueDate || undefined,
+    });
 
-      await db.transact([
-        tx.todos[todoId].update({
-          title: formData.title,
-          description: formData.description || '',
-          dueDate: formData.dueDate ? new Date(formData.dueDate) : undefined,
-          priority: formData.priority,
-          status: formData.status,
-          tags: formData.tags.length > 0 ? formData.tags : undefined,
-          visibility: formData.visibility,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }),
-        tx.todos[todoId].link({ user: user.id }),
-      ]);
-
-      toast.success('Todo created successfully!');
+    if (result.success) {
       router.push('/todos');
-    } catch (error) {
-      console.error('Failed to create todo:', error);
-      toast.error('Failed to create todo. Please try again.');
-      setIsSubmitting(false);
     }
   };
 

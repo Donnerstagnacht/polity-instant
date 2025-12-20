@@ -1,8 +1,9 @@
 'use client';
 
 import { use, useState, useMemo } from 'react';
-import { db, tx, id } from '../../../../db';
+import { db, tx, id } from '../../../../db/db';
 import { useRouter } from 'next/navigation';
+import { useAmendmentData } from '@/features/amendments/hooks/useAmendmentData';
 import { AuthGuard } from '@/features/auth/AuthGuard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -81,7 +82,10 @@ export default function AmendmentCollaboratorsPage({ params }: PageParams) {
   const [newRoleDescription, setNewRoleDescription] = useState('');
   const [addRoleDialogOpen, setAddRoleDialogOpen] = useState(false);
 
-  // Query amendment and collaborators
+  // Query amendment and collaborators using hook
+  const { amendment, isLoading: amendmentLoading } = useAmendmentData(amendmentId);
+  
+  // Query amendment with roles using db.useQuery (roles not in hook)
   const { data } = db.useQuery({
     amendments: {
       $: {
@@ -113,9 +117,9 @@ export default function AmendmentCollaboratorsPage({ params }: PageParams) {
   const { user } = db.useAuth();
   const currentUserId = user?.id;
 
-  const amendment = data?.amendments?.[0];
-  const collaborators = amendment?.amendmentRoleCollaborators || [];
-  const amendmentRoles = amendment?.roles || [];
+  const amendmentData = data?.amendments?.[0];
+  const collaborators = amendmentData?.amendmentRoleCollaborators || [];
+  const amendmentRoles = amendmentData?.roles || [];
   const rolesData = { roles: amendmentRoles };
 
   const currentUserCollaboration = collaborators.find((c: any) => c.user?.id === currentUserId);

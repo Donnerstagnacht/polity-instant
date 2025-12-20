@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import db from '../../../db';
+import db from '../../../db/db';
 
 interface GroupNode extends Node {
   data: {

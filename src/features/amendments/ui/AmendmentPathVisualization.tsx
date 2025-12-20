@@ -6,7 +6,7 @@ import { NetworkFlowBase, Panel } from '@/components/shared/NetworkFlowBase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, ArrowRight, Target } from 'lucide-react';
-import db from '../../../../db';
+import db from '../../../../db/db';
 
 interface AmendmentPathVisualizationProps {
   amendmentId: string;

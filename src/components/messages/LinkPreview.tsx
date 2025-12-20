@@ -13,7 +13,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import Link from 'next/link';
-import { db } from '../../../db';
+import { db } from '../../../db/db';
 
 interface LinkPreviewProps {
   url: string;

@@ -3,7 +3,8 @@
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { useParams } from 'next/navigation';
-import { db, tx } from '../../../db';
+import db from '../../../db/db';
+import { useTodoMutations } from '@/features/todos/hooks/useTodoData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -48,6 +49,7 @@ export default function TodoDetailPage() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const { updateTodo } = useTodoMutations();
 
   // Query the specific todo
   const { data, isLoading } = db.useQuery({
@@ -98,31 +100,26 @@ export default function TodoDetailPage() {
     if (!todo) return;
 
     setIsSaving(true);
-    try {
-      const updates: any = {
-        title: formData.title,
-        description: formData.description,
-        status: formData.status,
-        priority: formData.priority,
-        dueDate: formData.dueDate ? new Date(formData.dueDate).getTime() : null,
-        updatedAt: Date.now(),
-      };
+    const updates: any = {
+      title: formData.title,
+      description: formData.description,
+      status: formData.status,
+      priority: formData.priority,
+      dueDate: formData.dueDate ? new Date(formData.dueDate).getTime() : null,
+      updatedAt: Date.now(),
+    };
 
-      if (formData.status === 'completed' && todo.status !== 'completed') {
-        updates.completedAt = Date.now();
-      } else if (formData.status !== 'completed' && todo.status === 'completed') {
-        updates.completedAt = null;
-      }
-
-      await db.transact([tx.todos[todo.id].update(updates)]);
-      toast.success('Todo updated successfully!');
-      setIsEditing(false);
-    } catch (error) {
-      console.error('Failed to update todo:', error);
-      toast.error('Failed to update todo');
-    } finally {
-      setIsSaving(false);
+    if (formData.status === 'completed' && todo.status !== 'completed') {
+      updates.completedAt = Date.now();
+    } else if (formData.status !== 'completed' && todo.status === 'completed') {
+      updates.completedAt = null;
     }
+
+    const result = await updateTodo(todo.id, updates);
+    if (result.success) {
+      setIsEditing(false);
+    }
+    setIsSaving(false);
   };
 
   const handleCancel = () => {

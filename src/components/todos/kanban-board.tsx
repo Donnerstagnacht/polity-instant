@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Calendar } from 'lucide-react';
 import { useState } from 'react';
-import { db, tx } from '../../../db';
+import { db, tx } from '../../../db/db';
 import { toast } from 'sonner';
 import { TodoDetailDialog } from './todo-detail-dialog';
 

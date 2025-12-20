@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import db, { id } from '../../../../db';
+import db, { id } from '../../../../db/db';
+import { useAmendmentData } from '@/features/amendments/hooks/useAmendmentData';
 import {
   ArrowLeft,
   MessageSquare,
@@ -669,34 +670,34 @@ export default function AmendmentDiscussionsPage({ params }: { params: Promise<{
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [sortBy, setSortBy] = useState<'votes' | 'time'>('votes');
 
-  // Fetch amendment data with threads and comments
-  const { data, isLoading } = db.useQuery({
-    amendments: {
-      $: { where: { id: resolvedParams.id } },
-      threads: {
+  // Fetch amendment data using hook (discussions includes threads)
+  const { amendment, isLoading } = useAmendmentData(resolvedParams.id);
+  
+  // Fetch threads with detailed nested data
+  const { data: threadsData } = db.useQuery({
+    threads: {
+      $: { where: { 'amendment.id': resolvedParams.id } },
+      creator: {},
+      file: {},
+      votes: {
+        user: {},
+      },
+      comments: {
         creator: {},
-        file: {},
         votes: {
           user: {},
         },
-        comments: {
+        replies: {
           creator: {},
           votes: {
             user: {},
-          },
-          replies: {
-            creator: {},
-            votes: {
-              user: {},
-            },
           },
         },
       },
     },
   });
 
-  const amendment = data?.amendments?.[0];
-  const rawThreads = (amendment?.threads || []) as Thread[];
+  const rawThreads = (threadsData?.threads || []) as Thread[];
 
   // Sort threads
   const threads = [...rawThreads].sort((a, b) => {

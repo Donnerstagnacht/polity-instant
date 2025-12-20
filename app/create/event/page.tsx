@@ -20,7 +20,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel';
 import { Calendar, MapPin, Clock, Users, AlertCircle } from 'lucide-react';
 import { useState, useEffect, Suspense } from 'react';
-import { db, tx, id } from '@/../db';
+import { db, tx, id } from 'db/db';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { toast } from 'sonner';
 import { TypeAheadSelect } from '@/components/ui/type-ahead-select';

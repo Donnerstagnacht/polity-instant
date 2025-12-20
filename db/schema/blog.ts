@@ -1,0 +1,90 @@
+import { i } from '@instantdb/react';
+
+const _blog = {
+  entities: {
+    blogs: i.entity({
+      commentCount: i.number(),
+      date: i.string(),
+      likeCount: i.number(),
+      title: i.string(),
+      visibility: i.string().indexed().optional(), // 'public', 'authenticated', 'private'
+    }),
+    blogBloggers: i.entity({
+      createdAt: i.date().indexed().optional(),
+      status: i.string().indexed().optional(), // invited, requested, writer, owner
+      visibility: i.string().indexed().optional(), // 'public', 'authenticated', 'private'
+    }),
+  },
+  links: {
+    blogsGroup: {
+      forward: {
+        on: 'blogs',
+        has: 'one',
+        label: 'group',
+      },
+      reverse: {
+        on: 'groups',
+        has: 'many',
+        label: 'blogs',
+      },
+    },
+    blogBloggersRole: {
+      forward: { on: 'blogBloggers', has: 'one', label: 'role' },
+      reverse: { on: 'roles', has: 'many', label: 'bloggers' },
+    },
+    blogBloggersBlog: {
+      forward: { on: 'blogBloggers', has: 'one', label: 'blog' },
+      reverse: { on: 'blogs', has: 'many', label: 'blogRoleBloggers' },
+    },
+    blogBloggersUser: {
+      forward: { on: 'blogBloggers', has: 'one', label: 'user' },
+      reverse: { on: '$users', has: 'many', label: 'bloggerRelations' },
+    },
+    roleBlog: {
+      forward: { on: 'roles', has: 'one', label: 'blog' },
+      reverse: { on: 'blogs', has: 'many', label: 'roles' },
+    },
+    actionRightBlog: {
+      forward: { on: 'actionRights', has: 'one', label: 'blog' },
+      reverse: { on: 'blogs', has: 'many', label: 'scopedActionRights' },
+    },
+    subscribersBlog: {
+      forward: {
+        on: 'subscribers',
+        has: 'one',
+        label: 'blog',
+      },
+      reverse: {
+        on: 'blogs',
+        has: 'many',
+        label: 'subscribers',
+      },
+    },
+    hashtagBlogs: {
+      forward: {
+        on: 'hashtags',
+        has: 'one',
+        label: 'blog',
+      },
+      reverse: {
+        on: 'blogs',
+        has: 'many',
+        label: 'hashtags',
+      },
+    },
+    timelineEventsBlog: {
+      forward: {
+        on: 'timelineEvents',
+        has: 'one',
+        label: 'blog',
+      },
+      reverse: {
+        on: 'blogs',
+        has: 'many',
+        label: 'timelineEvents',
+      },
+    },
+  } as const,
+};
+
+export default _blog;

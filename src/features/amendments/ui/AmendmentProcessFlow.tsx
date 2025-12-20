@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import db, { tx, id } from '../../../../db';
+import db, { tx, id } from '../../../../db/db';
 import { useAuthStore } from '@/features/auth';
 import { toast } from 'sonner';
 import { findShortestPath } from '@/utils/path-finding';

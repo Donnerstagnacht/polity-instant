@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Edit, Eye, MessageSquare, Vote, ChevronDown } from 'lucide-react';
-import { db, tx } from '../../../../db';
+import { db, tx } from '../../../../db/db';
 import { useToast } from '@/global-state/use-toast';
 
 type EditingMode = 'edit' | 'view' | 'suggest' | 'vote';

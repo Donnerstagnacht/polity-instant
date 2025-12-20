@@ -31,7 +31,7 @@ import {
   Circle,
 } from 'lucide-react';
 import Link from 'next/link';
-import { db, tx } from '../../../db';
+import { db, tx } from '../../../db/db';
 import { toast } from 'sonner';
 
 type TodoStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';

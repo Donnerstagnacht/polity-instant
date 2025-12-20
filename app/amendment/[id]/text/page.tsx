@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { db, tx, id } from '../../../../db';
+import { db, tx, id } from '../../../../db/db';
 import { Loader2, Users, Eye, ArrowLeft, FileText, Pencil } from 'lucide-react';
 import { useToast } from '@/global-state/use-toast';
 import Link from 'next/link';

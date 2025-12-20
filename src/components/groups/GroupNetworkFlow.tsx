@@ -7,7 +7,7 @@ import { NetworkFlowBase, Panel } from '@/components/shared/NetworkFlowBase';
 import { RightFilters, formatRights, RIGHT_TYPES } from '@/components/shared/RightFilters';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { NetworkEntityDialog } from '@/components/shared/NetworkEntityDialog';
-import db from '../../../db';
+import db from '../../../db/db';
 
 interface GroupNode extends Node {
   data: {

@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { LogOut, User, Settings } from 'lucide-react';
-import { db } from '../../../db';
+import { db } from '../../../db/db';
 import { useTranslation } from '@/hooks/use-translation';
 import { cn } from '@/utils/utils.ts';
 import type { User as UserType } from '@/features/user/types/user.types';

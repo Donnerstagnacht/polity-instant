@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/utils/utils.ts';
-import { db } from '../../../db';
+import { db } from '../../../db/db';
 import { useUserData } from '@/features/user/hooks/useUserData';
 import { UserMenu } from '@/components/auth/UserMenu';
 import type { NavigationView } from '@/navigation/types/navigation.types';

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { db, tx, id } from '../../../../db';
+import { db, tx, id } from '../../../../db/db';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { createNotification } from '@/utils/notification-helpers';
 import { toast } from 'sonner';

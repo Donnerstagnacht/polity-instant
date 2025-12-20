@@ -24,7 +24,7 @@ import {
   Minus,
   CheckCircle2,
 } from 'lucide-react';
-import { db, id, tx } from '../../../../db';
+import { db, id, tx } from '../../../../db/db';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 

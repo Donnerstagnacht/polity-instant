@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import db from '../../../../db';
+import { useGroupData } from '@/features/groups/hooks/useGroupData';
+import db from '../../../../db/db';
 import { Calendar, MapPin, Users, Search as SearchIcon, Filter, Hash } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -135,20 +136,29 @@ export default function GroupEventsPage({ params }: { params: Promise<{ id: stri
   const [hashtagFilter, setHashtagFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Fetch group and events data from InstantDB
-  const { data, isLoading } = db.useQuery({
-    groups: {
-      $: { where: { id: resolvedParams.id } },
-      events: {
-        organizer: {},
-        participants: {},
-        hashtags: {},
-      },
-    },
-  });
+  // Fetch group data using hook
+  const { group, isLoading: groupLoading } = useGroupData(resolvedParams.id);
 
-  const group = data?.groups?.[0];
-  const events = group?.events || [];
+  // Fetch events with extended data (hashtags, participants, organizer)
+  const { data: eventsData, isLoading: eventsLoading } = db.useQuery(
+    group?.id
+      ? {
+          events: {
+            $: {
+              where: {
+                'groups.id': group.id,
+              },
+            },
+            organizer: {},
+            participants: {},
+            hashtags: {},
+          },
+        }
+      : null
+  );
+
+  const events = eventsData?.events || [];
+  const isLoading = groupLoading || eventsLoading;
 
   // Filter by hashtag
   const matchesHashtag = (event: any) => {

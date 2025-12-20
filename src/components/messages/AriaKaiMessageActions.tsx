@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { db, tx, id } from '../../../db';
+import { db, tx, id } from '../../../db/db';
 import { ARIA_KAI_USER_ID, ENTITY_DESCRIPTIONS, EntityTopic } from 'e2e/aria-kai';
 import { Users, Calendar, FileEdit, BookOpen, Vote, Sparkles } from 'lucide-react';
 

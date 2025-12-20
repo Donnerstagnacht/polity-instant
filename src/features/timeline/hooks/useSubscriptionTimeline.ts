@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import db from '../../../../db';
+import db from '../../../../db/db';
 
 export function useSubscriptionTimeline() {
   // Use InstantDB's native auth hook instead of zustand store

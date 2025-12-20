@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import db from '../../../../db';
+import { useGroupData } from '@/features/groups/hooks/useGroupData';
+import db from '../../../../db/db';
 import {
   FileText,
   Search as SearchIcon,
@@ -120,13 +121,10 @@ export default function GroupAmendmentsPage({ params }: { params: Promise<{ id: 
     rejected: true,
   });
 
-  // Fetch group and amendments data from InstantDB
-  const { data, isLoading } = db.useQuery({
-    groups: {
-      $: { where: { id: resolvedParams.id } },
-    },
-  });
+  // Fetch group data using hook
+  const { group, isLoading: groupLoading } = useGroupData(resolvedParams.id);
 
+  // Fetch amendments with hashtags (not included in useGroupData)
   const { data: amendmentsData, isLoading: amendmentsLoading } = db.useQuery({
     amendments: {
       $: {
@@ -138,8 +136,8 @@ export default function GroupAmendmentsPage({ params }: { params: Promise<{ id: 
     },
   });
 
-  const group = data?.groups?.[0];
   const amendments = amendmentsData?.amendments || [];
+  const isLoading = groupLoading || amendmentsLoading;
 
   // Filter by hashtag
   const matchesHashtag = (amendment: any) => {
@@ -234,7 +232,7 @@ export default function GroupAmendmentsPage({ params }: { params: Promise<{ id: 
             <h1 className="mb-4 text-2xl font-bold">Group Not Found</h1>
             <p className="text-muted-foreground">
               The group you're looking for doesn't exist or has been removed.
-            </p>
+            </p
           </div>
         </PageWrapper>
       </AuthGuard>

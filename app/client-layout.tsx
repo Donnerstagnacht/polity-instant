@@ -16,7 +16,7 @@ import type {
   NavigationView,
 } from '@/navigation/types/navigation.types';
 import { useNavigation } from '@/navigation/state/useNavigation';
-import { db } from '../db';
+import { db } from '../db/db';
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   // Initialize theme, screen responsive detection, and auth state

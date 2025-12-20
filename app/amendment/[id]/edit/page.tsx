@@ -21,7 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import db, { tx } from '../../../../db';
+import db, { tx } from '../../../../db/db';
+import { useAmendmentData } from '@/features/amendments/hooks/useAmendmentData';
 
 export default function AmendmentEditPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -45,18 +46,8 @@ export default function AmendmentEditPage({ params }: { params: Promise<{ id: st
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
 
-  // Fetch amendment data
-  const { data, isLoading } = db.useQuery({
-    amendments: {
-      $: { where: { id: resolvedParams.id } },
-      amendmentRoleCollaborators: {
-        $: { where: { status: 'admin' } },
-        user: {},
-      },
-    },
-  });
-
-  const amendment = data?.amendments?.[0];
+  // Fetch amendment data using hook
+  const { amendment, collaborators, isLoading } = useAmendmentData(resolvedParams.id);
 
   // Initialize form data when amendment data loads
   useEffect(() => {
@@ -75,8 +66,7 @@ export default function AmendmentEditPage({ params }: { params: Promise<{ id: st
       });
 
       // Check if current user is an admin collaborator
-      const adminCollaborators = amendment.amendmentRoleCollaborators || [];
-      const userIsAdmin = adminCollaborators.some(
+      const userIsAdmin = collaborators.some(
         (c: any) => c.user?.id === authUser?.id && c.status === 'admin'
       );
 

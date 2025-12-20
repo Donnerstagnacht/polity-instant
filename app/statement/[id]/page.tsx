@@ -6,7 +6,8 @@ import { PageWrapper } from '@/components/layout/page-wrapper';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import db from '../../../db';
+import { useStatementData } from '@/features/statements/hooks/useStatementData';
+import { db } from '../../../db/db';
 import { FileText, User, MessageSquare, Share2, ThumbsUp } from 'lucide-react';
 
 export default function StatementPage({ params }: { params: Promise<{ id: string }> }) {

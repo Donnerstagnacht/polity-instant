@@ -5,7 +5,7 @@
  * and sending notifications to entity recipients.
  */
 
-import { id, tx } from '../../db';
+import { id, tx } from '../../db/db';
 
 export type EntityType = 'group' | 'event' | 'amendment' | 'blog';
 

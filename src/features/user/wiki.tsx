@@ -9,7 +9,6 @@ import { UserWikiContentTabs } from '@/features/user/ui/UserWikiContentTabs';
 import { useUserData } from './hooks/useUserData';
 import { useSubscribeUser } from './hooks/useSubscribeUser';
 import { useAuthStore } from '@/features/auth/auth.ts';
-import { SeedUserDataButton } from './ui/SeedUserDataButton';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { StatsBar } from '@/components/ui/StatsBar';
 import { ActionBar } from '@/components/ui/ActionBar';
@@ -72,11 +71,10 @@ export function UserWiki(_props: UserWikiProps) {
       {!isLoading && !error && !dbUser && (
         <div className="container mx-auto max-w-6xl p-4">
           <div className="flex flex-col items-center justify-center py-12">
-            <div className="mb-6 text-center">
+            <div className="text-center">
               <h2 className="mb-2 text-2xl font-semibold">User Not Found</h2>
               <p className="text-muted-foreground">This user hasn't been created yet.</p>
             </div>
-            <SeedUserDataButton />
           </div>
         </div>
       )}

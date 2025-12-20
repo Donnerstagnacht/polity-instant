@@ -1,4 +1,4 @@
-import { tx, id } from '../../../../db';
+import { tx, id } from '../../../../db/db';
 
 interface CreateTimelineEventParams {
   eventType:

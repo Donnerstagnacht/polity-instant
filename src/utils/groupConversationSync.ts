@@ -1,4 +1,4 @@
-import { db, tx, id } from '../../db';
+import { db, tx, id } from '../../db/db';
 
 /**
  * Add a user to a group's conversation

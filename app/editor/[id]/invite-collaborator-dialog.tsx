@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/command';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { db, tx, id } from '../../../db';
+import { db, tx, id } from '../../../db/db';
 import { UserPlus, X, Loader2, Check } from 'lucide-react';
 import { useToast } from '@/global-state/use-toast';
 

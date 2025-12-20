@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import db from '../../db';
+import db from '../../db/db';
 
 interface UploadOptions {
   contentType?: string;

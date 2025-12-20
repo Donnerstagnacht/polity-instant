@@ -11,7 +11,7 @@ import {
   RIGHT_TYPES,
 } from '@/components/shared/RightFilters';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import db from '../../../db';
+import db from '../../../db/db';
 
 interface NetworkNode extends Node {
   data: {

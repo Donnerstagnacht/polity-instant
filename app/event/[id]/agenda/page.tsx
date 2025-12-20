@@ -41,7 +41,7 @@ import {
   Search as SearchIcon,
   Filter,
 } from 'lucide-react';
-import { db, id, tx } from '../../../../db';
+import { db, id, tx } from '../../../../db/db';
 import Link from 'next/link';
 import { useState } from 'react';
 

@@ -2,7 +2,7 @@
 
 import { useEffect, ReactNode, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { db } from '../../../db';
+import { db } from '../../../db/db';
 import { Loader2 } from 'lucide-react';
 
 interface AuthGuardProps {

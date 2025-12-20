@@ -1,7 +1,6 @@
 'use client';
 
 import { UserWiki } from '@/features/user/wiki';
-import { SeedUserDataButton } from '@/features/user/ui/SeedUserDataButton';
 import { useSearchParams } from 'next/navigation';
 import { use, useEffect, Suspense } from 'react';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
@@ -26,17 +25,14 @@ function UserPageContent({ userId }: { userId: string }) {
   // Pass them as props or use a custom hook to access them
 
   return (
-    <>
-      <UserWiki
-        userId={userId}
-        searchFilters={{
-          blogs,
-          groups,
-          amendments,
-        }}
-      />
-      <SeedUserDataButton />
-    </>
+    <UserWiki
+      userId={userId}
+      searchFilters={{
+        blogs,
+        groups,
+        amendments,
+      }}
+    />
   );
 }
 

@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { MessageCircle, Sparkles } from 'lucide-react';
-import { db } from '../../../db';
+import { db } from '../../../db/db';
 
 interface AriaKaiWelcomeDialogProps {
   open: boolean;

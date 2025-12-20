@@ -3,7 +3,8 @@
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { db, tx, id } from '../../db';
+import db, { id, tx } from '../../db/db';
+import { useMessageMutations } from '@/features/messages/hooks/useMessageData';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -70,6 +71,8 @@ export default function MessagesPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [conversationToDelete, setConversationToDelete] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const { sendMessage, createConversation, deleteMessage } = useMessageMutations();
 
   // Get user data for sending messages
   const { data: userData } = db.useQuery({
@@ -249,27 +252,9 @@ export default function MessagesPage() {
   const handleSendMessage = async () => {
     if (!messageText.trim() || !selectedConversationId || !user?.id) return;
 
-    const messageId = id();
-
-    try {
-      await db.transact([
-        tx.messages[messageId].update({
-          content: messageText.trim(),
-          isRead: false,
-          createdAt: new Date().toISOString(),
-        }),
-        tx.messages[messageId].link({
-          conversation: selectedConversationId,
-          sender: user.id,
-        }),
-        tx.conversations[selectedConversationId].update({
-          lastMessageAt: new Date().toISOString(),
-        }),
-      ]);
-
+    const result = await sendMessage(selectedConversationId, user.id, messageText.trim());
+    if (result.success) {
       setMessageText('');
-    } catch (error) {
-      console.error('Failed to send message:', error);
     }
   };
 
@@ -367,42 +352,11 @@ export default function MessagesPage() {
       return;
     }
 
-    const conversationId = id();
-    const participant1Id = id();
-    const participant2Id = id();
-
-    try {
-      await db.transact([
-        tx.conversations[conversationId].update({
-          createdAt: new Date().toISOString(),
-          lastMessageAt: new Date().toISOString(),
-          status: 'pending',
-          type: 'direct',
-        }),
-        tx.conversations[conversationId].link({
-          requestedBy: user.id,
-        }),
-        tx.conversationParticipants[participant1Id].update({
-          joinedAt: new Date().toISOString(),
-        }),
-        tx.conversationParticipants[participant1Id].link({
-          conversation: conversationId,
-          user: user.id,
-        }),
-        tx.conversationParticipants[participant2Id].update({
-          joinedAt: new Date().toISOString(),
-        }),
-        tx.conversationParticipants[participant2Id].link({
-          conversation: conversationId,
-          user: otherUserId,
-        }),
-      ]);
-
-      setSelectedConversationId(conversationId);
+    const result = await createConversation('direct', [user.id, otherUserId]);
+    if (result.success) {
+      setSelectedConversationId(result.conversationId!);
       setUserSearchDialogOpen(false);
       setUserSearchQuery('');
-    } catch (error) {
-      console.error('Failed to create conversation request:', error);
     }
   };
 

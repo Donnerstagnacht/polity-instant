@@ -2,8 +2,9 @@
 
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
-import { db, tx } from '@/../db';
+import db from 'db/db';
 import { useAuthStore } from '@/features/auth/auth.ts';
+import { useTodoMutations } from '@/features/todos/hooks/useTodoData';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,6 +50,8 @@ export default function TodosPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const [selectedTodo, setSelectedTodo] = useState<any>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+
+  const { updateTodo } = useTodoMutations();
 
   // Query todos with assignments and creator
   const { data, isLoading } = db.useQuery({
@@ -143,46 +146,34 @@ export default function TodosPage() {
   }, [data?.todos, user?.id]);
 
   const handleToggleComplete = async (todo: any) => {
-    try {
-      const newStatus = todo.status === 'completed' ? 'pending' : 'completed';
-      const updates: any = {
-        status: newStatus,
-        updatedAt: Date.now(),
-      };
+    const newStatus = todo.status === 'completed' ? 'pending' : 'completed';
+    const updates: any = {
+      status: newStatus,
+      updatedAt: Date.now(),
+    };
 
-      if (newStatus === 'completed') {
-        updates.completedAt = Date.now();
-      } else {
-        updates.completedAt = null;
-      }
-
-      await db.transact([tx.todos[todo.id].update(updates)]);
-      toast.success(newStatus === 'completed' ? 'Todo completed!' : 'Todo reopened!');
-    } catch (error) {
-      console.error('Failed to update todo:', error);
-      toast.error('Failed to update todo');
+    if (newStatus === 'completed') {
+      updates.completedAt = Date.now();
+    } else {
+      updates.completedAt = null;
     }
+
+    await updateTodo(todo.id, updates);
   };
 
   const handleUpdateStatus = async (todoId: string, newStatus: TodoStatus) => {
-    try {
-      const updates: any = {
-        status: newStatus,
-        updatedAt: Date.now(),
-      };
+    const updates: any = {
+      status: newStatus,
+      updatedAt: Date.now(),
+    };
 
-      if (newStatus === 'completed') {
-        updates.completedAt = Date.now();
-      } else {
-        updates.completedAt = null;
-      }
-
-      await db.transact([tx.todos[todoId].update(updates)]);
-      toast.success('Status updated!');
-    } catch (error) {
-      console.error('Failed to update status:', error);
-      toast.error('Failed to update status');
+    if (newStatus === 'completed') {
+      updates.completedAt = Date.now();
+    } else {
+      updates.completedAt = null;
     }
+
+    await updateTodo(todoId, updates);
   };
 
   const handleTodoClick = (todo: any) => {

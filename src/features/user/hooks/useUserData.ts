@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { db } from '../../../../db';
+import { db } from '../../../../db/db';
 import type { User } from '../types/user.types';
 
 /**

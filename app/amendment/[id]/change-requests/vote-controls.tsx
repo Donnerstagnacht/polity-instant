@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Check, X, Minus } from 'lucide-react';
-import { db, tx, id } from '../../../../db';
+import { db, tx, id } from '../../../../db/db';
 import { useToast } from '@/global-state/use-toast';
 
 interface VoteControlsProps {

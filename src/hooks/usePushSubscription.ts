@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { db } from '../../db';
+import { db } from '../../db/db';
 import { tx, id } from '@instantdb/react';
 
 interface UsePushSubscriptionReturn {

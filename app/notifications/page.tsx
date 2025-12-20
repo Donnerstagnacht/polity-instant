@@ -2,8 +2,9 @@
 
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
-import { db, tx } from '../../db';
+import db from '../../db/db';
 import { useRouter } from 'next/navigation';
+import { useNotificationMutations } from '@/features/notifications/hooks/useNotificationData';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -170,14 +171,12 @@ export default function NotificationsPage() {
     (n: any) => n.recipientGroup || n.recipientEvent || n.recipientAmendment || n.recipientBlog
   );
 
+  const { markAsRead, markAllAsRead, deleteNotification: deleteNotificationMutation } = useNotificationMutations();
+
   const handleNotificationClick = async (notification: any) => {
     // Mark as read if not already
     if (!notification.isRead) {
-      await db.transact([
-        tx.notifications[notification.id].update({
-          isRead: true,
-        }),
-      ]);
+      await markAsRead(notification.id);
     }
 
     // Navigate based on related entity
@@ -219,22 +218,16 @@ export default function NotificationsPage() {
     }
   };
 
-  const markAllAsRead = async () => {
+  const handleMarkAllAsRead = async () => {
     const unreadIds = unreadNotifications.map((n: any) => n.id);
     if (unreadIds.length > 0) {
-      await db.transact(
-        unreadIds.map((notifId: string) =>
-          tx.notifications[notifId].update({
-            isRead: true,
-          })
-        )
-      );
+      await markAllAsRead(unreadIds);
     }
   };
 
-  const deleteNotification = async (notificationId: string, e: React.MouseEvent) => {
+  const handleDeleteNotification = async (notificationId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    await db.transact([tx.notifications[notificationId].delete()]);
+    await deleteNotificationMutation(notificationId);
   };
 
   const formatTime = (date: string | number) => {
@@ -369,7 +362,7 @@ export default function NotificationsPage() {
                 variant="ghost"
                 size="icon"
                 className="h-6 w-6"
-                onClick={e => deleteNotification(notification.id, e)}
+                onClick={e => handleDeleteNotification(notification.id, e)}
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -410,7 +403,7 @@ export default function NotificationsPage() {
               <div className="flex items-center gap-2">
                 <PushNotificationToggle variant="minimal" />
                 {unreadNotifications.length > 0 && (
-                  <Button onClick={markAllAsRead} variant="outline">
+                  <Button onClick={handleMarkAllAsRead} variant="outline">
                     <CheckCheck className="mr-2 h-4 w-4" />
                     Mark all as read
                   </Button>

@@ -4,20 +4,14 @@ import { use } from 'react';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { GroupNetworkFlow } from '@/components/groups/GroupNetworkFlow';
-import db from '../../../../db';
+import { useEventData } from '@/features/events/hooks/useEventData';
 
 export default function EventNetworkPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
 
-  // Fetch the event to get its group
-  const { data: eventData, isLoading } = db.useQuery({
-    events: {
-      $: { where: { id: resolvedParams.id } },
-      group: {},
-    },
-  });
+  // Fetch the event to get its group using hook
+  const { event, isLoading } = useEventData(resolvedParams.id);
 
-  const event = eventData?.events?.[0];
   const group = event?.group;
 
   if (isLoading) {

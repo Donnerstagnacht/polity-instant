@@ -1,7 +1,7 @@
 'use client';
 
 import { use } from 'react';
-import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
+import { AuthGuard, OwnerOnlyGuard } from '@/features/auth';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { UserNetworkFlow } from '@/features/user/ui/UserNetworkFlow';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,7 +11,8 @@ export default function UserNetworkPage({ params }: { params: Promise<{ id: stri
 
   return (
     <AuthGuard requireAuth={true}>
-      <PageWrapper className="container mx-auto p-8">
+      <OwnerOnlyGuard targetUserId={resolvedParams.id}>
+        <PageWrapper className="container mx-auto p-8">
         <div className="mb-8">
           <h1 className="mb-4 text-4xl font-bold">User Network</h1>
           <p className="text-muted-foreground">
@@ -27,6 +28,7 @@ export default function UserNetworkPage({ params }: { params: Promise<{ id: stri
           </CardContent>
         </Card>
       </PageWrapper>
+      </OwnerOnlyGuard>
     </AuthGuard>
   );
 }

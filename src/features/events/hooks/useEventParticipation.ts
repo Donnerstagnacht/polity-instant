@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import db, { tx, id } from '../../../../db';
+import db, { tx, id } from '../../../../db/db';
 import { useAuthStore } from '@/features/auth/auth';
 import { toast } from 'sonner';
 

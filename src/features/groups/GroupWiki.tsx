@@ -11,7 +11,7 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel';
 import { LinkGroupDialog } from '@/components/groups/LinkGroupDialog';
-import db from '../../../db';
+import db from '../../../db/db';
 import { Settings, UserCheck, BookOpen, Network } from 'lucide-react';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { BlogSearchCard } from '@/features/search/ui/BlogSearchCard';

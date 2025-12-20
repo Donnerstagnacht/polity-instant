@@ -2,7 +2,7 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Calendar, MapPin, Users, Clock } from 'lucide-react';
-import db from '../../../db';
+import db from '../../../db/db';
 
 interface GroupEventsListProps {
   groupId: string;

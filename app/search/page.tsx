@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollableTabsList } from '@/components/ui/scrollable-tabs';
 import { Badge } from '@/components/ui/badge';
-import db from '../../db';
+import db from '../../db/db';
 import {
   Users,
   FileText,

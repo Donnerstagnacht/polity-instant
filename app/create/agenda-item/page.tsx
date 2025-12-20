@@ -22,7 +22,7 @@ import {
   AmendmentSelectCard,
   PositionSelectCard,
 } from '@/components/ui/entity-select-cards';
-import { db, tx, id } from '@/../db';
+import { db, tx, id } from 'db/db';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { toast } from 'sonner';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';

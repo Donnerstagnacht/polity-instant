@@ -14,7 +14,9 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { ImageUpload } from '@/components/shared/ImageUpload';
 import { Switch } from '@/components/ui/switch';
-import db, { tx } from '../../../../db';
+import db from '../../../../db/db';
+import { useEventData } from '@/features/events/hooks/useEventData';
+import { useEventMutations } from '@/features/events/hooks/useEventMutations';
 
 export default function EventEditPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -37,19 +39,11 @@ export default function EventEditPage({ params }: { params: Promise<{ id: string
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
 
-  // Fetch event data
-  const { data, isLoading } = db.useQuery({
-    events: {
-      $: { where: { id: resolvedParams.id } },
-      participants: {
-        $: { where: { status: 'admin' } },
-        user: {},
-      },
-      organizer: {},
-    },
-  });
-
-  const event = data?.events?.[0];
+  // Fetch event data using hook
+  const { event, isLoading } = useEventData(resolvedParams.id);
+  
+  // Initialize mutations hook
+  const { updateEvent } = useEventMutations(resolvedParams.id);
 
   // Initialize form data when event data loads
   useEffect(() => {
@@ -74,9 +68,9 @@ export default function EventEditPage({ params }: { params: Promise<{ id: string
       });
 
       // Check if current user is an admin or the organizer
-      const adminParticipants = event.participants || [];
+      const adminParticipants = event.participants?.filter((p: any) => p.status === 'admin') || [];
       const userIsAdmin = adminParticipants.some(
-        (p: any) => p.user?.id === authUser?.id && p.status === 'admin'
+        (p: any) => p.user?.id === authUser?.id
       );
       const userIsOrganizer = event.organizer?.id === authUser?.id;
 
@@ -114,7 +108,6 @@ export default function EventEditPage({ params }: { params: Promise<{ id: string
         imageURL: formData.imageURL,
         isPublic: formData.isPublic,
         tags: formData.tags,
-        updatedAt: new Date(),
       };
 
       // Add endDate if provided
@@ -127,17 +120,14 @@ export default function EventEditPage({ params }: { params: Promise<{ id: string
         updateData.capacity = parseInt(formData.capacity, 10);
       }
 
-      // Update the event in Instant DB
-      await db.transact([tx.events[resolvedParams.id].update(updateData)]);
-
-      toast.success('Event updated successfully');
+      // Update the event using hook
+      await updateEvent(updateData);
 
       // Wait a moment for the DB to update, then navigate
       setTimeout(() => {
         router.push(`/event/${resolvedParams.id}`);
       }, 500);
     } catch (error) {
-      toast.error('Failed to update event');
       console.error('Update error:', error);
     } finally {
       setIsSubmitting(false);

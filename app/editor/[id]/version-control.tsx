@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { GitBranch, Clock, User, Plus, History } from 'lucide-react';
-import { db, tx, id } from '../../../db';
+import { db, tx, id } from '../../../db/db';
 import { useToast } from '@/global-state/use-toast';
 
 interface Version {

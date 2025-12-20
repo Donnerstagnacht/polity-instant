@@ -20,7 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/global-state/use-toast';
-import db from '../../../../db';
+import db from '../../../../db/db';
 import { id, tx } from '@instantdb/react';
 import { addHours, startOfDay, addDays, addMonths, isPast, isFuture, format } from 'date-fns';
 import {
