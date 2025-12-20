@@ -31,7 +31,7 @@ const nextConfig = {
 
 export default withPWA({
   dest: 'public',
-  disable: process.env.NODE_ENV === 'development',
+  disable: false, // Enable PWA in development for testing push notifications
   register: true,
   skipWaiting: true,
   sw: 'custom-sw.js', // Use custom service worker

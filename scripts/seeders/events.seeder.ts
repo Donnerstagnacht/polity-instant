@@ -39,6 +39,47 @@ export const eventsSeeder: EntitySeeder = {
       const durationHours = randomInt(1, 6);
       const endDate = new Date(startDate.getTime() + durationHours * 60 * 60 * 1000);
 
+      // Amendment cutoff date (1-30 days before event, or same as event start)
+      const daysBeforeEvent = randomInt(0, 30); // 0 means cutoff = event start
+      const amendmentCutoffDate = new Date(startDate.getTime() - daysBeforeEvent * 24 * 60 * 60 * 1000);
+
+      // Determine event type (add variety)
+      let eventType: string;
+      let delegateAllocationMode: string | undefined;
+      let totalDelegates: number | undefined;
+      let delegateRatio: number | undefined;
+
+      if (i < 2 && hasGroup) {
+        // First 2 events with groups are delegate conferences
+        eventType = 'delegate_conference';
+        // First uses ratio mode, second uses total mode
+        if (i === 0) {
+          delegateAllocationMode = 'ratio';
+          delegateRatio = 50; // 1 delegate per 50 members
+        } else {
+          delegateAllocationMode = 'total';
+          totalDelegates = 10; // Fixed 10 delegates
+        }
+      } else if (i < 4 && hasGroup) {
+        // Next 2 are general assemblies
+        eventType = 'general_assembly';
+      } else if (i < 6) {
+        // Next 2 are open assemblies
+        eventType = 'open_assembly';
+      } else {
+        // Rest are random or 'other'
+        eventType = randomItem(['delegate_conference', 'general_assembly', 'open_assembly', 'other']);
+        // Random delegate conferences get random allocation mode
+        if (eventType === 'delegate_conference' && hasGroup) {
+          delegateAllocationMode = randomItem(['ratio', 'total']);
+          if (delegateAllocationMode === 'ratio') {
+            delegateRatio = randomItem([25, 50, 75, 100]); // Various ratios
+          } else {
+            totalDelegates = randomInt(5, 20);
+          }
+        }
+      }
+
       const eventTx = tx.events[eventId].update({
         title: faker.lorem.words(randomInt(3, 6)),
         description: faker.lorem.paragraph(),
@@ -58,6 +99,13 @@ export const eventsSeeder: EntitySeeder = {
         createdAt: faker.date.past({ years: 0.5 }),
         updatedAt: faker.date.recent({ days: 7 }),
         visibility: randomVisibility(),
+        public_participants: faker.datatype.boolean(0.5), // 50% chance participants are publicly visible
+        amendment_cutoff_date: amendmentCutoffDate,
+        eventType,
+        delegatesFinalized: false,
+        delegateAllocationMode,
+        totalDelegates,
+        delegateRatio,
       });
 
       if (groupId) {

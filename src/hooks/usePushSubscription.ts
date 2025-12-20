@@ -157,41 +157,84 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
       }
 
       console.log('[usePushSubscription] Permission granted, getting service worker...');
-      // Get service worker registration
-      const registration = await navigator.serviceWorker.ready;
-      console.log('[usePushSubscription] Service worker ready');
+      
+      // Check if service worker is registered
+      let swRegistration = await navigator.serviceWorker.getRegistration();
+      console.log('[usePushSubscription] Current SW registration:', swRegistration);
+      
+      if (!swRegistration) {
+        console.log('[usePushSubscription] No SW registration found, attempting to register...');
+        try {
+          swRegistration = await navigator.serviceWorker.register('/custom-sw.js', {
+            scope: '/',
+          });
+          console.log('[usePushSubscription] Service Worker registered successfully:', swRegistration);
+          
+          // Wait for it to become active
+          if (swRegistration.installing) {
+            await new Promise<void>((resolve) => {
+              swRegistration!.installing!.addEventListener('statechange', function(e) {
+                if ((e.target as ServiceWorker).state === 'activated') {
+                  resolve();
+                }
+              });
+            });
+          }
+        } catch (error) {
+          console.error('[usePushSubscription] Failed to register service worker:', error);
+          throw new Error('Service Worker konnte nicht registriert werden. Bitte laden Sie die Seite neu.');
+        }
+      }
+      
+      // Wait for service worker to be ready with timeout
+      console.log('[usePushSubscription] Waiting for service worker to be ready...');
+      const registration = await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise<ServiceWorkerRegistration>((_, reject) => 
+          setTimeout(() => reject(new Error('Service Worker Timeout - bitte Seite neu laden')), 5000)
+        )
+      ]);
+      
+      console.log('[usePushSubscription] Service worker ready:', registration);
 
       // Check if already subscribed
+      console.log('[usePushSubscription] Checking existing subscription...');
       let subscription = await registration.pushManager.getSubscription();
+      console.log('[usePushSubscription] Existing subscription:', subscription);
 
       if (!subscription) {
         // Get VAPID public key from environment
         const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+        console.log('[usePushSubscription] VAPID public key:', vapidPublicKey ? 'configured' : 'MISSING');
 
         if (!vapidPublicKey) {
           throw new Error('VAPID public key not configured');
         }
 
+        console.log('[usePushSubscription] Creating new push subscription...');
         // Subscribe to push notifications
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
         });
 
-        console.log('[usePushSubscription] Created new push subscription');
+        console.log('[usePushSubscription] Created new push subscription:', subscription);
       } else {
         console.log('[usePushSubscription] Using existing push subscription');
       }
 
       // Store subscription in InstantDB
+      console.log('[usePushSubscription] Preparing to save to database...');
       const subscriptionJson = subscription.toJSON();
       const keys = subscriptionJson.keys;
+      console.log('[usePushSubscription] Subscription keys:', keys ? 'present' : 'MISSING');
 
       if (!keys || !keys.auth || !keys.p256dh) {
         throw new Error('Invalid subscription keys');
       }
 
-      await db.transact([
+      console.log('[usePushSubscription] Saving subscription to InstantDB...');
+      const dbResult = await db.transact([
         tx.pushSubscriptions[id()].update({
           endpoint: subscription.endpoint,
           auth: keys.auth,
@@ -202,7 +245,8 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
         }).link({ user: user.id }),
       ]);
 
-      console.log('[usePushSubscription] Subscription saved to database');
+      console.log('[usePushSubscription] Database result:', dbResult);
+      console.log('[usePushSubscription] ===== SUBSCRIPTION SAVED SUCCESSFULLY =====');
 
       setIsSubscribed(true);
       setError(null);

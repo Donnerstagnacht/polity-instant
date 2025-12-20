@@ -16,8 +16,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel';
-import { Calendar, MapPin, Clock, Users } from 'lucide-react';
+import { Calendar, MapPin, Clock, Users, AlertCircle } from 'lucide-react';
 import { useState, useEffect, Suspense } from 'react';
 import { db, tx, id } from '@/../db';
 import { useAuthStore } from '@/features/auth/auth.ts';
@@ -25,6 +26,7 @@ import { toast } from 'sonner';
 import { TypeAheadSelect } from '@/components/ui/type-ahead-select';
 import { GroupSelectCard } from '@/components/ui/entity-select-cards';
 import { useSearchParams } from 'next/navigation';
+import { getDirectSubgroups, calculateDelegateAllocations } from '@/utils/delegate-calculations';
 
 function CreateEventForm() {
   const searchParams = useSearchParams();
@@ -42,6 +44,13 @@ function CreateEventForm() {
     isPublic: true,
     groupId: groupIdParam || '',
     visibility: 'public' as 'public' | 'authenticated' | 'private',
+    publicParticipants: false,
+    amendmentCutoffDate: new Date().toISOString().split('T')[0],
+    amendmentCutoffTime: '23:59',
+    eventType: 'other' as 'delegate_conference' | 'open_assembly' | 'general_assembly' | 'other',
+    delegateAllocationMode: 'ratio' as 'ratio' | 'total',
+    totalDelegates: 10,
+    delegateRatio: 50, // 1 delegate per 50 members
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
@@ -71,6 +80,69 @@ function CreateEventForm() {
 
   const userGroups = groupsData?.groups || [];
 
+  // Query group relationships to check for subgroups (for delegate conference)
+  const { data: relationshipsData } = db.useQuery(
+    formData.groupId
+      ? {
+          groupRelationships: {
+            $: {
+              where: {
+                'parentGroup.id': formData.groupId,
+              },
+            },
+            childGroup: {
+              memberships: {},
+            },
+            parentGroup: {},
+          },
+        }
+      : null
+  );
+
+  // Calculate delegate allocations for preview
+  const subgroups = formData.groupId
+    ? getDirectSubgroups(
+        formData.groupId,
+        (relationshipsData?.groupRelationships || [])
+          .filter((rel: any) => rel.childGroup && rel.parentGroup)
+          .map((rel: any) => ({
+            id: rel.id,
+            childGroup: {
+              id: rel.childGroup.id,
+              name: rel.childGroup.name,
+              memberCount: rel.childGroup.memberships?.filter((m: any) => m.status === 'member').length || 0,
+            },
+            parentGroup: {
+              id: rel.parentGroup.id,
+            },
+          }))
+          // Deduplicate by childGroup.id - a childGroup can have multiple relationships with different rights
+          .reduce((acc: any[], rel: any) => {
+            if (!acc.find(r => r.childGroup.id === rel.childGroup.id)) {
+              acc.push(rel);
+            }
+            return acc;
+          }, [])
+      )
+    : [];
+
+  const hasSubgroups = subgroups.length > 0;
+  const totalMembers = subgroups.reduce((sum, g) => sum + g.memberCount, 0);
+  
+  // Calculate total delegates based on allocation mode
+  const totalDelegates = formData.eventType === 'delegate_conference' && hasSubgroups
+    ? formData.delegateAllocationMode === 'total'
+      ? formData.totalDelegates
+      : Math.max(1, Math.floor(totalMembers / formData.delegateRatio))
+    : 0;
+  
+  const delegateAllocations = formData.eventType === 'delegate_conference' && hasSubgroups
+    ? calculateDelegateAllocations(
+        subgroups.map(g => ({ id: g.id, memberCount: g.memberCount })),
+        totalDelegates
+      )
+    : [];
+
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setIsSubmitting(true);
@@ -95,6 +167,7 @@ function CreateEventForm() {
 
       const startDateTime = new Date(`${formData.startDate}T${formData.startTime}`);
       const endDateTime = new Date(`${formData.endDate}T${formData.endTime}`);
+      const amendmentCutoffDateTime = new Date(`${formData.amendmentCutoffDate}T${formData.amendmentCutoffTime}`);
 
       await db.transact([
         // Create the event
@@ -109,6 +182,13 @@ function CreateEventForm() {
           createdAt: new Date(),
           updatedAt: new Date(),
           visibility: formData.visibility,
+          public_participants: formData.publicParticipants,
+          amendment_cutoff_date: amendmentCutoffDateTime,
+          eventType: formData.eventType,
+          delegatesFinalized: false,
+          delegateAllocationMode: formData.eventType === 'delegate_conference' ? formData.delegateAllocationMode : undefined,
+          totalDelegates: formData.eventType === 'delegate_conference' && formData.delegateAllocationMode === 'total' ? formData.totalDelegates : undefined,
+          delegateRatio: formData.eventType === 'delegate_conference' && formData.delegateAllocationMode === 'ratio' ? formData.delegateRatio : undefined,
         }),
         tx.events[eventId].link({ organizer: user.id, group: formData.groupId }),
 
@@ -215,6 +295,205 @@ function CreateEventForm() {
                     </div>
                   </CarouselItem>
 
+                  {/* Step 3: Event Type */}
+                  <CarouselItem>
+                    <div className="space-y-4 p-4">
+                      <div className="space-y-2">
+                        <Label>Event Type</Label>
+                        <RadioGroup
+                          value={formData.eventType}
+                          onValueChange={(value: typeof formData.eventType) =>
+                            setFormData({ ...formData, eventType: value })
+                          }
+                        >
+                          <div className="flex items-start space-x-2 rounded-lg border p-3">
+                            <RadioGroupItem value="delegate_conference" id="delegate-conference" />
+                            <div className="flex-1 space-y-1">
+                              <Label htmlFor="delegate-conference" className="cursor-pointer font-semibold">
+                                Delegate Conference
+                              </Label>
+                              <p className="text-sm text-muted-foreground">
+                                Subgroups send proportional delegates based on member counts
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-start space-x-2 rounded-lg border p-3">
+                            <RadioGroupItem value="general_assembly" id="general-assembly" />
+                            <div className="flex-1 space-y-1">
+                              <Label htmlFor="general-assembly" className="cursor-pointer font-semibold">
+                                General Assembly
+                              </Label>
+                              <p className="text-sm text-muted-foreground">
+                                All members of the associated group can participate
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-start space-x-2 rounded-lg border p-3">
+                            <RadioGroupItem value="open_assembly" id="open-assembly" />
+                            <div className="flex-1 space-y-1">
+                              <Label htmlFor="open-assembly" className="cursor-pointer font-semibold">
+                                Open Assembly
+                              </Label>
+                              <p className="text-sm text-muted-foreground">
+                                Anyone can register to participate
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-start space-x-2 rounded-lg border p-3">
+                            <RadioGroupItem value="other" id="other" />
+                            <div className="flex-1 space-y-1">
+                              <Label htmlFor="other" className="cursor-pointer font-semibold">
+                                Other
+                              </Label>
+                              <p className="text-sm text-muted-foreground">
+                                Standard event with custom participation rules
+                              </p>
+                            </div>
+                          </div>
+                        </RadioGroup>
+                      </div>
+
+                      {/* Delegate Allocation Settings */}
+                      {formData.eventType === 'delegate_conference' && (
+                        <div className="space-y-3 rounded-lg border p-3 bg-muted/50">
+                          <Label className="text-sm font-semibold">Delegate Allocation</Label>
+                          
+                          <RadioGroup
+                            value={formData.delegateAllocationMode}
+                            onValueChange={(value: 'ratio' | 'total') =>
+                              setFormData({ ...formData, delegateAllocationMode: value })
+                            }
+                          >
+                            <div className="flex items-start space-x-2">
+                              <RadioGroupItem value="ratio" id="mode-ratio" />
+                              <div className="flex-1 space-y-2">
+                                <Label htmlFor="mode-ratio" className="cursor-pointer font-medium">
+                                  Members per Delegate
+                                </Label>
+                                <p className="text-xs text-muted-foreground">
+                                  Proportional allocation based on member counts
+                                </p>
+                                {formData.delegateAllocationMode === 'ratio' && (
+                                  <div className="flex items-center gap-2 mt-2">
+                                    <Label htmlFor="delegate-ratio" className="text-xs whitespace-nowrap">
+                                      1 delegate per
+                                    </Label>
+                                    <Input
+                                      id="delegate-ratio"
+                                      type="number"
+                                      min="1"
+                                      max="1000"
+                                      value={formData.delegateRatio}
+                                      onChange={e =>
+                                        setFormData({
+                                          ...formData,
+                                          delegateRatio: parseInt(e.target.value) || 50,
+                                        })
+                                      }
+                                      className="w-20"
+                                    />
+                                    <span className="text-xs text-muted-foreground">members</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex items-start space-x-2">
+                              <RadioGroupItem value="total" id="mode-total" />
+                              <div className="flex-1 space-y-2">
+                                <Label htmlFor="mode-total" className="cursor-pointer font-medium">
+                                  Fixed Total
+                                </Label>
+                                <p className="text-xs text-muted-foreground">
+                                  Set a fixed number of total delegates
+                                </p>
+                                {formData.delegateAllocationMode === 'total' && (
+                                  <div className="flex items-center gap-2 mt-2">
+                                    <Label htmlFor="total-delegates" className="text-xs">
+                                      Total delegates:
+                                    </Label>
+                                    <Input
+                                      id="total-delegates"
+                                      type="number"
+                                      min="1"
+                                      max="1000"
+                                      value={formData.totalDelegates}
+                                      onChange={e =>
+                                        setFormData({
+                                          ...formData,
+                                          totalDelegates: parseInt(e.target.value) || 10,
+                                        })
+                                      }
+                                      className="w-20"
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </RadioGroup>
+                        </div>
+                      )}
+
+                      {/* Delegate Conference Preview */}
+                      {formData.eventType === 'delegate_conference' && formData.groupId && (
+                        <div className="mt-4 space-y-3">
+                          {!hasSubgroups ? (
+                            <div className="flex items-start gap-2 rounded-lg border border-yellow-500/50 bg-yellow-50 p-3 dark:bg-yellow-900/20">
+                              <AlertCircle className="mt-0.5 h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                              <div className="space-y-1">
+                                <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                                  No subgroups found
+                                </p>
+                                <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                                  The selected group has no subgroups. Delegate conferences require
+                                  subgroups to allocate delegates.
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-sm font-semibold">Delegate Allocation Preview</Label>
+                                <Badge variant="outline">
+                                  {totalDelegates} total delegates
+                                </Badge>
+                              </div>
+                              <div className="space-y-2 rounded-lg border p-3">
+                                {subgroups.map(subgroup => {
+                                  const allocation = delegateAllocations.find(
+                                    a => a.groupId === subgroup.id
+                                  );
+                                  return (
+                                    <div
+                                      key={subgroup.id}
+                                      className="flex items-center justify-between text-sm"
+                                    >
+                                      <div>
+                                        <span className="font-medium">{subgroup.name}</span>
+                                        <span className="ml-2 text-muted-foreground">
+                                          ({subgroup.memberCount} members)
+                                        </span>
+                                      </div>
+                                      <Badge variant="secondary">
+                                        {allocation?.allocatedDelegates || 0} delegates
+                                      </Badge>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                {formData.delegateAllocationMode === 'ratio'
+                                  ? `Based on 1 delegate per ${formData.delegateRatio} members. `
+                                  : `Fixed total of ${formData.totalDelegates} delegates distributed proportionally. `}
+                                Subgroups can nominate more candidates than allocated. Final allocation happens at event start.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </CarouselItem>
+
                   {/* Step 3: Date & Time */}
                   <CarouselItem>
                     <div className="space-y-4 p-4">
@@ -265,7 +544,7 @@ function CreateEventForm() {
                     </div>
                   </CarouselItem>
 
-                  {/* Step 4: Settings */}
+                  {/* Step 5: Settings */}
                   <CarouselItem>
                     <div className="space-y-4 p-4">
                       <div className="space-y-2">
@@ -282,6 +561,29 @@ function CreateEventForm() {
                           required
                         />
                       </div>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="cutoff-date">Amendment Cutoff Date</Label>
+                          <Input
+                            id="cutoff-date"
+                            type="date"
+                            value={formData.amendmentCutoffDate}
+                            onChange={e => setFormData({ ...formData, amendmentCutoffDate: e.target.value })}
+                            max={formData.startDate}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="cutoff-time">Cutoff Time</Label>
+                          <Input
+                            id="cutoff-time"
+                            type="time"
+                            value={formData.amendmentCutoffTime}
+                            onChange={e => setFormData({ ...formData, amendmentCutoffTime: e.target.value })}
+                            required
+                          />
+                        </div>
+                      </div>
                       <div className="flex items-center space-x-2">
                         <Switch
                           id="event-public"
@@ -294,17 +596,32 @@ function CreateEventForm() {
                           Make this event public
                         </Label>
                       </div>
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="public-participants"
+                          checked={formData.publicParticipants}
+                          onCheckedChange={checked =>
+                            setFormData({ ...formData, publicParticipants: checked })
+                          }
+                        />
+                        <Label htmlFor="public-participants" className="cursor-pointer">
+                          Make participant list public
+                        </Label>
+                      </div>
                     </div>
                   </CarouselItem>
 
-                  {/* Step 5: Review */}
+                  {/* Step 6: Review */}
                   <CarouselItem>
                     <div className="p-4">
                       <Card className="overflow-hidden border-2 bg-gradient-to-br from-green-100 to-blue-100 dark:from-green-900/40 dark:to-blue-900/50">
                         <CardHeader>
                           <div className="mb-2 flex items-center justify-between">
                             <Badge variant="default" className="text-xs">
-                              Event
+                              {formData.eventType === 'delegate_conference' && 'Delegate Conference'}
+                              {formData.eventType === 'general_assembly' && 'General Assembly'}
+                              {formData.eventType === 'open_assembly' && 'Open Assembly'}
+                              {formData.eventType === 'other' && 'Event'}
                             </Badge>
                             {formData.isPublic && (
                               <Badge variant="outline" className="text-xs">
@@ -344,6 +661,17 @@ function CreateEventForm() {
                             <Users className="h-4 w-4" />
                             <span>Max {formData.capacity} participants</span>
                           </div>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Calendar className="h-4 w-4" />
+                            <span>
+                              Amendment deadline: {formData.amendmentCutoffDate} at {formData.amendmentCutoffTime}
+                            </span>
+                          </div>
+                          {formData.publicParticipants && (
+                            <Badge variant="outline" className="text-xs">
+                              Public Participant List
+                            </Badge>
+                          )}
                           {formData.groupId && (
                             <p className="text-xs text-muted-foreground">
                               Organized by{' '}
@@ -358,7 +686,7 @@ function CreateEventForm() {
                 </CarouselContent>
               </Carousel>
               <div className="mt-4 flex justify-center gap-2">
-                {[0, 1, 2, 3, 4].map(index => (
+                {[0, 1, 2, 3, 4, 5].map(index => (
                   <button
                     key={index}
                     type="button"
@@ -380,7 +708,7 @@ function CreateEventForm() {
               >
                 Previous
               </Button>
-              {currentStep < 4 ? (
+              {currentStep < 5 ? (
                 <Button
                   type="button"
                   onClick={() => carouselApi?.scrollNext()}

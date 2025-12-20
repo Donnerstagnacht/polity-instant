@@ -9,6 +9,34 @@ export function useEventParticipation(eventId: string) {
   const { user } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
 
+  // Query event details including type and group
+  const { data: eventData } = db.useQuery({
+    events: {
+      $: { where: { id: eventId } },
+      group: {
+        memberships: {
+          user: {},
+        },
+      },
+      delegates: {
+        user: {},
+      },
+    },
+  });
+
+  const event = eventData?.events?.[0];
+  const eventType = event?.eventType;
+
+  // Check if user is a member of the event's group
+  const isGroupMember = event?.group?.memberships?.some(
+    (m: any) => m.user?.id === user?.id && (m.status === 'member' || m.status === 'admin')
+  );
+
+  // Check if user is a confirmed delegate
+  const isConfirmedDelegate = event?.delegates?.some(
+    (d: any) => d.user?.id === user?.id && d.status === 'confirmed'
+  );
+
   // Query current user's participation status
   const { data, isLoading: queryLoading } = db.useQuery(
     user?.id
@@ -60,6 +88,20 @@ export function useEventParticipation(eventId: string) {
       console.error('Invalid eventId:', eventId);
       return;
     }
+
+    // Check participation eligibility based on event type
+    if (eventType === 'delegate_conference') {
+      if (!isConfirmedDelegate) {
+        toast.error('Only confirmed delegates can participate in this delegate conference');
+        return;
+      }
+    } else if (eventType === 'general_assembly') {
+      if (!isGroupMember) {
+        toast.error('Only members of the associated group can participate in this general assembly');
+        return;
+      }
+    }
+    // For 'open_assembly' and 'other', anyone can request participation
 
     setIsLoading(true);
     try {
@@ -134,5 +176,13 @@ export function useEventParticipation(eventId: string) {
     requestParticipation,
     leaveEvent,
     acceptInvitation,
+    eventType,
+    isGroupMember,
+    isConfirmedDelegate,
+    canParticipate:
+      eventType === 'open_assembly' ||
+      eventType === 'other' ||
+      (eventType === 'delegate_conference' && isConfirmedDelegate) ||
+      (eventType === 'general_assembly' && isGroupMember),
   };
 }

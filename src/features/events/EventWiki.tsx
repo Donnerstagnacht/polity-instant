@@ -3,7 +3,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import db, { id, tx } from '../../../db';
-import { Settings, Trophy, UserCheck } from 'lucide-react';
+import { Settings, Trophy, UserCheck, Users, Calendar } from 'lucide-react';
 import { useState } from 'react';
 import {
   Dialog,
@@ -23,6 +23,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { GRADIENTS } from '@/features/user/state/gradientColors';
 import { toast } from 'sonner';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
@@ -36,6 +37,7 @@ import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useTranslation } from '@/hooks/use-translation';
 import { ShareButton } from '@/components/shared/ShareButton';
+import { DelegatesOverview } from './components/DelegatesOverview';
 import {
   Carousel,
   CarouselContent,
@@ -55,6 +57,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [selectedElection, setSelectedElection] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [participantsDialogOpen, setParticipantsDialogOpen] = useState(false);
 
   // Subscribe hook
   const {
@@ -92,6 +95,9 @@ export function EventWiki({ eventId }: EventWikiProps) {
           user: {},
         },
         election: {},
+      },
+      participants: {
+        user: {},
       },
     },
     agendaItems: {
@@ -340,6 +346,50 @@ export function EventWiki({ eventId }: EventWikiProps) {
         />
       )}
 
+      {/* Cut off Dates Card */}
+      {event.amendment_cutoff_date && (
+        <Card className={`mb-6 overflow-hidden ${GRADIENTS[0]}`}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Cut off Dates / Fristen
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between rounded-lg border bg-background/80 p-4 shadow-sm backdrop-blur-sm">
+              <span className="font-medium">Antragsfrist:</span>
+              <span className="text-lg font-semibold">
+                {new Date(event.amendment_cutoff_date).toLocaleString('de-DE', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                })}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Public Participants Card */}
+      {event.public_participants && (
+        <Card
+          className={`mb-6 cursor-pointer overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${GRADIENTS[1]}`}
+          onClick={() => setParticipantsDialogOpen(true)}
+        >
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Participants
+            </CardTitle>
+            <CardDescription>
+              {event.participants?.length || 0} participant(s) - Click to view list
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      )}
+
       {/* Event Positions Carousel */}
       {event.eventPositions && event.eventPositions.length > 0 && (
         <Card className="mb-6">
@@ -398,7 +448,8 @@ export function EventWiki({ eventId }: EventWikiProps) {
                                 {holders.map((holder: any) => (
                                   <div
                                     key={holder.id}
-                                    className="rounded-lg border bg-background/80 p-3 shadow-sm backdrop-blur-sm"
+                                    className="cursor-pointer rounded-lg border bg-background/80 p-3 shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
+                                    onClick={() => router.push(`/user/${holder.user?.id}`)}
                                   >
                                     <div className="flex items-center gap-3">
                                       <Avatar className="h-10 w-10 ring-2 ring-background">
@@ -577,6 +628,119 @@ export function EventWiki({ eventId }: EventWikiProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Participants Dialog */}
+      <Dialog open={participantsDialogOpen} onOpenChange={setParticipantsDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Event Participants</DialogTitle>
+            <DialogDescription>
+              {event.participants?.length || 0} participant(s) registered for this event
+            </DialogDescription>
+          </DialogHeader>
+          
+          {event.eventType === 'delegate_conference' ? (
+            <Tabs defaultValue="participants" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="participants">Participants</TabsTrigger>
+                <TabsTrigger value="delegates">Delegates by Subgroup</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="participants" className="space-y-4">
+                <div className="grid gap-4 py-4 sm:grid-cols-2">
+                  {event.participants && event.participants.length > 0 ? (
+                    event.participants.map((participant: any) => (
+                      <Card
+                        key={participant.id}
+                        className="cursor-pointer transition-all duration-300 hover:shadow-lg"
+                        onClick={() => router.push(`/user/${participant.user?.id}`)}
+                      >
+                        <CardContent className="flex items-center gap-4 p-4">
+                          <Avatar className="h-12 w-12">
+                            <AvatarImage
+                              src={participant.user?.avatar}
+                              alt={participant.user?.name || 'User'}
+                            />
+                            <AvatarFallback>
+                              {participant.user?.name?.[0]?.toUpperCase() || '?'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 space-y-1">
+                            <p className="font-semibold leading-none">
+                              {participant.user?.name || 'Unknown'}
+                            </p>
+                            {participant.user?.handle && (
+                              <p className="text-sm text-muted-foreground">
+                                @{participant.user.handle}
+                              </p>
+                            )}
+                            {participant.status && (
+                              <Badge variant="secondary" className="text-xs">
+                                {participant.status}
+                              </Badge>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  ) : (
+                    <div className="col-span-2 py-8 text-center text-muted-foreground">
+                      No participants yet
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="delegates" className="space-y-4">
+                <DelegatesOverview eventId={event.id} groupId={event.group?.id} />
+              </TabsContent>
+            </Tabs>
+          ) : (
+            <div className="grid gap-4 py-4 sm:grid-cols-2">
+              {event.participants && event.participants.length > 0 ? (
+                event.participants.map((participant: any) => (
+                  <Card
+                    key={participant.id}
+                    className="cursor-pointer transition-all duration-300 hover:shadow-lg"
+                    onClick={() => router.push(`/user/${participant.user?.id}`)}
+                  >
+                    <CardContent className="flex items-center gap-4 p-4">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage
+                          src={participant.user?.avatar}
+                          alt={participant.user?.name || 'User'}
+                        />
+                        <AvatarFallback>
+                          {participant.user?.name?.[0]?.toUpperCase() || '?'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 space-y-1">
+                        <p className="font-semibold leading-none">
+                          {participant.user?.name || 'Unknown'}
+                        </p>
+                        {participant.user?.handle && (
+                          <p className="text-sm text-muted-foreground">
+                            @{participant.user.handle}
+                          </p>
+                        )}
+                        {participant.status && (
+                          <Badge variant="secondary" className="text-xs">
+                            {participant.status}
+                          </Badge>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <div className="col-span-2 py-8 text-center text-muted-foreground">
+                  No participants yet
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

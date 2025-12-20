@@ -19,6 +19,7 @@ import { usersSeeder } from './seeders/users.seeder';
 import { groupsSeeder } from './seeders/groups.seeder';
 import { groupRelationshipsSeeder } from './seeders/groupRelationships.seeder';
 import { eventsSeeder } from './seeders/events.seeder';
+import { delegatesSeeder } from './seeders/delegates.seeder';
 import { followsSeeder } from './seeders/follows.seeder';
 import { positionsSeeder } from './seeders/positions.seeder';
 import { eventPositionsSeeder } from './seeders/eventPositions.seeder';
@@ -93,6 +94,7 @@ async function main() {
     invitationsSeeder,
     conversationsSeeder,
     eventsSeeder,
+    delegatesSeeder,
     eventPositionsSeeder,
     rbacSeeder,
     agendaAndVotingSeeder,

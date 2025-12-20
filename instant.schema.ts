@@ -208,6 +208,25 @@ const _schema = i.schema({
       title: i.string().indexed(),
       updatedAt: i.date().indexed(),
       visibility: i.string().indexed().optional(), // 'public', 'authenticated', 'private'
+      public_participants: i.boolean().indexed().optional(), // Whether participants list is publicly visible
+      amendment_cutoff_date: i.date().indexed().optional(), // Deadline for submitting amendments
+      eventType: i.string().indexed().optional(), // 'delegate_conference', 'open_assembly', 'general_assembly', 'other'
+      delegatesFinalized: i.boolean().indexed().optional(), // Whether delegates have been finalized for delegate conferences
+      delegateAllocationMode: i.string().indexed().optional(), // 'total' (fixed number) or 'ratio' (per X members)
+      totalDelegates: i.number().indexed().optional(), // Total number of delegates when mode is 'total'
+      delegateRatio: i.number().indexed().optional(), // Number of members per delegate when mode is 'ratio' (default: 50)
+    }),
+    eventDelegates: i.entity({
+      createdAt: i.date().indexed(),
+      updatedAt: i.date().indexed(),
+      priority: i.number().indexed(), // Order in the nomination list (1 = first, 2 = second, etc.)
+      status: i.string().indexed(), // 'nominated', 'confirmed', 'standby'
+    }),
+    groupDelegateAllocations: i.entity({
+      createdAt: i.date().indexed(),
+      updatedAt: i.date().indexed(),
+      allocatedDelegates: i.number().indexed(), // Current number of delegates allocated to this group
+      memberCount: i.number().indexed(), // Snapshot of member count at calculation time
     }),
     follows: i.entity({
       createdAt: i.date().indexed(),
@@ -224,6 +243,8 @@ const _schema = i.schema({
       name: i.string(),
       description: i.string().optional(),
       scope: i.string().indexed(), // 'group', 'event', 'amendment', or 'blog'
+      createdAt: i.date().indexed().optional(),
+      updatedAt: i.date().indexed().optional(),
     }),
     actionRights: i.entity({
       resource: i.string().indexed(),
@@ -1024,6 +1045,66 @@ const _schema = i.schema({
         on: '$users',
         has: 'many',
         label: 'organizedEvents',
+      },
+    },
+    eventDelegatesEvent: {
+      forward: {
+        on: 'eventDelegates',
+        has: 'one',
+        label: 'event',
+      },
+      reverse: {
+        on: 'events',
+        has: 'many',
+        label: 'delegates',
+      },
+    },
+    eventDelegatesUser: {
+      forward: {
+        on: 'eventDelegates',
+        has: 'one',
+        label: 'user',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'delegateAssignments',
+      },
+    },
+    eventDelegatesGroup: {
+      forward: {
+        on: 'eventDelegates',
+        has: 'one',
+        label: 'group',
+      },
+      reverse: {
+        on: 'groups',
+        has: 'many',
+        label: 'delegateAssignments',
+      },
+    },
+    groupDelegateAllocationsEvent: {
+      forward: {
+        on: 'groupDelegateAllocations',
+        has: 'one',
+        label: 'event',
+      },
+      reverse: {
+        on: 'events',
+        has: 'many',
+        label: 'delegateAllocations',
+      },
+    },
+    groupDelegateAllocationsGroup: {
+      forward: {
+        on: 'groupDelegateAllocations',
+        has: 'one',
+        label: 'group',
+      },
+      reverse: {
+        on: 'groups',
+        has: 'many',
+        label: 'delegateAllocations',
       },
     },
     followsFollowee: {
