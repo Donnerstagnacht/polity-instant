@@ -6,6 +6,7 @@ import { PermissionGuard } from '@/features/auth';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { EntityNotifications } from '@/components/notifications/EntityNotifications';
 import { useAmendmentData } from '@/features/amendments/hooks/useAmendmentData';
+import type { Amendment } from '@db/rbac/types';
 
 export default function AmendmentNotificationsPage({
   params,
@@ -17,7 +18,11 @@ export default function AmendmentNotificationsPage({
 
   return (
     <AuthGuard requireAuth={true}>
-      <PermissionGuard action="manage" resource="amendments" context={{ amendment }}>
+      <PermissionGuard
+        action="manage"
+        resource="amendments"
+        context={{ amendment: amendment as Amendment | undefined }}
+      >
         <PageWrapper className="container mx-auto max-w-4xl p-8">
           <EntityNotifications
             entityId={resolvedParams.id}
