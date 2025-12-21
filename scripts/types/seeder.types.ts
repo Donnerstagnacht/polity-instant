@@ -37,6 +37,7 @@ export interface SeedContext {
   invitationIds?: string[];
   requestIds?: string[];
   roleIds?: string[];
+  blogRoleIds?: string[];
   actionRightIds?: string[];
   bloggerIds?: string[];
   meetingSlotIds?: string[];
