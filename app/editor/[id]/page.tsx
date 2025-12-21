@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { db, tx } from '../../../db/db';
 import { Loader2, Users, Eye, ArrowLeft } from 'lucide-react';
-import { useToast } from '@/global-state/use-toast';
+import { toast } from 'sonner';
 import { InviteCollaboratorDialog } from './invite-collaborator-dialog';
 import { VersionControl } from './version-control';
 import { createDocumentVersion } from './version-utils';
@@ -29,7 +29,6 @@ export default function DocumentEditorPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = db.useAuth();
-  const { toast } = useToast();
   const documentId = params.id as string;
 
   // State
@@ -281,17 +280,10 @@ export default function DocumentEditorPage() {
         lastSaveTime.current = now;
         lastRemoteUpdate.current = now;
 
-        toast({
-          title: 'Success',
-          description: 'Version restored successfully',
-        });
+        toast.success('Version restored successfully');
       } catch (error) {
         console.error('Failed to restore version:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to restore version',
-          variant: 'destructive',
-        });
+        toast.error('Failed to restore version');
       }
     },
     [documentId, user, toast]
@@ -367,11 +359,7 @@ export default function DocumentEditorPage() {
           ]);
         } catch (error) {
           console.error('Failed to save title:', error);
-          toast({
-            title: 'Error',
-            description: 'Failed to save title',
-            variant: 'destructive',
-          });
+          toast.error('Failed to save title');
         } finally {
           setIsSavingTitle(false);
         }
@@ -419,11 +407,7 @@ export default function DocumentEditorPage() {
         ]);
       } catch (error) {
         console.error('❌ Discussions save failed:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to save comments',
-          variant: 'destructive',
-        });
+        toast.error('Failed to save comments');
       }
     },
     [documentId, user, discussions]

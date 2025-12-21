@@ -19,7 +19,7 @@ import {
   Copy,
   Send,
 } from 'lucide-react';
-import { useToast } from '@/global-state/use-toast';
+import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { ConversationSelectorDialog } from './ConversationSelectorDialog';
 
@@ -40,7 +40,6 @@ export function ShareButton({
   size = 'default',
   className = '',
 }: ShareButtonProps) {
-  const { toast } = useToast();
   const [copied, setCopied] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [conversationDialogOpen, setConversationDialogOpen] = useState(false);
@@ -53,17 +52,10 @@ export function ShareButton({
     try {
       await navigator.clipboard.writeText(fullUrl);
       setCopied(true);
-      toast({
-        title: 'Link copied!',
-        description: 'The link has been copied to your clipboard.',
-      });
+      toast.success('The link has been copied to your clipboard.');
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast({
-        title: 'Failed to copy',
-        description: 'Could not copy the link to your clipboard.',
-        variant: 'destructive',
-      });
+      toast.error('Could not copy the link to your clipboard.');
     }
   };
 
@@ -76,10 +68,7 @@ export function ShareButton({
 
   const handleShare = (platform: keyof typeof shareLinks) => {
     if (platform === 'instagram') {
-      toast({
-        title: 'Instagram',
-        description: 'Please share manually on Instagram.',
-      });
+      toast.info('Please share manually on Instagram.');
       return;
     }
     window.open(shareLinks[platform], '_blank', 'noopener,noreferrer,width=600,height=400');

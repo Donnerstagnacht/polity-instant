@@ -13,7 +13,6 @@ import type { EntitySeeder, SeedContext } from '../types/seeder.types';
 import { randomInt, randomItem, randomItems, randomVisibility } from '../helpers/random.helpers';
 import {
   DEFAULT_EVENT_ROLES,
-  DEFAULT_AMENDMENT_ROLES,
   DEFAULT_BLOG_ROLES,
 } from '../../db/rbac/constants';
 
@@ -25,8 +24,8 @@ export const rbacSeeder: EntitySeeder = {
     const { db } = context;
     const userIds = context.userIds || [];
     const eventIds = context.eventIds || [];
-    const amendmentIds = context.amendmentIds || [];
     const blogIds = context.blogIds || [];
+    const eventOrganizers = context.eventOrganizers || new Map<string, string>();
 
     console.log('Seeding RBAC entities (roles, actionRights, participants, bloggers)...');
     const transactions = [];
@@ -53,6 +52,7 @@ export const rbacSeeder: EntitySeeder = {
     const roleIds: string[] = [];
     const actionRightIds: string[] = [];
     const bloggerIds: string[] = [];
+    const eventRoleMappings = new Map<string, { organizerId: string; participantId: string }>();
 
     // 1. Create event-level roles and participants
     for (const eventId of eventIds) {
@@ -102,23 +102,68 @@ export const rbacSeeder: EntitySeeder = {
 
       const organizerRoleId = eventRoleIds['Organizer'];
       const participantRoleId = eventRoleIds['Participant'];
+      
+      // Store role mappings for use by other seeders
+      eventRoleMappings.set(eventId, {
+        organizerId: organizerRoleId,
+        participantId: participantRoleId,
+      });
+      
+      // Ensure event organizer is a participant with Organizer role
+      const eventOrganizerId = eventOrganizers.get(eventId);
+      const usersWithRoles = new Set<string>();
+      
+      if (eventOrganizerId) {
+        const organizerParticipantId = id();
+        transactions.push(
+          tx.eventParticipants[organizerParticipantId]
+            .update({
+              status: 'member',
+              createdAt: faker.date.past({ years: 0.3 }),
+              visibility: randomVisibility(),
+            })
+            .link({
+              event: eventId,
+              user: eventOrganizerId,
+              role: organizerRoleId,
+            })
+        );
+        totalParticipants++;
+        eventParticipantsToEvents++;
+        eventParticipantsToUsers++;
+        eventParticipantsToRoles++;
+        usersWithRoles.add(eventOrganizerId);
+      }
 
       for (let i = 0; i < participantUsers.length; i++) {
         const userId = participantUsers[i];
+        
+        // Skip if user is already the event organizer
+        if (usersWithRoles.has(userId)) {
+          continue;
+        }
+        
         const participantId = id();
 
-        // Assign roles: first is Organizer, rest are Participants
+        // Assign roles: first 1-2 users are co-organizers, rest are participants
         let roleId;
-        if (i === 0) {
-          roleId = organizerRoleId;
+        if (i < randomInt(1, 3)) {
+          roleId = organizerRoleId; // 1-2 co-organizers
         } else {
           roleId = participantRoleId;
         }
+        
+        // Organizers always have 'member' status, participants can be member/invited/requested
+        const status = roleId === organizerRoleId
+          ? ('member' as const)
+          : randomItem(['member', 'member', 'member', 'invited', 'requested'] as const);
 
         transactions.push(
-          tx.participants[participantId]
+          tx.eventParticipants[participantId]
             .update({
-              status: randomItem(['accepted', 'accepted', 'accepted', 'pending', 'invited']),
+              status,
+              createdAt: faker.date.past({ years: 0.3 }),
+              visibility: randomVisibility(),
             })
             .link({
               event: eventId,
@@ -133,48 +178,7 @@ export const rbacSeeder: EntitySeeder = {
       }
     }
 
-    // 2. Create amendment-level roles
-    for (const amendmentId of amendmentIds) {
-      const amendmentRoleIds: Record<string, string> = {};
-
-      // Create amendment-level roles from constants
-      for (const roleDef of DEFAULT_AMENDMENT_ROLES) {
-        const roleId = id();
-        roleIds.push(roleId);
-        amendmentRoleIds[roleDef.name] = roleId;
-
-        transactions.push(
-          tx.roles[roleId]
-            .update({
-              name: roleDef.name,
-              description: roleDef.description,
-              scope: 'amendment',
-              createdAt: faker.date.past({ years: 0.5 }),
-              updatedAt: new Date(),
-            })
-            .link({ amendment: amendmentId })
-        );
-        totalRoles++;
-        rolesToAmendments++;
-
-        // Create action rights for this role
-        for (const perm of roleDef.permissions) {
-          const actionRightId = id();
-          actionRightIds.push(actionRightId);
-          transactions.push(
-            tx.actionRights[actionRightId]
-              .update({
-                resource: perm.resource,
-                action: perm.action,
-              })
-              .link({ roles: [roleId], amendment: amendmentId })
-          );
-          totalActionRights++;
-          actionRightsToRoles++;
-          actionRightsToAmendments++;
-        }
-      }
-    }
+    // 2. Create amendment-level roles - REMOVED (Moved to amendments.seeder.ts)
 
     // 3. Create blog-level roles and bloggers
     for (const blogId of blogIds) {
@@ -267,12 +271,11 @@ export const rbacSeeder: EntitySeeder = {
       }
     }
 
-    console.log(`✓ Created ${totalRoles} roles (event-level, amendment-level, and blog-level)`);
+    console.log(`✓ Created ${totalRoles} roles (event-level and blog-level)`);
     console.log(`✓ Created ${totalActionRights} action rights with RBAC permissions`);
     console.log(`✓ Created ${totalParticipants} event participants with role assignments`);
     console.log(`✓ Created ${totalBloggers} blog bloggers with role assignments`);
     console.log(`  - Each event has 2 roles: Organizer, Participant`);
-    console.log(`  - Each amendment has 2 roles: Author, Collaborator`);
     console.log(`  - Each blog has 2 roles: Owner, Writer`);
 
     return {
@@ -280,6 +283,7 @@ export const rbacSeeder: EntitySeeder = {
       roleIds,
       actionRightIds,
       bloggerIds,
+      eventRoleMappings,
       linkCounts: {
         ...(context.linkCounts || {}),
         rolesToEvents,

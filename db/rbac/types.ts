@@ -96,12 +96,20 @@ export interface AmendmentCollaborator {
   status?: string;
 }
 
+export interface AmendmentRoleCollaborator {
+  id: string;
+  user?: { id: string };
+  role?: Role;
+}
+
 export interface Amendment {
   id: string;
   user?: { id: string }; // Author
+  owner?: { id: string }; // Owner relation from schema
   group?: { id: string };
   status?: string;
   collaborators?: AmendmentCollaborator[];
+  amendmentRoleCollaborators?: AmendmentRoleCollaborator[];
   roles?: Role[];
 }
 

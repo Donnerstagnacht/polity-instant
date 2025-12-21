@@ -14,11 +14,10 @@ export const eventsSeeder: EntitySeeder = {
     console.log('Seeding events...');
     const { db, userIds, groupIds } = context;
     const eventIds: string[] = [];
+    const eventOrganizers = new Map<string, string>();
     const transactions = [];
     let eventsToOrganizers = 0;
     let eventsToGroups = 0;
-    let participantsToEvents = 0;
-    let participantsToUsers = 0;
 
     const now = new Date();
 
@@ -30,8 +29,8 @@ export const eventsSeeder: EntitySeeder = {
       eventIds.push(eventId);
 
       const organizerId = randomItem(userIds);
-      const hasGroup = Math.random() > 0.5;
-      const groupId = hasGroup ? randomItem(groupIds) : null;
+      eventOrganizers.set(eventId, organizerId); // Track organizer for RBAC seeder
+      const groupId = randomItem(groupIds); // Always assign a group
 
       // Random date in the future (0-90 days)
       const daysInFuture = randomInt(0, 90);
@@ -49,8 +48,8 @@ export const eventsSeeder: EntitySeeder = {
       let totalDelegates: number | undefined;
       let delegateRatio: number | undefined;
 
-      if (i < 2 && hasGroup) {
-        // First 2 events with groups are delegate conferences
+      if (i < 2) {
+        // First 2 events are delegate conferences (all events have groups now)
         eventType = 'delegate_conference';
         // First uses ratio mode, second uses total mode
         if (i === 0) {
@@ -60,7 +59,7 @@ export const eventsSeeder: EntitySeeder = {
           delegateAllocationMode = 'total';
           totalDelegates = 10; // Fixed 10 delegates
         }
-      } else if (i < 4 && hasGroup) {
+      } else if (i < 4) {
         // Next 2 are general assemblies
         eventType = 'general_assembly';
       } else if (i < 6) {
@@ -70,7 +69,7 @@ export const eventsSeeder: EntitySeeder = {
         // Rest are random or 'other'
         eventType = randomItem(['delegate_conference', 'general_assembly', 'open_assembly', 'other']);
         // Random delegate conferences get random allocation mode
-        if (eventType === 'delegate_conference' && hasGroup) {
+        if (eventType === 'delegate_conference') {
           delegateAllocationMode = randomItem(['ratio', 'total']);
           if (delegateAllocationMode === 'ratio') {
             delegateRatio = randomItem([25, 50, 75, 100]); // Various ratios
@@ -108,37 +107,14 @@ export const eventsSeeder: EntitySeeder = {
         delegateRatio,
       });
 
-      if (groupId) {
-        transactions.push(eventTx.link({ organizer: organizerId, group: groupId }));
-        eventsToOrganizers++;
-        eventsToGroups++;
-      } else {
-        transactions.push(eventTx.link({ organizer: organizerId }));
-        eventsToOrganizers++;
-      }
+      // All events now have groups
+      transactions.push(eventTx.link({ organizer: organizerId, group: groupId }));
+      eventsToOrganizers++;
+      eventsToGroups++;
 
       // Add hashtags for this event
       const eventHashtags = randomItems(EVENT_HASHTAGS, randomInt(2, 4));
       transactions.push(...createHashtagTransactions(eventId, 'event', eventHashtags));
-
-      // Add participants (10-40% of capacity)
-      const participantCount = Math.floor((randomInt(10, 40) / 100) * randomInt(10, 200));
-      const participants = randomItems(
-        userIds.filter(uid => uid !== organizerId),
-        Math.min(participantCount, userIds.length - 1)
-      );
-
-      for (const participantId of participants) {
-        const participantTxId = id();
-        const status = randomItem(['going', 'going', 'going', 'maybe', 'not-going'] as const);
-        transactions.push(
-          tx.participants[participantTxId]
-            .update({ status })
-            .link({ event: eventId, user: participantId })
-        );
-        participantsToEvents++;
-        participantsToUsers++;
-      }
     }
 
     // Batch transact
@@ -146,19 +122,16 @@ export const eventsSeeder: EntitySeeder = {
     console.log(`✅ Seeded ${eventIds.length} events`);
     console.log(`  - Event-to-organizer links: ${eventsToOrganizers}`);
     console.log(`  - Event-to-group links: ${eventsToGroups}`);
-    console.log(`  - Participant-to-event links: ${participantsToEvents}`);
-    console.log(`  - Participant-to-user links: ${participantsToUsers}`);
+    console.log(`  - Participants will be created by RBAC seeder with proper roles`);
 
     return {
       ...context,
       eventIds,
+      eventOrganizers,
       linkCounts: {
         ...context.linkCounts,
         eventsToOrganizers: (context.linkCounts?.eventsToOrganizers || 0) + eventsToOrganizers,
         eventsToGroups: (context.linkCounts?.eventsToGroups || 0) + eventsToGroups,
-        participantsToEvents:
-          (context.linkCounts?.participantsToEvents || 0) + participantsToEvents,
-        participantsToUsers: (context.linkCounts?.participantsToUsers || 0) + participantsToUsers,
       },
     };
   },

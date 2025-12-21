@@ -146,7 +146,7 @@ export default function GroupEventsPage({ params }: { params: Promise<{ id: stri
           events: {
             $: {
               where: {
-                'groups.id': group.id,
+                'group.id': group.id,
               },
             },
             organizer: {},

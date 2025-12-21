@@ -170,6 +170,18 @@ export function hasAmendmentPermission(
   resource: ResourceType,
   action: ActionType
 ): boolean {
+  // Check new structure first
+  if (amendment?.amendmentRoleCollaborators) {
+    const collaborator = amendment.amendmentRoleCollaborators.find(c => c.user?.id === userId);
+    if (collaborator?.role?.actionRights) {
+      return collaborator.role.actionRights.some(
+        right =>
+          right.resource === resource &&
+          checkWithInheritance(right.action, action)
+      );
+    }
+  }
+
   if (!amendment?.collaborators || !amendment?.roles) return false;
 
   const collaboration = amendment.collaborators.find(c => c.user?.id === userId);
@@ -256,6 +268,9 @@ export function isAmendmentCollaborator(
   amendment: Amendment | undefined,
   userId: string
 ): boolean {
+  if (amendment?.amendmentRoleCollaborators) {
+    return amendment.amendmentRoleCollaborators.some(c => c.user?.id === userId);
+  }
   if (!amendment?.collaborators) return false;
   return amendment.collaborators.some(c => c.user?.id === userId);
 }
@@ -271,6 +286,7 @@ export function isAmendmentAuthor(
   amendment: Amendment | undefined,
   userId: string
 ): boolean {
+  if (amendment?.owner) return amendment.owner.id === userId;
   if (!amendment?.user) return false;
   return amendment.user.id === userId;
 }

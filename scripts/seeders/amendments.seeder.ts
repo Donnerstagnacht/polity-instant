@@ -8,7 +8,8 @@ import { faker } from '@faker-js/faker';
 import type { EntitySeeder, SeedContext } from '../types/seeder.types';
 import { randomInt, randomItem, randomItems, randomVisibility } from '../helpers/random.helpers';
 import { createHashtagTransactions, createAmendmentDocument } from '../helpers/entity.helpers';
-import { AMENDMENT_HASHTAGS } from '../config/seed.config';
+import { AMENDMENT_HASHTAGS, SEED_CONFIG } from '../config/seed.config';
+import { DEFAULT_AMENDMENT_ROLES } from '../../db/rbac/constants';
 
 export const amendmentsSeeder: EntitySeeder = {
   name: 'amendments',
@@ -42,7 +43,8 @@ export const amendmentsSeeder: EntitySeeder = {
     console.log('Seeding amendments with targets and paths...');
 
     // Get the main user (first user)
-    const mainUserId = userIds[0];
+    const mainUserId = SEED_CONFIG.mainTestUserId;
+    const tobiasUserId = SEED_CONFIG.tobiasUserId;
 
     // Store amendments for cloning
     const amendmentsToClone: { id: string; title: string; ownerId: string }[] = [];
@@ -96,6 +98,38 @@ export const amendmentsSeeder: EntitySeeder = {
             })
         );
 
+        // Create amendment roles
+        const amendmentRoleIds: Record<string, string> = {};
+        for (const roleDef of DEFAULT_AMENDMENT_ROLES) {
+          const roleId = id();
+          amendmentRoleIds[roleDef.name] = roleId;
+          
+          transactions.push(
+            tx.roles[roleId]
+              .update({
+                name: roleDef.name,
+                description: roleDef.description,
+                scope: 'amendment',
+                createdAt: faker.date.past({ years: 0.5 }),
+                updatedAt: new Date(),
+              })
+              .link({ amendment: amendmentId })
+          );
+
+          // Create action rights for this role
+          for (const perm of roleDef.permissions) {
+            const actionRightId = id();
+            transactions.push(
+              tx.actionRights[actionRightId]
+                .update({
+                  resource: perm.resource,
+                  action: perm.action,
+                })
+                .link({ roles: [roleId], amendment: amendmentId })
+            );
+          }
+        }
+
         // Create amendmentCollaborator to link user to amendment (as owner/admin)
         const collaboratorId = id();
         transactions.push(
@@ -105,8 +139,56 @@ export const amendmentsSeeder: EntitySeeder = {
               createdAt: faker.date.past({ years: 1 }),
               visibility: randomVisibility(),
             })
-            .link({ amendment: amendmentId, user: ownerId })
+            .link({ 
+              amendment: amendmentId, 
+              user: ownerId,
+              role: amendmentRoleIds['Author']
+            })
         );
+
+        // Always add Tobias as a Collaborator with manage rights (if not the owner)
+        if (tobiasUserId && userIds.includes(tobiasUserId) && ownerId !== tobiasUserId) {
+          const tobiasCollabId = id();
+          // Give Tobias Author role (manage rights) on 50% of amendments, otherwise Collaborator
+          const tobiasRole = Math.random() < 0.5 ? 'Author' : 'Collaborator';
+          transactions.push(
+            tx.amendmentCollaborators[tobiasCollabId]
+              .update({
+                status: tobiasRole === 'Author' ? 'admin' : 'member',
+                createdAt: faker.date.past({ years: 1 }),
+                visibility: randomVisibility(),
+              })
+              .link({ 
+                amendment: amendmentId, 
+                user: tobiasUserId,
+                role: amendmentRoleIds[tobiasRole]
+              })
+          );
+        }
+
+        // Add some random collaborators (2-4 collaborators per amendment)
+        const collaboratorCount = randomInt(2, 4);
+        const potentialCollaborators = userIds.filter(uid => uid !== ownerId && uid !== tobiasUserId);
+        const selectedCollaborators = randomItems(potentialCollaborators, collaboratorCount);
+
+        for (const collaboratorUserId of selectedCollaborators) {
+             const colId = id();
+             // 30% chance to be Author (with manage rights), 70% Collaborator
+             const roleType = Math.random() < 0.3 ? 'Author' : 'Collaborator';
+             transactions.push(
+                tx.amendmentCollaborators[colId]
+                  .update({
+                    status: roleType === 'Author' ? 'admin' : 'member',
+                    createdAt: faker.date.past({ years: 1 }),
+                    visibility: randomVisibility(),
+                  })
+                  .link({ 
+                    amendment: amendmentId, 
+                    user: collaboratorUserId,
+                    role: amendmentRoleIds[roleType]
+                  })
+              );
+        }
 
         // Link amendment to group
         transactions.push(tx.amendments[amendmentId].link({ groups: groupId }));
@@ -356,6 +438,38 @@ export const amendmentsSeeder: EntitySeeder = {
           })
       );
 
+      // Create roles for the clone
+      const cloneRoleIds: Record<string, string> = {};
+      for (const roleDef of DEFAULT_AMENDMENT_ROLES) {
+        const roleId = id();
+        cloneRoleIds[roleDef.name] = roleId;
+        
+        transactions.push(
+          tx.roles[roleId]
+            .update({
+              name: roleDef.name,
+              description: roleDef.description,
+              scope: 'amendment',
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            })
+            .link({ amendment: cloneId })
+        );
+
+        // Create action rights for this role
+        for (const perm of roleDef.permissions) {
+          const actionRightId = id();
+          transactions.push(
+            tx.actionRights[actionRightId]
+              .update({
+                resource: perm.resource,
+                action: perm.action,
+              })
+              .link({ roles: [roleId], amendment: cloneId })
+          );
+        }
+      }
+
       // Add clone owner as admin collaborator
       const collaboratorId = id();
       transactions.push(
@@ -365,7 +479,11 @@ export const amendmentsSeeder: EntitySeeder = {
             createdAt: new Date(),
             visibility: randomVisibility(),
           })
-          .link({ amendment: cloneId, user: cloneOwnerId })
+          .link({ 
+            amendment: cloneId, 
+            user: cloneOwnerId,
+            role: cloneRoleIds['Author']
+          })
       );
 
       // Clone the document (find original document and create a copy)

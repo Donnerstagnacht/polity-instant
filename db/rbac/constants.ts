@@ -122,3 +122,45 @@ export const DEFAULT_EVENT_ROLES = [
     ],
   },
 ];
+
+/**
+ * Available action rights for group membership management UI.
+ * Used to display permission options when creating or editing roles.
+ */
+export const ACTION_RIGHTS = [
+  { resource: 'messages', action: 'create', label: 'Create Messages' },
+  { resource: 'messages', action: 'read', label: 'Read Messages' },
+  { resource: 'messages', action: 'update', label: 'Update Messages' },
+  { resource: 'messages', action: 'delete', label: 'Delete Messages' },
+  { resource: 'events', action: 'create', label: 'Create Events' },
+  { resource: 'events', action: 'update', label: 'Update Events' },
+  { resource: 'events', action: 'delete', label: 'Delete Events' },
+  { resource: 'events', action: 'manage_participants', label: 'Manage Event Participants' },
+  { resource: 'events', action: 'manage_speakers', label: 'Manage Speakers' },
+  { resource: 'events', action: 'manage_votes', label: 'Manage Votes' },
+  { resource: 'agendaItems', action: 'create', label: 'Create Agenda Items' },
+  { resource: 'agendaItems', action: 'update', label: 'Update Agenda Items' },
+  { resource: 'agendaItems', action: 'delete', label: 'Delete Agenda Items' },
+  { resource: 'amendments', action: 'manage', label: 'Manage Amendments' },
+  { resource: 'amendments', action: 'create', label: 'Create Amendments' },
+  { resource: 'amendments', action: 'view', label: 'View Amendments' },
+  { resource: 'amendments', action: 'update', label: 'Update Amendments' },
+  { resource: 'amendments', action: 'delete', label: 'Delete Amendments' },
+  { resource: 'blogs', action: 'create', label: 'Create Blogs' },
+  { resource: 'blogs', action: 'update', label: 'Update Blogs' },
+  { resource: 'blogs', action: 'delete', label: 'Delete Blogs' },
+  { resource: 'blogs', action: 'manage', label: 'Manage Blogs' },
+  { resource: 'groups', action: 'manage_relationships', label: 'Manage Group Relationships' },
+  { resource: 'todos', action: 'create', label: 'Create Todos' },
+  { resource: 'todos', action: 'update', label: 'Update Todos' },
+  { resource: 'todos', action: 'delete', label: 'Delete Todos' },
+  { resource: 'elections', action: 'manage', label: 'Manage Elections' },
+  { resource: 'positions', action: 'manage', label: 'Manage Positions' },
+  { resource: 'payments', action: 'create', label: 'Create Payments' },
+  { resource: 'notifications', action: 'manageNotifications', label: 'Manage Notifications' },
+  { resource: 'payments', action: 'update', label: 'Update Payments' },
+  { resource: 'payments', action: 'delete', label: 'Delete Payments' },
+  { resource: 'links', action: 'create', label: 'Create Links' },
+  { resource: 'links', action: 'update', label: 'Update Links' },
+  { resource: 'links', action: 'delete', label: 'Delete Links' },
+] as const;

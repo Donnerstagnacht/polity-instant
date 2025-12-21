@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Edit, Eye, MessageSquare, Vote, ChevronDown } from 'lucide-react';
 import { db, tx } from '../../../../db/db';
-import { useToast } from '@/global-state/use-toast';
+import { toast } from 'sonner';
 
 type EditingMode = 'edit' | 'view' | 'suggest' | 'vote';
 
@@ -58,8 +58,6 @@ export function ModeSelector({
   currentMode,
   isOwnerOrCollaborator,
 }: ModeSelectorProps) {
-  const { toast } = useToast();
-
   const currentModeConfig = modes.find(m => m.value === currentMode) || modes[0];
   const Icon = currentModeConfig.icon;
 
@@ -68,11 +66,7 @@ export function ModeSelector({
 
     // Only allow owners/collaborators to change mode
     if (!isOwnerOrCollaborator) {
-      toast({
-        title: 'Permission Denied',
-        description: 'Only document owners and collaborators can change the editing mode.',
-        variant: 'destructive',
-      });
+      toast.error('Only document owners and collaborators can change the editing mode.');
       return;
     }
 
@@ -84,17 +78,10 @@ export function ModeSelector({
         }),
       ]);
 
-      toast({
-        title: 'Mode Changed',
-        description: `Document is now in ${newMode} mode.`,
-      });
+      toast.success(`Document is now in ${newMode} mode.`);
     } catch (error) {
       console.error('Failed to change mode:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to change document mode.',
-        variant: 'destructive',
-      });
+      toast.error('Failed to change document mode.');
     }
   };
 

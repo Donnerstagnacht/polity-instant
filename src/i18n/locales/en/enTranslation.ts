@@ -79,6 +79,8 @@ const enTranslation = {
         agenda: 'Agenda',
         stream: 'Stream',
         participants: 'Participants',
+        positions: 'Positions',
+        notifications: 'Notifications',
         network: 'Network',
         edit: 'Edit Event',
       },
@@ -98,6 +100,7 @@ const enTranslation = {
         operation: 'Operation',
         network: 'Network',
         memberships: 'Members',
+        notifications: 'Notifications',
         edit: 'Edit Group',
       },
       amendment: {
@@ -107,11 +110,13 @@ const enTranslation = {
         discussions: 'Discussions',
         collaborators: 'Collaborators',
         process: 'Process',
+        notifications: 'Notifications',
         edit: 'Edit Amendment',
       },
       blog: {
         overview: 'Overview',
         bloggers: 'Bloggers',
+        notifications: 'Notifications',
       },
     },
     toggles: {

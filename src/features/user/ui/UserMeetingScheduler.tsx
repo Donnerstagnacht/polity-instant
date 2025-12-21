@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { useToast } from '@/global-state/use-toast';
+import { toast } from 'sonner';
 import db from '../../../../db/db';
 import { id, tx } from '@instantdb/react';
 import { addHours, startOfDay, addDays, addMonths, isPast, isFuture, format } from 'date-fns';
@@ -57,7 +57,6 @@ interface UserMeetingSchedulerProps {
 }
 
 export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
-  const { toast } = useToast();
   const router = useRouter();
   const [view, setView] = useState<CalendarView>('day');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -220,17 +219,10 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
       setSelectedSlot(null);
 
       // Then show success toast
-      toast({
-        title: 'Meeting Booked',
-        description: `Your meeting on ${format(new Date(selectedSlot.startTime), 'PPP')} at ${format(new Date(selectedSlot.startTime), 'p')} has been confirmed.`,
-      });
+      toast.success(`Your meeting on ${format(new Date(selectedSlot.startTime), 'PPP')} at ${format(new Date(selectedSlot.startTime), 'p')} has been confirmed.`);
     } catch (error) {
       console.error('Booking error:', error);
-      toast({
-        title: 'Booking Failed',
-        description: 'Failed to book the meeting. Please try again.',
-        variant: 'destructive',
-      });
+      toast.error('Failed to book the meeting. Please try again.');
     }
   };
 
@@ -266,10 +258,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
 
         await db.transact(transactions);
 
-        toast({
-          title: 'Recurring Slots Created',
-          description: `${slots.length} ${newSlotType === 'public-meeting' ? 'public meeting' : 'meeting'} slots created.`,
-        });
+        toast.success(`${slots.length} ${newSlotType === 'public-meeting' ? 'public meeting' : 'meeting'} slots created.`);
       } else {
         // Single slot creation
         const startTime = new Date(newSlotDate);
@@ -296,10 +285,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
             }),
         ]);
 
-        toast({
-          title: 'Time Slot Created',
-          description: `New ${newSlotType === 'public-meeting' ? 'public meeting' : 'meeting'} slot created for ${format(startTime, 'PPP')} at ${format(startTime, 'p')}.`,
-        });
+        toast.success(`New ${newSlotType === 'public-meeting' ? 'public meeting' : 'meeting'} slot created for ${format(startTime, 'PPP')} at ${format(startTime, 'p')}.`);
       }
 
       // Reset form
@@ -318,11 +304,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
       setSlotDuration('60');
       setIsManageDialogOpen(false);
     } catch {
-      toast({
-        title: 'Creation Failed',
-        description: 'Failed to create time slot(s). Please try again.',
-        variant: 'destructive',
-      });
+      toast.error('Failed to create time slot(s). Please try again.');
     }
   };
 
@@ -406,16 +388,9 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
     try {
       await db.transact([tx.meetingSlots[slotId].delete()]);
 
-      toast({
-        title: 'Time Slot Deleted',
-        description: 'The time slot has been removed.',
-      });
+      toast.success('The time slot has been removed.');
     } catch {
-      toast({
-        title: 'Deletion Failed',
-        description: 'Failed to delete time slot. Please try again.',
-        variant: 'destructive',
-      });
+      toast.error('Failed to delete time slot. Please try again.');
     }
   };
 

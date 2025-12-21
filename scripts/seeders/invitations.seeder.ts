@@ -23,7 +23,7 @@ function randomVisibility(): 'public' | 'authenticated' | 'private' {
 
 export const invitationsSeeder: EntitySeeder = {
   name: 'invitations',
-  dependencies: ['users', 'groups', 'events'],
+  dependencies: ['users', 'groups', 'events', 'rbac'],
 
   async seed(context: SeedContext): Promise<SeedContext> {
     const { db } = context;
@@ -55,6 +55,7 @@ export const invitationsSeeder: EntitySeeder = {
     let eventRequestsToEvents = 0;
     let eventAdminsToUsers = 0;
     let eventAdminsToEvents = 0;
+    let eventParticipantsToRoles = 0;
     let amendmentInvitationsToUsers = 0;
     let amendmentInvitationsToAmendments = 0;
     let amendmentRequestsToUsers = 0;
@@ -65,11 +66,9 @@ export const invitationsSeeder: EntitySeeder = {
     // 1. Seed group invitations and requests
     console.log('Seeding group invitations and requests...');
     for (const groupId of groupIds) {
-      // Get users who might not already be members
-      const availableUsers = userIds.filter(() => {
-        // Simple filter - in production this would check existing memberships
-        return Math.random() > 0.3; // 70% chance a user is available
-      });
+      // Get users who are NOT already members of this group
+      const existingMembers = context.groupMemberships?.get(groupId) || new Set();
+      const availableUsers = userIds.filter(userId => !existingMembers.has(userId));
 
       // Add 2-4 invitations
       const invitationCount = randomInt(2, 4);
@@ -121,12 +120,22 @@ export const invitationsSeeder: EntitySeeder = {
 
     // 2. Seed event participation requests and invites
     console.log('Seeding event participation requests and invitations...');
+    
+    // Get event role mappings from rbac seeder
+    const eventRoleMappings = context.eventRoleMappings || new Map();
+    
     for (const eventId of eventIds) {
       // Get users who might not already be participants
       const availableUsers = userIds.filter(() => {
         // Simple filter - in production this would check existing participants
         return Math.random() > 0.3; // 70% chance a user is available
       });
+      
+      const roles = eventRoleMappings.get(eventId);
+      if (!roles) {
+        console.warn(`  ⚠️  No roles found for event ${eventId}, skipping invitations`);
+        continue;
+      }
 
       // Add 2-4 invitations
       const invitationCount = randomInt(2, 4);
@@ -141,11 +150,12 @@ export const invitationsSeeder: EntitySeeder = {
               status: 'invited',
               createdAt: faker.date.recent({ days: 30 }),
             })
-            .link({ user: invitedUserId, event: eventId })
+            .link({ user: invitedUserId, event: eventId, role: roles.participantId })
         );
         totalEventInvitations++;
         eventInvitationsToUsers++;
         eventInvitationsToEvents++;
+        eventParticipantsToRoles++;
       }
 
       // Add 2-4 requests (from different users)
@@ -164,11 +174,12 @@ export const invitationsSeeder: EntitySeeder = {
               status: 'requested',
               createdAt: faker.date.recent({ days: 30 }),
             })
-            .link({ user: requestingUserId, event: eventId })
+            .link({ user: requestingUserId, event: eventId, role: roles.participantId })
         );
         totalEventRequests++;
         eventRequestsToUsers++;
         eventRequestsToEvents++;
+        eventParticipantsToRoles++;
       }
 
       // Add 1-2 admin participants
@@ -186,11 +197,12 @@ export const invitationsSeeder: EntitySeeder = {
               status: 'member',
               createdAt: faker.date.past({ years: 0.17 }),
             })
-            .link({ user: userId, event: eventId })
+            .link({ user: userId, event: eventId, role: roles.organizerId })
         );
         totalEventAdmins++;
         eventAdminsToUsers++;
         eventAdminsToEvents++;
+        eventParticipantsToRoles++;
       }
     }
 
@@ -362,6 +374,8 @@ export const invitationsSeeder: EntitySeeder = {
           (context.linkCounts?.eventRequestsToEvents || 0) + eventRequestsToEvents,
         eventAdminsToUsers: (context.linkCounts?.eventAdminsToUsers || 0) + eventAdminsToUsers,
         eventAdminsToEvents: (context.linkCounts?.eventAdminsToEvents || 0) + eventAdminsToEvents,
+        eventParticipantsToRoles:
+          (context.linkCounts?.eventParticipantsToRoles || 0) + eventParticipantsToRoles,
         amendmentInvitationsToUsers:
           (context.linkCounts?.amendmentInvitationsToUsers || 0) + amendmentInvitationsToUsers,
         amendmentInvitationsToAmendments:

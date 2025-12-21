@@ -1,7 +1,7 @@
 'use client';
 
 import { use, Suspense } from 'react';
-import { AuthGuard, OwnerOnlyGuard } from '@/features/auth';
+import { AuthGuard } from '@/features/auth';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,8 @@ import { useStripeCheckout } from '@/features/user/hooks/useStripeCheckout';
 import { useAvatarUpload } from '@/features/user/hooks/useAvatarUpload';
 import { UserProfileEditForm } from '@/features/user/ui/UserProfileEditForm';
 import { Loader2 } from 'lucide-react';
+import { usePermissions } from '../../../../db/rbac/usePermissions';
+import { AccessDenied } from '@/components/shared/AccessDenied';
 
 export default function UserEditPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -41,6 +43,7 @@ function UserEditContent({ userId }: { userId: string }) {
   const router = useRouter();
   const { user: authUser } = useAuthStore();
   const { user: dbUser, isLoading, error } = useUserData(userId);
+  const { isMe, isLoading: permissionsLoading } = usePermissions({});
 
   // Use extracted hooks
   const { formData, isSubmitting, handleSubmit, updateField } = useUserProfileForm({
@@ -63,7 +66,7 @@ function UserEditContent({ userId }: { userId: string }) {
     userId: authUser?.id || userId,
   });
 
-  if (isLoading) {
+  if (isLoading || permissionsLoading) {
     return (
       <AuthGuard requireAuth={true}>
         <PageWrapper>
@@ -102,31 +105,39 @@ function UserEditContent({ userId }: { userId: string }) {
     );
   }
 
+  if (!isMe(userId)) {
+    return (
+      <AuthGuard requireAuth={true}>
+        <PageWrapper>
+          <AccessDenied />
+        </PageWrapper>
+      </AuthGuard>
+    );
+  }
+
   return (
     <AuthGuard requireAuth={true}>
-      <OwnerOnlyGuard targetUserId={userId}>
-        <PageWrapper>
-          <UserProfileEditForm
-            formData={formData}
-            isSubmitting={isSubmitting}
-            isUploading={isUploading}
-            userId={userId}
-            activeSubscriptionAmount={getActivePlanAmount()}
-            isCheckoutLoading={isCheckoutLoading}
-            isPlanActive={isPlanActive}
-            hasCustomPlan={hasCustomPlan()}
-            onSubmit={handleSubmit}
-            onCancel={() => router.push(`/user/${userId}`)}
-            onAvatarUpload={handleAvatarUpload}
-            onFieldChange={updateField}
-            onSubscribe={handleSubscribe}
-            onCustomAmount={handleCustomAmount}
-            onCancelSubscription={() =>
-              activeSubscription && handleCancelSubscription(activeSubscription.id)
-            }
-          />
-        </PageWrapper>
-      </OwnerOnlyGuard>
+      <PageWrapper>
+        <UserProfileEditForm
+          formData={formData}
+          isSubmitting={isSubmitting}
+          isUploading={isUploading}
+          userId={userId}
+          activeSubscriptionAmount={getActivePlanAmount()}
+          isCheckoutLoading={isCheckoutLoading}
+          isPlanActive={isPlanActive}
+          hasCustomPlan={hasCustomPlan()}
+          onSubmit={handleSubmit}
+          onCancel={() => router.push(`/user/${userId}`)}
+          onAvatarUpload={handleAvatarUpload}
+          onFieldChange={updateField}
+          onSubscribe={handleSubscribe}
+          onCustomAmount={handleCustomAmount}
+          onCancelSubscription={() =>
+            activeSubscription && handleCancelSubscription(activeSubscription.id)
+          }
+        />
+      </PageWrapper>
     </AuthGuard>
   );
 }

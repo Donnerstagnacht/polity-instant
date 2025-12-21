@@ -1,89 +1,25 @@
 'use client';
 
-import { use, useState, useMemo } from 'react';
+import { use, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { AuthGuard } from '@/features/auth/AuthGuard';
 import { PermissionGuard } from '@/features/auth/PermissionGuard';
+import { useAuthStore } from '@/features/auth/auth';
 import { useGroupData, useGroupMemberships, useGroupRoles, useUserSearch } from '@/features/groups/hooks/useGroupData';
 import { useGroupMutations } from '@/features/groups/hooks/useGroupMutations';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Trash2, Search, Users, UserPlus, Shield, Check, X, Loader2, Plus } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useGroupMembership } from '@/features/groups/hooks/useGroupMembership';
-import { useToast } from '@/global-state/use-toast';
-import { useAuthStore } from '@/features/auth/auth';
-
-// Define available action rights
-const ACTION_RIGHTS = [
-  { resource: 'messages', action: 'create', label: 'Create Messages' },
-  { resource: 'messages', action: 'read', label: 'Read Messages' },
-  { resource: 'messages', action: 'update', label: 'Update Messages' },
-  { resource: 'messages', action: 'delete', label: 'Delete Messages' },
-  { resource: 'events', action: 'create', label: 'Create Events' },
-  { resource: 'events', action: 'update', label: 'Update Events' },
-  { resource: 'events', action: 'delete', label: 'Delete Events' },
-  { resource: 'events', action: 'manage_participants', label: 'Manage Event Participants' },
-  { resource: 'events', action: 'manage_speakers', label: 'Manage Speakers' },
-  { resource: 'events', action: 'manage_votes', label: 'Manage Votes' },
-  { resource: 'agendaItems', action: 'create', label: 'Create Agenda Items' },
-  { resource: 'agendaItems', action: 'update', label: 'Update Agenda Items' },
-  { resource: 'agendaItems', action: 'delete', label: 'Delete Agenda Items' },
-  { resource: 'amendments', action: 'create', label: 'Create Amendments' },
-  { resource: 'amendments', action: 'delete', label: 'Delete Amendments' },
-  { resource: 'blogs', action: 'create', label: 'Create Blogs' },
-  { resource: 'blogs', action: 'update', label: 'Update Blogs' },
-  { resource: 'blogs', action: 'delete', label: 'Delete Blogs' },
-  { resource: 'groups', action: 'manage_relationships', label: 'Manage Group Relationships' },
-  { resource: 'todos', action: 'create', label: 'Create Todos' },
-  { resource: 'todos', action: 'update', label: 'Update Todos' },
-  { resource: 'todos', action: 'delete', label: 'Delete Todos' },
-  { resource: 'elections', action: 'manage', label: 'Manage Elections' },
-  { resource: 'positions', action: 'manage', label: 'Manage Positions' },
-  { resource: 'payments', action: 'create', label: 'Create Payments' },
-  { resource: 'notifications', action: 'manageNotifications', label: 'Manage Notifications' },
-  { resource: 'payments', action: 'update', label: 'Update Payments' },
-  { resource: 'payments', action: 'delete', label: 'Delete Payments' },
-  { resource: 'links', action: 'create', label: 'Create Links' },
-  { resource: 'links', action: 'update', label: 'Update Links' },
-  { resource: 'links', action: 'delete', label: 'Delete Links' },
-];
+import { useMembershipSearch } from '@/features/groups/hooks/useMembershipSearch';
+import { useRoleManagement } from '@/features/groups/hooks/useRoleManagement';
+import { PendingRequestsTable } from '@/features/groups/ui/PendingRequestsTable';
+import { ActiveMembersTable } from '@/features/groups/ui/ActiveMembersTable';
+import { PendingInvitationsTable } from '@/features/groups/ui/PendingInvitationsTable';
+import { InviteMembersDialog } from '@/features/groups/ui/InviteMembersDialog';
+import { AddRoleDialog } from '@/features/groups/ui/AddRoleDialog';
+import { RolesPermissionsTable } from '@/features/groups/ui/RolesPermissionsTable';
+import { MembershipTabs } from '@/features/groups/ui/MembershipTabs';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
+import type { MembershipTab } from '@/features/groups/types/group.types';
 
 export default function GroupMembershipsManagementPage({
   params,
@@ -92,92 +28,101 @@ export default function GroupMembershipsManagementPage({
 }) {
   const resolvedParams = use(params);
   const router = useRouter();
+  const { user: authUser } = useAuthStore();
+
+  // State
   const [searchQuery, setSearchQuery] = useState('');
   const [inviteSearchQuery, setInviteSearchQuery] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
-  const [activeTab, setActiveTab] = useState('memberships');
+  const [activeTab, setActiveTab] = useState<MembershipTab>('memberships');
   const [newRoleName, setNewRoleName] = useState('');
   const [newRoleDescription, setNewRoleDescription] = useState('');
   const [addRoleDialogOpen, setAddRoleDialogOpen] = useState(false);
-  const { toast } = useToast();
-  const { user: authUser } = useAuthStore();
 
-  // Check if current user is admin
+  // Data hooks
+  const { group } = useGroupData(resolvedParams.id);
+  const { memberships } = useGroupMemberships(resolvedParams.id);
+  const { roles } = useGroupRoles(resolvedParams.id);
+  const { users: searchedUsers, isLoading: isLoadingUsers } = useUserSearch(inviteSearchQuery, memberships);
   const { isAdmin } = useGroupMembership(resolvedParams.id);
 
-  // Use the new hooks
-  const { group } = useGroupData(resolvedParams.id);
-  const { memberships, activeMemberships, invitedMemberships, requestedMemberships } = useGroupMemberships(resolvedParams.id);
-  const { roles } = useGroupRoles(resolvedParams.id);
-  const { users: searchedUsers } = useUserSearch(inviteSearchQuery);
+  // Business logic hooks
   const groupMutations = useGroupMutations(resolvedParams.id);
-    },
-  });
+  const roleManagement = useRoleManagement(resolvedParams.id);
+  const { pendingRequests, activeMembers, pendingInvitations } = useMembershipSearch(
+    memberships,
+    searchQuery
+  );
 
-  // Query all users for user search
-  const { data: usersData, isLoading: isLoadingUsers } = db.useQuery({
-    $users: {},
-  });
+  // Handlers
+  const navigateToUser = (userId: string) => {
+    router.push(`/user/${userId}`);
+  };
 
-  const memberships = membershipsData?.groupMemberships || [];
-  const group = groupData?.groups?.[0];
-
-  // Get existing member IDs to exclude from invite search
-  const existingMemberIds = memberships.map(m => m.user?.id).filter(Boolean) as string[];
-
-  // Filter users for invite search
-  const filteredUsers = usersData?.$users?.filter(user => {
-    if (!user?.id) return false;
-    if (existingMemberIds.includes(user.id)) return false;
-
-    const query = inviteSearchQuery.toLowerCase();
-    return (
-      user.name?.toLowerCase().includes(query) ||
-      user.handle?.toLowerCase().includes(query) ||
-      user.contactEmail?.toLowerCase().includes(query)
+  const toggleUserSelection = (userId: string) => {
+    setSelectedUsers((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
     );
-  });
+  };
 
-  // Filter memberships based on search query
-  const filteredMemberships = useMemo(() => {
-    if (!searchQuery.trim()) return memberships;
+  const handleInviteUsers = async () => {
+    if (selectedUsers.length === 0) return;
 
-    const query = searchQuery.toLowerCase();
-    return memberships.filter((membership: any) => {
-      const userName = membership.user?.name?.toLowerCase() || '';
-      const userHandle = membership.user?.handle?.toLowerCase() || '';
-      const role = membership.role?.name?.toLowerCase() || '';
-      const status = membership.status?.toLowerCase() || '';
-      return (
-        userName.includes(query) ||
-        userHandle.includes(query) ||
-        role.includes(query) ||
-        status.includes(query)
+    setIsInviting(true);
+    try {
+      await groupMutations.inviteUsers(
+        selectedUsers,
+        undefined,
+        authUser?.id,
+        authUser?.name,
+        group?.name
       );
-    });
-  }, [memberships, searchQuery]);
 
-  // Separate by status (use filtered results)
-  const pendingRequests = useMemo(
-    () => filteredMemberships.filter((m: any) => m.status === 'requested'),
-    [filteredMemberships]
-  );
-  const activeMembers = useMemo(
-    () =>
-      filteredMemberships.filter((m: any) => m.status === 'member' || m.role?.name === 'Board Member'),
-    [filteredMemberships]
-  );
-  const pendingInvitations = useMemo(
-    () => filteredMemberships.filter((m: any) => m.status === 'invited'),
-    [filteredMemberships]
-  );
+      setSelectedUsers([]);
+      setInviteSearchQuery('');
+      setInviteDialogOpen(false);
+    } finally {
+      setIsInviting(false);
+    }
+  };
+
+  const handleApproveRequest = async (membershipId: string) => {
+    if (!isAdmin) return;
+
+    const membership = memberships.find((m) => m.id === membershipId);
+    const userId = membership?.user?.id;
+    if (!userId) return;
+
+    await groupMutations.approveMembership(
+      membershipId,
+      userId,
+      group?.conversation?.id,
+      authUser?.id,
+      authUser?.name
+    );
+  };
+
+  const handleRejectRequest = async (membershipId: string) => {
+    if (!isAdmin) return;
+
+    const membership = memberships.find((m) => m.id === membershipId);
+    const userId = membership?.user?.id;
+    if (!userId) return;
+
+    await groupMutations.rejectMembership(
+      membershipId,
+      userId,
+      authUser?.id,
+      authUser?.name
+    );
+  };
 
   const handleRemoveMember = async (membershipId: string) => {
     if (!isAdmin) return;
 
-    const membership = memberships.find((m: any) => m.id === membershipId);
+    const membership = memberships.find((m) => m.id === membershipId);
     const userId = membership?.user?.id;
     if (!userId) return;
 
@@ -193,7 +138,7 @@ export default function GroupMembershipsManagementPage({
   const handleChangeRole = async (membershipId: string, newRoleId: string) => {
     if (!isAdmin) return;
 
-    const membership = memberships.find((m: any) => m.id === membershipId);
+    const membership = memberships.find((m) => m.id === membershipId);
     const userId = membership?.user?.id;
     if (!userId) return;
 
@@ -206,60 +151,9 @@ export default function GroupMembershipsManagementPage({
     );
   };
 
-  const handleApproveRequest = async (membershipId: string) => {
-    if (!isAdmin) return;
-
-    try {
-      // Find the membership to get user ID
-      const membership = memberships.find((m: any) => m.id === membershipId);
-      const userId = membership?.user?.id;
-
-      const transactions = [
-        tx.groupMemberships[membershipId].update({
-          status: 'member',
-        }),
-      ];
-
-      // Send notification about approval
-      if (authUser && userId && group) {
-        const notificationTxs = notifyMembershipApproved({
-          senderId: authUser.id,
-          recipientUserId: userId,
-          groupId: resolvedParams.id,
-          groupName: group.name || 'Unknown Group',
-        });
-        transactions.push(...notificationTxs);
-      }
-
-      await db.transact(transactions);
-
-      // Add user to group conversation
-      if (userId) {
-        await addUserToGroupConversation(resolvedParams.id, userId);
-      }
-    } catch (error) {
-      console.error('Failed to approve request:', error);
-    }
-  };
-
-  const handleRejectRequest = async (membershipId: string) => {
-    if (!isAdmin) return;
-
-    const membership = memberships.find((m: any) => m.id === membershipId);
-    const userId = membership?.user?.id;
-    if (!userId) return;
-
-    await groupMutations.rejectMembership(
-      membershipId,
-      userId,
-      authUser?.id,
-      authUser?.name
-    );
-  };
-
   const handlePromoteToAdmin = async (membershipId: string) => {
     if (!isAdmin) return;
-    const boardMemberRole = roles.find((r: any) => r.name === 'Board Member');
+    const boardMemberRole = roles.find((r) => r.name === 'Board Member');
     if (boardMemberRole) {
       await groupMutations.promoteToAdmin(membershipId, boardMemberRole.id);
     }
@@ -267,102 +161,20 @@ export default function GroupMembershipsManagementPage({
 
   const handleDemoteToMember = async (membershipId: string) => {
     if (!isAdmin) return;
-    const memberRole = roles.find((r: any) => r.name === 'Member');
-    if (memberRole) {
-      await groupMutations.demoteToMember(membershipId);
-    }
+    await groupMutations.demoteToMember(membershipId);
   };
 
-  const handleWithdrawInvitation = async (membershipId: string) => {
-    if (!isAdmin) return;
-    await handleRemoveMember(membershipId);
-  };
-
-  const toggleUserSelection = (userId: string) => {
-    setSelectedUsers(prev =>
-      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
-    );
-  };
-
-  const handleInviteUsers = async () => {
-    if (selectedUsers.length === 0) return;
-
-    setIsInviting(true);
-    try {
-      await groupMutations.inviteUsers(
-        selectedUsers,
-        undefined,
-        authUser?.id,
-        authUser?.name
-      );
-
-      // Reset state
-      setSelectedUsers([]);
-      setInviteSearchQuery('');
-      setInviteDialogOpen(false);
-    } catch (error) {
-      console.error('Failed to invite members:', error);
-    } finally {
-      setIsInviting(false);
-    }
-  };
-
-  // Role management handlers
   const handleAddRole = async () => {
-    if (!newRoleName.trim()) {
-      toast({
-        title: 'Error',
-        description: 'Role name is required',
-        variant: 'destructive',
-        });
-      return;
-    }
-
-    try {
-      const roleId = id();
-
-      await db.transact([
-        tx.roles[roleId]
-          .create({
-            name: newRoleName,
-            description: newRoleDescription,
-            scope: 'group',
-          })
-          .link({ group: resolvedParams.id }),
-      ]);
-
-      toast({
-        title: 'Success',
-        description: 'Role created successfully',
-      });
-
+    const result = await roleManagement.addRole(newRoleName, newRoleDescription);
+    if (result.success) {
       setNewRoleName('');
       setNewRoleDescription('');
       setAddRoleDialogOpen(false);
-    } catch {
-      toast({
-        title: 'Error',
-        description: 'Failed to create role. Please try again.',
-        variant: 'destructive',
-      });
     }
   };
 
   const handleRemoveRole = async (roleId: string) => {
-    try {
-      await db.transact([tx.roles[roleId].delete()]);
-      toast({
-        title: 'Success',
-        description: 'Role removed successfully',
-      });
-    } catch (error) {
-      console.error('Failed to remove role:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to remove role. Please try again.',
-        variant: 'destructive',
-      });
-    }
+    await roleManagement.removeRole(roleId);
   };
 
   const handleToggleActionRight = async (
@@ -371,41 +183,16 @@ export default function GroupMembershipsManagementPage({
     action: string,
     currentlyHasRight: boolean
   ) => {
-    try {
-      if (currentlyHasRight) {
-        // Find and remove the action right
-        const role = rolesData?.roles?.find(r => r.id === roleId);
-        const actionRightToRemove = role?.actionRights?.find(
-          ar => ar.resource === resource && ar.action === action
-        );
-        if (actionRightToRemove) {
-          await db.transact([tx.actionRights[actionRightToRemove.id].delete()]);
-        }
-      } else {
-        // Add the action right
-        const actionRightId = id();
-        await db.transact([
-          tx.actionRights[actionRightId]
-            .create({
-              resource,
-              action,
-              groupId: resolvedParams.id,
-            })
-            .link({ roles: roleId }),
-        ]);
-      }
-    } catch (error) {
-      console.error('Failed to toggle action right:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update permission. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  };
+    const role = roles.find((r) => r.id === roleId);
+    if (!role) return;
 
-  const navigateToUser = (userId: string) => {
-    router.push(`/user/${userId}`);
+    await roleManagement.toggleActionRight(
+      roleId,
+      resource,
+      action,
+      currentlyHasRight,
+      role.actionRights || []
+    );
   };
 
   return (
@@ -423,593 +210,78 @@ export default function GroupMembershipsManagementPage({
             </p>
           </div>
 
-        {/* Search Bar */}
-        <div className="mb-6 flex gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search members by name, role, or status..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="pl-9"
+          {/* Search Bar and Invite Button */}
+          <div className="mb-6 flex gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search members by name, role, or status..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <InviteMembersDialog
+              isOpen={inviteDialogOpen}
+              onOpenChange={setInviteDialogOpen}
+              searchQuery={inviteSearchQuery}
+              onSearchQueryChange={setInviteSearchQuery}
+              users={searchedUsers}
+              selectedUsers={selectedUsers}
+              onToggleUser={toggleUserSelection}
+              onInvite={handleInviteUsers}
+              isLoading={isLoadingUsers}
+              isInviting={isInviting}
             />
           </div>
-          <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <UserPlus className="mr-2 h-4 w-4" />
-                Invite Member
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>Invite Members</DialogTitle>
-                <DialogDescription>
-                  Search and select users to invite to this group. They will receive an invitation
-                  to join.
-                </DialogDescription>
-              </DialogHeader>
 
-              <div className="py-4">
-                {/* Search and selection UI */}
-                <Command className="rounded-lg border">
-                  <CommandInput
-                    placeholder="Search by name, handle, or email..."
-                    value={inviteSearchQuery}
-                    onValueChange={setInviteSearchQuery}
+          {/* Tabs */}
+          <MembershipTabs
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            membershipsContent={
+              <>
+                <PendingRequestsTable
+                  requests={pendingRequests}
+                  onApprove={handleApproveRequest}
+                  onReject={handleRejectRequest}
+                  onNavigateToUser={navigateToUser}
+                />
+                <ActiveMembersTable
+                  members={activeMembers}
+                  roles={roles}
+                  onChangeRole={handleChangeRole}
+                  onPromote={handlePromoteToAdmin}
+                  onDemote={handleDemoteToMember}
+                  onRemove={handleRemoveMember}
+                  onNavigateToUser={navigateToUser}
+                />
+                <PendingInvitationsTable
+                  invitations={pendingInvitations}
+                  onWithdraw={handleRemoveMember}
+                  onNavigateToUser={navigateToUser}
+                />
+              </>
+            }
+            rolesContent={
+              <RolesPermissionsTable
+                roles={roles}
+                onTogglePermission={handleToggleActionRight}
+                onRemoveRole={handleRemoveRole}
+                addRoleButton={
+                  <AddRoleDialog
+                    isOpen={addRoleDialogOpen}
+                    onOpenChange={setAddRoleDialogOpen}
+                    roleName={newRoleName}
+                    onRoleNameChange={setNewRoleName}
+                    roleDescription={newRoleDescription}
+                    onRoleDescriptionChange={setNewRoleDescription}
+                    onAdd={handleAddRole}
                   />
-                  <CommandList>
-                    {isLoadingUsers ? (
-                      <div className="flex items-center justify-center py-6">
-                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                      </div>
-                    ) : (
-                      <>
-                        <CommandEmpty>No users found.</CommandEmpty>
-                        <CommandGroup>
-                          {filteredUsers?.map(user => {
-                            if (!user?.id) return null;
-                            const userId = user.id;
-                            const isSelected = selectedUsers.includes(userId);
-                            return (
-                              <CommandItem
-                                key={user.id}
-                                value={`${user.name} ${user.handle} ${user.contactEmail}`}
-                                onSelect={() => toggleUserSelection(userId)}
-                                className="cursor-pointer"
-                              >
-                                <div className="flex flex-1 items-center gap-3">
-                                  <Avatar className="h-8 w-8">
-                                    {user.avatar ? (
-                                      <AvatarImage src={user.avatar} alt={user.name || ''} />
-                                    ) : null}
-                                    <AvatarFallback>
-                                      {user.name?.[0]?.toUpperCase() || '?'}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <div className="flex-1">
-                                    <div className="font-medium">{user.name || 'Unnamed User'}</div>
-                                    <div className="text-xs text-muted-foreground">
-                                      {user.handle ? `@${user.handle}` : user.contactEmail}
-                                    </div>
-                                  </div>
-                                </div>
-                                {isSelected && (
-                                  <Check className="ml-2 h-4 w-4 text-primary" strokeWidth={3} />
-                                )}
-                              </CommandItem>
-                            );
-                          })}
-                        </CommandGroup>
-                      </>
-                    )}
-                  </CommandList>
-                </Command>
-
-                {/* Selected users display */}
-                {selectedUsers.length > 0 && (
-                  <div className="mt-4">
-                    <div className="mb-2 text-sm font-medium">
-                      Selected ({selectedUsers.length})
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedUsers.map(userId => {
-                        const user = usersData?.$users?.find(u => u?.id === userId);
-                        if (!user) return null;
-
-                        return (
-                          <Badge key={userId} variant="secondary" className="gap-1 pr-1">
-                            <span>{user.name || 'Unnamed User'}</span>
-                            <button
-                              onClick={() => toggleUserSelection(userId)}
-                              className="ml-1 rounded-full p-0.5 hover:bg-muted"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </Badge>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setInviteDialogOpen(false)}
-                  disabled={isInviting}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleInviteUsers}
-                  disabled={selectedUsers.length === 0 || isInviting}
-                >
-                  {isInviting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Inviting...
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="mr-2 h-4 w-4" />
-                      Invite {selectedUsers.length > 0 ? `(${selectedUsers.length})` : ''}
-                    </>
-                  )}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        {/* Tabs for Memberships and Roles */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="memberships">Memberships</TabsTrigger>
-            <TabsTrigger value="roles">Roles</TabsTrigger>
-          </TabsList>
-
-          {/* Memberships Tab */}
-          <TabsContent value="memberships" className="space-y-6">
-            {/* Pending Requests */}
-            {pendingRequests.length > 0 && (
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Pending Join Requests ({pendingRequests.length})
-                  </CardTitle>
-                  <CardDescription>Review and approve membership requests</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>User</TableHead>
-                        <TableHead>Requested</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {pendingRequests.map((membership: any) => {
-                        const user = membership.user;
-                        const userName = user?.name || 'Unknown User';
-                        const userAvatar = user?.avatar || '';
-                        const userHandle = user?.handle || '';
-                        const createdAt = membership.createdAt
-                          ? new Date(membership.createdAt).toLocaleDateString()
-                          : 'N/A';
-
-                        return (
-                          <TableRow key={membership.id}>
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <Avatar
-                                  className="h-10 w-10 cursor-pointer"
-                                  onClick={() => navigateToUser(user.id)}
-                                >
-                                  <AvatarImage src={userAvatar} alt={userName} />
-                                  <AvatarFallback>
-                                    {userName
-                                      .split(' ')
-                                      .map((n: string) => n[0])
-                                      .join('')
-                                      .toUpperCase()}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div
-                                  className="cursor-pointer hover:underline"
-                                  onClick={() => navigateToUser(user.id)}
-                                >
-                                  <div className="font-medium">{userName}</div>
-                                  {userHandle && (
-                                    <div className="text-sm text-muted-foreground">
-                                      @{userHandle}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">{createdAt}</TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
-                                <Button
-                                  variant="default"
-                                  size="sm"
-                                  onClick={() => handleApproveRequest(membership.id)}
-                                >
-                                  <Check className="mr-1 h-4 w-4" />
-                                  Accept
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleRejectRequest(membership.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                  <span className="ml-2">Remove</span>
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Active Members */}
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Active Members ({activeMembers.length})
-                </CardTitle>
-                <CardDescription>Current group members and administrators</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {activeMembers.length === 0 ? (
-                  <p className="py-8 text-center text-muted-foreground">No active members found</p>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>User</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Joined</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {activeMembers.map((membership: any) => {
-                        const user = membership.user;
-                        const userName = user?.name || 'Unknown User';
-                        const userAvatar = user?.avatar || '';
-                        const userHandle = user?.handle || '';
-                        const role = membership.role?.name || 'Member';
-                        const roleId = membership.role?.id || '';
-                        const createdAt = membership.createdAt
-                          ? new Date(membership.createdAt).toLocaleDateString()
-                          : 'N/A';
-
-                        return (
-                          <TableRow key={membership.id}>
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <Avatar
-                                  className="h-10 w-10 cursor-pointer"
-                                  onClick={() => navigateToUser(user.id)}
-                                >
-                                  <AvatarImage src={userAvatar} alt={userName} />
-                                  <AvatarFallback>
-                                    {userName
-                                      .split(' ')
-                                      .map((n: string) => n[0])
-                                      .join('')
-                                      .toUpperCase()}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div
-                                  className="cursor-pointer hover:underline"
-                                  onClick={() => navigateToUser(user.id)}
-                                >
-                                  <div className="font-medium">{userName}</div>
-                                  {userHandle && (
-                                    <div className="text-sm text-muted-foreground">
-                                      @{userHandle}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Select
-                                value={roleId}
-                                onValueChange={newRoleId =>
-                                  handleChangeRole(membership.id, newRoleId)
-                                }
-                              >
-                                <SelectTrigger className="w-40">
-                                  <SelectValue placeholder={role} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {rolesData?.roles?.map((roleOption: any) => (
-                                    <SelectItem key={roleOption.id} value={roleOption.id}>
-                                      {roleOption.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">{createdAt}</TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
-                                {role !== 'Board Member' && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handlePromoteToAdmin(membership.id)}
-                                  >
-                                    <Shield className="mr-1 h-4 w-4" />
-                                    Promote to Board Member
-                                  </Button>
-                                )}
-                                {role === 'Board Member' && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleDemoteToMember(membership.id)}
-                                  >
-                                    Demote to Member
-                                  </Button>
-                                )}
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleRemoveMember(membership.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                  <span className="ml-2">Remove</span>
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Pending Invitations */}
-            {pendingInvitations.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <UserPlus className="h-5 w-5" />
-                    Pending Invitations ({pendingInvitations.length})
-                  </CardTitle>
-                  <CardDescription>
-                    Users who have been invited but haven't accepted yet
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>User</TableHead>
-                        <TableHead>Invited</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {pendingInvitations.map((membership: any) => {
-                        const user = membership.user;
-                        const userName = user?.name || 'Unknown User';
-                        const userAvatar = user?.avatar || '';
-                        const userHandle = user?.handle || '';
-                        const createdAt = membership.createdAt
-                          ? new Date(membership.createdAt).toLocaleDateString()
-                          : 'N/A';
-
-                        return (
-                          <TableRow key={membership.id}>
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <Avatar
-                                  className="h-10 w-10 cursor-pointer"
-                                  onClick={() => navigateToUser(user.id)}
-                                >
-                                  <AvatarImage src={userAvatar} alt={userName} />
-                                  <AvatarFallback>
-                                    {userName
-                                      .split(' ')
-                                      .map((n: string) => n[0])
-                                      .join('')
-                                      .toUpperCase()}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div
-                                  className="cursor-pointer hover:underline"
-                                  onClick={() => navigateToUser(user.id)}
-                                >
-                                  <div className="font-medium">{userName}</div>
-                                  {userHandle && (
-                                    <div className="text-sm text-muted-foreground">
-                                      @{userHandle}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">{createdAt}</TableCell>
-                            <TableCell className="text-right">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleWithdrawInvitation(membership.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                <span className="ml-2">Withdraw Invitation</span>
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          {/* Roles Tab */}
-          <TabsContent value="roles" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <Shield className="h-5 w-5" />
-                      Role Permissions
-                    </CardTitle>
-                    <CardDescription>
-                      Manage roles and their action rights for this group
-                    </CardDescription>
-                  </div>
-                  <Dialog open={addRoleDialogOpen} onOpenChange={setAddRoleDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Role
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Add New Role</DialogTitle>
-                        <DialogDescription>
-                          Create a new role with custom permissions for this group.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                          <label htmlFor="role-name" className="text-sm font-medium">
-                            Role Name
-                          </label>
-                          <Input
-                            id="role-name"
-                            placeholder="e.g., Moderator, Editor, Organizer"
-                            value={newRoleName}
-                            onChange={e => setNewRoleName(e.target.value)}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label htmlFor="role-description" className="text-sm font-medium">
-                            Description (Optional)
-                          </label>
-                          <Input
-                            id="role-description"
-                            placeholder="Describe this role's purpose"
-                            value={newRoleDescription}
-                            onChange={e => setNewRoleDescription(e.target.value)}
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setAddRoleDialogOpen(false)}
-                        >
-                          Cancel
-                        </Button>
-                        <Button type="button" onClick={handleAddRole}>
-                          Create Role
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {rolesData?.roles && rolesData.roles.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="min-w-[200px]">Action Right</TableHead>
-                          {rolesData.roles.map((role: any) => (
-                            <TableHead key={role.id} className="min-w-[120px] text-center">
-                              <div className="flex flex-col items-center gap-1">
-                                <span className="font-semibold">{role.name}</span>
-                                {role.description && (
-                                  <span className="text-xs font-normal text-muted-foreground">
-                                    {role.description}
-                                  </span>
-                                )}
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="mt-1 h-6 w-6 p-0"
-                                  onClick={() => handleRemoveRole(role.id)}
-                                >
-                                  <Trash2 className="h-3 w-3 text-destructive" />
-                                </Button>
-                              </div>
-                            </TableHead>
-                          ))}
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {ACTION_RIGHTS.map(({ resource, action, label }) => {
-                          const rightKey = `${resource}-${action}`;
-                          return (
-                            <TableRow key={rightKey}>
-                              <TableCell className="font-medium">{label}</TableCell>
-                              {rolesData.roles.map((role: any) => {
-                                const hasRight = role.actionRights?.some(
-                                  (ar: any) => ar.resource === resource && ar.action === action
-                                );
-                                return (
-                                  <TableCell key={role.id} className="text-center">
-                                    <div className="flex justify-center">
-                                      <Checkbox
-                                        checked={hasRight}
-                                        onCheckedChange={() =>
-                                          handleToggleActionRight(
-                                            role.id,
-                                            resource,
-                                            action,
-                                            hasRight
-                                          )
-                                        }
-                                      />
-                                    </div>
-                                  </TableCell>
-                                );
-                              })}
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </div>
-                ) : (
-                  <div className="py-12 text-center">
-                    <Shield className="mx-auto h-12 w-12 text-muted-foreground/50" />
-                    <p className="mt-4 text-muted-foreground">
-                      No roles created yet. Click "Add Role" to create your first role.
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                }
+              />
+            }
+          />
         </div>
       </PermissionGuard>
     </AuthGuard>

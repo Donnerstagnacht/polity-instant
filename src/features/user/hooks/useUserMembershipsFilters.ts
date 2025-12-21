@@ -124,7 +124,7 @@ export function useUserMembershipsFilters({
     () => ({
       invited: filteredCollaborations.filter((c: any) => c.status === 'invited'),
       active: filteredCollaborations.filter(
-        (c: any) => c.status === 'member' || c.role === 'Applicant'
+        (c: any) => c.status === 'member' || c.status === 'admin' || c.role?.name === 'Author'
       ),
       requested: filteredCollaborations.filter((c: any) => c.status === 'requested'),
     }),

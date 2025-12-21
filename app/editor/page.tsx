@@ -19,12 +19,11 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Loader2, Plus, FileText, Calendar, User } from 'lucide-react';
-import { useToast } from '@/global-state/use-toast';
+import { toast } from 'sonner';
 
 export default function EditorPage() {
   const router = useRouter();
   const { user } = db.useAuth();
-  const { toast } = useToast();
 
   // State
   const [newDocTitle, setNewDocTitle] = useState('');
@@ -50,11 +49,7 @@ export default function EditorPage() {
   // Create new document
   const handleCreateDocument = async () => {
     if (!user || !newDocTitle.trim()) {
-      toast({
-        title: 'Error',
-        description: 'Please enter a document title',
-        variant: 'destructive',
-      });
+      toast.error('Please enter a document title');
       return;
     }
 
@@ -84,20 +79,13 @@ export default function EditorPage() {
       setNewDocTitle('');
       setIsCreateDialogOpen(false);
 
-      toast({
-        title: 'Success',
-        description: 'Document created successfully',
-      });
+      toast.success('Document created successfully');
 
       // Navigate to the new document
       router.push(`/editor/${docId}`);
     } catch (error) {
       console.error('Failed to create document:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to create document',
-        variant: 'destructive',
-      });
+      toast.error('Failed to create document');
     }
   };
 

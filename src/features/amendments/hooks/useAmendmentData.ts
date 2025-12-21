@@ -14,7 +14,17 @@ export function useAmendmentData(amendmentId?: string) {
             groups: {},
             amendmentRoleCollaborators: {
               user: {},
-              role: {},
+              role: {
+                actionRights: {},
+              },
+            },
+            roles: {
+              $: {
+                where: {
+                  scope: 'amendment',
+                },
+              },
+              actionRights: {},
             },
             changeRequests: {
               creator: {},

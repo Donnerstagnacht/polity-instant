@@ -5,7 +5,6 @@ import { AuthGuard } from '@/features/auth/AuthGuard';
 import { PermissionGuard } from '@/features/auth';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { EntityNotifications } from '@/components/notifications/EntityNotifications';
-import db from '../../../../db/db';
 import { useAmendmentData } from '@/features/amendments/hooks/useAmendmentData';
 
 export default function AmendmentNotificationsPage({
@@ -14,17 +13,11 @@ export default function AmendmentNotificationsPage({
   params: Promise<{ id: string }>;
 }) {
   const resolvedParams = use(params);
-
-  // Query for amendment details using hook
   const { amendment } = useAmendmentData(resolvedParams.id);
 
   return (
     <AuthGuard requireAuth={true}>
-      <PermissionGuard
-        action="manage"
-        resource="amendments"
-        context={{ amendment }}
-      >
+      <PermissionGuard action="manage" resource="amendments" context={{ amendment }}>
         <PageWrapper className="container mx-auto max-w-4xl p-8">
           <EntityNotifications
             entityId={resolvedParams.id}

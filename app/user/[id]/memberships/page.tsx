@@ -1,7 +1,7 @@
 'use client';
 
 import { use } from 'react';
-import { AuthGuard, OwnerOnlyGuard } from '@/features/auth';
+import { AuthGuard } from '@/features/auth';
 import { useAuthStore } from '@/features/auth/auth';
 import { useUserMemberships } from '@/features/user/hooks/useUserMemberships';
 import { useUserMembershipsFilters } from '@/features/user/hooks/useUserMembershipsFilters';
@@ -13,11 +13,14 @@ import { GroupMembershipsTab } from '@/features/user/ui/GroupMembershipsTab';
 import { EventParticipationsTab } from '@/features/user/ui/EventParticipationsTab';
 import { AmendmentCollaborationsTab } from '@/features/user/ui/AmendmentCollaborationsTab';
 import { BlogRelationsTab } from '@/features/user/ui/BlogRelationsTab';
+import { usePermissions } from '../../../../db/rbac/usePermissions';
+import { AccessDenied } from '@/components/shared/AccessDenied';
 
 export default function MembershipsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const { user: authUser } = useAuthStore();
   const router = useRouter();
+  const { isMe, isLoading: permissionsLoading } = usePermissions({});
 
   // Use the memberships hook
   const {
@@ -70,9 +73,26 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
     router.push(`/amendment/${amendmentId}`);
   const handleNavigateToBlog = (blogId: string) => router.push(`/blog/${blogId}`);
 
+  if (permissionsLoading) {
+    return (
+      <AuthGuard requireAuth={true}>
+        <div className="container mx-auto max-w-7xl p-8">
+          <div>Loading...</div>
+        </div>
+      </AuthGuard>
+    );
+  }
+
+  if (!isMe(resolvedParams.id)) {
+    return (
+      <AuthGuard requireAuth={true}>
+        <AccessDenied />
+      </AuthGuard>
+    );
+  }
+
   return (
     <AuthGuard requireAuth={true}>
-      <OwnerOnlyGuard targetUserId={resolvedParams.id}>
       <div className="container mx-auto max-w-7xl p-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold">My Memberships & Participation</h1>
@@ -179,7 +199,6 @@ export default function MembershipsPage({ params }: { params: Promise<{ id: stri
           </TabsContent>
         </Tabs>
       </div>
-      </OwnerOnlyGuard>
     </AuthGuard>
   );
 }

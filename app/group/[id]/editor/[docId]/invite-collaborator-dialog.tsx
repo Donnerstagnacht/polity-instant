@@ -23,7 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { db, tx, id } from '../../../../../db/db';
 import { UserPlus, X, Loader2, Check } from 'lucide-react';
-import { useToast } from '@/global-state/use-toast';
+import { toast } from 'sonner';
 
 interface InviteCollaboratorDialogProps {
   documentId: string;
@@ -38,7 +38,6 @@ export function InviteCollaboratorDialog({
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isInviting, setIsInviting] = useState(false);
-  const { toast } = useToast();
 
   // Query all users
   const { data: usersData, isLoading } = db.useQuery({
@@ -101,10 +100,9 @@ export function InviteCollaboratorDialog({
 
       await db.transact(linkTransactions);
 
-      toast({
-        title: 'Success',
-        description: `Invited ${selectedUsers.length} ${selectedUsers.length === 1 ? 'collaborator' : 'collaborators'}`,
-      });
+      toast.success(
+        `Invited ${selectedUsers.length} ${selectedUsers.length === 1 ? 'collaborator' : 'collaborators'}`
+      );
 
       // Reset state
       setSelectedUsers([]);
@@ -112,11 +110,7 @@ export function InviteCollaboratorDialog({
       setOpen(false);
     } catch (error) {
       console.error('Failed to invite collaborators:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to invite collaborators. Please try again.',
-        variant: 'destructive',
-      });
+      toast.error('Failed to invite collaborators. Please try again.');
     } finally {
       setIsInviting(false);
     }

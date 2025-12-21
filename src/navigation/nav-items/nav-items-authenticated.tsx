@@ -271,7 +271,7 @@ export const navItemsAuthenticated = (
   };
 
   // Function to create group secondary navigation items for a specific group
-  const getGroupSecondaryNavItems = (groupId: string, isAdmin = false): NavigationItem[] => {
+  const getGroupSecondaryNavItems = (groupId: string, isAdmin = false, isMember = false): NavigationItem[] => {
     const items: NavigationItem[] = [
       {
         id: 'overview',
@@ -279,13 +279,6 @@ export const navItemsAuthenticated = (
         icon: 'Home',
         href: `/group/${groupId}`,
         onClick: () => router.push(`/group/${groupId}`),
-      },
-      {
-        id: 'editor',
-        label: t ? t('navigation.secondary.group.editor') : 'Documents',
-        icon: 'FileText',
-        href: `/group/${groupId}/editor`,
-        onClick: () => router.push(`/group/${groupId}/editor`),
       },
       {
         id: 'events',
@@ -302,13 +295,6 @@ export const navItemsAuthenticated = (
         onClick: () => router.push(`/group/${groupId}/amendments`),
       },
       {
-        id: 'operation',
-        label: t ? t('navigation.secondary.group.operation') : 'Operation',
-        icon: 'AreaChart',
-        href: `/group/${groupId}/operation`,
-        onClick: () => router.push(`/group/${groupId}/operation`),
-      },
-      {
         id: 'network',
         label: t ? t('navigation.secondary.group.network') : 'Network',
         icon: 'Network',
@@ -316,6 +302,26 @@ export const navItemsAuthenticated = (
         onClick: () => router.push(`/group/${groupId}/network`),
       },
     ];
+
+    // Add member-only items if user is a member
+    if (isMember) {
+      items.push(
+        {
+          id: 'editor',
+          label: t ? t('navigation.secondary.group.editor') : 'Documents',
+          icon: 'FileText',
+          href: `/group/${groupId}/editor`,
+          onClick: () => router.push(`/group/${groupId}/editor`),
+        },
+        {
+          id: 'operation',
+          label: t ? t('navigation.secondary.group.operation') : 'Operation',
+          icon: 'AreaChart',
+          href: `/group/${groupId}/operation`,
+          onClick: () => router.push(`/group/${groupId}/operation`),
+        }
+      );
+    }
 
     // Only add memberships and edit items if user is admin
     if (isAdmin) {
@@ -476,7 +482,8 @@ export const navItemsAuthenticated = (
       isEventAdmin?: boolean,
       isAmendmentAdmin?: boolean,
       blogId?: string,
-      isBlogOwner?: boolean
+      isBlogOwner?: boolean,
+      isGroupMember?: boolean
     ) => {
       switch (currentPrimaryRoute) {
         case 'projects':
@@ -488,7 +495,7 @@ export const navItemsAuthenticated = (
         case 'user':
           return userId ? getUserSecondaryNavItems(userId, isOwnUser ?? false) : null;
         case 'group':
-          return groupId ? getGroupSecondaryNavItems(groupId, isGroupAdmin ?? false) : null;
+          return groupId ? getGroupSecondaryNavItems(groupId, isGroupAdmin ?? false, isGroupMember ?? false) : null;
         case 'amendment':
           return amendmentId
             ? getAmendmentSecondaryNavItems(amendmentId, isAmendmentAdmin ?? false)

@@ -81,6 +81,8 @@ const deTranslation: I18nLocale = {
         agenda: 'Tagesordnung',
         stream: 'Stream',
         participants: 'Teilnehmer',
+        positions: 'Positionen',
+        notifications: 'Benachrichtigungen',
         network: 'Netzwerk',
         edit: 'Veranstaltung bearbeiten',
       },
@@ -100,6 +102,7 @@ const deTranslation: I18nLocale = {
         operation: 'Betrieb',
         network: 'Netzwerk',
         memberships: 'Mitglieder',
+        notifications: 'Benachrichtigungen',
         edit: 'Gruppe bearbeiten',
       },
       amendment: {
@@ -109,11 +112,13 @@ const deTranslation: I18nLocale = {
         discussions: 'Diskussionen',
         collaborators: 'Mitarbeiter',
         process: 'Prozess',
+        notifications: 'Benachrichtigungen',
         edit: 'Amendment bearbeiten',
       },
       blog: {
         overview: 'Übersicht',
         bloggers: 'Blogger',
+        notifications: 'Benachrichtigungen',
       },
     },
     toggles: {

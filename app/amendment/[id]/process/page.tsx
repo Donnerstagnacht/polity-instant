@@ -1,7 +1,7 @@
 'use client';
 
 import { use } from 'react';
-import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
+import { AuthGuard } from '@/features/auth/AuthGuard';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { AmendmentProcessFlow } from '@/features/amendments/ui/AmendmentProcessFlow';
 

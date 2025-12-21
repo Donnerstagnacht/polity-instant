@@ -1,18 +1,40 @@
 'use client';
 
 import { use } from 'react';
-import { AuthGuard, OwnerOnlyGuard } from '@/features/auth';
+import { AuthGuard } from '@/features/auth';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { UserNetworkFlow } from '@/features/user/ui/UserNetworkFlow';
 import { Card, CardContent } from '@/components/ui/card';
+import { usePermissions } from '../../../../db/rbac/usePermissions';
+import { AccessDenied } from '@/components/shared/AccessDenied';
 
 export default function UserNetworkPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
+  const { isMe, isLoading: permissionsLoading } = usePermissions({});
+
+  if (permissionsLoading) {
+    return (
+      <AuthGuard requireAuth={true}>
+        <PageWrapper className="container mx-auto p-8">
+          <div>Loading...</div>
+        </PageWrapper>
+      </AuthGuard>
+    );
+  }
+
+  if (!isMe(resolvedParams.id)) {
+    return (
+      <AuthGuard requireAuth={true}>
+        <PageWrapper>
+          <AccessDenied />
+        </PageWrapper>
+      </AuthGuard>
+    );
+  }
 
   return (
     <AuthGuard requireAuth={true}>
-      <OwnerOnlyGuard targetUserId={resolvedParams.id}>
-        <PageWrapper className="container mx-auto p-8">
+      <PageWrapper className="container mx-auto p-8">
         <div className="mb-8">
           <h1 className="mb-4 text-4xl font-bold">User Network</h1>
           <p className="text-muted-foreground">
@@ -28,7 +50,6 @@ export default function UserNetworkPage({ params }: { params: Promise<{ id: stri
           </CardContent>
         </Card>
       </PageWrapper>
-      </OwnerOnlyGuard>
     </AuthGuard>
   );
 }

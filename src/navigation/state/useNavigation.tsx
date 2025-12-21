@@ -73,7 +73,12 @@ export function useNavigation() {
       ? {
           amendments: {
             $: { where: { id: amendmentId } },
-            amendmentRoleCollaborators: { user: {} },
+            amendmentRoleCollaborators: { 
+              user: {},
+              role: {
+                actionRights: {}
+              }
+            },
             roles: { actionRights: {} },
           },
         }
@@ -81,22 +86,15 @@ export function useNavigation() {
   );
   
   // Map the query result to match the Amendment interface expected by usePermissions
-  const amendment = amendmentData?.amendments?.[0] 
-    ? {
-        ...amendmentData.amendments[0],
-        collaborators: amendmentData.amendments[0].amendmentRoleCollaborators?.map((c: any) => ({
-          ...c,
-          roleName: c.role // Assuming the role name is stored in 'role' field of collaborator
-        }))
-      } as unknown as Amendment
-    : undefined;
+  const amendment = amendmentData?.amendments?.[0] as unknown as Amendment;
   
   // Let's use the permission hook
   const { 
     canManage, 
     isMe, 
     isABlogger,
-    isAuthor: isAmendmentAuthor 
+    isAuthor: isAmendmentAuthor,
+    isMember
   } = usePermissions({
     groupId,
     eventId,
@@ -119,6 +117,7 @@ export function useNavigation() {
     const isBlogOwner = canManage('blogs');
 
     const isOwnUser = isMe(userId);
+    const isGroupMember = isMember();
 
     const baseSecondaryItems = baseGetSecondaryNavItems(
       currentPrimaryRoute,
@@ -131,7 +130,8 @@ export function useNavigation() {
       isEventAdmin,
       isAmendmentAdmin,
       blogId,
-      isBlogOwner
+      isBlogOwner,
+      isGroupMember
     );
     if (!baseSecondaryItems) return null;
 

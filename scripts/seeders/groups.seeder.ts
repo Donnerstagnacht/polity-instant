@@ -33,6 +33,27 @@ export const groupsSeeder: EntitySeeder = {
     let messagesToConversations = 0;
     let messagesToSenders = 0;
 
+    // Define conversation and admin rights once for reuse across all groups
+    const conversationRights = [
+      { resource: 'messages', action: 'create' },
+      { resource: 'messages', action: 'read' },
+      { resource: 'messages', action: 'update' },
+      { resource: 'messages', action: 'delete' },
+    ];
+
+    const adminRights = [
+      { resource: 'notifications', action: 'manageNotifications' },
+      { resource: 'groupMemberships', action: 'manage' },
+      { resource: 'roles', action: 'manage' },
+      { resource: 'groups', action: 'manage' },
+    ];
+
+    // Track users who have received Board Member roles to ensure everyone gets at least one
+    const usersWithBoardMemberRole = new Set<string>();
+    
+    // Track all group memberships to avoid duplicates in invitations seeder
+    const groupMemberships = new Map<string, Set<string>>(); // groupId -> Set of userIds
+
     // Create groups owned by main test user
     for (let i = 0; i < 2; i++) {
       const groupId = id();
@@ -91,13 +112,6 @@ export const groupsSeeder: EntitySeeder = {
       );
 
       // Add conversation rights to both roles
-      const conversationRights = [
-        { resource: 'messages', action: 'create' },
-        { resource: 'messages', action: 'read' },
-        { resource: 'messages', action: 'update' },
-        { resource: 'messages', action: 'delete' },
-      ];
-
       for (const right of conversationRights) {
         const boardRightId = id();
         const memberRightId = id();
@@ -105,24 +119,26 @@ export const groupsSeeder: EntitySeeder = {
         transactions.push(
           tx.actionRights[boardRightId]
             .update({ resource: right.resource, action: right.action })
-            .link({ roles: boardMemberRoleId, groupId: groupId }),
+            .link({ roles: boardMemberRoleId, group: groupId }),
           tx.actionRights[memberRightId]
             .update({ resource: right.resource, action: right.action })
-            .link({ roles: memberRoleId, groupId: groupId })
+            .link({ roles: memberRoleId, group: groupId })
         );
         actionRightsToRoles += 2;
         actionRightsToGroups += 2;
       }
 
-      // Add manageNotifications right to board member role
-      const manageNotificationsRightId = id();
-      transactions.push(
-        tx.actionRights[manageNotificationsRightId]
-          .update({ resource: 'notifications', action: 'manageNotifications' })
-          .link({ roles: boardMemberRoleId, groupId: groupId })
-      );
-      actionRightsToRoles++;
-      actionRightsToGroups++;
+      // Add admin rights to board member role
+      for (const right of adminRights) {
+        const rightId = id();
+        transactions.push(
+          tx.actionRights[rightId]
+            .update({ resource: right.resource, action: right.action })
+            .link({ roles: boardMemberRoleId, group: groupId })
+        );
+        actionRightsToRoles++;
+        actionRightsToGroups++;
+      }
 
       // Add main user as owner member
       const ownerMembershipId = id();
@@ -138,6 +154,13 @@ export const groupsSeeder: EntitySeeder = {
       groupMembershipsToUsers++;
       groupMembershipsToGroups++;
       groupMembershipsToRoles++;
+      usersWithBoardMemberRole.add(mainUserId); // Track main user has board member role
+      
+      // Track membership
+      if (!groupMemberships.has(groupId)) {
+        groupMemberships.set(groupId, new Set());
+      }
+      groupMemberships.get(groupId)!.add(mainUserId);
 
       // Add some members to main user's groups
       const memberCount = randomInt(5, 8);
@@ -146,10 +169,23 @@ export const groupsSeeder: EntitySeeder = {
         memberCount
       );
 
-      for (const memberId of members) {
+      for (let idx = 0; idx < members.length; idx++) {
+        const memberId = members[idx];
         const membershipId = id();
-        const status = randomItem(['member', 'member', 'member', 'requested', 'invited'] as const);
-        const roleId = randomItem([memberRoleId, memberRoleId, boardMemberRoleId]);
+        
+        // Prioritize giving Board Member role to users who don't have one yet
+        const needsBoardMemberRole = !usersWithBoardMemberRole.has(memberId);
+        const roleId = needsBoardMemberRole ? boardMemberRoleId : (idx % 3 === 0 ? boardMemberRoleId : memberRoleId);
+        
+        // Board Members always have 'member' status, regular members can be invited/requested
+        const status = roleId === boardMemberRoleId 
+          ? 'member' as const
+          : randomItem(['member', 'member', 'member', 'requested', 'invited'] as const);
+        
+        if (roleId === boardMemberRoleId) {
+          usersWithBoardMemberRole.add(memberId);
+        }
+        
         transactions.push(
           tx.groupMemberships[membershipId]
             .update({
@@ -161,6 +197,9 @@ export const groupsSeeder: EntitySeeder = {
         groupMembershipsToUsers++;
         groupMembershipsToGroups++;
         groupMembershipsToRoles++;
+        
+        // Track membership
+        groupMemberships.get(groupId)!.add(memberId);
       }
 
       // Update member count
@@ -302,6 +341,35 @@ export const groupsSeeder: EntitySeeder = {
       );
       rolesToGroups += 2;
 
+      // Add conversation rights to both roles
+      for (const right of conversationRights) {
+        const boardRightId = id();
+        const memberRightId = id();
+
+        transactions.push(
+          tx.actionRights[boardRightId]
+            .update({ resource: right.resource, action: right.action })
+            .link({ roles: boardMemberRoleId, group: groupId }),
+          tx.actionRights[memberRightId]
+            .update({ resource: right.resource, action: right.action })
+            .link({ roles: memberRoleId, group: groupId })
+        );
+        actionRightsToRoles += 2;
+        actionRightsToGroups += 2;
+      }
+
+      // Add admin rights to board member role
+      for (const right of adminRights) {
+        const rightId = id();
+        transactions.push(
+          tx.actionRights[rightId]
+            .update({ resource: right.resource, action: right.action })
+            .link({ roles: boardMemberRoleId, group: groupId })
+        );
+        actionRightsToRoles++;
+        actionRightsToGroups++;
+      }
+
       // Add owner as member
       const ownerMembershipId = id();
       transactions.push(
@@ -316,6 +384,13 @@ export const groupsSeeder: EntitySeeder = {
       groupMembershipsToUsers++;
       groupMembershipsToGroups++;
       groupMembershipsToRoles++;
+      usersWithBoardMemberRole.add(ownerId); // Track owner has board member role
+      
+      // Track membership
+      if (!groupMemberships.has(groupId)) {
+        groupMemberships.set(groupId, new Set());
+      }
+      groupMemberships.get(groupId)!.add(ownerId);
 
       // Add random members
       const memberCount = randomInt(3, 10);
@@ -324,24 +399,42 @@ export const groupsSeeder: EntitySeeder = {
         memberCount
       );
 
-      for (const memberId of members) {
+      for (let idx = 0; idx < members.length; idx++) {
+        const memberId = members[idx];
         const membershipId = id();
+        
+        // Prioritize giving Board Member role to users who don't have one yet
+        const needsBoardMemberRole = !usersWithBoardMemberRole.has(memberId);
+        const roleId = needsBoardMemberRole ? boardMemberRoleId : (idx % 3 === 0 ? boardMemberRoleId : memberRoleId);
+        
+        // Board Members always have 'member' status, regular members can be invited/requested
+        const status = roleId === boardMemberRoleId 
+          ? 'member' as const
+          : randomItem(['member', 'member', 'requested', 'invited'] as const);
+        
+        if (roleId === boardMemberRoleId) {
+          usersWithBoardMemberRole.add(memberId);
+        }
+        
         transactions.push(
           tx.groupMemberships[membershipId]
             .update({
-              status: randomItem(['member', 'member', 'requested', 'invited'] as const),
+              status: status,
               createdAt: faker.date.past({ years: 0.5 }),
               visibility: randomVisibility(),
             })
             .link({
               user: memberId,
               group: groupId,
-              role: randomItem([memberRoleId, boardMemberRoleId]),
+              role: roleId,
             })
         );
         groupMembershipsToUsers++;
         groupMembershipsToGroups++;
         groupMembershipsToRoles++;
+        
+        // Track membership
+        groupMemberships.get(groupId)!.add(memberId);
       }
 
       // Update member count
@@ -354,7 +447,15 @@ export const groupsSeeder: EntitySeeder = {
 
     // Batch transact
     await batchTransact(db, transactions);
+    
+    // Verify all users have at least one Board Member role
+    const usersWithoutBoardMemberRole = userIds.filter(uid => !usersWithBoardMemberRole.has(uid));
+    if (usersWithoutBoardMemberRole.length > 0) {
+      console.log(`⚠️  Warning: ${usersWithoutBoardMemberRole.length} users without Board Member role`);
+    }
+    
     console.log(`✅ Seeded ${groupIds.length} groups`);
+    console.log(`   🎯 ${usersWithBoardMemberRole.size}/${userIds.length} users have Board Member role in at least one group`);
     console.log(`   Links created:`);
     console.log(`   - Groups to Owners: ${groupsToOwners}`);
     console.log(`   - Roles to Groups: ${rolesToGroups}`);
@@ -376,6 +477,7 @@ export const groupsSeeder: EntitySeeder = {
       ...context,
       groupIds,
       conversationIds,
+      groupMemberships, // Track memberships to avoid duplicates in invitations seeder
       linkCounts: {
         ...context.linkCounts,
         groupsToOwners: (context.linkCounts?.groupsToOwners || 0) + groupsToOwners,

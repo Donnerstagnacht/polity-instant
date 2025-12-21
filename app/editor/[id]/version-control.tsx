@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { GitBranch, Clock, User, Plus, History } from 'lucide-react';
 import { db, tx, id } from '../../../db/db';
-import { useToast } from '@/global-state/use-toast';
+import { toast } from 'sonner';
 
 interface Version {
   id: string;
@@ -47,7 +47,6 @@ export function VersionControl({
   currentUserId,
   onRestoreVersion,
 }: VersionControlProps) {
-  const { toast } = useToast();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
   const [versionTitle, setVersionTitle] = useState('');
@@ -69,11 +68,7 @@ export function VersionControl({
   // Create a new version manually
   const handleCreateVersion = async () => {
     if (!versionTitle.trim()) {
-      toast({
-        title: 'Error',
-        description: 'Please enter a version title',
-        variant: 'destructive',
-      });
+      toast.error('Please enter a version title');
       return;
     }
 
@@ -95,20 +90,13 @@ export function VersionControl({
           .link({ document: documentId, creator: currentUserId }),
       ]);
 
-      toast({
-        title: 'Success',
-        description: `Version ${nextVersionNumber} created successfully`,
-      });
+      toast.success(`Version ${nextVersionNumber} created successfully`);
 
       setVersionTitle('');
       setIsCreateDialogOpen(false);
     } catch (error) {
       console.error('Failed to create version:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to create version',
-        variant: 'destructive',
-      });
+      toast.error('Failed to create version');
     } finally {
       setIsCreating(false);
     }
@@ -119,19 +107,12 @@ export function VersionControl({
     try {
       onRestoreVersion(version.content);
 
-      toast({
-        title: 'Success',
-        description: `Restored to version ${version.versionNumber}`,
-      });
+      toast.success(`Restored to version ${version.versionNumber}`);
 
       setIsHistoryDialogOpen(false);
     } catch (error) {
       console.error('Failed to restore version:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to restore version',
-        variant: 'destructive',
-      });
+      toast.error('Failed to restore version');
     }
   };
 

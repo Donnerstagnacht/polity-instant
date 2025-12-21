@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Check, X, Minus } from 'lucide-react';
 import { db, tx, id } from '../../../../db/db';
-import { useToast } from '@/global-state/use-toast';
+import { toast } from 'sonner';
 
 interface VoteControlsProps {
   changeRequestId: string;
@@ -68,7 +68,6 @@ export function VoteControls({
   const [actualChangeRequestId, setActualChangeRequestId] = useState<string | null>(
     isUUID(changeRequestId) ? changeRequestId : null
   );
-  const { toast } = useToast();
 
   // Check if current user has already voted
   const currentUserVote = votes.find(v => v.voter?.id === currentUserId);
@@ -87,11 +86,7 @@ export function VoteControls({
 
   const handleVote = async (voteType: 'accept' | 'reject' | 'abstain') => {
     if (hasVoted) {
-      toast({
-        title: 'Already Voted',
-        description: 'You have already cast your vote on this change request.',
-        variant: 'destructive',
-      });
+      toast.error('You have already cast your vote on this change request.');
       return;
     }
 
@@ -141,21 +136,14 @@ export function VoteControls({
           .link({ voter: currentUserId }),
       ]);
 
-      toast({
-        title: 'Vote Recorded',
-        description: `You voted to ${voteType} this change request.`,
-      });
+      toast.success(`Vote recorded: ${voteType}`);
 
       if (onVoteComplete) {
         onVoteComplete();
       }
     } catch (error) {
       console.error('Failed to record vote:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to record your vote. Please try again.',
-        variant: 'destructive',
-      });
+      toast.error('Failed to record your vote. Please try again.');
     } finally {
       setIsVoting(false);
     }

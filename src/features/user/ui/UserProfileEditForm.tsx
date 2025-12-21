@@ -6,7 +6,7 @@ import { AboutSection } from './AboutSection';
 import { ContactInformationSection } from './ContactInformationSection';
 import { HashtagsSection } from './HashtagsSection';
 import { SubscriptionPlansGrid } from './SubscriptionPlansGrid';
-import { SubscriptionStatus } from '../components/SubscriptionStatus';
+import { SubscriptionStatus } from './SubscriptionStatus.tsx';
 import type { UserProfileFormData } from '../hooks/useUserProfileForm';
 
 interface UserProfileEditFormProps {

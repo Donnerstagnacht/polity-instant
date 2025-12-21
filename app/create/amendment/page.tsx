@@ -65,7 +65,7 @@ function CreateAmendmentForm() {
 
       const amendmentId = id();
       const collaboratorId = id();
-      const applicantRoleId = id();
+      const authorRoleId = id();
       const collaboratorRoleId = id();
 
       const transactions = [
@@ -80,13 +80,13 @@ function CreateAmendmentForm() {
           visibility: formData.visibility,
         }),
 
-        // Create Applicant role with admin permissions
-        tx.roles[applicantRoleId].update({
-          name: 'Applicant',
+        // Create Author role with admin permissions
+        tx.roles[authorRoleId].update({
+          name: 'Author',
           scope: 'amendment',
           createdAt: new Date(),
         }),
-        tx.roles[applicantRoleId].link({ amendment: amendmentId }),
+        tx.roles[authorRoleId].link({ amendment: amendmentId }),
 
         // Create Collaborator role with basic permissions
         tx.roles[collaboratorRoleId].update({
@@ -96,15 +96,15 @@ function CreateAmendmentForm() {
         }),
         tx.roles[collaboratorRoleId].link({ amendment: amendmentId }),
 
-        // Create collaboration for creator as Applicant
+        // Create collaboration for creator as Author
         tx.amendmentCollaborators[collaboratorId].update({
-          status: 'member',
+          status: 'admin',
           createdAt: new Date(),
         }),
         tx.amendmentCollaborators[collaboratorId].link({
           user: user.id,
           amendment: amendmentId,
-          role: applicantRoleId,
+          role: authorRoleId,
         }),
       ];
 

@@ -48,11 +48,15 @@ export function usePermissions(context: PermissionContext) {
             $: { where: { 'user.id': userId } },
             group: {
               roles: {
-                actionRights: {},
+                actionRights: {
+                  group: {},
+                },
               },
             },
             role: {
-              actionRights: {},
+              actionRights: {
+                group: {},
+              },
             },
           },
         }
@@ -62,11 +66,13 @@ export function usePermissions(context: PermissionContext) {
   const { data: participationData, isLoading: participationsLoading } = db.useQuery(
     userId
       ? {
-          participants: {
+          eventParticipants: {
             $: { where: { 'user.id': userId } },
             event: {},
             role: {
-              actionRights: {},
+              actionRights: {
+                event: {},
+              },
             },
           },
         }
@@ -80,7 +86,9 @@ export function usePermissions(context: PermissionContext) {
             $: { where: { 'user.id': userId } },
             blog: {},
             role: {
-              actionRights: {},
+              actionRights: {
+                blog: {},
+              },
             },
           },
         }
@@ -92,7 +100,7 @@ export function usePermissions(context: PermissionContext) {
   return useMemo(() => {
     // Transform data to match our types
     const memberships = membershipData?.groupMemberships as Membership[] | undefined;
-    const participations = participationData?.participants as Participation[] | undefined;
+    const participations = participationData?.eventParticipants as Participation[] | undefined;
     const bloggerRelations = bloggerData?.blogBloggers as BloggerRelation[] | undefined;
 
     /**
@@ -126,9 +134,9 @@ export function usePermissions(context: PermissionContext) {
       // Check amendment-level permissions
       if (context.amendment) {
         // Author can always manage their amendment
-        if (isAmendmentAuthor(context.amendment, userId) && action === 'manage') {
-          return true;
-        }
+        // if (isAmendmentAuthor(context.amendment, userId) && action === 'manage') {
+        //   return true;
+        // }
         if (hasAmendmentPermission(context.amendment, userId, resource, action)) {
           return true;
         }
