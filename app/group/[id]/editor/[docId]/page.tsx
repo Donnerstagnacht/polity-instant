@@ -84,7 +84,7 @@ export default function GroupDocumentEditorPage({
           groupId={groupId}
           userId={user?.id}
           userName={currentUser?.name}
-          userEmail={user?.email}
+          userEmail={user?.email ?? undefined}
           userAvatar={currentUser?.avatar}
         />
       </PageWrapper>
