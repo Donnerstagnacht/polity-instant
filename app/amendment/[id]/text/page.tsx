@@ -6,6 +6,7 @@ import { AuthGuard, PermissionGuard } from '@/features/auth';
 import { db } from '../../../../db/db';
 import { useAmendmentData } from '@/features/amendments/hooks/useAmendmentData';
 import { DocumentEditorView } from '@/features/amendments/document-editor/ui/DocumentEditorView';
+import type { Amendment } from '@db/rbac/types';
 
 export default function AmendmentTextPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -32,7 +33,7 @@ export default function AmendmentTextPage({ params }: { params: Promise<{ id: st
       <PermissionGuard
         action="update"
         resource="amendments"
-        context={{ amendment }}
+        context={{ amendment: amendment as Amendment | undefined }}
       >
         <PageWrapper className="container mx-auto p-8">
           <DocumentEditorView
