@@ -129,8 +129,7 @@ export function VoteControls({
           .link({ voter: currentUserId }),
       ]);
 
-      toast({
-        title: 'Vote Recorded',
+      toast.success('Vote Recorded', {
         description: `You voted to ${voteType} this change request.`,
       });
 
