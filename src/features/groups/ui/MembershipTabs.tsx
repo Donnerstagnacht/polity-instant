@@ -21,7 +21,11 @@ export function MembershipTabs({
   rolesContent,
 }: MembershipTabsProps) {
   return (
-    <Tabs value={activeTab} onValueChange={onTabChange} className="space-y-4">
+    <Tabs
+      value={activeTab}
+      onValueChange={value => onTabChange(value as MembershipTab)}
+      className="space-y-4"
+    >
       <TabsList>
         <TabsTrigger value="memberships">Memberships</TabsTrigger>
         <TabsTrigger value="roles">Roles</TabsTrigger>
