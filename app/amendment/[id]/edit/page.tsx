@@ -17,7 +17,7 @@ export default function AmendmentEditPage({ params }: { params: Promise<{ id: st
       <PermissionGuard
         action="update"
         resource="amendments"
-        context={{ amendment }}
+        context={{ amendment: amendment ?? undefined }}
       >
         <PageWrapper>
           <AmendmentEditContent
