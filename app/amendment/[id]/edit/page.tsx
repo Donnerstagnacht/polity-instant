@@ -6,6 +6,7 @@ import { PageWrapper } from '@/components/layout/page-wrapper';
 import { useAmendmentData } from '@/features/amendments/hooks/useAmendmentData';
 import { AmendmentEditContent } from '@/features/amendments/ui/AmendmentEditContent';
 import { useAuthStore } from '@/features/auth/auth';
+import type { Amendment } from '@db/rbac/types';
 
 export default function AmendmentEditPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -17,7 +18,7 @@ export default function AmendmentEditPage({ params }: { params: Promise<{ id: st
       <PermissionGuard
         action="update"
         resource="amendments"
-        context={{ amendment: amendment ?? undefined }}
+        context={{ amendment: amendment as Amendment | undefined }}
       >
         <PageWrapper>
           <AmendmentEditContent
