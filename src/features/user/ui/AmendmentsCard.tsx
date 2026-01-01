@@ -15,6 +15,7 @@ export interface AmendmentsCardProps {
     collaboratorsCount?: number;
     supportingGroupsCount?: number;
     supportingMembersCount?: number;
+    collaborationRole?: string;
   };
   statusStyle: {
     badge: string;
@@ -36,11 +37,18 @@ export const AmendmentsCard: React.FC<AmendmentsCardProps> = ({
   >
     <div className="flex flex-col md:flex-row">
       <div className="flex-1 p-6">
-        {amendment.code && (
-          <Badge variant="secondary" className="mb-2">
-            {amendment.code}
-          </Badge>
-        )}
+        <div className="mb-2 flex flex-wrap gap-2">
+          {amendment.code && (
+            <Badge variant="secondary">
+              {amendment.code}
+            </Badge>
+          )}
+          {amendment.collaborationRole && (
+            <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+              {amendment.collaborationRole}
+            </Badge>
+          )}
+        </div>
         <h3 className="text-lg font-semibold">{amendment.title}</h3>
         {amendment.subtitle && (
           <p className="mb-2 text-sm text-muted-foreground">{amendment.subtitle}</p>

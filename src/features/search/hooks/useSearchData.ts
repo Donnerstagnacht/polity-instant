@@ -33,6 +33,7 @@ export function useSearchData() {
       hashtags: {},
       amendmentRoleCollaborators: {
         user: {},
+        role: {},
       },
       votes: {
         user: {},

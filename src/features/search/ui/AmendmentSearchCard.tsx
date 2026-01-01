@@ -1,6 +1,7 @@
 import React from 'react';
 import { AmendmentsCard } from '@/features/user/ui/AmendmentsCard';
 import { getStatusStyles } from '@/features/user/utils/userWiki.utils';
+import db from '../../../../db/db';
 
 interface AmendmentSearchCardProps {
   amendment: any;
@@ -11,6 +12,7 @@ export function AmendmentSearchCard({
   amendment,
   gradientClass = 'bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950',
 }: AmendmentSearchCardProps) {
+  const { user } = db.useAuth();
   const statusStyle = getStatusStyles(amendment.status);
 
   // Calculate supporters from upvotes and downvotes
@@ -27,6 +29,12 @@ export function AmendmentSearchCard({
     (total: number, group: any) => total + (group.memberships?.length || 0),
     0
   ) || 0;
+  
+  // Find current user's collaboration
+  const currentUserCollaboration = amendment.amendmentRoleCollaborators?.find(
+    (collab: any) => collab.user?.id === user?.id
+  );
+  const collaborationRole = currentUserCollaboration?.role?.name;
 
   return (
     <a href={`/amendment/${amendment.id}`} className="block cursor-pointer">
@@ -43,6 +51,7 @@ export function AmendmentSearchCard({
           collaboratorsCount: collaboratorsCount,
           supportingGroupsCount: supportingGroupsCount,
           supportingMembersCount: supportingMembersCount,
+          collaborationRole: collaborationRole,
         }}
         statusStyle={statusStyle}
         gradientClass={gradientClass}
