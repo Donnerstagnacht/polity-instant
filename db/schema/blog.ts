@@ -8,11 +8,17 @@ const _blog = {
       likeCount: i.number(),
       title: i.string(),
       visibility: i.string().indexed().optional(), // 'public', 'authenticated', 'private'
+      upvotes: i.number().optional(),
+      downvotes: i.number().optional(),
     }),
     blogBloggers: i.entity({
       createdAt: i.date().indexed().optional(),
       status: i.string().indexed().optional(), // invited, requested, writer, owner
       visibility: i.string().indexed().optional(), // 'public', 'authenticated', 'private'
+    }),
+    blogSupportVotes: i.entity({
+      createdAt: i.date().indexed(),
+      vote: i.number().indexed(), // 1 for upvote, -1 for downvote
     }),
   },
   links: {
@@ -82,6 +88,30 @@ const _blog = {
         on: 'blogs',
         has: 'many',
         label: 'timelineEvents',
+      },
+    },
+    blogSupportVotesUser: {
+      forward: {
+        on: 'blogSupportVotes',
+        has: 'one',
+        label: 'user',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'blogSupportVotes',
+      },
+    },
+    blogSupportVotesBlog: {
+      forward: {
+        on: 'blogSupportVotes',
+        has: 'one',
+        label: 'blog',
+      },
+      reverse: {
+        on: 'blogs',
+        has: 'many',
+        label: 'votes',
       },
     },
   } as const,

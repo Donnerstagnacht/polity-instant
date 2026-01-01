@@ -356,7 +356,8 @@ export const navItemsAuthenticated = (
   // Function to create amendment secondary navigation items for a specific amendment
   const getAmendmentSecondaryNavItems = (
     amendmentId: string,
-    isAdmin = false
+    canView = false,
+    canManage = false
   ): NavigationItem[] => {
     const items: NavigationItem[] = [
       {
@@ -365,20 +366,6 @@ export const navItemsAuthenticated = (
         icon: 'FileText',
         href: `/amendment/${amendmentId}`,
         onClick: () => router.push(`/amendment/${amendmentId}`),
-      },
-      {
-        id: 'text',
-        label: t ? t('navigation.secondary.amendment.text') : 'Full Text',
-        icon: 'File',
-        href: `/amendment/${amendmentId}/text`,
-        onClick: () => router.push(`/amendment/${amendmentId}/text`),
-      },
-      {
-        id: 'changeRequests',
-        label: t ? t('navigation.secondary.amendment.changeRequests') : 'Change Requests',
-        icon: 'FileText',
-        href: `/amendment/${amendmentId}/change-requests`,
-        onClick: () => router.push(`/amendment/${amendmentId}/change-requests`),
       },
       {
         id: 'discussions',
@@ -396,9 +383,27 @@ export const navItemsAuthenticated = (
       },
     ];
 
-    // Only add collaborators and edit items if user is admin
-    if (isAdmin) {
+    // Add items requiring view permission
+    if (canView) {
+      items.push({
+        id: 'changeRequests',
+        label: t ? t('navigation.secondary.amendment.changeRequests') : 'Change Requests',
+        icon: 'FileText',
+        href: `/amendment/${amendmentId}/change-requests`,
+        onClick: () => router.push(`/amendment/${amendmentId}/change-requests`),
+      });
+    }
+
+    // Add items requiring manage permission
+    if (canManage) {
       items.push(
+        {
+          id: 'text',
+          label: t ? t('navigation.secondary.amendment.text') : 'Full Text',
+          icon: 'File',
+          href: `/amendment/${amendmentId}/text`,
+          onClick: () => router.push(`/amendment/${amendmentId}/text`),
+        },
         {
           id: 'collaborators',
           label: t ? t('navigation.secondary.amendment.collaborators') : 'Collaborators',
@@ -480,7 +485,8 @@ export const navItemsAuthenticated = (
       amendmentId?: string,
       isGroupAdmin?: boolean,
       isEventAdmin?: boolean,
-      isAmendmentAdmin?: boolean,
+      canViewAmendment?: boolean,
+      canManageAmendment?: boolean,
       blogId?: string,
       isBlogOwner?: boolean,
       isGroupMember?: boolean
@@ -498,7 +504,7 @@ export const navItemsAuthenticated = (
           return groupId ? getGroupSecondaryNavItems(groupId, isGroupAdmin ?? false, isGroupMember ?? false) : null;
         case 'amendment':
           return amendmentId
-            ? getAmendmentSecondaryNavItems(amendmentId, isAmendmentAdmin ?? false)
+            ? getAmendmentSecondaryNavItems(amendmentId, canViewAmendment ?? false, canManageAmendment ?? false)
             : null;
         case 'blog':
           return blogId ? getBlogSecondaryNavItems(blogId, isBlogOwner ?? false) : null;

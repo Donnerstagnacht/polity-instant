@@ -20,7 +20,7 @@ export default function GroupEditorPage({ params }: { params: Promise<{ id: stri
     <AuthGuard requireAuth={true}>
       <PermissionGuard
         action="view"
-        resource="groups"
+        resource="groupDocuments"
         context={{ groupId }}
       >
       <PageWrapper className="container mx-auto p-8">

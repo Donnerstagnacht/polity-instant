@@ -155,5 +155,5 @@ export interface ChartData {
   fill: string;
 }
 
-export type MembershipTab = 'memberships' | 'roles';
+export type MembershipTab = 'memberships' | 'roles' | 'positions';
 export type TodoViewMode = 'kanban' | 'list';

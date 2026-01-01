@@ -44,16 +44,29 @@ export const positionsSeeder: EntitySeeder = {
         const positionTx = tx.positions[positionId].update({
           title,
           description: faker.lorem.sentence(),
-          responsibilities: faker.lorem.paragraph(),
           term: randomItem([1, 2, 3, 4]), // Term in years as a number
           firstTermStart: faker.date.past({ years: 1 }),
-          isElected: faker.datatype.boolean(),
           createdAt: faker.date.past({ years: 1 }),
           updatedAt: faker.date.recent({ days: 30 }),
         });
 
         if (holderUserId) {
-          transactions.push(positionTx.link({ group: groupId, holder: holderUserId }));
+          transactions.push(positionTx.link({ group: groupId, currentHolder: holderUserId }));
+          
+          // Create holder history entry
+          const historyId = id();
+          const startDate = faker.date.past({ years: 1 });
+          transactions.push(
+            tx.positionHolderHistory[historyId]
+              .update({
+                startDate,
+                endDate: null,
+                reason: randomItem(['elected', 'appointed']),
+                createdAt: startDate,
+              })
+              .link({ position: positionId, holder: holderUserId })
+          );
+          
           positionsToGroups++;
           positionsToHolders++;
         } else {

@@ -184,6 +184,9 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
       },
       hashtags: {},
       subscribers: {},
+      votes: {
+        user: {},
+      },
     },
   });
 
@@ -209,6 +212,70 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
   // Get comments from separate query and filter to only show top-level comments
   const allComments = (commentsData?.comments || []) as BlogComment[];
   const topLevelComments = allComments.filter(comment => !comment.parentComment);
+
+  // Vote handling
+  const score = (blog?.upvotes || 0) - (blog?.downvotes || 0);
+  const userVote = blog?.votes?.find((v: any) => v.user?.id === user?.id);
+  const hasUpvoted = userVote?.vote === 1;
+  const hasDownvoted = userVote?.vote === -1;
+
+  const handleVote = async (voteValue: number) => {
+    if (!user?.id) {
+      toast.error('Please log in to vote');
+      return;
+    }
+
+    try {
+      if (userVote) {
+        // Update or remove existing vote
+        if (userVote.vote === voteValue) {
+          // Remove vote
+          await db.transact([
+            db.tx.blogSupportVotes[userVote.id].delete(),
+            db.tx.blogs[blogId].update({
+              upvotes: voteValue === 1 ? (blog.upvotes || 1) - 1 : blog.upvotes,
+              downvotes: voteValue === -1 ? (blog.downvotes || 1) - 1 : blog.downvotes,
+            }),
+          ]);
+        } else {
+          // Change vote
+          await db.transact([
+            db.tx.blogSupportVotes[userVote.id].update({ vote: voteValue }),
+            db.tx.blogs[blogId].update({
+              upvotes:
+                voteValue === 1
+                  ? (blog.upvotes || 0) + 1
+                  : Math.max(0, (blog.upvotes || 1) - 1),
+              downvotes:
+                voteValue === -1
+                  ? (blog.downvotes || 0) + 1
+                  : Math.max(0, (blog.downvotes || 1) - 1),
+            }),
+          ]);
+        }
+      } else {
+        // Create new vote
+        const voteId = id();
+        await db.transact([
+          db.tx.blogSupportVotes[voteId].update({
+            vote: voteValue,
+            createdAt: Date.now(),
+          }),
+          db.tx.blogSupportVotes[voteId].link({
+            blog: blogId,
+            user: user.id,
+          }),
+          db.tx.blogs[blogId].update({
+            upvotes: voteValue === 1 ? (blog.upvotes || 0) + 1 : blog.upvotes,
+            downvotes: voteValue === -1 ? (blog.downvotes || 0) + 1 : blog.downvotes,
+          }),
+        ]);
+      }
+    } catch (error) {
+      console.error('Error voting:', error);
+      toast.error('Failed to vote');
+    }
+  };
 
   // Sort comments based on selected sort method
   const comments = [...topLevelComments].sort((a, b) => {
@@ -332,7 +399,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
       <StatsBar
         stats={[
           { value: subscriberCount, labelKey: 'components.labels.subscribers' },
-          { value: blog.likeCount || 0, labelKey: 'components.labels.likes' },
+          { value: score, labelKey: 'components.labels.supporters' },
           { value: comments.length, labelKey: 'components.labels.comments' },
         ]}
       />
@@ -346,6 +413,24 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
           onToggleSubscribe={toggleSubscribe}
           isLoading={subscribeLoading}
         />
+        <div className="flex h-10 items-center gap-1 rounded-lg border bg-card px-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`h-8 w-8 p-0 ${hasUpvoted ? 'text-orange-500' : ''}`}
+            onClick={() => handleVote(1)}
+          >
+            <ArrowUp className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`h-8 w-8 p-0 ${hasDownvoted ? 'text-blue-500' : ''}`}
+            onClick={() => handleVote(-1)}
+          >
+            <ArrowDown className="h-4 w-4" />
+          </Button>
+        </div>
         <Button variant="outline" onClick={() => setIsCommenting(true)}>
           <MessageSquare className="mr-2 h-4 w-4" />
           Comment

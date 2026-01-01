@@ -90,7 +90,8 @@ export function useNavigation() {
   
   // Let's use the permission hook
   const { 
-    canManage, 
+    canManage,
+    canView,
     isMe, 
     isABlogger,
     isAuthor: isAmendmentAuthor,
@@ -108,8 +109,9 @@ export function useNavigation() {
     const isEventAdmin = canManage('events') || canManage('eventParticipants'); // 'manage_participants' implies manage
     const isGroupAdmin = canManage('groups') || canManage('groupMemberships');
     
-    // For amendment, we check if user can manage it
-    const isAmendmentAdmin = canManage('amendments');
+    // For amendment, we check if user can view or manage it
+    const canViewAmendment = canView('amendments');
+    const canManageAmendment = canManage('amendments');
 
     // For blog, we check if user is owner (which usually implies manage permission)
     // The original code checked for 'Owner' role specifically.
@@ -128,7 +130,8 @@ export function useNavigation() {
       amendmentId,
       isGroupAdmin,
       isEventAdmin,
-      isAmendmentAdmin,
+      canViewAmendment,
+      canManageAmendment,
       blogId,
       isBlogOwner,
       isGroupMember

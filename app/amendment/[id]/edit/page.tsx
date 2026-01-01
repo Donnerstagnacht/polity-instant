@@ -16,7 +16,7 @@ export default function AmendmentEditPage({ params }: { params: Promise<{ id: st
   return (
     <AuthGuard requireAuth={true}>
       <PermissionGuard
-        action="update"
+        action="manage"
         resource="amendments"
         context={{ amendment: amendment as Amendment | undefined }}
       >

@@ -30,6 +30,8 @@ const _groups = {
       relationshipType: i.string().indexed(),
       updatedAt: i.date().indexed(),
       withRight: i.string().indexed(),
+      status: i.string().indexed().optional(), // 'active', 'requested', 'rejected', etc.
+      initiatorGroupId: i.string().indexed().optional(),
     }),
     roles: i.entity({
       name: i.string(),
@@ -49,6 +51,12 @@ const _groups = {
       term: i.number(),
       title: i.string().indexed(),
       updatedAt: i.date().indexed(),
+    }),
+    positionHolderHistory: i.entity({
+      startDate: i.date().indexed(),
+      endDate: i.date().indexed().optional(),
+      reason: i.string().indexed(), // 'elected', 'appointed', 'resigned', 'term_ended', 'removed'
+      createdAt: i.date().indexed(),
     }),
   },
   links: {
@@ -158,6 +166,30 @@ const _groups = {
         on: 'groups',
         has: 'many',
         label: 'positions',
+      },
+    },
+    positionHolderHistoryPosition: {
+      forward: {
+        on: 'positionHolderHistory',
+        has: 'one',
+        label: 'position',
+      },
+      reverse: {
+        on: 'positions',
+        has: 'many',
+        label: 'holderHistory',
+      },
+    },
+    positionHolderHistoryHolder: {
+      forward: {
+        on: 'positionHolderHistory',
+        has: 'one',
+        label: 'holder',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'positionHistory',
       },
     },
   } as const,

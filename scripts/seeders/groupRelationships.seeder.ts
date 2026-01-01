@@ -29,6 +29,8 @@ export const groupRelationshipsSeeder: EntitySeeder = {
     const groupRelationshipIds: string[] = [];
     let parentGroupLinks = 0;
     let childGroupLinks = 0;
+    let requestedRelationships = 0;
+    let activeRelationships = 0;
 
     const rights = [
       'informationRight',
@@ -43,17 +45,28 @@ export const groupRelationshipsSeeder: EntitySeeder = {
     groupIds.forEach(gid => amendmentConnections.set(gid, 0));
 
     // Helper to add an amendmentRight relationship
-    const addAmendmentRelationship = (parentId: string, childId: string) => {
+    const addAmendmentRelationship = (parentId: string, childId: string, isRequested: boolean = false) => {
       const relationshipId = id();
       groupRelationshipIds.push(relationshipId);
+      
+      const relationshipData: any = {
+        relationshipType: 'isParent',
+        withRight: 'amendmentRight',
+        createdAt: faker.date.past({ years: 0.5 }),
+        updatedAt: new Date(),
+      };
+      
+      if (isRequested) {
+        relationshipData.status = 'requested';
+        relationshipData.initiatorGroupId = parentId; // Parent initiates the request
+        requestedRelationships++;
+      } else {
+        activeRelationships++;
+      }
+      
       transactions.push(
         tx.groupRelationships[relationshipId]
-          .update({
-            relationshipType: 'isParent',
-            withRight: 'amendmentRight',
-            createdAt: faker.date.past({ years: 0.5 }),
-            updatedAt: new Date(),
-          })
+          .update(relationshipData)
           .link({ parentGroup: parentId, childGroup: childId })
       );
       totalRelationships++;
@@ -87,6 +100,7 @@ export const groupRelationshipsSeeder: EntitySeeder = {
             .link({ parentGroup: groupIds[i], childGroup: groupIds[i + 1] })
         );
         totalRelationships++;
+        activeRelationships++;
         parentGroupLinks++;
         childGroupLinks++;
       }
@@ -151,6 +165,7 @@ export const groupRelationshipsSeeder: EntitySeeder = {
           .link({ parentGroup: groupIds[0], childGroup: groupIds[3] })
       );
       totalRelationships++;
+      activeRelationships++;
       parentGroupLinks++;
       childGroupLinks++;
 
@@ -166,6 +181,7 @@ export const groupRelationshipsSeeder: EntitySeeder = {
           .link({ parentGroup: groupIds[0], childGroup: groupIds[4] })
       );
       totalRelationships++;
+      activeRelationships++;
       parentGroupLinks++;
       childGroupLinks++;
 
@@ -187,6 +203,7 @@ export const groupRelationshipsSeeder: EntitySeeder = {
             .link({ parentGroup: groupIds[2], childGroup: groupIds[6] })
         );
         totalRelationships++;
+        activeRelationships++;
         parentGroupLinks++;
         childGroupLinks++;
       }
@@ -195,6 +212,102 @@ export const groupRelationshipsSeeder: EntitySeeder = {
       addAmendmentRelationship(groupIds[3], groupIds[4]);
       addAmendmentRelationship(groupIds[0], groupIds[3]);
       addAmendmentRelationship(groupIds[1], groupIds[4]);
+    }
+
+    // Phase 4: Create relationship requests for testing
+    // Each group should have at least 1 incoming and 1 outgoing request
+    console.log('Creating relationship requests...');
+    
+    if (groupIds.length >= 3) {
+      // Create various types of requested relationships with different rights
+      const requestableRights = ['informationRight', 'rightToSpeak', 'activeVotingRight', 'passiveVotingRight'];
+      
+      // Ensure each group gets at least 1 outgoing and 1 incoming request
+      for (let i = 0; i < groupIds.length; i++) {
+        const currentGroupId = groupIds[i];
+        
+        // Create 1 outgoing request (current group as parent/initiator)
+        const outgoingTargetIdx = (i + 2) % groupIds.length;
+        if (outgoingTargetIdx !== i) {
+          const outgoingRight = randomItem(requestableRights);
+          const relationshipId = id();
+          groupRelationshipIds.push(relationshipId);
+          transactions.push(
+            tx.groupRelationships[relationshipId]
+              .update({
+                relationshipType: 'isParent',
+                withRight: outgoingRight,
+                status: 'requested',
+                initiatorGroupId: currentGroupId,
+                createdAt: faker.date.past({ years: 0.1 }),
+                updatedAt: new Date(),
+              })
+              .link({ parentGroup: currentGroupId, childGroup: groupIds[outgoingTargetIdx] })
+          );
+          totalRelationships++;
+          requestedRelationships++;
+          parentGroupLinks++;
+          childGroupLinks++;
+        }
+        
+        // Create 1 incoming request (current group as child, other as parent/initiator)
+        const incomingSourceIdx = (i + 3) % groupIds.length;
+        if (incomingSourceIdx !== i && incomingSourceIdx !== outgoingTargetIdx) {
+          const incomingRight = randomItem(requestableRights);
+          const relationshipId = id();
+          groupRelationshipIds.push(relationshipId);
+          transactions.push(
+            tx.groupRelationships[relationshipId]
+              .update({
+                relationshipType: 'isParent',
+                withRight: incomingRight,
+                status: 'requested',
+                initiatorGroupId: groupIds[incomingSourceIdx], // Other group initiated
+                createdAt: faker.date.past({ years: 0.1 }),
+                updatedAt: new Date(),
+              })
+              .link({ parentGroup: groupIds[incomingSourceIdx], childGroup: currentGroupId })
+          );
+          totalRelationships++;
+          requestedRelationships++;
+          parentGroupLinks++;
+          childGroupLinks++;
+        }
+      }
+      
+      // Add a few more complex requests with multiple rights to the same pair
+      if (groupIds.length >= 5) {
+        const multiRequestPairs = [
+          { parent: 0, child: 2 },
+          { parent: 1, child: 3 },
+        ];
+        
+        for (const pair of multiRequestPairs) {
+          if (groupIds[pair.parent] && groupIds[pair.child]) {
+            const rightsToRequest = randomItems(requestableRights, randomInt(2, 3));
+            for (const right of rightsToRequest) {
+              const relationshipId = id();
+              groupRelationshipIds.push(relationshipId);
+              transactions.push(
+                tx.groupRelationships[relationshipId]
+                  .update({
+                    relationshipType: 'isParent',
+                    withRight: right,
+                    status: 'requested',
+                    initiatorGroupId: groupIds[pair.parent],
+                    createdAt: faker.date.past({ years: 0.05 }),
+                    updatedAt: new Date(),
+                  })
+                  .link({ parentGroup: groupIds[pair.parent], childGroup: groupIds[pair.child] })
+              );
+              totalRelationships++;
+              requestedRelationships++;
+              parentGroupLinks++;
+              childGroupLinks++;
+            }
+          }
+        }
+      }
     }
 
     if (transactions.length > 0) {
@@ -211,6 +324,8 @@ export const groupRelationshipsSeeder: EntitySeeder = {
     console.log(
       `✓ Created ${totalRelationships} group relationships with complex network structure`
     );
+    console.log(`  - Active relationships: ${activeRelationships}`);
+    console.log(`  - Requested relationships: ${requestedRelationships}`);
     console.log(`✓ Created ${amendmentRightChains} amendmentRight relationships for filtering`);
     console.log(
       `✓ AmendmentRight connections per group: min=${minConnections}, max=${maxConnections}`

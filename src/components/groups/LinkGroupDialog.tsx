@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -29,6 +29,13 @@ import { toast } from 'sonner';
 interface LinkGroupDialogProps {
   currentGroupId: string;
   currentGroupName: string;
+  // Edit mode props
+  initialTargetGroupId?: string;
+  initialRelationshipType?: 'parent' | 'child'; // 'parent' means target is parent
+  initialRights?: string[];
+  trigger?: React.ReactNode;
+  // Optimistic/Parent Data
+  allRelationships?: any[];
 }
 
 type RelationshipType = 'isParent' | 'isChild';
@@ -67,15 +74,34 @@ const RIGHTS: { value: WithRight; label: string; description: string }[] = [
   },
 ];
 
-export function LinkGroupDialog({ currentGroupId, currentGroupName }: LinkGroupDialogProps) {
+export function LinkGroupDialog({ 
+  currentGroupId, 
+  currentGroupName,
+  initialTargetGroupId,
+  initialRelationshipType,
+  initialRights,
+  trigger,
+  allRelationships
+}: LinkGroupDialogProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const [selectedGroupId, setSelectedGroupId] = useState<string>('');
-  const [relationshipType, setRelationshipType] = useState<RelationshipType>('isParent');
-  const [selectedRights, setSelectedRights] = useState<Set<WithRight>>(new Set());
+  
+  const isEditMode = !!initialTargetGroupId;
+
+  const [selectedGroupId, setSelectedGroupId] = useState<string>(initialTargetGroupId || '');
+  // Map 'parent' -> 'isParent', 'child' -> 'isChild'
+  const [relationshipType, setRelationshipType] = useState<RelationshipType>(
+      initialRelationshipType === 'parent' ? 'isParent' : 
+      initialRelationshipType === 'child' ? 'isChild' : 'isParent'
+  );
+  
+  const [selectedRights, setSelectedRights] = useState<Set<WithRight>>(
+      initialRights ? new Set(initialRights as WithRight[]) : new Set()
+  );
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch all groups except the current one
+  // Fetch all groups (needed for name info if not passed, and for selector)
   const { data: groupsData } = db.useQuery({
     groups: {
       $: {
@@ -88,6 +114,48 @@ export function LinkGroupDialog({ currentGroupId, currentGroupName }: LinkGroupD
 
   const availableGroups = groupsData?.groups || [];
 
+  // Fetch existing relationships to Handle Syncing (avoid duplicates, handle removals)
+  const shouldQuery = !allRelationships && !!selectedGroupId && open;
+  
+  const queryResult = db.useQuery(
+      shouldQuery ? {
+        groupRelationships: {
+            parentGroup: {},
+            childGroup: {},
+            $: {
+                where: {
+                   or: [
+                       { 'parentGroup.id': currentGroupId, 'childGroup.id': selectedGroupId },
+                       { 'parentGroup.id': selectedGroupId, 'childGroup.id': currentGroupId }
+                   ]
+                }
+            }
+        }
+      } : null
+  );
+
+  const existingRelsData = queryResult?.data;
+  const isLoadingQuery = shouldQuery ? (queryResult?.isLoading ?? true) : false;
+
+  const relevantRelationships = allRelationships 
+      ? allRelationships.filter(rel => 
+          (rel.parentGroup?.id === currentGroupId && rel.childGroup?.id === selectedGroupId) ||
+          (rel.parentGroup?.id === selectedGroupId && rel.childGroup?.id === currentGroupId)
+        )
+      : (existingRelsData?.groupRelationships || []);
+
+  // Reset state when opening/closing or props change
+  useEffect(() => {
+     if (open) {
+         if (isEditMode && initialTargetGroupId) {
+             setSelectedGroupId(initialTargetGroupId);
+             setRelationshipType(initialRelationshipType === 'parent' ? 'isParent' : 'isChild');
+             setSelectedRights(initialRights ? new Set(initialRights as WithRight[]) : new Set());
+         }
+     }
+  }, [open, isEditMode, initialTargetGroupId, initialRelationshipType, initialRights]);
+
+
   const toggleRight = (right: WithRight) => {
     const newRights = new Set(selectedRights);
     if (newRights.has(right)) {
@@ -99,57 +167,94 @@ export function LinkGroupDialog({ currentGroupId, currentGroupName }: LinkGroupD
   };
 
   const handleSubmit = async () => {
-    if (!selectedGroupId || selectedRights.size === 0) return;
+    if (!selectedGroupId) return; // Rights can be empty if we want to remove all? Assume valid to have 0 rights (removes relationship)
 
     setIsSubmitting(true);
     try {
       const now = new Date();
       const transactions = [];
 
-      // Create one relationship for each selected right
-      for (const right of selectedRights) {
-        const relationshipId = id();
-        const relationshipData: any = {
-          relationshipType,
-          withRight: right,
-          createdAt: now,
-          updatedAt: now,
-        };
+      // Logic:
+      // 1. Identify which rights are currently active in DB for this specific direction (Parent/Child configuration)
+      // 2. Add missing rights
+      // 3. Remove unchecked rights
 
-        // Link the parent and child groups based on relationship type
-        if (relationshipType === 'isParent') {
-          // Selected group is parent, current group is child
-          transactions.push(
-            db.tx.groupRelationships[relationshipId]
-              .update(relationshipData)
-              .link({ parentGroup: selectedGroupId, childGroup: currentGroupId })
-          );
-        } else {
-          // Current group is parent, selected group is child
-          transactions.push(
-            db.tx.groupRelationships[relationshipId]
-              .update(relationshipData)
-              .link({ parentGroup: currentGroupId, childGroup: selectedGroupId })
-          );
-        }
+      // Filter existing relationships to match the CURRENT direction selection
+      const currentDirectionRels = relevantRelationships.filter((rel: any) => {
+          if (relationshipType === 'isParent') {
+              // Selected is Parent, Current is Child
+              return rel.parentGroup?.id === selectedGroupId && rel.childGroup?.id === currentGroupId;
+          } else {
+               // Current is Parent, Selected is Child
+               return rel.parentGroup?.id === currentGroupId && rel.childGroup?.id === selectedGroupId;
+          }
+      });
+      
+      const existingRightsSet = new Set(currentDirectionRels.map((r: any) => r.withRight));
+
+      // 1. Additions
+      for (const right of selectedRights) {
+          if (!existingRightsSet.has(right)) {
+              // Create new
+              const relationshipId = id();
+              const relationshipData: any = {
+                relationshipType, // This string is stored in DB? Or just used for structure? Seeder uses 'isParent'/'isChild' string? Let's check. 
+                // Seeder uses 'groupRelationships' entries, usually just link. 
+                // Wait, schemas usually don't have 'relationshipType' string field if structure defines it.
+                // Checking previous `GroupNetworkFlow` code, it reads `rel.withRight`.
+                // Converting `relationshipType` state to DB structure:
+                // If isParent: parent=Selected, child=Current
+                // If isChild: parent=Current, child=Selected
+                // The DB object usually stores `withRight`.
+                withRight: right,
+                createdAt: now,
+                updatedAt: now,
+                status: 'requested', 
+                initiatorGroupId: currentGroupId,
+              };
+
+              if (relationshipType === 'isParent') {
+                transactions.push(
+                  db.tx.groupRelationships[relationshipId]
+                    .update(relationshipData)
+                    .link({ parentGroup: selectedGroupId, childGroup: currentGroupId })
+                );
+              } else {
+                transactions.push(
+                  db.tx.groupRelationships[relationshipId]
+                    .update(relationshipData)
+                    .link({ parentGroup: currentGroupId, childGroup: selectedGroupId })
+                );
+              }
+          }
       }
 
-      await db.transact(transactions);
+      // 2. Removals
+      for (const rel of currentDirectionRels) {
+          if (!selectedRights.has(rel.withRight as WithRight)) {
+              // Remove this relationship
+              transactions.push(db.tx.groupRelationships[rel.id].delete());
+          }
+      }
 
-      // Show success toast
-      toast.success(
-        `${selectedRights.size} ${selectedRights.size === 1 ? 'Beziehung wurde' : 'Beziehungen wurden'} erfolgreich erstellt.`
-      );
+      if (transactions.length > 0) {
+          await db.transact(transactions);
+          toast.success(isEditMode ? 'Beziehungen aktualisiert.' : 'Beziehungen erstellt.');
+      } else {
+          toast.info('Keine Änderungen vorgenommen.');
+      }
 
-      // Reset form and close dialog
-      setSelectedGroupId('');
-      setRelationshipType('isParent');
-      setSelectedRights(new Set());
+      if (!isEditMode) {
+        // Reset only if create mode
+        setSelectedGroupId('');
+        setRelationshipType('isParent');
+        setSelectedRights(new Set());
+      }
       setOpen(false);
+
     } catch (error) {
-      console.error('Error creating group relationships:', error);
-      // Show error toast
-      toast.error('Die Beziehungen konnten nicht erstellt werden. Bitte versuchen Sie es erneut.');
+      console.error('Error managing group relationships:', error);
+      toast.error('Fehler beim Speichern der Beziehungen.');
     } finally {
       setIsSubmitting(false);
     }
@@ -163,20 +268,33 @@ export function LinkGroupDialog({ currentGroupId, currentGroupName }: LinkGroupD
     }
   };
 
+  console.log('LinkGroupDialog Debug:', {
+    selectedGroupId,
+    isSubmitting,
+    isLoadingQuery,
+    shouldQuery,
+    allRelationships: !!allRelationships,
+    buttonDisabled: !selectedGroupId || isSubmitting || isLoadingQuery
+  });
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">
-          <Link className="mr-2 h-4 w-4" />
-          {t('components.actionBar.linkGroup')}
-        </Button>
+        {trigger ? trigger : (
+            <Button variant="outline">
+            <Link className="mr-2 h-4 w-4" />
+            {t('components.actionBar.linkGroup')}
+            </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Gruppe verknüpfen</DialogTitle>
+          <DialogTitle>{isEditMode ? 'Beziehung bearbeiten' : 'Gruppe verknüpfen'}</DialogTitle>
           <DialogDescription>
-            Verknüpfen Sie "{currentGroupName}" mit einer anderen Gruppe und wählen Sie die Rechte
-            aus, die übertragen werden sollen.
+            {isEditMode 
+                ? `Rechte für "${availableGroups.find(g => g.id === selectedGroupId)?.name || 'Gruppe'}" verwalten.`
+                : `Verknüpfen Sie "${currentGroupName}" mit einer anderen Gruppe.`
+            }
           </DialogDescription>
         </DialogHeader>
 
@@ -184,7 +302,11 @@ export function LinkGroupDialog({ currentGroupId, currentGroupName }: LinkGroupD
           {/* Group Selection */}
           <div className="grid gap-2">
             <Label htmlFor="group">Gruppe auswählen</Label>
-            <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
+            <Select 
+                value={selectedGroupId} 
+                onValueChange={setSelectedGroupId}
+                disabled={isEditMode}
+            >
               <SelectTrigger id="group">
                 <SelectValue placeholder="Gruppe auswählen..." />
               </SelectTrigger>
@@ -204,6 +326,7 @@ export function LinkGroupDialog({ currentGroupId, currentGroupName }: LinkGroupD
             <Select
               value={relationshipType}
               onValueChange={value => setRelationshipType(value as RelationshipType)}
+              disabled={isEditMode} 
             >
               <SelectTrigger id="relationshipType">
                 <SelectValue />
@@ -247,11 +370,6 @@ export function LinkGroupDialog({ currentGroupId, currentGroupName }: LinkGroupD
                 </button>
               ))}
             </div>
-            {selectedRights.size > 0 && (
-              <p className="text-sm text-muted-foreground">
-                {selectedRights.size} {selectedRights.size === 1 ? 'Recht' : 'Rechte'} ausgewählt
-              </p>
-            )}
           </div>
         </div>
 
@@ -261,11 +379,11 @@ export function LinkGroupDialog({ currentGroupId, currentGroupName }: LinkGroupD
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!selectedGroupId || selectedRights.size === 0 || isSubmitting}
+            disabled={!selectedGroupId || isSubmitting || isLoadingQuery}
           >
             {isSubmitting
-              ? 'Wird verknüpft...'
-              : `${selectedRights.size} ${selectedRights.size === 1 ? 'Beziehung' : 'Beziehungen'} erstellen`}
+              ? 'Speichern...'
+              : isEditMode ? 'Änderungen speichern' : 'Erstellen'}
           </Button>
         </DialogFooter>
       </DialogContent>

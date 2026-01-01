@@ -106,7 +106,25 @@ const rules = {
       'data.ref("group.id") in auth.ref("$user.memberships.group.id")',
       'hasManagePositions',
       "data.ref('group.id') in auth.ref('$user.memberships.group.roles.actionRights.group.id') && " +
-        "'positions' in auth.ref('$user.memberships.group.roles.actionRights.resource') && " +
+        "'groupPositions' in auth.ref('$user.memberships.group.roles.actionRights.resource') && " +
+        "'manage' in auth.ref('$user.memberships.group.roles.actionRights.action')",
+    ],
+  },
+  positionHolderHistory: {
+    allow: {
+      view: 'isGroupMember',
+      create: 'hasManagePositions',
+      update: 'hasManagePositions',
+      delete: 'hasManagePositions',
+    },
+    bind: [
+      'isAuthenticated',
+      'auth.id != null',
+      'isGroupMember',
+      'data.ref("position.group.id") in auth.ref("$user.memberships.group.id")',
+      'hasManagePositions',
+      "data.ref('position.group.id') in auth.ref('$user.memberships.group.roles.actionRights.group.id') && " +
+        "'groupPositions' in auth.ref('$user.memberships.group.roles.actionRights.resource') && " +
         "'manage' in auth.ref('$user.memberships.group.roles.actionRights.action')",
     ],
   },

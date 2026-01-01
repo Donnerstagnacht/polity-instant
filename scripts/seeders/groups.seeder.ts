@@ -42,10 +42,16 @@ export const groupsSeeder: EntitySeeder = {
     ];
 
     const adminRights = [
-      { resource: 'notifications', action: 'manageNotifications' },
+      { resource: 'groupNotifications', action: 'manageNotifications' },
       { resource: 'groupMemberships', action: 'manage' },
-      { resource: 'roles', action: 'manage' },
+      { resource: 'groupRoles', action: 'manage' },
       { resource: 'groups', action: 'manage' },
+      { resource: 'groupRelationships', action: 'manage' },
+      { resource: 'groupTodos', action: 'manage' },
+      { resource: 'groupLinks', action: 'manage' },
+      { resource: 'groupPayments', action: 'manage' },
+      { resource: 'groupDocuments', action: 'manage' },
+      { resource: 'groupPositions', action: 'manage' },
     ];
 
     // Track users who have received Board Member roles to ensure everyone gets at least one

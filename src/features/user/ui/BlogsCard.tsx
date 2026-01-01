@@ -7,7 +7,7 @@ export interface BlogsCardProps {
     id: number;
     title: string;
     date: string;
-    likes: number;
+    supporters: number;
     comments: number;
   };
   gradientClass: string;
@@ -31,8 +31,8 @@ export const BlogsCard: React.FC<BlogsCardProps> = ({ blog, gradientClass }) => 
       </CardHeader>
       <CardFooter className="mt-auto flex items-center justify-between text-muted-foreground">
         <span className="flex items-center">
-          <span className="text-red-500">♥</span>
-          <span className="ml-1">{blog.likes} likes</span>
+          <span className="text-orange-500">👍</span>
+          <span className="ml-1">{blog.supporters} supporters</span>
         </span>
         <span className="flex items-center">
           <span>💬</span>

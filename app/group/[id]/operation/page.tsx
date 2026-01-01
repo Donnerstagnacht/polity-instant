@@ -19,11 +19,21 @@ import { KanbanBoard } from '@/components/todos/kanban-board';
 import { TodoList } from '@/components/todos/todo-list';
 import { PermissionGuard } from '@/features/auth/PermissionGuard';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
+import { usePermissions } from 'db/rbac/usePermissions';
+import { AccessDenied } from '@/components/shared/AccessDenied';
+import { PageWrapper } from '@/components/layout/page-wrapper';
 
 export default function GroupOperationPage() {
   const params = useParams();
   const groupId = params.id as string;
   const user = useAuthStore((state) => state.user);
+
+  // Permissions
+  const { can, isLoading: isLoadingPermissions } = usePermissions({ groupId });
+  const canViewLinks = can('view', 'groupLinks');
+  const canViewPayments = can('view', 'groupPayments');
+  const canViewTodos = can('view', 'groupTodos');
+  const canAccessPage = canViewLinks || canViewPayments || canViewTodos;
 
   // State
   const [isAddLinkOpen, setIsAddLinkOpen] = useState(false);
@@ -61,159 +71,181 @@ export default function GroupOperationPage() {
     }
   };
 
+  if (isLoadingPermissions) {
+    return <div className="p-8">Loading permissions...</div>;
+  }
+
+  if (!canAccessPage) {
+    return (
+      <AuthGuard requireAuth={true}>
+        <PageWrapper>
+          <AccessDenied />
+        </PageWrapper>
+      </AuthGuard>
+    );
+  }
+
   return (
     <AuthGuard requireAuth={true}>
-      <PermissionGuard
-        action="view"
-        resource="groups"
-        context={{ groupId }}
-      >
-        <div className="container mx-auto space-y-6 p-6">
-      {/* Links Section */}
-      <LinksSection
-        links={links}
-        addLinkButton={
-          <AddLinkDialog
-            isOpen={isAddLinkOpen}
-            onOpenChange={setIsAddLinkOpen}
-            onSubmit={handleAddLink}
+      <div className="container mx-auto space-y-6 p-6">
+        {/* Links Section */}
+        {canViewLinks && (
+          <LinksSection
+            links={links}
+            addLinkButton={
+              can('create', 'groupLinks') ? (
+                <AddLinkDialog
+                  isOpen={isAddLinkOpen}
+                  onOpenChange={setIsAddLinkOpen}
+                  onSubmit={handleAddLink}
+                />
+              ) : null
+            }
           />
-        }
-      />
+        )}
 
-      {/* Financial Charts */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Income Chart */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Income: ${summary.income.toLocaleString()}</CardTitle>
-              <AddPaymentDialog
-                open={isAddPaymentOpen}
-                onOpenChange={setIsAddPaymentOpen}
-                onSubmit={handleAddPayment}
-                direction="income"
-                groupId={groupId}
-              />
-            </div>
-          </CardHeader>
-          <CardContent>
-            {incomeData.length === 0 ? (
-              <p className="text-muted-foreground">No income data</p>
-            ) : (
-              <ResponsiveContainer width="100%" height={300} key={`income-${payments.length}`}>
-                <PieChart>
-                  <Pie
-                    data={incomeData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={(entry) => `${entry.name}: $${entry.value}`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {incomeData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
+        {/* Financial Charts */}
+        {canViewPayments && (
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {/* Income Chart */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Income: ${summary.income.toLocaleString()}</CardTitle>
+                  {can('create', 'groupPayments') && (
+                    <AddPaymentDialog
+                      open={isAddPaymentOpen}
+                      onOpenChange={setIsAddPaymentOpen}
+                      onSubmit={handleAddPayment}
+                      direction="income"
+                      groupId={groupId}
+                    />
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {incomeData.length === 0 ? (
+                  <p className="text-muted-foreground">No income data</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={300} key={`income-${payments.length}`}>
+                    <PieChart>
+                      <Pie
+                        data={incomeData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={(entry) => `${entry.name}: $${entry.value}`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {incomeData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
 
-        {/* Expenditure Chart */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Expenditure: ${summary.expenditure.toLocaleString()}</CardTitle>
-              <AddPaymentDialog
-                open={isAddExpenseOpen}
-                onOpenChange={setIsAddExpenseOpen}
-                onSubmit={handleAddPayment}
-                direction="expense"
-                groupId={groupId}
-              />
-            </div>
-          </CardHeader>
-          <CardContent>
-            {expenditureData.length === 0 ? (
-              <p className="text-muted-foreground">No expenditure data</p>
-            ) : (
-              <ResponsiveContainer width="100%" height={300} key={`expenditure-${payments.length}`}>
-                <PieChart>
-                  <Pie
-                    data={expenditureData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={(entry) => `${entry.name}: $${entry.value}`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {expenditureData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Todos Section */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Tasks</CardTitle>
-            <div className="flex gap-2">
-              <div className="flex gap-1 rounded-lg border p-1">
-                <Button
-                  variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('list')}
-                >
-                  <LayoutList className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === 'kanban' ? 'secondary' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('kanban')}
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
-              </div>
-              <AddTodoDialog
-                open={isAddTodoOpen}
-                onOpenChange={setIsAddTodoOpen}
-                onSubmit={handleAddTodo}
-              />
-            </div>
+            {/* Expenditure Chart */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Expenditure: ${summary.expenditure.toLocaleString()}</CardTitle>
+                  {can('create', 'groupPayments') && (
+                    <AddPaymentDialog
+                      open={isAddExpenseOpen}
+                      onOpenChange={setIsAddExpenseOpen}
+                      onSubmit={handleAddPayment}
+                      direction="expense"
+                      groupId={groupId}
+                    />
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {expenditureData.length === 0 ? (
+                  <p className="text-muted-foreground">No expenditure data</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={300} key={`expenditure-${payments.length}`}>
+                    <PieChart>
+                      <Pie
+                        data={expenditureData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={(entry) => `${entry.name}: $${entry.value}`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {expenditureData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
           </div>
-        </CardHeader>
-        <CardContent>
-          {todos.length === 0 ? (
-            <p className="text-muted-foreground">No tasks for this group</p>
-          ) : viewMode === 'kanban' ? (
-            <KanbanBoard todos={todos as any} />
-          ) : (
-            <TodoList
-              todos={todos}
-              onToggleComplete={toggleTodoComplete}
-              onUpdateStatus={updateTodoStatus}
-            />
-          )}
-        </CardContent>
-      </Card>
-    </div>
-      </PermissionGuard>
+        )}
+
+        {/* Todos Section */}
+        {canViewTodos && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Tasks</CardTitle>
+                <div className="flex gap-2">
+                  <div className="flex gap-1 rounded-lg border p-1">
+                    <Button
+                      variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('list')}
+                    >
+                      <LayoutList className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant={viewMode === 'kanban' ? 'secondary' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('kanban')}
+                    >
+                      <LayoutGrid className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {can('create', 'groupTodos') && (
+                    <AddTodoDialog
+                      open={isAddTodoOpen}
+                      onOpenChange={setIsAddTodoOpen}
+                      onSubmit={handleAddTodo}
+                    />
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {todos.length === 0 ? (
+                <p className="text-muted-foreground">No tasks for this group</p>
+              ) : viewMode === 'kanban' ? (
+                <KanbanBoard todos={todos as any} />
+              ) : (
+                <TodoList
+                  todos={todos}
+                  onToggleComplete={toggleTodoComplete}
+                  onUpdateStatus={updateTodoStatus}
+                />
+              )}
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </AuthGuard>
   );
 }

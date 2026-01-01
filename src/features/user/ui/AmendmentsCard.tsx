@@ -12,6 +12,9 @@ export interface AmendmentsCardProps {
     supporters: number;
     date: string;
     tags?: string[];
+    collaboratorsCount?: number;
+    supportingGroupsCount?: number;
+    supportingMembersCount?: number;
   };
   statusStyle: {
     badge: string;
@@ -42,9 +45,23 @@ export const AmendmentsCard: React.FC<AmendmentsCardProps> = ({
         {amendment.subtitle && (
           <p className="mb-2 text-sm text-muted-foreground">{amendment.subtitle}</p>
         )}
-        <p className="mt-1 text-sm text-muted-foreground">
-          {amendment.supporters} supporters • {amendment.date}
-        </p>
+        <div className="mt-2 space-y-1">
+          <p className="text-sm text-muted-foreground">
+            {amendment.supporters} supporters • {amendment.date}
+          </p>
+          {(amendment.collaboratorsCount !== undefined ||
+            amendment.supportingGroupsCount !== undefined ||
+            amendment.supportingMembersCount !== undefined) && (
+            <p className="text-sm text-muted-foreground">
+              {amendment.collaboratorsCount !== undefined &&
+                `${amendment.collaboratorsCount} collaborators`}
+              {amendment.supportingGroupsCount !== undefined &&
+                ` • ${amendment.supportingGroupsCount} supporting groups`}
+              {amendment.supportingMembersCount !== undefined &&
+                ` • ${amendment.supportingMembersCount} supporting members`}
+            </p>
+          )}
+        </div>
         {amendment.tags && amendment.tags.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1">
             {amendment.tags.map((tag, idx) => (

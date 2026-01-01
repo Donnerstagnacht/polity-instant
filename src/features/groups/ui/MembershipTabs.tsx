@@ -12,6 +12,7 @@ interface MembershipTabsProps {
   onTabChange: (tab: MembershipTab) => void;
   membershipsContent: React.ReactNode;
   rolesContent: React.ReactNode;
+  positionsContent?: React.ReactNode;
 }
 
 export function MembershipTabs({
@@ -19,6 +20,7 @@ export function MembershipTabs({
   onTabChange,
   membershipsContent,
   rolesContent,
+  positionsContent,
 }: MembershipTabsProps) {
   return (
     <Tabs
@@ -29,6 +31,7 @@ export function MembershipTabs({
       <TabsList>
         <TabsTrigger value="memberships">Memberships</TabsTrigger>
         <TabsTrigger value="roles">Roles</TabsTrigger>
+        <TabsTrigger value="positions">Positions</TabsTrigger>
       </TabsList>
 
       <TabsContent value="memberships" className="space-y-6">
@@ -37,6 +40,10 @@ export function MembershipTabs({
 
       <TabsContent value="roles" className="space-y-6">
         {rolesContent}
+      </TabsContent>
+
+      <TabsContent value="positions" className="space-y-6">
+        {positionsContent}
       </TabsContent>
     </Tabs>
   );

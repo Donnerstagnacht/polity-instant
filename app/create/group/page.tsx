@@ -19,6 +19,7 @@ import { Switch } from '@/components/ui/switch';
 import { HashtagInput } from '@/components/ui/hashtag-input';
 import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel';
 import { db, tx, id } from 'db/db';
+import { DEFAULT_GROUP_ROLES, PERMISSION_IMPLIES } from 'db/rbac/constants';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { toast } from 'sonner';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
@@ -67,6 +68,10 @@ export default function CreateGroupPage() {
       const conversationId = id();
       const conversationParticipantId = id();
 
+      // Get role templates
+      const adminTemplate = DEFAULT_GROUP_ROLES.find(r => r.name === 'Admin');
+      const memberTemplate = DEFAULT_GROUP_ROLES.find(r => r.name === 'Member');
+
       const transactions = [
         // Create the group
         tx.groups[groupId].update({
@@ -100,17 +105,19 @@ export default function CreateGroupPage() {
           user: user.id,
         }),
 
-        // Create Board Member role with admin permissions
+        // Create Board Member role based on Admin template
         tx.roles[boardMemberRoleId].update({
           name: 'Board Member',
+          description: adminTemplate?.description || 'Board member with administrative access',
           scope: 'group',
           createdAt: new Date(),
         }),
         tx.roles[boardMemberRoleId].link({ group: groupId }),
 
-        // Create Member role with basic permissions
+        // Create Member role based on Member template
         tx.roles[memberRoleId].update({
           name: 'Member',
+          description: memberTemplate?.description || 'Regular group member',
           scope: 'group',
           createdAt: new Date(),
         }),
@@ -127,6 +134,36 @@ export default function CreateGroupPage() {
           role: boardMemberRoleId,
         }),
       ];
+
+      // Add permissions/action rights for the Board Member role
+      if (adminTemplate) {
+        adminTemplate.permissions.forEach(perm => {
+          const actionRightId = id();
+          transactions.push(
+            tx.actionRights[actionRightId]
+              .update({
+                resource: perm.resource,
+                action: perm.action,
+              })
+              .link({ roles: boardMemberRoleId, group: groupId })
+          );
+        });
+      }
+
+      // Add permissions/action rights for the Member role
+      if (memberTemplate) {
+        memberTemplate.permissions.forEach(perm => {
+          const actionRightId = id();
+          transactions.push(
+            tx.actionRights[actionRightId]
+              .update({
+                resource: perm.resource,
+                action: perm.action,
+              })
+              .link({ roles: memberRoleId, group: groupId })
+          );
+        });
+      }
 
       // Add hashtags
       formData.hashtags.forEach(tag => {

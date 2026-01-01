@@ -10,6 +10,10 @@ export function BlogSearchCard({
   blog,
   gradientClass = 'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950',
 }: BlogSearchCardProps) {
+  // Calculate supporters from upvotes and downvotes
+  const supporters = (blog.upvotes || 0) - (blog.downvotes || 0);
+  const comments = blog.comments?.length || blog.commentCount || 0;
+
   return (
     <a href={`/blog/${blog.id}`} className="block cursor-pointer">
       <BlogsCard
@@ -17,8 +21,8 @@ export function BlogSearchCard({
           id: blog.id,
           title: blog.title,
           date: blog.date || new Date(blog.createdAt).toLocaleDateString(),
-          likes: blog.likes || 0,
-          comments: blog.comments || 0,
+          supporters: supporters,
+          comments: comments,
         }}
         gradientClass={gradientClass}
       />

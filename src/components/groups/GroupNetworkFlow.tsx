@@ -57,11 +57,9 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
   // Memoize relationships to prevent infinite loops
   // Only recreate when the actual relationship IDs change
   const stableRelationships = useMemo(() => {
-    return relationships;
+    return relationships.filter((r: any) => !r.status || r.status === 'active');
   }, [
-    relationships.length,
-    // Create a stable key from relationship IDs
-    relationships.map(r => `${r.id}-${r.parentGroup?.id}-${r.childGroup?.id}`).join(','),
+    relationships
   ]);
 
   // Build direct relationships
@@ -293,8 +291,11 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
       const yOffset = -150 * level;
       const xOffset = (index - parents.length / 2) * 200;
 
+      // Use a unique ID for the parent node instance in the graph
+      const parentNodeId = `parent-${parent.group.id}`;
+
       newNodes.push({
-        id: parent.group.id,
+        id: parentNodeId,
         type: 'default',
         position: { x: 400 + xOffset, y: 300 + yOffset },
         data: {
@@ -315,11 +316,15 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         },
       });
 
-      const edgeTarget = showIndirect && parent.childId ? parent.childId : groupId;
+      let edgeTarget = groupId;
+      if (showIndirect && parent.childId && parent.childId !== groupId) {
+          // If it's an indirect connection, the target is another parent node
+          edgeTarget = `parent-${parent.childId}`;
+      }
 
       newEdges.push({
         id: `edge-parent-${parent.group.id}-to-${edgeTarget}`,
-        source: parent.group.id,
+        source: parentNodeId,
         target: edgeTarget,
         type: 'smoothstep',
         animated: true,
@@ -350,8 +355,10 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
       const yOffset = 150 * level;
       const xOffset = (index - children.length / 2) * 200;
 
+      const childNodeId = `child-${child.group.id}`;
+
       newNodes.push({
-        id: child.group.id,
+        id: childNodeId,
         type: 'default',
         position: { x: 400 + xOffset, y: 300 + yOffset },
         data: {
@@ -372,12 +379,15 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         },
       });
 
-      const edgeSource = showIndirect && child.parentId ? child.parentId : groupId;
+      let edgeSource = groupId;
+      if (showIndirect && child.parentId && child.parentId !== groupId) {
+           edgeSource = `child-${child.parentId}`;
+      }
 
       newEdges.push({
         id: `edge-${edgeSource}-to-child-${child.group.id}`,
         source: edgeSource,
-        target: child.group.id,
+        target: childNodeId,
         type: 'smoothstep',
         animated: true,
         label: formatRights(child.rights),
@@ -456,15 +466,17 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
     (_event: any, node: Node) => {
       if (!isInteractive) return;
 
+      const rawId = node.id.replace(/^(parent-|child-)/, '');
+
       // Find the group data from relationships
       const nodeGroup = stableRelationships.find(
-        (rel: any) => rel.parentGroup?.id === node.id || rel.childGroup?.id === node.id
+        (rel: any) => rel.parentGroup?.id === rawId || rel.childGroup?.id === rawId
       );
 
       const groupData =
-        nodeGroup?.parentGroup?.id === node.id
+        nodeGroup?.parentGroup?.id === rawId
           ? nodeGroup.parentGroup
-          : nodeGroup?.childGroup || (node.id === groupId ? group : null);
+          : nodeGroup?.childGroup || (node.id === groupId || rawId === groupId ? group : null);
 
       if (groupData) {
         setSelectedEntity({ type: 'group', data: groupData });
