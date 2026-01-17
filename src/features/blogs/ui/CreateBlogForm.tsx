@@ -15,10 +15,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel';
+import { HashtagInput } from '@/components/ui/hashtag-input';
+import { VisibilitySelector } from '@/components/ui/visibility-selector';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { db, tx, id } from 'db/db';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { toast } from 'sonner';
 import { PageWrapper } from '@/components/layout/page-wrapper';
+import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 
 export function CreateBlogForm() {
   const router = useRouter();
@@ -28,6 +32,7 @@ export function CreateBlogForm() {
     title: '',
     date: new Date().toISOString().split('T')[0],
     visibility: 'public' as 'public' | 'authenticated' | 'private',
+    hashtags: [] as string[],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
@@ -43,8 +48,7 @@ export function CreateBlogForm() {
     });
   }, [carouselApi]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setIsSubmitting(true);
 
     try {
@@ -64,14 +68,13 @@ export function CreateBlogForm() {
       const bloggerId = id();
 
       // Create action rights for Owner role
-      const ownerUpdateRightId = id();
-      const ownerDeleteRightId = id();
-      const ownerManageRightId = id();
+      const ownerManageBlogsId = id();
+      const ownerManageBloggersId = id();
 
       // Create action right for Writer role
       const writerUpdateRightId = id();
 
-      await db.transact([
+      const transactions = [
         // Create the blog
         tx.blogs[blogId].update({
           title: formData.title,
@@ -97,24 +100,18 @@ export function CreateBlogForm() {
         }),
         tx.roles[writerRoleId].link({ blog: blogId }),
 
-        // Create action rights for Owner role
-        tx.actionRights[ownerUpdateRightId].update({
+        // Create action rights for Owner role - 'manage' implies view, create, update, delete
+        tx.actionRights[ownerManageBlogsId].update({
           resource: 'blogs',
-          action: 'update',
+          action: 'manage',
         }),
-        tx.actionRights[ownerUpdateRightId].link({ roles: [ownerRoleId], blog: blogId }),
+        tx.actionRights[ownerManageBlogsId].link({ roles: [ownerRoleId], blog: blogId }),
 
-        tx.actionRights[ownerDeleteRightId].update({
-          resource: 'blogs',
-          action: 'delete',
-        }),
-        tx.actionRights[ownerDeleteRightId].link({ roles: [ownerRoleId], blog: blogId }),
-
-        tx.actionRights[ownerManageRightId].update({
+        tx.actionRights[ownerManageBloggersId].update({
           resource: 'blogBloggers',
           action: 'manage',
         }),
-        tx.actionRights[ownerManageRightId].link({ roles: [ownerRoleId], blog: blogId }),
+        tx.actionRights[ownerManageBloggersId].link({ roles: [ownerRoleId], blog: blogId }),
 
         // Create action right for Writer role
         tx.actionRights[writerUpdateRightId].update({
@@ -133,7 +130,36 @@ export function CreateBlogForm() {
           user: user.id,
           role: ownerRoleId,
         }),
-      ]);
+      ];
+
+      // Add hashtags
+      const hashtagTransactions = formData.hashtags.map(tag => {
+        const hashtagId = id();
+        return [
+          tx.hashtags[hashtagId].update({
+            tag,
+            createdAt: new Date(),
+          }),
+          tx.hashtags[hashtagId].link({ blog: blogId }),
+        ];
+      }).flat();
+
+      // Add timeline event for public blogs
+      const timelineTransactions = [];
+      if (formData.visibility === 'public') {
+        timelineTransactions.push(
+          createTimelineEvent({
+            eventType: 'created',
+            entityType: 'blog',
+            entityId: blogId,
+            actorId: user.id,
+            title: `New blog post: ${formData.title}`,
+            description: 'A new blog post has been published',
+          })
+        );
+      }
+
+      await db.transact([...transactions, ...hashtagTransactions, ...timelineTransactions]);
 
       toast.success('Blog post created successfully!');
       router.push(`/blog/${blogId}`);
@@ -150,10 +176,9 @@ export function CreateBlogForm() {
         <CardHeader>
           <CardTitle>Create a New Blog Post</CardTitle>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent>
-            <Carousel setApi={setCarouselApi} opts={{ watchDrag: false }}>
-              <CarouselContent>
+        <CardContent>
+          <Carousel setApi={setCarouselApi} opts={{ watchDrag: false }}>
+            <CarouselContent>
                 {/* Step 1: Basic Information */}
                 <CarouselItem>
                   <div className="space-y-4 p-4">
@@ -180,29 +205,24 @@ export function CreateBlogForm() {
                   </div>
                 </CarouselItem>
 
-                {/* Step 2: Visibility */}
+                {/* Step 2: Visibility & Hashtags */}
                 <CarouselItem>
                   <div className="space-y-4 p-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="blog-visibility">Visibility</Label>
-                      <select
-                        id="blog-visibility"
+                    <TooltipProvider>
+                      <VisibilitySelector
                         value={formData.visibility}
-                        onChange={e =>
-                          setFormData({
-                            ...formData,
-                            visibility: e.target.value as 'public' | 'authenticated' | 'private',
-                          })
-                        }
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      >
-                        <option value="public">Public - Anyone can see</option>
-                        <option value="authenticated">
-                          Authenticated - Only logged-in users
-                        </option>
-                        <option value="private">Private - Only you</option>
-                      </select>
-                    </div>
+                        onChange={visibility => setFormData({ ...formData, visibility })}
+                      />
+
+                      {/* Hashtags */}
+                      <div className="space-y-2 mt-4">
+                        <HashtagInput
+                          value={formData.hashtags}
+                          onChange={hashtags => setFormData({ ...formData, hashtags })}
+                          placeholder="Add hashtags (e.g., politics, community)"
+                        />
+                      </div>
+                    </TooltipProvider>
                   </div>
                 </CarouselItem>
 
@@ -219,6 +239,15 @@ export function CreateBlogForm() {
                             {formData.visibility}
                           </Badge>
                         </div>
+                        {formData.hashtags.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {formData.hashtags.map((tag, index) => (
+                              <Badge key={index} variant="secondary" className="text-xs">
+                                #{tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
                         <CardTitle className="text-lg">
                           {formData.title || 'Untitled Blog Post'}
                         </CardTitle>
@@ -267,13 +296,12 @@ export function CreateBlogForm() {
                 Next
               </Button>
             ) : (
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
                 {isSubmitting ? 'Creating...' : 'Create Blog Post'}
               </Button>
             )}
           </CardFooter>
-        </form>
-      </Card>
-    </PageWrapper>
-  );
-}
+        </Card>
+      </PageWrapper>
+    );
+  }

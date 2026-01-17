@@ -29,36 +29,39 @@ export const DEFAULT_GROUP_ROLES = [
     name: 'Admin',
     description: 'Full group control',
     permissions: [
-      { resource: 'groups' as ResourceType, action: 'manage' as ActionType },
-      { resource: 'events' as ResourceType, action: 'manage' as ActionType },
       { resource: 'amendments' as ResourceType, action: 'manage' as ActionType },
-      { resource: 'groupRoles' as ResourceType, action: 'manage' as ActionType },
+      { resource: 'events' as ResourceType, action: 'manage' as ActionType },
+      { resource: 'groupDocuments' as ResourceType, action: 'manage' as ActionType },
+      { resource: 'groupLinks' as ResourceType, action: 'manage' as ActionType },
       { resource: 'groupMemberships' as ResourceType, action: 'manage' as ActionType },
+      { resource: 'groupNotifications' as ResourceType, action: 'manageNotifications' as ActionType },
+      { resource: 'groupPayments' as ResourceType, action: 'manage' as ActionType },
       { resource: 'groupPositions' as ResourceType, action: 'manage' as ActionType },
       { resource: 'groupRelationships' as ResourceType, action: 'manage' as ActionType },
+      { resource: 'groupRoles' as ResourceType, action: 'manage' as ActionType },
+      { resource: 'groups' as ResourceType, action: 'manage' as ActionType },
       { resource: 'groupTodos' as ResourceType, action: 'manage' as ActionType },
-      { resource: 'groupLinks' as ResourceType, action: 'manage' as ActionType },
-      { resource: 'groupPayments' as ResourceType, action: 'manage' as ActionType },
-      { resource: 'groupDocuments' as ResourceType, action: 'manage' as ActionType },
+      { resource: 'messages' as ResourceType, action: 'manage' as ActionType },
     ],
   },
   {
     name: 'Moderator',
     description: 'Content moderation',
     permissions: [
-      { resource: 'events' as ResourceType, action: 'manage' as ActionType },
       { resource: 'amendments' as ResourceType, action: 'moderate' as ActionType },
       { resource: 'comments' as ResourceType, action: 'moderate' as ActionType },
+      { resource: 'events' as ResourceType, action: 'manage' as ActionType },
     ],
   },
   {
     name: 'Member',
     description: 'Standard member access',
     permissions: [
-      { resource: 'events' as ResourceType, action: 'view' as ActionType },
-      { resource: 'amendments' as ResourceType, action: 'view' as ActionType },
       { resource: 'amendments' as ResourceType, action: 'create' as ActionType },
+      { resource: 'amendments' as ResourceType, action: 'view' as ActionType },
       { resource: 'amendments' as ResourceType, action: 'vote' as ActionType },
+      { resource: 'events' as ResourceType, action: 'view' as ActionType },
+      { resource: 'messages' as ResourceType, action: 'manage' as ActionType },
     ],
   },
 ];
@@ -131,31 +134,58 @@ export const DEFAULT_EVENT_ROLES = [
 /**
  * Available action rights for group membership management UI.
  * Used to display permission options when creating or editing roles.
+ * Sorted alphabetically by resource, then by action (manage before view).
  */
 export const ACTION_RIGHTS = [
-  { resource: 'messages', action: 'manage', label: 'Manage Messages' },
-  { resource: 'messages', action: 'view', label: 'View Messages' },
+  // agendaItems
+  { resource: 'agendaItems', action: 'manage', label: 'Manage Agenda Items' },
+  { resource: 'agendaItems', action: 'view', label: 'View Agenda Items' },
+  // amendments
+  { resource: 'amendments', action: 'manage', label: 'Manage Amendments' },
+  { resource: 'amendments', action: 'view', label: 'View Amendments' },
+  // blogs
+  { resource: 'blogs', action: 'manage', label: 'Manage Blogs' },
+  { resource: 'blogs', action: 'view', label: 'View Blogs' },
+  // comments
+  { resource: 'comments', action: 'moderate', label: 'Moderate Comments' },
+  // elections
+  { resource: 'elections', action: 'manage', label: 'Manage Elections' },
+  // events
   { resource: 'events', action: 'manage', label: 'Manage Events' },
-  { resource: 'events', action: 'view', label: 'View Events' },
   { resource: 'events', action: 'manage_participants', label: 'Manage Event Participants' },
   { resource: 'events', action: 'manage_speakers', label: 'Manage Speakers' },
   { resource: 'events', action: 'manage_votes', label: 'Manage Votes' },
-  { resource: 'agendaItems', action: 'manage', label: 'Manage Agenda Items' },
-  { resource: 'agendaItems', action: 'view', label: 'View Agenda Items' },
-  { resource: 'amendments', action: 'manage', label: 'Manage Amendments' },
-  { resource: 'amendments', action: 'view', label: 'View Amendments' },
-  { resource: 'blogs', action: 'manage', label: 'Manage Blogs' },
-  { resource: 'blogs', action: 'view', label: 'View Blogs' },
-  { resource: 'groupRelationships', action: 'manage', label: 'Manage Group Relationships' },
-  { resource: 'groupTodos', action: 'manage', label: 'Manage Todos' },
-  { resource: 'groupTodos', action: 'view', label: 'View Todos' },
-  { resource: 'elections', action: 'manage', label: 'Manage Elections' },
-  { resource: 'groupPositions', action: 'manage', label: 'Manage Positions' },
-  { resource: 'groupPayments', action: 'manage', label: 'Manage Payments' },
-  { resource: 'groupPayments', action: 'view', label: 'View Payments' },
-  { resource: 'groupNotifications', action: 'manageNotifications', label: 'Manage Notifications' },
-  { resource: 'groupLinks', action: 'manage', label: 'Manage Links' },
-  { resource: 'groupLinks', action: 'view', label: 'View Links' },
+  { resource: 'events', action: 'view', label: 'View Events' },
+  // groupDocuments
   { resource: 'groupDocuments', action: 'manage', label: 'Manage Documents' },
   { resource: 'groupDocuments', action: 'view', label: 'View Documents' },
+  // groupLinks
+  { resource: 'groupLinks', action: 'manage', label: 'Manage Links' },
+  { resource: 'groupLinks', action: 'view', label: 'View Links' },
+  // groupMemberships
+  { resource: 'groupMemberships', action: 'manage', label: 'Manage Members' },
+  { resource: 'groupMemberships', action: 'view', label: 'View Members' },
+  // groupNotifications
+  { resource: 'groupNotifications', action: 'manageNotifications', label: 'Manage Notifications' },
+  // groupPayments
+  { resource: 'groupPayments', action: 'manage', label: 'Manage Payments' },
+  { resource: 'groupPayments', action: 'view', label: 'View Payments' },
+  // groupPositions
+  { resource: 'groupPositions', action: 'manage', label: 'Manage Positions' },
+  { resource: 'groupPositions', action: 'view', label: 'View Positions' },
+  // groupRelationships
+  { resource: 'groupRelationships', action: 'manage', label: 'Manage Group Relationships' },
+  { resource: 'groupRelationships', action: 'view', label: 'View Group Relationships' },
+  // groupRoles
+  { resource: 'groupRoles', action: 'manage', label: 'Manage Roles' },
+  { resource: 'groupRoles', action: 'view', label: 'View Roles' },
+  // groups
+  { resource: 'groups', action: 'manage', label: 'Manage Group Settings' },
+  { resource: 'groups', action: 'view', label: 'View Group' },
+  // groupTodos
+  { resource: 'groupTodos', action: 'manage', label: 'Manage Todos' },
+  { resource: 'groupTodos', action: 'view', label: 'View Todos' },
+  // messages
+  { resource: 'messages', action: 'manage', label: 'Manage Messages' },
+  { resource: 'messages', action: 'view', label: 'View Messages' },
 ] as const;

@@ -22,6 +22,21 @@ export default function MessagesPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [conversationToDelete, setConversationToDelete] = useState<string | null>(null);
 
+  // Query current user's name for notifications
+  const { data: userData } = db.useQuery(
+    user?.id
+      ? {
+          $users: {
+            $: {
+              where: { id: user.id },
+              limit: 1,
+            },
+          },
+        }
+      : null
+  );
+  const currentUserName = userData?.$users?.[0]?.name || 'Someone';
+
   const { conversations, isLoading } = useConversationData(user?.id);
   const {
     sendMessage,
@@ -90,6 +105,16 @@ export default function MessagesPage() {
     }
   };
 
+  // Handle accepting a conversation with notification to requester
+  const handleAcceptConversation = async (conversation: Conversation) => {
+    if (!user?.id) return;
+    await acceptConversation(conversation.id, {
+      senderId: user.id,
+      senderName: currentUserName,
+      requesterUserId: conversation.requestedBy?.id,
+    });
+  };
+
   if (isLoading) {
     return (
       <AuthGuard requireAuth={true}>
@@ -131,7 +156,7 @@ export default function MessagesPage() {
                 sendMessage(selectedConversationId, user.id, content);
               }
             }}
-            onAcceptConversation={acceptConversation}
+            onAcceptConversation={handleAcceptConversation}
             onRejectConversation={(conversation) => {
                 rejectConversation(conversation);
                 if (selectedConversationId === conversation.id) {

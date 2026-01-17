@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { db, tx, id } from '../../../../db/db';
 import { useAuthStore } from '@/features/auth/auth.ts';
-import { createNotification } from '@/utils/notification-helpers';
+import { notifyGroupNewSubscriber } from '@/utils/notification-helpers';
 import { toast } from 'sonner';
 
 /**
@@ -13,6 +13,36 @@ export function useSubscribeGroup(targetGroupId?: string) {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscriberCount, setSubscriberCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Query current user's name for notifications
+  const { data: currentUserData } = db.useQuery(
+    authUser?.id
+      ? {
+          $users: {
+            $: {
+              where: { id: authUser.id },
+              limit: 1,
+            },
+          },
+        }
+      : null
+  );
+  const currentUserName = currentUserData?.$users?.[0]?.name || 'Someone';
+
+  // Query group name for notifications
+  const { data: groupData } = db.useQuery(
+    targetGroupId
+      ? {
+          groups: {
+            $: {
+              where: { id: targetGroupId },
+              limit: 1,
+            },
+          },
+        }
+      : null
+  );
+  const groupName = groupData?.groups?.[0]?.name || 'Group';
 
   // Query to get all subscribers for the target group (we'll filter client-side)
   const { data: subscriptionData, isLoading: subscriptionLoading } = db.useQuery(
@@ -53,16 +83,11 @@ export function useSubscribeGroup(targetGroupId?: string) {
     setIsLoading(true);
     try {
       const subscriptionId = id();
-      const notification = createNotification({
+      const notification = notifyGroupNewSubscriber({
         senderId: authUser.id,
-        recipientEntityType: 'group',
-        recipientEntityId: targetGroupId,
-        type: 'group_update',
-        title: 'New Subscriber',
-        message: `${authUser.name || 'A user'} subscribed to this group`,
-        actionUrl: `/user/${authUser.id}`,
-        relatedEntityType: 'group',
-        relatedGroupId: targetGroupId,
+        senderName: currentUserName,
+        groupId: targetGroupId,
+        groupName: groupName,
       });
 
       await db.transact([

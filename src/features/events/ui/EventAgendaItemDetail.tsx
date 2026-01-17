@@ -40,8 +40,16 @@ import {
   BarChart3,
   Gavel,
   AlertCircle,
+  Play,
+  SkipForward,
 } from 'lucide-react';
 import { useEventAgendaItem } from '../hooks/useEventAgendaItem';
+import { AmendmentVotingQueue } from './AmendmentVotingQueue';
+import db, { tx } from '../../../../db/db';
+import { toast } from 'sonner';
+import { useState } from 'react';
+import { notifyVotingSessionStarted, notifyVotingSessionCompleted } from '@/utils/notification-helpers';
+import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 
 export function EventAgendaItemDetail({
   eventId,
@@ -66,6 +74,157 @@ export function EventAgendaItemDetail({
     handleDelete,
     handleAddToSpeakerList,
   } = useEventAgendaItem(eventId, agendaItemId);
+
+  const [startingVoting, setStartingVoting] = useState(false);
+  const [advancingVote, setAdvancingVote] = useState(false);
+
+  // Check if user is event organizer
+  const isOrganizer =
+    user &&
+    (event as any)?.group?.roles?.some(
+      (role: any) =>
+        role.actionRights?.some(
+          (ar: any) => ar.resource === 'events' && ar.action === 'manage'
+        ) &&
+        (event as any)?.group?.memberships?.some(
+          (m: any) => m.user?.id === user.id && m.role?.id === role.id
+        )
+    );
+
+  // Get amendment data if this is an amendment agenda item
+  const amendment = agendaItem?.type === 'amendment' && (data as any)?.amendments?.[0];
+  const changeRequests = amendment
+    ? ((data as any)?.changeRequests || []).filter((cr: any) => cr.amendment?.id === amendment.id)
+    : [];
+  const votingSession =
+    amendment &&
+    ((data as any)?.amendmentVotingSessions || []).find(
+      (session: any) =>
+        session.amendment?.id === amendment.id && session.agendaItem?.id === agendaItemId
+    );
+
+  const handleStartEventVoting = async () => {
+    if (!amendment || !isOrganizer || !user) return;
+
+    setStartingVoting(true);
+    try {
+      const sessionId = crypto.randomUUID();
+      const now = Date.now();
+      const votingDuration = 30 * 60 * 1000; // 30 minutes default
+
+      const transactions = [
+        // Update amendment to event_voting status
+        tx.amendments[amendment.id].update({
+          workflowStatus: 'event_voting',
+          updatedAt: now,
+        }),
+        // Create voting session
+        tx.amendmentVotingSessions[sessionId].update({
+          amendment: amendment.id,
+          event: eventId,
+          agendaItem: agendaItemId,
+          votingType: 'event',
+          status: 'active',
+          votingStartTime: now,
+          votingEndTime: now + votingDuration,
+          votingIntervalMinutes: 30,
+          currentChangeRequestIndex: 0,
+          autoClose: false, // Will be set from amendment settings
+          createdAt: now,
+          updatedAt: now,
+        }),
+      ];
+
+      // Add timeline event for public amendments
+      if (amendment.visibility === 'public') {
+        transactions.push(
+          createTimelineEvent({
+            eventType: 'vote_started',
+            entityType: 'amendment',
+            entityId: amendment.id,
+            actorId: user.id,
+            title: `Voting started for ${amendment.title || 'amendment'}`,
+            description: 'Event voting has begun',
+          })
+        );
+      }
+
+      // Send notification
+      const notificationTxs = notifyVotingSessionStarted({
+        senderId: user.id,
+        amendmentId: amendment.id,
+        amendmentTitle: amendment.title || 'Untitled Amendment',
+        eventId,
+      });
+      transactions.push(...notificationTxs);
+
+      await db.transact(transactions);
+
+      toast.success('Event-Abstimmung gestartet');
+    } catch (error) {
+      console.error('Failed to start event voting:', error);
+      toast.error('Fehler beim Starten der Abstimmung');
+    } finally {
+      setStartingVoting(false);
+    }
+  };
+
+  const handleAdvanceToNext = async () => {
+    if (!votingSession || !isOrganizer) return;
+
+    setAdvancingVote(true);
+    try {
+      const currentIndex = votingSession.currentChangeRequestIndex || 0;
+      const newIndex = currentIndex + 1;
+
+      await db.transact([
+        tx.amendmentVotingSessions[votingSession.id].update({
+          currentChangeRequestIndex: newIndex,
+          updatedAt: Date.now(),
+        }),
+      ]);
+
+      toast.success('Zur nächsten Abstimmung fortgeschritten');
+    } catch (error) {
+      console.error('Failed to advance vote:', error);
+      toast.error('Fehler beim Fortschreiten');
+    } finally {
+      setAdvancingVote(false);
+    }
+  };
+
+  const handleCompleteVoting = async () => {
+    if (!votingSession || !amendment || !isOrganizer || !user) return;
+
+    try {
+      const transactions: any[] = [
+        tx.amendmentVotingSessions[votingSession.id].update({
+          status: 'completed',
+          updatedAt: Date.now(),
+        }),
+      ];
+
+      // Send notification
+      const notificationTxs = notifyVotingSessionCompleted({
+        senderId: user.id,
+        amendmentId: amendment.id,
+        amendmentTitle: amendment.title || 'Untitled Amendment',
+        eventId,
+      });
+      transactions.push(...notificationTxs);
+
+      // Mark session as completed
+      await db.transact(transactions);
+
+      // TODO: Calculate vote results and progress to next event
+      // This should integrate with amendment-process-helpers.ts
+
+      toast.success('Abstimmung abgeschlossen');
+    } catch (error) {
+      console.error('Failed to complete voting:', error);
+      toast.error('Fehler beim Abschließen der Abstimmung');
+    }
+  };
 
   const getAgendaItemIcon = (type: string) => {
     switch (type) {
@@ -459,7 +618,110 @@ export function EventAgendaItemDetail({
       )}
 
       {/* Amendment Vote Section */}
-      {agendaItem.amendmentVote && (
+      {agendaItem.type === 'amendment' && amendment && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Gavel className="h-5 w-5" />
+                <CardTitle>Amendment Workflow</CardTitle>
+              </div>
+              <Badge
+                variant="outline"
+                className={
+                  amendment.workflowStatus === 'event_suggesting'
+                    ? 'border-teal-500 bg-teal-50 text-teal-700 dark:bg-teal-950'
+                    : amendment.workflowStatus === 'event_voting'
+                      ? 'border-red-500 bg-red-50 text-red-700 dark:bg-red-950'
+                      : 'border-gray-500'
+                }
+              >
+                {amendment.workflowStatus === 'event_suggesting'
+                  ? '💡 Event Vorschläge'
+                  : amendment.workflowStatus === 'event_voting'
+                    ? '🗳️ Event Abstimmung'
+                    : amendment.workflowStatus || 'Unbekannt'}
+              </Badge>
+            </div>
+            <CardDescription>
+              Amendment: <Link href={`/amendment/${amendment.id}`} className="hover:underline font-medium">{amendment.title}</Link>
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Start Voting Button */}
+            {amendment.workflowStatus === 'event_suggesting' && isOrganizer && !votingSession && (
+              <div className="rounded-lg border-2 border-dashed border-blue-300 bg-blue-50 p-6 text-center dark:bg-blue-950">
+                <div className="mb-4">
+                  <AlertCircle className="mx-auto h-12 w-12 text-blue-500" />
+                </div>
+                <h3 className="mb-2 text-lg font-semibold">Event-Abstimmung starten</h3>
+                <p className="mb-4 text-sm text-muted-foreground">
+                  Starten Sie die sequentielle Abstimmung über alle Change Requests und den finalen
+                  Text.
+                </p>
+                <Button
+                  onClick={handleStartEventVoting}
+                  disabled={startingVoting}
+                  size="lg"
+                  className="gap-2"
+                >
+                  <Play className="h-4 w-4" />
+                  {startingVoting ? 'Wird gestartet...' : 'Abstimmung starten'}
+                </Button>
+              </div>
+            )}
+
+            {/* Voting Queue */}
+            {amendment.workflowStatus === 'event_voting' && votingSession && (
+              <AmendmentVotingQueue
+                amendmentId={amendment.id}
+                eventId={eventId}
+                agendaItemId={agendaItemId}
+                changeRequests={changeRequests}
+                currentSession={votingSession}
+                isOrganizer={!!isOrganizer}
+                onAdvanceToNext={handleAdvanceToNext}
+                onComplete={handleCompleteVoting}
+              />
+            )}
+
+            {/* Info for event_suggesting phase */}
+            {amendment.workflowStatus === 'event_suggesting' && !isOrganizer && (
+              <div className="rounded-lg bg-muted/50 p-4">
+                <p className="text-sm text-muted-foreground">
+                  Dieses Amendment befindet sich in der Event-Vorschlagsphase. Event-Teilnehmer
+                  können Change Requests einreichen.
+                </p>
+                <div className="mt-3">
+                  <Link href={`/amendment/${amendment.id}/change-requests`}>
+                    <Button variant="outline" size="sm">
+                      Change Requests ansehen
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {/* Change Request Stats */}
+            {changeRequests.length > 0 && (
+              <div className="rounded-lg border p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Change Requests</span>
+                  <Badge variant="secondary">{changeRequests.length}</Badge>
+                </div>
+                <div className="mt-2 text-xs text-muted-foreground">
+                  {changeRequests.filter((cr: any) => cr.status === 'proposed').length} ausstehend,{' '}
+                  {changeRequests.filter((cr: any) => cr.status === 'accepted').length} angenommen,{' '}
+                  {changeRequests.filter((cr: any) => cr.status === 'rejected').length} abgelehnt
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Legacy Amendment Vote Section */}
+      {agendaItem.amendmentVote && !amendment && (
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">

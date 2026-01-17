@@ -6,6 +6,7 @@ import { useState, useMemo } from 'react';
 import db, { tx, id } from '../../../../db/db';
 import { toast } from 'sonner';
 import type { GroupPayment, FinancialSummary, ChartData } from '../types/group.types';
+import { notifyPaymentCreated } from '@/utils/notification-helpers';
 
 export function useGroupPayments(groupId: string) {
   const [isLoading, setIsLoading] = useState(false);
@@ -36,6 +37,9 @@ export function useGroupPayments(groupId: string) {
     payerGroupId?: string;
     receiverUserId?: string;
     receiverGroupId?: string;
+    senderId?: string;
+    groupName?: string;
+    adminUserIds?: string[];
   }) => {
     setIsLoading(true);
     try {
@@ -61,7 +65,24 @@ export function useGroupPayments(groupId: string) {
         return { success: false };
       }
 
-      await db.transact([transaction]);
+      const transactions: any[] = [transaction];
+
+      // Send notifications to admins
+      if (paymentData.senderId && paymentData.groupName && paymentData.adminUserIds) {
+        paymentData.adminUserIds.forEach(adminId => {
+          if (adminId !== paymentData.senderId) {
+            const notificationTxs = notifyPaymentCreated({
+              senderId: paymentData.senderId!,
+              groupId,
+              groupName: paymentData.groupName!,
+              paymentDescription: paymentData.label,
+            });
+            transactions.push(...notificationTxs);
+          }
+        });
+      }
+
+      await db.transact(transactions);
       toast.success('Payment added successfully!');
       return { success: true, paymentId };
     } catch (error) {
@@ -73,15 +94,38 @@ export function useGroupPayments(groupId: string) {
     }
   };
 
-  const deletePayment = async (paymentId: string) => {
+  const deletePayment = async (
+    paymentId: string,
+    paymentLabel?: string,
+    senderId?: string,
+    groupName?: string,
+    adminUserIds?: string[]
+  ) => {
     setIsLoading(true);
     try {
-      await db.transact([tx.payments[paymentId].delete()]);
+      const transactions: any[] = [tx.payments[paymentId].delete()];
+
+      // Send notifications to admins
+      if (senderId && paymentLabel && groupName && adminUserIds) {
+        adminUserIds.forEach(adminId => {
+          if (adminId !== senderId) {
+            const notificationTxs = notifyPaymentCreated({
+              senderId,
+              groupId,
+              groupName,
+              paymentDescription: `Deleted: ${paymentLabel}`,
+            });
+            transactions.push(...notificationTxs);
+          }
+        });
+      }
+
+      await db.transact(transactions);
       toast.success('Payment deleted successfully!');
       return { success: true };
     } catch (error) {
       console.error('Failed to delete payment:', error);
-      toast.error('Failed to delete payment');
+      toast.error('Failed to delete payment');;
       return { success: false, error };
     } finally {
       setIsLoading(false);

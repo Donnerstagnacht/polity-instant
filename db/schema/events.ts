@@ -9,7 +9,7 @@ const _events = {
       endDate: i.date().indexed().optional(),
       imageURL: i.string().optional(),
       isPublic: i.boolean().indexed(),
-      location: i.string().optional(),
+      location: i.string().optional(), // Legacy: single location field
       startDate: i.date().indexed(),
       streamURL: i.string().optional(), // YouTube live stream URL for the event stream page
       tags: i.json().optional(),
@@ -17,12 +17,36 @@ const _events = {
       updatedAt: i.date().indexed(),
       visibility: i.string().indexed().optional(), // 'public', 'authenticated', 'private'
       public_participants: i.boolean().indexed().optional(), // Whether participants list is publicly visible
+      participantListVisibility: i.string().indexed().optional(), // 'public', 'authenticated', 'private' - replaces public_participants
       amendment_cutoff_date: i.date().indexed().optional(), // Deadline for submitting amendments
       eventType: i.string().indexed().optional(), // 'delegate_conference', 'open_assembly', 'general_assembly', 'other'
       delegatesFinalized: i.boolean().indexed().optional(), // Whether delegates have been finalized for delegate conferences
       delegateAllocationMode: i.string().indexed().optional(), // 'total' (fixed number) or 'ratio' (per X members)
       totalDelegates: i.number().indexed().optional(), // Total number of delegates when mode is 'total'
       delegateRatio: i.number().indexed().optional(), // Number of members per delegate when mode is 'ratio' (default: 50)
+      
+      // Recurring event fields
+      recurringPattern: i.string().indexed().optional(), // 'daily', 'weekly', 'monthly', 'yearly', 'four-yearly', null for non-recurring
+      recurringInterval: i.number().optional(), // e.g., 1 for every week, 2 for every 2 weeks
+      recurringEndDate: i.date().indexed().optional(), // When the recurrence stops
+      recurringParentId: i.string().indexed().optional(), // ID of parent event for recurring instances
+      recurringInstanceDate: i.date().indexed().optional(), // Specific date for this recurring instance
+      
+      // Location type and online meeting fields
+      locationType: i.string().indexed().optional(), // 'online', 'physical', 'hybrid'
+      onlineMeetingLink: i.string().optional(), // URL for online meeting (Zoom, Teams, etc.)
+      meetingCode: i.string().optional(), // Access code for the meeting
+      
+      // Physical location fields (structured address)
+      locationName: i.string().optional(), // Name of venue (e.g., "Rathaus", "Community Center")
+      street: i.string().optional(), // Street name
+      houseNumber: i.string().optional(), // House/building number
+      postalCode: i.string().optional(), // Postal/ZIP code
+      city: i.string().optional(), // City name
+      
+      // Deadline fields for delegate conferences
+      delegateNominationDeadline: i.date().indexed().optional(), // Deadline for delegate nominations
+      proposalSubmissionDeadline: i.date().indexed().optional(), // Deadline for submitting proposals/amendments
     }),
     eventParticipants: i.entity({
       createdAt: i.date().indexed().optional(),

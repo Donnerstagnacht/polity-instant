@@ -29,11 +29,16 @@ export const documentsSeeder: EntitySeeder = {
         { type: 'p', children: [{ text: faker.lorem.paragraphs(2) }] },
       ];
 
+      // Add editingMode for workflow compatibility
+      const editingMode = randomItem(['edit', 'view', 'suggest', 'vote'] as const);
+
       transactions.push(
         tx.documents[documentId]
           .update({
             title: faker.lorem.sentence(),
             content: documentContent,
+            editingMode,
+            suggestionCounter: 0,
             createdAt: faker.date.past({ years: 0.5 }),
             updatedAt: faker.date.recent({ days: 7 }),
             isPublic: faker.datatype.boolean(0.7),

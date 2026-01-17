@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { db, tx, id } from '../../../../db/db';
 import { useAuthStore } from '@/features/auth/auth.ts';
+import { notifyNewFollower } from '@/utils/notification-helpers';
 
 /**
  * Hook to handle user following functionality
@@ -65,13 +66,24 @@ export function useFollowUser(targetUserId?: string) {
 
     setIsLoading(true);
     try {
-      await db.transact([
-        tx.follows[id()].update({
+      const followId = id();
+      const transactions: any[] = [
+        tx.follows[followId].update({
           follower: authUser.id,
           followee: targetUserId,
           createdAt: new Date(),
         }),
-      ]);
+      ];
+
+      // Send notification to the user being followed
+      const notificationTxs = notifyNewFollower({
+        senderId: authUser.id,
+        recipientUserId: targetUserId,
+        senderName: authUser.name || 'Someone',
+      });
+      transactions.push(...notificationTxs);
+
+      await db.transact(transactions);
     } catch (error) {
       console.error('Failed to follow user:', error);
     } finally {

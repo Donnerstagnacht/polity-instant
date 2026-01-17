@@ -60,8 +60,7 @@ function CreateElectionCandidateForm() {
 
   const userElections = electionsData?.elections || [];
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setIsSubmitting(true);
 
     try {
@@ -120,7 +119,6 @@ function CreateElectionCandidateForm() {
           <CardHeader>
             <CardTitle>Create a New Election Candidate</CardTitle>
           </CardHeader>
-          <form onSubmit={handleSubmit}>
             <CardContent>
               <Carousel setApi={setCarouselApi} opts={{ watchDrag: false }}>
                 <CarouselContent>
@@ -194,7 +192,7 @@ function CreateElectionCandidateForm() {
                   {/* Step 3: Review */}
                   <CarouselItem>
                     <div className="p-4">
-                      <Card className="overflow-hidden border-2 bg-gradient-to-br from-pink-100 to-blue-100 dark:from-pink-900/40 dark:to-blue-900/50">
+                      <Card className="overflow-hidden border-2 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/50">
                         <CardHeader>
                           <div className="mb-2 flex items-center justify-between">
                             <Badge variant="default" className="text-xs">
@@ -260,17 +258,16 @@ function CreateElectionCandidateForm() {
                 <Button
                   type="button"
                   onClick={() => carouselApi?.scrollNext()}
-                  disabled={currentStep === 0 && !formData.electionId}
+                  disabled={(currentStep === 0 && !formData.electionId) || (currentStep === 1 && !formData.name)}
                 >
                   Next
                 </Button>
               ) : (
-                <Button type="submit" disabled={isSubmitting}>
+                <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
                   {isSubmitting ? 'Creating...' : 'Create Election Candidate'}
                 </Button>
               )}
             </CardFooter>
-          </form>
         </Card>
       </PageWrapper>
     </AuthGuard>

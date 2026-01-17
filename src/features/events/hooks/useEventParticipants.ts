@@ -45,7 +45,8 @@ export function useEventParticipants(eventId: string) {
   const { user } = db.useAuth();
   const currentUserId = user?.id;
 
-  const rolesData = { roles: event?.group?.roles || [] };
+  // Use event-scoped roles, not group roles
+  const rolesData = { roles: event?.roles || [] };
 
   // Get existing participant IDs to exclude from invite search
   const existingParticipantIds = participants.map(p => p.user?.id).filter(Boolean) as string[];
@@ -219,7 +220,12 @@ export function useEventParticipants(eventId: string) {
     [filteredParticipants]
   );
   const activeParticipants = useMemo(
-    () => filteredParticipants.filter((p: any) => p.status === 'member' || p.role === 'Organizer'),
+    () => filteredParticipants.filter((p: any) => 
+      p.status === 'member' || 
+      p.status === 'confirmed' || 
+      p.status === 'admin' ||
+      p.role?.name === 'Organizer'
+    ),
     [filteredParticipants]
   );
   const invitedUsers = useMemo(

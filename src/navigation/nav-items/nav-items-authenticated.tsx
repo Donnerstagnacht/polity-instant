@@ -258,20 +258,29 @@ export const navItemsAuthenticated = (
     );
 
     if (isOwnUser) {
-      items.push({
-        id: 'edit',
-        label: t ? t('navigation.secondary.user.edit') : 'Edit User',
-        icon: 'Settings',
-        href: `/user/${userId}/edit`,
-        onClick: () => router.push(`/user/${userId}/edit`),
-      });
+      items.push(
+        {
+          id: 'notifications',
+          label: t ? t('navigation.secondary.user.notifications') : 'Notifications',
+          icon: 'Bell',
+          href: `/user/${userId}/notifications`,
+          onClick: () => router.push(`/user/${userId}/notifications`),
+        },
+        {
+          id: 'edit',
+          label: t ? t('navigation.secondary.user.edit') : 'Edit User',
+          icon: 'Settings',
+          href: `/user/${userId}/edit`,
+          onClick: () => router.push(`/user/${userId}/edit`),
+        }
+      );
     }
 
     return items;
   };
 
   // Function to create group secondary navigation items for a specific group
-  const getGroupSecondaryNavItems = (groupId: string, isAdmin = false, isMember = false): NavigationItem[] => {
+  const getGroupSecondaryNavItems = (groupId: string, isAdmin = false, isMember = false, canManageMembers = false): NavigationItem[] => {
     const items: NavigationItem[] = [
       {
         id: 'overview',
@@ -323,16 +332,20 @@ export const navItemsAuthenticated = (
       );
     }
 
-    // Only add memberships and edit items if user is admin
+    // Add memberships item if user can manage members (groupMemberships permission)
+    if (canManageMembers) {
+      items.push({
+        id: 'memberships',
+        label: t ? t('navigation.secondary.group.memberships') : 'Members',
+        icon: 'Users',
+        href: `/group/${groupId}/memberships`,
+        onClick: () => router.push(`/group/${groupId}/memberships`),
+      });
+    }
+
+    // Only add notifications and edit items if user is admin
     if (isAdmin) {
       items.push(
-        {
-          id: 'memberships',
-          label: t ? t('navigation.secondary.group.memberships') : 'Members',
-          icon: 'Users',
-          href: `/group/${groupId}/memberships`,
-          onClick: () => router.push(`/group/${groupId}/memberships`),
-        },
         {
           id: 'notifications',
           label: t ? t('navigation.secondary.group.notifications') : 'Notifications',
@@ -442,7 +455,7 @@ export const navItemsAuthenticated = (
       },
     ];
 
-    // Only add bloggers item if user is owner
+    // Only add bloggers, editor, notifications and edit items if user is owner
     if (isOwner) {
       items.push(
         {
@@ -453,11 +466,25 @@ export const navItemsAuthenticated = (
           onClick: () => router.push(`/blog/${blogId}/bloggers`),
         },
         {
+          id: 'editor',
+          label: t ? t('navigation.secondary.blog.editor') : 'Editor',
+          icon: 'Edit',
+          href: `/blog/${blogId}/editor`,
+          onClick: () => router.push(`/blog/${blogId}/editor`),
+        },
+        {
           id: 'notifications',
           label: t ? t('navigation.secondary.blog.notifications') : 'Notifications',
           icon: 'Bell',
           href: `/blog/${blogId}/notifications`,
           onClick: () => router.push(`/blog/${blogId}/notifications`),
+        },
+        {
+          id: 'edit',
+          label: t ? t('navigation.secondary.blog.edit') : 'Edit Blog',
+          icon: 'Settings',
+          href: `/blog/${blogId}/edit`,
+          onClick: () => router.push(`/blog/${blogId}/edit`),
         }
       );
     }
@@ -489,7 +516,8 @@ export const navItemsAuthenticated = (
       canManageAmendment?: boolean,
       blogId?: string,
       isBlogOwner?: boolean,
-      isGroupMember?: boolean
+      isGroupMember?: boolean,
+      canManageMembers?: boolean
     ) => {
       switch (currentPrimaryRoute) {
         case 'projects':
@@ -501,7 +529,7 @@ export const navItemsAuthenticated = (
         case 'user':
           return userId ? getUserSecondaryNavItems(userId, isOwnUser ?? false) : null;
         case 'group':
-          return groupId ? getGroupSecondaryNavItems(groupId, isGroupAdmin ?? false, isGroupMember ?? false) : null;
+          return groupId ? getGroupSecondaryNavItems(groupId, isGroupAdmin ?? false, isGroupMember ?? false, canManageMembers ?? false) : null;
         case 'amendment':
           return amendmentId
             ? getAmendmentSecondaryNavItems(amendmentId, canViewAmendment ?? false, canManageAmendment ?? false)

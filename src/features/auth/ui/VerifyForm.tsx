@@ -10,9 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Shield, ArrowLeft, RotateCcw } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
 import { useAuthStore } from '@/features/auth/auth.ts';
-import { db, tx, id } from '../../../../db/db';
-import { ARIA_KAI_USER_ID, ARIA_KAI_WELCOME_MESSAGE } from 'e2e/aria-kai';
-import { AriaKaiWelcomeDialog } from '@/components/dialogs/AriaKaiWelcomeDialog';
+import { db } from '../../../../db/db';
 
 export function VerifyForm() {
   const { t } = useTranslation();
@@ -23,7 +21,6 @@ export function VerifyForm() {
   const email = searchParams.get('email') || '';
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [isResending, setIsResending] = useState(false);
-  const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
@@ -89,12 +86,14 @@ export function VerifyForm() {
     const success = await verifyMagicCode(email, verificationCode);
 
     if (success) {
-      // Initialize first-time users with Aria & Kai conversation
       try {
         const { user } = useAuthStore.getState();
 
         if (user?.id) {
-          // Check if user already has a handle
+          // Wait a bit for InstantDB to sync the user record
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Check if user already has a name (existing user)
           const { data } = await db.queryOnce({
             $users: {
               $: { where: { id: user.id } },
@@ -102,121 +101,38 @@ export function VerifyForm() {
           });
 
           const userRecord = data?.$users?.[0];
+          
+          // Check if user was just created (within last 2 minutes) or has no name
+          const now = Date.now();
+          const userCreatedAt = userRecord?.createdAt 
+            ? (typeof userRecord.createdAt === 'number' ? userRecord.createdAt : new Date(userRecord.createdAt).getTime())
+            : now;
+          const isNewUser = (now - userCreatedAt) < 2 * 60 * 1000; // 2 minutes
+          const hasNoName = !userRecord?.name || userRecord.name.trim() === '';
 
           console.log('🔍 First-time user check:', {
             userId: user.id,
-            hasHandle: !!userRecord?.handle,
-            handle: userRecord?.handle,
-            willShowDialog: !userRecord?.handle,
+            hasName: !!userRecord?.name,
+            name: userRecord?.name,
+            createdAt: userRecord?.createdAt,
+            isNewUser,
+            hasNoName,
+            willShowOnboarding: isNewUser || hasNoName,
           });
 
-          if (!userRecord?.handle) {
-            const now = Date.now();
-            const threeYearsAgo = now - 3 * 365 * 24 * 60 * 60 * 1000;
-            const conversationId = id();
-            const messageId = id();
-
-            // First ensure Aria & Kai exists
-            await db.transact([
-              tx.$users[ARIA_KAI_USER_ID].update({
-                name: 'Aria & Kai',
-                handle: '@ariakai',
-                subtitle: 'Your Personal Assistants',
-                bio: 'Aria & Kai are your personal AI assistants dedicated to helping you get the most out of Polity.',
-                createdAt: threeYearsAgo,
-                updatedAt: threeYearsAgo,
-                lastSeenAt: now,
-                visibility: 'public',
-              }),
-            ]);
-
-            // Generate random handle
-            const adjectives = [
-              'Quick',
-              'Lazy',
-              'Happy',
-              'Sad',
-              'Bright',
-              'Dark',
-              'Clever',
-              'Bold',
-              'Swift',
-              'Calm',
-            ];
-            const nouns = [
-              'Fox',
-              'Dog',
-              'Cat',
-              'Bird',
-              'Fish',
-              'Mouse',
-              'Lion',
-              'Bear',
-              'Wolf',
-              'Eagle',
-            ];
-            const randomHandle = `${adjectives[Math.floor(Math.random() * adjectives.length)]}${nouns[Math.floor(Math.random() * nouns.length)]}${Math.floor(Math.random() * 9000) + 1000}`;
-
-            // Initialize user and create conversation
-            await db.transact([
-              tx.$users[user.id].update({
-                handle: randomHandle,
-                name: email.split('@')[0],
-                updatedAt: now,
-                lastSeenAt: now,
-              }),
-              tx.conversations[conversationId].update({
-                lastMessageAt: now,
-                createdAt: now,
-                type: 'direct',
-                status: 'accepted',
-              }),
-              tx.conversations[conversationId].link({
-                requestedBy: ARIA_KAI_USER_ID,
-              }),
-              tx.conversationParticipants[id()]
-                .update({
-                  lastReadAt: null,
-                  joinedAt: now,
-                  leftAt: null,
-                })
-                .link({ user: user.id, conversation: conversationId }),
-              tx.conversationParticipants[id()]
-                .update({
-                  lastReadAt: now,
-                  joinedAt: now,
-                  leftAt: null,
-                })
-                .link({ user: ARIA_KAI_USER_ID, conversation: conversationId }),
-              tx.messages[messageId]
-                .update({
-                  content: ARIA_KAI_WELCOME_MESSAGE,
-                  isRead: false,
-                  createdAt: now,
-                  updatedAt: null,
-                  deletedAt: null,
-                })
-                .link({ conversation: conversationId, sender: ARIA_KAI_USER_ID }),
-            ]);
-
-            console.log('✅ Aria & Kai conversation created:', {
-              conversationId,
-              messageId,
-              userId: user.id,
-              ariaKaiId: ARIA_KAI_USER_ID,
-            });
-
-            // Show welcome dialog for new users
-            console.log('🎉 Setting showWelcomeDialog to true');
-            setShowWelcomeDialog(true);
+          if (isNewUser || hasNoName) {
+            // New user or user without name - redirect to homepage with onboarding flag
+            console.log('🎉 Redirecting to onboarding');
+            router.push('/?onboarding=true');
           } else {
             // Existing user, redirect normally
+            console.log('✅ Existing user, redirecting to homepage');
             router.push('/');
           }
         }
       } catch (error) {
-        console.error('❌ Error initializing user:', error);
-        // Don't block login on initialization failure
+        console.error('❌ Error checking user:', error);
+        // Don't block login on check failure
         router.push('/');
       }
     }
@@ -335,9 +251,7 @@ export function VerifyForm() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Welcome Dialog for new users */}
-      <AriaKaiWelcomeDialog open={showWelcomeDialog} onOpenChange={setShowWelcomeDialog} />
     </div>
   );
 }
+

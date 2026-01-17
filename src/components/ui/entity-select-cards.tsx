@@ -15,7 +15,7 @@ export function EventSelectCard({ event }: { event: any }) {
   };
 
   return (
-    <Card className="transition-all hover:shadow-md">
+    <Card className="overflow-hidden bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/50 transition-all hover:shadow-md">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-base">{event.title}</CardTitle>
@@ -53,7 +53,7 @@ export function EventSelectCard({ event }: { event: any }) {
 // Group Selection Card
 export function GroupSelectCard({ group }: { group: any }) {
   return (
-    <Card className="transition-all hover:shadow-md">
+    <Card className="overflow-hidden bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/50 transition-all hover:shadow-md">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-base">{group.name}</CardTitle>
@@ -107,7 +107,7 @@ export function AmendmentSelectCard({ amendment }: { amendment: any }) {
 // Election Selection Card
 export function ElectionSelectCard({ election }: { election: any }) {
   return (
-    <Card className="transition-all hover:shadow-md">
+    <Card className="overflow-hidden bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/50 transition-all hover:shadow-md">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-base">{election.title}</CardTitle>

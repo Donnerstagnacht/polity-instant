@@ -18,12 +18,15 @@ interface GroupEditFormProps {
   groupId: string;
   initialData?: Partial<GroupFormData>;
   onCancel?: () => void;
+  actorId?: string;
+  visibility?: 'public' | 'private' | 'authenticated';
 }
 
-export function GroupEditForm({ groupId, initialData, onCancel }: GroupEditFormProps) {
+export function GroupEditForm({ groupId, initialData, onCancel, actorId, visibility }: GroupEditFormProps) {
   const { formData, updateField, handleSubmit, isSubmitting } = useGroupUpdate(
     groupId,
-    initialData
+    initialData,
+    { actorId, visibility }
   );
 
   return (

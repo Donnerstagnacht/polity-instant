@@ -5,6 +5,7 @@ import {
   Calendar,
   CheckSquare,
   CreditCard,
+  Edit,
   File,
   FileText,
   FolderOpen,
@@ -67,6 +68,7 @@ export const iconMap = {
   Sparkles,
   Target,
   CreditCard,
+  Edit,
 } as const;
 
 export type IconName = keyof typeof iconMap;

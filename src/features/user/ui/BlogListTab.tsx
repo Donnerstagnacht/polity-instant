@@ -8,7 +8,8 @@ interface BlogListTabProps {
     id: number;
     title: string;
     date: string;
-    likes: number;
+    likes?: number;
+    supporters?: number;
     comments: number;
   }[];
   searchValue: string;

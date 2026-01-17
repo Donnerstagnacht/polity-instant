@@ -4,6 +4,13 @@
 
 import db, { tx, id as generateId } from '../../../../../db/db';
 import { toast } from 'sonner';
+import {
+  notifyCollaborationInvite,
+  notifyCollaborationApproved,
+  notifyCollaborationRejected,
+  notifyCollaborationRemoved,
+  notifyCollaborationRoleChanged,
+} from '@/utils/notification-helpers';
 
 /**
  * Invite users as collaborators
@@ -11,19 +18,36 @@ import { toast } from 'sonner';
 export async function inviteUsers(
   userIds: string[],
   amendmentId: string,
-  collaboratorRoleId: string
+  collaboratorRoleId: string,
+  senderId?: string,
+  amendmentTitle?: string
 ): Promise<void> {
-  const inviteTransactions = userIds.map(userId => {
+  const transactions: any[] = [];
+
+  userIds.forEach(userId => {
     const collaboratorId = generateId();
-    return tx.amendmentCollaborators[collaboratorId]
-      .update({
-        status: 'invited',
-        createdAt: Date.now(),
-      })
-      .link({ user: userId, amendment: amendmentId, role: collaboratorRoleId });
+    transactions.push(
+      tx.amendmentCollaborators[collaboratorId]
+        .update({
+          status: 'invited',
+          createdAt: Date.now(),
+        })
+        .link({ user: userId, amendment: amendmentId, role: collaboratorRoleId })
+    );
+
+    // Send notification
+    if (senderId && amendmentTitle) {
+      const notificationTxs = notifyCollaborationInvite({
+        senderId,
+        recipientUserId: userId,
+        amendmentId,
+        amendmentTitle,
+      });
+      transactions.push(...notificationTxs);
+    }
   });
 
-  await db.transact(inviteTransactions);
+  await db.transact(transactions);
 }
 
 /**
@@ -57,41 +81,152 @@ export async function changeCollaboratorStatus(
 /**
  * Remove collaborator
  */
-export async function removeCollaborator(collaboratorId: string): Promise<void> {
-  await db.transact([tx.amendmentCollaborators[collaboratorId].delete()]);
+export async function removeCollaborator(
+  collaboratorId: string,
+  userId?: string,
+  senderId?: string,
+  amendmentId?: string,
+  amendmentTitle?: string
+): Promise<void> {
+  const transactions: any[] = [tx.amendmentCollaborators[collaboratorId].delete()];
+
+  // Send notification
+  if (userId && senderId && amendmentId && amendmentTitle) {
+    const notificationTxs = notifyCollaborationRemoved({
+      senderId,
+      recipientUserId: userId,
+      amendmentId,
+      amendmentTitle,
+    });
+    transactions.push(...notificationTxs);
+  }
+
+  await db.transact(transactions);
 }
 
 /**
  * Approve collaboration request
  */
-export async function approveRequest(collaboratorId: string): Promise<void> {
-  await changeCollaboratorStatus(collaboratorId, 'member');
+export async function approveRequest(
+  collaboratorId: string,
+  userId?: string,
+  senderId?: string,
+  amendmentId?: string,
+  amendmentTitle?: string
+): Promise<void> {
+  const transactions: any[] = [
+    tx.amendmentCollaborators[collaboratorId].update({
+      status: 'member',
+    }),
+  ];
+
+  // Send notification
+  if (userId && senderId && amendmentId && amendmentTitle) {
+    const notificationTxs = notifyCollaborationApproved({
+      senderId,
+      recipientUserId: userId,
+      amendmentId,
+      amendmentTitle,
+    });
+    transactions.push(...notificationTxs);
+  }
+
+  await db.transact(transactions);
 }
 
 /**
  * Reject collaboration request (removes collaborator)
  */
-export async function rejectRequest(collaboratorId: string): Promise<void> {
-  await removeCollaborator(collaboratorId);
+export async function rejectRequest(
+  collaboratorId: string,
+  userId?: string,
+  senderId?: string,
+  amendmentId?: string,
+  amendmentTitle?: string
+): Promise<void> {
+  const transactions: any[] = [tx.amendmentCollaborators[collaboratorId].delete()];
+
+  // Send notification
+  if (userId && senderId && amendmentId && amendmentTitle) {
+    const notificationTxs = notifyCollaborationRejected({
+      senderId,
+      recipientUserId: userId,
+      amendmentId,
+      amendmentTitle,
+    });
+    transactions.push(...notificationTxs);
+  }
+
+  await db.transact(transactions);
 }
 
 /**
  * Promote collaborator to admin
  */
-export async function promoteToAdmin(collaboratorId: string, roles: any[]): Promise<void> {
+export async function promoteToAdmin(
+  collaboratorId: string,
+  roles: any[],
+  userId?: string,
+  senderId?: string,
+  amendmentId?: string,
+  amendmentTitle?: string
+): Promise<void> {
   const authorRole = roles.find(r => r.name === 'Author');
   if (authorRole) {
-    await changeCollaboratorRole(collaboratorId, authorRole.id);
+    const transactions: any[] = [
+      tx.amendmentCollaborators[collaboratorId].link({
+        role: authorRole.id,
+      }),
+    ];
+
+    // Send notification
+    if (userId && senderId && amendmentId && amendmentTitle) {
+      const notificationTxs = notifyCollaborationRoleChanged({
+        senderId,
+        recipientUserId: userId,
+        amendmentId,
+        amendmentTitle,
+        newRole: 'Author',
+      });
+      transactions.push(...notificationTxs);
+    }
+
+    await db.transact(transactions);
   }
 }
 
 /**
  * Demote admin to regular collaborator
  */
-export async function demoteToMember(collaboratorId: string, roles: any[]): Promise<void> {
+export async function demoteToMember(
+  collaboratorId: string,
+  roles: any[],
+  userId?: string,
+  senderId?: string,
+  amendmentId?: string,
+  amendmentTitle?: string
+): Promise<void> {
   const collaboratorRole = roles.find(r => r.name === 'Collaborator');
   if (collaboratorRole) {
-    await changeCollaboratorRole(collaboratorId, collaboratorRole.id);
+    const transactions: any[] = [
+      tx.amendmentCollaborators[collaboratorId].link({
+        role: collaboratorRole.id,
+      }),
+    ];
+
+    // Send notification
+    if (userId && senderId && amendmentId && amendmentTitle) {
+      const notificationTxs = notifyCollaborationRoleChanged({
+        senderId,
+        recipientUserId: userId,
+        amendmentId,
+        amendmentTitle,
+        newRole: 'Collaborator',
+      });
+      transactions.push(...notificationTxs);
+    }
+
+    await db.transact(transactions);
   }
 }
 

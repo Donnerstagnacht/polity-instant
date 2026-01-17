@@ -3,6 +3,7 @@
 
 import { test, expect } from '@playwright/test';
 import { loginAsTestUser } from '../helpers/auth';
+import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Blogs - Search Blogs', () => {
   test('User searches blogs by title', async ({ page }) => {
@@ -24,7 +25,7 @@ test.describe('Blogs - Search Blogs', () => {
     await blogsTab.click();
 
     // 6. Matching blogs displayed
-    page.getByRole('article').or(page.locator('[data-entity-type="blog"]'));
+    const results = page.getByRole('article').or(page.locator('[data-entity-type="blog"]'));
 
     // 7. Results sorted by relevance
     // Blog cards show key info

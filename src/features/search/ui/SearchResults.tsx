@@ -46,7 +46,7 @@ export function SearchResults({ results, type, isLoading }: SearchResultsProps) 
           case 'groups':
             return <GroupSearchCard key={key} group={item} gradientClass={gradientClass} />;
           case 'events':
-            return <EventSearchCard key={key} event={item} />;
+            return <EventSearchCard key={key} event={item} showParticipationButton={true} />;
           case 'statements':
             return <StatementSearchCard key={key} statement={item} />;
           case 'blogs':
@@ -76,7 +76,7 @@ function UnifiedResultCard({ item, index }: { item: any; index?: number }) {
     case 'statement':
       return <StatementSearchCard statement={item} />;
     case 'event':
-      return <EventSearchCard event={item} />;
+      return <EventSearchCard event={item} showParticipationButton={true} />;
     default:
       return null;
   }

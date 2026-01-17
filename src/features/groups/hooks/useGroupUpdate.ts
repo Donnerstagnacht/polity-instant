@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import db, { tx } from '../../../../db/db';
 import { syncGroupNameToConversation } from '@/utils/groupConversationSync';
+import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 
 export interface GroupFormData {
   name: string;
@@ -53,14 +54,16 @@ const initialFormState: GroupFormData = {
  *
  * @param groupId - ID of the group to update
  * @param initialData - Initial form data (usually from fetched group data)
+ * @param options - Additional options like actorId and visibility
  * @returns Form state, handlers, and submission logic
  *
  * @example
- * const { formData, updateField, handleSubmit, isSubmitting } = useGroupUpdate(groupId, group);
+ * const { formData, updateField, handleSubmit, isSubmitting } = useGroupUpdate(groupId, group, { actorId: userId, visibility: 'public' });
  */
 export function useGroupUpdate(
   groupId: string,
-  initialData?: Partial<GroupFormData>
+  initialData?: Partial<GroupFormData>,
+  options?: { actorId?: string; visibility?: 'public' | 'private' | 'authenticated' }
 ): UseGroupUpdateResult {
   const router = useRouter();
   const [formData, setFormData] = useState<GroupFormData>(initialFormState);
@@ -138,8 +141,7 @@ export function useGroupUpdate(
       // Check if name changed
       const nameChanged = formData.name !== originalName;
 
-      // Update the group in Instant DB
-      await db.transact([
+      const transactions: any[] = [
         tx.groups[groupId].update({
           name: formData.name,
           description: formData.description,
@@ -154,7 +156,24 @@ export function useGroupUpdate(
           snapchat: formData.snapchat,
           updatedAt: new Date(),
         }),
-      ]);
+      ];
+
+      // Add timeline event for public groups
+      if (options?.actorId && options?.visibility === 'public') {
+        transactions.push(
+          createTimelineEvent({
+            eventType: 'updated',
+            entityType: 'group',
+            entityId: groupId,
+            actorId: options.actorId,
+            title: `${formData.name} updated their profile`,
+            description: nameChanged ? `Group name changed to ${formData.name}` : 'Group profile has been updated',
+          })
+        );
+      }
+
+      // Update the group in Instant DB
+      await db.transact(transactions);
 
       // Sync name to group conversation if it changed
       if (nameChanged) {

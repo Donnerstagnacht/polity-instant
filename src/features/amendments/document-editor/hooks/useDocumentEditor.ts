@@ -34,6 +34,8 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editorValue, setEditorValue] = useState<any[] | null>(null);
   const [discussions, setDiscussions] = useState<any[]>([]);
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Refs to prevent re-renders and update loops
   const isInitialized = useRef(false);
@@ -61,6 +63,9 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
 
   const amendment = amendmentData?.amendments?.[0];
   const document = amendment?.document;
+  
+  // Use the queried document ID as the source of truth (fixes empty documentId parameter bug)
+  const actualDocumentId = document?.id || documentId || '';
 
   // Fetch changeRequests with votes
   const { data: changeRequestsData } = db.useQuery(
@@ -173,10 +178,14 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
   // Content change handler - throttled saves
   const handleContentChange = useCallback(
     async (newContent: any[]) => {
-      if (!documentId || !userId) return;
+      if (!actualDocumentId || !userId) {
+        console.warn('⚠️ Cannot save: missing documentId or userId', { actualDocumentId, userId });
+        return;
+      }
 
       isLocalChange.current = true;
       setEditorValue(newContent);
+      setHasUnsavedChanges(true);
 
       const now = Date.now();
       if (now - lastSaveTime.current < 1000) {
@@ -184,57 +193,73 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
       }
 
       lastSaveTime.current = now;
+      setSaveStatus('saving');
 
       try {
         await db.transact([
-          tx.documents[documentId].merge({
+          tx.documents[actualDocumentId].merge({
             content: newContent,
             updatedAt: now,
           }),
         ]);
         lastRemoteUpdate.current = now;
+        setSaveStatus('saved');
+        setHasUnsavedChanges(false);
       } catch (error) {
-        console.error('Content save failed:', error);
+        console.error('❌ Content save failed:', error);
+        setSaveStatus('error');
+        toast.error('Failed to save content. Please try again.');
       }
     },
-    [documentId, userId]
+    [actualDocumentId, userId]
   );
 
   // Save document title (debounced)
   const handleTitleChange = useCallback(
     (newTitle: string) => {
       setDocumentTitle(newTitle);
+      setHasUnsavedChanges(true);
 
       if (titleSaveTimeoutRef.current) {
         clearTimeout(titleSaveTimeoutRef.current);
       }
 
       titleSaveTimeoutRef.current = setTimeout(async () => {
-        if (!documentId || !newTitle.trim()) return;
+        if (!actualDocumentId || !newTitle.trim()) {
+          console.warn('⚠️ Cannot save title: missing documentId or empty title', { actualDocumentId, newTitle });
+          return;
+        }
 
         setIsSavingTitle(true);
+        setSaveStatus('saving');
         try {
           await db.transact([
-            tx.documents[documentId].merge({
+            tx.documents[actualDocumentId].merge({
               title: newTitle,
               updatedAt: Date.now(),
             }),
           ]);
+          setSaveStatus('saved');
+          setHasUnsavedChanges(false);
         } catch (error) {
-          console.error('Failed to save title:', error);
-          toast.error('Failed to save title');
+          console.error('❌ Failed to save title:', error);
+          setSaveStatus('error');
+          toast.error('Failed to save title. Please try again.');
         } finally {
           setIsSavingTitle(false);
         }
       }, 500);
     },
-    [documentId]
+    [actualDocumentId]
   );
 
   // Save discussions (debounced and deduped)
   const handleDiscussionsChange = useCallback(
     async (newDiscussions: any[]) => {
-      if (!documentId || !userId) return;
+      if (!actualDocumentId || !userId) {
+        console.warn('⚠️ Cannot save discussions: missing documentId or userId', { actualDocumentId, userId });
+        return;
+      }
 
       const currentDiscussionsStr = JSON.stringify(discussions);
       const newDiscussionsStr = JSON.stringify(newDiscussions);
@@ -244,6 +269,7 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
       }
 
       setDiscussions(newDiscussions);
+      setHasUnsavedChanges(true);
 
       const now = Date.now();
       const timeSinceLastSave = now - lastDiscussionsSave.current;
@@ -256,20 +282,24 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
       }
 
       lastDiscussionsSave.current = now;
+      setSaveStatus('saving');
 
       try {
         await db.transact([
-          tx.documents[documentId].merge({
+          tx.documents[actualDocumentId].merge({
             discussions: newDiscussions,
             updatedAt: now,
           }),
         ]);
+        setSaveStatus('saved');
+        setHasUnsavedChanges(false);
       } catch (error) {
         console.error('❌ Discussions save failed:', error);
-        toast.error('Failed to save comments');
+        setSaveStatus('error');
+        toast.error('Failed to save comments. Please try again.');
       }
     },
-    [documentId, userId, discussions]
+    [actualDocumentId, userId, discussions]
   );
 
   // Cleanup timeouts
@@ -281,6 +311,20 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
     };
   }, []);
 
+  // Warn before leaving with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges || saveStatus === 'saving') {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges, saveStatus]);
+
   return {
     // State
     documentTitle,
@@ -290,6 +334,8 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
     documentContent,
     isSavingTitle,
     isEditingTitle,
+    saveStatus,
+    hasUnsavedChanges,
     
     // Data
     amendment,

@@ -78,13 +78,40 @@ export const amendmentsSeeder: EntitySeeder = {
           ? 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg'
           : undefined;
 
+        // Determine workflow status based on amendment lifecycle
+        const workflowStatus = randomItem([
+          'collaborative_editing',
+          'internal_suggesting',
+          'internal_voting',
+          'viewing',
+          'event_suggesting',
+          'event_voting',
+          'passed',
+          'rejected'
+        ] as const);
+
+        // Only set currentEventId if in event phase
+        const currentEventId = ['event_suggesting', 'event_voting'].includes(workflowStatus)
+          ? targetEventId
+          : undefined;
+
+        // Determine supporting groups (2-5 random groups)
+        const supportingGroupsCount = randomInt(2, 5);
+        const supportingGroups = randomItems(
+          groupIds,
+          Math.min(supportingGroupsCount, groupIds.length)
+        );
+
         transactions.push(
           tx.amendments[amendmentId]
             .update({
               title: amendmentTitle,
               subtitle: faker.lorem.sentence(),
               status: randomItem(['Passed', 'Rejected', 'Under Review', 'Drafting'] as const),
+              workflowStatus,
+              currentEventId,
               supporters: randomInt(10, 500),
+              supporterGroups: supportingGroups,
               date: faker.date.past({ years: 1 }).toISOString(),
               code: `AMN-${faker.string.alphanumeric(6).toUpperCase()}`,
               tags: [randomItem(['policy', 'reform', 'legislation', 'amendment', 'proposal'])],
@@ -193,12 +220,7 @@ export const amendmentsSeeder: EntitySeeder = {
         // Link amendment to group
         transactions.push(tx.amendments[amendmentId].link({ groups: groupId }));
 
-        // Add group supporters (2-5 random groups supporting this amendment)
-        const supportingGroupsCount = randomInt(2, 5);
-        const supportingGroups = randomItems(
-          groupIds,
-          Math.min(supportingGroupsCount, groupIds.length)
-        );
+        // Add group supporters links (already determined above)
         for (const supportingGroupId of supportingGroups) {
           transactions.push(
             tx.amendments[amendmentId].link({ groupSupporters: supportingGroupId })
@@ -216,7 +238,72 @@ export const amendmentsSeeder: EntitySeeder = {
         );
 
         // Add document
-        transactions.push(...createAmendmentDocument(amendmentId, amendmentTitle, mainUserId));
+        transactions.push(...createAmendmentDocument(amendmentId, amendmentTitle, mainUserId, workflowStatus));
+
+        // Add change requests (2-5 per amendment if in suggesting/voting phase)
+        if (['internal_suggesting', 'internal_voting', 'event_suggesting', 'event_voting'].includes(workflowStatus)) {
+          const changeRequestCount = randomInt(2, 5);
+          const isEventPhase = ['event_suggesting', 'event_voting'].includes(workflowStatus);
+          
+          for (let k = 0; k < changeRequestCount; k++) {
+            const changeRequestId = id();
+            const proposedChange = faker.lorem.paragraphs(randomInt(1, 3));
+            const originalText = faker.lorem.paragraphs(randomInt(1, 3));
+            
+            // Calculate character count (simple diff length approximation)
+            const characterCount = Math.abs(proposedChange.length - originalText.length) + 
+              Math.floor(Math.random() * 50); // Add some variation
+            
+            const crStatus = randomItem(['proposed', 'pending', 'accepted', 'rejected'] as const);
+            const source = isEventPhase ? 'event_participant' : 'collaborator';
+            const creatorId = isEventPhase ? randomItem(userIds) : randomItem(selectedCollaborators.concat([ownerId]));
+            
+            transactions.push(
+              tx.changeRequests[changeRequestId]
+                .update({
+                  title: faker.lorem.sentence(),
+                  description: faker.lorem.sentences(2),
+                  proposedChange,
+                  justification: faker.lorem.paragraph(),
+                  status: crStatus,
+                  characterCount,
+                  source,
+                  sourceEventId: isEventPhase ? currentEventId : undefined,
+                  votingOrder: k, // Sequential order
+                  requiresVoting: workflowStatus.includes('voting'),
+                  votingThreshold: 50,
+                  createdAt: faker.date.recent({ days: 30 }),
+                  updatedAt: new Date(),
+                })
+                .link({
+                  amendment: amendmentId,
+                  creator: creatorId,
+                })
+            );
+            
+            // Add votes on change requests if in voting phase
+            if (workflowStatus.includes('voting') && crStatus !== 'proposed') {
+              const voteCount = randomInt(3, 8);
+              const voters = randomItems(userIds, voteCount);
+              
+              for (const voterId of voters) {
+                const voteId = id();
+                transactions.push(
+                  tx.changeRequestVotes[voteId]
+                    .update({
+                      vote: randomItem(['accept', 'reject', 'abstain'] as const),
+                      createdAt: faker.date.recent({ days: 10 }),
+                      updatedAt: faker.date.recent({ days: 5 }),
+                    })
+                    .link({
+                      changeRequest: changeRequestId,
+                      voter: voterId,
+                    })
+                );
+              }
+            }
+          }
+        }
 
         // === Create amendment path leading to target ===
         // Create a path (2-3 groups in the path)
@@ -390,6 +477,56 @@ export const amendmentsSeeder: EntitySeeder = {
         pathsCreated++;
         amendmentPathsToAmendments++;
 
+        // Create voting session if in event_voting phase
+        if (workflowStatus === 'event_voting' && currentEventId) {
+          const sessionId = id();
+          const now = Date.now();
+          const votingDuration = randomInt(15, 60) * 60 * 1000; // 15-60 minutes
+          
+          transactions.push(
+            tx.amendmentVotingSessions[sessionId]
+              .update({
+                votingType: 'event',
+                status: randomItem(['pending', 'active', 'completed'] as const),
+                votingStartTime: now,
+                votingEndTime: now + votingDuration,
+                votingIntervalMinutes: randomInt(15, 60),
+                currentChangeRequestIndex: randomInt(0, 3),
+                autoClose: faker.datatype.boolean(0.5),
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              })
+              .link({
+                amendment: amendmentId,
+                event: currentEventId,
+                agendaItem: pathSegmentIds[0], // Link to first agenda item
+              })
+          );
+        } else if (workflowStatus === 'internal_voting') {
+          // Create internal voting session
+          const sessionId = id();
+          const now = Date.now();
+          const votingDuration = randomInt(24, 72) * 60 * 60 * 1000; // 1-3 days
+          
+          transactions.push(
+            tx.amendmentVotingSessions[sessionId]
+              .update({
+                votingType: 'internal',
+                status: randomItem(['pending', 'active', 'completed'] as const),
+                votingStartTime: now,
+                votingEndTime: now + votingDuration,
+                votingIntervalMinutes: randomInt(60, 180),
+                currentChangeRequestIndex: randomInt(0, 2),
+                autoClose: faker.datatype.boolean(0.3),
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              })
+              .link({
+                amendment: amendmentId,
+              })
+          );
+        }
+
         // Link amendment to target group and target event
         if (targetEventId) {
           transactions.push(
@@ -488,7 +625,7 @@ export const amendmentsSeeder: EntitySeeder = {
 
       // Clone the document (find original document and create a copy)
       transactions.push(
-        ...createAmendmentDocument(cloneId, `${originalAmendment.title} (Clone)`, cloneOwnerId)
+        ...createAmendmentDocument(cloneId, `${originalAmendment.title} (Clone)`, cloneOwnerId, 'collaborative_editing')
       );
 
       clonesCreated++;

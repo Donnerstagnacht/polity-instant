@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { db, tx, id } from '../../../../db/db';
 import { useAuthStore } from '@/features/auth/auth.ts';
-import { createNotification } from '@/utils/notification-helpers';
+import { notifyEventNewSubscriber } from '@/utils/notification-helpers';
 import { toast } from 'sonner';
 
 /**
@@ -13,6 +13,36 @@ export function useSubscribeEvent(targetEventId?: string) {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscriberCount, setSubscriberCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Query current user's name for notifications
+  const { data: currentUserData } = db.useQuery(
+    authUser?.id
+      ? {
+          $users: {
+            $: {
+              where: { id: authUser.id },
+              limit: 1,
+            },
+          },
+        }
+      : null
+  );
+  const currentUserName = currentUserData?.$users?.[0]?.name || 'Someone';
+
+  // Query event title for notifications
+  const { data: eventData } = db.useQuery(
+    targetEventId
+      ? {
+          events: {
+            $: {
+              where: { id: targetEventId },
+              limit: 1,
+            },
+          },
+        }
+      : null
+  );
+  const eventTitle = eventData?.events?.[0]?.title || 'Event';
 
   // Query to get all subscribers for the target event
   const { data: subscriptionData, isLoading: subscriptionLoading } = db.useQuery(
@@ -53,16 +83,11 @@ export function useSubscribeEvent(targetEventId?: string) {
     setIsLoading(true);
     try {
       const subscriptionId = id();
-      const notification = createNotification({
+      const notification = notifyEventNewSubscriber({
         senderId: authUser.id,
-        recipientEntityType: 'event',
-        recipientEntityId: targetEventId,
-        type: 'event_update',
-        title: 'New Subscriber',
-        message: `${authUser.name || 'A user'} subscribed to this event`,
-        actionUrl: `/user/${authUser.id}`,
-        relatedEntityType: 'event',
-        relatedEventId: targetEventId,
+        senderName: currentUserName,
+        eventId: targetEventId,
+        eventTitle: eventTitle,
       });
 
       await db.transact([

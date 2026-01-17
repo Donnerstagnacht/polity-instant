@@ -54,17 +54,17 @@ export const USER: User = {
       id: 1,
       title: 'Reimagining Parliamentary Oversight',
       date: 'Mar 15, 2023',
-      likes: 324,
+      supporters: 324,
       comments: 47,
     },
     {
       id: 2,
       title: "The Case for Citizens' Assemblies",
       date: 'Feb 2, 2023',
-      likes: 521,
+      supporters: 521,
       comments: 83,
     },
-    { id: 3, title: 'Digital Constitutionalism', date: 'Jan 10, 2023', likes: 187, comments: 32 },
+    { id: 3, title: 'Digital Constitutionalism', date: 'Jan 10, 2023', supporters: 187, comments: 32 },
   ],
   groups: [
     {

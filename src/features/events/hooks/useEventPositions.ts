@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { useAuthStore } from '@/features/auth/auth';
 import { db } from '../../../../db/db';
 import { tx, id } from '@instantdb/react';
+import { notifyEventPositionCreated, notifyEventPositionDeleted } from '@/utils/notification-helpers';
 
 export function useEventPositions(eventId: string) {
   const { user: authUser } = useAuthStore();
@@ -71,11 +72,12 @@ export function useEventPositions(eventId: string) {
     try {
       const positionId = id();
       const now = Date.now();
+      const positionTitle = title.trim();
 
-      await db.transact([
+      const transactions: any[] = [
         tx.eventPositions[positionId]
           .create({
-            title: title.trim(),
+            title: positionTitle,
             description: description.trim() || null,
             capacity: capacityNum,
             createElectionOnAgenda: createElection,
@@ -83,7 +85,20 @@ export function useEventPositions(eventId: string) {
             updatedAt: now,
           })
           .link({ event: eventId }),
-      ]);
+      ];
+
+      // Send notification to event participants
+      if (authUser?.id) {
+        const notificationTxs = notifyEventPositionCreated({
+          senderId: authUser.id,
+          eventId,
+          eventTitle: event?.title || 'Event',
+          positionTitle,
+        });
+        transactions.push(...notificationTxs);
+      }
+
+      await db.transact(transactions);
     } catch (error) {
       console.error('Failed to create position:', error);
       toast.error('Failed to create position. Please try again.');
@@ -124,12 +139,25 @@ export function useEventPositions(eventId: string) {
     }
   };
 
-  const handleDeletePosition = async (positionId: string) => {
+  const handleDeletePosition = async (positionId: string, positionTitle?: string) => {
     // Optimistic update: show success immediately
     toast.success('Position deleted successfully');
 
     try {
-      await db.transact([tx.eventPositions[positionId].delete()]);
+      const transactions: any[] = [tx.eventPositions[positionId].delete()];
+
+      // Send notification to event participants
+      if (authUser?.id && positionTitle) {
+        const notificationTxs = notifyEventPositionDeleted({
+          senderId: authUser.id,
+          eventId,
+          eventTitle: event?.title || 'Event',
+          positionTitle,
+        });
+        transactions.push(...notificationTxs);
+      }
+
+      await db.transact(transactions);
     } catch (error) {
       console.error('Failed to delete position:', error);
       toast.error('Failed to delete position. Please try again.');

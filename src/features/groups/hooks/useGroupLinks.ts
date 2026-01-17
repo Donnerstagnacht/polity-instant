@@ -6,6 +6,7 @@ import { useState } from 'react';
 import db, { tx, id } from '../../../../db/db';
 import { toast } from 'sonner';
 import type { GroupLink } from '../types/group.types';
+import { notifyLinkAdded, notifyLinkRemoved } from '@/utils/notification-helpers';
 
 export function useGroupLinks(groupId: string) {
   const [isLoading, setIsLoading] = useState(false);
@@ -23,11 +24,17 @@ export function useGroupLinks(groupId: string) {
 
   const links = (data?.links || []) as any as GroupLink[];
 
-  const addLink = async (label: string, url: string) => {
+  const addLink = async (
+    label: string,
+    url: string,
+    senderId?: string,
+    groupName?: string,
+    adminUserIds?: string[]
+  ) => {
     setIsLoading(true);
     try {
       const linkId = id();
-      await db.transact([
+      const transactions: any[] = [
         tx.links[linkId]
           .update({
             label,
@@ -35,7 +42,24 @@ export function useGroupLinks(groupId: string) {
             createdAt: Date.now(),
           })
           .link({ group: groupId }),
-      ]);
+      ];
+
+      // Send notifications to admins
+      if (senderId && groupName && adminUserIds) {
+        adminUserIds.forEach(adminId => {
+          if (adminId !== senderId) {
+            const notificationTxs = notifyLinkAdded({
+              senderId,
+              groupId,
+              groupName,
+              linkTitle: label,
+            });
+            transactions.push(...notificationTxs);
+          }
+        });
+      }
+
+      await db.transact(transactions);
       toast.success('Link added successfully!');
       return { success: true, linkId };
     } catch (error) {
@@ -47,10 +71,33 @@ export function useGroupLinks(groupId: string) {
     }
   };
 
-  const deleteLink = async (linkId: string) => {
+  const deleteLink = async (
+    linkId: string,
+    linkLabel?: string,
+    senderId?: string,
+    groupName?: string,
+    adminUserIds?: string[]
+  ) => {
     setIsLoading(true);
     try {
-      await db.transact([tx.links[linkId].delete()]);
+      const transactions: any[] = [tx.links[linkId].delete()];
+
+      // Send notifications to admins
+      if (senderId && linkLabel && groupName && adminUserIds) {
+        adminUserIds.forEach(adminId => {
+          if (adminId !== senderId) {
+            const notificationTxs = notifyLinkRemoved({
+              senderId,
+              groupId,
+              groupName,
+              linkTitle: linkLabel,
+            });
+            transactions.push(...notificationTxs);
+          }
+        });
+      }
+
+      await db.transact(transactions);
       toast.success('Link deleted successfully!');
       return { success: true };
     } catch (error) {

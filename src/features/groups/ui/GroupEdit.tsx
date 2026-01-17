@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { useGroupData } from '../hooks/useGroupData';
 import { GroupEditForm } from './GroupEditForm';
+import { useAuthStore } from '@/features/auth/auth';
 
 interface GroupEditProps {
   groupId: string;
@@ -18,6 +19,7 @@ interface GroupEditProps {
 export function GroupEdit({ groupId }: GroupEditProps) {
   const router = useRouter();
   const { group, isLoading } = useGroupData(groupId);
+  const { user } = useAuthStore();
 
   // Loading state
   if (isLoading) {
@@ -58,6 +60,8 @@ export function GroupEdit({ groupId }: GroupEditProps) {
         groupId={groupId}
         initialData={group}
         onCancel={() => router.push(`/group/${groupId}`)}
+        actorId={user?.id}
+        visibility={group?.visibility as 'public' | 'private' | 'authenticated' | undefined}
       />
     </div>
   );

@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { ArrowRight } from 'lucide-react';
 import { SubscriptionTimeline } from '@/features/timeline';
 import { AriaKaiWelcomeDialog } from '@/components/dialogs/AriaKaiWelcomeDialog';
+import { OnboardingWizard } from '@/features/auth/ui/onboarding/OnboardingWizard';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,11 +23,17 @@ import { db } from '../db/db';
 
 export default function HomePage() {
   // const { t } = useTranslation(); // Temporarily disabled
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const showAriaKaiParam = searchParams.get('showAriaKai');
+  const onboardingParam = searchParams.get('onboarding');
+  
   // Use InstantDB's native auth hook for consistency with client-layout
   const { user } = db.useAuth();
   const isAuthenticated = !!user;
   const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
   const [showAlphaWarning, setShowAlphaWarning] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Query user data to check assistantIntroduction flag
   const { data } = db.useQuery(
@@ -44,12 +52,48 @@ export default function HomePage() {
 
   const userData = data?.$users?.[0];
   const shouldShowDialog = userData?.assistantIntroduction !== false;
+  
+  console.log('🏠 HomePage render:', {
+    isAuthenticated,
+    userId: user?.id,
+    showAriaKaiParam,
+    onboardingParam,
+    shouldShowDialog,
+    showOnboarding,
+    userData: userData ? { id: userData.id, name: userData.name, assistantIntroduction: userData.assistantIntroduction } : null
+  });
+
+  // Check if user should see onboarding
+  useEffect(() => {
+    if (onboardingParam === 'true' && isAuthenticated && userData) {
+      const hasNoName = !userData.name || userData.name.trim() === '';
+      console.log('🔍 Onboarding check:', { hasNoName, userData });
+      if (hasNoName) {
+        console.log('✅ Showing onboarding wizard');
+        setShowOnboarding(true);
+      } else {
+        console.log('❌ User has name, skipping onboarding');
+        // Remove onboarding parameter
+        router.replace('/');
+      }
+    }
+  }, [onboardingParam, isAuthenticated, userData, router]);
 
   useEffect(() => {
-    if (isAuthenticated && shouldShowDialog) {
+    // Show dialog if user is authenticated and hasn't dismissed it
+    // Don't show if user is in onboarding flow
+    console.log('🏠 HomePage useEffect check:', {
+      isAuthenticated,
+      shouldShowDialog,
+      onboardingParam,
+      willShow: isAuthenticated && shouldShowDialog && !onboardingParam
+    });
+    
+    if (isAuthenticated && shouldShowDialog && !onboardingParam) {
+      console.log('🎉 Setting showWelcomeDialog to true');
       setShowWelcomeDialog(true);
     }
-  }, [isAuthenticated, shouldShowDialog]);
+  }, [isAuthenticated, shouldShowDialog, onboardingParam]);
 
   // Show alpha warning for unauthenticated users
   useEffect(() => {
@@ -65,6 +109,24 @@ export default function HomePage() {
     localStorage.setItem('alpha-warning-dismissed', 'true');
     setShowAlphaWarning(false);
   };
+
+  const handleOnboardingComplete = () => {
+    console.log('🏁 Onboarding completed');
+    setShowOnboarding(false);
+    // Navigation is handled within OnboardingWizard
+  };
+
+  // Show onboarding wizard if needed
+  if (isAuthenticated && showOnboarding && user?.id) {
+    console.log('📋 Rendering OnboardingWizard');
+    return (
+      <OnboardingWizard
+        userId={user.id}
+        userEmail={user.email || ''}
+        onComplete={handleOnboardingComplete}
+      />
+    );
+  }
 
   // If authenticated, show the timeline
   if (isAuthenticated) {

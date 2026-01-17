@@ -113,13 +113,15 @@ export function useNavigation() {
     const canViewAmendment = canView('amendments');
     const canManageAmendment = canManage('amendments');
 
-    // For blog, we check if user is owner (which usually implies manage permission)
-    // The original code checked for 'Owner' role specifically.
-    // `canManage('blogs')` should cover this if the Owner role has manage permission.
-    const isBlogOwner = canManage('blogs');
+    // For blog, we check if user can manage bloggers (which is the Owner permission)
+    // The blog creator gets the Owner role with 'manage' permission for 'blogBloggers'
+    const isBlogOwner = blogId ? canManage('blogBloggers') : false;
 
     const isOwnUser = isMe(userId);
     const isGroupMember = isMember();
+    
+    // Check if user can manage group memberships (for Members nav item)
+    const canManageMembers = canManage('groupMemberships');
 
     const baseSecondaryItems = baseGetSecondaryNavItems(
       currentPrimaryRoute,
@@ -134,7 +136,8 @@ export function useNavigation() {
       canManageAmendment,
       blogId,
       isBlogOwner,
-      isGroupMember
+      isGroupMember,
+      canManageMembers
     );
     if (!baseSecondaryItems) return null;
 

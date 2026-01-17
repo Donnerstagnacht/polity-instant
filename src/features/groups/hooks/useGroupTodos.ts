@@ -6,6 +6,7 @@ import { useState } from 'react';
 import db, { tx, id } from '../../../../db/db';
 import { toast } from 'sonner';
 import type { GroupTodo } from '../types/group.types';
+import { notifyTodoAssigned, notifyTodoUpdated, notifyTodoCompleted } from '@/utils/notification-helpers';
 
 export function useGroupTodos(groupId: string, userId?: string) {
   const [isLoading, setIsLoading] = useState(false);
@@ -33,6 +34,8 @@ export function useGroupTodos(groupId: string, userId?: string) {
     description: string;
     priority: string;
     dueDate: string;
+    assigneeUserIds?: string[];
+    groupName?: string;
   }) => {
     if (!userId) {
       toast.error('You must be logged in');
@@ -42,10 +45,9 @@ export function useGroupTodos(groupId: string, userId?: string) {
     setIsLoading(true);
     try {
       const todoId = id();
-      const assignmentId = id();
       const now = Date.now();
 
-      await db.transact([
+      const transactions: any[] = [
         tx.todos[todoId].update({
           title: todoData.title,
           description: todoData.description,
@@ -56,12 +58,35 @@ export function useGroupTodos(groupId: string, userId?: string) {
           updatedAt: now,
         }),
         tx.todos[todoId].link({ creator: userId, group: groupId }),
+      ];
+
+      // Create assignment for creator
+      const assignmentId = id();
+      transactions.push(
         tx.todoAssignments[assignmentId].update({
           assignedAt: now,
           role: 'assignee',
         }),
-        tx.todoAssignments[assignmentId].link({ todo: todoId, user: userId }),
-      ]);
+        tx.todoAssignments[assignmentId].link({ todo: todoId, user: userId })
+      );
+
+      // Send notifications to assignees
+      if (todoData.assigneeUserIds && todoData.groupName) {
+        todoData.assigneeUserIds.forEach(assigneeId => {
+          if (assigneeId !== userId) {
+            const notificationTxs = notifyTodoAssigned({
+              senderId: userId,
+              recipientUserId: assigneeId,
+              groupId,
+              groupName: todoData.groupName!,
+              todoTitle: todoData.title,
+            });
+            transactions.push(...notificationTxs);
+          }
+        });
+      }
+
+      await db.transact(transactions);
 
       toast.success('Todo added successfully!');
       return { success: true, todoId };
@@ -74,7 +99,13 @@ export function useGroupTodos(groupId: string, userId?: string) {
     }
   };
 
-  const updateTodoStatus = async (todoId: string, newStatus: string) => {
+  const updateTodoStatus = async (
+    todoId: string,
+    newStatus: string,
+    senderId?: string,
+    groupName?: string,
+    assigneeUserIds?: string[]
+  ) => {
     setIsLoading(true);
     try {
       const updates: any = {
@@ -88,7 +119,32 @@ export function useGroupTodos(groupId: string, userId?: string) {
         updates.completedAt = null;
       }
 
-      await db.transact([tx.todos[todoId].update(updates)]);
+      const transactions: any[] = [tx.todos[todoId].update(updates)];
+
+      // Send notifications to assignees about status change
+      if (senderId && groupName && assigneeUserIds) {
+        assigneeUserIds.forEach(assigneeId => {
+          if (assigneeId !== senderId) {
+            const notificationTxs = newStatus === 'completed'
+              ? notifyTodoCompleted({
+                  senderId,
+                  senderName: '', // Will be filled by the caller
+                  recipientUserId: assigneeId,
+                  todoTitle: '', // Will be filled by the caller
+                })
+              : notifyTodoUpdated({
+                  senderId,
+                  recipientUserId: assigneeId,
+                  groupId,
+                  groupName,
+                  todoTitle: '',
+                });
+            transactions.push(...notificationTxs);
+          }
+        });
+      }
+
+      await db.transact(transactions);
       toast.success('Status updated!');
       return { success: true };
     } catch (error) {
@@ -105,10 +161,34 @@ export function useGroupTodos(groupId: string, userId?: string) {
     return updateTodoStatus(todo.id, newStatus);
   };
 
-  const deleteTodo = async (todoId: string) => {
+  const deleteTodo = async (
+    todoId: string,
+    todoTitle?: string,
+    senderId?: string,
+    groupName?: string,
+    assigneeUserIds?: string[]
+  ) => {
     setIsLoading(true);
     try {
-      await db.transact([tx.todos[todoId].delete()]);
+      const transactions: any[] = [tx.todos[todoId].delete()];
+
+      // Send notifications to assignees about deletion
+      if (senderId && todoTitle && groupName && assigneeUserIds) {
+        assigneeUserIds.forEach(assigneeId => {
+          if (assigneeId !== senderId) {
+            const notificationTxs = notifyTodoUpdated({
+              senderId,
+              recipientUserId: assigneeId,
+              groupId,
+              groupName,
+              todoTitle,
+            });
+            transactions.push(...notificationTxs);
+          }
+        });
+      }
+
+      await db.transact(transactions);
       toast.success('Todo deleted successfully!');
       return { success: true };
     } catch (error) {

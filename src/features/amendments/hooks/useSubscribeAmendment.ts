@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { db, tx, id } from '../../../../db/db';
 import { useAuthStore } from '@/features/auth/auth.ts';
-import { createNotification } from '@/utils/notification-helpers';
+import { notifyAmendmentNewSubscriber } from '@/utils/notification-helpers';
 import { toast } from 'sonner';
 
 /**
@@ -13,6 +13,36 @@ export function useSubscribeAmendment(targetAmendmentId?: string) {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscriberCount, setSubscriberCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Query current user's name for notifications
+  const { data: currentUserData } = db.useQuery(
+    authUser?.id
+      ? {
+          $users: {
+            $: {
+              where: { id: authUser.id },
+              limit: 1,
+            },
+          },
+        }
+      : null
+  );
+  const currentUserName = currentUserData?.$users?.[0]?.name || 'Someone';
+
+  // Query amendment title for notifications
+  const { data: amendmentData } = db.useQuery(
+    targetAmendmentId
+      ? {
+          amendments: {
+            $: {
+              where: { id: targetAmendmentId },
+              limit: 1,
+            },
+          },
+        }
+      : null
+  );
+  const amendmentTitle = amendmentData?.amendments?.[0]?.title || 'Amendment';
 
   // Query to get all subscribers for the target amendment
   const { data: subscriptionData, isLoading: subscriptionLoading } = db.useQuery(
@@ -53,16 +83,11 @@ export function useSubscribeAmendment(targetAmendmentId?: string) {
     setIsLoading(true);
     try {
       const subscriptionId = id();
-      const notification = createNotification({
+      const notification = notifyAmendmentNewSubscriber({
         senderId: authUser.id,
-        recipientEntityType: 'amendment',
-        recipientEntityId: targetAmendmentId,
-        type: 'group_update',
-        title: 'New Subscriber',
-        message: `${authUser.name || 'A user'} subscribed to this amendment`,
-        actionUrl: `/user/${authUser.id}`,
-        relatedEntityType: 'amendment',
-        relatedAmendmentId: targetAmendmentId,
+        senderName: currentUserName,
+        amendmentId: targetAmendmentId,
+        amendmentTitle: amendmentTitle,
       });
 
       await db.transact([

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import db, { tx, id } from '../../../../db/db';
 import { toast } from 'sonner';
 import { Message, Conversation } from '../types';
+import { notifyDirectMessage, notifyConversationRequest, notifyConversationAccepted } from '@/utils/notification-helpers';
 
 export function useMessageMutations() {
   const [isLoading, setIsLoading] = useState(false);
@@ -9,11 +10,16 @@ export function useMessageMutations() {
   /**
    * Send a message to a conversation
    */
-  const sendMessage = async (conversationId: string, senderId: string, content: string) => {
+  const sendMessage = async (
+    conversationId: string,
+    senderId: string,
+    content: string,
+    recipientUserIds?: string[]
+  ) => {
     setIsLoading(true);
     try {
       const messageId = id();
-      await db.transact([
+      const transactions: any[] = [
         tx.messages[messageId]
           .update({
             content,
@@ -28,7 +34,24 @@ export function useMessageMutations() {
         tx.conversations[conversationId].update({
             lastMessageAt: new Date().toISOString(),
         })
-      ]);
+      ];
+
+      // Notify all other participants
+      if (recipientUserIds) {
+        recipientUserIds.forEach(recipientId => {
+          if (recipientId !== senderId) {
+            const notificationTxs = notifyDirectMessage({
+              senderId,
+              senderName: '', // Will be filled from user data
+              recipientUserId: recipientId,
+              conversationId,
+            });
+            transactions.push(...notificationTxs);
+          }
+        });
+      }
+
+      await db.transact(transactions);
       return { success: true, messageId };
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -45,7 +68,8 @@ export function useMessageMutations() {
   const createConversation = async (
     type: string,
     participantIds: string[],
-    groupId?: string
+    groupId?: string,
+    creatorId?: string
   ) => {
     setIsLoading(true);
     try {
@@ -81,6 +105,20 @@ export function useMessageMutations() {
       // Link requestedBy to the first participant (assuming it's the creator)
       if (participantIds.length > 0) {
           conversationTx.link({ requestedBy: participantIds[0] });
+      }
+
+      // Send conversation request notifications to other participants
+      if (creatorId) {
+        participantIds.forEach(participantId => {
+          if (participantId !== creatorId) {
+            const notificationTxs = notifyConversationRequest({
+              senderId: creatorId,
+              senderName: '', // Will be filled from user data
+              recipientUserId: participantId,
+            });
+            transactions.push(...notificationTxs);
+          }
+        });
       }
 
       await db.transact(transactions);
@@ -128,13 +166,33 @@ export function useMessageMutations() {
       }
   };
 
-  const acceptConversation = async (conversationId: string) => {
+  const acceptConversation = async (
+    conversationId: string,
+    params?: {
+      senderId?: string;
+      senderName?: string;
+      requesterUserId?: string;
+    }
+  ) => {
     try {
-      await db.transact([
+      const transactions: any[] = [
         tx.conversations[conversationId].update({
           status: 'accepted',
         }),
-      ]);
+      ];
+
+      // Send notification to the requester
+      if (params?.senderId && params?.senderName && params?.requesterUserId) {
+        const notificationTxs = notifyConversationAccepted({
+          senderId: params.senderId,
+          senderName: params.senderName,
+          recipientUserId: params.requesterUserId,
+          conversationId,
+        });
+        transactions.push(...notificationTxs);
+      }
+
+      await db.transact(transactions);
       toast.success('Conversation accepted');
       return { success: true };
     } catch (error) {

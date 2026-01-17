@@ -57,6 +57,13 @@ import {
 } from '@/components/ui/command';
 import { toast } from 'sonner';
 import { usePermissions } from '../../../../db/rbac/usePermissions';
+import {
+  notifyBloggerInvited,
+  notifyBloggerRoleChanged,
+  notifyBloggerRemoved,
+  notifyBlogRoleCreated,
+  notifyBlogRoleDeleted,
+} from '@/utils/notification-helpers';
 
 // Define available action rights for blogs
 const ACTION_RIGHTS = [
@@ -157,7 +164,7 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
         throw new Error('Writer role not found');
       }
 
-      const inviteTransactions = selectedUsers.map(userId => {
+      const inviteTransactions: any[] = selectedUsers.map(userId => {
         const bloggerId = id();
         return tx.blogBloggers[bloggerId]
           .update({
@@ -166,6 +173,19 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
           })
           .link({ user: userId, blog: blogId, role: writerRole.id });
       });
+
+      // Send notifications to invited users
+      if (currentUserId) {
+        selectedUsers.forEach(userId => {
+          const notificationTxs = notifyBloggerInvited({
+            senderId: currentUserId,
+            recipientUserId: userId,
+            blogId,
+            blogTitle: blog?.title || 'Blog',
+          });
+          inviteTransactions.push(...notificationTxs);
+        });
+      }
 
       await db.transact(inviteTransactions);
 
@@ -186,9 +206,24 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
   };
 
   // Handle role updates
-  const handleUpdateRole = async (bloggerId: string, newRoleId: string) => {
+  const handleUpdateRole = async (bloggerId: string, newRoleId: string, userId?: string) => {
     try {
-      await db.transact(tx.blogBloggers[bloggerId].link({ role: newRoleId }));
+      const transactions: any[] = [tx.blogBloggers[bloggerId].link({ role: newRoleId })];
+
+      // Send notification to the blogger about role change
+      if (currentUserId && userId) {
+        const newRole = rolesData.roles.find((r: any) => r.id === newRoleId);
+        const notificationTxs = notifyBloggerRoleChanged({
+          senderId: currentUserId,
+          recipientUserId: userId,
+          blogId,
+          blogTitle: blog?.title || 'Blog',
+          newRole: newRole?.name || 'Unknown Role',
+        });
+        transactions.push(...notificationTxs);
+      }
+
+      await db.transact(transactions);
       toast.success('Blogger role updated successfully');
     } catch (err) {
       console.error('Error updating role:', err);
@@ -197,9 +232,22 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
   };
 
   // Handle removing blogger
-  const handleRemoveBlogger = async (bloggerId: string) => {
+  const handleRemoveBlogger = async (bloggerId: string, userId?: string) => {
     try {
-      await db.transact(tx.blogBloggers[bloggerId].delete());
+      const transactions: any[] = [tx.blogBloggers[bloggerId].delete()];
+
+      // Send notification to the removed blogger
+      if (currentUserId && userId) {
+        const notificationTxs = notifyBloggerRemoved({
+          senderId: currentUserId,
+          recipientUserId: userId,
+          blogId,
+          blogTitle: blog?.title || 'Blog',
+        });
+        transactions.push(...notificationTxs);
+      }
+
+      await db.transact(transactions);
       toast.success('Blogger removed successfully');
     } catch (err) {
       console.error('Error removing blogger:', err);
@@ -252,14 +300,27 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
 
     try {
       const roleId = id();
-      await db.transact([
+      const transactions: any[] = [
         tx.roles[roleId].update({
           name: newRoleName,
           description: newRoleDescription,
           scope: 'blog',
         }),
         tx.roles[roleId].link({ blog: blogId }),
-      ]);
+      ];
+
+      // Send notification about new role
+      if (currentUserId) {
+        const notificationTxs = notifyBlogRoleCreated({
+          senderId: currentUserId,
+          blogId,
+          blogTitle: blog?.title || 'Blog',
+          roleName: newRoleName,
+        });
+        transactions.push(...notificationTxs);
+      }
+
+      await db.transact(transactions);
 
       toast.success('Role created successfully');
 
@@ -273,9 +334,22 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
   };
 
   // Handle deleting a role
-  const handleDeleteRole = async (roleId: string) => {
+  const handleDeleteRole = async (roleId: string, roleName?: string) => {
     try {
-      await db.transact(tx.roles[roleId].delete());
+      const transactions: any[] = [tx.roles[roleId].delete()];
+
+      // Send notification about role deletion
+      if (currentUserId && roleName) {
+        const notificationTxs = notifyBlogRoleDeleted({
+          senderId: currentUserId,
+          blogId,
+          blogTitle: blog?.title || 'Blog',
+          roleName,
+        });
+        transactions.push(...notificationTxs);
+      }
+
+      await db.transact(transactions);
       toast.success('Role deleted successfully');
     } catch (error) {
       console.error('Failed to delete role:', error);
@@ -559,7 +633,9 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                             {canManageBloggers && blogger.user?.id !== currentUserId ? (
                               <Select
                                 value={blogger.role?.id}
-                                onValueChange={newRoleId => handleUpdateRole(blogger.id, newRoleId)}
+                                onValueChange={newRoleId =>
+                                  handleUpdateRole(blogger.id, newRoleId, blogger.user?.id)
+                                }
                               >
                                 <SelectTrigger className="w-[180px]">
                                   <SelectValue placeholder="Select role" />

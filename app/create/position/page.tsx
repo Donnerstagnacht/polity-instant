@@ -63,8 +63,7 @@ function CreatePositionForm() {
     },
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setIsSubmitting(true);
 
     try {
@@ -111,7 +110,6 @@ function CreatePositionForm() {
           <CardHeader>
             <CardTitle>Create a New Position</CardTitle>
           </CardHeader>
-          <form onSubmit={handleSubmit}>
             <CardContent>
               <Carousel setApi={setCarouselApi} opts={{ watchDrag: false }}>
                 <CarouselContent>
@@ -203,7 +201,7 @@ function CreatePositionForm() {
                   {/* Step 3: Review */}
                   <CarouselItem>
                     <div className="p-4">
-                      <Card className="overflow-hidden border-2 bg-gradient-to-br from-yellow-100 to-orange-100 dark:from-yellow-900/40 dark:to-orange-900/50">
+                      <Card className="overflow-hidden border-2 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/50">
                         <CardHeader>
                           <div className="mb-2 flex items-center justify-between">
                             <Badge variant="default" className="text-xs">
@@ -275,6 +273,7 @@ function CreatePositionForm() {
                   onClick={() => carouselApi?.scrollNext()}
                   disabled={
                     (currentStep === 0 && !formData.title) ||
+                    (currentStep === 1 && (!formData.description || !formData.term || !formData.firstTermStart)) ||
                     !data?.groups ||
                     data.groups.length === 0
                   }
@@ -283,14 +282,14 @@ function CreatePositionForm() {
                 </Button>
               ) : (
                 <Button
-                  type="submit"
+                  type="button"
+                  onClick={handleSubmit}
                   disabled={isSubmitting || !data?.groups || data.groups.length === 0}
                 >
                   {isSubmitting ? 'Creating...' : 'Create Position'}
                 </Button>
               )}
             </CardFooter>
-          </form>
         </Card>
       </PageWrapper>
     </AuthGuard>

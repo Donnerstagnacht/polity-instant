@@ -2,8 +2,7 @@
 // seed: e2e/seed.spec.ts
 
 import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { loginAsTestUser } from '../helpers/auth';import { TEST_ENTITY_IDS } from '../test-entity-ids';
 test.describe('Blogs - Blog Loading States', () => {
   test('Blog page displays loading indicator', async ({ page }) => {
     // 1. Authenticate as test user

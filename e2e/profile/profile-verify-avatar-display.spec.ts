@@ -25,6 +25,6 @@ test.describe('Responsive Behavior and Visual Elements', () => {
     // 5. Verify avatar has appropriate alt text for accessibility
     const altAttr = await avatar.getAttribute('alt');
     expect(altAttr).toBeTruthy();
-    expect(altAttr.length).toBeGreaterThan(0);
+    expect(altAttr?.length).toBeGreaterThan(0);
   });
 });

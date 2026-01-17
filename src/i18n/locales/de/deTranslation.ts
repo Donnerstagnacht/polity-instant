@@ -92,6 +92,7 @@ const deTranslation: I18nLocale = {
         memberships: 'Mitgliedschaften',
         network: 'Netzwerk',
         meet: 'Treffen',
+        notifications: 'Benachrichtigungen',
         edit: 'Profil bearbeiten',
       },
       group: {
@@ -118,7 +119,9 @@ const deTranslation: I18nLocale = {
       blog: {
         overview: 'Übersicht',
         bloggers: 'Blogger',
+        editor: 'Editor',
         notifications: 'Benachrichtigungen',
+        edit: 'Blog bearbeiten',
       },
     },
     toggles: {
@@ -767,6 +770,50 @@ const deTranslation: I18nLocale = {
       title: 'Seite nicht gefunden',
       description: 'Die gesuchte Seite existiert nicht oder wurde verschoben.',
       helpText: 'Benötigen Sie Hilfe beim Finden?',
+    },
+  },
+  onboarding: {
+    welcome: 'Willkommen bei Polity!',
+    nameStep: {
+      title: 'Wie heißt du?',
+      description: 'Damit andere dich erkennen können',
+      firstName: 'Vorname',
+      lastName: 'Nachname',
+      firstNamePlaceholder: 'Gib deinen Vornamen ein',
+      lastNamePlaceholder: 'Gib deinen Nachnamen ein',
+      validation: {
+        required: 'Dieses Feld ist erforderlich',
+        tooShort: 'Mindestens 2 Zeichen erforderlich',
+        tooLong: 'Maximal 50 Zeichen erlaubt',
+      },
+      continue: 'Weiter',
+    },
+    groupStep: {
+      title: 'Finde deine Gruppe',
+      description: 'Suche nach einem Ort oder einer Gruppe, in der du aktiv bist',
+      searchPlaceholder: 'Gruppen oder Orte suchen...',
+      noResults: 'Keine Gruppen gefunden',
+      skip: 'Überspringen',
+      continue: 'Weiter',
+    },
+    confirmStep: {
+      title: 'Dieser Gruppe beitreten?',
+      description:
+        'Möchtest du in dieser Gruppe mitarbeiten und eine Beitrittsanfrage senden?',
+      yes: 'Ja, Anfrage senden',
+      no: 'Nein, einfach weitermachen',
+      requestSending: 'Anfrage wird gesendet...',
+      requestSent: 'Anfrage gesendet!',
+    },
+    summaryStep: {
+      title: 'Alles erledigt!',
+      description: 'Das haben wir für dich getan:',
+      nameUpdated: 'Name gesetzt auf',
+      groupSelected: 'Gruppe ausgewählt',
+      membershipRequested: 'Beitrittsanfrage gesendet an',
+      noGroup: 'Keine Gruppe ausgewählt',
+      goToProfile: 'Zu meinem Profil',
+      goToGroup: 'Zur Gruppe',
     },
   },
 };

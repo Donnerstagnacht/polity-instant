@@ -7,7 +7,8 @@ export interface BlogsCardProps {
     id: number;
     title: string;
     date: string;
-    supporters: number;
+    supporters?: number;
+    likes?: number; // Legacy support
     comments: number;
   };
   gradientClass: string;

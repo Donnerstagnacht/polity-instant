@@ -25,11 +25,16 @@ import { IncomingRelationshipRequestsTable } from '@/features/groups/ui/Incoming
 import { ActiveRelationshipsTable } from '@/features/groups/ui/ActiveRelationshipsTable';
 import { OutgoingRelationshipRequestsTable } from '@/features/groups/ui/OutgoingRelationshipRequestsTable';
 import { formatRights, RIGHT_TYPES } from '@/components/shared/RightFilters';
-import db from '../../../../db/db';
+import db, { tx } from '../../../../db/db';
+import {
+  notifyRelationshipApproved,
+  notifyRelationshipRejected,
+} from '@/utils/notification-helpers';
 
 export default function GroupNetworkPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const groupId = resolvedParams.id;
+  const { user } = db.useAuth();
   const { can } = usePermissions({ groupId });
   const canManageRelationships = can('manage', 'groupRelationships');
   
@@ -184,14 +189,50 @@ export default function GroupNetworkPage({ params }: { params: Promise<{ id: str
 
   // Handlers
   const handleAcceptRequest = async (relationships: any[]) => {
-    const transactions = relationships.map((rel) =>
-      db.tx.groupRelationships[rel.id].update({ status: 'active' })
+    const transactions: any[] = relationships.map((rel) =>
+      tx.groupRelationships[rel.id].update({ status: 'active' })
     );
+
+    // Send notifications to the requesting group
+    if (user?.id && group?.name) {
+      for (const rel of relationships) {
+        const sourceGroup = rel.parentGroup;
+        if (sourceGroup?.id) {
+          const notificationTxs = notifyRelationshipApproved({
+            senderId: user.id,
+            sourceGroupId: sourceGroup.id,
+            sourceGroupName: sourceGroup.name || 'Unknown Group',
+            targetGroupId: groupId,
+            targetGroupName: group.name,
+          });
+          transactions.push(...notificationTxs);
+        }
+      }
+    }
+
     await db.transact(transactions);
   };
 
   const handleRejectRequest = async (relationships: any[]) => {
-    const transactions = relationships.map((rel) => db.tx.groupRelationships[rel.id].delete());
+    const transactions: any[] = relationships.map((rel) => tx.groupRelationships[rel.id].delete());
+
+    // Send notifications to the requesting group
+    if (user?.id && group?.name) {
+      for (const rel of relationships) {
+        const sourceGroup = rel.parentGroup;
+        if (sourceGroup?.id) {
+          const notificationTxs = notifyRelationshipRejected({
+            senderId: user.id,
+            sourceGroupId: sourceGroup.id,
+            sourceGroupName: sourceGroup.name || 'Unknown Group',
+            targetGroupId: groupId,
+            targetGroupName: group.name,
+          });
+          transactions.push(...notificationTxs);
+        }
+      }
+    }
+
     await db.transact(transactions);
   };
 

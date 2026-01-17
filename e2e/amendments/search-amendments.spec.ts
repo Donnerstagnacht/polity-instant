@@ -3,6 +3,7 @@
 
 import { test, expect } from '@playwright/test';
 import { loginAsTestUser } from '../helpers/auth';
+import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Amendments - Search Amendments', () => {
   test('User searches amendments by title', async ({ page }) => {
@@ -24,7 +25,7 @@ test.describe('Amendments - Search Amendments', () => {
     await amendmentsTab.click();
 
     // 6. Matching amendments shown
-    page.getByRole('article').or(page.locator('[data-entity-type="amendment"]'));
+    const results = page.getByRole('article').or(page.locator('[data-entity-type="amendment"]'));
 
     // 7. Results sorted by relevance
     // Amendment cards with key info

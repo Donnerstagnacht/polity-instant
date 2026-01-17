@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { db, tx, id } from '../../../../db/db';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { toast } from 'sonner';
+import { notifyNewFollower } from '@/utils/notification-helpers';
 
 /**
  * Hook to handle user subscription functionality
@@ -12,6 +13,21 @@ export function useSubscribeUser(targetUserId?: string) {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscriberCount, setSubscriberCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Query current user's name for notifications
+  const { data: currentUserData } = db.useQuery(
+    authUser?.id
+      ? {
+          $users: {
+            $: {
+              where: { id: authUser.id },
+              limit: 1,
+            },
+          },
+        }
+      : null
+  );
+  const currentUserName = currentUserData?.$users?.[0]?.name || 'Someone';
 
   // Query to get all subscribers for the target user (we'll filter client-side)
   const { data: subscriptionData, isLoading: subscriptionLoading } = db.useQuery(
@@ -50,16 +66,23 @@ export function useSubscribeUser(targetUserId?: string) {
 
     setIsLoading(true);
     try {
-      await db.transact([
-        tx.subscribers[id()]
-          .update({
-            createdAt: new Date(),
-          })
-          .link({
-            subscriber: authUser.id,
-            user: targetUserId,
-          }),
-      ]);
+      const subscriptionTx = tx.subscribers[id()]
+        .update({
+          createdAt: new Date(),
+        })
+        .link({
+          subscriber: authUser.id,
+          user: targetUserId,
+        });
+
+      // Create notification for the user being followed
+      const notificationTxs = notifyNewFollower({
+        senderId: authUser.id,
+        senderName: currentUserName,
+        recipientUserId: targetUserId,
+      });
+
+      await db.transact([subscriptionTx, ...notificationTxs]);
       toast.success('Successfully subscribed to user');
     } catch (error) {
       console.error('🔔 [subscribe] Failed to subscribe:', error);

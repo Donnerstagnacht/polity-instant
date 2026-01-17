@@ -4,12 +4,19 @@ const _blog = {
   entities: {
     blogs: i.entity({
       commentCount: i.number(),
+      content: i.json().optional(), // Changed from string to json for PlateEditor
       date: i.string(),
+      description: i.string().optional(),
+      imageURL: i.string().optional(),
+      isPublic: i.boolean().optional(),
       likeCount: i.number(),
       title: i.string(),
       visibility: i.string().indexed().optional(), // 'public', 'authenticated', 'private'
       upvotes: i.number().optional(),
       downvotes: i.number().optional(),
+      updatedAt: i.date().indexed().optional(), // Track updates
+      editingMode: i.string().optional(), // 'edit', 'view', 'suggest', 'vote'
+      discussions: i.json().optional(), // Store discussions/comments
     }),
     blogBloggers: i.entity({
       createdAt: i.date().indexed().optional(),
@@ -112,6 +119,18 @@ const _blog = {
         on: 'blogs',
         has: 'many',
         label: 'votes',
+      },
+    },
+    documentVersionsBlog: {
+      forward: {
+        on: 'documentVersions',
+        has: 'one',
+        label: 'blog',
+      },
+      reverse: {
+        on: 'blogs',
+        has: 'many',
+        label: 'versions',
       },
     },
   } as const,

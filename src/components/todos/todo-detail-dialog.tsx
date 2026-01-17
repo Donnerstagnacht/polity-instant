@@ -15,6 +15,19 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
   Calendar,
   Tag,
   Users,
@@ -29,10 +42,15 @@ import {
   Clock,
   XCircle,
   Circle,
+  UserPlus,
+  Trash2,
+  Check,
+  ChevronsUpDown,
 } from 'lucide-react';
 import Link from 'next/link';
 import { db, tx } from '../../../db/db';
 import { toast } from 'sonner';
+import { cn } from '@/utils/utils';
 
 type TodoStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 type TodoPriority = 'low' | 'medium' | 'high' | 'urgent';
@@ -46,6 +64,11 @@ interface TodoDetailDialogProps {
 export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>(
+    todo.assignments?.map((a: any) => a.user?.id).filter(Boolean) || []
+  );
   const [formData, setFormData] = useState({
     title: todo.title || '',
     description: todo.description || '',
@@ -55,6 +78,37 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
   });
 
   const isOverdue = todo.dueDate && todo.status !== 'completed' && todo.dueDate < Date.now();
+
+  // Query group members if the todo belongs to a group
+  const { data: membersData } = db.useQuery(
+    todo.group?.id
+      ? {
+          groupMemberships: {
+            $: {
+              where: {
+                'group.id': todo.group.id,
+                status: 'member',
+              },
+            },
+            user: {},
+          },
+        }
+      : null
+  );
+
+  const members = membersData?.groupMemberships || [];
+
+  // Filter members based on search query
+  const filteredMembers = members.filter((membership: any) => {
+    const user = membership.user;
+    if (!user?.id) return false;
+    const query = searchQuery.toLowerCase();
+    return (
+      user.fullName?.toLowerCase().includes(query) ||
+      user.handle?.toLowerCase().includes(query) ||
+      user.email?.toLowerCase().includes(query)
+    );
+  });
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -74,7 +128,36 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
         updates.completedAt = null;
       }
 
-      await db.transact([tx.todos[todo.id].update(updates)]);
+      const transactions: any[] = [tx.todos[todo.id].update(updates)];
+
+      // Handle assignment changes
+      const currentAssignmentIds = todo.assignments?.map((a: any) => a.user?.id).filter(Boolean) || [];
+      const addedUserIds = selectedUserIds.filter(id => !currentAssignmentIds.includes(id));
+      const removedAssignments = todo.assignments?.filter(
+        (a: any) => a.user?.id && !selectedUserIds.includes(a.user.id)
+      ) || [];
+
+      // Remove old assignments
+      removedAssignments.forEach((assignment: any) => {
+        transactions.push(tx.todoAssignments[assignment.id].delete());
+      });
+
+      // Add new assignments
+      addedUserIds.forEach((userId: string) => {
+        const assignmentId = crypto.randomUUID();
+        transactions.push(
+          tx.todoAssignments[assignmentId]
+            .update({
+              createdAt: Date.now(),
+            })
+            .link({
+              todo: todo.id,
+              user: userId,
+            })
+        );
+      });
+
+      await db.transact(transactions);
       toast.success('Todo updated successfully!');
       setIsEditing(false);
     } catch (error) {
@@ -93,7 +176,23 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
       priority: todo.priority || 'medium',
       dueDate: todo.dueDate ? new Date(todo.dueDate).toISOString().split('T')[0] : '',
     });
+    setSelectedUserIds(
+      todo.assignments?.map((a: any) => a.user?.id).filter(Boolean) || []
+    );
+    setSearchQuery('');
     setIsEditing(false);
+  };
+
+  const handleRemoveAssignee = (userId: string) => {
+    setSelectedUserIds(prev => prev.filter(id => id !== userId));
+  };
+
+  const handleAddAssignee = (userId: string) => {
+    if (!selectedUserIds.includes(userId)) {
+      setSelectedUserIds(prev => [...prev, userId]);
+    }
+    setPopoverOpen(false);
+    setSearchQuery('');
   };
 
   return (
@@ -291,12 +390,117 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
           )}
 
           {/* Assigned Users */}
-          {todo.assignments && todo.assignments.length > 0 && (
-            <div>
-              <label className="mb-2 block text-sm font-medium">
-                <Users className="mr-2 inline h-4 w-4" />
-                Assigned To
-              </label>
+          <div>
+            <label className="mb-2 block text-sm font-medium">
+              <Users className="mr-2 inline h-4 w-4" />
+              Assigned To
+            </label>
+            {isEditing ? (
+              <div className="space-y-3">
+                {/* Show currently selected users */}
+                {selectedUserIds.length > 0 && (
+                  <div className="space-y-2">
+                    {selectedUserIds.map((userId: string) => {
+                      const membership = members.find((m: any) => m.user?.id === userId);
+                      const user = membership?.user || todo.assignments?.find((a: any) => a.user?.id === userId)?.user;
+                      if (!user) return null;
+                      return (
+                        <div
+                          key={userId}
+                          className="flex items-center justify-between rounded-md border p-2"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage src={user.imageURL || user.avatar} />
+                              <AvatarFallback>
+                                {user.fullName?.[0] || user.email?.[0]?.toUpperCase() || '?'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm">
+                              {user.fullName || user.email?.split('@')[0] || 'Unknown'}
+                            </span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveAssignee(userId)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {/* Add user button */}
+                {todo.group?.id && (
+                  <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full justify-start"
+                        disabled={!members.length}
+                      >
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Add Assignee
+                        <ChevronsUpDown className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[400px] p-0" align="start">
+                      <Command>
+                        <CommandInput
+                          placeholder="Search members..."
+                          value={searchQuery}
+                          onValueChange={setSearchQuery}
+                        />
+                        <CommandList>
+                          <CommandEmpty>No members found.</CommandEmpty>
+                          <CommandGroup>
+                            {filteredMembers
+                              .filter((m: any) => !selectedUserIds.includes(m.user?.id))
+                              .map((membership: any) => {
+                                const user = membership.user;
+                                return (
+                                  <CommandItem
+                                    key={user.id}
+                                    value={user.id}
+                                    onSelect={() => handleAddAssignee(user.id)}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        'mr-2 h-4 w-4',
+                                        selectedUserIds.includes(user.id) ? 'opacity-100' : 'opacity-0'
+                                      )}
+                                    />
+                                    <Avatar className="mr-2 h-6 w-6">
+                                      <AvatarImage src={user.imageURL} />
+                                      <AvatarFallback>
+                                        {user.fullName?.[0] || user.email?.[0]?.toUpperCase() || 'U'}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex flex-col">
+                                      <span className="text-sm font-medium">
+                                        {user.fullName || user.handle || 'Unknown'}
+                                      </span>
+                                      {user.email && (
+                                        <span className="text-xs text-muted-foreground">
+                                          {user.email}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </CommandItem>
+                                );
+                              })}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
+            ) : todo.assignments && todo.assignments.length > 0 ? (
               <div className="space-y-2">
                 {todo.assignments.map((assignment: any, idx: number) => (
                   <Link
@@ -314,8 +518,10 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                   </Link>
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <p className="text-sm text-muted-foreground">No users assigned</p>
+            )}
+          </div>
 
           {/* Group */}
           {todo.group && (

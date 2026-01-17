@@ -1,6 +1,11 @@
 import { useState, useMemo } from 'react';
 import db, { tx, id } from '../../../../db/db';
 import { toast } from 'sonner';
+import {
+  notifyStandaloneTodoAssigned,
+  notifyTodoCompleted,
+  notifyStandaloneTodoDeleted,
+} from '@/utils/notification-helpers';
 
 /**
  * Hook to query todo data
@@ -110,6 +115,7 @@ export function useTodoMutations() {
     groupId?: string;
     eventId?: string;
     amendmentId?: string;
+    senderId?: string;
   }) => {
     setIsLoading(true);
     try {
@@ -121,6 +127,7 @@ export function useTodoMutations() {
         priority: todoData.priority || 'medium',
         dueDate: todoData.dueDate,
         createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
 
       todoTx.link({ owner: todoData.ownerId });
@@ -129,7 +136,24 @@ export function useTodoMutations() {
       if (todoData.eventId) todoTx.link({ event: todoData.eventId });
       if (todoData.amendmentId) todoTx.link({ amendment: todoData.amendmentId });
 
-      await db.transact([todoTx]);
+      const transactions: any[] = [todoTx];
+
+      // Notify assignee if they're different from the owner
+      if (
+        todoData.senderId &&
+        todoData.assigneeId &&
+        todoData.assigneeId !== todoData.senderId
+      ) {
+        const notificationTxs = notifyStandaloneTodoAssigned({
+          senderId: todoData.senderId,
+          recipientUserId: todoData.assigneeId,
+          todoId,
+          todoTitle: todoData.title,
+        });
+        transactions.push(...notificationTxs);
+      }
+
+      await db.transact(transactions);
       toast.success('Todo created successfully');
       return { success: true, todoId };
     } catch (error) {
@@ -144,15 +168,43 @@ export function useTodoMutations() {
   /**
    * Update a todo
    */
-  const updateTodo = async (todoId: string, updates: any) => {
+  const updateTodo = async (
+    todoId: string,
+    updates: any,
+    options?: {
+      senderId?: string;
+      senderName?: string;
+      creatorId?: string;
+      todoTitle?: string;
+    }
+  ) => {
     setIsLoading(true);
     try {
-      await db.transact([
+      const transactions: any[] = [
         tx.todos[todoId].update({
           ...updates,
           updatedAt: new Date().toISOString(),
         }),
-      ]);
+      ];
+
+      // Notify creator when todo is completed by someone else
+      if (
+        updates.status === 'completed' &&
+        options?.senderId &&
+        options?.creatorId &&
+        options.senderId !== options.creatorId &&
+        options.todoTitle
+      ) {
+        const notificationTxs = notifyTodoCompleted({
+          senderId: options.senderId,
+          senderName: options.senderName || 'Someone',
+          recipientUserId: options.creatorId,
+          todoTitle: options.todoTitle,
+        });
+        transactions.push(...notificationTxs);
+      }
+
+      await db.transact(transactions);
       toast.success('Todo updated successfully');
       return { success: true };
     } catch (error) {
@@ -167,10 +219,35 @@ export function useTodoMutations() {
   /**
    * Delete a todo
    */
-  const deleteTodo = async (todoId: string) => {
+  const deleteTodo = async (
+    todoId: string,
+    params?: {
+      senderId?: string;
+      senderName?: string;
+      todoTitle?: string;
+      assigneeUserIds?: string[];
+    }
+  ) => {
     setIsLoading(true);
     try {
-      await db.transact([tx.todos[todoId].delete()]);
+      const transactions: any[] = [tx.todos[todoId].delete()];
+
+      // Send notifications to assignees
+      if (params?.senderId && params?.senderName && params?.todoTitle && params?.assigneeUserIds) {
+        for (const assigneeId of params.assigneeUserIds) {
+          if (assigneeId !== params.senderId) {
+            const notificationTxs = notifyStandaloneTodoDeleted({
+              senderId: params.senderId,
+              senderName: params.senderName,
+              recipientUserId: assigneeId,
+              todoTitle: params.todoTitle,
+            });
+            transactions.push(...notificationTxs);
+          }
+        }
+      }
+
+      await db.transact(transactions);
       toast.success('Todo deleted successfully');
       return { success: true };
     } catch (error) {

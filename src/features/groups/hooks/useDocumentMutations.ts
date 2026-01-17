@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import db, { tx, id } from '../../../../db/db';
+import { notifyDocumentCreated, notifyDocumentDeleted } from '@/utils/notification-helpers';
 
 interface UseDocumentMutationsResult {
   createDocument: (title: string, groupId: string, userId: string) => Promise<string | null>;
@@ -37,7 +38,9 @@ export function useDocumentMutations(groupId: string): UseDocumentMutationsResul
   const createDocument = async (
     title: string,
     groupId: string,
-    userId: string
+    userId: string,
+    groupName?: string,
+    adminUserIds?: string[]
   ): Promise<string | null> => {
     if (!title.trim()) {
       toast.error('Please enter a document title');
@@ -48,7 +51,7 @@ export function useDocumentMutations(groupId: string): UseDocumentMutationsResul
 
     try {
       const docId = id();
-      await db.transact([
+      const transactions: any[] = [
         tx.documents[docId]
           .update({
             title,
@@ -67,8 +70,24 @@ export function useDocumentMutations(groupId: string): UseDocumentMutationsResul
             isPublic: false,
           })
           .link({ owner: userId, group: groupId }),
-      ]);
+      ];
 
+      // Send notifications to admins
+      if (groupName && adminUserIds) {
+        adminUserIds.forEach(adminId => {
+          if (adminId !== userId) {
+            const notificationTxs = notifyDocumentCreated({
+              senderId: userId,
+              groupId,
+              groupName,
+              documentTitle: title,
+            });
+            transactions.push(...notificationTxs);
+          }
+        });
+      }
+
+      await db.transact(transactions);
       toast.success('Document created successfully');
 
       // Navigate to the new document
@@ -89,12 +108,34 @@ export function useDocumentMutations(groupId: string): UseDocumentMutationsResul
   /**
    * Delete a document
    */
-  const deleteDocument = async (documentId: string): Promise<boolean> => {
+  const deleteDocument = async (
+    documentId: string,
+    documentTitle?: string,
+    senderId?: string,
+    groupName?: string,
+    adminUserIds?: string[]
+  ): Promise<boolean> => {
     setIsDeleting(true);
 
     try {
-      await db.transact([tx.documents[documentId].delete()]);
+      const transactions: any[] = [tx.documents[documentId].delete()];
 
+      // Send notifications to admins
+      if (senderId && documentTitle && groupName && adminUserIds) {
+        adminUserIds.forEach(adminId => {
+          if (adminId !== senderId) {
+            const notificationTxs = notifyDocumentDeleted({
+              senderId,
+              groupId,
+              groupName,
+              documentTitle,
+            });
+            transactions.push(...notificationTxs);
+          }
+        });
+      }
+
+      await db.transact(transactions);
       toast.success('Document deleted successfully');
       return true;
     } catch (error) {

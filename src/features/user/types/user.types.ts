@@ -29,7 +29,8 @@ export interface UserBlog {
   id: number;
   title: string;
   date: string;
-  likes: number;
+  likes?: number; // Legacy support
+  supporters?: number;
   comments: number;
 }
 

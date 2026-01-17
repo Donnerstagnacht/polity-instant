@@ -24,7 +24,7 @@ test.describe('Groups - Search Groups', () => {
     await groupsTab.click();
 
     // 6. Matching groups displayed
-    page.getByRole('article').or(page.locator('[data-entity-type="group"]'));
+    const results = page.getByRole('article').or(page.locator('[data-entity-type="group"]'));
 
     // 7. Results sorted by relevance
     // Group cards show key info

@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import db, { tx, id } from '../../../../db/db';
 import { toast } from 'sonner';
+import { notifyActionRightsChanged } from '@/utils/notification-helpers';
 
 export function useRoleManagement(groupId: string) {
   const [isLoading, setIsLoading] = useState(false);
@@ -62,22 +63,28 @@ export function useRoleManagement(groupId: string) {
     resource: string,
     action: string,
     currentlyHasRight: boolean,
-    roleActionRights: any[]
+    roleActionRights: any[],
+    senderId?: string,
+    groupName?: string,
+    roleName?: string,
+    adminUserIds?: string[]
   ) => {
     setIsLoading(true);
     try {
+      const transactions: any[] = [];
+
       if (currentlyHasRight) {
         // Find and remove the action right
         const actionRightToRemove = roleActionRights.find(
           (ar) => ar.resource === resource && ar.action === action
         );
         if (actionRightToRemove) {
-          await db.transact([tx.actionRights[actionRightToRemove.id].delete()]);
+          transactions.push(tx.actionRights[actionRightToRemove.id].delete());
         }
       } else {
         // Add the action right
         const actionRightId = id();
-        await db.transact([
+        transactions.push(
           tx.actionRights[actionRightId]
             .update({
               resource,
@@ -85,9 +92,27 @@ export function useRoleManagement(groupId: string) {
               groupId,
               createdAt: Date.now(),
             })
-            .link({ role: roleId }),
-        ]);
+            .link({ role: roleId })
+        );
       }
+
+      // Send notifications to admins
+      if (senderId && groupName && roleName && adminUserIds) {
+        adminUserIds.forEach(adminId => {
+          if (adminId !== senderId) {
+            const notificationTxs = notifyActionRightsChanged({
+              senderId,
+              recipientUserId: adminId,
+              groupId,
+              groupName,
+              roleName,
+            });
+            transactions.push(...notificationTxs);
+          }
+        });
+      }
+
+      await db.transact(transactions);
       return { success: true };
     } catch (error) {
       console.error('Failed to toggle action right:', error);

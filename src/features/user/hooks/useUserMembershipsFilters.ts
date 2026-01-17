@@ -112,7 +112,7 @@ export function useUserMembershipsFilters({
     () => ({
       invited: filteredParticipations.filter((p: any) => p.status === 'invited'),
       active: filteredParticipations.filter(
-        (p: any) => p.status === 'member' || p.status === 'admin'
+        (p: any) => p.status === 'member' || p.status === 'admin' || p.status === 'confirmed'
       ),
       requested: filteredParticipations.filter((p: any) => p.status === 'requested'),
     }),

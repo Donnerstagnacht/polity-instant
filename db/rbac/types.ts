@@ -22,12 +22,15 @@ export type ResourceType =
   | 'eventParticipants'
   | 'follows'
   | 'groups'
-  | 'groupMemberships'
-  | 'groupRelationships'
-  | 'groupTodos'
-  | 'groupLinks'
-  | 'groupPayments'
   | 'groupDocuments'
+  | 'groupLinks'
+  | 'groupMemberships'
+  | 'groupNotifications'
+  | 'groupPayments'
+  | 'groupPositions'
+  | 'groupRelationships'
+  | 'groupRoles'
+  | 'groupTodos'
   | 'messages'
   | 'notifications'
   | 'payments'
@@ -50,12 +53,13 @@ export type ActionType =
   | 'comment'
   | 'moderate'
   | 'invite_members'
-  | 'manage_roles'
-  | 'manage_participants'
   | 'manage_members'
+  | 'manage_participants'
+  | 'manage_relationships'
+  | 'manage_roles'
   | 'manage_speakers'
   | 'manage_votes'
-  | 'manage_relationships';
+  | 'manageNotifications';
 
 export interface ActionRight {
   id: string;

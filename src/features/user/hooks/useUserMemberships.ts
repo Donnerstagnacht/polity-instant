@@ -5,6 +5,19 @@ import {
   notifyMembershipWithdrawn,
   notifyParticipationWithdrawn,
   notifyCollaborationWithdrawn,
+  notifyGroupInvitationAccepted,
+  notifyGroupInvitationDeclined,
+  notifyGroupRequestWithdrawn,
+  notifyEventInvitationAccepted,
+  notifyEventInvitationDeclined,
+  notifyEventRequestWithdrawn,
+  notifyCollaborationInvitationAccepted,
+  notifyCollaborationInvitationDeclined,
+  notifyCollaborationRequestWithdrawn,
+  notifyBlogInvitationAccepted,
+  notifyBlogInvitationDeclined,
+  notifyBlogRequestWithdrawn,
+  notifyBlogWriterLeft,
 } from '@/utils/notification-helpers';
 
 /**
@@ -155,6 +168,18 @@ export function useUserMemberships(userId?: string, userName?: string) {
   const leaveBlog = async (relationId: string) => {
     try {
       await db.transact([tx.blogBloggers[relationId].delete()]);
+
+      // Notify the blog (entity notification)
+      const blogRelation = blogRelations.find((r: any) => r.id === relationId);
+      if (blogRelation?.blog && userId && userName) {
+        await notifyBlogWriterLeft({
+          senderId: userId,
+          senderName: userName,
+          blogId: blogRelation.blog.id,
+          blogTitle: blogRelation.blog.title || 'Blog',
+        });
+      }
+
       toast.success('Left blog successfully');
       return { success: true };
     } catch (error) {
@@ -174,6 +199,18 @@ export function useUserMemberships(userId?: string, userName?: string) {
           status: 'member',
         }),
       ]);
+
+      // Notify the group (entity notification)
+      const membership = memberships.find((m: any) => m.id === membershipId);
+      if (membership?.group && userId && userName) {
+        await notifyGroupInvitationAccepted({
+          senderId: userId,
+          senderName: userName,
+          groupId: membership.group.id,
+          groupName: membership.group.name || 'Group',
+        });
+      }
+
       toast.success('Invitation accepted');
       return { success: true };
     } catch (error) {
@@ -188,7 +225,21 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const declineGroupInvitation = async (membershipId: string) => {
     try {
+      // Get membership info before deleting
+      const membership = memberships.find((m: any) => m.id === membershipId);
+
       await db.transact([tx.groupMemberships[membershipId].delete()]);
+
+      // Notify the group (entity notification)
+      if (membership?.group && userId && userName) {
+        await notifyGroupInvitationDeclined({
+          senderId: userId,
+          senderName: userName,
+          groupId: membership.group.id,
+          groupName: membership.group.name || 'Group',
+        });
+      }
+
       toast.success('Invitation declined');
       return { success: true };
     } catch (error) {
@@ -203,7 +254,21 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawGroupRequest = async (membershipId: string) => {
     try {
+      // Get membership info before deleting
+      const membership = memberships.find((m: any) => m.id === membershipId);
+
       await db.transact([tx.groupMemberships[membershipId].delete()]);
+
+      // Notify the group (entity notification)
+      if (membership?.group && userId && userName) {
+        await notifyGroupRequestWithdrawn({
+          senderId: userId,
+          senderName: userName,
+          groupId: membership.group.id,
+          groupName: membership.group.name || 'Group',
+        });
+      }
+
       toast.success('Request withdrawn');
       return { success: true };
     } catch (error) {
@@ -223,6 +288,18 @@ export function useUserMemberships(userId?: string, userName?: string) {
           status: 'member',
         }),
       ]);
+
+      // Notify the event (entity notification)
+      const participation = participations.find((p: any) => p.id === participationId);
+      if (participation?.event && userId && userName) {
+        await notifyEventInvitationAccepted({
+          senderId: userId,
+          senderName: userName,
+          eventId: participation.event.id,
+          eventTitle: participation.event.title || 'Event',
+        });
+      }
+
       toast.success('Event invitation accepted');
       return { success: true };
     } catch (error) {
@@ -237,7 +314,21 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const declineEventInvitation = async (participationId: string) => {
     try {
+      // Get participation info before deleting
+      const participation = participations.find((p: any) => p.id === participationId);
+
       await db.transact([tx.eventParticipants[participationId].delete()]);
+
+      // Notify the event (entity notification)
+      if (participation?.event && userId && userName) {
+        await notifyEventInvitationDeclined({
+          senderId: userId,
+          senderName: userName,
+          eventId: participation.event.id,
+          eventTitle: participation.event.title || 'Event',
+        });
+      }
+
       toast.success('Event invitation declined');
       return { success: true };
     } catch (error) {
@@ -252,7 +343,21 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawEventRequest = async (participationId: string) => {
     try {
+      // Get participation info before deleting
+      const participation = participations.find((p: any) => p.id === participationId);
+
       await db.transact([tx.eventParticipants[participationId].delete()]);
+
+      // Notify the event (entity notification)
+      if (participation?.event && userId && userName) {
+        await notifyEventRequestWithdrawn({
+          senderId: userId,
+          senderName: userName,
+          eventId: participation.event.id,
+          eventTitle: participation.event.title || 'Event',
+        });
+      }
+
       toast.success('Event request withdrawn');
       return { success: true };
     } catch (error) {
@@ -272,6 +377,18 @@ export function useUserMemberships(userId?: string, userName?: string) {
           status: 'member',
         }),
       ]);
+
+      // Notify the amendment (entity notification)
+      const collaboration = collaborations.find((c: any) => c.id === collaborationId);
+      if (collaboration?.amendment && userId && userName) {
+        await notifyCollaborationInvitationAccepted({
+          senderId: userId,
+          senderName: userName,
+          amendmentId: collaboration.amendment.id,
+          amendmentTitle: collaboration.amendment.title || 'Amendment',
+        });
+      }
+
       toast.success('Collaboration invitation accepted');
       return { success: true };
     } catch (error) {
@@ -286,7 +403,21 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const declineCollaborationInvitation = async (collaborationId: string) => {
     try {
+      // Get collaboration info before deleting
+      const collaboration = collaborations.find((c: any) => c.id === collaborationId);
+
       await db.transact([tx.amendmentCollaborators[collaborationId].delete()]);
+
+      // Notify the amendment (entity notification)
+      if (collaboration?.amendment && userId && userName) {
+        await notifyCollaborationInvitationDeclined({
+          senderId: userId,
+          senderName: userName,
+          amendmentId: collaboration.amendment.id,
+          amendmentTitle: collaboration.amendment.title || 'Amendment',
+        });
+      }
+
       toast.success('Collaboration invitation declined');
       return { success: true };
     } catch (error) {
@@ -301,7 +432,21 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawCollaborationRequest = async (collaborationId: string) => {
     try {
+      // Get collaboration info before deleting
+      const collaboration = collaborations.find((c: any) => c.id === collaborationId);
+
       await db.transact([tx.amendmentCollaborators[collaborationId].delete()]);
+
+      // Notify the amendment (entity notification)
+      if (collaboration?.amendment && userId && userName) {
+        await notifyCollaborationRequestWithdrawn({
+          senderId: userId,
+          senderName: userName,
+          amendmentId: collaboration.amendment.id,
+          amendmentTitle: collaboration.amendment.title || 'Amendment',
+        });
+      }
+
       toast.success('Collaboration request withdrawn');
       return { success: true };
     } catch (error) {
@@ -321,6 +466,18 @@ export function useUserMemberships(userId?: string, userName?: string) {
           status: 'writer',
         }),
       ]);
+
+      // Notify the blog (entity notification)
+      const blogRelation = blogRelations.find((r: any) => r.id === blogRelationId);
+      if (blogRelation?.blog && userId && userName) {
+        await notifyBlogInvitationAccepted({
+          senderId: userId,
+          senderName: userName,
+          blogId: blogRelation.blog.id,
+          blogTitle: blogRelation.blog.title || 'Blog',
+        });
+      }
+
       toast.success('Blog invitation accepted');
       return { success: true };
     } catch (error) {
@@ -335,7 +492,21 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const declineBlogInvitation = async (blogRelationId: string) => {
     try {
+      // Get blog relation info before deleting
+      const blogRelation = blogRelations.find((r: any) => r.id === blogRelationId);
+
       await db.transact([tx.blogBloggers[blogRelationId].delete()]);
+
+      // Notify the blog (entity notification)
+      if (blogRelation?.blog && userId && userName) {
+        await notifyBlogInvitationDeclined({
+          senderId: userId,
+          senderName: userName,
+          blogId: blogRelation.blog.id,
+          blogTitle: blogRelation.blog.title || 'Blog',
+        });
+      }
+
       toast.success('Blog invitation declined');
       return { success: true };
     } catch (error) {
@@ -350,7 +521,21 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawBlogRequest = async (blogRelationId: string) => {
     try {
+      // Get blog relation info before deleting
+      const blogRelation = blogRelations.find((r: any) => r.id === blogRelationId);
+
       await db.transact([tx.blogBloggers[blogRelationId].delete()]);
+
+      // Notify the blog (entity notification)
+      if (blogRelation?.blog && userId && userName) {
+        await notifyBlogRequestWithdrawn({
+          senderId: userId,
+          senderName: userName,
+          blogId: blogRelation.blog.id,
+          blogTitle: blogRelation.blog.title || 'Blog',
+        });
+      }
+
       toast.success('Blog request withdrawn');
       return { success: true };
     } catch (error) {

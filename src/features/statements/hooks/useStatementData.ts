@@ -44,7 +44,6 @@ export function useStatementMutations() {
           .update({
             text,
             tag,
-            createdAt: new Date().toISOString(),
           })
           .link({ user: userId }),
       ]);

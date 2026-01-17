@@ -172,23 +172,23 @@ export function useGroupRoles(groupId?: string) {
  * Hook to search users for inviting to group
  */
 export function useUserSearch(searchQuery: string, existingMemberships: any[] = []) {
-  const { data, isLoading } = db.useQuery(
-    searchQuery.trim()
-      ? {
-          $users: {
-            $: {
-              where: {
-                or: [
-                  { name: { $like: `%${searchQuery}%` } },
-                  { handle: { $like: `%${searchQuery}%` } },
-                ],
-              },
-              limit: 20,
-            },
-          },
-        }
-      : null
-  );
+  const trimmedQuery = searchQuery.trim();
+  
+  const { data, isLoading } = db.useQuery({
+    $users: {
+      $: {
+        where: trimmedQuery
+          ? {
+              or: [
+                { name: { $like: `%${trimmedQuery}%` } },
+                { handle: { $like: `%${trimmedQuery}%` } },
+              ],
+            }
+          : {},
+        limit: 20,
+      },
+    },
+  });
 
   const existingMemberIds = useMemo(
     () => existingMemberships.map((m) => m.user?.id).filter(Boolean),

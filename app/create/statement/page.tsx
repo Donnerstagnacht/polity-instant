@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel';
+import { VisibilitySelector } from '@/components/ui/visibility-selector';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { useStatementMutations } from '@/features/statements/hooks/useStatementData';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
@@ -37,9 +39,7 @@ export default function CreateStatementPage() {
     });
   }, [carouselApi]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleSubmit = async () => {
     if (!user?.id) {
       return;
     }
@@ -57,7 +57,6 @@ export default function CreateStatementPage() {
           <CardHeader>
             <CardTitle>Create a New Statement</CardTitle>
           </CardHeader>
-          <form onSubmit={handleSubmit}>
             <CardContent>
               <Carousel setApi={setCarouselApi} opts={{ watchDrag: false }}>
                 <CarouselContent>
@@ -91,26 +90,12 @@ export default function CreateStatementPage() {
                           required
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="statement-visibility">Visibility</Label>
-                        <select
-                          id="statement-visibility"
+                      <TooltipProvider>
+                        <VisibilitySelector
                           value={formData.visibility}
-                          onChange={e =>
-                            setFormData({
-                              ...formData,
-                              visibility: e.target.value as 'public' | 'authenticated' | 'private',
-                            })
-                          }
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        >
-                          <option value="public">Public - Anyone can see</option>
-                          <option value="authenticated">
-                            Authenticated - Only logged-in users
-                          </option>
-                          <option value="private">Private - Only you</option>
-                        </select>
-                      </div>
+                          onChange={visibility => setFormData({ ...formData, visibility })}
+                        />
+                      </TooltipProvider>
                     </div>
                   </CarouselItem>
 
@@ -170,17 +155,16 @@ export default function CreateStatementPage() {
                 <Button
                   type="button"
                   onClick={() => carouselApi?.scrollNext()}
-                  disabled={currentStep === 0 && !formData.text}
+                  disabled={(currentStep === 0 && !formData.text) || (currentStep === 1 && !formData.tag)}
                 >
                   Next
                 </Button>
               ) : (
-                <Button type="submit" disabled={isSubmitting}>
+                <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
                   {isSubmitting ? 'Creating...' : 'Create Statement'}
                 </Button>
               )}
             </CardFooter>
-          </form>
         </Card>
       </PageWrapper>
     </AuthGuard>

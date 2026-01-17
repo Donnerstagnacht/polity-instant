@@ -11,7 +11,7 @@ import { ARIA_KAI_USER_ID } from '../../../../e2e/aria-kai';
 interface MessageListProps {
   conversation: Conversation;
   currentUserId?: string;
-  onAcceptConversation: (id: string) => void;
+  onAcceptConversation: (conversation: Conversation) => void;
   onRejectConversation: (conversation: Conversation) => void;
 }
 
@@ -74,7 +74,7 @@ export function MessageList({
                   </p>
                   <div className="flex gap-2">
                     <Button
-                      onClick={() => onAcceptConversation(conversation.id)}
+                      onClick={() => onAcceptConversation(conversation)}
                       variant="default"
                       size="sm"
                     >

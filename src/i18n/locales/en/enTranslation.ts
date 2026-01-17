@@ -90,6 +90,7 @@ const enTranslation = {
         memberships: 'Memberships',
         network: 'Network',
         meet: 'Meet',
+        notifications: 'Notifications',
         edit: 'Edit Profile',
       },
       group: {
@@ -116,7 +117,9 @@ const enTranslation = {
       blog: {
         overview: 'Overview',
         bloggers: 'Bloggers',
+        editor: 'Editor',
         notifications: 'Notifications',
+        edit: 'Edit Blog',
       },
     },
     toggles: {
@@ -760,6 +763,50 @@ const enTranslation = {
       title: 'Page Not Found',
       description: 'The page you are looking for does not exist or has been moved.',
       helpText: 'Need help finding something?',
+    },
+  },
+  onboarding: {
+    welcome: 'Welcome to Polity!',
+    nameStep: {
+      title: "What's your name?",
+      description: 'Help others recognize you',
+      firstName: 'First name',
+      lastName: 'Last name',
+      firstNamePlaceholder: 'Enter your first name',
+      lastNamePlaceholder: 'Enter your last name',
+      validation: {
+        required: 'This field is required',
+        tooShort: 'Must be at least 2 characters',
+        tooLong: 'Must be at most 50 characters',
+      },
+      continue: 'Continue',
+    },
+    groupStep: {
+      title: 'Find your group',
+      description: "Search for a location or group you're active in",
+      searchPlaceholder: 'Search groups or locations...',
+      noResults: 'No groups found',
+      skip: 'Skip this step',
+      continue: 'Continue',
+    },
+    confirmStep: {
+      title: 'Join this group?',
+      description:
+        'Would you like to participate in this group and send a membership request?',
+      yes: 'Yes, send request',
+      no: 'No, just continue',
+      requestSending: 'Sending request...',
+      requestSent: 'Request sent!',
+    },
+    summaryStep: {
+      title: "You're all set!",
+      description: "Here's what we've done for you:",
+      nameUpdated: 'Name set to',
+      groupSelected: 'Group selected',
+      membershipRequested: 'Membership request sent to',
+      noGroup: 'No group selected',
+      goToProfile: 'Go to my profile',
+      goToGroup: 'Go to group',
     },
   },
 };

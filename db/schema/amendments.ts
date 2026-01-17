@@ -10,8 +10,11 @@ const _amendments = {
       videoURL: i.string().optional(),
       videoThumbnailURL: i.string().optional(),
       status: i.string(),
+      workflowStatus: i.string().indexed().optional(), // 'collaborative_editing', 'internal_suggesting', 'internal_voting', 'viewing', 'event_suggesting', 'event_voting'
+      currentEventId: i.string().optional(), // ID of current event in process  
       subtitle: i.string().optional(),
       supporters: i.number(),
+      supporterGroups: i.json().optional(), // Array of group IDs that supported this amendment
       tags: i.json().optional(),
       title: i.string(),
       updatedAt: i.date().indexed().optional(),
@@ -52,10 +55,29 @@ const _amendments = {
       votingStartTime: i.date().optional(),
       requiresVoting: i.boolean().optional(), // Whether this CR requires voting approval
       votingThreshold: i.number().optional(), // Percentage needed to pass (default 50)
+      characterCount: i.number().indexed().optional(), // Total diff length (insertions + deletions)
+      source: i.string().indexed().optional(), // 'collaborator' | 'event_participant'
+      sourceEventId: i.string().optional(), // Event ID if created by event participant
+      votingOrder: i.number().optional(), // Manual override for voting sequence (organizers only)
     }),
     changeRequestVotes: i.entity({
       createdAt: i.date().indexed(),
       updatedAt: i.date().optional(),
+      vote: i.string().indexed(), // 'accept', 'reject', 'abstain'
+    }),
+    amendmentVotingSessions: i.entity({
+      createdAt: i.date().indexed(),
+      updatedAt: i.date().indexed(),
+      votingType: i.string().indexed(), // 'internal' | 'event'
+      status: i.string().indexed(), // 'pending', 'active', 'completed'
+      votingStartTime: i.date().indexed(),
+      votingEndTime: i.date().indexed(),
+      votingIntervalMinutes: i.number(), // Voting duration in minutes
+      currentChangeRequestIndex: i.number().optional(), // Current index in sequential voting
+      autoClose: i.boolean().optional(), // Auto-close when votingEndTime reached
+    }),
+    amendmentVotingSessionVotes: i.entity({
+      createdAt: i.date().indexed(),
       vote: i.string().indexed(), // 'accept', 'reject', 'abstain'
     }),
     amendmentCollaborators: i.entity({
@@ -672,6 +694,78 @@ const _amendments = {
         on: '$users',
         has: 'many',
         label: 'commentVotes',
+      },
+    },
+    amendmentVotingSessionsAmendment: {
+      forward: {
+        on: 'amendmentVotingSessions',
+        has: 'one',
+        label: 'amendment',
+      },
+      reverse: {
+        on: 'amendments',
+        has: 'many',
+        label: 'votingSessions',
+      },
+    },
+    amendmentVotingSessionsEvent: {
+      forward: {
+        on: 'amendmentVotingSessions',
+        has: 'one',
+        label: 'event',
+      },
+      reverse: {
+        on: 'events',
+        has: 'many',
+        label: 'amendmentVotingSessions',
+      },
+    },
+    amendmentVotingSessionsAgendaItem: {
+      forward: {
+        on: 'amendmentVotingSessions',
+        has: 'one',
+        label: 'agendaItem',
+      },
+      reverse: {
+        on: 'agendaItems',
+        has: 'many',
+        label: 'amendmentVotingSessions',
+      },
+    },
+    amendmentVotingSessionVotesSession: {
+      forward: {
+        on: 'amendmentVotingSessionVotes',
+        has: 'one',
+        label: 'session',
+      },
+      reverse: {
+        on: 'amendmentVotingSessions',
+        has: 'many',
+        label: 'votes',
+      },
+    },
+    amendmentVotingSessionVotesVoter: {
+      forward: {
+        on: 'amendmentVotingSessionVotes',
+        has: 'one',
+        label: 'voter',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'amendmentSessionVotes',
+      },
+    },
+    amendmentVotingSessionVotesChangeRequest: {
+      forward: {
+        on: 'amendmentVotingSessionVotes',
+        has: 'one',
+        label: 'changeRequest',
+      },
+      reverse: {
+        on: 'changeRequests',
+        has: 'many',
+        label: 'sessionVotes',
       },
     },
   } as const,

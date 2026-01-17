@@ -1,6 +1,14 @@
 import { useState } from 'react';
 import db, { tx, id } from '../../../../db/db';
 import { toast } from 'sonner';
+import {
+  notifyEventInvite,
+  notifyParticipationApproved,
+  notifyParticipationRejected,
+  notifyParticipationRemoved,
+  notifyOrganizerPromoted,
+} from '@/utils/notification-helpers';
+import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 
 /**
  * Hook for event mutations
@@ -11,7 +19,12 @@ export function useEventMutations(eventId: string) {
   /**
    * Invite participants to the event
    */
-  const inviteParticipants = async (userIds: string[], roleId?: string) => {
+  const inviteParticipants = async (
+    userIds: string[],
+    roleId?: string,
+    senderId?: string,
+    eventTitle?: string
+  ) => {
     if (userIds.length === 0) return { success: false, error: 'No users selected' };
 
     setIsLoading(true);
@@ -35,6 +48,17 @@ export function useEventMutations(eventId: string) {
         }
 
         transactions.push(participantTx);
+
+        // Send notification
+        if (senderId && eventTitle) {
+          const notificationTxs = notifyEventInvite({
+            senderId,
+            recipientUserId: userId,
+            eventId,
+            eventTitle,
+          });
+          transactions.push(...notificationTxs);
+        }
       });
 
       await db.transact(transactions);
@@ -52,14 +76,32 @@ export function useEventMutations(eventId: string) {
   /**
    * Approve a participation request
    */
-  const approveParticipation = async (participationId: string) => {
+  const approveParticipation = async (
+    participationId: string,
+    userId?: string,
+    senderId?: string,
+    eventTitle?: string
+  ) => {
     setIsLoading(true);
     try {
-      await db.transact([
+      const transactions: any[] = [
         tx.eventParticipants[participationId].update({
           status: 'member',
         }),
-      ]);
+      ];
+
+      // Send notification
+      if (userId && senderId && eventTitle) {
+        const notificationTxs = notifyParticipationApproved({
+          senderId,
+          recipientUserId: userId,
+          eventId,
+          eventTitle,
+        });
+        transactions.push(...notificationTxs);
+      }
+
+      await db.transact(transactions);
       toast.success('Participation approved');
       return { success: true };
     } catch (error) {
@@ -74,10 +116,28 @@ export function useEventMutations(eventId: string) {
   /**
    * Reject a participation request
    */
-  const rejectParticipation = async (participationId: string) => {
+  const rejectParticipation = async (
+    participationId: string,
+    userId?: string,
+    senderId?: string,
+    eventTitle?: string
+  ) => {
     setIsLoading(true);
     try {
-      await db.transact([tx.eventParticipants[participationId].delete()]);
+      const transactions: any[] = [tx.eventParticipants[participationId].delete()];
+
+      // Send notification
+      if (userId && senderId && eventTitle) {
+        const notificationTxs = notifyParticipationRejected({
+          senderId,
+          recipientUserId: userId,
+          eventId,
+          eventTitle,
+        });
+        transactions.push(...notificationTxs);
+      }
+
+      await db.transact(transactions);
       toast.success('Participation request rejected');
       return { success: true };
     } catch (error) {
@@ -92,10 +152,28 @@ export function useEventMutations(eventId: string) {
   /**
    * Remove a participant from the event
    */
-  const removeParticipant = async (participationId: string) => {
+  const removeParticipant = async (
+    participationId: string,
+    userId?: string,
+    senderId?: string,
+    eventTitle?: string
+  ) => {
     setIsLoading(true);
     try {
-      await db.transact([tx.eventParticipants[participationId].delete()]);
+      const transactions: any[] = [tx.eventParticipants[participationId].delete()];
+
+      // Send notification
+      if (userId && senderId && eventTitle) {
+        const notificationTxs = notifyParticipationRemoved({
+          senderId,
+          recipientUserId: userId,
+          eventId,
+          eventTitle,
+        });
+        transactions.push(...notificationTxs);
+      }
+
+      await db.transact(transactions);
       toast.success('Participant removed successfully');
       return { success: true };
     } catch (error) {
@@ -110,10 +188,30 @@ export function useEventMutations(eventId: string) {
   /**
    * Change a participant's role
    */
-  const changeParticipantRole = async (participationId: string, roleId: string) => {
+  const changeParticipantRole = async (
+    participationId: string,
+    roleId: string,
+    userId?: string,
+    senderId?: string,
+    eventTitle?: string,
+    isPromotion?: boolean
+  ) => {
     setIsLoading(true);
     try {
-      await db.transact([tx.eventParticipants[participationId].link({ role: roleId })]);
+      const transactions: any[] = [tx.eventParticipants[participationId].link({ role: roleId })];
+
+      // Send notification if it's an organizer promotion
+      if (isPromotion && userId && senderId && eventTitle) {
+        const notificationTxs = notifyOrganizerPromoted({
+          senderId,
+          recipientUserId: userId,
+          eventId,
+          eventTitle,
+        });
+        transactions.push(...notificationTxs);
+      }
+
+      await db.transact(transactions);
       toast.success('Participant role updated');
       return { success: true };
     } catch (error) {
@@ -128,15 +226,38 @@ export function useEventMutations(eventId: string) {
   /**
    * Update event details
    */
-  const updateEvent = async (updates: any) => {
+  const updateEvent = async (
+    updates: any,
+    options?: {
+      actorId?: string;
+      eventTitle?: string;
+      visibility?: string;
+    }
+  ) => {
     setIsLoading(true);
     try {
-      await db.transact([
+      const transactions: any[] = [
         tx.events[eventId].update({
           ...updates,
           updatedAt: new Date().toISOString(),
         }),
-      ]);
+      ];
+
+      // Add timeline event for public events
+      if (options?.visibility === 'public' && options?.actorId) {
+        transactions.push(
+          createTimelineEvent({
+            eventType: 'updated',
+            entityType: 'event',
+            entityId: eventId,
+            actorId: options.actorId,
+            title: `${options.eventTitle || 'Event'} was updated`,
+            description: 'Event details have been updated',
+          })
+        );
+      }
+
+      await db.transact(transactions);
       toast.success('Event updated successfully');
       return { success: true };
     } catch (error) {

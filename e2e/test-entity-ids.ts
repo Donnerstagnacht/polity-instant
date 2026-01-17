@@ -85,6 +85,14 @@ export const TEST_ENTITY_IDS = {
   testPayment1: 'e2ee0001-0000-4000-8000-000000000001',
   testPayment2: 'e2ee0002-0000-4000-8000-000000000002',
   testPayment3: 'e2ee0003-0000-4000-8000-000000000003',
+
+  // ===== CONVENIENCE ALIASES =====
+  // These aliases make tests more readable
+  AMENDMENT: 'e2e40001-0000-4000-8000-000000000001', // Same as testAmendment1
+  BLOG: 'e2e30001-0000-4000-8000-000000000001', // Same as testBlog1
+  EVENT: 'e2e20001-0000-4000-8000-000000000001', // Same as testEvent1
+  GROUP: 'e2e10001-0000-4000-8000-000000000001', // Same as testGroup1
+  STATEMENT: 'e2ef0001-0000-4000-8000-000000000001', // New statement ID
 } as const;
 
 export const TEST_EMAILS = {

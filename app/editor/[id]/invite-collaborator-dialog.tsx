@@ -24,15 +24,18 @@ import { Badge } from '@/components/ui/badge';
 import { db, tx, id } from '../../../db/db';
 import { UserPlus, X, Loader2, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { notifyDocumentCollaboratorInvited } from '@/utils/notification-helpers';
 
 interface InviteCollaboratorDialogProps {
   documentId: string;
   currentUserId: string;
+  documentTitle?: string;
 }
 
 export function InviteCollaboratorDialog({
   documentId,
   currentUserId,
+  documentTitle,
 }: InviteCollaboratorDialogProps) {
   const [open, setOpen] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
@@ -84,7 +87,7 @@ export function InviteCollaboratorDialog({
     setIsInviting(true);
     try {
       // Link collaborators to document and users
-      const linkTransactions = selectedUsers.flatMap(userId => {
+      const linkTransactions: any[] = selectedUsers.flatMap(userId => {
         const collaboratorId = id();
         return [
           tx.documentCollaborators[collaboratorId].update({
@@ -96,6 +99,17 @@ export function InviteCollaboratorDialog({
             user: userId,
           }),
         ];
+      });
+
+      // Send notifications to invited users
+      selectedUsers.forEach(userId => {
+        const notificationTxs = notifyDocumentCollaboratorInvited({
+          senderId: currentUserId,
+          recipientUserId: userId,
+          documentId,
+          documentTitle: documentTitle || 'Document',
+        });
+        linkTransactions.push(...notificationTxs);
       });
 
       await db.transact(linkTransactions);

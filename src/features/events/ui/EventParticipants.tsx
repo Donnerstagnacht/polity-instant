@@ -329,7 +329,7 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                     <TableCell>{participant.user?.contactEmail || '-'}</TableCell>
                     <TableCell>
                       <Select
-                        value={participant.role || 'member'}
+                        value={participant.role?.name || 'Participant'}
                         onValueChange={newRole => actions.changeRole(participant.id, newRole)}
                       >
                         <SelectTrigger className='w-40'>
@@ -347,7 +347,7 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                     <TableCell>{new Date(participant.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <div className='flex gap-2'>
-                        {participant.role !== 'Organizer' && (
+                        {participant.role?.name !== 'Organizer' && (
                           <Button
                             size='sm'
                             variant='outline'
@@ -357,7 +357,7 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                             Make Organizer
                           </Button>
                         )}
-                        {participant.role === 'Organizer' && (
+                        {participant.role?.name === 'Organizer' && (
                           <Button
                             size='sm'
                             variant='outline'

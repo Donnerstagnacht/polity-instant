@@ -24,6 +24,103 @@ const _notifications = {
       createdAt: i.date().indexed(),
       updatedAt: i.date().indexed(),
     }),
+    /**
+     * User notification settings - stores preferences for each notification category
+     * Each JSON field contains boolean toggles for specific notification types
+     */
+    notificationSettings: i.entity({
+      // Group notification preferences
+      groupNotifications: i.json<{
+        tasksAssigned: boolean;
+        paymentNotifications: boolean;
+        newEvents: boolean;
+        newAmendments: boolean;
+        newRelationships: boolean;
+        newPositions: boolean;
+        newDocuments: boolean;
+        newMembers: boolean;
+        roleUpdates: boolean;
+        newSubscribers: boolean;
+        profileUpdates: boolean;
+        membershipRequests: boolean;
+        membershipInvitations: boolean;
+      }>().optional(),
+      // Event notification preferences
+      eventNotifications: i.json<{
+        agendaItems: boolean;
+        elections: boolean;
+        votes: boolean;
+        scheduleChanges: boolean;
+        newParticipants: boolean;
+        roleUpdates: boolean;
+        positionChanges: boolean;
+        profileUpdates: boolean;
+        newSubscribers: boolean;
+        participationRequests: boolean;
+        participationInvitations: boolean;
+        delegateNominations: boolean;
+        speakerListAdditions: boolean;
+        meetingBookings: boolean;
+      }>().optional(),
+      // Amendment notification preferences
+      amendmentNotifications: i.json<{
+        changeRequests: boolean;
+        changeRequestDecisions: boolean;
+        newCollaborators: boolean;
+        roleUpdates: boolean;
+        upvotesDownvotes: boolean;
+        newSubscribers: boolean;
+        processProgress: boolean;
+        supportingGroups: boolean;
+        clones: boolean;
+        discussions: boolean;
+        profileUpdates: boolean;
+        workflowChanges: boolean;
+        collaborationRequests: boolean;
+        collaborationInvitations: boolean;
+        votingSessions: boolean;
+      }>().optional(),
+      // Blog notification preferences
+      blogNotifications: i.json<{
+        newSubscribers: boolean;
+        upvotesDownvotes: boolean;
+        profileUpdates: boolean;
+        newWriters: boolean;
+        roleUpdates: boolean;
+        comments: boolean;
+        writerRequests: boolean;
+        writerInvitations: boolean;
+      }>().optional(),
+      // Todo notification preferences
+      todoNotifications: i.json<{
+        taskAssigned: boolean;
+        taskUpdated: boolean;
+        taskCompleted: boolean;
+        dueDateReminders: boolean;
+        overdueAlerts: boolean;
+      }>().optional(),
+      // Social notification preferences
+      socialNotifications: i.json<{
+        newFollowers: boolean;
+        mentions: boolean;
+        directMessages: boolean;
+        conversationRequests: boolean;
+      }>().optional(),
+      // Delivery settings
+      deliverySettings: i.json<{
+        pushNotifications: boolean;
+        inAppNotifications: boolean;
+        emailNotifications: boolean;
+      }>().optional(),
+      // Timeline settings
+      timelineSettings: i.json<{
+        showOnHomepage: boolean;
+        refreshFrequency: 'realtime' | 'every5min' | 'every15min' | 'manual';
+      }>().optional(),
+      // Timestamps
+      createdAt: i.date().indexed(),
+      updatedAt: i.date().indexed(),
+    }),
   },
   links: {
     notificationsRecipient: {
@@ -216,6 +313,18 @@ const _notifications = {
         on: '$users',
         has: 'many',
         label: 'pushSubscriptions',
+      },
+    },
+    notificationSettingsUser: {
+      forward: {
+        on: 'notificationSettings',
+        has: 'one',
+        label: 'user',
+      },
+      reverse: {
+        on: '$users',
+        has: 'one',
+        label: 'notificationSettings',
       },
     },
   } as const,

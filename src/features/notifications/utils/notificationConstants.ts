@@ -1,7 +1,7 @@
 import { Bell, Calendar, MessageSquare, UserPlus, Users } from 'lucide-react';
 import { NotificationType } from '../types/notification.types';
 
-export const notificationIcons: Record<NotificationType, any> = {
+export const notificationIcons: Partial<Record<NotificationType, any>> = {
   group_invite: Users,
   event_invite: Calendar,
   message: MessageSquare,
@@ -11,7 +11,7 @@ export const notificationIcons: Record<NotificationType, any> = {
   group_update: Users,
 };
 
-export const notificationColors: Record<NotificationType, string> = {
+export const notificationColors: Partial<Record<NotificationType, string>> = {
   group_invite: 'text-blue-500',
   event_invite: 'text-purple-500',
   message: 'text-green-500',

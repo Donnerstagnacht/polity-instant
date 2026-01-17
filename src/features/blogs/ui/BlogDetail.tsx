@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import db, { id } from '../../../../db/db';
-import { BookOpen, Calendar, MessageSquare, Clock, ArrowUp, ArrowDown, Settings, Edit, Trash2 } from 'lucide-react';
+import { BookOpen, Calendar, MessageSquare, Clock, ArrowUp, ArrowDown, Trash2, Edit } from 'lucide-react';
 import { StatsBar } from '@/components/ui/StatsBar';
 import { useSubscribeBlog } from '@/features/blogs/hooks/useSubscribeBlog';
 import { ActionBar } from '@/components/ui/ActionBar';
@@ -20,6 +20,9 @@ import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/use-translation';
 import { CommentSortSelect, CommentSortBy } from '@/components/shared/CommentSortSelect';
 import { useBlogPermissions } from '../hooks/useBlogPermissions';
+import { PlateEditor } from '@/components/kit-platejs/plate-editor';
+import Link from 'next/link';
+import { notifyBlogCommentAdded } from '@/utils/notification-helpers';
 
 // Comment component for blog comments
 interface BlogComment {
@@ -174,6 +177,21 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
     isLoading: subscribeLoading,
   } = useSubscribeBlog(blogId);
 
+  // Query current user's name for notifications
+  const { data: currentUserData } = db.useQuery(
+    user?.id
+      ? {
+          $users: {
+            $: {
+              where: { id: user.id },
+              limit: 1,
+            },
+          },
+        }
+      : null
+  );
+  const currentUserName = currentUserData?.$users?.[0]?.name || 'Someone';
+
   // Fetch blog data from InstantDB with comments
   const { data, isLoading } = db.useQuery({
     blogs: {
@@ -222,6 +240,11 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
   const handleVote = async (voteValue: number) => {
     if (!user?.id) {
       toast.error('Please log in to vote');
+      return;
+    }
+
+    if (!blog) {
+      toast.error('Blog data not loaded');
       return;
     }
 
@@ -302,7 +325,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
     setIsSubmitting(true);
     try {
       const commentId = id();
-      await db.transact([
+      const transactions: any[] = [
         db.tx.comments[commentId].update({
           text: commentText,
           createdAt: Date.now(),
@@ -311,7 +334,20 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
           blog: blogId,
           creator: user.id,
         }),
-      ]);
+      ];
+
+      // Add notification to the blog entity
+      if (blog) {
+        const notificationTxs = notifyBlogCommentAdded({
+          senderId: user.id,
+          senderName: currentUserName,
+          blogId,
+          blogTitle: blog.title || 'Blog',
+        });
+        transactions.push(...notificationTxs);
+      }
+
+      await db.transact(transactions);
 
       toast.success('Comment posted successfully');
       setCommentText('');
@@ -438,18 +474,6 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
         <ShareButton url={`/blog/${blogId}`} title={blog.title} description="" />
         
         {/* RBAC Actions */}
-        {canManageMembers && (
-          <Button variant="outline" onClick={() => router.push(`/blog/${blogId}/bloggers`)}>
-            <Settings className="mr-2 h-4 w-4" />
-            Manage
-          </Button>
-        )}
-        {canEdit && (
-          <Button variant="outline" onClick={() => toast.info('Edit functionality coming soon')}>
-            <Edit className="mr-2 h-4 w-4" />
-            Edit
-          </Button>
-        )}
         {canDelete && (
           <Button variant="destructive" onClick={handleDeleteBlog}>
             <Trash2 className="mr-2 h-4 w-4" />
@@ -467,22 +491,42 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
 
       {/* Blog Content */}
       <Card className="mb-6">
-        <CardContent className="prose prose-slate max-w-none pt-6 dark:prose-invert">
-          <p className="lead text-muted-foreground">
-            This is where the blog content would appear. The blog post can include rich text,
-            images, and other media.
-          </p>
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-            incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-            exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-          </p>
-          <h2>Section Heading</h2>
-          <p>
-            Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat
-            nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui
-            officia deserunt mollit anim id est laborum.
-          </p>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Blog Content</CardTitle>
+            <CardDescription>
+              {blog.content ? 'The latest version of this blog post' : 'No content yet'}
+            </CardDescription>
+          </div>
+          {canEdit && (
+            <Link href={`/blog/${blogId}/editor`}>
+              <Button variant="outline" size="sm">
+                <Edit className="mr-2 h-4 w-4" />
+                Edit Content
+              </Button>
+            </Link>
+          )}
+        </CardHeader>
+        <CardContent className="prose prose-slate max-w-none dark:prose-invert">
+          {blog.content && Array.isArray(blog.content) && blog.content.length > 0 ? (
+            <PlateEditor
+              value={blog.content}
+              currentMode="view"
+              isOwnerOrCollaborator={false}
+            />
+          ) : (
+            <div className="py-8 text-center text-muted-foreground">
+              <p>No content available yet.</p>
+              {canEdit && (
+                <Link href={`/blog/${blogId}/editor`}>
+                  <Button variant="outline" className="mt-4">
+                    <Edit className="mr-2 h-4 w-4" />
+                    Start Writing
+                  </Button>
+                </Link>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 

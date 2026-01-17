@@ -3,6 +3,7 @@
 
 import { test, expect } from '@playwright/test';
 import { loginAsTestUser } from '../helpers/auth';
+import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Statements - Search and Filter', () => {
   test('User searches statements by text', async ({ page }) => {

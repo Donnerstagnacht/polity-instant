@@ -58,11 +58,14 @@ test.describe('Group Conversations - Member Synchronization', () => {
       await page.goto('/search?type=groups');
 
       // Find the "Leave Group" button for a group
+      const groupCards = page.getByRole('article').or(page.locator('[data-entity-type="group"]'));
       const leaveButton = page.getByRole('button', { name: /leave group/i }).first();
       const canLeave = await leaveButton.isVisible().catch(() => false);
 
       if (canLeave) {
         // Leave the group
+        const groupCard = groupCards.first();
+        const groupName = await groupCard.textContent();
         await leaveButton.click();
         await page.waitForTimeout(1000);
 

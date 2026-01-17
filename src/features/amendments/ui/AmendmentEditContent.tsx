@@ -18,7 +18,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import db, { tx } from '../../../../db/db';
+import type { WorkflowStatus } from '@db/rbac/workflow-constants';
+import {
+  WORKFLOW_STATUS_METADATA,
+  COLLABORATOR_SELECTABLE_STATUSES,
+  isEventPhase,
+} from '@db/rbac/workflow-constants';
 
 interface AmendmentEditContentProps {
   amendmentId: string;
@@ -45,6 +52,8 @@ export function AmendmentEditContent({
     videoURL: '',
     videoThumbnailURL: '',
     status: 'Drafting',
+    workflowStatus: 'collaborative_editing' as WorkflowStatus,
+    autoCloseVoting: false,
     date: '',
     supporters: 0,
     tags: [] as string[],
@@ -63,6 +72,9 @@ export function AmendmentEditContent({
         videoURL: amendment.videoURL || '',
         videoThumbnailURL: amendment.videoThumbnailURL || '',
         status: amendment.status || 'Drafting',
+        workflowStatus:
+          (amendment.workflowStatus as WorkflowStatus) || 'collaborative_editing',
+        autoCloseVoting: false, // Will be loaded from document settings
         date: amendment.date || new Date().toLocaleDateString(),
         supporters: amendment.supporters || 0,
         tags: Array.isArray(amendment.tags) ? amendment.tags : [],
@@ -100,6 +112,7 @@ export function AmendmentEditContent({
           videoURL: formData.videoURL,
           videoThumbnailURL: formData.videoThumbnailURL,
           status: formData.status,
+          workflowStatus: formData.workflowStatus,
           date: formData.date,
           supporters: formData.supporters,
           tags: formData.tags,
@@ -261,6 +274,86 @@ export function AmendmentEditContent({
                 placeholder="Number of supporters"
               />
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Workflow Einstellungen</CardTitle>
+            <CardDescription>
+              Konfigurieren Sie den Workflow-Status und Abstimmungseinstellungen
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="workflowStatus">Workflow Status</Label>
+              <Select
+                value={formData.workflowStatus}
+                onValueChange={value =>
+                  setFormData({ ...formData, workflowStatus: value as WorkflowStatus })
+                }
+                disabled={isEventPhase(formData.workflowStatus)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Workflow Status wählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  {COLLABORATOR_SELECTABLE_STATUSES.map(status => {
+                    const config = WORKFLOW_STATUS_METADATA[status];
+                    return (
+                      <SelectItem key={status} value={status}>
+                        {config.label}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {WORKFLOW_STATUS_METADATA[formData.workflowStatus].description}
+              </p>
+              {isEventPhase(formData.workflowStatus) && (
+                <p className="text-xs text-amber-600">
+                  ⚠️ Dieser Status wird durch Event-Organizers gesteuert und kann hier nicht
+                  geändert werden.
+                </p>
+              )}
+            </div>
+
+            {formData.workflowStatus === 'internal_voting' && (
+              <div className="space-y-2 rounded-lg border p-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="autoCloseVoting">Automatisches Schließen von Abstimmungen</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Abstimmungen werden automatisch nach Ablauf des Zeitintervalls geschlossen
+                    </p>
+                  </div>
+                  <Switch
+                    id="autoCloseVoting"
+                    checked={formData.autoCloseVoting}
+                    onCheckedChange={checked =>
+                      setFormData({ ...formData, autoCloseVoting: checked })
+                    }
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {formData.autoCloseVoting
+                    ? '✓ Abstimmungen werden automatisch geschlossen'
+                    : '○ Abstimmungen erfordern manuelle Bestätigung durch Organizers'}
+                </p>
+              </div>
+            )}
+
+            {amendment?.currentEventId && (
+              <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-950">
+                <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                  📅 Amendment befindet sich in Event-Phase
+                </p>
+                <p className="mt-1 text-xs text-blue-700 dark:text-blue-300">
+                  Workflow wird durch Event {amendment.currentEventId} gesteuert
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 

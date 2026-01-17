@@ -16,7 +16,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel';
-import { Calendar } from 'lucide-react';
+import { VisibilitySelector } from '@/components/ui/visibility-selector';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { Calendar, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { useTodoMutations } from '@/features/todos/hooks/useTodoData';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
@@ -61,9 +63,7 @@ export default function CreateTodoPage() {
     setFormData({ ...formData, tags: formData.tags.filter(tag => tag !== tagToRemove) });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleSubmit = async () => {
     if (!user?.id) {
       return;
     }
@@ -89,7 +89,6 @@ export default function CreateTodoPage() {
           <CardHeader>
             <CardTitle>Create a New Todo</CardTitle>
           </CardHeader>
-          <form onSubmit={handleSubmit}>
             <CardContent>
               <Carousel setApi={setCarouselApi} opts={{ watchDrag: false }}>
                 <CarouselContent>
@@ -131,41 +130,93 @@ export default function CreateTodoPage() {
                           onChange={e => setFormData({ ...formData, dueDate: e.target.value })}
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="todo-priority">Priority</Label>
-                        <select
-                          id="todo-priority"
-                          value={formData.priority}
-                          onChange={e =>
-                            setFormData({
-                              ...formData,
-                              priority: e.target.value as 'low' | 'medium' | 'high',
-                            })
-                          }
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        >
-                          <option value="low">Low</option>
-                          <option value="medium">Medium</option>
-                          <option value="high">High</option>
-                        </select>
+                      <div className="space-y-3">
+                        <Label>Priority</Label>
+                        <div className="grid grid-cols-3 gap-2">
+                          <Button
+                            type="button"
+                            variant={formData.priority === 'low' ? 'default' : 'outline'}
+                            onClick={() => setFormData({ ...formData, priority: 'low' })}
+                            className="flex items-center gap-2"
+                          >
+                            {formData.priority === 'low' ? (
+                              <CheckCircle2 className="h-4 w-4" />
+                            ) : (
+                              <AlertCircle className="h-4 w-4" />
+                            )}
+                            Low
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={formData.priority === 'medium' ? 'default' : 'outline'}
+                            onClick={() => setFormData({ ...formData, priority: 'medium' })}
+                            className="flex items-center gap-2"
+                          >
+                            {formData.priority === 'medium' ? (
+                              <CheckCircle2 className="h-4 w-4" />
+                            ) : (
+                              <Loader2 className="h-4 w-4" />
+                            )}
+                            Medium
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={formData.priority === 'high' ? 'default' : 'outline'}
+                            onClick={() => setFormData({ ...formData, priority: 'high' })}
+                            className="flex items-center gap-2"
+                          >
+                            {formData.priority === 'high' ? (
+                              <CheckCircle2 className="h-4 w-4" />
+                            ) : (
+                              <AlertCircle className="h-4 w-4" />
+                            )}
+                            High
+                          </Button>
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="todo-status">Status</Label>
-                        <select
-                          id="todo-status"
-                          value={formData.status}
-                          onChange={e =>
-                            setFormData({
-                              ...formData,
-                              status: e.target.value as 'todo' | 'in_progress' | 'completed',
-                            })
-                          }
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        >
-                          <option value="todo">To Do</option>
-                          <option value="in_progress">In Progress</option>
-                          <option value="completed">Completed</option>
-                        </select>
+                      <div className="space-y-3">
+                        <Label>Status</Label>
+                        <div className="grid grid-cols-3 gap-2">
+                          <Button
+                            type="button"
+                            variant={formData.status === 'todo' ? 'default' : 'outline'}
+                            onClick={() => setFormData({ ...formData, status: 'todo' })}
+                            className="flex items-center gap-2"
+                          >
+                            {formData.status === 'todo' ? (
+                              <CheckCircle2 className="h-4 w-4" />
+                            ) : (
+                              <Calendar className="h-4 w-4" />
+                            )}
+                            To Do
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={formData.status === 'in_progress' ? 'default' : 'outline'}
+                            onClick={() => setFormData({ ...formData, status: 'in_progress' })}
+                            className="flex items-center gap-2"
+                          >
+                            {formData.status === 'in_progress' ? (
+                              <CheckCircle2 className="h-4 w-4" />
+                            ) : (
+                              <Loader2 className="h-4 w-4" />
+                            )}
+                            In Progress
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={formData.status === 'completed' ? 'default' : 'outline'}
+                            onClick={() => setFormData({ ...formData, status: 'completed' })}
+                            className="flex items-center gap-2"
+                          >
+                            {formData.status === 'completed' ? (
+                              <CheckCircle2 className="h-4 w-4" />
+                            ) : (
+                              <CheckCircle2 className="h-4 w-4" />
+                            )}
+                            Completed
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </CarouselItem>
@@ -173,26 +224,12 @@ export default function CreateTodoPage() {
                   {/* Step 3: Settings */}
                   <CarouselItem>
                     <div className="space-y-4 p-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="todo-visibility">Visibility</Label>
-                        <select
-                          id="todo-visibility"
+                      <TooltipProvider>
+                        <VisibilitySelector
                           value={formData.visibility}
-                          onChange={e =>
-                            setFormData({
-                              ...formData,
-                              visibility: e.target.value as 'public' | 'authenticated' | 'private',
-                            })
-                          }
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        >
-                          <option value="public">Public - Anyone can see</option>
-                          <option value="authenticated">
-                            Authenticated - Only logged-in users
-                          </option>
-                          <option value="private">Private - Only you</option>
-                        </select>
-                      </div>
+                          onChange={visibility => setFormData({ ...formData, visibility })}
+                        />
+                      </TooltipProvider>
                       <div className="space-y-2">
                         <Label>Tags (Optional)</Label>
                         <div className="flex gap-2">
@@ -321,12 +358,11 @@ export default function CreateTodoPage() {
                   Next
                 </Button>
               ) : (
-                <Button type="submit" disabled={isSubmitting}>
+                <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
                   {isSubmitting ? 'Creating...' : 'Create Todo'}
                 </Button>
               )}
             </CardFooter>
-          </form>
         </Card>
       </PageWrapper>
     </AuthGuard>

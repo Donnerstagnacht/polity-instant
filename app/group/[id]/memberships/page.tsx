@@ -41,7 +41,7 @@ export default function GroupMembershipsManagementPage({
   // Permissions
   const { can } = usePermissions({ groupId });
   const canManage = can('manage', 'groupMemberships');
-  const canManagePositions = can('manage', 'groupPositions');
+  const canManagePositions = can('manage', 'positions');
 
   // State
   const [searchQuery, setSearchQuery] = useState('');
@@ -204,29 +204,92 @@ export default function GroupMembershipsManagementPage({
     const role = roles.find((r) => r.id === roleId);
     if (!role) return;
 
+    // Get admin user IDs for notifications
+    const adminUserIds = activeMembers
+      .filter((m) => m.role?.name === 'Board Member')
+      .map((m) => m.user?.[0]?.id)
+      .filter(Boolean) as string[];
+
     await roleManagement.toggleActionRight(
       roleId,
       resource,
       action,
       currentlyHasRight,
-      role.actionRights || []
+      role.actionRights || [],
+      authUser?.id,
+      group?.name,
+      role.name,
+      adminUserIds
     );
   };
 
   // Positions handlers
   const handleAssignHolder = (userId: string, reason: 'elected' | 'appointed') => {
     if (!canManagePositions || !positionsHook.selectedPosition) return;
-    positionsHook.actions.assignHolder(positionsHook.selectedPosition.id, userId, reason);
+    positionsHook.actions.assignHolder(
+      positionsHook.selectedPosition.id,
+      userId,
+      reason,
+      authUser?.id,
+      group?.name,
+      positionsHook.selectedPosition.title
+    );
   };
 
   const handleRemoveHolder = (positionId: string) => {
     if (!canManagePositions) return;
-    positionsHook.actions.removeHolder(positionId, 'removed');
+    const position = positionsHook.positions.find((p) => p.id === positionId);
+    positionsHook.actions.removeHolder(
+      positionId,
+      'removed',
+      authUser?.id,
+      group?.name,
+      position?.title
+    );
   };
 
   const handleCreateElection = (positionId: string) => {
     if (!canManagePositions) return;
-    positionsHook.actions.createElection(positionId);
+    const position = positionsHook.positions.find((p) => p.id === positionId);
+    // Get all member user IDs for notifications
+    const memberUserIds = activeMembers
+      .map((m) => m.user?.[0]?.id)
+      .filter(Boolean) as string[];
+
+    positionsHook.actions.createElection(positionId, undefined, {
+      senderId: authUser?.id,
+      groupName: group?.name,
+      memberUserIds,
+    });
+  };
+
+  // Position create/delete handlers with notifications
+  const handleCreatePosition = async () => {
+    const adminUserIds = activeMembers
+      .filter((m) => m.role?.name === 'Board Member')
+      .map((m) => m.user?.[0]?.id)
+      .filter(Boolean) as string[];
+
+    return positionsHook.actions.create({
+      senderId: authUser?.id,
+      groupName: group?.name,
+      adminUserIds,
+    });
+  };
+
+  const handleDeletePosition = async (positionId: string) => {
+    const position = positionsHook.positions.find((p) => p.id === positionId);
+    const adminUserIds = activeMembers
+      .filter((m) => m.role?.name === 'Board Member')
+      .map((m) => m.user?.[0]?.id)
+      .filter(Boolean) as string[];
+
+    return positionsHook.actions.delete(positionId, {
+      positionTitle: position?.title,
+      senderId: authUser?.id,
+      groupName: group?.name,
+      adminUserIds,
+    });
   };
 
   return (
@@ -339,7 +402,7 @@ export default function GroupMembershipsManagementPage({
                     <AddPositionDialog
                       open={positionsHook.dialogs.add.open}
                       onOpenChange={positionsHook.dialogs.add.setOpen}
-                      onSubmit={positionsHook.actions.create}
+                      onSubmit={handleCreatePosition}
                       form={positionsHook.form}
                     />
                   </div>
@@ -348,7 +411,7 @@ export default function GroupMembershipsManagementPage({
                   positions={positionsHook.positions}
                   canManage={canManagePositions}
                   onEdit={positionsHook.actions.openEdit}
-                  onDelete={positionsHook.actions.delete}
+                  onDelete={handleDeletePosition}
                   onAssignHolder={positionsHook.actions.openAssignHolder}
                   onRemoveHolder={handleRemoveHolder}
                   onViewHistory={positionsHook.actions.openHistory}

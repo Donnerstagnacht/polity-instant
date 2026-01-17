@@ -2,8 +2,9 @@ import { useState } from 'react';
 import db, { tx, id } from '../../../../db/db';
 import { useAuthStore } from '@/features/auth/auth';
 import { toast } from 'sonner';
+import { notifyParticipationRequest } from '@/utils/notification-helpers';
 
-export type ParticipationStatus = 'invited' | 'requested' | 'member' | 'admin';
+export type ParticipationStatus = 'invited' | 'requested' | 'member' | 'admin' | 'confirmed';
 
 export function useEventParticipation(eventId: string) {
   const { user } = useAuthStore();
@@ -66,15 +67,15 @@ export function useEventParticipation(eventId: string) {
 
   const participation = data?.eventParticipants?.[0];
 
-  // Filter to count only members and admins (excluding invited and requested)
+  // Filter to count only active participants (excluding invited and requested)
   const allParticipants = allParticipantsData?.eventParticipants || [];
   const filteredParticipants = allParticipants.filter(
-    (p: any) => p.status === 'member' || p.status === 'admin'
+    (p: any) => p.status === 'member' || p.status === 'admin' || p.status === 'confirmed'
   );
   const participantCount = filteredParticipants.length;
 
   const status: ParticipationStatus | null = (participation?.status as ParticipationStatus) || null;
-  const isParticipant = status === 'member' || status === 'admin';
+  const isParticipant = status === 'member' || status === 'admin' || status === 'confirmed';
   const isAdmin = status === 'admin';
   const hasRequested = status === 'requested';
   const isInvited = status === 'invited';
@@ -106,7 +107,7 @@ export function useEventParticipation(eventId: string) {
     setIsLoading(true);
     try {
       const newParticipationId = id();
-      await db.transact([
+      const transactions: any[] = [
         tx.eventParticipants[newParticipationId]
           .update({
             createdAt: new Date().toISOString(),
@@ -116,7 +117,18 @@ export function useEventParticipation(eventId: string) {
             user: user.id,
             event: eventId,
           }),
-      ]);
+      ];
+
+      // Send notification to event admins
+      const notificationTxs = notifyParticipationRequest({
+        senderId: user.id,
+        senderName: user.email?.split('@')[0] || 'A user',
+        eventId,
+        eventTitle: event?.title || 'Event',
+      });
+      transactions.push(...notificationTxs);
+
+      await db.transact(transactions);
       toast.success('Participation request sent successfully');
     } catch (error) {
       console.error('Failed to request participation:', error);

@@ -3,7 +3,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import db, { id, tx } from '../../../db/db';
-import { Settings, Trophy, UserCheck, Users, Calendar } from 'lucide-react';
+import { Settings, Trophy, UserCheck, Users, Calendar, Video, Building2, MapPin, Clock, FileText, Repeat } from 'lucide-react';
 import { useState } from 'react';
 import {
   Dialog,
@@ -237,6 +237,16 @@ export function EventWiki({ eventId }: EventWikiProps) {
           ) : (
             <Badge variant="secondary">{t('components.badges.private')}</Badge>
           )}
+          {event.recurringPattern && (
+            <Badge variant="outline">
+              <Repeat className="mr-1 h-3 w-3" />
+              {event.recurringPattern === 'daily' ? 'Täglich' :
+               event.recurringPattern === 'weekly' ? 'Wöchentlich' :
+               event.recurringPattern === 'monthly' ? 'Monatlich' :
+               event.recurringPattern === 'yearly' ? 'Jährlich' :
+               event.recurringPattern === 'four-yearly' ? '4 Jährig' : event.recurringPattern}
+            </Badge>
+          )}
         </div>
 
         {/* Organizer Info */}
@@ -291,7 +301,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
         />
         <MembershipButton
           actionType="participate"
-          status={status}
+          status={status as any}
           isMember={isParticipant}
           hasRequested={hasRequested}
           isInvited={isInvited}
@@ -347,27 +357,130 @@ export function EventWiki({ eventId }: EventWikiProps) {
       )}
 
       {/* Cut off Dates Card */}
-      {event.amendment_cutoff_date && (
+      {(event.amendment_cutoff_date || event.delegateNominationDeadline || event.proposalSubmissionDeadline) && (
         <Card className={`mb-6 overflow-hidden ${GRADIENTS[0]}`}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              Cut off Dates / Fristen
+              Fristen
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between rounded-lg border bg-background/80 p-4 shadow-sm backdrop-blur-sm">
-              <span className="font-medium">Antragsfrist:</span>
-              <span className="text-lg font-semibold">
-                {new Date(event.amendment_cutoff_date).toLocaleString('de-DE', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  day: '2-digit',
-                  month: '2-digit',
-                  year: 'numeric',
-                })}
-              </span>
-            </div>
+          <CardContent className="space-y-3">
+            {event.delegateNominationDeadline && (
+              <div className="flex items-center justify-between rounded-lg border bg-background/80 p-4 shadow-sm backdrop-blur-sm">
+                <div className="flex items-center gap-2">
+                  <UserCheck className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">Delegiertennominierung:</span>
+                </div>
+                <span className="text-lg font-semibold">
+                  {new Date(event.delegateNominationDeadline).toLocaleString('de-DE', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                  })}
+                </span>
+              </div>
+            )}
+            {event.proposalSubmissionDeadline && (
+              <div className="flex items-center justify-between rounded-lg border bg-background/80 p-4 shadow-sm backdrop-blur-sm">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">Antragseingabe:</span>
+                </div>
+                <span className="text-lg font-semibold">
+                  {new Date(event.proposalSubmissionDeadline).toLocaleString('de-DE', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                  })}
+                </span>
+              </div>
+            )}
+            {event.amendment_cutoff_date && (
+              <div className="flex items-center justify-between rounded-lg border bg-background/80 p-4 shadow-sm backdrop-blur-sm">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">Änderungsanträge:</span>
+                </div>
+                <span className="text-lg font-semibold">
+                  {new Date(event.amendment_cutoff_date).toLocaleString('de-DE', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                  })}
+                </span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Location Card */}
+      {(event.locationType || event.location) && (
+        <Card className={`mb-6 overflow-hidden ${GRADIENTS[2]}`}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              {event.locationType === 'online' ? (
+                <Video className="h-5 w-5" />
+              ) : event.locationType === 'physical' ? (
+                <Building2 className="h-5 w-5" />
+              ) : (
+                <MapPin className="h-5 w-5" />
+              )}
+              {event.locationType === 'online' ? 'Online Meeting' : 'Veranstaltungsort'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {event.locationType === 'online' ? (
+              <>
+                {event.onlineMeetingLink && (
+                  <div className="flex items-center justify-between rounded-lg border bg-background/80 p-4 shadow-sm backdrop-blur-sm">
+                    <span className="font-medium">Meeting Link:</span>
+                    <a 
+                      href={event.onlineMeetingLink} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline truncate max-w-[60%]"
+                    >
+                      {event.onlineMeetingLink}
+                    </a>
+                  </div>
+                )}
+                {event.meetingCode && (
+                  <div className="flex items-center justify-between rounded-lg border bg-background/80 p-4 shadow-sm backdrop-blur-sm">
+                    <span className="font-medium">Zugangscode:</span>
+                    <span className="font-mono text-lg">{event.meetingCode}</span>
+                  </div>
+                )}
+              </>
+            ) : event.locationType === 'physical' ? (
+              <div className="rounded-lg border bg-background/80 p-4 shadow-sm backdrop-blur-sm space-y-2">
+                {event.locationName && (
+                  <p className="font-semibold text-lg">{event.locationName}</p>
+                )}
+                {(event.street || event.houseNumber) && (
+                  <p className="text-muted-foreground">
+                    {[event.street, event.houseNumber].filter(Boolean).join(' ')}
+                  </p>
+                )}
+                {(event.postalCode || event.city) && (
+                  <p className="text-muted-foreground">
+                    {[event.postalCode, event.city].filter(Boolean).join(' ')}
+                  </p>
+                )}
+              </div>
+            ) : event.location ? (
+              <div className="flex items-center gap-2 rounded-lg border bg-background/80 p-4 shadow-sm backdrop-blur-sm">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <span>{event.location}</span>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       )}

@@ -6,7 +6,10 @@ export function useSearchData() {
     $users: {
       $: {
         where: {
-          visibility: 'public',
+          or: [
+            { visibility: 'public' },
+            { visibility: 'authenticated' },
+          ],
         },
       },
       hashtags: {}, // Load hashtags for users

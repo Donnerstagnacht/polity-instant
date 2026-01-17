@@ -5,6 +5,7 @@
 import db, { tx, id as generateId } from '../../../../../db/db';
 import { toast } from 'sonner';
 import { createDocumentVersion } from '../../utils/version-utils';
+import { notifyChangeRequestAccepted, notifyChangeRequestRejected } from '@/utils/notification-helpers';
 
 /**
  * Restore a document version
@@ -42,7 +43,8 @@ export async function acceptSuggestion(
   editorValue: any[],
   discussions: any[],
   suggestion: any,
-  editingMode: string | undefined
+  editingMode: string | undefined,
+  amendmentTitle?: string
 ): Promise<{ updatedDiscussions: any[] }> {
   // In vote mode, suggestions cannot be accepted directly
   if (editingMode === 'vote') {
@@ -73,7 +75,8 @@ export async function acceptSuggestion(
       // Create a changeRequest entity to preserve the accepted suggestion
       const changeRequestId = generateId();
 
-      await db.transact([
+      // Build transactions including notification to the change request creator
+      const transactions: any[] = [
         tx.changeRequests[changeRequestId]
           .update({
             title: discussion.crId || 'Change Request',
@@ -86,7 +89,20 @@ export async function acceptSuggestion(
           })
           .link({ creator: userId })
           .link({ amendment: amendmentId }),
-      ]);
+      ];
+
+      // Send notification to the change request creator if different from acceptor
+      if (discussion.userId && discussion.userId !== userId) {
+        const notificationTxs = notifyChangeRequestAccepted({
+          senderId: userId,
+          recipientUserId: discussion.userId,
+          amendmentId,
+          amendmentTitle: amendmentTitle || 'Amendment',
+        });
+        transactions.push(...notificationTxs);
+      }
+
+      await db.transact(transactions);
     }
 
     // Remove the discussion from the array
@@ -119,7 +135,8 @@ export async function declineSuggestion(
   editorValue: any[],
   discussions: any[],
   suggestion: any,
-  editingMode: string | undefined
+  editingMode: string | undefined,
+  amendmentTitle?: string
 ): Promise<{ updatedDiscussions: any[] }> {
   // In vote mode, suggestions cannot be rejected directly
   if (editingMode === 'vote') {
@@ -150,7 +167,8 @@ export async function declineSuggestion(
       // Create a changeRequest entity to preserve the rejected suggestion
       const changeRequestId = generateId();
 
-      await db.transact([
+      // Build transactions including notification to the change request creator
+      const transactions: any[] = [
         tx.changeRequests[changeRequestId]
           .update({
             title: discussion.crId || 'Change Request',
@@ -163,7 +181,20 @@ export async function declineSuggestion(
           })
           .link({ creator: userId })
           .link({ amendment: amendmentId }),
-      ]);
+      ];
+
+      // Send notification to the change request creator if different from rejector
+      if (discussion.userId && discussion.userId !== userId) {
+        const notificationTxs = notifyChangeRequestRejected({
+          senderId: userId,
+          recipientUserId: discussion.userId,
+          amendmentId,
+          amendmentTitle: amendmentTitle || 'Amendment',
+        });
+        transactions.push(...notificationTxs);
+      }
+
+      await db.transact(transactions);
     }
 
     // Remove the discussion from the array

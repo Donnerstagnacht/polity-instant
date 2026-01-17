@@ -13,7 +13,7 @@ interface MessageViewProps {
   onDeleteClick: (id: string) => void;
   onMembersClick: () => void;
   onSendMessage: (content: string) => void;
-  onAcceptConversation: (id: string) => void;
+  onAcceptConversation: (conversation: Conversation) => void;
   onRejectConversation: (conversation: Conversation) => void;
   className?: string;
 }

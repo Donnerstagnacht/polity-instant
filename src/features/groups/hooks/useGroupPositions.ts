@@ -6,6 +6,13 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import db, { tx, id } from '../../../../db/db';
+import {
+  notifyPositionCreated,
+  notifyPositionAssigned,
+  notifyPositionVacated,
+  notifyPositionDeleted,
+  notifyElectionCreated,
+} from '@/utils/notification-helpers';
 
 export function useGroupPositions(groupId: string) {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -59,7 +66,11 @@ export function useGroupPositions(groupId: string) {
   /**
    * Create a new position
    */
-  const createPosition = async () => {
+  const createPosition = async (params?: {
+    senderId?: string;
+    groupName?: string;
+    adminUserIds?: string[];
+  }) => {
     if (!title.trim()) {
       toast.error('Position title is required');
       return { success: false };
@@ -76,6 +87,7 @@ export function useGroupPositions(groupId: string) {
       return { success: false };
     }
 
+    const positionTitle = title.trim();
     resetForm();
     setAddDialogOpen(false);
     toast.success('Position created successfully');
@@ -84,10 +96,10 @@ export function useGroupPositions(groupId: string) {
       const positionId = id();
       const now = Date.now();
 
-      const transactions = [
+      const transactions: any[] = [
         tx.positions[positionId]
           .update({
-            title: title.trim(),
+            title: positionTitle,
             description: description.trim() || null,
             term: termNum,
             firstTermStart: new Date(firstTermStart).getTime(),
@@ -104,8 +116,8 @@ export function useGroupPositions(groupId: string) {
 
         transactions.push(
           tx.elections[electionId].update({
-            title: `Election for ${title.trim()}`,
-            description: `Vote for the ${title.trim()} position`,
+            title: `Election for ${positionTitle}`,
+            description: `Vote for the ${positionTitle} position`,
             majorityType: 'simple',
             status: 'pending',
             isMultipleChoice: false,
@@ -115,7 +127,7 @@ export function useGroupPositions(groupId: string) {
           }),
           tx.elections[electionId].link({ position: positionId }),
           tx.agendaItems[agendaItemId].update({
-            title: `Election: ${title.trim()}`,
+            title: `Election: ${positionTitle}`,
             type: 'election',
             order: 0,
             createdAt: now,
@@ -123,6 +135,22 @@ export function useGroupPositions(groupId: string) {
           }),
           tx.agendaItems[agendaItemId].link({ election: electionId })
         );
+      }
+
+      // Send notifications to admins
+      if (params?.senderId && params?.groupName && params?.adminUserIds) {
+        for (const adminId of params.adminUserIds) {
+          if (adminId !== params.senderId) {
+            const notificationTxs = notifyPositionCreated({
+              senderId: params.senderId,
+              recipientUserId: adminId,
+              groupId,
+              groupName: params.groupName,
+              positionTitle,
+            });
+            transactions.push(...notificationTxs);
+          }
+        }
       }
 
       await db.transact(transactions);
@@ -180,11 +208,37 @@ export function useGroupPositions(groupId: string) {
   /**
    * Delete a position
    */
-  const deletePosition = async (positionId: string) => {
+  const deletePosition = async (
+    positionId: string,
+    params?: {
+      positionTitle?: string;
+      senderId?: string;
+      groupName?: string;
+      adminUserIds?: string[];
+    }
+  ) => {
     toast.success('Position deleted successfully');
 
     try {
-      await db.transact([tx.positions[positionId].delete()]);
+      const transactions: any[] = [tx.positions[positionId].delete()];
+
+      // Send notifications to admins
+      if (params?.senderId && params?.groupName && params?.adminUserIds && params?.positionTitle) {
+        for (const adminId of params.adminUserIds) {
+          if (adminId !== params.senderId) {
+            const notificationTxs = notifyPositionDeleted({
+              senderId: params.senderId,
+              recipientUserId: adminId,
+              groupId,
+              groupName: params.groupName,
+              positionTitle: params.positionTitle,
+            });
+            transactions.push(...notificationTxs);
+          }
+        }
+      }
+
+      await db.transact(transactions);
       return { success: true };
     } catch (error) {
       console.error('Failed to delete position:', error);
@@ -200,7 +254,10 @@ export function useGroupPositions(groupId: string) {
   const assignHolder = async (
     positionId: string,
     userId: string,
-    reason: 'elected' | 'appointed' = 'appointed'
+    reason: 'elected' | 'appointed' = 'appointed',
+    senderId?: string,
+    groupName?: string,
+    positionTitle?: string
   ) => {
     toast.success('Holder assigned successfully');
 
@@ -209,7 +266,7 @@ export function useGroupPositions(groupId: string) {
       const position = positions.find((p) => p.id === positionId);
       const transactions: any[] = [];
 
-      // If there's a current holder, end their history entry
+      // If there's a current holder, end their history entry and notify them
       if (position?.currentHolder?.id) {
         const currentHistoryEntry = position.holderHistory?.find(
           (h: any) => h.holder?.id === position.currentHolder?.id && !h.endDate
@@ -220,6 +277,18 @@ export function useGroupPositions(groupId: string) {
               endDate: now,
             })
           );
+        }
+
+        // Notify previous holder that they've been replaced
+        if (senderId && groupName) {
+          const notificationTxs = notifyPositionVacated({
+            senderId,
+            recipientUserId: position.currentHolder.id,
+            groupId,
+            groupName,
+            positionTitle: positionTitle || position.title || 'Unknown Position',
+          });
+          transactions.push(...notificationTxs);
         }
       }
 
@@ -239,6 +308,18 @@ export function useGroupPositions(groupId: string) {
       // Link new holder to position
       transactions.push(tx.positions[positionId].link({ currentHolder: userId }));
 
+      // Notify new holder that they've been assigned
+      if (senderId && groupName) {
+        const notificationTxs = notifyPositionAssigned({
+          senderId,
+          recipientUserId: userId,
+          groupId,
+          groupName,
+          positionTitle: positionTitle || position?.title || 'Unknown Position',
+        });
+        transactions.push(...notificationTxs);
+      }
+
       await db.transact(transactions);
       return { success: true };
     } catch (error) {
@@ -251,7 +332,13 @@ export function useGroupPositions(groupId: string) {
   /**
    * Remove the current holder from a position
    */
-  const removeHolder = async (positionId: string, reason: 'resigned' | 'removed' | 'term_ended' = 'removed') => {
+  const removeHolder = async (
+    positionId: string,
+    reason: 'resigned' | 'removed' | 'term_ended' = 'removed',
+    senderId?: string,
+    groupName?: string,
+    positionTitle?: string
+  ) => {
     toast.success('Holder removed successfully');
 
     try {
@@ -272,6 +359,18 @@ export function useGroupPositions(groupId: string) {
             })
           );
         }
+
+        // Notify holder that they've been removed
+        if (senderId && groupName) {
+          const notificationTxs = notifyPositionVacated({
+            senderId,
+            recipientUserId: position.currentHolder.id,
+            groupId,
+            groupName,
+            positionTitle: positionTitle || position.title || 'Unknown Position',
+          });
+          transactions.push(...notificationTxs);
+        }
       }
 
       // Unlink current holder
@@ -291,7 +390,15 @@ export function useGroupPositions(groupId: string) {
   /**
    * Create an election for a position (e.g., when term is ending)
    */
-  const createElectionForPosition = async (positionId: string, eventId?: string) => {
+  const createElectionForPosition = async (
+    positionId: string,
+    eventId?: string,
+    params?: {
+      senderId?: string;
+      groupName?: string;
+      memberUserIds?: string[];
+    }
+  ) => {
     try {
       const position = positions.find((p) => p.id === positionId);
       if (!position) {
@@ -303,7 +410,7 @@ export function useGroupPositions(groupId: string) {
       const electionId = id();
       const agendaItemId = id();
 
-      const transactions = [
+      const transactions: any[] = [
         tx.elections[electionId].update({
           title: `Election for ${position.title}`,
           description: `Vote for the ${position.title} position`,
@@ -328,6 +435,22 @@ export function useGroupPositions(groupId: string) {
       // If eventId is provided, link agenda item to event
       if (eventId) {
         transactions.push(tx.agendaItems[agendaItemId].link({ event: eventId }));
+      }
+
+      // Send notifications to group members
+      if (params?.senderId && params?.groupName && params?.memberUserIds) {
+        for (const memberId of params.memberUserIds) {
+          if (memberId !== params.senderId) {
+            const notificationTxs = notifyElectionCreated({
+              senderId: params.senderId,
+              recipientUserId: memberId,
+              groupId,
+              groupName: params.groupName,
+              positionTitle: position.title || 'Unknown Position',
+            });
+            transactions.push(...notificationTxs);
+          }
+        }
       }
 
       await db.transact(transactions);

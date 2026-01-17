@@ -18,6 +18,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { GitBranch, Clock, User, Plus, History, Search, Pencil, Check, X } from 'lucide-react';
 import { db, tx, id } from '../../../../db/db';
 import { toast } from 'sonner';
+import { notifyVersionCreated } from '@/utils/notification-helpers';
 
 interface Version {
   id: string;
@@ -39,6 +40,8 @@ interface VersionControlProps {
   currentContent: any[];
   currentUserId: string;
   onRestoreVersion: (content: any[]) => void;
+  amendmentId?: string;
+  amendmentTitle?: string;
 }
 
 export function VersionControl({
@@ -46,6 +49,8 @@ export function VersionControl({
   currentContent,
   currentUserId,
   onRestoreVersion,
+  amendmentId,
+  amendmentTitle,
 }: VersionControlProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
@@ -91,7 +96,7 @@ export function VersionControl({
         versions.length > 0 ? Math.max(...versions.map(v => v.versionNumber)) + 1 : 1;
 
       const versionId = id();
-      await db.transact([
+      const transactions: any[] = [
         tx.documentVersions[versionId]
           .update({
             versionNumber: nextVersionNumber,
@@ -101,7 +106,20 @@ export function VersionControl({
             creationType: 'manual',
           })
           .link({ document: documentId, creator: currentUserId }),
-      ]);
+      ];
+
+      // Send notification to amendment subscribers if amendmentId is provided
+      if (amendmentId) {
+        const notificationTxs = notifyVersionCreated({
+          senderId: currentUserId,
+          amendmentId,
+          amendmentTitle: amendmentTitle || 'Untitled Amendment',
+          version: `v.${nextVersionNumber}`,
+        });
+        transactions.push(...notificationTxs);
+      }
+
+      await db.transact(transactions);
 
       toast.success(`Version ${nextVersionNumber} created successfully`);
 

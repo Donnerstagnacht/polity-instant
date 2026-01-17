@@ -7,6 +7,10 @@ import {
   notifyMembershipRejected,
   notifyMembershipRoleChanged,
   notifyMembershipRemoved,
+  notifyAdminPromoted,
+  notifyAdminDemoted,
+  notifyRoleCreated,
+  notifyRoleDeleted,
 } from '@/utils/notification-helpers';
 import { addUserToGroupConversation } from '@/utils/groupConversationSync';
 
@@ -257,11 +261,18 @@ export function useGroupMutations(groupId: string) {
   /**
    * Create a new role
    */
-  const createRole = async (name: string, description: string, actionRights: any[]) => {
+  const createRole = async (
+    name: string,
+    description: string,
+    actionRights: any[],
+    senderId?: string,
+    groupName?: string,
+    adminUserIds?: string[]
+  ) => {
     setIsLoading(true);
     try {
       const roleId = id();
-      const transactions = [
+      const transactions: any[] = [
         tx.roles[roleId].update({
           name,
           description,
@@ -284,6 +295,22 @@ export function useGroupMutations(groupId: string) {
         );
       });
 
+      // Send notifications to admins
+      if (senderId && groupName && adminUserIds) {
+        adminUserIds.forEach(adminId => {
+          if (adminId !== senderId) {
+            const notificationTxs = notifyRoleCreated({
+              senderId,
+              recipientUserId: adminId,
+              groupId,
+              groupName,
+              roleName: name,
+            });
+            transactions.push(...notificationTxs);
+          }
+        });
+      }
+
       await db.transact(transactions);
       toast.success('Role created successfully');
       return { success: true, roleId };
@@ -299,10 +326,34 @@ export function useGroupMutations(groupId: string) {
   /**
    * Delete a role
    */
-  const deleteRole = async (roleId: string) => {
+  const deleteRole = async (
+    roleId: string,
+    roleName?: string,
+    senderId?: string,
+    groupName?: string,
+    adminUserIds?: string[]
+  ) => {
     setIsLoading(true);
     try {
-      await db.transact([tx.roles[roleId].delete()]);
+      const transactions: any[] = [tx.roles[roleId].delete()];
+
+      // Send notifications to admins
+      if (senderId && roleName && groupName && adminUserIds) {
+        adminUserIds.forEach(adminId => {
+          if (adminId !== senderId) {
+            const notificationTxs = notifyRoleDeleted({
+              senderId,
+              recipientUserId: adminId,
+              groupId,
+              groupName,
+              roleName,
+            });
+            transactions.push(...notificationTxs);
+          }
+        });
+      }
+
+      await db.transact(transactions);
       toast.success('Role deleted successfully');
       return { success: true };
     } catch (error) {
@@ -317,14 +368,32 @@ export function useGroupMutations(groupId: string) {
   /**
    * Promote member to admin
    */
-  const promoteToAdmin = async (membershipId: string, userId: string) => {
+  const promoteToAdmin = async (
+    membershipId: string,
+    userId: string,
+    senderId?: string,
+    groupName?: string
+  ) => {
     setIsLoading(true);
     try {
-      await db.transact([
+      const transactions: any[] = [
         tx.groupMemberships[membershipId].update({
           status: 'admin',
         }),
-      ]);
+      ];
+
+      // Send notification
+      if (senderId && groupName) {
+        const notificationTxs = notifyAdminPromoted({
+          senderId,
+          recipientUserId: userId,
+          groupId,
+          groupName,
+        });
+        transactions.push(...notificationTxs);
+      }
+
+      await db.transact(transactions);
       toast.success('Member promoted to admin');
       return { success: true };
     } catch (error) {
@@ -339,14 +408,32 @@ export function useGroupMutations(groupId: string) {
   /**
    * Demote admin to member
    */
-  const demoteToMember = async (membershipId: string) => {
+  const demoteToMember = async (
+    membershipId: string,
+    userId?: string,
+    senderId?: string,
+    groupName?: string
+  ) => {
     setIsLoading(true);
     try {
-      await db.transact([
+      const transactions: any[] = [
         tx.groupMemberships[membershipId].update({
           status: 'member',
         }),
-      ]);
+      ];
+
+      // Send notification
+      if (senderId && userId && groupName) {
+        const notificationTxs = notifyAdminDemoted({
+          senderId,
+          recipientUserId: userId,
+          groupId,
+          groupName,
+        });
+        transactions.push(...notificationTxs);
+      }
+
+      await db.transact(transactions);
       toast.success('Admin demoted to member');
       return { success: true };
     } catch (error) {

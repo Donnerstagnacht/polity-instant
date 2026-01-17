@@ -67,8 +67,7 @@ export function useNotificationMutations() {
     try {
       await db.transact([
         tx.notifications[notificationId].update({
-          read: true,
-          readAt: new Date().toISOString(),
+          isRead: true,
         }),
       ]);
       return { success: true };
@@ -90,8 +89,7 @@ export function useNotificationMutations() {
     try {
       const transactions = notificationIds.map(id =>
         tx.notifications[id].update({
-          read: true,
-          readAt: new Date().toISOString(),
+          isRead: true,
         })
       );
       await db.transact(transactions);

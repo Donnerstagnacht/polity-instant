@@ -2,6 +2,7 @@ import { useState } from 'react';
 import db, { tx } from '../../../../db/db';
 import { useAuthStore } from '@/features/auth/auth';
 import { toast } from 'sonner';
+import { notifyMembershipRequest } from '@/utils/notification-helpers';
 
 export type MembershipStatus = 'invited' | 'requested' | 'member' | 'admin';
 
@@ -80,8 +81,18 @@ export function useGroupMembership(groupId: string) {
 
     setIsLoading(true);
     try {
+      // Query group name for notification
+      const groupQuery = await db.queryOnce({
+        groups: {
+          $: { where: { id: groupId } },
+        },
+      });
+      const groupName = groupQuery?.data?.groups?.[0]?.name || 'Group';
+
       const newMembershipId = crypto.randomUUID();
-      await db.transact([
+
+      // Build transactions
+      const transactions: any[] = [
         tx.groupMemberships[newMembershipId]
           .update({
             createdAt: new Date().toISOString(),
@@ -91,7 +102,18 @@ export function useGroupMembership(groupId: string) {
             user: user.id,
             group: groupId,
           }),
-      ]);
+      ];
+
+      // Add notification to group admins/members with manage rights
+      const notificationTxs = notifyMembershipRequest({
+        senderId: user.id,
+        senderName: user.email?.split('@')[0] || 'A user',
+        groupId,
+        groupName,
+      });
+      transactions.push(...notificationTxs);
+
+      await db.transact(transactions);
       toast.success('Membership request sent successfully');
     } catch (error) {
       console.error('Failed to request membership:', error);
@@ -137,7 +159,13 @@ export function useGroupMembership(groupId: string) {
       }
 
       await db.transact(transactions);
-      toast.success('Successfully left the group');
+      
+      // Show different message based on membership status
+      if (status === 'requested') {
+        toast.success('Request successfully withdrawn.');
+      } else {
+        toast.success('Successfully left the group');
+      }
     } catch (error) {
       console.error('Failed to leave group:', error);
       toast.error('Failed to leave group. Please try again.');

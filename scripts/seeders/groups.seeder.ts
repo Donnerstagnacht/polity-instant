@@ -5,6 +5,7 @@ import { SEED_CONFIG, GROUP_HASHTAGS } from '../config/seed.config';
 import { randomInt, randomItem, randomItems, randomVisibility } from '../helpers/random.helpers';
 import { batchTransact } from '../helpers/transaction.helpers';
 import { createHashtagTransactions } from '../helpers/entity.helpers';
+import { DEFAULT_GROUP_ROLES } from '../../db/rbac/constants';
 
 export const groupsSeeder: EntitySeeder = {
   name: 'groups',
@@ -33,7 +34,12 @@ export const groupsSeeder: EntitySeeder = {
     let messagesToConversations = 0;
     let messagesToSenders = 0;
 
-    // Define conversation and admin rights once for reuse across all groups
+    // Define conversation and admin rights derived from DEFAULT_GROUP_ROLES
+    // Get Admin and Member templates from constants
+    const adminTemplate = DEFAULT_GROUP_ROLES.find(r => r.name === 'Admin');
+    const memberTemplate = DEFAULT_GROUP_ROLES.find(r => r.name === 'Member');
+
+    // Message rights for conversations (both roles get these)
     const conversationRights = [
       { resource: 'messages', action: 'create' },
       { resource: 'messages', action: 'read' },
@@ -41,18 +47,10 @@ export const groupsSeeder: EntitySeeder = {
       { resource: 'messages', action: 'delete' },
     ];
 
-    const adminRights = [
-      { resource: 'groupNotifications', action: 'manageNotifications' },
-      { resource: 'groupMemberships', action: 'manage' },
-      { resource: 'groupRoles', action: 'manage' },
-      { resource: 'groups', action: 'manage' },
-      { resource: 'groupRelationships', action: 'manage' },
-      { resource: 'groupTodos', action: 'manage' },
-      { resource: 'groupLinks', action: 'manage' },
-      { resource: 'groupPayments', action: 'manage' },
-      { resource: 'groupDocuments', action: 'manage' },
-      { resource: 'groupPositions', action: 'manage' },
-    ];
+    // Admin rights from DEFAULT_GROUP_ROLES Admin template (excluding messages which are handled separately)
+    const adminRights = adminTemplate?.permissions
+      .filter(p => p.resource !== 'messages')
+      .map(p => ({ resource: p.resource, action: p.action })) || [];
 
     // Track users who have received Board Member roles to ensure everyone gets at least one
     const usersWithBoardMemberRole = new Set<string>();

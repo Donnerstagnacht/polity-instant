@@ -2,6 +2,7 @@ import { useState } from 'react';
 import db, { tx, id } from '../../../../db/db';
 import { useAuthStore } from '@/features/auth/auth';
 import { toast } from 'sonner';
+import { notifyCollaborationRequest } from '@/utils/notification-helpers';
 
 export type CollaborationStatus = 'invited' | 'requested' | 'member' | 'admin';
 
@@ -61,7 +62,7 @@ export function useAmendmentCollaboration(amendmentId: string) {
     setIsLoading(true);
     try {
       const newCollaborationId = id();
-      await db.transact([
+      const transactions: any[] = [
         tx.amendmentCollaborators[newCollaborationId]
           .update({
             createdAt: new Date().toISOString(),
@@ -71,7 +72,18 @@ export function useAmendmentCollaboration(amendmentId: string) {
             user: user.id,
             amendment: amendmentId,
           }),
-      ]);
+      ];
+
+      // Send notification to amendment admins
+      const notificationTxs = notifyCollaborationRequest({
+        senderId: user.id,
+        senderName: user.email?.split('@')[0] || 'A user',
+        amendmentId,
+        amendmentTitle: 'Amendment',
+      });
+      transactions.push(...notificationTxs);
+
+      await db.transact(transactions);
       toast.success('Collaboration request sent successfully');
     } catch (error) {
       console.error('Failed to request collaboration:', error);

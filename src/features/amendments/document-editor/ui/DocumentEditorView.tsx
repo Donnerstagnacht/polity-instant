@@ -58,6 +58,8 @@ export function DocumentEditorView({
     documentContent,
     isSavingTitle,
     isEditingTitle,
+    saveStatus,
+    hasUnsavedChanges,
     amendment,
     document,
     amendmentLoading,
@@ -130,12 +132,13 @@ export function DocumentEditorView({
         editorValue,
         discussions,
         suggestion,
-        document.editingMode
+        document.editingMode,
+        amendment.title
       );
 
       setDiscussions(updatedDiscussions);
     },
-    [document?.id, document?.editingMode, userId, editorValue, discussions, amendment?.id, setDiscussions]
+    [document?.id, document?.editingMode, userId, editorValue, discussions, amendment?.id, amendment?.title, setDiscussions]
   );
 
   const handleSuggestionDeclined = useCallback(
@@ -149,12 +152,13 @@ export function DocumentEditorView({
         editorValue,
         discussions,
         suggestion,
-        document.editingMode
+        document.editingMode,
+        amendment.title
       );
 
       setDiscussions(updatedDiscussions);
     },
-    [document?.id, document?.editingMode, userId, editorValue, discussions, amendment?.id, setDiscussions]
+    [document?.id, document?.editingMode, userId, editorValue, discussions, amendment?.id, amendment?.title, setDiscussions]
   );
 
   const handleModeChange = useCallback(
@@ -268,6 +272,8 @@ export function DocumentEditorView({
               currentContent={documentContent}
               currentUserId={userId}
               onRestoreVersion={handleRestoreVersion}
+              amendmentId={amendmentId}
+              amendmentTitle={amendment?.title}
             />
           )}
 
@@ -340,15 +346,23 @@ export function DocumentEditorView({
               )}
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              {isSavingTitle ? (
+              {saveStatus === 'saving' || isSavingTitle ? (
                 <>
                   <Loader2 className="h-3 w-3 animate-spin" />
-                  <span>Saving title...</span>
+                  <span>Saving...</span>
+                </>
+              ) : saveStatus === 'error' ? (
+                <>
+                  <span className="text-destructive">⚠️ Save failed</span>
+                </>
+              ) : hasUnsavedChanges ? (
+                <>
+                  <span className="text-yellow-600">Unsaved changes</span>
                 </>
               ) : (
                 <>
                   <Eye className="h-3 w-3" />
-                  <span>Auto-save enabled</span>
+                  <span>All changes saved</span>
                 </>
               )}
             </div>

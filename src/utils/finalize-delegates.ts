@@ -9,19 +9,21 @@ import {
   calculateDelegateAllocations,
   finalizeDelegateSelection,
 } from './delegate-calculations';
+import { notifyDelegatesFinalized } from './notification-helpers';
 
 /**
  * Build transactions for finalizing delegates
  * This function should be called with data fetched from InstantDB Admin SDK
  * 
  * @param eventData - Event data with delegates and group relationships
+ * @param senderId - The ID of the user triggering the finalization (for notifications)
  * @returns Transaction chunks to execute
  */
 export function buildFinalizeDelegatesTransactions(eventData: {
   event: any;
   groupRelationships: any[];
   parentGroupId: string;
-}): any[] {
+}, senderId?: string): any[] {
   const { event, groupRelationships, parentGroupId } = eventData;
 
   if (event.eventType !== 'delegate_conference') {
@@ -102,6 +104,16 @@ export function buildFinalizeDelegatesTransactions(eventData: {
       })
     );
   });
+
+  // 4. Send notification to event participants
+  if (senderId) {
+    const notificationTxs = notifyDelegatesFinalized({
+      senderId,
+      eventId: event.id,
+      eventTitle: event.title || 'Event',
+    });
+    chunks.push(...notificationTxs);
+  }
 
   return chunks;
 }

@@ -15,13 +15,15 @@ export function useEventData(eventId?: string) {
               memberships: {
                 user: {},
               },
-              roles: {
-                actionRights: {},
-              },
+            },
+            roles: {
+              actionRights: {},
             },
             participants: {
               user: {},
-              role: {},
+              role: {
+                actionRights: {},
+              },
             },
             delegates: {
               user: {},

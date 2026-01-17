@@ -38,7 +38,8 @@ export function createHashtagTransactions(
 export function createAmendmentDocument(
   amendmentId: string,
   amendmentTitle: string,
-  ownerId: string
+  ownerId: string,
+  workflowStatus?: string
 ): any[] {
   const transactions = [];
   const documentId = id();
@@ -61,12 +62,30 @@ export function createAmendmentDocument(
     { type: 'p', children: [{ text: faker.lorem.paragraphs(1) }] },
   ];
 
+  // Map workflow status to editing mode
+  const getEditingMode = (wfStatus?: string) => {
+    if (!wfStatus) return 'edit';
+    const mapping: Record<string, string> = {
+      collaborative_editing: 'edit',
+      internal_suggesting: 'suggest',
+      internal_voting: 'vote',
+      viewing: 'view',
+      event_suggesting: 'suggest',
+      event_voting: 'vote',
+      passed: 'view',
+      rejected: 'view',
+    };
+    return mapping[wfStatus] || 'edit';
+  };
+
   // Create the document
   transactions.push(
     tx.documents[documentId]
       .update({
         title: amendmentTitle,
         content: documentContent,
+        editingMode: getEditingMode(workflowStatus),
+        suggestionCounter: 0,
         createdAt: faker.date.past({ years: 0.5 }),
         updatedAt: faker.date.recent({ days: 7 }),
         isPublic: true,

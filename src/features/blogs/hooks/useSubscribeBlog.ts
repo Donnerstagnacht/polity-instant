@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { db, tx, id } from '../../../../db/db';
 import { useAuthStore } from '@/features/auth/auth.ts';
-import { createNotification } from '@/utils/notification-helpers';
+import { notifyBlogNewSubscriber } from '@/utils/notification-helpers';
 import { toast } from 'sonner';
 
 /**
@@ -13,6 +13,21 @@ export function useSubscribeBlog(targetBlogId?: string) {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscriberCount, setSubscriberCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Query current user's name for notifications
+  const { data: currentUserData } = db.useQuery(
+    authUser?.id
+      ? {
+          $users: {
+            $: {
+              where: { id: authUser.id },
+              limit: 1,
+            },
+          },
+        }
+      : null
+  );
+  const currentUserName = currentUserData?.$users?.[0]?.name || 'Someone';
 
   // Query to get all subscribers for the target blog
   const { data: subscriptionData, isLoading: subscriptionLoading } = db.useQuery(
@@ -30,6 +45,21 @@ export function useSubscribeBlog(targetBlogId?: string) {
         }
       : null
   );
+
+  // Query blog title for notifications
+  const { data: blogData } = db.useQuery(
+    targetBlogId
+      ? {
+          blogs: {
+            $: {
+              where: { id: targetBlogId },
+              limit: 1,
+            },
+          },
+        }
+      : null
+  );
+  const blogTitle = blogData?.blogs?.[0]?.title || 'Blog';
 
   // Update subscription state when data changes
   useEffect(() => {
@@ -53,16 +83,11 @@ export function useSubscribeBlog(targetBlogId?: string) {
     setIsLoading(true);
     try {
       const subscriptionId = id();
-      const notification = createNotification({
+      const notification = notifyBlogNewSubscriber({
         senderId: authUser.id,
-        recipientEntityType: 'blog',
-        recipientEntityId: targetBlogId,
-        type: 'group_update',
-        title: 'New Subscriber',
-        message: `${authUser.name || 'A user'} subscribed to this blog`,
-        actionUrl: `/user/${authUser.id}`,
-        relatedEntityType: 'blog',
-        relatedBlogId: targetBlogId,
+        senderName: currentUserName,
+        blogId: targetBlogId,
+        blogTitle: blogTitle,
       });
 
       await db.transact([

@@ -17,6 +17,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel';
 import { TypeAheadSelect } from '@/components/ui/type-ahead-select';
+import { TypeSelector } from '@/components/ui/type-selector';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import {
   EventSelectCard,
   AmendmentSelectCard,
@@ -26,6 +28,7 @@ import { db, tx, id } from 'db/db';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { toast } from 'sonner';
 import { PageWrapper } from '@/components/layout/page-wrapper';
+import { notifyAgendaItemCreated } from '@/utils/notification-helpers';
 
 export function CreateAgendaItemForm() {
   const router = useRouter();
@@ -79,8 +82,7 @@ export function CreateAgendaItemForm() {
   const userAmendments = amendmentsData?.amendments || [];
   const userPositions = positionsData?.positions || [];
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setIsSubmitting(true);
 
     try {
@@ -141,6 +143,16 @@ export function CreateAgendaItemForm() {
         transactions.push(electionTx);
       }
 
+      // Send notification to event participants
+      const selectedEvent = userEvents.find((e: any) => e.id === formData.eventId);
+      const notificationTxs = notifyAgendaItemCreated({
+        senderId: user.id,
+        eventId: formData.eventId,
+        eventTitle: selectedEvent?.title || 'Event',
+        agendaItemTitle: formData.title,
+      });
+      transactions.push(...notificationTxs);
+
       await db.transact(transactions);
 
       toast.success('Agenda item created successfully!');
@@ -158,7 +170,6 @@ export function CreateAgendaItemForm() {
         <CardHeader>
           <CardTitle>Create a New Agenda Item</CardTitle>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
           <CardContent>
             <Carousel setApi={setCarouselApi} opts={{ watchDrag: false }}>
               <CarouselContent>
@@ -203,26 +214,12 @@ export function CreateAgendaItemForm() {
                 {/* Step 2: Type & Settings */}
                 <CarouselItem>
                   <div className="space-y-4 p-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="agenda-type">Type</Label>
-                      <select
-                        id="agenda-type"
+                    <TooltipProvider>
+                      <TypeSelector
                         value={formData.type}
-                        onChange={e =>
-                          setFormData({
-                            ...formData,
-                            type: e.target.value as typeof formData.type,
-                          })
-                        }
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        required
-                      >
-                        <option value="discussion">Discussion</option>
-                        <option value="speech">Speech</option>
-                        <option value="election">Election</option>
-                        <option value="vote">Vote</option>
-                      </select>
-                    </div>
+                        onChange={type => setFormData({ ...formData, type })}
+                      />
+                    </TooltipProvider>
                     <div className="grid gap-4 md:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="agenda-order">Order</Label>
@@ -295,7 +292,7 @@ export function CreateAgendaItemForm() {
                 {/* Step 4: Review */}
                 <CarouselItem>
                   <div className="p-4">
-                    <Card className="overflow-hidden border-2 bg-gradient-to-br from-red-100 to-yellow-100 dark:from-red-900/40 dark:to-yellow-900/50">
+                    <Card className="overflow-hidden border-2 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/50">
                       <CardHeader>
                         <div className="mb-2 flex items-center justify-between">
                           <Badge variant="default" className="text-xs">
@@ -386,12 +383,11 @@ export function CreateAgendaItemForm() {
                 Next
               </Button>
             ) : (
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
                 {isSubmitting ? 'Creating...' : 'Create Agenda Item'}
               </Button>
             )}
           </CardFooter>
-        </form>
       </Card>
     </PageWrapper>
   );
