@@ -11,7 +11,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { getIconComponent } from '@/navigation/nav-items/icon-map';
 import { getShortcutForItem } from '@/navigation/nav-keyboard/keyboard-navigation';
-// import { useTranslation } from 'react-i18next'; // Temporarily disabled
+import { useTranslation } from '@/hooks/use-translation';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import {
@@ -30,7 +30,7 @@ export function NavigationCommandDialog({
   primaryNavItems: NavigationItem[];
   secondaryNavItems: NavigationItem[] | null;
 }) {
-  // const { t } = useTranslation(); // Temporarily disabled
+  const { t } = useTranslation();
   const router = useRouter();
 
   const [open, setOpen] = useState(false);
@@ -78,10 +78,10 @@ export function NavigationCommandDialog({
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder="Search navigation..." />
+      <CommandInput placeholder={t('navigation.commandDialog.placeholder')} />
       <CommandList>
-        <CommandEmpty>No results found.</CommandEmpty>
-        <CommandGroup heading="Primary Navigation">
+        <CommandEmpty>{t('navigation.commandDialog.noResults')}</CommandEmpty>
+        <CommandGroup heading={t('navigation.commandDialog.groups.primaryNavigation')}>
           {primaryNavItems.map(item => {
             const IconComponent = getIconComponent(item.icon);
             return (
@@ -116,7 +116,7 @@ export function NavigationCommandDialog({
         {authenticated && userId && (
           <>
             <CommandSeparator />
-            <CommandGroup heading="User Navigation">
+            <CommandGroup heading={t('navigation.commandDialog.groups.userNavigation', 'User Navigation')}>
               {navItemsAuthenticated(router)
                 .getUserSecondaryNavItems(userId, true)
                 .map((item: NavigationItem) => {

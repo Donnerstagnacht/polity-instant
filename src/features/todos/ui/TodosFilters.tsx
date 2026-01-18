@@ -10,6 +10,7 @@ import {
 import { Search } from 'lucide-react';
 import { TodoPriority } from '../types/todo.types';
 import { SortBy } from '../hooks/useTodoFilters';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface TodosFiltersProps {
   searchQuery: string;
@@ -28,6 +29,8 @@ export function TodosFilters({
   sortBy,
   setSortBy,
 }: TodosFiltersProps) {
+  const { t } = useTranslation();
+  
   return (
     <Card className="mb-6">
       <CardContent className="pt-6">
@@ -36,7 +39,7 @@ export function TodosFilters({
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search todos..."
+                placeholder={t('features.todos.search.placeholder')}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -46,25 +49,25 @@ export function TodosFilters({
           <div className="flex gap-2">
             <Select value={filterPriority} onValueChange={(v: any) => setFilterPriority(v)}>
               <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Priority" />
+                <SelectValue placeholder={t('features.todos.priority.title')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Priorities</SelectItem>
-                <SelectItem value="urgent">Urgent</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="all">{t('features.todos.priority.all')}</SelectItem>
+                <SelectItem value="urgent">{t('features.todos.priority.urgent')}</SelectItem>
+                <SelectItem value="high">{t('features.todos.priority.high')}</SelectItem>
+                <SelectItem value="medium">{t('features.todos.priority.medium')}</SelectItem>
+                <SelectItem value="low">{t('features.todos.priority.low')}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
               <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Sort by" />
+                <SelectValue placeholder={t('features.todos.sort.title')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="dueDate">Due Date</SelectItem>
-                <SelectItem value="priority">Priority</SelectItem>
-                <SelectItem value="createdAt">Created Date</SelectItem>
-                <SelectItem value="title">Title</SelectItem>
+                <SelectItem value="dueDate">{t('features.todos.sort.dueDate')}</SelectItem>
+                <SelectItem value="priority">{t('features.todos.sort.priority')}</SelectItem>
+                <SelectItem value="createdAt">{t('features.todos.sort.createdAt')}</SelectItem>
+                <SelectItem value="title">{t('features.todos.sort.titleSort')}</SelectItem>
               </SelectContent>
             </Select>
           </div>

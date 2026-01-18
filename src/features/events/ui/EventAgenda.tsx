@@ -45,6 +45,7 @@ import {
   Search as SearchIcon,
   Filter,
 } from 'lucide-react';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface EventAgendaProps {
   eventId: string;
@@ -52,6 +53,7 @@ interface EventAgendaProps {
 
 export function EventAgenda({ eventId }: EventAgendaProps) {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user } = db.useAuth();
   const { event, isLoading: eventLoading } = useEventData(eventId);
   const { agendaItems, electionVotes, amendmentVoteEntries, isLoading } = useAgendaItems(eventId);
@@ -169,12 +171,12 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       <div className="container mx-auto p-6">
         <Card>
           <CardContent className="p-6 text-center">
-            <h2 className="mb-2 text-2xl font-bold">Event Not Found</h2>
+            <h2 className="mb-2 text-2xl font-bold">{t('features.events.wiki.notFound')}</h2>
             <p className="mb-4 text-muted-foreground">
-              The event you're looking for doesn't exist.
+              {t('features.events.wiki.notFoundDescription')}
             </p>
             <Button asChild>
-              <Link href="/calendar">Return to Calendar</Link>
+              <Link href="/calendar">{t('features.events.backToCalendar')}</Link>
             </Button>
           </CardContent>
         </Card>
@@ -187,7 +189,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       {/* Agenda Statistics */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Agenda Statistiken</CardTitle>
+          <CardTitle className="text-lg">{t('features.events.agenda.statistics')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
@@ -200,7 +202,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                   {agendaItems.filter((item: any) => item.election).length}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {agendaItems.filter((item: any) => item.election).length === 1 ? 'Wahl' : 'Wahlen'}
+                  {agendaItems.filter((item: any) => item.election).length === 1 ? t('features.events.agenda.election') : t('features.events.agenda.elections')}
                 </p>
               </div>
             </div>
@@ -215,8 +217,8 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {agendaItems.filter((item: any) => item.amendmentVote).length === 1
-                    ? 'Abstimmung'
-                    : 'Abstimmungen'}
+                    ? t('features.events.agenda.vote')
+                    : t('features.events.agenda.votes')}
                 </p>
               </div>
             </div>
@@ -236,7 +238,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                     0
                   )}
                 </p>
-                <p className="text-sm text-muted-foreground">Offene Änderungsanträge</p>
+                <p className="text-sm text-muted-foreground">{t('features.events.agenda.openChangeRequests')}</p>
               </div>
             </div>
           </div>
@@ -247,7 +249,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-semibold">
-            Tagesordnungspunkte ({filteredAgendaItems.length})
+            {t('features.events.agenda.itemsCount', { count: filteredAgendaItems.length })}
           </h2>
         </div>
 
@@ -255,7 +257,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
           <div className="relative flex-1">
             <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search agenda items..."
+              placeholder={t('features.events.agenda.searchPlaceholder')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -269,39 +271,39 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
         {showFilters && (
           <Card>
             <CardHeader>
-              <CardTitle>Filters</CardTitle>
-              <CardDescription>Refine the agenda items</CardDescription>
+              <CardTitle>{t('features.events.agenda.filters')}</CardTitle>
+              <CardDescription>{t('features.events.agenda.filtersDescription')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="type-filter">Type</Label>
+                  <Label htmlFor="type-filter">{t('features.events.agenda.type')}</Label>
                   <Select value={typeFilter} onValueChange={setTypeFilter}>
                     <SelectTrigger id="type-filter">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="election">Election</SelectItem>
-                      <SelectItem value="vote">Vote</SelectItem>
-                      <SelectItem value="speech">Speech</SelectItem>
-                      <SelectItem value="discussion">Discussion</SelectItem>
+                      <SelectItem value="all">{t('features.events.agenda.allTypes')}</SelectItem>
+                      <SelectItem value="election">{t('features.events.agenda.typeElection')}</SelectItem>
+                      <SelectItem value="vote">{t('features.events.agenda.typeVote')}</SelectItem>
+                      <SelectItem value="speech">{t('features.events.agenda.typeSpeech')}</SelectItem>
+                      <SelectItem value="discussion">{t('features.events.agenda.typeDiscussion')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="status-filter">Status</Label>
+                  <Label htmlFor="status-filter">{t('features.events.agenda.statusLabel')}</Label>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger id="status-filter">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="in-progress">In Progress</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="planned">Planned</SelectItem>
+                      <SelectItem value="all">{t('features.events.agenda.allStatus')}</SelectItem>
+                      <SelectItem value="pending">{t('features.events.agenda.statusPending')}</SelectItem>
+                      <SelectItem value="in-progress">{t('features.events.agenda.statusInProgress')}</SelectItem>
+                      <SelectItem value="completed">{t('features.events.agenda.statusCompleted')}</SelectItem>
+                      <SelectItem value="planned">{t('features.events.agenda.statusPlanned')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -316,14 +318,14 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
         <Card>
           <CardContent className="p-8 text-center">
             <Calendar className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-            <h3 className="mb-2 text-lg font-semibold">Noch keine Tagesordnungspunkte</h3>
+            <h3 className="mb-2 text-lg font-semibold">{t('features.events.agenda.noItems')}</h3>
             <p className="mb-4 text-muted-foreground">
-              Für dieses Event wurden noch keine Tagesordnungspunkte erstellt.
+              {t('features.events.agenda.noItemsDescription')}
             </p>
             <Button asChild>
               <Link href="/create?type=agenda-item">
                 <Plus className="mr-2 h-4 w-4" />
-                Ersten Tagesordnungspunkt erstellen
+                {t('features.events.agenda.createFirstItem')}
               </Link>
             </Button>
           </CardContent>
@@ -376,7 +378,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                       <Button asChild variant="outline" size="sm">
                         <Link href={`/event/${eventId}/agenda/${item.id}`}>
                           <Eye className="mr-2 h-4 w-4" />
-                          Details
+                          {t('features.events.agenda.details')}
                         </Link>
                       </Button>
                     </div>
@@ -393,7 +395,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <User className="h-4 w-4" />
-                          <span>Von {item.creator?.name || item.creator?.email || 'Unbekannt'}</span>
+                          <span>{t('features.events.agenda.by', { name: item.creator?.name || item.creator?.email || t('features.events.agenda.unknown') })}</span>
                         </div>
                       </div>
                     </div>
@@ -408,33 +410,33 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       {/* Quick Actions */}
       <Card>
         <CardHeader>
-          <CardTitle>Schnellaktionen</CardTitle>
-          <CardDescription>Verwalte die Tagesordnung dieses Events</CardDescription>
+          <CardTitle>{t('features.events.agenda.quickActions.title')}</CardTitle>
+          <CardDescription>{t('features.events.agenda.quickActions.description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
             <Button asChild variant="outline" className="justify-start">
               <Link href="/create?type=agenda-item">
                 <Plus className="mr-2 h-4 w-4" />
-                Tagesordnungspunkt hinzufügen
+                {t('features.events.agenda.quickActions.addItem')}
               </Link>
             </Button>
             <Button asChild variant="outline" className="justify-start">
               <Link href="/create?type=election">
                 <Vote className="mr-2 h-4 w-4" />
-                Wahl erstellen
+                {t('features.events.agenda.quickActions.createElection')}
               </Link>
             </Button>
             <Button asChild variant="outline" className="justify-start">
               <Link href="/create?type=amendment-vote">
                 <Gavel className="mr-2 h-4 w-4" />
-                Abstimmung erstellen
+                {t('features.events.agenda.quickActions.createVote')}
               </Link>
             </Button>
             <Button asChild variant="outline" className="justify-start">
               <Link href={`/event/${eventId}`}>
                 <ArrowRight className="mr-2 h-4 w-4" />
-                Zurück zum Event
+                {t('features.events.agenda.quickActions.backToEvent')}
               </Link>
             </Button>
           </div>

@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface Booking {
   id: string;
@@ -20,12 +21,14 @@ interface MeetingParticipantsProps {
 }
 
 export function MeetingParticipants({ bookings, count }: MeetingParticipantsProps) {
+  const { t } = useTranslation();
+
   if (count === 0) return null;
 
   return (
     <Card className="mb-6">
       <CardHeader>
-        <CardTitle>Participants ({count})</CardTitle>
+        <CardTitle>{t('features.meet.participants.titleWithCount', { count })}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -36,13 +39,13 @@ export function MeetingParticipants({ bookings, count }: MeetingParticipantsProp
                 <AvatarFallback>{booking.booker?.name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
               </Avatar>
               <div className="flex-1">
-                <p className="font-medium">{booking.booker?.name || 'Unknown'}</p>
+                <p className="font-medium">{booking.booker?.name || t('features.meet.participants.unknown')}</p>
                 <p className="text-sm text-muted-foreground">
                   @{booking.booker?.handle || 'unknown'}
                 </p>
                 {booking.notes && (
                   <p className="mt-1 text-sm text-muted-foreground">
-                    <span className="font-medium">Note:</span> {booking.notes}
+                    <span className="font-medium">{t('features.meet.participants.note')}</span> {booking.notes}
                   </p>
                 )}
               </div>

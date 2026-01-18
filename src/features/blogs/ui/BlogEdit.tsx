@@ -16,6 +16,7 @@ import { Loader2 } from 'lucide-react';
 import { ImageUpload } from '@/components/shared/ImageUpload';
 import { useBlogUpdate } from '../hooks/useBlogUpdate';
 import { useAuthStore } from '@/features/auth/auth';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface BlogEditProps {
   blogId: string;
@@ -24,6 +25,7 @@ interface BlogEditProps {
 export function BlogEdit({ blogId }: BlogEditProps) {
   const router = useRouter();
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const {
     formData,
     tagInput,
@@ -42,7 +44,7 @@ export function BlogEdit({ blogId }: BlogEditProps) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-muted-foreground">Loading blog data...</p>
+        <p className="text-muted-foreground">{t('features.blogs.editPage.loading')}</p>
       </div>
     );
   }
@@ -52,11 +54,11 @@ export function BlogEdit({ blogId }: BlogEditProps) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <p className="text-lg font-semibold">Blog not found</p>
-          <p className="text-muted-foreground">No blog data exists for this ID</p>
+          <p className="text-lg font-semibold">{t('features.blogs.editPage.notFound')}</p>
+          <p className="text-muted-foreground">{t('features.blogs.editPage.notFoundDescription')}</p>
           <div className="mt-6">
             <Button onClick={() => router.push(`/blog`)} variant="default">
-              Back to Blogs
+              {t('features.blogs.editPage.backToBlogs')}
             </Button>
           </div>
         </div>
@@ -68,8 +70,8 @@ export function BlogEdit({ blogId }: BlogEditProps) {
   return (
     <div className="container mx-auto max-w-4xl p-4">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Edit Blog</h1>
-        <p className="text-muted-foreground">Update blog information</p>
+        <h1 className="text-3xl font-bold">{t('features.blogs.editPage.title')}</h1>
+        <p className="text-muted-foreground">{t('features.blogs.editPage.description')}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -77,34 +79,34 @@ export function BlogEdit({ blogId }: BlogEditProps) {
         <ImageUpload
           currentImage={formData.imageURL}
           onImageChange={(url: string) => updateField('imageURL', url)}
-          label="Blog Image"
-          description="Upload a blog image or provide a URL"
+          label={t('features.blogs.editPage.blogImage')}
+          description={t('features.blogs.editPage.blogImageDescription')}
         />
 
         {/* Basic Information */}
         <Card>
           <CardHeader>
-            <CardTitle>Basic Information</CardTitle>
-            <CardDescription>Public blog information</CardDescription>
+            <CardTitle>{t('features.blogs.editPage.basicInfo')}</CardTitle>
+            <CardDescription>{t('features.blogs.editPage.basicInfoDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Blog Title *</Label>
+              <Label htmlFor="title">{t('features.blogs.editPage.blogTitleRequired')}</Label>
               <Input
                 id="title"
                 value={formData.title}
                 onChange={e => updateField('title', e.target.value)}
-                placeholder="Blog title"
+                placeholder={t('features.blogs.editPage.blogTitlePlaceholder')}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">{t('features.blogs.editPage.descriptionLabel')}</Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={e => updateField('description', e.target.value)}
-                placeholder="Describe the blog and its purpose..."
+                placeholder={t('features.blogs.editPage.descriptionPlaceholder')}
                 rows={6}
               />
             </div>
@@ -114,7 +116,7 @@ export function BlogEdit({ blogId }: BlogEditProps) {
                 checked={formData.isPublic}
                 onCheckedChange={checked => updateField('isPublic', checked)}
               />
-              <Label htmlFor="isPublic">Public Blog</Label>
+              <Label htmlFor="isPublic">{t('features.blogs.editPage.publicBlog')}</Label>
             </div>
           </CardContent>
         </Card>
@@ -122,8 +124,8 @@ export function BlogEdit({ blogId }: BlogEditProps) {
         {/* Tags */}
         <Card>
           <CardHeader>
-            <CardTitle>Tags</CardTitle>
-            <CardDescription>Add tags to categorize this blog</CardDescription>
+            <CardTitle>{t('features.blogs.editPage.tags')}</CardTitle>
+            <CardDescription>{t('features.blogs.editPage.tagsDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex gap-2">
@@ -136,10 +138,10 @@ export function BlogEdit({ blogId }: BlogEditProps) {
                     handleAddTag();
                   }
                 }}
-                placeholder="Add a tag"
+                placeholder={t('features.blogs.editPage.addTagPlaceholder')}
               />
               <Button type="button" onClick={handleAddTag} variant="outline">
-                Add
+                {t('features.blogs.editPage.add')}
               </Button>
             </div>
             {formData.tags.length > 0 && (
@@ -172,16 +174,16 @@ export function BlogEdit({ blogId }: BlogEditProps) {
             onClick={() => router.push(`/blog/${blogId}`)}
             disabled={isSubmitting}
           >
-            Cancel
+            {t('features.blogs.editPage.cancel')}
           </Button>
           <Button type="submit" disabled={isSubmitting} className="flex-1">
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
+                {t('features.blogs.editPage.saving')}
               </>
             ) : (
-              'Save Changes'
+              t('features.blogs.editPage.saveChanges')
             )}
           </Button>
         </div>

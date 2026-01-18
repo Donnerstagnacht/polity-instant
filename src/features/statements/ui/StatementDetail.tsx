@@ -6,12 +6,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { db } from '../../../../db/db';
 import { FileText, User, MessageSquare, Share2, ThumbsUp } from 'lucide-react';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface StatementDetailProps {
   statementId: string;
 }
 
 export function StatementDetail({ statementId }: StatementDetailProps) {
+  const { t } = useTranslation();
+  
   // Fetch statement data from InstantDB
   const { data, isLoading } = db.useQuery({
     statements: {
@@ -25,7 +28,7 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
   if (isLoading) {
     return (
       <PageWrapper className="container mx-auto p-8">
-        <div className="py-12 text-center">Loading statement details...</div>
+        <div className="py-12 text-center">{t('features.statements.detail.loading')}</div>
       </PageWrapper>
     );
   }
@@ -34,9 +37,9 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
     return (
       <PageWrapper className="container mx-auto p-8">
         <div className="py-12 text-center">
-          <h1 className="mb-4 text-2xl font-bold">Statement Not Found</h1>
+          <h1 className="mb-4 text-2xl font-bold">{t('features.statements.detail.notFound')}</h1>
           <p className="text-muted-foreground">
-            The statement you're looking for doesn't exist or has been removed.
+            {t('features.statements.detail.notFoundDescription')}
           </p>
         </div>
       </PageWrapper>
@@ -72,15 +75,15 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
               <div className="flex items-center gap-3">
                 <Button variant="outline" size="sm">
                   <ThumbsUp className="mr-2 h-4 w-4" />
-                  Agree
+                  {t('features.statements.detail.agree')}
                 </Button>
                 <Button variant="outline" size="sm">
                   <MessageSquare className="mr-2 h-4 w-4" />
-                  Comment
+                  {t('features.statements.detail.comment')}
                 </Button>
                 <Button variant="outline" size="sm">
                   <Share2 className="mr-2 h-4 w-4" />
-                  Share
+                  {t('features.statements.detail.share')}
                 </Button>
               </div>
             </CardContent>
@@ -89,12 +92,12 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
           {/* Comments Section */}
           <Card>
             <CardHeader>
-              <CardTitle>Discussion</CardTitle>
-              <CardDescription>What do others think about this statement?</CardDescription>
+              <CardTitle>{t('features.statements.detail.discussion')}</CardTitle>
+              <CardDescription>{t('features.statements.detail.discussionDescription')}</CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                No comments yet. Be the first to share your thoughts.
+                {t('features.statements.detail.noComments')}
               </p>
             </CardContent>
           </Card>
@@ -102,11 +105,11 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
           {/* Related Statements */}
           <Card>
             <CardHeader>
-              <CardTitle>Related Statements</CardTitle>
-              <CardDescription>Other statements with similar tags</CardDescription>
+              <CardTitle>{t('features.statements.detail.relatedStatements')}</CardTitle>
+              <CardDescription>{t('features.statements.detail.relatedStatementsDescription')}</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">No related statements found.</p>
+              <p className="text-sm text-muted-foreground">{t('features.statements.detail.noRelatedStatements')}</p>
             </CardContent>
           </Card>
         </div>
@@ -119,7 +122,7 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <User className="h-5 w-5" />
-                  Author
+                  {t('features.statements.detail.author')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -139,14 +142,14 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
           {/* Tag Info */}
           <Card>
             <CardHeader>
-              <CardTitle>Category</CardTitle>
+              <CardTitle>{t('features.statements.detail.category')}</CardTitle>
             </CardHeader>
             <CardContent>
               <Badge variant="secondary" className="text-sm">
                 {statement.tag}
               </Badge>
               <p className="mt-3 text-sm text-muted-foreground">
-                Explore more statements in this category
+                {t('features.statements.detail.exploreMore')}
               </p>
             </CardContent>
           </Card>
@@ -154,16 +157,16 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
           {/* Actions */}
           <Card>
             <CardHeader>
-              <CardTitle>Actions</CardTitle>
+              <CardTitle>{t('features.statements.detail.actions')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <Button variant="outline" className="w-full justify-start">
                 <Share2 className="mr-2 h-4 w-4" />
-                Share Statement
+                {t('features.statements.detail.shareStatement')}
               </Button>
               <Button variant="outline" className="w-full justify-start">
                 <FileText className="mr-2 h-4 w-4" />
-                Save for Later
+                {t('features.statements.detail.saveForLater')}
               </Button>
             </CardContent>
           </Card>

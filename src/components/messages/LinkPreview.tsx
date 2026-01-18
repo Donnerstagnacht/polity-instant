@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { db } from '../../../db/db';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface LinkPreviewProps {
   url: string;
@@ -68,6 +69,7 @@ function isPolityLink(url: string): boolean {
 }
 
 export function LinkPreview({ url, className = '' }: LinkPreviewProps) {
+  const { t } = useTranslation();
   const isPolity = isPolityLink(url);
   const polityLink = isPolity ? parsePolityUrl(url) : null;
 
@@ -82,7 +84,7 @@ export function LinkPreview({ url, className = '' }: LinkPreviewProps) {
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{url}</p>
-              <p className="text-xs text-muted-foreground">External Link</p>
+              <p className="text-xs text-muted-foreground">{t('components.linkPreview.externalLink')}</p>
             </div>
           </CardContent>
         </Card>
@@ -122,6 +124,7 @@ function PolityLinkPreview({ type, id, className }: PolityLinkPreviewProps) {
 }
 
 function UserPreview({ userId, className }: { userId: string; className?: string }) {
+  const { t } = useTranslation();
   const { data, isLoading } = db.useQuery({
     $users: {
       $: {
@@ -152,7 +155,7 @@ function UserPreview({ userId, className }: { userId: string; className?: string
             <AvatarFallback>{user.name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold">{user.name || 'Unknown User'}</p>
+            <p className="truncate font-semibold">{user.name || t('components.linkPreview.unknownUser')}</p>
             {user.handle && (
               <p className="truncate text-sm text-muted-foreground">@{user.handle}</p>
             )}
@@ -161,7 +164,7 @@ function UserPreview({ userId, className }: { userId: string; className?: string
             )}
           </div>
           <Badge variant="outline" className="flex-shrink-0 text-xs">
-            User
+            {t('components.linkPreview.user')}
           </Badge>
         </CardContent>
       </Card>
@@ -170,6 +173,7 @@ function UserPreview({ userId, className }: { userId: string; className?: string
 }
 
 function GroupPreview({ groupId, className }: { groupId: string; className?: string }) {
+  const { t } = useTranslation();
   const { data, isLoading } = db.useQuery({
     groups: {
       $: {
@@ -204,10 +208,10 @@ function GroupPreview({ groupId, className }: { groupId: string; className?: str
             {group.description && (
               <p className="line-clamp-1 text-xs text-muted-foreground">{group.description}</p>
             )}
-            <p className="text-xs text-muted-foreground">{group.memberCount || 0} members</p>
+            <p className="text-xs text-muted-foreground">{group.memberCount || 0} {t('components.linkPreview.members')}</p>
           </div>
           <Badge variant="outline" className="flex-shrink-0 text-xs">
-            Group
+            {t('components.linkPreview.group')}
           </Badge>
         </CardContent>
       </Card>
@@ -216,6 +220,7 @@ function GroupPreview({ groupId, className }: { groupId: string; className?: str
 }
 
 function EventPreview({ eventId, className }: { eventId: string; className?: string }) {
+  const { t } = useTranslation();
   const { data, isLoading } = db.useQuery({
     events: {
       $: {
@@ -259,7 +264,7 @@ function EventPreview({ eventId, className }: { eventId: string; className?: str
             )}
           </div>
           <Badge variant="outline" className="flex-shrink-0 text-xs">
-            Event
+            {t('components.linkPreview.event')}
           </Badge>
         </CardContent>
       </Card>
@@ -268,6 +273,7 @@ function EventPreview({ eventId, className }: { eventId: string; className?: str
 }
 
 function AmendmentPreview({ amendmentId, className }: { amendmentId: string; className?: string }) {
+  const { t } = useTranslation();
   const { data, isLoading } = db.useQuery({
     amendments: {
       $: {
@@ -311,7 +317,7 @@ function AmendmentPreview({ amendmentId, className }: { amendmentId: string; cla
             )}
           </div>
           <Badge variant="outline" className="flex-shrink-0 text-xs">
-            Amendment
+            {t('components.linkPreview.amendment')}
           </Badge>
         </CardContent>
       </Card>
@@ -320,6 +326,7 @@ function AmendmentPreview({ amendmentId, className }: { amendmentId: string; cla
 }
 
 function BlogPreview({ blogId, className }: { blogId: string; className?: string }) {
+  const { t } = useTranslation();
   const { data, isLoading } = db.useQuery({
     blogs: {
       $: {
@@ -348,13 +355,13 @@ function BlogPreview({ blogId, className }: { blogId: string; className?: string
           <div className="min-w-0 flex-1">
             <p className="truncate font-semibold">{blog.title}</p>
             <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-              <span>{blog.likeCount || 0} likes</span>
+              <span>{blog.likeCount || 0} {t('components.linkPreview.likes')}</span>
               <span>•</span>
-              <span>{blog.commentCount || 0} comments</span>
+              <span>{blog.commentCount || 0} {t('components.linkPreview.comments')}</span>
             </div>
           </div>
           <Badge variant="outline" className="flex-shrink-0 text-xs">
-            Blog
+            {t('components.linkPreview.blog')}
           </Badge>
         </CardContent>
       </Card>
@@ -363,6 +370,7 @@ function BlogPreview({ blogId, className }: { blogId: string; className?: string
 }
 
 function StatementPreview({ statementId, className }: { statementId: string; className?: string }) {
+  const { t } = useTranslation();
   const { data, isLoading } = db.useQuery({
     statements: {
       $: {
@@ -397,7 +405,7 @@ function StatementPreview({ statementId, className }: { statementId: string; cla
             )}
           </div>
           <Badge variant="outline" className="flex-shrink-0 text-xs">
-            Statement
+            {t('components.linkPreview.statement')}
           </Badge>
         </CardContent>
       </Card>
@@ -406,6 +414,7 @@ function StatementPreview({ statementId, className }: { statementId: string; cla
 }
 
 function TodoPreview({ todoId, className }: { todoId: string; className?: string }) {
+  const { t } = useTranslation();
   const { data, isLoading } = db.useQuery({
     todos: {
       $: {
@@ -446,7 +455,7 @@ function TodoPreview({ todoId, className }: { todoId: string; className?: string
             </div>
           </div>
           <Badge variant="outline" className="flex-shrink-0 text-xs">
-            Todo
+            {t('components.linkPreview.todo')}
           </Badge>
         </CardContent>
       </Card>

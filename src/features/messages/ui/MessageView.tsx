@@ -4,6 +4,7 @@ import { Conversation } from '../types';
 import { ConversationHeader } from './ConversationHeader';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface MessageViewProps {
   conversation?: Conversation;
@@ -30,6 +31,8 @@ export function MessageView({
   onRejectConversation,
   className,
 }: MessageViewProps) {
+  const { t } = useTranslation();
+
   return (
     <Card
       className={cn(
@@ -63,9 +66,9 @@ export function MessageView({
       ) : (
         <div className="flex h-full items-center justify-center">
           <div className="text-center">
-            <p className="text-lg font-semibold">Select a conversation</p>
+            <p className="text-lg font-semibold">{t('features.messages.conversation.select')}</p>
             <p className="text-sm text-muted-foreground">
-              Choose a conversation from the list to start messaging
+              {t('features.messages.conversation.selectDescription')}
             </p>
           </div>
         </div>

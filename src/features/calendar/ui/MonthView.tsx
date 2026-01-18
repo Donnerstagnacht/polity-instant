@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Calendar } from '@/components/ui/calendar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/hooks/use-translation';
 import { CalendarEvent } from '../types';
 import { isSameDay, formatTime } from '../utils/dateUtils';
 
@@ -14,6 +15,7 @@ interface MonthViewProps {
 
 export const MonthView = ({ selectedDate, onDateSelect, events, allEvents }: MonthViewProps) => {
   const router = useRouter();
+  const { t, currentLanguage } = useTranslation();
 
   const getEventsForDate = (date: Date) => {
     return allEvents.filter((event) => isSameDay(event.startDate, date));
@@ -26,9 +28,11 @@ export const MonthView = ({ selectedDate, onDateSelect, events, allEvents }: Mon
       <div className="lg:col-span-2">
         <Card>
           <CardHeader>
-            <CardTitle>Month View</CardTitle>
+            <CardTitle>{t('features.calendar.monthView.title')}</CardTitle>
             <CardDescription>
-              {events.length} event{events.length !== 1 ? 's' : ''} this month
+              {events.length === 1
+                ? t('features.calendar.monthView.eventCount', { count: events.length })
+                : t('features.calendar.monthView.eventCountPlural', { count: events.length })}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -56,17 +60,18 @@ export const MonthView = ({ selectedDate, onDateSelect, events, allEvents }: Mon
         <Card>
           <CardHeader>
             <CardTitle>
-              {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              {selectedDate.toLocaleDateString(currentLanguage === 'de' ? 'de-DE' : 'en-US', { month: 'short', day: 'numeric' })}
             </CardTitle>
             <CardDescription>
-              {selectedDateEvents.length} event
-              {selectedDateEvents.length !== 1 ? 's' : ''}
+              {selectedDateEvents.length === 1
+                ? t('features.calendar.monthView.eventCount', { count: selectedDateEvents.length })
+                : t('features.calendar.monthView.eventCountPlural', { count: selectedDateEvents.length })}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {selectedDateEvents.length === 0 ? (
               <div className="py-8 text-center text-sm text-muted-foreground">
-                No events on this day
+                {t('features.calendar.monthView.noEvents')}
               </div>
             ) : (
               <ScrollArea className="h-[400px]">
@@ -95,7 +100,7 @@ export const MonthView = ({ selectedDate, onDateSelect, events, allEvents }: Mon
                       )}
                       {event.isMeeting && (
                         <p className="mt-1 text-xs text-muted-foreground">
-                          {event.isPublic ? 'Public Meeting' : 'Private Meeting'}
+                          {event.isPublic ? t('features.calendar.eventCard.publicMeeting') : t('features.calendar.eventCard.privateMeeting')}
                         </p>
                       )}
                     </div>

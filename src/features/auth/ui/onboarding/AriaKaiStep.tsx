@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslation } from "@/hooks/use-translation";
 
 interface AriaKaiStepProps {
   onNext: () => void;
@@ -15,6 +16,8 @@ export function AriaKaiStep({
   dontShowAgain,
   onDontShowAgainChange,
 }: AriaKaiStepProps) {
+  const { t } = useTranslation();
+
   return (
     <Card className="w-full">
       <CardHeader className="text-center pb-4">
@@ -25,9 +28,9 @@ export function AriaKaiStep({
             </AvatarFallback>
           </Avatar>
         </div>
-        <CardTitle className="text-2xl">Welcome to Polity!</CardTitle>
+        <CardTitle className="text-2xl">{t('onboarding.ariaKaiStep.title')}</CardTitle>
         <CardDescription className="text-base">
-          Meet Aria & Kai, your personal assistants
+          {t('onboarding.ariaKaiStep.subtitle')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -58,10 +61,9 @@ export function AriaKaiStep({
         </div>
 
         <div className="bg-muted/50 rounded-lg p-4">
-          <p className="text-sm font-medium mb-2">Quick Tip:</p>
+          <p className="text-sm font-medium mb-2">{t('onboarding.ariaKaiStep.quickTip')}</p>
           <p className="text-sm text-muted-foreground">
-            We've already started a conversation with you. Click below to see where you can always
-            find us!
+            {t('onboarding.ariaKaiStep.tipText')}
           </p>
         </div>
 
@@ -75,12 +77,12 @@ export function AriaKaiStep({
             htmlFor="dont-show-again"
             className="text-sm text-muted-foreground cursor-pointer"
           >
-            Don't show me this introduction again
+            {t('onboarding.ariaKaiStep.dontShowAgain')}
           </label>
         </div>
 
         <Button onClick={onNext} className="w-full" size="lg">
-          Continue
+          {t('onboarding.ariaKaiStep.continue')}
         </Button>
       </CardContent>
     </Card>

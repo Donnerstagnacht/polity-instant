@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import db from '../../../db/db';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface GroupNode extends Node {
   data: {
@@ -35,6 +36,7 @@ interface GroupNode extends Node {
 }
 
 export function GroupHierarchyFlow() {
+  const { t } = useTranslation();
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
   const [showIndirect, setShowIndirect] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState<GroupNode>([]);
@@ -180,11 +182,11 @@ export function GroupHierarchyFlow() {
   // Helper to format rights for display
   const formatRights = (rights: string[]) => {
     const labels: Record<string, string> = {
-      informationRight: 'Info',
-      amendmentRight: 'Antrag',
-      rightToSpeak: 'Rede',
-      activeVotingRight: 'Aktiv',
-      passiveVotingRight: 'Passiv',
+      informationRight: t('common.rights.information'),
+      amendmentRight: t('common.rights.amendment'),
+      rightToSpeak: t('common.rights.speak'),
+      activeVotingRight: t('common.rights.activeVoting'),
+      passiveVotingRight: t('common.rights.passiveVoting'),
     };
     return rights.map(r => labels[r] || r).join(', ');
   };
@@ -394,15 +396,15 @@ export function GroupHierarchyFlow() {
       {/* Controls */}
       <Card>
         <CardHeader>
-          <CardTitle>Gruppenhierarchie</CardTitle>
-          <CardDescription>Visualisieren Sie die Beziehungen zwischen Gruppen</CardDescription>
+          <CardTitle>{t('common.network.groupHierarchy')}</CardTitle>
+          <CardDescription>{t('common.network.groupHierarchyDescription')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-2">
-            <Label htmlFor="group-select">Gruppe auswählen</Label>
+            <Label htmlFor="group-select">{t('common.network.selectGroup')}</Label>
             <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
               <SelectTrigger id="group-select">
-                <SelectValue placeholder="Wählen Sie eine Gruppe..." />
+                <SelectValue placeholder={t('common.network.selectGroupPlaceholder')} />
               </SelectTrigger>
               <SelectContent>
                 {groups.map(group => (
@@ -416,7 +418,7 @@ export function GroupHierarchyFlow() {
 
           <div className="flex gap-2">
             <Button onClick={generateFlowChart} disabled={!selectedGroupId}>
-              Direkte Beziehungen anzeigen
+              {t('common.network.showDirectRelationships')}
             </Button>
             <Button
               variant="secondary"
@@ -426,7 +428,7 @@ export function GroupHierarchyFlow() {
               }}
               disabled={!selectedGroupId}
             >
-              Indirekte Hierarchie anzeigen
+              {t('common.network.showIndirectHierarchy')}
             </Button>
           </div>
 
@@ -434,15 +436,15 @@ export function GroupHierarchyFlow() {
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2">
                 <div className="h-4 w-4 rounded border border-[#a5d6a7] bg-[#c8e6c9]"></div>
-                <span>Übergeordnete Gruppen</span>
+                <span>{t('common.network.parentGroupsLegend')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="h-4 w-4 rounded border border-[#90caf9] bg-[#bbdefb]"></div>
-                <span>Ausgewählte Gruppe</span>
+                <span>{t('common.network.selectedGroup')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="h-4 w-4 rounded border border-[#ffcc80] bg-[#ffe0b2]"></div>
-                <span>Untergeordnete Gruppen</span>
+                <span>{t('common.network.childGroupsLegend')}</span>
               </div>
             </div>
           )}
@@ -472,15 +474,15 @@ export function GroupHierarchyFlow() {
         >
           {/* Control Panel - top left */}
           <Panel position="top-left" className="rounded bg-white p-4 shadow">
-            <h2 className="mb-2 text-lg font-bold">Gruppenhierarchie</h2>
+            <h2 className="mb-2 text-lg font-bold">{t('common.network.groupHierarchy')}</h2>
             <p className="mb-3 text-sm text-gray-600">
-              Visualisierung der Beziehungen zwischen Gruppen
+              {t('common.network.groupHierarchyDescription')}
             </p>
             <div className="flex flex-wrap gap-2">
               {isInteractive && (
                 <>
                   <Button size="sm" variant="outline" onClick={resetVisualization}>
-                    Reset
+                    {t('common.network.reset')}
                   </Button>
                   <Button
                     size="sm"
@@ -490,7 +492,7 @@ export function GroupHierarchyFlow() {
                     }}
                     disabled={!selectedGroupId}
                   >
-                    Direkte
+                    {t('common.network.direct')}
                   </Button>
                   <Button
                     size="sm"
@@ -501,7 +503,7 @@ export function GroupHierarchyFlow() {
                     }}
                     disabled={!selectedGroupId}
                   >
-                    Indirekte
+                    {t('common.network.indirect')}
                   </Button>
                 </>
               )}
@@ -510,7 +512,7 @@ export function GroupHierarchyFlow() {
                 variant={isInteractive ? 'outline' : 'default'}
                 onClick={() => setIsInteractive(!isInteractive)}
               >
-                {isInteractive ? 'Lock Editor' : 'Unlock Editor'}
+                {isInteractive ? t('common.network.lockEditor') : t('common.network.unlockEditor')}
               </Button>
             </div>
 
@@ -519,15 +521,15 @@ export function GroupHierarchyFlow() {
               <div className="mt-3 space-y-2 text-sm">
                 <div className="flex items-center gap-2">
                   <div className="h-4 w-4 rounded border border-[#a5d6a7] bg-[#c8e6c9]"></div>
-                  <span>Übergeordnet</span>
+                  <span>{t('common.network.parentGroups')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="h-4 w-4 rounded border border-[#90caf9] bg-[#bbdefb]"></div>
-                  <span>Ausgewählt</span>
+                  <span>{t('common.network.selectedGroup')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="h-4 w-4 rounded border border-[#ffcc80] bg-[#ffe0b2]"></div>
-                  <span>Untergeordnet</span>
+                  <span>{t('common.network.childGroups')}</span>
                 </div>
               </div>
             )}

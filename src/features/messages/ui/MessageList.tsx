@@ -7,6 +7,7 @@ import { Conversation, Message } from '../types';
 import { getOtherParticipant } from '../utils';
 import { AriaKaiMessageActions } from '@/components/messages/AriaKaiMessageActions';
 import { ARIA_KAI_USER_ID } from '../../../../e2e/aria-kai';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface MessageListProps {
   conversation: Conversation;
@@ -21,6 +22,7 @@ export function MessageList({
   onAcceptConversation,
   onRejectConversation,
 }: MessageListProps) {
+  const { t } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new messages arrive
@@ -28,13 +30,15 @@ export function MessageList({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [conversation.messages]);
 
+  const otherParticipantName = getOtherParticipant(conversation, currentUserId)?.name || t('common.labels.unknownUser');
+
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="space-y-4 p-4">
         {conversation.messages.length === 0 ? (
           <div className="flex h-full items-center justify-center py-12">
             <p className="text-sm text-muted-foreground">
-              No messages yet. Start the conversation!
+              {t('features.messages.conversation.noMessagesYet')}
             </p>
           </div>
         ) : (
@@ -69,8 +73,7 @@ export function MessageList({
               <Card className="bg-muted/50">
                 <CardContent className="flex flex-col items-center gap-3 p-4">
                   <p className="text-center text-sm font-medium">
-                    {getOtherParticipant(conversation, currentUserId)?.name || 'This user'}{' '}
-                    wants to start a conversation with you
+                    {t('features.messages.conversation.wantsToStart', { name: otherParticipantName })}
                   </p>
                   <div className="flex gap-2">
                     <Button
@@ -79,14 +82,12 @@ export function MessageList({
                       size="sm"
                     >
                       <Check className="mr-2 h-4 w-4" />
-                      Accept
+                      {t('features.messages.conversation.accept')}
                     </Button>
                     <Button
                       onClick={() => {
                         if (
-                          confirm(
-                            'Are you sure you want to reject this conversation request?'
-                          )
+                          confirm(t('features.messages.conversation.rejectConfirm'))
                         ) {
                           onRejectConversation(conversation);
                         }
@@ -95,7 +96,7 @@ export function MessageList({
                       size="sm"
                     >
                       <X className="mr-2 h-4 w-4" />
-                      Reject
+                      {t('features.messages.conversation.reject')}
                     </Button>
                   </div>
                 </CardContent>

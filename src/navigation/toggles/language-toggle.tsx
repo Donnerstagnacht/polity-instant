@@ -14,6 +14,8 @@ import { useTranslation } from '@/hooks/use-translation';
 import type { Language } from '@/global-state/language.store';
 import type { Size } from '@/navigation/types/navigation.types';
 import { useState } from 'react';
+import enTranslation from '@/i18n/locales/en/enTranslation';
+import deTranslation from '@/i18n/locales/de/deTranslation';
 
 export function LanguageToggle({
   size = 'default',
@@ -48,23 +50,20 @@ export function LanguageToggle({
   };
 
   // Custom language setter with toast notification and i18n integration
-  const handleLanguageChange = (lang: Language) => {
-    // Change the language using our custom hook
-    changeLanguage(lang);
+  const handleLanguageChange = async (lang: Language) => {
+    // Get the translations for the NEW language directly
+    const translations = lang === 'en' ? enTranslation : deTranslation;
+    const successMessage = translations.navigation.toggles.language.changeSuccess;
+    const description = translations.navigation.toggles.language.changeDescription;
 
-    // Show notification
-    toast.success(
-      lang === 'en'
-        ? t('navigation.toggles.language.changeSuccess')
-        : 'Sprache geändert zu Deutsch',
-      {
-        description:
-          lang === 'en'
-            ? t('navigation.toggles.language.changeDescription')
-            : 'Ihre Spracheinstellung wurde zu Deutsch aktualisiert.',
-        icon: lang === 'en' ? '🇺🇸' : '🇩🇪',
-      }
-    );
+    // Change the language using our custom hook
+    await changeLanguage(lang);
+
+    // Show notification in the NEW language
+    toast.success(successMessage, {
+      description: description,
+      icon: lang === 'en' ? '🇺🇸' : '🇩🇪',
+    });
   };
 
   // If dropdown variant is selected, return the dropdown submenu version

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { db, tx, id } from '../../../db/db';
 import { ARIA_KAI_USER_ID, ENTITY_DESCRIPTIONS, EntityTopic } from 'e2e/aria-kai';
 import { Users, Calendar, FileEdit, BookOpen, Vote, Sparkles } from 'lucide-react';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface AriaKaiMessageActionsProps {
   conversationId: string;
@@ -19,18 +20,19 @@ const TOPIC_ICONS: Record<string, React.ReactNode> = {
   elections: <Vote className="h-4 w-4" />,
 };
 
-const TOPIC_LABELS: Record<string, string> = {
-  groups: 'Groups',
-  events: 'Events',
-  amendments: 'Amendments',
-  blogs: 'Blogs',
-  elections: 'Elections & Positions',
+const TOPIC_LABEL_KEYS: Record<string, string> = {
+  groups: 'components.ariaKaiActions.groups',
+  events: 'components.ariaKaiActions.events',
+  amendments: 'components.ariaKaiActions.amendments',
+  blogs: 'components.ariaKaiActions.blogs',
+  elections: 'components.ariaKaiActions.elections',
 };
 
 export function AriaKaiMessageActions({
   conversationId,
   currentUserId,
 }: AriaKaiMessageActionsProps) {
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
 
   // Query user's tutorial step
@@ -125,7 +127,7 @@ export function AriaKaiMessageActions({
           className="min-w-[140px] flex-1 sm:flex-initial"
         >
           <Sparkles className="mr-2 h-4 w-4" />
-          Show me
+          {t('components.ariaKaiActions.showMe')}
         </Button>
       )}
 
@@ -142,7 +144,7 @@ export function AriaKaiMessageActions({
               className="min-w-[140px] flex-1 sm:flex-initial"
             >
               {TOPIC_ICONS[topic]}
-              <span className="ml-2">{TOPIC_LABELS[topic]}</span>
+              <span className="ml-2">{t(TOPIC_LABEL_KEYS[topic])}</span>
             </Button>
           ))}
         </div>

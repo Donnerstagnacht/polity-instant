@@ -118,7 +118,7 @@ export function SummaryStep({
       <div className="space-y-3 pt-4">
         <Button onClick={onGoToAssistant} disabled={isLoading} className="w-full" size="lg">
           <MessageCircle className="mr-2 h-4 w-4" />
-          Show me my assistant location
+          {t('onboarding.summaryStep.showAssistant')}
         </Button>
         
         <Button onClick={onGoToProfile} disabled={isLoading} variant="outline" className="w-full" size="lg">

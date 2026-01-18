@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { CheckCheck } from 'lucide-react';
 import { PushNotificationToggle } from '@/components/push-notification-toggle';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface NotificationHeaderProps {
   unreadCount: number;
@@ -8,14 +9,23 @@ interface NotificationHeaderProps {
 }
 
 export function NotificationHeader({ unreadCount, onMarkAllAsRead }: NotificationHeaderProps) {
+  const { t } = useTranslation();
+  
+  const getUnreadText = () => {
+    if (unreadCount === 0) {
+      return t('features.notifications.allCaughtUp');
+    }
+    return unreadCount === 1
+      ? t('features.notifications.unreadCount', { count: unreadCount })
+      : t('features.notifications.unreadCountPlural', { count: unreadCount });
+  };
+
   return (
     <div className="mb-6 flex items-center justify-between">
       <div>
-        <h1 className="text-3xl font-bold">Notifications v1</h1>
+        <h1 className="text-3xl font-bold">{t('features.notifications.titleVersion')}</h1>
         <p className="text-muted-foreground">
-          {unreadCount > 0
-            ? `${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}`
-            : 'All caught up!'}
+          {getUnreadText()}
         </p>
       </div>
       <div className="flex items-center gap-2">
@@ -23,7 +33,7 @@ export function NotificationHeader({ unreadCount, onMarkAllAsRead }: Notificatio
         {unreadCount > 0 && (
           <Button onClick={onMarkAllAsRead} variant="outline">
             <CheckCheck className="mr-2 h-4 w-4" />
-            Mark all as read
+            {t('features.notifications.markAllAsRead')}
           </Button>
         )}
       </div>

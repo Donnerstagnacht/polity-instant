@@ -18,8 +18,10 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CheckSquare, Plus } from 'lucide-react';
 import { Todo, TodoStatus } from './types/todo.types';
+import { useTranslation } from '@/hooks/use-translation';
 
 export function TodosPage() {
+  const { t } = useTranslation();
   const user = useAuthStore(state => state.user);
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const [selectedTodo, setSelectedTodo] = useState<any>(null);
@@ -91,7 +93,7 @@ export function TodosPage() {
   if (!user) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground">{t('features.todos.loading')}</p>
       </div>
     );
   }
@@ -116,24 +118,24 @@ export function TodosPage() {
       >
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <p className="text-muted-foreground">Loading todos...</p>
+            <p className="text-muted-foreground">{t('features.todos.loadingTodos')}</p>
           </div>
         ) : filteredTodos.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <CheckSquare className="mb-4 h-12 w-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">No todos found</h3>
+              <h3 className="mb-2 text-lg font-semibold">{t('features.todos.list.empty')}</h3>
               <p className="mb-4 text-center text-sm text-muted-foreground">
                 {searchQuery
-                  ? 'No todos match your search'
+                  ? t('features.todos.list.noMatchingTodos')
                   : selectedTab === 'all'
-                    ? "You haven't created any todos yet"
-                    : `You have no ${selectedTab.replace('_', ' ')} todos`}
+                    ? t('features.todos.list.noTodosYet')
+                    : t('features.todos.list.noStatusTodos', { status: t(`features.todos.status.${selectedTab}`) })}
               </p>
               <Link href="/create/todo">
                 <Button>
                   <Plus className="mr-2 h-4 w-4" />
-                  Create Your First Todo
+                  {t('features.todos.create.createFirstTodo')}
                 </Button>
               </Link>
             </CardContent>

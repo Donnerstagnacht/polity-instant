@@ -15,8 +15,10 @@ import {
 } from '@/components/ui/card';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { Check, ArrowRight, Euro } from 'lucide-react';
+import { useTranslation } from '@/hooks/use-translation';
 
 export default function PricingPage() {
+  const { t } = useTranslation();
   const [customAmount, setCustomAmount] = useState(['', '', '']);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -61,80 +63,43 @@ export default function PricingPage() {
 
   const tiers = [
     {
-      name: 'Free',
-      price: '€0',
-      description: 'Full access to all features - democratic tools should be free for everyone',
-      features: [
-        'Full user page',
-        'Create unlimited groups',
-        'Join public groups',
-        'Organize events',
-        'Participate in events',
-        'Propose amendments',
-        'View public amendments',
-        'Advanced search',
-        'Tasks & calendar',
-        'Messages & notifications',
-        'Community support',
-      ],
-      cta: 'Get Started',
+      name: t('pages.pricing.tiers.free.name'),
+      price: t('pages.pricing.tiers.free.price'),
+      description: t('pages.pricing.tiers.free.description'),
+      features: t('pages.pricing.tiers.free.features'),
+      cta: t('pages.pricing.tiers.free.cta'),
       highlighted: false,
-      helpText: 'All features are free. Paid tiers help us keep the platform running and growing.',
+      helpText: t('pages.pricing.tiers.free.helpText'),
     },
     {
-      name: 'Running Costs',
-      price: '€2',
-      period: '/month',
-      description: 'Help us cover server costs, hosting, and infrastructure',
-      features: [
-        'Everything in Free',
-        'Priority support',
-        'No ads (when we add them)',
-        'Custom user themes',
-        'Supporter badge',
-        'Our eternal gratitude ❤️',
-      ],
-      cta: 'Cover Running Costs',
+      name: t('pages.pricing.tiers.runningCosts.name'),
+      price: t('pages.pricing.tiers.runningCosts.price'),
+      period: t('pages.pricing.tiers.runningCosts.period'),
+      description: t('pages.pricing.tiers.runningCosts.description'),
+      features: t('pages.pricing.tiers.runningCosts.features'),
+      cta: t('pages.pricing.tiers.runningCosts.cta'),
       highlighted: false,
-      helpText: 'Help us keep the servers running and the platform accessible to everyone.',
+      helpText: t('pages.pricing.tiers.runningCosts.helpText'),
     },
     {
-      name: 'Development',
-      price: '€10',
-      period: '/month',
-      description: 'Fund new features, improvements, and platform growth',
-      features: [
-        'Everything in Running Costs',
-        'Early access to new features',
-        'Advanced analytics',
-        'Custom group branding',
-        'API access',
-        'Dedicated support',
-        'Vote on feature roadmap',
-        'Contributor badge',
-      ],
-      cta: 'Support Development',
+      name: t('pages.pricing.tiers.development.name'),
+      price: t('pages.pricing.tiers.development.price'),
+      period: t('pages.pricing.tiers.development.period'),
+      description: t('pages.pricing.tiers.development.description'),
+      features: t('pages.pricing.tiers.development.features'),
+      cta: t('pages.pricing.tiers.development.cta'),
       highlighted: true,
-      helpText: 'Help us build new features and improve the platform for everyone.',
+      helpText: t('pages.pricing.tiers.development.helpText'),
     },
     {
-      name: 'Your Choice',
+      name: t('pages.pricing.tiers.custom.name'),
       price: 'custom',
-      period: '/month',
-      description: 'Choose your own contribution - pay what feels right for you',
-      features: [
-        'Everything in Development',
-        'Badge & recognition',
-        'Direct line to founders',
-        'Exclusive community access',
-        'Monthly development updates',
-        'Recognition on our website',
-        'Invitation to quarterly strategy calls',
-        'Free swag & merch (for €25+)',
-      ],
-      cta: 'Choose Your Amount',
+      period: t('pages.pricing.tiers.custom.period'),
+      description: t('pages.pricing.tiers.custom.description'),
+      features: t('pages.pricing.tiers.custom.features'),
+      cta: t('pages.pricing.tiers.custom.cta'),
       highlighted: false,
-      helpText: 'Pick an amount that works for you. Every contribution helps us grow!',
+      helpText: t('pages.pricing.tiers.custom.helpText'),
       isCustom: true,
     },
   ];
@@ -143,9 +108,9 @@ export default function PricingPage() {
     <PageWrapper className="container mx-auto px-4 py-16">
       {/* Header */}
       <div className="mb-12 text-center">
-        <h1 className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl">Pricing</h1>
+        <h1 className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl">{t('pages.pricing.title')}</h1>
         <p className="mx-auto max-w-2xl text-xl text-muted-foreground">
-          Transparent pricing that grows with your needs. No hidden fees.
+          {t('pages.pricing.subtitle')}
         </p>
       </div>
 
@@ -166,7 +131,7 @@ export default function PricingPage() {
               <div className="mt-4">
                 {tier.isCustom ? (
                   <div className="space-y-3">
-                    <Label className="text-sm font-medium">Your monthly contribution</Label>
+                    <Label className="text-sm font-medium">{t('pages.pricing.customContribution.label')}</Label>
                     <div className="flex items-center justify-center gap-2">
                       <Euro className="h-6 w-6 text-muted-foreground" />
                       {customAmount.map((digit, idx) => (
@@ -235,55 +200,48 @@ export default function PricingPage() {
       <div className="space-y-8">
         <Card>
           <CardHeader>
-            <CardTitle>Our Transparent Pricing Philosophy</CardTitle>
+            <CardTitle>{t('pages.pricing.philosophy.title')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-muted-foreground">
             <p>
-              Polity is built on transparency and community support. We believe democratic tools
-              should be accessible to everyone, so{' '}
-              <strong className="text-foreground">all features are free</strong>. Our paid tiers
-              simply help us keep the platform running and growing:
+              {t('pages.pricing.philosophy.intro')}{' '}
+              <strong className="text-foreground">{t('pages.pricing.philosophy.allFeaturesFreeBold')}</strong>
+              {t('pages.pricing.philosophy.afterBold')}
             </p>
             <ul className="space-y-3 pl-6">
               <li>
-                <strong className="text-foreground">Free tier:</strong> Full access to everything -
-                no restrictions, no paywalls. Democracy shouldn't have a price tag.
+                <strong className="text-foreground">{t('pages.pricing.philosophy.tiers.free.label')}</strong>{' '}
+                {t('pages.pricing.philosophy.tiers.free.description')}
               </li>
               <li>
-                <strong className="text-foreground">Running Costs (€2/month):</strong> Helps us
-                cover server infrastructure, database hosting, bandwidth, and basic operational
-                expenses. This keeps the platform fast and reliable for everyone.
+                <strong className="text-foreground">{t('pages.pricing.philosophy.tiers.runningCosts.label')}</strong>{' '}
+                {t('pages.pricing.philosophy.tiers.runningCosts.description')}
               </li>
               <li>
-                <strong className="text-foreground">Development (€10/month):</strong> Funds new
-                features, platform improvements, security updates, and dedicated support. This helps
-                us develop the product further and faster.
+                <strong className="text-foreground">{t('pages.pricing.philosophy.tiers.development.label')}</strong>{' '}
+                {t('pages.pricing.philosophy.tiers.development.description')}
               </li>
               <li>
-                <strong className="text-foreground">Your Choice (custom amount):</strong> Choose
-                your own monthly contribution - whether it's €1, €5, €15, or any amount that works
-                for you. Every contribution, big or small, helps us achieve our mission. You get
-                access to exclusive features and help us grow at your own pace.
+                <strong className="text-foreground">{t('pages.pricing.philosophy.tiers.custom.label')}</strong>{' '}
+                {t('pages.pricing.philosophy.tiers.custom.description')}
               </li>
             </ul>
             <p className="rounded-lg border bg-accent/50 p-4">
-              <strong className="text-foreground">Pay what you can:</strong> We rely on those who
-              can afford to contribute to subsidize free access for everyone else. It's a solidarity
-              model that makes democratic participation truly universal.
+              <strong className="text-foreground">{t('pages.pricing.philosophy.solidarity.label')}</strong>{' '}
+              {t('pages.pricing.philosophy.solidarity.description')}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Enterprise & Custom Solutions</CardTitle>
+            <CardTitle>{t('pages.pricing.enterprise.title')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="mb-4 text-muted-foreground">
-              Need custom features, dedicated hosting, or on-premise deployment? We offer tailored
-              solutions for larger organizations.
+              {t('pages.pricing.enterprise.description')}
             </p>
-            <Button variant="outline">Contact Sales</Button>
+            <Button variant="outline">{t('pages.pricing.enterprise.cta')}</Button>
           </CardContent>
         </Card>
       </div>

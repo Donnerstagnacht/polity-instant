@@ -1,6 +1,7 @@
 import { useRouter } from 'next/navigation';
 import { StatsBar } from '@/components/ui/StatsBar';
 import { InfoTabs } from '@/components/shared/InfoTabs';
+import { useTranslation } from '@/hooks/use-translation';
 import { useMeetingData } from './hooks/useMeetingData';
 import { useMeetingBooking } from './hooks/useMeetingBooking';
 import { MeetingHeader } from './ui/MeetingHeader';
@@ -14,6 +15,7 @@ interface MeetingPageProps {
 
 export function MeetingPage({ meetingId }: MeetingPageProps) {
   const router = useRouter();
+  const { t } = useTranslation();
   const { meetingSlot, isLoading, isOwner, hasBooked, bookingCount, isPast, isAvailable } =
     useMeetingData(meetingId);
   const { bookMeeting, cancelBooking } = useMeetingBooking();
@@ -21,7 +23,7 @@ export function MeetingPage({ meetingId }: MeetingPageProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-lg text-muted-foreground">Loading meeting...</div>
+        <div className="text-lg text-muted-foreground">{t('features.meet.page.loadingMeeting')}</div>
       </div>
     );
   }
@@ -29,9 +31,9 @@ export function MeetingPage({ meetingId }: MeetingPageProps) {
   if (!meetingSlot) {
     return (
       <div className="py-12 text-center">
-        <h1 className="mb-4 text-2xl font-bold">Meeting Not Found</h1>
+        <h1 className="mb-4 text-2xl font-bold">{t('features.meet.page.notFound')}</h1>
         <p className="text-muted-foreground">
-          The meeting you're looking for doesn't exist or has been removed.
+          {t('features.meet.page.notFoundDescription')}
         </p>
       </div>
     );

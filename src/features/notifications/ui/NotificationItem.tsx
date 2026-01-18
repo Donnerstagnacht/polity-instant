@@ -8,6 +8,7 @@ import { cn } from '@/utils/utils';
 import { Notification, NotificationType } from '../types/notification.types';
 import { notificationIcons, notificationColors } from '../utils/notificationConstants';
 import { formatTime } from '../utils/notificationHelpers';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface NotificationItemProps {
   notification: Notification;
@@ -20,6 +21,7 @@ export function NotificationItem({
   onNotificationClick,
   onDeleteNotification,
 }: NotificationItemProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const Icon = notificationIcons[notification.type as NotificationType] || Bell;
   const iconColor = notificationColors[notification.type as NotificationType] || 'text-gray-500';
@@ -78,7 +80,7 @@ export function NotificationItem({
             </Avatar>
             {onBehalfEntity && (
               <>
-                <span className="text-xs text-muted-foreground">for</span>
+                <span className="text-xs text-muted-foreground">{t('features.notifications.item.for')}</span>
                 <Avatar
                   className="h-8 w-8 cursor-pointer hover:ring-2 hover:ring-blue-500"
                   onClick={(e) => {
@@ -113,7 +115,7 @@ export function NotificationItem({
               {isEntityNotification && recipientEntity && (
                 <Badge variant="outline" className="w-fit">
                   <Users className="mr-1 h-3 w-3" />
-                  {(recipientEntity as any).name || (recipientEntity as any).title || 'Entity'} notification
+                  {(recipientEntity as any).name || (recipientEntity as any).title || 'Entity'} {t('features.notifications.item.notification')}
                 </Badge>
               )}
             </div>

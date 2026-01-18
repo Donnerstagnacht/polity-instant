@@ -23,153 +23,119 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 import { GRADIENTS } from '@/features/user/state/gradientColors';
-
-const eventTypeConfig = {
-  created: {
-    icon: Plus,
-    label: 'Created',
-    variant: 'default' as const,
-    color: 'text-green-600',
-    borderColor: 'border-l-green-500',
-    bgGradient: 'bg-gradient-to-r from-green-50/50 to-transparent dark:from-green-950/20',
-    bgColor: 'bg-green-500',
-  },
-  updated: {
-    icon: FileEdit,
-    label: 'Updated',
-    variant: 'secondary' as const,
-    color: 'text-blue-600',
-    borderColor: 'border-l-blue-500',
-    bgGradient: 'bg-gradient-to-r from-blue-50/50 to-transparent dark:from-blue-950/20',
-    bgColor: 'bg-blue-500',
-  },
-  comment_added: {
-    icon: MessageSquare,
-    label: 'Comment',
-    variant: 'outline' as const,
-    color: 'text-purple-600',
-    borderColor: 'border-l-purple-500',
-    bgGradient: 'bg-gradient-to-r from-purple-50/50 to-transparent dark:from-purple-950/20',
-    bgColor: 'bg-purple-500',
-  },
-  vote_started: {
-    icon: Vote,
-    label: 'Vote Started',
-    variant: 'destructive' as const,
-    color: 'text-red-600',
-    borderColor: 'border-l-red-500',
-    bgGradient: 'bg-gradient-to-r from-red-50/50 to-transparent dark:from-red-950/20',
-    bgColor: 'bg-red-500',
-  },
-  participant_joined: {
-    icon: UserPlus,
-    label: 'Joined',
-    variant: 'default' as const,
-    color: 'text-green-600',
-    borderColor: 'border-l-green-500',
-    bgGradient: 'bg-gradient-to-r from-green-50/50 to-transparent dark:from-green-950/20',
-    bgColor: 'bg-green-500',
-  },
-  status_changed: {
-    icon: CheckCircle2,
-    label: 'Status Changed',
-    variant: 'secondary' as const,
-    color: 'text-orange-600',
-    borderColor: 'border-l-orange-500',
-    bgGradient: 'bg-gradient-to-r from-orange-50/50 to-transparent dark:from-orange-950/20',
-    bgColor: 'bg-orange-500',
-  },
-  published: {
-    icon: FileText,
-    label: 'Published',
-    variant: 'default' as const,
-    color: 'text-green-600',
-    borderColor: 'border-l-green-500',
-    bgGradient: 'bg-gradient-to-r from-green-50/50 to-transparent dark:from-green-950/20',
-    bgColor: 'bg-green-500',
-  },
-  member_added: {
-    icon: UserPlus,
-    label: 'Member Added',
-    variant: 'default' as const,
-    color: 'text-blue-600',
-    borderColor: 'border-l-blue-500',
-    bgGradient: 'bg-gradient-to-r from-blue-50/50 to-transparent dark:from-blue-950/20',
-    bgColor: 'bg-blue-500',
-  },
-} as const;
-
-const entityTypeConfig = {
-  user: {
-    icon: User,
-    label: 'User',
-    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
-  },
-  group: {
-    icon: Users,
-    label: 'Group',
-    color: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
-  },
-  amendment: {
-    icon: Scale,
-    label: 'Amendment',
-    color: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
-  },
-  event: {
-    icon: Calendar,
-    label: 'Event',
-    color: 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300',
-  },
-  blog: {
-    icon: BookOpen,
-    label: 'Blog',
-    color: 'bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300',
-  },
-} as const;
-
-interface TimelineEventCardProps {
-  event: {
-    id: string;
-    eventType: keyof typeof eventTypeConfig;
-    entityType: keyof typeof entityTypeConfig;
-    title: string;
-    description?: string;
-    createdAt: Date | string;
-    metadata?: Record<string, unknown>;
-    actor?: {
-      id: string;
-      name?: string;
-      avatar?: string;
-    };
-    user?: { id: string; name?: string; avatar?: string };
-    group?: { id: string; name?: string; imageURL?: string; memberCount?: number };
-    amendment?: {
-      id: string;
-      title?: string;
-      status?: string;
-      user?: { name?: string };
-    };
-    event?: {
-      id: string;
-      title?: string;
-      startDate?: Date | string;
-      location?: string;
-      imageURL?: string;
-    };
-    blog?: {
-      id: string;
-      title?: string;
-      likeCount?: number;
-      commentCount?: number;
-      user?: { name?: string };
-    };
-  };
-  index?: number;
-}
+import { useTranslation } from '@/hooks/use-translation';
 
 export function TimelineEventCard({ event, index = 0 }: TimelineEventCardProps) {
-  const eventConfig = eventTypeConfig[event.eventType] || eventTypeConfig.updated;
-  const entityConfig = entityTypeConfig[event.entityType] || entityTypeConfig.user;
+  const { t } = useTranslation();
+
+  const eventTypeConfig = {
+    created: {
+      icon: Plus,
+      label: t('features.timeline.eventTypes.created'),
+      variant: 'default' as const,
+      color: 'text-green-600',
+      borderColor: 'border-l-green-500',
+      bgGradient: 'bg-gradient-to-r from-green-50/50 to-transparent dark:from-green-950/20',
+      bgColor: 'bg-green-500',
+    },
+    updated: {
+      icon: FileEdit,
+      label: t('features.timeline.eventTypes.updated'),
+      variant: 'secondary' as const,
+      color: 'text-blue-600',
+      borderColor: 'border-l-blue-500',
+      bgGradient: 'bg-gradient-to-r from-blue-50/50 to-transparent dark:from-blue-950/20',
+      bgColor: 'bg-blue-500',
+    },
+    comment_added: {
+      icon: MessageSquare,
+      label: t('features.timeline.eventTypes.comment_added'),
+      variant: 'outline' as const,
+      color: 'text-purple-600',
+      borderColor: 'border-l-purple-500',
+      bgGradient: 'bg-gradient-to-r from-purple-50/50 to-transparent dark:from-purple-950/20',
+      bgColor: 'bg-purple-500',
+    },
+    vote_started: {
+      icon: Vote,
+      label: t('features.timeline.eventTypes.vote_started'),
+      variant: 'destructive' as const,
+      color: 'text-red-600',
+      borderColor: 'border-l-red-500',
+      bgGradient: 'bg-gradient-to-r from-red-50/50 to-transparent dark:from-red-950/20',
+      bgColor: 'bg-red-500',
+    },
+    participant_joined: {
+      icon: UserPlus,
+      label: t('features.timeline.eventTypes.participant_joined'),
+      variant: 'default' as const,
+      color: 'text-green-600',
+      borderColor: 'border-l-green-500',
+      bgGradient: 'bg-gradient-to-r from-green-50/50 to-transparent dark:from-green-950/20',
+      bgColor: 'bg-green-500',
+    },
+    status_changed: {
+      icon: CheckCircle2,
+      label: t('features.timeline.eventTypes.status_changed'),
+      variant: 'secondary' as const,
+      color: 'text-orange-600',
+      borderColor: 'border-l-orange-500',
+      bgGradient: 'bg-gradient-to-r from-orange-50/50 to-transparent dark:from-orange-950/20',
+      bgColor: 'bg-orange-500',
+    },
+    published: {
+      icon: FileText,
+      label: t('features.timeline.eventTypes.published'),
+      variant: 'default' as const,
+      color: 'text-green-600',
+      borderColor: 'border-l-green-500',
+      bgGradient: 'bg-gradient-to-r from-green-50/50 to-transparent dark:from-green-950/20',
+      bgColor: 'bg-green-500',
+    },
+    member_added: {
+      icon: UserPlus,
+      label: t('features.timeline.eventTypes.member_added'),
+      variant: 'default' as const,
+      color: 'text-blue-600',
+      borderColor: 'border-l-blue-500',
+      bgGradient: 'bg-gradient-to-r from-blue-50/50 to-transparent dark:from-blue-950/20',
+      bgColor: 'bg-blue-500',
+    },
+  } as const;
+
+  const entityTypeConfig = {
+    user: {
+      icon: User,
+      label: t('features.timeline.types.user'),
+      color: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+    },
+    group: {
+      icon: Users,
+      label: t('features.timeline.types.group'),
+      color: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+    },
+    amendment: {
+      icon: Scale,
+      label: t('features.timeline.types.amendment'),
+      color: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
+    },
+    event: {
+      icon: Calendar,
+      label: t('features.timeline.types.event'),
+      color: 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300',
+    },
+    blog: {
+      icon: BookOpen,
+      label: t('features.timeline.types.blog'),
+      color: 'bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300',
+    },
+  } as const;
+
+  type EventTypeKey = keyof typeof eventTypeConfig;
+  type EntityTypeKey = keyof typeof entityTypeConfig;
+
+  const eventConfig = eventTypeConfig[event.eventType as EventTypeKey] || eventTypeConfig.updated;
+  const entityConfig = entityTypeConfig[event.entityType as EntityTypeKey] || entityTypeConfig.user;
 
   const EventIcon = eventConfig.icon;
   const EntityIcon = entityConfig.icon;
@@ -182,12 +148,12 @@ export function TimelineEventCard({ event, index = 0 }: TimelineEventCardProps) 
     switch (event.entityType) {
       case 'amendment':
         return {
-          name: event.amendment?.title || 'Amendment',
-          subtitle: event.amendment?.user?.name ? `by ${event.amendment.user.name}` : undefined,
+          name: event.amendment?.title || t('features.timeline.types.amendment'),
+          subtitle: event.amendment?.user?.name ? `${t('features.timeline.card.by')} ${event.amendment.user.name}` : undefined,
         };
       case 'event':
         return {
-          name: event.event?.title || 'Event',
+          name: event.event?.title || t('features.timeline.types.event'),
           subtitle: event.event?.startDate
             ? new Date(event.event.startDate).toLocaleDateString('en-US', {
                 month: 'short',
@@ -199,16 +165,16 @@ export function TimelineEventCard({ event, index = 0 }: TimelineEventCardProps) 
       case 'blog':
         return {
           name: event.blog?.title || 'Blog Post',
-          subtitle: event.blog?.user?.name ? `by ${event.blog.user.name}` : undefined,
+          subtitle: event.blog?.user?.name ? `${t('features.timeline.card.by')} ${event.blog.user.name}` : undefined,
         };
       case 'group':
         return {
-          name: event.group?.name || 'Group',
+          name: event.group?.name || t('features.timeline.types.group'),
           subtitle: undefined,
         };
       case 'user':
         return {
-          name: event.user?.name || 'User',
+          name: event.user?.name || t('features.timeline.types.user'),
           subtitle: undefined,
         };
       default:
@@ -324,7 +290,7 @@ export function TimelineEventCard({ event, index = 0 }: TimelineEventCardProps) 
           {event.entityType === 'group' && event.group && (
             <div className="mb-3 flex items-center gap-2 rounded-lg border border-border/50 bg-background/50 p-2 text-xs">
               <Users className="h-3.5 w-3.5" />
-              <span className="font-medium">{event.group.memberCount ?? '—'} members</span>
+              <span className="font-medium">{event.group.memberCount ?? '—'} {t('features.timeline.card.members')}</span>
             </div>
           )}
 
@@ -344,7 +310,7 @@ export function TimelineEventCard({ event, index = 0 }: TimelineEventCardProps) 
           {event.entityType === 'amendment' && event.amendment && (
             <div className="mb-3 rounded-lg border border-border/50 bg-background/50 p-2 text-xs">
               {event.amendment.status && (
-                <span className="font-semibold">Status: {event.amendment.status}</span>
+                <span className="font-semibold">{t('features.timeline.card.status')}: {event.amendment.status}</span>
               )}
             </div>
           )}
@@ -399,7 +365,7 @@ export function TimelineEventCard({ event, index = 0 }: TimelineEventCardProps) 
           {entityLink && (
             <Button variant="outline" size="sm" className="mt-3 w-full gap-2" asChild>
               <Link href={entityLink}>
-                View Details
+                {t('features.timeline.card.viewDetails')}
                 <ExternalLink className="h-3 w-3" />
               </Link>
             </Button>
@@ -408,4 +374,44 @@ export function TimelineEventCard({ event, index = 0 }: TimelineEventCardProps) 
       </CardContent>
     </Card>
   );
+}
+
+interface TimelineEventCardProps {
+  event: {
+    id: string;
+    eventType: string;
+    entityType: string;
+    title: string;
+    description?: string;
+    createdAt: Date | string;
+    metadata?: Record<string, unknown>;
+    actor?: {
+      id: string;
+      name?: string;
+      avatar?: string;
+    };
+    user?: { id: string; name?: string; avatar?: string };
+    group?: { id: string; name?: string; imageURL?: string; memberCount?: number };
+    amendment?: {
+      id: string;
+      title?: string;
+      status?: string;
+      user?: { name?: string };
+    };
+    event?: {
+      id: string;
+      title?: string;
+      startDate?: Date | string;
+      location?: string;
+      imageURL?: string;
+    };
+    blog?: {
+      id: string;
+      title?: string;
+      likeCount?: number;
+      commentCount?: number;
+      user?: { name?: string };
+    };
+  };
+  index?: number;
 }

@@ -7,8 +7,10 @@ import { useNotificationActions } from './hooks/useNotificationActions';
 import { NotificationHeader } from './ui/NotificationHeader';
 import { NotificationTabs } from './ui/NotificationTabs';
 import { NotificationsList } from './ui/NotificationsList';
+import { useTranslation } from '@/hooks/use-translation';
 
 export function NotificationsPage() {
+  const { t } = useTranslation();
   const { user } = db.useAuth();
 
   const { data, isLoading } = db.useQuery({
@@ -99,7 +101,7 @@ export function NotificationsPage() {
   if (isLoading) {
     return (
       <div className="flex h-[400px] items-center justify-center">
-        <p className="text-muted-foreground">Loading notifications...</p>
+        <p className="text-muted-foreground">{t('features.notifications.loading')}</p>
       </div>
     );
   }
@@ -125,8 +127,8 @@ export function NotificationsPage() {
         <NotificationsList
           notifications={filteredNotifications.all}
           emptyIcon={Bell}
-          emptyTitle="No notifications yet"
-          emptyDescription="When you get notifications, they'll show up here"
+          emptyTitle={t('features.notifications.empty.noNotificationsYet')}
+          emptyDescription={t('features.notifications.empty.whenYouGet')}
           onNotificationClick={handleNotificationClick}
           onDeleteNotification={handleDeleteNotification}
         />
@@ -136,8 +138,8 @@ export function NotificationsPage() {
         <NotificationsList
           notifications={filteredNotifications.unread}
           emptyIcon={Check}
-          emptyTitle="All caught up!"
-          emptyDescription="You've read all your notifications"
+          emptyTitle={t('features.notifications.allCaughtUp')}
+          emptyDescription={t('features.notifications.empty.allRead')}
           onNotificationClick={handleNotificationClick}
           onDeleteNotification={handleDeleteNotification}
         />
@@ -147,8 +149,8 @@ export function NotificationsPage() {
         <NotificationsList
           notifications={filteredNotifications.read}
           emptyIcon={Bell}
-          emptyTitle="No read notifications"
-          emptyDescription="Notifications you've read will appear here"
+          emptyTitle={t('features.notifications.empty.noRead')}
+          emptyDescription={t('features.notifications.empty.readAppear')}
           onNotificationClick={handleNotificationClick}
           onDeleteNotification={handleDeleteNotification}
         />
@@ -158,8 +160,8 @@ export function NotificationsPage() {
         <NotificationsList
           notifications={filteredNotifications.personal}
           emptyIcon={Bell}
-          emptyTitle="No personal notifications"
-          emptyDescription="Notifications sent directly to you will appear here"
+          emptyTitle={t('features.notifications.empty.noPersonal')}
+          emptyDescription={t('features.notifications.empty.personalAppear')}
           onNotificationClick={handleNotificationClick}
           onDeleteNotification={handleDeleteNotification}
         />
@@ -169,8 +171,8 @@ export function NotificationsPage() {
         <NotificationsList
           notifications={filteredNotifications.entity}
           emptyIcon={Users}
-          emptyTitle="No entity notifications"
-          emptyDescription="Notifications for groups, events, and amendments you're part of will appear here"
+          emptyTitle={t('features.notifications.empty.noEntity')}
+          emptyDescription={t('features.notifications.empty.entityAppear')}
           onNotificationClick={handleNotificationClick}
           onDeleteNotification={handleDeleteNotification}
         />

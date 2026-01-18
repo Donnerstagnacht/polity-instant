@@ -1,0 +1,81 @@
+export const groupPageTranslations = {
+  settings: 'Gruppeneinstellungen',
+  loading: 'Anträge werden geladen...',
+  notFound: {
+    title: 'Gruppe nicht gefunden',
+    description: 'Die gesuchte Gruppe existiert nicht oder wurde entfernt.',
+  },
+  childGroups: {
+    title: 'Untergeordnete Gruppen',
+    description: 'Gruppen, die dieser Gruppe untergeordnet sind',
+  },
+  memberships: {
+    title: 'Mitglieder',
+    searchPlaceholder: 'Mitglieder nach Name, Rolle oder Status suchen...',
+    noMembers: 'Keine Mitglieder gefunden',
+    inviteMember: 'Mitglied einladen',
+    manageMemberships: 'Mitgliedschaften verwalten',
+  },
+  events: {
+    title: 'Veranstaltungen',
+    searchPlaceholder: 'Veranstaltungen suchen...',
+    hashtagPlaceholder: 'Hashtag zum Filtern eingeben...',
+    noEvents: 'Keine Veranstaltungen gefunden',
+    createEvent: 'Veranstaltung erstellen',
+  },
+  network: {
+    title: 'Netzwerk',
+    searchPlaceholder: 'Beziehungen nach Gruppenname suchen...',
+    direction: 'Richtung',
+    filterAll: 'Alle',
+    filterParent: 'Übergeordnet',
+    filterChild: 'Untergeordnet',
+    noRelationships: 'Keine Beziehungen gefunden',
+  },
+  amendments: {
+    title: 'Anträge',
+    titleWithGroup: '{{groupName}} - Anträge',
+    searchPlaceholder: 'Anträge suchen...',
+    noAmendments: 'Keine Anträge für diese Gruppe gefunden.',
+    noMatchingAmendments: 'Keine Anträge entsprechen Ihren Suchkriterien.',
+    createAmendment: 'Neuer Antrag',
+    count: '{{count}} Antrag gefunden',
+    countPlural: '{{count}} Anträge gefunden',
+    statusBreakdown: {
+      passed: 'Angenommen',
+      underReview: 'In Prüfung',
+      drafting: 'Entwurf',
+      rejected: 'Abgelehnt',
+      allStatuses: 'Alle Status',
+    },
+  },
+  editor: {
+    title: 'Dokumente',
+    searchPlaceholder: 'Dokumente suchen...',
+    noDocuments: 'Keine Dokumente gefunden',
+    createDocument: 'Dokument erstellen',
+    inviteCollaborator: {
+      title: 'Mitarbeiter einladen',
+      searchPlaceholder: 'Nach Name, Handle oder E-Mail suchen...',
+      noResults: 'Keine Benutzer gefunden',
+      invite: 'Einladen',
+      cancel: 'Abbrechen',
+    },
+  },
+  operation: {
+    title: 'Betrieb',
+  },
+  notifications: {
+    title: 'Benachrichtigungen',
+  },
+  edit: {
+    title: 'Gruppe bearbeiten',
+    save: 'Änderungen speichern',
+    cancel: 'Abbrechen',
+  },
+  relationships: {
+    title: 'Beziehungen',
+    manage: 'Verwalten',
+    remove: 'Entfernen',
+  },
+} as const;

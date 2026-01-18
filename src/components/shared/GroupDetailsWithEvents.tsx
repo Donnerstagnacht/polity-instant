@@ -6,6 +6,7 @@ import { GroupEventsList } from './GroupEventsList';
 import { GRADIENTS } from '@/features/user/state/gradientColors';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface GroupDetailsWithEventsProps {
   groupId: string;
@@ -20,6 +21,7 @@ export function GroupDetailsWithEvents({
   onEventClick,
   onClose,
 }: GroupDetailsWithEventsProps) {
+  const { t } = useTranslation();
   // Use a random gradient based on group ID
   const gradientIndex = parseInt(groupId.substring(0, 8), 16) % GRADIENTS.length;
   const gradientClass = GRADIENTS[gradientIndex];
@@ -27,7 +29,7 @@ export function GroupDetailsWithEvents({
   return (
     <div className="space-y-4">
       <div className="flex items-start justify-between">
-        <h3 className="text-lg font-semibold">Group Details</h3>
+        <h3 className="text-lg font-semibold">{t('common.labels.groupDetails')}</h3>
         {onClose && (
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-4 w-4" />
@@ -41,7 +43,7 @@ export function GroupDetailsWithEvents({
       {/* Future Events Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Upcoming Events</CardTitle>
+          <CardTitle className="text-base">{t('common.labels.upcomingEvents')}</CardTitle>
         </CardHeader>
         <div className="px-6 pb-6">
           <GroupEventsList groupId={groupId} onEventClick={onEventClick} />

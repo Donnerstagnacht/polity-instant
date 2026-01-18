@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { CalendarView } from '../types';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface CalendarHeaderProps {
   view: CalendarView;
@@ -28,18 +29,19 @@ export const CalendarHeader = ({
   onNext,
   onToday,
 }: CalendarHeaderProps) => {
+  const { t } = useTranslation();
   const router = useRouter();
 
   return (
     <>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Calendar</h1>
-          <p className="text-muted-foreground">View and manage your events</p>
+          <h1 className="text-3xl font-bold">{t('features.calendar.title')}</h1>
+          <p className="text-muted-foreground">{t('features.calendar.description')}</p>
         </div>
         <Button onClick={() => router.push('/create/event')}>
           <Plus className="mr-2 h-4 w-4" />
-          Create Event
+          {t('features.calendar.actions.createEvent')}
         </Button>
       </div>
 
@@ -49,7 +51,7 @@ export const CalendarHeader = ({
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <Button variant="outline" onClick={onToday}>
-            Today
+            {t('features.calendar.today')}
           </Button>
           <Button variant="outline" size="icon" onClick={onNext}>
             <ChevronRight className="h-4 w-4" />
@@ -61,15 +63,15 @@ export const CalendarHeader = ({
           <TabsList>
             <TabsTrigger value="day">
               <List className="mr-2 h-4 w-4" />
-              Day
+              {t('features.calendar.views.day')}
             </TabsTrigger>
             <TabsTrigger value="week">
               <Grid3x3 className="mr-2 h-4 w-4" />
-              Week
+              {t('features.calendar.views.week')}
             </TabsTrigger>
             <TabsTrigger value="month">
               <CalendarIcon className="mr-2 h-4 w-4" />
-              Month
+              {t('features.calendar.views.month')}
             </TabsTrigger>
           </TabsList>
         </Tabs>

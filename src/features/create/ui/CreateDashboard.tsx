@@ -12,32 +12,35 @@ import {
   UserCheck,
   Briefcase,
 } from 'lucide-react';
+import { useTranslation } from '@/hooks/use-translation';
 
 export function CreateDashboard() {
+  const { t } = useTranslation();
+  
   const coreItems = [
     {
       href: '/create/group',
       icon: Users,
-      title: 'Group',
-      description: 'Organize members around common interests or goals',
+      title: t('pages.create.group.pageTitle'),
+      description: t('pages.create.group.description'),
     },
     {
       href: '/create/event',
       icon: Calendar,
-      title: 'Event',
-      description: 'Create and manage events for your community',
+      title: t('pages.create.event.pageTitle'),
+      description: t('pages.create.event.description'),
     },
     {
       href: '/create/amendment',
       icon: Scale,
-      title: 'Amendment',
-      description: 'Propose changes or new policies for consideration',
+      title: t('pages.create.amendment.pageTitle'),
+      description: t('pages.create.amendment.description'),
     },
     {
       href: '/create/blog',
       icon: BookOpen,
-      title: 'Blog Post',
-      description: 'Write and share your thoughts with the community',
+      title: t('pages.create.blog.pageTitle'),
+      description: t('pages.create.blog.description'),
     },
   ];
 
@@ -45,14 +48,14 @@ export function CreateDashboard() {
     {
       href: '/create/todo',
       icon: CheckSquare,
-      title: 'Todo',
-      description: 'Create a task to track your work and progress',
+      title: t('pages.create.todo.pageTitle'),
+      description: t('pages.create.todo.description'),
     },
     {
       href: '/create/statement',
       icon: FileText,
-      title: 'Statement',
-      description: 'Share your position or opinion on a topic',
+      title: t('pages.create.statement.pageTitle'),
+      description: t('pages.create.statement.description'),
     },
   ];
 
@@ -60,39 +63,39 @@ export function CreateDashboard() {
     {
       href: '/create/agenda-item',
       icon: Calendar,
-      title: 'Agenda Item',
-      description: 'Create an agenda item for an event (election, vote, speech)',
+      title: t('pages.create.agendaItem.pageTitle'),
+      description: t('pages.create.agendaItem.description'),
     },
     {
       href: '/create/election-candidate',
       icon: UserCheck,
-      title: 'Election Candidate',
-      description: 'Add a candidate to an election',
+      title: t('pages.create.electionCandidate.pageTitle'),
+      description: t('pages.create.electionCandidate.description'),
     },
     {
       href: '/create/position',
       icon: Briefcase,
-      title: 'Position',
-      description: 'Create an elected position within a group',
+      title: t('pages.create.position.pageTitle'),
+      description: t('pages.create.position.description'),
     },
   ];
 
   return (
     <PageWrapper className="container mx-auto p-8">
       <div className="mb-6">
-        <h1 className="mb-2 text-3xl font-bold">Create New Item</h1>
-        <p className="text-muted-foreground">Choose what you want to create</p>
+        <h1 className="mb-2 text-3xl font-bold">{t('pages.create.dashboard.title')}</h1>
+        <p className="text-muted-foreground">{t('pages.create.dashboard.subtitle')}</p>
       </div>
 
 <Card>
         <CardHeader>
-          <CardTitle>What would you like to create?</CardTitle>
-          <CardDescription>Choose the type of item you want to create</CardDescription>
+          <CardTitle>{t('pages.create.dashboard.cardTitle')}</CardTitle>
+          <CardDescription>{t('pages.create.dashboard.cardDescription')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
           {/* Core Set */}
           <div>
-            <h3 className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">Core</h3>
+            <h3 className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('pages.create.dashboard.core')}</h3>
             <div className="grid gap-4 md:grid-cols-2">
               {coreItems.map(item => {
                 const Icon = item.icon;
@@ -118,7 +121,7 @@ export function CreateDashboard() {
 
           {/* Operational Set */}
           <div>
-            <h3 className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">Operational</h3>
+            <h3 className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('pages.create.dashboard.operational')}</h3>
             <div className="grid gap-4 md:grid-cols-2">
               {operationalItems.map(item => {
                 const Icon = item.icon;
@@ -144,7 +147,7 @@ export function CreateDashboard() {
 
           {/* Event Options Set */}
           <div>
-            <h3 className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">Event Options</h3>
+            <h3 className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('pages.create.dashboard.eventOptions')}</h3>
             <div className="grid gap-4 md:grid-cols-2">
               {eventOptionsItems.map(item => {
                 const Icon = item.icon;

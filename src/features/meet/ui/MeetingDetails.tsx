@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock } from 'lucide-react';
+import { useTranslation } from '@/hooks/use-translation';
 import { formatMeetingDate, formatMeetingTime, formatMeetingType } from '../utils/meetingFormatters';
 import { calculateDuration, getMeetingStatus } from '../utils/meetingUtils';
 
@@ -19,13 +20,14 @@ export function MeetingDetails({
   isAvailable,
   isPast,
 }: MeetingDetailsProps) {
+  const { t } = useTranslation();
   const duration = calculateDuration(startTime, endTime);
   const status = getMeetingStatus(isAvailable, isPast);
 
   return (
     <Card className="mb-6">
       <CardHeader>
-        <CardTitle>Meeting Details</CardTitle>
+        <CardTitle>{t('features.meet.page.meetingDetails')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-4 md:grid-cols-2">
@@ -42,7 +44,7 @@ export function MeetingDetails({
           <div className="flex items-start gap-3">
             <Clock className="mt-1 h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="font-medium">Duration</p>
+              <p className="font-medium">{t('features.meet.page.duration')}</p>
               <p className="text-sm text-muted-foreground">{duration}</p>
             </div>
           </div>

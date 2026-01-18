@@ -15,11 +15,13 @@ import { useAuthStore } from '@/features/auth/auth.ts';
 import { useStatementMutations } from '@/features/statements/hooks/useStatementData';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { PageWrapper } from '@/components/layout/page-wrapper';
+import { useTranslation } from '@/hooks/use-translation';
 
 export default function CreateStatementPage() {
   const router = useRouter();
   const user = useAuthStore(state => state.user);
   const { createStatement, isLoading: isSubmitting } = useStatementMutations();
+  const { t } = useTranslation();
 
   const [formData, setFormData] = useState({
     text: '',
@@ -55,7 +57,7 @@ export default function CreateStatementPage() {
       <PageWrapper className="flex min-h-screen items-center justify-center p-8">
         <Card className="w-full max-w-2xl">
           <CardHeader>
-            <CardTitle>Create a New Statement</CardTitle>
+            <CardTitle>{t('pages.create.statement.title')}</CardTitle>
           </CardHeader>
             <CardContent>
               <Carousel setApi={setCarouselApi} opts={{ watchDrag: false }}>
@@ -64,10 +66,10 @@ export default function CreateStatementPage() {
                   <CarouselItem>
                     <div className="space-y-4 p-4">
                       <div className="space-y-2">
-                        <Label htmlFor="statement-text">Statement</Label>
+                        <Label htmlFor="statement-text">{t('pages.create.statement.textLabel')}</Label>
                         <Textarea
                           id="statement-text"
-                          placeholder="Enter your statement"
+                          placeholder={t('pages.create.statement.textPlaceholder')}
                           value={formData.text}
                           onChange={e => setFormData({ ...formData, text: e.target.value })}
                           rows={6}
@@ -81,10 +83,10 @@ export default function CreateStatementPage() {
                   <CarouselItem>
                     <div className="space-y-4 p-4">
                       <div className="space-y-2">
-                        <Label htmlFor="statement-tag">Tag</Label>
+                        <Label htmlFor="statement-tag">{t('pages.create.statement.tagLabel')}</Label>
                         <Input
                           id="statement-tag"
-                          placeholder="e.g., policy, opinion, announcement"
+                          placeholder={t('pages.create.statement.tagPlaceholder')}
                           value={formData.tag}
                           onChange={e => setFormData({ ...formData, tag: e.target.value })}
                           required
@@ -106,7 +108,7 @@ export default function CreateStatementPage() {
                         <CardHeader>
                           <div className="mb-2 flex items-center justify-between">
                             <Badge variant="default" className="text-xs">
-                              Statement
+                              {t('pages.create.statement.reviewBadge')}
                             </Badge>
                             {formData.tag && (
                               <Badge variant="secondary" className="text-xs">
@@ -114,12 +116,12 @@ export default function CreateStatementPage() {
                               </Badge>
                             )}
                           </div>
-                          <CardTitle className="text-lg">Statement</CardTitle>
+                          <CardTitle className="text-lg">{t('pages.create.statement.reviewBadge')}</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
-                          <p className="text-sm">{formData.text || 'No statement text provided'}</p>
+                          <p className="text-sm">{formData.text || t('pages.create.statement.noTextProvided')}</p>
                           <div className="flex items-center gap-2 text-sm">
-                            <strong>Visibility:</strong>
+                            <strong>{t('pages.create.common.visibility')}:</strong>
                             <span className="text-muted-foreground">{formData.visibility}</span>
                           </div>
                         </CardContent>
@@ -137,7 +139,7 @@ export default function CreateStatementPage() {
                     className={`h-2 w-2 rounded-full transition-colors ${
                       currentStep === index ? 'bg-primary' : 'bg-muted-foreground/30'
                     }`}
-                    aria-label={`Go to step ${index + 1}`}
+                    aria-label={t('pages.create.goToStep', { step: index + 1 })}
                   />
                 ))}
               </div>
@@ -149,7 +151,7 @@ export default function CreateStatementPage() {
                 onClick={() => carouselApi?.scrollPrev()}
                 disabled={currentStep === 0}
               >
-                Previous
+                {t('pages.create.previous')}
               </Button>
               {currentStep < 2 ? (
                 <Button
@@ -157,11 +159,11 @@ export default function CreateStatementPage() {
                   onClick={() => carouselApi?.scrollNext()}
                   disabled={(currentStep === 0 && !formData.text) || (currentStep === 1 && !formData.tag)}
                 >
-                  Next
+                  {t('pages.create.next')}
                 </Button>
               ) : (
                 <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
-                  {isSubmitting ? 'Creating...' : 'Create Statement'}
+                  {isSubmitting ? t('pages.create.creating') : t('pages.create.statement.createButton')}
                 </Button>
               )}
             </CardFooter>

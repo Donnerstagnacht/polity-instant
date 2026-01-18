@@ -9,8 +9,10 @@ import { Badge } from '@/components/ui/badge';
 import { Rss, Calendar, Users, Scale, BookOpen, User } from 'lucide-react';
 import { TimelineEventCard } from './TimelineEventCard';
 import { useSubscriptionTimeline } from '../hooks/useSubscriptionTimeline';
+import { useTranslation } from '@/hooks/use-translation';
 
 export function SubscriptionTimeline() {
+  const { t } = useTranslation();
   const { events, isLoading } = useSubscriptionTimeline();
   const [filterType, setFilterType] = useState<string>('all');
 
@@ -23,9 +25,9 @@ export function SubscriptionTimeline() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Rss className="h-5 w-5" />
-            Your Timeline
+            {t('features.timeline.yourTimeline')}
           </CardTitle>
-          <CardDescription>Loading updates from your subscriptions...</CardDescription>
+          <CardDescription>{t('features.timeline.loading')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -53,10 +55,10 @@ export function SubscriptionTimeline() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Rss className="h-5 w-5" />
-            Your Timeline
+            {t('features.timeline.yourTimeline')}
           </CardTitle>
           <CardDescription>
-            Subscribe to users, groups, amendments, events, or blogs to see updates here
+            {t('features.timeline.subscribeDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -66,11 +68,11 @@ export function SubscriptionTimeline() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">
-                Your timeline is empty. Start following content to see updates.
+                {t('features.timeline.emptyTimelineHint')}
               </p>
             </div>
             <Button variant="outline" asChild>
-              <a href="/search">Discover Content</a>
+              <a href="/search">{t('features.timeline.discoverContent')}</a>
             </Button>
           </div>
         </CardContent>
@@ -87,11 +89,12 @@ export function SubscriptionTimeline() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Rss className="h-5 w-5" />
-                Your Timeline
+                {t('features.timeline.yourTimeline')}
               </CardTitle>
               <CardDescription>
-                {filteredEvents.length} update{filteredEvents.length !== 1 ? 's' : ''} from your
-                subscriptions
+                {filteredEvents.length === 1
+                  ? t('features.timeline.updatesCount', { count: filteredEvents.length })
+                  : t('features.timeline.updatesCountPlural', { count: filteredEvents.length })}
               </CardDescription>
             </div>
           </div>
@@ -102,34 +105,34 @@ export function SubscriptionTimeline() {
       <Tabs value={filterType} onValueChange={setFilterType}>
         <ScrollableTabsList>
           <TabsTrigger value="all" className="gap-2">
-            All
+            {t('features.timeline.filters.all')}
             <Badge variant="secondary">{events.length}</Badge>
           </TabsTrigger>
           <TabsTrigger value="amendment" className="gap-2">
             <Scale className="h-4 w-4" />
-            Amendments
+            {t('features.timeline.types.amendment')}
             <Badge variant="secondary">
               {events.filter(e => e.entityType === 'amendment').length}
             </Badge>
           </TabsTrigger>
           <TabsTrigger value="event" className="gap-2">
             <Calendar className="h-4 w-4" />
-            Events
+            {t('features.timeline.types.event')}
             <Badge variant="secondary">{events.filter(e => e.entityType === 'event').length}</Badge>
           </TabsTrigger>
           <TabsTrigger value="group" className="gap-2">
             <Users className="h-4 w-4" />
-            Groups
+            {t('features.timeline.types.group')}
             <Badge variant="secondary">{events.filter(e => e.entityType === 'group').length}</Badge>
           </TabsTrigger>
           <TabsTrigger value="blog" className="gap-2">
             <BookOpen className="h-4 w-4" />
-            Blogs
+            {t('features.timeline.types.blog')}
             <Badge variant="secondary">{events.filter(e => e.entityType === 'blog').length}</Badge>
           </TabsTrigger>
           <TabsTrigger value="user" className="gap-2">
             <User className="h-4 w-4" />
-            Users
+            {t('features.timeline.types.user')}
             <Badge variant="secondary">{events.filter(e => e.entityType === 'user').length}</Badge>
           </TabsTrigger>
         </ScrollableTabsList>
@@ -138,7 +141,7 @@ export function SubscriptionTimeline() {
           {filteredEvents.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
-                <p className="text-sm text-muted-foreground">No {filterType} updates to show</p>
+                <p className="text-sm text-muted-foreground">{t('features.timeline.noUpdates')}</p>
               </CardContent>
             </Card>
           ) : (

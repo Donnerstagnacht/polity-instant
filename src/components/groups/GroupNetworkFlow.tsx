@@ -8,6 +8,7 @@ import { RightFilters, formatRights, RIGHT_TYPES } from '@/components/shared/Rig
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { NetworkEntityDialog } from '@/components/shared/NetworkEntityDialog';
 import db from '../../../db/db';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface GroupNode extends Node {
   data: {
@@ -22,6 +23,7 @@ interface GroupNetworkFlowProps {
 }
 
 export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
+  const { t } = useTranslation();
   const [showIndirect, setShowIndirect] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState<GroupNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -516,7 +518,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
   if (!group) {
     return (
       <div className="flex h-[600px] w-full items-center justify-center rounded-lg border bg-background">
-        <p className="text-muted-foreground">Loading group network...</p>
+        <p className="text-muted-foreground">{t('common.network.loadingGroupNetwork')}</p>
       </div>
     );
   }
@@ -543,7 +545,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
       panel={
         <Panel position="top-left" className="rounded bg-white p-4 shadow dark:bg-background">
           <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-lg font-bold">Gruppennetzwerk</h2>
+            <h2 className="text-lg font-bold">{t('common.network.groupNetwork')}</h2>
             <Button
               size="sm"
               variant="ghost"
@@ -560,7 +562,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
           {!panelCollapsed && (
             <>
               <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
-                Visualisierung der Beziehungen von {group.name}
+                {t('common.network.groupNetworkDescription', { groupName: group.name })}
               </p>
               <div className="flex flex-wrap gap-2">
                 {isInteractive && (
@@ -570,14 +572,14 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
                       variant={!showIndirect ? 'default' : 'outline'}
                       onClick={() => setShowIndirect(false)}
                     >
-                      Direkte
+                      {t('common.network.direct')}
                     </Button>
                     <Button
                       size="sm"
                       variant={showIndirect ? 'default' : 'outline'}
                       onClick={() => setShowIndirect(true)}
                     >
-                      Indirekte
+                      {t('common.network.indirect')}
                     </Button>
                   </>
                 )}
@@ -586,7 +588,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
                   variant={isInteractive ? 'outline' : 'default'}
                   onClick={() => setIsInteractive(!isInteractive)}
                 >
-                  {isInteractive ? 'Lock Editor' : 'Unlock Editor'}
+                  {isInteractive ? t('common.network.lockEditor') : t('common.network.unlockEditor')}
                 </Button>
               </div>
 
@@ -599,7 +601,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
                   onClick={() => setLegendCollapsed(!legendCollapsed)}
                   className="flex w-full items-center justify-between text-sm font-medium hover:text-primary"
                 >
-                  <span>Legende</span>
+                  <span>{t('common.network.legend')}</span>
                   {legendCollapsed ? (
                     <ChevronDown className="h-4 w-4" />
                   ) : (
@@ -610,15 +612,15 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
                   <div className="mt-2 space-y-2 text-sm">
                     <div className="flex items-center gap-2">
                       <div className="h-4 w-4 rounded border border-[#a5d6a7] bg-[#c8e6c9]"></div>
-                      <span>Übergeordnet</span>
+                      <span>{t('common.network.parentGroups')}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="h-4 w-4 rounded border border-[#90caf9] bg-[#bbdefb]"></div>
-                      <span>Ausgewählt</span>
+                      <span>{t('common.network.selectedGroup')}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="h-4 w-4 rounded border border-[#ffcc80] bg-[#ffe0b2]"></div>
-                      <span>Untergeordnet</span>
+                      <span>{t('common.network.childGroups')}</span>
                     </div>
                   </div>
                 )}

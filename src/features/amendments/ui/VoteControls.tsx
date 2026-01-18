@@ -6,8 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Check, X, Minus } from 'lucide-react';
-import { db, tx, id } from '../../../../db/db';
+import { db, tx, id } from 'db/db';
 import { toast } from 'sonner';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface VoteControlsProps {
   changeRequestId: string;
@@ -56,6 +57,7 @@ export function VoteControls({
   suggestionData,
   onVoteComplete,
 }: VoteControlsProps) {
+  const { t } = useTranslation();
   const [isVoting, setIsVoting] = useState(false);
 
   const isUUID = (str: string) => {
@@ -81,7 +83,7 @@ export function VoteControls({
 
   const handleVote = async (voteType: 'accept' | 'reject' | 'abstain') => {
     if (hasVoted) {
-      toast.error('You have already cast your vote on this change request.');
+      toast.error(t('features.amendments.voteControls.alreadyVoted'));
       return;
     }
 
@@ -129,8 +131,8 @@ export function VoteControls({
           .link({ voter: currentUserId }),
       ]);
 
-      toast.success('Vote Recorded', {
-        description: `You voted to ${voteType} this change request.`,
+      toast.success(t('features.amendments.voteControls.voteRecorded'), {
+        description: t('features.amendments.voteControls.yourVote').replace('{{vote}}', voteType),
       });
 
       if (onVoteComplete) {
@@ -138,7 +140,7 @@ export function VoteControls({
       }
     } catch (error) {
       console.error('Failed to record vote:', error);
-      toast.error('Failed to record your vote. Please try again.');
+      toast.error(t('features.amendments.voteControls.voteFailed'));
     } finally {
       setIsVoting(false);
     }
@@ -159,7 +161,7 @@ export function VoteControls({
             className="flex-1 bg-green-600 hover:bg-green-700"
           >
             <Check className="mr-2 h-4 w-4" />
-            Accept
+            {t('features.amendments.voteControls.accept')}
           </Button>
           <Button
             onClick={() => handleVote('reject')}
@@ -168,7 +170,7 @@ export function VoteControls({
             className="flex-1"
           >
             <X className="mr-2 h-4 w-4" />
-            Reject
+            {t('features.amendments.voteControls.reject')}
           </Button>
           <Button
             onClick={() => handleVote('abstain')}
@@ -177,15 +179,14 @@ export function VoteControls({
             className="flex-1"
           >
             <Minus className="mr-2 h-4 w-4" />
-            Abstain
+            {t('features.amendments.voteControls.abstain')}
           </Button>
         </div>
       ) : (
         <Card className="border-blue-500/50 bg-blue-500/5">
           <CardContent className="py-3">
             <p className="text-sm">
-              You voted to <strong className="capitalize">{currentUserVote.vote}</strong> this
-              change request
+              {t('features.amendments.voteControls.yourVote').replace('{{vote}}', currentUserVote.vote)}
             </p>
           </CardContent>
         </Card>
@@ -193,9 +194,9 @@ export function VoteControls({
 
       <div className="rounded-lg border bg-muted/50 p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h4 className="font-semibold">Voting Progress</h4>
+          <h4 className="font-semibold">{t('features.amendments.voteControls.votingProgress')}</h4>
           <Badge variant="secondary">
-            {totalVotes} / {totalCollaborators} voted
+            {totalVotes} / {totalCollaborators} {t('features.amendments.voteControls.voted')}
           </Badge>
         </div>
 
@@ -204,7 +205,7 @@ export function VoteControls({
             <div className="mb-1 flex items-center justify-between text-sm">
               <span className="flex items-center gap-2">
                 <Check className="h-3 w-3 text-green-600" />
-                Accept
+                {t('features.amendments.voteControls.accept')}
               </span>
               <span className="font-semibold">{acceptVotes}</span>
             </div>
@@ -223,7 +224,7 @@ export function VoteControls({
             <div className="mb-1 flex items-center justify-between text-sm">
               <span className="flex items-center gap-2">
                 <X className="h-3 w-3 text-red-600" />
-                Reject
+                {t('features.amendments.voteControls.reject')}
               </span>
               <span className="font-semibold">{rejectVotes}</span>
             </div>
@@ -242,7 +243,7 @@ export function VoteControls({
             <div className="mb-1 flex items-center justify-between text-sm">
               <span className="flex items-center gap-2">
                 <Minus className="h-3 w-3 text-gray-600" />
-                Abstain
+                {t('features.amendments.voteControls.abstain')}
               </span>
               <span className="font-semibold">{abstainVotes}</span>
             </div>
@@ -260,7 +261,7 @@ export function VoteControls({
 
         {votes.length > 0 && (
           <div className="mt-4 border-t pt-3">
-            <p className="mb-2 text-sm font-semibold">Voted:</p>
+            <p className="mb-2 text-sm font-semibold">{t('features.amendments.voteControls.votedList')}:</p>
             <div className="flex flex-wrap gap-2">
               {votes.map(vote => (
                 <div
@@ -275,7 +276,7 @@ export function VoteControls({
                       {vote.voter?.user?.name?.[0]?.toUpperCase() || '?'}
                     </AvatarFallback>
                   </Avatar>
-                  <span>{vote.voter?.user?.name || 'Unknown'}</span>
+                  <span>{vote.voter?.user?.name || t('features.amendments.voteControls.unknown')}</span>
                   <Badge
                     variant="outline"
                     className={`ml-1 ${
@@ -297,7 +298,7 @@ export function VoteControls({
         {notVotedYet.length > 0 && (
           <div className="mt-3 border-t pt-3">
             <p className="mb-2 text-sm font-semibold text-muted-foreground">
-              Waiting for ({notVotedYet.length}):
+              {t('features.amendments.voteControls.waitingFor')} ({notVotedYet.length}):
             </p>
             <div className="flex flex-wrap gap-2">
               {notVotedYet.map(collab => (
@@ -313,7 +314,7 @@ export function VoteControls({
                       {collab.user?.name?.[0]?.toUpperCase() || '?'}
                     </AvatarFallback>
                   </Avatar>
-                  <span>{collab.user?.name || 'Unknown'}</span>
+                  <span>{collab.user?.name || t('features.amendments.voteControls.unknown')}</span>
                 </div>
               ))}
             </div>

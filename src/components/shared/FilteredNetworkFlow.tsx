@@ -12,6 +12,7 @@ import {
 } from '@/components/shared/RightFilters';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import db from '../../../db/db';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface NetworkNode extends Node {
   data: {
@@ -38,6 +39,7 @@ export function FilteredNetworkFlow({
   title = 'Network',
   description,
 }: FilteredNetworkFlowProps) {
+  const { t } = useTranslation();
   const [showIndirect, setShowIndirect] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState<NetworkNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -568,7 +570,7 @@ export function FilteredNetworkFlow({
   if (!user) {
     return (
       <div className="flex h-[600px] w-full items-center justify-center rounded-lg border bg-background">
-        <p className="text-muted-foreground">Loading network...</p>
+        <p className="text-muted-foreground">{t('common.network.loadingNetwork')}</p>
       </div>
     );
   }
@@ -601,7 +603,7 @@ export function FilteredNetworkFlow({
               className="flex items-center gap-2"
             >
               <ChevronDown className="h-4 w-4" />
-              Show Controls
+              {t('common.network.showControls')}
             </Button>
           ) : (
             <>
@@ -625,14 +627,14 @@ export function FilteredNetworkFlow({
                       variant={!showIndirect ? 'default' : 'outline'}
                       onClick={() => setShowIndirect(false)}
                     >
-                      Direct
+                      {t('common.network.direct')}
                     </Button>
                     <Button
                       size="sm"
                       variant={showIndirect ? 'default' : 'outline'}
                       onClick={() => setShowIndirect(true)}
                     >
-                      Indirect
+                      {t('common.network.indirect')}
                     </Button>
                   </>
                 )}
@@ -641,7 +643,7 @@ export function FilteredNetworkFlow({
                   variant={isInteractive ? 'outline' : 'default'}
                   onClick={() => setIsInteractive(!isInteractive)}
                 >
-                  {isInteractive ? 'Lock Editor' : 'Unlock Editor'}
+                  {isInteractive ? t('common.network.lockEditor') : t('common.network.unlockEditor')}
                 </Button>
               </div>
 
@@ -652,7 +654,7 @@ export function FilteredNetworkFlow({
 
               {filterRight && (
                 <div className="mt-3 text-sm text-muted-foreground">
-                  Filtered by: {filterRight.replace('Right', '')}
+                  {t('common.network.filteredBy')}: {filterRight.replace('Right', '')}
                 </div>
               )}
 
@@ -662,7 +664,7 @@ export function FilteredNetworkFlow({
                   onClick={() => setLegendCollapsed(!legendCollapsed)}
                   className="flex w-full items-center justify-between text-sm font-medium hover:text-primary"
                 >
-                  <span>Legend</span>
+                  <span>{t('common.network.legend')}</span>
                   {legendCollapsed ? (
                     <ChevronDown className="h-4 w-4" />
                   ) : (
@@ -673,19 +675,19 @@ export function FilteredNetworkFlow({
                   <div className="mt-2 space-y-2 text-sm">
                     <div className="flex items-center gap-2">
                       <div className="h-4 w-4 rounded-full border-2 border-[#2196f3] bg-[#e3f2fd]"></div>
-                      <span>User</span>
+                      <span>{t('common.network.user')}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="h-4 w-4 rounded border border-[#a5d6a7] bg-[#c8e6c9]"></div>
-                      <span>User's Groups</span>
+                      <span>{t('common.network.userGroups')}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="h-4 w-4 rounded border border-[#80cbc4] bg-[#b2dfdb]"></div>
-                      <span>Parent Groups</span>
+                      <span>{t('common.network.parentGroups')}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="h-4 w-4 rounded border border-[#ffcc80] bg-[#ffe0b2]"></div>
-                      <span>Child Groups</span>
+                      <span>{t('common.network.childGroups')}</span>
                     </div>
                   </div>
                 )}

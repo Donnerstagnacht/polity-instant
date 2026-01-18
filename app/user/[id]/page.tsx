@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { use, useEffect, Suspense } from 'react';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { useNavigation } from '@/navigation/state/useNavigation';
+import { useTranslation } from '@/hooks/use-translation';
 
 function UserPageContent({ userId }: { userId: string }) {
   const searchParams = useSearchParams();
@@ -36,14 +37,20 @@ function UserPageContent({ userId }: { userId: string }) {
   );
 }
 
+function LoadingFallback() {
+  const { t } = useTranslation();
+  return <div>{t('common.loading.general')}</div>;
+}
+
 export default function UserPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
 
   return (
     <AuthGuard requireAuth={true}>
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<LoadingFallback />}>
         <UserPageContent userId={resolvedParams.id} />
       </Suspense>
     </AuthGuard>
   );
 }
+

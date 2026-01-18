@@ -9,6 +9,7 @@ import { Search, MessageSquare } from 'lucide-react';
 import { db, tx, id } from '../../../db/db';
 import { cn } from '@/utils/utils';
 import { toast } from 'sonner';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface ConversationSelectorDialogProps {
   open: boolean;
@@ -43,6 +44,7 @@ export function ConversationSelectorDialog({
   shareUrl,
   shareTitle,
 }: ConversationSelectorDialogProps) {
+  const { t } = useTranslation();
   const { user } = db.useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [sending, setSending] = useState<string | null>(null);
@@ -98,7 +100,7 @@ export function ConversationSelectorDialog({
   const getConversationDisplay = (conversation: Conversation) => {
     if (conversation.type === 'group') {
       return {
-        name: conversation.name || conversation.group?.name || 'Group Chat',
+        name: conversation.name || conversation.group?.name || t('common.labels.groupChat'),
         avatar: conversation.group?.imageURL || null,
         handle: null,
         isGroup: true,
@@ -107,7 +109,7 @@ export function ConversationSelectorDialog({
     } else {
       const otherUser = conversation.participants.find(p => p.user?.id !== user?.id)?.user;
       return {
-        name: otherUser?.name || 'Unknown User',
+        name: otherUser?.name || t('common.labels.unknownUser'),
         avatar: otherUser?.avatar,
         handle: otherUser?.handle,
         isGroup: false,
@@ -141,12 +143,12 @@ export function ConversationSelectorDialog({
         }),
       ]);
 
-      toast.success('Link shared to conversation!');
+      toast.success(t('common.share.linkShared'));
       onOpenChange(false);
       setSearchQuery('');
     } catch (error) {
       console.error('Failed to share link:', error);
-      toast.error('Failed to share link');
+      toast.error(t('common.share.linkShareFailed'));
     } finally {
       setSending(null);
     }
@@ -156,13 +158,13 @@ export function ConversationSelectorDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Share to Conversation</DialogTitle>
+          <DialogTitle>{t('common.share.title')}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search conversations..."
+              placeholder={t('common.share.searchConversations')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="pl-9"
@@ -171,13 +173,13 @@ export function ConversationSelectorDialog({
           <div className="max-h-[400px] space-y-2 overflow-y-auto">
             {isLoading ? (
               <div className="py-8 text-center">
-                <p className="text-muted-foreground">Loading conversations...</p>
+                <p className="text-muted-foreground">{t('common.loading.conversations')}</p>
               </div>
             ) : filteredConversations.length === 0 ? (
               <div className="py-8 text-center">
                 <MessageSquare className="mx-auto mb-2 h-12 w-12 text-muted-foreground" />
                 <p className="text-muted-foreground">
-                  {searchQuery ? 'No conversations found' : 'No conversations yet'}
+                  {searchQuery ? t('common.share.noConversationsFound') : t('common.share.noConversationsYet')}
                 </p>
               </div>
             ) : (
@@ -209,7 +211,7 @@ export function ConversationSelectorDialog({
                         )}
                         {conversation.status === 'pending' && (
                           <Badge variant="outline" className="text-xs">
-                            Pending
+                            {t('common.labels.pending')}
                           </Badge>
                         )}
                       </div>
@@ -217,7 +219,7 @@ export function ConversationSelectorDialog({
                         <p className="truncate text-sm text-muted-foreground">@{display.handle}</p>
                       )}
                     </div>
-                    {isSending && <div className="text-xs text-muted-foreground">Sending...</div>}
+                    {isSending && <div className="text-xs text-muted-foreground">{t('common.labels.sending')}</div>}
                   </button>
                 );
               })

@@ -8,6 +8,7 @@ import { useCalendarState } from './hooks/useCalendarState';
 import { useCalendarNavigation } from './hooks/useCalendarNavigation';
 import { CalendarHeader } from './ui/CalendarHeader';
 import { DayView } from './ui/DayView';
+import { useTranslation } from '@/hooks/use-translation';
 import { WeekView } from './ui/WeekView';
 import { MonthView } from './ui/MonthView';
 import {
@@ -23,6 +24,7 @@ import {
 } from './utils/dateUtils';
 
 export default function CalendarPage() {
+  const { t } = useTranslation();
   const { events, isLoading } = useCalendarData();
   const { view, setView, selectedDate, setSelectedDate } = useCalendarState();
   const { goToPrevious, goToNext, goToToday } = useCalendarNavigation(
@@ -57,7 +59,7 @@ export default function CalendarPage() {
       <AuthGuard requireAuth={true}>
         <PageWrapper className="container mx-auto p-4">
           <div className="flex h-[400px] items-center justify-center">
-            <p className="text-muted-foreground">Loading calendar...</p>
+            <p className="text-muted-foreground">{t('features.calendar.loading')}</p>
           </div>
         </PageWrapper>
       </AuthGuard>

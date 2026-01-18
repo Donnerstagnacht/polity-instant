@@ -6,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useTranslation } from '@/hooks/use-translation';
 
 export type CommentSortBy = 'votes' | 'time';
 
@@ -16,6 +17,8 @@ interface CommentSortSelectProps {
 }
 
 export function CommentSortSelect({ sortBy, onSortChange, className }: CommentSortSelectProps) {
+  const { t } = useTranslation();
+  
   return (
     <Select value={sortBy} onValueChange={value => onSortChange(value as CommentSortBy)}>
       <SelectTrigger className={className}>
@@ -25,13 +28,13 @@ export function CommentSortSelect({ sortBy, onSortChange, className }: CommentSo
         <SelectItem value="votes">
           <div className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4" />
-            <span>Top Voted</span>
+            <span>{t('common.comments.sortBy.topVoted')}</span>
           </div>
         </SelectItem>
         <SelectItem value="time">
           <div className="flex items-center gap-2">
             <CalendarIcon className="h-4 w-4" />
-            <span>Newest First</span>
+            <span>{t('common.comments.sortBy.newestFirst')}</span>
           </div>
         </SelectItem>
       </SelectContent>

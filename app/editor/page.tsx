@@ -20,10 +20,12 @@ import {
 import { Label } from '@/components/ui/label';
 import { Loader2, Plus, FileText, Calendar, User } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslation } from '@/hooks/use-translation';
 
 export default function EditorPage() {
   const router = useRouter();
   const { user } = db.useAuth();
+  const { t } = useTranslation();
 
   // State
   const [newDocTitle, setNewDocTitle] = useState('');
@@ -108,9 +110,9 @@ export default function EditorPage() {
     <AuthGuard requireAuth={true}>
       <PageWrapper className="container mx-auto p-8">
         <div className="mb-8">
-          <h1 className="mb-4 text-4xl font-bold">My Documents</h1>
+          <h1 className="mb-4 text-4xl font-bold">{t('pages.editor.title')}</h1>
           <p className="text-muted-foreground">
-            Create and manage your collaborative documents. Select a document to start editing.
+            {t('pages.editor.description')}
           </p>
         </div>
 
@@ -120,20 +122,20 @@ export default function EditorPage() {
             <DialogTrigger asChild>
               <Button size="lg">
                 <Plus className="mr-2 h-4 w-4" />
-                New Document
+                {t('pages.editor.newDocument')}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Create New Document</DialogTitle>
-                <DialogDescription>Enter a title for your new document.</DialogDescription>
+                <DialogTitle>{t('pages.editor.createDocument.title')}</DialogTitle>
+                <DialogDescription>{t('pages.editor.createDocument.description')}</DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title">Document Title</Label>
+                  <Label htmlFor="title">{t('pages.editor.createDocument.label')}</Label>
                   <Input
                     id="title"
-                    placeholder="My Document"
+                    placeholder={t('pages.editor.createDocument.placeholder')}
                     value={newDocTitle}
                     onChange={e => setNewDocTitle(e.target.value)}
                     onKeyDown={e => {
@@ -144,7 +146,7 @@ export default function EditorPage() {
                   />
                 </div>
                 <Button onClick={handleCreateDocument} className="w-full">
-                  Create Document
+                  {t('pages.editor.createDocument.button')}
                 </Button>
               </div>
             </DialogContent>
@@ -173,23 +175,22 @@ export default function EditorPage() {
                         {doc.title}
                       </CardTitle>
                     </div>
-                    {doc.owner?.id === user?.id && <Badge variant="outline">Owner</Badge>}
+                    {doc.owner?.id === user?.id && <Badge variant="outline">{t('pages.editor.document.owner')}</Badge>}
                   </div>
                   <CardDescription className="mt-2 flex flex-col gap-2">
                     <div className="flex items-center gap-2 text-xs">
                       <Calendar className="h-3 w-3" />
-                      <span>Updated: {formatDate(doc.updatedAt || doc.createdAt)}</span>
+                      <span>{t('pages.editor.document.updated')}: {formatDate(doc.updatedAt || doc.createdAt)}</span>
                     </div>
                     {doc.owner && (
                       <div className="flex items-center gap-2 text-xs">
                         <User className="h-3 w-3" />
-                        <span>By {doc.owner.email || 'Unknown'}</span>
+                        <span>{t('pages.editor.document.by')} {doc.owner.email || 'Unknown'}</span>
                       </div>
                     )}
                     {doc.collaborators && doc.collaborators.length > 0 && (
                       <div className="text-xs text-muted-foreground">
-                        {doc.collaborators.length} collaborator
-                        {doc.collaborators.length > 1 ? 's' : ''}
+                        {doc.collaborators.length} {doc.collaborators.length > 1 ? t('pages.editor.document.collaboratorsPlural') : t('pages.editor.document.collaborators')}
                       </div>
                     )}
                   </CardDescription>
@@ -202,11 +203,11 @@ export default function EditorPage() {
             <CardContent className="flex flex-col items-center justify-center py-20 text-center">
               <FileText className="mb-4 h-16 w-16 text-muted-foreground" />
               <p className="mb-4 text-lg text-muted-foreground">
-                No documents yet. Create your first document to get started.
+                {t('pages.editor.empty.description')}
               </p>
               <Button onClick={() => setIsCreateDialogOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
-                Create Your First Document
+                {t('pages.editor.empty.button')}
               </Button>
             </CardContent>
           </Card>

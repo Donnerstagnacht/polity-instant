@@ -51,6 +51,7 @@ import Link from 'next/link';
 import { db, tx } from '../../../db/db';
 import { toast } from 'sonner';
 import { cn } from '@/utils/utils';
+import { useTranslation } from '@/hooks/use-translation';
 
 type TodoStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 type TodoPriority = 'low' | 'medium' | 'high' | 'urgent';
@@ -62,6 +63,7 @@ interface TodoDetailDialogProps {
 }
 
 export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogProps) {
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -158,11 +160,11 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
       });
 
       await db.transact(transactions);
-      toast.success('Todo updated successfully!');
+      toast.success(t('features.todos.notifications.todoUpdated'));
       setIsEditing(false);
     } catch (error) {
       console.error('Failed to update todo:', error);
-      toast.error('Failed to update todo');
+      toast.error(t('features.todos.notifications.todoUpdateFailed'));
     } finally {
       setIsSaving(false);
     }
@@ -206,7 +208,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                   value={formData.title}
                   onChange={e => setFormData({ ...formData, title: e.target.value })}
                   className="text-2xl font-bold"
-                  placeholder="Todo title"
+                  placeholder={t('features.todos.detail.todoTitle')}
                 />
               ) : (
                 <span className="text-2xl">{todo.title}</span>
@@ -217,17 +219,17 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                 <>
                   <Button onClick={handleSave} disabled={isSaving} size="sm">
                     <Save className="mr-2 h-4 w-4" />
-                    Save
+                    {t('features.todos.detail.save')}
                   </Button>
                   <Button onClick={handleCancel} variant="outline" size="sm" disabled={isSaving}>
                     <X className="mr-2 h-4 w-4" />
-                    Cancel
+                    {t('features.todos.detail.cancel')}
                   </Button>
                 </>
               ) : (
                 <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
                   <Edit className="mr-2 h-4 w-4" />
-                  Edit
+                  {t('features.todos.actions.edit')}
                 </Button>
               )}
             </div>
@@ -238,7 +240,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
           {/* Status and Priority */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-2 block text-sm font-medium">Status</label>
+              <label className="mb-2 block text-sm font-medium">{t('features.todos.detail.status')}</label>
               {isEditing ? (
                 <Select
                   value={formData.status}
@@ -251,25 +253,25 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                     <SelectItem value="pending">
                       <div className="flex items-center gap-2">
                         <Circle className="h-4 w-4" />
-                        Pending
+                        {t('features.todos.status.pending')}
                       </div>
                     </SelectItem>
                     <SelectItem value="in_progress">
                       <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4" />
-                        In Progress
+                        {t('features.todos.status.inProgress')}
                       </div>
                     </SelectItem>
                     <SelectItem value="completed">
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="h-4 w-4" />
-                        Completed
+                        {t('features.todos.status.completed')}
                       </div>
                     </SelectItem>
                     <SelectItem value="cancelled">
                       <div className="flex items-center gap-2">
                         <XCircle className="h-4 w-4" />
-                        Cancelled
+                        {t('features.todos.status.cancelled')}
                       </div>
                     </SelectItem>
                   </SelectContent>
@@ -283,7 +285,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium">Priority</label>
+              <label className="mb-2 block text-sm font-medium">{t('features.todos.detail.priority')}</label>
               {isEditing ? (
                 <Select
                   value={formData.priority}
@@ -296,25 +298,25 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                     <SelectItem value="low">
                       <div className="flex items-center gap-2">
                         <Flag className="h-4 w-4 text-blue-500" />
-                        Low
+                        {t('features.todos.priority.low')}
                       </div>
                     </SelectItem>
                     <SelectItem value="medium">
                       <div className="flex items-center gap-2">
                         <Flag className="h-4 w-4 text-yellow-500" />
-                        Medium
+                        {t('features.todos.priority.medium')}
                       </div>
                     </SelectItem>
                     <SelectItem value="high">
                       <div className="flex items-center gap-2">
                         <Flag className="h-4 w-4 text-orange-500" />
-                        High
+                        {t('features.todos.priority.high')}
                       </div>
                     </SelectItem>
                     <SelectItem value="urgent">
                       <div className="flex items-center gap-2">
                         <AlertCircle className="h-4 w-4 text-red-500" />
-                        Urgent
+                        {t('features.todos.priority.urgent')}
                       </div>
                     </SelectItem>
                   </SelectContent>
@@ -330,24 +332,24 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
 
           {/* Description */}
           <div>
-            <label className="mb-2 block text-sm font-medium">Description</label>
+            <label className="mb-2 block text-sm font-medium">{t('features.todos.detail.description')}</label>
             {isEditing ? (
               <Textarea
                 value={formData.description}
                 onChange={e => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Add a description..."
+                placeholder={t('features.todos.detail.addDescription')}
                 rows={6}
               />
             ) : (
               <p className="text-sm text-muted-foreground">
-                {todo.description || 'No description provided'}
+                {todo.description || t('features.todos.detail.noDescription')}
               </p>
             )}
           </div>
 
           {/* Due Date */}
           <div>
-            <label className="mb-2 block text-sm font-medium">Due Date</label>
+            <label className="mb-2 block text-sm font-medium">{t('features.todos.dueDate.title')}</label>
             {isEditing ? (
               <Input
                 type="date"
@@ -363,19 +365,19 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                 {isOverdue && (
                   <Badge variant="destructive" className="ml-2">
                     <AlertTriangle className="mr-1 h-3 w-3" />
-                    Overdue
+                    {t('features.todos.status.overdue')}
                   </Badge>
                 )}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No due date set</p>
+              <p className="text-sm text-muted-foreground">{t('features.todos.detail.noDueDateSet')}</p>
             )}
           </div>
 
           {/* Creator */}
           {todo.creator && (
             <div>
-              <label className="mb-2 block text-sm font-medium">Created By</label>
+              <label className="mb-2 block text-sm font-medium">{t('features.todos.detail.createdBy')}</label>
               <Link
                 href={`/user/${todo.creator.id}`}
                 className="flex items-center gap-2 text-sm hover:underline"
@@ -393,7 +395,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
           <div>
             <label className="mb-2 block text-sm font-medium">
               <Users className="mr-2 inline h-4 w-4" />
-              Assigned To
+              {t('features.todos.detail.assignedTo')}
             </label>
             {isEditing ? (
               <div className="space-y-3">
@@ -444,19 +446,19 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                         disabled={!members.length}
                       >
                         <UserPlus className="mr-2 h-4 w-4" />
-                        Add Assignee
+                        {t('features.todos.assignee.addAssignee')}
                         <ChevronsUpDown className="ml-auto h-4 w-4 opacity-50" />
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[400px] p-0" align="start">
                       <Command>
                         <CommandInput
-                          placeholder="Search members..."
+                          placeholder={t('features.todos.assignee.searchMembers')}
                           value={searchQuery}
                           onValueChange={setSearchQuery}
                         />
                         <CommandList>
-                          <CommandEmpty>No members found.</CommandEmpty>
+                          <CommandEmpty>{t('features.todos.assignee.noMembersFound')}</CommandEmpty>
                           <CommandGroup>
                             {filteredMembers
                               .filter((m: any) => !selectedUserIds.includes(m.user?.id))
@@ -519,7 +521,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No users assigned</p>
+              <p className="text-sm text-muted-foreground">{t('features.todos.assignee.noUsersAssigned')}</p>
             )}
           </div>
 
@@ -528,7 +530,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
             <div>
               <label className="mb-2 block text-sm font-medium">
                 <Building2 className="mr-2 inline h-4 w-4" />
-                Group
+                {t('features.todos.group.title')}
               </label>
               <Link
                 href={`/group/${todo.group.id}`}
@@ -548,7 +550,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
             <div>
               <label className="mb-2 block text-sm font-medium">
                 <Tag className="mr-2 inline h-4 w-4" />
-                Tags
+                {t('features.todos.detail.tags')}
               </label>
               <div className="flex flex-wrap gap-2">
                 {todo.tags.map((tag: string, idx: number) => (
@@ -564,14 +566,14 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
           <div className="border-t pt-4 text-xs text-muted-foreground">
             <div className="grid grid-cols-2 gap-2">
               <div>
-                Created: {todo.createdAt ? new Date(todo.createdAt).toLocaleString() : 'N/A'}
+                {t('features.todos.detail.created')}: {todo.createdAt ? new Date(todo.createdAt).toLocaleString() : 'N/A'}
               </div>
               <div>
-                Updated: {todo.updatedAt ? new Date(todo.updatedAt).toLocaleString() : 'N/A'}
+                {t('features.todos.detail.updated')}: {todo.updatedAt ? new Date(todo.updatedAt).toLocaleString() : 'N/A'}
               </div>
               {todo.completedAt && (
                 <div className="col-span-2">
-                  Completed: {new Date(todo.completedAt).toLocaleString()}
+                  {t('features.todos.status.completed')}: {new Date(todo.completedAt).toLocaleString()}
                 </div>
               )}
             </div>

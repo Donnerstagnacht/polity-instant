@@ -46,31 +46,31 @@ type WithRight =
   | 'activeVotingRight'
   | 'passiveVotingRight';
 
-const RIGHTS: { value: WithRight; label: string; description: string }[] = [
+const RIGHTS_KEYS: { value: WithRight; labelKey: string; descKey: string }[] = [
   {
     value: 'informationRight',
-    label: 'Informationsrecht',
-    description: 'Recht auf Information und Einsicht',
+    labelKey: 'common.network.rightInfo',
+    descKey: 'common.network.rightInfoDesc',
   },
   {
     value: 'amendmentRight',
-    label: 'Antragsrecht',
-    description: 'Recht, Anträge zu stellen',
+    labelKey: 'common.network.rightAmendment',
+    descKey: 'common.network.rightAmendmentDesc',
   },
   {
     value: 'rightToSpeak',
-    label: 'Rederecht',
-    description: 'Recht, in Sitzungen zu sprechen',
+    labelKey: 'common.network.rightSpeak',
+    descKey: 'common.network.rightSpeakDesc',
   },
   {
     value: 'activeVotingRight',
-    label: 'Aktives Stimmrecht',
-    description: 'Recht, an Abstimmungen teilzunehmen',
+    labelKey: 'common.network.rightActiveVoting',
+    descKey: 'common.network.rightActiveVotingDesc',
   },
   {
     value: 'passiveVotingRight',
-    label: 'Passives Stimmrecht',
-    description: 'Recht, gewählt zu werden',
+    labelKey: 'common.network.rightPassiveVoting',
+    descKey: 'common.network.rightPassiveVotingDesc',
   },
 ];
 
@@ -239,9 +239,9 @@ export function LinkGroupDialog({
 
       if (transactions.length > 0) {
           await db.transact(transactions);
-          toast.success(isEditMode ? 'Beziehungen aktualisiert.' : 'Beziehungen erstellt.');
+          toast.success(isEditMode ? t('common.network.relationshipsUpdated') : t('common.network.relationshipsCreated'));
       } else {
-          toast.info('Keine Änderungen vorgenommen.');
+          toast.info(t('common.network.noChanges'));
       }
 
       if (!isEditMode) {
@@ -254,7 +254,7 @@ export function LinkGroupDialog({
 
     } catch (error) {
       console.error('Error managing group relationships:', error);
-      toast.error('Fehler beim Speichern der Beziehungen.');
+      toast.error(t('common.network.relationshipSaveError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -262,9 +262,9 @@ export function LinkGroupDialog({
 
   const getRelationshipLabel = () => {
     if (relationshipType === 'isParent') {
-      return 'Als übergeordnete Gruppe';
+      return t('common.network.asParentGroup');
     } else {
-      return 'Als untergeordnete Gruppe';
+      return t('common.network.asChildGroup');
     }
   };
 
@@ -289,11 +289,11 @@ export function LinkGroupDialog({
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>{isEditMode ? 'Beziehung bearbeiten' : 'Gruppe verknüpfen'}</DialogTitle>
+          <DialogTitle>{isEditMode ? t('common.network.editRelationship') : t('common.network.linkGroupTitle')}</DialogTitle>
           <DialogDescription>
             {isEditMode 
-                ? `Rechte für "${availableGroups.find(g => g.id === selectedGroupId)?.name || 'Gruppe'}" verwalten.`
-                : `Verknüpfen Sie "${currentGroupName}" mit einer anderen Gruppe.`
+                ? t('common.network.editRelationshipDescription', { groupName: availableGroups.find(g => g.id === selectedGroupId)?.name || 'Gruppe' })
+                : t('common.network.linkGroupDescription', { groupName: currentGroupName })
             }
           </DialogDescription>
         </DialogHeader>
@@ -301,14 +301,14 @@ export function LinkGroupDialog({
         <div className="grid gap-4 py-4">
           {/* Group Selection */}
           <div className="grid gap-2">
-            <Label htmlFor="group">Gruppe auswählen</Label>
+            <Label htmlFor="group">{t('common.network.selectGroup')}</Label>
             <Select 
                 value={selectedGroupId} 
                 onValueChange={setSelectedGroupId}
                 disabled={isEditMode}
             >
               <SelectTrigger id="group">
-                <SelectValue placeholder="Gruppe auswählen..." />
+                <SelectValue placeholder={t('common.network.selectGroupPlaceholder')} />
               </SelectTrigger>
               <SelectContent>
                 {availableGroups.map(group => (
@@ -322,7 +322,7 @@ export function LinkGroupDialog({
 
           {/* Relationship Type */}
           <div className="grid gap-2">
-            <Label htmlFor="relationshipType">Beziehungstyp</Label>
+            <Label htmlFor="relationshipType">{t('common.network.relationshipTypeLabel')}</Label>
             <Select
               value={relationshipType}
               onValueChange={value => setRelationshipType(value as RelationshipType)}
@@ -332,8 +332,8 @@ export function LinkGroupDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="isParent">Als übergeordnete Gruppe</SelectItem>
-                <SelectItem value="isChild">Als untergeordnete Gruppe</SelectItem>
+                <SelectItem value="isParent">{t('common.network.asParentGroup')}</SelectItem>
+                <SelectItem value="isChild">{t('common.network.asChildGroup')}</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-sm text-muted-foreground">{getRelationshipLabel()}</p>
@@ -341,9 +341,9 @@ export function LinkGroupDialog({
 
           {/* Rights Selection */}
           <div className="grid gap-3">
-            <Label>Rechte auswählen (mehrere möglich)</Label>
+            <Label>{t('common.network.selectRights')}</Label>
             <div className="grid gap-2">
-              {RIGHTS.map(right => (
+              {RIGHTS_KEYS.map(right => (
                 <button
                   key={right.value}
                   type="button"
@@ -364,8 +364,8 @@ export function LinkGroupDialog({
                     {selectedRights.has(right.value) && <Check className="h-3 w-3" />}
                   </div>
                   <div className="flex-1">
-                    <div className="font-medium">{right.label}</div>
-                    <div className="text-sm text-muted-foreground">{right.description}</div>
+                    <div className="font-medium">{t(right.labelKey)}</div>
+                    <div className="text-sm text-muted-foreground">{t(right.descKey)}</div>
                   </div>
                 </button>
               ))}
@@ -375,15 +375,15 @@ export function LinkGroupDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>
-            Abbrechen
+            {t('common.actions.cancel')}
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={!selectedGroupId || isSubmitting || isLoadingQuery}
           >
             {isSubmitting
-              ? 'Speichern...'
-              : isEditMode ? 'Änderungen speichern' : 'Erstellen'}
+              ? t('common.network.saving')
+              : isEditMode ? t('common.network.saveChanges') : t('common.actions.create')}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -9,6 +10,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export function PWAInstallPrompt() {
+  const { t } = useTranslation();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
 
@@ -76,15 +78,15 @@ export function PWAInstallPrompt() {
       <div className="rounded-lg border border-border bg-background p-4 shadow-lg">
         <div className="flex items-start gap-3">
           <div className="flex-1">
-            <h3 className="font-semibold text-foreground">Install Polity</h3>
+            <h3 className="font-semibold text-foreground">{t('common.pwa.installTitle')}</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Install our app for quick access and a better experience
+              {t('common.pwa.installDescription')}
             </p>
           </div>
           <button
             onClick={handleDismiss}
             className="text-muted-foreground hover:text-foreground"
-            aria-label="Dismiss"
+            aria-label={t('common.pwa.dismiss')}
           >
             <X className="h-5 w-5" />
           </button>
@@ -94,13 +96,13 @@ export function PWAInstallPrompt() {
             onClick={handleDismiss}
             className="flex-1 rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
           >
-            Not now
+            {t('common.pwa.notNow')}
           </button>
           <button
             onClick={handleInstall}
             className="flex-1 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
-            Install
+            {t('common.pwa.install')}
           </button>
         </div>
       </div>

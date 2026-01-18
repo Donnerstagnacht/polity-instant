@@ -5,6 +5,7 @@ import { Send } from 'lucide-react';
 import { CardContent } from '@/components/ui/card';
 import { Conversation } from '../types';
 import { getOtherParticipant } from '../utils';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface MessageInputProps {
   conversation: Conversation;
@@ -17,6 +18,7 @@ export function MessageInput({
   currentUserId,
   onSendMessage,
 }: MessageInputProps) {
+  const { t } = useTranslation();
   const [messageText, setMessageText] = useState('');
 
   const handleSendMessage = () => {
@@ -25,19 +27,19 @@ export function MessageInput({
     setMessageText('');
   };
 
+  const otherParticipantName = getOtherParticipant(conversation, currentUserId)?.name || t('common.labels.unknownUser');
+
   return (
     <CardContent className="flex-shrink-0 border-t p-4">
       {conversation.type !== 'group' &&
       conversation.status === 'pending' &&
       conversation.requestedBy?.id === currentUserId ? (
         <div className="text-center text-sm text-muted-foreground">
-          Waiting for{' '}
-          {getOtherParticipant(conversation, currentUserId)?.name || 'the other user'} to
-          accept your conversation request
+          {t('features.messages.conversation.waitingForAccept', { name: otherParticipantName })}
         </div>
       ) : conversation.status === 'rejected' ? (
         <div className="text-center text-sm text-muted-foreground">
-          This conversation request was rejected
+          {t('features.messages.conversation.rejected')}
         </div>
       ) : (
         <form
@@ -48,7 +50,7 @@ export function MessageInput({
           className="flex gap-2"
         >
           <Input
-            placeholder="Type a message..."
+            placeholder={t('features.messages.compose.messagePlaceholder')}
             value={messageText}
             onChange={(e) => setMessageText(e.target.value)}
             className="flex-1"

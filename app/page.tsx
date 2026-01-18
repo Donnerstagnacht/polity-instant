@@ -19,10 +19,10 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { db } from '../db/db';
-// import { useTranslation } from 'react-i18next'; // Temporarily disabled
+import { useTranslation } from '@/hooks/use-translation';
 
 export default function HomePage() {
-  // const { t } = useTranslation(); // Temporarily disabled
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const router = useRouter();
   const showAriaKaiParam = searchParams.get('showAriaKai');
@@ -134,7 +134,7 @@ export default function HomePage() {
       <PageWrapper className="container mx-auto p-8">
         <AriaKaiWelcomeDialog open={showWelcomeDialog} onOpenChange={setShowWelcomeDialog} />
         <div className="mb-8 text-center">
-          <h1 className="mb-4 text-4xl font-bold">Welcome back, {user?.email}!</h1>
+          <h1 className="mb-4 text-4xl font-bold">{t('pages.home.welcomeBack', { email: user?.email })}</h1>
         </div>
         <div className="mb-8">
           <SubscriptionTimeline />
@@ -149,10 +149,9 @@ export default function HomePage() {
       <AlertDialog open={showAlphaWarning} onOpenChange={setShowAlphaWarning}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Early Alpha Version</AlertDialogTitle>
+            <AlertDialogTitle>{t('pages.home.alphaWarning.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This is an early apha version. Database overwrites can happen and delete your data. In
-              case you would like to be an early tester, contact{' '}
+              {t('pages.home.alphaWarning.description')}{' '}
               <a
                 href="mailto:tobias.hassebrock@gmail.com"
                 className="font-medium text-primary underline hover:text-primary/80"
@@ -162,7 +161,7 @@ export default function HomePage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={handleDismissWarning}>I Understand</AlertDialogAction>
+            <AlertDialogAction onClick={handleDismissWarning}>{t('pages.home.alphaWarning.dismiss')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -171,24 +170,23 @@ export default function HomePage() {
         <div className="mx-auto max-w-4xl text-center">
           {/* Hero Section */}
           <h1 className="mb-6 text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl">
-            Democracy Reimagined for the Digital Age
+            {t('pages.home.hero.title')}
           </h1>
           <p className="mb-8 text-xl text-muted-foreground sm:text-2xl">
-            Empowering communities, organizations, and governments with collaborative
-            decision-making tools
+            {t('pages.home.hero.subtitle')}
           </p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link href="/auth">
               <Button size="lg" className="w-full sm:w-auto">
-                Get Started
+                {t('pages.home.hero.getStarted')}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
             <Link href="/features">
               <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                Explore Features
+                {t('pages.home.hero.exploreFeatures')}
               </Button>
             </Link>
           </div>
@@ -199,24 +197,24 @@ export default function HomePage() {
               href="/solutions"
               className="rounded-lg border bg-card p-4 transition-colors hover:bg-accent"
             >
-              <h3 className="font-semibold">Solutions</h3>
-              <p className="mt-1 text-muted-foreground">For parties, governments, NGOs & more</p>
+              <h3 className="font-semibold">{t('pages.home.quickLinks.solutions.title')}</h3>
+              <p className="mt-1 text-muted-foreground">{t('pages.home.quickLinks.solutions.description')}</p>
             </Link>
             <Link
               href="/pricing"
               className="rounded-lg border bg-card p-4 transition-colors hover:bg-accent"
             >
-              <h3 className="font-semibold">Pricing</h3>
+              <h3 className="font-semibold">{t('pages.home.quickLinks.pricing.title')}</h3>
               <p className="mt-1 text-muted-foreground">
-                Transparent pricing from free to enterprise
+                {t('pages.home.quickLinks.pricing.description')}
               </p>
             </Link>
             <Link
               href="/features"
               className="rounded-lg border bg-card p-4 transition-colors hover:bg-accent"
             >
-              <h3 className="font-semibold">Features</h3>
-              <p className="mt-1 text-muted-foreground">Full feature overview</p>
+              <h3 className="font-semibold">{t('pages.home.quickLinks.features.title')}</h3>
+              <p className="mt-1 text-muted-foreground">{t('pages.home.quickLinks.features.description')}</p>
             </Link>
           </div>
         </div>

@@ -15,6 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { Loader2 } from 'lucide-react';
 import { ImageUpload } from '@/components/shared/ImageUpload';
 import { useEventUpdate } from '../hooks/useEventUpdate';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface EventEditProps {
   eventId: string;
@@ -22,6 +23,7 @@ interface EventEditProps {
 
 export function EventEdit({ eventId }: EventEditProps) {
   const router = useRouter();
+  const { t } = useTranslation();
   const {
     formData,
     tagInput,
@@ -40,7 +42,7 @@ export function EventEdit({ eventId }: EventEditProps) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-muted-foreground">Loading event data...</p>
+        <p className="text-muted-foreground">{t('features.events.editPage.loading')}</p>
       </div>
     );
   }
@@ -50,11 +52,11 @@ export function EventEdit({ eventId }: EventEditProps) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <p className="text-lg font-semibold">Event not found</p>
-          <p className="text-muted-foreground">No event data exists for this ID</p>
+          <p className="text-lg font-semibold">{t('features.events.editPage.notFound')}</p>
+          <p className="text-muted-foreground">{t('features.events.editPage.notFoundDescription')}</p>
           <div className="mt-6">
             <Button onClick={() => router.push(`/calendar`)} variant="default">
-              Back to Calendar
+              {t('features.events.backToCalendar')}
             </Button>
           </div>
         </div>
@@ -66,8 +68,8 @@ export function EventEdit({ eventId }: EventEditProps) {
   return (
     <div className="container mx-auto max-w-4xl p-4">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Edit Event</h1>
-        <p className="text-muted-foreground">Update event information</p>
+        <h1 className="text-3xl font-bold">{t('features.events.editPage.title')}</h1>
+        <p className="text-muted-foreground">{t('features.events.editPage.subtitle')}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -75,34 +77,34 @@ export function EventEdit({ eventId }: EventEditProps) {
         <ImageUpload
           currentImage={formData.imageURL}
           onImageChange={(url: string) => updateField('imageURL', url)}
-          label="Event Image"
-          description="Upload an event image or provide a URL"
+          label={t('features.events.editPage.image.label')}
+          description={t('features.events.editPage.image.description')}
         />
 
         {/* Basic Information */}
         <Card>
           <CardHeader>
-            <CardTitle>Basic Information</CardTitle>
-            <CardDescription>Public event information</CardDescription>
+            <CardTitle>{t('features.events.editPage.basicInfo.title')}</CardTitle>
+            <CardDescription>{t('features.events.editPage.basicInfo.description')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Event Title *</Label>
+              <Label htmlFor="title">{t('features.events.editPage.eventTitle')}</Label>
               <Input
                 id="title"
                 value={formData.title}
                 onChange={e => updateField('title', e.target.value)}
-                placeholder="Event title"
+                placeholder={t('features.events.editPage.eventTitlePlaceholder')}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">{t('features.events.editPage.eventDescription')}</Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={e => updateField('description', e.target.value)}
-                placeholder="Describe the event and its purpose..."
+                placeholder={t('features.events.editPage.eventDescriptionPlaceholder')}
                 rows={6}
               />
             </div>
@@ -112,7 +114,7 @@ export function EventEdit({ eventId }: EventEditProps) {
                 checked={formData.isPublic}
                 onCheckedChange={checked => updateField('isPublic', checked)}
               />
-              <Label htmlFor="isPublic">Public Event</Label>
+              <Label htmlFor="isPublic">{t('features.events.editPage.publicEvent')}</Label>
             </div>
           </CardContent>
         </Card>
@@ -120,13 +122,13 @@ export function EventEdit({ eventId }: EventEditProps) {
         {/* Date & Time Information */}
         <Card>
           <CardHeader>
-            <CardTitle>Date & Time</CardTitle>
-            <CardDescription>When is this event happening?</CardDescription>
+            <CardTitle>{t('features.events.editPage.dateTime.title')}</CardTitle>
+            <CardDescription>{t('features.events.editPage.dateTime.description')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="startDate">Start Date & Time *</Label>
+                <Label htmlFor="startDate">{t('features.events.editPage.dateTime.startDate')}</Label>
                 <Input
                   id="startDate"
                   type="datetime-local"
@@ -136,7 +138,7 @@ export function EventEdit({ eventId }: EventEditProps) {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="endDate">End Date & Time</Label>
+                <Label htmlFor="endDate">{t('features.events.editPage.dateTime.endDate')}</Label>
                 <Input
                   id="endDate"
                   type="datetime-local"
@@ -151,28 +153,28 @@ export function EventEdit({ eventId }: EventEditProps) {
         {/* Location & Capacity */}
         <Card>
           <CardHeader>
-            <CardTitle>Location & Capacity</CardTitle>
-            <CardDescription>Where is this event and how many can attend?</CardDescription>
+            <CardTitle>{t('features.events.editPage.locationCapacity.title')}</CardTitle>
+            <CardDescription>{t('features.events.editPage.locationCapacity.description')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
+              <Label htmlFor="location">{t('features.events.editPage.locationCapacity.location')}</Label>
               <Input
                 id="location"
                 value={formData.location}
                 onChange={e => updateField('location', e.target.value)}
-                placeholder="Event location or venue"
+                placeholder={t('features.events.editPage.locationCapacity.locationPlaceholder')}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="capacity">Capacity (optional)</Label>
+              <Label htmlFor="capacity">{t('features.events.editPage.locationCapacity.capacity')}</Label>
               <Input
                 id="capacity"
                 type="number"
                 min="1"
                 value={formData.capacity}
                 onChange={e => updateField('capacity', e.target.value)}
-                placeholder="Maximum number of participants"
+                placeholder={t('features.events.editPage.locationCapacity.capacityPlaceholder')}
               />
             </div>
           </CardContent>
@@ -181,8 +183,8 @@ export function EventEdit({ eventId }: EventEditProps) {
         {/* Tags */}
         <Card>
           <CardHeader>
-            <CardTitle>Tags</CardTitle>
-            <CardDescription>Add tags to categorize this event</CardDescription>
+            <CardTitle>{t('features.events.editPage.tags.title')}</CardTitle>
+            <CardDescription>{t('features.events.editPage.tags.description')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex gap-2">
@@ -195,10 +197,10 @@ export function EventEdit({ eventId }: EventEditProps) {
                     handleAddTag();
                   }
                 }}
-                placeholder="Add a tag"
+                placeholder={t('features.events.editPage.tags.placeholder')}
               />
               <Button type="button" onClick={handleAddTag} variant="outline">
-                Add
+                {t('features.events.add')}
               </Button>
             </div>
             {formData.tags.length > 0 && (
@@ -231,16 +233,16 @@ export function EventEdit({ eventId }: EventEditProps) {
             onClick={() => router.push(`/event/${eventId}`)}
             disabled={isSubmitting}
           >
-            Cancel
+            {t('features.events.cancel')}
           </Button>
           <Button type="submit" disabled={isSubmitting} className="flex-1">
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
+                {t('features.events.editPage.saving')}
               </>
             ) : (
-              'Save Changes'
+              t('features.events.editPage.saveChanges')
             )}
           </Button>
         </div>

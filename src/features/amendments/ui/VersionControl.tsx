@@ -19,6 +19,7 @@ import { GitBranch, Clock, User, Plus, History, Search, Pencil, Check, X } from 
 import { db, tx, id } from '../../../../db/db';
 import { toast } from 'sonner';
 import { notifyVersionCreated } from '@/utils/notification-helpers';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface Version {
   id: string;
@@ -52,6 +53,7 @@ export function VersionControl({
   amendmentId,
   amendmentTitle,
 }: VersionControlProps) {
+  const { t } = useTranslation();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
   const [versionTitle, setVersionTitle] = useState('');
@@ -86,7 +88,7 @@ export function VersionControl({
 
   const handleCreateVersion = async () => {
     if (!versionTitle.trim()) {
-      toast.error('Please enter a version title');
+      toast.error(t('features.amendments.versionControl.enterTitle'));
       return;
     }
 
@@ -121,13 +123,13 @@ export function VersionControl({
 
       await db.transact(transactions);
 
-      toast.success(`Version ${nextVersionNumber} created successfully`);
+      toast.success(`${t('features.amendments.versionControl.versionNumber')} ${nextVersionNumber} ${t('features.amendments.versionControl.createdSuccess')}`);
 
       setVersionTitle('');
       setIsCreateDialogOpen(false);
     } catch (error) {
       console.error('Failed to create version:', error);
-      toast.error('Failed to create version');
+      toast.error(t('features.amendments.versionControl.createFailed'));
     } finally {
       setIsCreating(false);
     }
@@ -137,12 +139,12 @@ export function VersionControl({
     try {
       onRestoreVersion(version.content);
 
-      toast.success(`Restored to version ${version.versionNumber}`);
+      toast.success(`${t('features.amendments.versionControl.restoredTo')} ${version.versionNumber}`);
 
       setIsHistoryDialogOpen(false);
     } catch (error) {
       console.error('Failed to restore version:', error);
-      toast.error('Failed to restore version');
+      toast.error(t('features.amendments.versionControl.restoreFailed'));
     }
   };
 
@@ -159,7 +161,7 @@ export function VersionControl({
 
   const handleUpdateVersionTitle = async (versionId: string, newTitle: string) => {
     if (!newTitle.trim()) {
-      toast.error('Version title cannot be empty');
+      toast.error(t('features.amendments.versionControl.titleEmpty'));
       return;
     }
 
@@ -170,29 +172,29 @@ export function VersionControl({
         }),
       ]);
 
-      toast.success('Version title updated successfully');
+      toast.success(t('features.amendments.versionControl.titleUpdated'));
 
       setEditingVersionId(null);
       setEditingTitle('');
     } catch (error) {
       console.error('Failed to update version title:', error);
-      toast.error('Failed to update version title');
+      toast.error(t('features.amendments.versionControl.updateFailed'));
     }
   };
 
   const getCreationTypeBadge = (type: string) => {
     const variants: Record<
       string,
-      { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }
+      { labelKey: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }
     > = {
-      manual: { label: 'Manual', variant: 'default' },
-      suggestion_added: { label: 'Suggestion Added', variant: 'secondary' },
-      suggestion_accepted: { label: 'Accepted', variant: 'outline' },
-      suggestion_declined: { label: 'Declined', variant: 'destructive' },
+      manual: { labelKey: 'features.amendments.versionControl.creationType.manual', variant: 'default' },
+      suggestion_added: { labelKey: 'features.amendments.versionControl.creationType.suggestionAdded', variant: 'secondary' },
+      suggestion_accepted: { labelKey: 'features.amendments.versionControl.creationType.suggestionAccepted', variant: 'outline' },
+      suggestion_declined: { labelKey: 'features.amendments.versionControl.creationType.suggestionDeclined', variant: 'destructive' },
     };
 
-    const config = variants[type] || { label: type, variant: 'outline' };
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    const config = variants[type] || { labelKey: type, variant: 'outline' };
+    return <Badge variant={config.variant}>{t(config.labelKey)}</Badge>;
   };
 
   return (
@@ -201,22 +203,22 @@ export function VersionControl({
         <DialogTrigger asChild>
           <Button variant="outline" size="sm">
             <Plus className="mr-2 h-4 w-4" />
-            Create Version
+            {t('features.amendments.versionControl.createVersion')}
           </Button>
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create New Version</DialogTitle>
+            <DialogTitle>{t('features.amendments.versionControl.createNewVersion')}</DialogTitle>
             <DialogDescription>
-              Save the current state of the amendment as a new version.
+              {t('features.amendments.versionControl.saveCurrentState')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="version-title">Version Title</Label>
+              <Label htmlFor="version-title">{t('features.amendments.versionControl.versionTitle')}</Label>
               <Input
                 id="version-title"
-                placeholder="e.g., Draft completed, Final review, etc."
+                placeholder={t('features.amendments.versionControl.versionTitlePlaceholder')}
                 value={versionTitle}
                 onChange={e => setVersionTitle(e.target.value)}
                 onKeyDown={e => {
@@ -227,13 +229,13 @@ export function VersionControl({
               />
             </div>
             <div className="text-sm text-muted-foreground">
-              Version number: v.
+              {t('features.amendments.versionControl.versionNumber')}: v.
               {versions.length > 0 ? Math.max(...versions.map(v => v.versionNumber)) + 1 : 1}
             </div>
           </div>
           <DialogFooter>
             <Button onClick={handleCreateVersion} disabled={isCreating || !versionTitle.trim()}>
-              {isCreating ? 'Creating...' : 'Create Version'}
+              {isCreating ? t('features.amendments.versionControl.creating') : t('features.amendments.versionControl.createVersion')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -243,7 +245,7 @@ export function VersionControl({
         <DialogTrigger asChild>
           <Button variant="outline" size="sm">
             <History className="mr-2 h-4 w-4" />
-            Version History
+            {t('features.amendments.versionControl.versionHistory')}
             {versions.length > 0 && (
               <Badge variant="secondary" className="ml-2">
                 {versions.length}
@@ -253,16 +255,16 @@ export function VersionControl({
         </DialogTrigger>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Version History</DialogTitle>
+            <DialogTitle>{t('features.amendments.versionControl.versionHistory')}</DialogTitle>
             <DialogDescription>
-              View and restore previous versions of this amendment.
+              {t('features.amendments.versionControl.viewAndRestore')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search by title, version number, or author..."
+              placeholder={t('features.amendments.versionControl.searchPlaceholder')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -272,7 +274,7 @@ export function VersionControl({
           <ScrollArea className="h-[400px] pr-4">
             {isLoading ? (
               <div className="flex items-center justify-center py-8 text-muted-foreground">
-                Loading versions...
+                {t('features.amendments.versionControl.loadingVersions')}
               </div>
             ) : filteredVersions.length > 0 ? (
               <div className="space-y-4">
@@ -357,7 +359,7 @@ export function VersionControl({
                       size="sm"
                       onClick={() => handleRestoreVersion(version)}
                     >
-                      Restore
+                      {t('features.amendments.versionControl.restore')}
                     </Button>
                   </div>
                 ))}
@@ -366,11 +368,11 @@ export function VersionControl({
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <History className="mb-2 h-12 w-12 text-muted-foreground" />
                 <p className="text-muted-foreground">
-                  {searchQuery ? 'No versions found matching your search' : 'No versions yet'}
+                  {searchQuery ? t('features.amendments.versionControl.noVersionsFound') : t('features.amendments.versionControl.noVersionsYet')}
                 </p>
                 {!searchQuery && (
                   <p className="text-sm text-muted-foreground">
-                    Create your first version to start tracking changes
+                    {t('features.amendments.versionControl.createFirstVersion')}
                   </p>
                 )}
               </div>

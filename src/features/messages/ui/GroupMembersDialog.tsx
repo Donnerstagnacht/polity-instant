@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Conversation } from '../types';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface GroupMembersDialogProps {
   open: boolean;
@@ -19,13 +20,16 @@ export function GroupMembersDialog({
   onOpenChange,
   conversation,
 }: GroupMembersDialogProps) {
+  const { t } = useTranslation();
+  const groupName = conversation?.name || conversation?.group?.name || t('features.messages.groupMembers.defaultGroupName');
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Group Members</DialogTitle>
+          <DialogTitle>{t('features.messages.groupMembers.title')}</DialogTitle>
           <DialogDescription>
-            {conversation?.name || conversation?.group?.name || 'Group'} members
+            {t('features.messages.groupMembers.description', { groupName })}
           </DialogDescription>
         </DialogHeader>
         <div className="max-h-[400px] space-y-2 overflow-y-auto py-4">
@@ -44,7 +48,7 @@ export function GroupMembersDialog({
               </Avatar>
               <div className="flex-1">
                 <p className="font-semibold">
-                  {participant.user?.name || 'Unknown User'}
+                  {participant.user?.name || t('common.labels.unknownUser')}
                 </p>
                 {participant.user?.handle && (
                   <p className="text-sm text-muted-foreground">

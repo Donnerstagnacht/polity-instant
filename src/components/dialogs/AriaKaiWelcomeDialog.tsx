@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { MessageCircle, Sparkles } from 'lucide-react';
 import { db } from '../../../db/db';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface AriaKaiWelcomeDialogProps {
   open: boolean;
@@ -21,6 +22,7 @@ interface AriaKaiWelcomeDialogProps {
 }
 
 export function AriaKaiWelcomeDialog({ open, onOpenChange }: AriaKaiWelcomeDialogProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const [isNavigating, setIsNavigating] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
@@ -56,9 +58,9 @@ export function AriaKaiWelcomeDialog({ open, onOpenChange }: AriaKaiWelcomeDialo
               </AvatarFallback>
             </Avatar>
             <div>
-              <DialogTitle className="text-2xl">Welcome to Polity!</DialogTitle>
+              <DialogTitle className="text-2xl">{t('components.ariaKaiWelcome.title')}</DialogTitle>
               <DialogDescription className="mt-1 text-base">
-                Meet Aria & Kai, your personal assistants
+                {t('components.ariaKaiWelcome.subtitle')}
               </DialogDescription>
             </div>
           </div>
@@ -68,28 +70,21 @@ export function AriaKaiWelcomeDialog({ open, onOpenChange }: AriaKaiWelcomeDialo
           <div className="flex items-start gap-3">
             <Sparkles className="mt-0.5 h-5 w-5 flex-shrink-0 text-purple-500" />
             <p className="text-sm text-muted-foreground">
-              Hey! We're <span className="font-semibold text-foreground">Aria & Kai</span>, and
-              we're here to help you navigate Polity and make the most of all its features.
+              {t('components.ariaKaiWelcome.intro')}
             </p>
           </div>
 
           <div className="flex items-start gap-3">
             <MessageCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-500" />
             <p className="text-sm text-muted-foreground">
-              Whenever you need assistance, tips, or want to learn about groups, events, amendments,
-              and more, just{' '}
-              <span className="font-semibold text-foreground">
-                find us in your message conversations
-              </span>
-              . We're always ready to help!
+              {t('components.ariaKaiWelcome.helpText')}
             </p>
           </div>
 
           <div className="rounded-lg border bg-muted/50 p-4">
-            <p className="mb-2 text-sm font-medium">Quick Tip:</p>
+            <p className="mb-2 text-sm font-medium">{t('components.ariaKaiWelcome.quickTip')}</p>
             <p className="text-sm text-muted-foreground">
-              We've already started a conversation with you. Click below to see where you can always
-              find us!
+              {t('components.ariaKaiWelcome.quickTipText')}
             </p>
           </div>
 
@@ -103,18 +98,18 @@ export function AriaKaiWelcomeDialog({ open, onOpenChange }: AriaKaiWelcomeDialo
               htmlFor="dontShowAgain"
               className="cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
-              Don't show this message again
+              {t('components.ariaKaiWelcome.dontShowAgain')}
             </label>
           </div>
         </div>
 
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={handleClose}>
-            I'll find you later
+            {t('components.ariaKaiWelcome.findLater')}
           </Button>
           <Button onClick={handleShowLocation} disabled={isNavigating}>
             <MessageCircle className="mr-2 h-4 w-4" />
-            Show me my assistant location
+            {t('components.ariaKaiWelcome.showLocation')}
           </Button>
         </div>
       </DialogContent>

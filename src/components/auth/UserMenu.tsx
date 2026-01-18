@@ -163,7 +163,7 @@ export function UserMenu({
             <>
               <DropdownMenuSeparator />
               <DropdownMenuLabel className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                Groups
+                {t('common.labels.groups')}
               </DropdownMenuLabel>
               {activeGroups.map((group: any) => (
                 <DropdownMenuItem
@@ -204,7 +204,7 @@ export function UserMenu({
             <AlertDialogDescription>{t('auth.logout.confirm')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.actions.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleLogout}>{t('auth.logout.button')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

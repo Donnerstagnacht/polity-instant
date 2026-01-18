@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { db, tx } from '../../../db/db';
 import { toast } from 'sonner';
 import { TodoDetailDialog } from './todo-detail-dialog';
+import { useTranslation } from '@/hooks/use-translation';
 
 type TodoStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 type TodoPriority = 'low' | 'medium' | 'high' | 'urgent';
@@ -29,17 +30,18 @@ interface KanbanBoardProps {
   todos: Todo[];
 }
 
-const COLUMNS: { id: TodoStatus; title: string; color: string }[] = [
-  { id: 'pending', title: 'To Do', color: 'bg-slate-100 dark:bg-slate-800' },
-  { id: 'in_progress', title: 'In Progress', color: 'bg-blue-50 dark:bg-blue-950' },
-  { id: 'completed', title: 'Completed', color: 'bg-green-50 dark:bg-green-950' },
-  { id: 'cancelled', title: 'Cancelled', color: 'bg-red-50 dark:bg-red-950' },
-];
-
 export function KanbanBoard({ todos }: KanbanBoardProps) {
+  const { t } = useTranslation();
   const [draggedTodoId, setDraggedTodoId] = useState<string | null>(null);
   const [selectedTodo, setSelectedTodo] = useState<Todo | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+
+  const COLUMNS: { id: TodoStatus; titleKey: string; color: string }[] = [
+    { id: 'pending', titleKey: 'features.todos.kanban.toDo', color: 'bg-slate-100 dark:bg-slate-800' },
+    { id: 'in_progress', titleKey: 'features.todos.kanban.inProgress', color: 'bg-blue-50 dark:bg-blue-950' },
+    { id: 'completed', titleKey: 'features.todos.kanban.completed', color: 'bg-green-50 dark:bg-green-950' },
+    { id: 'cancelled', titleKey: 'features.todos.kanban.cancelled', color: 'bg-red-50 dark:bg-red-950' },
+  ];
 
   const handleDragStart = (todoId: string) => {
     setDraggedTodoId(todoId);
@@ -65,10 +67,10 @@ export function KanbanBoard({ todos }: KanbanBoardProps) {
       }
 
       await db.transact([tx.todos[draggedTodoId].update(updates)]);
-      toast.success('Todo status updated!');
+      toast.success(t('features.todos.kanban.statusUpdated'));
     } catch (error) {
       console.error('Failed to update todo:', error);
-      toast.error('Failed to update todo');
+      toast.error(t('features.todos.kanban.updateFailed'));
     } finally {
       setDraggedTodoId(null);
     }
@@ -97,8 +99,8 @@ export function KanbanBoard({ todos }: KanbanBoardProps) {
               onDrop={() => handleDrop(column.id)}
             >
               <div className="mb-4">
-                <h3 className="text-lg font-semibold">{column.title}</h3>
-                <p className="text-sm text-muted-foreground">{columnTodos.length} tasks</p>
+                <h3 className="text-lg font-semibold">{t(column.titleKey)}</h3>
+                <p className="text-sm text-muted-foreground">{columnTodos.length} {t('features.todos.kanban.tasks')}</p>
               </div>
 
               <div className="space-y-3">
@@ -109,6 +111,7 @@ export function KanbanBoard({ todos }: KanbanBoardProps) {
                     onDragStart={handleDragStart}
                     onClick={handleTodoClick}
                     isDragging={draggedTodoId === todo.id}
+                    t={t}
                   />
                 ))}
               </div>
@@ -133,9 +136,10 @@ interface TodoKanbanCardProps {
   onDragStart: (todoId: string) => void;
   onClick: (todo: Todo) => void;
   isDragging: boolean;
+  t: (key: string, options?: any) => string;
 }
 
-function TodoKanbanCard({ todo, onDragStart, onClick, isDragging }: TodoKanbanCardProps) {
+function TodoKanbanCard({ todo, onDragStart, onClick, isDragging, t }: TodoKanbanCardProps) {
   const isOverdue = todo.dueDate && todo.status !== 'completed' && todo.dueDate < Date.now();
   const [isDraggingCard, setIsDraggingCard] = useState(false);
 
@@ -176,10 +180,10 @@ function TodoKanbanCard({ todo, onDragStart, onClick, isDragging }: TodoKanbanCa
         <div className="space-y-2">
           {/* Priority */}
           <div className="flex items-center justify-between">
-            <PriorityBadge priority={todo.priority} />
+            <PriorityBadge priority={todo.priority} t={t} />
             {isOverdue && (
               <Badge variant="destructive" className="text-xs">
-                Overdue
+                {t('features.todos.status.overdue')}
               </Badge>
             )}
           </div>
@@ -234,7 +238,7 @@ function TodoKanbanCard({ todo, onDragStart, onClick, isDragging }: TodoKanbanCa
   );
 }
 
-function PriorityBadge({ priority }: { priority: TodoPriority }) {
+function PriorityBadge({ priority, t }: { priority: TodoPriority; t: (key: string) => string }) {
   const colors = {
     urgent: 'bg-red-500/10 text-red-500 border-red-500/20',
     high: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
@@ -244,7 +248,7 @@ function PriorityBadge({ priority }: { priority: TodoPriority }) {
 
   return (
     <Badge variant="outline" className={`${colors[priority]} text-xs capitalize`}>
-      {priority}
+      {t(`features.todos.priority.${priority}`)}
     </Badge>
   );
 }

@@ -5,6 +5,7 @@ import { ArrowLeft, Pin, PinOff, Trash2 } from 'lucide-react';
 import { Conversation } from '../types';
 import { getConversationDisplay } from '../utils';
 import { ARIA_KAI_USER_ID } from '../../../../e2e/aria-kai';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface ConversationHeaderProps {
   conversation: Conversation;
@@ -23,6 +24,7 @@ export function ConversationHeader({
   onDeleteClick,
   onMembersClick,
 }: ConversationHeaderProps) {
+  const { t } = useTranslation();
   const display = getConversationDisplay(conversation, currentUserId);
 
   return (
@@ -49,7 +51,7 @@ export function ConversationHeader({
               onClick={onMembersClick}
               className="text-sm text-muted-foreground transition-colors hover:text-foreground hover:underline"
             >
-              {display.participantCount} members
+              {t('features.messages.conversation.members', { count: display.participantCount })}
             </button>
           ) : (
             display.handle && (
@@ -73,7 +75,9 @@ export function ConversationHeader({
               )
             }
             title={
-              conversation.pinned ? 'Unpin conversation' : 'Pin conversation'
+              conversation.pinned 
+                ? t('features.messages.conversation.unpin') 
+                : t('features.messages.conversation.pin')
             }
           >
             {conversation.pinned ? (
@@ -94,8 +98,8 @@ export function ConversationHeader({
               onClick={() => onDeleteClick(conversation.id)}
               title={
                 conversation.status === 'pending'
-                  ? 'Cancel request'
-                  : 'Delete conversation'
+                  ? t('features.messages.conversation.cancelRequest')
+                  : t('features.messages.conversation.delete')
               }
             >
               <Trash2 className="h-4 w-4" />

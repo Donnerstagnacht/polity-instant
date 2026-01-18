@@ -39,6 +39,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import db from '../../../db/db';
 import { useState as useStateForDelete } from 'react';
+import { useTranslation } from '@/hooks/use-translation';
 
 
 interface GroupRelationshipsManagerProps {
@@ -46,6 +47,7 @@ interface GroupRelationshipsManagerProps {
 }
 
 export function GroupRelationshipsManager({ groupId }: GroupRelationshipsManagerProps) {
+  const { t } = useTranslation();
   const { group } = useGroupData(groupId);
   const [searchQuery, setSearchQuery] = useState('');
   const [directionFilter, setDirectionFilter] = useState<'all' | 'parent' | 'child'>('all');
@@ -163,9 +165,9 @@ export function GroupRelationshipsManager({ groupId }: GroupRelationshipsManager
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>Group Relationships</CardTitle>
+            <CardTitle>{t('common.network.groupRelationships')}</CardTitle>
             <CardDescription>
-              Manage how this group connects to other groups.
+              {t('common.network.groupRelationshipsDescription')}
             </CardDescription>
           </div>
           <PermissionGuard
@@ -187,14 +189,14 @@ export function GroupRelationshipsManager({ groupId }: GroupRelationshipsManager
             <div className="space-y-6">
                 {groupedIncoming.length > 0 && (
                     <div className="rounded-md border p-4 bg-muted/60">
-                        <h3 className="mb-4 font-semibold">Eingehende Anfragen</h3>
+                        <h3 className="mb-4 font-semibold">{t('common.network.incomingRequests')}</h3>
                         <div className="space-y-4">
                             {groupedIncoming.map((req) => (
                                 <div key={req.group.id} className="flex items-center justify-between rounded-lg border bg-background p-3">
                                     <div>
                                         <div className="font-medium">{req.group.name}</div>
                                         <div className="text-sm text-muted-foreground flex items-center gap-2">
-                                            <span>Möchte {req.type === 'parent' ? 'übergeordnete' : 'untergeordnete'} Gruppe sein mit Rechten:</span>
+                                            <span>{req.type === 'parent' ? t('common.network.wantsToBeParent') : t('common.network.wantsToBeChild')}</span>
                                             {req.rights.map((r: string) => (
                                                 <Badge key={r} variant="outline" className="text-xs">{formatRights([r])}</Badge>
                                             ))}
@@ -202,8 +204,8 @@ export function GroupRelationshipsManager({ groupId }: GroupRelationshipsManager
                                     </div>
                                     <div className="flex gap-2">
                                         <PermissionGuard action="manage" resource="groupRelationships" context={{ groupId }}>
-                                            <Button size="sm" variant="outline" onClick={() => handleRejectRequest(req.rels)}>Ablehnen</Button>
-                                            <Button size="sm" onClick={() => handleAcceptRequest(req.rels)}>Akzeptieren</Button>
+                                            <Button size="sm" variant="outline" onClick={() => handleRejectRequest(req.rels)}>{t('common.network.reject')}</Button>
+                                            <Button size="sm" onClick={() => handleAcceptRequest(req.rels)}>{t('common.network.accept')}</Button>
                                         </PermissionGuard>
                                     </div>
                                 </div>
@@ -214,21 +216,21 @@ export function GroupRelationshipsManager({ groupId }: GroupRelationshipsManager
 
                 {groupedOutgoing.length > 0 && (
                     <div className="rounded-md border p-4">
-                        <h3 className="mb-4 font-semibold">Ausstehende Anfragen</h3>
+                        <h3 className="mb-4 font-semibold">{t('common.network.outgoingRequests')}</h3>
                         <div className="space-y-4">
                              {groupedOutgoing.map((req) => (
                                 <div key={req.group.id} className="flex items-center justify-between rounded-lg border bg-background p-3">
                                     <div>
                                         <div className="font-medium">{req.group.name}</div>
                                         <div className="text-sm text-muted-foreground flex items-center gap-2">
-                                            <span>Anfrage als {req.type === 'parent' ? 'übergeordnete' : 'untergeordnete'} Gruppe:</span>
+                                            <span>{req.type === 'parent' ? t('common.network.requestAsParent') : t('common.network.requestAsChild')}</span>
                                             {req.rights.map((r: string) => (
                                                 <Badge key={r} variant="outline" className="text-xs">{formatRights([r])}</Badge>
                                             ))}
                                         </div>
                                     </div>
                                       <PermissionGuard action="manage" resource="groupRelationships" context={{ groupId }}>
-                                        <Button size="sm" variant="outline" onClick={() => handleRejectRequest(req.rels)}>Abbrechen</Button>
+                                        <Button size="sm" variant="outline" onClick={() => handleRejectRequest(req.rels)}>{t('common.network.cancelRequest')}</Button>
                                       </PermissionGuard>
                                 </div>
                             ))}
@@ -239,14 +241,14 @@ export function GroupRelationshipsManager({ groupId }: GroupRelationshipsManager
         )}
 
         <div className="flex items-center justify-between pt-4 border-t">
-           <h3 className="font-semibold">Aktive Beziehungen</h3>
+           <h3 className="font-semibold">{t('common.network.activeRelationships')}</h3>
         </div>
         {/* Filters */}
         <div className="mb-6 flex flex-col gap-4 md:flex-row">
             <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input 
-                    placeholder="Search by group name..." 
+                    placeholder={t('common.network.searchByGroupName')} 
                     className="pl-9"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -258,16 +260,16 @@ export function GroupRelationshipsManager({ groupId }: GroupRelationshipsManager
                         <SelectValue placeholder="Direction" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">All Directions</SelectItem>
-                        <SelectItem value="parent">Parents Only</SelectItem>
-                        <SelectItem value="child">Children Only</SelectItem>
+                        <SelectItem value="all">{t('common.network.allDirections')}</SelectItem>
+                        <SelectItem value="parent">{t('common.network.parentsOnly')}</SelectItem>
+                        <SelectItem value="child">{t('common.network.childrenOnly')}</SelectItem>
                     </SelectContent>
                 </Select>
                  <Button 
                     variant={showIndirect ? "default" : "outline"}
                     onClick={() => setShowIndirect(!showIndirect)}
                  >
-                    {showIndirect ? "Indirect Included" : "Direct Only"}
+                    {showIndirect ? t('common.network.indirectIncluded') : t('common.network.directOnly')}
                  </Button>
             </div>
         </div>
@@ -292,17 +294,17 @@ export function GroupRelationshipsManager({ groupId }: GroupRelationshipsManager
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Group Name</TableHead>
-              <TableHead>Relationship</TableHead>
-              <TableHead>Rights</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t('common.network.groupName')}</TableHead>
+              <TableHead>{t('common.network.relationship')}</TableHead>
+              <TableHead>{t('common.labels.rights')}</TableHead>
+              <TableHead className="text-right">{t('common.actions.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredRelationships.length === 0 ? (
                  <TableRow>
                  <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
-                    No relationships found matching your filters.
+                    {t('common.network.noRelationshipsFound')}
                  </TableCell>
               </TableRow>
             ) : (
@@ -314,7 +316,7 @@ export function GroupRelationshipsManager({ groupId }: GroupRelationshipsManager
                         </TableCell>
                         <TableCell>
                             <Badge variant={rel.type === 'parent' ? 'default' : 'secondary'}>
-                                {rel.type === 'parent' ? 'Parent' : 'Child'}
+                                {rel.type === 'parent' ? t('common.network.parent') : t('common.network.child')}
                             </Badge>
                         </TableCell>
                         <TableCell>
@@ -361,18 +363,18 @@ export function GroupRelationshipsManager({ groupId }: GroupRelationshipsManager
                                         </AlertDialogTrigger>
                                         <AlertDialogContent>
                                             <AlertDialogHeader>
-                                                <AlertDialogTitle>Delete all relationships?</AlertDialogTitle>
+                                                <AlertDialogTitle>{t('common.network.deleteAllRelationships')}</AlertDialogTitle>
                                                 <AlertDialogDescription>
-                                                    This will remove all relationships (both parent and child directions) between this group and <strong>{rel.group.name}</strong>. This action cannot be undone.
+                                                    {t('common.network.deleteRelationshipDescription', { groupName: rel.group.name })}
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogCancel>{t('common.actions.cancel')}</AlertDialogCancel>
                                                 <AlertDialogAction
                                                     onClick={() => handleDeleteRelationship(rel.group.id)}
                                                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                                 >
-                                                    Delete
+                                                    {t('common.actions.delete')}
                                                 </AlertDialogAction>
                                             </AlertDialogFooter>
                                         </AlertDialogContent>

@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Clock, MapPin, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/hooks/use-translation';
 import { db } from '../../../../db/db';
 import { CalendarEvent } from '../types';
 import { formatTime } from '../utils/dateUtils';
@@ -13,6 +14,7 @@ interface EventCardProps {
 
 export const EventCard = ({ event }: EventCardProps) => {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user } = db.useAuth();
   
   const participantCount = event.participants?.length || 0;
@@ -48,16 +50,16 @@ export const EventCard = ({ event }: EventCardProps) => {
               <div className="flex gap-1">
                 {isMeeting && (
                   <Badge variant="outline" className="text-xs">
-                    Meeting
+                    {t('features.calendar.eventCard.meeting')}
                   </Badge>
                 )}
                 {event.isPublic ? (
                   <Badge variant="secondary" className="text-xs">
-                    Public
+                    {t('features.calendar.eventCard.public')}
                   </Badge>
                 ) : (
                   <Badge variant="outline" className="text-xs">
-                    Private
+                    {t('features.calendar.eventCard.private')}
                   </Badge>
                 )}
               </div>
@@ -78,7 +80,9 @@ export const EventCard = ({ event }: EventCardProps) => {
                 <div className="flex items-center gap-2">
                   <Users className="h-3.5 w-3.5" />
                   <span>
-                    {participantCount} participant{participantCount !== 1 ? 's' : ''}
+                    {participantCount === 1
+                      ? t('features.calendar.eventCard.participant', { count: participantCount })
+                      : t('features.calendar.eventCard.participantPlural', { count: participantCount })}
                   </span>
                 </div>
               )}
@@ -93,24 +97,24 @@ export const EventCard = ({ event }: EventCardProps) => {
                   </AvatarFallback>
                 </Avatar>
                 <span className="text-xs text-muted-foreground">
-                  {event.organizer.name || 'Unknown'}
+                  {event.organizer.name || t('features.calendar.eventCard.unknown')}
                 </span>
               </div>
             )}
 
             {!isMeeting && (userIsParticipant || userIsOrganizer) && (
               <Badge variant="default" className="text-xs">
-                {userIsOrganizer ? "You're organizing" : "You're attending"}
+                {userIsOrganizer ? t('features.calendar.eventCard.youreOrganizing') : t('features.calendar.eventCard.youreAttending')}
               </Badge>
             )}
             {isMeeting && userIsOrganizer && (
               <Badge variant="default" className="text-xs">
-                Your meeting slot
+                {t('features.calendar.eventCard.yourMeetingSlot')}
               </Badge>
             )}
             {isMeeting && !userIsOrganizer && (
               <Badge variant="default" className="text-xs">
-                You booked this
+                {t('features.calendar.eventCard.youBookedThis')}
               </Badge>
             )}
           </div>

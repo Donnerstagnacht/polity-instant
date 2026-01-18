@@ -26,6 +26,7 @@ import {
   COLLABORATOR_SELECTABLE_STATUSES,
   isEventPhase,
 } from '@db/rbac/workflow-constants';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface AmendmentEditContentProps {
   amendmentId: string;
@@ -43,6 +44,7 @@ export function AmendmentEditContent({
   isLoading,
 }: AmendmentEditContentProps) {
   const router = useRouter();
+  const { t } = useTranslation();
 
   const [formData, setFormData] = useState({
     title: '',
@@ -99,7 +101,7 @@ export function AmendmentEditContent({
 
     try {
       if (!amendment) {
-        toast.error('No amendment data to update');
+        toast.error(t('features.amendments.editContent.updateFailed'));
         return;
       }
 
@@ -119,13 +121,13 @@ export function AmendmentEditContent({
         }),
       ]);
 
-      toast.success('Amendment updated successfully');
+      toast.success(t('features.amendments.editContent.updateSuccess'));
 
       setTimeout(() => {
         router.push(`/amendment/${amendmentId}`);
       }, 500);
     } catch (error) {
-      toast.error('Failed to update amendment');
+      toast.error(t('features.amendments.editContent.updateFailed'));
       console.error('Update error:', error);
     } finally {
       setIsSubmitting(false);
@@ -136,7 +138,7 @@ export function AmendmentEditContent({
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-muted-foreground">Loading amendment data...</p>
+        <p className="text-muted-foreground">{t('features.amendments.editContent.loading')}</p>
       </div>
     );
   }
@@ -145,11 +147,11 @@ export function AmendmentEditContent({
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <p className="text-lg font-semibold">Amendment not found</p>
-          <p className="text-muted-foreground">No amendment data exists for this ID</p>
+          <p className="text-lg font-semibold">{t('features.amendments.editContent.notFound')}</p>
+          <p className="text-muted-foreground">{t('features.amendments.editContent.noDataExists')}</p>
           <div className="mt-6">
             <Button onClick={() => router.push(`/`)} variant="default">
-              Back to Home
+              {t('features.amendments.editContent.backToHome')}
             </Button>
           </div>
         </div>
@@ -160,24 +162,24 @@ export function AmendmentEditContent({
   return (
     <div className="container mx-auto max-w-4xl p-4">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Edit Amendment</h1>
-        <p className="text-muted-foreground">Update amendment information</p>
+        <h1 className="text-3xl font-bold">{t('features.amendments.editContent.pageTitle')}</h1>
+        <p className="text-muted-foreground">{t('features.amendments.editContent.pageDescription')}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <ImageUpload
           currentImage={formData.imageURL}
           onImageChange={(url: string) => setFormData({ ...formData, imageURL: url })}
-          label="Amendment Image"
-          description="Upload an amendment image or provide a URL"
+          label={t('features.amendments.editContent.amendmentImage')}
+          description={t('features.amendments.editContent.amendmentImageDescription')}
         />
 
         <VideoUpload
           currentVideo={formData.videoURL}
           currentThumbnail={formData.videoThumbnailURL}
           onVideoChange={(url: string) => setFormData({ ...formData, videoURL: url })}
-          label="Amendment Video"
-          description="Upload a video file or provide a URL (max 100MB)"
+          label={t('features.amendments.editContent.amendmentVideo')}
+          description={t('features.amendments.editContent.amendmentVideoDescription')}
         />
 
         {formData.videoURL && (
@@ -186,43 +188,43 @@ export function AmendmentEditContent({
             onImageChange={(url: string) =>
               setFormData({ ...formData, videoThumbnailURL: url })
             }
-            label="Video Thumbnail"
-            description="Upload a thumbnail image for the video (optional)"
+            label={t('features.amendments.editContent.videoThumbnail')}
+            description={t('features.amendments.editContent.videoThumbnailDescription')}
           />
         )}
 
         <Card>
           <CardHeader>
-            <CardTitle>Basic Information</CardTitle>
-            <CardDescription>Amendment details</CardDescription>
+            <CardTitle>{t('features.amendments.editContent.basicInfo')}</CardTitle>
+            <CardDescription>{t('features.amendments.editContent.basicInfoDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Title *</Label>
+              <Label htmlFor="title">{t('features.amendments.editContent.titleLabel')}</Label>
               <Input
                 id="title"
                 value={formData.title}
                 onChange={e => setFormData({ ...formData, title: e.target.value })}
-                placeholder="Amendment title"
+                placeholder={t('features.amendments.editContent.titlePlaceholder')}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="subtitle">Subtitle</Label>
+              <Label htmlFor="subtitle">{t('features.amendments.editContent.subtitleLabel')}</Label>
               <Input
                 id="subtitle"
                 value={formData.subtitle}
                 onChange={e => setFormData({ ...formData, subtitle: e.target.value })}
-                placeholder="Brief description"
+                placeholder={t('features.amendments.editContent.subtitlePlaceholder')}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="code">Amendment Code/Text</Label>
+              <Label htmlFor="code">{t('features.amendments.editContent.codeLabel')}</Label>
               <Textarea
                 id="code"
                 value={formData.code}
                 onChange={e => setFormData({ ...formData, code: e.target.value })}
-                placeholder="Enter the full amendment text..."
+                placeholder={t('features.amendments.editContent.codePlaceholder')}
                 rows={10}
               />
             </div>
@@ -231,38 +233,38 @@ export function AmendmentEditContent({
 
         <Card>
           <CardHeader>
-            <CardTitle>Status & Metadata</CardTitle>
-            <CardDescription>Track the amendment progress</CardDescription>
+            <CardTitle>{t('features.amendments.editContent.statusMetadata')}</CardTitle>
+            <CardDescription>{t('features.amendments.editContent.statusMetadataDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
+              <Label htmlFor="status">{t('features.amendments.editContent.statusLabel')}</Label>
               <Select
                 value={formData.status}
                 onValueChange={value => setFormData({ ...formData, status: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
+                  <SelectValue placeholder={t('features.amendments.editContent.selectStatus')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Drafting">Drafting</SelectItem>
-                  <SelectItem value="Under Review">Under Review</SelectItem>
-                  <SelectItem value="Passed">Passed</SelectItem>
-                  <SelectItem value="Rejected">Rejected</SelectItem>
+                  <SelectItem value="Drafting">{t('features.amendments.editContent.statusDrafting')}</SelectItem>
+                  <SelectItem value="Under Review">{t('features.amendments.editContent.statusUnderReview')}</SelectItem>
+                  <SelectItem value="Passed">{t('features.amendments.editContent.statusPassed')}</SelectItem>
+                  <SelectItem value="Rejected">{t('features.amendments.editContent.statusRejected')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="date">Date</Label>
+              <Label htmlFor="date">{t('features.amendments.editContent.dateLabel')}</Label>
               <Input
                 id="date"
                 value={formData.date}
                 onChange={e => setFormData({ ...formData, date: e.target.value })}
-                placeholder="e.g., March 15, 2024"
+                placeholder={t('features.amendments.editContent.datePlaceholder')}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="supporters">Supporters</Label>
+              <Label htmlFor="supporters">{t('features.amendments.editContent.supportersLabel')}</Label>
               <Input
                 id="supporters"
                 type="number"
@@ -271,7 +273,7 @@ export function AmendmentEditContent({
                 onChange={e =>
                   setFormData({ ...formData, supporters: parseInt(e.target.value, 10) || 0 })
                 }
-                placeholder="Number of supporters"
+                placeholder={t('features.amendments.editContent.supportersPlaceholder')}
               />
             </div>
           </CardContent>
@@ -279,14 +281,14 @@ export function AmendmentEditContent({
 
         <Card>
           <CardHeader>
-            <CardTitle>Workflow Einstellungen</CardTitle>
+            <CardTitle>{t('features.amendments.editContent.workflowSettings')}</CardTitle>
             <CardDescription>
-              Konfigurieren Sie den Workflow-Status und Abstimmungseinstellungen
+              {t('features.amendments.editContent.workflowSettingsDescription')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="workflowStatus">Workflow Status</Label>
+              <Label htmlFor="workflowStatus">{t('features.amendments.editContent.workflowStatusLabel')}</Label>
               <Select
                 value={formData.workflowStatus}
                 onValueChange={value =>
@@ -295,7 +297,7 @@ export function AmendmentEditContent({
                 disabled={isEventPhase(formData.workflowStatus)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Workflow Status wählen" />
+                  <SelectValue placeholder={t('features.amendments.editContent.selectWorkflowStatus')} />
                 </SelectTrigger>
                 <SelectContent>
                   {COLLABORATOR_SELECTABLE_STATUSES.map(status => {
@@ -313,8 +315,7 @@ export function AmendmentEditContent({
               </p>
               {isEventPhase(formData.workflowStatus) && (
                 <p className="text-xs text-amber-600">
-                  ⚠️ Dieser Status wird durch Event-Organizers gesteuert und kann hier nicht
-                  geändert werden.
+                  {t('features.amendments.editContent.eventPhaseWarning')}
                 </p>
               )}
             </div>
@@ -323,9 +324,9 @@ export function AmendmentEditContent({
               <div className="space-y-2 rounded-lg border p-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label htmlFor="autoCloseVoting">Automatisches Schließen von Abstimmungen</Label>
+                    <Label htmlFor="autoCloseVoting">{t('features.amendments.editContent.autoCloseVoting')}</Label>
                     <p className="text-xs text-muted-foreground">
-                      Abstimmungen werden automatisch nach Ablauf des Zeitintervalls geschlossen
+                      {t('features.amendments.editContent.autoCloseVotingDescription')}
                     </p>
                   </div>
                   <Switch
@@ -338,8 +339,8 @@ export function AmendmentEditContent({
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {formData.autoCloseVoting
-                    ? '✓ Abstimmungen werden automatisch geschlossen'
-                    : '○ Abstimmungen erfordern manuelle Bestätigung durch Organizers'}
+                    ? t('features.amendments.editContent.autoCloseEnabled')
+                    : t('features.amendments.editContent.autoCloseDisabled')}
                 </p>
               </div>
             )}
@@ -347,10 +348,10 @@ export function AmendmentEditContent({
             {amendment?.currentEventId && (
               <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-950">
                 <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">
-                  📅 Amendment befindet sich in Event-Phase
+                  {t('features.amendments.editContent.eventPhase')}
                 </p>
                 <p className="mt-1 text-xs text-blue-700 dark:text-blue-300">
-                  Workflow wird durch Event {amendment.currentEventId} gesteuert
+                  {t('features.amendments.editContent.eventPhaseDescription', { eventId: amendment.currentEventId })}
                 </p>
               </div>
             )}
@@ -359,8 +360,8 @@ export function AmendmentEditContent({
 
         <Card>
           <CardHeader>
-            <CardTitle>Tags</CardTitle>
-            <CardDescription>Add tags to categorize this amendment</CardDescription>
+            <CardTitle>{t('features.amendments.editContent.tagsTitle')}</CardTitle>
+            <CardDescription>{t('features.amendments.editContent.tagsDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex gap-2">
@@ -373,10 +374,10 @@ export function AmendmentEditContent({
                     handleAddTag();
                   }
                 }}
-                placeholder="Add a tag"
+                placeholder={t('features.amendments.editContent.addTagPlaceholder')}
               />
               <Button type="button" onClick={handleAddTag} variant="outline">
-                Add
+                {t('features.amendments.editContent.addButton')}
               </Button>
             </div>
             {formData.tags.length > 0 && (
@@ -408,16 +409,16 @@ export function AmendmentEditContent({
             onClick={() => router.push(`/amendment/${amendmentId}`)}
             disabled={isSubmitting}
           >
-            Cancel
+            {t('features.amendments.editContent.cancel')}
           </Button>
           <Button type="submit" disabled={isSubmitting} className="flex-1">
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
+                {t('features.amendments.editContent.saving')}
               </>
             ) : (
-              'Save Changes'
+              t('features.amendments.editContent.saveChanges')
             )}
           </Button>
         </div>

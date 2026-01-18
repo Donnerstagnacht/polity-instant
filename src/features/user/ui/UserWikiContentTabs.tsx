@@ -28,9 +28,9 @@ export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
     <div className="mt-8">
       <Tabs defaultValue="blogs">
         <ScrollableTabsList>
-          <TabsTrigger value="blogs">Blogs</TabsTrigger>
+          <TabsTrigger value="blogs">{t('pages.users.blogs.title')}</TabsTrigger>
           <TabsTrigger value="groups">{t('pages.users.groups.title')}</TabsTrigger>
-          <TabsTrigger value="amendments">Amendments</TabsTrigger>
+          <TabsTrigger value="amendments">{t('pages.users.amendments.title')}</TabsTrigger>
         </ScrollableTabsList>
 
         <TabsContent value="blogs" className="mt-4">

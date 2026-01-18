@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/hooks/use-translation';
 
 export const RIGHT_TYPES = [
   'informationRight',
@@ -12,6 +13,16 @@ export const RIGHT_TYPES = [
 
 export type RightType = (typeof RIGHT_TYPES)[number];
 
+// Translation keys mapping
+const RIGHT_TRANSLATION_KEYS: Record<RightType, string> = {
+  informationRight: 'common.rights.information',
+  amendmentRight: 'common.rights.amendment',
+  rightToSpeak: 'common.rights.speak',
+  activeVotingRight: 'common.rights.activeVoting',
+  passiveVotingRight: 'common.rights.passiveVoting',
+};
+
+// Fallback labels (used for non-hook contexts)
 export const RIGHT_LABELS: Record<RightType, string> = {
   informationRight: 'Info',
   amendmentRight: 'Antrag',
@@ -38,9 +49,15 @@ interface RightFiltersProps {
 }
 
 export function RightFilters({ selectedRights, onToggleRight }: RightFiltersProps) {
+  const { t } = useTranslation();
+  
+  const getTranslatedRightLabel = (right: RightType): string => {
+    return t(RIGHT_TRANSLATION_KEYS[right]) || RIGHT_LABELS[right];
+  };
+
   return (
     <div className="mt-4">
-      <h3 className="mb-2 text-sm font-semibold">Filter nach Rechten:</h3>
+      <h3 className="mb-2 text-sm font-semibold">{t('common.labels.filterByRights')}:</h3>
       <div className="flex flex-wrap gap-2">
         {RIGHT_TYPES.map(right => (
           <Button
@@ -50,7 +67,7 @@ export function RightFilters({ selectedRights, onToggleRight }: RightFiltersProp
             onClick={() => onToggleRight(right)}
             className="text-xs"
           >
-            {getRightLabel(right)}
+            {getTranslatedRightLabel(right)}
           </Button>
         ))}
       </div>

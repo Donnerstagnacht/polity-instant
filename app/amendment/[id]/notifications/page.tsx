@@ -6,6 +6,7 @@ import { PermissionGuard } from '@/features/auth';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { EntityNotifications } from '@/components/notifications/EntityNotifications';
 import { useAmendmentData } from '@/features/amendments/hooks/useAmendmentData';
+import { useTranslation } from '@/hooks/use-translation';
 import type { Amendment } from '@db/rbac/types';
 
 export default function AmendmentNotificationsPage({
@@ -14,6 +15,7 @@ export default function AmendmentNotificationsPage({
   params: Promise<{ id: string }>;
 }) {
   const resolvedParams = use(params);
+  const { t } = useTranslation();
   const { amendment } = useAmendmentData(resolvedParams.id);
 
   return (
@@ -27,7 +29,7 @@ export default function AmendmentNotificationsPage({
           <EntityNotifications
             entityId={resolvedParams.id}
             entityType="amendment"
-            entityName={amendment?.title || 'Amendment'}
+            entityName={amendment?.title || t('features.amendments.title')}
           />
         </PageWrapper>
       </PermissionGuard>

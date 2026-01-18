@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageWrapper } from '@/components/layout/page-wrapper';
+import { useTranslation } from '@/hooks/use-translation';
 import {
   Euro,
   Palette,
@@ -17,68 +18,48 @@ import {
 } from 'lucide-react';
 
 export default function SupportPage() {
+  const { t } = useTranslation();
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const supportAreas = [
     {
       icon: Euro,
-      title: 'Finanziell',
-      description: 'Unterstütze das Projekt durch finanzielle Beiträge',
+      title: t('pages.support.areas.financial.title'),
+      description: t('pages.support.areas.financial.description'),
       iconColor: 'text-green-600 dark:text-green-400',
       iconBg: 'bg-green-500/10',
       content: {
-        intro:
-          'Deine finanzielle Unterstützung hilft uns, die Server am Laufen zu halten, neue Features zu entwickeln und die Plattform für alle zugänglich zu machen.',
-        details: [
-          'Decke Betriebskosten wie Server, Hosting und Infrastruktur',
-          'Finanziere die Entwicklung neuer Features und Verbesserungen',
-          'Ermögliche kostenfreien Zugang für alle Nutzer:innen',
-          'Unterstütze demokratische Prozesse weltweit',
-        ],
-        cta: 'Unsere Preismodelle ansehen',
+        intro: t('pages.support.areas.financial.intro'),
+        details: t('pages.support.areas.financial.details') as unknown as string[],
+        cta: t('pages.support.areas.financial.cta'),
         link: '/pricing',
         external: false,
       },
     },
     {
       icon: Palette,
-      title: 'Design',
-      description: 'Hilf bei der Gestaltung von Flows und verbessere UI & UX',
+      title: t('pages.support.areas.design.title'),
+      description: t('pages.support.areas.design.description'),
       iconColor: 'text-purple-600 dark:text-purple-400',
       iconBg: 'bg-purple-500/10',
       content: {
-        intro:
-          'Deine Design-Expertise kann die Benutzerfreundlichkeit der Plattform erheblich verbessern und demokratische Prozesse zugänglicher machen.',
-        details: [
-          'Gestalte intuitive Benutzer-Flows für komplexe demokratische Prozesse',
-          'Verbessere die User Experience durch durchdachtes Interface Design',
-          'Entwickle visuelle Konzepte für neue Features',
-          'Optimiere die Barrierefreiheit und Inklusion der Plattform',
-          'Erstelle Design-Systeme und Komponenten-Bibliotheken',
-        ],
-        cta: 'Figma-Projekt ansehen',
+        intro: t('pages.support.areas.design.intro'),
+        details: t('pages.support.areas.design.details') as unknown as string[],
+        cta: t('pages.support.areas.design.cta'),
         link: 'https://www.figma.com/proto/cAT8Aonu8P7ojwgnKcVlkz/Polity?node-id=51098-4683&starting-point-node-id=51098%3A4683',
         external: true,
       },
     },
     {
       icon: Code,
-      title: 'Entwicklung',
-      description: 'Trage durch Code, Bug-Reports oder Feature-Requests bei',
+      title: t('pages.support.areas.development.title'),
+      description: t('pages.support.areas.development.description'),
       iconColor: 'text-blue-600 dark:text-blue-400',
       iconBg: 'bg-blue-500/10',
       content: {
-        intro:
-          'Als Open-Source-Projekt leben wir von Entwickler-Beiträgen. Jede Code-Zeile, jeder Bug-Report und jede Feature-Idee bringt uns weiter.',
-        details: [
-          'Schreibe Code für neue Features oder Verbesserungen',
-          'Behebe Bugs und verbessere die Code-Qualität',
-          'Erstelle oder verbessere Tests und Dokumentation',
-          'Melde Bugs über GitHub Issues',
-          'Schlage neue Features oder Verbesserungen vor',
-          'Review Pull Requests und hilf anderen Entwickler:innen',
-        ],
-        cta: 'GitHub Repository ansehen',
+        intro: t('pages.support.areas.development.intro'),
+        details: t('pages.support.areas.development.details') as unknown as string[],
+        cta: t('pages.support.areas.development.cta'),
         link: 'https://github.com/Donnerstagnacht/polity-instant',
         external: true,
       },
@@ -94,10 +75,9 @@ export default function SupportPage() {
             <Heart className="h-8 w-8 text-primary" />
           </div>
         </div>
-        <h1 className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl">Unterstütze Polity</h1>
+        <h1 className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl">{t('pages.support.header.title')}</h1>
         <p className="mx-auto max-w-2xl text-xl text-muted-foreground">
-          Hilf uns dabei, demokratische Prozesse für alle zugänglich zu machen. Es gibt viele
-          Möglichkeiten, das Projekt zu unterstützen.
+          {t('pages.support.header.subtitle')}
         </p>
       </div>
 
@@ -129,7 +109,7 @@ export default function SupportPage() {
                   </p>
 
                   <div className="flex-1">
-                    <h4 className="mb-3 text-sm font-semibold">Wie du helfen kannst:</h4>
+                    <h4 className="mb-3 text-sm font-semibold">{t('pages.support.howCanHelp')}</h4>
                     <ul className="space-y-2">
                       {area.content.details.map((detail, detailIndex) => (
                         <li key={detailIndex} className="flex items-start gap-3">
@@ -205,7 +185,7 @@ export default function SupportPage() {
                           </p>
 
                           <div>
-                            <h4 className="mb-3 text-sm font-semibold">Wie du helfen kannst:</h4>
+                            <h4 className="mb-3 text-sm font-semibold">{t('pages.support.howCanHelp')}</h4>
                             <ul className="space-y-2">
                               {area.content.details.map((detail, detailIndex) => (
                                 <li key={detailIndex} className="flex items-start gap-3">
@@ -288,18 +268,14 @@ export default function SupportPage() {
       {/* Community Section */}
       <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
         <CardHeader>
-          <CardTitle className="text-2xl">Werde Teil der Community</CardTitle>
+          <CardTitle className="text-2xl">{t('pages.support.community.title')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-muted-foreground">
-            Polity ist ein Community-Projekt. Jede Form der Unterstützung – ob finanziell, durch
-            Design oder Entwicklung – macht einen Unterschied. Gemeinsam bauen wir Werkzeuge für
-            eine demokratischere Zukunft.
+            {t('pages.support.community.description')}
           </p>
           <p className="rounded-lg border bg-background/50 p-4 text-sm">
-            <strong>Open Source & Transparent:</strong> Alle unsere Entwicklungen sind öffentlich
-            einsehbar. Deine Beiträge helfen nicht nur uns, sondern der gesamten Community und
-            demokratischen Bewegungen weltweit.
+            <strong>{t('pages.support.community.openSource.title')}</strong> {t('pages.support.community.openSource.text')}
           </p>
         </CardContent>
       </Card>

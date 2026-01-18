@@ -20,6 +20,7 @@ import {
   Tag,
   User,
 } from 'lucide-react';
+import { useTranslation } from '@/hooks/use-translation';
 
 type TodoStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 type TodoPriority = 'low' | 'medium' | 'high' | 'urgent';
@@ -32,6 +33,7 @@ interface TodoCardProps {
 }
 
 export function TodoCard({ todo, onToggleComplete, onUpdateStatus, onClick }: TodoCardProps) {
+  const { t } = useTranslation();
   const isCompleted = todo.status === 'completed';
   const isOverdue = todo.dueDate && todo.status !== 'completed' && todo.dueDate < Date.now();
 
@@ -59,7 +61,7 @@ export function TodoCard({ todo, onToggleComplete, onUpdateStatus, onClick }: To
           <button
             onClick={() => onToggleComplete(todo)}
             className="mt-1 flex-shrink-0"
-            aria-label={isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
+            aria-label={isCompleted ? t('features.todos.actions.markIncomplete') : t('features.todos.actions.markComplete')}
           >
             {isCompleted ? (
               <CheckCircle2 className="h-6 w-6 text-green-500" />
@@ -156,25 +158,25 @@ export function TodoCard({ todo, onToggleComplete, onUpdateStatus, onClick }: To
                     <SelectItem value="pending">
                       <div className="flex items-center gap-2">
                         <Circle className="h-4 w-4" />
-                        Pending
+                        {t('features.todos.status.pending')}
                       </div>
                     </SelectItem>
                     <SelectItem value="in_progress">
                       <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4" />
-                        In Progress
+                        {t('features.todos.status.inProgress')}
                       </div>
                     </SelectItem>
                     <SelectItem value="completed">
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="h-4 w-4" />
-                        Completed
+                        {t('features.todos.status.completed')}
                       </div>
                     </SelectItem>
                     <SelectItem value="cancelled">
                       <div className="flex items-center gap-2">
                         <XCircle className="h-4 w-4" />
-                        Cancelled
+                        {t('features.todos.status.cancelled')}
                       </div>
                     </SelectItem>
                   </SelectContent>

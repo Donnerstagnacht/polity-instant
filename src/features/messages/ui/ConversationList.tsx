@@ -7,6 +7,7 @@ import { cn } from '@/utils/utils';
 import { Conversation } from '../types';
 import { ConversationItem } from './ConversationItem';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -29,6 +30,8 @@ export function ConversationList({
   onNewConversationClick,
   className,
 }: ConversationListProps) {
+  const { t } = useTranslation();
+
   return (
     <Card
       className={cn(
@@ -39,7 +42,7 @@ export function ConversationList({
     >
       <CardHeader className="flex-shrink-0 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold">Messages</h2>
+          <h2 className="text-xl font-bold">{t('features.messages.title')}</h2>
           <Button 
             size="icon" 
             variant="default" 
@@ -52,7 +55,7 @@ export function ConversationList({
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search conversations..."
+            placeholder={t('features.messages.searchConversations')}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             className="pl-9"
@@ -65,7 +68,7 @@ export function ConversationList({
           {conversations.length === 0 ? (
             <div className="py-8 text-center">
               <p className="text-muted-foreground">
-                {searchQuery ? 'No conversations found' : 'No conversations yet'}
+                {searchQuery ? t('features.messages.noConversationsFound') : t('features.messages.noConversations')}
               </p>
             </div>
           ) : (

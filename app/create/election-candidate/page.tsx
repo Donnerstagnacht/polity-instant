@@ -23,11 +23,13 @@ import { useAuthStore } from '@/features/auth/auth.ts';
 import { toast } from 'sonner';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { PageWrapper } from '@/components/layout/page-wrapper';
+import { useTranslation } from '@/hooks/use-translation';
 
 function CreateElectionCandidateForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const user = useAuthStore(state => state.user);
+  const { t } = useTranslation();
 
   const electionIdParam = searchParams.get('electionId');
 
@@ -65,13 +67,13 @@ function CreateElectionCandidateForm() {
 
     try {
       if (!user?.id) {
-        toast.error('You must be logged in to create an election candidate');
+        toast.error(t('pages.create.validation.loginRequired'));
         setIsSubmitting(false);
         return;
       }
 
       if (!formData.electionId) {
-        toast.error('Please select an election for this candidate');
+        toast.error(t('pages.create.electionCandidate.validation.electionRequired'));
         setIsSubmitting(false);
         return;
       }
@@ -103,11 +105,11 @@ function CreateElectionCandidateForm() {
 
       await db.transact(transactions);
 
-      toast.success('Election candidate created successfully!');
+      toast.success(`Election Candidate ${t('pages.create.success.created')}`);
       router.push('/');
     } catch (error) {
       console.error('Failed to create election candidate:', error);
-      toast.error('Failed to create election candidate. Please try again.');
+      toast.error(t('pages.create.error.createFailed'));
       setIsSubmitting(false);
     }
   };
@@ -117,7 +119,7 @@ function CreateElectionCandidateForm() {
       <PageWrapper className="flex min-h-screen items-center justify-center p-8">
         <Card className="w-full max-w-2xl">
           <CardHeader>
-            <CardTitle>Create a New Election Candidate</CardTitle>
+            <CardTitle>{t('pages.create.electionCandidate.title')}</CardTitle>
           </CardHeader>
             <CardContent>
               <Carousel setApi={setCarouselApi} opts={{ watchDrag: false }}>
@@ -126,19 +128,19 @@ function CreateElectionCandidateForm() {
                   <CarouselItem>
                     <div className="space-y-4 p-4">
                       <div className="space-y-2">
-                        <Label htmlFor="election-candidate-election">Election</Label>
+                        <Label htmlFor="election-candidate-election">{t('pages.create.electionCandidate.electionLabel')}</Label>
                         <TypeAheadSelect
                           items={userElections}
                           value={formData.electionId}
                           onChange={value => setFormData({ ...formData, electionId: value })}
-                          placeholder="Search for an election..."
+                          placeholder={t('pages.create.electionCandidate.electionPlaceholder')}
                           searchKeys={['title', 'description']}
                           renderItem={election => <ElectionSelectCard election={election} />}
                           getItemId={election => election.id}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="election-candidate-order">Order</Label>
+                        <Label htmlFor="election-candidate-order">{t('pages.create.electionCandidate.orderLabel')}</Label>
                         <Input
                           id="election-candidate-order"
                           type="number"
@@ -158,30 +160,30 @@ function CreateElectionCandidateForm() {
                   <CarouselItem>
                     <div className="space-y-4 p-4">
                       <div className="space-y-2">
-                        <Label htmlFor="election-candidate-name">Name</Label>
+                        <Label htmlFor="election-candidate-name">{t('pages.create.electionCandidate.nameLabel')}</Label>
                         <Input
                           id="election-candidate-name"
-                          placeholder="Enter candidate name"
+                          placeholder={t('pages.create.electionCandidate.namePlaceholder')}
                           value={formData.name}
                           onChange={e => setFormData({ ...formData, name: e.target.value })}
                           required
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="election-candidate-description">Description</Label>
+                        <Label htmlFor="election-candidate-description">{t('pages.create.electionCandidate.descriptionLabel')}</Label>
                         <Textarea
                           id="election-candidate-description"
-                          placeholder="Describe the candidate (optional)"
+                          placeholder={t('pages.create.electionCandidate.descriptionPlaceholder')}
                           value={formData.description}
                           onChange={e => setFormData({ ...formData, description: e.target.value })}
                           rows={4}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="election-candidate-imageURL">Image URL (optional)</Label>
+                        <Label htmlFor="election-candidate-imageURL">{t('pages.create.electionCandidate.imageUrlOptional')}</Label>
                         <Input
                           id="election-candidate-imageURL"
-                          placeholder="Enter image URL"
+                          placeholder={t('pages.create.electionCandidate.imageUrlPlaceholder')}
                           value={formData.imageURL}
                           onChange={e => setFormData({ ...formData, imageURL: e.target.value })}
                         />
@@ -196,10 +198,10 @@ function CreateElectionCandidateForm() {
                         <CardHeader>
                           <div className="mb-2 flex items-center justify-between">
                             <Badge variant="default" className="text-xs">
-                              Candidate
+                              {t('pages.create.electionCandidate.reviewBadge')}
                             </Badge>
                             <Badge variant="secondary" className="text-xs">
-                              Order #{formData.order}
+                              {t('pages.create.electionCandidate.order', { order: formData.order })}
                             </Badge>
                           </div>
                           <CardTitle className="text-lg">
@@ -211,15 +213,15 @@ function CreateElectionCandidateForm() {
                         </CardHeader>
                         <CardContent className="space-y-3">
                           <div className="flex items-center gap-2 text-sm">
-                            <strong>Election:</strong>
+                            <strong>{t('pages.create.electionCandidate.election')}</strong>
                             <span className="text-muted-foreground">
                               {userElections.find(e => e.id === formData.electionId)?.title ||
-                                'Not selected'}
+                                t('pages.create.common.notSelected')}
                             </span>
                           </div>
                           {formData.imageURL && (
                             <div className="space-y-1">
-                              <strong className="text-sm">Image:</strong>
+                              <strong className="text-sm">{t('pages.create.electionCandidate.image')}</strong>
                               <p className="break-all text-xs text-muted-foreground">
                                 {formData.imageURL}
                               </p>
@@ -240,7 +242,7 @@ function CreateElectionCandidateForm() {
                     className={`h-2 w-2 rounded-full transition-colors ${
                       currentStep === index ? 'bg-primary' : 'bg-muted-foreground/30'
                     }`}
-                    aria-label={`Go to step ${index + 1}`}
+                    aria-label={t('pages.create.goToStep', { step: index + 1 })}
                   />
                 ))}
               </div>
@@ -252,7 +254,7 @@ function CreateElectionCandidateForm() {
                 onClick={() => carouselApi?.scrollPrev()}
                 disabled={currentStep === 0}
               >
-                Previous
+                {t('pages.create.previous')}
               </Button>
               {currentStep < 2 ? (
                 <Button
@@ -260,11 +262,11 @@ function CreateElectionCandidateForm() {
                   onClick={() => carouselApi?.scrollNext()}
                   disabled={(currentStep === 0 && !formData.electionId) || (currentStep === 1 && !formData.name)}
                 >
-                  Next
+                  {t('pages.create.next')}
                 </Button>
               ) : (
                 <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
-                  {isSubmitting ? 'Creating...' : 'Create Election Candidate'}
+                  {isSubmitting ? t('pages.create.creating') : t('pages.create.electionCandidate.createButton')}
                 </Button>
               )}
             </CardFooter>
@@ -275,13 +277,15 @@ function CreateElectionCandidateForm() {
 }
 
 export default function CreateElectionCandidatePage() {
+  const { t } = useTranslation();
+  
   return (
     <Suspense
       fallback={
         <PageWrapper className="flex min-h-screen items-center justify-center p-8">
           <Card className="w-full max-w-2xl">
             <CardHeader>
-              <CardTitle>Loading...</CardTitle>
+              <CardTitle>{t('pages.create.loading')}</CardTitle>
             </CardHeader>
           </Card>
         </PageWrapper>

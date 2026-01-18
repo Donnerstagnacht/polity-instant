@@ -23,11 +23,13 @@ import { useAuthStore } from '@/features/auth/auth.ts';
 import { useTodoMutations } from '@/features/todos/hooks/useTodoData';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { PageWrapper } from '@/components/layout/page-wrapper';
+import { useTranslation } from '@/hooks/use-translation';
 
 export default function CreateTodoPage() {
   const router = useRouter();
   const user = useAuthStore(state => state.user);
   const { createTodo, isLoading: isSubmitting } = useTodoMutations();
+  const { t } = useTranslation();
 
   const [formData, setFormData] = useState({
     title: '',
@@ -87,7 +89,7 @@ export default function CreateTodoPage() {
       <PageWrapper className="flex min-h-screen items-center justify-center p-8">
         <Card className="w-full max-w-2xl">
           <CardHeader>
-            <CardTitle>Create a New Todo</CardTitle>
+            <CardTitle>{t('pages.create.todo.title')}</CardTitle>
           </CardHeader>
             <CardContent>
               <Carousel setApi={setCarouselApi} opts={{ watchDrag: false }}>
@@ -96,20 +98,20 @@ export default function CreateTodoPage() {
                   <CarouselItem>
                     <div className="space-y-4 p-4">
                       <div className="space-y-2">
-                        <Label htmlFor="todo-title">Title</Label>
+                        <Label htmlFor="todo-title">{t('pages.create.todo.titleLabel')}</Label>
                         <Input
                           id="todo-title"
-                          placeholder="Enter todo title"
+                          placeholder={t('pages.create.todo.titlePlaceholder')}
                           value={formData.title}
                           onChange={e => setFormData({ ...formData, title: e.target.value })}
                           required
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="todo-description">Description</Label>
+                        <Label htmlFor="todo-description">{t('pages.create.todo.descriptionLabel')}</Label>
                         <Textarea
                           id="todo-description"
-                          placeholder="Describe the task"
+                          placeholder={t('pages.create.todo.descriptionPlaceholder')}
                           value={formData.description}
                           onChange={e => setFormData({ ...formData, description: e.target.value })}
                           rows={4}
@@ -122,7 +124,7 @@ export default function CreateTodoPage() {
                   <CarouselItem>
                     <div className="space-y-4 p-4">
                       <div className="space-y-2">
-                        <Label htmlFor="todo-due-date">Due Date (Optional)</Label>
+                        <Label htmlFor="todo-due-date">{t('pages.create.todo.dueDateOptional')}</Label>
                         <Input
                           id="todo-due-date"
                           type="date"
@@ -131,7 +133,7 @@ export default function CreateTodoPage() {
                         />
                       </div>
                       <div className="space-y-3">
-                        <Label>Priority</Label>
+                        <Label>{t('pages.create.todo.priorityLabel')}</Label>
                         <div className="grid grid-cols-3 gap-2">
                           <Button
                             type="button"
@@ -144,7 +146,7 @@ export default function CreateTodoPage() {
                             ) : (
                               <AlertCircle className="h-4 w-4" />
                             )}
-                            Low
+                            {t('pages.create.todo.priority.low')}
                           </Button>
                           <Button
                             type="button"
@@ -157,7 +159,7 @@ export default function CreateTodoPage() {
                             ) : (
                               <Loader2 className="h-4 w-4" />
                             )}
-                            Medium
+                            {t('pages.create.todo.priority.medium')}
                           </Button>
                           <Button
                             type="button"
@@ -170,12 +172,12 @@ export default function CreateTodoPage() {
                             ) : (
                               <AlertCircle className="h-4 w-4" />
                             )}
-                            High
+                            {t('pages.create.todo.priority.high')}
                           </Button>
                         </div>
                       </div>
                       <div className="space-y-3">
-                        <Label>Status</Label>
+                        <Label>{t('pages.create.todo.statusLabel')}</Label>
                         <div className="grid grid-cols-3 gap-2">
                           <Button
                             type="button"
@@ -188,7 +190,7 @@ export default function CreateTodoPage() {
                             ) : (
                               <Calendar className="h-4 w-4" />
                             )}
-                            To Do
+                            {t('pages.create.todo.status.todo')}
                           </Button>
                           <Button
                             type="button"
@@ -201,7 +203,7 @@ export default function CreateTodoPage() {
                             ) : (
                               <Loader2 className="h-4 w-4" />
                             )}
-                            In Progress
+                            {t('pages.create.todo.status.inProgress')}
                           </Button>
                           <Button
                             type="button"
@@ -214,7 +216,7 @@ export default function CreateTodoPage() {
                             ) : (
                               <CheckCircle2 className="h-4 w-4" />
                             )}
-                            Completed
+                            {t('pages.create.todo.status.completed')}
                           </Button>
                         </div>
                       </div>
@@ -231,10 +233,10 @@ export default function CreateTodoPage() {
                         />
                       </TooltipProvider>
                       <div className="space-y-2">
-                        <Label>Tags (Optional)</Label>
+                        <Label>{t('pages.create.todo.tagsOptional')}</Label>
                         <div className="flex gap-2">
                           <Input
-                            placeholder="Add a tag"
+                            placeholder={t('pages.create.todo.tagPlaceholder')}
                             value={tagInput}
                             onChange={e => setTagInput(e.target.value)}
                             onKeyDown={e => {
@@ -245,7 +247,7 @@ export default function CreateTodoPage() {
                             }}
                           />
                           <Button type="button" variant="outline" onClick={handleAddTag}>
-                            Add
+                            {t('pages.create.todo.addTag')}
                           </Button>
                         </div>
                         {formData.tags.length > 0 && (
@@ -278,13 +280,13 @@ export default function CreateTodoPage() {
                         <CardHeader>
                           <div className="mb-2 flex items-center justify-between">
                             <Badge variant="default" className="text-xs">
-                              Todo
+                              {t('pages.create.todo.reviewBadge')}
                             </Badge>
                             <Badge
                               variant={formData.priority === 'high' ? 'destructive' : 'secondary'}
                               className="text-xs"
                             >
-                              {formData.priority} Priority
+                              {t(`pages.create.todo.priorityBadge`, { priority: formData.priority })}
                             </Badge>
                           </div>
                           <CardTitle className="text-lg">
@@ -298,17 +300,17 @@ export default function CreateTodoPage() {
                           {formData.dueDate && (
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Calendar className="h-4 w-4" />
-                              <span>Due: {formData.dueDate}</span>
+                              <span>{t('pages.create.todo.due')} {formData.dueDate}</span>
                             </div>
                           )}
                           <div className="flex items-center gap-2 text-sm">
-                            <strong>Status:</strong>
+                            <strong>{t('pages.create.todo.statusLabel')}:</strong>
                             <Badge variant="outline" className="text-xs">
                               {formData.status}
                             </Badge>
                           </div>
                           <div className="flex items-center gap-2 text-sm">
-                            <strong>Visibility:</strong>
+                            <strong>{t('pages.create.common.visibility')}:</strong>
                             <span className="text-muted-foreground">{formData.visibility}</span>
                           </div>
                           {formData.tags.length > 0 && (
@@ -335,7 +337,7 @@ export default function CreateTodoPage() {
                     className={`h-2 w-2 rounded-full transition-colors ${
                       currentStep === index ? 'bg-primary' : 'bg-muted-foreground/30'
                     }`}
-                    aria-label={`Go to step ${index + 1}`}
+                    aria-label={t('pages.create.goToStep', { step: index + 1 })}
                   />
                 ))}
               </div>
@@ -347,7 +349,7 @@ export default function CreateTodoPage() {
                 onClick={() => carouselApi?.scrollPrev()}
                 disabled={currentStep === 0}
               >
-                Previous
+                {t('pages.create.previous')}
               </Button>
               {currentStep < 3 ? (
                 <Button
@@ -355,11 +357,11 @@ export default function CreateTodoPage() {
                   onClick={() => carouselApi?.scrollNext()}
                   disabled={currentStep === 0 && !formData.title}
                 >
-                  Next
+                  {t('pages.create.next')}
                 </Button>
               ) : (
                 <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
-                  {isSubmitting ? 'Creating...' : 'Create Todo'}
+                  {isSubmitting ? t('pages.create.creating') : t('pages.create.todo.createButton')}
                 </Button>
               )}
             </CardFooter>

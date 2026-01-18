@@ -14,8 +14,10 @@ import { NewConversationDialog } from './ui/NewConversationDialog';
 import { GroupMembersDialog } from './ui/GroupMembersDialog';
 import { DeleteConversationDialog } from './ui/DeleteConversationDialog';
 import { Conversation } from './types';
+import { useTranslation } from '@/hooks/use-translation';
 
 export default function MessagesPage() {
+  const { t } = useTranslation();
   const { user } = db.useAuth();
   const [userSearchDialogOpen, setUserSearchDialogOpen] = useState(false);
   const [memberListDialogOpen, setMemberListDialogOpen] = useState(false);
@@ -120,7 +122,7 @@ export default function MessagesPage() {
       <AuthGuard requireAuth={true}>
         <PageWrapper className="container mx-auto p-4">
           <div className="flex h-[600px] items-center justify-center">
-            <p className="text-muted-foreground">Loading conversations...</p>
+            <p className="text-muted-foreground">{t('features.messages.loading')}</p>
           </div>
         </PageWrapper>
       </AuthGuard>

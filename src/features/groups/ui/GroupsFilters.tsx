@@ -4,8 +4,10 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/hooks/use-translation';
 
 export const GroupsFilters: React.FC = () => {
+  const { t } = useTranslation();
   const { searchTerm, selectedTags, setSearchTerm, toggleTag, setSelectedTags, getAllTags } =
     useGroupsStore();
 
@@ -24,7 +26,7 @@ export const GroupsFilters: React.FC = () => {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Search groups by name, description, or tags..."
+          placeholder={t('features.groups.list.searchPlaceholder')}
           className="pl-10"
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
@@ -34,7 +36,7 @@ export const GroupsFilters: React.FC = () => {
       {/* Tag Filters */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-foreground">Filter by tags:</h3>
+          <h3 className="text-sm font-medium text-foreground">{t('features.groups.list.filters.filterByTags')}</h3>
           {hasActiveFilters && (
             <Button
               variant="ghost"
@@ -43,7 +45,7 @@ export const GroupsFilters: React.FC = () => {
               className="h-8 px-3 text-muted-foreground hover:text-foreground"
             >
               <X className="mr-1 h-3 w-3" />
-              Clear filters
+              {t('features.groups.list.filters.clearFilters')}
             </Button>
           )}
         </div>
@@ -68,10 +70,10 @@ export const GroupsFilters: React.FC = () => {
       {/* Active Filters Display */}
       {hasActiveFilters && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>Active filters:</span>
+          <span>{t('features.groups.list.filters.activeFilters')}</span>
           {searchTerm && (
             <Badge variant="secondary" className="text-xs">
-              Search: "{searchTerm}"
+              {t('features.groups.list.filters.searchLabel', { query: searchTerm })}
             </Badge>
           )}
           {selectedTags.map(tag => (

@@ -7,12 +7,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Calendar, ArrowRight, Target } from 'lucide-react';
 import db from '../../../../db/db';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface AmendmentPathVisualizationProps {
   amendmentId: string;
 }
 
 export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisualizationProps) {
+  const { t } = useTranslation();
   const [nodes, setNodes] = useNodesState<Node>([]);
   const [edges, setEdges] = useEdgesState<Edge>([]);
 
@@ -122,11 +124,11 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Target className="h-5 w-5" />
-            Amendment Process Path
+            {t('features.amendments.pathVisualization.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">Loading...</p>
+          <p className="text-sm text-muted-foreground">{t('features.amendments.process.loading')}</p>
         </CardContent>
       </Card>
     );
@@ -138,13 +140,13 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Target className="h-5 w-5" />
-            Amendment Process Path
+            {t('features.amendments.pathVisualization.title')}
           </CardTitle>
-          <CardDescription>No target group set yet</CardDescription>
+          <CardDescription>{t('features.amendments.pathVisualization.noTargetSet')}</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Visit the Process tab to select a target group and event for this amendment.
+            {t('features.amendments.pathVisualization.visitProcessTab')}
           </p>
         </CardContent>
       </Card>
@@ -157,19 +159,19 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Target className="h-5 w-5" />
-            Amendment Process Path
+            {t('features.amendments.pathVisualization.title')}
           </CardTitle>
-          <CardDescription>Path calculation in progress</CardDescription>
+          <CardDescription>{t('features.amendments.pathVisualization.pathCalculating')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3 text-sm">
-            <p className="font-semibold">Target:</p>
+            <p className="font-semibold">{t('features.amendments.process.target')}:</p>
             <div className="ml-4">
               <p>
-                <span className="text-muted-foreground">Group:</span> {amendment.targetGroup.name}
+                <span className="text-muted-foreground">{t('features.amendments.process.targetGroup')}:</span> {amendment.targetGroup.name}
               </p>
               <p>
-                <span className="text-muted-foreground">Event:</span> {amendment.targetEvent.title}
+                <span className="text-muted-foreground">{t('features.amendments.process.event')}:</span> {amendment.targetEvent.title}
               </p>
             </div>
           </div>
@@ -184,11 +186,10 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Target className="h-5 w-5" />
-            Amendment Process Path
+            {t('features.amendments.pathVisualization.title')}
           </CardTitle>
           <CardDescription>
-            Shortest path to target group ({pathSegments.length} step
-            {pathSegments.length !== 1 ? 's' : ''})
+            {t('features.amendments.pathVisualization.shortestPath', { count: pathSegments.length })}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -196,11 +197,11 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
           <div className="mb-4 rounded-lg border bg-muted/50 p-4">
             <div className="grid gap-3 text-sm md:grid-cols-2">
               <div>
-                <div className="font-semibold text-muted-foreground">Target Group</div>
+                <div className="font-semibold text-muted-foreground">{t('features.amendments.process.targetGroup')}</div>
                 <div className="mt-1">{amendment.targetGroup.name}</div>
               </div>
               <div>
-                <div className="font-semibold text-muted-foreground">Target Event</div>
+                <div className="font-semibold text-muted-foreground">{t('features.amendments.process.targetEvent')}</div>
                 <div className="mt-1 flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
                   {amendment.targetEvent.title}
@@ -233,15 +234,15 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2">
                       <div className="h-4 w-4 rounded border border-[#90caf9] bg-[#e3f2fd]"></div>
-                      <span>Start</span>
+                      <span>{t('features.amendments.pathVisualization.start')}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="h-4 w-4 rounded border border-[#a5d6a7] bg-[#c8e6c9]"></div>
-                      <span>Path</span>
+                      <span>{t('features.amendments.pathVisualization.path')}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="h-4 w-4 rounded border border-[#ef9a9a] bg-[#ffcdd2]"></div>
-                      <span>Target</span>
+                      <span>{t('features.amendments.process.target')}</span>
                     </div>
                   </div>
                 </Panel>
@@ -258,10 +259,10 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <h4 className="font-semibold">{segment.group?.name || 'Unknown Group'}</h4>
-                    {index === 0 && <Badge variant="secondary">Start</Badge>}
+                    <h4 className="font-semibold">{segment.group?.name || t('common.unknown')}</h4>
+                    {index === 0 && <Badge variant="secondary">{t('features.amendments.pathVisualization.start')}</Badge>}
                     {index === pathSegments.length - 1 && (
-                      <Badge variant="destructive">Target</Badge>
+                      <Badge variant="destructive">{t('features.amendments.process.target')}</Badge>
                     )}
                   </div>
                   {segment.event?.title && (

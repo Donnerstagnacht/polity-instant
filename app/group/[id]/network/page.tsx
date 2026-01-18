@@ -30,6 +30,7 @@ import {
   notifyRelationshipApproved,
   notifyRelationshipRejected,
 } from '@/utils/notification-helpers';
+import { useTranslation } from '@/hooks/use-translation';
 
 export default function GroupNetworkPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -39,6 +40,7 @@ export default function GroupNetworkPage({ params }: { params: Promise<{ id: str
   const canManageRelationships = can('manage', 'groupRelationships');
   
   const { group } = useGroupData(groupId);
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [directionFilter, setDirectionFilter] = useState<'all' | 'parent' | 'child'>('all');
   const [selectedRights, setSelectedRights] = useState<Set<string>>(new Set());
@@ -257,9 +259,9 @@ export default function GroupNetworkPage({ params }: { params: Promise<{ id: str
       <PermissionGuard action="view" resource="groupRelationships" context={{ groupId }}>
         <PageWrapper className="container mx-auto p-8">
           <div className="mb-8">
-            <h1 className="mb-4 text-4xl font-bold">Group Network</h1>
+            <h1 className="mb-4 text-4xl font-bold">{t('pages.group.network.title')}</h1>
             <p className="text-muted-foreground">
-              {group?.name || 'Group'} - Manage relationships and network visualization
+              {group?.name || t('navigation.primary.groups')}
             </p>
           </div>
 
@@ -275,7 +277,7 @@ export default function GroupNetworkPage({ params }: { params: Promise<{ id: str
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Search relationships by group name..."
+                    placeholder={t('pages.group.network.searchPlaceholder')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9"

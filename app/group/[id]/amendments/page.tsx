@@ -14,9 +14,11 @@ import { AmendmentSearchAndFilters } from '@/features/groups/ui/AmendmentSearchA
 import { AmendmentGroups } from '@/features/groups/ui/AmendmentGroups';
 import { Scale } from 'lucide-react';
 import { useNavigation } from '@/navigation/state/useNavigation';
+import { useTranslation } from '@/hooks/use-translation';
 
 export default function GroupAmendmentsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
+  const { t } = useTranslation();
   const { currentPrimaryRoute } = useNavigation();
 
   // Set current route to 'group' when this page is loaded
@@ -48,7 +50,7 @@ export default function GroupAmendmentsPage({ params }: { params: Promise<{ id: 
     return (
       <AuthGuard requireAuth={true}>
         <PageWrapper className="container mx-auto p-8">
-          <div className="py-12 text-center">Loading amendments...</div>
+          <div className="py-12 text-center">{t('pages.group.loading')}</div>
         </PageWrapper>
       </AuthGuard>
     );
@@ -59,9 +61,9 @@ export default function GroupAmendmentsPage({ params }: { params: Promise<{ id: 
       <AuthGuard requireAuth={true}>
         <PageWrapper className="container mx-auto p-8">
           <div className="py-12 text-center">
-            <h1 className="mb-4 text-2xl font-bold">Group Not Found</h1>
+            <h1 className="mb-4 text-2xl font-bold">{t('pages.group.notFound.title')}</h1>
             <p className="text-muted-foreground">
-              The group you're looking for doesn't exist or has been removed.
+              {t('pages.group.notFound.description')}
             </p>
           </div>
         </PageWrapper>
@@ -75,19 +77,21 @@ export default function GroupAmendmentsPage({ params }: { params: Promise<{ id: 
         {/* Header */}
         <div className="mb-6 flex items-start justify-between">
           <div>
-            <h1 className="mb-2 text-3xl font-bold">{group.name} - Amendments</h1>
+            <h1 className="mb-2 text-3xl font-bold">{group.name} - {t('pages.group.amendments.title')}</h1>
             <p className="text-muted-foreground">
-              {sortedAmendments.length} amendment{sortedAmendments.length !== 1 ? 's' : ''} found
+              {sortedAmendments.length === 1 
+                ? t('pages.group.amendments.count', { count: sortedAmendments.length })
+                : t('pages.group.amendments.countPlural', { count: sortedAmendments.length })}
             </p>
             {/* Debug: Show status breakdown */}
             {sortedAmendments.length > 0 && (
               <div className="mt-2 text-sm text-muted-foreground">
-                Passed: {groupedAmendments.passed.length}, Under Review:{' '}
-                {groupedAmendments.underReview.length}, Drafting:{' '}
-                {groupedAmendments.drafting.length}, Rejected: {groupedAmendments.rejected.length}
+                {t('pages.group.amendments.statusBreakdown.passed')}: {groupedAmendments.passed.length}, {t('pages.group.amendments.statusBreakdown.underReview')}:{' '}
+                {groupedAmendments.underReview.length}, {t('pages.group.amendments.statusBreakdown.drafting')}:{' '}
+                {groupedAmendments.drafting.length}, {t('pages.group.amendments.statusBreakdown.rejected')}: {groupedAmendments.rejected.length}
                 {/* Show unique statuses for debugging */}
                 <div className="mt-1">
-                  All statuses:{' '}
+                  {t('pages.group.amendments.statusBreakdown.allStatuses')}:{' '}
                   {Array.from(new Set(sortedAmendments.map((a: any) => a.status))).join(', ')}
                 </div>
               </div>
@@ -96,7 +100,7 @@ export default function GroupAmendmentsPage({ params }: { params: Promise<{ id: 
           <Button asChild>
             <a href={`/create/amendment?groupId=${resolvedParams.id}`}>
               <Scale className="mr-2 h-4 w-4" />
-              New Amendment
+              {t('pages.group.amendments.createAmendment')}
             </a>
           </Button>
         </div>
@@ -118,8 +122,8 @@ export default function GroupAmendmentsPage({ params }: { params: Promise<{ id: 
         {sortedAmendments.length === 0 ? (
           <div className="py-12 text-center text-muted-foreground">
             {amendments.length === 0
-              ? 'No amendments found for this group.'
-              : 'No amendments match your search criteria.'}
+              ? t('pages.group.amendments.noAmendments')
+              : t('pages.group.amendments.noMatchingAmendments')}
           </div>
         ) : (
           <AmendmentGroups groupedAmendments={groupedAmendments} />

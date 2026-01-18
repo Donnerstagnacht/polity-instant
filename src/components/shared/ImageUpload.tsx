@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Upload, X } from 'lucide-react';
 import { cn } from '@/utils/utils';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface ImageUploadProps {
   currentImage?: string;
@@ -21,6 +22,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   description = 'Upload a user image or provide a URL',
   className,
 }) => {
+  const { t } = useTranslation();
   const [previewUrl, setPreviewUrl] = useState<string>(currentImage || '');
   const [imageUrl, setImageUrl] = useState<string>(currentImage || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -94,13 +96,13 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
               className="flex-1"
             >
               <Upload className="mr-2 h-4 w-4" />
-              Upload Image
+              {t('common.actions.uploadImage')}
             </Button>
           </div>
 
           {/* URL Input */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Or provide a URL</label>
+            <label className="text-sm font-medium">{t('common.labels.orProvideUrl')}</label>
             <input
               type="url"
               value={imageUrl}

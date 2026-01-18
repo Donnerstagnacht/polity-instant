@@ -22,6 +22,7 @@ import {
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { ConversationSelectorDialog } from './ConversationSelectorDialog';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface ShareButtonProps {
   url: string;
@@ -40,6 +41,7 @@ export function ShareButton({
   size = 'default',
   className = '',
 }: ShareButtonProps) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [conversationDialogOpen, setConversationDialogOpen] = useState(false);
@@ -52,10 +54,10 @@ export function ShareButton({
     try {
       await navigator.clipboard.writeText(fullUrl);
       setCopied(true);
-      toast.success('The link has been copied to your clipboard.');
+      toast.success(t('common.share.linkCopied'));
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error('Could not copy the link to your clipboard.');
+      toast.error(t('common.share.linkCopyFailed'));
     }
   };
 
@@ -68,7 +70,7 @@ export function ShareButton({
 
   const handleShare = (platform: keyof typeof shareLinks) => {
     if (platform === 'instagram') {
-      toast.info('Please share manually on Instagram.');
+      toast.info(t('common.share.shareManually'));
       return;
     }
     window.open(shareLinks[platform], '_blank', 'noopener,noreferrer,width=600,height=400');
@@ -81,12 +83,12 @@ export function ShareButton({
         <DropdownMenuTrigger asChild>
           <Button variant={variant} size={size} className={className}>
             <Share2 className="mr-2 h-4 w-4" />
-            Share
+            {t('common.actions.share')}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[280px]">
           <div className="p-2">
-            <div className="mb-2 text-xs font-medium text-muted-foreground">Share via</div>
+            <div className="mb-2 text-xs font-medium text-muted-foreground">{t('common.labels.shareVia')}</div>
 
             <DropdownMenuItem
               onClick={() => {
@@ -123,7 +125,7 @@ export function ShareButton({
 
             <DropdownMenuSeparator />
 
-            <div className="mb-1 mt-2 text-xs font-medium text-muted-foreground">Copy link</div>
+            <div className="mb-1 mt-2 text-xs font-medium text-muted-foreground">{t('common.labels.copyLink')}</div>
             <div className="flex items-center gap-2">
               <Input
                 value={fullUrl}

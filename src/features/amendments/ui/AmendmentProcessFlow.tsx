@@ -25,12 +25,14 @@ import { CalendarIcon, Target, X, RefreshCw, User } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TypeAheadSelect } from '@/components/ui/type-ahead-select';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface AmendmentProcessFlowProps {
   amendmentId: string;
 }
 
 export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps) {
+  const { t } = useTranslation();
   const user = useAuthStore((state: any) => state.user);
   const router = useRouter();
   const [entityDialogOpen, setEntityDialogOpen] = useState(false);
@@ -308,7 +310,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
       const pathWithEvents = calculatePathWithEvents(groupId);
 
       if (!pathWithEvents || pathWithEvents.length === 0) {
-        toast.error('No valid path found to target group');
+        toast.error(t('features.amendments.process.noValidPath'));
         setIsSaving(false);
         return;
       }
@@ -451,16 +453,16 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
 
       await db.transact(transactions);
 
-      toast.success(hasTarget ? 'Target updated successfully' : 'Target set successfully', {
-        description: `Amendment will be processed through ${groupData.name} with ${enrichedPath.length} events in the path`,
+      toast.success(hasTarget ? t('features.amendments.process.targetUpdatedSuccess') : t('features.amendments.process.targetSetSuccess'), {
+        description: t('features.amendments.process.pathDescription', { groupName: groupData.name, count: enrichedPath.length }),
       });
 
       setTargetDialogOpen(false);
       setPendingTarget(null);
     } catch (error) {
       console.error('Error setting target:', error);
-      toast.error('Failed to set target', {
-        description: 'Please try again',
+      toast.error(t('features.amendments.process.setTargetFailed'), {
+        description: t('features.amendments.process.tryAgain'),
       });
     } finally {
       setIsSaving(false);
@@ -503,12 +505,12 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
 
       await db.transact(transactions);
 
-      toast.success('Target removed successfully');
+      toast.success(t('features.amendments.process.targetRemovedSuccess'));
       setRemoveDialogOpen(false);
     } catch (error) {
       console.error('Error removing target:', error);
-      toast.error('Failed to remove target', {
-        description: 'Please try again',
+      toast.error(t('features.amendments.process.removeTargetFailed'), {
+        description: t('features.amendments.process.tryAgain'),
       });
     } finally {
       setIsSaving(false);
@@ -526,8 +528,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
       const segmentIndex = pathData.findIndex((s: any) => s.groupId === groupId);
 
       if (segmentIndex === -1) {
-        toast.error('Group not found in path');
-        return;
+      toast.error(t('features.amendments.process.groupNotFound'));
       }
 
       const segment = pathData[segmentIndex];
@@ -601,12 +602,12 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
 
       await db.transact(transactions);
 
-      toast.success('Event updated successfully');
+      toast.success(t('features.amendments.process.eventUpdatedSuccess'));
       setEventChangeDialog(null);
     } catch (error) {
       console.error('Error changing event:', error);
-      toast.error('Failed to update event', {
-        description: 'Please try again',
+      toast.error(t('features.amendments.process.eventUpdateFailed'), {
+        description: t('features.amendments.process.tryAgain'),
       });
     } finally {
       setIsSaving(false);
@@ -627,7 +628,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
   if (!user) {
     return (
       <div className="flex h-[600px] items-center justify-center">
-        <p className="text-muted-foreground">Please log in to view the amendment process.</p>
+        <p className="text-muted-foreground">{t('features.amendments.process.pleaseLogin')}</p>
       </div>
     );
   }
@@ -635,7 +636,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
   if (isLoading) {
     return (
       <div className="flex h-[600px] items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground">{t('features.amendments.process.loading')}</p>
       </div>
     );
   }
@@ -886,7 +887,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Target className="h-4 w-4" />
-                Current Target
+                {t('features.amendments.process.currentTarget')}
               </CardTitle>
               <div className="flex gap-2">
                 <Button
@@ -924,11 +925,11 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                   }}
                 >
                   <RefreshCw className="mr-2 h-3 w-3" />
-                  Update
+                  {t('features.amendments.process.update')}
                 </Button>
                 <Button size="sm" variant="destructive" onClick={() => setRemoveDialogOpen(true)}>
                   <X className="mr-2 h-3 w-3" />
-                  Remove
+                  {t('features.amendments.process.remove')}
                 </Button>
               </div>
             </div>
@@ -938,7 +939,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
             {amendment.path && enrichedPathData && enrichedPathData.length > 0 && (
               <div className="space-y-4">
                 <div className="text-xs font-semibold uppercase text-muted-foreground">
-                  Amendment Path ({enrichedPathData.length} groups)
+                  {t('features.amendments.process.amendmentPath')} ({enrichedPathData.length} {t('common.groups')})
                 </div>
 
                 {/* Timeline */}
@@ -990,12 +991,12 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                                   <h4 className="text-base font-semibold">{segment.groupName}</h4>
                                   {isNextEvent && (
                                     <Badge className="bg-cyan-500 text-xs hover:bg-cyan-600">
-                                      Next Event
+                                      {t('features.amendments.process.nextEvent')}
                                     </Badge>
                                   )}
                                   {isTarget && (
                                     <Badge className="bg-red-500 text-xs hover:bg-red-600">
-                                      Target
+                                      {t('features.amendments.process.target')}
                                     </Badge>
                                   )}
                                   {isPending && (
@@ -1003,7 +1004,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                                       variant="outline"
                                       className="border-yellow-600 text-xs text-yellow-700"
                                     >
-                                      Awaiting Previous
+                                      {t('features.amendments.process.awaitingPrevious')}
                                     </Badge>
                                   )}
                                 </div>
@@ -1058,7 +1059,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                                     <div className="text-2xl opacity-50">→</div>
                                     <div className="flex-1">
                                       <span className="text-sm italic text-muted-foreground">
-                                        No upcoming event
+                                        {t('features.amendments.process.noUpcomingEvent')}
                                       </span>
                                     </div>
                                     <Button
@@ -1090,12 +1091,11 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                 {/* Summary */}
                 <div className="mt-4 flex items-center gap-2 border-t pt-4">
                   <Badge variant="secondary">
-                    {enrichedPathData.filter((s: any) => s.agendaItemId).length} agenda items
-                    created
+                    {enrichedPathData.filter((s: any) => s.agendaItemId).length} {t('common.agendaItems')}
                   </Badge>
                   {enrichedPathData.filter((s: any) => s.amendmentVoteId).length > 0 && (
                     <Badge variant="secondary">
-                      {enrichedPathData.filter((s: any) => s.amendmentVoteId).length} votes created
+                      {enrichedPathData.filter((s: any) => s.amendmentVoteId).length} {t('common.votes')}
                     </Badge>
                   )}
                 </div>
@@ -1107,12 +1107,12 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-8 text-center">
             <Target className="mb-4 h-12 w-12 text-muted-foreground/50" />
-            <h3 className="mb-2 text-lg font-semibold">No Target Selected</h3>
+            <h3 className="mb-2 text-lg font-semibold">{t('features.amendments.process.noTargetSelected')}</h3>
             <p className="mb-4 text-sm text-muted-foreground">
-              Choose a target group and event from the network below to begin the amendment process.
+              {t('features.amendments.process.chooseTargetPrompt')}
             </p>
             <p className="text-xs text-muted-foreground">
-              Click on a group in the network, then select an event to set your target.
+              {t('features.amendments.process.clickGroupPrompt')}
             </p>
           </CardContent>
         </Card>
@@ -1122,12 +1122,12 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
         <CardHeader className="pb-3">
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <CardTitle>Amendment Network</CardTitle>
+              <CardTitle>{t('features.amendments.process.amendmentNetwork')}</CardTitle>
               <Tabs value={activeTab} onValueChange={v => setActiveTab(v as 'path' | 'network')}>
                 <TabsList>
-                  <TabsTrigger value="network">Available Targets</TabsTrigger>
+                  <TabsTrigger value="network">{t('features.amendments.process.availableTargets')}</TabsTrigger>
                   <TabsTrigger value="path" disabled={!hasTarget}>
-                    Target Path
+                    {t('features.amendments.process.targetPath')}
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -1216,7 +1216,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                   if (!pathViz) {
                     return (
                       <div className="flex h-full items-center justify-center">
-                        <p className="text-muted-foreground">No path available</p>
+                        <p className="text-muted-foreground">{t('features.amendments.process.noPathAvailable')}</p>
                       </div>
                     );
                   }
@@ -1247,12 +1247,12 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {hasTarget ? 'Update Amendment Target' : 'Set Amendment Target'}
+              {hasTarget ? t('features.amendments.process.updateAmendmentTarget') : t('features.amendments.process.setAmendmentTarget')}
             </DialogTitle>
             <DialogDescription>
               {hasTarget
-                ? 'Update the target group and event for your amendment. This will remove the previous agenda item and path.'
-                : 'Set the target group and event for your amendment. An agenda item will be created automatically.'}
+                ? t('features.amendments.process.updateTargetDescription')
+                : t('features.amendments.process.setTargetDescription')}
             </DialogDescription>
           </DialogHeader>
 
@@ -1261,7 +1261,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
               {/* Group Card (matching GroupsCard design) */}
               <div>
                 <h4 className="mb-2 text-sm font-semibold uppercase text-muted-foreground">
-                  Target Group
+                  {t('features.amendments.process.targetGroup')}
                 </h4>
                 <Card className="overflow-hidden border-2 bg-gradient-to-br from-blue-100 to-purple-100 transition-all duration-300 dark:from-blue-900/40 dark:to-purple-900/50">
                   <CardHeader className="space-y-3 pb-4">
@@ -1288,7 +1288,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                       <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                         <User className="h-4 w-4" />
                         <span className="font-medium">
-                          {pendingTarget.groupData.memberCount || 0} members
+                          {pendingTarget.groupData.memberCount || 0} {t('features.amendments.process.members')}
                         </span>
                       </div>
                     </div>
@@ -1299,7 +1299,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
               {/* Event Card (matching GroupEventsList design) */}
               <div>
                 <h4 className="mb-2 text-sm font-semibold uppercase text-muted-foreground">
-                  Target Event
+                  {t('features.amendments.process.targetEvent')}
                 </h4>
                 <div className="rounded-lg border-2 bg-gradient-to-br from-green-100 to-blue-100 p-4 dark:from-green-900/40 dark:to-blue-900/50">
                   {/* Header with title and badges */}
@@ -1310,7 +1310,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                     <div className="flex gap-1">
                       {pendingTarget.eventData.isPublic && (
                         <Badge variant="outline" className="text-xs">
-                          Public
+                          {t('features.amendments.process.public')}
                         </Badge>
                       )}
                     </div>
@@ -1369,15 +1369,15 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
               </div>
 
               <div className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
-                <p className="font-semibold">What will happen:</p>
+                <p className="font-semibold">{t('features.amendments.process.whatWillHappen')}</p>
                 <ul className="ml-4 mt-1 list-disc space-y-1">
-                  <li>An agenda item will be created for the selected event</li>
-                  <li>An amendment vote will be created for the agenda item</li>
-                  <li>The shortest path to the target group will be calculated and stored</li>
+                  <li>{t('features.amendments.process.agendaItemWillBeCreated')}</li>
+                  <li>{t('features.amendments.process.voteWillBeCreated')}</li>
+                  <li>{t('features.amendments.process.pathWillBeCalculated')}</li>
                   {hasTarget && (
                     <>
-                      <li>The previous agenda item and vote will be removed</li>
-                      <li>The previous path will be deleted</li>
+                      <li>{t('features.amendments.process.previousAgendaItemRemoved')}</li>
+                      <li>{t('features.amendments.process.previousPathDeleted')}</li>
                     </>
                   )}
                 </ul>
@@ -1387,10 +1387,10 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setTargetDialogOpen(false)}>
-              Cancel
+              {t('features.amendments.process.cancel')}
             </Button>
             <Button onClick={handleConfirmTarget} disabled={isSaving}>
-              {isSaving ? 'Processing...' : hasTarget ? 'Update Target' : 'Confirm Target'}
+              {isSaving ? t('features.amendments.process.processing') : hasTarget ? t('features.amendments.process.updateTarget') : t('features.amendments.process.confirmTarget')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1400,29 +1400,28 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
       <Dialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Remove Amendment Target</DialogTitle>
+            <DialogTitle>{t('features.amendments.process.removeAmendmentTarget')}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to remove the target for this amendment? This will also delete
-              the associated agenda item, amendment vote, and path.
+              {t('features.amendments.process.removeTargetConfirmation')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="rounded-md bg-destructive/10 p-3 text-sm">
-            <p className="font-semibold text-destructive">This action will:</p>
+            <p className="font-semibold text-destructive">{t('features.amendments.process.thisActionWill')}</p>
             <ul className="ml-4 mt-1 list-disc space-y-1 text-destructive/80">
-              <li>Remove the target group and event</li>
-              <li>Delete the agenda item from the event</li>
-              <li>Delete the amendment vote</li>
-              <li>Delete the calculated process path</li>
+              <li>{t('features.amendments.process.removeTargetGroupAndEvent')}</li>
+              <li>{t('features.amendments.process.deleteAgendaItem')}</li>
+              <li>{t('features.amendments.process.deleteVote')}</li>
+              <li>{t('features.amendments.process.deletePath')}</li>
             </ul>
           </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setRemoveDialogOpen(false)}>
-              Cancel
+              {t('features.amendments.process.cancel')}
             </Button>
             <Button variant="destructive" onClick={handleRemoveTarget} disabled={isSaving}>
-              {isSaving ? 'Removing...' : 'Remove Target'}
+              {isSaving ? t('features.amendments.process.removing') : t('features.amendments.process.removeTarget')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1436,9 +1435,9 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
         >
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Change Event for {eventChangeDialog.groupName}</DialogTitle>
+              <DialogTitle>{t('features.amendments.process.changeEventFor', { groupName: eventChangeDialog.groupName })}</DialogTitle>
               <DialogDescription>
-                Select a new event for this group in the amendment path
+                {t('features.amendments.process.selectNewEvent')}
               </DialogDescription>
             </DialogHeader>
 
@@ -1456,7 +1455,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                   if (upcomingEvents.length === 0) {
                     return (
                       <p className="text-sm text-muted-foreground">
-                        No upcoming events for this group
+                        {t('features.amendments.process.noUpcomingEvents')}
                       </p>
                     );
                   }
@@ -1496,7 +1495,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                               <h4 className="font-semibold group-hover:text-primary">
                                 {event.title}
                               </h4>
-                              {isCurrentEvent && <Badge variant="secondary">Current</Badge>}
+                              {isCurrentEvent && <Badge variant="secondary">{t('features.amendments.process.current')}</Badge>}
                             </div>
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
                               <CalendarIcon className="h-3 w-3" />
@@ -1527,7 +1526,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                                 }
                               }}
                             >
-                              {isSaving ? 'Updating...' : 'Select'}
+                              {isSaving ? t('features.amendments.process.updating') : t('features.amendments.process.select')}
                             </Button>
                           )}
                         </div>
@@ -1540,7 +1539,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
 
             <DialogFooter>
               <Button variant="outline" onClick={() => setEventChangeDialog(null)}>
-                Cancel
+                {t('features.amendments.process.cancel')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1551,9 +1550,9 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
       <Dialog open={targetSelectionDialog} onOpenChange={setTargetSelectionDialog}>
         <DialogContent className="flex h-[85vh] max-w-4xl flex-col">
           <DialogHeader>
-            <DialogTitle>Select Target Group and Event</DialogTitle>
+            <DialogTitle>{t('features.amendments.process.selectTargetGroupAndEvent')}</DialogTitle>
             <DialogDescription>
-              Choose a collaborator to view their network, then select a group and event
+              {t('features.amendments.process.selectCollaboratorDescription')}
             </DialogDescription>
           </DialogHeader>
 
@@ -1565,7 +1564,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                   items={allUsers}
                   value={targetCollaboratorUserId}
                   onChange={setTargetCollaboratorUserId}
-                  placeholder="Select collaborator to view their network..."
+                  placeholder={t('features.amendments.process.selectCollaboratorPlaceholder')}
                   searchKeys={['name', 'email']}
                   getItemId={(user: any) => user.id}
                   renderItem={(user: any) => (
@@ -1612,7 +1611,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                       </div>
                     </div>
                   )}
-                  label="Select Network For:"
+                  label={t('features.amendments.process.selectNetworkFor')}
                 />
               </div>
             </div>
@@ -1627,8 +1626,8 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                   return (
                     <p className="px-6 text-sm text-muted-foreground">
                       {!targetCollaboratorUserId
-                        ? 'Please select a collaborator to view their network'
-                        : 'Loading groups...'}
+                        ? t('features.amendments.process.selectCollaboratorPrompt')
+                        : t('features.amendments.process.loadingGroups')}
                     </p>
                   );
                 }
@@ -1677,8 +1676,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                 if (connectedGroups.length === 0) {
                   return (
                     <p className="text-sm text-muted-foreground">
-                      No connected groups found. You need to be a member of groups with amendment
-                      rights.
+                      {t('features.amendments.process.noConnectedGroups')}
                     </p>
                   );
                 }
@@ -1723,11 +1721,11 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                             <div className="mt-2 flex items-center gap-2">
                               {isMemberGroup && (
                                 <Badge variant="secondary" className="text-xs">
-                                  Member
+                                  {t('features.amendments.process.member')}
                                 </Badge>
                               )}
                               <span className="text-xs text-muted-foreground">
-                                {group.memberCount || 0} members
+                                {group.memberCount || 0} {t('features.amendments.process.members')}
                               </span>
                             </div>
                           </div>
@@ -1756,7 +1754,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                             if (upcomingEvents.length === 0) {
                               return (
                                 <p className="py-2 text-sm text-muted-foreground">
-                                  No upcoming events for this group
+                                  {t('features.amendments.process.noUpcomingEvents')}
                                 </p>
                               );
                             }
@@ -1835,7 +1833,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                 setPendingTarget(null);
               }}
             >
-              Cancel
+              {t('features.amendments.process.cancel')}
             </Button>
             {pendingTarget && (
               <Button
@@ -1844,7 +1842,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                   setTargetDialogOpen(true);
                 }}
               >
-                Confirm Selection
+                {t('features.amendments.process.confirmSelection')}
               </Button>
             )}
           </DialogFooter>

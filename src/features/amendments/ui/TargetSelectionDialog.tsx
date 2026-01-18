@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TypeAheadSelect } from '@/components/ui/type-ahead-select';
 import { CalendarIcon, User } from 'lucide-react';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface TargetSelectionDialogProps {
   open: boolean;
@@ -49,10 +50,11 @@ export function TargetSelectionDialog({
   hideCollaboratorSelection = false,
   onGroupSelect,
   isSaving = false,
-  title = 'Select Target Group and Event',
-  description = 'Choose a collaborator to view their network, then select a group and event',
-  confirmButtonText = 'Confirm Selection',
+  title,
+  description,
+  confirmButtonText,
 }: TargetSelectionDialogProps) {
+  const { t } = useTranslation();
   const [targetCollaboratorUserId, setTargetCollaboratorUserId] = useState<string>('');
   const [selectedTargetGroup, setSelectedTargetGroup] = useState<{
     id: string;
@@ -64,6 +66,10 @@ export function TargetSelectionDialog({
     eventId: string;
     eventData: any;
   } | null>(null);
+
+  const dialogTitle = title || t('features.amendments.targetSelection.defaultTitle');
+  const dialogDescription = description || t('features.amendments.targetSelection.defaultDescription');
+  const confirmText = confirmButtonText || t('features.amendments.targetSelection.defaultConfirm');
 
   const handleCancel = () => {
     onOpenChange(false);
@@ -136,8 +142,8 @@ export function TargetSelectionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex h-[85vh] max-w-4xl flex-col">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
+          <DialogTitle>{dialogTitle}</DialogTitle>
+          <DialogDescription>{dialogDescription}</DialogDescription>
         </DialogHeader>
 
         {!hideCollaboratorSelection && (
@@ -149,7 +155,7 @@ export function TargetSelectionDialog({
                   items={allUsers}
                   value={targetCollaboratorUserId}
                   onChange={setTargetCollaboratorUserId}
-                  placeholder="Select collaborator to view their network..."
+                  placeholder={t('features.amendments.targetSelection.selectCollaboratorPlaceholder')}
                   searchKeys={['name', 'email']}
                   getItemId={(user: any) => user.id}
                   renderItem={(user: any) => (
@@ -196,7 +202,7 @@ export function TargetSelectionDialog({
                       </div>
                     </div>
                   )}
-                  label="Select Network For:"
+                  label={t('features.amendments.targetSelection.selectNetworkFor')}
                 />
               </div>
             </div>
@@ -208,14 +214,14 @@ export function TargetSelectionDialog({
             {!targetUserId || !networkData ? (
               <p className="px-6 text-sm text-muted-foreground">
                 {hideCollaboratorSelection
-                  ? 'Loading your network...'
+                  ? t('features.amendments.targetSelection.loadingNetwork')
                   : !targetCollaboratorUserId
-                    ? 'Please select a collaborator to view their network'
-                    : 'Loading groups...'}
+                    ? t('features.amendments.targetSelection.selectCollaboratorPrompt')
+                    : t('features.amendments.targetSelection.loadingGroups')}
               </p>
             ) : connectedGroups.length === 0 ? (
               <p className="px-6 text-sm text-muted-foreground">
-                No connected groups found. You need to be a member of groups with amendment rights.
+                {t('features.amendments.targetSelection.noConnectedGroups')}
               </p>
             ) : (
               connectedGroups.map((group: any, index: number) => {
@@ -250,11 +256,11 @@ export function TargetSelectionDialog({
                           <div className="mt-2 flex items-center gap-2">
                             {isMemberGroup && (
                               <Badge variant="secondary" className="text-xs">
-                                Member
+                                {t('features.amendments.targetSelection.member')}
                               </Badge>
                             )}
                             <span className="text-xs text-muted-foreground">
-                              {group.memberCount || 0} members
+                              {group.memberCount || 0} {t('features.amendments.targetSelection.members')}
                             </span>
                           </div>
                         </div>
@@ -283,7 +289,7 @@ export function TargetSelectionDialog({
                           if (upcomingEvents.length === 0) {
                             return (
                               <p className="py-2 text-sm text-muted-foreground">
-                                No upcoming events for this group
+                                {t('features.amendments.targetSelection.noUpcomingEvents')}
                               </p>
                             );
                           }
@@ -345,11 +351,11 @@ export function TargetSelectionDialog({
 
         <DialogFooter className="border-t pt-4">
           <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
-            Cancel
+            {t('features.amendments.targetSelection.cancel')}
           </Button>
           {pendingTarget && (
             <Button onClick={handleConfirm} disabled={isSaving}>
-              {isSaving ? 'Processing...' : confirmButtonText}
+              {isSaving ? t('features.amendments.targetSelection.processing') : confirmText}
             </Button>
           )}
         </DialogFooter>

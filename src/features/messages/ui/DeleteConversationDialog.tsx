@@ -6,6 +6,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface DeleteConversationDialogProps {
   open: boolean;
@@ -18,19 +19,20 @@ export function DeleteConversationDialog({
   onOpenChange,
   onConfirm,
 }: DeleteConversationDialogProps) {
+  const { t } = useTranslation();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete Conversation</DialogTitle>
+          <DialogTitle>{t('features.messages.conversation.delete')}</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete this conversation? This action cannot
-            be undone and all messages will be permanently deleted.
+            {t('features.messages.conversation.deleteConfirm')}
           </DialogDescription>
         </DialogHeader>
         <div className="flex justify-end gap-2 pt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t('common.actions.cancel')}
           </Button>
           <Button
             variant="destructive"
@@ -39,7 +41,7 @@ export function DeleteConversationDialog({
               onOpenChange(false);
             }}
           >
-            Delete
+            {t('common.actions.delete')}
           </Button>
         </div>
       </DialogContent>

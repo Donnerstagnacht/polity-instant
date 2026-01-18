@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ShareButton } from '@/components/shared/ShareButton';
 import { AlertCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslation } from '@/hooks/use-translation';
 import db from '../../../db/db';
 import { useTodoMutations } from './hooks/useTodoData';
 import { TodoDetailHeader } from './ui/TodoDetailHeader';
@@ -16,6 +17,7 @@ interface TodoDetailPageProps {
 }
 
 export function TodoDetailPage({ todoId }: TodoDetailPageProps) {
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { updateTodo } = useTodoMutations();
@@ -98,7 +100,7 @@ export function TodoDetailPage({ todoId }: TodoDetailPageProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-muted-foreground">Loading todo...</p>
+        <p className="text-muted-foreground">{t('features.todos.detail.loading')}</p>
       </div>
     );
   }
@@ -107,14 +109,14 @@ export function TodoDetailPage({ todoId }: TodoDetailPageProps) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <AlertCircle className="mb-4 h-12 w-12 text-muted-foreground" />
-        <h2 className="mb-2 text-xl font-semibold">Todo not found</h2>
+        <h2 className="mb-2 text-xl font-semibold">{t('features.todos.detail.notFound')}</h2>
         <p className="mb-4 text-muted-foreground">
-          This todo doesn't exist or you don't have access to it.
+          {t('features.todos.detail.noAccessDescription')}
         </p>
         <Link href="/todos">
           <Button>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Todos
+            {t('features.todos.detail.backToTodos')}
           </Button>
         </Link>
       </div>
@@ -127,7 +129,7 @@ export function TodoDetailPage({ todoId }: TodoDetailPageProps) {
         <Link href="/todos">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Todos
+            {t('features.todos.detail.backToTodos')}
           </Button>
         </Link>
         <ShareButton

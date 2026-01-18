@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Search } from 'lucide-react';
 import db from '../../../../db/db';
 import { ARIA_KAI_USER_ID } from '../../../../e2e/aria-kai';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface NewConversationDialogProps {
   open: boolean;
@@ -25,6 +26,7 @@ export function NewConversationDialog({
   currentUserId,
   onUserSelect,
 }: NewConversationDialogProps) {
+  const { t } = useTranslation();
   const [userSearchQuery, setUserSearchQuery] = useState('');
 
   // Query all users for search dialog
@@ -63,16 +65,16 @@ export function NewConversationDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Start a New Conversation</DialogTitle>
+          <DialogTitle>{t('features.messages.compose.startNew')}</DialogTitle>
           <DialogDescription>
-            Search for users to start a conversation with
+            {t('features.messages.compose.searchDescription')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search users by name or handle..."
+              placeholder={t('features.messages.compose.searchUsersPlaceholder')}
               value={userSearchQuery}
               onChange={(e) => setUserSearchQuery(e.target.value)}
               className="pl-9"
@@ -83,8 +85,8 @@ export function NewConversationDialog({
               <div className="py-8 text-center">
                 <p className="text-muted-foreground">
                   {userSearchQuery
-                    ? 'No users found'
-                    : 'Start typing to search users'}
+                    ? t('features.messages.compose.noUsersFound')
+                    : t('features.messages.compose.startTyping')}
                 </p>
               </div>
             ) : (
@@ -107,7 +109,7 @@ export function NewConversationDialog({
                     </Avatar>
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-semibold">
-                        {searchUser.name || 'Unknown User'}
+                        {searchUser.name || t('common.labels.unknownUser')}
                       </p>
                       {searchUser.handle && (
                         <p className="truncate text-sm text-muted-foreground">

@@ -15,10 +15,12 @@ import { Switch } from '@/components/ui/switch';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { useNavigation } from '@/navigation/state/useNavigation';
 import { EventSearchCard } from '@/features/search/ui/EventSearchCard';
+import { useTranslation } from '@/hooks/use-translation';
 
 export default function GroupEventsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const { currentPrimaryRoute } = useNavigation();
+  const { t } = useTranslation();
 
   // Set current route to 'group' when this page is loaded
   useEffect(() => {
@@ -131,7 +133,7 @@ export default function GroupEventsPage({ params }: { params: Promise<{ id: stri
     return (
       <AuthGuard requireAuth={true}>
         <PageWrapper className="container mx-auto p-8">
-          <div className="py-12 text-center">Loading events...</div>
+          <div className="py-12 text-center">{t('common.loading.general')}</div>
         </PageWrapper>
       </AuthGuard>
     );
@@ -177,7 +179,7 @@ export default function GroupEventsPage({ params }: { params: Promise<{ id: stri
             <div className="relative flex-1">
               <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search events..."
+                placeholder={t('pages.group.events.searchPlaceholder')}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="pl-10"

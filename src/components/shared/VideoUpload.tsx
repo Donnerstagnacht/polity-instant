@@ -7,6 +7,7 @@ import { X, Video, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/utils';
 import { useUploadFile } from '@/hooks/use-upload-file';
 import { toast } from 'sonner';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface VideoUploadProps {
   currentVideo?: string;
@@ -25,6 +26,7 @@ export const VideoUpload: React.FC<VideoUploadProps> = ({
   description = 'Upload a video file',
   className,
 }) => {
+  const { t } = useTranslation();
   const [previewUrl, setPreviewUrl] = useState<string>(currentVideo || '');
   const [videoUrl, setVideoUrl] = useState<string>(currentVideo || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -139,12 +141,12 @@ export const VideoUpload: React.FC<VideoUploadProps> = ({
               {isUploading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Uploading... {progress}%
+                  {t('common.actions.uploading')} {progress}%
                 </>
               ) : (
                 <>
                   <Video className="mr-2 h-4 w-4" />
-                  Upload Video
+                  {t('common.actions.uploadVideo')}
                 </>
               )}
             </Button>
@@ -152,7 +154,7 @@ export const VideoUpload: React.FC<VideoUploadProps> = ({
 
           {/* URL Input */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Or provide a URL</label>
+            <label className="text-sm font-medium">{t('common.labels.orProvideUrl')}</label>
             <input
               type="url"
               value={videoUrl}

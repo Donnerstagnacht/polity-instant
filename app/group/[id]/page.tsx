@@ -6,9 +6,11 @@ import { PageWrapper } from '@/components/layout/page-wrapper';
 import { GroupWiki } from '@/features/groups/GroupWiki';
 import { usePermissions } from '../../../db/rbac/usePermissions';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/hooks/use-translation';
 
 export default function GroupPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
+  const { t } = useTranslation();
 
   const { canManage } = usePermissions({ groupId: resolvedParams.id });
   const canManageGroup = canManage('groups');
@@ -19,7 +21,7 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
         {canManageGroup && (
           <div className="mb-4 flex justify-end">
             <Button variant="outline" size="sm">
-              Group Settings
+              {t('pages.group.settings')}
             </Button>
           </div>
         )}

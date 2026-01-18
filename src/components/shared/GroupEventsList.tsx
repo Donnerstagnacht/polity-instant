@@ -3,6 +3,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Calendar, MapPin, Users, Clock } from 'lucide-react';
 import db from '../../../db/db';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface GroupEventsListProps {
   groupId: string;
@@ -10,6 +11,7 @@ interface GroupEventsListProps {
 }
 
 export function GroupEventsList({ groupId, onEventClick }: GroupEventsListProps) {
+  const { t } = useTranslation();
   // Fetch group events
   const { data, isLoading } = db.useQuery({
     events: {
@@ -58,13 +60,13 @@ export function GroupEventsList({ groupId, onEventClick }: GroupEventsListProps)
   };
 
   if (isLoading) {
-    return <div className="py-4 text-center text-sm text-muted-foreground">Loading events...</div>;
+    return <div className="py-4 text-center text-sm text-muted-foreground">{t('common.labels.loadingEvents')}</div>;
   }
 
   if (futureEvents.length === 0) {
     return (
       <div className="py-4 text-center text-sm text-muted-foreground">
-        No upcoming events for this group.
+        {t('common.labels.noUpcomingEvents')}
       </div>
     );
   }
@@ -100,7 +102,7 @@ export function GroupEventsList({ groupId, onEventClick }: GroupEventsListProps)
               <div className="flex gap-1">
                 {event.isPublic && (
                   <Badge variant="outline" className="text-xs">
-                    Public
+                    {t('common.labels.public')}
                   </Badge>
                 )}
               </div>
@@ -131,7 +133,7 @@ export function GroupEventsList({ groupId, onEventClick }: GroupEventsListProps)
               {/* Participants */}
               <div className="flex items-center gap-1.5">
                 <Users className="h-3.5 w-3.5" />
-                <span>{event.participants?.length || 0} participants</span>
+                <span>{event.participants?.length || 0} {t('common.labels.participants')}</span>
               </div>
             </div>
 

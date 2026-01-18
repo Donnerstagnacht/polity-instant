@@ -30,45 +30,52 @@ import { useSearchParams } from 'next/navigation';
 import { getDirectSubgroups, calculateDelegateAllocations } from '@/utils/delegate-calculations';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { notifyGroupEventCreated } from '@/utils/notification-helpers';
+import { useTranslation } from '@/hooks/use-translation';
 
-// Recurring pattern options
-const recurringPatternOptions = [
-  { value: 'none', label: 'Einmalig', description: 'Das Event findet nur einmal statt' },
-  { value: 'daily', label: 'Täglich', description: 'Wiederholung jeden Tag' },
-  { value: 'weekly', label: 'Wöchentlich', description: 'Wiederholung jede Woche' },
-  { value: 'monthly', label: 'Monatlich', description: 'Wiederholung jeden Monat' },
-  { value: 'yearly', label: 'Jährlich', description: 'Wiederholung jedes Jahr' },
-  { value: 'four-yearly', label: '4 Jährig', description: 'Wiederholung alle 4 Jahre' },
+// Recurring pattern options - labels need to be resolved at render time
+const getRecurringPatternOptions = (t: (key: string) => string) => [
+  { value: 'none', label: t('pages.create.event.recurringPatterns.none'), description: t('pages.create.event.recurringPatterns.noneDesc') },
+  { value: 'daily', label: t('pages.create.event.recurringPatterns.daily'), description: t('pages.create.event.recurringPatterns.dailyDesc') },
+  { value: 'weekly', label: t('pages.create.event.recurringPatterns.weekly'), description: t('pages.create.event.recurringPatterns.weeklyDesc') },
+  { value: 'monthly', label: t('pages.create.event.recurringPatterns.monthly'), description: t('pages.create.event.recurringPatterns.monthlyDesc') },
+  { value: 'yearly', label: t('pages.create.event.recurringPatterns.yearly'), description: t('pages.create.event.recurringPatterns.yearlyDesc') },
+  { value: 'four-yearly', label: t('pages.create.event.recurringPatterns.fourYearly'), description: t('pages.create.event.recurringPatterns.fourYearlyDesc') },
 ];
 
-// Visibility options (reused pattern from create group)
-const visibilityOptions = [
+// Visibility options - labels need to be resolved at render time
+const getVisibilityOptions = (t: (key: string) => string) => [
   {
     value: 'public' as const,
-    label: 'Public',
-    description: 'Jeder kann dieses Event sehen',
+    label: t('pages.create.common.public'),
+    description: t('pages.create.event.visibility.publicDesc'),
   },
   {
     value: 'authenticated' as const,
-    label: 'Authenticated',
-    description: 'Nur eingeloggte Nutzer können dieses Event sehen',
+    label: t('pages.create.common.authenticated'),
+    description: t('pages.create.event.visibility.authenticatedDesc'),
   },
   {
     value: 'private' as const,
-    label: 'Private',
-    description: 'Nur Teilnehmer können dieses Event sehen',
+    label: t('pages.create.common.private'),
+    description: t('pages.create.event.visibility.privateDesc'),
   },
 ];
 
-// Location type options
-const locationTypeOptions = [
-  { value: 'online', label: 'Online', icon: Video },
-  { value: 'physical', label: 'Vor Ort', icon: Building2 },
+// Location type options - labels need to be resolved at render time
+const getLocationTypeOptions = (t: (key: string) => string) => [
+  { value: 'online', label: t('pages.create.event.locationTypes.online'), icon: Video },
+  { value: 'physical', label: t('pages.create.event.locationTypes.physical'), icon: Building2 },
 ];
 
 function CreateEventForm() {
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const groupIdParam = searchParams.get('groupId');
+
+  // Get translated options
+  const recurringPatternOptions = getRecurringPatternOptions(t);
+  const visibilityOptions = getVisibilityOptions(t);
+  const locationTypeOptions = getLocationTypeOptions(t);
 
   const [formData, setFormData] = useState({
     // Basic info
@@ -233,13 +240,13 @@ function CreateEventForm() {
 
     try {
       if (!user?.id) {
-        toast.error('Du musst eingeloggt sein, um ein Event zu erstellen');
+        toast.error(t('pages.create.validation.loginRequired'));
         setIsSubmitting(false);
         return;
       }
 
       if (!formData.groupId) {
-        toast.error('Bitte wähle eine Gruppe für dieses Event');
+        toast.error(t('pages.create.validation.groupRequired'));
         setIsSubmitting(false);
         return;
       }
@@ -419,13 +426,13 @@ function CreateEventForm() {
 
       await db.transact(transactions);
 
-      toast.success('Event erfolgreich erstellt!');
+      toast.success(`Event ${t('pages.create.success.created')}`);
       setTimeout(() => {
         window.location.href = `/event/${eventId}`;
       }, 500);
     } catch (error) {
       console.error('Failed to create event:', error);
-      toast.error('Fehler beim Erstellen des Events. Bitte versuche es erneut.');
+      toast.error(t('pages.create.error.createFailed'));
       setIsSubmitting(false);
     }
   };
@@ -436,7 +443,7 @@ function CreateEventForm() {
         <TooltipProvider>
           <Card className="w-full max-w-2xl">
             <CardHeader>
-              <CardTitle>Neues Event erstellen</CardTitle>
+              <CardTitle>{t('pages.create.event.title')}</CardTitle>
             </CardHeader>
             <form onSubmit={handleSubmit}>
               <CardContent>
@@ -446,20 +453,20 @@ function CreateEventForm() {
                     <CarouselItem>
                       <div className="space-y-4 p-4">
                         <div className="space-y-2">
-                          <Label htmlFor="event-title">Event Titel</Label>
+                          <Label htmlFor="event-title">{t('pages.create.event.titleLabel')}</Label>
                           <Input
                             id="event-title"
-                            placeholder="Gib einen Titel ein"
+                            placeholder={t('pages.create.event.titlePlaceholder')}
                             value={formData.title}
                             onChange={e => setFormData({ ...formData, title: e.target.value })}
                             required
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="event-description">Beschreibung</Label>
+                          <Label htmlFor="event-description">{t('pages.create.event.descriptionLabel')}</Label>
                           <Textarea
                             id="event-description"
-                            placeholder="Beschreibe den Zweck dieses Events"
+                            placeholder={t('pages.create.event.descriptionPlaceholder')}
                             value={formData.description}
                             onChange={e => setFormData({ ...formData, description: e.target.value })}
                             rows={4}
@@ -473,7 +480,7 @@ function CreateEventForm() {
                       <div className="space-y-4 p-4">
                         <div className="grid gap-4 md:grid-cols-2">
                           <div className="space-y-2">
-                            <Label htmlFor="event-start-date">Startdatum</Label>
+                            <Label htmlFor="event-start-date">{t('pages.create.event.startDate')}</Label>
                             <Input
                               id="event-start-date"
                               type="date"
@@ -483,7 +490,7 @@ function CreateEventForm() {
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="event-start-time">Startzeit</Label>
+                            <Label htmlFor="event-start-time">{t('pages.create.event.startTime')}</Label>
                             <Input
                               id="event-start-time"
                               type="time"
@@ -495,7 +502,7 @@ function CreateEventForm() {
                         </div>
                         <div className="grid gap-4 md:grid-cols-2">
                           <div className="space-y-2">
-                            <Label htmlFor="event-end-date">Enddatum</Label>
+                            <Label htmlFor="event-end-date">{t('pages.create.event.endDate')}</Label>
                             <Input
                               id="event-end-date"
                               type="date"
@@ -505,7 +512,7 @@ function CreateEventForm() {
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="event-end-time">Endzeit</Label>
+                            <Label htmlFor="event-end-time">{t('pages.create.event.endTime')}</Label>
                             <Input
                               id="event-end-time"
                               type="time"
@@ -518,7 +525,7 @@ function CreateEventForm() {
 
                         {/* Recurring Pattern */}
                         <div className="space-y-3 pt-4 border-t">
-                          <Label>Wiederholung</Label>
+                          <Label>{t('pages.create.event.recurring')}</Label>
                           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                             {recurringPatternOptions.map(option => (
                               <Tooltip key={option.value}>
@@ -544,7 +551,7 @@ function CreateEventForm() {
                           
                           {formData.recurringPattern !== 'none' && (
                             <div className="space-y-2 pt-2">
-                              <Label htmlFor="recurring-end">Wiederholung endet am</Label>
+                              <Label htmlFor="recurring-end">{t('pages.create.event.recurringEnds')}</Label>
                               <Input
                                 id="recurring-end"
                                 type="date"
@@ -562,15 +569,15 @@ function CreateEventForm() {
                     <CarouselItem>
                       <div className="space-y-4 p-4">
                         <div className="space-y-2">
-                          <Label htmlFor="event-group">Gruppe</Label>
+                          <Label htmlFor="event-group">{t('pages.create.event.groupLabel')}</Label>
                           <p className="text-sm text-muted-foreground">
-                            Wähle die Gruppe, die dieses Event organisiert
+                            {t('pages.create.event.groupDescription')}
                           </p>
                           <TypeAheadSelect
                             items={userGroups}
                             value={formData.groupId}
                             onChange={value => setFormData({ ...formData, groupId: value })}
-                            placeholder="Suche nach einer Gruppe..."
+                            placeholder={t('pages.create.common.searchGroup')}
                             searchKeys={['name', 'description']}
                             renderItem={group => <GroupSelectCard group={group} />}
                             getItemId={group => group.id}
@@ -583,7 +590,7 @@ function CreateEventForm() {
                     <CarouselItem>
                       <div className="space-y-4 p-4">
                         <div className="space-y-2">
-                          <Label>Event Typ</Label>
+                          <Label>{t('pages.create.event.eventType')}</Label>
                           <RadioGroup
                             value={formData.eventType}
                             onValueChange={(value: typeof formData.eventType) =>
@@ -594,10 +601,10 @@ function CreateEventForm() {
                               <RadioGroupItem value="delegate_conference" id="delegate-conference" />
                               <div className="flex-1 space-y-1">
                                 <Label htmlFor="delegate-conference" className="cursor-pointer font-semibold">
-                                  Delegiertenkonferenz
+                                  {t('pages.create.event.eventTypes.delegateConference')}
                                 </Label>
                                 <p className="text-sm text-muted-foreground">
-                                  Untergruppen senden proportionale Delegierte basierend auf Mitgliederzahlen
+                                  {t('pages.create.event.eventTypes.delegateConferenceDesc')}
                                 </p>
                               </div>
                             </div>
@@ -605,10 +612,10 @@ function CreateEventForm() {
                               <RadioGroupItem value="general_assembly" id="general-assembly" />
                               <div className="flex-1 space-y-1">
                                 <Label htmlFor="general-assembly" className="cursor-pointer font-semibold">
-                                  Mitgliederversammlung
+                                  {t('pages.create.event.eventTypes.generalAssembly')}
                                 </Label>
                                 <p className="text-sm text-muted-foreground">
-                                  Alle Mitglieder der zugehörigen Gruppe können teilnehmen
+                                  {t('pages.create.event.eventTypes.generalAssemblyDesc')}
                                 </p>
                               </div>
                             </div>
@@ -616,10 +623,10 @@ function CreateEventForm() {
                               <RadioGroupItem value="open_assembly" id="open-assembly" />
                               <div className="flex-1 space-y-1">
                                 <Label htmlFor="open-assembly" className="cursor-pointer font-semibold">
-                                  Offene Versammlung
+                                  {t('pages.create.event.eventTypes.openAssembly')}
                                 </Label>
                                 <p className="text-sm text-muted-foreground">
-                                  Jeder kann sich zur Teilnahme registrieren
+                                  {t('pages.create.event.eventTypes.openAssemblyDesc')}
                                 </p>
                               </div>
                             </div>
@@ -627,10 +634,10 @@ function CreateEventForm() {
                               <RadioGroupItem value="other" id="other" />
                               <div className="flex-1 space-y-1">
                                 <Label htmlFor="other" className="cursor-pointer font-semibold">
-                                  Sonstiges
+                                  {t('pages.create.event.eventTypes.other')}
                                 </Label>
                                 <p className="text-sm text-muted-foreground">
-                                  Standard-Event mit individuellen Teilnahmeregeln
+                                  {t('pages.create.event.eventTypes.otherDesc')}
                                 </p>
                               </div>
                             </div>
@@ -640,7 +647,7 @@ function CreateEventForm() {
                         {/* Delegate Allocation Settings */}
                         {formData.eventType === 'delegate_conference' && (
                           <div className="space-y-3 rounded-lg border p-3 bg-muted/50">
-                            <Label className="text-sm font-semibold">Delegiertenzuweisung</Label>
+                            <Label className="text-sm font-semibold">{t('pages.create.event.delegateAllocation')}</Label>
                             
                             <RadioGroup
                               value={formData.delegateAllocationMode}
@@ -652,15 +659,15 @@ function CreateEventForm() {
                                 <RadioGroupItem value="ratio" id="mode-ratio" />
                                 <div className="flex-1 space-y-2">
                                   <Label htmlFor="mode-ratio" className="cursor-pointer font-medium">
-                                    Mitglieder pro Delegierter
+                                    {t('pages.create.event.delegateAllocationMode.ratio')}
                                   </Label>
                                   <p className="text-xs text-muted-foreground">
-                                    Proportionale Zuweisung basierend auf Mitgliederzahlen
+                                    {t('pages.create.event.delegateAllocationMode.ratioDesc')}
                                   </p>
                                   {formData.delegateAllocationMode === 'ratio' && (
                                     <div className="flex items-center gap-2 mt-2">
                                       <Label htmlFor="delegate-ratio" className="text-xs whitespace-nowrap">
-                                        1 Delegierter pro
+                                        {t('pages.create.event.delegateAllocationMode.ratioLabel')}
                                       </Label>
                                       <Input
                                         id="delegate-ratio"
@@ -676,7 +683,7 @@ function CreateEventForm() {
                                         }
                                         className="w-20"
                                       />
-                                      <span className="text-xs text-muted-foreground">Mitglieder</span>
+                                      <span className="text-xs text-muted-foreground">{t('pages.create.event.delegateAllocationMode.ratioMembers')}</span>
                                     </div>
                                   )}
                                 </div>
@@ -686,15 +693,15 @@ function CreateEventForm() {
                                 <RadioGroupItem value="total" id="mode-total" />
                                 <div className="flex-1 space-y-2">
                                   <Label htmlFor="mode-total" className="cursor-pointer font-medium">
-                                    Feste Anzahl
+                                    {t('pages.create.event.delegateAllocationMode.total')}
                                   </Label>
                                   <p className="text-xs text-muted-foreground">
-                                    Feste Gesamtzahl an Delegierten festlegen
+                                    {t('pages.create.event.delegateAllocationMode.totalDesc')}
                                   </p>
                                   {formData.delegateAllocationMode === 'total' && (
                                     <div className="flex items-center gap-2 mt-2">
                                       <Label htmlFor="total-delegates" className="text-xs">
-                                        Gesamte Delegierte:
+                                        {t('pages.create.event.delegateAllocationMode.totalLabel')}
                                       </Label>
                                       <Input
                                         id="total-delegates"
@@ -726,20 +733,19 @@ function CreateEventForm() {
                                 <AlertCircle className="mt-0.5 h-4 w-4 text-yellow-600 dark:text-yellow-400" />
                                 <div className="space-y-1">
                                   <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                                    Keine Untergruppen gefunden
+                                    {t('pages.create.event.noSubgroups')}
                                   </p>
                                   <p className="text-xs text-yellow-700 dark:text-yellow-300">
-                                    Die ausgewählte Gruppe hat keine Untergruppen. Delegiertenkonferenzen benötigen
-                                    Untergruppen zur Zuweisung von Delegierten.
+                                    {t('pages.create.event.noSubgroupsDesc')}
                                   </p>
                                 </div>
                               </div>
                             ) : (
                               <div className="space-y-2">
                                 <div className="flex items-center justify-between">
-                                  <Label className="text-sm font-semibold">Delegiertenzuweisung Vorschau</Label>
+                                  <Label className="text-sm font-semibold">{t('pages.create.event.delegatePreview')}</Label>
                                   <Badge variant="outline">
-                                    {totalDelegatesCalc} Delegierte gesamt
+                                    {totalDelegatesCalc} {t('pages.create.event.delegates')}
                                   </Badge>
                                 </div>
                                 <div className="space-y-2 rounded-lg border p-3">
@@ -755,11 +761,11 @@ function CreateEventForm() {
                                         <div>
                                           <span className="font-medium">{subgroup.name}</span>
                                           <span className="ml-2 text-muted-foreground">
-                                            ({subgroup.memberCount} Mitglieder)
+                                            ({subgroup.memberCount} {t('pages.create.event.members')})
                                           </span>
                                         </div>
                                         <Badge variant="secondary">
-                                          {allocation?.allocatedDelegates || 0} Delegierte
+                                          {allocation?.allocatedDelegates || 0} {t('pages.create.event.delegates')}
                                         </Badge>
                                       </div>
                                     );
@@ -776,7 +782,7 @@ function CreateEventForm() {
                     <CarouselItem>
                       <div className="space-y-4 p-4">
                         <div className="space-y-3">
-                          <Label>Veranstaltungsort</Label>
+                          <Label>{t('pages.create.event.location')}</Label>
                           <div className="grid grid-cols-2 gap-3">
                             {locationTypeOptions.map(option => {
                               const IconComponent = option.icon;
@@ -800,14 +806,14 @@ function CreateEventForm() {
                         {formData.locationType === 'online' && (
                           <div className="space-y-4 pt-4 border-t">
                             <div className="space-y-2">
-                              <Label htmlFor="meeting-link">Meeting Link</Label>
+                              <Label htmlFor="meeting-link">{t('pages.create.event.meetingLink')}</Label>
                               <div className="flex gap-2">
                                 <div className="relative flex-1">
                                   <LinkIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                   <Input
                                     id="meeting-link"
                                     type="url"
-                                    placeholder="https://zoom.us/j/..."
+                                    placeholder={t('pages.create.event.meetingLinkPlaceholder')}
                                     value={formData.onlineMeetingLink}
                                     onChange={e => setFormData({ ...formData, onlineMeetingLink: e.target.value })}
                                     className="pl-10"
@@ -816,7 +822,7 @@ function CreateEventForm() {
                               </div>
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor="meeting-code">Zugangscode (optional)</Label>
+                              <Label htmlFor="meeting-code">{t('pages.create.event.accessCodeOptional')}</Label>
                               <Input
                                 id="meeting-code"
                                 placeholder="123456"
@@ -831,17 +837,17 @@ function CreateEventForm() {
                         {formData.locationType === 'physical' && (
                           <div className="space-y-4 pt-4 border-t">
                             <div className="space-y-2">
-                              <Label htmlFor="location-name">Name des Veranstaltungsortes</Label>
+                              <Label htmlFor="location-name">{t('pages.create.event.venueName')}</Label>
                               <Input
                                 id="location-name"
-                                placeholder="z.B. Rathaus, Bürgerzentrum"
+                                placeholder={t('pages.create.event.venueNamePlaceholder')}
                                 value={formData.locationName}
                                 onChange={e => setFormData({ ...formData, locationName: e.target.value })}
                               />
                             </div>
                             <div className="grid gap-4 grid-cols-3">
                               <div className="col-span-2 space-y-2">
-                                <Label htmlFor="street">Straße</Label>
+                                <Label htmlFor="street">{t('pages.create.event.street')}</Label>
                                 <Input
                                   id="street"
                                   placeholder="Musterstraße"
@@ -850,7 +856,7 @@ function CreateEventForm() {
                                 />
                               </div>
                               <div className="space-y-2">
-                                <Label htmlFor="house-number">Hausnummer</Label>
+                                <Label htmlFor="house-number">{t('pages.create.event.houseNumber')}</Label>
                                 <Input
                                   id="house-number"
                                   placeholder="123"
@@ -861,7 +867,7 @@ function CreateEventForm() {
                             </div>
                             <div className="grid gap-4 grid-cols-3">
                               <div className="space-y-2">
-                                <Label htmlFor="postal-code">Postleitzahl</Label>
+                                <Label htmlFor="postal-code">{t('pages.create.event.postalCode')}</Label>
                                 <Input
                                   id="postal-code"
                                   placeholder="12345"
@@ -870,7 +876,7 @@ function CreateEventForm() {
                                 />
                               </div>
                               <div className="col-span-2 space-y-2">
-                                <Label htmlFor="city">Ort</Label>
+                                <Label htmlFor="city">{t('pages.create.event.city')}</Label>
                                 <Input
                                   id="city"
                                   placeholder="Musterstadt"
@@ -889,7 +895,7 @@ function CreateEventForm() {
                       <div className="space-y-4 p-4">
                         <div className="flex items-center gap-2 mb-4">
                           <FileText className="h-5 w-5" />
-                          <Label className="text-lg font-semibold">Fristen</Label>
+                          <Label className="text-lg font-semibold">{t('pages.create.event.deadlines')}</Label>
                         </div>
 
                         {/* Delegate Nomination Deadline */}
@@ -897,10 +903,10 @@ function CreateEventForm() {
                           <div className="space-y-2 p-3 rounded-lg border">
                             <div className="flex items-center gap-2">
                               <UserCheck className="h-4 w-4 text-muted-foreground" />
-                              <Label className="font-medium">Frist für Delegiertennominierung</Label>
+                              <Label className="font-medium">{t('pages.create.event.delegateNominationDeadline')}</Label>
                             </div>
                             <p className="text-xs text-muted-foreground">
-                              Bis wann können Untergruppen ihre Delegierten nominieren?
+                              {t('pages.create.event.delegateNominationDeadlineDesc')}
                             </p>
                             <div className="grid gap-4 md:grid-cols-2">
                               <Input
@@ -922,10 +928,10 @@ function CreateEventForm() {
                         <div className="space-y-2 p-3 rounded-lg border">
                           <div className="flex items-center gap-2">
                             <FileText className="h-4 w-4 text-muted-foreground" />
-                            <Label className="font-medium">Frist für Antragseingabe</Label>
+                            <Label className="font-medium">{t('pages.create.event.proposalSubmissionDeadline')}</Label>
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            Bis wann können Anträge eingereicht werden?
+                            {t('pages.create.event.proposalSubmissionDeadlineDesc')}
                           </p>
                           <div className="grid gap-4 md:grid-cols-2">
                             <Input
@@ -946,10 +952,10 @@ function CreateEventForm() {
                         <div className="space-y-2 p-3 rounded-lg border">
                           <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4 text-muted-foreground" />
-                            <Label className="font-medium">Änderungsantrags-Frist</Label>
+                            <Label className="font-medium">{t('pages.create.event.amendmentCutoffDeadline')}</Label>
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            Bis wann können Änderungsanträge zu bestehenden Anträgen eingereicht werden?
+                            {t('pages.create.event.amendmentCutoffDeadlineDesc')}
                           </p>
                           <div className="grid gap-4 md:grid-cols-2">
                             <Input
@@ -974,7 +980,7 @@ function CreateEventForm() {
                         {/* Event Visibility */}
                         <div className="space-y-3">
                           <div className="flex items-center gap-2">
-                            <Label>Event Sichtbarkeit</Label>
+                            <Label>{t('pages.create.event.eventVisibility')}</Label>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Info className="h-4 w-4 text-muted-foreground cursor-help" />
@@ -1007,14 +1013,14 @@ function CreateEventForm() {
                         {/* Participant List Visibility */}
                         <div className="space-y-3">
                           <div className="flex items-center gap-2">
-                            <Label>Teilnehmerliste Sichtbarkeit</Label>
+                            <Label>{t('pages.create.event.participantListVisibility')}</Label>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                               </TooltipTrigger>
                               <TooltipContent className="max-w-xs">
                                 <p className="text-sm">
-                                  Wer kann die Liste der Teilnehmer sehen?
+                                  {t('pages.create.event.participantListVisibilityDesc')}
                                 </p>
                               </TooltipContent>
                             </Tooltip>
@@ -1039,12 +1045,12 @@ function CreateEventForm() {
 
                         {/* Capacity */}
                         <div className="space-y-2">
-                          <Label htmlFor="event-capacity">Maximale Teilnehmerzahl</Label>
+                          <Label htmlFor="event-capacity">{t('pages.create.event.maxParticipants')}</Label>
                           <Input
                             id="event-capacity"
                             type="number"
                             min="1"
-                            placeholder="Maximale Anzahl der Teilnehmer"
+                            placeholder={t('pages.create.event.maxParticipantsPlaceholder')}
                             value={formData.capacity}
                             onChange={e =>
                               setFormData({ ...formData, capacity: parseInt(e.target.value) || 50 })
@@ -1062,15 +1068,15 @@ function CreateEventForm() {
                           <CardHeader>
                             <div className="mb-2 flex flex-wrap items-center gap-2">
                               <Badge variant="default" className="text-xs">
-                                {formData.eventType === 'delegate_conference' && 'Delegiertenkonferenz'}
-                                {formData.eventType === 'general_assembly' && 'Mitgliederversammlung'}
-                                {formData.eventType === 'open_assembly' && 'Offene Versammlung'}
-                                {formData.eventType === 'other' && 'Event'}
+                                {formData.eventType === 'delegate_conference' && t('pages.create.event.eventTypes.delegateConference')}
+                                {formData.eventType === 'general_assembly' && t('pages.create.event.eventTypes.generalAssembly')}
+                                {formData.eventType === 'open_assembly' && t('pages.create.event.eventTypes.openAssembly')}
+                                {formData.eventType === 'other' && t('pages.create.event.eventTypes.other')}
                               </Badge>
                               <Badge variant="outline" className="text-xs">
-                                {formData.visibility === 'public' && 'Öffentlich'}
-                                {formData.visibility === 'authenticated' && 'Nur Eingeloggte'}
-                                {formData.visibility === 'private' && 'Privat'}
+                                {formData.visibility === 'public' && t('pages.create.common.public')}
+                                {formData.visibility === 'authenticated' && t('pages.create.common.authenticated')}
+                                {formData.visibility === 'private' && t('pages.create.common.private')}
                               </Badge>
                               {formData.recurringPattern !== 'none' && (
                                 <Badge variant="secondary" className="text-xs">
@@ -1079,7 +1085,7 @@ function CreateEventForm() {
                               )}
                             </div>
                             <CardTitle className="text-lg">
-                              {formData.title || 'Unbenanntes Event'}
+                              {formData.title || t('pages.create.event.untitledEvent')}
                             </CardTitle>
                             {formData.description && (
                               <CardDescription>{formData.description}</CardDescription>
@@ -1092,7 +1098,7 @@ function CreateEventForm() {
                                 {formData.locationType === 'online' ? (
                                   <>
                                     <Video className="h-4 w-4" />
-                                    <span>{formData.onlineMeetingLink || 'Online Meeting'}</span>
+                                    <span>{formData.onlineMeetingLink || t('pages.create.event.onlineMeeting')}</span>
                                   </>
                                 ) : (
                                   <>
@@ -1106,7 +1112,7 @@ function CreateEventForm() {
                                         formData.postalCode && formData.city 
                                           ? `${formData.postalCode} ${formData.city}` 
                                           : formData.city,
-                                      ].filter(Boolean).join(', ') || 'Vor Ort'}
+                                      ].filter(Boolean).join(', ') || t('pages.create.event.inPerson')}
                                     </span>
                                   </>
                                 )}
@@ -1124,7 +1130,7 @@ function CreateEventForm() {
                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <Clock className="h-4 w-4" />
                                 <span>
-                                  Endet: {formData.endDate} um {formData.endTime}
+                                  {t('pages.create.event.ends')} {formData.endDate} um {formData.endTime}
                                 </span>
                               </div>
                             )}
@@ -1132,7 +1138,7 @@ function CreateEventForm() {
                             {/* Capacity */}
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Users className="h-4 w-4" />
-                              <span>Max. {formData.capacity} Teilnehmer</span>
+                              <span>{t('pages.create.event.max')} {formData.capacity} {t('pages.create.event.participants')}</span>
                             </div>
 
                             {/* Deadlines */}
@@ -1140,7 +1146,7 @@ function CreateEventForm() {
                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <UserCheck className="h-4 w-4" />
                                 <span>
-                                  Delegiertennominierung: {formData.delegateNominationDeadline} {formData.delegateNominationTime}
+                                  {t('pages.create.event.delegateNomination')}: {formData.delegateNominationDeadline} {formData.delegateNominationTime}
                                 </span>
                               </div>
                             )}
@@ -1148,7 +1154,7 @@ function CreateEventForm() {
                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <FileText className="h-4 w-4" />
                                 <span>
-                                  Antragseingabe: {formData.proposalSubmissionDeadline} {formData.proposalSubmissionTime}
+                                  {t('pages.create.event.proposalSubmission')}: {formData.proposalSubmissionDeadline} {formData.proposalSubmissionTime}
                                 </span>
                               </div>
                             )}
@@ -1156,21 +1162,20 @@ function CreateEventForm() {
                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <Clock className="h-4 w-4" />
                                 <span>
-                                  Änderungsanträge: {formData.amendmentCutoffDate} {formData.amendmentCutoffTime}
+                                  {t('pages.create.event.amendmentCutoff')}: {formData.amendmentCutoffDate} {formData.amendmentCutoffTime}
                                 </span>
                               </div>
                             )}
 
                             {/* Participant List Visibility */}
                             <Badge variant="outline" className="text-xs">
-                              Teilnehmerliste: {formData.participantListVisibility === 'public' ? 'Öffentlich' : formData.participantListVisibility === 'authenticated' ? 'Nur Eingeloggte' : 'Privat'}
+                              {t('pages.create.event.participantList')} {formData.participantListVisibility === 'public' ? t('pages.create.common.public') : formData.participantListVisibility === 'authenticated' ? t('pages.create.common.authenticated') : t('pages.create.common.private')}
                             </Badge>
 
                             {/* Group */}
                             {formData.groupId && (
                               <p className="text-xs text-muted-foreground">
-                                Organisiert von{' '}
-                                {userGroups.find(g => g.id === formData.groupId)?.name || 'Unbekannte Gruppe'}
+                                {t('pages.create.event.organizedBy').replace('{{group}}', userGroups.find(g => g.id === formData.groupId)?.name || t('pages.create.event.unknownGroup'))}
                               </p>
                             )}
                           </CardContent>
@@ -1188,7 +1193,7 @@ function CreateEventForm() {
                       className={`h-2 w-2 rounded-full transition-colors ${
                         currentStep === index ? 'bg-primary' : 'bg-muted-foreground/30'
                       }`}
-                      aria-label={`Gehe zu Schritt ${index + 1}`}
+                      aria-label={t('pages.create.goToStep').replace('{{step}}', String(index + 1))}
                     />
                   ))}
                 </div>
@@ -1200,7 +1205,7 @@ function CreateEventForm() {
                   onClick={() => carouselApi?.scrollPrev()}
                   disabled={currentStep === 0}
                 >
-                  Zurück
+                  {t('pages.create.common.previous')}
                 </Button>
                 {currentStep < totalSteps - 1 ? (
                   <Button
@@ -1208,7 +1213,7 @@ function CreateEventForm() {
                     onClick={() => carouselApi?.scrollNext()}
                     disabled={currentStep === 0 && !formData.title}
                   >
-                    Weiter
+                    {t('pages.create.common.next')}
                   </Button>
                 ) : (
                   <Button 
@@ -1216,7 +1221,7 @@ function CreateEventForm() {
                     onClick={() => handleSubmit()}
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? 'Wird erstellt...' : 'Event erstellen'}
+                    {isSubmitting ? t('pages.create.common.creating') : t('pages.create.event.createButton')}
                   </Button>
                 )}
               </CardFooter>
@@ -1229,13 +1234,15 @@ function CreateEventForm() {
 }
 
 export default function CreateEventPage() {
+  const { t } = useTranslation();
+  
   return (
     <Suspense
       fallback={
         <PageWrapper className="flex min-h-screen items-center justify-center p-8">
           <Card className="w-full max-w-2xl">
             <CardHeader>
-              <CardTitle>Laden...</CardTitle>
+              <CardTitle>{t('pages.create.loading')}</CardTitle>
             </CardHeader>
           </Card>
         </PageWrapper>

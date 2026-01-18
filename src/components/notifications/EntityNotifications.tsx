@@ -11,6 +11,7 @@ import { Bell, Check, CheckCheck, Users, Calendar, MessageSquare, UserPlus, X } 
 import { cn } from '@/utils/utils';
 import { useRouter } from 'next/navigation';
 import { EntityType } from '@/utils/notification-helpers';
+import { useTranslation } from '@/hooks/use-translation';
 
 type NotificationType =
   | 'group_invite'
@@ -106,6 +107,7 @@ export function EntityNotifications({
   entityType,
   entityName,
 }: EntityNotificationsProps) {
+  const { t } = useTranslation();
   const router = useRouter();
 
   // Build the recipient key for the query
@@ -173,12 +175,12 @@ export function EntityNotifications({
 
     if (diffInHours < 1) {
       const diffInMinutes = Math.floor(diffInHours * 60);
-      return `${diffInMinutes}m ago`;
+      return t('pages.notifications.time.minutesAgo', { count: diffInMinutes });
     } else if (diffInHours < 24) {
-      return `${Math.floor(diffInHours)}h ago`;
+      return t('pages.notifications.time.hoursAgo', { count: Math.floor(diffInHours) });
     } else if (diffInHours < 168) {
       const diffInDays = Math.floor(diffInHours / 24);
-      return `${diffInDays}d ago`;
+      return t('pages.notifications.time.daysAgo', { count: diffInDays });
     } else {
       return notifDate.toLocaleDateString('en-US', {
         month: 'short',
@@ -250,7 +252,7 @@ export function EntityNotifications({
   if (isLoading) {
     return (
       <div className="flex h-[400px] items-center justify-center">
-        <p className="text-muted-foreground">Loading notifications...</p>
+        <p className="text-muted-foreground">{t('pages.notifications.entity.loadingNotifications')}</p>
       </div>
     );
   }
@@ -261,37 +263,39 @@ export function EntityNotifications({
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold">{entityName} Notifications</h2>
+            <h2 className="text-2xl font-bold">{t('pages.notifications.entity.title', { entityName })}</h2>
             <p className="text-muted-foreground">
               {unreadNotifications.length > 0
-                ? `${unreadNotifications.length} unread notification${unreadNotifications.length !== 1 ? 's' : ''}`
-                : 'All caught up!'}
+                ? unreadNotifications.length === 1
+                  ? t('pages.notifications.entity.unreadCount', { count: unreadNotifications.length })
+                  : t('pages.notifications.entity.unreadCountPlural', { count: unreadNotifications.length })
+                : t('pages.notifications.entity.allCaughtUp')}
             </p>
           </div>
           {unreadNotifications.length > 0 && (
             <Button onClick={markAllAsRead} variant="outline">
               <CheckCheck className="mr-2 h-4 w-4" />
-              Mark all as read
+              {t('pages.notifications.markAllRead')}
             </Button>
           )}
         </div>
 
         <ScrollableTabsList>
           <TabsTrigger value="all">
-            All
+            {t('pages.notifications.filters.all')}
             <Badge variant="secondary" className="ml-2">
               {notifications.length}
             </Badge>
           </TabsTrigger>
           <TabsTrigger value="unread">
-            Unread
+            {t('pages.notifications.filters.unread')}
             {unreadNotifications.length > 0 && (
               <Badge variant="default" className="ml-2">
                 {unreadNotifications.length}
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="read">Read</TabsTrigger>
+          <TabsTrigger value="read">{t('pages.notifications.filters.read')}</TabsTrigger>
         </ScrollableTabsList>
 
         <TabsContent value="all" className="mt-6">
@@ -299,9 +303,9 @@ export function EntityNotifications({
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Bell className="mb-4 h-12 w-12 text-muted-foreground" />
-                <p className="text-lg font-semibold">No notifications yet</p>
+                <p className="text-lg font-semibold">{t('pages.notifications.entity.noNotificationsYet')}</p>
                 <p className="text-sm text-muted-foreground">
-                  Notifications for this {entityType} will show up here
+                  {t('pages.notifications.entity.notificationsWillShowHere', { entityType })}
                 </p>
               </CardContent>
             </Card>
@@ -319,8 +323,8 @@ export function EntityNotifications({
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Check className="mb-4 h-12 w-12 text-green-500" />
-                <p className="text-lg font-semibold">All caught up!</p>
-                <p className="text-sm text-muted-foreground">All notifications have been read</p>
+                <p className="text-lg font-semibold">{t('pages.notifications.entity.allCaughtUp')}</p>
+                <p className="text-sm text-muted-foreground">{t('pages.notifications.entity.allRead')}</p>
               </CardContent>
             </Card>
           ) : (
@@ -337,8 +341,8 @@ export function EntityNotifications({
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Bell className="mb-4 h-12 w-12 text-muted-foreground" />
-                <p className="text-lg font-semibold">No read notifications</p>
-                <p className="text-sm text-muted-foreground">Read notifications will appear here</p>
+                <p className="text-lg font-semibold">{t('pages.notifications.entity.noReadNotifications')}</p>
+                <p className="text-sm text-muted-foreground">{t('pages.notifications.entity.readNotificationsAppearHere')}</p>
               </CardContent>
             </Card>
           ) : (

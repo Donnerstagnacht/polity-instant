@@ -14,6 +14,7 @@ import { GroupEventsList } from './GroupEventsList';
 import { GRADIENTS } from '@/features/user/state/gradientColors';
 import { formatRights } from './RightFilters';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface NetworkEntityDialogProps {
   open: boolean;
@@ -26,6 +27,7 @@ interface NetworkEntityDialogProps {
 
 export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntityDialogProps) {
   const router = useRouter();
+  const { t } = useTranslation();
 
   if (!entity) return null;
 
@@ -35,21 +37,21 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
         <DialogHeader>
           <DialogTitle>
             {entity.type === 'group'
-              ? 'Group Details'
+              ? t('common.labels.groupDetails')
               : entity.type === 'user'
-                ? 'User Details'
+                ? t('common.labels.userDetails')
                 : entity.type === 'event'
-                  ? 'Event Details'
-                  : 'Relationship Details'}
+                  ? t('common.labels.eventDetails')
+                  : t('common.labels.relationshipDetails')}
           </DialogTitle>
           <DialogDescription>
             {entity.type === 'group'
-              ? 'View information about this group'
+              ? t('common.labels.viewGroupInfo')
               : entity.type === 'user'
-                ? 'View information about this user'
+                ? t('common.labels.viewUserInfo')
                 : entity.type === 'event'
-                  ? 'View information about this event'
-                  : 'View information about this relationship'}
+                  ? t('common.labels.viewEventInfo')
+                  : t('common.labels.viewRelationshipInfo')}
           </DialogDescription>
         </DialogHeader>
 
@@ -64,7 +66,7 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
 
               {/* Upcoming Events Section */}
               <div className="rounded-lg border p-4">
-                <h4 className="mb-3 text-sm font-semibold">Upcoming Events</h4>
+                <h4 className="mb-3 text-sm font-semibold">{t('common.labels.upcomingEvents')}</h4>
                 <GroupEventsList
                   groupId={entity.data.id}
                   onEventClick={(eventId, eventData) => {
@@ -100,13 +102,13 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
                   )}
                   {entity.data.startDate && (
                     <p className="mt-2 text-sm">
-                      <span className="font-medium">Date:</span>{' '}
+                      <span className="font-medium">{t('common.labels.date')}:</span>{' '}
                       {new Date(entity.data.startDate).toLocaleDateString()}
                     </p>
                   )}
                   {entity.data.location && (
                     <p className="text-sm">
-                      <span className="font-medium">Location:</span> {entity.data.location}
+                      <span className="font-medium">{t('common.labels.location')}:</span> {entity.data.location}
                     </p>
                   )}
                 </div>
@@ -143,9 +145,9 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
               {entity.data.rights && (entity.data.rights as string[]).length > 0 ? (
                 <div className="space-y-3">
                   <div className="mb-4">
-                    <p className="text-sm font-medium text-muted-foreground">Relationship Rights</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('common.labels.relationshipRights')}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {(entity.data.rights as string[]).length} right(s) granted
+                      {(entity.data.rights as string[]).length} {t('common.labels.rightsGranted')}
                     </p>
                   </div>
                   <div className="grid gap-3">
@@ -160,7 +162,7 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
                             <div>
                               <p className="text-lg font-semibold">{formatRights([right])}</p>
                               <p className="mt-1 text-xs text-muted-foreground">
-                                Relationship Right
+                                {t('common.labels.relationshipRight')}
                               </p>
                             </div>
                             <div className="rounded-full bg-white/80 px-3 py-1 text-xs font-medium">
@@ -176,11 +178,11 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
                 <div className="rounded-lg border p-4">
                   <div className="space-y-3">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Connection Type</p>
-                      <p className="text-lg font-semibold">{entity.data.label || 'Connection'}</p>
+                      <p className="text-sm font-medium text-muted-foreground">{t('common.labels.connectionType')}</p>
+                      <p className="text-lg font-semibold">{entity.data.label || t('common.labels.connection')}</p>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {entity.data.label ? entity.data.label : 'Membership connection'}
+                      {entity.data.label ? entity.data.label : t('common.labels.membershipConnection')}
                     </p>
                   </div>
                 </div>
@@ -191,7 +193,7 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t('common.actions.cancel')}
           </Button>
           {entity.type === 'group' && entity.data?.id && (
             <Button
@@ -200,7 +202,7 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
                 onOpenChange(false);
               }}
             >
-              Show Group
+              {t('common.labels.showGroup')}
             </Button>
           )}
           {entity.type === 'user' && entity.data?.id && (
@@ -210,7 +212,7 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
                 onOpenChange(false);
               }}
             >
-              Show User
+              {t('common.labels.showUser')}
             </Button>
           )}
           {entity.type === 'event' && entity.data?.id && (
@@ -220,7 +222,7 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
                 onOpenChange(false);
               }}
             >
-              Show Event
+              {t('common.labels.showEvent')}
             </Button>
           )}
         </DialogFooter>

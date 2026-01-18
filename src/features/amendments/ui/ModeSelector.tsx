@@ -13,6 +13,7 @@ import {
 import { Edit, Eye, MessageSquare, Vote, ChevronDown } from 'lucide-react';
 import { db, tx } from '../../../../db/db';
 import { toast } from 'sonner';
+import { useTranslation } from '@/hooks/use-translation';
 
 type EditingMode = 'edit' | 'view' | 'suggest' | 'vote';
 
@@ -22,42 +23,44 @@ interface ModeSelectorProps {
   isOwnerOrCollaborator: boolean;
 }
 
-const modes = [
-  {
-    value: 'edit' as EditingMode,
-    label: 'Edit',
-    icon: Edit,
-    description: 'Direct editing enabled',
-    color: 'bg-blue-500',
-  },
-  {
-    value: 'view' as EditingMode,
-    label: 'View',
-    icon: Eye,
-    description: 'Read-only mode',
-    color: 'bg-gray-500',
-  },
-  {
-    value: 'suggest' as EditingMode,
-    label: 'Suggest',
-    icon: MessageSquare,
-    description: 'Changes require review',
-    color: 'bg-purple-500',
-  },
-  {
-    value: 'vote' as EditingMode,
-    label: 'Vote',
-    icon: Vote,
-    description: 'Changes require voting',
-    color: 'bg-orange-500',
-  },
-];
-
 export function ModeSelector({
   documentId,
   currentMode,
   isOwnerOrCollaborator,
 }: ModeSelectorProps) {
+  const { t } = useTranslation();
+
+  const modes = [
+    {
+      value: 'edit' as EditingMode,
+      label: t('features.amendments.workflow.collaborativeEditing'),
+      icon: Edit,
+      description: t('features.amendments.modeSelector.active'),
+      color: 'bg-blue-500',
+    },
+    {
+      value: 'view' as EditingMode,
+      label: t('features.amendments.workflow.viewing'),
+      icon: Eye,
+      description: t('features.amendments.modeSelector.viewOnly'),
+      color: 'bg-gray-500',
+    },
+    {
+      value: 'suggest' as EditingMode,
+      label: t('features.amendments.workflow.internalSuggesting'),
+      icon: MessageSquare,
+      description: t('features.amendments.modeSelector.active'),
+      color: 'bg-purple-500',
+    },
+    {
+      value: 'vote' as EditingMode,
+      label: t('features.amendments.workflow.internalVoting'),
+      icon: Vote,
+      description: t('features.amendments.modeSelector.active'),
+      color: 'bg-orange-500',
+    },
+  ];
+
   const currentModeConfig = modes.find(m => m.value === currentMode) || modes[0];
   const Icon = currentModeConfig.icon;
 
@@ -65,7 +68,7 @@ export function ModeSelector({
     if (newMode === currentMode) return;
 
     if (!isOwnerOrCollaborator) {
-      toast.error('Only document owners and collaborators can change the editing mode.');
+      toast.error(t('features.amendments.modeSelector.errors.onlyCollaborators'));
       return;
     }
 
@@ -77,10 +80,11 @@ export function ModeSelector({
         }),
       ]);
 
-      toast.success(`Document is now in ${newMode} mode.`);
+      const modeConfig = modes.find(m => m.value === newMode);
+      toast.success(`${t('features.amendments.modeSelector.title')}: ${modeConfig?.label}`);
     } catch (error) {
       console.error('Failed to change mode:', error);
-      toast.error('Failed to change document mode.');
+      toast.error(t('features.amendments.modeSelector.errors.changeFailed'));
     }
   };
 
@@ -95,9 +99,9 @@ export function ModeSelector({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
         <DropdownMenuLabel>
-          Document Mode
+          {t('features.amendments.modeSelector.title')}
           {!isOwnerOrCollaborator && (
-            <span className="ml-2 text-xs font-normal text-muted-foreground">(View only)</span>
+            <span className="ml-2 text-xs font-normal text-muted-foreground">{t('features.amendments.modeSelector.viewOnly')}</span>
           )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
@@ -123,7 +127,7 @@ export function ModeSelector({
                     <span className="font-semibold">{mode.label}</span>
                     {isActive && (
                       <Badge variant="secondary" className="text-xs">
-                        Active
+                        {t('features.amendments.modeSelector.active')}
                       </Badge>
                     )}
                   </div>

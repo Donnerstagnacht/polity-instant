@@ -28,11 +28,13 @@ import { TargetGroupEventSelector } from '@/features/amendments/ui/TargetGroupEv
 import { VideoUpload } from '@/components/shared/VideoUpload';
 import { CalendarIcon, Target, Video, ChevronRight } from 'lucide-react';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
+import { useTranslation } from '@/hooks/use-translation';
 
 function CreateAmendmentForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const groupIdParam = searchParams.get('groupId');
+  const { t } = useTranslation();
 
   const [formData, setFormData] = useState({
     title: '',
@@ -91,7 +93,7 @@ function CreateAmendmentForm() {
 
     try {
       if (!user?.id) {
-        toast.error('You must be logged in to create an amendment');
+        toast.error(t('pages.create.validation.loginRequired'));
         setIsSubmitting(false);
         return;
       }
@@ -326,13 +328,13 @@ function CreateAmendmentForm() {
 
       await db.transact(transactions);
 
-      toast.success('Amendment created successfully!');
+      toast.success(`Amendment ${t('pages.create.success.created')}`);
       setTimeout(() => {
         router.push(`/amendment/${amendmentId}`);
       }, 500);
     } catch (error) {
       console.error('Failed to create amendment:', error);
-      toast.error('Failed to create amendment. Please try again.');
+      toast.error(t('pages.create.error.createFailed'));
       setIsSubmitting(false);
     }
   };
@@ -361,7 +363,7 @@ function CreateAmendmentForm() {
         <TooltipProvider>
           <Card className="w-full max-w-2xl">
             <CardHeader>
-              <CardTitle>Create New Amendment</CardTitle>
+              <CardTitle>{t('pages.create.amendment.title')}</CardTitle>
             </CardHeader>
             <div>
               <CardContent>
@@ -371,20 +373,20 @@ function CreateAmendmentForm() {
                     <CarouselItem>
                       <div className="space-y-4 p-4">
                         <div className="space-y-2">
-                          <Label htmlFor="amendment-title">Amendment Title</Label>
+                          <Label htmlFor="amendment-title">{t('pages.create.amendment.titleLabel')}</Label>
                           <Input
                             id="amendment-title"
-                            placeholder="Enter the title"
+                            placeholder={t('pages.create.amendment.titlePlaceholder')}
                             value={formData.title}
                             onChange={e => setFormData({ ...formData, title: e.target.value })}
                             required
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="amendment-subtitle">Subtitle (Optional)</Label>
+                          <Label htmlFor="amendment-subtitle">{t('pages.create.amendment.subtitleOptional')}</Label>
                           <Input
                             id="amendment-subtitle"
-                            placeholder="Add a subtitle"
+                            placeholder={t('pages.create.amendment.subtitlePlaceholder')}
                             value={formData.subtitle}
                             onChange={e => setFormData({ ...formData, subtitle: e.target.value })}
                           />
@@ -396,9 +398,9 @@ function CreateAmendmentForm() {
                     <CarouselItem>
                       <div className="space-y-4 p-4">
                         <div>
-                          <h3 className="text-lg font-semibold">Select Target Group & Event</h3>
+                          <h3 className="text-lg font-semibold">{t('pages.create.amendment.targetGroupEvent')}</h3>
                           <p className="text-sm text-muted-foreground">
-                            Choose a group and event where this amendment will be processed
+                            {t('pages.create.amendment.targetGroupEventDesc')}
                           </p>
                         </div>
                         {user?.id && (
@@ -415,7 +417,7 @@ function CreateAmendmentForm() {
                           <div className="mt-4 rounded-lg border bg-muted/30 p-3">
                             <div className="flex items-center gap-2 text-sm font-medium">
                               <Target className="h-4 w-4 text-primary" />
-                              Selected Target:
+                              {t('pages.create.amendment.selectedTarget')}
                             </div>
                             <div className="mt-2 flex items-center gap-2 text-sm">
                               <Badge variant="secondary">{formData.targetGroupData.name}</Badge>
@@ -436,11 +438,11 @@ function CreateAmendmentForm() {
                         />
 
                         <div className="space-y-2">
-                          <Label>Hashtags (Optional)</Label>
+                          <Label>{t('pages.create.common.hashtags')}</Label>
                           <HashtagInput
                             value={formData.hashtags}
                             onChange={hashtags => setFormData({ ...formData, hashtags })}
-                            placeholder="Add hashtags (e.g., policy, reform)"
+                            placeholder={t('pages.create.common.hashtagsPlaceholder')}
                           />
                         </div>
                       </div>
@@ -452,10 +454,10 @@ function CreateAmendmentForm() {
                         <div>
                           <h3 className="flex items-center gap-2 text-lg font-semibold">
                             <Video className="h-5 w-5" />
-                            Presentation Video (Optional)
+                            {t('pages.create.amendment.presentationVideoOptional')}
                           </h3>
                           <p className="text-sm text-muted-foreground">
-                            Add a video to present your amendment
+                            {t('pages.create.amendment.presentationVideoDesc')}
                           </p>
                         </div>
 
@@ -478,10 +480,10 @@ function CreateAmendmentForm() {
                           <CardHeader>
                             <div className="mb-2 flex items-center justify-between">
                               <Badge variant="default" className="text-xs">
-                                Amendment
+                                {t('pages.create.amendment.reviewBadge')}
                               </Badge>
                               <Badge variant="secondary" className="text-xs">
-                                Drafting
+                                {t('pages.create.amendment.reviewStatus')}
                               </Badge>
                             </div>
                             <CardTitle className="text-lg">
@@ -495,7 +497,7 @@ function CreateAmendmentForm() {
                             {/* Target Group & Event */}
                             {formData.targetGroupData && formData.targetEventData && (
                               <div className="space-y-2">
-                                <strong className="text-sm">Target:</strong>
+                                <strong className="text-sm">{t('pages.create.amendment.target')}</strong>
                                 <div className="rounded-md bg-background/50 p-3 text-sm">
                                   <div className="flex items-center gap-2">
                                     <Target className="h-4 w-4 text-primary" />
@@ -529,7 +531,7 @@ function CreateAmendmentForm() {
                             {formData.pathWithEvents.length > 0 && (
                               <div className="space-y-2">
                                 <strong className="text-sm">
-                                  Path ({formData.pathWithEvents.length} groups):
+                                  {t('pages.create.amendment.path')} {t('pages.create.amendment.pathGroups', { count: formData.pathWithEvents.length })}
                                 </strong>
                                 <div className="flex flex-wrap items-center gap-1">
                                   {formData.pathWithEvents.map((segment, index) => (
@@ -550,7 +552,7 @@ function CreateAmendmentForm() {
                             )}
 
                             <div className="flex items-center gap-2 text-sm">
-                              <strong>Visibility:</strong>
+                              <strong>{t('pages.create.common.visibility')}:</strong>
                               <Badge variant="outline">{formData.visibility}</Badge>
                             </div>
 
@@ -558,7 +560,7 @@ function CreateAmendmentForm() {
                               <div className="flex items-center gap-2 text-sm">
                                 <Video className="h-4 w-4" />
                                 <span className="text-muted-foreground">
-                                  Video attached
+                                  {t('pages.create.amendment.videoAttached')}
                                 </span>
                               </div>
                             )}
@@ -576,17 +578,16 @@ function CreateAmendmentForm() {
                         </Card>
 
                         <div className="mt-4 rounded-md bg-muted p-3 text-xs text-muted-foreground">
-                          <p className="font-semibold">What will happen:</p>
+                          <p className="font-semibold">{t('pages.create.amendment.whatWillHappen')}</p>
                           <ul className="ml-4 mt-1 list-disc space-y-1">
-                            <li>Amendment will be created with status "Drafting"</li>
-                            <li>You will be assigned as the Author</li>
+                            <li>{t('pages.create.amendment.willBeCreated')}</li>
+                            <li>{t('pages.create.amendment.willBeAssignedAuthor')}</li>
                             {formData.pathWithEvents.length > 0 && (
                               <>
                                 <li>
-                                  {formData.pathWithEvents.filter(s => s.eventId).length} agenda
-                                  items will be created
+                                  {t('pages.create.amendment.agendaItemsWillBeCreated', { count: formData.pathWithEvents.filter(s => s.eventId).length })}
                                 </li>
-                                <li>Amendment path will be set up for processing</li>
+                                <li>{t('pages.create.amendment.pathWillBeSetUp')}</li>
                               </>
                             )}
                           </ul>
@@ -604,7 +605,7 @@ function CreateAmendmentForm() {
                       className={`h-2 w-2 rounded-full transition-colors ${
                         currentStep === index ? 'bg-primary' : 'bg-muted-foreground/30'
                       }`}
-                      aria-label={`Go to step ${index + 1}`}
+                      aria-label={t('pages.create.goToStep', { step: index + 1 })}
                     />
                   ))}
                 </div>
@@ -616,7 +617,7 @@ function CreateAmendmentForm() {
                   onClick={() => carouselApi?.scrollPrev()}
                   disabled={currentStep === 0 || isSubmitting}
                 >
-                  Previous
+                  {t('pages.create.previous')}
                 </Button>
                 {currentStep < totalSteps - 1 ? (
                   <Button
@@ -624,7 +625,7 @@ function CreateAmendmentForm() {
                     onClick={() => carouselApi?.scrollNext()}
                     disabled={!canProceedFromStep(currentStep)}
                   >
-                    Next
+                    {t('pages.create.next')}
                   </Button>
                 ) : (
                   <Button
@@ -632,7 +633,7 @@ function CreateAmendmentForm() {
                     onClick={() => handleSubmit()}
                     disabled={isSubmitting || !formData.title}
                   >
-                    {isSubmitting ? 'Creating...' : 'Create Amendment'}
+                    {isSubmitting ? t('pages.create.creating') : t('pages.create.amendment.createButton')}
                   </Button>
                 )}
               </CardFooter>
@@ -645,13 +646,15 @@ function CreateAmendmentForm() {
 }
 
 export default function CreateAmendmentPage() {
+  const { t } = useTranslation();
+  
   return (
     <Suspense
       fallback={
         <PageWrapper className="flex min-h-screen items-center justify-center p-8">
           <Card className="w-full max-w-2xl">
             <CardHeader>
-              <CardTitle>Loading...</CardTitle>
+              <CardTitle>{t('pages.create.loading')}</CardTitle>
             </CardHeader>
           </Card>
         </PageWrapper>

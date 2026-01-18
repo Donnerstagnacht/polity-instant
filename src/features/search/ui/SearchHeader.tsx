@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search as SearchIcon, Filter, Hash } from 'lucide-react';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface SearchHeaderProps {
   searchQuery: string;
@@ -24,12 +25,14 @@ export function SearchHeader({
   totalResults,
   queryParam,
 }: SearchHeaderProps) {
+  const { t } = useTranslation();
+
   return (
     <>
       <div className="mb-6">
-        <h1 className="mb-2 text-3xl font-bold">Search</h1>
+        <h1 className="mb-2 text-3xl font-bold">{t('features.search.title')}</h1>
         <p className="text-muted-foreground">
-          Find users, groups, statements, blogs, and amendments
+          {t('features.search.description')}
         </p>
       </div>
 
@@ -39,7 +42,7 @@ export function SearchHeader({
           <div className="relative flex-1">
             <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search for anything... (type-ahead enabled)"
+              placeholder={t('features.search.placeholderDetailed')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -53,7 +56,7 @@ export function SearchHeader({
         {/* Active Filters Display */}
         {hashtagFilter && !showFilters && (
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Active filter:</span>
+            <span className="text-sm text-muted-foreground">{t('features.search.filters.title')}:</span>
             <Badge
               variant="secondary"
               className="cursor-pointer"
@@ -80,9 +83,9 @@ export function SearchHeader({
         <div className="mb-4">
           <p className="text-sm text-muted-foreground">
             {queryParam &&
-              `Found ${totalResults} result${totalResults !== 1 ? 's' : ''} for "${queryParam}"`}
+              t('features.search.results.showingFor', { count: totalResults, query: queryParam })}
             {queryParam && hashtagFilter && ' '}
-            {hashtagFilter && `Filtering by hashtag: #${hashtagFilter.replace(/^#/, '')}`}
+            {hashtagFilter && `${t('features.search.filters.title')}: #${hashtagFilter.replace(/^#/, '')}`}
           </p>
         </div>
       )}

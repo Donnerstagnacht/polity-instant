@@ -4,8 +4,10 @@ import { GroupsCard } from '@/features/user/ui/GroupsCard';
 import { getRoleBadgeColor } from '@/features/user/utils/userWiki.utils';
 import { GRADIENTS } from '@/features/user/state/gradientColors';
 import { Loader2 } from 'lucide-react';
+import { useTranslation } from '@/hooks/use-translation';
 
 export const GroupsList: React.FC = () => {
+  const { t } = useTranslation();
   const { loading, getFilteredGroups } = useGroupsStore();
 
   const filteredGroups = getFilteredGroups();
@@ -14,7 +16,7 @@ export const GroupsList: React.FC = () => {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2 text-muted-foreground">Loading groups...</span>
+        <span className="ml-2 text-muted-foreground">{t('features.groups.list.loading')}</span>
       </div>
     );
   }
@@ -27,9 +29,9 @@ export const GroupsList: React.FC = () => {
             <span className="text-2xl">🔍</span>
           </div>
         </div>
-        <h3 className="mb-2 text-lg font-medium text-foreground">No groups found</h3>
+        <h3 className="mb-2 text-lg font-medium text-foreground">{t('features.groups.list.noGroups')}</h3>
         <p className="text-muted-foreground">
-          Try adjusting your search terms or clearing the filters.
+          {t('features.groups.list.noGroupsDescription')}
         </p>
       </div>
     );
@@ -39,7 +41,7 @@ export const GroupsList: React.FC = () => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-foreground">
-          {filteredGroups.length} group{filteredGroups.length !== 1 ? 's' : ''} found
+          {t('features.groups.list.groupsFound', { count: filteredGroups.length })}
         </h2>
       </div>
 

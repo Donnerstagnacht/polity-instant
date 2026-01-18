@@ -50,8 +50,10 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { useEventParticipants, ACTION_RIGHTS } from '../hooks/useEventParticipants';
+import { useTranslation } from '@/hooks/use-translation';
 
 export function EventParticipants({ eventId }: { eventId: string }) {
+  const { t } = useTranslation();
   const {
     event,
     isLoading,
@@ -66,11 +68,11 @@ export function EventParticipants({ eventId }: { eventId: string }) {
   } = useEventParticipants(eventId);
 
   if (isLoading) {
-    return <div className='container mx-auto p-4'>Loading...</div>;
+    return <div className='container mx-auto p-4'>{t('features.events.participants.loading')}</div>;
   }
 
   if (error || !event) {
-    return <div className='container mx-auto p-4'>Event not found</div>;
+    return <div className='container mx-auto p-4'>{t('features.events.participants.notFound')}</div>;
   }
 
   return (
@@ -78,13 +80,13 @@ export function EventParticipants({ eventId }: { eventId: string }) {
       <div className='mb-4 flex items-center justify-between'>
         <Button variant='ghost' onClick={actions.goBack}>
           <ArrowLeft className='mr-2 h-4 w-4' />
-          Back
+          {t('features.events.participants.back')}
         </Button>
       </div>
 
       <div className='mb-6'>
-        <h1 className='mb-2 text-3xl font-bold'>Manage Participants</h1>
-        <p className='text-muted-foreground'>Event: {event.title}</p>
+        <h1 className='mb-2 text-3xl font-bold'>{t('features.events.participants.manageParticipants')}</h1>
+        <p className='text-muted-foreground'>{t('features.events.participants.event')}: {event.title}</p>
       </div>
 
       {/* Search Bar */}
@@ -92,7 +94,7 @@ export function EventParticipants({ eventId }: { eventId: string }) {
         <div className='relative flex-1'>
           <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
           <Input
-            placeholder='Search participants by name, email, or status...'
+            placeholder={t('features.events.participants.searchPlaceholder')}
             value={state.searchQuery}
             onChange={e => state.setSearchQuery(e.target.value)}
             className='pl-9'
@@ -103,8 +105,8 @@ export function EventParticipants({ eventId }: { eventId: string }) {
       {/* Tabs for Participants and Roles */}
       <Tabs value={state.activeTab} onValueChange={state.setActiveTab} className='space-y-4'>
         <TabsList>
-          <TabsTrigger value='participants'>Participants</TabsTrigger>
-          <TabsTrigger value='roles'>Roles</TabsTrigger>
+          <TabsTrigger value='participants'>{t('features.events.participants.tabs.participants')}</TabsTrigger>
+          <TabsTrigger value='roles'>{t('features.events.participants.tabs.roles')}</TabsTrigger>
         </TabsList>
 
         {/* Participants Tab */}
@@ -115,15 +117,14 @@ export function EventParticipants({ eventId }: { eventId: string }) {
               <DialogTrigger asChild>
                 <Button>
                   <UserPlus className='mr-2 h-4 w-4' />
-                  Invite Participant
+                  {t('features.events.participants.invite')}
                 </Button>
               </DialogTrigger>
               <DialogContent className='sm:max-w-[500px]'>
                 <DialogHeader>
-                  <DialogTitle>Invite Participants</DialogTitle>
+                  <DialogTitle>{t('features.events.participants.inviteTitle')}</DialogTitle>
                   <DialogDescription>
-                    Search and select users to invite to this event. They will receive an invitation
-                    to participate.
+                    {t('features.events.participants.inviteDescription')}
                   </DialogDescription>
                 </DialogHeader>
 
@@ -131,7 +132,7 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                   {/* Search and selection UI */}
                   <Command className='rounded-lg border'>
                     <CommandInput
-                      placeholder='Search by name, handle, or email...'
+                      placeholder={t('features.events.participants.searchUsersPlaceholder')}
                       value={state.inviteSearchQuery}
                       onValueChange={state.setInviteSearchQuery}
                     />
@@ -142,7 +143,7 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                         </div>
                       ) : (
                         <>
-                          <CommandEmpty>No users found.</CommandEmpty>
+                          <CommandEmpty>{t('features.events.participants.noUsersFound')}</CommandEmpty>
                           <CommandGroup>
                             {filteredUsers?.map(user => {
                               if (!user?.id) return null;
@@ -189,7 +190,7 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                   {state.selectedUsers.length > 0 && (
                     <div className='mt-4'>
                       <div className='mb-2 text-sm font-medium'>
-                        Selected ({state.selectedUsers.length})
+                        {t('features.events.participants.selected', { count: state.selectedUsers.length })}
                       </div>
                       <div className='flex flex-wrap gap-2'>
                         {state.selectedUsers.map(userId => {
@@ -221,7 +222,7 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                     onClick={() => state.setInviteDialogOpen(false)}
                     disabled={state.isInviting}
                   >
-                    Cancel
+                    {t('features.events.cancel')}
                   </Button>
                   <Button
                     onClick={actions.inviteUsers}
@@ -230,12 +231,12 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                     {state.isInviting ? (
                       <>
                         <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                        Inviting...
+                        {t('features.events.participants.inviting')}
                       </>
                     ) : (
                       <>
                         <UserPlus className='mr-2 h-4 w-4' />
-                        Invite {state.selectedUsers.length > 0 ? `(${state.selectedUsers.length})` : ''}
+                        {t('features.events.participants.inviteCount', { count: state.selectedUsers.length })}
                       </>
                     )}
                   </Button>
@@ -249,15 +250,15 @@ export function EventParticipants({ eventId }: { eventId: string }) {
             <div className='mb-8'>
               <h2 className='mb-4 flex items-center gap-2 text-xl font-semibold'>
                 <Clock className='h-5 w-5' />
-                Pending Requests ({derived.pendingRequests.length})
+                {t('features.events.participants.pendingRequests', { count: derived.pendingRequests.length })}
               </h2>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Requested</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead>{t('features.events.participants.table.user')}</TableHead>
+                    <TableHead>{t('features.events.participants.table.email')}</TableHead>
+                    <TableHead>{t('features.events.participants.table.requested')}</TableHead>
+                    <TableHead>{t('features.events.participants.table.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -279,14 +280,14 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                       <TableCell>
                         <div className='flex gap-2'>
                           <Button size='sm' onClick={() => actions.acceptRequest(participant.id)}>
-                            Accept
+                            {t('features.events.participants.actions.accept')}
                           </Button>
                           <Button
                             size='sm'
                             variant='outline'
                             onClick={() => actions.removeParticipant(participant.id)}
                           >
-                            Decline
+                            {t('features.events.participants.actions.decline')}
                           </Button>
                         </div>
                       </TableCell>
@@ -300,16 +301,16 @@ export function EventParticipants({ eventId }: { eventId: string }) {
           {/* Active Participants */}
           <div className='mb-8'>
             <h2 className='mb-4 text-xl font-semibold'>
-              Active Participants ({derived.activeParticipants.length})
+              {t('features.events.participants.activeParticipants', { count: derived.activeParticipants.length })}
             </h2>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead>{t('features.events.participants.table.user')}</TableHead>
+                  <TableHead>{t('features.events.participants.table.email')}</TableHead>
+                  <TableHead>{t('features.events.participants.table.role')}</TableHead>
+                  <TableHead>{t('features.events.participants.table.joined')}</TableHead>
+                  <TableHead>{t('features.events.participants.table.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -354,7 +355,7 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                             onClick={() => actions.changeRole(participant.id, 'Organizer')}
                           >
                             <Shield className='mr-1 h-4 w-4' />
-                            Make Organizer
+                            {t('features.events.participants.actions.makeOrganizer')}
                           </Button>
                         )}
                         {participant.role?.name === 'Organizer' && (
@@ -363,7 +364,7 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                             variant='outline'
                             onClick={() => actions.changeRole(participant.id, 'Participant')}
                           >
-                            Remove Organizer
+                            {t('features.events.participants.actions.removeOrganizer')}
                           </Button>
                         )}
                         {participant.user?.id !== currentUserId && (
@@ -373,7 +374,7 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                             onClick={() => actions.removeParticipant(participant.id)}
                           >
                             <UserX className='mr-1 h-4 w-4' />
-                            Remove
+                            {t('features.events.participants.actions.remove')}
                           </Button>
                         )}
                       </div>
@@ -388,15 +389,15 @@ export function EventParticipants({ eventId }: { eventId: string }) {
           {derived.invitedUsers.length > 0 && (
             <div>
               <h2 className='mb-4 text-xl font-semibold'>
-                Pending Invitations ({derived.invitedUsers.length})
+                {t('features.events.participants.pendingInvitations', { count: derived.invitedUsers.length })}
               </h2>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Invited</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead>{t('features.events.participants.table.user')}</TableHead>
+                    <TableHead>{t('features.events.participants.table.email')}</TableHead>
+                    <TableHead>{t('features.events.participants.table.invited')}</TableHead>
+                    <TableHead>{t('features.events.participants.table.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -421,7 +422,7 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                           variant='outline'
                           onClick={() => actions.removeParticipant(participant.id)}
                         >
-                          Cancel Invitation
+                          {t('features.events.participants.actions.cancelInvitation')}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -440,45 +441,45 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                 <div>
                   <CardTitle className='flex items-center gap-2'>
                     <Shield className='h-5 w-5' />
-                    Role Permissions
+                    {t('features.events.participants.roles.title')}
                   </CardTitle>
                   <CardDescription>
-                    Manage roles and their action rights for this event
+                    {t('features.events.participants.roles.description')}
                   </CardDescription>
                 </div>
                 <Dialog open={state.addRoleDialogOpen} onOpenChange={state.setAddRoleDialogOpen}>
                   <DialogTrigger asChild>
                     <Button>
                       <Plus className='mr-2 h-4 w-4' />
-                      Add Role
+                      {t('features.events.participants.roles.addRole')}
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Add New Role</DialogTitle>
+                      <DialogTitle>{t('features.events.participants.roles.addRoleTitle')}</DialogTitle>
                       <DialogDescription>
-                        Create a new role with custom permissions for this event.
+                        {t('features.events.participants.roles.addRoleDescription')}
                       </DialogDescription>
                     </DialogHeader>
                     <div className='space-y-4 py-4'>
                       <div className='space-y-2'>
                         <label htmlFor='role-name' className='text-sm font-medium'>
-                          Role Name
+                          {t('features.events.participants.roles.roleName')}
                         </label>
                         <Input
                           id='role-name'
-                          placeholder='e.g., Organizer, Speaker, Moderator'
+                          placeholder={t('features.events.participants.roles.roleNamePlaceholder')}
                           value={state.newRoleName}
                           onChange={e => state.setNewRoleName(e.target.value)}
                         />
                       </div>
                       <div className='space-y-2'>
                         <label htmlFor='role-description' className='text-sm font-medium'>
-                          Description (Optional)
+                          {t('features.events.participants.roles.roleDescription')}
                         </label>
                         <Input
                           id='role-description'
-                          placeholder="Describe this role's purpose"
+                          placeholder={t('features.events.participants.roles.roleDescriptionPlaceholder')}
                           value={state.newRoleDescription}
                           onChange={e => state.setNewRoleDescription(e.target.value)}
                         />
@@ -490,10 +491,10 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                         variant='outline'
                         onClick={() => state.setAddRoleDialogOpen(false)}
                       >
-                        Cancel
+                        {t('features.events.cancel')}
                       </Button>
                       <Button type='button' onClick={actions.addRole}>
-                        Create Role
+                        {t('features.events.participants.roles.createRole')}
                       </Button>
                     </DialogFooter>
                   </DialogContent>
@@ -506,7 +507,7 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className='min-w-[200px]'>Action Right</TableHead>
+                        <TableHead className='min-w-[200px]'>{t('features.events.participants.roles.actionRight')}</TableHead>
                         {rolesData.roles.map((role: any) => (
                           <TableHead key={role.id} className='min-w-[120px] text-center'>
                             <div className='flex flex-col items-center gap-1'>
@@ -562,7 +563,7 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                 <div className='py-12 text-center'>
                   <Shield className='mx-auto h-12 w-12 text-muted-foreground/50' />
                   <p className='mt-4 text-muted-foreground'>
-                    No roles created yet. Click 'Add Role' to create your first role.
+                    {t('features.events.participants.roles.noRoles')}
                   </p>
                 </div>
               )}

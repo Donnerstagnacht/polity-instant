@@ -361,21 +361,21 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
   };
 
   const handleDeleteBlog = async () => {
-    if (!confirm('Are you sure you want to delete this blog?')) return;
+    if (!confirm(t('features.blogs.detail.confirmDelete'))) return;
     try {
       await db.transact([db.tx.blogs[blogId].delete()]);
-      toast.success('Blog deleted successfully');
+      toast.success(t('features.blogs.detail.blogDeleted'));
       router.push('/');
     } catch (error) {
       console.error('Error deleting blog:', error);
-      toast.error('Failed to delete blog');
+      toast.error(t('features.blogs.detail.blogDeleteFailed'));
     }
   };
 
   if (isLoading) {
     return (
       <PageWrapper className="container mx-auto p-8">
-        <div className="py-12 text-center">Loading blog post...</div>
+        <div className="py-12 text-center">{t('features.blogs.detail.loading')}</div>
       </PageWrapper>
     );
   }
@@ -384,9 +384,9 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
     return (
       <PageWrapper className="container mx-auto p-8">
         <div className="py-12 text-center">
-          <h1 className="mb-4 text-2xl font-bold">Blog Post Not Found</h1>
+          <h1 className="mb-4 text-2xl font-bold">{t('features.blogs.detail.notFound')}</h1>
           <p className="text-muted-foreground">
-            The blog post you're looking for doesn't exist or has been removed.
+            {t('features.blogs.detail.notFoundDescription')}
           </p>
         </div>
       </PageWrapper>
@@ -469,7 +469,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
         </div>
         <Button variant="outline" onClick={() => setIsCommenting(true)}>
           <MessageSquare className="mr-2 h-4 w-4" />
-          Comment
+          {t('features.blogs.detail.comment')}
         </Button>
         <ShareButton url={`/blog/${blogId}`} title={blog.title} description="" />
         
@@ -477,7 +477,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
         {canDelete && (
           <Button variant="destructive" onClick={handleDeleteBlog}>
             <Trash2 className="mr-2 h-4 w-4" />
-            Delete
+            {t('features.blogs.delete')}
           </Button>
         )}
       </ActionBar>
@@ -493,16 +493,16 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
       <Card className="mb-6">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Blog Content</CardTitle>
+            <CardTitle>{t('features.blogs.detail.blogContent')}</CardTitle>
             <CardDescription>
-              {blog.content ? 'The latest version of this blog post' : 'No content yet'}
+              {blog.content ? t('features.blogs.detail.latestVersion') : t('features.blogs.detail.noContentYet')}
             </CardDescription>
           </div>
           {canEdit && (
             <Link href={`/blog/${blogId}/editor`}>
               <Button variant="outline" size="sm">
                 <Edit className="mr-2 h-4 w-4" />
-                Edit Content
+                {t('features.blogs.detail.editContent')}
               </Button>
             </Link>
           )}
@@ -516,12 +516,12 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
             />
           ) : (
             <div className="py-8 text-center text-muted-foreground">
-              <p>No content available yet.</p>
+              <p>{t('features.blogs.detail.noContentAvailable')}</p>
               {canEdit && (
                 <Link href={`/blog/${blogId}/editor`}>
                   <Button variant="outline" className="mt-4">
                     <Edit className="mr-2 h-4 w-4" />
-                    Start Writing
+                    {t('features.blogs.detail.startWriting')}
                   </Button>
                 </Link>
               )}
@@ -535,8 +535,8 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Discussion ({comments.length})</CardTitle>
-              <CardDescription>Join the conversation</CardDescription>
+              <CardTitle>{t('features.blogs.detail.discussion')} ({comments.length})</CardTitle>
+              <CardDescription>{t('features.blogs.detail.discussionDescription')}</CardDescription>
             </div>
             <CommentSortSelect sortBy={sortBy} onSortChange={setSortBy} />
           </div>
@@ -550,24 +550,24 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
               className="mb-6 w-full"
             >
               <MessageSquare className="mr-2 h-4 w-4" />
-              Add Comment
+              {t('features.blogs.detail.addComment')}
             </Button>
           )}
 
           {isCommenting && (
             <div className="mb-6 space-y-2 rounded-lg border p-4">
               <Textarea
-                placeholder="Write your comment..."
+                placeholder={t('features.blogs.detail.writeComment')}
                 value={commentText}
                 onChange={e => setCommentText(e.target.value)}
                 rows={3}
               />
               <div className="flex gap-2">
                 <Button onClick={handleAddComment} disabled={isSubmitting || !commentText.trim()}>
-                  Post Comment
+                  {t('features.blogs.detail.postComment')}
                 </Button>
                 <Button variant="outline" onClick={() => setIsCommenting(false)}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </div>
             </div>
@@ -577,7 +577,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
           <div className="space-y-4">
             {comments.length === 0 ? (
               <p className="text-center text-sm text-muted-foreground">
-                No comments yet. Be the first to comment on this post.
+                {t('features.blogs.detail.noCommentsYet')}
               </p>
             ) : (
               comments.map(comment => (

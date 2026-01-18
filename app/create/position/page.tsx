@@ -23,11 +23,13 @@ import { useAuthStore } from '@/features/auth/auth.ts';
 import { toast } from 'sonner';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { PageWrapper } from '@/components/layout/page-wrapper';
+import { useTranslation } from '@/hooks/use-translation';
 
 function CreatePositionForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const user = useAuthStore(state => state.user);
+  const { t } = useTranslation();
 
   const groupIdParam = searchParams.get('groupId');
 
@@ -68,13 +70,13 @@ function CreatePositionForm() {
 
     try {
       if (!user?.id) {
-        toast.error('You must be logged in to create a position');
+        toast.error(t('pages.create.validation.loginRequired'));
         setIsSubmitting(false);
         return;
       }
 
       if (!formData.groupId) {
-        toast.error('Please select a group');
+        toast.error(t('pages.create.validation.groupRequired'));
         setIsSubmitting(false);
         return;
       }
@@ -94,11 +96,11 @@ function CreatePositionForm() {
           .link({ group: formData.groupId }),
       ]);
 
-      toast.success('Position created successfully!');
+      toast.success(`Position ${t('pages.create.success.created')}`);
       router.push(`/group/${formData.groupId}`);
     } catch (error) {
       console.error('Failed to create position:', error);
-      toast.error('Failed to create position. Please try again.');
+      toast.error(t('pages.create.error.createFailed'));
       setIsSubmitting(false);
     }
   };
@@ -108,7 +110,7 @@ function CreatePositionForm() {
       <PageWrapper className="flex min-h-screen items-center justify-center p-8">
         <Card className="w-full max-w-2xl">
           <CardHeader>
-            <CardTitle>Create a New Position</CardTitle>
+            <CardTitle>{t('pages.create.position.title')}</CardTitle>
           </CardHeader>
             <CardContent>
               <Carousel setApi={setCarouselApi} opts={{ watchDrag: false }}>
@@ -117,30 +119,30 @@ function CreatePositionForm() {
                   <CarouselItem>
                     <div className="space-y-4 p-4">
                       <div className="space-y-2">
-                        <Label htmlFor="position-group">Group</Label>
+                        <Label htmlFor="position-group">{t('pages.create.position.groupLabel')}</Label>
                         {isLoading ? (
-                          <p className="text-sm text-muted-foreground">Loading groups...</p>
+                          <p className="text-sm text-muted-foreground">{t('pages.create.position.loadingGroups')}</p>
                         ) : data?.groups && data.groups.length > 0 ? (
                           <TypeAheadSelect
                             items={data.groups}
                             value={formData.groupId}
                             onChange={value => setFormData({ ...formData, groupId: value })}
-                            placeholder="Search for a group..."
+                            placeholder={t('pages.create.common.searchGroup')}
                             searchKeys={['name', 'description']}
                             renderItem={group => <GroupSelectCard group={group} />}
                             getItemId={group => group.id}
                           />
                         ) : (
                           <p className="text-sm text-muted-foreground">
-                            No groups found. You need to create or own a group first.
+                            {t('pages.create.common.noGroupsFound')}
                           </p>
                         )}
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="position-title">Position Title</Label>
+                        <Label htmlFor="position-title">{t('pages.create.position.titleLabel')}</Label>
                         <Input
                           id="position-title"
-                          placeholder="e.g., President, Secretary, Treasurer"
+                          placeholder={t('pages.create.position.titlePlaceholder')}
                           value={formData.title}
                           onChange={e => setFormData({ ...formData, title: e.target.value })}
                           required
@@ -153,17 +155,17 @@ function CreatePositionForm() {
                   <CarouselItem>
                     <div className="space-y-4 p-4">
                       <div className="space-y-2">
-                        <Label htmlFor="position-description">Description</Label>
+                        <Label htmlFor="position-description">{t('pages.create.position.descriptionLabel')}</Label>
                         <Textarea
                           id="position-description"
-                          placeholder="Describe the responsibilities and role"
+                          placeholder={t('pages.create.position.descriptionPlaceholder')}
                           value={formData.description}
                           onChange={e => setFormData({ ...formData, description: e.target.value })}
                           rows={5}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="position-term">Term Length (months)</Label>
+                        <Label htmlFor="position-term">{t('pages.create.position.termLabel')}</Label>
                         <Input
                           id="position-term"
                           type="number"
@@ -176,12 +178,11 @@ function CreatePositionForm() {
                           required
                         />
                         <p className="text-sm text-muted-foreground">
-                          How long does each term last? (e.g., 6 = 6 months, 12 = 1 year, 24 = 2
-                          years)
+                          {t('pages.create.position.termHint')}
                         </p>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="position-firstTermStart">First Term Start Date</Label>
+                        <Label htmlFor="position-firstTermStart">{t('pages.create.position.firstTermStartLabel')}</Label>
                         <Input
                           id="position-firstTermStart"
                           type="date"
@@ -192,7 +193,7 @@ function CreatePositionForm() {
                           required
                         />
                         <p className="text-sm text-muted-foreground">
-                          When did or will the first term for this position start?
+                          {t('pages.create.position.firstTermStartHint')}
                         </p>
                       </div>
                     </div>
@@ -205,10 +206,10 @@ function CreatePositionForm() {
                         <CardHeader>
                           <div className="mb-2 flex items-center justify-between">
                             <Badge variant="default" className="text-xs">
-                              Position
+                              {t('pages.create.position.reviewBadge')}
                             </Badge>
                             <Badge variant="secondary" className="text-xs">
-                              {formData.term} months
+                              {t('pages.create.position.termMonths', { months: formData.term })}
                             </Badge>
                           </div>
                           <CardTitle className="text-lg">
@@ -220,19 +221,19 @@ function CreatePositionForm() {
                         </CardHeader>
                         <CardContent className="space-y-3">
                           <div className="flex items-center gap-2 text-sm">
-                            <strong>Group:</strong>
+                            <strong>{t('pages.create.common.group')}:</strong>
                             <span className="text-muted-foreground">
                               {data?.groups?.find(g => g.id === formData.groupId)?.name ||
-                                'Not selected'}
+                                t('pages.create.common.notSelected')}
                             </span>
                           </div>
                           <div className="flex items-center gap-2 text-sm">
-                            <strong>Term Length:</strong>
+                            <strong>{t('pages.create.position.termLength')}</strong>
                             <span className="text-muted-foreground">{formData.term} months</span>
                           </div>
                           {formData.firstTermStart && (
                             <div className="flex items-center gap-2 text-sm">
-                              <strong>First Term Starts:</strong>
+                              <strong>{t('pages.create.position.firstTermStarts')}</strong>
                               <span className="text-muted-foreground">
                                 {formData.firstTermStart}
                               </span>
@@ -253,7 +254,7 @@ function CreatePositionForm() {
                     className={`h-2 w-2 rounded-full transition-colors ${
                       currentStep === index ? 'bg-primary' : 'bg-muted-foreground/30'
                     }`}
-                    aria-label={`Go to step ${index + 1}`}
+                    aria-label={t('pages.create.goToStep', { step: index + 1 })}
                   />
                 ))}
               </div>
@@ -265,7 +266,7 @@ function CreatePositionForm() {
                 onClick={() => carouselApi?.scrollPrev()}
                 disabled={currentStep === 0}
               >
-                Previous
+                {t('pages.create.previous')}
               </Button>
               {currentStep < 2 ? (
                 <Button
@@ -278,7 +279,7 @@ function CreatePositionForm() {
                     data.groups.length === 0
                   }
                 >
-                  Next
+                  {t('pages.create.next')}
                 </Button>
               ) : (
                 <Button
@@ -286,7 +287,7 @@ function CreatePositionForm() {
                   onClick={handleSubmit}
                   disabled={isSubmitting || !data?.groups || data.groups.length === 0}
                 >
-                  {isSubmitting ? 'Creating...' : 'Create Position'}
+                  {isSubmitting ? t('pages.create.creating') : t('pages.create.position.createButton')}
                 </Button>
               )}
             </CardFooter>
@@ -297,13 +298,15 @@ function CreatePositionForm() {
 }
 
 export default function CreatePositionPage() {
+  const { t } = useTranslation();
+  
   return (
     <Suspense
       fallback={
         <PageWrapper className="flex min-h-screen items-center justify-center p-8">
           <Card className="w-full max-w-2xl">
             <CardHeader>
-              <CardTitle>Loading...</CardTitle>
+              <CardTitle>{t('pages.create.loading')}</CardTitle>
             </CardHeader>
           </Card>
         </PageWrapper>

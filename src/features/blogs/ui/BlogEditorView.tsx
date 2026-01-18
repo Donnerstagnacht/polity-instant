@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, Eye, ArrowLeft, FileText, Pencil } from 'lucide-react';
-import { VersionControl } from '../../../../app/blog/[id]/editor/version-control';
+import { VersionControl } from './VersionControl';
 import { ShareButton } from '@/components/shared/ShareButton';
 import { useBlogEditor } from '../hooks/useBlogEditor';
 import db from '../../../../db/db';

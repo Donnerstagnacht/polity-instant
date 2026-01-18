@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
+import { useTranslation } from '@/hooks/use-translation';
 import { CalendarEvent } from '../types';
 import { isSameDay } from '../utils/dateUtils';
 
@@ -10,6 +11,8 @@ interface MiniCalendarProps {
 }
 
 export const MiniCalendar = ({ selectedDate, onSelect, events }: MiniCalendarProps) => {
+  const { t } = useTranslation();
+
   const getEventsForDate = (date: Date) => {
     return events.filter((event) => isSameDay(event.startDate, date));
   };
@@ -17,7 +20,7 @@ export const MiniCalendar = ({ selectedDate, onSelect, events }: MiniCalendarPro
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Calendar</CardTitle>
+        <CardTitle>{t('features.calendar.title')}</CardTitle>
       </CardHeader>
       <CardContent>
         <Calendar

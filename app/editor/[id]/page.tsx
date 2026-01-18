@@ -13,10 +13,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { db, tx } from '../../../db/db';
 import { Loader2, Users, Eye, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
-import { InviteCollaboratorDialog } from './invite-collaborator-dialog';
-import { VersionControl } from './version-control';
-import { createDocumentVersion } from './version-utils';
+import { InviteCollaboratorDialog } from '@/features/documents';
+import { VersionControl } from '@/features/amendments/ui/VersionControl';
+import { createDocumentVersion } from '@/features/amendments/utils/version-utils';
 import { useSuggestionIdAssignment } from '@/hooks/use-suggestion-id-assignment';
+import { useTranslation } from '@/hooks/use-translation';
 
 const DEFAULT_CONTENT = [
   {
@@ -30,6 +31,7 @@ export default function DocumentEditorPage() {
   const router = useRouter();
   const { user } = db.useAuth();
   const documentId = params.id as string;
+  const { t } = useTranslation();
 
   // State
   const [documentTitle, setDocumentTitle] = useState('');
@@ -280,13 +282,13 @@ export default function DocumentEditorPage() {
         lastSaveTime.current = now;
         lastRemoteUpdate.current = now;
 
-        toast.success('Version restored successfully');
+        toast.success(t('pages.editor.versionControl.restoredSuccess'));
       } catch (error) {
         console.error('Failed to restore version:', error);
-        toast.error('Failed to restore version');
+        toast.error(t('pages.editor.versionControl.restoreFailed'));
       }
     },
-    [documentId, user, toast]
+    [documentId, user, toast, t]
   );
 
   // Handle suggestion accepted - create a version
@@ -450,11 +452,11 @@ export default function DocumentEditorPage() {
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-20 text-center">
               <p className="mb-4 text-lg text-muted-foreground">
-                Document not found or you don't have access to it.
+                {t('pages.editor.document.notFound')}
               </p>
               <Button onClick={() => router.push('/editor')}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Documents
+                {t('pages.editor.document.backToDocuments')}
               </Button>
             </CardContent>
           </Card>
@@ -469,7 +471,7 @@ export default function DocumentEditorPage() {
         <div className="mb-6 flex items-center justify-between">
           <Button variant="ghost" onClick={() => router.push('/editor')}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Documents
+            {t('pages.editor.document.backToDocuments')}
           </Button>
 
           <div className="flex items-center gap-4">
@@ -492,7 +494,7 @@ export default function DocumentEditorPage() {
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">
-                  {onlinePeers.length} {onlinePeers.length === 1 ? 'user' : 'users'} online
+                  {onlinePeers.length} {onlinePeers.length === 1 ? t('pages.editor.presence.userOnline') : t('pages.editor.presence.usersOnline')}
                 </span>
                 <div className="flex -space-x-2">
                   {onlinePeers.map((peer: any) => (
@@ -514,7 +516,7 @@ export default function DocumentEditorPage() {
               </div>
             )}
 
-            {document.owner?.id === user?.id && <Badge variant="outline">Owner</Badge>}
+            {document.owner?.id === user?.id && <Badge variant="outline">{t('pages.editor.document.owner')}</Badge>}
           </div>
         </div>
 
@@ -526,31 +528,31 @@ export default function DocumentEditorPage() {
                   value={documentTitle}
                   onChange={e => handleTitleChange(e.target.value)}
                   className="border-none px-0 text-2xl font-bold shadow-none focus-visible:ring-0"
-                  placeholder="Untitled Document"
+                  placeholder={t('pages.editor.document.untitled')}
                 />
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 {isSavingTitle ? (
                   <>
                     <Loader2 className="h-3 w-3 animate-spin" />
-                    <span>Saving title...</span>
+                    <span>{t('pages.editor.document.savingTitle')}</span>
                   </>
                 ) : (
                   <>
                     <Eye className="h-3 w-3" />
-                    <span>Auto-save enabled</span>
+                    <span>{t('pages.editor.document.autoSaveEnabled')}</span>
                   </>
                 )}
               </div>
             </div>
             <CardDescription>
-              Changes are saved automatically as you type. Other users' changes appear in real-time.
+              {t('pages.editor.document.changesAutoSaved')}
             </CardDescription>
 
             {/* Collaborators list */}
             {document.collaborators && document.collaborators.length > 0 && (
               <div className="mt-4 flex flex-wrap items-center gap-2">
-                <span className="text-sm text-muted-foreground">Collaborators:</span>
+                <span className="text-sm text-muted-foreground">{t('pages.editor.document.collaboratorsPlural')}:</span>
                 {document.collaborators.map((collab: any) => {
                   return (
                     <div

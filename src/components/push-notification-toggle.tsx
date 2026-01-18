@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface PushNotificationToggleProps {
   variant?: 'default' | 'card' | 'minimal';
@@ -28,6 +29,7 @@ export function PushNotificationToggle({
   variant = 'default',
   showDescription = true,
 }: PushNotificationToggleProps) {
+  const { t } = useTranslation();
   const { isSupported, isSubscribed, isLoading, permission, error, subscribe, unsubscribe } =
     usePushSubscription();
 
@@ -35,15 +37,15 @@ export function PushNotificationToggle({
     try {
       if (isSubscribed) {
         await unsubscribe();
-        toast.success('Push-Benachrichtigungen deaktiviert');
+        toast.success(t('components.pushNotifications.deactivated'));
       } else {
         await subscribe();
         // Only show success if subscribe didn't throw
-        toast.success('Push-Benachrichtigungen aktiviert');
+        toast.success(t('components.pushNotifications.activated'));
       }
     } catch (err: any) {
       console.error('[PushNotificationToggle] Error:', err);
-      toast.error(err.message || 'Fehler beim Ändern der Einstellung');
+      toast.error(err.message || t('components.pushNotifications.error'));
     }
   };
 
@@ -55,7 +57,7 @@ export function PushNotificationToggle({
           variant="outline"
           size="sm"
           disabled
-          title="Ihr Browser unterstützt keine Push-Benachrichtigungen"
+          title={t('components.pushNotifications.notSupported')}
         >
           <BellOff className="h-4 w-4" />
         </Button>
@@ -65,7 +67,7 @@ export function PushNotificationToggle({
     return (
       <Alert>
         <BellOff className="h-4 w-4" />
-        <AlertDescription>Ihr Browser unterstützt keine Push-Benachrichtigungen.</AlertDescription>
+        <AlertDescription>{t('components.pushNotifications.notSupported')}</AlertDescription>
       </Alert>
     );
   }
@@ -78,7 +80,7 @@ export function PushNotificationToggle({
           variant="outline"
           size="sm"
           disabled
-          title="Benachrichtigungen blockiert. Bitte in den Browser-Einstellungen aktivieren."
+          title={t('components.pushNotifications.blocked')}
         >
           <BellOff className="h-4 w-4" />
         </Button>
@@ -89,8 +91,7 @@ export function PushNotificationToggle({
       <Alert variant="destructive">
         <BellOff className="h-4 w-4" />
         <AlertDescription>
-          Push-Benachrichtigungen wurden blockiert. Bitte aktivieren Sie diese in Ihren
-          Browser-Einstellungen.
+          {t('components.pushNotifications.blockedLong')}
         </AlertDescription>
       </Alert>
     );
@@ -110,12 +111,12 @@ export function PushNotificationToggle({
         ) : isSubscribed ? (
           <>
             <Bell className="mr-2 h-4 w-4" />
-            Benachrichtigungen aktiv
+            {t('components.pushNotifications.active')}
           </>
         ) : (
           <>
             <BellOff className="mr-2 h-4 w-4" />
-            Benachrichtigungen aktivieren
+            {t('components.pushNotifications.activate')}
           </>
         )}
       </Button>
@@ -129,11 +130,11 @@ export function PushNotificationToggle({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             {isSubscribed ? <Bell className="h-5 w-5" /> : <BellOff className="h-5 w-5" />}
-            Push-Benachrichtigungen
+            {t('components.pushNotifications.title')}
           </CardTitle>
           {showDescription && (
             <CardDescription>
-              Erhalten Sie Benachrichtigungen auch wenn die App geschlossen ist.
+              {t('components.pushNotifications.description')}
             </CardDescription>
           )}
         </CardHeader>
@@ -147,12 +148,12 @@ export function PushNotificationToggle({
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <div className="text-sm font-medium">
-                {isSubscribed ? 'Aktiviert' : 'Deaktiviert'}
+                {isSubscribed ? t('components.pushNotifications.enabled') : t('components.pushNotifications.disabled')}
               </div>
               <div className="text-sm text-muted-foreground">
                 {isSubscribed
-                  ? 'Sie erhalten Push-Benachrichtigungen auf diesem Gerät'
-                  : 'Aktivieren Sie Push-Benachrichtigungen für dieses Gerät'}
+                  ? t('components.pushNotifications.enabledDescription')
+                  : t('components.pushNotifications.disabledDescription')}
               </div>
             </div>
             <Button
@@ -163,9 +164,9 @@ export function PushNotificationToggle({
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : isSubscribed ? (
-                'Deaktivieren'
+                t('components.pushNotifications.deactivate')
               ) : (
-                'Aktivieren'
+                t('components.pushNotifications.activate')
               )}
             </Button>
           </div>
@@ -181,13 +182,13 @@ export function PushNotificationToggle({
         <div className="space-y-0.5">
           <div className="flex items-center gap-2 text-sm font-medium">
             {isSubscribed ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
-            Push-Benachrichtigungen
+            {t('components.pushNotifications.title')}
           </div>
           {showDescription && (
             <div className="text-sm text-muted-foreground">
               {isSubscribed
-                ? 'Sie erhalten Benachrichtigungen auch wenn die App geschlossen ist'
-                : 'Aktivieren Sie Benachrichtigungen für dieses Gerät'}
+                ? t('components.pushNotifications.enabledDescriptionShort')
+                : t('components.pushNotifications.disabledDescriptionShort')}
             </div>
           )}
         </div>
@@ -200,9 +201,9 @@ export function PushNotificationToggle({
           {isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : isSubscribed ? (
-            'Deaktivieren'
+            t('components.pushNotifications.deactivate')
           ) : (
-            'Aktivieren'
+            t('components.pushNotifications.activate')
           )}
         </Button>
       </div>

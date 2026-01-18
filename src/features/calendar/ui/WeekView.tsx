@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/utils';
+import { useTranslation } from '@/hooks/use-translation';
 import { CalendarEvent } from '../types';
 import { getWeekDays, isSameDay, formatTime } from '../utils/dateUtils';
 
@@ -13,6 +14,7 @@ interface WeekViewProps {
 
 export const WeekView = ({ selectedDate, events, allEvents }: WeekViewProps) => {
   const router = useRouter();
+  const { t, currentLanguage } = useTranslation();
   const weekDays = getWeekDays(selectedDate);
 
   const getEventsForDate = (date: Date) => {
@@ -22,9 +24,11 @@ export const WeekView = ({ selectedDate, events, allEvents }: WeekViewProps) => 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Week View</CardTitle>
+        <CardTitle>{t('features.calendar.weekView.title')}</CardTitle>
         <CardDescription>
-          {events.length} event{events.length !== 1 ? 's' : ''} this week
+          {events.length === 1
+            ? t('features.calendar.weekView.eventCount', { count: events.length })
+            : t('features.calendar.weekView.eventCountPlural', { count: events.length })}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -45,7 +49,7 @@ export const WeekView = ({ selectedDate, events, allEvents }: WeekViewProps) => 
               >
                 <div className="mb-2 text-center">
                   <p className="text-xs font-medium text-muted-foreground">
-                    {day.toLocaleDateString('en-US', { weekday: 'short' })}
+                    {day.toLocaleDateString(currentLanguage === 'de' ? 'de-DE' : 'en-US', { weekday: 'short' })}
                   </p>
                   <p
                     className={cn(

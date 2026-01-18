@@ -27,6 +27,7 @@ import { MembershipTabs } from '@/features/groups/ui/MembershipTabs';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import type { MembershipTab } from '@/features/groups/types/group.types';
+import { useTranslation } from '@/hooks/use-translation';
 
 export default function GroupMembershipsManagementPage({
   params,
@@ -37,6 +38,7 @@ export default function GroupMembershipsManagementPage({
   const router = useRouter();
   const { user: authUser } = useAuthStore();
   const groupId = resolvedParams.id;
+  const { t } = useTranslation();
 
   // Permissions
   const { can } = usePermissions({ groupId });
@@ -301,9 +303,9 @@ export default function GroupMembershipsManagementPage({
       >
         <div className="container mx-auto max-w-7xl p-8">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold">Manage Group Memberships</h1>
+            <h1 className="text-3xl font-bold">{t('pages.group.memberships.manageMemberships')}</h1>
             <p className="mt-2 text-muted-foreground">
-              {group?.name || 'Group'} - Manage members, requests, and invitations
+              {group?.name || t('navigation.primary.groups')} - {t('pages.group.memberships.title')}
             </p>
           </div>
 
@@ -312,7 +314,7 @@ export default function GroupMembershipsManagementPage({
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search members by name, role, or status..."
+                placeholder={t('pages.group.memberships.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"

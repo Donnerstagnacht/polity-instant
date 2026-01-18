@@ -34,6 +34,7 @@ import { UserPlus, X, Link as LinkIcon, Calendar, Check, Users } from 'lucide-re
 import { VisibilitySelector } from '@/components/ui/visibility-selector';
 import { cn } from '@/utils/utils';
 import { notifyRelationshipRequested } from '@/utils/notification-helpers';
+import { useTranslation } from '@/hooks/use-translation';
 
 type WithRight =
   | 'informationRight'
@@ -52,6 +53,7 @@ interface GroupLink {
 export default function CreateGroupPage() {
   const router = useRouter();
   const user = useAuthStore(state => state.user);
+  const { t } = useTranslation();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -109,7 +111,7 @@ export default function CreateGroupPage() {
     if (!user) return;
     
     if (formData.invitedUserIds.includes(userId)) {
-      toast.info('User already invited');
+      toast.info(t('pages.create.group.userAlreadyInvited'));
       setSelectedUserId('');
       return;
     }
@@ -141,7 +143,7 @@ export default function CreateGroupPage() {
   // Handler: Add group link
   const handleAddGroupLink = () => {
     if (!selectedLinkGroupId || selectedRights.size === 0) {
-      toast.error('Please select a group and at least one right');
+      toast.error(t('pages.create.group.selectGroupAndRights'));
       return;
     }
 
@@ -150,7 +152,7 @@ export default function CreateGroupPage() {
 
     const existingLink = formData.groupLinks.find(link => link.groupId === selectedLinkGroupId);
     if (existingLink) {
-      toast.info('Group already linked. Updating rights...');
+      toast.info(t('pages.create.group.groupAlreadyLinked'));
       setFormData(prev => ({
         ...prev,
         groupLinks: prev.groupLinks.map(link =>
@@ -222,7 +224,7 @@ export default function CreateGroupPage() {
 
     try {
       if (!user?.id) {
-        toast.error('You must be logged in to create a group');
+        toast.error(t('pages.create.validation.loginRequired'));
         setIsSubmitting(false);
         return;
       }
@@ -548,11 +550,11 @@ export default function CreateGroupPage() {
 
       await db.transact(transactions);
 
-      toast.success('Group created successfully!');
+      toast.success(`Group ${t('pages.create.success.created')}`);
       router.push(`/group/${groupId}`);
     } catch (error) {
       console.error('Failed to create group:', error);
-      toast.error('Failed to create group. Please try again.');
+      toast.error(t('pages.create.error.createFailed'));
       setIsSubmitting(false);
     }
   };
@@ -563,7 +565,7 @@ export default function CreateGroupPage() {
         <TooltipProvider>
           <Card className="w-full max-w-2xl">
             <CardHeader>
-              <CardTitle>Create a New Group</CardTitle>
+              <CardTitle>{t('pages.create.group.title')}</CardTitle>
             </CardHeader>
             <div>
               <CardContent>
@@ -573,20 +575,20 @@ export default function CreateGroupPage() {
                     <CarouselItem>
                       <div className="space-y-4 p-4">
                         <div className="space-y-2">
-                          <Label htmlFor="group-name">Group Name</Label>
+                          <Label htmlFor="group-name">{t('pages.create.group.nameLabel')}</Label>
                           <Input
                             id="group-name"
-                            placeholder="Enter group name"
+                            placeholder={t('pages.create.group.namePlaceholder')}
                             value={formData.name}
                             onChange={e => setFormData({ ...formData, name: e.target.value })}
                             required
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="group-description">Description</Label>
+                          <Label htmlFor="group-description">{t('pages.create.group.descriptionLabel')}</Label>
                           <Textarea
                             id="group-description"
-                            placeholder="Describe the purpose of this group"
+                            placeholder={t('pages.create.group.descriptionPlaceholder')}
                             value={formData.description}
                             onChange={e =>
                               setFormData({ ...formData, description: e.target.value })
@@ -601,11 +603,11 @@ export default function CreateGroupPage() {
                     <CarouselItem>
                       <div className="space-y-4 p-4">
                         <div className="flex items-center justify-between">
-                          <Label>Invite Members (Optional)</Label>
-                          <Badge variant="secondary">{formData.invitedUserIds.length} invited</Badge>
+                          <Label>{t('pages.create.group.inviteMembersOptional')}</Label>
+                          <Badge variant="secondary">{formData.invitedUserIds.length} {t('pages.create.group.invited')}</Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          Search and select users to invite to your group
+                          {t('pages.create.group.searchUsers')}
                         </p>
 
                         <div className="space-y-3">
@@ -613,7 +615,7 @@ export default function CreateGroupPage() {
                             items={searchedUsers}
                             value={selectedUserId}
                             onChange={setSelectedUserId}
-                            placeholder="Search users by name or handle..."
+                            placeholder={t('pages.create.group.searchUsers')}
                             searchKeys={['name', 'handle', 'contactEmail']}
                             renderItem={(user: any) => <UserSelectCard user={user} />}
                             getItemId={(user: any) => user.id}
@@ -622,7 +624,7 @@ export default function CreateGroupPage() {
                           {/* Display last invited user */}
                           {lastInvitedUser && (
                             <div className="space-y-2">
-                              <Label className="text-sm">Last Invited</Label>
+                              <Label className="text-sm">{t('pages.create.group.lastInvited')}</Label>
                               <Card className="p-3">
                                 <div className="flex items-center gap-3">
                                   <Avatar className="h-10 w-10">
@@ -654,7 +656,7 @@ export default function CreateGroupPage() {
                           {/* Display all invited users */}
                           {formData.invitedUserIds.length > 0 && (
                             <div className="space-y-2">
-                              <Label className="text-sm">All Invited Users ({invitedUsers.length})</Label>
+                              <Label className="text-sm">{t('pages.create.group.allInvitedUsers')} ({invitedUsers.length})</Label>
                               <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border p-2">
                                 {invitedUsers.map((user: any) => (
                                   <Card key={user.id} className="p-3">
@@ -704,7 +706,7 @@ export default function CreateGroupPage() {
                           <HashtagInput
                             value={formData.hashtags}
                             onChange={hashtags => setFormData({ ...formData, hashtags })}
-                            placeholder="Add hashtags (e.g., politics, community)"
+                            placeholder={t('pages.create.group.hashtagsPlaceholder')}
                           />
                         </div>
                       </div>
@@ -714,22 +716,22 @@ export default function CreateGroupPage() {
                     <CarouselItem>
                       <div className="space-y-4 p-4">
                         <div className="flex items-center justify-between">
-                          <Label>Link to Other Groups (Optional)</Label>
-                          <Badge variant="secondary">{formData.groupLinks.length} linked</Badge>
+                          <Label>{t('pages.create.group.linkGroupsOptional')}</Label>
+                          <Badge variant="secondary">{formData.groupLinks.length} {t('pages.create.group.linked')}</Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          Request relationships with other groups
+                          {t('pages.create.group.requestRelationships')}
                         </p>
 
                         <div className="space-y-3">
                           {/* Group Selection */}
                           <div className="space-y-2">
-                            <Label>Select Group</Label>
+                            <Label>{t('pages.create.group.selectGroup')}</Label>
                             <TypeAheadSelect
                               items={availableGroups}
                               value={selectedLinkGroupId}
                               onChange={setSelectedLinkGroupId}
-                              placeholder="Search for a group..."
+                              placeholder={t('pages.create.group.searchGroups')}
                               searchKeys={['name', 'description']}
                               renderItem={(group: any) => <GroupSelectCard group={group} />}
                               getItemId={(group: any) => group.id}
@@ -740,7 +742,7 @@ export default function CreateGroupPage() {
                           {selectedLinkGroupId && (
                             <>
                               <div className="space-y-2">
-                                <Label>Relationship Type</Label>
+                                <Label>{t('pages.create.group.relationshipType')}</Label>
                                 <div className="grid grid-cols-2 gap-2">
                                   <Button
                                     type="button"
@@ -749,7 +751,7 @@ export default function CreateGroupPage() {
                                     }
                                     onClick={() => setLinkRelationshipType('isParent')}
                                   >
-                                    They are Parent
+                                    {t('pages.create.group.theyAreParent')}
                                   </Button>
                                   <Button
                                     type="button"
@@ -758,14 +760,14 @@ export default function CreateGroupPage() {
                                     }
                                     onClick={() => setLinkRelationshipType('isChild')}
                                   >
-                                    They are Child
+                                    {t('pages.create.group.theyAreChild')}
                                   </Button>
                                 </div>
                               </div>
 
                               {/* Rights Selection */}
                               <div className="space-y-2">
-                                <Label>Select Rights (at least one)</Label>
+                                <Label>{t('pages.create.group.selectRights')}</Label>
                                 <div className="grid grid-cols-2 gap-2">
                                   {RIGHTS.map(right => (
                                     <Button
@@ -791,7 +793,7 @@ export default function CreateGroupPage() {
                                 className="w-full"
                               >
                                 <LinkIcon className="mr-2 h-4 w-4" />
-                                Add Group Link
+                                {t('pages.create.group.addGroupLink')}
                               </Button>
                             </>
                           )}
@@ -799,7 +801,7 @@ export default function CreateGroupPage() {
                           {/* Display linked groups */}
                           {formData.groupLinks.length > 0 && (
                             <div className="space-y-2 mt-4">
-                              <Label className="text-sm">Linked Groups</Label>
+                              <Label className="text-sm">{t('pages.create.group.linkedGroups')}</Label>
                               <div className="space-y-2">
                                 {formData.groupLinks.map(link => (
                                   <Card key={link.groupId} className="p-3">
@@ -843,7 +845,7 @@ export default function CreateGroupPage() {
                       <div className="space-y-4 p-4">
                         <div className="flex items-center justify-between">
                           <Label htmlFor="create-event" className="cursor-pointer">
-                            Create Constitutional Event
+                            {t('pages.create.group.createConstitutionalEvent')}
                           </Label>
                           <Switch
                             id="create-event"
@@ -854,16 +856,16 @@ export default function CreateGroupPage() {
                           />
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          Optionally create a General Assembly event for your new group
+                          {t('pages.create.group.optionalGeneralAssembly')}
                         </p>
 
                         {formData.createConstitutionalEvent && (
                           <div className="space-y-4 pt-4">
                             <div className="space-y-2">
-                              <Label htmlFor="event-name">Event Name</Label>
+                              <Label htmlFor="event-name">{t('pages.create.group.eventName')}</Label>
                               <Input
                                 id="event-name"
-                                placeholder="e.g., Founding Assembly"
+                                placeholder={t('pages.create.group.eventNamePlaceholder')}
                                 value={formData.eventName}
                                 onChange={e =>
                                   setFormData({ ...formData, eventName: e.target.value })
@@ -873,10 +875,10 @@ export default function CreateGroupPage() {
                             </div>
 
                             <div className="space-y-2">
-                              <Label htmlFor="event-location">Location</Label>
+                              <Label htmlFor="event-location">{t('pages.create.group.eventLocation')}</Label>
                               <Input
                                 id="event-location"
-                                placeholder="Enter location"
+                                placeholder={t('pages.create.group.eventLocationPlaceholder')}
                                 value={formData.eventLocation}
                                 onChange={e =>
                                   setFormData({ ...formData, eventLocation: e.target.value })
@@ -886,7 +888,7 @@ export default function CreateGroupPage() {
 
                             <div className="grid grid-cols-2 gap-4">
                               <div className="space-y-2">
-                                <Label htmlFor="event-start-date">Start Date</Label>
+                                <Label htmlFor="event-start-date">{t('pages.create.group.eventStartDate')}</Label>
                                 <Input
                                   id="event-start-date"
                                   type="date"
@@ -897,7 +899,7 @@ export default function CreateGroupPage() {
                                 />
                               </div>
                               <div className="space-y-2">
-                                <Label htmlFor="event-start-time">Start Time</Label>
+                                <Label htmlFor="event-start-time">{t('pages.create.group.eventStartTime')}</Label>
                                 <Input
                                   id="event-start-time"
                                   type="time"
@@ -913,10 +915,9 @@ export default function CreateGroupPage() {
                               <div className="flex items-start gap-2">
                                 <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground" />
                                 <div className="flex-1 text-sm text-muted-foreground">
-                                  <p className="font-medium mb-1">Event Type: General Assembly</p>
+                                  <p className="font-medium mb-1">{t('pages.create.group.eventTypeGeneralAssembly')}</p>
                                   <p>
-                                    All invited members will be invited to this event. You will be
-                                    the event organizer.
+                                    {t('pages.create.group.eventTypeDescription')}
                                   </p>
                                 </div>
                               </div>
@@ -942,7 +943,7 @@ export default function CreateGroupPage() {
                               )}
                             </div>
                             <CardTitle className="text-lg">
-                              {formData.name || 'Untitled Group'}
+                              {formData.name || t('pages.create.group.untitledGroup')}
                             </CardTitle>
                             {formData.description && (
                               <CardDescription>{formData.description}</CardDescription>
@@ -950,13 +951,13 @@ export default function CreateGroupPage() {
                           </CardHeader>
                           <CardContent className="space-y-3">
                             <div className="flex items-center gap-2 text-sm">
-                              <strong>Visibility:</strong>
+                              <strong>{t('pages.create.group.visibilityLabel')}:</strong>
                               <Badge variant="secondary">{formData.visibility}</Badge>
                             </div>
 
                             {formData.hashtags.length > 0 && (
                               <div>
-                                <strong className="text-sm block mb-1">Hashtags:</strong>
+                                <strong className="text-sm block mb-1">{t('pages.create.group.hashtagsLabel')}:</strong>
                                 <div className="flex flex-wrap gap-1">
                                   {formData.hashtags.map((tag, index) => (
                                     <Badge key={index} variant="secondary" className="text-xs">
@@ -969,7 +970,7 @@ export default function CreateGroupPage() {
 
                             {formData.invitedUserIds.length > 0 && (
                               <div>
-                                <strong className="text-sm block mb-1">Invited Members:</strong>
+                                <strong className="text-sm block mb-1">{t('pages.create.group.invitedMembersLabel')}:</strong>
                                 <div className="space-y-2">
                                   <div className="flex flex-wrap gap-2">
                                     {(showAllInvitedInSummary ? invitedUsers : invitedUsers.slice(0, 3)).map((user: any) => (
@@ -995,8 +996,8 @@ export default function CreateGroupPage() {
                                       className="h-auto py-1 text-xs"
                                     >
                                       {showAllInvitedInSummary
-                                        ? 'Show less'
-                                        : `Show ${formData.invitedUserIds.length - 3} more`}
+                                        ? t('pages.create.common.showLess')
+                                        : `${t('pages.create.common.show')} ${formData.invitedUserIds.length - 3} ${t('pages.create.common.more')}`}
                                     </Button>
                                   )}
                                 </div>
@@ -1005,11 +1006,11 @@ export default function CreateGroupPage() {
 
                             {formData.groupLinks.length > 0 && (
                               <div>
-                                <strong className="text-sm block mb-1">Group Links:</strong>
+                                <strong className="text-sm block mb-1">{t('pages.create.group.groupLinksLabel')}:</strong>
                                 <div className="space-y-1">
                                   {formData.groupLinks.map(link => (
                                     <div key={link.groupId} className="text-xs text-muted-foreground">
-                                      • {link.groupName} ({link.relationshipType === 'isParent' ? 'Parent' : 'Child'})
+                                      • {link.groupName} ({link.relationshipType === 'isParent' ? t('pages.create.group.parent') : t('pages.create.group.child')})
                                     </div>
                                   ))}
                                 </div>
@@ -1018,7 +1019,7 @@ export default function CreateGroupPage() {
 
                             {formData.createConstitutionalEvent && formData.eventName && (
                               <div>
-                                <strong className="text-sm block mb-1">Constitutional Event:</strong>
+                                <strong className="text-sm block mb-1">{t('pages.create.group.constitutionalEventLabel')}:</strong>
                                 <Card className="p-2 bg-background/50">
                                   <div className="flex items-center gap-2 text-xs">
                                     <Calendar className="h-3 w-3" />
@@ -1059,7 +1060,7 @@ export default function CreateGroupPage() {
                   onClick={() => carouselApi?.scrollPrev()}
                   disabled={currentStep === 0 || isSubmitting}
                 >
-                  Previous
+                  {t('pages.create.common.previous')}
                 </Button>
                 {currentStep < 5 ? (
                   <Button
@@ -1067,11 +1068,11 @@ export default function CreateGroupPage() {
                     onClick={() => carouselApi?.scrollNext()}
                     disabled={currentStep === 0 && !formData.name}
                   >
-                    Next
+                    {t('pages.create.common.next')}
                   </Button>
                 ) : (
                   <Button type="button" onClick={() => handleSubmit()} disabled={isSubmitting}>
-                    {isSubmitting ? 'Creating...' : 'Create Group'}
+                    {isSubmitting ? t('pages.create.common.creating') : t('pages.create.group.createGroup')}
                   </Button>
                 )}
               </CardFooter>

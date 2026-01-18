@@ -60,7 +60,7 @@ export function LoginForm() {
               {t('auth.codeSent.title')}
             </CardTitle>
             <CardDescription>
-              {t('auth.codeSent.description').replace('{{email}}', email)}
+              {t('auth.codeSent.description', { email })}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

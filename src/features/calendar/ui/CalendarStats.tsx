@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from '@/hooks/use-translation';
 import { CalendarEvent } from '../types';
 import { isDateInRange, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from '../utils/dateUtils';
 
@@ -7,18 +8,20 @@ interface CalendarStatsProps {
 }
 
 export const CalendarStats = ({ events }: CalendarStatsProps) => {
+  const { t } = useTranslation();
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Stats</CardTitle>
+        <CardTitle>{t('features.calendar.stats.title')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex justify-between">
-          <span className="text-sm text-muted-foreground">Total Events</span>
+          <span className="text-sm text-muted-foreground">{t('features.calendar.stats.totalEvents')}</span>
           <span className="font-semibold">{events.length}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-sm text-muted-foreground">This Week</span>
+          <span className="text-sm text-muted-foreground">{t('features.calendar.stats.thisWeek')}</span>
           <span className="font-semibold">
             {
               events.filter((e) =>
@@ -28,7 +31,7 @@ export const CalendarStats = ({ events }: CalendarStatsProps) => {
           </span>
         </div>
         <div className="flex justify-between">
-          <span className="text-sm text-muted-foreground">This Month</span>
+          <span className="text-sm text-muted-foreground">{t('features.calendar.stats.thisMonth')}</span>
           <span className="font-semibold">
             {
               events.filter((e) =>
