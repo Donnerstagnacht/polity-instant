@@ -26,6 +26,7 @@ export const notificationsSeeder: EntitySeeder = {
       'group_invitation',
       'group_request_approved',
       'event_invitation',
+      'event_agenda_item_transferred',
       'amendment_collaboration',
       'new_follower',
       'new_comment',

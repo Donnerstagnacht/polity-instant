@@ -16,8 +16,7 @@ export function TodosHeader({ viewMode, setViewMode }: TodosHeaderProps) {
   return (
     <div className="mb-6 flex items-center justify-between">
       <div>
-        <h1 className="mb-2 text-3xl font-bold">{t('features.todos.title')}</h1>
-        <p className="text-muted-foreground">{t('features.todos.description')}</p>
+        <h1 className="text-3xl font-bold">{t('features.todos.title')}</h1>
       </div>
       <div className="flex gap-2">
         <div className="flex gap-1 rounded-lg border p-1">

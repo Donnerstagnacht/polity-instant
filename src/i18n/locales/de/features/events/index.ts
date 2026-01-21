@@ -94,6 +94,7 @@ export const eventsTranslations = {
     statusInProgress: 'Laufend',
     statusCompleted: 'Abgeschlossen',
     statusPlanned: 'Geplant',
+    active: 'Aktiv',
     details: 'Details',
     by: 'Von {{name}}',
     unknown: 'Unbekannt',
@@ -111,6 +112,22 @@ export const eventsTranslations = {
       duration: 'Dauer',
       presenter: 'Vortragender',
     },
+    // Transfer/Move agenda items
+    transferItem: 'Tagesordnungspunkt übertragen',
+    moveToEvent: 'Zu einer anderen Veranstaltung verschieben',
+    selectDestinationEvent:
+      'Wähle die Veranstaltung, zu der dieser Tagesordnungspunkt verschoben werden soll.',
+    searchEvents: 'Nach einer Veranstaltung suchen...',
+    transferConfirm: 'Übertragen',
+    transferring: 'Übertrage...',
+    transferSuccess: 'Tagesordnungspunkt erfolgreich übertragen',
+    transferError: 'Übertragung des Tagesordnungspunkts fehlgeschlagen',
+    currentEvent: 'Aktuelle Veranstaltung',
+    destinationEvent: 'Zielveranstaltung',
+    transferWarning:
+      'Alle Teilnehmer beider Veranstaltungen werden über diese Übertragung benachrichtigt.',
+    noEventsWithPermission:
+      'Keine Veranstaltungen gefunden, in denen Sie Agenda-Verwaltungsrechte haben.',
   },
   participants: {
     title: 'Teilnehmer',
@@ -121,7 +138,8 @@ export const eventsTranslations = {
     back: 'Zurück',
     invite: 'Teilnehmer einladen',
     inviteTitle: 'Teilnehmer einladen',
-    inviteDescription: 'Suche und wähle Benutzer aus, die zu dieser Veranstaltung eingeladen werden sollen. Sie erhalten eine Einladung zur Teilnahme.',
+    inviteDescription:
+      'Suche und wähle Benutzer aus, die zu dieser Veranstaltung eingeladen werden sollen. Sie erhalten eine Einladung zur Teilnahme.',
     searchUsersPlaceholder: 'Nach Name, Handle oder E-Mail suchen...',
     noUsersFound: 'Keine Benutzer gefunden.',
     selected: 'Ausgewählt ({{count}})',
@@ -158,13 +176,15 @@ export const eventsTranslations = {
       description: 'Verwalte Rollen und ihre Aktionsrechte für diese Veranstaltung',
       addRole: 'Rolle hinzufügen',
       addRoleTitle: 'Neue Rolle hinzufügen',
-      addRoleDescription: 'Erstelle eine neue Rolle mit benutzerdefinierten Berechtigungen für diese Veranstaltung.',
+      addRoleDescription:
+        'Erstelle eine neue Rolle mit benutzerdefinierten Berechtigungen für diese Veranstaltung.',
       roleName: 'Rollenname',
       roleNamePlaceholder: 'z.B. Organisator, Redner, Moderator',
       roleDescription: 'Beschreibung (Optional)',
       roleDescriptionPlaceholder: 'Beschreibe den Zweck dieser Rolle',
       createRole: 'Rolle erstellen',
-      noRoles: "Noch keine Rollen erstellt. Klicke auf 'Rolle hinzufügen', um deine erste Rolle zu erstellen.",
+      noRoles:
+        "Noch keine Rollen erstellt. Klicke auf 'Rolle hinzufügen', um deine erste Rolle zu erstellen.",
       actionRight: 'Aktionsrecht',
     },
     status: {

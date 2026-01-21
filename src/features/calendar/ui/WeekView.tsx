@@ -5,6 +5,7 @@ import { cn } from '@/utils/utils';
 import { useTranslation } from '@/hooks/use-translation';
 import { CalendarEvent } from '../types';
 import { getWeekDays, isSameDay, formatTime } from '../utils/dateUtils';
+import { getBaseEventId } from '../utils/eventIdUtils';
 
 interface WeekViewProps {
   selectedDate: Date;
@@ -18,7 +19,7 @@ export const WeekView = ({ selectedDate, events, allEvents }: WeekViewProps) => 
   const weekDays = getWeekDays(selectedDate);
 
   const getEventsForDate = (date: Date) => {
-    return allEvents.filter((event) => isSameDay(event.startDate, date));
+    return allEvents.filter(event => isSameDay(event.startDate, date));
   };
 
   return (
@@ -49,7 +50,9 @@ export const WeekView = ({ selectedDate, events, allEvents }: WeekViewProps) => 
               >
                 <div className="mb-2 text-center">
                   <p className="text-xs font-medium text-muted-foreground">
-                    {day.toLocaleDateString(currentLanguage === 'de' ? 'de-DE' : 'en-US', { weekday: 'short' })}
+                    {day.toLocaleDateString(currentLanguage === 'de' ? 'de-DE' : 'en-US', {
+                      weekday: 'short',
+                    })}
                   </p>
                   <p
                     className={cn(
@@ -63,15 +66,16 @@ export const WeekView = ({ selectedDate, events, allEvents }: WeekViewProps) => 
                 </div>
                 <ScrollArea className="h-[140px]">
                   <div className="space-y-1">
-                    {dayEvents.map((event) => (
+                    {dayEvents.map(event => (
                       <div
                         key={event.id}
                         className="cursor-pointer rounded border p-1.5 text-xs transition-colors hover:bg-accent"
                         onClick={() => {
+                          const baseEventId = getBaseEventId(event.id);
                           if (event.isMeeting) {
-                            router.push(`/meet/${event.id}`);
+                            router.push(`/meet/${baseEventId}`);
                           } else {
-                            router.push(`/event/${event.id}`);
+                            router.push(`/event/${baseEventId}`);
                           }
                         }}
                       >

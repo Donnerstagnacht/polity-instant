@@ -3,7 +3,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import db, { id, tx } from '../../../db/db';
-import { Settings, Trophy, UserCheck, Users, Calendar, Video, Building2, MapPin, Clock, FileText, Repeat } from 'lucide-react';
+import { Trophy, UserCheck, Users, Calendar, Video, Building2, MapPin, Clock, FileText, Repeat } from 'lucide-react';
 import { useState } from 'react';
 import {
   Dialog,
@@ -156,8 +156,6 @@ export function EventWiki({ eventId }: EventWikiProps) {
       </div>
     );
   }
-
-  const isAdmin = status === 'admin';
 
   // Get elections for this event
   const elections = (agendaItems || [])
@@ -321,15 +319,6 @@ export function EventWiki({ eventId }: EventWikiProps) {
           title={event.title}
           description={event.description || ''}
         />
-        {isAdmin && (
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => router.push(`/event/${eventId}/edit`)}
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
-        )}
       </ActionBar>
 
       {/* Hashtags */}

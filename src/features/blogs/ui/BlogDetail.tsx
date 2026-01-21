@@ -38,6 +38,7 @@ interface BlogComment {
     name?: string;
     handle?: string;
     avatar?: string;
+    imageURL?: string;
   };
   votes?: {
     id: string;
@@ -127,8 +128,8 @@ function CommentItem({ comment, blogId }: { comment: BlogComment; blogId: string
       <div className="flex-1">
         <div className="mb-3 flex items-start justify-between">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Avatar>
-              <AvatarImage src={comment.creator?.avatar} />
+            <Avatar className="h-6 w-6">
+              <AvatarImage src={comment.creator?.avatar || comment.creator?.imageURL} />
               <AvatarFallback>{comment.creator?.name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
             </Avatar>
             <span className="font-medium">{comment.creator?.name || 'Anonymous'}</span>

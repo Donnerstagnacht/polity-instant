@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Reply, ArrowUp, ArrowDown, User, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { createComment } from '../utils/thread-operations';
@@ -96,7 +97,10 @@ export function CommentTree({ comment, threadId, userId }: CommentTreeProps) {
             <div className="flex-1">
               <div className="mb-3 flex items-start justify-between">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <User className="h-4 w-4" />
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={comment.creator?.avatar || comment.creator?.imageURL} />
+                    <AvatarFallback>{comment.creator?.name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+                  </Avatar>
                   <span>{comment.creator?.name || 'Anonymous'}</span>
                   {comment.creator?.handle && (
                     <span className="text-xs">@{comment.creator.handle}</span>

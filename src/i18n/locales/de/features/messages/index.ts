@@ -8,6 +8,11 @@ export const messagesTranslations = {
   noConversationsFound: 'Keine Unterhaltungen gefunden',
   newMessage: 'Neue Nachricht',
   loading: 'Unterhaltungen werden geladen...',
+  filters: {
+    all: 'Alle Unterhaltungen',
+    direct: 'Direktnachrichten',
+    group: 'Gruppenchats',
+  },
   compose: {
     title: 'Neue Unterhaltung',
     startNew: 'Neue Unterhaltung starten',

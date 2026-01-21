@@ -8,6 +8,11 @@ export const messagesTranslations = {
   noConversationsFound: 'No conversations found',
   newMessage: 'New Message',
   loading: 'Loading conversations...',
+  filters: {
+    all: 'All Conversations',
+    direct: 'Direct Messages',
+    group: 'Group Chats',
+  },
   compose: {
     title: 'New Conversation',
     startNew: 'Start a New Conversation',

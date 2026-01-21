@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/use-translation';
 import { CalendarEvent } from '../types';
 import { isSameDay, formatTime } from '../utils/dateUtils';
+import { getBaseEventId } from '../utils/eventIdUtils';
 
 interface MonthViewProps {
   selectedDate: Date;
@@ -18,7 +19,7 @@ export const MonthView = ({ selectedDate, onDateSelect, events, allEvents }: Mon
   const { t, currentLanguage } = useTranslation();
 
   const getEventsForDate = (date: Date) => {
-    return allEvents.filter((event) => isSameDay(event.startDate, date));
+    return allEvents.filter(event => isSameDay(event.startDate, date));
   };
 
   const selectedDateEvents = getEventsForDate(selectedDate);
@@ -39,7 +40,7 @@ export const MonthView = ({ selectedDate, onDateSelect, events, allEvents }: Mon
             <Calendar
               mode="single"
               selected={selectedDate}
-              onSelect={(date) => date && onDateSelect(date)}
+              onSelect={date => date && onDateSelect(date)}
               month={selectedDate}
               onMonthChange={onDateSelect}
               modifiers={{
@@ -60,12 +61,17 @@ export const MonthView = ({ selectedDate, onDateSelect, events, allEvents }: Mon
         <Card>
           <CardHeader>
             <CardTitle>
-              {selectedDate.toLocaleDateString(currentLanguage === 'de' ? 'de-DE' : 'en-US', { month: 'short', day: 'numeric' })}
+              {selectedDate.toLocaleDateString(currentLanguage === 'de' ? 'de-DE' : 'en-US', {
+                month: 'short',
+                day: 'numeric',
+              })}
             </CardTitle>
             <CardDescription>
               {selectedDateEvents.length === 1
                 ? t('features.calendar.monthView.eventCount', { count: selectedDateEvents.length })
-                : t('features.calendar.monthView.eventCountPlural', { count: selectedDateEvents.length })}
+                : t('features.calendar.monthView.eventCountPlural', {
+                    count: selectedDateEvents.length,
+                  })}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -76,15 +82,16 @@ export const MonthView = ({ selectedDate, onDateSelect, events, allEvents }: Mon
             ) : (
               <ScrollArea className="h-[400px]">
                 <div className="space-y-3">
-                  {selectedDateEvents.map((event) => (
+                  {selectedDateEvents.map(event => (
                     <div
                       key={event.id}
                       className="cursor-pointer rounded-lg border p-3 transition-colors hover:bg-accent"
                       onClick={() => {
+                        const baseEventId = getBaseEventId(event.id);
                         if (event.isMeeting) {
-                          router.push(`/meet/${event.id}`);
+                          router.push(`/meet/${baseEventId}`);
                         } else {
-                          router.push(`/event/${event.id}`);
+                          router.push(`/event/${baseEventId}`);
                         }
                       }}
                     >
@@ -92,15 +99,15 @@ export const MonthView = ({ selectedDate, onDateSelect, events, allEvents }: Mon
                         {event.isMeeting && '📅 '}
                         {event.title}
                       </h4>
-                      <p className="text-sm text-muted-foreground">
-                        {formatTime(event.startDate)}
-                      </p>
+                      <p className="text-sm text-muted-foreground">{formatTime(event.startDate)}</p>
                       {event.location && !event.isMeeting && (
                         <p className="mt-1 text-xs text-muted-foreground">{event.location}</p>
                       )}
                       {event.isMeeting && (
                         <p className="mt-1 text-xs text-muted-foreground">
-                          {event.isPublic ? t('features.calendar.eventCard.publicMeeting') : t('features.calendar.eventCard.privateMeeting')}
+                          {event.isPublic
+                            ? t('features.calendar.eventCard.publicMeeting')
+                            : t('features.calendar.eventCard.privateMeeting')}
                         </p>
                       )}
                     </div>

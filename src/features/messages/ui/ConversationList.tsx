@@ -2,12 +2,20 @@ import { Card, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Plus } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Search, Plus, Filter } from 'lucide-react';
 import { cn } from '@/utils/utils';
 import { Conversation } from '../types';
 import { ConversationItem } from './ConversationItem';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { useTranslation } from '@/hooks/use-translation';
+import { useState } from 'react';
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -31,6 +39,13 @@ export function ConversationList({
   className,
 }: ConversationListProps) {
   const { t } = useTranslation();
+  const [conversationFilter, setConversationFilter] = useState<'all' | 'direct' | 'group'>('all');
+
+  // Filter conversations based on type
+  const filteredByTypeConversations = conversations.filter((conv) => {
+    if (conversationFilter === 'all') return true;
+    return conv.type === conversationFilter;
+  });
 
   return (
     <Card
@@ -52,27 +67,42 @@ export function ConversationList({
             <Plus className="h-5 w-5" />
           </Button>
         </div>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder={t('features.messages.searchConversations')}
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-9"
-          />
+        <div className="space-y-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder={t('features.messages.searchConversations')}
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Select value={conversationFilter} onValueChange={(value: 'all' | 'direct' | 'group') => setConversationFilter(value)}>
+            <SelectTrigger className="w-full">
+              <Filter className="mr-2 h-4 w-4" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('features.messages.filters.all')}</SelectItem>
+              <SelectItem value="direct">{t('features.messages.filters.direct')}</SelectItem>
+              <SelectItem value="group">{t('features.messages.filters.group')}</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </CardHeader>
       <Separator />
       <div className="flex-1 overflow-y-auto">
         <div className="space-y-1 p-4">
-          {conversations.length === 0 ? (
+          {filteredByTypeConversations.length === 0 ? (
             <div className="py-8 text-center">
               <p className="text-muted-foreground">
-                {searchQuery ? t('features.messages.noConversationsFound') : t('features.messages.noConversations')}
+                {searchQuery || conversationFilter !== 'all'
+                  ? t('features.messages.noConversationsFound')
+                  : t('features.messages.noConversations')}
               </p>
             </div>
           ) : (
-            conversations.map((conversation) => (
+            filteredByTypeConversations.map((conversation) => (
               <ConversationItem
                 key={conversation.id}
                 conversation={conversation}

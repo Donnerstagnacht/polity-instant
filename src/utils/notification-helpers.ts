@@ -77,6 +77,7 @@ export type NotificationType =
   | 'event_organizer_demoted'
   | 'event_agenda_item_created'
   | 'event_agenda_item_deleted'
+  | 'event_agenda_item_transferred'
   | 'event_schedule_changed'
   | 'event_candidate_added'
   | 'event_election_started'
@@ -255,7 +256,7 @@ export function createNotification(config: NotificationConfig) {
         actionUrl: config.actionUrl,
         notificationId,
         type: config.type,
-      }).catch((error) => {
+      }).catch(error => {
         console.error('[Notification] Failed to send push notification:', error);
         // Don't throw - notification was already created in DB
       });
@@ -1509,6 +1510,53 @@ export function notifyAgendaItemDeleted(params: {
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
   });
+}
+
+/**
+ * Send notification when an agenda item is transferred to another event
+ * Sends notifications to both source and target event participants
+ */
+export function notifyAgendaItemTransferred(params: {
+  senderId: string;
+  sourceEventId: string;
+  sourceEventTitle: string;
+  targetEventId: string;
+  targetEventTitle: string;
+  agendaItemTitle: string;
+}) {
+  const transactions: any[] = [];
+
+  // Notify source event participants
+  transactions.push(
+    ...createNotification({
+      senderId: params.senderId,
+      recipientEntityType: 'event',
+      recipientEntityId: params.sourceEventId,
+      type: 'event_agenda_item_transferred',
+      title: 'Agenda Item Moved',
+      message: `"${params.agendaItemTitle}" has been moved to ${params.targetEventTitle}`,
+      actionUrl: `/event/${params.targetEventId}/agenda`,
+      relatedEntityType: 'event',
+      relatedEventId: params.targetEventId,
+    })
+  );
+
+  // Notify target event participants
+  transactions.push(
+    ...createNotification({
+      senderId: params.senderId,
+      recipientEntityType: 'event',
+      recipientEntityId: params.targetEventId,
+      type: 'event_agenda_item_transferred',
+      title: 'Agenda Item Added',
+      message: `"${params.agendaItemTitle}" has been moved from ${params.sourceEventTitle}`,
+      actionUrl: `/event/${params.targetEventId}/agenda`,
+      relatedEntityType: 'event',
+      relatedEventId: params.sourceEventId,
+    })
+  );
+
+  return transactions;
 }
 
 /**
@@ -2809,4 +2857,3 @@ export function notifyBlogWriterLeft(params: {
     relatedUserId: params.senderId,
   });
 }
-

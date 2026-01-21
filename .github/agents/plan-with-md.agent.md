@@ -1,6 +1,6 @@
 ---
 description: Use this agent when you need to plan and organize tasks as tickable markdown checklists. Creates comprehensive task plans in .md files saved to the tasks folder.
-tools: ['edit/createFile', 'edit/editFiles', 'search/changes', 'search/codebase', 'search/fileSearch', 'search/listDirectory', 'search/searchResults', 'search/searchSubagent', 'search/textSearch', 'search/usages', 'read/readFile', 'read/problems', 'read/getTaskOutput', 'todo']
+tools: ['edit/createFile', 'edit/editFiles', 'search/changes', 'search/codebase', 'search/fileSearch', 'search/listDirectory', 'search/searchResults', 'search/textSearch', 'search/usages', 'read/readFile', 'read/problems', 'read/getTaskOutput', 'todo']
 handoffs:
   - label: Start Implementation
     agent: agent
@@ -33,7 +33,11 @@ plans as tickable markdown checklists. You excel at breaking down complex projec
    - Include context and notes where helpful
    - Do not change other files outside the `tasks/` folder
 
-4. **Handoff for Implementation**
+4. **Clarification and Iteration**
+   - Ask the user for feedback or additional details if needed
+   - Update the plan based on user input before finalizing
+
+5. **Handoff for Implementation**
    - After creating the plan, offer to hand off to an implementation agent
    - The implementation agent should work through tasks systematically
    - Update checkboxes to `- [x]` as tasks are completed
@@ -91,7 +95,7 @@ This document tracks all tasks needed to implement [feature description].
 
 - Important considerations for implementation
 - Links to relevant documentation or examples
-- Assumptions made during planning
+- Assumptions made during planning- 
 
 </example-plan>
 

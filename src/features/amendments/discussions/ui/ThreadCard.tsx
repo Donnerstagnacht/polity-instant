@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ArrowUp, ArrowDown, User, Clock, MessageSquare, File } from 'lucide-react';
 import { toast } from 'sonner';
 import { createComment } from '../utils/thread-operations';
@@ -103,7 +104,10 @@ export function ThreadCard({ thread, userId }: ThreadCardProps) {
               )}
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={thread.creator?.avatar || thread.creator?.imageURL} />
+                    <AvatarFallback>{thread.creator?.name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+                  </Avatar>
                   <span>{thread.creator?.name || 'Anonymous'}</span>
                 </div>
                 <div className="flex items-center gap-2">

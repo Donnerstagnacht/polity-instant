@@ -7,6 +7,7 @@ import { useTranslation } from '@/hooks/use-translation';
 import { db } from '../../../../db/db';
 import { CalendarEvent } from '../types';
 import { formatTime } from '../utils/dateUtils';
+import { getBaseEventId } from '../utils/eventIdUtils';
 
 interface EventCardProps {
   event: CalendarEvent;
@@ -16,7 +17,7 @@ export const EventCard = ({ event }: EventCardProps) => {
   const router = useRouter();
   const { t } = useTranslation();
   const { user } = db.useAuth();
-  
+
   const participantCount = event.participants?.length || 0;
   const userIsParticipant = event.participants?.some((p: any) => p.user?.id === user?.id);
   const userIsOrganizer = event.organizer?.id === user?.id;
@@ -26,10 +27,11 @@ export const EventCard = ({ event }: EventCardProps) => {
     <Card
       className="cursor-pointer transition-colors hover:bg-accent"
       onClick={() => {
+        const baseEventId = getBaseEventId(event.id);
         if (isMeeting) {
-          router.push(`/meet/${event.id}`);
+          router.push(`/meet/${baseEventId}`);
         } else {
-          router.push(`/event/${event.id}`);
+          router.push(`/event/${baseEventId}`);
         }
       }}
     >
@@ -37,11 +39,7 @@ export const EventCard = ({ event }: EventCardProps) => {
         <div className="flex items-start gap-3">
           {event.imageURL && !isMeeting && (
             <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md">
-              <img
-                src={event.imageURL}
-                alt={event.title}
-                className="h-full w-full object-cover"
-              />
+              <img src={event.imageURL} alt={event.title} className="h-full w-full object-cover" />
             </div>
           )}
           <div className="flex-1 space-y-2">
@@ -82,7 +80,9 @@ export const EventCard = ({ event }: EventCardProps) => {
                   <span>
                     {participantCount === 1
                       ? t('features.calendar.eventCard.participant', { count: participantCount })
-                      : t('features.calendar.eventCard.participantPlural', { count: participantCount })}
+                      : t('features.calendar.eventCard.participantPlural', {
+                          count: participantCount,
+                        })}
                   </span>
                 </div>
               )}
@@ -104,7 +104,9 @@ export const EventCard = ({ event }: EventCardProps) => {
 
             {!isMeeting && (userIsParticipant || userIsOrganizer) && (
               <Badge variant="default" className="text-xs">
-                {userIsOrganizer ? t('features.calendar.eventCard.youreOrganizing') : t('features.calendar.eventCard.youreAttending')}
+                {userIsOrganizer
+                  ? t('features.calendar.eventCard.youreOrganizing')
+                  : t('features.calendar.eventCard.youreAttending')}
               </Badge>
             )}
             {isMeeting && userIsOrganizer && (

@@ -7,14 +7,9 @@ import { db } from '../../../../db/db';
 import { useEventData } from '../hooks/useEventData';
 import { useAgendaItems } from '../hooks/useAgendaItems';
 import { useVoting } from '../hooks/useVoting';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { usePermissions } from '@db/rbac';
+import { TransferAgendaItemDialog } from './TransferAgendaItemDialog';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -32,8 +27,6 @@ import {
   Users,
   Vote,
   User,
-  Eye,
-  ArrowRight,
   Gavel,
   Plus,
   FileText,
@@ -44,8 +37,11 @@ import {
   CheckCircle2,
   Search as SearchIcon,
   Filter,
+  ArrowRight,
 } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
+import { ActionBar } from '@/components/ui/ActionBar';
+import { TimelineItem, AgendaCard } from '@/components/shared/timeline';
 
 interface EventAgendaProps {
   eventId: string;
@@ -58,11 +54,19 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   const { event, isLoading: eventLoading } = useEventData(eventId);
   const { agendaItems, electionVotes, amendmentVoteEntries, isLoading } = useAgendaItems(eventId);
   const { handleElectionVote, handleAmendmentVote, votingLoading } = useVoting();
+  const { can } = usePermissions({ eventId });
 
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [transferDialogItem, setTransferDialogItem] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+
+  // Check if user can manage agenda items
+  const canManageAgenda = can('manage', 'agendaItems');
 
   // Calculate start and end times for each agenda item
   const agendaItemsWithTimes = agendaItems.map((item: any, index: number) => {
@@ -192,30 +196,32 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
           <CardTitle className="text-lg">{t('features.events.agenda.statistics')}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="flex items-center gap-3 rounded-lg border p-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900">
-                <Vote className="h-5 w-5 text-purple-600 dark:text-purple-300" />
+          <div className="grid grid-cols-3 gap-2 md:gap-4">
+            <div className="flex items-center gap-1.5 rounded-lg border p-2 md:gap-3 md:p-4">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-purple-100 md:h-10 md:w-10 dark:bg-purple-900">
+                <Vote className="h-4 w-4 text-purple-600 md:h-5 md:w-5 dark:text-purple-300" />
               </div>
-              <div>
-                <p className="text-2xl font-bold">
+              <div className="min-w-0">
+                <p className="text-lg font-bold md:text-2xl">
                   {agendaItems.filter((item: any) => item.election).length}
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  {agendaItems.filter((item: any) => item.election).length === 1 ? t('features.events.agenda.election') : t('features.events.agenda.elections')}
+                <p className="truncate text-xs text-muted-foreground md:text-sm">
+                  {agendaItems.filter((item: any) => item.election).length === 1
+                    ? t('features.events.agenda.election')
+                    : t('features.events.agenda.elections')}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 rounded-lg border p-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900">
-                <Gavel className="h-5 w-5 text-orange-600 dark:text-orange-300" />
+            <div className="flex items-center gap-1.5 rounded-lg border p-2 md:gap-3 md:p-4">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-orange-100 md:h-10 md:w-10 dark:bg-orange-900">
+                <Gavel className="h-4 w-4 text-orange-600 md:h-5 md:w-5 dark:text-orange-300" />
               </div>
-              <div>
-                <p className="text-2xl font-bold">
+              <div className="min-w-0">
+                <p className="text-lg font-bold md:text-2xl">
                   {agendaItems.filter((item: any) => item.amendmentVote).length}
                 </p>
-                <p className="text-sm text-muted-foreground">
+                <p className="truncate text-xs text-muted-foreground md:text-sm">
                   {agendaItems.filter((item: any) => item.amendmentVote).length === 1
                     ? t('features.events.agenda.vote')
                     : t('features.events.agenda.votes')}
@@ -223,12 +229,12 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 rounded-lg border p-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-                <FileText className="h-5 w-5 text-blue-600 dark:text-blue-300" />
+            <div className="flex items-center gap-1.5 rounded-lg border p-2 md:gap-3 md:p-4">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 md:h-10 md:w-10 dark:bg-blue-900">
+                <FileText className="h-4 w-4 text-blue-600 md:h-5 md:w-5 dark:text-blue-300" />
               </div>
-              <div>
-                <p className="text-2xl font-bold">
+              <div className="min-w-0">
+                <p className="text-lg font-bold md:text-2xl">
                   {agendaItems.reduce(
                     (count: number, item: any) =>
                       count +
@@ -238,12 +244,36 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                     0
                   )}
                 </p>
-                <p className="text-sm text-muted-foreground">{t('features.events.agenda.openChangeRequests')}</p>
+                <p className="truncate text-xs text-muted-foreground md:text-sm">
+                  {t('features.events.agenda.openChangeRequests')}
+                </p>
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Action Bar */}
+      <ActionBar>
+        <Button asChild variant="outline">
+          <Link href="/create?type=agenda-item">
+            <Plus className="mr-2 h-4 w-4" />
+            {t('features.events.agenda.quickActions.addItem')}
+          </Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href="/create?type=election">
+            <Vote className="mr-2 h-4 w-4" />
+            {t('features.events.agenda.quickActions.createElection')}
+          </Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href="/create?type=amendment-vote">
+            <Gavel className="mr-2 h-4 w-4" />
+            {t('features.events.agenda.quickActions.createVote')}
+          </Link>
+        </Button>
+      </ActionBar>
 
       {/* Search and Filters */}
       <div className="space-y-4">
@@ -284,10 +314,16 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t('features.events.agenda.allTypes')}</SelectItem>
-                      <SelectItem value="election">{t('features.events.agenda.typeElection')}</SelectItem>
+                      <SelectItem value="election">
+                        {t('features.events.agenda.typeElection')}
+                      </SelectItem>
                       <SelectItem value="vote">{t('features.events.agenda.typeVote')}</SelectItem>
-                      <SelectItem value="speech">{t('features.events.agenda.typeSpeech')}</SelectItem>
-                      <SelectItem value="discussion">{t('features.events.agenda.typeDiscussion')}</SelectItem>
+                      <SelectItem value="speech">
+                        {t('features.events.agenda.typeSpeech')}
+                      </SelectItem>
+                      <SelectItem value="discussion">
+                        {t('features.events.agenda.typeDiscussion')}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -300,10 +336,18 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t('features.events.agenda.allStatus')}</SelectItem>
-                      <SelectItem value="pending">{t('features.events.agenda.statusPending')}</SelectItem>
-                      <SelectItem value="in-progress">{t('features.events.agenda.statusInProgress')}</SelectItem>
-                      <SelectItem value="completed">{t('features.events.agenda.statusCompleted')}</SelectItem>
-                      <SelectItem value="planned">{t('features.events.agenda.statusPlanned')}</SelectItem>
+                      <SelectItem value="pending">
+                        {t('features.events.agenda.statusPending')}
+                      </SelectItem>
+                      <SelectItem value="in-progress">
+                        {t('features.events.agenda.statusInProgress')}
+                      </SelectItem>
+                      <SelectItem value="completed">
+                        {t('features.events.agenda.statusCompleted')}
+                      </SelectItem>
+                      <SelectItem value="planned">
+                        {t('features.events.agenda.statusPlanned')}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -332,7 +376,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
         </Card>
       ) : (
         <div className="space-y-6">
-          {filteredAgendaItems.map((item: any) => {
+          {filteredAgendaItems.map((item: any, index: number) => {
             const userElectionVote = userElectionVotes.find(
               (vote: any) => vote.election?.id === item.election?.id
             );
@@ -340,108 +384,72 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
               (entry: any) => entry.amendmentVote?.id === item.amendmentVote?.id
             );
 
+            const isActive = item.status === 'in-progress';
+
+            // Determine if we need an action button
+            let actionButton = null;
+            if (isActive) {
+              if (item.election) {
+                actionButton = (
+                  <Button size="sm" variant="default">
+                    <Vote className="mr-2 h-4 w-4" />
+                    {t('features.events.agenda.vote')}
+                  </Button>
+                );
+              } else if (item.amendmentVote) {
+                actionButton = (
+                  <Button size="sm" variant="default">
+                    <Gavel className="mr-2 h-4 w-4" />
+                    {t('features.events.agenda.vote')}
+                  </Button>
+                );
+              }
+            }
+
             return (
-              <div key={item.id} className="relative flex gap-4">
-                {/* Time Column */}
-                <div className="relative flex w-24 flex-shrink-0 flex-col items-center pt-4">
-                  <div className="h-3 w-3 rounded-full border-2 border-background bg-primary" />
-                  <div className="mb-2 mt-2 flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-semibold">
-                    {item.order}
-                  </div>
-                  <div className="mt-2 text-center">
-                    <div className="text-sm font-semibold">
-                      {formatTime(item.calculatedStartTime)}
-                    </div>
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      {formatTime(item.calculatedEndTime)}
-                    </div>
-                    <Badge variant="outline" className="mt-2 text-xs">
-                      {item.calculatedDuration}m
-                    </Badge>
-                  </div>
-                </div>
-
-                {/* Card with content */}
-                <Card className="flex-1 transition-shadow hover:shadow-md">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 space-y-1">
-                        <CardTitle className="text-lg">{item.title}</CardTitle>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge className={getTypeColor(item.type)}>
-                            {getAgendaItemIcon(item.type)}
-                            <span className="ml-1 capitalize">{item.type}</span>
-                          </Badge>
-                          <Badge className={getStatusColor(item.status)}>{item.status}</Badge>
-                        </div>
-                      </div>
-                      <Button asChild variant="outline" size="sm">
-                        <Link href={`/event/${eventId}/agenda/${item.id}`}>
-                          <Eye className="mr-2 h-4 w-4" />
-                          {t('features.events.agenda.details')}
-                        </Link>
-                      </Button>
-                    </div>
-                  </CardHeader>
-
-                  {item.description && (
-                    <CardContent className="pt-0">
-                      <p className="text-muted-foreground">{item.description}</p>
-                    </CardContent>
-                  )}
-
-                  <CardFooter className="pt-3">
-                    <div className="flex w-full items-center justify-between">
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <User className="h-4 w-4" />
-                          <span>{t('features.events.agenda.by', { name: item.creator?.name || item.creator?.email || t('features.events.agenda.unknown') })}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardFooter>
-                </Card>
-              </div>
+              <TimelineItem
+                key={item.id}
+                order={item.order}
+                startTime={formatTime(item.calculatedStartTime)}
+                endTime={formatTime(item.calculatedEndTime)}
+                duration={item.calculatedDuration}
+              >
+                <AgendaCard
+                  id={item.id}
+                  title={item.title}
+                  description={item.description}
+                  type={item.type}
+                  status={item.status}
+                  creatorName={item.creator?.name || item.creator?.email}
+                  detailsLink={`/event/${eventId}/agenda/${item.id}`}
+                  isActive={isActive}
+                  actionButton={actionButton}
+                  showMoveButton={canManageAgenda}
+                  onMoveClick={() => setTransferDialogItem({ id: item.id, title: item.title })}
+                />
+              </TimelineItem>
             );
           })}
         </div>
       )}
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('features.events.agenda.quickActions.title')}</CardTitle>
-          <CardDescription>{t('features.events.agenda.quickActions.description')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-            <Button asChild variant="outline" className="justify-start">
-              <Link href="/create?type=agenda-item">
-                <Plus className="mr-2 h-4 w-4" />
-                {t('features.events.agenda.quickActions.addItem')}
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="justify-start">
-              <Link href="/create?type=election">
-                <Vote className="mr-2 h-4 w-4" />
-                {t('features.events.agenda.quickActions.createElection')}
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="justify-start">
-              <Link href="/create?type=amendment-vote">
-                <Gavel className="mr-2 h-4 w-4" />
-                {t('features.events.agenda.quickActions.createVote')}
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="justify-start">
-              <Link href={`/event/${eventId}`}>
-                <ArrowRight className="mr-2 h-4 w-4" />
-                {t('features.events.agenda.quickActions.backToEvent')}
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Transfer Dialog */}
+      {transferDialogItem && (
+        <TransferAgendaItemDialog
+          agendaItemId={transferDialogItem.id}
+          agendaItemTitle={transferDialogItem.title}
+          currentEventId={eventId}
+          currentEventTitle={event?.title || 'Event'}
+          open={!!transferDialogItem}
+          onOpenChange={isOpen => {
+            if (!isOpen) setTransferDialogItem(null);
+          }}
+          onTransferComplete={() => {
+            setTransferDialogItem(null);
+            router.refresh();
+          }}
+        />
+      )}
     </div>
   );
 }

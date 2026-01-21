@@ -36,6 +36,7 @@ export const calendarTranslations = {
     export: 'Export Calendar',
     sync: 'Sync with Calendar',
   },
+  viewEvent: 'View Event',
   dayView: {
     eventsFor: 'Events for {{date}}',
     eventCount: '{{count}} event scheduled',

@@ -289,6 +289,20 @@ export const navItemsAuthenticated = (
         href: `/group/${groupId}`,
         onClick: () => router.push(`/group/${groupId}`),
       },
+    ];
+
+    // Add operation as second item if user is a member
+    if (isMember) {
+      items.push({
+        id: 'operation',
+        label: t ? t('navigation.secondary.group.operation') : 'Operation',
+        icon: 'AreaChart',
+        href: `/group/${groupId}/operation`,
+        onClick: () => router.push(`/group/${groupId}/operation`),
+      });
+    }
+
+    items.push(
       {
         id: 'events',
         label: t ? t('navigation.secondary.group.events') : 'Events',
@@ -309,27 +323,18 @@ export const navItemsAuthenticated = (
         icon: 'Network',
         href: `/group/${groupId}/network`,
         onClick: () => router.push(`/group/${groupId}/network`),
-      },
-    ];
+      }
+    );
 
-    // Add member-only items if user is a member
+    // Add editor/documents item if user is a member
     if (isMember) {
-      items.push(
-        {
-          id: 'editor',
-          label: t ? t('navigation.secondary.group.editor') : 'Documents',
-          icon: 'FileText',
-          href: `/group/${groupId}/editor`,
-          onClick: () => router.push(`/group/${groupId}/editor`),
-        },
-        {
-          id: 'operation',
-          label: t ? t('navigation.secondary.group.operation') : 'Operation',
-          icon: 'AreaChart',
-          href: `/group/${groupId}/operation`,
-          onClick: () => router.push(`/group/${groupId}/operation`),
-        }
-      );
+      items.push({
+        id: 'editor',
+        label: t ? t('navigation.secondary.group.editor') : 'Documents',
+        icon: 'FileText',
+        href: `/group/${groupId}/editor`,
+        onClick: () => router.push(`/group/${groupId}/editor`),
+      });
     }
 
     // Add memberships item if user can manage members (groupMemberships permission)

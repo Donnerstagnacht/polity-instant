@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/carousel';
 import { LinkGroupDialog } from '@/components/groups/LinkGroupDialog';
 import db from '../../../db/db';
-import { Settings, UserCheck, BookOpen, Network } from 'lucide-react';
+import { UserCheck, BookOpen, Network } from 'lucide-react';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { BlogSearchCard } from '@/features/search/ui/BlogSearchCard';
 import { GRADIENTS } from '@/features/user/state/gradientColors';
@@ -49,7 +49,6 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
   const {
     status,
     isMember,
-    isAdmin,
     hasRequested,
     isInvited,
     memberCount: membershipCount,
@@ -211,15 +210,6 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
           title={group.name}
           description={group.description || ''}
         />
-        {isAdmin && (
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => router.push(`/group/${groupId}/edit`)}
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
-        )}
       </ActionBar>
 
       {/* Hashtags */}

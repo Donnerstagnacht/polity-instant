@@ -34,7 +34,10 @@ export const DEFAULT_GROUP_ROLES = [
       { resource: 'groupDocuments' as ResourceType, action: 'manage' as ActionType },
       { resource: 'groupLinks' as ResourceType, action: 'manage' as ActionType },
       { resource: 'groupMemberships' as ResourceType, action: 'manage' as ActionType },
-      { resource: 'groupNotifications' as ResourceType, action: 'manageNotifications' as ActionType },
+      {
+        resource: 'groupNotifications' as ResourceType,
+        action: 'manageNotifications' as ActionType,
+      },
       { resource: 'groupPayments' as ResourceType, action: 'manage' as ActionType },
       { resource: 'groupPositions' as ResourceType, action: 'manage' as ActionType },
       { resource: 'groupRelationships' as ResourceType, action: 'manage' as ActionType },
@@ -95,9 +98,7 @@ export const DEFAULT_AMENDMENT_ROLES = [
   {
     name: 'Author',
     description: 'Full amendment control',
-    permissions: [
-      { resource: 'amendments' as ResourceType, action: 'manage' as ActionType },
-    ],
+    permissions: [{ resource: 'amendments' as ResourceType, action: 'manage' as ActionType }],
   },
   {
     name: 'Collaborator',
@@ -117,17 +118,19 @@ export const DEFAULT_EVENT_ROLES = [
     name: 'Organizer',
     description: 'Event organizer with full permissions',
     permissions: [
+      { resource: 'agendaItems' as ResourceType, action: 'manage' as ActionType },
       { resource: 'events' as ResourceType, action: 'manage' as ActionType },
       { resource: 'eventParticipants' as ResourceType, action: 'manage' as ActionType },
-      { resource: 'groupNotifications' as ResourceType, action: 'manageNotifications' as ActionType },
+      {
+        resource: 'groupNotifications' as ResourceType,
+        action: 'manageNotifications' as ActionType,
+      },
     ],
   },
   {
     name: 'Participant',
     description: 'Regular event participant',
-    permissions: [
-      { resource: 'events' as ResourceType, action: 'view' as ActionType },
-    ],
+    permissions: [{ resource: 'events' as ResourceType, action: 'view' as ActionType }],
   },
 ];
 

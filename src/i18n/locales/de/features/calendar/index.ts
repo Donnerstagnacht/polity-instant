@@ -36,6 +36,7 @@ export const calendarTranslations = {
     export: 'Kalender exportieren',
     sync: 'Mit Kalender synchronisieren',
   },
+  viewEvent: 'Termin ansehen',
   dayView: {
     eventsFor: 'Termine für {{date}}',
     eventCount: '{{count}} Termin geplant',

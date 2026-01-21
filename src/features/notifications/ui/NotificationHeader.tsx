@@ -10,23 +10,11 @@ interface NotificationHeaderProps {
 
 export function NotificationHeader({ unreadCount, onMarkAllAsRead }: NotificationHeaderProps) {
   const { t } = useTranslation();
-  
-  const getUnreadText = () => {
-    if (unreadCount === 0) {
-      return t('features.notifications.allCaughtUp');
-    }
-    return unreadCount === 1
-      ? t('features.notifications.unreadCount', { count: unreadCount })
-      : t('features.notifications.unreadCountPlural', { count: unreadCount });
-  };
 
   return (
     <div className="mb-6 flex items-center justify-between">
       <div>
         <h1 className="text-3xl font-bold">{t('features.notifications.titleVersion')}</h1>
-        <p className="text-muted-foreground">
-          {getUnreadText()}
-        </p>
       </div>
       <div className="flex items-center gap-2">
         <PushNotificationToggle variant="minimal" />

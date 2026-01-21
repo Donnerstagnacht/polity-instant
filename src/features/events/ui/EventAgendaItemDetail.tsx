@@ -25,6 +25,7 @@ import {
   User,
   Plus,
   ArrowLeft,
+  ArrowRight,
   FileText,
   Users,
   Vote,
@@ -45,11 +46,17 @@ import {
 } from 'lucide-react';
 import { useEventAgendaItem } from '../hooks/useEventAgendaItem';
 import { AmendmentVotingQueue } from './AmendmentVotingQueue';
+import { TransferAgendaItemDialog } from './TransferAgendaItemDialog';
+import { usePermissions } from '@db/rbac';
 import db, { tx } from '../../../../db/db';
 import { toast } from 'sonner';
 import { useState } from 'react';
-import { notifyVotingSessionStarted, notifyVotingSessionCompleted } from '@/utils/notification-helpers';
+import {
+  notifyVotingSessionStarted,
+  notifyVotingSessionCompleted,
+} from '@/utils/notification-helpers';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
+import { useTranslation } from '@/hooks/use-translation';
 
 export function EventAgendaItemDetail({
   eventId,
@@ -58,6 +65,7 @@ export function EventAgendaItemDetail({
   eventId: string;
   agendaItemId: string;
 }) {
+  const { t } = useTranslation();
   const {
     agendaItem,
     event,
@@ -75,17 +83,19 @@ export function EventAgendaItemDetail({
     handleAddToSpeakerList,
   } = useEventAgendaItem(eventId, agendaItemId);
 
+  const { can } = usePermissions({ eventId });
+  const canManageAgenda = can('manage', 'agendaItems');
+
   const [startingVoting, setStartingVoting] = useState(false);
   const [advancingVote, setAdvancingVote] = useState(false);
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
 
   // Check if user is event organizer
   const isOrganizer =
     user &&
     (event as any)?.group?.roles?.some(
       (role: any) =>
-        role.actionRights?.some(
-          (ar: any) => ar.resource === 'events' && ar.action === 'manage'
-        ) &&
+        role.actionRights?.some((ar: any) => ar.resource === 'events' && ar.action === 'manage') &&
         (event as any)?.group?.memberships?.some(
           (m: any) => m.user?.id === user.id && m.role?.id === role.id
         )
@@ -332,9 +342,7 @@ export function EventAgendaItemDetail({
                   <Badge className={getTypeColor(agendaItem.type)}>
                     <span className="capitalize">{agendaItem.type}</span>
                   </Badge>
-                  <Badge className={getStatusColor(agendaItem.status)}>
-                    {agendaItem.status}
-                  </Badge>
+                  <Badge className={getStatusColor(agendaItem.status)}>{agendaItem.status}</Badge>
                   {agendaItem.duration && (
                     <Badge variant="outline">
                       <Clock className="mr-1 h-3 w-3" />
@@ -346,6 +354,12 @@ export function EventAgendaItemDetail({
             </div>
             {canEdit && (
               <div className="flex items-center gap-2">
+                {canManageAgenda && (
+                  <Button variant="outline" size="sm" onClick={() => setTransferDialogOpen(true)}>
+                    <ArrowRight className="mr-2 h-4 w-4" />
+                    {t('features.events.agenda.moveToEvent')}
+                  </Button>
+                )}
                 <Button variant="outline" size="sm">
                   <Edit className="mr-2 h-4 w-4" />
                   Bearbeiten
@@ -361,8 +375,8 @@ export function EventAgendaItemDetail({
                     <AlertDialogHeader>
                       <AlertDialogTitle>Tagesordnungspunkt löschen?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Diese Aktion kann nicht rückgängig gemacht werden. Der
-                        Tagesordnungspunkt und alle zugehörigen Daten werden dauerhaft gelöscht.
+                        Diese Aktion kann nicht rückgängig gemacht werden. Der Tagesordnungspunkt
+                        und alle zugehörigen Daten werden dauerhaft gelöscht.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -381,9 +395,7 @@ export function EventAgendaItemDetail({
         {agendaItem.description && (
           <CardContent className="pt-0">
             <div className="rounded-lg bg-muted/50 p-4">
-              <p className="whitespace-pre-wrap text-muted-foreground">
-                {agendaItem.description}
-              </p>
+              <p className="whitespace-pre-wrap text-muted-foreground">{agendaItem.description}</p>
             </div>
           </CardContent>
         )}
@@ -467,9 +479,7 @@ export function EventAgendaItemDetail({
           <CardContent className="space-y-6">
             {agendaItem.election.description && (
               <div className="rounded-lg bg-muted/50 p-4">
-                <p className="text-sm text-muted-foreground">
-                  {agendaItem.election.description}
-                </p>
+                <p className="text-sm text-muted-foreground">{agendaItem.election.description}</p>
               </div>
             )}
 
@@ -533,8 +543,7 @@ export function EventAgendaItemDetail({
                           .map((candidate: any) => {
                             const voteCount = voteCounts[candidate.id] || 0;
                             const isVoted = userVote?.candidate?.id === candidate.id;
-                            const percentage =
-                              totalVotes > 0 ? (voteCount / totalVotes) * 100 : 0;
+                            const percentage = totalVotes > 0 ? (voteCount / totalVotes) * 100 : 0;
                             const isLeading = voteCount === maxVotes && maxVotes > 0;
 
                             return (
@@ -588,9 +597,7 @@ export function EventAgendaItemDetail({
                                   <Button
                                     size="lg"
                                     variant={isVoted ? 'default' : 'outline'}
-                                    onClick={() =>
-                                      handleElectionVote(election.id, candidate.id)
-                                    }
+                                    onClick={() => handleElectionVote(election.id, candidate.id)}
                                     disabled={votingLoading === election.id || !user}
                                   >
                                     <Vote className="mr-2 h-4 w-4" />
@@ -644,7 +651,10 @@ export function EventAgendaItemDetail({
               </Badge>
             </div>
             <CardDescription>
-              Amendment: <Link href={`/amendment/${amendment.id}`} className="hover:underline font-medium">{amendment.title}</Link>
+              Amendment:{' '}
+              <Link href={`/amendment/${amendment.id}`} className="font-medium hover:underline">
+                {amendment.title}
+              </Link>
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -916,10 +926,7 @@ export function EventAgendaItemDetail({
                       </h3>
                       <div className="space-y-2">
                         {amendmentVote.changeRequests.map((request: any, index: number) => (
-                          <div
-                            key={request.id || index}
-                            className="rounded-lg border bg-card p-4"
-                          >
+                          <div key={request.id || index} className="rounded-lg border bg-card p-4">
                             <div className="flex items-start justify-between gap-4">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2">
@@ -993,6 +1000,21 @@ export function EventAgendaItemDetail({
           <Link href={`/event/${eventId}`}>Zum Event</Link>
         </Button>
       </div>
+
+      {/* Transfer Dialog */}
+      {agendaItem && (
+        <TransferAgendaItemDialog
+          agendaItemId={agendaItemId}
+          agendaItemTitle={agendaItem.title}
+          currentEventId={eventId}
+          currentEventTitle={event?.title || 'Event'}
+          open={transferDialogOpen}
+          onOpenChange={setTransferDialogOpen}
+          onTransferComplete={() => {
+            setTransferDialogOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }
