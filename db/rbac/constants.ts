@@ -125,12 +125,24 @@ export const DEFAULT_EVENT_ROLES = [
         resource: 'groupNotifications' as ResourceType,
         action: 'manageNotifications' as ActionType,
       },
+      { resource: 'events' as ResourceType, action: 'active_voting' as ActionType },
+    ],
+  },
+  {
+    name: 'Voter',
+    description: 'Event participant with voting rights',
+    permissions: [
+      { resource: 'events' as ResourceType, action: 'view' as ActionType },
+      { resource: 'events' as ResourceType, action: 'active_voting' as ActionType },
     ],
   },
   {
     name: 'Participant',
     description: 'Regular event participant',
-    permissions: [{ resource: 'events' as ResourceType, action: 'view' as ActionType }],
+    permissions: [
+      { resource: 'events' as ResourceType, action: 'view' as ActionType },
+      { resource: 'events' as ResourceType, action: 'active_voting' as ActionType },
+    ],
   },
 ];
 
@@ -158,6 +170,7 @@ export const ACTION_RIGHTS = [
   { resource: 'events', action: 'manage_participants', label: 'Manage Event Participants' },
   { resource: 'events', action: 'manage_speakers', label: 'Manage Speakers' },
   { resource: 'events', action: 'manage_votes', label: 'Manage Votes' },
+  { resource: 'events', action: 'active_voting', label: 'Active Voting Rights' },
   { resource: 'events', action: 'view', label: 'View Events' },
   // groupDocuments
   { resource: 'groupDocuments', action: 'manage', label: 'Manage Documents' },

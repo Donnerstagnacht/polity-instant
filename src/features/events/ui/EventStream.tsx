@@ -21,8 +21,12 @@ import {
   ThumbsDown,
   Minus,
   CheckCircle2,
+  Play,
 } from 'lucide-react';
 import { useEventStream } from '../hooks/useEventStream';
+import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from '@/hooks/use-translation';
+import { AgendaNavigationControls } from './AgendaNavigationControls';
 
 // Helper function to extract YouTube video ID from URL
 function getYouTubeVideoId(url: string): string | null {
@@ -43,9 +47,13 @@ function getYouTubeVideoId(url: string): string | null {
 
 export function EventStream({ eventId }: { eventId: string }) {
   const router = useRouter();
+  const { t } = useTranslation();
+  const { toast } = useToast();
   const carouselRef = useRef<HTMLDivElement>(null);
+  const activeContentRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const previousAgendaItemIdRef = useRef<string | null>(null);
 
   const {
     event,
@@ -67,6 +75,24 @@ export function EventStream({ eventId }: { eventId: string }) {
     calculateSpeakerTime,
     formatTime,
   } = useEventStream(eventId);
+
+  // Show toast notification when agenda item changes
+  useEffect(() => {
+    const currentId = currentAgendaItem?.id;
+    if (currentId && currentId !== previousAgendaItemIdRef.current) {
+      if (previousAgendaItemIdRef.current !== null) {
+        // Show toast notification for agenda item change
+        toast(t('features.events.agenda.itemActivated'), {
+          description: currentAgendaItem.title,
+        });
+        // Auto-scroll to active content
+        setTimeout(() => {
+          activeContentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      }
+      previousAgendaItemIdRef.current = currentId;
+    }
+  }, [currentAgendaItem?.id, currentAgendaItem?.title, toast, t]);
 
   // Carousel scroll handlers
   const updateScrollButtons = () => {
@@ -144,7 +170,7 @@ export function EventStream({ eventId }: { eventId: string }) {
   if (isLoading) {
     return (
       <div className="flex h-[400px] items-center justify-center">
-        <p className="text-muted-foreground">Loading stream...</p>
+        <p className="text-muted-foreground">{t('common.loading.general')}</p>
       </div>
     );
   }
@@ -152,10 +178,10 @@ export function EventStream({ eventId }: { eventId: string }) {
   if (!event || !currentAgendaItem) {
     return (
       <div className="flex h-[400px] flex-col items-center justify-center gap-4">
-        <p className="text-lg text-muted-foreground">No active agenda item found</p>
+        <p className="text-lg text-muted-foreground">{t('features.events.stream.noActiveItem')}</p>
         <Button onClick={() => router.push(`/event/${eventId}`)}>
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Event
+          {t('features.events.backToEvent')}
         </Button>
       </div>
     );
@@ -173,7 +199,7 @@ export function EventStream({ eventId }: { eventId: string }) {
                 <iframe
                   className="h-full w-full"
                   src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&rel=0&modestbranding=1`}
-                  title="Event Live Stream"
+                  title={t('features.events.stream.liveStream')}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
                 />
@@ -182,49 +208,62 @@ export function EventStream({ eventId }: { eventId: string }) {
           ) : null;
         })()}
 
-      {/* Current Agenda Item */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                {getAgendaItemIcon(currentAgendaItem.type)}
-              </div>
-              <div className="space-y-2">
-                <CardTitle className="text-2xl">{currentAgendaItem.title}</CardTitle>
-                <div className="flex items-center gap-2">
-                  <Badge className={getTypeColor(currentAgendaItem.type)}>
-                    <span className="capitalize">{currentAgendaItem.type}</span>
-                  </Badge>
-                  <Badge className={getStatusColor(currentAgendaItem.status)}>
-                    {currentAgendaItem.status}
-                  </Badge>
-                  {currentAgendaItem.duration && (
-                    <Badge variant="outline">
-                      <Clock className="mr-1 h-3 w-3" />
-                      {currentAgendaItem.duration} Minutes
+      {/* Current Agenda Item - Prominent Display */}
+      <div ref={activeContentRef}>
+        <Card className="border-2 border-primary shadow-lg ring-2 ring-primary/20">
+          <CardHeader className="bg-primary/5">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-4">
+                <div className="relative flex h-14 w-14 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-md">
+                  {getAgendaItemIcon(currentAgendaItem.type)}
+                  <div className="absolute -right-1 -top-1 flex h-5 w-5 animate-pulse items-center justify-center rounded-full bg-green-500 text-white">
+                    <Play className="h-3 w-3 fill-white" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="default" className="animate-pulse">
+                      {t('features.events.stream.live')}
                     </Badge>
-                  )}
+                    <CardTitle className="text-2xl">{currentAgendaItem.title}</CardTitle>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge className={getTypeColor(currentAgendaItem.type)}>
+                      <span className="capitalize">{currentAgendaItem.type}</span>
+                    </Badge>
+                    <Badge className={getStatusColor(currentAgendaItem.status)}>
+                      {currentAgendaItem.status}
+                    </Badge>
+                    {currentAgendaItem.duration && (
+                      <Badge variant="outline">
+                        <Clock className="mr-1 h-3 w-3" />
+                        {currentAgendaItem.duration} {t('common.minutes')}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
+              <Button asChild variant="outline">
+                <Link href={`/event/${eventId}/agenda/${currentAgendaItem.id}`}>
+                  {t('features.events.stream.viewDetails')}
+                </Link>
+              </Button>
             </div>
-            <Button asChild variant="outline">
-              <Link href={`/event/${eventId}/agenda/${currentAgendaItem.id}`}>
-                View Details
-              </Link>
-            </Button>
-          </div>
-        </CardHeader>
-        {currentAgendaItem.description && (
-          <CardContent>
-            <div className="rounded-lg bg-muted/50 p-4">
-              <p className="whitespace-pre-wrap text-muted-foreground">
-                {currentAgendaItem.description}
-              </p>
-            </div>
-          </CardContent>
-        )}
-      </Card>
+          </CardHeader>
+          {currentAgendaItem.description && (
+            <CardContent>
+              <div className="rounded-lg bg-muted/50 p-4">
+                <p className="whitespace-pre-wrap text-muted-foreground">
+                  {currentAgendaItem.description}
+                </p>
+              </div>
+            </CardContent>
+          )}
+        </Card>
+
+        {/* Agenda Navigation Controls for organizers */}
+        <AgendaNavigationControls eventId={eventId} />
+      </div>
 
       {/* Election Section */}
       {currentAgendaItem.election && (
@@ -289,8 +328,7 @@ export function EventStream({ eventId }: { eventId: string }) {
                           .map((candidate: any) => {
                             const voteCount = voteCounts[candidate.id] || 0;
                             const isVoted = userVote?.candidate?.id === candidate.id;
-                            const percentage =
-                              totalVotes > 0 ? (voteCount / totalVotes) * 100 : 0;
+                            const percentage = totalVotes > 0 ? (voteCount / totalVotes) * 100 : 0;
 
                             return (
                               <div
@@ -337,9 +375,7 @@ export function EventStream({ eventId }: { eventId: string }) {
                                   <Button
                                     size="lg"
                                     variant={isVoted ? 'default' : 'outline'}
-                                    onClick={() =>
-                                      handleElectionVote(election.id, candidate.id)
-                                    }
+                                    onClick={() => handleElectionVote(election.id, candidate.id)}
                                     disabled={votingLoading === election.id || !user}
                                   >
                                     <Vote className="mr-2 h-4 w-4" />
@@ -427,9 +463,7 @@ export function EventStream({ eventId }: { eventId: string }) {
                       <div className="text-2xl font-bold text-gray-700 dark:text-gray-300">
                         {voteCounts.abstain}
                       </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                        Enthalten
-                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Enthalten</div>
                     </div>
                   </div>
 
@@ -472,9 +506,7 @@ export function EventStream({ eventId }: { eventId: string }) {
                         </div>
                         <div className="space-y-1">
                           <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600 dark:text-gray-400">
-                              Enthalten
-                            </span>
+                            <span className="text-gray-600 dark:text-gray-400">Enthalten</span>
                             <span className="font-medium">
                               {((voteCounts.abstain / totalVotes) * 100).toFixed(1)}%
                             </span>
@@ -579,11 +611,7 @@ export function EventStream({ eventId }: { eventId: string }) {
                 {removingSpeaker === userSpeaker.id ? 'Removing...' : 'Remove Yourself'}
               </Button>
             ) : (
-              <Button
-                onClick={handleAddToSpeakerList}
-                disabled={addingSpeaker || !user}
-                size="lg"
-              >
+              <Button onClick={handleAddToSpeakerList} disabled={addingSpeaker || !user} size="lg">
                 <Plus className="mr-2 h-5 w-5" />
                 {addingSpeaker ? 'Adding...' : 'Add Yourself'}
               </Button>
@@ -701,10 +729,7 @@ export function EventStream({ eventId }: { eventId: string }) {
                         {/* Completed Badge */}
                         {speaker.completed && (
                           <div className="flex justify-center">
-                            <Badge
-                              variant="outline"
-                              className="bg-green-100 dark:bg-green-900"
-                            >
+                            <Badge variant="outline" className="bg-green-100 dark:bg-green-900">
                               Completed
                             </Badge>
                           </div>

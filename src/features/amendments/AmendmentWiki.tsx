@@ -26,6 +26,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ShareButton } from '@/components/shared/ShareButton';
 import { useAuthStore } from '@/features/auth';
 import { GroupsCard } from '@/features/user/ui/GroupsCard';
+import { SupporterStatusBadge } from '@/features/amendments/ui/SupporterStatusBadge';
 import { GRADIENTS } from '@/features/user/state/gradientColors';
 import { findShortestPath } from '@/utils/path-finding';
 import { TargetSelectionDialog } from '@/features/amendments/ui/TargetSelectionDialog';
@@ -132,6 +133,9 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
       groupSupporters: {
         memberships: {},
       },
+      supportConfirmations: {
+        group: {},
+      },
       targetGroup: {},
       path: {
         user: {},
@@ -170,6 +174,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
   const isAdmin = status === 'admin';
   const collaborators = amendment.amendmentRoleCollaborators || [];
   const supportingGroups = amendment.groupSupporters || [];
+  const supportConfirmations = amendment.supportConfirmations || [];
   const clones = amendment.clones || [];
   const clonedFrom = amendment.clonedFrom;
   const totalSupportingMembers = supportingGroups.reduce(
@@ -178,6 +183,17 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
   );
   const targetCollaborator = amendment.path?.user;
   const targetGroup = amendment.targetGroup;
+
+  // Helper to get support status for a group
+  const getSupportStatus = (groupId: string): 'active' | 'pending' | 'declined' => {
+    const confirmation = supportConfirmations.find(
+      (c: any) => c.group?.id === groupId && c.status !== 'confirmed'
+    );
+    if (!confirmation) return 'active';
+    if (confirmation.status === 'pending') return 'pending';
+    if (confirmation.status === 'declined') return 'declined';
+    return 'active';
+  };
 
   // Vote handling
   const score = (amendment.upvotes || 0) - (amendment.downvotes || 0);
@@ -817,25 +833,34 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {supportingGroups.map((group: any, index: number) => (
-                <Link
-                  key={group.id}
-                  href={`/group/${group.id}`}
-                  className="block transition-opacity hover:opacity-90"
-                >
-                  <GroupsCard
-                    group={{
-                      id: group.id,
-                      groupId: group.id,
-                      name: group.name || 'Unknown Group',
-                      description: group.description,
-                      role: 'Supporter',
-                      members: group.memberships?.length || 0,
-                    }}
-                    gradientClass={GRADIENTS[index % GRADIENTS.length]}
-                  />
-                </Link>
-              ))}
+              {supportingGroups
+                .filter((group: any) => getSupportStatus(group.id) !== 'declined')
+                .map((group: any, index: number) => {
+                  const supportStatus = getSupportStatus(group.id);
+                  return (
+                    <div key={group.id} className="relative">
+                      <Link
+                        href={`/group/${group.id}`}
+                        className="block transition-opacity hover:opacity-90"
+                      >
+                        <GroupsCard
+                          group={{
+                            id: group.id,
+                            groupId: group.id,
+                            name: group.name || 'Unknown Group',
+                            description: group.description,
+                            role: 'Supporter',
+                            members: group.memberships?.length || 0,
+                          }}
+                          gradientClass={GRADIENTS[index % GRADIENTS.length]}
+                        />
+                      </Link>
+                      <div className="absolute right-2 top-2">
+                        <SupporterStatusBadge status={supportStatus} size="sm" />
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
           </CardContent>
         </Card>

@@ -46,6 +46,7 @@ import {
 } from 'lucide-react';
 import { useEventAgendaItem } from '../hooks/useEventAgendaItem';
 import { AmendmentVotingQueue } from './AmendmentVotingQueue';
+import { VotingSessionManager } from './VotingSessionManager';
 import { TransferAgendaItemDialog } from './TransferAgendaItemDialog';
 import { usePermissions } from '@db/rbac';
 import db, { tx } from '../../../../db/db';
@@ -483,6 +484,15 @@ export function EventAgendaItemDetail({
               </div>
             )}
 
+            {/* Voting Session Manager for Elections */}
+            <VotingSessionManager
+              eventId={eventId}
+              agendaItemId={agendaItemId}
+              agendaItemTitle={agendaItem.title || 'Election'}
+              votingType="election"
+              targetEntityId={agendaItem.election.id}
+            />
+
             {(() => {
               const election = agendaItem.election;
               const userVote = userElectionVotes.find(
@@ -658,30 +668,18 @@ export function EventAgendaItemDetail({
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Start Voting Button */}
-            {amendment.workflowStatus === 'event_suggesting' && isOrganizer && !votingSession && (
-              <div className="rounded-lg border-2 border-dashed border-blue-300 bg-blue-50 p-6 text-center dark:bg-blue-950">
-                <div className="mb-4">
-                  <AlertCircle className="mx-auto h-12 w-12 text-blue-500" />
-                </div>
-                <h3 className="mb-2 text-lg font-semibold">Event-Abstimmung starten</h3>
-                <p className="mb-4 text-sm text-muted-foreground">
-                  Starten Sie die sequentielle Abstimmung über alle Change Requests und den finalen
-                  Text.
-                </p>
-                <Button
-                  onClick={handleStartEventVoting}
-                  disabled={startingVoting}
-                  size="lg"
-                  className="gap-2"
-                >
-                  <Play className="h-4 w-4" />
-                  {startingVoting ? 'Wird gestartet...' : 'Abstimmung starten'}
-                </Button>
-              </div>
+            {/* Voting Session Manager for Amendment */}
+            {(amendment.workflowStatus === 'event_suggesting' || amendment.workflowStatus === 'event_voting') && (
+              <VotingSessionManager
+                eventId={eventId}
+                agendaItemId={agendaItemId}
+                agendaItemTitle={amendment.title || 'Amendment'}
+                votingType="amendment"
+                targetEntityId={amendment.id}
+              />
             )}
 
-            {/* Voting Queue */}
+            {/* Voting Queue for Change Requests */}
             {amendment.workflowStatus === 'event_voting' && votingSession && (
               <AmendmentVotingQueue
                 amendmentId={amendment.id}

@@ -15,6 +15,9 @@ const _agendas = {
       title: i.string().indexed(),
       type: i.string().indexed(),
       updatedAt: i.date().indexed(),
+      // Agenda item activation fields
+      activatedAt: i.date().indexed().optional(), // Timestamp when item was activated
+      completedAt: i.date().indexed().optional(), // Timestamp when item was completed
     }),
     speakerList: i.entity({
       completed: i.boolean().indexed(),

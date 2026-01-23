@@ -90,6 +90,21 @@ export type NotificationType =
   | 'event_meeting_cancelled'
   | 'event_speaker_added'
   | 'event_new_subscriber'
+  // Agenda and voting notifications
+  | 'agenda_item_activated'
+  | 'voting_phase_started'
+  | 'voting_phase_ending_soon'
+  | 'voting_completed'
+  | 'amendment_forwarded'
+  | 'election_result'
+  | 'revote_scheduled'
+  | 'event_cancelled'
+  | 'agenda_items_reassigned'
+  | 'amendment_path_recalculation_required'
+  // Supporter confirmation notifications
+  | 'support_confirmation_required'
+  | 'support_confirmed'
+  | 'support_declined'
   // Amendment notifications
   | 'amendment_workflow_changed'
   | 'amendment_path_advanced'
@@ -1827,6 +1842,335 @@ export function notifyEventNewSubscriber(params: {
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
     relatedUserId: params.senderId,
+  });
+}
+
+// ============================================================================
+// AGENDA AND VOTING NOTIFICATIONS
+// ============================================================================
+
+/**
+ * Send notification when an agenda item is activated
+ */
+export function notifyAgendaItemActivated(params: {
+  senderId: string;
+  eventId: string;
+  eventTitle: string;
+  agendaItemId: string;
+  agendaItemTitle: string;
+  agendaItemType: string;
+}) {
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'event',
+    recipientEntityId: params.eventId,
+    type: 'agenda_item_activated',
+    title: 'Agenda Item Activated',
+    message: `${params.agendaItemTitle} is now active at ${params.eventTitle}`,
+    actionUrl: `/event/${params.eventId}/stream`,
+    relatedEntityType: 'event',
+    relatedEventId: params.eventId,
+  });
+}
+
+/**
+ * Send notification when voting phase starts
+ */
+export function notifyVotingPhaseStarted(params: {
+  senderId: string;
+  eventId: string;
+  eventTitle: string;
+  agendaItemTitle: string;
+  votingType: string;
+  timeLimit?: number;
+}) {
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'event',
+    recipientEntityId: params.eventId,
+    type: 'voting_phase_started',
+    title: 'Voting Has Begun',
+    message: `Voting for ${params.agendaItemTitle} has started${params.timeLimit ? ` (${Math.floor(params.timeLimit / 60)} minutes)` : ''}`,
+    actionUrl: `/event/${params.eventId}/stream`,
+    relatedEntityType: 'event',
+    relatedEventId: params.eventId,
+  });
+}
+
+/**
+ * Send notification when voting is ending soon
+ */
+export function notifyVotingPhaseEndingSoon(params: {
+  senderId: string;
+  eventId: string;
+  eventTitle: string;
+  agendaItemTitle: string;
+  minutesRemaining: number;
+}) {
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'event',
+    recipientEntityId: params.eventId,
+    type: 'voting_phase_ending_soon',
+    title: 'Voting Ending Soon',
+    message: `Voting for ${params.agendaItemTitle} ends in ${params.minutesRemaining} minutes`,
+    actionUrl: `/event/${params.eventId}/stream`,
+    relatedEntityType: 'event',
+    relatedEventId: params.eventId,
+  });
+}
+
+/**
+ * Send notification when voting is completed
+ */
+export function notifyVotingCompleted(params: {
+  senderId: string;
+  eventId: string;
+  eventTitle: string;
+  agendaItemTitle: string;
+  result: 'passed' | 'rejected' | 'tie';
+  acceptVotes: number;
+  rejectVotes: number;
+}) {
+  const resultText = params.result === 'passed' ? 'accepted' : params.result === 'rejected' ? 'rejected' : 'resulted in a tie';
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'event',
+    recipientEntityId: params.eventId,
+    type: 'voting_completed',
+    title: 'Voting Completed',
+    message: `${params.agendaItemTitle} was ${resultText} (${params.acceptVotes} for, ${params.rejectVotes} against)`,
+    actionUrl: `/event/${params.eventId}/agenda`,
+    relatedEntityType: 'event',
+    relatedEventId: params.eventId,
+  });
+}
+
+/**
+ * Send notification when an amendment is forwarded to next event
+ */
+export function notifyAmendmentForwarded(params: {
+  senderId: string;
+  amendmentId: string;
+  amendmentTitle: string;
+  sourceEventTitle: string;
+  targetEventId: string;
+  targetEventTitle: string;
+}) {
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'amendment',
+    recipientEntityId: params.amendmentId,
+    type: 'amendment_forwarded',
+    title: 'Amendment Forwarded',
+    message: `${params.amendmentTitle} has been forwarded from ${params.sourceEventTitle} to ${params.targetEventTitle}`,
+    actionUrl: `/event/${params.targetEventId}/agenda`,
+    relatedEntityType: 'amendment',
+    relatedAmendmentId: params.amendmentId,
+  });
+}
+
+/**
+ * Send notification when an election result is determined
+ */
+export function notifyElectionResult(params: {
+  senderId: string;
+  eventId: string;
+  eventTitle: string;
+  positionTitle: string;
+  winnerName: string;
+  winnerId: string;
+}) {
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'event',
+    recipientEntityId: params.eventId,
+    type: 'election_result',
+    title: 'Election Result',
+    message: `${params.winnerName} has been elected as ${params.positionTitle}`,
+    actionUrl: `/event/${params.eventId}/positions`,
+    relatedEntityType: 'event',
+    relatedEventId: params.eventId,
+    relatedUserId: params.winnerId,
+  });
+}
+
+/**
+ * Send notification when a revote is scheduled
+ */
+export function notifyRevoteScheduled(params: {
+  senderId: string;
+  groupId: string;
+  groupName: string;
+  positionTitle: string;
+  scheduledDate: string;
+  eventId?: string;
+}) {
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'group',
+    recipientEntityId: params.groupId,
+    type: 'revote_scheduled',
+    title: 'Revote Scheduled',
+    message: `A revote for ${params.positionTitle} has been scheduled for ${params.scheduledDate}`,
+    actionUrl: params.eventId ? `/event/${params.eventId}/agenda` : `/group/${params.groupId}/positions`,
+    relatedEntityType: 'group',
+    relatedGroupId: params.groupId,
+    relatedEventId: params.eventId,
+  });
+}
+
+/**
+ * Send notification when an event is cancelled
+ */
+export function notifyEventCancelled(params: {
+  senderId: string;
+  eventId: string;
+  eventTitle: string;
+  cancellationReason?: string;
+  reassignmentEventId?: string;
+  reassignmentEventTitle?: string;
+}) {
+  const message = params.reassignmentEventId
+    ? `${params.eventTitle} has been cancelled. Agenda items have been moved to ${params.reassignmentEventTitle}.`
+    : `${params.eventTitle} has been cancelled.${params.cancellationReason ? ` Reason: ${params.cancellationReason}` : ''}`;
+  
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'event',
+    recipientEntityId: params.eventId,
+    type: 'event_cancelled',
+    title: 'Event Cancelled',
+    message,
+    actionUrl: params.reassignmentEventId ? `/event/${params.reassignmentEventId}` : undefined,
+    relatedEntityType: 'event',
+    relatedEventId: params.eventId,
+  });
+}
+
+/**
+ * Send notification when agenda items are reassigned to another event
+ */
+export function notifyAgendaItemsReassigned(params: {
+  senderId: string;
+  sourceEventId: string;
+  sourceEventTitle: string;
+  targetEventId: string;
+  targetEventTitle: string;
+  itemCount: number;
+}) {
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'event',
+    recipientEntityId: params.targetEventId,
+    type: 'agenda_items_reassigned',
+    title: 'Agenda Items Reassigned',
+    message: `${params.itemCount} agenda item(s) from ${params.sourceEventTitle} have been added to ${params.targetEventTitle}`,
+    actionUrl: `/event/${params.targetEventId}/agenda`,
+    relatedEntityType: 'event',
+    relatedEventId: params.targetEventId,
+  });
+}
+
+/**
+ * Send notification when amendment path needs recalculation
+ */
+export function notifyAmendmentPathRecalculationRequired(params: {
+  senderId: string;
+  amendmentId: string;
+  amendmentTitle: string;
+  reason: string;
+}) {
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'amendment',
+    recipientEntityId: params.amendmentId,
+    type: 'amendment_path_recalculation_required',
+    title: 'Path Recalculation Required',
+    message: `The path for ${params.amendmentTitle} needs to be recalculated. ${params.reason}`,
+    actionUrl: `/amendment/${params.amendmentId}/process`,
+    relatedEntityType: 'amendment',
+    relatedAmendmentId: params.amendmentId,
+  });
+}
+
+// ============================================================================
+// SUPPORTER CONFIRMATION NOTIFICATIONS
+// ============================================================================
+
+/**
+ * Send notification when a group needs to confirm support after a change request
+ */
+export function notifySupportConfirmationRequired(params: {
+  senderId: string;
+  groupId: string;
+  groupName: string;
+  amendmentId: string;
+  amendmentTitle: string;
+  changeRequestTitle: string;
+  agendaItemId?: string;
+  eventId?: string;
+  eventTitle?: string;
+}) {
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'group',
+    recipientEntityId: params.groupId,
+    type: 'support_confirmation_required',
+    title: 'Support Confirmation Required',
+    message: `A change was accepted on ${params.amendmentTitle}. ${params.groupName} needs to confirm continued support.`,
+    actionUrl: params.eventId ? `/event/${params.eventId}/agenda` : `/amendment/${params.amendmentId}`,
+    relatedEntityType: 'group',
+    relatedGroupId: params.groupId,
+    relatedAmendmentId: params.amendmentId,
+  });
+}
+
+/**
+ * Send notification when a group confirms support for an amendment
+ */
+export function notifySupportConfirmed(params: {
+  senderId: string;
+  amendmentId: string;
+  amendmentTitle: string;
+  groupId: string;
+  groupName: string;
+}) {
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'amendment',
+    recipientEntityId: params.amendmentId,
+    type: 'support_confirmed',
+    title: 'Support Confirmed',
+    message: `${params.groupName} has confirmed their support for ${params.amendmentTitle}`,
+    actionUrl: `/amendment/${params.amendmentId}`,
+    relatedEntityType: 'amendment',
+    relatedAmendmentId: params.amendmentId,
+    relatedGroupId: params.groupId,
+  });
+}
+
+/**
+ * Send notification when a group declines support for an amendment
+ */
+export function notifySupportDeclined(params: {
+  senderId: string;
+  amendmentId: string;
+  amendmentTitle: string;
+  groupId: string;
+  groupName: string;
+}) {
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'amendment',
+    recipientEntityId: params.amendmentId,
+    type: 'support_declined',
+    title: 'Support Declined',
+    message: `${params.groupName} has withdrawn their support for ${params.amendmentTitle}`,
+    actionUrl: `/amendment/${params.amendmentId}`,
+    relatedEntityType: 'amendment',
+    relatedAmendmentId: params.amendmentId,
+    relatedGroupId: params.groupId,
   });
 }
 

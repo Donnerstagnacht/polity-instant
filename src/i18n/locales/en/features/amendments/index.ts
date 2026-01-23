@@ -59,12 +59,14 @@ export const amendmentsTranslations = {
     workflowStatusLabel: 'Workflow Status',
     selectWorkflowStatus: 'Select workflow status',
     autoCloseVoting: 'Automatic vote closing',
-    autoCloseVotingDescription: 'Votes will be automatically closed after the time interval expires',
+    autoCloseVotingDescription:
+      'Votes will be automatically closed after the time interval expires',
     autoCloseEnabled: '✓ Votes will be closed automatically',
     autoCloseDisabled: '○ Votes require manual confirmation by organizers',
     eventPhase: '📅 Amendment is in event phase',
     eventPhaseDescription: 'Workflow is controlled by event {{eventId}}',
-    eventPhaseWarning: '⚠️ This status is controlled by event organizers and cannot be changed here.',
+    eventPhaseWarning:
+      '⚠️ This status is controlled by event organizers and cannot be changed here.',
     tagsTitle: 'Tags',
     tagsDescription: 'Add tags to categorize this amendment',
     addTagPlaceholder: 'Add a tag',
@@ -158,7 +160,8 @@ export const amendmentsTranslations = {
     agendaItemsCreated: '{{count}} agenda items created',
     votesCreated: '{{count}} votes created',
     noTargetSelected: 'No Target Selected',
-    chooseTargetPrompt: 'Choose a target group and event from the network below to begin the amendment process.',
+    chooseTargetPrompt:
+      'Choose a target group and event from the network below to begin the amendment process.',
     clickGroupPrompt: 'Click on a group in the network, then select an event to set your target.',
     amendmentNetwork: 'Amendment Network',
     availableTargets: 'Available Targets',
@@ -173,8 +176,10 @@ export const amendmentsTranslations = {
     amendmentRight: 'amendmentRight',
     updateAmendmentTarget: 'Update Amendment Target',
     setAmendmentTarget: 'Set Amendment Target',
-    updateTargetDescription: 'Update the target group and event for your amendment. This will remove the previous agenda item and path.',
-    setTargetDescription: 'Set the target group and event for your amendment. An agenda item will be created automatically.',
+    updateTargetDescription:
+      'Update the target group and event for your amendment. This will remove the previous agenda item and path.',
+    setTargetDescription:
+      'Set the target group and event for your amendment. An agenda item will be created automatically.',
     targetGroup: 'Target Group',
     members: 'members',
     public: 'Public',
@@ -189,7 +194,8 @@ export const amendmentsTranslations = {
     updateTarget: 'Update Target',
     confirmTarget: 'Confirm Target',
     removeAmendmentTarget: 'Remove Amendment Target',
-    removeTargetConfirmation: 'Are you sure you want to remove the target for this amendment? This will also delete the associated agenda item, amendment vote, and path.',
+    removeTargetConfirmation:
+      'Are you sure you want to remove the target for this amendment? This will also delete the associated agenda item, amendment vote, and path.',
     thisActionWill: 'This action will:',
     removeTargetGroupAndEvent: 'Remove the target group and event',
     deleteAgendaItem: 'Delete the agenda item from the event',
@@ -203,17 +209,20 @@ export const amendmentsTranslations = {
     updating: 'Updating...',
     select: 'Select',
     selectTargetGroupAndEvent: 'Select Target Group and Event',
-    selectCollaboratorDescription: 'Choose a collaborator to view their network, then select a group and event',
+    selectCollaboratorDescription:
+      'Choose a collaborator to view their network, then select a group and event',
     selectNetworkFor: 'Select Network For:',
     selectCollaboratorPlaceholder: 'Select collaborator to view their network...',
     selectCollaboratorPrompt: 'Please select a collaborator to view their network',
     loadingGroups: 'Loading groups...',
-    noConnectedGroups: 'No connected groups found. You need to be a member of groups with amendment rights.',
+    noConnectedGroups:
+      'No connected groups found. You need to be a member of groups with amendment rights.',
     noUpcomingEvents: 'No upcoming events for this group',
     confirmSelection: 'Confirm Selection',
     targetSetSuccess: 'Target set successfully',
     targetUpdatedSuccess: 'Target updated successfully',
-    pathDescription: 'Amendment will be processed through {{groupName}} with {{count}} events in the path',
+    pathDescription:
+      'Amendment will be processed through {{groupName}} with {{count}} events in the path',
     setTargetFailed: 'Failed to set target',
     noValidPath: 'No valid path found to target group',
     targetRemovedSuccess: 'Target removed successfully',
@@ -225,14 +234,16 @@ export const amendmentsTranslations = {
   },
   targetSelection: {
     defaultTitle: 'Select Target Group and Event',
-    defaultDescription: 'Choose a collaborator to view their network, then select a group and event',
+    defaultDescription:
+      'Choose a collaborator to view their network, then select a group and event',
     defaultConfirm: 'Confirm Selection',
     selectCollaboratorPlaceholder: 'Select collaborator to view their network...',
     selectNetworkFor: 'Select Network For:',
     loadingNetwork: 'Loading your network...',
     selectCollaboratorPrompt: 'Please select a collaborator to view their network',
     loadingGroups: 'Loading groups...',
-    noConnectedGroups: 'No connected groups found. You need to be a member of groups with amendment rights.',
+    noConnectedGroups:
+      'No connected groups found. You need to be a member of groups with amendment rights.',
     member: 'Member',
     members: 'members',
     noUpcomingEvents: 'No upcoming events for this group',
@@ -292,6 +303,30 @@ export const amendmentsTranslations = {
       suggestionAccepted: 'Suggestion accepted',
       suggestionDeclined: 'Suggestion declined',
       autoSave: 'Auto-save',
+    },
+  },
+  // Support Confirmation
+  supportConfirmation: {
+    title: 'Support Confirmations',
+    noPending: 'No pending confirmations',
+    pending: 'pending',
+    requestedAgo: 'Requested {{time}}',
+    changeRequest: 'Change Request',
+    description:
+      'A change was accepted on an amendment your group supports. Please review the changes and confirm whether your group wants to continue supporting.',
+    viewChanges: 'View Changes',
+    hideChanges: 'Hide Changes',
+    confirm: 'Confirm Support',
+    decline: 'Withdraw Support',
+    comparison: {
+      title: 'Version Comparison',
+      hasChanges: 'Changes detected',
+      sideBySide: 'Side by Side',
+      original: 'Original',
+      current: 'Current',
+      originalLabel: 'Original (when supported)',
+      currentLabel: 'Current Version',
+      empty: 'No content',
     },
   },
 } as const;

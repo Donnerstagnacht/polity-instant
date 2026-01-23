@@ -100,7 +100,8 @@ export const commonTranslations = {
     groupNetwork: 'Gruppennetzwerk',
     groupNetworkDescription: 'Visualisierung der Beziehungen von {{groupName}}',
     groupRelationships: 'Gruppenbeziehungen',
-    groupRelationshipsDescription: 'Verwalten Sie die Verbindungen dieser Gruppe zu anderen Gruppen.',
+    groupRelationshipsDescription:
+      'Verwalten Sie die Verbindungen dieser Gruppe zu anderen Gruppen.',
     incomingRequests: 'Eingehende Anfragen',
     outgoingRequests: 'Ausstehende Anfragen',
     wantsToBeParent: 'Möchte übergeordnete Gruppe sein mit Rechten:',
@@ -123,7 +124,8 @@ export const commonTranslations = {
     child: 'Untergeordnet',
     noRelationshipsFound: 'Keine Beziehungen gefunden, die Ihren Filtern entsprechen.',
     deleteAllRelationships: 'Alle Beziehungen löschen?',
-    deleteRelationshipDescription: 'Dies entfernt alle Beziehungen (sowohl übergeordnet als auch untergeordnet) zwischen dieser Gruppe und {{groupName}}. Diese Aktion kann nicht rückgängig gemacht werden.',
+    deleteRelationshipDescription:
+      'Dies entfernt alle Beziehungen (sowohl übergeordnet als auch untergeordnet) zwischen dieser Gruppe und {{groupName}}. Diese Aktion kann nicht rückgängig gemacht werden.',
     linkGroup: 'Gruppe verknüpfen',
     editRelationship: 'Beziehung bearbeiten',
     linkGroupTitle: 'Gruppe verknüpfen',
@@ -169,7 +171,8 @@ export const commonTranslations = {
   },
   pwa: {
     installTitle: 'Polity installieren',
-    installDescription: 'Installieren Sie unsere App für schnellen Zugriff und ein besseres Erlebnis',
+    installDescription:
+      'Installieren Sie unsere App für schnellen Zugriff und ein besseres Erlebnis',
     dismiss: 'Schließen',
     notNow: 'Nicht jetzt',
     install: 'Installieren',
@@ -178,6 +181,7 @@ export const commonTranslations = {
   goHome: 'Zur Startseite',
   search: 'Suchen',
   unknown: 'Unbekannt',
+  minutes: 'Minuten',
   groups: 'Gruppen',
   agendaItems: 'Tagesordnungspunkte',
   votes: 'Abstimmungen',

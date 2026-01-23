@@ -123,7 +123,8 @@ export const commonTranslations = {
     child: 'Child',
     noRelationshipsFound: 'No relationships found matching your filters.',
     deleteAllRelationships: 'Delete all relationships?',
-    deleteRelationshipDescription: 'This will remove all relationships (both parent and child directions) between this group and {{groupName}}. This action cannot be undone.',
+    deleteRelationshipDescription:
+      'This will remove all relationships (both parent and child directions) between this group and {{groupName}}. This action cannot be undone.',
     linkGroup: 'Link Group',
     editRelationship: 'Edit relationship',
     linkGroupTitle: 'Link Group',
@@ -178,6 +179,7 @@ export const commonTranslations = {
   goHome: 'Go Home',
   search: 'Search',
   unknown: 'Unknown',
+  minutes: 'minutes',
   groups: 'groups',
   agendaItems: 'agenda items',
   votes: 'votes',

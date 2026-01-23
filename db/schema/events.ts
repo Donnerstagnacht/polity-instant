@@ -24,29 +24,37 @@ const _events = {
       delegateAllocationMode: i.string().indexed().optional(), // 'total' (fixed number) or 'ratio' (per X members)
       totalDelegates: i.number().indexed().optional(), // Total number of delegates when mode is 'total'
       delegateRatio: i.number().indexed().optional(), // Number of members per delegate when mode is 'ratio' (default: 50)
-      
+
       // Recurring event fields
       recurringPattern: i.string().indexed().optional(), // 'daily', 'weekly', 'monthly', 'yearly', 'four-yearly', null for non-recurring
       recurringInterval: i.number().optional(), // e.g., 1 for every week, 2 for every 2 weeks
       recurringEndDate: i.date().indexed().optional(), // When the recurrence stops
       recurringParentId: i.string().indexed().optional(), // ID of parent event for recurring instances
       recurringInstanceDate: i.date().indexed().optional(), // Specific date for this recurring instance
-      
+
       // Location type and online meeting fields
       locationType: i.string().indexed().optional(), // 'online', 'physical', 'hybrid'
       onlineMeetingLink: i.string().optional(), // URL for online meeting (Zoom, Teams, etc.)
       meetingCode: i.string().optional(), // Access code for the meeting
-      
+
       // Physical location fields (structured address)
       locationName: i.string().optional(), // Name of venue (e.g., "Rathaus", "Community Center")
       street: i.string().optional(), // Street name
       houseNumber: i.string().optional(), // House/building number
       postalCode: i.string().optional(), // Postal/ZIP code
       city: i.string().optional(), // City name
-      
+
       // Deadline fields for delegate conferences
       delegateNominationDeadline: i.date().indexed().optional(), // Deadline for delegate nominations
       proposalSubmissionDeadline: i.date().indexed().optional(), // Deadline for submitting proposals/amendments
+
+      // Agenda management fields
+      currentAgendaItemId: i.string().indexed().optional(), // ID of the currently active agenda item
+
+      // Event status and cancellation fields
+      status: i.string().indexed().optional(), // 'active', 'cancelled', 'completed'
+      cancellationReason: i.string().optional(), // Reason for cancellation
+      cancelledAt: i.date().indexed().optional(), // When the event was cancelled
     }),
     eventParticipants: i.entity({
       createdAt: i.date().indexed().optional(),
@@ -94,6 +102,33 @@ const _events = {
       updatedAt: i.date().indexed(),
     }),
     eventPositionHolders: i.entity({
+      createdAt: i.date().indexed(),
+    }),
+    // Event voting sessions for structured voting at events
+    eventVotingSessions: i.entity({
+      createdAt: i.date().indexed(),
+      updatedAt: i.date().indexed(),
+      phase: i.string().indexed(), // 'introduction', 'voting', 'completed'
+      votingType: i.string().indexed(), // 'amendment', 'election', 'change_request'
+      startedAt: i.date().indexed().optional(),
+      endedAt: i.date().indexed().optional(),
+      timeLimit: i.number().optional(), // Time limit in seconds
+      autoCloseOnAllVoted: i.boolean().optional(),
+      autoCloseOnTimeout: i.boolean().optional(),
+      majorityType: i.string().indexed(), // 'simple', 'absolute', 'two_thirds'
+      result: i.string().indexed().optional(), // 'passed', 'rejected', 'tie'
+      targetEntityType: i.string().indexed(), // 'amendment', 'change_request', 'election'
+      targetEntityId: i.string().indexed(),
+    }),
+    // Individual votes cast in event voting sessions
+    eventVotes: i.entity({
+      createdAt: i.date().indexed(),
+      vote: i.string().indexed(), // 'accept', 'reject', 'abstain'
+    }),
+    // Scheduled elections for position revotes
+    scheduledElections: i.entity({
+      scheduledDate: i.date().indexed(),
+      status: i.string().indexed(), // 'scheduled', 'event_created', 'completed', 'cancelled'
       createdAt: i.date().indexed(),
     }),
   },
@@ -332,6 +367,154 @@ const _events = {
         on: 'elections',
         has: 'one',
         label: 'eventPosition',
+      },
+    },
+    // Event voting session links
+    eventVotingSessionsAgendaItem: {
+      forward: {
+        on: 'eventVotingSessions',
+        has: 'one',
+        label: 'agendaItem',
+      },
+      reverse: {
+        on: 'agendaItems',
+        has: 'many',
+        label: 'votingSessions',
+      },
+    },
+    eventVotingSessionsEvent: {
+      forward: {
+        on: 'eventVotingSessions',
+        has: 'one',
+        label: 'event',
+      },
+      reverse: {
+        on: 'events',
+        has: 'many',
+        label: 'votingSessions',
+      },
+    },
+    eventVotingSessionsAmendment: {
+      forward: {
+        on: 'eventVotingSessions',
+        has: 'one',
+        label: 'amendment',
+      },
+      reverse: {
+        on: 'amendments',
+        has: 'many',
+        label: 'eventVotingSessions',
+      },
+    },
+    eventVotingSessionsChangeRequest: {
+      forward: {
+        on: 'eventVotingSessions',
+        has: 'one',
+        label: 'changeRequest',
+      },
+      reverse: {
+        on: 'changeRequests',
+        has: 'many',
+        label: 'eventVotingSessions',
+      },
+    },
+    eventVotingSessionsElection: {
+      forward: {
+        on: 'eventVotingSessions',
+        has: 'one',
+        label: 'election',
+      },
+      reverse: {
+        on: 'elections',
+        has: 'many',
+        label: 'eventVotingSessions',
+      },
+    },
+    // Event votes links
+    eventVotesSession: {
+      forward: {
+        on: 'eventVotes',
+        has: 'one',
+        label: 'session',
+      },
+      reverse: {
+        on: 'eventVotingSessions',
+        has: 'many',
+        label: 'votes',
+      },
+    },
+    eventVotesVoter: {
+      forward: {
+        on: 'eventVotes',
+        has: 'one',
+        label: 'voter',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'eventVotes',
+      },
+    },
+    eventVotesCandidate: {
+      forward: {
+        on: 'eventVotes',
+        has: 'one',
+        label: 'candidate',
+      },
+      reverse: {
+        on: 'electionCandidates',
+        has: 'many',
+        label: 'eventVotes',
+      },
+    },
+    // Event cancelled by link
+    eventsCancelledBy: {
+      forward: {
+        on: 'events',
+        has: 'one',
+        label: 'cancelledBy',
+      },
+      reverse: {
+        on: '$users',
+        has: 'many',
+        label: 'cancelledEvents',
+      },
+    },
+    // Scheduled elections links
+    scheduledElectionsPosition: {
+      forward: {
+        on: 'scheduledElections',
+        has: 'one',
+        label: 'position',
+      },
+      reverse: {
+        on: 'positions',
+        has: 'many',
+        label: 'scheduledElections',
+      },
+    },
+    scheduledElectionsGroup: {
+      forward: {
+        on: 'scheduledElections',
+        has: 'one',
+        label: 'group',
+      },
+      reverse: {
+        on: 'groups',
+        has: 'many',
+        label: 'scheduledElections',
+      },
+    },
+    scheduledElectionsEvent: {
+      forward: {
+        on: 'scheduledElections',
+        has: 'one',
+        label: 'event',
+      },
+      reverse: {
+        on: 'events',
+        has: 'many',
+        label: 'scheduledElections',
       },
     },
   } as const,

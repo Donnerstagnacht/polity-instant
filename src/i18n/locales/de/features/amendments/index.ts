@@ -59,12 +59,14 @@ export const amendmentsTranslations = {
     workflowStatusLabel: 'Workflow-Status',
     selectWorkflowStatus: 'Workflow-Status wählen',
     autoCloseVoting: 'Automatisches Schließen von Abstimmungen',
-    autoCloseVotingDescription: 'Abstimmungen werden automatisch nach Ablauf des Zeitintervalls geschlossen',
+    autoCloseVotingDescription:
+      'Abstimmungen werden automatisch nach Ablauf des Zeitintervalls geschlossen',
     autoCloseEnabled: '✓ Abstimmungen werden automatisch geschlossen',
     autoCloseDisabled: '○ Abstimmungen erfordern manuelle Bestätigung durch Organisatoren',
     eventPhase: '📅 Antrag befindet sich in Event-Phase',
     eventPhaseDescription: 'Workflow wird durch Event {{eventId}} gesteuert',
-    eventPhaseWarning: '⚠️ Dieser Status wird durch Event-Organisatoren gesteuert und kann hier nicht geändert werden.',
+    eventPhaseWarning:
+      '⚠️ Dieser Status wird durch Event-Organisatoren gesteuert und kann hier nicht geändert werden.',
     tagsTitle: 'Tags',
     tagsDescription: 'Füge Tags hinzu, um diesen Antrag zu kategorisieren',
     addTagPlaceholder: 'Tag hinzufügen',
@@ -140,7 +142,8 @@ export const amendmentsTranslations = {
   },
   process: {
     title: 'Antragsprozess',
-    description: 'Navigiere durch das Netzwerk, um eine Zielgruppe und ein Event für deinen Antrag auszuwählen',
+    description:
+      'Navigiere durch das Netzwerk, um eine Zielgruppe und ein Event für deinen Antrag auszuwählen',
     pleaseLogin: 'Bitte melde dich an, um den Antragsprozess anzuzeigen.',
     loading: 'Laden...',
     currentTarget: 'Aktuelles Ziel',
@@ -158,8 +161,10 @@ export const amendmentsTranslations = {
     agendaItemsCreated: '{{count}} Tagesordnungspunkte erstellt',
     votesCreated: '{{count}} Abstimmungen erstellt',
     noTargetSelected: 'Kein Ziel ausgewählt',
-    chooseTargetPrompt: 'Wähle eine Zielgruppe und ein Event aus dem untenstehenden Netzwerk, um den Antragsprozess zu starten.',
-    clickGroupPrompt: 'Klicke auf eine Gruppe im Netzwerk und wähle dann ein Event aus, um dein Ziel festzulegen.',
+    chooseTargetPrompt:
+      'Wähle eine Zielgruppe und ein Event aus dem untenstehenden Netzwerk, um den Antragsprozess zu starten.',
+    clickGroupPrompt:
+      'Klicke auf eine Gruppe im Netzwerk und wähle dann ein Event aus, um dein Ziel festzulegen.',
     amendmentNetwork: 'Antragsnetzwerk',
     availableTargets: 'Verfügbare Ziele',
     targetPath: 'Zielpfad',
@@ -173,8 +178,10 @@ export const amendmentsTranslations = {
     amendmentRight: 'Antragsrecht',
     updateAmendmentTarget: 'Antragsziel aktualisieren',
     setAmendmentTarget: 'Antragsziel festlegen',
-    updateTargetDescription: 'Aktualisiere die Zielgruppe und das Event für deinen Antrag. Dadurch werden der vorherige Tagesordnungspunkt und Pfad entfernt.',
-    setTargetDescription: 'Lege die Zielgruppe und das Event für deinen Antrag fest. Ein Tagesordnungspunkt wird automatisch erstellt.',
+    updateTargetDescription:
+      'Aktualisiere die Zielgruppe und das Event für deinen Antrag. Dadurch werden der vorherige Tagesordnungspunkt und Pfad entfernt.',
+    setTargetDescription:
+      'Lege die Zielgruppe und das Event für deinen Antrag fest. Ein Tagesordnungspunkt wird automatisch erstellt.',
     targetGroup: 'Zielgruppe',
     members: 'Mitglieder',
     public: 'Öffentlich',
@@ -182,14 +189,16 @@ export const amendmentsTranslations = {
     agendaItemWillBeCreated: 'Ein Tagesordnungspunkt wird für das ausgewählte Event erstellt',
     voteWillBeCreated: 'Eine Antragsabstimmung wird für den Tagesordnungspunkt erstellt',
     pathWillBeCalculated: 'Der kürzeste Pfad zur Zielgruppe wird berechnet und gespeichert',
-    previousAgendaItemRemoved: 'Der vorherige Tagesordnungspunkt und die Abstimmung werden entfernt',
+    previousAgendaItemRemoved:
+      'Der vorherige Tagesordnungspunkt und die Abstimmung werden entfernt',
     previousPathDeleted: 'Der vorherige Pfad wird gelöscht',
     cancel: 'Abbrechen',
     processing: 'Verarbeitung...',
     updateTarget: 'Ziel aktualisieren',
     confirmTarget: 'Ziel bestätigen',
     removeAmendmentTarget: 'Antragsziel entfernen',
-    removeTargetConfirmation: 'Bist du sicher, dass du das Ziel für diesen Antrag entfernen möchtest? Dadurch werden auch der zugehörige Tagesordnungspunkt, die Antragsabstimmung und der Pfad gelöscht.',
+    removeTargetConfirmation:
+      'Bist du sicher, dass du das Ziel für diesen Antrag entfernen möchtest? Dadurch werden auch der zugehörige Tagesordnungspunkt, die Antragsabstimmung und der Pfad gelöscht.',
     thisActionWill: 'Diese Aktion wird:',
     removeTargetGroupAndEvent: 'Die Zielgruppe und das Event entfernen',
     deleteAgendaItem: 'Den Tagesordnungspunkt vom Event löschen',
@@ -203,12 +212,14 @@ export const amendmentsTranslations = {
     updating: 'Aktualisieren...',
     select: 'Auswählen',
     selectTargetGroupAndEvent: 'Zielgruppe und Event auswählen',
-    selectCollaboratorDescription: 'Wähle einen Mitarbeiter, um dessen Netzwerk anzuzeigen, dann wähle eine Gruppe und ein Event',
+    selectCollaboratorDescription:
+      'Wähle einen Mitarbeiter, um dessen Netzwerk anzuzeigen, dann wähle eine Gruppe und ein Event',
     selectNetworkFor: 'Netzwerk auswählen für:',
     selectCollaboratorPlaceholder: 'Mitarbeiter auswählen, um dessen Netzwerk anzuzeigen...',
     selectCollaboratorPrompt: 'Bitte wähle einen Mitarbeiter, um dessen Netzwerk anzuzeigen',
     loadingGroups: 'Gruppen werden geladen...',
-    noConnectedGroups: 'Keine verbundenen Gruppen gefunden. Du musst Mitglied von Gruppen mit Antragsrechten sein.',
+    noConnectedGroups:
+      'Keine verbundenen Gruppen gefunden. Du musst Mitglied von Gruppen mit Antragsrechten sein.',
     noUpcomingEvents: 'Keine anstehenden Events für diese Gruppe',
     confirmSelection: 'Auswahl bestätigen',
     targetSetSuccess: 'Ziel erfolgreich festgelegt',
@@ -225,14 +236,16 @@ export const amendmentsTranslations = {
   },
   targetSelection: {
     defaultTitle: 'Zielgruppe und Event auswählen',
-    defaultDescription: 'Wähle einen Mitarbeiter, um dessen Netzwerk anzuzeigen, dann wähle eine Gruppe und ein Event',
+    defaultDescription:
+      'Wähle einen Mitarbeiter, um dessen Netzwerk anzuzeigen, dann wähle eine Gruppe und ein Event',
     defaultConfirm: 'Auswahl bestätigen',
     selectCollaboratorPlaceholder: 'Mitarbeiter auswählen, um dessen Netzwerk anzuzeigen...',
     selectNetworkFor: 'Netzwerk auswählen für:',
     loadingNetwork: 'Dein Netzwerk wird geladen...',
     selectCollaboratorPrompt: 'Bitte wähle einen Mitarbeiter, um dessen Netzwerk anzuzeigen',
     loadingGroups: 'Gruppen werden geladen...',
-    noConnectedGroups: 'Keine verbundenen Gruppen gefunden. Du musst Mitglied von Gruppen mit Antragsrechten sein.',
+    noConnectedGroups:
+      'Keine verbundenen Gruppen gefunden. Du musst Mitglied von Gruppen mit Antragsrechten sein.',
     member: 'Mitglied',
     members: 'Mitglieder',
     noUpcomingEvents: 'Keine anstehenden Events für diese Gruppe',
@@ -246,7 +259,8 @@ export const amendmentsTranslations = {
   pathVisualization: {
     title: 'Antragsprozess-Pfad',
     noTargetSet: 'Noch keine Zielgruppe festgelegt',
-    visitProcessTab: 'Besuche den Prozess-Tab, um eine Zielgruppe und ein Event für diesen Antrag auszuwählen.',
+    visitProcessTab:
+      'Besuche den Prozess-Tab, um eine Zielgruppe und ein Event für diesen Antrag auszuwählen.',
     pathCalculating: 'Pfadberechnung läuft',
     shortestPath: 'Kürzester Pfad zur Zielgruppe ({{count}} Schritte)',
     start: 'Start',
@@ -292,6 +306,30 @@ export const amendmentsTranslations = {
       suggestionAccepted: 'Vorschlag akzeptiert',
       suggestionDeclined: 'Vorschlag abgelehnt',
       autoSave: 'Automatische Speicherung',
+    },
+  },
+  // Support Confirmation
+  supportConfirmation: {
+    title: 'Unterstützungsbestätigungen',
+    noPending: 'Keine ausstehenden Bestätigungen',
+    pending: 'ausstehend',
+    requestedAgo: 'Angefordert {{time}}',
+    changeRequest: 'Änderungsantrag',
+    description:
+      'Eine Änderung wurde an diesem Antrag akzeptiert, den Ihre Gruppe unterstützt. Bitte überprüfen Sie die Änderungen und bestätigen Sie, ob Ihre Gruppe weiterhin unterstützen möchte.',
+    viewChanges: 'Änderungen anzeigen',
+    hideChanges: 'Änderungen ausblenden',
+    confirm: 'Unterstützung bestätigen',
+    decline: 'Unterstützung zurückziehen',
+    comparison: {
+      title: 'Versionsvergleich',
+      hasChanges: 'Änderungen erkannt',
+      sideBySide: 'Nebeneinander',
+      original: 'Original',
+      current: 'Aktuell',
+      originalLabel: 'Original (bei Unterstützung)',
+      currentLabel: 'Aktuelle Version',
+      empty: 'Kein Inhalt',
     },
   },
 } as const;

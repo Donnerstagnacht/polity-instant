@@ -11,7 +11,7 @@ const _amendments = {
       videoThumbnailURL: i.string().optional(),
       status: i.string(),
       workflowStatus: i.string().indexed().optional(), // 'collaborative_editing', 'internal_suggesting', 'internal_voting', 'viewing', 'event_suggesting', 'event_voting'
-      currentEventId: i.string().optional(), // ID of current event in process  
+      currentEventId: i.string().optional(), // ID of current event in process
       subtitle: i.string().optional(),
       supporters: i.number(),
       supporterGroups: i.json().optional(), // Array of group IDs that supported this amendment
@@ -145,6 +145,14 @@ const _amendments = {
     commentVotes: i.entity({
       createdAt: i.date().indexed(),
       vote: i.number().indexed(), // 1 for upvote, -1 for downvote
+    }),
+    // Support confirmations for when change requests are accepted on supported amendments
+    supportConfirmations: i.entity({
+      status: i.string().indexed(), // 'pending', 'confirmed', 'declined'
+      changeRequestId: i.string().indexed(), // Reference to the change request that triggered this
+      originalVersion: i.json(), // Snapshot of amendment document at time of support
+      createdAt: i.date().indexed(),
+      respondedAt: i.date().indexed().optional(), // When the group responded
     }),
   },
   links: {
@@ -766,6 +774,55 @@ const _amendments = {
         on: 'changeRequests',
         has: 'many',
         label: 'sessionVotes',
+      },
+    },
+    // Support confirmation links
+    supportConfirmationsAmendment: {
+      forward: {
+        on: 'supportConfirmations',
+        has: 'one',
+        label: 'amendment',
+      },
+      reverse: {
+        on: 'amendments',
+        has: 'many',
+        label: 'supportConfirmations',
+      },
+    },
+    supportConfirmationsGroup: {
+      forward: {
+        on: 'supportConfirmations',
+        has: 'one',
+        label: 'group',
+      },
+      reverse: {
+        on: 'groups',
+        has: 'many',
+        label: 'supportConfirmations',
+      },
+    },
+    supportConfirmationsChangeRequest: {
+      forward: {
+        on: 'supportConfirmations',
+        has: 'one',
+        label: 'changeRequest',
+      },
+      reverse: {
+        on: 'changeRequests',
+        has: 'many',
+        label: 'supportConfirmations',
+      },
+    },
+    supportConfirmationsAgendaItem: {
+      forward: {
+        on: 'supportConfirmations',
+        has: 'one',
+        label: 'agendaItem',
+      },
+      reverse: {
+        on: 'agendaItems',
+        has: 'one',
+        label: 'supportConfirmation',
       },
     },
   } as const,

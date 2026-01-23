@@ -138,6 +138,13 @@ export const agendaAndVotingSeeder: EntitySeeder = {
         const creatorId = randomItem(userIds);
         const type = randomItem(agendaTypes);
         const startTime = faker.date.future({ years: 0.5 });
+        const status = randomItem(voteStatuses);
+
+        // Add activation and completion timestamps based on status
+        const isCompleted = status === 'completed';
+        const isActive = status === 'active';
+        const activatedAt = isActive || isCompleted ? faker.date.recent({ days: 7 }) : undefined;
+        const completedAt = isCompleted ? faker.date.recent({ days: 3 }) : undefined;
 
         // Create agenda item
         transactions.push(
@@ -148,10 +155,12 @@ export const agendaAndVotingSeeder: EntitySeeder = {
               type,
               scheduledTime: startTime,
               duration: randomInt(15, 120), // 15-120 minutes
-              status: randomItem(voteStatuses),
+              status,
               order: orderCounter++,
               createdAt: faker.date.past({ years: 0.08 }),
               updatedAt: new Date(),
+              ...(activatedAt ? { activatedAt } : {}),
+              ...(completedAt ? { completedAt } : {}),
             })
             .link({ creator: creatorId, event: eventId })
         );

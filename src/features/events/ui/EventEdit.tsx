@@ -12,10 +12,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Loader2 } from 'lucide-react';
+import { Loader2, XCircle } from 'lucide-react';
 import { ImageUpload } from '@/components/shared/ImageUpload';
 import { useEventUpdate } from '../hooks/useEventUpdate';
 import { useTranslation } from '@/hooks/use-translation';
+import { CancelEventDialog } from './CancelEventDialog';
+import { usePermissions } from '@db/rbac';
+import { useState } from 'react';
 
 interface EventEditProps {
   eventId: string;
@@ -24,6 +27,10 @@ interface EventEditProps {
 export function EventEdit({ eventId }: EventEditProps) {
   const router = useRouter();
   const { t } = useTranslation();
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const { can } = usePermissions({ eventId });
+  const canDeleteEvent = can('delete', 'events');
+
   const {
     formData,
     tagInput,
@@ -53,7 +60,9 @@ export function EventEdit({ eventId }: EventEditProps) {
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <p className="text-lg font-semibold">{t('features.events.editPage.notFound')}</p>
-          <p className="text-muted-foreground">{t('features.events.editPage.notFoundDescription')}</p>
+          <p className="text-muted-foreground">
+            {t('features.events.editPage.notFoundDescription')}
+          </p>
           <div className="mt-6">
             <Button onClick={() => router.push(`/calendar`)} variant="default">
               {t('features.events.backToCalendar')}
@@ -128,7 +137,9 @@ export function EventEdit({ eventId }: EventEditProps) {
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="startDate">{t('features.events.editPage.dateTime.startDate')}</Label>
+                <Label htmlFor="startDate">
+                  {t('features.events.editPage.dateTime.startDate')}
+                </Label>
                 <Input
                   id="startDate"
                   type="datetime-local"
@@ -154,11 +165,15 @@ export function EventEdit({ eventId }: EventEditProps) {
         <Card>
           <CardHeader>
             <CardTitle>{t('features.events.editPage.locationCapacity.title')}</CardTitle>
-            <CardDescription>{t('features.events.editPage.locationCapacity.description')}</CardDescription>
+            <CardDescription>
+              {t('features.events.editPage.locationCapacity.description')}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="location">{t('features.events.editPage.locationCapacity.location')}</Label>
+              <Label htmlFor="location">
+                {t('features.events.editPage.locationCapacity.location')}
+              </Label>
               <Input
                 id="location"
                 value={formData.location}
@@ -167,7 +182,9 @@ export function EventEdit({ eventId }: EventEditProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="capacity">{t('features.events.editPage.locationCapacity.capacity')}</Label>
+              <Label htmlFor="capacity">
+                {t('features.events.editPage.locationCapacity.capacity')}
+              </Label>
               <Input
                 id="capacity"
                 type="number"
@@ -235,6 +252,20 @@ export function EventEdit({ eventId }: EventEditProps) {
           >
             {t('features.events.cancel')}
           </Button>
+
+          {/* Cancel Event Button - only for users with delete permission */}
+          {canDeleteEvent && (
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => setCancelDialogOpen(true)}
+              disabled={isSubmitting}
+            >
+              <XCircle className="mr-2 h-4 w-4" />
+              {t('features.events.cancel.cancelEvent', 'Cancel Event')}
+            </Button>
+          )}
+
           <Button type="submit" disabled={isSubmitting} className="flex-1">
             {isSubmitting ? (
               <>
@@ -247,6 +278,16 @@ export function EventEdit({ eventId }: EventEditProps) {
           </Button>
         </div>
       </form>
+
+      {/* Cancel Event Dialog */}
+      {canDeleteEvent && (
+        <CancelEventDialog
+          eventId={eventId}
+          open={cancelDialogOpen}
+          onOpenChange={setCancelDialogOpen}
+          onCancelled={() => router.push('/calendar')}
+        />
+      )}
     </div>
   );
 }

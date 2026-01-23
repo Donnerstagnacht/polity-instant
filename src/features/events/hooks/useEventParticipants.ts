@@ -71,7 +71,8 @@ export function useEventParticipants(eventId: string) {
   };
 
   // Initialize event mutations hook
-  const { inviteParticipants, removeParticipant, changeParticipantRole, approveParticipation } = useEventMutations(eventId);
+  const { inviteParticipants, removeParticipant, changeParticipantRole, approveParticipation } =
+    useEventMutations(eventId);
 
   const handleInviteUsers = async () => {
     if (selectedUsers.length === 0) return;
@@ -185,9 +186,8 @@ export function useEventParticipants(eventId: string) {
             .create({
               resource,
               action,
-              eventId: eventId,
             })
-            .link({ roles: roleId }),
+            .link({ roles: roleId, event: eventId }),
         ]);
       }
     } catch (error) {
@@ -220,12 +220,14 @@ export function useEventParticipants(eventId: string) {
     [filteredParticipants]
   );
   const activeParticipants = useMemo(
-    () => filteredParticipants.filter((p: any) => 
-      p.status === 'member' || 
-      p.status === 'confirmed' || 
-      p.status === 'admin' ||
-      p.role?.name === 'Organizer'
-    ),
+    () =>
+      filteredParticipants.filter(
+        (p: any) =>
+          p.status === 'member' ||
+          p.status === 'confirmed' ||
+          p.status === 'admin' ||
+          p.role?.name === 'Organizer'
+      ),
     [filteredParticipants]
   );
   const invitedUsers = useMemo(
@@ -242,17 +244,25 @@ export function useEventParticipants(eventId: string) {
     rolesData,
     filteredUsers,
     isLoadingUsers,
-    
+
     state: {
-      searchQuery, setSearchQuery,
-      inviteSearchQuery, setInviteSearchQuery,
-      selectedUsers, setSelectedUsers,
-      inviteDialogOpen, setInviteDialogOpen,
+      searchQuery,
+      setSearchQuery,
+      inviteSearchQuery,
+      setInviteSearchQuery,
+      selectedUsers,
+      setSelectedUsers,
+      inviteDialogOpen,
+      setInviteDialogOpen,
       isInviting,
-      activeTab, setActiveTab,
-      newRoleName, setNewRoleName,
-      newRoleDescription, setNewRoleDescription,
-      addRoleDialogOpen, setAddRoleDialogOpen,
+      activeTab,
+      setActiveTab,
+      newRoleName,
+      setNewRoleName,
+      newRoleDescription,
+      setNewRoleDescription,
+      addRoleDialogOpen,
+      setAddRoleDialogOpen,
     },
 
     derived: {
@@ -271,6 +281,6 @@ export function useEventParticipants(eventId: string) {
       removeRole: handleRemoveRole,
       toggleActionRight: handleToggleActionRight,
       goBack: () => router.back(),
-    }
+    },
   };
 }

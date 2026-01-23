@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { db } from '../../../../db/db';
@@ -38,10 +38,14 @@ import {
   Search as SearchIcon,
   Filter,
   ArrowRight,
+  Play,
+  Check,
 } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
 import { ActionBar } from '@/components/ui/ActionBar';
 import { TimelineItem, AgendaCard } from '@/components/shared/timeline';
+import { useToast } from '@/hooks/use-toast';
+import { AgendaNavigationControls } from './AgendaNavigationControls';
 
 interface EventAgendaProps {
   eventId: string;
@@ -50,11 +54,19 @@ interface EventAgendaProps {
 export function EventAgenda({ eventId }: EventAgendaProps) {
   const router = useRouter();
   const { t } = useTranslation();
+  const { toast } = useToast();
   const { user } = db.useAuth();
   const { event, isLoading: eventLoading } = useEventData(eventId);
   const { agendaItems, electionVotes, amendmentVoteEntries, isLoading } = useAgendaItems(eventId);
   const { handleElectionVote, handleAmendmentVote, votingLoading } = useVoting();
   const { can } = usePermissions({ eventId });
+
+  // Track current agenda item changes for toast notifications
+  const previousAgendaItemIdRef = useRef<string | null>(null);
+  const activeItemRef = useRef<HTMLDivElement>(null);
+
+  // Get the current active agenda item from event
+  const currentAgendaItemId = event?.currentAgendaItemId;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -64,6 +76,25 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     id: string;
     title: string;
   } | null>(null);
+
+  // Show toast and auto-scroll when current agenda item changes
+  useEffect(() => {
+    if (currentAgendaItemId && currentAgendaItemId !== previousAgendaItemIdRef.current) {
+      const currentItem = agendaItems.find((item: any) => item.id === currentAgendaItemId);
+      if (currentItem && previousAgendaItemIdRef.current !== null) {
+        // Only show toast if this is not the initial load
+        toast(t('features.events.agenda.itemActivated'), {
+          description: currentItem.title,
+        });
+      }
+      previousAgendaItemIdRef.current = currentAgendaItemId;
+
+      // Auto-scroll to active item after a short delay
+      setTimeout(() => {
+        activeItemRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
+  }, [currentAgendaItemId, agendaItems, toast, t]);
 
   // Check if user can manage agenda items
   const canManageAgenda = can('manage', 'agendaItems');
@@ -253,6 +284,9 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
         </CardContent>
       </Card>
 
+      {/* Agenda Navigation Controls for managing agenda progression */}
+      {canManageAgenda && <AgendaNavigationControls eventId={eventId} />}
+
       {/* Action Bar */}
       <ActionBar>
         <Button asChild variant="outline">
@@ -406,28 +440,57 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
               }
             }
 
+            // Check if this is the currently active item from event
+            const isCurrentItem = currentAgendaItemId === item.id;
+            const isCompleted = item.status === 'completed' || !!item.completedAt;
+
             return (
-              <TimelineItem
+              <div
                 key={item.id}
-                order={item.order}
-                startTime={formatTime(item.calculatedStartTime)}
-                endTime={formatTime(item.calculatedEndTime)}
-                duration={item.calculatedDuration}
+                ref={isCurrentItem ? activeItemRef : undefined}
+                className={isCurrentItem ? 'relative' : ''}
               >
-                <AgendaCard
-                  id={item.id}
-                  title={item.title}
-                  description={item.description}
-                  type={item.type}
-                  status={item.status}
-                  creatorName={item.creator?.name || item.creator?.email}
-                  detailsLink={`/event/${eventId}/agenda/${item.id}`}
-                  isActive={isActive}
-                  actionButton={actionButton}
-                  showMoveButton={canManageAgenda}
-                  onMoveClick={() => setTransferDialogItem({ id: item.id, title: item.title })}
-                />
-              </TimelineItem>
+                {/* Active item indicator */}
+                {isCurrentItem && (
+                  <div className="absolute -left-4 top-1/2 flex -translate-y-1/2 items-center gap-2">
+                    <div className="animate-pulse">
+                      <Play className="h-5 w-5 fill-primary text-primary" />
+                    </div>
+                  </div>
+                )}
+                <TimelineItem
+                  order={item.order}
+                  startTime={formatTime(item.calculatedStartTime)}
+                  endTime={formatTime(item.calculatedEndTime)}
+                  duration={item.calculatedDuration}
+                >
+                  <div
+                    className={`relative ${isCurrentItem ? 'animate-pulse-subtle rounded-lg ring-2 ring-primary ring-offset-2' : ''} ${isCompleted ? 'opacity-70' : ''}`}
+                  >
+                    {/* Completion checkmark overlay */}
+                    {isCompleted && (
+                      <div className="absolute -right-2 -top-2 z-10">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-white">
+                          <Check className="h-4 w-4" />
+                        </div>
+                      </div>
+                    )}
+                    <AgendaCard
+                      id={item.id}
+                      title={item.title}
+                      description={item.description}
+                      type={item.type}
+                      status={item.status}
+                      creatorName={item.creator?.name || item.creator?.email}
+                      detailsLink={`/event/${eventId}/agenda/${item.id}`}
+                      isActive={isActive}
+                      actionButton={actionButton}
+                      showMoveButton={canManageAgenda}
+                      onMoveClick={() => setTransferDialogItem({ id: item.id, title: item.title })}
+                    />
+                  </div>
+                </TimelineItem>
+              </div>
             );
           })}
         </div>

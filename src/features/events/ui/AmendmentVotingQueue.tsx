@@ -13,9 +13,16 @@ import {
   Clock,
   GripVertical,
   FileText,
+  ThumbsUp,
+  ThumbsDown,
+  Minus,
 } from 'lucide-react';
 import db, { tx } from '../../../../db/db';
 import { toast } from 'sonner';
+import { useChangeRequestVoting } from '../hooks/useChangeRequestVoting';
+import { VoteButtons } from './VoteButtons';
+import { VotingPhaseIndicator } from './VotingPhaseIndicator';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface ChangeRequest {
   id: string;
@@ -59,6 +66,7 @@ interface AmendmentVotingQueueProps {
   isOrganizer: boolean;
   onAdvanceToNext: () => void;
   onComplete: () => void;
+  userId?: string;
 }
 
 function ChangeRequestItem({
@@ -84,7 +92,6 @@ function ChangeRequestItem({
   canMoveUp?: boolean;
   canMoveDown?: boolean;
 }) {
-
   const totalVotes = voteResults
     ? voteResults.accept + voteResults.reject + voteResults.abstain
     : 0;
@@ -153,18 +160,14 @@ function ChangeRequestItem({
                 </Badge>
               )}
             </div>
-            <Badge variant="outline">
-              {changeRequest.characterCount || 0} Zeichen geändert
-            </Badge>
+            <Badge variant="outline">{changeRequest.characterCount || 0} Zeichen geändert</Badge>
           </div>
 
           <p className="text-sm text-muted-foreground">{changeRequest.description}</p>
 
           {changeRequest.creator && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>
-                Vorgeschlagen von {changeRequest.creator.name || 'Unbekannt'}
-              </span>
+              <span>Vorgeschlagen von {changeRequest.creator.name || 'Unbekannt'}</span>
               {changeRequest.source && (
                 <Badge variant="outline" className="text-xs">
                   {changeRequest.source === 'collaborator' ? 'Collaborator' : 'Event-Teilnehmer'}
@@ -201,8 +204,27 @@ export function AmendmentVotingQueue({
   isOrganizer,
   onAdvanceToNext,
   onComplete,
+  userId,
 }: AmendmentVotingQueueProps) {
+  const { t } = useTranslation();
   const [localChangeRequests, setLocalChangeRequests] = useState(changeRequests);
+
+  // Integrate with useChangeRequestVoting for proper voting management
+  const {
+    currentChangeRequest,
+    pendingChangeRequests: hookPendingCRs,
+    voteResults: currentVoteResults,
+    hasVoted,
+    castVote,
+    moveToNextChangeRequest,
+    isLoading: votingLoading,
+  } = useChangeRequestVoting({
+    eventId,
+    votingSessionId: currentSession?.id || '',
+    userId: userId || '',
+    agendaItemId,
+    amendmentId,
+  });
 
   // Sort change requests by votingOrder (if set) or characterCount
   const sortedChangeRequests = useMemo(() => {
@@ -220,9 +242,7 @@ export function AmendmentVotingQueue({
   const totalRequests = sortedChangeRequests.length;
   const progress = totalRequests > 0 ? ((currentIndex + 1) / (totalRequests + 1)) * 100 : 0;
 
-  const timeRemaining = currentSession
-    ? Math.max(0, currentSession.votingEndTime - Date.now())
-    : 0;
+  const timeRemaining = currentSession ? Math.max(0, currentSession.votingEndTime - Date.now()) : 0;
   const minutesRemaining = Math.floor(timeRemaining / 60000);
   const secondsRemaining = Math.floor((timeRemaining % 60000) / 1000);
 
@@ -298,11 +318,7 @@ export function AmendmentVotingQueue({
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold">Vorschläge ({totalRequests})</h3>
-            {isOrganizer && (
-              <p className="text-xs text-muted-foreground">
-                ↑↓ zum Neuordnen
-              </p>
-            )}
+            {isOrganizer && <p className="text-xs text-muted-foreground">↑↓ zum Neuordnen</p>}
           </div>
 
           <div className="space-y-2">
@@ -327,6 +343,77 @@ export function AmendmentVotingQueue({
             ))}
           </div>
         </div>
+
+        {/* Current Vote Section */}
+        {currentChangeRequest && currentSession?.status === 'active' && (
+          <div className="space-y-4 rounded-lg border-2 border-primary bg-primary/5 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-semibold">
+                  {t('features.events.voting.castYourVote', 'Cast Your Vote')}
+                </h4>
+                <p className="text-sm text-muted-foreground">{currentChangeRequest.title}</p>
+              </div>
+              {hasVoted && (
+                <Badge variant="outline" className="bg-green-50">
+                  <CheckCircle2 className="mr-1 h-3 w-3" />
+                  {t('features.events.voting.voted', 'Voted')}
+                </Badge>
+              )}
+            </div>
+
+            {/* Vote Results Display */}
+            {currentVoteResults && (
+              <div className="flex items-center gap-4 text-sm">
+                <span className="flex items-center gap-1">
+                  <ThumbsUp className="h-4 w-4 text-green-600" />
+                  {currentVoteResults.accept}
+                </span>
+                <span className="flex items-center gap-1">
+                  <ThumbsDown className="h-4 w-4 text-red-600" />
+                  {currentVoteResults.reject}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Minus className="h-4 w-4 text-gray-600" />
+                  {currentVoteResults.abstain}
+                </span>
+              </div>
+            )}
+
+            {/* Vote Buttons */}
+            {!hasVoted && userId && (
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => castVote('accept')}
+                  disabled={votingLoading}
+                  variant="outline"
+                  className="flex-1 border-green-500 text-green-600 hover:bg-green-50"
+                >
+                  <ThumbsUp className="mr-2 h-4 w-4" />
+                  {t('features.events.voting.accept', 'Accept')}
+                </Button>
+                <Button
+                  onClick={() => castVote('reject')}
+                  disabled={votingLoading}
+                  variant="outline"
+                  className="flex-1 border-red-500 text-red-600 hover:bg-red-50"
+                >
+                  <ThumbsDown className="mr-2 h-4 w-4" />
+                  {t('features.events.voting.reject', 'Reject')}
+                </Button>
+                <Button
+                  onClick={() => castVote('abstain')}
+                  disabled={votingLoading}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  <Minus className="mr-2 h-4 w-4" />
+                  {t('features.events.voting.abstain', 'Abstain')}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Final Text Vote */}
         {currentIndex >= totalRequests && (

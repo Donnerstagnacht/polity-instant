@@ -51,6 +51,7 @@ const _groups = {
       term: i.number(),
       title: i.string().indexed(),
       updatedAt: i.date().indexed(),
+      scheduledRevoteDate: i.date().indexed().optional(), // When the next revote is scheduled
     }),
     positionHolderHistory: i.entity({
       startDate: i.date().indexed(),
