@@ -16,7 +16,7 @@ export const followsSeeder: EntitySeeder = {
     const followIds: string[] = [];
     const mainUserId = SEED_CONFIG.mainTestUserId;
     let followsToFollowers = 0;
-    let followsToFollowed = 0;
+    let followsToFollowees = 0;
 
     // Main user following 10 random users
     const mainUserFollowing = randomItems(
@@ -29,10 +29,10 @@ export const followsSeeder: EntitySeeder = {
       transactions.push(
         tx.follows[followId]
           .update({ createdAt: faker.date.past({ years: 1 }) })
-          .link({ follower: mainUserId, followed: followedId })
+          .link({ follower: mainUserId, followee: followedId })
       );
       followsToFollowers++;
-      followsToFollowed++;
+      followsToFollowees++;
     }
 
     // 5 random users following main user
@@ -46,10 +46,10 @@ export const followsSeeder: EntitySeeder = {
       transactions.push(
         tx.follows[followId]
           .update({ createdAt: faker.date.past({ years: 1 }) })
-          .link({ follower: followerId, followed: mainUserId })
+          .link({ follower: followerId, followee: mainUserId })
       );
       followsToFollowers++;
-      followsToFollowed++;
+      followsToFollowees++;
     }
 
     // Random follows between other users
@@ -69,17 +69,17 @@ export const followsSeeder: EntitySeeder = {
         transactions.push(
           tx.follows[followId]
             .update({ createdAt: faker.date.past({ years: 1 }) })
-            .link({ follower: userId, followed: followedId })
+            .link({ follower: userId, followee: followedId })
         );
         followsToFollowers++;
-        followsToFollowed++;
+        followsToFollowees++;
       }
     }
 
     await batchTransact(db, transactions);
     console.log(`✅ Seeded ${followIds.length} follows`);
     console.log(`  - Follow-to-follower links: ${followsToFollowers}`);
-    console.log(`  - Follow-to-followed links: ${followsToFollowed}`);
+    console.log(`  - Follow-to-followee links: ${followsToFollowees}`);
 
     return {
       ...context,
@@ -87,7 +87,7 @@ export const followsSeeder: EntitySeeder = {
       linkCounts: {
         ...context.linkCounts,
         followsToFollowers: (context.linkCounts?.followsToFollowers || 0) + followsToFollowers,
-        followsToFollowed: (context.linkCounts?.followsToFollowed || 0) + followsToFollowed,
+        followsToFollowees: (context.linkCounts?.followsToFollowees || 0) + followsToFollowees,
       },
     };
   },

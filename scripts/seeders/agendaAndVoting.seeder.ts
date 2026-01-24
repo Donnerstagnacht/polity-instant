@@ -76,7 +76,7 @@ export const agendaAndVotingSeeder: EntitySeeder = {
               title: `Wahl: ${eventPosition.title}`,
               description: eventPosition.description || `Election for ${eventPosition.title}`,
               type: 'election',
-              scheduledTime: startTime,
+              scheduledTime: startTime.toISOString(),
               duration: randomInt(15, 45), // 15-45 minutes for elections
               status: 'planned',
               order: orderCounter++,
@@ -156,7 +156,7 @@ export const agendaAndVotingSeeder: EntitySeeder = {
               title: faker.lorem.words(randomInt(3, 6)),
               description: faker.lorem.paragraph(),
               type,
-              scheduledTime: startTime,
+              scheduledTime: startTime.toISOString(),
               duration: randomInt(15, 120), // 15-120 minutes
               status,
               order: orderCounter++,

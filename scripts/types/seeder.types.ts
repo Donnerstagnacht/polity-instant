@@ -72,7 +72,7 @@ export interface SeedContext {
 
     // Follows
     followsToFollowers?: number;
-    followsToFollowed?: number;
+    followsToFollowees?: number;
 
     // Groups
     groupsToOwners?: number;
@@ -129,7 +129,8 @@ export interface SeedContext {
     groupRelationshipsToChildGroups?: number;
 
     // Payments
-    paymentsToGroups?: number;
+    paymentsToPayerGroups?: number;
+    paymentsToReceiverGroups?: number;
     paymentsToPayerUsers?: number;
     paymentsToReceiverUsers?: number;
 

@@ -49,41 +49,39 @@ export const eventVotingSessionsSeeder: EntitySeeder = {
       if (!eventId || !amendmentId) continue;
 
       const sessionId = id();
-      const createdById = randomItem(userIds);
-      const sessionPhase = randomItem(['setup', 'introduction', 'voting', 'closed']);
-      const duration = randomInt(60, 300); // 1-5 minutes
-      const quorumPercentage = randomItem([50, 60, 67, 75]);
-      const passThreshold = randomItem([50, 60, 67]);
+      const sessionPhase = randomItem(['introduction', 'voting', 'completed']);
+      const timeLimit = randomInt(60, 300); // 1-5 minutes in seconds
+      const majorityType = randomItem(['simple', 'absolute', 'two_thirds']);
+      const votingType = 'amendment';
 
       const startedAt =
-        sessionPhase !== 'setup' ? faker.date.recent({ days: 7 }).getTime() : undefined;
-      const closedAt =
-        sessionPhase === 'closed'
-          ? startedAt! + duration * 1000 + randomInt(1000, 10000)
-          : undefined;
+        sessionPhase !== 'introduction' ? faker.date.recent({ days: 7 }) : undefined;
+      const endedAt = sessionPhase === 'completed' ? faker.date.recent({ days: 1 }) : undefined;
 
       transactions.push(
         tx.eventVotingSessions[sessionId]
           .update({
             phase: sessionPhase,
-            duration,
-            quorumPercentage,
-            passThreshold,
-            startedAt,
-            closedAt,
-            createdAt: faker.date.past({ years: 0.1 }).getTime(),
+            votingType,
+            timeLimit,
+            majorityType,
+            targetEntityType: 'amendment',
+            targetEntityId: amendmentId,
+            ...(startedAt ? { startedAt } : {}),
+            ...(endedAt ? { endedAt } : {}),
+            createdAt: faker.date.past({ years: 0.1 }),
+            updatedAt: new Date(),
           })
           .link({
             event: eventId,
             agendaItem: agendaItem.id,
             amendment: amendmentId,
-            createdBy: createdById,
           })
       );
       totalVotingSessions++;
 
-      // Create votes for voting/closed sessions
-      if (sessionPhase === 'voting' || sessionPhase === 'closed') {
+      // Create votes for voting/completed sessions
+      if (sessionPhase === 'voting' || sessionPhase === 'completed') {
         const voterCount = randomInt(3, Math.min(10, userIds.length));
         const voters = randomItems(userIds, voterCount);
 
@@ -94,12 +92,12 @@ export const eventVotingSessionsSeeder: EntitySeeder = {
           transactions.push(
             tx.eventVotes[voteId]
               .update({
-                voteType,
-                votedAt: faker.date.recent({ days: 1 }).getTime(),
+                vote: voteType,
+                createdAt: faker.date.recent({ days: 1 }),
               })
               .link({
                 session: sessionId,
-                user: voterId,
+                voter: voterId,
               })
           );
           totalEventVotes++;

@@ -25,7 +25,6 @@ export const cleanDatabaseSeeder: EntitySeeder = {
         blogBloggers: {},
         amendments: {},
         amendmentCollaborators: {},
-        user: {},
         groups: {},
         groupMemberships: {},
         groupRelationships: {},
@@ -123,7 +122,6 @@ export const cleanDatabaseSeeder: EntitySeeder = {
         'groupRelationships', // Delete group relationships
         'groupMemberships',
         'groups',
-        'user',
         'amendments',
         'blogs',
         'statements',

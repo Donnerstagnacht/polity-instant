@@ -37,7 +37,6 @@ export const subscriptionsSeeder: EntitySeeder = {
         tx.subscribers[subscriptionId]
           .update({
             createdAt: faker.date.past({ years: 0.5 }),
-            notificationsEnabled: faker.datatype.boolean(0.8),
           })
           .link({ subscriber: mainUserId, user: subscribedId })
       );
@@ -54,7 +53,6 @@ export const subscriptionsSeeder: EntitySeeder = {
         tx.subscribers[subscriptionId]
           .update({
             createdAt: faker.date.past({ years: 0.5 }),
-            notificationsEnabled: faker.datatype.boolean(0.8),
           })
           .link({ subscriber: mainUserId, group: groupId })
       );
@@ -72,7 +70,6 @@ export const subscriptionsSeeder: EntitySeeder = {
           tx.subscribers[subscriptionId]
             .update({
               createdAt: faker.date.past({ years: 0.5 }),
-              notificationsEnabled: faker.datatype.boolean(0.8),
             })
             .link({ subscriber: mainUserId, event: eventId })
         );
@@ -91,7 +88,6 @@ export const subscriptionsSeeder: EntitySeeder = {
           tx.subscribers[subscriptionId]
             .update({
               createdAt: faker.date.past({ years: 0.5 }),
-              notificationsEnabled: faker.datatype.boolean(0.8),
             })
             .link({ subscriber: mainUserId, amendment: amendmentId })
         );
@@ -110,7 +106,6 @@ export const subscriptionsSeeder: EntitySeeder = {
           tx.subscribers[subscriptionId]
             .update({
               createdAt: faker.date.past({ years: 0.5 }),
-              notificationsEnabled: faker.datatype.boolean(0.8),
             })
             .link({ subscriber: mainUserId, blog: blogId })
         );
@@ -134,7 +129,6 @@ export const subscriptionsSeeder: EntitySeeder = {
           tx.subscribers[subscriptionId]
             .update({
               createdAt: faker.date.past({ years: 0.5 }),
-              notificationsEnabled: faker.datatype.boolean(0.7),
             })
             .link({ subscriber: userId, user: subscribedId })
         );
@@ -151,7 +145,6 @@ export const subscriptionsSeeder: EntitySeeder = {
           tx.subscribers[subscriptionId]
             .update({
               createdAt: faker.date.past({ years: 0.5 }),
-              notificationsEnabled: faker.datatype.boolean(0.7),
             })
             .link({ subscriber: userId, group: subscribedGroup })
         );
@@ -168,7 +161,6 @@ export const subscriptionsSeeder: EntitySeeder = {
           tx.subscribers[subscriptionId]
             .update({
               createdAt: faker.date.past({ years: 0.5 }),
-              notificationsEnabled: faker.datatype.boolean(0.7),
             })
             .link({ subscriber: userId, event: subscribedEvent })
         );
@@ -185,7 +177,6 @@ export const subscriptionsSeeder: EntitySeeder = {
           tx.subscribers[subscriptionId]
             .update({
               createdAt: faker.date.past({ years: 0.5 }),
-              notificationsEnabled: faker.datatype.boolean(0.7),
             })
             .link({ subscriber: userId, amendment: subscribedAmendment })
         );
@@ -202,7 +193,6 @@ export const subscriptionsSeeder: EntitySeeder = {
           tx.subscribers[subscriptionId]
             .update({
               createdAt: faker.date.past({ years: 0.5 }),
-              notificationsEnabled: faker.datatype.boolean(0.7),
             })
             .link({ subscriber: userId, blog: subscribedBlog })
         );

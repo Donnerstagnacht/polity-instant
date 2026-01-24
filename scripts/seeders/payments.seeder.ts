@@ -13,7 +13,8 @@ export const paymentsSeeder: EntitySeeder = {
     const { db, userIds, groupIds } = context;
     const paymentIds: string[] = [];
     const transactions = [];
-    let paymentsToGroups = 0;
+    let paymentsToPayerGroups = 0;
+    let paymentsToReceiverGroups = 0;
     let paymentsToPayerUsers = 0;
     let paymentsToReceiverUsers = 0;
 
@@ -37,12 +38,16 @@ export const paymentsSeeder: EntitySeeder = {
               createdAt: faker.date.past({ years: 0.5 }),
             })
             .link({
-              group: groupId,
+              ...(isIncome ? { receiverGroup: groupId } : { payerGroup: groupId }),
               payerUser: payerUserId,
               receiverUser: receiverUserId,
             })
         );
-        paymentsToGroups++;
+        if (isIncome) {
+          paymentsToReceiverGroups++;
+        } else {
+          paymentsToPayerGroups++;
+        }
         paymentsToPayerUsers++;
         paymentsToReceiverUsers++;
       }
@@ -50,16 +55,20 @@ export const paymentsSeeder: EntitySeeder = {
 
     await batchTransact(db, transactions);
     console.log(`✅ Seeded ${paymentIds.length} payments`);
-    console.log(`  - Payment-to-group links: ${paymentsToGroups}`);
-    console.log(`  - Payment-to-payer links: ${paymentsToPayerUsers}`);
-    console.log(`  - Payment-to-receiver links: ${paymentsToReceiverUsers}`);
+    console.log(`  - Payment-to-payer-group links: ${paymentsToPayerGroups}`);
+    console.log(`  - Payment-to-receiver-group links: ${paymentsToReceiverGroups}`);
+    console.log(`  - Payment-to-payer-user links: ${paymentsToPayerUsers}`);
+    console.log(`  - Payment-to-receiver-user links: ${paymentsToReceiverUsers}`);
 
     return {
       ...context,
       paymentIds,
       linkCounts: {
         ...context.linkCounts,
-        paymentsToGroups: (context.linkCounts?.paymentsToGroups || 0) + paymentsToGroups,
+        paymentsToPayerGroups:
+          (context.linkCounts?.paymentsToPayerGroups || 0) + paymentsToPayerGroups,
+        paymentsToReceiverGroups:
+          (context.linkCounts?.paymentsToReceiverGroups || 0) + paymentsToReceiverGroups,
         paymentsToPayerUsers:
           (context.linkCounts?.paymentsToPayerUsers || 0) + paymentsToPayerUsers,
         paymentsToReceiverUsers:
