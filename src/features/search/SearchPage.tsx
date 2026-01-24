@@ -328,6 +328,8 @@ export function SearchPage() {
             endDate: item.votingEndTime ? toDate(item.votingEndTime) : undefined,
             candidates: item.candidates || [],
             totalCandidates: item.candidates?.length || 0,
+            agendaEventId: item.agendaItem?.event?.id,
+            agendaItemId: item.agendaItem?.id,
           });
           break;
         case 'vote':
@@ -349,6 +351,9 @@ export function SearchPage() {
               reactions: item.votes?.filter((v: any) => v.vote === 'accept')?.length || 0,
               comments: item.votes?.filter((v: any) => v.vote === 'reject')?.length || 0,
             },
+            agendaEventId:
+              item.election?.agendaItem?.event?.id || item.amendment?.agendaItems?.[0]?.event?.id,
+            agendaItemId: item.election?.agendaItem?.id || item.amendment?.agendaItems?.[0]?.id,
           });
           break;
         case 'video':
@@ -684,6 +689,8 @@ export function SearchPage() {
                 supportPercentage,
                 supportCount,
                 opposeCount,
+                agendaEventId: item.agendaEventId,
+                agendaItemId: item.agendaItemId,
               },
             };
           }
@@ -700,6 +707,8 @@ export function SearchPage() {
               candidates: item.candidates || [],
               totalCandidates: item.totalCandidates || 0,
               votingEndDate: item.endDate,
+              agendaEventId: item.agendaEventId,
+              agendaItemId: item.agendaItemId,
             },
           };
           break;

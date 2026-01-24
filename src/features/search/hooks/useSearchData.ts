@@ -208,6 +208,9 @@ export function useSearchData(
         group: {},
       },
       candidates: {},
+      agendaItem: {
+        event: {},
+      },
     },
   });
 
@@ -220,6 +223,16 @@ export function useSearchData(
       event: {},
       votes: {
         voter: {},
+      },
+      election: {
+        agendaItem: {
+          event: {},
+        },
+      },
+      amendment: {
+        agendaItems: {
+          event: {},
+        },
       },
     },
   });

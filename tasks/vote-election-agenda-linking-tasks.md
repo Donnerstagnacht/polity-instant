@@ -111,19 +111,36 @@ This document tracks all tasks needed to ensure Vote and Election timeline cards
 
 ---
 
-## 6. Verification & Testing
+## 6. Search Integration
 
-### 6.1 Re-seed and verify data
+### 6.1 Update search data queries
 
-- [ ] Run seed script to create fresh data with new linking
+- [x] In [src/features/search/hooks/useSearchData.ts](../src/features/search/hooks/useSearchData.ts), added `agendaItem: { event: {} }` to elections query
+- [x] Added `election: { agendaItem: { event: {} } }` and `amendment: { agendaItems: { event: {} } }` to eventVotingSessions query
+
+### 6.2 Update search result mapping
+
+- [x] In [src/features/search/SearchPage.tsx](../src/features/search/SearchPage.tsx), extract `agendaEventId` and `agendaItemId` from election's `agendaItem.event.id` and `agendaItem.id`
+- [x] Extract `agendaEventId` and `agendaItemId` from vote's `election.agendaItem` or `amendment.agendaItems[0]`
+- [x] Pass these values to vote and election card props in search results
+
+---
+
+## 7. Verification & Testing
+
+### 7.1 Re-seed and verify data
+
+- [ ] Run seed script to create fresh data with new linking: `npm run seed`
 - [ ] Verify in database that elections have agendaItem links
 - [ ] Verify in database that amendmentVotes have agendaItem links
 - [ ] Verify in database that timeline events for votes/elections have the linked entities
 
-### 6.2 Manual UI verification
+### 7.2 Manual UI verification
 
 - [ ] Navigate to timeline, find a Vote card, click it, confirm it navigates to `/event/{id}/agenda/{agendaItemId}`
 - [ ] Navigate to timeline, find an Election card, click it, confirm it navigates to `/event/{id}/agenda/{agendaItemId}`
+- [ ] **Navigate to search, find a Vote card, click it, confirm it navigates to `/event/{id}/agenda/{agendaItemId}`**
+- [ ] **Navigate to search, find an Election card, click it, confirm it navigates to `/event/{id}/agenda/{agendaItemId}`**
 - [ ] Verify fallback behavior works when no agenda item is linked (falls back to amendment or group page)
 
 ---
@@ -137,7 +154,8 @@ This document tracks all tasks needed to ensure Vote and Election timeline cards
 | 3. timelineEvents Seeder  | 5     | ✅ Completed |
 | 4. Timeline Hook Updates  | 2     | ✅ Completed |
 | 5. ModernTimeline Mapping | 2     | ✅ Completed |
-| 6. Verification & Testing | 2     | Pending      |
+| 6. Search Integration     | 4     | ✅ Completed |
+| 7. Verification & Testing | 5     | Pending      |
 
 ---
 

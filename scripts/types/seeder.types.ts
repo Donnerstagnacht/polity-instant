@@ -179,6 +179,8 @@ export interface SeedContext {
     timelineEventsToGroups?: number;
     timelineEventsToUsers?: number;
     timelineEventsToStatements?: number;
+    timelineEventsToElections?: number;
+    timelineEventsToAmendmentVotes?: number;
 
     // Reactions
     reactionsToUsers?: number;
