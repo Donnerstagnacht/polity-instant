@@ -1,8 +1,10 @@
 /**
- * Main document editor view component
+ * Main document editor view component for Amendments
+ *
+ * Uses the unified editor system from @/features/editor
  */
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { PlateEditor } from '@/components/kit-platejs/plate-editor';
@@ -12,22 +14,24 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, Users, Eye, ArrowLeft, FileText, Pencil } from 'lucide-react';
-import { VersionControl } from '@/features/amendments/ui/VersionControl';
 import { ShareButton } from '@/components/shared/ShareButton';
 import { useNavigationStore } from '@/navigation/state/navigation.store';
 import { useScreenStore } from '@/global-state/screen.store';
 import { useNavigation } from '@/navigation/state/useNavigation';
 import { useSuggestionIdAssignment } from '@/hooks/use-suggestion-id-assignment';
-import { useDocumentEditor } from '../hooks/useDocumentEditor';
-import { useDocumentPresence } from '../hooks/useDocumentPresence';
-import { useEditorUsers } from '../hooks/useEditorUsers';
+
+// Unified editor imports
 import {
-  restoreVersion,
-  acceptSuggestion,
-  declineSuggestion,
-  changeEditingMode,
-  voteOnSuggestion,
-} from '../utils/document-operations';
+  useEditor,
+  useEditorPresence,
+  useEditorUsers,
+  VersionControl,
+  handleSuggestionAccepted,
+  handleSuggestionDeclined,
+  handleVoteOnSuggestion,
+  type EditorUser,
+} from '@/features/editor';
+import db from '@db/db';
 
 interface DocumentEditorViewProps {
   amendmentId: string;
@@ -43,32 +47,61 @@ export function DocumentEditorView({
   userColor,
 }: DocumentEditorViewProps) {
   const router = useRouter();
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
 
   // Navigation state
   const { navigationView, navigationType } = useNavigationStore();
   const { isMobileScreen } = useScreenStore();
   const { secondaryNavItems } = useNavigation();
 
-  // Document editor hook (queries document internally)
+  // Unified editor hook
   const {
-    documentTitle,
-    editorValue,
+    entity,
+    title: documentTitle,
+    content: editorValue,
     discussions,
-    discussionsWithVotes,
-    documentContent,
-    isSavingTitle,
-    isEditingTitle,
+    mode,
     saveStatus,
     hasUnsavedChanges,
-    amendment,
-    document,
-    amendmentLoading,
-    setIsEditingTitle,
+    isSavingTitle,
+    isLoading: amendmentLoading,
+    hasAccess,
+    isOwnerOrCollaborator,
+    setTitle: handleTitleChange,
+    setContent: handleContentChange,
     setDiscussions,
-    handleContentChange,
-    handleTitleChange,
-    handleDiscussionsChange,
-  } = useDocumentEditor({ documentId: '', amendmentId, userId }); // documentId determined by hook from amendmentId
+    setMode: handleModeChange,
+    restoreVersion: handleRestoreVersion,
+  } = useEditor({
+    entityType: 'amendment',
+    entityId: amendmentId,
+    userId,
+  });
+
+  // Query amendment and document data for additional metadata
+  const { data: amendmentData } = db.useQuery({
+    amendments: {
+      $: { where: { id: amendmentId } },
+      document: {
+        collaborators: {
+          user: {},
+        },
+      },
+      amendmentRoleCollaborators: {
+        user: {},
+      },
+    },
+  });
+  const amendment = amendmentData?.amendments?.[0];
+  const document = amendment?.document;
+
+  // Build discussions with votes for UI
+  const discussionsWithVotes = useMemo(() => {
+    return discussions.map((d: any) => ({
+      ...d,
+      votes: d.votes || [],
+    }));
+  }, [discussions]);
 
   // Auto-assign suggestion IDs
   useSuggestionIdAssignment({
@@ -78,20 +111,26 @@ export function DocumentEditorView({
   });
 
   // Presence
-  const { onlinePeers } = useDocumentPresence({
-    documentId: document?.id,
+  const { onlinePeers } = useEditorPresence({
+    entityId: document?.id || '',
     userId,
     userName: userRecord?.name || userRecord?.email || 'Anonymous',
     userAvatar: userRecord?.avatar,
-    userColor,
+    enabled: !!document?.id,
   });
 
+  // Build current user for hooks
+  const currentUser: EditorUser | undefined = userId
+    ? {
+        id: userId,
+        name: userRecord?.name || userRecord?.email || 'Anonymous',
+        email: userRecord?.email,
+        avatarUrl: userRecord?.avatar,
+      }
+    : undefined;
+
   // Build users map for the editor
-  const editorUsers = useEditorUsers(
-    userId ? { id: userId, email: userRecord?.email } : undefined,
-    userRecord,
-    document as any // Cast to avoid type errors
-  );
+  const editorUsers = useEditorUsers(entity, currentUser);
 
   // Calculate dynamic top margin based on secondary navigation
   const getTopMargin = useMemo(() => {
@@ -109,23 +148,11 @@ export function DocumentEditorView({
   }, [isMobileScreen, secondaryNavItems, navigationType, navigationView]);
 
   // Handlers
-  const handleRestoreVersion = useCallback(
-    async (content: any[]) => {
-      if (!document?.id || !userId) return;
-
-      await restoreVersion(document.id, content, () => {
-        // Update local state after restore
-        handleContentChange(content);
-      });
-    },
-    [document?.id, userId, handleContentChange]
-  );
-
-  const handleSuggestionAccepted = useCallback(
+  const onSuggestionAccepted = useCallback(
     async (suggestion: any) => {
       if (!document?.id || !userId || !editorValue || !amendment?.id) return;
 
-      const { updatedDiscussions } = await acceptSuggestion(
+      const { updatedDiscussions } = await handleSuggestionAccepted(
         document.id,
         amendment.id,
         userId,
@@ -138,14 +165,23 @@ export function DocumentEditorView({
 
       setDiscussions(updatedDiscussions);
     },
-    [document?.id, document?.editingMode, userId, editorValue, discussions, amendment?.id, amendment?.title, setDiscussions]
+    [
+      document?.id,
+      document?.editingMode,
+      userId,
+      editorValue,
+      discussions,
+      amendment?.id,
+      amendment?.title,
+      setDiscussions,
+    ]
   );
 
-  const handleSuggestionDeclined = useCallback(
+  const onSuggestionDeclined = useCallback(
     async (suggestion: any) => {
       if (!document?.id || !userId || !editorValue || !amendment?.id) return;
 
-      const { updatedDiscussions } = await declineSuggestion(
+      const { updatedDiscussions } = await handleSuggestionDeclined(
         document.id,
         amendment.id,
         userId,
@@ -158,22 +194,23 @@ export function DocumentEditorView({
 
       setDiscussions(updatedDiscussions);
     },
-    [document?.id, document?.editingMode, userId, editorValue, discussions, amendment?.id, amendment?.title, setDiscussions]
-  );
-
-  const handleModeChange = useCallback(
-    async (newMode: 'edit' | 'view' | 'suggest' | 'vote') => {
-      if (!document?.id) return;
-      await changeEditingMode(document.id, newMode);
-    },
-    [document?.id]
+    [
+      document?.id,
+      document?.editingMode,
+      userId,
+      editorValue,
+      discussions,
+      amendment?.id,
+      amendment?.title,
+      setDiscussions,
+    ]
   );
 
   const handleVote = useCallback(
     async (suggestion: any, voteType: 'accept' | 'reject' | 'abstain') => {
       if (!document?.id || !userId || !amendment?.id) return;
 
-      await voteOnSuggestion(
+      await handleVoteOnSuggestion(
         document.id,
         amendment.id,
         userId,
@@ -185,19 +222,21 @@ export function DocumentEditorView({
     [document?.id, userId, amendment?.id, discussions]
   );
 
-  const handleVoteAccept = useCallback((suggestion: any) => handleVote(suggestion, 'accept'), [handleVote]);
-  const handleVoteReject = useCallback((suggestion: any) => handleVote(suggestion, 'reject'), [handleVote]);
-  const handleVoteAbstain = useCallback((suggestion: any) => handleVote(suggestion, 'abstain'), [handleVote]);
+  const handleVoteAccept = useCallback(
+    (suggestion: any) => handleVote(suggestion, 'accept'),
+    [handleVote]
+  );
+  const handleVoteReject = useCallback(
+    (suggestion: any) => handleVote(suggestion, 'reject'),
+    [handleVote]
+  );
+  const handleVoteAbstain = useCallback(
+    (suggestion: any) => handleVote(suggestion, 'abstain'),
+    [handleVote]
+  );
 
-  // Check if user has access
-  const hasAccess =
-    document &&
-    (document.owner?.id === userId ||
-      document.collaborators?.some((c: any) => c.user?.id === userId) ||
-      document.isPublic);
-
-  // Check if user is owner or collaborator
-  const isOwnerOrCollaborator =
+  // Check if user is owner or collaborator (supplementary check from queried data)
+  const isOwnerOrCollabFromData =
     (document &&
       (document.owner?.id === userId ||
         document.collaborators?.some((c: any) => c.user?.id === userId))) ||
@@ -265,11 +304,12 @@ export function DocumentEditorView({
             description={amendment.subtitle || amendment.code || ''}
           />
 
-          {/* Version Control */}
+          {/* Unified Version Control */}
           {userId && document?.id && (
             <VersionControl
-              documentId={document.id}
-              currentContent={documentContent}
+              entityType="amendment"
+              entityId={document.id}
+              currentContent={editorValue}
               currentUserId={userId}
               onRestoreVersion={handleRestoreVersion}
               amendmentId={amendmentId}
@@ -413,13 +453,13 @@ export function DocumentEditorView({
           <div className="min-h-[600px]">
             <PlateEditor
               key={document.id}
-              value={documentContent}
+              value={editorValue}
               onChange={handleContentChange}
               documentId={document.id}
               documentTitle={documentTitle}
-              currentMode={(document.editingMode as any) || 'suggest'}
+              currentMode={mode || 'suggest'}
               onModeChange={handleModeChange}
-              isOwnerOrCollaborator={!!isOwnerOrCollaborator}
+              isOwnerOrCollaborator={!!(isOwnerOrCollaborator || isOwnerOrCollabFromData)}
               currentUser={
                 userId && userRecord
                   ? {
@@ -431,9 +471,9 @@ export function DocumentEditorView({
               }
               users={editorUsers}
               discussions={discussionsWithVotes}
-              onDiscussionsChange={handleDiscussionsChange}
-              onSuggestionAccepted={handleSuggestionAccepted}
-              onSuggestionDeclined={handleSuggestionDeclined}
+              onDiscussionsChange={setDiscussions}
+              onSuggestionAccepted={onSuggestionAccepted}
+              onSuggestionDeclined={onSuggestionDeclined}
               onVoteAccept={handleVoteAccept}
               onVoteReject={handleVoteReject}
               onVoteAbstain={handleVoteAbstain}

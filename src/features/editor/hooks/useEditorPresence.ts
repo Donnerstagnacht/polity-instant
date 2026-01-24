@@ -1,40 +1,35 @@
 /**
- * Document Presence Hook
+ * Unified Editor Presence Hook
  *
  * Manages InstantDB room setup and peer presence tracking for collaborative editing.
+ * Works with all entity types (amendments, blogs, documents, group documents).
  */
 
 import { useMemo, useEffect } from 'react';
-import db from '../../../../db/db';
+import db from '@db/db';
+import { generateUserColor } from '../utils/editor-operations';
+import type { EditorPresencePeer } from '../types';
 
-export interface PresencePeer {
-  peerId: string;
-  userId: string;
-  name: string;
-  avatar?: string;
-  color: string;
-}
-
-interface UseDocumentPresenceOptions {
-  documentId: string;
+interface UseEditorPresenceOptions {
+  /** The entity ID to create a room for */
+  entityId: string;
+  /** Current user ID */
   userId?: string;
+  /** Current user name */
   userName?: string;
+  /** Current user avatar URL */
   userAvatar?: string;
+  /** Whether presence is enabled */
+  enabled?: boolean;
 }
 
-interface UseDocumentPresenceResult {
-  onlinePeers: PresencePeer[];
+interface UseEditorPresenceResult {
+  /** List of other users currently online */
+  onlinePeers: EditorPresencePeer[];
+  /** The current user's color */
   userColor: string;
+  /** Function to publish presence updates */
   publishPresence: ((data: any) => void) | null;
-}
-
-/**
- * Generate a consistent color for a user based on their ID
- */
-function generateUserColor(userId: string): string {
-  const hash = parseInt(userId.substring(0, 8), 16);
-  const hue = hash % 360;
-  return `hsl(${hue}, 70%, 50%)`;
 }
 
 /**
@@ -44,17 +39,15 @@ function generateUserColor(userId: string): string {
  * @returns Online peers, user color, and presence publishing function
  *
  * @example
- * const { onlinePeers, userColor } = useDocumentPresence({
- *   documentId,
+ * const { onlinePeers, userColor } = useEditorPresence({
+ *   entityId: documentId,
  *   userId: user.id,
  *   userName: user.name,
  *   userAvatar: user.avatar,
  * });
  */
-export function useDocumentPresence(
-  options: UseDocumentPresenceOptions
-): UseDocumentPresenceResult {
-  const { documentId, userId, userName, userAvatar } = options;
+export function useEditorPresence(options: UseEditorPresenceOptions): UseEditorPresenceResult {
+  const { entityId, userId, userName, userAvatar, enabled = true } = options;
 
   // Generate consistent user color
   const userColor = useMemo(() => {
@@ -62,7 +55,7 @@ export function useDocumentPresence(
   }, [userId]);
 
   // Create room for presence
-  const room = db.room('editor', documentId);
+  const room = db.room('editor', entityId);
 
   // Presence hook - show who's online
   const { peers, publishPresence } = db.rooms.usePresence(room, {
@@ -76,7 +69,7 @@ export function useDocumentPresence(
 
   // Publish presence when user data changes
   useEffect(() => {
-    if (userId && publishPresence) {
+    if (userId && publishPresence && enabled) {
       publishPresence({
         name: userName || 'Anonymous',
         avatar: userAvatar,
@@ -84,10 +77,12 @@ export function useDocumentPresence(
         userId,
       });
     }
-  }, [userId, publishPresence, userName, userAvatar, userColor]);
+  }, [userId, publishPresence, userName, userAvatar, userColor, enabled]);
 
   // Get online peers (excluding current user)
-  const onlinePeers = useMemo<PresencePeer[]>(() => {
+  const onlinePeers = useMemo<EditorPresencePeer[]>(() => {
+    if (!enabled) return [];
+
     return Object.values(peers)
       .filter((peer: any) => peer.userId !== userId)
       .map((peer: any) => ({
@@ -97,11 +92,11 @@ export function useDocumentPresence(
         avatar: peer.avatar,
         color: peer.color || '#888888',
       }));
-  }, [peers, userId]);
+  }, [peers, userId, enabled]);
 
   return {
     onlinePeers,
     userColor,
-    publishPresence,
+    publishPresence: enabled ? publishPresence : null,
   };
 }

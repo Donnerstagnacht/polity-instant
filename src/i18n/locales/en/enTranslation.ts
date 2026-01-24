@@ -17,6 +17,7 @@ import { statementsTranslations } from './features/statements';
 import { timelineTranslations } from './features/timeline';
 import { todosTranslations } from './features/todos';
 import { userTranslations } from './features/user';
+import { editor as editorTranslations } from './features/editor';
 import { landingSectionTranslations } from './pages/home/landing';
 import { componentsTranslations } from './components';
 import { plateJsTranslations } from './plateJs';
@@ -64,6 +65,7 @@ const enTranslation = {
     blogs: blogsTranslations,
     calendar: calendarTranslations,
     create: createTranslations,
+    editor: editorTranslations,
     events: eventsTranslations,
     groups: groupsTranslations,
     meet: meetTranslations,

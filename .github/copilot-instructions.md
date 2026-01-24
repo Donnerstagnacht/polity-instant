@@ -53,6 +53,11 @@ polity/
 │   │   ├── auth/           # Authentication
 │   │   ├── blogs/          # Blog system
 │   │   ├── calendar/       # Calendar features
+│   │   ├── editor/         # **Unified Editor System** (NEW)
+│   │   │   ├── hooks/      # useEditor, useEditorPresence, useEditorUsers
+│   │   │   ├── types/      # EditorEntity, EditorMode, EditorCapabilities
+│   │   │   ├── ui/         # EditorView, VersionControl, ModeSelector
+│   │   │   └── utils/      # entity-adapter, version-utils, editor-operations
 │   │   ├── events/         # Event management
 │   │   ├── groups/         # Group management
 │   │   ├── messages/       # Messaging system
@@ -229,17 +234,50 @@ Located in `src/features/amendments/change-requests/`:
 
 ## Editor System (Plate.js)
 
-Rich text editing is powered by Plate.js:
+Rich text editing is powered by Plate.js with a **unified editor system**:
+
+### Unified Editor Feature
+Located in `src/features/editor/`:
+
+```typescript
+import { EditorView, useEditor, VersionControl, ModeSelector } from '@/features/editor';
+
+// Usage in a page
+<EditorView
+  entityType="amendment" // 'amendment' | 'blog' | 'document' | 'groupDocument'
+  entityId={entityId}
+  userId={user?.id}
+  userRecord={{ id, name, email, avatar }}
+/>
+```
+
+### Entity Types
+- **amendment** - Amendment documents with full workflow (suggest/vote modes)
+- **blog** - Blog posts with public/private visibility
+- **document** - Standalone documents with collaborators
+- **groupDocument** - Group-scoped documents
+
+### Editor Capabilities
+Capabilities are configured per entity type:
+```typescript
+const DEFAULT_CAPABILITIES = {
+  amendment: { versioning: true, presence: true, voting: true, modeSelection: true },
+  blog: { versioning: true, presence: false, voting: false, modeSelection: true },
+  document: { versioning: true, presence: true, voting: false, modeSelection: false },
+  groupDocument: { versioning: false, presence: true, voting: false, modeSelection: false },
+};
+```
+
+### Key Components
+- `EditorView` - Main unified editor view
+- `VersionControl` - Version history and restore
+- `ModeSelector` - Switch between edit/view/suggest/vote modes
+- `InviteCollaboratorDialog` - Invite users to collaborate
+
+### Core Plate.js Integration
 - `src/components/kit-platejs/` - Plate.js kit components
 - `src/components/ui-platejs/` - Plate.js UI components
-- `src/features/amendments/document-editor/` - Amendment editor integration
-
-### Mode Selector
-The editor has different modes (see `ModeSelector.tsx`):
-- **Edit** - Direct editing
-- **View** - Read-only
-- **Suggest** - Create suggestions
-- **Vote** - Vote on suggestions
+- `PlateEditor` - Core editor component with all plugins
 
 ---
 

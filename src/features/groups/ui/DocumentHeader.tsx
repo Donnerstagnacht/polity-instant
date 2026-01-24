@@ -8,14 +8,14 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Eye } from 'lucide-react';
 import { PresenceIndicators } from './PresenceIndicators';
-import type { PresencePeer } from '../hooks/useDocumentPresence';
+import type { EditorPresencePeer } from '@/features/editor';
 
 interface DocumentHeaderProps {
   title: string;
   onTitleChange: (title: string) => void;
   isSaving: boolean;
   isOwner: boolean;
-  onlinePeers: PresencePeer[];
+  onlinePeers: EditorPresencePeer[];
 }
 
 export function DocumentHeader({

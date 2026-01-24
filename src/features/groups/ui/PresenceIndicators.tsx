@@ -6,10 +6,10 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Users } from 'lucide-react';
-import type { PresencePeer } from '../hooks/useDocumentPresence';
+import type { EditorPresencePeer } from '@/features/editor';
 
 interface PresenceIndicatorsProps {
-  peers: PresencePeer[];
+  peers: EditorPresencePeer[];
 }
 
 export function PresenceIndicators({ peers }: PresenceIndicatorsProps) {

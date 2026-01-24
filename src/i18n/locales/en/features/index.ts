@@ -4,6 +4,7 @@ export { blogsTranslations } from './blogs';
 export { calendarTranslations } from './calendar';
 export { createTranslations } from './create';
 export { documentsTranslations } from './documents';
+export { editor as editorTranslations } from './editor';
 export { eventsTranslations } from './events';
 export { groupsTranslations } from './groups';
 export { meetTranslations } from './meet';
@@ -22,6 +23,7 @@ export const features = {
   calendar: async () => (await import('./calendar')).calendarTranslations,
   create: async () => (await import('./create')).createTranslations,
   documents: async () => (await import('./documents')).documentsTranslations,
+  editor: async () => (await import('./editor')).editor,
   events: async () => (await import('./events')).eventsTranslations,
   groups: async () => (await import('./groups')).groupsTranslations,
   meet: async () => (await import('./meet')).meetTranslations,

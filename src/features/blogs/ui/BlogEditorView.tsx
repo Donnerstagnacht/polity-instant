@@ -1,8 +1,10 @@
 /**
  * Main blog editor view component
+ *
+ * Uses the unified editor system from @/features/editor
  */
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { PlateEditor } from '@/components/kit-platejs/plate-editor';
@@ -12,10 +14,11 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, Eye, ArrowLeft, FileText, Pencil } from 'lucide-react';
-import { VersionControl } from './VersionControl';
 import { ShareButton } from '@/components/shared/ShareButton';
-import { useBlogEditor } from '../hooks/useBlogEditor';
-import db from '../../../../db/db';
+
+// Unified editor imports
+import { useEditor, useEditorUsers, VersionControl, type EditorUser } from '@/features/editor';
+import db from '@db/db';
 
 interface BlogEditorViewProps {
   blogId: string;
@@ -24,80 +27,59 @@ interface BlogEditorViewProps {
   userColor: string;
 }
 
-export function BlogEditorView({
-  blogId,
-  userId,
-  userRecord,
-  userColor,
-}: BlogEditorViewProps) {
+export function BlogEditorView({ blogId, userId, userRecord, userColor }: BlogEditorViewProps) {
   const router = useRouter();
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
 
-  // Blog editor hook
+  // Unified editor hook
   const {
-    blogTitle,
-    editorValue,
+    entity,
+    title: blogTitle,
+    content: blogContent,
     discussions,
-    blogContent,
-    isSavingTitle,
-    isEditingTitle,
+    mode,
     saveStatus,
     hasUnsavedChanges,
-    blog,
-    blogLoading,
-    setIsEditingTitle,
-    setDiscussions,
-    handleContentChange,
-    handleTitleChange,
-    handleDiscussionsChange,
-  } = useBlogEditor({ blogId, userId });
+    isSavingTitle,
+    isLoading: blogLoading,
+    hasAccess,
+    isOwnerOrCollaborator,
+    setTitle: handleTitleChange,
+    setContent: handleContentChange,
+    setDiscussions: handleDiscussionsChange,
+    setMode: handleModeChange,
+    restoreVersion: handleRestoreVersion,
+  } = useEditor({
+    entityType: 'blog',
+    entityId: blogId,
+    userId,
+  });
+
+  // Query blog data for additional metadata
+  const { data: blogData } = db.useQuery({
+    blogs: {
+      $: { where: { id: blogId } },
+      blogRoleBloggers: {
+        user: {},
+      },
+    },
+  });
+  const blog = blogData?.blogs?.[0];
+
+  // Build current user for hooks
+  const currentUser: EditorUser | undefined = userId
+    ? {
+        id: userId,
+        name: userRecord?.name || userRecord?.email || 'Anonymous',
+        email: userRecord?.email,
+        avatarUrl: userRecord?.avatar,
+      }
+    : undefined;
 
   // Build users map for the editor
-  const editorUsers = useMemo(() => {
-    const users: Record<string, { id: string; name: string; avatarUrl: string }> = {};
-
-    if (userId && userRecord) {
-      users[userId] = {
-        id: userId,
-        name: userRecord.name || userRecord.email || 'You',
-        avatarUrl: userRecord.avatar || '',
-      };
-    }
-
-    // Add other bloggers
-    if (blog?.blogRoleBloggers) {
-      blog.blogRoleBloggers.forEach((blogger: any) => {
-        if (blogger.user && blogger.user.id !== userId) {
-          users[blogger.user.id] = {
-            id: blogger.user.id,
-            name: blogger.user.name || blogger.user.email || 'User',
-            avatarUrl: blogger.user.avatar || '',
-          };
-        }
-      });
-    }
-
-    return users;
-  }, [userId, userRecord, blog?.blogRoleBloggers]);
-
-  // Handlers
-  const handleRestoreVersion = useCallback(
-    async (content: any[]) => {
-      if (!blogId || !userId) return;
-
-      // Update local state after restore
-      handleContentChange(content);
-    },
-    [blogId, userId, handleContentChange]
-  );
-
-  // Check if user has access
-  const hasAccess =
-    blog &&
-    (blog.blogRoleBloggers?.some((b: any) => b.user?.id === userId) ||
-      blog.isPublic);
-
-  // Check if user is owner or collaborator
-  const isOwnerOrCollaborator =
+  const editorUsers = useEditorUsers(entity, currentUser);
+  // Additional check from queried data
+  const isOwnerOrCollabFromData =
     blog &&
     blog.blogRoleBloggers?.some(
       (b: any) => b.user?.id === userId && (b.status === 'owner' || b.status === 'admin')
@@ -117,9 +99,7 @@ export function BlogEditorView({
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-          <p className="mb-4 text-lg text-muted-foreground">
-            Blog not found.
-          </p>
+          <p className="mb-4 text-lg text-muted-foreground">Blog not found.</p>
           <Button onClick={() => router.push(`/blog`)}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Blogs
@@ -133,9 +113,7 @@ export function BlogEditorView({
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-          <p className="mb-4 text-lg text-muted-foreground">
-            You don't have access to this blog.
-          </p>
+          <p className="mb-4 text-lg text-muted-foreground">You don't have access to this blog.</p>
           <Button onClick={() => router.push(`/blog/${blogId}`)}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Blog
@@ -163,10 +141,11 @@ export function BlogEditorView({
             description={blog.description || ''}
           />
 
-          {/* Version Control */}
+          {/* Unified Version Control */}
           {userId && blogId && (
             <VersionControl
-              blogId={blogId}
+              entityType="blog"
+              entityId={blogId}
               currentContent={blogContent}
               currentUserId={userId}
               onRestoreVersion={handleRestoreVersion}
@@ -242,9 +221,7 @@ export function BlogEditorView({
 
           {/* Blog metadata */}
           <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
-            {blog.date && (
-              <span className="text-muted-foreground">Date: {blog.date}</span>
-            )}
+            {blog.date && <span className="text-muted-foreground">Date: {blog.date}</span>}
             {blog.upvotes !== undefined && (
               <span className="text-muted-foreground">{blog.upvotes} upvotes</span>
             )}
@@ -281,8 +258,8 @@ export function BlogEditorView({
               onChange={handleContentChange}
               documentId={blogId}
               documentTitle={blogTitle}
-              currentMode={(blog.editingMode as any) || 'edit'}
-              isOwnerOrCollaborator={!!isOwnerOrCollaborator}
+              currentMode={mode || 'edit'}
+              isOwnerOrCollaborator={!!(isOwnerOrCollaborator || isOwnerOrCollabFromData)}
               currentUser={
                 userId && userRecord
                   ? {

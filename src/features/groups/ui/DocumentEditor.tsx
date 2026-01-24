@@ -2,15 +2,17 @@
  * Document Editor Component
  *
  * Complete document editor with PlateEditor, auto-save, and presence.
+ * Uses the unified editor system from @/features/editor
  */
 
 import { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { PlateEditor } from '@/components/kit-platejs/plate-editor';
 import { DocumentHeader } from './DocumentHeader';
-import { useDocumentEditor } from '../hooks/useDocumentEditor';
-import { useDocumentPresence } from '../hooks/useDocumentPresence';
 import { useSuggestionIdAssignment } from '@/hooks/use-suggestion-id-assignment';
+
+// Unified editor imports
+import { useEditor, useEditorPresence, useEditorUsers, type EditorUser } from '@/features/editor';
 
 interface DocumentEditorProps {
   documentId: string;
@@ -29,24 +31,31 @@ export function DocumentEditor({
   userEmail,
   userAvatar,
 }: DocumentEditorProps) {
-  // Document editor hook
+  // Unified editor hook
   const {
-    document,
+    entity,
     title,
     content,
     discussions,
+    isSavingTitle,
+    isOwnerOrCollaborator,
     setTitle,
     setContent,
     setDiscussions,
-    isSavingTitle,
-  } = useDocumentEditor({ documentId, userId });
+  } = useEditor({
+    entityType: 'groupDocument',
+    entityId: documentId,
+    userId,
+    groupId,
+  });
 
   // Presence hook
-  const { onlinePeers } = useDocumentPresence({
-    documentId,
+  const { onlinePeers } = useEditorPresence({
+    entityId: documentId,
     userId,
     userName: userName || userEmail || 'Anonymous',
     userAvatar,
+    enabled: !!documentId,
   });
 
   // Auto-assign suggestion IDs
@@ -56,31 +65,20 @@ export function DocumentEditor({
     onDiscussionsUpdate: setDiscussions,
   });
 
-  // Build users map for the editor
-  const editorUsers = useMemo(() => {
-    const users: Record<string, { id: string; name: string; avatarUrl: string }> = {};
-
-    if (userId) {
-      users[userId] = {
-        id: userId,
-        name: userName || userEmail || 'Anonymous',
-        avatarUrl: userAvatar || `https://api.dicebear.com/9.x/glass/svg?seed=${userId}`,
-      };
-    }
-
-    return users;
-  }, [userId, userName, userEmail, userAvatar]);
-
-  // Current user for editor
-  const currentUser = userId
+  // Build current user for hooks
+  const currentUser: EditorUser | undefined = userId
     ? {
         id: userId,
         name: userName || userEmail || 'Anonymous',
-        avatar: userAvatar,
+        email: userEmail,
+        avatarUrl: userAvatar || `https://api.dicebear.com/9.x/glass/svg?seed=${userId}`,
       }
     : undefined;
 
-  const isOwner = document?.owner?.id === userId;
+  // Build users map for the editor
+  const editorUsers = useEditorUsers(entity, currentUser);
+
+  const isOwner = entity?.owner?.id === userId;
 
   return (
     <Card>
@@ -103,7 +101,15 @@ export function DocumentEditor({
             value={content}
             onChange={setContent}
             documentId={documentId}
-            currentUser={currentUser}
+            currentUser={
+              currentUser
+                ? {
+                    id: currentUser.id,
+                    name: currentUser.name,
+                    avatar: currentUser.avatarUrl,
+                  }
+                : undefined
+            }
             users={editorUsers}
             discussions={discussions}
             onDiscussionsChange={setDiscussions}
