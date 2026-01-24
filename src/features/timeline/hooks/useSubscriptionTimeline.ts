@@ -128,6 +128,9 @@ export function useSubscriptionTimeline() {
             blog: { hashtags: {}, comments: {} }, // Blogs don't have a direct user link - they use blogBloggers junction table
             todo: { group: {}, creator: {} },
             statement: { user: {} },
+            // Link to elections and votes for agenda item navigation
+            election: { agendaItem: { event: {} } },
+            amendmentVote: { agendaItem: { event: {} } },
           },
         }
       : null

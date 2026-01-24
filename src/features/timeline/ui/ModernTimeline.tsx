@@ -137,6 +137,29 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
         | unknown[]
         | undefined;
 
+      // Extract agenda item links from election or amendmentVote relationships
+      // First try linked entities, then fall back to metadata
+      const linkedElection = eventRecord.election as
+        | { agendaItem?: { id?: string; event?: { id?: string } } }
+        | undefined;
+      const linkedAmendmentVote = eventRecord.amendmentVote as
+        | { agendaItem?: { id?: string; event?: { id?: string } } }
+        | undefined;
+      const metadata = eventRecord.metadata as
+        | { agendaEventId?: string; agendaItemId?: string }
+        | undefined;
+
+      const agendaEventId =
+        linkedElection?.agendaItem?.event?.id ||
+        linkedAmendmentVote?.agendaItem?.event?.id ||
+        metadata?.agendaEventId ||
+        undefined;
+      const agendaItemId =
+        linkedElection?.agendaItem?.id ||
+        linkedAmendmentVote?.agendaItem?.id ||
+        metadata?.agendaItemId ||
+        undefined;
+
       acc.push({
         id: eventRecord.id,
         entityId: eventRecord.entityId || undefined,
@@ -192,6 +215,9 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
         changeRequestCount: eventRecord.amendment?.changeRequests?.length,
         commentCount: eventRecord.blog?.comments?.length,
         groupCount: eventRecord.user?.memberships?.length,
+        // Agenda item links for vote/election navigation
+        agendaEventId,
+        agendaItemId,
       });
 
       return acc;
@@ -567,8 +593,8 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
                 supportPercentage,
                 supportCount,
                 opposeCount,
-                agendaEventId: (item as any).agendaEventId,
-                agendaItemId: (item as any).agendaItemId,
+                agendaEventId: item.agendaEventId,
+                agendaItemId: item.agendaItemId,
               },
             };
           }
@@ -584,8 +610,8 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
               status: normalizeElectionStatus(status),
               candidates: [],
               totalCandidates: 0,
-              agendaEventId: (item as any).agendaEventId,
-              agendaItemId: (item as any).agendaItemId,
+              agendaEventId: item.agendaEventId,
+              agendaItemId: item.agendaItemId,
             },
           };
           break;

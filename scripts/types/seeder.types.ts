@@ -49,6 +49,7 @@ export interface SeedContext {
   reactionIds?: string[];
   amendmentPathIds?: string[];
   amendmentVoteIds?: string[];
+  electionIds?: string[];
   groupRelationshipIds?: string[];
   eventOrganizers?: Map<string, string>;
   eventRoleMappings?: Map<string, { organizerId: string; participantId: string }>;

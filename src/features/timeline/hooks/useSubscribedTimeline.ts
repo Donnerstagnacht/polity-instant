@@ -62,6 +62,9 @@ export interface TimelineItem {
   changeRequestCount?: number;
   commentCount?: number;
   groupCount?: number;
+  // Agenda item links for vote/election cards navigation
+  agendaEventId?: string;
+  agendaItemId?: string;
 }
 
 export interface UseSubscribedTimelineOptions {

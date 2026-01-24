@@ -268,6 +268,31 @@ const _common = {
         label: 'performedTimelineEvents',
       },
     },
+    // Timeline event links to decision entities (for agenda item navigation)
+    timelineEventsElection: {
+      forward: {
+        on: 'timelineEvents',
+        has: 'one',
+        label: 'election',
+      },
+      reverse: {
+        on: 'elections',
+        has: 'many',
+        label: 'timelineEvents',
+      },
+    },
+    timelineEventsAmendmentVote: {
+      forward: {
+        on: 'timelineEvents',
+        has: 'one',
+        label: 'amendmentVote',
+      },
+      reverse: {
+        on: 'amendmentVotes',
+        has: 'many',
+        label: 'timelineEvents',
+      },
+    },
     // Reactions links
     reactionsUser: {
       forward: {

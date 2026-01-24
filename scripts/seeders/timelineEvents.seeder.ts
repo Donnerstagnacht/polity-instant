@@ -74,6 +74,7 @@ export const timelineEventsSeeder: EntitySeeder = {
     'todos',
     'subscriptions',
     'tobiasSubscriptions',
+    'agendaAndVoting',
   ],
 
   async seed(context: SeedContext): Promise<SeedContext> {
@@ -138,6 +139,44 @@ export const timelineEventsSeeder: EntitySeeder = {
     let timelineEventsToGroups = 0;
     let timelineEventsToUsers = 0;
     let timelineEventsToStatements = 0;
+    let timelineEventsToElections = 0;
+    let timelineEventsToAmendmentVotes = 0;
+
+    // Query elections with their agenda items for linking
+    const electionsData = await db.query({
+      elections: {
+        agendaItem: {
+          event: {},
+        },
+      },
+    });
+    const electionsWithAgenda = (electionsData?.elections || []).map((election: any) => ({
+      id: election.id,
+      title: election.title,
+      status: election.status,
+      votingEndTime: election.votingEndTime,
+      agendaItemId: election.agendaItem?.id,
+      agendaEventId: election.agendaItem?.event?.id,
+    }));
+
+    // Query amendmentVotes with their agenda items for linking
+    const amendmentVotesData = await db.query({
+      amendmentVotes: {
+        agendaItem: {
+          event: {},
+        },
+      },
+    });
+    const amendmentVotesWithAgenda = (amendmentVotesData?.amendmentVotes || []).map(
+      (vote: any) => ({
+        id: vote.id,
+        title: vote.title,
+        status: vote.status,
+        votingEndTime: vote.votingEndTime,
+        agendaItemId: vote.agendaItem?.id,
+        agendaEventId: vote.agendaItem?.event?.id,
+      })
+    );
 
     // Helper to generate random stats
     const generateStats = () => ({
@@ -489,94 +528,134 @@ export const timelineEventsSeeder: EntitySeeder = {
       }
     }
 
-    // 4. Vote events (open and closed)
+    // 4. Vote events (open and closed) - linked to real amendmentVotes with agenda items
     const voteStatuses = ['open', 'open', 'open', 'closed', 'passed', 'rejected'];
-    for (let i = 0; i < 6; i++) {
-      if (userIds.length === 0 || amendmentIds.length === 0) {
+    const votesToCreate = Math.min(
+      6,
+      amendmentVotesWithAgenda.length > 0 ? amendmentVotesWithAgenda.length : 6
+    );
+
+    for (let i = 0; i < votesToCreate; i++) {
+      if (userIds.length === 0) {
         break;
       }
 
       const timelineEventId = id();
       timelineEventIds.push(timelineEventId);
       const actorId = randomItem(userIds);
-      const amendmentId = randomItem(amendmentIds);
-      const status = voteStatuses[i];
+      const status = voteStatuses[i % voteStatuses.length];
       const isOpen = status === 'open';
 
-      transactions.push(
-        tx.timelineEvents[timelineEventId]
-          .update({
-            eventType: isOpen ? 'vote_opened' : 'vote_closed',
-            entityType: 'amendment',
-            entityId: amendmentId,
-            title: `Vote: ${faker.lorem.sentence(4)}`,
-            description: faker.lorem.paragraph(2),
-            contentType: 'vote',
-            tags: getRandomTags(),
-            stats: generateStats(),
-            voteStatus: status,
-            endsAt: isOpen
-              ? new Date(Date.now() + randomInt(1, 7) * 24 * 60 * 60 * 1000).getTime()
-              : new Date(Date.now() - randomInt(1, 7) * 24 * 60 * 60 * 1000).getTime(),
-            metadata: {
-              supportPercent: randomInt(30, 80),
-              opposePercent: randomInt(10, 50),
-              abstainPercent: randomInt(0, 20),
-              totalVotes: randomInt(50, 300),
-              quorumReached: Math.random() > 0.3,
-            },
-            createdAt: faker.date.recent({ days: randomInt(1, 14) }),
-          })
-          .link({ actor: actorId, amendment: amendmentId })
-      );
+      // Use real amendmentVote if available, otherwise fall back to amendment
+      const realVote = amendmentVotesWithAgenda[i];
+      const amendmentId =
+        realVote?.id || (amendmentIds.length > 0 ? randomItem(amendmentIds) : null);
+
+      if (!amendmentId) continue;
+
+      const updateData: any = {
+        eventType: isOpen ? 'vote_opened' : 'vote_closed',
+        entityType: 'amendment',
+        entityId: amendmentId,
+        title: realVote?.title || `Vote: ${faker.lorem.sentence(4)}`,
+        description: faker.lorem.paragraph(2),
+        contentType: 'vote',
+        tags: getRandomTags(),
+        stats: generateStats(),
+        voteStatus: status,
+        endsAt: isOpen
+          ? new Date(Date.now() + randomInt(1, 7) * 24 * 60 * 60 * 1000).getTime()
+          : new Date(Date.now() - randomInt(1, 7) * 24 * 60 * 60 * 1000).getTime(),
+        metadata: {
+          supportPercent: randomInt(30, 80),
+          opposePercent: randomInt(10, 50),
+          abstainPercent: randomInt(0, 20),
+          totalVotes: randomInt(50, 300),
+          quorumReached: Math.random() > 0.3,
+          // Store agenda item references in metadata for timeline display
+          agendaEventId: realVote?.agendaEventId,
+          agendaItemId: realVote?.agendaItemId,
+        },
+        createdAt: faker.date.recent({ days: randomInt(1, 14) }),
+      };
+
+      // Build link object
+      const linkData: any = { actor: actorId };
+      if (realVote) {
+        linkData.amendmentVote = realVote.id;
+        timelineEventsToAmendmentVotes++;
+      } else {
+        linkData.amendment = amendmentId;
+        timelineEventsToAmendments++;
+      }
+
+      transactions.push(tx.timelineEvents[timelineEventId].update(updateData).link(linkData));
       eventsCreated++;
       timelineEventsToActors++;
-      timelineEventsToAmendments++;
     }
 
-    // 5. Election events
+    // 5. Election events - linked to real elections with agenda items
     const electionStatuses = ['nominations', 'voting', 'voting', 'closed', 'winner'];
-    for (let i = 0; i < 5; i++) {
-      if (userIds.length === 0 || eventIds.length === 0) {
+    const electionsToCreate = Math.min(
+      5,
+      electionsWithAgenda.length > 0 ? electionsWithAgenda.length : 5
+    );
+
+    for (let i = 0; i < electionsToCreate; i++) {
+      if (userIds.length === 0) {
         break;
       }
 
       const timelineEventId = id();
       timelineEventIds.push(timelineEventId);
       const actorId = randomItem(userIds);
-      const eventId = randomItem(eventIds);
-      const status = electionStatuses[i];
+      const status = electionStatuses[i % electionStatuses.length];
       const isActive = status === 'nominations' || status === 'voting';
 
-      transactions.push(
-        tx.timelineEvents[timelineEventId]
-          .update({
-            eventType:
-              status === 'winner'
-                ? 'election_winner_announced'
-                : `election_${status === 'nominations' ? 'nominations_open' : status === 'voting' ? 'voting_open' : 'closed'}`,
-            entityType: 'event',
-            entityId: eventId,
-            title: `Election: ${faker.person.jobTitle()}`,
-            description: faker.lorem.paragraph(2),
-            contentType: 'election',
-            tags: getRandomTags(),
-            stats: generateStats(),
-            electionStatus: status,
-            endsAt: isActive
-              ? new Date(Date.now() + randomInt(1, 14) * 24 * 60 * 60 * 1000).getTime()
-              : new Date(Date.now() - randomInt(1, 7) * 24 * 60 * 60 * 1000).getTime(),
-            metadata: {
-              candidates: randomInt(2, 8),
-              totalVotes: randomInt(30, 200),
-              turnoutPercent: randomInt(40, 90),
-              winnerName: status === 'winner' ? faker.person.fullName() : undefined,
-              winnerPercent: status === 'winner' ? randomInt(40, 70) : undefined,
-            },
-            createdAt: faker.date.recent({ days: randomInt(1, 14) }),
-          })
-          .link({ actor: actorId, event: eventId })
-      );
+      // Use real election if available
+      const realElection = electionsWithAgenda[i];
+      const eventId =
+        realElection?.agendaEventId || (eventIds.length > 0 ? randomItem(eventIds) : null);
+
+      if (!eventId) continue;
+
+      const updateData: any = {
+        eventType:
+          status === 'winner'
+            ? 'election_winner_announced'
+            : `election_${status === 'nominations' ? 'nominations_open' : status === 'voting' ? 'voting_open' : 'closed'}`,
+        entityType: 'event',
+        entityId: eventId,
+        title: realElection?.title || `Election: ${faker.person.jobTitle()}`,
+        description: faker.lorem.paragraph(2),
+        contentType: 'election',
+        tags: getRandomTags(),
+        stats: generateStats(),
+        electionStatus: status,
+        endsAt: isActive
+          ? new Date(Date.now() + randomInt(1, 14) * 24 * 60 * 60 * 1000).getTime()
+          : new Date(Date.now() - randomInt(1, 7) * 24 * 60 * 60 * 1000).getTime(),
+        metadata: {
+          candidates: randomInt(2, 8),
+          totalVotes: randomInt(30, 200),
+          turnoutPercent: randomInt(40, 90),
+          winnerName: status === 'winner' ? faker.person.fullName() : undefined,
+          winnerPercent: status === 'winner' ? randomInt(40, 70) : undefined,
+          // Store agenda item references in metadata for timeline display
+          agendaEventId: realElection?.agendaEventId,
+          agendaItemId: realElection?.agendaItemId,
+        },
+        createdAt: faker.date.recent({ days: randomInt(1, 14) }),
+      };
+
+      // Build link object
+      const linkData: any = { actor: actorId, event: eventId };
+      if (realElection) {
+        linkData.election = realElection.id;
+        timelineEventsToElections++;
+      }
+
+      transactions.push(tx.timelineEvents[timelineEventId].update(updateData).link(linkData));
       eventsCreated++;
       timelineEventsToActors++;
       timelineEventsToEvents++;
@@ -667,7 +746,7 @@ export const timelineEventsSeeder: EntitySeeder = {
     }
 
     console.log(
-      `✅ Created ${eventsCreated} timeline events (including ${5} videos, ${8} images, ${6} statements, ${6} votes, ${5} elections)`
+      `✅ Created ${eventsCreated} timeline events (including ${5} videos, ${8} images, ${6} statements, ${votesToCreate} votes, ${electionsToCreate} elections)`
     );
 
     return {
@@ -682,6 +761,8 @@ export const timelineEventsSeeder: EntitySeeder = {
         timelineEventsToGroups,
         timelineEventsToUsers,
         timelineEventsToStatements,
+        timelineEventsToElections,
+        timelineEventsToAmendmentVotes,
       },
     };
   },

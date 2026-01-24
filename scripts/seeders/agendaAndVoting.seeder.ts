@@ -21,6 +21,9 @@ export const agendaAndVotingSeeder: EntitySeeder = {
 
     console.log('Seeding agenda items and voting system...');
     const transactions = [];
+    const electionIds: string[] = [];
+    const amendmentVoteIds: string[] = [];
+    const agendaItemIds: string[] = [];
     let totalAgendaItems = 0;
     let totalElections = 0;
     let totalAmendmentVotes = 0;
@@ -108,6 +111,8 @@ export const agendaAndVotingSeeder: EntitySeeder = {
           .link({ agendaItem: agendaItemId, eventPosition: eventPosition.id });
 
         transactions.push(electionTx);
+        electionIds.push(electionId);
+        agendaItemIds.push(agendaItemId);
         totalElections++;
         electionsToAgendaItems++;
 
@@ -171,6 +176,7 @@ export const agendaAndVotingSeeder: EntitySeeder = {
               ...(amendmentId ? { amendment: amendmentId } : {}),
             })
         );
+        agendaItemIds.push(agendaItemId);
         if (amendmentId) {
           agendaItemsToAmendments++;
         }
@@ -199,6 +205,7 @@ export const agendaAndVotingSeeder: EntitySeeder = {
             .link({ agendaItem: agendaItemId, position: positionId });
 
           transactions.push(electionTx);
+          electionIds.push(electionId);
           totalElections++;
           electionsToAgendaItems++;
           electionsToPositions++;
@@ -270,6 +277,7 @@ export const agendaAndVotingSeeder: EntitySeeder = {
               })
               .link({ agendaItem: agendaItemId })
           );
+          amendmentVoteIds.push(amendmentVoteId);
           totalAmendmentVotes++;
           agendaAmendmentVotesToAgendaItems++;
 
@@ -359,6 +367,9 @@ export const agendaAndVotingSeeder: EntitySeeder = {
 
     return {
       ...context,
+      electionIds: [...(context.electionIds || []), ...electionIds],
+      amendmentVoteIds: [...(context.amendmentVoteIds || []), ...amendmentVoteIds],
+      agendaItemIds: [...(context.agendaItemIds || []), ...agendaItemIds],
       linkCounts: {
         ...(context.linkCounts || {}),
         agendaItemsToCreators,
