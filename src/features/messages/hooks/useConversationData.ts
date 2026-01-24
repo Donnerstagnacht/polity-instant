@@ -1,8 +1,11 @@
 import db from '../../../../db/db';
 import { Conversation } from '../types';
 
-export function useConversationData(userId?: string) {
-  const { data, isLoading } = db.useQuery(
+export function useConversationData(
+  userId?: string,
+  cursor: { after?: string; first: number } = { first: 20 }
+) {
+  const { data, isLoading, pageInfo } = db.useQuery(
     userId
       ? {
           conversations: {
@@ -10,6 +13,7 @@ export function useConversationData(userId?: string) {
               where: {
                 'participants.user.id': userId,
               },
+              ...cursor,
             },
             group: {}, // Load group data for group conversations
             requestedBy: {}, // Load user who requested the conversation
@@ -34,5 +38,6 @@ export function useConversationData(userId?: string) {
   return {
     conversations,
     isLoading,
+    pageInfo,
   };
 }

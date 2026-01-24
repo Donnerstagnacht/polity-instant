@@ -46,6 +46,7 @@ export interface SeedContext {
   stripeSubscriptionIds?: string[];
   stripePaymentIds?: string[];
   timelineEventIds?: string[];
+  reactionIds?: string[];
   amendmentPathIds?: string[];
   amendmentVoteIds?: string[];
   groupRelationshipIds?: string[];
@@ -156,6 +157,7 @@ export interface SeedContext {
     subscriptionsToSubscribedGroups?: number;
     subscriptionsToSubscribedEvents?: number;
     subscriptionsToSubscribedAmendments?: number;
+    subscriptionsToSubscribedBlogs?: number;
 
     // Meeting Slots
     meetingSlotsToOwners?: number;
@@ -174,6 +176,10 @@ export interface SeedContext {
     timelineEventsToBlogs?: number;
     timelineEventsToGroups?: number;
     timelineEventsToUsers?: number;
+
+    // Reactions
+    reactionsToUsers?: number;
+    reactionsToTimelineEvents?: number;
 
     // Tobias Subscriptions
     tobiasSubscribersToUsers?: number;

@@ -17,6 +17,7 @@ export const agendaAndVotingSeeder: EntitySeeder = {
     const userIds = context.userIds || [];
     const eventIds = context.eventIds || [];
     const positionIds = context.positionIds || [];
+    const amendmentIds = context.amendmentIds || [];
 
     console.log('Seeding agenda items and voting system...');
     const transactions = [];
@@ -29,7 +30,7 @@ export const agendaAndVotingSeeder: EntitySeeder = {
     // Link tracking counters
     let agendaItemsToCreators = 0;
     let agendaItemsToEvents = 0;
-    const agendaItemsToAmendments = 0;
+    let agendaItemsToAmendments = 0;
     let electionsToAgendaItems = 0;
     let electionsToPositions = 0;
     let electionCandidatesToElections = 0;
@@ -139,6 +140,8 @@ export const agendaAndVotingSeeder: EntitySeeder = {
         const type = randomItem(agendaTypes);
         const startTime = faker.date.future({ years: 0.5 });
         const status = randomItem(voteStatuses);
+        const amendmentId =
+          type === 'vote' && amendmentIds.length > 0 ? randomItem(amendmentIds) : undefined;
 
         // Add activation and completion timestamps based on status
         const isCompleted = status === 'completed';
@@ -162,8 +165,15 @@ export const agendaAndVotingSeeder: EntitySeeder = {
               ...(activatedAt ? { activatedAt } : {}),
               ...(completedAt ? { completedAt } : {}),
             })
-            .link({ creator: creatorId, event: eventId })
+            .link({
+              creator: creatorId,
+              event: eventId,
+              ...(amendmentId ? { amendment: amendmentId } : {}),
+            })
         );
+        if (amendmentId) {
+          agendaItemsToAmendments++;
+        }
         totalAgendaItems++;
         agendaItemsToCreators++;
         agendaItemsToEvents++;

@@ -27,36 +27,36 @@ const enTranslation = {
   common: commonTranslations,
   loading: commonTranslations.loading,
   errors: commonTranslations.errors,
-  
+
   // Navigation
   navigation: navigationTranslations,
   navigationDemo: navigationTranslations.demo,
   commandDialog: navigationTranslations.commandDialog,
-  
+
   // Authentication
   auth: authTranslations,
   onboarding: authTranslations.onboarding,
-  
+
   // Landing pages
   landing: {
     ...landingSectionTranslations,
     solutions: pagesTranslations.solutions,
     pricing: pagesTranslations.pricing,
   },
-  
+
   // Shared components
   components: componentsTranslations,
   media: componentsTranslations.media,
   mediaUpload: componentsTranslations.mediaUpload,
   dateElement: componentsTranslations.dateElement,
   columnElement: componentsTranslations.columnElement,
-  
+
   // PlateJS editor
   plateJs: plateJsTranslations,
-  
+
   // Page-specific translations
   pages: pagesTranslations,
-  
+
   // Feature-specific translations
   features: {
     auth: authTranslations,
@@ -75,10 +75,11 @@ const enTranslation = {
     todos: todosTranslations,
     user: userTranslations,
   },
-  
+
   // Legacy compatibility - map old keys to new structure
   // These ensure backwards compatibility with existing code
   home: pagesTranslations.home,
+  timeline: timelineTranslations,
 };
 
 export default enTranslation;

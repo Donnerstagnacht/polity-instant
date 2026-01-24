@@ -1,16 +1,80 @@
 /**
  * Timeline Events Seeder
  * Seeds activity feed showing various actions on subscribed content
+ * Updated for Pinterest-style timeline with media, votes, elections, and rich content types
  */
 
 import { id, tx } from '@instantdb/admin';
 import { faker } from '@faker-js/faker';
 import type { EntitySeeder, SeedContext } from '../types/seeder.types';
 import { randomInt, randomItem } from '../helpers/random.helpers';
+import { SEED_CONFIG } from '../config/seed.config';
+
+// Content type gradients for visual variety
+const CONTENT_TYPE_GRADIENTS = {
+  group: 'bg-gradient-to-br from-green-100 to-blue-100',
+  event: 'bg-gradient-to-br from-orange-100 to-yellow-100',
+  amendment: 'bg-gradient-to-br from-purple-100 to-blue-100',
+  vote: 'bg-gradient-to-br from-red-100 to-orange-100',
+  election: 'bg-gradient-to-br from-rose-100 to-pink-100',
+  video: 'bg-gradient-to-br from-pink-100 to-red-100',
+  image: 'bg-gradient-to-br from-cyan-100 to-blue-100',
+  statement: 'bg-gradient-to-br from-indigo-100 to-purple-100',
+  todo: 'bg-gradient-to-br from-yellow-100 to-orange-100',
+  blog: 'bg-gradient-to-br from-teal-100 to-green-100',
+  action: 'bg-gradient-to-br from-gray-100 to-slate-100',
+};
+
+// Sample image URLs for timeline cards
+const SAMPLE_IMAGES = [
+  'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=800',
+  'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800',
+  'https://images.unsplash.com/photo-1577563908411-5077b6dc7624?w=800',
+  'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800',
+  'https://images.unsplash.com/photo-1494172961521-33799ddd43a5?w=800',
+  'https://images.unsplash.com/photo-1531973576160-7125cd663d86?w=800',
+];
+
+// Sample video URLs (YouTube)
+const SAMPLE_VIDEOS = [
+  {
+    url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    thumbnail: 'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg',
+  },
+  {
+    url: 'https://www.youtube.com/watch?v=9bZkp7q19f0',
+    thumbnail: 'https://img.youtube.com/vi/9bZkp7q19f0/maxresdefault.jpg',
+  },
+];
+
+// Topic tags for categorization
+const TOPIC_TAGS = [
+  'transport',
+  'budget',
+  'climate',
+  'healthcare',
+  'education',
+  'housing',
+  'urban',
+  'governance',
+  'environment',
+  'economy',
+  'social',
+  'justice',
+];
 
 export const timelineEventsSeeder: EntitySeeder = {
   name: 'timelineEvents',
-  dependencies: ['users', 'groups', 'events'],
+  dependencies: [
+    'users',
+    'groups',
+    'events',
+    'amendments',
+    'blogs',
+    'todos',
+    'subscriptions',
+    'tobiasSubscriptions',
+  ],
 
   async seed(context: SeedContext): Promise<SeedContext> {
     const { db } = context;
@@ -19,8 +83,49 @@ export const timelineEventsSeeder: EntitySeeder = {
     const eventIds = context.eventIds || [];
     const amendmentIds = context.amendmentIds || [];
     const blogIds = context.blogIds || [];
+    const todoIds = context.todoIds || [];
 
-    console.log('Seeding timeline events...');
+    const mainUserId = SEED_CONFIG.tobiasUserId;
+
+    const subscriptionsData = await db.query({
+      subscribers: {
+        $: {
+          where: {
+            'subscriber.id': mainUserId,
+          },
+        },
+        user: {},
+        group: {},
+        event: {},
+        amendment: {},
+        blog: {},
+      },
+    });
+
+    const subscribedUserIds = (subscriptionsData?.subscribers || [])
+      .filter((sub: any) => sub.user)
+      .map((sub: any) => sub.user.id);
+    const subscribedGroupIds = (subscriptionsData?.subscribers || [])
+      .filter((sub: any) => sub.group)
+      .map((sub: any) => sub.group.id);
+    const subscribedEventIds = (subscriptionsData?.subscribers || [])
+      .filter((sub: any) => sub.event)
+      .map((sub: any) => sub.event.id);
+    const subscribedAmendmentIds = (subscriptionsData?.subscribers || [])
+      .filter((sub: any) => sub.amendment)
+      .map((sub: any) => sub.amendment.id);
+    const subscribedBlogIds = (subscriptionsData?.subscribers || [])
+      .filter((sub: any) => sub.blog)
+      .map((sub: any) => sub.blog.id);
+
+    const pickFrom = <T>(preferred: T[], fallback: T[]): T | undefined =>
+      preferred.length > 0
+        ? randomItem(preferred)
+        : fallback.length > 0
+          ? randomItem(fallback)
+          : undefined;
+
+    console.log('Seeding timeline events with Pinterest-style content...');
     const transactions = [];
     const timelineEventIds: string[] = [];
 
@@ -32,10 +137,26 @@ export const timelineEventsSeeder: EntitySeeder = {
     let timelineEventsToGroups = 0;
     let timelineEventsToUsers = 0;
 
+    // Helper to generate random stats
+    const generateStats = () => ({
+      likes: randomInt(0, 500),
+      views: randomInt(10, 5000),
+      comments: randomInt(0, 100),
+      shares: randomInt(0, 50),
+    });
+
+    // Helper to get random topic tags (1-3 tags)
+    const getRandomTags = () => {
+      const count = randomInt(1, 3);
+      const shuffled = [...TOPIC_TAGS].sort(() => 0.5 - Math.random());
+      return shuffled.slice(0, count);
+    };
+
     const entityConfigs = [
       {
         type: 'amendment',
-        ids: amendmentIds,
+        contentType: 'amendment',
+        ids: subscribedAmendmentIds.length > 0 ? subscribedAmendmentIds : amendmentIds,
         events: ['created', 'updated', 'comment_added', 'vote_started', 'status_changed'],
         titles: () => [
           `Amendment draft created`,
@@ -54,7 +175,8 @@ export const timelineEventsSeeder: EntitySeeder = {
       },
       {
         type: 'event',
-        ids: eventIds,
+        contentType: 'event',
+        ids: subscribedEventIds.length > 0 ? subscribedEventIds : eventIds,
         events: ['created', 'updated', 'participant_joined', 'status_changed'],
         titles: () => [
           `New event scheduled`,
@@ -71,7 +193,8 @@ export const timelineEventsSeeder: EntitySeeder = {
       },
       {
         type: 'blog',
-        ids: blogIds,
+        contentType: 'blog',
+        ids: subscribedBlogIds.length > 0 ? subscribedBlogIds : blogIds,
         events: ['created', 'updated', 'comment_added', 'published'],
         titles: () => [
           `New blog post published`,
@@ -88,7 +211,8 @@ export const timelineEventsSeeder: EntitySeeder = {
       },
       {
         type: 'group',
-        ids: groupIds,
+        contentType: 'group',
+        ids: subscribedGroupIds.length > 0 ? subscribedGroupIds : groupIds,
         events: ['created', 'updated', 'member_added', 'status_changed'],
         titles: () => [
           `New group created`,
@@ -105,7 +229,8 @@ export const timelineEventsSeeder: EntitySeeder = {
       },
       {
         type: 'user',
-        ids: userIds.slice(0, 10),
+        contentType: 'action',
+        ids: (subscribedUserIds.length > 0 ? subscribedUserIds : userIds).slice(0, 10),
         events: ['updated', 'status_changed'],
         titles: () => [`User updated`, `User status changed`],
         descriptions: () => [
@@ -119,6 +244,10 @@ export const timelineEventsSeeder: EntitySeeder = {
 
     // Create timeline events for each entity type
     for (const config of entityConfigs) {
+      if (!config.ids || config.ids.length === 0) {
+        continue;
+      }
+
       const entitiesToProcess = config.ids.slice(0, Math.min(config.ids.length, 15));
 
       for (const entityId of entitiesToProcess) {
@@ -130,6 +259,10 @@ export const timelineEventsSeeder: EntitySeeder = {
           const eventIndex = config.events.indexOf(eventType);
           const title = config.titles()[eventIndex];
           const description = config.descriptions()[eventIndex];
+          if (userIds.length === 0) {
+            continue;
+          }
+
           const actorId = randomItem(userIds);
 
           const timelineEventId = id();
@@ -137,11 +270,20 @@ export const timelineEventsSeeder: EntitySeeder = {
           const daysAgo = randomInt(1, 30);
 
           // Create metadata based on event type
-          let metadata = {};
+          let metadata: Record<string, unknown> = {};
+          let voteStatus: string | undefined;
+          let electionStatus: string | undefined;
+          let endsAt: Date | undefined;
+
           if (eventType === 'vote_started') {
+            voteStatus = 'open';
+            endsAt = new Date(Date.now() + randomInt(1, 14) * 24 * 60 * 60 * 1000);
             metadata = {
-              votingEndTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+              votingEndTime: endsAt,
               expectedTurnout: randomInt(50, 200),
+              currentSupport: randomInt(30, 70),
+              currentOppose: randomInt(10, 40),
+              currentAbstain: randomInt(0, 20),
             };
           } else if (eventType === 'status_changed') {
             metadata = {
@@ -160,6 +302,10 @@ export const timelineEventsSeeder: EntitySeeder = {
             };
           }
 
+          if (!entityId) {
+            continue;
+          }
+
           transactions.push(
             tx.timelineEvents[timelineEventId]
               .update({
@@ -169,6 +315,12 @@ export const timelineEventsSeeder: EntitySeeder = {
                 title,
                 description,
                 metadata,
+                contentType: config.contentType,
+                tags: getRandomTags(),
+                stats: generateStats(),
+                voteStatus,
+                electionStatus,
+                endsAt: endsAt?.getTime(),
                 createdAt: faker.date.recent({ days: daysAgo }),
               })
               .link({
@@ -179,9 +331,8 @@ export const timelineEventsSeeder: EntitySeeder = {
           eventsCreated++;
 
           // Track link creations
-          timelineEventsToActors++; // All timeline events link to actor
+          timelineEventsToActors++;
 
-          // Increment counter based on entity type
           if (config.type === 'amendment') {
             timelineEventsToAmendments++;
           } else if (config.type === 'event') {
@@ -197,6 +348,274 @@ export const timelineEventsSeeder: EntitySeeder = {
       }
     }
 
+    // Create special content types for Pinterest-style timeline
+
+    // 1. Video uploads
+    for (let i = 0; i < 5; i++) {
+      const video = randomItem(SAMPLE_VIDEOS);
+      const timelineEventId = id();
+      timelineEventIds.push(timelineEventId);
+      const actorId = pickFrom(subscribedUserIds, userIds);
+      const groupId = pickFrom(subscribedGroupIds, groupIds);
+
+      if (!actorId || !groupId) {
+        continue;
+      }
+
+      transactions.push(
+        tx.timelineEvents[timelineEventId]
+          .update({
+            eventType: 'video_uploaded',
+            entityType: 'group',
+            entityId: groupId,
+            title: faker.lorem.sentence(4),
+            description: faker.lorem.paragraph(2),
+            contentType: 'video',
+            videoURL: video.url,
+            videoThumbnailURL: video.thumbnail,
+            tags: getRandomTags(),
+            stats: generateStats(),
+            metadata: { duration: randomInt(60, 600), views: randomInt(100, 5000) },
+            createdAt: faker.date.recent({ days: randomInt(1, 14) }),
+          })
+          .link({ actor: actorId, group: groupId })
+      );
+      eventsCreated++;
+      timelineEventsToActors++;
+      timelineEventsToGroups++;
+    }
+
+    // 2. Image posts
+    for (let i = 0; i < 8; i++) {
+      const imageURL = randomItem(SAMPLE_IMAGES);
+      const timelineEventId = id();
+      timelineEventIds.push(timelineEventId);
+      const actorId = pickFrom(subscribedUserIds, userIds);
+      const groupId = pickFrom(subscribedGroupIds, groupIds);
+
+      if (!actorId || !groupId) {
+        continue;
+      }
+
+      transactions.push(
+        tx.timelineEvents[timelineEventId]
+          .update({
+            eventType: 'image_uploaded',
+            entityType: 'group',
+            entityId: groupId,
+            title: faker.lorem.sentence(3),
+            description: faker.lorem.sentence(10),
+            contentType: 'image',
+            imageURL,
+            tags: getRandomTags(),
+            stats: generateStats(),
+            createdAt: faker.date.recent({ days: randomInt(1, 21) }),
+          })
+          .link({ actor: actorId, group: groupId })
+      );
+      eventsCreated++;
+      timelineEventsToActors++;
+      timelineEventsToGroups++;
+    }
+
+    // 3. Statements
+    for (let i = 0; i < 6; i++) {
+      const timelineEventId = id();
+      timelineEventIds.push(timelineEventId);
+      const actorId = pickFrom(subscribedUserIds, userIds);
+
+      if (!actorId) {
+        continue;
+      }
+
+      transactions.push(
+        tx.timelineEvents[timelineEventId]
+          .update({
+            eventType: 'statement_posted',
+            entityType: 'user',
+            entityId: actorId,
+            title: 'Statement',
+            description: faker.lorem.paragraph(3),
+            contentType: 'statement',
+            tags: getRandomTags(),
+            stats: generateStats(),
+            createdAt: faker.date.recent({ days: randomInt(1, 14) }),
+          })
+          .link({ actor: actorId, user: actorId })
+      );
+      eventsCreated++;
+      timelineEventsToActors++;
+      timelineEventsToUsers++;
+    }
+
+    // 4. Vote events (open and closed)
+    const voteStatuses = ['open', 'open', 'open', 'closed', 'passed', 'rejected'];
+    for (let i = 0; i < 6; i++) {
+      if (userIds.length === 0 || amendmentIds.length === 0) {
+        break;
+      }
+
+      const timelineEventId = id();
+      timelineEventIds.push(timelineEventId);
+      const actorId = randomItem(userIds);
+      const amendmentId = randomItem(amendmentIds);
+      const status = voteStatuses[i];
+      const isOpen = status === 'open';
+
+      transactions.push(
+        tx.timelineEvents[timelineEventId]
+          .update({
+            eventType: isOpen ? 'vote_opened' : 'vote_closed',
+            entityType: 'amendment',
+            entityId: amendmentId,
+            title: `Vote: ${faker.lorem.sentence(4)}`,
+            description: faker.lorem.paragraph(2),
+            contentType: 'vote',
+            tags: getRandomTags(),
+            stats: generateStats(),
+            voteStatus: status,
+            endsAt: isOpen
+              ? new Date(Date.now() + randomInt(1, 7) * 24 * 60 * 60 * 1000).getTime()
+              : new Date(Date.now() - randomInt(1, 7) * 24 * 60 * 60 * 1000).getTime(),
+            metadata: {
+              supportPercent: randomInt(30, 80),
+              opposePercent: randomInt(10, 50),
+              abstainPercent: randomInt(0, 20),
+              totalVotes: randomInt(50, 300),
+              quorumReached: Math.random() > 0.3,
+            },
+            createdAt: faker.date.recent({ days: randomInt(1, 14) }),
+          })
+          .link({ actor: actorId, amendment: amendmentId })
+      );
+      eventsCreated++;
+      timelineEventsToActors++;
+      timelineEventsToAmendments++;
+    }
+
+    // 5. Election events
+    const electionStatuses = ['nominations', 'voting', 'voting', 'closed', 'winner'];
+    for (let i = 0; i < 5; i++) {
+      if (userIds.length === 0 || eventIds.length === 0) {
+        break;
+      }
+
+      const timelineEventId = id();
+      timelineEventIds.push(timelineEventId);
+      const actorId = randomItem(userIds);
+      const eventId = randomItem(eventIds);
+      const status = electionStatuses[i];
+      const isActive = status === 'nominations' || status === 'voting';
+
+      transactions.push(
+        tx.timelineEvents[timelineEventId]
+          .update({
+            eventType:
+              status === 'winner'
+                ? 'election_winner_announced'
+                : `election_${status === 'nominations' ? 'nominations_open' : status === 'voting' ? 'voting_open' : 'closed'}`,
+            entityType: 'event',
+            entityId: eventId,
+            title: `Election: ${faker.person.jobTitle()}`,
+            description: faker.lorem.paragraph(2),
+            contentType: 'election',
+            tags: getRandomTags(),
+            stats: generateStats(),
+            electionStatus: status,
+            endsAt: isActive
+              ? new Date(Date.now() + randomInt(1, 14) * 24 * 60 * 60 * 1000).getTime()
+              : new Date(Date.now() - randomInt(1, 7) * 24 * 60 * 60 * 1000).getTime(),
+            metadata: {
+              candidates: randomInt(2, 8),
+              totalVotes: randomInt(30, 200),
+              turnoutPercent: randomInt(40, 90),
+              winnerName: status === 'winner' ? faker.person.fullName() : undefined,
+              winnerPercent: status === 'winner' ? randomInt(40, 70) : undefined,
+            },
+            createdAt: faker.date.recent({ days: randomInt(1, 14) }),
+          })
+          .link({ actor: actorId, event: eventId })
+      );
+      eventsCreated++;
+      timelineEventsToActors++;
+      timelineEventsToEvents++;
+    }
+
+    // 6. Todo events (if todos exist)
+    let todosForTimeline: Array<{ id: string; group?: { id: string }; creator?: { id: string } }> =
+      [];
+
+    if (todoIds && todoIds.length > 0) {
+      const todosQuery = {
+        todos: {
+          $: {
+            where: {
+              id: { in: todoIds },
+            },
+          },
+          group: {},
+          creator: {},
+        },
+      };
+
+      const todosData = await db.query(todosQuery);
+      todosForTimeline = (todosData?.todos || []).map((todo: any) => ({
+        id: todo.id,
+        group: todo.group ? { id: todo.group.id } : undefined,
+        creator: todo.creator ? { id: todo.creator.id } : undefined,
+      }));
+
+      if (todosForTimeline.length === 0) {
+        todosForTimeline = todoIds.slice(0, 4).map(id => ({ id }));
+      }
+    }
+
+    if (todosForTimeline.length > 0) {
+      for (let i = 0; i < Math.min(4, todosForTimeline.length); i++) {
+        const timelineEventId = id();
+        timelineEventIds.push(timelineEventId);
+        const todo = todosForTimeline[i];
+        const actorId = todo.creator?.id || pickFrom(subscribedUserIds, userIds);
+        const todoId = todo.id;
+        const groupId = todo.group?.id;
+
+        if (!actorId || !todoId) {
+          continue;
+        }
+
+        transactions.push(
+          tx.timelineEvents[timelineEventId]
+            .update({
+              eventType: 'todo_created',
+              entityType: 'todo',
+              entityId: todoId,
+              title: faker.lorem.sentence(4),
+              description: faker.lorem.paragraph(1),
+              contentType: 'todo',
+              tags: getRandomTags(),
+              stats: generateStats(),
+              metadata: {
+                dueDate: faker.date.soon({ days: randomInt(1, 30) }).getTime(),
+                priority: randomItem(['low', 'medium', 'high', 'urgent']),
+                assigneeCount: randomInt(1, 5),
+                progress: randomInt(0, 100),
+              },
+              createdAt: faker.date.recent({ days: randomInt(1, 14) }),
+            })
+            .link({
+              actor: actorId,
+              todo: todoId,
+              ...(groupId ? { group: groupId } : {}),
+            })
+        );
+        eventsCreated++;
+        timelineEventsToActors++;
+        if (groupId) {
+          timelineEventsToGroups++;
+        }
+      }
+    }
+
     // Execute in batches
     if (transactions.length > 0) {
       const batchSize = 20;
@@ -206,7 +625,9 @@ export const timelineEventsSeeder: EntitySeeder = {
       }
     }
 
-    console.log(`✓ Created ${eventsCreated} timeline events across all entity types`);
+    console.log(
+      `✅ Created ${eventsCreated} timeline events (including ${5} videos, ${8} images, ${6} statements, ${6} votes, ${5} elections)`
+    );
 
     return {
       ...context,

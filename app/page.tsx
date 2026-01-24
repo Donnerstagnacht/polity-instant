@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { ArrowRight } from 'lucide-react';
-import { SubscriptionTimeline } from '@/features/timeline';
+import { ModernTimeline } from '@/features/timeline/ui/ModernTimeline';
 import { AriaKaiWelcomeDialog } from '@/components/dialogs/AriaKaiWelcomeDialog';
 import { OnboardingWizard } from '@/features/auth/ui/onboarding/OnboardingWizard';
 import {
@@ -27,7 +27,7 @@ export default function HomePage() {
   const router = useRouter();
   const showAriaKaiParam = searchParams.get('showAriaKai');
   const onboardingParam = searchParams.get('onboarding');
-  
+
   // Use InstantDB's native auth hook for consistency with client-layout
   const { user } = db.useAuth();
   const isAuthenticated = !!user;
@@ -52,7 +52,7 @@ export default function HomePage() {
 
   const userData = data?.$users?.[0];
   const shouldShowDialog = userData?.assistantIntroduction !== false;
-  
+
   console.log('🏠 HomePage render:', {
     isAuthenticated,
     userId: user?.id,
@@ -60,7 +60,13 @@ export default function HomePage() {
     onboardingParam,
     shouldShowDialog,
     showOnboarding,
-    userData: userData ? { id: userData.id, name: userData.name, assistantIntroduction: userData.assistantIntroduction } : null
+    userData: userData
+      ? {
+          id: userData.id,
+          name: userData.name,
+          assistantIntroduction: userData.assistantIntroduction,
+        }
+      : null,
   });
 
   // Check if user should see onboarding
@@ -86,9 +92,9 @@ export default function HomePage() {
       isAuthenticated,
       shouldShowDialog,
       onboardingParam,
-      willShow: isAuthenticated && shouldShowDialog && !onboardingParam
+      willShow: isAuthenticated && shouldShowDialog && !onboardingParam,
     });
-    
+
     if (isAuthenticated && shouldShowDialog && !onboardingParam) {
       console.log('🎉 Setting showWelcomeDialog to true');
       setShowWelcomeDialog(true);
@@ -131,14 +137,9 @@ export default function HomePage() {
   // If authenticated, show the timeline
   if (isAuthenticated) {
     return (
-      <PageWrapper className="container mx-auto p-8">
+      <PageWrapper className="container mx-auto">
         <AriaKaiWelcomeDialog open={showWelcomeDialog} onOpenChange={setShowWelcomeDialog} />
-        <div className="mb-8 text-center">
-          <h1 className="mb-4 text-4xl font-bold">{t('pages.home.welcomeBack', { email: user?.email })}</h1>
-        </div>
-        <div className="mb-8">
-          <SubscriptionTimeline />
-        </div>
+        <ModernTimeline />
       </PageWrapper>
     );
   }
@@ -161,7 +162,9 @@ export default function HomePage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={handleDismissWarning}>{t('pages.home.alphaWarning.dismiss')}</AlertDialogAction>
+            <AlertDialogAction onClick={handleDismissWarning}>
+              {t('pages.home.alphaWarning.dismiss')}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -198,7 +201,9 @@ export default function HomePage() {
               className="rounded-lg border bg-card p-4 transition-colors hover:bg-accent"
             >
               <h3 className="font-semibold">{t('pages.home.quickLinks.solutions.title')}</h3>
-              <p className="mt-1 text-muted-foreground">{t('pages.home.quickLinks.solutions.description')}</p>
+              <p className="mt-1 text-muted-foreground">
+                {t('pages.home.quickLinks.solutions.description')}
+              </p>
             </Link>
             <Link
               href="/pricing"
@@ -214,7 +219,9 @@ export default function HomePage() {
               className="rounded-lg border bg-card p-4 transition-colors hover:bg-accent"
             >
               <h3 className="font-semibold">{t('pages.home.quickLinks.features.title')}</h3>
-              <p className="mt-1 text-muted-foreground">{t('pages.home.quickLinks.features.description')}</p>
+              <p className="mt-1 text-muted-foreground">
+                {t('pages.home.quickLinks.features.description')}
+              </p>
             </Link>
           </div>
         </div>

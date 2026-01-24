@@ -11,14 +11,22 @@ export function useSubscriptionTimeline() {
   const shouldQuery = !!authUser?.id;
 
   // Fetch all subscriptions for the current user
+  const subscriptionsWhere = useMemo(() => {
+    if (!authUser?.id) return null;
+    if (!authUser.email) {
+      return { 'subscriber.id': authUser.id };
+    }
+    return {
+      or: [{ 'subscriber.id': authUser.id }, { 'subscriber.email': authUser.email }],
+    };
+  }, [authUser?.id, authUser?.email]);
+
   const { data: subscriptionsData, isLoading: subscriptionsLoading } = db.useQuery(
-    shouldQuery
+    shouldQuery && subscriptionsWhere
       ? {
           subscribers: {
             $: {
-              where: {
-                'subscriber.id': authUser.id,
-              },
+              where: subscriptionsWhere,
             },
             user: {},
             group: {},
@@ -64,6 +72,7 @@ export function useSubscriptionTimeline() {
 
     if (subscribedEntityIds.users.length > 0) {
       conditions.push({ 'user.id': { in: subscribedEntityIds.users } });
+      conditions.push({ 'actor.id': { in: subscribedEntityIds.users } });
     }
     if (subscribedEntityIds.groups.length > 0) {
       conditions.push({ 'group.id': { in: subscribedEntityIds.groups } });
@@ -95,6 +104,7 @@ export function useSubscriptionTimeline() {
             amendment: { document: {} },
             event: { organizer: {} },
             blog: {}, // Blogs don't have a direct user link - they use blogBloggers junction table
+            todo: { group: {}, creator: {} },
           },
         }
       : null

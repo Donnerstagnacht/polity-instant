@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search as SearchIcon, Filter, Hash } from 'lucide-react';
+import { Search as SearchIcon, Filter, X } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
 
 interface SearchHeaderProps {
@@ -9,8 +9,8 @@ interface SearchHeaderProps {
   setSearchQuery: (query: string) => void;
   showFilters: boolean;
   setShowFilters: (show: boolean) => void;
-  hashtagFilter: string;
-  setHashtagFilter: (hashtag: string) => void;
+  activeTopics: string[];
+  onTopicRemove: (topic: string) => void;
   totalResults: number;
   queryParam: string;
 }
@@ -20,8 +20,8 @@ export function SearchHeader({
   setSearchQuery,
   showFilters,
   setShowFilters,
-  hashtagFilter,
-  setHashtagFilter,
+  activeTopics,
+  onTopicRemove,
   totalResults,
   queryParam,
 }: SearchHeaderProps) {
@@ -31,9 +31,7 @@ export function SearchHeader({
     <>
       <div className="mb-6">
         <h1 className="mb-2 text-3xl font-bold">{t('features.search.title')}</h1>
-        <p className="text-muted-foreground">
-          {t('features.search.description')}
-        </p>
+        <p className="text-muted-foreground">{t('features.search.description')}</p>
       </div>
 
       {/* Search Bar - Fixed/Sticky */}
@@ -54,38 +52,43 @@ export function SearchHeader({
         </div>
 
         {/* Active Filters Display */}
-        {hashtagFilter && !showFilters && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">{t('features.search.filters.title')}:</span>
-            <Badge
-              variant="secondary"
-              className="cursor-pointer"
-              onClick={() => setHashtagFilter('')}
-            >
-              <Hash className="mr-1 h-3 w-3" />
-              {hashtagFilter.replace(/^#/, '')}
-              <button
-                className="ml-2 hover:text-destructive"
-                onClick={e => {
-                  e.stopPropagation();
-                  setHashtagFilter('');
-                }}
+        {activeTopics.length > 0 && !showFilters && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              {t('features.search.filters.title')}:
+            </span>
+            {activeTopics.map(topic => (
+              <Badge
+                key={topic}
+                variant="secondary"
+                className="cursor-pointer"
+                onClick={() => onTopicRemove(topic)}
               >
-                ×
-              </button>
-            </Badge>
+                {topic}
+                <button
+                  className="ml-2 hover:text-destructive"
+                  onClick={e => {
+                    e.stopPropagation();
+                    onTopicRemove(topic);
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            ))}
           </div>
         )}
       </div>
 
       {/* Results Summary */}
-      {(queryParam || hashtagFilter) && (
+      {(queryParam || activeTopics.length > 0) && (
         <div className="mb-4">
           <p className="text-sm text-muted-foreground">
             {queryParam &&
               t('features.search.results.showingFor', { count: totalResults, query: queryParam })}
-            {queryParam && hashtagFilter && ' '}
-            {hashtagFilter && `${t('features.search.filters.title')}: #${hashtagFilter.replace(/^#/, '')}`}
+            {queryParam && activeTopics.length > 0 && ' '}
+            {activeTopics.length > 0 &&
+              `${t('features.search.filters.title')}: ${activeTopics.join(', ')}`}
           </p>
         </div>
       )}

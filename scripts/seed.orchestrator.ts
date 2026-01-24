@@ -12,6 +12,7 @@ export class SeedOrchestrator {
     this.db = init({
       appId,
       adminToken,
+      schema: require('../db/instant.schema').default,
     });
   }
 
@@ -160,6 +161,7 @@ export class SeedOrchestrator {
       hashtagIds: [],
       documentIds: [],
       todoIds: [],
+      reactionIds: [],
       linkCounts: {},
     };
 
@@ -225,6 +227,7 @@ export class SeedOrchestrator {
       { label: 'Stripe Subscriptions', count: context.stripeSubscriptionIds?.length || 0 },
       { label: 'Stripe Payments', count: context.stripePaymentIds?.length || 0 },
       { label: 'Timeline Events', count: context.timelineEventIds?.length || 0 },
+      { label: 'Reactions', count: context.reactionIds?.length || 0 },
       { label: 'Amendment Paths', count: context.amendmentPathIds?.length || 0 },
       { label: 'Amendment Votes', count: context.amendmentVoteIds?.length || 0 },
       { label: 'Group Relationships', count: context.groupRelationshipIds?.length || 0 },
@@ -433,6 +436,13 @@ export class SeedOrchestrator {
         { label: 'Timeline Events → Blogs', count: context.linkCounts.timelineEventsToBlogs },
         { label: 'Timeline Events → Groups', count: context.linkCounts.timelineEventsToGroups },
         { label: 'Timeline Events → Users', count: context.linkCounts.timelineEventsToUsers },
+
+        // Reactions
+        { label: 'Reactions → Users', count: context.linkCounts.reactionsToUsers },
+        {
+          label: 'Reactions → Timeline Events',
+          count: context.linkCounts.reactionsToTimelineEvents,
+        },
 
         // Tobias Subscriptions
         { label: 'Tobias Subscribers → Users', count: context.linkCounts.tobiasSubscribersToUsers },

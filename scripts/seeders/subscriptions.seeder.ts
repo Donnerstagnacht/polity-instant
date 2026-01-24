@@ -7,11 +7,11 @@ import { batchTransact } from '../helpers/transaction.helpers';
 
 export const subscriptionsSeeder: EntitySeeder = {
   name: 'subscriptions',
-  dependencies: ['users', 'groups', 'events'],
+  dependencies: ['users', 'groups', 'events', 'amendments', 'blogs'],
 
   async seed(context: SeedContext): Promise<SeedContext> {
     console.log('Seeding subscriptions...');
-    const { db, userIds, groupIds, eventIds, amendmentIds } = context;
+    const { db, userIds, groupIds, eventIds, amendmentIds, blogIds } = context;
     const transactions = [];
     const subscriptionIds: string[] = [];
 
@@ -21,8 +21,9 @@ export const subscriptionsSeeder: EntitySeeder = {
     let subscriptionsToSubscribedGroups = 0;
     let subscriptionsToSubscribedEvents = 0;
     let subscriptionsToSubscribedAmendments = 0;
+    let subscriptionsToSubscribedBlogs = 0;
 
-    const mainUserId = SEED_CONFIG.mainTestUserId;
+    const mainUserId = SEED_CONFIG.tobiasUserId;
 
     // Main user subscriptions
     const mainUserSubscribedUsers = randomItems(
@@ -33,12 +34,12 @@ export const subscriptionsSeeder: EntitySeeder = {
       const subscriptionId = id();
       subscriptionIds.push(subscriptionId);
       transactions.push(
-        tx.subscriptions[subscriptionId]
+        tx.subscribers[subscriptionId]
           .update({
             createdAt: faker.date.past({ years: 0.5 }),
             notificationsEnabled: faker.datatype.boolean(0.8),
           })
-          .link({ subscriber: mainUserId, subscribedToUser: subscribedId })
+          .link({ subscriber: mainUserId, user: subscribedId })
       );
       subscriptionsToSubscribers++;
       subscriptionsToSubscribedUsers++;
@@ -50,12 +51,12 @@ export const subscriptionsSeeder: EntitySeeder = {
       const subscriptionId = id();
       subscriptionIds.push(subscriptionId);
       transactions.push(
-        tx.subscriptions[subscriptionId]
+        tx.subscribers[subscriptionId]
           .update({
             createdAt: faker.date.past({ years: 0.5 }),
             notificationsEnabled: faker.datatype.boolean(0.8),
           })
-          .link({ subscriber: mainUserId, subscribedToGroup: groupId })
+          .link({ subscriber: mainUserId, group: groupId })
       );
       subscriptionsToSubscribers++;
       subscriptionsToSubscribedGroups++;
@@ -68,12 +69,12 @@ export const subscriptionsSeeder: EntitySeeder = {
         const subscriptionId = id();
         subscriptionIds.push(subscriptionId);
         transactions.push(
-          tx.subscriptions[subscriptionId]
+          tx.subscribers[subscriptionId]
             .update({
               createdAt: faker.date.past({ years: 0.5 }),
               notificationsEnabled: faker.datatype.boolean(0.8),
             })
-            .link({ subscriber: mainUserId, subscribedToEvent: eventId })
+            .link({ subscriber: mainUserId, event: eventId })
         );
         subscriptionsToSubscribers++;
         subscriptionsToSubscribedEvents++;
@@ -87,15 +88,34 @@ export const subscriptionsSeeder: EntitySeeder = {
         const subscriptionId = id();
         subscriptionIds.push(subscriptionId);
         transactions.push(
-          tx.subscriptions[subscriptionId]
+          tx.subscribers[subscriptionId]
             .update({
               createdAt: faker.date.past({ years: 0.5 }),
               notificationsEnabled: faker.datatype.boolean(0.8),
             })
-            .link({ subscriber: mainUserId, subscribedToAmendment: amendmentId })
+            .link({ subscriber: mainUserId, amendment: amendmentId })
         );
         subscriptionsToSubscribers++;
         subscriptionsToSubscribedAmendments++;
+      }
+    }
+
+    // Main user blog subscriptions
+    if (blogIds && blogIds.length > 0) {
+      const mainUserSubscribedBlogs = randomItems(blogIds, randomInt(2, 5));
+      for (const blogId of mainUserSubscribedBlogs) {
+        const subscriptionId = id();
+        subscriptionIds.push(subscriptionId);
+        transactions.push(
+          tx.subscribers[subscriptionId]
+            .update({
+              createdAt: faker.date.past({ years: 0.5 }),
+              notificationsEnabled: faker.datatype.boolean(0.8),
+            })
+            .link({ subscriber: mainUserId, blog: blogId })
+        );
+        subscriptionsToSubscribers++;
+        subscriptionsToSubscribedBlogs++;
       }
     }
 
@@ -111,12 +131,12 @@ export const subscriptionsSeeder: EntitySeeder = {
         const subscriptionId = id();
         subscriptionIds.push(subscriptionId);
         transactions.push(
-          tx.subscriptions[subscriptionId]
+          tx.subscribers[subscriptionId]
             .update({
               createdAt: faker.date.past({ years: 0.5 }),
               notificationsEnabled: faker.datatype.boolean(0.7),
             })
-            .link({ subscriber: userId, subscribedToUser: subscribedId })
+            .link({ subscriber: userId, user: subscribedId })
         );
         subscriptionsToSubscribers++;
         subscriptionsToSubscribedUsers++;
@@ -128,15 +148,66 @@ export const subscriptionsSeeder: EntitySeeder = {
         const subscriptionId = id();
         subscriptionIds.push(subscriptionId);
         transactions.push(
-          tx.subscriptions[subscriptionId]
+          tx.subscribers[subscriptionId]
             .update({
               createdAt: faker.date.past({ years: 0.5 }),
               notificationsEnabled: faker.datatype.boolean(0.7),
             })
-            .link({ subscriber: userId, subscribedToGroup: subscribedGroup })
+            .link({ subscriber: userId, group: subscribedGroup })
         );
         subscriptionsToSubscribers++;
         subscriptionsToSubscribedGroups++;
+      }
+
+      // Event subscriptions
+      if (eventIds.length > 0 && Math.random() > 0.5) {
+        const subscribedEvent = randomItem(eventIds);
+        const subscriptionId = id();
+        subscriptionIds.push(subscriptionId);
+        transactions.push(
+          tx.subscribers[subscriptionId]
+            .update({
+              createdAt: faker.date.past({ years: 0.5 }),
+              notificationsEnabled: faker.datatype.boolean(0.7),
+            })
+            .link({ subscriber: userId, event: subscribedEvent })
+        );
+        subscriptionsToSubscribers++;
+        subscriptionsToSubscribedEvents++;
+      }
+
+      // Amendment subscriptions
+      if (amendmentIds.length > 0 && Math.random() > 0.5) {
+        const subscribedAmendment = randomItem(amendmentIds);
+        const subscriptionId = id();
+        subscriptionIds.push(subscriptionId);
+        transactions.push(
+          tx.subscribers[subscriptionId]
+            .update({
+              createdAt: faker.date.past({ years: 0.5 }),
+              notificationsEnabled: faker.datatype.boolean(0.7),
+            })
+            .link({ subscriber: userId, amendment: subscribedAmendment })
+        );
+        subscriptionsToSubscribers++;
+        subscriptionsToSubscribedAmendments++;
+      }
+
+      // Blog subscriptions
+      if (blogIds && blogIds.length > 0 && Math.random() > 0.5) {
+        const subscribedBlog = randomItem(blogIds);
+        const subscriptionId = id();
+        subscriptionIds.push(subscriptionId);
+        transactions.push(
+          tx.subscribers[subscriptionId]
+            .update({
+              createdAt: faker.date.past({ years: 0.5 }),
+              notificationsEnabled: faker.datatype.boolean(0.7),
+            })
+            .link({ subscriber: userId, blog: subscribedBlog })
+        );
+        subscriptionsToSubscribers++;
+        subscriptionsToSubscribedBlogs++;
       }
     }
 
@@ -148,6 +219,7 @@ export const subscriptionsSeeder: EntitySeeder = {
     console.log(`   - subscriptionsToSubscribedGroups: ${subscriptionsToSubscribedGroups}`);
     console.log(`   - subscriptionsToSubscribedEvents: ${subscriptionsToSubscribedEvents}`);
     console.log(`   - subscriptionsToSubscribedAmendments: ${subscriptionsToSubscribedAmendments}`);
+    console.log(`   - subscriptionsToSubscribedBlogs: ${subscriptionsToSubscribedBlogs}`);
 
     return {
       ...context,
@@ -168,6 +240,9 @@ export const subscriptionsSeeder: EntitySeeder = {
         subscriptionsToSubscribedAmendments:
           (context.linkCounts?.subscriptionsToSubscribedAmendments || 0) +
           subscriptionsToSubscribedAmendments,
+        subscriptionsToSubscribedBlogs:
+          (context.linkCounts?.subscriptionsToSubscribedBlogs || 0) +
+          subscriptionsToSubscribedBlogs,
       },
     };
   },

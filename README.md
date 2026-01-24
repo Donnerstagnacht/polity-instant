@@ -101,6 +101,38 @@ We welcome contributions! There are multiple ways to help:
 
 Check out our [GitHub repository](https://github.com/Donnerstagnacht/polity-instant) to get started!
 
+## 🎨 Timeline Feature
+
+Polity features a **Pinterest/Instagram-style discovery timeline** with three distinct modes:
+
+### Timeline Modes
+
+- **📌 Following** - Content from groups, events, and amendments you subscribe to
+- **🔭 Explore** - Discover trending content, popular topics, and new groups to join
+- **🖥️ Decisions** - Bloomberg-style terminal for active votes and elections
+
+### Content Cards
+
+The timeline displays rich content cards for:
+
+- 👥 Groups - Community cards with member counts and topics
+- 📅 Events - Event cards with dates and participation status
+- 📝 Amendments - Amendment cards with workflow status and voting
+- 🗳️ Votes - Live vote cards with progress bars and countdowns
+- 🏛️ Elections - Election cards with candidate info and phases
+- ✅ Todos - Task cards with completion status
+- 📰 Blogs - Blog post cards with previews
+- 💬 Statements - Statement cards with discussion counts
+
+### Discovery Features
+
+- **Topic Filtering** - Filter by topics like Climate, Transport, Budget, Education
+- **Gradient Cards** - Beautiful gradient headers for visual variety
+- **Reactions** - Support, Oppose, or show Interest in content
+- **Real-time Updates** - Live updates via InstantDB subscriptions
+- **Infinite Scroll** - Smooth loading of more content
+- **Responsive Design** - Masonry grid adapts from 1-4 columns
+
 ## 📄 Project Structure
 
 ```

@@ -9,7 +9,16 @@ import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import db, { id } from '../../../../db/db';
-import { BookOpen, Calendar, MessageSquare, Clock, ArrowUp, ArrowDown, Trash2, Edit } from 'lucide-react';
+import {
+  BookOpen,
+  Calendar,
+  MessageSquare,
+  Clock,
+  ArrowUp,
+  ArrowDown,
+  Trash2,
+  Edit,
+} from 'lucide-react';
 import { StatsBar } from '@/components/ui/StatsBar';
 import { useSubscribeBlog } from '@/features/blogs/hooks/useSubscribeBlog';
 import { ActionBar } from '@/components/ui/ActionBar';
@@ -23,6 +32,7 @@ import { useBlogPermissions } from '../hooks/useBlogPermissions';
 import { PlateEditor } from '@/components/kit-platejs/plate-editor';
 import Link from 'next/link';
 import { notifyBlogCommentAdded } from '@/utils/notification-helpers';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
 // Comment component for blog comments
 interface BlogComment {
@@ -49,6 +59,8 @@ interface BlogComment {
   }[];
   replies?: BlogComment[];
 }
+
+type CommentCursor = [string, string, unknown, number];
 
 function CommentItem({ comment, blogId }: { comment: BlogComment; blogId: string }) {
   const { user } = useAuthStore();
@@ -166,6 +178,9 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sortBy, setSortBy] = useState<CommentSortBy>('votes');
+  const [commentCursor, setCommentCursor] = useState<{ after?: CommentCursor; first: number }>({
+    first: 10,
+  });
 
   // Permissions
   const { canEdit, canDelete, canManageMembers } = useBlogPermissions(blogId);
@@ -209,10 +224,14 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
     },
   });
 
-  // Separate query for comments to avoid nesting issues
-  const { data: commentsData } = db.useQuery({
+  // Separate query for comments with cursor pagination
+  const { data: commentsData, pageInfo: commentsPageInfo } = db.useQuery({
     comments: {
-      $: { where: { blog: blogId } },
+      $: {
+        where: { blog: blogId },
+        order: { createdAt: 'desc' as const },
+        ...commentCursor,
+      },
       creator: {},
       votes: {
         user: {},
@@ -231,6 +250,21 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
   // Get comments from separate query and filter to only show top-level comments
   const allComments = (commentsData?.comments || []) as BlogComment[];
   const topLevelComments = allComments.filter(comment => !comment.parentComment);
+
+  const loadMoreComments = () => {
+    const endCursor = commentsPageInfo?.comments?.endCursor;
+    if (endCursor) {
+      setCommentCursor({ after: endCursor, first: 10 });
+    }
+  };
+
+  const hasMoreComments = commentsPageInfo?.comments?.hasNextPage ?? false;
+
+  const loadMoreCommentsRef = useInfiniteScroll({
+    hasMore: hasMoreComments,
+    isLoading: false,
+    onLoadMore: loadMoreComments,
+  });
 
   // Vote handling
   const score = (blog?.upvotes || 0) - (blog?.downvotes || 0);
@@ -267,9 +301,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
             db.tx.blogSupportVotes[userVote.id].update({ vote: voteValue }),
             db.tx.blogs[blogId].update({
               upvotes:
-                voteValue === 1
-                  ? (blog.upvotes || 0) + 1
-                  : Math.max(0, (blog.upvotes || 1) - 1),
+                voteValue === 1 ? (blog.upvotes || 0) + 1 : Math.max(0, (blog.upvotes || 1) - 1),
               downvotes:
                 voteValue === -1
                   ? (blog.downvotes || 0) + 1
@@ -301,23 +333,19 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
     }
   };
 
-  // Sort comments based on selected sort method
-  const comments = [...topLevelComments].sort((a, b) => {
-    if (sortBy === 'votes') {
-      // Calculate scores from votes relation
-      const upvotesA = a.votes?.filter(v => v.vote === 1).length || 0;
-      const downvotesA = a.votes?.filter(v => v.vote === -1).length || 0;
-      const scoreA = upvotesA - downvotesA;
-
-      const upvotesB = b.votes?.filter(v => v.vote === 1).length || 0;
-      const downvotesB = b.votes?.filter(v => v.vote === -1).length || 0;
-      const scoreB = upvotesB - downvotesB;
-
-      return scoreB - scoreA; // Higher score first
-    } else {
-      return b.createdAt - a.createdAt; // Newer first
+  const comments = useMemo(() => {
+    if (sortBy === 'time') {
+      return [...topLevelComments].sort((a, b) => b.createdAt - a.createdAt);
     }
-  });
+
+    return [...topLevelComments].sort((a, b) => {
+      const aUp = a.votes?.filter(v => v.vote === 1).length || 0;
+      const aDown = a.votes?.filter(v => v.vote === -1).length || 0;
+      const bUp = b.votes?.filter(v => v.vote === 1).length || 0;
+      const bDown = b.votes?.filter(v => v.vote === -1).length || 0;
+      return bUp - bDown - (aUp - aDown);
+    });
+  }, [sortBy, topLevelComments]);
 
   // Handle adding a comment
   const handleAddComment = async () => {
@@ -386,9 +414,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
       <PageWrapper className="container mx-auto p-8">
         <div className="py-12 text-center">
           <h1 className="mb-4 text-2xl font-bold">{t('features.blogs.detail.notFound')}</h1>
-          <p className="text-muted-foreground">
-            {t('features.blogs.detail.notFoundDescription')}
-          </p>
+          <p className="text-muted-foreground">{t('features.blogs.detail.notFoundDescription')}</p>
         </div>
       </PageWrapper>
     );
@@ -473,7 +499,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
           {t('features.blogs.detail.comment')}
         </Button>
         <ShareButton url={`/blog/${blogId}`} title={blog.title} description="" />
-        
+
         {/* RBAC Actions */}
         {canDelete && (
           <Button variant="destructive" onClick={handleDeleteBlog}>
@@ -496,7 +522,9 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
           <div>
             <CardTitle>{t('features.blogs.detail.blogContent')}</CardTitle>
             <CardDescription>
-              {blog.content ? t('features.blogs.detail.latestVersion') : t('features.blogs.detail.noContentYet')}
+              {blog.content
+                ? t('features.blogs.detail.latestVersion')
+                : t('features.blogs.detail.noContentYet')}
             </CardDescription>
           </div>
           {canEdit && (
@@ -510,11 +538,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
         </CardHeader>
         <CardContent className="prose prose-slate max-w-none dark:prose-invert">
           {blog.content && Array.isArray(blog.content) && blog.content.length > 0 ? (
-            <PlateEditor
-              value={blog.content}
-              currentMode="view"
-              isOwnerOrCollaborator={false}
-            />
+            <PlateEditor value={blog.content} currentMode="view" isOwnerOrCollaborator={false} />
           ) : (
             <div className="py-8 text-center text-muted-foreground">
               <p>{t('features.blogs.detail.noContentAvailable')}</p>
@@ -536,7 +560,9 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>{t('features.blogs.detail.discussion')} ({comments.length})</CardTitle>
+              <CardTitle>
+                {t('features.blogs.detail.discussion')} ({comments.length})
+              </CardTitle>
               <CardDescription>{t('features.blogs.detail.discussionDescription')}</CardDescription>
             </div>
             <CommentSortSelect sortBy={sortBy} onSortChange={setSortBy} />
@@ -545,11 +571,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
         <CardContent>
           {/* Add Comment Form */}
           {!isCommenting && (
-            <Button
-              variant="outline"
-              onClick={() => setIsCommenting(true)}
-              className="mb-6 w-full"
-            >
+            <Button variant="outline" onClick={() => setIsCommenting(true)} className="mb-6 w-full">
               <MessageSquare className="mr-2 h-4 w-4" />
               {t('features.blogs.detail.addComment')}
             </Button>
@@ -581,9 +603,12 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
                 {t('features.blogs.detail.noCommentsYet')}
               </p>
             ) : (
-              comments.map(comment => (
-                <CommentItem key={comment.id} comment={comment} blogId={blogId} />
-              ))
+              <>
+                {comments.map(comment => (
+                  <CommentItem key={comment.id} comment={comment} blogId={blogId} />
+                ))}
+                {hasMoreComments && <div ref={loadMoreCommentsRef} className="h-px" />}
+              </>
             )}
           </div>
         </CardContent>

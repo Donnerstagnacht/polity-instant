@@ -11,10 +11,8 @@ import { id, tx } from '@instantdb/admin';
 import { faker } from '@faker-js/faker';
 import type { EntitySeeder, SeedContext } from '../types/seeder.types';
 import { randomInt, randomItem, randomItems, randomVisibility } from '../helpers/random.helpers';
-import {
-  DEFAULT_EVENT_ROLES,
-  DEFAULT_BLOG_ROLES,
-} from '../../db/rbac/constants';
+import { DEFAULT_EVENT_ROLES, DEFAULT_BLOG_ROLES } from '../../db/rbac/constants';
+import { SEED_CONFIG } from '../config/seed.config';
 
 export const rbacSeeder: EntitySeeder = {
   name: 'rbac',
@@ -24,6 +22,7 @@ export const rbacSeeder: EntitySeeder = {
     const { db } = context;
     const userIds = context.userIds || [];
     const eventIds = context.eventIds || [];
+    const tobiasUserId = SEED_CONFIG.tobiasUserId;
     const blogIds = context.blogIds || [];
     const eventOrganizers = context.eventOrganizers || new Map<string, string>();
 
@@ -102,17 +101,17 @@ export const rbacSeeder: EntitySeeder = {
 
       const organizerRoleId = eventRoleIds['Organizer'];
       const participantRoleId = eventRoleIds['Participant'];
-      
+
       // Store role mappings for use by other seeders
       eventRoleMappings.set(eventId, {
         organizerId: organizerRoleId,
         participantId: participantRoleId,
       });
-      
+
       // Ensure event organizer is a participant with Organizer role
       const eventOrganizerId = eventOrganizers.get(eventId);
       const usersWithRoles = new Set<string>();
-      
+
       if (eventOrganizerId) {
         const organizerParticipantId = id();
         transactions.push(
@@ -135,14 +134,37 @@ export const rbacSeeder: EntitySeeder = {
         usersWithRoles.add(eventOrganizerId);
       }
 
+      // Add Tobias as a participant to ALL events
+      if (tobiasUserId && !usersWithRoles.has(tobiasUserId)) {
+        const tobiasParticipantId = id();
+        transactions.push(
+          tx.eventParticipants[tobiasParticipantId]
+            .update({
+              status: 'member',
+              createdAt: faker.date.past({ years: 0.3 }),
+              visibility: 'public',
+            })
+            .link({
+              event: eventId,
+              user: tobiasUserId,
+              role: participantRoleId,
+            })
+        );
+        totalParticipants++;
+        eventParticipantsToEvents++;
+        eventParticipantsToUsers++;
+        eventParticipantsToRoles++;
+        usersWithRoles.add(tobiasUserId);
+      }
+
       for (let i = 0; i < participantUsers.length; i++) {
         const userId = participantUsers[i];
-        
+
         // Skip if user is already the event organizer
         if (usersWithRoles.has(userId)) {
           continue;
         }
-        
+
         const participantId = id();
 
         // Assign roles: first 1-2 users are co-organizers, rest are participants
@@ -152,11 +174,12 @@ export const rbacSeeder: EntitySeeder = {
         } else {
           roleId = participantRoleId;
         }
-        
+
         // Organizers always have 'member' status, participants can be member/invited/requested
-        const status = roleId === organizerRoleId
-          ? ('member' as const)
-          : randomItem(['member', 'member', 'member', 'invited', 'requested'] as const);
+        const status =
+          roleId === organizerRoleId
+            ? ('member' as const)
+            : randomItem(['member', 'member', 'member', 'invited', 'requested'] as const);
 
         transactions.push(
           tx.eventParticipants[participantId]

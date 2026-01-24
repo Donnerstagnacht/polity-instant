@@ -42,6 +42,8 @@ import { blogsSeeder } from './seeders/blogs.seeder';
 import { amendmentsSeeder } from './seeders/amendments.seeder';
 import { eventVotingSessionsSeeder } from './seeders/eventVotingSessions.seeder';
 import { supportConfirmationsSeeder } from './seeders/supportConfirmations.seeder';
+import { topicsSeeder } from './seeders/topics.seeder';
+import { reactionsSeeder } from './seeders/reactions.seeder';
 
 // Load environment variables from .env and .env.local
 config({ path: resolve(process.cwd(), '.env') });
@@ -109,6 +111,8 @@ async function main() {
     meetingSlotsSeeder,
     blogCommentsSeeder,
     timelineEventsSeeder,
+    topicsSeeder,
+    reactionsSeeder,
     stripeDataSeeder,
     tobiasSubscriptionsSeeder,
   ]);

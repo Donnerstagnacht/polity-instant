@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Bell, Check, Users, Search } from 'lucide-react';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { useNotificationMutations } from './hooks/useNotificationData';
 import { useNotificationFilters } from './hooks/useNotificationFilters';
 import { useNotificationActions } from './hooks/useNotificationActions';
@@ -15,13 +16,15 @@ export function NotificationsPage() {
   const { t } = useTranslation();
   const { user } = db.useAuth();
   const [searchQuery, setSearchQuery] = useState('');
+  const [cursor, setCursor] = useState<{ after?: any; first: number }>({ first: 20 });
 
-  const { data, isLoading } = db.useQuery({
+  const { data, isLoading, pageInfo } = db.useQuery({
     notifications: {
       $: {
         order: {
           serverCreatedAt: 'desc' as const,
         },
+        ...cursor,
       },
       recipient: {},
       sender: {},
@@ -94,8 +97,23 @@ export function NotificationsPage() {
   const { markAllAsRead } = useNotificationMutations();
   const { handleNotificationClick, handleDeleteNotification } = useNotificationActions();
 
+  const handleLoadMore = () => {
+    const endCursor = pageInfo?.notifications?.endCursor;
+    if (endCursor) {
+      setCursor({ after: endCursor, first: 20 });
+    }
+  };
+
+  const hasMore = pageInfo?.notifications?.hasNextPage ?? false;
+
+  const loadMoreRef = useInfiniteScroll({
+    hasMore,
+    isLoading,
+    onLoadMore: handleLoadMore,
+  });
+
   const handleMarkAllAsRead = async () => {
-    const unreadIds = filteredNotifications.unread.map((n) => n.id);
+    const unreadIds = filteredNotifications.unread.map(n => n.id);
     if (unreadIds.length > 0) {
       await markAllAsRead(unreadIds);
     }
@@ -111,30 +129,35 @@ export function NotificationsPage() {
 
   // Filter notifications based on search query
   const searchFilteredNotifications = {
-    all: filteredNotifications.all.filter((n: any) => 
-      !searchQuery || 
-      n.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      n.message?.toLowerCase().includes(searchQuery.toLowerCase())
+    all: filteredNotifications.all.filter(
+      (n: any) =>
+        !searchQuery ||
+        n.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        n.message?.toLowerCase().includes(searchQuery.toLowerCase())
     ),
-    unread: filteredNotifications.unread.filter((n: any) => 
-      !searchQuery || 
-      n.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      n.message?.toLowerCase().includes(searchQuery.toLowerCase())
+    unread: filteredNotifications.unread.filter(
+      (n: any) =>
+        !searchQuery ||
+        n.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        n.message?.toLowerCase().includes(searchQuery.toLowerCase())
     ),
-    read: filteredNotifications.read.filter((n: any) => 
-      !searchQuery || 
-      n.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      n.message?.toLowerCase().includes(searchQuery.toLowerCase())
+    read: filteredNotifications.read.filter(
+      (n: any) =>
+        !searchQuery ||
+        n.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        n.message?.toLowerCase().includes(searchQuery.toLowerCase())
     ),
-    personal: filteredNotifications.personal.filter((n: any) => 
-      !searchQuery || 
-      n.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      n.message?.toLowerCase().includes(searchQuery.toLowerCase())
+    personal: filteredNotifications.personal.filter(
+      (n: any) =>
+        !searchQuery ||
+        n.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        n.message?.toLowerCase().includes(searchQuery.toLowerCase())
     ),
-    entity: filteredNotifications.entity.filter((n: any) => 
-      !searchQuery || 
-      n.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      n.message?.toLowerCase().includes(searchQuery.toLowerCase())
+    entity: filteredNotifications.entity.filter(
+      (n: any) =>
+        !searchQuery ||
+        n.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        n.message?.toLowerCase().includes(searchQuery.toLowerCase())
     ),
   };
 
@@ -152,7 +175,7 @@ export function NotificationsPage() {
           <Input
             placeholder={t('features.notifications.searchPlaceholder')}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             className="pl-10"
           />
         </div>
@@ -219,6 +242,9 @@ export function NotificationsPage() {
           onDeleteNotification={handleDeleteNotification}
         />
       </TabsContent>
+
+      {/* Infinite scroll trigger */}
+      {hasMore && <div ref={loadMoreRef} className="h-px" />}
     </Tabs>
   );
 }

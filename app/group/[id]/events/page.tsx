@@ -16,6 +16,7 @@ import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { useNavigation } from '@/navigation/state/useNavigation';
 import { EventSearchCard } from '@/features/search/ui/EventSearchCard';
 import { useTranslation } from '@/hooks/use-translation';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
 export default function GroupEventsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -33,12 +34,17 @@ export default function GroupEventsPage({ params }: { params: Promise<{ id: stri
   const [publicOnly, setPublicOnly] = useState(false);
   const [hashtagFilter, setHashtagFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [eventCursor, setEventCursor] = useState<{ after?: string; first: number }>({ first: 20 });
 
   // Fetch group data using hook
   const { group, isLoading: groupLoading } = useGroupData(resolvedParams.id);
 
-  // Fetch events with extended data (hashtags, participants, organizer)
-  const { data: eventsData, isLoading: eventsLoading } = db.useQuery(
+  // Fetch events with extended data (hashtags, participants, organizer) and cursor pagination
+  const {
+    data: eventsData,
+    isLoading: eventsLoading,
+    pageInfo: eventsPageInfo,
+  } = db.useQuery(
     group?.id
       ? {
           events: {
@@ -46,6 +52,7 @@ export default function GroupEventsPage({ params }: { params: Promise<{ id: stri
               where: {
                 'group.id': group.id,
               },
+              ...eventCursor,
             },
             organizer: {},
             participants: {},
@@ -54,6 +61,21 @@ export default function GroupEventsPage({ params }: { params: Promise<{ id: stri
         }
       : null
   );
+
+  const loadMoreEvents = () => {
+    const endCursor = eventsPageInfo?.events?.endCursor;
+    if (endCursor) {
+      setEventCursor({ after: endCursor, first: 20 });
+    }
+  };
+
+  const hasMoreEvents = eventsPageInfo?.events?.hasNextPage ?? false;
+
+  const loadMoreRef = useInfiniteScroll({
+    hasMore: hasMoreEvents,
+    isLoading: eventsLoading,
+    onLoadMore: loadMoreEvents,
+  });
 
   const events = eventsData?.events || [];
   const isLoading = groupLoading || eventsLoading;
@@ -254,15 +276,14 @@ export default function GroupEventsPage({ params }: { params: Promise<{ id: stri
               : 'No events match your search criteria.'}
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
-            {sortedEvents.map((event: any) => (
-              <EventSearchCard
-                key={event.id}
-                event={event}
-                showParticipationButton={true}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-4 md:grid-cols-2">
+              {sortedEvents.map((event: any) => (
+                <EventSearchCard key={event.id} event={event} showParticipationButton={true} />
+              ))}
+            </div>
+            {hasMoreEvents && <div ref={loadMoreRef} className="mt-6 h-px" />}
+          </>
         )}
       </PageWrapper>
     </AuthGuard>

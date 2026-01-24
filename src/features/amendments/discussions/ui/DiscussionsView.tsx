@@ -15,6 +15,7 @@ import { ArrowLeft, MessageSquare, Plus, TrendingUp, Calendar as CalendarIcon } 
 import { useDiscussions } from '../hooks/useDiscussions';
 import { ThreadCard } from './ThreadCard';
 import { CreateThreadDialog } from './CreateThreadDialog';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
 interface DiscussionsViewProps {
   amendmentId: string;
@@ -25,7 +26,13 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [sortBy, setSortBy] = useState<'votes' | 'time'>('votes');
 
-  const { amendment, threads, isLoading } = useDiscussions(amendmentId, sortBy);
+  const { amendment, threads, isLoading, hasMore, loadMore } = useDiscussions(amendmentId, sortBy);
+
+  const loadMoreRef = useInfiniteScroll({
+    hasMore,
+    isLoading,
+    onLoadMore: loadMore,
+  });
 
   if (isLoading) {
     return (
@@ -118,7 +125,12 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
             </CardContent>
           </Card>
         ) : (
-          threads.map(thread => <ThreadCard key={thread.id} thread={thread} userId={userId} />)
+          <>
+            {threads.map(thread => (
+              <ThreadCard key={thread.id} thread={thread} userId={userId} />
+            ))}
+            {hasMore && <div ref={loadMoreRef} className="h-px" />}
+          </>
         )}
       </div>
 

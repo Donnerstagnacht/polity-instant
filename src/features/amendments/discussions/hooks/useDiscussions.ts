@@ -1,7 +1,12 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import db from '../../../../../db/db';
 import { useAmendmentData } from '@/features/amendments/hooks/useAmendmentData';
-import { buildCommentTree, sortComments, sortCommentTree, type CommentWithReplies } from '../utils/comment-tree';
+import {
+  buildCommentTree,
+  sortComments,
+  sortCommentTree,
+  type CommentWithReplies,
+} from '../utils/comment-tree';
 
 export interface Thread {
   id: string;
@@ -31,13 +36,24 @@ export interface Thread {
 }
 
 export function useDiscussions(amendmentId: string, sortBy: 'votes' | 'time' = 'votes') {
+  // Cursor state for pagination
+  const [cursor, setCursor] = useState<{ after?: string; first: number }>({ first: 10 });
+
   // Fetch amendment data
   const { amendment, isLoading: amendmentLoading } = useAmendmentData(amendmentId);
 
   // Fetch threads with detailed nested data
-  const { data: threadsData, isLoading: threadsLoading } = db.useQuery({
+  const {
+    data: threadsData,
+    isLoading: threadsLoading,
+    pageInfo,
+  } = db.useQuery({
     threads: {
-      $: { where: { 'amendment.id': amendmentId } },
+      $: {
+        where: { 'amendment.id': amendmentId },
+        order: sortBy === 'votes' ? { upvotes: 'desc' as const } : { createdAt: 'desc' as const },
+        ...cursor,
+      },
       creator: {},
       file: {},
       votes: {
@@ -55,13 +71,13 @@ export function useDiscussions(amendmentId: string, sortBy: 'votes' | 'time' = '
 
   const rawThreads = (threadsData?.threads || []) as Thread[];
 
-  // Process threads with comment trees
+  // Process threads with comment trees (no sorting needed since query handles it)
   const threads = useMemo(() => {
     return rawThreads.map(thread => {
       // Build comment tree
       const comments = thread.comments || [];
       const rootComments = buildCommentTree(comments);
-      
+
       // Sort root comments and their replies recursively
       const sortedComments = sortComments(rootComments, sortBy).map(comment =>
         sortCommentTree(comment, sortBy)
@@ -74,25 +90,20 @@ export function useDiscussions(amendmentId: string, sortBy: 'votes' | 'time' = '
     });
   }, [rawThreads, sortBy]);
 
-  // Sort threads themselves
-  const sortedThreads = useMemo(() => {
-    return [...threads].sort((a, b) => {
-      if (sortBy === 'votes') {
-        const scoreA = (a.upvotes || 0) - (a.downvotes || 0);
-        const scoreB = (b.upvotes || 0) - (b.downvotes || 0);
-        if (scoreA !== scoreB) return scoreB - scoreA;
-        return b.createdAt - a.createdAt;
-      } else {
-        return b.createdAt - a.createdAt;
-      }
-    });
-  }, [threads, sortBy]);
-
   const isLoading = amendmentLoading || threadsLoading;
+
+  const loadMore = () => {
+    const endCursor = pageInfo?.threads?.endCursor;
+    if (endCursor) {
+      setCursor({ after: endCursor, first: 10 });
+    }
+  };
 
   return {
     amendment,
-    threads: sortedThreads,
+    threads,
     isLoading,
+    hasMore: pageInfo?.threads?.hasNextPage ?? false,
+    loadMore,
   };
 }

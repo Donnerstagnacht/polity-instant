@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect } from 'react';
+import { use, useEffect, useState } from 'react';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { Button } from '@/components/ui/button';
@@ -15,11 +15,13 @@ import { AmendmentGroups } from '@/features/groups/ui/AmendmentGroups';
 import { Scale } from 'lucide-react';
 import { useNavigation } from '@/navigation/state/useNavigation';
 import { useTranslation } from '@/hooks/use-translation';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
 export default function GroupAmendmentsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const { t } = useTranslation();
   const { currentPrimaryRoute } = useNavigation();
+  const [cursor, setCursor] = useState<{ after?: string; first: number }>({ first: 20 });
 
   // Set current route to 'group' when this page is loaded
   useEffect(() => {
@@ -29,17 +31,30 @@ export default function GroupAmendmentsPage({ params }: { params: Promise<{ id: 
 
   // Fetch data
   const { group, isLoading: groupLoading } = useGroupData(resolvedParams.id);
-  const { amendments, isLoading: amendmentsLoading } = useGroupAmendments(resolvedParams.id);
+  const {
+    amendments,
+    isLoading: amendmentsLoading,
+    pageInfo,
+  } = useGroupAmendments(resolvedParams.id, cursor);
+
+  const loadMore = () => {
+    const endCursor = pageInfo?.amendments?.endCursor;
+    if (endCursor) {
+      setCursor({ after: endCursor, first: 20 });
+    }
+  };
+
+  const hasMore = pageInfo?.amendments?.hasNextPage ?? false;
+
+  const loadMoreRef = useInfiniteScroll({
+    hasMore,
+    isLoading: amendmentsLoading,
+    onLoadMore: loadMore,
+  });
 
   // Filters
-  const {
-    filters,
-    showFilters,
-    hasActiveFilters,
-    updateFilter,
-    clearFilter,
-    setShowFilters,
-  } = useAmendmentFilters();
+  const { filters, showFilters, hasActiveFilters, updateFilter, clearFilter, setShowFilters } =
+    useAmendmentFilters();
 
   // Filter and group amendments
   const { sortedAmendments, groupedAmendments } = useFilteredAmendments(amendments, filters);
@@ -62,9 +77,7 @@ export default function GroupAmendmentsPage({ params }: { params: Promise<{ id: 
         <PageWrapper className="container mx-auto p-8">
           <div className="py-12 text-center">
             <h1 className="mb-4 text-2xl font-bold">{t('pages.group.notFound.title')}</h1>
-            <p className="text-muted-foreground">
-              {t('pages.group.notFound.description')}
-            </p>
+            <p className="text-muted-foreground">{t('pages.group.notFound.description')}</p>
           </div>
         </PageWrapper>
       </AuthGuard>
@@ -77,18 +90,25 @@ export default function GroupAmendmentsPage({ params }: { params: Promise<{ id: 
         {/* Header */}
         <div className="mb-6 flex items-start justify-between">
           <div>
-            <h1 className="mb-2 text-3xl font-bold">{group.name} - {t('pages.group.amendments.title')}</h1>
+            <h1 className="mb-2 text-3xl font-bold">
+              {group.name} - {t('pages.group.amendments.title')}
+            </h1>
             <p className="text-muted-foreground">
-              {sortedAmendments.length === 1 
+              {sortedAmendments.length === 1
                 ? t('pages.group.amendments.count', { count: sortedAmendments.length })
                 : t('pages.group.amendments.countPlural', { count: sortedAmendments.length })}
             </p>
             {/* Debug: Show status breakdown */}
             {sortedAmendments.length > 0 && (
               <div className="mt-2 text-sm text-muted-foreground">
-                {t('pages.group.amendments.statusBreakdown.passed')}: {groupedAmendments.passed.length}, {t('pages.group.amendments.statusBreakdown.underReview')}:{' '}
-                {groupedAmendments.underReview.length}, {t('pages.group.amendments.statusBreakdown.drafting')}:{' '}
-                {groupedAmendments.drafting.length}, {t('pages.group.amendments.statusBreakdown.rejected')}: {groupedAmendments.rejected.length}
+                {t('pages.group.amendments.statusBreakdown.passed')}:{' '}
+                {groupedAmendments.passed.length},{' '}
+                {t('pages.group.amendments.statusBreakdown.underReview')}:{' '}
+                {groupedAmendments.underReview.length},{' '}
+                {t('pages.group.amendments.statusBreakdown.drafting')}:{' '}
+                {groupedAmendments.drafting.length},{' '}
+                {t('pages.group.amendments.statusBreakdown.rejected')}:{' '}
+                {groupedAmendments.rejected.length}
                 {/* Show unique statuses for debugging */}
                 <div className="mt-1">
                   {t('pages.group.amendments.statusBreakdown.allStatuses')}:{' '}
@@ -126,7 +146,10 @@ export default function GroupAmendmentsPage({ params }: { params: Promise<{ id: 
               : t('pages.group.amendments.noMatchingAmendments')}
           </div>
         ) : (
-          <AmendmentGroups groupedAmendments={groupedAmendments} />
+          <>
+            <AmendmentGroups groupedAmendments={groupedAmendments} />
+            {hasMore && <div ref={loadMoreRef} className="h-px" />}
+          </>
         )}
       </PageWrapper>
     </AuthGuard>
