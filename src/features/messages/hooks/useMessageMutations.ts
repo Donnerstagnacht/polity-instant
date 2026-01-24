@@ -2,7 +2,11 @@ import { useState } from 'react';
 import db, { tx, id } from '../../../../db/db';
 import { toast } from 'sonner';
 import { Message, Conversation } from '../types';
-import { notifyDirectMessage, notifyConversationRequest, notifyConversationAccepted } from '@/utils/notification-helpers';
+import {
+  notifyDirectMessage,
+  notifyConversationRequest,
+  notifyConversationAccepted,
+} from '@/utils/notification-helpers';
 
 export function useMessageMutations() {
   const [isLoading, setIsLoading] = useState(false);
@@ -32,8 +36,8 @@ export function useMessageMutations() {
           }),
         // Update conversation lastMessageAt
         tx.conversations[conversationId].update({
-            lastMessageAt: new Date().toISOString(),
-        })
+          lastMessageAt: new Date().toISOString(),
+        }),
       ];
 
       // Notify all other participants
@@ -74,16 +78,38 @@ export function useMessageMutations() {
     setIsLoading(true);
     try {
       const conversationId = id();
-      const conversationTx = tx.conversations[conversationId].update({
+
+      // Determine the requester (creator of the conversation request)
+      const requesterId = creatorId || participantIds[0];
+
+      console.log('[createConversation] Creating conversation:', {
+        conversationId,
         type,
-        createdAt: new Date().toISOString(),
-        lastMessageAt: new Date().toISOString(),
-        status: 'pending', // Default to pending
+        creatorId,
+        participantIds,
+        requesterId,
+        status: 'pending',
       });
 
+      // Build the links object - all links must be in a single .link() call
+      const links: Record<string, string> = {};
       if (groupId) {
-        conversationTx.link({ group: groupId });
+        links.group = groupId;
       }
+      if (requesterId) {
+        links.requestedBy = requesterId;
+        console.log('[createConversation] Will link requestedBy to:', requesterId);
+      }
+
+      // Create conversation with all links in one call
+      const conversationTx = tx.conversations[conversationId]
+        .update({
+          type,
+          createdAt: new Date().toISOString(),
+          lastMessageAt: new Date().toISOString(),
+          status: 'pending', // Default to pending
+        })
+        .link(links);
 
       const transactions: any[] = [conversationTx];
 
@@ -101,11 +127,6 @@ export function useMessageMutations() {
             })
         );
       });
-      
-      // Link requestedBy to the first participant (assuming it's the creator)
-      if (participantIds.length > 0) {
-          conversationTx.link({ requestedBy: participantIds[0] });
-      }
 
       // Send conversation request notifications to other participants
       if (creatorId) {
@@ -152,18 +173,18 @@ export function useMessageMutations() {
   };
 
   const markAsRead = async (messages: Message[]) => {
-      if (messages.length === 0) return;
-      try {
-        await db.transact(
-            messages.map((msg) =>
-              tx.messages[msg.id].update({
-                isRead: true,
-              })
-            )
-          );
-      } catch (error) {
-          console.error('Failed to mark messages as read:', error);
-      }
+    if (messages.length === 0) return;
+    try {
+      await db.transact(
+        messages.map(msg =>
+          tx.messages[msg.id].update({
+            isRead: true,
+          })
+        )
+      );
+    } catch (error) {
+      console.error('Failed to mark messages as read:', error);
+    }
   };
 
   const acceptConversation = async (
@@ -204,11 +225,9 @@ export function useMessageMutations() {
 
   const rejectConversation = async (conversation: Conversation) => {
     try {
-      const deleteTransactions = conversation.messages.map((msg) =>
-        tx.messages[msg.id].delete()
-      );
+      const deleteTransactions = conversation.messages.map(msg => tx.messages[msg.id].delete());
 
-      const participantTransactions = conversation.participants.map((p) =>
+      const participantTransactions = conversation.participants.map(p =>
         tx.conversationParticipants[p.id].delete()
       );
 
@@ -227,27 +246,25 @@ export function useMessageMutations() {
   };
 
   const deleteConversation = async (conversation: Conversation) => {
-      try {
-        const deleteTransactions = conversation.messages.map((msg) =>
-          tx.messages[msg.id].delete()
-        );
-  
-        const participantTransactions = conversation.participants.map((p) =>
-          tx.conversationParticipants[p.id].delete()
-        );
-  
-        await db.transact([
-          ...deleteTransactions,
-          ...participantTransactions,
-          tx.conversations[conversation.id].delete(),
-        ]);
-        toast.success('Conversation deleted');
-        return { success: true };
-      } catch (error) {
-        console.error('Failed to delete conversation:', error);
-        toast.error('Failed to delete conversation');
-        return { success: false, error };
-      }
+    try {
+      const deleteTransactions = conversation.messages.map(msg => tx.messages[msg.id].delete());
+
+      const participantTransactions = conversation.participants.map(p =>
+        tx.conversationParticipants[p.id].delete()
+      );
+
+      await db.transact([
+        ...deleteTransactions,
+        ...participantTransactions,
+        tx.conversations[conversation.id].delete(),
+      ]);
+      toast.success('Conversation deleted');
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to delete conversation:', error);
+      toast.error('Failed to delete conversation');
+      return { success: false, error };
+    }
   };
 
   const togglePin = async (conversationId: string, currentPinned: boolean) => {

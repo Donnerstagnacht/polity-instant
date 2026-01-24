@@ -13,6 +13,7 @@ import {
   notifyRoleDeleted,
 } from '@/utils/notification-helpers';
 import { addUserToGroupConversation } from '@/utils/groupConversationSync';
+import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 
 /**
  * Hook for group membership mutations
@@ -88,15 +89,28 @@ export function useGroupMutations(groupId: string) {
     userId: string,
     conversationId?: string,
     senderId?: string,
-    senderName?: string
+    senderName?: string,
+    groupName?: string
   ) => {
     setIsLoading(true);
     try {
-      const transactions = [
+      const transactions: any[] = [
         tx.groupMemberships[membershipId].update({
           status: 'member',
         }),
       ];
+
+      // Add timeline event for member joining
+      transactions.push(
+        createTimelineEvent({
+          eventType: 'member_added',
+          entityType: 'group',
+          entityId: groupId,
+          actorId: userId,
+          title: `New member joined ${groupName || 'the group'}`,
+          description: 'A new member has joined the group',
+        })
+      );
 
       // Add user to group conversation if it exists
       if (conversationId) {
@@ -109,7 +123,7 @@ export function useGroupMutations(groupId: string) {
           senderId,
           recipientUserId: userId,
           groupId,
-          groupName: '',
+          groupName: groupName || '',
         });
         transactions.push(...notificationTxs);
       }
@@ -230,9 +244,7 @@ export function useGroupMutations(groupId: string) {
   ) => {
     setIsLoading(true);
     try {
-      const transactions = [
-        tx.groupMemberships[membershipId].link({ role: roleId }),
-      ];
+      const transactions = [tx.groupMemberships[membershipId].link({ role: roleId })];
 
       // Send notification
       if (senderId) {

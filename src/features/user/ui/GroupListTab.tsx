@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
-import { GroupsCard } from './GroupsCard';
-import { GRADIENTS } from '@/features/user/state/gradientColors';
+import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
+import { useTranslation } from '@/hooks/use-translation';
 
 import type { UserGroup } from '../types/user.types';
 
@@ -10,15 +10,14 @@ interface GroupsListTabProps {
   groups: UserGroup[];
   searchValue: string;
   onSearchChange: (value: string) => void;
-  getRoleBadgeColor: (role: string) => { bg: string; text: string; badge: string };
 }
 
 export const GroupsListTab: React.FC<GroupsListTabProps> = ({
   groups,
   searchValue,
   onSearchChange,
-  getRoleBadgeColor,
 }) => {
+  const { t } = useTranslation();
   const filteredGroups = useMemo(() => {
     const term = (searchValue ?? '').toLowerCase();
     if (!term) return groups;
@@ -35,31 +34,31 @@ export const GroupsListTab: React.FC<GroupsListTabProps> = ({
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Search groups by name, role or description..."
+          placeholder={t('pages.user.groups.searchPlaceholder')}
           className="pl-10"
           value={searchValue}
           onChange={e => onSearchChange(e.target.value)}
         />
       </div>
       {filteredGroups.length === 0 ? (
-        <p className="py-8 text-center text-muted-foreground">
-          No groups found matching your search.
-        </p>
+        <p className="py-8 text-center text-muted-foreground">{t('pages.user.groups.noResults')}</p>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredGroups.map((group, index) => {
-            const roleColor = getRoleBadgeColor(group.role);
-            const badgeClasses = `${roleColor.bg} ${roleColor.text}`;
-            const gradientClass = GRADIENTS[index % GRADIENTS.length];
-            const groupId = group.groupId || group.id; // Use groupId if available, fallback to id
+          {filteredGroups.map(group => {
+            const groupId = group.groupId || group.id;
             return (
-              <a key={group.id} href={`/group/${groupId}`} className="block cursor-pointer">
-                <GroupsCard
-                  group={group}
-                  badgeClasses={badgeClasses}
-                  gradientClass={gradientClass}
-                />
-              </a>
+              <GroupTimelineCard
+                key={group.id}
+                group={{
+                  id: String(groupId),
+                  name: group.name,
+                  description: group.description,
+                  memberCount: group.members,
+                  eventCount: group.events,
+                  amendmentCount: group.amendments,
+                  topics: group.tags,
+                }}
+              />
             );
           })}
         </div>

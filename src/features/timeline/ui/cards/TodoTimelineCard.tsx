@@ -1,12 +1,21 @@
 'use client';
 
-import { CheckSquare, Square, Users, ExternalLink, Share2, Clock } from 'lucide-react';
+import { useState } from 'react';
+import { CheckSquare, Square, Users, Clock, UserPlus, Activity, UserCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslation } from '@/hooks/use-translation';
 import { cn } from '@/utils/utils';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { differenceInDays, format, isPast, isToday } from 'date-fns';
+import { ShareButton } from '@/components/shared/ShareButton';
+import { useTodoMutations } from '@/features/todos/hooks/useTodoData';
+import type { TodoStatus } from '@/features/todos/types/todo.types';
+import { db, tx, id } from '@db/db';
+import { toast } from 'sonner';
 import {
   TimelineCardBase,
   TimelineCardContent,
@@ -28,6 +37,10 @@ export interface TodoTimelineCardProps {
     assigneeCount?: number;
     groupName?: string;
     groupId?: string;
+    status?: TodoStatus;
+    visibility?: 'public' | 'authenticated' | 'private';
+    creatorId?: string;
+    creatorName?: string;
   };
   onToggle?: () => void;
   onVolunteer?: () => void;
@@ -91,14 +104,26 @@ function getUrgencyConfig(dueDate: Date): { color: string; bgColor: string; labe
  * - Assignee count
  * - Actions: View, Volunteer, Share
  */
-export function TodoTimelineCard({
-  todo,
-  onToggle,
-  onVolunteer,
-  onShare,
-  className,
-}: TodoTimelineCardProps) {
+export function TodoTimelineCard({ todo, onToggle, className }: TodoTimelineCardProps) {
   const { t } = useTranslation();
+  const { user } = db.useAuth();
+  const [statusOpen, setStatusOpen] = useState(false);
+  const [assigning, setAssigning] = useState(false);
+  const { updateTodo, isLoading } = useTodoMutations();
+  const { data: assignmentsData } = db.useQuery(
+    todo.id
+      ? {
+          todoAssignments: {
+            $: {
+              where: {
+                'todo.id': todo.id,
+              },
+            },
+            user: {},
+          },
+        }
+      : null
+  );
 
   const dueDate = todo.dueDate ? new Date(todo.dueDate) : null;
   const urgency = dueDate ? getUrgencyConfig(dueDate) : null;
@@ -107,13 +132,76 @@ export function TodoTimelineCard({
     (todo.currentValue && todo.targetValue
       ? Math.round((todo.currentValue / todo.targetValue) * 100)
       : undefined);
+  const assignments = assignmentsData?.todoAssignments ?? [];
+  const isAssignedToMe = !!user?.id && assignments.some(a => a.user?.id === user.id);
+
+  const currentStatus = todo.status || (todo.isCompleted ? 'completed' : 'pending');
+  const statusLabels: Record<TodoStatus, string> = {
+    pending: t('features.todos.status.pending'),
+    in_progress: t('features.todos.status.in_progress'),
+    completed: t('features.todos.status.completed'),
+    cancelled: t('features.todos.status.cancelled'),
+  };
+
+  const handleStatusUpdate = async (newStatus: TodoStatus) => {
+    await updateTodo(
+      todo.id,
+      { status: newStatus },
+      {
+        senderId: user?.id,
+        senderName: user?.email?.split('@')[0] || 'Someone',
+        creatorId: todo.creatorId,
+        todoTitle: todo.title,
+        visibility: todo.visibility,
+      }
+    );
+    setStatusOpen(false);
+  };
+
+  const handleAssignToMe = async () => {
+    if (!user?.id) {
+      toast.error(t('features.todos.kanban.updateFailed'));
+      return;
+    }
+    if (isAssignedToMe) {
+      toast.success(t('features.todos.assignee.assignedToMe'));
+      return;
+    }
+    setAssigning(true);
+    try {
+      const assignmentId = id();
+      await db.transact([
+        tx.todoAssignments[assignmentId]
+          .update({
+            assignedAt: new Date().toISOString(),
+            role: 'assignee',
+          })
+          .link({
+            todo: todo.id,
+            user: user.id,
+          }),
+      ]);
+      toast.success(t('features.todos.assignee.assignedToMe'));
+    } catch (error) {
+      console.error('Failed to assign todo:', error);
+      toast.error(t('features.todos.kanban.updateFailed'));
+    } finally {
+      setAssigning(false);
+    }
+  };
 
   return (
-    <TimelineCardBase contentType="todo" className={className}>
+    <TimelineCardBase contentType="todo" className={className} href={`/todos/${todo.id}`}>
       <TimelineCardContent className="pt-4">
         {/* Title with Checkbox */}
         <div className="mb-3 flex items-start gap-3">
-          <button onClick={onToggle} className="mt-0.5 flex-shrink-0">
+          <button
+            onClick={e => {
+              e.stopPropagation();
+              onToggle?.();
+            }}
+            className="mt-0.5 flex-shrink-0"
+          >
             {todo.isCompleted ? (
               <CheckSquare className="h-5 w-5 text-green-600" />
             ) : (
@@ -164,14 +252,43 @@ export function TodoTimelineCard({
 
         {/* Meta Info */}
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          {todo.assigneeCount !== undefined && (
-            <span className="flex items-center gap-1">
-              <Users className="h-3.5 w-3.5" />
-              {todo.assigneeCount} {t('features.timeline.cards.assigned')}
-            </span>
+          {(todo.assigneeCount !== undefined || assignments.length > 0) && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="flex cursor-help items-center gap-1">
+                  <Users className="h-3.5 w-3.5" />
+                  <span className="font-medium">{todo.assigneeCount ?? assignments.length}</span>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  {(todo.assigneeCount ?? assignments.length) || 0}{' '}
+                  {t('features.timeline.cards.assigned')}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {progress !== undefined && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="flex cursor-help items-center gap-1">
+                  <Activity className="h-3.5 w-3.5" />
+                  <span className="font-medium">{progress}%</span>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  {progress}% {t('features.timeline.cards.progress')}
+                </p>
+              </TooltipContent>
+            </Tooltip>
           )}
           {todo.groupName && (
-            <Link href={`/group/${todo.groupId}`} className="truncate hover:underline">
+            <Link
+              href={`/group/${todo.groupId}`}
+              className="truncate hover:underline"
+              onClick={e => e.stopPropagation()}
+            >
               {todo.groupName}
             </Link>
           )}
@@ -179,21 +296,62 @@ export function TodoTimelineCard({
       </TimelineCardContent>
 
       <TimelineCardActions>
-        <Link href={`/todos/${todo.id}`}>
-          <TimelineCardActionButton icon={ExternalLink} label={t('features.timeline.cards.view')} />
-        </Link>
-        {!todo.isCompleted && (
-          <TimelineCardActionButton
-            icon={Users}
-            label={t('features.timeline.cards.volunteer')}
-            onClick={onVolunteer}
-          />
-        )}
+        {/* Status Popover */}
+        <Popover open={statusOpen} onOpenChange={setStatusOpen}>
+          <PopoverTrigger asChild onClick={e => e.stopPropagation()}>
+            <Button variant="outline" size="sm" className="flex items-center gap-1.5">
+              <CheckSquare className="h-3.5 w-3.5" />
+              <span className="text-xs">{statusLabels[currentStatus]}</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-48 p-2" align="start" onClick={e => e.stopPropagation()}>
+            <div className="flex flex-col gap-1">
+              {(['pending', 'in_progress', 'completed', 'cancelled'] as TodoStatus[])
+                .filter(status => status !== currentStatus)
+                .map(status => (
+                  <Button
+                    key={status}
+                    variant="ghost"
+                    size="sm"
+                    onClick={e => {
+                      e.preventDefault();
+                      handleStatusUpdate(status);
+                    }}
+                    disabled={isLoading}
+                    className="justify-start"
+                  >
+                    {statusLabels[status]}
+                  </Button>
+                ))}
+            </div>
+          </PopoverContent>
+        </Popover>
+
         <TimelineCardActionButton
-          icon={Share2}
-          label={t('features.timeline.cards.share')}
-          onClick={onShare}
+          icon={isAssignedToMe ? UserCheck : UserPlus}
+          label={
+            isAssignedToMe
+              ? t('features.todos.assignee.assignedToMe')
+              : t('features.todos.assignee.assignToMe')
+          }
+          onClick={e => {
+            e?.preventDefault();
+            e?.stopPropagation();
+            handleAssignToMe();
+          }}
+          disabled={assigning || isAssignedToMe}
+          variant={isAssignedToMe ? 'secondary' : 'outline'}
         />
+
+        <div onClick={e => e.preventDefault()}>
+          <ShareButton
+            url={`/todos/${todo.id}`}
+            title={todo.title}
+            description={todo.description || ''}
+            variant="outline"
+            size="sm"
+          />
+        </div>
       </TimelineCardActions>
     </TimelineCardBase>
   );

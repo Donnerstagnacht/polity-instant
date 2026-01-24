@@ -31,6 +31,18 @@ export function SearchPage() {
 
   const { data, isLoading } = useSearchData();
 
+  const agendaItemsByEventId = useMemo(() => {
+    const map = new Map<string, Array<{ election?: unknown; amendmentVote?: unknown }>>();
+    for (const item of data?.agendaItems ?? []) {
+      const eventId = (item as any).event?.id as string | undefined;
+      if (!eventId) continue;
+      const list = map.get(eventId) ?? [];
+      list.push(item as any);
+      map.set(eventId, list);
+    }
+    return map;
+  }, [data?.agendaItems]);
+
   const { mosaicResults } = useSearchFilters(data, {
     query: searchQuery,
     sortBy,
@@ -96,9 +108,12 @@ export function SearchPage() {
     title: string;
     description?: string;
     imageUrl?: string;
+    videoUrl?: string;
     authorId?: string;
     authorName?: string;
     authorAvatar?: string;
+    handle?: string;
+    subtitle?: string;
     groupId?: string;
     groupName?: string;
     eventId?: string;
@@ -106,6 +121,8 @@ export function SearchPage() {
     startDate?: Date;
     endDate?: Date;
     location?: string;
+    city?: string;
+    postcode?: string;
     createdAt: Date;
     updatedAt?: Date;
     status?: string;
@@ -114,7 +131,21 @@ export function SearchPage() {
     assigneeCount?: number;
     tags?: string[];
     memberCount?: number;
+    eventCount?: number;
     attendeeCount?: number;
+    electionsCount?: number;
+    amendmentsCount?: number;
+    groupCount?: number;
+    amendmentCount?: number;
+    collaboratorCount?: number;
+    supportingGroupsCount?: number;
+    changeRequestCount?: number;
+    commentCount?: number;
+    votingType?: string;
+    phase?: string;
+    result?: string;
+    candidates?: any[];
+    totalCandidates?: number;
     stats?: {
       reactions?: number;
       comments?: number;
@@ -149,6 +180,8 @@ export function SearchPage() {
             groupId: item.id,
             groupName: item.name,
             memberCount: item.memberCount ?? item.memberships?.length,
+            eventCount: item.events?.length,
+            amendmentCount: item.amendments?.length,
             stats: {
               members: item.memberCount ?? item.memberships?.length,
             },
@@ -164,10 +197,20 @@ export function SearchPage() {
             startDate: item.startDate ? new Date(item.startDate) : undefined,
             endDate: item.endDate ? new Date(item.endDate) : undefined,
             location: item.location || item.locationName,
+            city: item.city,
+            postcode: item.postalCode,
+            attendeeCount: item.participants?.length,
+            electionsCount:
+              item.eventPositions?.filter((position: any) => Boolean(position?.election)).length ??
+              item.scheduledElections?.length ??
+              agendaItemsByEventId
+                .get(item.id)
+                ?.filter((agendaItem: any) => Boolean(agendaItem?.election)).length ??
+              item.votingSessions?.filter((session: any) => Boolean(session?.election)).length,
+            amendmentsCount: item.targetedAmendments?.length,
             tags: toTags(item.hashtags),
             groupId: item.group?.id,
             groupName: item.group?.name,
-            attendeeCount: item.participants?.length,
             stats: {
               members: item.participants?.length,
             },
@@ -182,6 +225,11 @@ export function SearchPage() {
             createdAt: toDate(item.createdAt),
             tags: toTags(item.hashtags),
             status: item.workflowStatus || item.status,
+            groupId: item.groups?.[0]?.id,
+            groupName: item.groups?.[0]?.name,
+            collaboratorCount: item.amendmentRoleCollaborators?.length,
+            supportingGroupsCount: item.groupSupporters?.length,
+            changeRequestCount: item.changeRequests?.length,
             stats: {
               reactions: item.votes?.length,
               comments: item.comments?.length,
@@ -203,6 +251,7 @@ export function SearchPage() {
             authorId: blogAuthor?.id,
             authorName: blogAuthor?.name,
             authorAvatar: blogAuthor?.avatarUrl,
+            commentCount: item.comments?.length,
             stats: {
               reactions: item.votes?.length,
               comments: item.comments?.length,
@@ -249,14 +298,97 @@ export function SearchPage() {
         case 'user':
           acc.push({
             id: item.id,
-            type: 'action',
-            title: item.name,
+            type: 'user',
+            title: item.name || '',
             description: item.bio,
             createdAt: toDate(item.createdAt || item.joinedAt),
             tags: toTags(item.hashtags),
             authorId: item.id,
             authorName: item.name,
-            authorAvatar: item.avatarUrl,
+            authorAvatar: item.imageURL || item.avatarUrl,
+            handle: item.handle,
+            subtitle: item.subtitle,
+            location: item.contactLocation,
+            groupCount: item.memberships?.length,
+            amendmentCount: item.collaborations?.length,
+          });
+          break;
+        case 'election':
+          acc.push({
+            id: item.id,
+            type: 'election',
+            title: item.title || '',
+            description: item.description,
+            createdAt: toDate(item.createdAt),
+            updatedAt: item.updatedAt ? toDate(item.updatedAt) : undefined,
+            status: item.status,
+            groupId: item.position?.group?.id,
+            groupName: item.position?.group?.name,
+            startDate: item.votingStartTime ? toDate(item.votingStartTime) : undefined,
+            endDate: item.votingEndTime ? toDate(item.votingEndTime) : undefined,
+            candidates: item.candidates || [],
+            totalCandidates: item.candidates?.length || 0,
+          });
+          break;
+        case 'vote':
+          acc.push({
+            id: item.id,
+            type: 'vote',
+            title: item.event?.title || item.votingType || 'Vote',
+            description: item.targetEntityType
+              ? `${item.votingType} - ${item.targetEntityType}`
+              : undefined,
+            createdAt: toDate(item.createdAt),
+            eventId: item.event?.id,
+            eventName: item.event?.title,
+            status: item.phase,
+            votingType: item.votingType,
+            phase: item.phase,
+            result: item.result,
+            stats: {
+              reactions: item.votes?.filter((v: any) => v.vote === 'accept')?.length || 0,
+              comments: item.votes?.filter((v: any) => v.vote === 'reject')?.length || 0,
+            },
+          });
+          break;
+        case 'video':
+          acc.push({
+            id: item.id,
+            type: 'video',
+            title: item.title || '',
+            description: item.description,
+            imageUrl: item.videoThumbnailURL || item.imageURL,
+            videoUrl: item.videoURL,
+            createdAt: toDate(item.createdAt),
+            authorId: item.actor?.id,
+            authorName: item.actor?.name,
+            authorAvatar: item.actor?.avatarUrl,
+            groupId: item.group?.id,
+            groupName: item.group?.name,
+            stats: {
+              views: item.views,
+              reactions: item.likes,
+            },
+          });
+          break;
+        case 'image':
+          acc.push({
+            id: item.id,
+            type: 'image',
+            title: item.title || '',
+            description: item.description,
+            imageUrl: item.imageURL,
+            createdAt: toDate(item.createdAt),
+            authorId: item.actor?.id,
+            authorName: item.actor?.name,
+            authorAvatar: item.actor?.avatarUrl,
+            groupId: item.group?.id,
+            groupName: item.group?.name,
+            location: item.location,
+            stats: {
+              reactions: item.likes,
+              comments: item.comments,
+            },
           });
           break;
         default:
@@ -265,7 +397,7 @@ export function SearchPage() {
 
       return acc;
     }, []);
-  }, [mosaicResults]);
+  }, [agendaItemsByEventId, mosaicResults]);
 
   const getCreatedAt = useCallback((item: SearchContentItem) => {
     return item.createdAt instanceof Date ? item.createdAt : new Date(item.createdAt);
@@ -383,6 +515,44 @@ export function SearchPage() {
     return 'viewing';
   }, []);
 
+  const normalizeVoteStatus = useCallback((status?: string) => {
+    if (!status) return 'open';
+    const normalized = status.toLowerCase();
+    if (
+      normalized === 'open' ||
+      normalized === 'closing_soon' ||
+      normalized === 'last_hour' ||
+      normalized === 'final_minutes' ||
+      normalized === 'passed' ||
+      normalized === 'failed' ||
+      normalized === 'tied'
+    ) {
+      return normalized as
+        | 'open'
+        | 'closing_soon'
+        | 'last_hour'
+        | 'final_minutes'
+        | 'passed'
+        | 'failed'
+        | 'tied';
+    }
+    return 'open';
+  }, []);
+
+  const normalizeElectionStatus = useCallback((status?: string) => {
+    if (!status) return 'voting_open';
+    const normalized = status.toLowerCase();
+    if (
+      normalized === 'nominations_open' ||
+      normalized === 'voting_open' ||
+      normalized === 'closed' ||
+      normalized === 'winner_announced'
+    ) {
+      return normalized as 'nominations_open' | 'voting_open' | 'closed' | 'winner_announced';
+    }
+    return 'voting_open';
+  }, []);
+
   const renderTimelineCard = useCallback(
     (item: SearchContentItem) => {
       let cardType: CardType | null = item.type;
@@ -396,6 +566,8 @@ export function SearchPage() {
               name: item.title,
               description: item.description,
               memberCount: item.memberCount ?? item.stats?.members,
+              eventCount: item.eventCount,
+              amendmentCount: item.amendmentCount,
               topics: item.tags,
               isFollowing: false,
             },
@@ -410,7 +582,12 @@ export function SearchPage() {
               startDate: item.startDate ?? item.createdAt,
               endDate: item.endDate,
               location: item.location,
+              city: item.city,
+              postcode: item.postcode,
               attendeeCount: item.attendeeCount,
+              electionsCount: item.electionsCount,
+              amendmentsCount: item.amendmentsCount,
+              hashtags: (item.tags ?? []).map(tag => ({ id: tag, tag })),
               organizerName: item.groupName || item.authorName,
               isAttending: false,
             },
@@ -424,6 +601,10 @@ export function SearchPage() {
               description: item.description,
               status: normalizeAmendmentStatus(item.status),
               groupName: item.groupName,
+              collaboratorCount: item.collaboratorCount,
+              supportingGroupsCount: item.supportingGroupsCount,
+              changeRequestCount: item.changeRequestCount,
+              hashtags: (item.tags ?? []).map(tag => ({ id: tag, tag })),
             },
           };
           break;
@@ -437,6 +618,8 @@ export function SearchPage() {
               authorName: item.authorName,
               authorAvatar: item.authorAvatar,
               publishedAt: item.createdAt,
+              hashtags: (item.tags ?? []).map(tag => ({ id: tag, tag })),
+              commentCount: item.commentCount ?? item.stats?.comments,
             },
           };
           break;
@@ -463,6 +646,93 @@ export function SearchPage() {
               assigneeCount: item.assigneeCount,
               groupName: item.groupName,
               groupId: item.groupId,
+            },
+          };
+          break;
+        case 'user':
+          cardProps = {
+            user: {
+              id: item.id,
+              name: item.title,
+              handle: item.handle,
+              bio: item.description,
+              subtitle: item.subtitle,
+              avatarUrl: item.authorAvatar,
+              location: item.location,
+              groupCount: item.groupCount,
+              amendmentCount: item.amendmentCount,
+              hashtags: (item.tags ?? []).map(tag => ({ id: tag, tag })),
+            },
+          };
+          break;
+        case 'vote':
+          {
+            const supportCount = item.stats?.reactions ?? 0;
+            const opposeCount = item.stats?.comments ?? 0;
+            const totalVotes = supportCount + opposeCount;
+            const supportPercentage =
+              totalVotes > 0 ? Math.round((supportCount / totalVotes) * 100) : 0;
+
+            cardProps = {
+              vote: {
+                id: item.id,
+                amendmentId: item.id,
+                amendmentTitle: item.title,
+                question: item.description,
+                status: normalizeVoteStatus(item.status),
+                endTime: item.endDate ?? item.updatedAt ?? item.createdAt,
+                supportPercentage,
+                supportCount,
+                opposeCount,
+              },
+            };
+          }
+          break;
+        case 'election':
+          cardProps = {
+            election: {
+              id: item.id,
+              title: item.title,
+              positionName: item.title,
+              groupId: item.groupId,
+              groupName: item.groupName,
+              status: normalizeElectionStatus(item.status),
+              candidates: item.candidates || [],
+              totalCandidates: item.totalCandidates || 0,
+              votingEndDate: item.endDate,
+            },
+          };
+          break;
+        case 'video':
+          cardProps = {
+            video: {
+              id: item.id,
+              title: item.title,
+              thumbnailUrl: item.imageUrl,
+              views: item.stats?.views,
+              likes: item.stats?.reactions,
+              authorName: item.authorName,
+              authorAvatar: item.authorAvatar,
+              sourceName: item.groupName,
+            },
+          };
+          break;
+        case 'image':
+          if (!item.imageUrl) {
+            cardType = null;
+            break;
+          }
+          cardProps = {
+            image: {
+              id: item.id,
+              imageUrl: item.imageUrl,
+              caption: item.description,
+              location: item.location,
+              likes: item.stats?.reactions,
+              comments: item.stats?.comments,
+              authorName: item.authorName,
+              authorAvatar: item.authorAvatar,
+              sourceName: item.groupName,
             },
           };
           break;
@@ -504,7 +774,7 @@ export function SearchPage() {
 
       return <DynamicTimelineCard cardType={cardType} cardProps={cardProps} />;
     },
-    [normalizeAmendmentStatus, t]
+    [normalizeAmendmentStatus, normalizeVoteStatus, normalizeElectionStatus, t]
   );
 
   return (

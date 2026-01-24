@@ -27,6 +27,7 @@ import {
   isEventPhase,
 } from '@db/rbac/workflow-constants';
 import { useTranslation } from '@/hooks/use-translation';
+import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 
 interface AmendmentEditContentProps {
   amendmentId: string;
@@ -74,8 +75,7 @@ export function AmendmentEditContent({
         videoURL: amendment.videoURL || '',
         videoThumbnailURL: amendment.videoThumbnailURL || '',
         status: amendment.status || 'Drafting',
-        workflowStatus:
-          (amendment.workflowStatus as WorkflowStatus) || 'collaborative_editing',
+        workflowStatus: (amendment.workflowStatus as WorkflowStatus) || 'collaborative_editing',
         autoCloseVoting: false, // Will be loaded from document settings
         date: amendment.date || new Date().toLocaleDateString(),
         supporters: amendment.supporters || 0,
@@ -98,14 +98,14 @@ export function AmendmentEditContent({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
     try {
       if (!amendment) {
         toast.error(t('features.amendments.editContent.updateFailed'));
         return;
       }
-
-      await db.transact([
+      const transactions: any[] = [];
+      // Only push update if something changed
+      transactions.push(
         tx.amendments[amendmentId].update({
           title: formData.title,
           subtitle: formData.subtitle,
@@ -118,11 +118,45 @@ export function AmendmentEditContent({
           date: formData.date,
           supporters: formData.supporters,
           tags: formData.tags,
-        }),
-      ]);
-
+        })
+      );
+      // Only create timeline events for public amendments
+      if (amendment.visibility === 'public') {
+        if (formData.imageURL && formData.imageURL !== amendment.imageURL) {
+          transactions.push(
+            createTimelineEvent({
+              eventType: 'image_uploaded',
+              entityType: 'amendment',
+              entityId: amendmentId,
+              actorId: currentUserId,
+              title: t('features.timeline.imageUploadedTitle'),
+              description: t('features.timeline.imageUploadedDescription', {
+                title: formData.title,
+              }),
+              contentType: 'image',
+              status: {},
+            })
+          );
+        }
+        if (formData.videoURL && formData.videoURL !== amendment.videoURL) {
+          transactions.push(
+            createTimelineEvent({
+              eventType: 'video_uploaded',
+              entityType: 'amendment',
+              entityId: amendmentId,
+              actorId: currentUserId,
+              title: t('features.timeline.videoUploadedTitle'),
+              description: t('features.timeline.videoUploadedDescription', {
+                title: formData.title,
+              }),
+              contentType: 'video',
+              status: {},
+            })
+          );
+        }
+      }
+      await db.transact(transactions);
       toast.success(t('features.amendments.editContent.updateSuccess'));
-
       setTimeout(() => {
         router.push(`/amendment/${amendmentId}`);
       }, 500);
@@ -148,7 +182,9 @@ export function AmendmentEditContent({
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <p className="text-lg font-semibold">{t('features.amendments.editContent.notFound')}</p>
-          <p className="text-muted-foreground">{t('features.amendments.editContent.noDataExists')}</p>
+          <p className="text-muted-foreground">
+            {t('features.amendments.editContent.noDataExists')}
+          </p>
           <div className="mt-6">
             <Button onClick={() => router.push(`/`)} variant="default">
               {t('features.amendments.editContent.backToHome')}
@@ -163,7 +199,9 @@ export function AmendmentEditContent({
     <div className="container mx-auto max-w-4xl p-4">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">{t('features.amendments.editContent.pageTitle')}</h1>
-        <p className="text-muted-foreground">{t('features.amendments.editContent.pageDescription')}</p>
+        <p className="text-muted-foreground">
+          {t('features.amendments.editContent.pageDescription')}
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -185,9 +223,7 @@ export function AmendmentEditContent({
         {formData.videoURL && (
           <ImageUpload
             currentImage={formData.videoThumbnailURL}
-            onImageChange={(url: string) =>
-              setFormData({ ...formData, videoThumbnailURL: url })
-            }
+            onImageChange={(url: string) => setFormData({ ...formData, videoThumbnailURL: url })}
             label={t('features.amendments.editContent.videoThumbnail')}
             description={t('features.amendments.editContent.videoThumbnailDescription')}
           />
@@ -196,7 +232,9 @@ export function AmendmentEditContent({
         <Card>
           <CardHeader>
             <CardTitle>{t('features.amendments.editContent.basicInfo')}</CardTitle>
-            <CardDescription>{t('features.amendments.editContent.basicInfoDescription')}</CardDescription>
+            <CardDescription>
+              {t('features.amendments.editContent.basicInfoDescription')}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -234,7 +272,9 @@ export function AmendmentEditContent({
         <Card>
           <CardHeader>
             <CardTitle>{t('features.amendments.editContent.statusMetadata')}</CardTitle>
-            <CardDescription>{t('features.amendments.editContent.statusMetadataDescription')}</CardDescription>
+            <CardDescription>
+              {t('features.amendments.editContent.statusMetadataDescription')}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -247,10 +287,18 @@ export function AmendmentEditContent({
                   <SelectValue placeholder={t('features.amendments.editContent.selectStatus')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Drafting">{t('features.amendments.editContent.statusDrafting')}</SelectItem>
-                  <SelectItem value="Under Review">{t('features.amendments.editContent.statusUnderReview')}</SelectItem>
-                  <SelectItem value="Passed">{t('features.amendments.editContent.statusPassed')}</SelectItem>
-                  <SelectItem value="Rejected">{t('features.amendments.editContent.statusRejected')}</SelectItem>
+                  <SelectItem value="Drafting">
+                    {t('features.amendments.editContent.statusDrafting')}
+                  </SelectItem>
+                  <SelectItem value="Under Review">
+                    {t('features.amendments.editContent.statusUnderReview')}
+                  </SelectItem>
+                  <SelectItem value="Passed">
+                    {t('features.amendments.editContent.statusPassed')}
+                  </SelectItem>
+                  <SelectItem value="Rejected">
+                    {t('features.amendments.editContent.statusRejected')}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -264,7 +312,9 @@ export function AmendmentEditContent({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="supporters">{t('features.amendments.editContent.supportersLabel')}</Label>
+              <Label htmlFor="supporters">
+                {t('features.amendments.editContent.supportersLabel')}
+              </Label>
               <Input
                 id="supporters"
                 type="number"
@@ -288,7 +338,9 @@ export function AmendmentEditContent({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="workflowStatus">{t('features.amendments.editContent.workflowStatusLabel')}</Label>
+              <Label htmlFor="workflowStatus">
+                {t('features.amendments.editContent.workflowStatusLabel')}
+              </Label>
               <Select
                 value={formData.workflowStatus}
                 onValueChange={value =>
@@ -297,7 +349,9 @@ export function AmendmentEditContent({
                 disabled={isEventPhase(formData.workflowStatus)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={t('features.amendments.editContent.selectWorkflowStatus')} />
+                  <SelectValue
+                    placeholder={t('features.amendments.editContent.selectWorkflowStatus')}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {COLLABORATOR_SELECTABLE_STATUSES.map(status => {
@@ -324,7 +378,9 @@ export function AmendmentEditContent({
               <div className="space-y-2 rounded-lg border p-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label htmlFor="autoCloseVoting">{t('features.amendments.editContent.autoCloseVoting')}</Label>
+                    <Label htmlFor="autoCloseVoting">
+                      {t('features.amendments.editContent.autoCloseVoting')}
+                    </Label>
                     <p className="text-xs text-muted-foreground">
                       {t('features.amendments.editContent.autoCloseVotingDescription')}
                     </p>
@@ -351,7 +407,9 @@ export function AmendmentEditContent({
                   {t('features.amendments.editContent.eventPhase')}
                 </p>
                 <p className="mt-1 text-xs text-blue-700 dark:text-blue-300">
-                  {t('features.amendments.editContent.eventPhaseDescription', { eventId: amendment.currentEventId })}
+                  {t('features.amendments.editContent.eventPhaseDescription', {
+                    eventId: amendment.currentEventId,
+                  })}
                 </p>
               </div>
             )}
@@ -361,7 +419,9 @@ export function AmendmentEditContent({
         <Card>
           <CardHeader>
             <CardTitle>{t('features.amendments.editContent.tagsTitle')}</CardTitle>
-            <CardDescription>{t('features.amendments.editContent.tagsDescription')}</CardDescription>
+            <CardDescription>
+              {t('features.amendments.editContent.tagsDescription')}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex gap-2">

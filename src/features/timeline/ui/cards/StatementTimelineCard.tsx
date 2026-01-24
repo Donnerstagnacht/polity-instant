@@ -1,9 +1,11 @@
 'use client';
 
-import { Quote, ThumbsUp, ThumbsDown, HelpCircle, MessageSquare, Share2, User } from 'lucide-react';
+import { Quote, ThumbsUp, ThumbsDown, HelpCircle, MessageSquare, User } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
 import { cn } from '@/utils/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { ShareButton } from '@/components/shared/ShareButton';
 import { getContentTypeGradient } from '../../constants/content-type-config';
 import {
   TimelineCardBase,
@@ -57,7 +59,11 @@ export function StatementTimelineCard({
   };
 
   return (
-    <TimelineCardBase contentType="statement" className={className}>
+    <TimelineCardBase
+      contentType="statement"
+      className={className}
+      href={`/statement/${statement.id}`}
+    >
       {/* Quote Header */}
       <div className={cn('relative p-6', gradient)}>
         {/* Large Quote Mark */}
@@ -94,7 +100,10 @@ export function StatementTimelineCard({
         {/* Reaction Buttons */}
         <div className="mb-2 flex items-center justify-center gap-2">
           <button
-            onClick={() => handleReact('support')}
+            onClick={e => {
+              e.stopPropagation();
+              handleReact('support');
+            }}
             className={cn(
               'flex flex-col items-center gap-1 rounded-lg px-4 py-2 transition-colors',
               'hover:bg-green-100 dark:hover:bg-green-900/40',
@@ -113,7 +122,10 @@ export function StatementTimelineCard({
           </button>
 
           <button
-            onClick={() => handleReact('oppose')}
+            onClick={e => {
+              e.stopPropagation();
+              handleReact('oppose');
+            }}
             className={cn(
               'flex flex-col items-center gap-1 rounded-lg px-4 py-2 transition-colors',
               'hover:bg-red-100 dark:hover:bg-red-900/40',
@@ -132,7 +144,10 @@ export function StatementTimelineCard({
           </button>
 
           <button
-            onClick={() => handleReact('interested')}
+            onClick={e => {
+              e.stopPropagation();
+              handleReact('interested');
+            }}
             className={cn(
               'flex flex-col items-center gap-1 rounded-lg px-4 py-2 transition-colors',
               'hover:bg-amber-100 dark:hover:bg-amber-900/40',
@@ -148,6 +163,64 @@ export function StatementTimelineCard({
             <span className="text-xs font-medium">{statement.interestedCount ?? 0}</span>
           </button>
         </div>
+
+        {/* Stats Bar with Tooltips */}
+        <div className="mt-3 flex items-center justify-center gap-4 text-xs text-muted-foreground">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex cursor-help items-center gap-1">
+                <ThumbsUp className="h-3.5 w-3.5" />
+                <span className="font-medium">{statement.supportCount ?? 0}</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>
+                {statement.supportCount ?? 0} {t('features.timeline.cards.support')}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex cursor-help items-center gap-1">
+                <ThumbsDown className="h-3.5 w-3.5" />
+                <span className="font-medium">{statement.opposeCount ?? 0}</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>
+                {statement.opposeCount ?? 0} {t('features.timeline.cards.oppose')}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex cursor-help items-center gap-1">
+                <HelpCircle className="h-3.5 w-3.5" />
+                <span className="font-medium">{statement.interestedCount ?? 0}</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>
+                {statement.interestedCount ?? 0} {t('features.timeline.cards.interested')}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+          {statement.commentCount !== undefined && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex cursor-help items-center gap-1">
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  <span className="font-medium">{statement.commentCount}</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  {statement.commentCount} {t('features.timeline.cards.comments')}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
       </TimelineCardContent>
 
       <TimelineCardActions>
@@ -158,13 +231,20 @@ export function StatementTimelineCard({
               ? `${statement.commentCount}`
               : t('features.timeline.cards.comment')
           }
-          onClick={onComment}
+          onClick={e => {
+            e?.preventDefault();
+            onComment?.();
+          }}
         />
-        <TimelineCardActionButton
-          icon={Share2}
-          label={t('features.timeline.cards.share')}
-          onClick={onShare}
-        />
+        <div onClick={e => e.preventDefault()}>
+          <ShareButton
+            url={`/statement/${statement.id}`}
+            title={statement.authorName}
+            description={statement.content}
+            variant="outline"
+            size="sm"
+          />
+        </div>
       </TimelineCardActions>
     </TimelineCardBase>
   );

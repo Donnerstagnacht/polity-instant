@@ -30,7 +30,8 @@ export function MessageList({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [conversation.messages]);
 
-  const otherParticipantName = getOtherParticipant(conversation, currentUserId)?.name || t('common.labels.unknownUser');
+  const otherParticipantName =
+    getOtherParticipant(conversation, currentUserId)?.name || t('common.labels.unknownUser');
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -44,65 +45,67 @@ export function MessageList({
         ) : (
           conversation.messages.map((message: Message) => {
             const isOwnMessage = message.sender?.id === currentUserId;
-            return (
-              <MessageBubble
-                key={message.id}
-                message={message}
-                isOwnMessage={isOwnMessage}
-              />
-            );
+            return <MessageBubble key={message.id} message={message} isOwnMessage={isOwnMessage} />;
           })
         )}
 
         {/* Aria & Kai Tutorial Actions - Show only in Aria & Kai conversation */}
-        {conversation.participants.some(
-          (p) => p.user?.id === ARIA_KAI_USER_ID
-        ) &&
-          currentUserId && (
-            <AriaKaiMessageActions
-              conversationId={conversation.id}
-              currentUserId={currentUserId}
-            />
-          )}
+        {conversation.participants.some(p => p.user?.id === ARIA_KAI_USER_ID) && currentUserId && (
+          <AriaKaiMessageActions conversationId={conversation.id} currentUserId={currentUserId} />
+        )}
 
-        {/* Conversation Request Accept/Reject - Show if pending and user is recipient - Only for direct messages */}
-        {conversation.type !== 'group' &&
-          conversation.status === 'pending' &&
-          conversation.requestedBy?.id !== currentUserId && (
-            <div className="border-t pt-4">
-              <Card className="bg-muted/50">
-                <CardContent className="flex flex-col items-center gap-3 p-4">
+        {/* Conversation Request - Only for direct messages */}
+        {conversation.type !== 'group' && conversation.status === 'pending' && (
+          <div className="border-t pt-4">
+            {console.log('[MessageList] Pending conversation check:', {
+              conversationId: conversation.id,
+              status: conversation.status,
+              type: conversation.type,
+              requestedBy: conversation.requestedBy,
+              requestedById: conversation.requestedBy?.id,
+              currentUserId,
+              isRequester: conversation.requestedBy?.id === currentUserId,
+              otherParticipantName,
+            })}
+            <Card className="bg-muted/50">
+              <CardContent className="flex flex-col items-center gap-3 p-4">
+                {conversation.requestedBy?.id === currentUserId ? (
                   <p className="text-center text-sm font-medium">
-                    {t('features.messages.conversation.wantsToStart', { name: otherParticipantName })}
+                    {t('features.messages.conversation.waitingForAccept', {
+                      name: otherParticipantName,
+                    })}
                   </p>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => onAcceptConversation(conversation)}
-                      variant="default"
-                      size="sm"
-                    >
-                      <Check className="mr-2 h-4 w-4" />
-                      {t('features.messages.conversation.accept')}
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        if (
-                          confirm(t('features.messages.conversation.rejectConfirm'))
-                        ) {
-                          onRejectConversation(conversation);
-                        }
-                      }}
-                      variant="outline"
-                      size="sm"
-                    >
-                      <X className="mr-2 h-4 w-4" />
-                      {t('features.messages.conversation.reject')}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+                ) : (
+                  <>
+                    <p className="text-center text-sm font-medium">
+                      {t('features.messages.conversation.wantsToStart', {
+                        name: otherParticipantName,
+                      })}
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => onAcceptConversation(conversation)}
+                        variant="default"
+                        size="sm"
+                      >
+                        <Check className="mr-2 h-4 w-4" />
+                        {t('features.messages.conversation.accept')}
+                      </Button>
+                      <Button
+                        onClick={() => onRejectConversation(conversation)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <X className="mr-2 h-4 w-4" />
+                        {t('features.messages.conversation.reject')}
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         <div ref={messagesEndRef} />
       </div>

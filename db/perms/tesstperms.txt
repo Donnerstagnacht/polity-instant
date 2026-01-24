@@ -1,0 +1,8 @@
+{
+  "$users": {
+    "allow": {
+      "view": "true",
+      "update": "true"
+    }
+  }
+}

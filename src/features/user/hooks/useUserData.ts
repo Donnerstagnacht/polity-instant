@@ -22,11 +22,17 @@ export function useUserData(userId?: string) {
             stats: {},
             statements: {},
             memberships: {
-              group: {},
+              group: {
+                events: {},
+                amendments: {},
+                hashtags: {},
+              },
               role: {},
             },
             bloggerRelations: {
-              blog: {},
+              blog: {
+                hashtags: {},
+              },
               role: {
                 actionRights: {},
               },
@@ -47,7 +53,10 @@ export function useUserData(userId?: string) {
                 'user.id': userId,
               },
             },
-            amendment: {},
+            amendment: {
+              groups: {},
+              hashtags: {},
+            },
           },
         }
       : null
@@ -128,9 +137,13 @@ export function useUserData(userId?: string) {
                 id: relation.blog.id,
                 title: relation.blog.title,
                 date: relation.blog.date,
-                likes: relation.blog.likeCount || 0,
-                comments: relation.blog.commentCount || 0,
-                role: relation.status, // Include the blogger role status
+                description: relation.blog.description,
+                imageURL: relation.blog.imageURL,
+                commentCount: relation.blog.commentCount || 0,
+                hashtags: relation.blog.hashtags,
+                authorName: userData.name,
+                authorAvatar:
+                  userData.avatarFile?.url || userData.avatar || userData.imageURL || '',
               });
             }
             return acc;
@@ -152,9 +165,8 @@ export function useUserData(userId?: string) {
                 role: membership.role?.name || 'Member', // Default to 'Member' if role is undefined
                 description: membership.group.description,
                 tags: membership.group.tags,
-                // Amendment and event counts not available in this query - set to undefined
-                amendments: undefined,
-                events: undefined,
+                amendments: membership.group.amendments?.length,
+                events: membership.group.events?.length,
                 abbr: membership.group.abbr,
               });
             }
@@ -178,7 +190,9 @@ export function useUserData(userId?: string) {
               supporters: collab.amendment.supporters,
               date: collab.amendment.date,
               code: collab.amendment.code,
-              tags: collab.amendment.tags,
+              tags: collab.amendment.hashtags?.map((tag: any) => tag.tag) || collab.amendment.tags,
+              groupId: collab.amendment.groups?.[0]?.id,
+              groupName: collab.amendment.groups?.[0]?.name,
             });
           }
           return acc;

@@ -1,8 +1,9 @@
 import '@/styles/animations.css';
 import { SocialBar } from '@/features/user/ui/SocialBar';
+import { useRouter } from 'next/navigation';
+import { Mail } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useUserWikiContentSearch } from './state/useUserWikiContentSearch';
-import { BADGE_COLORS } from './state/badgeColors';
-import { GRADIENTS } from './state/gradientColors';
 import { InfoTabs } from '@/components/shared/InfoTabs';
 import { StatementCarousel } from '@/features/user/ui/StatementCarousel';
 import { UserWikiContentTabs } from '@/features/user/ui/UserWikiContentTabs';
@@ -14,9 +15,7 @@ import { StatsBar } from '@/components/ui/StatsBar';
 import { ActionBar } from '@/components/ui/ActionBar';
 import { SubscribeButton } from '@/components/shared/action-buttons';
 import { ShareButton } from '@/components/shared/ShareButton';
-
-// --- UserWiki utility functions moved to utils/userWiki.utils.ts ---
-import { getTagColor, getRoleBadgeColor, getBlogGradient } from './utils/userWiki.utils';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface UserWikiProps {
   userId?: string;
@@ -29,6 +28,8 @@ interface UserWikiProps {
 
 export function UserWiki(_props: UserWikiProps) {
   // Props available: _props.userId, _props.searchFilters
+  const { t } = useTranslation();
+  const router = useRouter();
 
   // Content search state and handler
   const { searchTerms, handleSearchChange } = useUserWikiContentSearch();
@@ -120,6 +121,17 @@ export function UserWiki(_props: UserWikiProps) {
                 onToggleSubscribe={toggleSubscribe}
                 isLoading={subscribeLoading}
               />
+              <Button
+                variant="outline"
+                onClick={() =>
+                  router.push(
+                    `/messages?userId=${encodeURIComponent(dbUser.id || '')}&name=${encodeURIComponent(dbUser.name || '')}`
+                  )
+                }
+              >
+                <Mail className="h-4 w-4" />
+                <span>{t('features.timeline.cards.message')}</span>
+              </Button>
               <ShareButton
                 url={`/user/${userIdToFetch}`}
                 title={dbUser.name || 'User'}
@@ -141,15 +153,15 @@ export function UserWiki(_props: UserWikiProps) {
 
           <StatementCarousel
             statements={dbUser.statements}
-            getTagColor={(tag: string) => getTagColor(tag, BADGE_COLORS)}
+            authorName={dbUser.name || t('common.unknownUser')}
+            authorTitle={dbUser.subtitle}
+            authorAvatar={dbUser.avatar}
           />
 
           <UserWikiContentTabs
             user={dbUser}
             searchTerms={searchTerms}
             handleSearchChange={handleSearchChange}
-            getBlogGradient={(blogId: number) => getBlogGradient(blogId, GRADIENTS)}
-            getRoleBadgeColor={getRoleBadgeColor}
           />
         </div>
       )}

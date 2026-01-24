@@ -6,7 +6,11 @@ export type SearchType =
   | 'todos'
   | 'blogs'
   | 'amendments'
-  | 'events';
+  | 'events'
+  | 'votes'
+  | 'elections'
+  | 'videos'
+  | 'images';
 
 export interface SearchFilters {
   query: string;
@@ -16,6 +20,17 @@ export interface SearchFilters {
 
 export interface SearchResultItem {
   id: string;
-  _type: 'user' | 'group' | 'statement' | 'todo' | 'blog' | 'amendment' | 'event';
+  _type:
+    | 'user'
+    | 'group'
+    | 'statement'
+    | 'todo'
+    | 'blog'
+    | 'amendment'
+    | 'event'
+    | 'vote'
+    | 'election'
+    | 'video'
+    | 'image';
   [key: string]: any;
 }

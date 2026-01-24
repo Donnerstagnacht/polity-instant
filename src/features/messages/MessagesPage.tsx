@@ -2,7 +2,8 @@
 
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { AuthGuard } from '@/features/auth/AuthGuard';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { db } from '../../../db/db';
 import { useConversationData } from './hooks/useConversationData';
 import { useMessageMutations } from './hooks/useMessageMutations';
@@ -19,7 +20,9 @@ import { useTranslation } from '@/hooks/use-translation';
 export default function MessagesPage() {
   const { t } = useTranslation();
   const { user } = db.useAuth();
+  const searchParams = useSearchParams();
   const [userSearchDialogOpen, setUserSearchDialogOpen] = useState(false);
+  const [newConversationSearch, setNewConversationSearch] = useState('');
   const [memberListDialogOpen, setMemberListDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [conversationToDelete, setConversationToDelete] = useState<string | null>(null);
@@ -49,15 +52,65 @@ export default function MessagesPage() {
     deleteConversation,
     togglePin,
   } = useMessageMutations();
-  const { searchQuery, setSearchQuery, filteredConversations } = useConversationFilters(conversations);
-  const { selectedConversationId, setSelectedConversationId, selectedConversation } = useConversationSelection(conversations);
+  const { searchQuery, setSearchQuery, filteredConversations } =
+    useConversationFilters(conversations);
+  const { selectedConversationId, setSelectedConversationId, selectedConversation } =
+    useConversationSelection(conversations);
+
+  // Get user IDs that already have a direct conversation with current user
+  const existingConversationUserIds = useMemo(() => {
+    return conversations
+      .filter(conv => conv.type === 'direct')
+      .flatMap(conv => conv.participants.map(p => p.user?.id))
+      .filter((id): id is string => id !== undefined && id !== user?.id);
+  }, [conversations, user?.id]);
+
+  const messageUserId = searchParams.get('userId');
+  const messageUserName = searchParams.get('name') || '';
+
+  // Open new conversation dialog from query params
+  useEffect(() => {
+    const shouldOpen = searchParams.get('new') === '1';
+    const search = searchParams.get('userSearch') || searchParams.get('search');
+    if (shouldOpen) {
+      setUserSearchDialogOpen(true);
+      setNewConversationSearch(search ?? '');
+    }
+  }, [searchParams]);
+
+  // Route message intent based on existing conversations
+  useEffect(() => {
+    if (!messageUserId || !messageUserName || isLoading) return;
+
+    const existingConversation = conversations.find(conv => {
+      if (conv.type === 'group') return false;
+      return conv.participants.some(p => p.user?.id === messageUserId);
+    });
+
+    if (existingConversation) {
+      setSelectedConversationId(existingConversation.id);
+      setSearchQuery('');
+      setUserSearchDialogOpen(false);
+      setNewConversationSearch('');
+    } else {
+      setUserSearchDialogOpen(true);
+      setNewConversationSearch(messageUserName);
+    }
+  }, [
+    messageUserId,
+    messageUserName,
+    conversations,
+    isLoading,
+    setSearchQuery,
+    setSelectedConversationId,
+  ]);
 
   // Mark messages as read when viewing a conversation
   useEffect(() => {
     if (!selectedConversation || !user?.id) return;
 
     const unreadMessages = selectedConversation.messages.filter(
-      (msg) => !msg.isRead && msg.sender?.id !== user.id
+      msg => !msg.isRead && msg.sender?.id !== user.id
     );
 
     if (unreadMessages.length > 0) {
@@ -70,9 +123,9 @@ export default function MessagesPage() {
     if (!user?.id) return;
 
     // Check if direct conversation already exists between these users
-    const existingConversation = conversations.find((conv) => {
+    const existingConversation = conversations.find(conv => {
       if (conv.type === 'group') return false; // Ignore group conversations
-      const participantIds = conv.participants.map((p) => p.user?.id);
+      const participantIds = conv.participants.map(p => p.user?.id);
       return (
         participantIds.length === 2 &&
         participantIds.includes(user.id) &&
@@ -87,7 +140,7 @@ export default function MessagesPage() {
       return;
     }
 
-    const result = await createConversation('direct', [user.id, otherUserId]);
+    const result = await createConversation('direct', [user.id, otherUserId], undefined, user.id);
     if (result.success) {
       setSelectedConversationId(result.conversationId!);
       setUserSearchDialogOpen(false);
@@ -96,7 +149,7 @@ export default function MessagesPage() {
 
   const handleDeleteConversation = async () => {
     if (conversationToDelete) {
-      const conversation = conversations.find((c) => c.id === conversationToDelete);
+      const conversation = conversations.find(c => c.id === conversationToDelete);
       if (conversation) {
         await deleteConversation(conversation);
         if (selectedConversationId === conversationToDelete) {
@@ -140,7 +193,10 @@ export default function MessagesPage() {
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             currentUserId={user?.id}
-            onNewConversationClick={() => setUserSearchDialogOpen(true)}
+            onNewConversationClick={() => {
+              setNewConversationSearch('');
+              setUserSearchDialogOpen(true);
+            }}
           />
 
           <MessageView
@@ -148,22 +204,22 @@ export default function MessagesPage() {
             currentUserId={user?.id}
             onBack={() => setSelectedConversationId(null)}
             onTogglePin={togglePin}
-            onDeleteClick={(id) => {
+            onDeleteClick={id => {
               setConversationToDelete(id);
               setDeleteDialogOpen(true);
             }}
             onMembersClick={() => setMemberListDialogOpen(true)}
-            onSendMessage={(content) => {
+            onSendMessage={content => {
               if (selectedConversationId && user?.id) {
                 sendMessage(selectedConversationId, user.id, content);
               }
             }}
             onAcceptConversation={handleAcceptConversation}
-            onRejectConversation={(conversation) => {
-                rejectConversation(conversation);
-                if (selectedConversationId === conversation.id) {
-                    setSelectedConversationId(null);
-                }
+            onRejectConversation={conversation => {
+              rejectConversation(conversation);
+              if (selectedConversationId === conversation.id) {
+                setSelectedConversationId(null);
+              }
             }}
           />
         </div>
@@ -172,7 +228,9 @@ export default function MessagesPage() {
           open={userSearchDialogOpen}
           onOpenChange={setUserSearchDialogOpen}
           currentUserId={user?.id}
+          initialSearchQuery={newConversationSearch}
           onUserSelect={handleCreateConversationRequest}
+          existingConversationUserIds={existingConversationUserIds}
         />
 
         <GroupMembersDialog

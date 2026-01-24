@@ -5,10 +5,9 @@ import { useState, useCallback, useEffect } from 'react';
 /**
  * Timeline mode types
  * - subscribed: Shows content from entities the user follows
- * - explore: Shows user's own content + public content they don't follow
  * - decisions: Bloomberg-style terminal for active votes and elections
  */
-export type TimelineMode = 'subscribed' | 'explore' | 'decisions';
+export type TimelineMode = 'subscribed' | 'decisions';
 
 const STORAGE_KEY = 'polity:timeline-mode';
 
@@ -68,14 +67,12 @@ export function useTimelineMode(defaultMode: TimelineMode = 'subscribed') {
   }, []);
 
   /**
-   * Toggle between modes in order: subscribed -> explore -> decisions -> subscribed
+   * Toggle between modes in order: subscribed -> decisions -> subscribed
    */
   const toggleMode = useCallback(() => {
     setModeState(current => {
       switch (current) {
         case 'subscribed':
-          return 'explore';
-        case 'explore':
           return 'decisions';
         case 'decisions':
           return 'subscribed';
@@ -96,11 +93,6 @@ export function useTimelineMode(defaultMode: TimelineMode = 'subscribed') {
   const isSubscribedMode = mode === 'subscribed';
 
   /**
-   * Check if in explore mode
-   */
-  const isExploreMode = mode === 'explore';
-
-  /**
    * Check if in decisions (terminal) mode
    */
   const isDecisionsMode = mode === 'decisions';
@@ -111,7 +103,6 @@ export function useTimelineMode(defaultMode: TimelineMode = 'subscribed') {
     toggleMode,
     isMode,
     isSubscribedMode,
-    isExploreMode,
     isDecisionsMode,
   };
 }
@@ -120,7 +111,7 @@ export function useTimelineMode(defaultMode: TimelineMode = 'subscribed') {
  * Validate that a string is a valid timeline mode
  */
 function isValidMode(value: string): value is TimelineMode {
-  return value === 'subscribed' || value === 'explore' || value === 'decisions';
+  return value === 'subscribed' || value === 'decisions';
 }
 
 export default useTimelineMode;

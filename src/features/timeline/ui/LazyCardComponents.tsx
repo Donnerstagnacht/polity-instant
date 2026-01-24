@@ -61,6 +61,10 @@ const LazyActionTimelineCard = lazy(() =>
   import('./cards/ActionTimelineCard').then(m => ({ default: m.ActionTimelineCard }))
 );
 
+const LazyUserTimelineCard = lazy(() =>
+  import('./cards/UserTimelineCard').then(m => ({ default: m.UserTimelineCard }))
+);
+
 /**
  * Map of content types to lazy-loaded card components
  */
@@ -76,6 +80,7 @@ export const LAZY_CARD_COMPONENTS = {
   vote: LazyVoteTimelineCard,
   election: LazyElectionTimelineCard,
   action: LazyActionTimelineCard,
+  user: LazyUserTimelineCard,
 } as const;
 
 export type CardType = keyof typeof LAZY_CARD_COMPONENTS;
@@ -123,7 +128,7 @@ export function DynamicTimelineCard({
 
   return (
     <Suspense fallback={fallback || <CardSkeleton className={className} />}>
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      { }
       <CardComponent {...(cardProps as any)} />
     </Suspense>
   );

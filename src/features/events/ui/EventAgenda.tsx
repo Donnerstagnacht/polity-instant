@@ -254,8 +254,8 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                 </p>
                 <p className="truncate text-xs text-muted-foreground md:text-sm">
                   {agendaItems.filter((item: any) => item.amendmentVote).length === 1
-                    ? t('features.events.agenda.vote')
-                    : t('features.events.agenda.votes')}
+                    ? t('features.events.agenda.amendment')
+                    : t('features.events.agenda.amendments')}
                 </p>
               </div>
             </div>

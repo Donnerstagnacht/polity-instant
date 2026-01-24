@@ -1,27 +1,16 @@
 'use client';
 
-import {
-  Vote,
-  ThumbsUp,
-  ThumbsDown,
-  MessageSquare,
-  ExternalLink,
-  Clock,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-} from 'lucide-react';
-import Link from 'next/link';
+import { Vote, ThumbsUp, ThumbsDown, Clock, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
 import { cn } from '@/utils/utils';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { ShareButton } from '@/components/shared/ShareButton';
 import {
   TimelineCardBase,
   TimelineCardHeader,
   TimelineCardContent,
   TimelineCardActions,
-  TimelineCardActionButton,
 } from './TimelineCardBase';
 
 export interface VoteTimelineCardProps {
@@ -42,6 +31,8 @@ export interface VoteTimelineCardProps {
     trendPercentage?: number;
     hasVoted?: boolean;
     userVote?: 'support' | 'oppose' | 'abstain';
+    agendaEventId?: string;
+    agendaItemId?: string;
   };
   onVoteSupport?: () => void;
   onVoteOppose?: () => void;
@@ -100,13 +91,7 @@ const STATUS_CONFIG: Record<string, { color: string; bgColor: string; pulse?: bo
  * - Trend indicator
  * - Actions: Vote Support, Vote Oppose, Discuss
  */
-export function VoteTimelineCard({
-  vote,
-  onVoteSupport,
-  onVoteOppose,
-  onDiscuss,
-  className,
-}: VoteTimelineCardProps) {
+export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
   const { t } = useTranslation();
 
   const statusConfig = STATUS_CONFIG[vote.status] || STATUS_CONFIG.open;
@@ -119,10 +104,17 @@ export function VoteTimelineCard({
 
   const TrendIcon = vote.trend === 'up' ? TrendingUp : vote.trend === 'down' ? TrendingDown : Minus;
 
+  const agendaHref =
+    vote.agendaEventId && vote.agendaItemId
+      ? `/event/${vote.agendaEventId}/agenda/${vote.agendaItemId}`
+      : undefined;
+  const fallbackHref = `/amendment/${vote.amendmentId}`;
+
   return (
     <TimelineCardBase
       contentType="vote"
       className={cn(statusConfig.pulse && 'ring-2 ring-red-500 ring-opacity-50', className)}
+      href={agendaHref || fallbackHref}
     >
       <TimelineCardHeader
         contentType="vote"
@@ -165,13 +157,8 @@ export function VoteTimelineCard({
       </TimelineCardHeader>
 
       <TimelineCardContent>
-        {/* Amendment Link */}
-        <Link
-          href={`/amendment/${vote.amendmentId}`}
-          className="mb-2 line-clamp-2 text-sm font-medium hover:underline"
-        >
-          {vote.amendmentTitle}
-        </Link>
+        {/* Amendment Title (card click handles navigation) */}
+        <p className="mb-2 line-clamp-2 text-sm font-medium">{vote.amendmentTitle}</p>
 
         {vote.question && (
           <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">{vote.question}</p>
@@ -242,38 +229,20 @@ export function VoteTimelineCard({
       </TimelineCardContent>
 
       <TimelineCardActions>
-        {isActive && !vote.hasVoted && (
-          <>
-            <TimelineCardActionButton
-              icon={ThumbsUp}
-              label={t('features.timeline.cards.voteSupport')}
-              onClick={onVoteSupport}
-              variant="outline"
-            />
-            <TimelineCardActionButton
-              icon={ThumbsDown}
-              label={t('features.timeline.cards.voteOppose')}
-              onClick={onVoteOppose}
-              variant="outline"
-            />
-          </>
-        )}
         {vote.hasVoted && (
           <Badge variant="secondary" className="text-xs">
             {t('features.timeline.cards.voted')}: {vote.userVote}
           </Badge>
         )}
-        <TimelineCardActionButton
-          icon={MessageSquare}
-          label={t('features.timeline.cards.discuss')}
-          onClick={onDiscuss}
-        />
-        <Link href={`/amendment/${vote.amendmentId}`}>
-          <TimelineCardActionButton
-            icon={ExternalLink}
-            label={t('features.timeline.cards.viewDocument')}
+        <div onClick={e => e.preventDefault()}>
+          <ShareButton
+            url={agendaHref || fallbackHref}
+            title={vote.amendmentTitle}
+            description={vote.question || ''}
+            variant="outline"
+            size="sm"
           />
-        </Link>
+        </div>
       </TimelineCardActions>
     </TimelineCardBase>
   );

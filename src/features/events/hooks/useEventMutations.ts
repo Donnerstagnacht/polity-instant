@@ -232,6 +232,8 @@ export function useEventMutations(eventId: string) {
       actorId?: string;
       eventTitle?: string;
       visibility?: string;
+      previousImageURL?: string;
+      previousVideoURL?: string;
     }
   ) => {
     setIsLoading(true);
@@ -243,18 +245,36 @@ export function useEventMutations(eventId: string) {
         }),
       ];
 
-      // Add timeline event for public events
+      // Add timeline events for public events when media is uploaded
       if (options?.visibility === 'public' && options?.actorId) {
-        transactions.push(
-          createTimelineEvent({
-            eventType: 'updated',
-            entityType: 'event',
-            entityId: eventId,
-            actorId: options.actorId,
-            title: `${options.eventTitle || 'Event'} was updated`,
-            description: 'Event details have been updated',
-          })
-        );
+        // Check if image was uploaded/changed
+        if (updates.imageURL && updates.imageURL !== options.previousImageURL) {
+          transactions.push(
+            createTimelineEvent({
+              eventType: 'image_uploaded',
+              entityType: 'event',
+              entityId: eventId,
+              actorId: options.actorId,
+              title: `${options.eventTitle || 'Event'} image updated`,
+              description: 'A new image was uploaded to this event',
+              contentType: 'image',
+            })
+          );
+        }
+        // Check if video was uploaded/changed
+        if (updates.videoURL && updates.videoURL !== options.previousVideoURL) {
+          transactions.push(
+            createTimelineEvent({
+              eventType: 'video_uploaded',
+              entityType: 'event',
+              entityId: eventId,
+              actorId: options.actorId,
+              title: `${options.eventTitle || 'Event'} video updated`,
+              description: 'A new video was uploaded to this event',
+              contentType: 'video',
+            })
+          );
+        }
       }
 
       await db.transact(transactions);

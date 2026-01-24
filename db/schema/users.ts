@@ -42,11 +42,6 @@ const _users = {
       expiresAt: i.date().indexed(),
       usedAt: i.date().optional(),
     }),
-    statements: i.entity({
-      tag: i.string(),
-      text: i.string(),
-      visibility: i.string().indexed().optional(), // 'public', 'authenticated', 'private'
-    }),
     stats: i.entity({
       label: i.string(),
       unit: i.string().optional(),
@@ -88,18 +83,6 @@ const _users = {
         on: '$users',
         has: 'many',
         label: 'following',
-      },
-    },
-    statementsUser: {
-      forward: {
-        on: 'statements',
-        has: 'one',
-        label: 'user',
-      },
-      reverse: {
-        on: '$users',
-        has: 'many',
-        label: 'statements',
       },
     },
     statsUser: {

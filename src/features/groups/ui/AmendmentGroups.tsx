@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { AmendmentCard } from './AmendmentCard';
+import { useTranslation } from '@/hooks/use-translation';
+import { AmendmentTimelineCard } from '@/features/timeline/ui/cards/AmendmentTimelineCard';
 
 interface AmendmentGroupsProps {
   groupedAmendments: {
@@ -13,9 +14,12 @@ interface AmendmentGroupsProps {
     drafting: any[];
     rejected: any[];
   };
+  groupName?: string;
+  groupId?: string;
 }
 
-export function AmendmentGroups({ groupedAmendments }: AmendmentGroupsProps) {
+export function AmendmentGroups({ groupedAmendments, groupName, groupId }: AmendmentGroupsProps) {
+  const { t } = useTranslation();
   const [openSections, setOpenSections] = useState({
     passed: true,
     underReview: true,
@@ -25,6 +29,48 @@ export function AmendmentGroups({ groupedAmendments }: AmendmentGroupsProps) {
 
   const toggleSection = (section: keyof typeof openSections) => {
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const normalizeStatus = (
+    status?: string
+  ):
+    | 'collaborative_editing'
+    | 'internal_suggesting'
+    | 'internal_voting'
+    | 'viewing'
+    | 'event_suggesting'
+    | 'event_voting'
+    | 'passed'
+    | 'rejected' => {
+    if (!status) return 'viewing';
+    const normalized = status.toLowerCase();
+    if (
+      normalized === 'collaborative_editing' ||
+      normalized === 'internal_suggesting' ||
+      normalized === 'internal_voting' ||
+      normalized === 'viewing' ||
+      normalized === 'event_suggesting' ||
+      normalized === 'event_voting' ||
+      normalized === 'passed' ||
+      normalized === 'rejected'
+    ) {
+      return normalized as
+        | 'collaborative_editing'
+        | 'internal_suggesting'
+        | 'internal_voting'
+        | 'viewing'
+        | 'event_suggesting'
+        | 'event_voting'
+        | 'passed'
+        | 'rejected';
+    }
+    if (normalized === 'drafting' || normalized === 'draft') {
+      return 'collaborative_editing';
+    }
+    if (normalized === 'under review' || normalized === 'review') {
+      return 'internal_voting';
+    }
+    return 'viewing';
   };
 
   return (
@@ -40,14 +86,28 @@ export function AmendmentGroups({ groupedAmendments }: AmendmentGroupsProps) {
                 ) : (
                   <ChevronRight className="h-5 w-5" />
                 )}
-                <h2 className="text-xl font-semibold">Passed</h2>
+                <h2 className="text-xl font-semibold">
+                  {t('pages.group.amendments.statusBreakdown.passed')}
+                </h2>
                 <Badge variant="secondary">{groupedAmendments.passed.length}</Badge>
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent>
               <div className="grid gap-4 p-4 md:grid-cols-2">
                 {groupedAmendments.passed.map((amendment: any) => (
-                  <AmendmentCard key={amendment.id} amendment={amendment} />
+                  <AmendmentTimelineCard
+                    key={amendment.id}
+                    amendment={{
+                      id: String(amendment.id),
+                      title: amendment.title,
+                      subtitle: groupName,
+                      description: amendment.subtitle,
+                      status: normalizeStatus(amendment.status),
+                      groupName,
+                      groupId,
+                      hashtags: amendment.hashtags,
+                    }}
+                  />
                 ))}
               </div>
             </CollapsibleContent>
@@ -69,14 +129,28 @@ export function AmendmentGroups({ groupedAmendments }: AmendmentGroupsProps) {
                 ) : (
                   <ChevronRight className="h-5 w-5" />
                 )}
-                <h2 className="text-xl font-semibold">Under Review</h2>
+                <h2 className="text-xl font-semibold">
+                  {t('pages.group.amendments.statusBreakdown.underReview')}
+                </h2>
                 <Badge variant="secondary">{groupedAmendments.underReview.length}</Badge>
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent>
               <div className="grid gap-4 p-4 md:grid-cols-2">
                 {groupedAmendments.underReview.map((amendment: any) => (
-                  <AmendmentCard key={amendment.id} amendment={amendment} />
+                  <AmendmentTimelineCard
+                    key={amendment.id}
+                    amendment={{
+                      id: String(amendment.id),
+                      title: amendment.title,
+                      subtitle: groupName,
+                      description: amendment.subtitle,
+                      status: normalizeStatus(amendment.status),
+                      groupName,
+                      groupId,
+                      hashtags: amendment.hashtags,
+                    }}
+                  />
                 ))}
               </div>
             </CollapsibleContent>
@@ -95,14 +169,28 @@ export function AmendmentGroups({ groupedAmendments }: AmendmentGroupsProps) {
                 ) : (
                   <ChevronRight className="h-5 w-5" />
                 )}
-                <h2 className="text-xl font-semibold">Drafting</h2>
+                <h2 className="text-xl font-semibold">
+                  {t('pages.group.amendments.statusBreakdown.drafting')}
+                </h2>
                 <Badge variant="secondary">{groupedAmendments.drafting.length}</Badge>
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent>
               <div className="grid gap-4 p-4 md:grid-cols-2">
                 {groupedAmendments.drafting.map((amendment: any) => (
-                  <AmendmentCard key={amendment.id} amendment={amendment} />
+                  <AmendmentTimelineCard
+                    key={amendment.id}
+                    amendment={{
+                      id: String(amendment.id),
+                      title: amendment.title,
+                      subtitle: groupName,
+                      description: amendment.subtitle,
+                      status: normalizeStatus(amendment.status),
+                      groupName,
+                      groupId,
+                      hashtags: amendment.hashtags,
+                    }}
+                  />
                 ))}
               </div>
             </CollapsibleContent>
@@ -121,14 +209,28 @@ export function AmendmentGroups({ groupedAmendments }: AmendmentGroupsProps) {
                 ) : (
                   <ChevronRight className="h-5 w-5" />
                 )}
-                <h2 className="text-xl font-semibold">Rejected</h2>
+                <h2 className="text-xl font-semibold">
+                  {t('pages.group.amendments.statusBreakdown.rejected')}
+                </h2>
                 <Badge variant="secondary">{groupedAmendments.rejected.length}</Badge>
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent>
               <div className="grid gap-4 p-4 md:grid-cols-2">
                 {groupedAmendments.rejected.map((amendment: any) => (
-                  <AmendmentCard key={amendment.id} amendment={amendment} />
+                  <AmendmentTimelineCard
+                    key={amendment.id}
+                    amendment={{
+                      id: String(amendment.id),
+                      title: amendment.title,
+                      subtitle: groupName,
+                      description: amendment.subtitle,
+                      status: normalizeStatus(amendment.status),
+                      groupName,
+                      groupId,
+                      hashtags: amendment.hashtags,
+                    }}
+                  />
                 ))}
               </div>
             </CollapsibleContent>

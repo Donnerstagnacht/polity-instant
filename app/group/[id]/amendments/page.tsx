@@ -147,7 +147,11 @@ export default function GroupAmendmentsPage({ params }: { params: Promise<{ id: 
           </div>
         ) : (
           <>
-            <AmendmentGroups groupedAmendments={groupedAmendments} />
+            <AmendmentGroups
+              groupedAmendments={groupedAmendments}
+              groupName={group.name}
+              groupId={group.id}
+            />
             {hasMore && <div ref={loadMoreRef} className="h-px" />}
           </>
         )}

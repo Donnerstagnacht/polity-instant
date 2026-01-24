@@ -8,6 +8,7 @@
 import db, { tx } from '../../db/db';
 import { toast } from 'sonner';
 import type { WorkflowStatus } from '@db/rbac/workflow-constants';
+import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 
 /**
  * Add a group as supporter to an amendment after event approval
@@ -16,10 +17,7 @@ import type { WorkflowStatus } from '@db/rbac/workflow-constants';
  * @param groupId - Group ID to add as supporter
  * @returns Success boolean
  */
-export async function addGroupAsSupporter(
-  amendmentId: string,
-  groupId: string
-): Promise<boolean> {
+export async function addGroupAsSupporter(amendmentId: string, groupId: string): Promise<boolean> {
   try {
     // Fetch current amendment
     const { data } = await db.queryOnce({
@@ -168,6 +166,19 @@ export async function progressToNextEvent(
           currentEventId: null,
           updatedAt: Date.now(),
         }),
+        // Add timeline event for rejection
+        createTimelineEvent({
+          eventType: 'vote_rejected',
+          entityType: 'amendment',
+          entityId: amendmentId,
+          actorId: 'system',
+          title: 'Amendment rejected',
+          description: 'The amendment was rejected at event voting',
+          contentType: 'vote',
+          status: {
+            voteStatus: 'rejected',
+          },
+        }),
       ]);
 
       toast.error('Amendment wurde abgelehnt');
@@ -183,6 +194,19 @@ export async function progressToNextEvent(
           status: 'Passed',
           currentEventId: null,
           updatedAt: Date.now(),
+        }),
+        // Add timeline event for passing
+        createTimelineEvent({
+          eventType: 'vote_passed',
+          entityType: 'amendment',
+          entityId: amendmentId,
+          actorId: 'system',
+          title: 'Amendment passed',
+          description: 'The amendment has been approved at all required events',
+          contentType: 'vote',
+          status: {
+            voteStatus: 'passed',
+          },
         }),
       ]);
 

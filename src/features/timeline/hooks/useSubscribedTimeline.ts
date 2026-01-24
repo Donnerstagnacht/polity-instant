@@ -22,7 +22,8 @@ export interface TimelineItem {
     | 'election'
     | 'vote'
     | 'todo'
-    | 'action';
+    | 'action'
+    | 'user';
   eventType?: string;
   title: string;
   description?: string;
@@ -38,8 +39,14 @@ export interface TimelineItem {
   startDate?: Date;
   endDate?: Date;
   location?: string;
+  city?: string;
+  postcode?: string;
   attendeeCount?: number;
+  electionsCount?: number;
+  amendmentsCount?: number;
   memberCount?: number;
+  eventCount?: number;
+  amendmentCount?: number;
   createdAt: Date;
   updatedAt?: Date;
   status?: string;
@@ -50,6 +57,11 @@ export interface TimelineItem {
     members?: number;
   };
   tags?: string[];
+  collaboratorCount?: number;
+  supportingGroupsCount?: number;
+  changeRequestCount?: number;
+  commentCount?: number;
+  groupCount?: number;
 }
 
 export interface UseSubscribedTimelineOptions {
@@ -101,7 +113,7 @@ export function useSubscribedTimeline(
             $: {
               where: userWhere,
             },
-            group: {},
+            group: { hashtags: {}, events: {}, amendments: {} },
           },
         }
       : null
@@ -115,11 +127,51 @@ export function useSubscribedTimeline(
             $: {
               where: userWhere,
             },
-            event: {},
+            event: {
+              hashtags: {},
+              participants: {},
+              votingSessions: { election: {}, amendment: {} },
+              targetedAmendments: {},
+              eventPositions: { election: {} },
+              scheduledElections: {},
+              agendaItems: { election: {}, amendmentVote: {} },
+            },
           },
         }
       : null
   );
+
+  const participatedEventIds = useMemo(() => {
+    if (!participationData?.eventParticipants) return [] as string[];
+    return participationData.eventParticipants.filter(p => p.event).map(p => p.event!.id);
+  }, [participationData]);
+
+  const { data: agendaItemsData } = db.useQuery(
+    participatedEventIds.length > 0
+      ? {
+          agendaItems: {
+            $: {
+              where: { 'event.id': { in: participatedEventIds } },
+            },
+            event: {},
+            election: {},
+            amendmentVote: {},
+          },
+        }
+      : null
+  );
+
+  const agendaItemsByEventId = useMemo(() => {
+    const map = new Map<string, Array<{ election?: unknown; amendmentVote?: unknown }>>();
+    for (const item of agendaItemsData?.agendaItems ?? []) {
+      const eventId = (item as any).event?.id as string | undefined;
+      if (!eventId) continue;
+      const list = map.get(eventId) ?? [];
+      list.push(item as any);
+      map.set(eventId, list);
+    }
+    return map;
+  }, [agendaItemsData]);
 
   // Get subscribed group IDs
   const subscribedGroupIds = useMemo(() => {
@@ -144,10 +196,19 @@ export function useSubscribedTimeline(
         groupId: m.group!.id,
         groupName: m.group!.name || 'Unnamed Group',
         memberCount: (m.group as Record<string, unknown>).memberCount as number | undefined,
+        eventCount: (m.group as Record<string, unknown>).events
+          ? ((m.group as Record<string, unknown>).events as unknown[]).length
+          : undefined,
+        amendmentCount: (m.group as Record<string, unknown>).amendments
+          ? ((m.group as Record<string, unknown>).amendments as unknown[]).length
+          : undefined,
         createdAt: new Date(
           ((m.group as Record<string, unknown>).createdAt as string) || Date.now()
         ),
         status: (m.group as Record<string, unknown>).status as string | undefined,
+        tags: ((m.group as Record<string, unknown>).hashtags as Array<{ tag?: string | null }>)
+          ?.map(tag => tag?.tag)
+          .filter((tag): tag is string => Boolean(tag)),
       }));
   }, [membershipData]);
 
@@ -178,10 +239,35 @@ export function useSubscribedTimeline(
           ((p.event as Record<string, unknown>).locationName as string | undefined) ||
           ((p.event as Record<string, unknown>).location as string | undefined) ||
           ((p.event as Record<string, unknown>).city as string | undefined),
+        city: (p.event as Record<string, unknown>).city as string | undefined,
+        postcode: (p.event as Record<string, unknown>).postalCode as string | undefined,
+        attendeeCount: (p.event as Record<string, unknown>).participants
+          ? ((p.event as Record<string, unknown>).participants as unknown[]).length
+          : undefined,
+        electionsCount:
+          (
+            (p.event as Record<string, unknown>).eventPositions as
+              | Array<{ election?: unknown }>
+              | undefined
+          )?.filter(position => Boolean(position?.election)).length ??
+          ((p.event as Record<string, unknown>).scheduledElections as unknown[] | undefined)
+            ?.length ??
+          agendaItemsByEventId.get(p.event!.id)?.filter(item => Boolean(item?.election)).length ??
+          (
+            (p.event as Record<string, unknown>).votingSessions as
+              | Array<{ election?: unknown }>
+              | undefined
+          )?.filter(session => Boolean(session?.election)).length,
+        amendmentsCount: (p.event as Record<string, unknown>).targetedAmendments
+          ? ((p.event as Record<string, unknown>).targetedAmendments as unknown[]).length
+          : undefined,
         createdAt: new Date(
           ((p.event as Record<string, unknown>).createdAt as string) || Date.now()
         ),
         status: (p.event as Record<string, unknown>).status as string | undefined,
+        tags: ((p.event as Record<string, unknown>).hashtags as Array<{ tag?: string | null }>)
+          ?.map(tag => tag?.tag)
+          .filter((tag): tag is string => Boolean(tag)),
       }));
   }, [participationData]);
 

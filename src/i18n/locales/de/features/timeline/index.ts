@@ -88,6 +88,7 @@ export const timelineTranslations = {
     todo: 'Aufgabe',
     blog: 'Blog',
     action: 'Aktivität',
+    user: 'Benutzer',
   },
   // Card-specific translations
   cards: {
@@ -128,6 +129,15 @@ export const timelineTranslations = {
     bookmark: 'Merken',
     bookmarked: 'Gemerkt',
     readProgress: 'Lesefortschritt',
+    message: 'Nachricht',
+    groups: 'Gruppen',
+    viewProfile: 'Profil anzeigen',
+    subscribers: 'Abonnenten',
+    comments: 'Kommentare',
+    likes: 'Likes',
+    views: 'Aufrufe',
+    interested: 'Interessiert',
+    videoUnavailable: 'Video nicht verfügbar',
     // Election card translations
     election: {
       status: {
@@ -155,6 +165,7 @@ export const timelineTranslations = {
     },
     // Action card translations
     action: {
+      actors: 'Akteure',
       userJoinedGroup: '{{actor}} ist beigetreten',
       voteStarted: 'Abstimmung gestartet für',
       eventGoingLive: 'Veranstaltung ist jetzt live',
@@ -167,6 +178,50 @@ export const timelineTranslations = {
       amendmentRejected: 'Antrag abgelehnt',
       from: 'von',
       to: 'an',
+    },
+    // Event card translations
+    event: {
+      participants: 'Teilnehmer',
+      elections: 'Wahlen',
+      amendments: 'Anträge',
+      attending: 'Teilnehmend',
+      invited: 'Eingeladen',
+      pending: 'Ausstehend',
+      leaveEvent: 'Veranstaltung verlassen',
+      acceptInvitation: 'Einladung annehmen',
+      declineInvitation: 'Einladung ablehnen',
+      withdrawRequest: 'Anfrage zurückziehen',
+      requestParticipation: 'Teilnahme anfragen',
+    },
+    // Group card translations
+    group: {
+      members: 'Mitglieder',
+      events: 'Veranstaltungen',
+      amendments: 'Anträge',
+      member: 'Mitglied',
+      invited: 'Eingeladen',
+      pending: 'Ausstehend',
+      join: 'Beitreten',
+      leaveGroup: 'Gruppe verlassen',
+      acceptInvitation: 'Einladung annehmen',
+      declineInvitation: 'Einladung ablehnen',
+      withdrawRequest: 'Anfrage zurückziehen',
+      requestMembership: 'Mitgliedschaft anfragen',
+    },
+    // Amendment card translations
+    amendment: {
+      collaborators: 'Mitarbeiter',
+      supportingGroups: 'Unterstützende Gruppen',
+      changeRequests: 'Änderungsanträge',
+      collaborator: 'Mitarbeiter',
+      invited: 'Eingeladen',
+      pending: 'Ausstehend',
+      collaborate: 'Mitarbeiten',
+      leaveCollaboration: 'Mitarbeit beenden',
+      acceptInvitation: 'Einladung annehmen',
+      declineInvitation: 'Einladung ablehnen',
+      withdrawRequest: 'Anfrage zurückziehen',
+      requestCollaboration: 'Mitarbeit anfragen',
     },
   },
   card: {

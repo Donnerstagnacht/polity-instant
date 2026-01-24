@@ -37,12 +37,6 @@ const MODE_CONFIG: Record<
     activeClass: 'bg-primary text-primary-foreground',
     hoverClass: 'hover:bg-primary/10',
   },
-  explore: {
-    icon: Telescope,
-    labelKey: 'features.timeline.modes.explore',
-    activeClass: 'bg-primary text-primary-foreground',
-    hoverClass: 'hover:bg-primary/10',
-  },
   decisions: {
     icon: Monitor,
     labelKey: 'features.timeline.modes.decisions',
@@ -52,11 +46,10 @@ const MODE_CONFIG: Record<
 };
 
 /**
- * TimelineModeToggle - Three-tab mode selector for timeline
+ * TimelineModeToggle - Two-tab mode selector for timeline
  *
  * Displays tabs for:
  * - 📌 Following: Content from subscribed entities
- * - 🔭 Explore: Discovery feed with own + public content
  * - 🖥️ Decisions: Bloomberg-style terminal for votes/elections
  *
  * Features:
@@ -74,7 +67,7 @@ export function TimelineModeToggle({
 }: TimelineModeToggleProps) {
   const { t } = useTranslation();
 
-  const modes: TimelineMode[] = ['subscribed', 'explore', 'decisions'];
+  const modes: TimelineMode[] = ['subscribed', 'decisions'];
 
   return (
     <div

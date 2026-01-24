@@ -122,6 +122,69 @@ export function useSearchFilters(data: any, filters: SearchFilters) {
     [data?.todos, query, topics]
   );
 
+  // Filter elections from direct query
+  const filteredElections = useMemo(
+    () =>
+      data?.elections?.filter((election: any) => {
+        const matchesTitle = filterByQuery(election.title || '', query);
+        const matchesDescription =
+          election.description && filterByQuery(election.description, query);
+        const matchesGroup =
+          election.position?.group?.name && filterByQuery(election.position.group.name, query);
+        const matchesPosition =
+          election.position?.title && filterByQuery(election.position.title, query);
+
+        if (!query) return true;
+        return matchesTitle || matchesDescription || matchesGroup || matchesPosition;
+      }) || [],
+    [data?.elections, query]
+  );
+
+  // Filter voting sessions (votes)
+  const filteredVotes = useMemo(
+    () =>
+      data?.eventVotingSessions?.filter((session: any) => {
+        const matchesType = session.votingType && filterByQuery(session.votingType, query);
+        const matchesPhase = session.phase && filterByQuery(session.phase, query);
+        const matchesEvent = session.event?.title && filterByQuery(session.event.title, query);
+
+        if (!query) return true;
+        return matchesType || matchesPhase || matchesEvent;
+      }) || [],
+    [data?.eventVotingSessions, query]
+  );
+
+  // Filter timeline events for video and image content
+  const filteredVideos = useMemo(
+    () =>
+      data?.timelineEvents?.filter((event: any) => {
+        if (event.contentType !== 'video') return false;
+
+        const matchesTitle = filterByQuery(event.title || '', query);
+        const matchesDescription = event.description && filterByQuery(event.description, query);
+        const matchesGroup = event.group?.name && filterByQuery(event.group.name, query);
+
+        if (!query) return true;
+        return matchesTitle || matchesDescription || matchesGroup;
+      }) || [],
+    [data?.timelineEvents, query]
+  );
+
+  const filteredImages = useMemo(
+    () =>
+      data?.timelineEvents?.filter((event: any) => {
+        if (event.contentType !== 'image') return false;
+
+        const matchesTitle = filterByQuery(event.title || '', query);
+        const matchesDescription = event.description && filterByQuery(event.description, query);
+        const matchesGroup = event.group?.name && filterByQuery(event.group.name, query);
+
+        if (!query) return true;
+        return matchesTitle || matchesDescription || matchesGroup;
+      }) || [],
+    [data?.timelineEvents, query]
+  );
+
   const allResults = useMemo(
     () => ({
       users: sortResults(filteredUsers, sortBy),
@@ -131,6 +194,10 @@ export function useSearchFilters(data: any, filters: SearchFilters) {
       blogs: sortResults(filteredBlogs, sortBy),
       amendments: sortResults(filteredAmendments, sortBy),
       events: sortResults(filteredEvents, sortBy),
+      elections: sortResults(filteredElections, sortBy),
+      votes: sortResults(filteredVotes, sortBy),
+      videos: sortResults(filteredVideos, sortBy),
+      images: sortResults(filteredImages, sortBy),
     }),
     [
       filteredUsers,
@@ -140,6 +207,10 @@ export function useSearchFilters(data: any, filters: SearchFilters) {
       filteredBlogs,
       filteredAmendments,
       filteredEvents,
+      filteredElections,
+      filteredVotes,
+      filteredVideos,
+      filteredImages,
       sortBy,
     ]
   );
@@ -151,7 +222,11 @@ export function useSearchFilters(data: any, filters: SearchFilters) {
     allResults.todos.length +
     allResults.blogs.length +
     allResults.amendments.length +
-    allResults.events.length;
+    allResults.events.length +
+    allResults.elections.length +
+    allResults.votes.length +
+    allResults.videos.length +
+    allResults.images.length;
 
   const mosaicResults = useMemo(
     () => [
@@ -162,6 +237,10 @@ export function useSearchFilters(data: any, filters: SearchFilters) {
       ...allResults.blogs.map((item: any) => ({ ...item, _type: 'blog' as const })),
       ...allResults.amendments.map((item: any) => ({ ...item, _type: 'amendment' as const })),
       ...allResults.events.map((item: any) => ({ ...item, _type: 'event' as const })),
+      ...allResults.elections.map((item: any) => ({ ...item, _type: 'election' as const })),
+      ...allResults.votes.map((item: any) => ({ ...item, _type: 'vote' as const })),
+      ...allResults.videos.map((item: any) => ({ ...item, _type: 'video' as const })),
+      ...allResults.images.map((item: any) => ({ ...item, _type: 'image' as const })),
     ],
     [allResults]
   );

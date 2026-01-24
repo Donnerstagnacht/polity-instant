@@ -30,6 +30,8 @@ export function useSearchData(
         ...cursors.users,
       },
       hashtags: {}, // Load hashtags for users
+      memberships: {},
+      collaborations: {},
     },
     groups: {
       $: cursors.groups,
@@ -39,6 +41,8 @@ export function useSearchData(
         user: {},
         role: {}, // Load role for displaying actual member role
       },
+      events: {},
+      amendments: {},
     },
     statements: {
       $: cursors.statements,
@@ -69,6 +73,8 @@ export function useSearchData(
       groupSupporters: {
         memberships: {},
       },
+      changeRequests: {},
+      groups: {},
     },
     events: {
       $: cursors.events,
@@ -78,6 +84,11 @@ export function useSearchData(
         user: {}, // Load user info to match current user
       },
       hashtags: {},
+      votingSessions: { election: {}, amendment: {} },
+      targetedAmendments: {},
+      eventPositions: { election: {} },
+      scheduledElections: {},
+      agendaItems: { election: {}, amendmentVote: {} },
     },
   });
 
@@ -152,17 +163,97 @@ export function useSearchData(
       : null
   );
 
+  // Query timelineEvents for vote, election, video, image content types
+  const { data: timelineEventsData, isLoading: timelineEventsLoading } = db.useQuery({
+    timelineEvents: {
+      $: {
+        where: {
+          contentType: { in: ['vote', 'election', 'video', 'image'] },
+        },
+        first: 50,
+      },
+      actor: {},
+      group: {},
+      event: {},
+    },
+  });
+
+  const eventIds = useMemo(
+    () => (data?.events || []).map((event: any) => event.id).filter(Boolean),
+    [data?.events]
+  );
+
+  const { data: agendaItemsData, isLoading: agendaItemsLoading } = db.useQuery(
+    eventIds.length > 0
+      ? {
+          agendaItems: {
+            $: {
+              where: { 'event.id': { in: eventIds } },
+            },
+            event: {},
+            election: {},
+            amendmentVote: {},
+          },
+        }
+      : null
+  );
+
+  // Query elections directly for better search results
+  const { data: electionsData, isLoading: electionsLoading } = db.useQuery({
+    elections: {
+      $: {
+        first: 20,
+      },
+      position: {
+        group: {},
+      },
+      candidates: {},
+    },
+  });
+
+  // Query eventVotingSessions for votes
+  const { data: votingSessionsData, isLoading: votingSessionsLoading } = db.useQuery({
+    eventVotingSessions: {
+      $: {
+        first: 20,
+      },
+      event: {},
+      votes: {
+        voter: {},
+      },
+    },
+  });
+
   const combinedData = useMemo(
     () => ({
       ...data,
       todos: todosData?.todos || [],
+      timelineEvents: timelineEventsData?.timelineEvents || [],
+      elections: electionsData?.elections || [],
+      eventVotingSessions: votingSessionsData?.eventVotingSessions || [],
+      agendaItems: agendaItemsData?.agendaItems || [],
     }),
-    [data, todosData?.todos]
+    [
+      data,
+      todosData?.todos,
+      timelineEventsData?.timelineEvents,
+      electionsData?.elections,
+      votingSessionsData?.eventVotingSessions,
+      agendaItemsData?.agendaItems,
+    ]
   );
 
   return {
     data: combinedData,
-    isLoading: isLoading || membershipsLoading || assignmentsLoading || todosLoading,
+    isLoading:
+      isLoading ||
+      membershipsLoading ||
+      assignmentsLoading ||
+      todosLoading ||
+      timelineEventsLoading ||
+      electionsLoading ||
+      votingSessionsLoading ||
+      agendaItemsLoading,
     currentUserId: user?.id,
     pageInfo,
   };

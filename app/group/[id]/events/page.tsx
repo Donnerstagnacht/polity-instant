@@ -9,12 +9,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useGroupData } from '@/features/groups/hooks/useGroupData';
 import db from '../../../../db/db';
-import { Calendar, MapPin, Users, Search as SearchIcon, Filter, Hash } from 'lucide-react';
+import { Calendar, Search as SearchIcon, Filter, Hash } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { useNavigation } from '@/navigation/state/useNavigation';
-import { EventSearchCard } from '@/features/search/ui/EventSearchCard';
+import { EventTimelineCard } from '@/features/timeline/ui/cards/EventTimelineCard';
 import { useTranslation } from '@/hooks/use-translation';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
@@ -134,22 +134,6 @@ export default function GroupEventsPage({ params }: { params: Promise<{ id: stri
     const dateB = new Date(b.startDate).getTime();
     return dateA - dateB;
   });
-
-  const formatEventDate = (date: string | number) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
-
-  const formatEventTime = (date: string | number) => {
-    return new Date(date).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-    });
-  };
 
   if (isLoading) {
     return (
@@ -279,7 +263,23 @@ export default function GroupEventsPage({ params }: { params: Promise<{ id: stri
           <>
             <div className="grid gap-4 md:grid-cols-2">
               {sortedEvents.map((event: any) => (
-                <EventSearchCard key={event.id} event={event} showParticipationButton={true} />
+                <EventTimelineCard
+                  key={event.id}
+                  event={{
+                    id: String(event.id),
+                    title: event.title,
+                    description: event.description,
+                    startDate: event.startDate,
+                    endDate: event.endDate,
+                    location: event.location,
+                    city: event.city,
+                    postcode: event.postcode,
+                    attendeeCount: event.participants?.length || 0,
+                    organizerName: group.name,
+                    groupId: group.id,
+                    hashtags: event.hashtags,
+                  }}
+                />
               ))}
             </div>
             {hasMoreEvents && <div ref={loadMoreRef} className="mt-6 h-px" />}

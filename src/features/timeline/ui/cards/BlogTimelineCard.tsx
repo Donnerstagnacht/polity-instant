@@ -1,17 +1,20 @@
 'use client';
 
-import { BookOpen, Clock, Bookmark, Share2, ExternalLink, User } from 'lucide-react';
-import Link from 'next/link';
+import { BookOpen, Clock, User, Bell, Users, MessageSquare } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
 import { cn } from '@/utils/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
-import { getContentTypeGradient } from '../../constants/content-type-config';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { HashtagDisplay } from '@/components/ui/hashtag-display';
+import { ShareButton } from '@/components/shared/ShareButton';
+import { useSubscribeBlog } from '@/features/blogs/hooks/useSubscribeBlog';
+import { Button } from '@/components/ui/button';
+import { CONTENT_TYPE_CONFIG, getContentTypeGradient } from '../../constants/content-type-config';
 import {
   TimelineCardBase,
   TimelineCardContent,
   TimelineCardActions,
-  TimelineCardActionButton,
   TimelineCardBadge,
 } from './TimelineCardBase';
 
@@ -25,10 +28,10 @@ export interface BlogTimelineCardProps {
     authorName?: string;
     authorAvatar?: string;
     publishedAt?: string | Date;
-    isBookmarked?: boolean;
     readProgress?: number; // 0-100, how much user has read
+    commentCount?: number;
+    hashtags?: { id: string; tag: string }[];
   };
-  onBookmark?: () => void;
   onShare?: () => void;
   className?: string;
 }
@@ -45,6 +48,7 @@ function formatReadingTime(minutes: number): string {
  * BlogTimelineCard - The Long Read card
  *
  * Displays a blog post with:
+ * - Clickable card that navigates to blog page
  * - Featured/cover image (if available)
  * - Teal-green gradient header (if no cover image)
  * - Title (large)
@@ -52,14 +56,33 @@ function formatReadingTime(minutes: number): string {
  * - Author info
  * - Reading time
  * - Reading progress (if user has started)
- * - Actions: Read More, Bookmark, Share
+ * - Actions: Subscribe, Share
  */
-export function BlogTimelineCard({ blog, onBookmark, onShare, className }: BlogTimelineCardProps) {
+export function BlogTimelineCard({ blog, className }: BlogTimelineCardProps) {
   const { t } = useTranslation();
   const gradient = getContentTypeGradient('blog');
+  const subscription = useSubscribeBlog(blog.id);
+  const blogStyle = CONTENT_TYPE_CONFIG.blog;
+
+  const stats = [
+    {
+      icon: Users,
+      value: subscription.subscriberCount ?? 0,
+      label: t('features.timeline.cards.subscribers'),
+    },
+    ...(blog.commentCount !== undefined
+      ? [
+          {
+            icon: MessageSquare,
+            value: blog.commentCount,
+            label: t('features.timeline.cards.comments'),
+          },
+        ]
+      : []),
+  ];
 
   return (
-    <TimelineCardBase contentType="blog" className={className}>
+    <TimelineCardBase contentType="blog" className={className} href={`/blog/${blog.id}`}>
       {/* Cover Image or Gradient Header */}
       {blog.coverImageUrl ? (
         <div className="relative aspect-video">
@@ -99,6 +122,17 @@ export function BlogTimelineCard({ blog, onBookmark, onShare, className }: BlogT
           <p className="mb-3 line-clamp-3 text-sm text-muted-foreground">{blog.excerpt}</p>
         )}
 
+        {/* Hashtags */}
+        {blog.hashtags && blog.hashtags.length > 0 && (
+          <div className="mb-3" onClick={e => e.preventDefault()}>
+            <HashtagDisplay
+              hashtags={blog.hashtags.slice(0, 3)}
+              centered={false}
+              badgeClassName={`border bg-white/70 dark:bg-gray-900/60 ${blogStyle.borderColor} ${blogStyle.accentColor}`}
+            />
+          </div>
+        )}
+
         {/* Author Info */}
         <div className="mb-2 flex items-center gap-2">
           <Avatar className="h-6 w-6">
@@ -132,32 +166,52 @@ export function BlogTimelineCard({ blog, onBookmark, onShare, className }: BlogT
             <Progress value={blog.readProgress} className="h-1" />
           </div>
         )}
+
+        {/* Stats Bar with Tooltips */}
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          {stats.map((stat, index) => (
+            <Tooltip key={index}>
+              <TooltipTrigger asChild>
+                <div className="flex cursor-help items-center gap-1">
+                  <stat.icon className="h-3.5 w-3.5" />
+                  <span className="font-medium">{stat.value}</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  {stat.value} {stat.label}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          ))}
+        </div>
       </TimelineCardContent>
 
       <TimelineCardActions>
-        <Link href={`/blog/${blog.id}`}>
-          <TimelineCardActionButton
-            icon={ExternalLink}
-            label={t('features.timeline.cards.readMore')}
-            variant="default"
+        {/* Subscribe Button */}
+        <Button
+          variant={subscription.isSubscribed ? 'outline' : 'ghost'}
+          size="sm"
+          onClick={e => {
+            e.preventDefault();
+            subscription.toggleSubscribe();
+          }}
+          disabled={subscription.isLoading}
+          className="flex items-center gap-1.5"
+        >
+          <Bell className={`h-3.5 w-3.5 ${subscription.isSubscribed ? 'fill-current' : ''}`} />
+        </Button>
+
+        {/* Share Button */}
+        <div onClick={e => e.preventDefault()}>
+          <ShareButton
+            url={`/blog/${blog.id}`}
+            title={blog.title}
+            description={blog.excerpt || ''}
+            variant="outline"
+            size="sm"
           />
-        </Link>
-        <TimelineCardActionButton
-          icon={Bookmark}
-          label={
-            blog.isBookmarked
-              ? t('features.timeline.cards.bookmarked')
-              : t('features.timeline.cards.bookmark')
-          }
-          onClick={onBookmark}
-          variant={blog.isBookmarked ? 'secondary' : 'outline'}
-          className={cn(blog.isBookmarked && '[&>svg]:fill-current')}
-        />
-        <TimelineCardActionButton
-          icon={Share2}
-          label={t('features.timeline.cards.share')}
-          onClick={onShare}
-        />
+        </div>
       </TimelineCardActions>
     </TimelineCardBase>
   );

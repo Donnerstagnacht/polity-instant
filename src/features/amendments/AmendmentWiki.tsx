@@ -25,7 +25,7 @@ import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ShareButton } from '@/components/shared/ShareButton';
 import { useAuthStore } from '@/features/auth';
-import { GroupsCard } from '@/features/user/ui/GroupsCard';
+import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
 import { SupporterStatusBadge } from '@/features/amendments/ui/SupporterStatusBadge';
 import { GRADIENTS } from '@/features/user/state/gradientColors';
 import { findShortestPath } from '@/utils/path-finding';
@@ -843,16 +843,14 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
                         href={`/group/${group.id}`}
                         className="block transition-opacity hover:opacity-90"
                       >
-                        <GroupsCard
+                        <GroupTimelineCard
                           group={{
-                            id: group.id,
-                            groupId: group.id,
-                            name: group.name || 'Unknown Group',
+                            id: String(group.id),
+                            name: group.name || t('common.unknown'),
                             description: group.description,
-                            role: 'Supporter',
-                            members: group.memberships?.length || 0,
+                            memberCount: group.memberships?.length || 0,
+                            hashtags: group.hashtags,
                           }}
-                          gradientClass={GRADIENTS[index % GRADIENTS.length]}
                         />
                       </Link>
                       <div className="absolute right-2 top-2">

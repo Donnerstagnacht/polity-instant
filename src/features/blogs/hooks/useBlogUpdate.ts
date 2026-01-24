@@ -89,18 +89,22 @@ export function useBlogUpdate(blogId: string, actorId?: string) {
 
       const transactions: any[] = [db.tx.blogs[blogId].update(updateData)];
 
-      // Add timeline event for public blogs
+      // Add timeline event for public blogs when image is uploaded
       if (formData.isPublic && actorId) {
-        transactions.push(
-          createTimelineEvent({
-            eventType: 'updated',
-            entityType: 'blog',
-            entityId: blogId,
-            actorId,
-            title: `${formData.title} has been updated`,
-            description: 'The blog post has been modified',
-          })
-        );
+        // Check if image was uploaded/changed
+        if (formData.imageURL && formData.imageURL !== blog.imageURL) {
+          transactions.push(
+            createTimelineEvent({
+              eventType: 'image_uploaded',
+              entityType: 'blog',
+              entityId: blogId,
+              actorId,
+              title: `${formData.title} image updated`,
+              description: 'A new image was uploaded to this blog post',
+              contentType: 'image',
+            })
+          );
+        }
       }
 
       // Update blog
@@ -109,9 +113,7 @@ export function useBlogUpdate(blogId: string, actorId?: string) {
       // Handle hashtags - remove old and add new
       if (blog.hashtags) {
         const existingTags = blog.hashtags.map((ht: any) => ht.tag);
-        const tagsToRemove = blog.hashtags.filter(
-          (ht: any) => !formData.tags.includes(ht.tag)
-        );
+        const tagsToRemove = blog.hashtags.filter((ht: any) => !formData.tags.includes(ht.tag));
         const tagsToAdd = formData.tags.filter(tag => !existingTags.includes(tag));
 
         const transactions: any[] = [];

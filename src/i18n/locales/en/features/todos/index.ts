@@ -102,6 +102,7 @@ export const todosTranslations = {
     unassigned: 'Unassigned',
     assignTo: 'Assign to',
     assignToMe: 'Assign to me',
+    assignedToMe: 'Assigned to me',
     noUsersAssigned: 'No users assigned',
     addAssignee: 'Add Assignee',
     searchMembers: 'Search members...',

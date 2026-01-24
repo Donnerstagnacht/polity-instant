@@ -3,9 +3,10 @@ import { Button } from '@/components/ui/button';
 import { CardHeader } from '@/components/ui/card';
 import { ArrowLeft, Pin, PinOff, Trash2 } from 'lucide-react';
 import { Conversation } from '../types';
-import { getConversationDisplay } from '../utils';
+import { getConversationDisplay, getOtherParticipant } from '../utils';
 import { ARIA_KAI_USER_ID } from '../../../../e2e/aria-kai';
 import { useTranslation } from '@/hooks/use-translation';
+import Link from 'next/link';
 
 interface ConversationHeaderProps {
   conversation: Conversation;
@@ -26,39 +27,44 @@ export function ConversationHeader({
 }: ConversationHeaderProps) {
   const { t } = useTranslation();
   const display = getConversationDisplay(conversation, currentUserId);
+  const otherParticipant = getOtherParticipant(conversation, currentUserId);
+  const userHref = !display.isGroup && otherParticipant?.id ? `/user/${otherParticipant.id}` : null;
+
+  const identityContent = (
+    <>
+      <Avatar className="h-10 w-10">
+        <AvatarImage src={display.avatar || undefined} />
+        <AvatarFallback>{display.name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+      </Avatar>
+      <div className="ml-3">
+        <h3 className="font-semibold">{display.name}</h3>
+        {display.isGroup ? (
+          <button
+            onClick={onMembersClick}
+            className="text-sm text-muted-foreground transition-colors hover:text-foreground hover:underline"
+          >
+            {t('features.messages.conversation.members', { count: display.participantCount })}
+          </button>
+        ) : (
+          display.handle && <p className="text-sm text-muted-foreground">@{display.handle}</p>
+        )}
+      </div>
+    </>
+  );
 
   return (
     <CardHeader className="flex-shrink-0 flex-row items-center justify-between space-y-0 border-b">
       <div className="flex items-center">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="mr-2 md:hidden"
-          onClick={onBack}
-        >
+        <Button variant="ghost" size="icon" className="mr-2 md:hidden" onClick={onBack}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <Avatar className="h-10 w-10">
-          <AvatarImage src={display.avatar || undefined} />
-          <AvatarFallback>
-            {display.name?.[0]?.toUpperCase() || 'U'}
-          </AvatarFallback>
-        </Avatar>
-        <div className="ml-3">
-          <h3 className="font-semibold">{display.name}</h3>
-          {display.isGroup ? (
-            <button
-              onClick={onMembersClick}
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground hover:underline"
-            >
-              {t('features.messages.conversation.members', { count: display.participantCount })}
-            </button>
-          ) : (
-            display.handle && (
-              <p className="text-sm text-muted-foreground">@{display.handle}</p>
-            )
-          )}
-        </div>
+        {userHref ? (
+          <Link href={userHref} className="flex items-center">
+            {identityContent}
+          </Link>
+        ) : (
+          <div className="flex items-center">{identityContent}</div>
+        )}
       </div>
 
       {/* Action Bar */}
@@ -68,15 +74,10 @@ export function ConversationHeader({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() =>
-              onTogglePin(
-                conversation.id,
-                conversation.pinned || false
-              )
-            }
+            onClick={() => onTogglePin(conversation.id, conversation.pinned || false)}
             title={
-              conversation.pinned 
-                ? t('features.messages.conversation.unpin') 
+              conversation.pinned
+                ? t('features.messages.conversation.unpin')
                 : t('features.messages.conversation.pin')
             }
           >
@@ -89,9 +90,7 @@ export function ConversationHeader({
         )}
         {/* Show delete for direct messages, not group chats or Aria & Kai conversation */}
         {conversation.type !== 'group' &&
-          !conversation.participants.some(
-            (p) => p.user?.id === ARIA_KAI_USER_ID
-          ) && (
+          !conversation.participants.some(p => p.user?.id === ARIA_KAI_USER_ID) && (
             <Button
               variant="ghost"
               size="icon"

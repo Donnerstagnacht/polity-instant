@@ -1,15 +1,11 @@
 'use client';
 
-import { Image as ImageIcon, Heart, MessageSquare, Share2, MapPin, User } from 'lucide-react';
+import { Image as ImageIcon, MapPin, User, Heart, MessageSquare } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
-import { cn } from '@/utils/utils';
 import { Badge } from '@/components/ui/badge';
-import {
-  TimelineCardBase,
-  TimelineCardContent,
-  TimelineCardActions,
-  TimelineCardActionButton,
-} from './TimelineCardBase';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { ShareButton } from '@/components/shared/ShareButton';
+import { TimelineCardBase, TimelineCardContent, TimelineCardActions } from './TimelineCardBase';
 
 export interface ImageTimelineCardProps {
   image: {
@@ -21,8 +17,9 @@ export interface ImageTimelineCardProps {
     comments?: number;
     authorName?: string;
     authorAvatar?: string;
-    sourceType?: 'user' | 'group' | 'event';
+    sourceType?: 'user' | 'group' | 'event' | 'amendment' | 'blog';
     sourceName?: string;
+    sourceId?: string;
     isLiked?: boolean;
   };
   onLike?: () => void;
@@ -49,6 +46,8 @@ const SOURCE_LABELS: Record<string, string> = {
   user: 'User Photo',
   group: 'Group Photo',
   event: 'Event Photo',
+  amendment: 'Amendment Image',
+  blog: 'Blog Image',
 };
 
 /**
@@ -62,18 +61,13 @@ const SOURCE_LABELS: Record<string, string> = {
  * - Like and comment counts
  * - Actions: Like, Comment, Share
  */
-export function ImageTimelineCard({
-  image,
-  onLike,
-  onComment,
-  onShare,
-  onImageClick,
-  className,
-}: ImageTimelineCardProps) {
+export function ImageTimelineCard({ image, onImageClick, className }: ImageTimelineCardProps) {
   const { t } = useTranslation();
+  const sourceHref =
+    image.sourceType && image.sourceId ? `/${image.sourceType}/${image.sourceId}` : undefined;
 
   return (
-    <TimelineCardBase contentType="image" className={className}>
+    <TimelineCardBase contentType="image" className={className} href={sourceHref}>
       {/* Image Container */}
       <div className="group relative cursor-pointer" onClick={onImageClick}>
         <img
@@ -132,26 +126,52 @@ export function ImageTimelineCard({
             </span>
           </div>
         )}
+
+        {/* Stats Bar with Tooltips */}
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          {image.likes !== undefined && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="flex cursor-help items-center gap-1">
+                  <Heart className="h-3.5 w-3.5" />
+                  {formatCount(image.likes)}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  {image.likes} {t('features.timeline.cards.likes')}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {image.comments !== undefined && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="flex cursor-help items-center gap-1">
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  {formatCount(image.comments)}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  {image.comments} {t('features.timeline.cards.comments')}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
       </TimelineCardContent>
 
       <TimelineCardActions>
-        <TimelineCardActionButton
-          icon={Heart}
-          label={`${image.likes !== undefined ? formatCount(image.likes) : ''}`}
-          onClick={onLike}
-          variant={image.isLiked ? 'secondary' : 'outline'}
-          className={cn(image.isLiked && '[&>svg]:fill-red-500 [&>svg]:text-red-500')}
-        />
-        <TimelineCardActionButton
-          icon={MessageSquare}
-          label={`${image.comments !== undefined ? formatCount(image.comments) : ''}`}
-          onClick={onComment}
-        />
-        <TimelineCardActionButton
-          icon={Share2}
-          label={t('features.timeline.cards.share')}
-          onClick={onShare}
-        />
+        <div onClick={e => e.preventDefault()}>
+          <ShareButton
+            url={sourceHref || `/image/${image.id}`}
+            title={image.caption || t('features.timeline.contentTypes.image')}
+            description={image.location || ''}
+            variant="outline"
+            size="sm"
+          />
+        </div>
       </TimelineCardActions>
     </TimelineCardBase>
   );

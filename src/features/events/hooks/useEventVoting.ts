@@ -16,6 +16,7 @@ import {
 } from '@/utils/notification-helpers';
 import { toast } from 'sonner';
 import { handleAmendmentVoteResult } from '@/features/amendments/utils/voting-results';
+import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 
 export type VotingPhase = 'introduction' | 'voting' | 'completed';
 export type VotingType = 'amendment' | 'election' | 'change_request';
@@ -375,6 +376,22 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
           });
           transactions.push(...notificationTxs);
         }
+
+        // Add timeline event for vote closing
+        transactions.push(
+          createTimelineEvent({
+            eventType: 'vote_closed',
+            entityType: 'event',
+            entityId: eventId,
+            actorId: user.id,
+            title: agendaItemTitle,
+            description: event?.title || undefined,
+            contentType: 'vote',
+            status: {
+              voteStatus: result,
+            },
+          })
+        );
 
         await db.transact(transactions);
 

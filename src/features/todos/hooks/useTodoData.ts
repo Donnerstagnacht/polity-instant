@@ -6,6 +6,7 @@ import {
   notifyTodoCompleted,
   notifyStandaloneTodoDeleted,
 } from '@/utils/notification-helpers';
+import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 
 /**
  * Hook to query todo data
@@ -116,6 +117,7 @@ export function useTodoMutations() {
     eventId?: string;
     amendmentId?: string;
     senderId?: string;
+    visibility?: 'public' | 'authenticated' | 'private';
   }) => {
     setIsLoading(true);
     try {
@@ -126,6 +128,7 @@ export function useTodoMutations() {
         status: todoData.status || 'open',
         priority: todoData.priority || 'medium',
         dueDate: todoData.dueDate,
+        visibility: todoData.visibility || 'private',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
@@ -138,12 +141,22 @@ export function useTodoMutations() {
 
       const transactions: any[] = [todoTx];
 
+      // Add timeline event for public todos
+      if (todoData.visibility === 'public') {
+        transactions.push(
+          createTimelineEvent({
+            eventType: 'todo_created',
+            entityType: 'todo',
+            entityId: todoId,
+            actorId: todoData.ownerId,
+            title: `New task: ${todoData.title}`,
+            description: todoData.description?.substring(0, 100) || undefined,
+          })
+        );
+      }
+
       // Notify assignee if they're different from the owner
-      if (
-        todoData.senderId &&
-        todoData.assigneeId &&
-        todoData.assigneeId !== todoData.senderId
-      ) {
+      if (todoData.senderId && todoData.assigneeId && todoData.assigneeId !== todoData.senderId) {
         const notificationTxs = notifyStandaloneTodoAssigned({
           senderId: todoData.senderId,
           recipientUserId: todoData.assigneeId,
@@ -176,6 +189,7 @@ export function useTodoMutations() {
       senderName?: string;
       creatorId?: string;
       todoTitle?: string;
+      visibility?: 'public' | 'authenticated' | 'private';
     }
   ) => {
     setIsLoading(true);
@@ -186,6 +200,20 @@ export function useTodoMutations() {
           updatedAt: new Date().toISOString(),
         }),
       ];
+
+      // Add timeline event for todo completion (if public)
+      if (updates.status === 'completed' && options?.visibility === 'public' && options?.senderId) {
+        transactions.push(
+          createTimelineEvent({
+            eventType: 'status_changed',
+            entityType: 'todo',
+            entityId: todoId,
+            actorId: options.senderId,
+            title: `Task completed: ${options.todoTitle || 'Task'}`,
+            description: 'A task has been marked as completed',
+          })
+        );
+      }
 
       // Notify creator when todo is completed by someone else
       if (

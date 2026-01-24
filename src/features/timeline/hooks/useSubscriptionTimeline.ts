@@ -29,7 +29,7 @@ export function useSubscriptionTimeline() {
               where: subscriptionsWhere,
             },
             user: {},
-            group: {},
+            group: { hashtags: {}, events: {}, amendments: {} },
             amendment: {},
             event: { organizer: {} },
             blog: {}, // Blogs don't have a direct user link - they use blogBloggers junction table
@@ -37,6 +37,13 @@ export function useSubscriptionTimeline() {
         }
       : null
   );
+
+  const subscribedEventIds = useMemo(() => {
+    if (!subscriptionsData?.subscribers) return [] as string[];
+    return subscriptionsData.subscribers
+      .filter((sub): sub is typeof sub & { event: NonNullable<typeof sub.event> } => !!sub.event)
+      .map(sub => sub.event.id);
+  }, [subscriptionsData]);
 
   // Get all entity IDs we're subscribed to
   const subscribedEntityIds = useMemo(() => {
@@ -99,16 +106,72 @@ export function useSubscriptionTimeline() {
               where: whereClause,
             },
             actor: {},
-            user: {},
+            user: { hashtags: {}, memberships: {}, collaborations: {} },
             group: {},
-            amendment: { document: {} },
-            event: { organizer: {} },
-            blog: {}, // Blogs don't have a direct user link - they use blogBloggers junction table
+            amendment: {
+              document: {},
+              hashtags: {},
+              amendmentRoleCollaborators: {},
+              groupSupporters: {},
+              changeRequests: {},
+            },
+            event: {
+              organizer: {},
+              hashtags: {},
+              participants: {},
+              votingSessions: { election: {}, amendment: {} },
+              targetedAmendments: {},
+              eventPositions: { election: {} },
+              scheduledElections: {},
+              agendaItems: { election: {}, amendmentVote: {} },
+            },
+            blog: { hashtags: {}, comments: {} }, // Blogs don't have a direct user link - they use blogBloggers junction table
             todo: { group: {}, creator: {} },
+            statement: { user: {} },
           },
         }
       : null
   );
+
+  const timelineEventIds = useMemo(() => {
+    if (!timelineData?.timelineEvents) return [] as string[];
+    const ids = timelineData.timelineEvents
+      .map((event: any) => event?.event?.id)
+      .filter((id: string | undefined): id is string => Boolean(id));
+    return Array.from(new Set(ids));
+  }, [timelineData?.timelineEvents]);
+
+  const agendaEventIds = useMemo(
+    () => Array.from(new Set([...subscribedEventIds, ...timelineEventIds])),
+    [subscribedEventIds, timelineEventIds]
+  );
+
+  const { data: agendaItemsData, isLoading: agendaItemsLoading } = db.useQuery(
+    agendaEventIds.length > 0
+      ? {
+          agendaItems: {
+            $: {
+              where: { 'event.id': { in: agendaEventIds } },
+            },
+            event: {},
+            election: {},
+            amendmentVote: {},
+          },
+        }
+      : null
+  );
+
+  const agendaItemsByEventId = useMemo(() => {
+    const map = new Map<string, Array<{ election?: unknown; amendmentVote?: unknown }>>();
+    for (const item of agendaItemsData?.agendaItems ?? []) {
+      const eventId = (item as any).event?.id as string | undefined;
+      if (!eventId) continue;
+      const list = map.get(eventId) ?? [];
+      list.push(item as any);
+      map.set(eventId, list);
+    }
+    return map;
+  }, [agendaItemsData]);
 
   // Sort timeline events by date (most recent first)
   const sortedEvents = useMemo(() => {
@@ -121,7 +184,8 @@ export function useSubscriptionTimeline() {
 
   return {
     events: sortedEvents,
-    isLoading: shouldQuery ? subscriptionsLoading || timelineLoading : false,
+    isLoading: shouldQuery ? subscriptionsLoading || timelineLoading || agendaItemsLoading : false,
     subscribedEntityIds,
+    agendaItemsByEventId,
   };
 }

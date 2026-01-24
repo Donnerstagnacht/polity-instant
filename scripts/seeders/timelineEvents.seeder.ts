@@ -84,6 +84,7 @@ export const timelineEventsSeeder: EntitySeeder = {
     const amendmentIds = context.amendmentIds || [];
     const blogIds = context.blogIds || [];
     const todoIds = context.todoIds || [];
+    const statementIds = context.statementIds || [];
 
     const mainUserId = SEED_CONFIG.tobiasUserId;
 
@@ -136,6 +137,7 @@ export const timelineEventsSeeder: EntitySeeder = {
     let timelineEventsToBlogs = 0;
     let timelineEventsToGroups = 0;
     let timelineEventsToUsers = 0;
+    let timelineEventsToStatements = 0;
 
     // Helper to generate random stats
     const generateStats = () => ({
@@ -419,10 +421,42 @@ export const timelineEventsSeeder: EntitySeeder = {
     }
 
     // 3. Statements
-    for (let i = 0; i < 6; i++) {
+    let statementsForTimeline: Array<{
+      id: string;
+      user?: { id: string };
+      tag?: string;
+      text?: string;
+    }> = [];
+
+    if (statementIds.length > 0) {
+      const statementsData = await db.query({
+        statements: {
+          $: {
+            where: {
+              id: { in: statementIds },
+            },
+          },
+          user: {},
+        },
+      });
+
+      statementsForTimeline = (statementsData?.statements || []).map((statement: any) => ({
+        id: statement.id,
+        user: statement.user ? { id: statement.user.id } : undefined,
+        tag: statement.tag,
+        text: statement.text,
+      }));
+    }
+
+    if (statementsForTimeline.length === 0 && statementIds.length > 0) {
+      statementsForTimeline = statementIds.slice(0, 6).map(id => ({ id }));
+    }
+
+    for (let i = 0; i < Math.min(6, statementsForTimeline.length); i++) {
       const timelineEventId = id();
       timelineEventIds.push(timelineEventId);
-      const actorId = pickFrom(subscribedUserIds, userIds);
+      const statement = statementsForTimeline[i];
+      const actorId = statement.user?.id || pickFrom(subscribedUserIds, userIds);
 
       if (!actorId) {
         continue;
@@ -435,17 +469,24 @@ export const timelineEventsSeeder: EntitySeeder = {
             entityType: 'user',
             entityId: actorId,
             title: 'Statement',
-            description: faker.lorem.paragraph(3),
+            description: statement.text || faker.lorem.paragraph(3),
             contentType: 'statement',
-            tags: getRandomTags(),
+            tags: statement.tag ? [statement.tag, ...getRandomTags()] : getRandomTags(),
             stats: generateStats(),
             createdAt: faker.date.recent({ days: randomInt(1, 14) }),
           })
-          .link({ actor: actorId, user: actorId })
+          .link({
+            actor: actorId,
+            user: actorId,
+            ...(statement.id ? { statement: statement.id } : {}),
+          })
       );
       eventsCreated++;
       timelineEventsToActors++;
       timelineEventsToUsers++;
+      if (statement.id) {
+        timelineEventsToStatements++;
+      }
     }
 
     // 4. Vote events (open and closed)
@@ -640,6 +681,7 @@ export const timelineEventsSeeder: EntitySeeder = {
         timelineEventsToBlogs,
         timelineEventsToGroups,
         timelineEventsToUsers,
+        timelineEventsToStatements,
       },
     };
   },

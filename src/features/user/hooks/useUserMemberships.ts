@@ -19,6 +19,7 @@ import {
   notifyBlogRequestWithdrawn,
   notifyBlogWriterLeft,
 } from '@/utils/notification-helpers';
+import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 
 /**
  * Hook to query and manage user memberships, participations, and collaborations
@@ -194,14 +195,31 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const acceptGroupInvitation = async (membershipId: string) => {
     try {
-      await db.transact([
+      const membership = memberships.find((m: any) => m.id === membershipId);
+
+      const transactions: any[] = [
         tx.groupMemberships[membershipId].update({
           status: 'member',
         }),
-      ]);
+      ];
+
+      // Add timeline event for member joining (if group is public)
+      if (membership?.group && userId) {
+        transactions.push(
+          createTimelineEvent({
+            eventType: 'member_added',
+            entityType: 'group',
+            entityId: membership.group.id,
+            actorId: userId,
+            title: `${userName || 'New member'} joined ${membership.group.name || 'the group'}`,
+            description: 'A new member has joined the group',
+          })
+        );
+      }
+
+      await db.transact(transactions);
 
       // Notify the group (entity notification)
-      const membership = memberships.find((m: any) => m.id === membershipId);
       if (membership?.group && userId && userName) {
         await notifyGroupInvitationAccepted({
           senderId: userId,
@@ -372,14 +390,31 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const acceptCollaborationInvitation = async (collaborationId: string) => {
     try {
-      await db.transact([
+      const collaboration = collaborations.find((c: any) => c.id === collaborationId);
+      const transactions: any[] = [
         tx.amendmentCollaborators[collaborationId].update({
           status: 'member',
         }),
-      ]);
+      ];
+
+      // Add timeline event for public amendments
+      if (collaboration?.amendment && collaboration.amendment.visibility === 'public' && userId) {
+        transactions.push(
+          createTimelineEvent({
+            eventType: 'member_added',
+            entityType: 'amendment',
+            entityId: collaboration.amendment.id,
+            actorId: userId,
+            title: userName || 'User',
+            description: collaboration.amendment.title || 'Amendment',
+            contentType: 'amendment',
+          })
+        );
+      }
+
+      await db.transact(transactions);
 
       // Notify the amendment (entity notification)
-      const collaboration = collaborations.find((c: any) => c.id === collaborationId);
       if (collaboration?.amendment && userId && userName) {
         await notifyCollaborationInvitationAccepted({
           senderId: userId,

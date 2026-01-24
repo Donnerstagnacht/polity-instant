@@ -3,12 +3,6 @@ export { MasonryGrid, MasonryGridEmpty } from './ui/MasonryGrid';
 export { TimelineModeToggle } from './ui/TimelineModeToggle';
 export { TimelineHeader } from './ui/TimelineHeader';
 export { TimelineFilterPanel } from './ui/TimelineFilterPanel';
-export {
-  ExploreSectionHeader,
-  ExploreSectionDivider,
-  type ExploreSectionType,
-} from './ui/ExploreSectionHeader';
-export { ExploreEmptyState, ExploreEmptyStateCompact } from './ui/ExploreEmptyState';
 
 // Lazy Card Components (Code Splitting)
 export {
@@ -46,12 +40,6 @@ export {
   type UseSubscribedTimelineOptions,
   type UseSubscribedTimelineResult,
 } from './hooks/useSubscribedTimeline';
-export {
-  useExploreTimeline,
-  type ExploreItem,
-  type UseExploreTimelineOptions,
-  type UseExploreTimelineResult,
-} from './hooks/useExploreTimeline';
 export {
   useDecisionFlash,
   getFlashClasses,

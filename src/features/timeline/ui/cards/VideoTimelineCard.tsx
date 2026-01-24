@@ -1,9 +1,12 @@
 'use client';
 
-import { Video, Play, Heart, Share2, Eye, User } from 'lucide-react';
+import { useState } from 'react';
+import { Video, Play, Eye, User } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
-import { cn } from '@/utils/utils';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { ShareButton } from '@/components/shared/ShareButton';
 import {
   TimelineCardBase,
   TimelineCardContent,
@@ -21,9 +24,11 @@ export interface VideoTimelineCardProps {
     likes?: number;
     authorName?: string;
     authorAvatar?: string;
-    sourceType?: 'amendment' | 'user' | 'group' | 'event';
+    sourceType?: 'amendment' | 'user' | 'group' | 'event' | 'blog';
     sourceName?: string;
     sourceId?: string;
+    videoUrl?: string;
+    amendmentId?: string;
     isLiked?: boolean;
   };
   onPlay?: () => void;
@@ -81,19 +86,29 @@ const SOURCE_LABELS: Record<string, string> = {
  * - View and like counts
  * - Actions: Play, Like, Share
  */
-export function VideoTimelineCard({
-  video,
-  onPlay,
-  onLike,
-  onShare,
-  className,
-}: VideoTimelineCardProps) {
+export function VideoTimelineCard({ video, onPlay, className }: VideoTimelineCardProps) {
   const { t } = useTranslation();
+  const [playerOpen, setPlayerOpen] = useState(false);
+
+  const sourceHref =
+    video.sourceType && video.sourceId ? `/${video.sourceType}/${video.sourceId}` : undefined;
+  const amendmentHref = video.amendmentId
+    ? `/amendment/${video.amendmentId}`
+    : video.sourceType === 'amendment' && video.sourceId
+      ? `/amendment/${video.sourceId}`
+      : sourceHref;
 
   return (
-    <TimelineCardBase contentType="video" className={className}>
+    <TimelineCardBase contentType="video" className={className} href={amendmentHref}>
       {/* Video Thumbnail */}
-      <div className="group relative aspect-video cursor-pointer bg-muted" onClick={onPlay}>
+      <div
+        className="group relative aspect-video cursor-pointer bg-muted"
+        onClick={e => {
+          e.preventDefault();
+          setPlayerOpen(true);
+          onPlay?.();
+        }}
+      >
         {video.thumbnailUrl ? (
           <img
             src={video.thumbnailUrl}
@@ -163,16 +178,19 @@ export function VideoTimelineCard({
         {/* Stats */}
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           {video.views !== undefined && (
-            <span className="flex items-center gap-1">
-              <Eye className="h-3.5 w-3.5" />
-              {formatViews(video.views)}
-            </span>
-          )}
-          {video.likes !== undefined && (
-            <span className="flex items-center gap-1">
-              <Heart className={cn('h-3.5 w-3.5', video.isLiked && 'fill-red-500 text-red-500')} />
-              {formatViews(video.likes)}
-            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="flex cursor-help items-center gap-1">
+                  <Eye className="h-3.5 w-3.5" />
+                  {formatViews(video.views)}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  {video.views} {t('features.timeline.cards.views')}
+                </p>
+              </TooltipContent>
+            </Tooltip>
           )}
         </div>
       </TimelineCardContent>
@@ -181,23 +199,40 @@ export function VideoTimelineCard({
         <TimelineCardActionButton
           icon={Play}
           label={t('features.timeline.cards.play')}
-          onClick={onPlay}
+          onClick={e => {
+            e?.preventDefault();
+            setPlayerOpen(true);
+            onPlay?.();
+          }}
           variant="default"
         />
-        <TimelineCardActionButton
-          icon={Heart}
-          label={
-            video.isLiked ? t('features.timeline.cards.liked') : t('features.timeline.cards.like')
-          }
-          onClick={onLike}
-          variant={video.isLiked ? 'secondary' : 'outline'}
-        />
-        <TimelineCardActionButton
-          icon={Share2}
-          label={t('features.timeline.cards.share')}
-          onClick={onShare}
-        />
+        <div onClick={e => e.preventDefault()}>
+          <ShareButton
+            url={amendmentHref || `/video/${video.id}`}
+            title={video.title}
+            description={video.sourceName || ''}
+            variant="outline"
+            size="sm"
+          />
+        </div>
       </TimelineCardActions>
+
+      <Dialog open={playerOpen} onOpenChange={setPlayerOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{video.title}</DialogTitle>
+          </DialogHeader>
+          <div className="aspect-video w-full overflow-hidden rounded-lg bg-black">
+            {video.videoUrl ? (
+              <video src={video.videoUrl} controls autoPlay className="h-full w-full" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
+                {t('features.timeline.cards.videoUnavailable')}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </TimelineCardBase>
   );
 }

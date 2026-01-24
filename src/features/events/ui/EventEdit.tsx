@@ -250,7 +250,7 @@ export function EventEdit({ eventId }: EventEditProps) {
             onClick={() => router.push(`/event/${eventId}`)}
             disabled={isSubmitting}
           >
-            {t('features.events.cancel')}
+            {t('features.events.cancelLabel')}
           </Button>
 
           {/* Cancel Event Button - only for users with delete permission */}

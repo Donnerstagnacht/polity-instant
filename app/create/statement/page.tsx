@@ -46,7 +46,7 @@ export default function CreateStatementPage() {
       return;
     }
 
-    const result = await createStatement(user.id, formData.text, formData.tag);
+    const result = await createStatement(user.id, formData.text, formData.tag, formData.visibility);
     if (result.success && result.statementId) {
       router.push(`/statement/${result.statementId}`);
     }
@@ -59,114 +59,124 @@ export default function CreateStatementPage() {
           <CardHeader>
             <CardTitle>{t('pages.create.statement.title')}</CardTitle>
           </CardHeader>
-            <CardContent>
-              <Carousel setApi={setCarouselApi} opts={{ watchDrag: false }}>
-                <CarouselContent>
-                  {/* Step 1: Statement Text */}
-                  <CarouselItem>
-                    <div className="space-y-4 p-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="statement-text">{t('pages.create.statement.textLabel')}</Label>
-                        <Textarea
-                          id="statement-text"
-                          placeholder={t('pages.create.statement.textPlaceholder')}
-                          value={formData.text}
-                          onChange={e => setFormData({ ...formData, text: e.target.value })}
-                          rows={6}
-                          required
-                        />
-                      </div>
+          <CardContent>
+            <Carousel setApi={setCarouselApi} opts={{ watchDrag: false }}>
+              <CarouselContent>
+                {/* Step 1: Statement Text */}
+                <CarouselItem>
+                  <div className="space-y-4 p-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="statement-text">
+                        {t('pages.create.statement.textLabel')}
+                      </Label>
+                      <Textarea
+                        id="statement-text"
+                        placeholder={t('pages.create.statement.textPlaceholder')}
+                        value={formData.text}
+                        onChange={e => setFormData({ ...formData, text: e.target.value })}
+                        rows={6}
+                        required
+                      />
                     </div>
-                  </CarouselItem>
+                  </div>
+                </CarouselItem>
 
-                  {/* Step 2: Tag & Visibility */}
-                  <CarouselItem>
-                    <div className="space-y-4 p-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="statement-tag">{t('pages.create.statement.tagLabel')}</Label>
-                        <Input
-                          id="statement-tag"
-                          placeholder={t('pages.create.statement.tagPlaceholder')}
-                          value={formData.tag}
-                          onChange={e => setFormData({ ...formData, tag: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <TooltipProvider>
-                        <VisibilitySelector
-                          value={formData.visibility}
-                          onChange={visibility => setFormData({ ...formData, visibility })}
-                        />
-                      </TooltipProvider>
+                {/* Step 2: Tag & Visibility */}
+                <CarouselItem>
+                  <div className="space-y-4 p-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="statement-tag">{t('pages.create.statement.tagLabel')}</Label>
+                      <Input
+                        id="statement-tag"
+                        placeholder={t('pages.create.statement.tagPlaceholder')}
+                        value={formData.tag}
+                        onChange={e => setFormData({ ...formData, tag: e.target.value })}
+                        required
+                      />
                     </div>
-                  </CarouselItem>
+                    <TooltipProvider>
+                      <VisibilitySelector
+                        value={formData.visibility}
+                        onChange={visibility => setFormData({ ...formData, visibility })}
+                      />
+                    </TooltipProvider>
+                  </div>
+                </CarouselItem>
 
-                  {/* Step 3: Review */}
-                  <CarouselItem>
-                    <div className="p-4">
-                      <Card className="overflow-hidden border-2 bg-gradient-to-br from-pink-100 to-blue-100 dark:from-pink-900/40 dark:to-blue-900/50">
-                        <CardHeader>
-                          <div className="mb-2 flex items-center justify-between">
-                            <Badge variant="default" className="text-xs">
-                              {t('pages.create.statement.reviewBadge')}
+                {/* Step 3: Review */}
+                <CarouselItem>
+                  <div className="p-4">
+                    <Card className="overflow-hidden border-2 bg-gradient-to-br from-pink-100 to-blue-100 dark:from-pink-900/40 dark:to-blue-900/50">
+                      <CardHeader>
+                        <div className="mb-2 flex items-center justify-between">
+                          <Badge variant="default" className="text-xs">
+                            {t('pages.create.statement.reviewBadge')}
+                          </Badge>
+                          {formData.tag && (
+                            <Badge variant="secondary" className="text-xs">
+                              #{formData.tag}
                             </Badge>
-                            {formData.tag && (
-                              <Badge variant="secondary" className="text-xs">
-                                #{formData.tag}
-                              </Badge>
-                            )}
-                          </div>
-                          <CardTitle className="text-lg">{t('pages.create.statement.reviewBadge')}</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                          <p className="text-sm">{formData.text || t('pages.create.statement.noTextProvided')}</p>
-                          <div className="flex items-center gap-2 text-sm">
-                            <strong>{t('pages.create.common.visibility')}:</strong>
-                            <span className="text-muted-foreground">{formData.visibility}</span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </CarouselItem>
-                </CarouselContent>
-              </Carousel>
-              <div className="mt-4 flex justify-center gap-2">
-                {[0, 1, 2].map(index => (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => carouselApi?.scrollTo(index)}
-                    className={`h-2 w-2 rounded-full transition-colors ${
-                      currentStep === index ? 'bg-primary' : 'bg-muted-foreground/30'
-                    }`}
-                    aria-label={t('pages.create.goToStep', { step: index + 1 })}
-                  />
-                ))}
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between">
+                          )}
+                        </div>
+                        <CardTitle className="text-lg">
+                          {t('pages.create.statement.reviewBadge')}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <p className="text-sm">
+                          {formData.text || t('pages.create.statement.noTextProvided')}
+                        </p>
+                        <div className="flex items-center gap-2 text-sm">
+                          <strong>{t('pages.create.common.visibility')}:</strong>
+                          <span className="text-muted-foreground">{formData.visibility}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </CarouselItem>
+              </CarouselContent>
+            </Carousel>
+            <div className="mt-4 flex justify-center gap-2">
+              {[0, 1, 2].map(index => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => carouselApi?.scrollTo(index)}
+                  className={`h-2 w-2 rounded-full transition-colors ${
+                    currentStep === index ? 'bg-primary' : 'bg-muted-foreground/30'
+                  }`}
+                  aria-label={t('pages.create.goToStep', { step: index + 1 })}
+                />
+              ))}
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => carouselApi?.scrollPrev()}
+              disabled={currentStep === 0}
+            >
+              {t('pages.create.previous')}
+            </Button>
+            {currentStep < 2 ? (
               <Button
                 type="button"
-                variant="outline"
-                onClick={() => carouselApi?.scrollPrev()}
-                disabled={currentStep === 0}
+                onClick={() => carouselApi?.scrollNext()}
+                disabled={
+                  (currentStep === 0 && !formData.text) || (currentStep === 1 && !formData.tag)
+                }
               >
-                {t('pages.create.previous')}
+                {t('pages.create.next')}
               </Button>
-              {currentStep < 2 ? (
-                <Button
-                  type="button"
-                  onClick={() => carouselApi?.scrollNext()}
-                  disabled={(currentStep === 0 && !formData.text) || (currentStep === 1 && !formData.tag)}
-                >
-                  {t('pages.create.next')}
-                </Button>
-              ) : (
-                <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
-                  {isSubmitting ? t('pages.create.creating') : t('pages.create.statement.createButton')}
-                </Button>
-              )}
-            </CardFooter>
+            ) : (
+              <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
+                {isSubmitting
+                  ? t('pages.create.creating')
+                  : t('pages.create.statement.createButton')}
+              </Button>
+            )}
+          </CardFooter>
         </Card>
       </PageWrapper>
     </AuthGuard>

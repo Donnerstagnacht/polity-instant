@@ -11,6 +11,7 @@ import { usePermissions } from '@db/rbac';
 import { calculateElectionWinner, type MajorityType } from '@/utils/voting-utils';
 import { notifyPositionAssigned } from '@/utils/notification-helpers';
 import { schedulePositionRevote } from '@/features/events/utils/revote-scheduling';
+import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 
 interface UseElectionVotingOptions {
   eventId: string;
@@ -225,6 +226,19 @@ export function useElectionVoting({
           status: 'completed',
           winnerId: result.winner.id,
           completedAt: Date.now(),
+        }),
+        // Add timeline event for election winner
+        createTimelineEvent({
+          eventType: 'election_winner_announced',
+          entityType: 'election',
+          entityId: electionId,
+          actorId: userId,
+          title: `Election winner: ${result.winner.name || 'Candidate elected'}`,
+          description: position?.title ? `Elected to position: ${position.title}` : undefined,
+          contentType: 'election',
+          status: {
+            electionStatus: 'winner',
+          },
         }),
       ]);
 

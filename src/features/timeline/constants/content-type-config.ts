@@ -10,6 +10,7 @@ import {
   CheckSquare,
   BookOpen,
   Zap,
+  User,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -29,7 +30,8 @@ export type ContentType =
   | 'statement'
   | 'todo'
   | 'blog'
-  | 'action';
+  | 'action'
+  | 'user';
 
 export interface ContentTypeConfig {
   icon: LucideIcon;
@@ -129,6 +131,14 @@ export const CONTENT_TYPE_CONFIG: Record<ContentType, ContentTypeConfig> = {
     accentColor: 'text-slate-600 dark:text-slate-400',
     borderColor: 'border-slate-500',
   },
+  user: {
+    icon: User,
+    labelKey: 'features.timeline.contentTypes.user',
+    gradient: 'from-blue-100 to-indigo-100',
+    gradientDark: 'dark:from-blue-900/40 dark:to-indigo-900/50',
+    accentColor: 'text-blue-600 dark:text-blue-400',
+    borderColor: 'border-blue-500',
+  },
 };
 
 /**
@@ -154,4 +164,5 @@ export const CONTENT_TYPE_LABELS: Record<ContentType, string> = {
   todo: 'features.timeline.contentTypes.todo',
   blog: 'features.timeline.contentTypes.blog',
   action: 'features.timeline.contentTypes.action',
+  user: 'features.timeline.contentTypes.user',
 };

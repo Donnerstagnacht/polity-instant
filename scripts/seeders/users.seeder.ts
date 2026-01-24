@@ -15,6 +15,7 @@ export const usersSeeder: EntitySeeder = {
     console.log('Seeding users...');
     const { db } = context;
     const userIds: string[] = [];
+    const statementIds: string[] = [];
     const conversationIds: string[] = [];
     const messageIds: string[] = [];
     const transactions = [];
@@ -87,6 +88,7 @@ export const usersSeeder: EntitySeeder = {
         .link({ user: mainUserId })
     );
     statementsToUsers++;
+    statementIds.push(statementId);
 
     // Add hashtags for main user
     const mainUserHashtags = randomItems(USER_HASHTAGS, 2);
@@ -192,6 +194,7 @@ export const usersSeeder: EntitySeeder = {
         .link({ user: tobiasUserId })
     );
     statementsToUsers++;
+    statementIds.push(tobiasStatementId);
 
     const tobiasHashtags = randomItems(USER_HASHTAGS, 2);
     transactions.push(...createHashtagTransactions(tobiasUserId, 'user', tobiasHashtags));
@@ -345,6 +348,7 @@ export const usersSeeder: EntitySeeder = {
             .link({ user: userId })
         );
         statementsToUsers++;
+        statementIds.push(statementId);
       }
 
       // Add hashtags
@@ -409,6 +413,7 @@ export const usersSeeder: EntitySeeder = {
     return {
       ...context,
       userIds,
+      statementIds: [...(context.statementIds || []), ...statementIds],
       conversationIds: [...(context.conversationIds || []), ...conversationIds],
       messageIds: [...(context.messageIds || []), ...messageIds],
       linkCounts: {

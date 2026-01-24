@@ -14,7 +14,7 @@ import { LinkGroupDialog } from '@/components/groups/LinkGroupDialog';
 import db from '../../../db/db';
 import { UserCheck, BookOpen, Network } from 'lucide-react';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
-import { BlogSearchCard } from '@/features/search/ui/BlogSearchCard';
+import { BlogTimelineCard } from '@/features/timeline/ui/cards/BlogTimelineCard';
 import { GRADIENTS } from '@/features/user/state/gradientColors';
 import { useSubscribeGroup } from '@/features/groups/hooks/useSubscribeGroup';
 import { StatsBar } from '@/components/ui/StatsBar';
@@ -24,7 +24,7 @@ import { SubscribeButton, MembershipButton } from '@/components/shared/action-bu
 import { SocialBar } from '@/features/user/ui/SocialBar';
 import { InfoTabs } from '@/components/shared/InfoTabs';
 import { useRouter } from 'next/navigation';
-import { GroupsCard } from '@/features/user/ui/GroupsCard';
+import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
 import Link from 'next/link';
 import { useTranslation } from '@/hooks/use-translation';
 import { ShareButton } from '@/components/shared/ShareButton';
@@ -362,18 +362,16 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
                     href={`/group/${childGroup.id}`}
                     className="block transition-opacity hover:opacity-90"
                   >
-                    <GroupsCard
+                    <GroupTimelineCard
                       group={{
-                        id: childGroup.id,
-                        groupId: childGroup.id,
-                        name: childGroup.name || 'Unbekannt',
+                        id: String(childGroup.id),
+                        name: childGroup.name || t('common.unknown'),
                         description: childGroup.description,
-                        role: rights.map(formatRight).join(', '),
-                        members: childGroup.memberships?.length || childGroup.memberCount || 0,
-                        amendments: childGroup.amendments?.length || 0,
-                        events: childGroup.events?.length || 0,
+                        memberCount: childGroup.memberships?.length || childGroup.memberCount || 0,
+                        amendmentCount: childGroup.amendments?.length || 0,
+                        eventCount: childGroup.events?.length || 0,
+                        hashtags: childGroup.hashtags,
                       }}
-                      gradientClass={GRADIENTS[index % GRADIENTS.length]}
                     />
                   </Link>
                 )
@@ -396,10 +394,19 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {group.blogs.map((blog: any, index: number) => (
-                <BlogSearchCard
+                <BlogTimelineCard
                   key={blog.id}
-                  blog={blog}
-                  gradientClass={GRADIENTS[index % GRADIENTS.length]}
+                  blog={{
+                    id: String(blog.id),
+                    title: blog.title,
+                    excerpt: blog.description,
+                    coverImageUrl: blog.imageURL,
+                    commentCount: blog.commentCount,
+                    hashtags: blog.hashtags,
+                    authorName: blog.authorName || group.name,
+                    publishedAt: blog.date,
+                  }}
+                  className={GRADIENTS[index % GRADIENTS.length]}
                 />
               ))}
             </div>

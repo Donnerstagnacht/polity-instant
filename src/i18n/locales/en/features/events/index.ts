@@ -7,7 +7,7 @@ export const eventsTranslations = {
   join: 'Join Event',
   leave: 'Leave Event',
   backToCalendar: 'Back to Calendar',
-  cancel: 'Cancel',
+  cancelLabel: 'Cancel',
   add: 'Add',
   editPage: {
     title: 'Edit Event',
@@ -76,6 +76,8 @@ export const eventsTranslations = {
     statistics: 'Agenda Statistics',
     elections: 'Elections',
     election: 'Election',
+    amendments: 'Amendments',
+    amendment: 'Amendment',
     votes: 'Votes',
     vote: 'Vote',
     openChangeRequests: 'Open Change Requests',
@@ -301,7 +303,7 @@ export const eventsTranslations = {
     rejected: 'Rejected',
     abstained: 'Abstained',
     votes: 'Votes',
-    results: 'Results',
+    resultsLabel: 'Results',
     passed: 'Passed',
     failed: 'Failed',
     pending: 'Pending',
@@ -347,8 +349,7 @@ export const eventsTranslations = {
     confirm: 'Cancel Event',
     warning: {
       title: 'Warning: This action cannot be undone',
-      description:
-        'All participants will be notified and the event will be marked as cancelled.',
+      description: 'All participants will be notified and the event will be marked as cancelled.',
     },
     reason: {
       label: 'Cancellation Reason',

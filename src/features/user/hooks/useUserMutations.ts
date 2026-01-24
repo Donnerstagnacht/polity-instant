@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { db, tx, id } from '../../../../db/db';
 import { toast } from 'sonner';
+import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 
 /**
  * Hook for user update mutations
@@ -63,7 +64,19 @@ export function useUserMutations() {
     setError(null);
 
     try {
-      await db.transact([tx.$users[userId].link({ avatarFile: fileId })]);
+      await db.transact([
+        tx.$users[userId].link({ avatarFile: fileId }),
+        createTimelineEvent({
+          eventType: 'image_uploaded',
+          entityType: 'user',
+          entityId: userId,
+          actorId: userId,
+          title: 'Avatar updated',
+          description: 'User uploaded a new profile image',
+          contentType: 'image',
+          status: {},
+        }),
+      ]);
       toast.success('Avatar updated successfully');
       return { success: true };
     } catch (err) {
@@ -87,16 +100,18 @@ export function useUserMutations() {
     setError(null);
 
     try {
-      const transactions = hashtags.map(tag => {
-        const hashtagId = id();
-        return [
-          tx.hashtags[hashtagId].update({
-            tag,
-            createdAt: new Date(),
-          }),
-          tx.hashtags[hashtagId].link({ user: userId }),
-        ];
-      }).flat();
+      const transactions = hashtags
+        .map(tag => {
+          const hashtagId = id();
+          return [
+            tx.hashtags[hashtagId].update({
+              tag,
+              createdAt: new Date(),
+            }),
+            tx.hashtags[hashtagId].link({ user: userId }),
+          ];
+        })
+        .flat();
 
       await db.transact(transactions);
       toast.success('Hashtags added successfully');
@@ -192,6 +207,18 @@ export function useUserMutations() {
           );
         });
       }
+
+      // Add timeline event for profile update
+      transactions.push(
+        createTimelineEvent({
+          eventType: 'updated',
+          entityType: 'user',
+          entityId: userId,
+          actorId: userId,
+          title: profileData.name ? `${profileData.name} updated their profile` : 'Profile updated',
+          description: profileData.about?.substring(0, 100) || undefined,
+        })
+      );
 
       await db.transact(transactions);
       toast.success('Profile updated successfully');

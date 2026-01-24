@@ -102,6 +102,7 @@ export const todosTranslations = {
     unassigned: 'Nicht zugewiesen',
     assignTo: 'Zuweisen an',
     assignToMe: 'Mir zuweisen',
+    assignedToMe: 'Mir zugewiesen',
     noUsersAssigned: 'Keine Benutzer zugewiesen',
     addAssignee: 'Zuständigen hinzufügen',
     searchMembers: 'Mitglieder suchen...',

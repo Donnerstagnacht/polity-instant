@@ -52,7 +52,7 @@ const SORT_OPTIONS: { value: TimelineSortOption; labelKey: string }[] = [
  *
  * Features:
  * - Title: "Your Political Ecosystem"
- * - Mode Toggle: Following / Explore / Decisions
+ * - Mode Toggle: Following / Decisions
  * - Filter button (hidden in Decisions mode)
  * - Sort dropdown
  * - Settings icon

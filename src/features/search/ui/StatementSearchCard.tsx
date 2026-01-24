@@ -1,18 +1,30 @@
 import React from 'react';
-import { StatementCard } from '@/features/user/ui/StatementCard';
-import { getTagColor } from '@/features/user/utils/userWiki.utils';
-import { BADGE_COLORS } from '@/features/user/state/badgeColors';
+import { StatementTimelineCard } from '@/features/timeline/ui/cards/StatementTimelineCard';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface StatementSearchCardProps {
   statement: any;
 }
 
 export function StatementSearchCard({ statement }: StatementSearchCardProps) {
-  const tagColor = getTagColor(statement.tag, BADGE_COLORS);
+  const { t } = useTranslation();
+  const authorName = statement.user?.name || statement.authorName || t('common.unknownUser');
+  const authorAvatar = statement.user?.avatar || statement.user?.imageURL || statement.authorAvatar;
+  const authorTitle = statement.user?.subtitle || statement.authorTitle;
 
   return (
-    <a href={`/statement/${statement.id}`} className="block cursor-pointer">
-      <StatementCard tag={statement.tag} text={statement.text} tagColor={tagColor} />
-    </a>
+    <StatementTimelineCard
+      statement={{
+        id: String(statement.id),
+        content: statement.text || statement.content || '',
+        authorName,
+        authorTitle,
+        authorAvatar,
+        supportCount: statement.supportCount,
+        opposeCount: statement.opposeCount,
+        interestedCount: statement.interestedCount,
+        commentCount: statement.commentCount,
+      }}
+    />
   );
 }

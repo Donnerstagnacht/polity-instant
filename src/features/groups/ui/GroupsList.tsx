@@ -1,8 +1,6 @@
 import React from 'react';
 import { useGroupsStore } from '@/global-state/groups.store';
-import { GroupsCard } from '@/features/user/ui/GroupsCard';
-import { getRoleBadgeColor } from '@/features/user/utils/userWiki.utils';
-import { GRADIENTS } from '@/features/user/state/gradientColors';
+import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
 import { Loader2 } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
 
@@ -29,10 +27,10 @@ export const GroupsList: React.FC = () => {
             <span className="text-2xl">🔍</span>
           </div>
         </div>
-        <h3 className="mb-2 text-lg font-medium text-foreground">{t('features.groups.list.noGroups')}</h3>
-        <p className="text-muted-foreground">
-          {t('features.groups.list.noGroupsDescription')}
-        </p>
+        <h3 className="mb-2 text-lg font-medium text-foreground">
+          {t('features.groups.list.noGroups')}
+        </h3>
+        <p className="text-muted-foreground">{t('features.groups.list.noGroupsDescription')}</p>
       </div>
     );
   }
@@ -46,20 +44,20 @@ export const GroupsList: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredGroups.map((group, index) => {
-          const roleColor = getRoleBadgeColor(group.role);
-          const badgeClasses = `${roleColor.bg} ${roleColor.text}`;
-          const gradientClass = GRADIENTS[index % GRADIENTS.length];
-
-          return (
-            <GroupsCard
-              key={group.id}
-              group={group}
-              badgeClasses={badgeClasses}
-              gradientClass={gradientClass}
-            />
-          );
-        })}
+        {filteredGroups.map(group => (
+          <GroupTimelineCard
+            key={group.id}
+            group={{
+              id: String(group.id),
+              name: group.name,
+              description: group.description,
+              memberCount: group.members,
+              eventCount: group.events,
+              amendmentCount: group.amendments,
+              topics: group.tags,
+            }}
+          />
+        ))}
       </div>
     </div>
   );

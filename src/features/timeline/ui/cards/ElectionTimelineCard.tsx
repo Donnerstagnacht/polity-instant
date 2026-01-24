@@ -1,11 +1,11 @@
 'use client';
 
-import { Award, Users, Calendar, ExternalLink, Crown, Trophy } from 'lucide-react';
-import Link from 'next/link';
+import { Award, Users, Calendar, Crown, Trophy } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
 import { cn } from '@/utils/utils';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ShareButton } from '@/components/shared/ShareButton';
 import {
   TimelineCardBase,
   TimelineCardHeader,
@@ -39,6 +39,8 @@ export interface ElectionTimelineCardProps {
     totalCandidates: number;
     totalVoters?: number;
     turnoutPercentage?: number;
+    agendaEventId?: string;
+    agendaItemId?: string;
   };
   onCastVote?: () => void;
   onNominate?: () => void;
@@ -279,6 +281,11 @@ export function ElectionTimelineCard({
   const isVotingOpen = election.status === 'voting_open';
   const isNominationsOpen = election.status === 'nominations_open';
 
+  const agendaHref =
+    election.agendaEventId && election.agendaItemId
+      ? `/event/${election.agendaEventId}/agenda/${election.agendaItemId}`
+      : undefined;
+  const fallbackHref = election.groupId ? `/group/${election.groupId}` : undefined;
   // Get status label
   const getStatusLabel = () => {
     switch (election.status) {
@@ -309,11 +316,16 @@ export function ElectionTimelineCard({
   const dateText = getDateText();
 
   return (
-    <TimelineCardBase contentType="election" className={className}>
+    <TimelineCardBase
+      contentType="election"
+      className={className}
+      href={agendaHref || fallbackHref}
+    >
       <TimelineCardHeader
         contentType="election"
         title={election.title}
         subtitle={election.groupName}
+        subtitleHref={election.groupId ? `/group/${election.groupId}` : undefined}
         badge={
           <Badge
             variant="outline"
@@ -401,7 +413,10 @@ export function ElectionTimelineCard({
         {/* Primary action based on status */}
         {isNominationsOpen && onNominate && (
           <TimelineCardActionButton
-            onClick={onNominate}
+            onClick={e => {
+              e?.preventDefault();
+              onNominate?.();
+            }}
             variant="default"
             size="sm"
             label={t('features.timeline.cards.election.nominate')}
@@ -409,7 +424,10 @@ export function ElectionTimelineCard({
         )}
         {isVotingOpen && onCastVote && (
           <TimelineCardActionButton
-            onClick={onCastVote}
+            onClick={e => {
+              e?.preventDefault();
+              onCastVote?.();
+            }}
             variant="default"
             size="sm"
             label={t('features.timeline.cards.castVote')}
@@ -417,7 +435,10 @@ export function ElectionTimelineCard({
         )}
         {(election.status === 'closed' || isWinnerAnnounced) && onViewResults && (
           <TimelineCardActionButton
-            onClick={onViewResults}
+            onClick={e => {
+              e?.preventDefault();
+              onViewResults?.();
+            }}
             variant="default"
             size="sm"
             label={t('features.timeline.cards.viewResults')}
@@ -427,23 +448,24 @@ export function ElectionTimelineCard({
         {/* View candidates */}
         {onViewCandidates && !isWinnerAnnounced && (
           <TimelineCardActionButton
-            onClick={onViewCandidates}
+            onClick={e => {
+              e?.preventDefault();
+              onViewCandidates?.();
+            }}
             variant="outline"
             size="sm"
             label={t('features.timeline.cards.election.viewCandidates')}
           />
         )}
-
-        {/* Link to election page */}
-        <Link href={`/election/${election.id}`} passHref>
-          <TimelineCardActionButton
-            variant="ghost"
+        <div onClick={e => e.preventDefault()}>
+          <ShareButton
+            url={agendaHref || fallbackHref || `/election/${election.id}`}
+            title={election.title}
+            description={election.positionName}
+            variant="outline"
             size="sm"
-            className="ml-auto"
-            icon={ExternalLink}
-            label=""
           />
-        </Link>
+        </div>
       </TimelineCardActions>
     </TimelineCardBase>
   );

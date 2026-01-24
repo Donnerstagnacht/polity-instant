@@ -11,7 +11,6 @@ export const timelineAriaLabels = {
   modeToggle: {
     group: 'Timeline view mode',
     following: 'Show content from groups and topics you follow',
-    explore: 'Discover new content and trending topics',
     decisions: 'View open votes and elections',
   },
 
@@ -88,31 +87,32 @@ export function useScreenReaderAnnounce() {
   const [announcement, setAnnouncement] = React.useState('');
   const timeoutRef = React.useRef<NodeJS.Timeout>();
 
-  const announce = React.useCallback((message: string, priority: 'polite' | 'assertive' = 'polite') => {
-    // Clear any pending announcement
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
+  const announce = React.useCallback(
+    (message: string, priority: 'polite' | 'assertive' = 'polite') => {
+      // Clear any pending announcement
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
 
-    // Set the announcement
-    setAnnouncement('');
-    
-    // Small delay to ensure the change is detected
-    timeoutRef.current = setTimeout(() => {
-      setAnnouncement(message);
-    }, 100);
-  }, []);
+      // Set the announcement
+      setAnnouncement('');
 
-  const LiveRegion = React.useCallback(() => (
-    <div
-      role="status"
-      aria-live="polite"
-      aria-atomic="true"
-      className="sr-only"
-    >
-      {announcement}
-    </div>
-  ), [announcement]);
+      // Small delay to ensure the change is detected
+      timeoutRef.current = setTimeout(() => {
+        setAnnouncement(message);
+      }, 100);
+    },
+    []
+  );
+
+  const LiveRegion = React.useCallback(
+    () => (
+      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+        {announcement}
+      </div>
+    ),
+    [announcement]
+  );
 
   React.useEffect(() => {
     return () => {
@@ -133,28 +133,31 @@ export function useCardListKeyboardNav(cardCount: number) {
   const [focusedIndex, setFocusedIndex] = React.useState(-1);
   const cardRefs = React.useRef<(HTMLElement | null)[]>([]);
 
-  const handleKeyDown = React.useCallback((e: React.KeyboardEvent) => {
-    switch (e.key) {
-      case 'ArrowDown':
-      case 'ArrowRight':
-        e.preventDefault();
-        setFocusedIndex(prev => Math.min(prev + 1, cardCount - 1));
-        break;
-      case 'ArrowUp':
-      case 'ArrowLeft':
-        e.preventDefault();
-        setFocusedIndex(prev => Math.max(prev - 1, 0));
-        break;
-      case 'Home':
-        e.preventDefault();
-        setFocusedIndex(0);
-        break;
-      case 'End':
-        e.preventDefault();
-        setFocusedIndex(cardCount - 1);
-        break;
-    }
-  }, [cardCount]);
+  const handleKeyDown = React.useCallback(
+    (e: React.KeyboardEvent) => {
+      switch (e.key) {
+        case 'ArrowDown':
+        case 'ArrowRight':
+          e.preventDefault();
+          setFocusedIndex(prev => Math.min(prev + 1, cardCount - 1));
+          break;
+        case 'ArrowUp':
+        case 'ArrowLeft':
+          e.preventDefault();
+          setFocusedIndex(prev => Math.max(prev - 1, 0));
+          break;
+        case 'Home':
+          e.preventDefault();
+          setFocusedIndex(0);
+          break;
+        case 'End':
+          e.preventDefault();
+          setFocusedIndex(cardCount - 1);
+          break;
+      }
+    },
+    [cardCount]
+  );
 
   // Focus the card when index changes
   React.useEffect(() => {
@@ -163,9 +166,12 @@ export function useCardListKeyboardNav(cardCount: number) {
     }
   }, [focusedIndex]);
 
-  const setCardRef = React.useCallback((index: number) => (el: HTMLElement | null) => {
-    cardRefs.current[index] = el;
-  }, []);
+  const setCardRef = React.useCallback(
+    (index: number) => (el: HTMLElement | null) => {
+      cardRefs.current[index] = el;
+    },
+    []
+  );
 
   return {
     focusedIndex,
@@ -185,7 +191,9 @@ export interface FocusRingProps {
 
 export function FocusRing({ children, className }: FocusRingProps) {
   return (
-    <div className={`focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none ${className || ''}`}>
+    <div
+      className={`focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${className || ''}`}
+    >
       {children}
     </div>
   );
@@ -198,7 +206,7 @@ export function SkipToTimeline() {
   return (
     <a
       href="#timeline-content"
-      className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
+      className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
     >
       Skip to timeline
     </a>
@@ -214,14 +222,13 @@ export interface TimelineRegionProps {
   className?: string;
 }
 
-export function TimelineRegion({ children, label = 'Timeline content', className }: TimelineRegionProps) {
+export function TimelineRegion({
+  children,
+  label = 'Timeline content',
+  className,
+}: TimelineRegionProps) {
   return (
-    <main
-      id="timeline-content"
-      role="main"
-      aria-label={label}
-      className={className}
-    >
+    <main id="timeline-content" role="main" aria-label={label} className={className}>
       {children}
     </main>
   );

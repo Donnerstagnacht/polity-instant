@@ -3,12 +3,15 @@
 import { Hash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/utils/utils';
 
 interface HashtagDisplayProps {
   hashtags: { id: string; tag: string }[];
   title?: string;
   clickable?: boolean;
   centered?: boolean;
+  className?: string;
+  badgeClassName?: string;
 }
 
 export function HashtagDisplay({
@@ -16,6 +19,8 @@ export function HashtagDisplay({
   title = '',
   clickable = true,
   centered = false,
+  className,
+  badgeClassName,
 }: HashtagDisplayProps) {
   const router = useRouter();
 
@@ -31,14 +36,14 @@ export function HashtagDisplay({
   };
 
   return (
-    <div className={`space-y-2 ${centered ? 'flex flex-col items-center' : ''}`}>
+    <div className={cn('space-y-2', centered ? 'flex flex-col items-center' : '', className)}>
       {title && <h3 className="text-sm font-semibold text-muted-foreground">{title}</h3>}
-      <div className="flex flex-wrap justify-center gap-2">
+      <div className={cn('flex flex-wrap gap-2', centered ? 'justify-center' : 'justify-start')}>
         {hashtags.map(({ id, tag }) => (
           <Badge
             key={id}
             variant="secondary"
-            className={`${clickable ? 'cursor-pointer hover:bg-primary/20' : ''}`}
+            className={cn(clickable ? 'cursor-pointer hover:bg-primary/20' : '', badgeClassName)}
             onClick={() => handleHashtagClick(tag)}
           >
             <Hash className="mr-1 h-3 w-3" />

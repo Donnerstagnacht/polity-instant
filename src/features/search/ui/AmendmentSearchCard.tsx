@@ -1,61 +1,105 @@
 import React from 'react';
-import { AmendmentsCard } from '@/features/user/ui/AmendmentsCard';
-import { getStatusStyles } from '@/features/user/utils/userWiki.utils';
+import { AmendmentTimelineCard } from '@/features/timeline/ui/cards/AmendmentTimelineCard';
 import db from '../../../../db/db';
 
 interface AmendmentSearchCardProps {
   amendment: any;
-  gradientClass?: string;
 }
 
-export function AmendmentSearchCard({
-  amendment,
-  gradientClass = 'bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950',
-}: AmendmentSearchCardProps) {
+export function AmendmentSearchCard({ amendment }: AmendmentSearchCardProps) {
   const { user } = db.useAuth();
-  const statusStyle = getStatusStyles(amendment.status);
 
   // Calculate supporters from upvotes and downvotes
   const supporters = (amendment.upvotes || 0) - (amendment.downvotes || 0);
-  
+
   // Count collaborators
   const collaboratorsCount = amendment.amendmentRoleCollaborators?.length || 0;
-  
+
   // Count supporting groups
   const supportingGroupsCount = amendment.groupSupporters?.length || 0;
-  
-  // Calculate total supporting members from all supporting groups
-  const supportingMembersCount = amendment.groupSupporters?.reduce(
-    (total: number, group: any) => total + (group.memberships?.length || 0),
-    0
-  ) || 0;
-  
+
   // Find current user's collaboration
   const currentUserCollaboration = amendment.amendmentRoleCollaborators?.find(
     (collab: any) => collab.user?.id === user?.id
   );
   const collaborationRole = currentUserCollaboration?.role?.name;
 
+  const normalizedCollaborationStatus = collaborationRole
+    ? collaborationRole.toLowerCase()
+    : undefined;
+  const collaborationStatus =
+    normalizedCollaborationStatus === 'admin'
+      ? 'admin'
+      : normalizedCollaborationStatus === 'collaborator' ||
+          normalizedCollaborationStatus === 'member'
+        ? 'member'
+        : normalizedCollaborationStatus === 'invited'
+          ? 'invited'
+          : normalizedCollaborationStatus === 'requested'
+            ? 'requested'
+            : undefined;
+
+  const normalizeStatus = (
+    status?: string
+  ):
+    | 'collaborative_editing'
+    | 'internal_suggesting'
+    | 'internal_voting'
+    | 'viewing'
+    | 'event_suggesting'
+    | 'event_voting'
+    | 'passed'
+    | 'rejected' => {
+    if (!status) return 'viewing';
+    const normalized = status.toLowerCase();
+    if (
+      normalized === 'collaborative_editing' ||
+      normalized === 'internal_suggesting' ||
+      normalized === 'internal_voting' ||
+      normalized === 'viewing' ||
+      normalized === 'event_suggesting' ||
+      normalized === 'event_voting' ||
+      normalized === 'passed' ||
+      normalized === 'rejected'
+    ) {
+      return normalized as
+        | 'collaborative_editing'
+        | 'internal_suggesting'
+        | 'internal_voting'
+        | 'viewing'
+        | 'event_suggesting'
+        | 'event_voting'
+        | 'passed'
+        | 'rejected';
+    }
+    if (normalized === 'drafting' || normalized === 'draft') {
+      return 'collaborative_editing';
+    }
+    if (normalized === 'under review' || normalized === 'review') {
+      return 'internal_voting';
+    }
+    return 'viewing';
+  };
+
+  const primaryGroup = amendment.groups?.[0];
+
   return (
-    <a href={`/amendment/${amendment.id}`} className="block cursor-pointer">
-      <AmendmentsCard
-        amendment={{
-          id: amendment.id,
-          code: amendment.code,
-          title: amendment.title,
-          subtitle: amendment.subtitle,
-          status: amendment.status,
-          supporters: supporters,
-          date: amendment.date || new Date(amendment.createdAt).toLocaleDateString(),
-          tags: amendment.tags,
-          collaboratorsCount: collaboratorsCount,
-          supportingGroupsCount: supportingGroupsCount,
-          supportingMembersCount: supportingMembersCount,
-          collaborationRole: collaborationRole,
-        }}
-        statusStyle={statusStyle}
-        gradientClass={gradientClass}
-      />
-    </a>
+    <AmendmentTimelineCard
+      amendment={{
+        id: String(amendment.id),
+        title: amendment.title,
+        subtitle: primaryGroup?.name,
+        description: amendment.subtitle,
+        status: normalizeStatus(amendment.status),
+        supportCount: supporters,
+        groupName: primaryGroup?.name,
+        groupId: primaryGroup?.id,
+        collaboratorCount: collaboratorsCount,
+        supportingGroupsCount: supportingGroupsCount,
+        changeRequestCount: amendment.changeRequests?.length,
+        hashtags: amendment.hashtags,
+        collaborationStatus,
+      }}
+    />
   );
 }

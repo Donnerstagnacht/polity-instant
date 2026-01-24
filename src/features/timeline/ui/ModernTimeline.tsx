@@ -12,23 +12,17 @@ import { db } from '@db/db';
 import { MasonryGrid } from './MasonryGrid';
 import { TimelineHeader } from './TimelineHeader';
 import { TimelineFilterPanel } from './TimelineFilterPanel';
-import { ExploreSectionHeader } from './ExploreSectionHeader';
-import { ExploreEmptyState } from './ExploreEmptyState';
 
 // Hooks
 import { useTimelineMode } from '../hooks/useTimelineMode';
 import { useTimelineFilters, type TimelineSortOption } from '../hooks/useTimelineFilters';
 import { useSubscribedTimeline, type TimelineItem } from '../hooks/useSubscribedTimeline';
 import { useSubscriptionTimeline } from '../hooks/useSubscriptionTimeline';
-import { useExploreTimeline, type ExploreItem } from '../hooks/useExploreTimeline';
 import { useDecisionTerminal } from '../hooks/useDecisionTerminal';
 
 // Decision Terminal
 import { DecisionTerminal } from './terminal/DecisionTerminal';
 import { DynamicTimelineCard, type CardType } from './LazyCardComponents';
-
-// Unified content item type
-type ContentItem = TimelineItem | ExploreItem;
 
 interface ModernTimelineProps {
   className?: string;
@@ -39,9 +33,8 @@ interface ModernTimelineProps {
 /**
  * ModernTimeline - Pinterest/Instagram-style discovery timeline
  *
- * Three modes:
+ * Two modes:
  * - Following: Content from user's subscriptions
- * - Explore: Discover new content + own content
  * - Decisions: Bloomberg-style decision terminal
  */
 export function ModernTimeline({ className, userId: userIdProp, groupId }: ModernTimelineProps) {
@@ -84,6 +77,8 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
     if (!subscriptionTimeline.events.length) return [] as TimelineItem[];
 
     const getString = (value: unknown) => (typeof value === 'string' ? value : undefined);
+    const getTags = (hashtags?: Array<{ tag?: string | null }>) =>
+      hashtags?.map(tag => tag?.tag).filter((tag): tag is string => Boolean(tag)) ?? [];
     const supportedTypes = new Set<TimelineItem['type']>([
       'group',
       'event',
@@ -96,14 +91,14 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
       'vote',
       'todo',
       'action',
+      'user',
     ]);
 
     const items = subscriptionTimeline.events.reduce<TimelineItem[]>((acc, event) => {
       const eventRecord = event as Record<string, any>;
       const rawContentType =
         getString(eventRecord.contentType) || getString(eventRecord.entityType) || undefined;
-      const normalizedContentType =
-        rawContentType === 'activity' || rawContentType === 'user' ? 'action' : rawContentType;
+      const normalizedContentType = rawContentType === 'activity' ? 'action' : rawContentType;
       const contentType = normalizedContentType as TimelineItem['type'] | undefined;
 
       if (!contentType || !supportedTypes.has(contentType)) {
@@ -112,6 +107,35 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
 
       const createdAt = eventRecord.createdAt ? new Date(eventRecord.createdAt) : new Date();
       const stats = (eventRecord.stats as TimelineItem['stats']) || undefined;
+      const amendmentTags = getTags(eventRecord.amendment?.hashtags);
+      const blogTags = getTags(eventRecord.blog?.hashtags);
+      const userTags = getTags(eventRecord.user?.hashtags);
+      const eventTags = getTags(eventRecord.event?.hashtags);
+      const fallbackTags =
+        amendmentTags.length > 0
+          ? amendmentTags
+          : blogTags.length > 0
+            ? blogTags
+            : userTags.length > 0
+              ? userTags
+              : eventTags.length > 0
+                ? eventTags
+                : undefined;
+      const tags = (eventRecord.tags as string[] | undefined) ?? fallbackTags;
+      const eventParticipants = eventRecord.event?.participants as unknown[] | undefined;
+      const eventVotingSessions = eventRecord.event?.votingSessions as
+        | Array<{ election?: unknown; amendment?: unknown }>
+        | undefined;
+      const eventPositions = eventRecord.event?.eventPositions as
+        | Array<{ election?: unknown }>
+        | undefined;
+      const scheduledElections = eventRecord.event?.scheduledElections as unknown[] | undefined;
+      const agendaItems = subscriptionTimeline.agendaItemsByEventId?.get(
+        eventRecord.event?.id as string
+      );
+      const eventTargetedAmendments = eventRecord.event?.targetedAmendments as
+        | unknown[]
+        | undefined;
 
       acc.push({
         id: eventRecord.id,
@@ -123,7 +147,6 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
         imageUrl: eventRecord.imageURL || eventRecord.videoThumbnailURL || undefined,
         videoUrl: eventRecord.videoURL || undefined,
         authorId: eventRecord.actor?.id || undefined,
-        authorName: eventRecord.actor?.name || eventRecord.user?.name || undefined,
         authorAvatar:
           getString(eventRecord.actor?.avatarUrl) ||
           getString(eventRecord.user?.avatarUrl) ||
@@ -139,6 +162,8 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
           getString(eventRecord.event?.location) ||
           getString(eventRecord.event?.city) ||
           undefined,
+        city: getString(eventRecord.event?.city),
+        postcode: getString(eventRecord.event?.postalCode),
         createdAt,
         status:
           contentType === 'vote'
@@ -147,7 +172,26 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
               ? eventRecord.electionStatus
               : undefined,
         stats,
-        tags: (eventRecord.tags as string[]) || undefined,
+        tags,
+        attendeeCount: eventParticipants?.length,
+        electionsCount:
+          eventPositions?.filter(position => Boolean(position?.election)).length ??
+          scheduledElections?.length ??
+          agendaItems?.filter(item => Boolean(item?.election)).length ??
+          eventVotingSessions?.filter(session => Boolean(session?.election)).length ??
+          undefined,
+        amendmentsCount:
+          eventTargetedAmendments?.length ??
+          eventVotingSessions?.filter(session => Boolean(session?.amendment)).length ??
+          undefined,
+        eventCount: eventRecord.group?.events?.length,
+        amendmentCount:
+          eventRecord.user?.collaborations?.length ?? eventRecord.group?.amendments?.length,
+        collaboratorCount: eventRecord.amendment?.amendmentRoleCollaborators?.length,
+        supportingGroupsCount: eventRecord.amendment?.groupSupporters?.length,
+        changeRequestCount: eventRecord.amendment?.changeRequests?.length,
+        commentCount: eventRecord.blog?.comments?.length,
+        groupCount: eventRecord.user?.memberships?.length,
       });
 
       return acc;
@@ -161,64 +205,48 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
       seenIds.add(item.id);
       return true;
     });
-  }, [subscriptionTimeline.events]);
+  }, [subscriptionTimeline.events, subscriptionTimeline.agendaItemsByEventId]);
 
   const subscribedGroupIds = subscriptionTimeline.subscribedEntityIds?.groups?.length
     ? subscriptionTimeline.subscribedEntityIds.groups
     : subscribedResult.subscribedGroupIds;
 
-  // Explore mode data - only load when in explore mode
-  const exploreResult = useExploreTimeline({
-    userId,
-    subscribedGroupIds,
-    pageSize: 30,
-  });
-
-  // Current data based on mode
+  // Current data - only Following mode
   const currentData = useMemo(() => {
-    if (mode === 'subscribed') {
-      const useSubscriptionItems = subscriptionItems.length > 0;
-      const mergedItems = useSubscriptionItems
-        ? [...subscriptionItems, ...subscribedResult.items]
-        : subscribedResult.items;
-      const seenIds = new Set<string>();
-      const dedupedItems = mergedItems.filter(item => {
-        if (seenIds.has(item.id)) {
-          return false;
-        }
-        seenIds.add(item.id);
-        return true;
-      });
+    const useSubscriptionItems = subscriptionItems.length > 0;
+    const mergedItems = useSubscriptionItems
+      ? [...subscriptionItems, ...subscribedResult.items]
+      : subscribedResult.items;
+    const seenIds = new Set<string>();
+    const dedupedItems = mergedItems.filter(item => {
+      if (seenIds.has(item.id)) {
+        return false;
+      }
+      seenIds.add(item.id);
+      return true;
+    });
 
-      return {
-        items: dedupedItems,
-        isLoading: subscribedResult.isLoading || subscriptionTimeline.isLoading,
-        refresh: subscribedResult.refresh,
-        hasMore: subscribedResult.hasMore,
-        loadMore: subscribedResult.loadMore,
-      };
-    }
     return {
-      items: exploreResult.items as ContentItem[],
-      isLoading: exploreResult.isLoading,
-      refresh: exploreResult.refresh,
-      hasMore: false,
-      loadMore: () => {},
+      items: dedupedItems,
+      isLoading: subscribedResult.isLoading || subscriptionTimeline.isLoading,
+      refresh: subscribedResult.refresh,
+      hasMore: subscribedResult.hasMore,
+      loadMore: subscribedResult.loadMore,
     };
-  }, [mode, subscribedResult, exploreResult, subscriptionItems, subscriptionTimeline.isLoading]);
+  }, [subscribedResult, subscriptionItems, subscriptionTimeline.isLoading]);
 
   const decisionTerminal = useDecisionTerminal({
     groupIds: groupId ? [groupId] : undefined,
   });
 
-  const getCreatedAt = useCallback((item: ContentItem) => {
+  const getCreatedAt = useCallback((item: TimelineItem) => {
     if (item.createdAt instanceof Date) {
       return item.createdAt;
     }
     return new Date(item.createdAt);
   }, []);
 
-  const getEngagementScore = useCallback((item: ContentItem) => {
+  const getEngagementScore = useCallback((item: TimelineItem) => {
     const stats = item.stats;
     return (
       (stats?.reactions ?? 0) + (stats?.comments ?? 0) + (stats?.views ?? 0) + (stats?.members ?? 0)
@@ -229,7 +257,7 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
     let items = [...currentData.items];
 
     if (filters.contentTypes.length === 0) {
-      return [] as ContentItem[];
+      return [] as TimelineItem[];
     }
 
     items = items.filter(item => filters.contentTypes.includes(item.type));
@@ -379,7 +407,7 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
   }, []);
 
   const renderTimelineCard = useCallback(
-    (item: ContentItem) => {
+    (item: TimelineItem) => {
       const memberCount =
         'memberCount' in item
           ? item.memberCount
@@ -403,6 +431,8 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
               description: item.description,
               memberCount,
               topics: item.tags,
+              eventCount: item.eventCount,
+              amendmentCount: item.amendmentCount,
               isFollowing: mode === 'subscribed',
             },
           };
@@ -416,7 +446,12 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
               startDate: item.startDate ?? item.createdAt,
               endDate: item.endDate,
               location: item.location,
+              city: item.city,
+              postcode: item.postcode,
               attendeeCount: item.attendeeCount,
+              electionsCount: item.electionsCount,
+              amendmentsCount: item.amendmentsCount,
+              hashtags: (item.tags ?? []).map(tag => ({ id: tag, tag })),
               organizerName: item.groupName || item.authorName,
               isAttending: mode === 'subscribed',
             },
@@ -430,6 +465,10 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
               description: item.description,
               status: normalizeAmendmentStatus(status),
               groupName: item.groupName,
+              collaboratorCount: item.collaboratorCount,
+              supportingGroupsCount: item.supportingGroupsCount,
+              changeRequestCount: item.changeRequestCount,
+              hashtags: (item.tags ?? []).map(tag => ({ id: tag, tag })),
             },
           };
           break;
@@ -442,7 +481,9 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
               coverImageUrl: item.imageUrl,
               authorName: item.authorName,
               authorAvatar: item.authorAvatar,
+              hashtags: (item.tags ?? []).map(tag => ({ id: tag, tag })),
               publishedAt: item.createdAt,
+              commentCount: item.commentCount ?? item.stats?.comments,
             },
           };
           break;
@@ -466,6 +507,7 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
               description: item.description,
               groupId: item.groupId,
               groupName: item.groupName,
+              status: item.status as any,
             },
           };
           break;
@@ -475,11 +517,14 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
               id: item.id,
               title: item.title,
               thumbnailUrl: item.imageUrl,
+              videoUrl: item.videoUrl,
               views: item.stats?.views,
               likes: item.stats?.reactions,
               authorName: item.authorName,
               authorAvatar: item.authorAvatar,
               sourceName: item.groupName,
+              sourceType: item.groupId ? 'group' : undefined,
+              sourceId: item.groupId,
             },
           };
           break;
@@ -498,6 +543,8 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
               authorName: item.authorName,
               authorAvatar: item.authorAvatar,
               sourceName: item.groupName,
+              sourceType: item.groupId ? 'group' : undefined,
+              sourceId: item.groupId,
             },
           };
           break;
@@ -520,6 +567,8 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
                 supportPercentage,
                 supportCount,
                 opposeCount,
+                agendaEventId: (item as any).agendaEventId,
+                agendaItemId: (item as any).agendaItemId,
               },
             };
           }
@@ -535,6 +584,8 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
               status: normalizeElectionStatus(status),
               candidates: [],
               totalCandidates: 0,
+              agendaEventId: (item as any).agendaEventId,
+              agendaItemId: (item as any).agendaItemId,
             },
           };
           break;
@@ -562,6 +613,23 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
                     }
                   : undefined,
               timestamp: item.createdAt,
+            },
+          };
+          break;
+        case 'user':
+          cardProps = {
+            user: {
+              id: item.authorId || item.id,
+              name: item.authorName || item.title,
+              handle: 'handle' in item ? (item as any).handle : undefined,
+              bio: item.description,
+              subtitle: 'subtitle' in item ? (item as any).subtitle : undefined,
+              avatarUrl: item.authorAvatar,
+              location: item.location,
+              groupCount:
+                item.groupCount ?? ('groupCount' in item ? (item as any).groupCount : undefined),
+              amendmentCount: item.amendmentCount,
+              hashtags: (item.tags ?? []).map(tag => ({ id: tag, tag })),
             },
           };
           break;
@@ -653,71 +721,6 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
             <a href="/search">{t('features.timeline.discoverContent')}</a>
           </Button>
         </div>
-      </div>
-    );
-  }
-
-  // Explore mode with sections
-  if (mode === 'explore') {
-    const exploreItems = filteredItems as ExploreItem[];
-    const own = exploreItems.filter(item => item.reason === 'own_content').slice(0, 6);
-    const discover = exploreItems.filter(item => item.reason !== 'own_content').slice(0, 20);
-    const hasContent = own.length > 0 || discover.length > 0;
-
-    if (!currentData.isLoading && !hasContent) {
-      return (
-        <div className={cn('space-y-4', className)}>
-          <TimelineHeader
-            mode={mode}
-            onModeChange={setMode}
-            sortBy={filters.sortBy}
-            onSortChange={handleSortChange}
-          />
-          <ExploreEmptyState />
-        </div>
-      );
-    }
-
-    return (
-      <div className={cn('space-y-6', className)}>
-        <TimelineHeader
-          mode={mode}
-          onModeChange={setMode}
-          sortBy={filters.sortBy}
-          onSortChange={handleSortChange}
-        />
-
-        {/* Your Recent Activity Section */}
-        {own.length > 0 && (
-          <section>
-            <ExploreSectionHeader section="your_activity" />
-            <MasonryGrid
-              items={own}
-              renderItem={renderTimelineCard}
-              keyExtractor={item => item.id}
-              className="mt-4"
-            />
-          </section>
-        )}
-
-        {/* Discover Section */}
-        {discover.length > 0 && (
-          <section>
-            <ExploreSectionHeader section="discover" />
-            <MasonryGrid
-              items={discover}
-              renderItem={renderTimelineCard}
-              keyExtractor={item => item.id}
-              className="mt-4"
-            />
-          </section>
-        )}
-
-        {currentData.isLoading && (
-          <div className="flex justify-center py-8">
-            <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        )}
       </div>
     );
   }

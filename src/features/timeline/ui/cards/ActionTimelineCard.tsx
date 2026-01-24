@@ -10,13 +10,14 @@ import {
   Users,
   Calendar,
   ScrollText,
-  ExternalLink,
 } from 'lucide-react';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { useTranslation } from '@/hooks/use-translation';
 import { cn } from '@/utils/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { ShareButton } from '@/components/shared/ShareButton';
 import {
   TimelineCardBase,
   TimelineCardContent,
@@ -185,6 +186,7 @@ function EntityLink({ entity }: { entity: ActionEntity }) {
     <Link
       href={entity.url}
       className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700"
+      onClick={e => e.stopPropagation()}
     >
       {iconMap[entity.type]}
       <span className="max-w-[120px] truncate">{entity.name}</span>
@@ -211,6 +213,7 @@ export function ActionTimelineCard({ action, onViewDetails, className }: ActionT
   const gradient = getContentTypeGradient('action');
   const timestamp =
     typeof action.timestamp === 'string' ? new Date(action.timestamp) : action.timestamp;
+  const shareUrl = action.targetEntity?.url || action.sourceEntity?.url || '/timeline';
 
   // Build action message based on type
   const getActionMessage = () => {
@@ -275,7 +278,7 @@ export function ActionTimelineCard({ action, onViewDetails, className }: ActionT
   };
 
   return (
-    <TimelineCardBase contentType="action" className={className}>
+    <TimelineCardBase contentType="action" className={className} href={action.sourceEntity?.url}>
       {/* Gradient accent bar at top */}
       <div className={cn('h-1', gradient)} />
 
@@ -329,35 +332,54 @@ export function ActionTimelineCard({ action, onViewDetails, className }: ActionT
             <p className="mt-2 text-xs text-muted-foreground">
               {formatDistanceToNow(timestamp, { addSuffix: true })}
             </p>
+
+            {/* Stats Bar with Tooltips */}
+            <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex cursor-help items-center gap-1">
+                    <Users className="h-3.5 w-3.5" />
+                    <span className="font-medium">{action.actors.length}</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {action.actors.length} {t('features.timeline.cards.action.actors')}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
           </div>
         </div>
       </TimelineCardContent>
 
       {/* Actions */}
-      {(onViewDetails || action.sourceEntity) && (
-        <TimelineCardActions>
-          {onViewDetails && (
-            <TimelineCardActionButton
-              onClick={onViewDetails}
-              variant="outline"
-              size="sm"
-              label={t('features.timeline.cards.viewDetails')}
-            />
-          )}
-
-          {action.sourceEntity && (
-            <Link href={action.sourceEntity.url} passHref>
-              <TimelineCardActionButton
-                variant="ghost"
-                size="sm"
-                className="ml-auto"
-                icon={ExternalLink}
-                label=""
-              />
-            </Link>
-          )}
-        </TimelineCardActions>
-      )}
+      <TimelineCardActions>
+        {onViewDetails && (
+          <TimelineCardActionButton
+            onClick={e => {
+              e?.preventDefault();
+              onViewDetails?.();
+            }}
+            variant="outline"
+            size="sm"
+            label={t('features.timeline.cards.viewDetails')}
+          />
+        )}
+        <div onClick={e => e.preventDefault()}>
+          <ShareButton
+            url={shareUrl}
+            title={
+              action.sourceEntity?.name ||
+              action.targetEntity?.name ||
+              t('features.timeline.contentTypes.action')
+            }
+            description={getActionMessage()}
+            variant="outline"
+            size="sm"
+          />
+        </div>
+      </TimelineCardActions>
     </TimelineCardBase>
   );
 }

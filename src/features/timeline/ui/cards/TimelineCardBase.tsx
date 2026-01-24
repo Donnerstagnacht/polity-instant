@@ -1,6 +1,7 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, MouseEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,11 +19,17 @@ export interface TimelineCardBaseProps {
   children: ReactNode;
   elevated?: boolean;
   onClick?: () => void;
+  /** URL to navigate to when card is clicked (supports left-click and right-click open in new tab) */
+  href?: string;
 }
 
 /**
  * Base card wrapper for all timeline cards
  * Provides consistent styling, shadows, and hover effects
+ * When href is provided, the card becomes clickable with:
+ * - Left-click: Navigate using Next.js router
+ * - Middle-click or Ctrl+click: Open in new tab
+ * Uses div instead of Link to avoid nested anchor issues
  */
 export function TimelineCardBase({
   contentType,
@@ -30,22 +37,69 @@ export function TimelineCardBase({
   children,
   elevated = false,
   onClick,
+  href,
 }: TimelineCardBaseProps) {
+  const router = useRouter();
   const shadowClasses = getCardShadowClasses(elevated);
+
+  const cardStyles = cn(
+    'block overflow-hidden border border-gray-100 dark:border-gray-800',
+    'bg-card text-card-foreground',
+    CARD_RADIUS.card,
+    shadowClasses,
+    'transform transition-all duration-200',
+    'hover:-translate-y-1',
+    (onClick || href) && 'cursor-pointer',
+    className
+  );
+
+  const handleClick = (e: MouseEvent<HTMLDivElement>) => {
+    // If user clicked on an interactive element inside, don't navigate
+    const target = e.target as HTMLElement;
+    if (e.defaultPrevented) {
+      return;
+    }
+    const interactive = target.closest(
+      'a, button, [role="button"], input, select, textarea, label'
+    );
+    if (interactive && interactive !== e.currentTarget) {
+      return;
+    }
+
+    if (onClick) {
+      onClick();
+    }
+
+    if (href) {
+      // Ctrl+click or Cmd+click opens in new tab
+      if (e.ctrlKey || e.metaKey) {
+        window.open(href, '_blank');
+        return;
+      }
+
+      // Use Next.js routing for standard left click
+      e.preventDefault();
+      router.push(href);
+    }
+  };
 
   return (
     <div
-      className={cn(
-        'overflow-hidden border border-gray-100 dark:border-gray-800',
-        'bg-card text-card-foreground',
-        CARD_RADIUS.card,
-        shadowClasses,
-        'transform transition-all duration-200',
-        'hover:-translate-y-1',
-        onClick && 'cursor-pointer',
-        className
-      )}
-      onClick={onClick}
+      className={cardStyles}
+      onClick={handleClick}
+      role={href ? 'link' : onClick ? 'button' : undefined}
+      tabIndex={href || onClick ? 0 : undefined}
+      onKeyDown={e => {
+        if (href && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          router.push(href);
+        }
+        if (!href && onClick && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      aria-label={href ? `Open ${contentType}` : undefined}
     >
       {children}
     </div>
@@ -56,6 +110,8 @@ export interface TimelineCardHeaderProps {
   contentType: ContentType;
   title: string;
   subtitle?: string;
+  /** URL for the subtitle link (e.g., group page) */
+  subtitleHref?: string;
   badge?: ReactNode;
   showIcon?: boolean;
   className?: string;
@@ -69,6 +125,7 @@ export function TimelineCardHeader({
   contentType,
   title,
   subtitle,
+  subtitleHref,
   badge,
   showIcon = true,
   className,
@@ -77,6 +134,19 @@ export function TimelineCardHeader({
   const config = CONTENT_TYPE_CONFIG[contentType];
   const gradient = getContentTypeGradient(contentType);
   const Icon = config.icon;
+  const router = useRouter();
+
+  const handleSubtitleClick = (e: MouseEvent<HTMLSpanElement>) => {
+    if (!subtitleHref) return;
+    e.stopPropagation();
+
+    // Ctrl+click or Cmd+click opens in new tab
+    if (e.ctrlKey || e.metaKey) {
+      window.open(subtitleHref, '_blank');
+    } else {
+      router.push(subtitleHref);
+    }
+  };
 
   return (
     <div className={cn('p-4', gradient, className)}>
@@ -85,9 +155,32 @@ export function TimelineCardHeader({
           {showIcon && <Icon className={cn('mt-0.5 h-5 w-5 flex-shrink-0', config.accentColor)} />}
           <div className="min-w-0 flex-1">
             <h3 className="truncate text-base font-semibold leading-tight">{title}</h3>
-            {subtitle && (
-              <p className="mt-0.5 truncate text-xs text-muted-foreground">{subtitle}</p>
-            )}
+            {subtitle &&
+              (subtitleHref ? (
+                <span
+                  onClick={handleSubtitleClick}
+                  onAuxClick={e => {
+                    if (e.button === 1) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      window.open(subtitleHref, '_blank');
+                    }
+                  }}
+                  role="link"
+                  tabIndex={0}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      router.push(subtitleHref);
+                    }
+                  }}
+                  className="mt-0.5 block cursor-pointer truncate text-xs text-muted-foreground hover:text-foreground hover:underline"
+                >
+                  {subtitle}
+                </span>
+              ) : (
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">{subtitle}</p>
+              ))}
           </div>
         </div>
         {badge}
@@ -128,7 +221,7 @@ export function TimelineCardActions({ className, children }: TimelineCardActions
 export interface TimelineCardActionButtonProps {
   icon?: LucideIcon;
   label: string;
-  onClick?: () => void;
+  onClick?: (e?: React.MouseEvent) => void;
   variant?: 'default' | 'outline' | 'ghost' | 'secondary';
   size?: 'sm' | 'default';
   className?: string;

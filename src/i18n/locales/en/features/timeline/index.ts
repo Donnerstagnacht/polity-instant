@@ -88,6 +88,7 @@ export const timelineTranslations = {
     todo: 'Todo',
     blog: 'Blog',
     action: 'Activity',
+    user: 'User',
   },
   // Card-specific translations
   cards: {
@@ -128,6 +129,15 @@ export const timelineTranslations = {
     bookmark: 'Bookmark',
     bookmarked: 'Bookmarked',
     readProgress: 'Reading Progress',
+    message: 'Message',
+    groups: 'groups',
+    viewProfile: 'View Profile',
+    subscribers: 'Subscribers',
+    comments: 'Comments',
+    likes: 'Likes',
+    views: 'Views',
+    interested: 'Interested',
+    videoUnavailable: 'Video unavailable',
     // Election card translations
     election: {
       status: {
@@ -155,6 +165,7 @@ export const timelineTranslations = {
     },
     // Action card translations
     action: {
+      actors: 'Actors',
       userJoinedGroup: '{{actor}} joined',
       voteStarted: 'Vote started on',
       eventGoingLive: 'Event is now live',
@@ -167,6 +178,50 @@ export const timelineTranslations = {
       amendmentRejected: 'Amendment rejected',
       from: 'from',
       to: 'to',
+    },
+    // Event card translations
+    event: {
+      participants: 'Participants',
+      elections: 'Elections',
+      amendments: 'Amendments',
+      attending: 'Attending',
+      invited: 'Invited',
+      pending: 'Pending',
+      leaveEvent: 'Leave Event',
+      acceptInvitation: 'Accept Invitation',
+      declineInvitation: 'Decline Invitation',
+      withdrawRequest: 'Withdraw Request',
+      requestParticipation: 'Request to Participate',
+    },
+    // Group card translations
+    group: {
+      members: 'Members',
+      events: 'Events',
+      amendments: 'Amendments',
+      member: 'Member',
+      invited: 'Invited',
+      pending: 'Pending',
+      join: 'Join',
+      leaveGroup: 'Leave Group',
+      acceptInvitation: 'Accept Invitation',
+      declineInvitation: 'Decline Invitation',
+      withdrawRequest: 'Withdraw Request',
+      requestMembership: 'Request to Join',
+    },
+    // Amendment card translations
+    amendment: {
+      collaborators: 'Collaborators',
+      supportingGroups: 'Supporting Groups',
+      changeRequests: 'Change Requests',
+      collaborator: 'Collaborator',
+      invited: 'Invited',
+      pending: 'Pending',
+      collaborate: 'Collaborate',
+      leaveCollaboration: 'Leave Collaboration',
+      acceptInvitation: 'Accept Invitation',
+      declineInvitation: 'Decline Invitation',
+      withdrawRequest: 'Withdraw Request',
+      requestCollaboration: 'Request to Collaborate',
     },
   },
   card: {

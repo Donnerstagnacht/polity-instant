@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -18,6 +18,8 @@ interface NewConversationDialogProps {
   onOpenChange: (open: boolean) => void;
   currentUserId?: string;
   onUserSelect: (userId: string) => void;
+  initialSearchQuery?: string;
+  existingConversationUserIds?: string[]; // User IDs that already have a direct conversation
 }
 
 export function NewConversationDialog({
@@ -25,9 +27,17 @@ export function NewConversationDialog({
   onOpenChange,
   currentUserId,
   onUserSelect,
+  initialSearchQuery,
+  existingConversationUserIds = [],
 }: NewConversationDialogProps) {
   const { t } = useTranslation();
   const [userSearchQuery, setUserSearchQuery] = useState('');
+
+  useEffect(() => {
+    if (open) {
+      setUserSearchQuery(initialSearchQuery ?? '');
+    }
+  }, [initialSearchQuery, open]);
 
   // Query all users for search dialog
   const { data: allUsersData } = db.useQuery({
@@ -44,31 +54,31 @@ export function NewConversationDialog({
 
   // Filter users in search dialog
   const filteredUsers = useMemo(() => {
+    // Base filter: exclude current user, Aria & Kai, and users with existing conversations
+    const baseFilter = (u: any) =>
+      u.id !== currentUserId &&
+      u.id !== ARIA_KAI_USER_ID &&
+      !existingConversationUserIds.includes(u.id);
+
     if (!userSearchQuery.trim()) {
-      return allUsers.filter(
-        (u: any) => u.id !== currentUserId && u.id !== ARIA_KAI_USER_ID
-      ); // Exclude current user and Aria & Kai
+      return allUsers.filter(baseFilter);
     }
-    return allUsers
-      .filter((u: any) => u.id !== currentUserId && u.id !== ARIA_KAI_USER_ID) // Exclude current user and Aria & Kai
-      .filter((u: any) => {
-        const name = u.name?.toLowerCase() || '';
-        const handle = u.handle?.toLowerCase() || '';
-        return (
-          name.includes(userSearchQuery.toLowerCase()) ||
-          handle.includes(userSearchQuery.toLowerCase())
-        );
-      });
-  }, [allUsers, userSearchQuery, currentUserId]);
+    return allUsers.filter(baseFilter).filter((u: any) => {
+      const name = u.name?.toLowerCase() || '';
+      const handle = u.handle?.toLowerCase() || '';
+      return (
+        name.includes(userSearchQuery.toLowerCase()) ||
+        handle.includes(userSearchQuery.toLowerCase())
+      );
+    });
+  }, [allUsers, userSearchQuery, currentUserId, existingConversationUserIds]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{t('features.messages.compose.startNew')}</DialogTitle>
-          <DialogDescription>
-            {t('features.messages.compose.searchDescription')}
-          </DialogDescription>
+          <DialogDescription>{t('features.messages.compose.searchDescription')}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="relative">
@@ -76,7 +86,7 @@ export function NewConversationDialog({
             <Input
               placeholder={t('features.messages.compose.searchUsersPlaceholder')}
               value={userSearchQuery}
-              onChange={(e) => setUserSearchQuery(e.target.value)}
+              onChange={e => setUserSearchQuery(e.target.value)}
               className="pl-9"
             />
           </div>
@@ -100,12 +110,8 @@ export function NewConversationDialog({
                     className="flex flex-1 items-center gap-3 text-left"
                   >
                     <Avatar className="h-10 w-10 flex-shrink-0">
-                      <AvatarImage
-                        src={searchUser.avatar || searchUser.imageURL}
-                      />
-                      <AvatarFallback>
-                        {searchUser.name?.[0]?.toUpperCase() || 'U'}
-                      </AvatarFallback>
+                      <AvatarImage src={searchUser.avatar || searchUser.imageURL} />
+                      <AvatarFallback>{searchUser.name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-semibold">

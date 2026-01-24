@@ -11,6 +11,7 @@ import _messages from './schema/messages';
 import _notifications from './schema/notifications';
 import _blog from './schema/blog';
 import _payments from './schema/payments';
+import _statements from './schema/statements';
 import _common from './schema/common';
 
 const _schema = i.schema({
@@ -25,6 +26,7 @@ const _schema = i.schema({
     ..._notifications.entities,
     ..._blog.entities,
     ..._payments.entities,
+    ..._statements.entities,
     ..._common.entities,
   },
   links: {
@@ -38,6 +40,7 @@ const _schema = i.schema({
     ..._notifications.links,
     ..._blog.links,
     ..._payments.links,
+    ..._statements.links,
     ..._common.links,
   },
   rooms: {

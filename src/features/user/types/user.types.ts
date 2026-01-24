@@ -29,9 +29,15 @@ export interface UserBlog {
   id: number;
   title: string;
   date: string;
+  description?: string;
+  imageURL?: string;
+  commentCount?: number;
+  comments?: number; // Legacy support
+  supporters?: number; // Legacy support
   likes?: number; // Legacy support
-  supporters?: number;
-  comments: number;
+  hashtags?: { id: string; tag: string }[];
+  authorName?: string;
+  authorAvatar?: string;
 }
 
 export interface UserGroup {
@@ -56,6 +62,8 @@ export interface UserAmendment {
   date: string;
   code?: string;
   tags?: string[];
+  groupId?: string;
+  groupName?: string;
 }
 
 export interface UserHashtag {

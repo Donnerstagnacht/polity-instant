@@ -2,7 +2,7 @@ import React from 'react';
 import { USER } from '../state/user.data';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { UserWikiContentTabs } from './UserWikiContentTabs';
-import { getBlogGradient, getRoleBadgeColor } from '../utils/userWiki.utils';
+import { getBlogGradient } from '../utils/userWiki.utils';
 import { GRADIENTS } from '../state/gradientColors';
 
 const meta: Meta = {
@@ -24,7 +24,6 @@ export const UserWikiContentTabsDefault: StoryObj = {
         searchTerms={searchTerms}
         handleSearchChange={handleSearchChange}
         getBlogGradient={(id: number) => getBlogGradient(id, GRADIENTS)}
-        getRoleBadgeColor={getRoleBadgeColor}
         {...args}
       />
     );

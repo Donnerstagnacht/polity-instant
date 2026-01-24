@@ -19,6 +19,7 @@ import {
   notifyChangeRequestRejected,
 } from '@/utils/notification-helpers';
 import { triggerSupporterConfirmation } from '@/features/amendments/hooks/useSupportConfirmation';
+import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 
 interface UseChangeRequestVotingOptions {
   eventId: string;
@@ -128,15 +129,35 @@ export function useChangeRequestVoting({
         throw new Error('Permission denied');
       }
 
-      await db.transact([
+      const transactions: any[] = [
         tx.eventVotingSessions[votingSessionId].update({
           targetEntityType: 'change_request',
           targetEntityId: changeRequestId,
           phase: 'voting',
         }),
-      ]);
+      ];
+
+      // Add timeline event for vote starting
+      if (amendmentId) {
+        transactions.push(
+          createTimelineEvent({
+            eventType: 'vote_started',
+            entityType: 'amendment',
+            entityId: amendmentId,
+            actorId: userId,
+            title: 'Voting started on change request',
+            description: amendmentTitle || undefined,
+            contentType: 'vote',
+            status: {
+              voteStatus: 'open',
+            },
+          })
+        );
+      }
+
+      await db.transact(transactions);
     },
-    [votingSessionId, can]
+    [votingSessionId, can, amendmentId, amendmentTitle, userId]
   );
 
   // Move to the next change request in queue
@@ -227,12 +248,32 @@ export function useChangeRequestVoting({
       const newStatus = passed ? 'approved' : 'rejected';
 
       // Update change request status
-      await db.transact([
+      const transactions: any[] = [
         tx.changeRequests[currentChangeRequest.id].update({
           status: newStatus,
           resolvedAt: Date.now(),
         }),
-      ]);
+      ];
+
+      // Add timeline event for vote result
+      if (amendmentId) {
+        transactions.push(
+          createTimelineEvent({
+            eventType: passed ? 'vote_passed' : 'vote_rejected',
+            entityType: 'amendment',
+            entityId: amendmentId,
+            actorId: userId,
+            title: passed ? 'Change request approved' : 'Change request rejected',
+            description: amendmentTitle || undefined,
+            contentType: 'vote',
+            status: {
+              voteStatus: passed ? 'passed' : 'rejected',
+            },
+          })
+        );
+      }
+
+      await db.transact(transactions);
 
       // Send notifications to change request author
       const authorId = currentChangeRequest.author?.id;

@@ -35,6 +35,7 @@ import { VisibilitySelector } from '@/components/ui/visibility-selector';
 import { cn } from '@/utils/utils';
 import { notifyRelationshipRequested } from '@/utils/notification-helpers';
 import { useTranslation } from '@/hooks/use-translation';
+import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 
 type WithRight =
   | 'informationRight'
@@ -78,14 +79,19 @@ export default function CreateGroupPage() {
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('');
   const [lastInvitedUserId, setLastInvitedUserId] = useState<string | null>(null);
-  const { users: allSearchedUsers = [], isLoading: isLoadingUsers } = useUserSearch(userSearchQuery, []);
-  
+  const { users: allSearchedUsers = [], isLoading: isLoadingUsers } = useUserSearch(
+    userSearchQuery,
+    []
+  );
+
   // Filter out the logged-in user from search results
   const searchedUsers = allSearchedUsers.filter((u: any) => u.id !== user?.id);
 
   // Step 4: Link Groups
   const [selectedLinkGroupId, setSelectedLinkGroupId] = useState('');
-  const [linkRelationshipType, setLinkRelationshipType] = useState<'isParent' | 'isChild'>('isParent');
+  const [linkRelationshipType, setLinkRelationshipType] = useState<'isParent' | 'isChild'>(
+    'isParent'
+  );
   const [selectedRights, setSelectedRights] = useState<Set<WithRight>>(new Set());
 
   // Fetch all groups for linking
@@ -109,13 +115,13 @@ export default function CreateGroupPage() {
     if (!userId) return;
     const user = searchedUsers.find((u: any) => u.id === userId);
     if (!user) return;
-    
+
     if (formData.invitedUserIds.includes(userId)) {
       toast.info(t('pages.create.group.userAlreadyInvited'));
       setSelectedUserId('');
       return;
     }
-    
+
     setFormData(prev => ({
       ...prev,
       invitedUserIds: [...prev.invitedUserIds, userId],
@@ -157,7 +163,11 @@ export default function CreateGroupPage() {
         ...prev,
         groupLinks: prev.groupLinks.map(link =>
           link.groupId === selectedLinkGroupId
-            ? { ...link, rights: Array.from(selectedRights), relationshipType: linkRelationshipType }
+            ? {
+                ...link,
+                rights: Array.from(selectedRights),
+                relationshipType: linkRelationshipType,
+              }
             : link
         ),
       }));
@@ -219,7 +229,7 @@ export default function CreateGroupPage() {
     if (e) {
       e.preventDefault();
     }
-    
+
     setIsSubmitting(true);
 
     try {
@@ -420,6 +430,20 @@ export default function CreateGroupPage() {
         }
       });
 
+      // Add timeline event for public groups
+      if (formData.visibility === 'public') {
+        transactions.push(
+          createTimelineEvent({
+            eventType: 'created',
+            entityType: 'group',
+            entityId: groupId,
+            actorId: user.id,
+            title: `New group created: ${formData.name}`,
+            description: formData.description || 'A new group has been created',
+          })
+        );
+      }
+
       // Create constitutional event if requested
       let eventId: string | undefined;
       if (formData.createConstitutionalEvent && formData.eventName) {
@@ -585,7 +609,9 @@ export default function CreateGroupPage() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="group-description">{t('pages.create.group.descriptionLabel')}</Label>
+                          <Label htmlFor="group-description">
+                            {t('pages.create.group.descriptionLabel')}
+                          </Label>
                           <Textarea
                             id="group-description"
                             placeholder={t('pages.create.group.descriptionPlaceholder')}
@@ -604,7 +630,9 @@ export default function CreateGroupPage() {
                       <div className="space-y-4 p-4">
                         <div className="flex items-center justify-between">
                           <Label>{t('pages.create.group.inviteMembersOptional')}</Label>
-                          <Badge variant="secondary">{formData.invitedUserIds.length} {t('pages.create.group.invited')}</Badge>
+                          <Badge variant="secondary">
+                            {formData.invitedUserIds.length} {t('pages.create.group.invited')}
+                          </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">
                           {t('pages.create.group.searchUsers')}
@@ -624,21 +652,30 @@ export default function CreateGroupPage() {
                           {/* Display last invited user */}
                           {lastInvitedUser && (
                             <div className="space-y-2">
-                              <Label className="text-sm">{t('pages.create.group.lastInvited')}</Label>
+                              <Label className="text-sm">
+                                {t('pages.create.group.lastInvited')}
+                              </Label>
                               <Card className="p-3">
                                 <div className="flex items-center gap-3">
                                   <Avatar className="h-10 w-10">
                                     {lastInvitedUser.avatar && (
-                                      <AvatarImage src={lastInvitedUser.avatar} alt={lastInvitedUser.name || ''} />
+                                      <AvatarImage
+                                        src={lastInvitedUser.avatar}
+                                        alt={lastInvitedUser.name || ''}
+                                      />
                                     )}
                                     <AvatarFallback>
                                       {lastInvitedUser.name?.[0]?.toUpperCase() || '?'}
                                     </AvatarFallback>
                                   </Avatar>
                                   <div className="flex-1">
-                                    <div className="font-medium">{lastInvitedUser.name || 'User'}</div>
+                                    <div className="font-medium">
+                                      {lastInvitedUser.name || 'User'}
+                                    </div>
                                     <div className="text-xs text-muted-foreground">
-                                      {lastInvitedUser.handle ? `@${lastInvitedUser.handle}` : lastInvitedUser.contactEmail}
+                                      {lastInvitedUser.handle
+                                        ? `@${lastInvitedUser.handle}`
+                                        : lastInvitedUser.contactEmail}
                                     </div>
                                   </div>
                                   <button
@@ -656,7 +693,9 @@ export default function CreateGroupPage() {
                           {/* Display all invited users */}
                           {formData.invitedUserIds.length > 0 && (
                             <div className="space-y-2">
-                              <Label className="text-sm">{t('pages.create.group.allInvitedUsers')} ({invitedUsers.length})</Label>
+                              <Label className="text-sm">
+                                {t('pages.create.group.allInvitedUsers')} ({invitedUsers.length})
+                              </Label>
                               <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border p-2">
                                 {invitedUsers.map((user: any) => (
                                   <Card key={user.id} className="p-3">
@@ -670,7 +709,9 @@ export default function CreateGroupPage() {
                                         </AvatarFallback>
                                       </Avatar>
                                       <div className="flex-1">
-                                        <div className="text-sm font-medium">{user.name || 'User'}</div>
+                                        <div className="text-sm font-medium">
+                                          {user.name || 'User'}
+                                        </div>
                                         <div className="text-xs text-muted-foreground">
                                           {user.handle ? `@${user.handle}` : user.contactEmail}
                                         </div>
@@ -702,7 +743,7 @@ export default function CreateGroupPage() {
                         />
 
                         {/* Hashtags */}
-                        <div className="space-y-2 mt-2">
+                        <div className="mt-2 space-y-2">
                           <HashtagInput
                             value={formData.hashtags}
                             onChange={hashtags => setFormData({ ...formData, hashtags })}
@@ -717,7 +758,9 @@ export default function CreateGroupPage() {
                       <div className="space-y-4 p-4">
                         <div className="flex items-center justify-between">
                           <Label>{t('pages.create.group.linkGroupsOptional')}</Label>
-                          <Badge variant="secondary">{formData.groupLinks.length} {t('pages.create.group.linked')}</Badge>
+                          <Badge variant="secondary">
+                            {formData.groupLinks.length} {t('pages.create.group.linked')}
+                          </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">
                           {t('pages.create.group.requestRelationships')}
@@ -773,9 +816,11 @@ export default function CreateGroupPage() {
                                     <Button
                                       key={right.value}
                                       type="button"
-                                      variant={selectedRights.has(right.value) ? 'default' : 'outline'}
+                                      variant={
+                                        selectedRights.has(right.value) ? 'default' : 'outline'
+                                      }
                                       onClick={() => toggleRight(right.value)}
-                                      className="h-auto py-3 justify-start"
+                                      className="h-auto justify-start py-3"
                                     >
                                       {selectedRights.has(right.value) && (
                                         <Check className="mr-2 h-4 w-4" />
@@ -800,14 +845,16 @@ export default function CreateGroupPage() {
 
                           {/* Display linked groups */}
                           {formData.groupLinks.length > 0 && (
-                            <div className="space-y-2 mt-4">
-                              <Label className="text-sm">{t('pages.create.group.linkedGroups')}</Label>
+                            <div className="mt-4 space-y-2">
+                              <Label className="text-sm">
+                                {t('pages.create.group.linkedGroups')}
+                              </Label>
                               <div className="space-y-2">
                                 {formData.groupLinks.map(link => (
                                   <Card key={link.groupId} className="p-3">
                                     <div className="flex items-start justify-between gap-2">
                                       <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-1">
+                                        <div className="mb-1 flex items-center gap-2">
                                           <span className="font-medium">{link.groupName}</span>
                                           <Badge variant="outline" className="text-xs">
                                             {link.relationshipType === 'isParent'
@@ -817,7 +864,11 @@ export default function CreateGroupPage() {
                                         </div>
                                         <div className="flex flex-wrap gap-1">
                                           {link.rights.map(right => (
-                                            <Badge key={right} variant="secondary" className="text-xs">
+                                            <Badge
+                                              key={right}
+                                              variant="secondary"
+                                              className="text-xs"
+                                            >
                                               {RIGHTS.find(r => r.value === right)?.label}
                                             </Badge>
                                           ))}
@@ -862,7 +913,9 @@ export default function CreateGroupPage() {
                         {formData.createConstitutionalEvent && (
                           <div className="space-y-4 pt-4">
                             <div className="space-y-2">
-                              <Label htmlFor="event-name">{t('pages.create.group.eventName')}</Label>
+                              <Label htmlFor="event-name">
+                                {t('pages.create.group.eventName')}
+                              </Label>
                               <Input
                                 id="event-name"
                                 placeholder={t('pages.create.group.eventNamePlaceholder')}
@@ -875,7 +928,9 @@ export default function CreateGroupPage() {
                             </div>
 
                             <div className="space-y-2">
-                              <Label htmlFor="event-location">{t('pages.create.group.eventLocation')}</Label>
+                              <Label htmlFor="event-location">
+                                {t('pages.create.group.eventLocation')}
+                              </Label>
                               <Input
                                 id="event-location"
                                 placeholder={t('pages.create.group.eventLocationPlaceholder')}
@@ -888,7 +943,9 @@ export default function CreateGroupPage() {
 
                             <div className="grid grid-cols-2 gap-4">
                               <div className="space-y-2">
-                                <Label htmlFor="event-start-date">{t('pages.create.group.eventStartDate')}</Label>
+                                <Label htmlFor="event-start-date">
+                                  {t('pages.create.group.eventStartDate')}
+                                </Label>
                                 <Input
                                   id="event-start-date"
                                   type="date"
@@ -899,7 +956,9 @@ export default function CreateGroupPage() {
                                 />
                               </div>
                               <div className="space-y-2">
-                                <Label htmlFor="event-start-time">{t('pages.create.group.eventStartTime')}</Label>
+                                <Label htmlFor="event-start-time">
+                                  {t('pages.create.group.eventStartTime')}
+                                </Label>
                                 <Input
                                   id="event-start-time"
                                   type="time"
@@ -913,12 +972,12 @@ export default function CreateGroupPage() {
 
                             <Card className="bg-muted/50 p-3">
                               <div className="flex items-start gap-2">
-                                <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                                <Calendar className="mt-0.5 h-4 w-4 text-muted-foreground" />
                                 <div className="flex-1 text-sm text-muted-foreground">
-                                  <p className="font-medium mb-1">{t('pages.create.group.eventTypeGeneralAssembly')}</p>
-                                  <p>
-                                    {t('pages.create.group.eventTypeDescription')}
+                                  <p className="mb-1 font-medium">
+                                    {t('pages.create.group.eventTypeGeneralAssembly')}
                                   </p>
+                                  <p>{t('pages.create.group.eventTypeDescription')}</p>
                                 </div>
                               </div>
                             </Card>
@@ -957,7 +1016,9 @@ export default function CreateGroupPage() {
 
                             {formData.hashtags.length > 0 && (
                               <div>
-                                <strong className="text-sm block mb-1">{t('pages.create.group.hashtagsLabel')}:</strong>
+                                <strong className="mb-1 block text-sm">
+                                  {t('pages.create.group.hashtagsLabel')}:
+                                </strong>
                                 <div className="flex flex-wrap gap-1">
                                   {formData.hashtags.map((tag, index) => (
                                     <Badge key={index} variant="secondary" className="text-xs">
@@ -970,11 +1031,19 @@ export default function CreateGroupPage() {
 
                             {formData.invitedUserIds.length > 0 && (
                               <div>
-                                <strong className="text-sm block mb-1">{t('pages.create.group.invitedMembersLabel')}:</strong>
+                                <strong className="mb-1 block text-sm">
+                                  {t('pages.create.group.invitedMembersLabel')}:
+                                </strong>
                                 <div className="space-y-2">
                                   <div className="flex flex-wrap gap-2">
-                                    {(showAllInvitedInSummary ? invitedUsers : invitedUsers.slice(0, 3)).map((user: any) => (
-                                      <div key={user.id} className="flex items-center gap-1.5 rounded-md border bg-background/50 px-2 py-1">
+                                    {(showAllInvitedInSummary
+                                      ? invitedUsers
+                                      : invitedUsers.slice(0, 3)
+                                    ).map((user: any) => (
+                                      <div
+                                        key={user.id}
+                                        className="flex items-center gap-1.5 rounded-md border bg-background/50 px-2 py-1"
+                                      >
                                         <Avatar className="h-5 w-5">
                                           {user.avatar && (
                                             <AvatarImage src={user.avatar} alt={user.name || ''} />
@@ -992,7 +1061,9 @@ export default function CreateGroupPage() {
                                       type="button"
                                       variant="ghost"
                                       size="sm"
-                                      onClick={() => setShowAllInvitedInSummary(!showAllInvitedInSummary)}
+                                      onClick={() =>
+                                        setShowAllInvitedInSummary(!showAllInvitedInSummary)
+                                      }
                                       className="h-auto py-1 text-xs"
                                     >
                                       {showAllInvitedInSummary
@@ -1006,11 +1077,20 @@ export default function CreateGroupPage() {
 
                             {formData.groupLinks.length > 0 && (
                               <div>
-                                <strong className="text-sm block mb-1">{t('pages.create.group.groupLinksLabel')}:</strong>
+                                <strong className="mb-1 block text-sm">
+                                  {t('pages.create.group.groupLinksLabel')}:
+                                </strong>
                                 <div className="space-y-1">
                                   {formData.groupLinks.map(link => (
-                                    <div key={link.groupId} className="text-xs text-muted-foreground">
-                                      • {link.groupName} ({link.relationshipType === 'isParent' ? t('pages.create.group.parent') : t('pages.create.group.child')})
+                                    <div
+                                      key={link.groupId}
+                                      className="text-xs text-muted-foreground"
+                                    >
+                                      • {link.groupName} (
+                                      {link.relationshipType === 'isParent'
+                                        ? t('pages.create.group.parent')
+                                        : t('pages.create.group.child')}
+                                      )
                                     </div>
                                   ))}
                                 </div>
@@ -1019,14 +1099,16 @@ export default function CreateGroupPage() {
 
                             {formData.createConstitutionalEvent && formData.eventName && (
                               <div>
-                                <strong className="text-sm block mb-1">{t('pages.create.group.constitutionalEventLabel')}:</strong>
-                                <Card className="p-2 bg-background/50">
+                                <strong className="mb-1 block text-sm">
+                                  {t('pages.create.group.constitutionalEventLabel')}:
+                                </strong>
+                                <Card className="bg-background/50 p-2">
                                   <div className="flex items-center gap-2 text-xs">
                                     <Calendar className="h-3 w-3" />
                                     <span>{formData.eventName}</span>
                                   </div>
                                   {formData.eventLocation && (
-                                    <div className="text-xs text-muted-foreground mt-1">
+                                    <div className="mt-1 text-xs text-muted-foreground">
                                       📍 {formData.eventLocation}
                                     </div>
                                   )}
@@ -1072,7 +1154,9 @@ export default function CreateGroupPage() {
                   </Button>
                 ) : (
                   <Button type="button" onClick={() => handleSubmit()} disabled={isSubmitting}>
-                    {isSubmitting ? t('pages.create.common.creating') : t('pages.create.group.createGroup')}
+                    {isSubmitting
+                      ? t('pages.create.common.creating')
+                      : t('pages.create.group.createGroup')}
                   </Button>
                 )}
               </CardFooter>
