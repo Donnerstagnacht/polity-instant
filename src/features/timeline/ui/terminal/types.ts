@@ -98,6 +98,16 @@ export interface DecisionItem {
     href: string;
   };
 
+  // Indication support
+  /** Whether this decision is still in indication phase */
+  isIndicationPhase?: boolean;
+
+  /** Indication vote data */
+  indicationVotes?: VoteData;
+
+  /** Indication support percentage */
+  indicationSupportPercentage?: number;
+
   /** Candidates (for elections) */
   candidates?: Array<{
     id: string;
@@ -105,6 +115,8 @@ export interface DecisionItem {
     avatarUrl?: string;
     votes?: number;
     isWinner?: boolean;
+    indicationVotes?: number;
+    indicationPercentage?: number;
   }>;
 }
 

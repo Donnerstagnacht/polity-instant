@@ -68,26 +68,55 @@ export function MobileDecisionCard({ decision, onClick, className }: MobileDecis
         {/* Vote bar and trend (for open votes) */}
         {decision.votes && (
           <div className="mb-3 mt-3 space-y-2">
-            <div className="flex items-center justify-between">
-              <VoteBarCompact votes={decision.votes} className="w-full max-w-[180px]" />
-              {!decision.isClosed && <TrendIndicator trend={decision.trend} compact />}
-            </div>
-            <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                {t('timeline.terminal.support', { defaultValue: 'Support' })}:{' '}
-                {decision.votes.support}
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
-                {t('timeline.terminal.oppose', { defaultValue: 'Oppose' })}: {decision.votes.oppose}
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
-                {t('timeline.terminal.abstain', { defaultValue: 'Abstain' })}:{' '}
-                {decision.votes.abstain}
-              </span>
-            </div>
+            {/* Indication display */}
+            {decision.isIndicationPhase && decision.indicationVotes ? (
+              <>
+                <div className="flex items-center justify-between">
+                  <VoteBarCompact
+                    votes={decision.indicationVotes}
+                    className="w-full max-w-[180px] opacity-70"
+                  />
+                </div>
+                <div className="text-[11px] text-blue-500">
+                  * {t('timeline.terminal.indicationOnly', { defaultValue: 'Indication only' })}
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Show indication comparison if available */}
+                {decision.indicationVotes && !decision.isIndicationPhase && (
+                  <div className="text-[10px] text-muted-foreground">
+                    <span className="text-blue-400">
+                      {t('timeline.terminal.indication', { defaultValue: 'Ind' })}:{' '}
+                      {decision.indicationSupportPercentage}%
+                    </span>
+                    <span className="mx-1">→</span>
+                    <span className="font-medium">{decision.supportPercentage}%</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between">
+                  <VoteBarCompact votes={decision.votes} className="w-full max-w-[180px]" />
+                  {!decision.isClosed && <TrendIndicator trend={decision.trend} compact />}
+                </div>
+                <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                    {t('timeline.terminal.support', { defaultValue: 'Support' })}:{' '}
+                    {decision.votes.support}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                    {t('timeline.terminal.oppose', { defaultValue: 'Oppose' })}:{' '}
+                    {decision.votes.oppose}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
+                    {t('timeline.terminal.abstain', { defaultValue: 'Abstain' })}:{' '}
+                    {decision.votes.abstain}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         )}
 

@@ -1,14 +1,6 @@
 import Link from 'next/link';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,38 +12,25 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import {
-  Clock,
-  User,
-  Plus,
-  ArrowLeft,
-  ArrowRight,
-  FileText,
-  Users,
-  Vote,
-  UserCheck,
-  ThumbsUp,
-  ThumbsDown,
-  Minus,
-  CheckCircle2,
-  Edit,
-  Trash2,
-  Calendar,
-  Mic,
-  BarChart3,
-  Gavel,
-  AlertCircle,
-  Play,
-  SkipForward,
-} from 'lucide-react';
+import { ArrowLeft, ArrowRight, Edit, Trash2, AlertCircle } from 'lucide-react';
 import { useEventAgendaItem } from '../hooks/useEventAgendaItem';
 import { AmendmentVotingQueue } from './AmendmentVotingQueue';
 import { VotingSessionManager } from './VotingSessionManager';
 import { TransferAgendaItemDialog } from './TransferAgendaItemDialog';
+import { AgendaItemContextCard } from './AgendaItemContextCard';
+import { AgendaSpeakerListSection } from './AgendaSpeakerListSection';
+import { AgendaVoteSection } from './AgendaVoteSection';
+import { AgendaElectionSection } from './AgendaElectionSection';
 import { usePermissions } from '@db/rbac';
-import db, { tx } from '../../../../db/db';
+import db, { tx, id as generateId } from '../../../../db/db';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import type {
+  SpeakerListItem,
+  ElectionVote,
+  ElectionCandidate,
+  VoteEntry,
+} from '../types/agenda-section-types';
 import {
   notifyVotingSessionStarted,
   notifyVotingSessionCompleted,
@@ -84,12 +63,17 @@ export function EventAgendaItemDetail({
     handleAddToSpeakerList,
   } = useEventAgendaItem(eventId, agendaItemId);
 
-  const { can } = usePermissions({ eventId });
+  const { can, canVote, canBeCandidate } = usePermissions({ eventId });
   const canManageAgenda = can('manage', 'agendaItems');
+  const canManageVotes = canManageAgenda;
+  const hasVotingRight = canVote();
+  const hasCandidateRight = canBeCandidate();
 
   const [startingVoting, setStartingVoting] = useState(false);
   const [advancingVote, setAdvancingVote] = useState(false);
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const [candidateLoading, setCandidateLoading] = useState(false);
+  const [markingSpeakerComplete, setMarkingSpeakerComplete] = useState<string | null>(null);
 
   // Check if user is event organizer
   const isOrganizer =
@@ -237,45 +221,222 @@ export function EventAgendaItemDetail({
     }
   };
 
-  const getAgendaItemIcon = (type: string) => {
-    switch (type) {
-      case 'election':
-        return <UserCheck className="h-5 w-5" />;
-      case 'vote':
-        return <Vote className="h-5 w-5" />;
-      case 'speech':
-        return <Users className="h-5 w-5" />;
-      case 'discussion':
-      default:
-        return <FileText className="h-5 w-5" />;
+  // Handler: Mark speaker as completed
+  const handleMarkSpeakerCompleted = async (speakerId: string) => {
+    if (!user || !canManageAgenda) return;
+
+    setMarkingSpeakerComplete(speakerId);
+    try {
+      await db.transact([
+        tx.speakerList[speakerId].update({
+          completed: true,
+          completedAt: Date.now(),
+        }),
+      ]);
+      toast.success(t('features.events.agenda.markCompleted'));
+    } catch (error) {
+      console.error('Error marking speaker completed:', error);
+      toast.error('Fehler beim Markieren');
+    } finally {
+      setMarkingSpeakerComplete(null);
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'in-progress':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-      case 'pending':
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+  // Handler: Become candidate
+  const handleBecomeCandidate = async () => {
+    if (!user || !agendaItem?.election?.id || !hasCandidateRight) return;
+
+    setCandidateLoading(true);
+    try {
+      const candidateName =
+        (user as any).name || (user as any).fullName || (user as any).email || 'Candidate';
+      const candidateOrder = electionCandidates.length + 1;
+      const candidateId = generateId();
+      await db.transact([
+        tx.electionCandidates[candidateId]
+          .update({
+            name: candidateName,
+            order: candidateOrder,
+            status: 'nominated',
+            createdAt: Date.now(),
+          })
+          .link({
+            user: user.id,
+            election: agendaItem.election.id,
+          }),
+      ]);
+      toast.success(t('features.events.agenda.becomeCandidate'));
+    } catch (error) {
+      console.error('Error becoming candidate:', error);
+      toast.error('Fehler beim Kandidieren');
+    } finally {
+      setCandidateLoading(false);
     }
   };
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'election':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
-      case 'vote':
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
-      case 'speech':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-      case 'discussion':
-      default:
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+  // Handler: Withdraw candidacy
+  const handleWithdrawCandidacy = async () => {
+    if (!user || !agendaItem?.election?.id) return;
+
+    const candidates = agendaItem.election.candidates || [];
+    const userCandidate = candidates.find((c: any) => c.user?.id === user.id);
+    if (!userCandidate) return;
+
+    setCandidateLoading(true);
+    try {
+      await db.transact([tx.electionCandidates[userCandidate.id].delete()]);
+      toast.success(t('features.events.agenda.withdrawCandidacy'));
+    } catch (error) {
+      console.error('Error withdrawing candidacy:', error);
+      toast.error('Fehler beim Zurückziehen');
+    } finally {
+      setCandidateLoading(false);
     }
   };
+
+  // Handler: Vote on change request
+  const handleChangeRequestVote = async (
+    changeRequestId: string,
+    vote: 'yes' | 'no' | 'abstain'
+  ) => {
+    if (!user) return;
+    // TODO: Implement change request voting when schema supports it
+    console.log('CR Vote:', changeRequestId, vote);
+    toast.info('Change Request Voting wird bald unterstützt');
+  };
+
+  // Handler: Activate change request for voting
+  const handleActivateChangeRequest = async (changeRequestId: string) => {
+    if (!user || !canManageVotes) return;
+    // TODO: Implement change request activation
+    console.log('Activate CR:', changeRequestId);
+    toast.info('Change Request Aktivierung wird bald unterstützt');
+  };
+
+  // Map agenda status to component status
+  const mapAgendaStatus = (status: string): 'planned' | 'active' | 'completed' => {
+    if (status === 'completed' || status === 'done') return 'completed';
+    if (status === 'active' || status === 'in-progress') return 'active';
+    return 'planned';
+  };
+
+  // Prepare speaker list data
+  const speakerListData = useMemo((): SpeakerListItem[] => {
+    return (agendaItem?.speakerList || []).map((speaker: any) => ({
+      id: speaker.id,
+      order: speaker.order || 0,
+      time: speaker.time || 3,
+      completed: speaker.completed || false,
+      title: speaker.title,
+      user: speaker.user
+        ? {
+            id: speaker.user.id,
+            name: speaker.user.name,
+            email: speaker.user.email,
+            avatar: speaker.user.avatar || speaker.user.imageURL,
+          }
+        : undefined,
+    }));
+  }, [agendaItem?.speakerList]);
+
+  const isUserInSpeakerList = speakerListData.some(speaker => speaker.user?.id === user?.id);
+
+  // Prepare election data
+  const election = agendaItem?.election;
+
+  const electionCandidates = useMemo((): ElectionCandidate[] => {
+    if (!election?.candidates) return [];
+    return election.candidates
+      .filter((candidate: any) => candidate.user?.id || candidate.userId)
+      .map((candidate: any) => ({
+        id: candidate.id,
+        userId: candidate.user?.id || candidate.userId || '',
+        user: candidate.user
+          ? {
+              id: candidate.user.id,
+              name: candidate.user.name,
+              email: candidate.user.email,
+              avatar: candidate.user.avatar || candidate.user.imageURL,
+            }
+          : undefined,
+        status: (candidate.status || 'nominated') as 'nominated' | 'accepted' | 'withdrawn',
+      }));
+  }, [election?.candidates]);
+
+  const electionVotes = useMemo((): ElectionVote[] => {
+    if (!election?.id) return [];
+    // Use nested election.votes query for better reactivity
+    const votes = (election as any)?.votes || [];
+    return votes
+      .filter((vote: any) => vote.candidate?.id)
+      .map((vote: any) => ({
+        id: vote.id,
+        candidateId: vote.candidate?.id || '',
+        isIndication: vote.isIndication,
+        voter: vote.voter ? { id: vote.voter.id, name: vote.voter.name } : undefined,
+      }));
+  }, [election]);
+
+  const userElectionVote = useMemo((): ElectionVote | undefined => {
+    if (!user?.id || !election?.id) return undefined;
+    const vote = userElectionVotes.find((v: any) => v.election?.id === election.id);
+    if (!vote || !vote.candidate?.id) return undefined;
+    return {
+      id: vote.id,
+      candidateId: vote.candidate?.id || '',
+      isIndication: vote.isIndication,
+      voter: { id: user.id, name: (user as any).name },
+    };
+  }, [user?.id, election?.id, userElectionVotes]);
+
+  const isUserCandidate = useMemo(() => {
+    return electionCandidates.some(c => c.userId === user?.id);
+  }, [electionCandidates, user?.id]);
+
+  // Prepare amendment vote data
+  const amendmentVote = agendaItem?.amendmentVote;
+
+  const amendmentVoteEntries = useMemo((): VoteEntry[] => {
+    if (!amendmentVote?.id) return [];
+    // Use global query which is reactive, then filter by amendmentVote.id
+    return ((data as any)?.amendmentVoteEntries || [])
+      .filter(
+        (entry: any) =>
+          entry.amendmentVote?.id === amendmentVote.id &&
+          ['yes', 'no', 'abstain'].includes(entry.vote)
+      )
+      .map((entry: any) => ({
+        id: entry.id,
+        vote: entry.vote as 'yes' | 'no' | 'abstain',
+        isIndication: entry.isIndication,
+        voter: entry.voter ? { id: entry.voter.id, name: entry.voter.name } : undefined,
+      }));
+  }, [amendmentVote?.id, data]);
+
+  const userAmendmentVote = useMemo((): VoteEntry | undefined => {
+    if (!user?.id || !amendmentVote?.id) return undefined;
+    const entry = userAmendmentVotes.find((e: any) => e.amendmentVote?.id === amendmentVote.id);
+    if (!entry || !['yes', 'no', 'abstain'].includes(entry.vote)) return undefined;
+    return {
+      id: entry.id,
+      vote: entry.vote as 'yes' | 'no' | 'abstain',
+      isIndication: entry.isIndication,
+      voter: { id: user.id, name: (user as any).name },
+    };
+  }, [user?.id, amendmentVote?.id, userAmendmentVotes]);
+
+  // Change request votes (grouped by CR id)
+  const changeRequestVotes = useMemo(() => {
+    const votes: Record<string, VoteEntry[]> = {};
+    // TODO: Query change request votes when they have their own vote entries
+    return votes;
+  }, []);
+
+  const userChangeRequestVotes = useMemo(() => {
+    const votes: Record<string, VoteEntry> = {};
+    // TODO: Query user's change request votes
+    return votes;
+  }, []);
 
   if (isLoading) {
     return (
@@ -310,709 +471,234 @@ export function EventAgendaItemDetail({
   const isEventOrganizer = user?.id === event.organizer?.id;
   const canEdit = isCreator || isEventOrganizer;
 
-  // Check if user is already in speaker list
-  const speakerList = agendaItem?.speakerList || [];
-  const isUserInSpeakerList = speakerList.some((speaker: any) => speaker.user?.id === user?.id);
-
   return (
     <div className="space-y-6">
-      {/* Breadcrumb Navigation */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Link href={`/event/${eventId}`} className="hover:underline">
-          {event.title}
-        </Link>
-        <span>/</span>
-        <Link href={`/event/${eventId}/agenda`} className="hover:underline">
-          Tagesordnung
-        </Link>
-        <span>/</span>
-        <span className="text-foreground">{agendaItem.title}</span>
+      {/* Navigation Bar */}
+      <div className="flex items-center justify-between gap-2">
+        <Button asChild variant="outline" size="sm">
+          <Link href={`/event/${eventId}/agenda`}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            {t('features.events.agenda.backToAgenda')}
+          </Link>
+        </Button>
+        <div className="flex items-center gap-2">
+          {canManageAgenda && (
+            <Button variant="outline" size="sm" onClick={() => setTransferDialogOpen(true)}>
+              <ArrowRight className="mr-2 h-4 w-4" />
+              {t('features.events.agenda.moveToEvent')}
+            </Button>
+          )}
+          {canEdit && (
+            <>
+              <Button variant="outline" size="sm">
+                <Edit className="mr-2 h-4 w-4" />
+                {t('common.actions.edit')}
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm" disabled={deleteLoading}>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    {t('common.actions.delete')}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t('features.events.agenda.deleteTitle')}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {t('features.events.agenda.deleteDescription')}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t('common.actions.cancel')}</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} disabled={deleteLoading}>
+                      {deleteLoading ? t('common.actions.deleting') : t('common.actions.delete')}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Agenda Item Header */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                {getAgendaItemIcon(agendaItem.type)}
-              </div>
-              <div className="space-y-2">
-                <CardTitle className="text-2xl">{agendaItem.title}</CardTitle>
-                <div className="flex items-center gap-2">
-                  <Badge className={getTypeColor(agendaItem.type)}>
-                    <span className="capitalize">{agendaItem.type}</span>
-                  </Badge>
-                  <Badge className={getStatusColor(agendaItem.status)}>{agendaItem.status}</Badge>
-                  {agendaItem.duration && (
-                    <Badge variant="outline">
-                      <Clock className="mr-1 h-3 w-3" />
-                      {agendaItem.duration} Minuten
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            </div>
-            {canEdit && (
-              <div className="flex items-center gap-2">
-                {canManageAgenda && (
-                  <Button variant="outline" size="sm" onClick={() => setTransferDialogOpen(true)}>
-                    <ArrowRight className="mr-2 h-4 w-4" />
-                    {t('features.events.agenda.moveToEvent')}
-                  </Button>
-                )}
-                <Button variant="outline" size="sm">
-                  <Edit className="mr-2 h-4 w-4" />
-                  Bearbeiten
-                </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="outline" size="sm" disabled={deleteLoading}>
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Löschen
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Tagesordnungspunkt löschen?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Diese Aktion kann nicht rückgängig gemacht werden. Der Tagesordnungspunkt
-                        und alle zugehörigen Daten werden dauerhaft gelöscht.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleDelete} disabled={deleteLoading}>
-                        {deleteLoading ? 'Wird gelöscht...' : 'Löschen'}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            )}
-          </div>
-        </CardHeader>
+      {/* Section 1: Context Card */}
+      <AgendaItemContextCard
+        agendaItem={{
+          id: agendaItem.id,
+          title: agendaItem.title,
+          description: agendaItem.description,
+          type: agendaItem.type,
+          status: agendaItem.status,
+          duration: agendaItem.duration,
+          scheduledTime: agendaItem.scheduledTime,
+          startTime: agendaItem.startTime ? new Date(agendaItem.startTime) : undefined,
+          endTime: agendaItem.endTime ? new Date(agendaItem.endTime) : undefined,
+          activatedAt: agendaItem.activatedAt ? new Date(agendaItem.activatedAt) : undefined,
+          completedAt: agendaItem.completedAt ? new Date(agendaItem.completedAt) : undefined,
+        }}
+        position={
+          (election as any)?.position
+            ? {
+                id: (election as any).position.id,
+                title: (election as any).position.title,
+                description: (election as any).position.description,
+                group: (election as any).position.group
+                  ? {
+                      id: (election as any).position.group.id,
+                      name:
+                        (election as any).position.group.name ||
+                        (election as any).position.group.title,
+                    }
+                  : undefined,
+              }
+            : undefined
+        }
+        amendment={
+          amendment
+            ? {
+                id: amendment.id,
+                title: amendment.title,
+                subtitle: amendment.subtitle,
+                status: amendment.status,
+                workflowStatus: amendment.workflowStatus,
+                imageURL: amendment.imageURL,
+                group: amendment.group
+                  ? { id: amendment.group.id, name: amendment.group.name || amendment.group.title }
+                  : undefined,
+              }
+            : undefined
+        }
+      />
 
-        {agendaItem.description && (
-          <CardContent className="pt-0">
-            <div className="rounded-lg bg-muted/50 p-4">
-              <p className="whitespace-pre-wrap text-muted-foreground">{agendaItem.description}</p>
-            </div>
-          </CardContent>
-        )}
+      {/* Section 2: Speaker List */}
+      <AgendaSpeakerListSection
+        speakers={speakerListData}
+        isUserInSpeakerList={isUserInSpeakerList}
+        canManageSpeakers={canManageAgenda}
+        isAddingSpeaker={addingSpeaker}
+        userId={user?.id}
+        onAddToSpeakerList={handleAddToSpeakerList}
+        onMarkCompleted={handleMarkSpeakerCompleted}
+      />
 
-        <CardFooter className="flex-col items-start gap-4 border-t pt-6">
-          <div className="grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="flex items-center gap-2 text-sm">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">Erstellt von:</span>
-              <span className="font-medium">
-                {agendaItem.creator?.name || agendaItem.creator?.email || 'Unbekannt'}
-              </span>
-            </div>
-            {agendaItem.startTime && (
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Startzeit:</span>
-                <span className="font-medium">
-                  {new Date(agendaItem.startTime).toLocaleString('de-DE')}
-                </span>
-              </div>
-            )}
-            <div className="flex items-center gap-2 text-sm">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">Event:</span>
-              <Link href={`/event/${eventId}`} className="font-medium hover:underline">
-                {event.title}
-              </Link>
-            </div>
-          </div>
+      {/* Section 3: Election */}
+      {election && (
+        <>
+          <VotingSessionManager
+            eventId={eventId}
+            agendaItemId={agendaItemId}
+            agendaItemTitle={agendaItem.title || 'Election'}
+            votingType="election"
+            targetEntityId={election.id}
+          />
+          <AgendaElectionSection
+            positionId={(election as any).position?.id || election.id}
+            positionName={
+              (election as any).position?.title ||
+              election.title ||
+              t('features.events.agenda.position')
+            }
+            candidates={electionCandidates}
+            electionVotes={electionVotes}
+            userVote={userElectionVote}
+            agendaStatus={mapAgendaStatus(agendaItem.status)}
+            canVote={hasVotingRight}
+            canBeCandidate={hasCandidateRight}
+            isUserCandidate={isUserCandidate}
+            isVotingLoading={votingLoading === election.id}
+            isCandidateLoading={candidateLoading}
+            onVote={candidateId => handleElectionVote(election.id, candidateId)}
+            onBecomeCandidate={handleBecomeCandidate}
+            onWithdrawCandidacy={handleWithdrawCandidacy}
+          />
+        </>
+      )}
 
-          {/* Speaker List Button */}
-          <div className="w-full border-t pt-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Mic className="h-5 w-5 text-muted-foreground" />
-                <span className="font-medium">Rednerliste</span>
-                {speakerList.length > 0 && (
-                  <Badge variant="secondary">{speakerList.length} Redner</Badge>
-                )}
-              </div>
-              <Button
-                onClick={handleAddToSpeakerList}
-                disabled={isUserInSpeakerList || !user || addingSpeaker}
-                variant={isUserInSpeakerList ? 'outline' : 'default'}
-              >
-                {isUserInSpeakerList ? (
-                  <>
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                    Bereits eingetragen
-                  </>
-                ) : (
-                  <>
-                    <Plus className="mr-2 h-4 w-4" />
-                    {addingSpeaker ? 'Wird hinzugefügt...' : 'Zur Rednerliste hinzufügen'}
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </CardFooter>
-      </Card>
-
-      {/* Election Section */}
-      {agendaItem.election && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Vote className="h-5 w-5" />
-                <CardTitle>Wahl</CardTitle>
-              </div>
-              <Badge variant="secondary">
-                {agendaItem.election.majorityType === 'absolute'
-                  ? 'Absolute Mehrheit'
-                  : 'Relative Mehrheit'}
-              </Badge>
-            </div>
-            <CardDescription>{agendaItem.election.title}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {agendaItem.election.description && (
-              <div className="rounded-lg bg-muted/50 p-4">
-                <p className="text-sm text-muted-foreground">{agendaItem.election.description}</p>
-              </div>
-            )}
-
-            {/* Voting Session Manager for Elections */}
+      {/* Section 3: Amendment Vote (when amendment is linked) */}
+      {agendaItem.type === 'amendment' && amendment && (
+        <>
+          {(amendment.workflowStatus === 'event_suggesting' ||
+            amendment.workflowStatus === 'event_voting') && (
             <VotingSessionManager
               eventId={eventId}
               agendaItemId={agendaItemId}
-              agendaItemTitle={agendaItem.title || 'Election'}
-              votingType="election"
-              targetEntityId={agendaItem.election.id}
+              agendaItemTitle={amendment.title || 'Amendment'}
+              votingType="amendment"
+              targetEntityId={amendment.id}
             />
-
-            {(() => {
-              const election = agendaItem.election;
-              const userVote = userElectionVotes.find(
-                (vote: any) => vote.election?.id === election.id
-              );
-              const candidates = election.candidates || [];
-
-              // Get all votes for this election
-              const electionVotes = (data?.electionVotes || []).filter(
-                (vote: any) => vote.election?.id === election.id
-              );
-
-              // Count votes for each candidate
-              const voteCounts: Record<string, number> = {};
-              electionVotes.forEach((vote: any) => {
-                const candId = vote.candidate?.id;
-                if (candId) {
-                  voteCounts[candId] = (voteCounts[candId] || 0) + 1;
-                }
-              });
-
-              const totalVotes = electionVotes.length;
-              const maxVotes = Math.max(...Object.values(voteCounts), 0);
-
-              return (
-                <>
-                  {/* Vote Statistics */}
-                  <div className="grid gap-4 sm:grid-cols-3">
-                    <div className="rounded-lg border bg-card p-4 text-center">
-                      <div className="text-2xl font-bold">{totalVotes}</div>
-                      <div className="text-sm text-muted-foreground">Abgegebene Stimmen</div>
-                    </div>
-                    <div className="rounded-lg border bg-card p-4 text-center">
-                      <div className="text-2xl font-bold">{candidates.length}</div>
-                      <div className="text-sm text-muted-foreground">Kandidaten</div>
-                    </div>
-                    <div className="rounded-lg border bg-card p-4 text-center">
-                      <div className="text-2xl font-bold">{election.status || 'Geplant'}</div>
-                      <div className="text-sm text-muted-foreground">Status</div>
-                    </div>
-                  </div>
-
-                  {/* Candidates List */}
-                  {candidates.length > 0 ? (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-semibold">Kandidaten</h3>
-                        {userVote && (
-                          <Badge variant="outline" className="text-xs">
-                            <CheckCircle2 className="mr-1 h-3 w-3" />
-                            Sie haben gewählt
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="space-y-3">
-                        {candidates
-                          .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
-                          .map((candidate: any) => {
-                            const voteCount = voteCounts[candidate.id] || 0;
-                            const isVoted = userVote?.candidate?.id === candidate.id;
-                            const percentage = totalVotes > 0 ? (voteCount / totalVotes) * 100 : 0;
-                            const isLeading = voteCount === maxVotes && maxVotes > 0;
-
-                            return (
-                              <div
-                                key={candidate.id}
-                                className={`relative overflow-hidden rounded-lg border p-4 transition-all ${
-                                  isVoted ? 'border-primary bg-primary/5' : ''
-                                }`}
-                              >
-                                {/* Progress bar background */}
-                                <div
-                                  className="absolute inset-0 bg-muted/30 transition-all"
-                                  style={{
-                                    width: `${percentage}%`,
-                                  }}
-                                />
-
-                                <div className="relative flex items-center justify-between gap-4">
-                                  <div className="flex-1 space-y-1">
-                                    <div className="flex items-center gap-2">
-                                      <h4 className="font-semibold">{candidate.name}</h4>
-                                      {isLeading && totalVotes > 0 && (
-                                        <Badge variant="default" className="text-xs">
-                                          <BarChart3 className="mr-1 h-3 w-3" />
-                                          Führend
-                                        </Badge>
-                                      )}
-                                      {isVoted && (
-                                        <Badge variant="default" className="text-xs">
-                                          <CheckCircle2 className="mr-1 h-3 w-3" />
-                                          Ihre Wahl
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    {candidate.description && (
-                                      <p className="text-sm text-muted-foreground">
-                                        {candidate.description}
-                                      </p>
-                                    )}
-                                    <div className="flex items-center gap-3 text-sm">
-                                      <Badge variant="outline">
-                                        {voteCount} {voteCount === 1 ? 'Stimme' : 'Stimmen'}
-                                      </Badge>
-                                      {totalVotes > 0 && (
-                                        <span className="text-muted-foreground">
-                                          {percentage.toFixed(1)}%
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <Button
-                                    size="lg"
-                                    variant={isVoted ? 'default' : 'outline'}
-                                    onClick={() => handleElectionVote(election.id, candidate.id)}
-                                    disabled={votingLoading === election.id || !user}
-                                  >
-                                    <Vote className="mr-2 h-4 w-4" />
-                                    {isVoted ? 'Gewählt' : 'Wählen'}
-                                  </Button>
-                                </div>
-                              </div>
-                            );
-                          })}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="rounded-lg border border-dashed p-8 text-center">
-                      <Users className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">
-                        Noch keine Kandidaten hinzugefügt
-                      </p>
-                    </div>
-                  )}
-                </>
-              );
-            })()}
-          </CardContent>
-        </Card>
+          )}
+          {amendment.workflowStatus === 'event_voting' && votingSession && (
+            <AmendmentVotingQueue
+              amendmentId={amendment.id}
+              eventId={eventId}
+              agendaItemId={agendaItemId}
+              changeRequests={changeRequests}
+              currentSession={votingSession}
+              isOrganizer={!!isOrganizer}
+              onAdvanceToNext={handleAdvanceToNext}
+              onComplete={handleCompleteVoting}
+            />
+          )}
+          <AgendaVoteSection
+            amendmentId={amendment.id}
+            amendmentTitle={amendment.title || 'Amendment'}
+            voteEntries={amendmentVoteEntries}
+            changeRequests={changeRequests.map((cr: any) => ({
+              id: cr.id,
+              title: cr.title || 'Change Request',
+              description: cr.description || '',
+              characterCount: cr.characterCount,
+              votingOrder: cr.votingOrder,
+              status: cr.status,
+              activatedAt: cr.activatedAt,
+              completedAt: cr.completedAt,
+            }))}
+            changeRequestVotes={changeRequestVotes}
+            userVote={userAmendmentVote}
+            userChangeRequestVotes={userChangeRequestVotes}
+            agendaStatus={mapAgendaStatus(agendaItem.status)}
+            canVote={hasVotingRight}
+            canManageVotes={canManageVotes}
+            isVotingLoading={votingLoading === amendmentVote?.id}
+            onVote={vote => amendmentVote && handleAmendmentVote(amendmentVote.id, vote)}
+            onChangeRequestVote={handleChangeRequestVote}
+            onActivateChangeRequest={handleActivateChangeRequest}
+          />
+        </>
       )}
 
-      {/* Amendment Vote Section */}
-      {agendaItem.type === 'amendment' && amendment && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Gavel className="h-5 w-5" />
-                <CardTitle>Amendment Workflow</CardTitle>
-              </div>
-              <Badge
-                variant="outline"
-                className={
-                  amendment.workflowStatus === 'event_suggesting'
-                    ? 'border-teal-500 bg-teal-50 text-teal-700 dark:bg-teal-950'
-                    : amendment.workflowStatus === 'event_voting'
-                      ? 'border-red-500 bg-red-50 text-red-700 dark:bg-red-950'
-                      : 'border-gray-500'
-                }
-              >
-                {amendment.workflowStatus === 'event_suggesting'
-                  ? '💡 Event Vorschläge'
-                  : amendment.workflowStatus === 'event_voting'
-                    ? '🗳️ Event Abstimmung'
-                    : amendment.workflowStatus || 'Unbekannt'}
-              </Badge>
-            </div>
-            <CardDescription>
-              Amendment:{' '}
-              <Link href={`/amendment/${amendment.id}`} className="font-medium hover:underline">
-                {amendment.title}
-              </Link>
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Voting Session Manager for Amendment */}
-            {(amendment.workflowStatus === 'event_suggesting' || amendment.workflowStatus === 'event_voting') && (
-              <VotingSessionManager
-                eventId={eventId}
-                agendaItemId={agendaItemId}
-                agendaItemTitle={amendment.title || 'Amendment'}
-                votingType="amendment"
-                targetEntityId={amendment.id}
-              />
-            )}
-
-            {/* Voting Queue for Change Requests */}
-            {amendment.workflowStatus === 'event_voting' && votingSession && (
-              <AmendmentVotingQueue
-                amendmentId={amendment.id}
-                eventId={eventId}
-                agendaItemId={agendaItemId}
-                changeRequests={changeRequests}
-                currentSession={votingSession}
-                isOrganizer={!!isOrganizer}
-                onAdvanceToNext={handleAdvanceToNext}
-                onComplete={handleCompleteVoting}
-              />
-            )}
-
-            {/* Info for event_suggesting phase */}
-            {amendment.workflowStatus === 'event_suggesting' && !isOrganizer && (
-              <div className="rounded-lg bg-muted/50 p-4">
-                <p className="text-sm text-muted-foreground">
-                  Dieses Amendment befindet sich in der Event-Vorschlagsphase. Event-Teilnehmer
-                  können Change Requests einreichen.
-                </p>
-                <div className="mt-3">
-                  <Link href={`/amendment/${amendment.id}/change-requests`}>
-                    <Button variant="outline" size="sm">
-                      Change Requests ansehen
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            )}
-
-            {/* Change Request Stats */}
-            {changeRequests.length > 0 && (
-              <div className="rounded-lg border p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Change Requests</span>
-                  <Badge variant="secondary">{changeRequests.length}</Badge>
-                </div>
-                <div className="mt-2 text-xs text-muted-foreground">
-                  {changeRequests.filter((cr: any) => cr.status === 'proposed').length} ausstehend,{' '}
-                  {changeRequests.filter((cr: any) => cr.status === 'accepted').length} angenommen,{' '}
-                  {changeRequests.filter((cr: any) => cr.status === 'rejected').length} abgelehnt
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Legacy Amendment Vote Section */}
-      {agendaItem.amendmentVote && !amendment && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Gavel className="h-5 w-5" />
-              <CardTitle>Abstimmung</CardTitle>
-            </div>
-            <CardDescription>{agendaItem.amendmentVote.title}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {agendaItem.amendmentVote.description && (
-              <div className="rounded-lg bg-muted/50 p-4">
-                <p className="text-sm text-muted-foreground">
-                  {agendaItem.amendmentVote.description}
-                </p>
-              </div>
-            )}
-
-            {(() => {
-              const amendmentVote = agendaItem.amendmentVote;
-              const userVote = userAmendmentVotes.find(
-                (entry: any) => entry.amendmentVote?.id === amendmentVote.id
-              );
-
-              // Get all vote entries for this amendment vote
-              const voteEntries = (data?.amendmentVoteEntries || []).filter(
-                (entry: any) => entry.amendmentVote?.id === amendmentVote.id
-              );
-
-              // Count votes
-              const voteCounts = {
-                yes: voteEntries.filter((e: any) => e.vote === 'yes').length,
-                no: voteEntries.filter((e: any) => e.vote === 'no').length,
-                abstain: voteEntries.filter((e: any) => e.vote === 'abstain').length,
-              };
-              const totalVotes = voteCounts.yes + voteCounts.no + voteCounts.abstain;
-
-              return (
-                <>
-                  {/* Vote Statistics */}
-                  <div className="grid gap-4 sm:grid-cols-4">
-                    <div className="rounded-lg border bg-card p-4 text-center">
-                      <div className="text-2xl font-bold">{totalVotes}</div>
-                      <div className="text-sm text-muted-foreground">Gesamt</div>
-                    </div>
-                    <div className="rounded-lg bg-green-50 p-4 text-center dark:bg-green-950">
-                      <div className="text-2xl font-bold text-green-700 dark:text-green-300">
-                        {voteCounts.yes}
-                      </div>
-                      <div className="text-sm text-green-600 dark:text-green-400">Ja</div>
-                    </div>
-                    <div className="rounded-lg bg-red-50 p-4 text-center dark:bg-red-950">
-                      <div className="text-2xl font-bold text-red-700 dark:text-red-300">
-                        {voteCounts.no}
-                      </div>
-                      <div className="text-sm text-red-600 dark:text-red-400">Nein</div>
-                    </div>
-                    <div className="rounded-lg bg-gray-50 p-4 text-center dark:bg-gray-900">
-                      <div className="text-2xl font-bold text-gray-700 dark:text-gray-300">
-                        {voteCounts.abstain}
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">Enthalten</div>
-                    </div>
-                  </div>
-
-                  {/* Vote Percentages */}
-                  {totalVotes > 0 && (
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-medium">Ergebnisse in Prozent</h3>
-                      <div className="space-y-2">
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-green-600 dark:text-green-400">Ja</span>
-                            <span className="font-medium">
-                              {((voteCounts.yes / totalVotes) * 100).toFixed(1)}%
-                            </span>
-                          </div>
-                          <div className="h-2 overflow-hidden rounded-full bg-muted">
-                            <div
-                              className="h-full bg-green-600 transition-all dark:bg-green-400"
-                              style={{
-                                width: `${(voteCounts.yes / totalVotes) * 100}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-red-600 dark:text-red-400">Nein</span>
-                            <span className="font-medium">
-                              {((voteCounts.no / totalVotes) * 100).toFixed(1)}%
-                            </span>
-                          </div>
-                          <div className="h-2 overflow-hidden rounded-full bg-muted">
-                            <div
-                              className="h-full bg-red-600 transition-all dark:bg-red-400"
-                              style={{
-                                width: `${(voteCounts.no / totalVotes) * 100}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600 dark:text-gray-400">Enthalten</span>
-                            <span className="font-medium">
-                              {((voteCounts.abstain / totalVotes) * 100).toFixed(1)}%
-                            </span>
-                          </div>
-                          <div className="h-2 overflow-hidden rounded-full bg-muted">
-                            <div
-                              className="h-full bg-gray-600 transition-all dark:bg-gray-400"
-                              style={{
-                                width: `${(voteCounts.abstain / totalVotes) * 100}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Voting Interface */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold">Ihre Stimme abgeben</h3>
-                      {userVote && (
-                        <Badge variant="outline" className="text-xs">
-                          <CheckCircle2 className="mr-1 h-3 w-3" />
-                          Sie haben mit{' '}
-                          <span className="ml-1 font-medium">
-                            {userVote.vote === 'yes'
-                              ? 'Ja'
-                              : userVote.vote === 'no'
-                                ? 'Nein'
-                                : 'Enthalten'}
-                          </span>{' '}
-                          gestimmt
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-3">
-                      <Button
-                        variant={userVote?.vote === 'yes' ? 'default' : 'outline'}
-                        size="lg"
-                        onClick={() => handleAmendmentVote(amendmentVote.id, 'yes')}
-                        disabled={votingLoading === amendmentVote.id || !user}
-                        className={
-                          userVote?.vote === 'yes'
-                            ? 'bg-green-600 hover:bg-green-700'
-                            : 'border-green-600 text-green-600 hover:bg-green-50 dark:hover:bg-green-950'
-                        }
-                      >
-                        <ThumbsUp className="mr-2 h-5 w-5" />
-                        Ja
-                      </Button>
-                      <Button
-                        variant={userVote?.vote === 'no' ? 'default' : 'outline'}
-                        size="lg"
-                        onClick={() => handleAmendmentVote(amendmentVote.id, 'no')}
-                        disabled={votingLoading === amendmentVote.id || !user}
-                        className={
-                          userVote?.vote === 'no'
-                            ? 'bg-red-600 hover:bg-red-700'
-                            : 'border-red-600 text-red-600 hover:bg-red-50 dark:hover:bg-red-950'
-                        }
-                      >
-                        <ThumbsDown className="mr-2 h-5 w-5" />
-                        Nein
-                      </Button>
-                      <Button
-                        variant={userVote?.vote === 'abstain' ? 'default' : 'outline'}
-                        size="lg"
-                        onClick={() => handleAmendmentVote(amendmentVote.id, 'abstain')}
-                        disabled={votingLoading === amendmentVote.id || !user}
-                        className={
-                          userVote?.vote === 'abstain'
-                            ? 'bg-gray-600 hover:bg-gray-700'
-                            : 'border-gray-600 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-900'
-                        }
-                      >
-                        <Minus className="mr-2 h-5 w-5" />
-                        Enthalten
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Change Requests */}
-                  {amendmentVote.changeRequests && amendmentVote.changeRequests.length > 0 && (
-                    <div className="space-y-3">
-                      <h3 className="font-semibold">
-                        Änderungsanträge ({amendmentVote.changeRequests.length})
-                      </h3>
-                      <div className="space-y-2">
-                        {amendmentVote.changeRequests.map((request: any, index: number) => (
-                          <div key={request.id || index} className="rounded-lg border bg-card p-4">
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                  <Badge variant="outline" className="text-xs">
-                                    #{index + 1}
-                                  </Badge>
-                                  <h4 className="font-medium">{request.title}</h4>
-                                </div>
-                                {request.description && (
-                                  <p className="mt-2 text-sm text-muted-foreground">
-                                    {request.description}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </>
-              );
-            })()}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Additional Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Weitere Informationen</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <h4 className="mb-2 text-sm font-medium text-muted-foreground">Typ</h4>
-              <Badge className={getTypeColor(agendaItem.type)}>
-                <span className="capitalize">{agendaItem.type}</span>
-              </Badge>
-            </div>
-            <div>
-              <h4 className="mb-2 text-sm font-medium text-muted-foreground">Status</h4>
-              <Badge className={getStatusColor(agendaItem.status)}>{agendaItem.status}</Badge>
-            </div>
-            {agendaItem.duration && (
-              <div>
-                <h4 className="mb-2 text-sm font-medium text-muted-foreground">Dauer</h4>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span>{agendaItem.duration} Minuten</span>
-                </div>
-              </div>
-            )}
-            <div>
-              <h4 className="mb-2 text-sm font-medium text-muted-foreground">Reihenfolge</h4>
-              <span>Position {agendaItem.order}</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Navigation */}
-      <div className="flex items-center justify-between">
-        <Button asChild variant="outline">
-          <Link href={`/event/${eventId}/agenda`}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Zurück zur Tagesordnung
-          </Link>
-        </Button>
-        <Button asChild>
-          <Link href={`/event/${eventId}`}>Zum Event</Link>
-        </Button>
-      </div>
-
-      {/* Transfer Dialog */}
-      {agendaItem && (
-        <TransferAgendaItemDialog
-          agendaItemId={agendaItemId}
-          agendaItemTitle={agendaItem.title}
-          currentEventId={eventId}
-          currentEventTitle={event?.title || 'Event'}
-          open={transferDialogOpen}
-          onOpenChange={setTransferDialogOpen}
-          onTransferComplete={() => {
-            setTransferDialogOpen(false);
-          }}
+      {/* Section 3: Legacy Amendment Vote (when no amendment linked) */}
+      {amendmentVote && !amendment && (
+        <AgendaVoteSection
+          amendmentId={amendmentVote.id}
+          amendmentTitle={amendmentVote.title || 'Amendment Vote'}
+          voteEntries={amendmentVoteEntries}
+          changeRequests={[]}
+          changeRequestVotes={{}}
+          userVote={userAmendmentVote}
+          userChangeRequestVotes={{}}
+          agendaStatus={mapAgendaStatus(agendaItem.status)}
+          canVote={hasVotingRight}
+          canManageVotes={canManageVotes}
+          isVotingLoading={votingLoading === amendmentVote.id}
+          onVote={vote => handleAmendmentVote(amendmentVote.id, vote)}
+          onChangeRequestVote={handleChangeRequestVote}
+          onActivateChangeRequest={handleActivateChangeRequest}
         />
       )}
+
+      {/* Transfer Dialog */}
+      <TransferAgendaItemDialog
+        agendaItemId={agendaItemId}
+        agendaItemTitle={agendaItem.title}
+        currentEventId={eventId}
+        currentEventTitle={event?.title || 'Event'}
+        open={transferDialogOpen}
+        onOpenChange={setTransferDialogOpen}
+        onTransferComplete={() => {
+          setTransferDialogOpen(false);
+        }}
+      />
     </div>
   );
 }

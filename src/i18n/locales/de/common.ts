@@ -15,7 +15,9 @@ export const commonTranslations = {
   },
   actions: {
     cancel: 'Abbrechen',
+    continue: 'Weiter',
     delete: 'Löschen',
+    deleting: 'Wird gelöscht...',
     save: 'Speichern',
     confirm: 'Bestätigen',
     close: 'Schließen',

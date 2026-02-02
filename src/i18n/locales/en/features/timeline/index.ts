@@ -116,6 +116,9 @@ export const timelineTranslations = {
     voteOppose: 'Vote Oppose',
     turnout: 'turnout',
     voted: 'Voted',
+    // Indication support
+    indication: 'Indication',
+    actual: 'Actual',
     play: 'Play',
     like: 'Like',
     liked: 'Liked',

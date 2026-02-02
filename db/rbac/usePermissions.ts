@@ -12,6 +12,8 @@ import {
   hasEventPermission,
   hasBlogPermission,
   hasAmendmentPermission,
+  hasActiveVotingRight,
+  hasPassiveVotingRight,
   isSelf,
   isGroupMember,
   isEventParticipant,
@@ -19,7 +21,14 @@ import {
   isAmendmentCollaborator,
   isAmendmentAuthor,
 } from './helpers.ts';
-import type { PermissionContext, ResourceType, ActionType, Membership, Participation, BloggerRelation } from './types.ts';
+import type {
+  PermissionContext,
+  ResourceType,
+  ActionType,
+  Membership,
+  Participation,
+  BloggerRelation,
+} from './types.ts';
 
 /**
  * Hook for checking permissions in React components.
@@ -192,6 +201,24 @@ export function usePermissions(context: PermissionContext) {
       return isAmendmentAuthor(context.amendment, userId);
     };
 
+    /**
+     * Check if authenticated user has active voting rights in the context event.
+     * Active voting allows casting votes in elections and amendment votes.
+     */
+    const canVote = (): boolean => {
+      if (!context.eventId) return false;
+      return hasActiveVotingRight(participations, context.eventId);
+    };
+
+    /**
+     * Check if authenticated user has passive voting rights in the context event.
+     * Passive voting allows being a candidate in elections.
+     */
+    const canBeCandidate = (): boolean => {
+      if (!context.eventId) return false;
+      return hasPassiveVotingRight(participations, context.eventId);
+    };
+
     return {
       // Loading state
       isLoading,
@@ -214,6 +241,10 @@ export function usePermissions(context: PermissionContext) {
       isABlogger,
       isCollaborator,
       isAuthor,
+
+      // Voting permission checks
+      canVote,
+      canBeCandidate,
 
       // Raw data access (for advanced use cases)
       memberships,

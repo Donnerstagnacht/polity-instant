@@ -44,10 +44,13 @@ const _agendas = {
       imageURL: i.string().optional(),
       name: i.string().indexed(),
       order: i.number().indexed(),
+      status: i.string().indexed(), // 'nominated' | 'accepted' | 'withdrawn'
     }),
     electionVotes: i.entity({
       createdAt: i.date().indexed(),
       updatedAt: i.date().optional(),
+      isIndication: i.boolean().indexed().optional(), // true = indication vote before voting starts, false/undefined = actual vote
+      indicatedAt: i.date().optional(), // When the indication was originally made
     }),
   },
   links: {
@@ -155,6 +158,18 @@ const _agendas = {
       },
       reverse: {
         on: 'positions',
+        has: 'many',
+        label: 'elections',
+      },
+    },
+    electionsAmendment: {
+      forward: {
+        on: 'elections',
+        has: 'one',
+        label: 'amendment',
+      },
+      reverse: {
+        on: 'amendments',
         has: 'many',
         label: 'elections',
       },

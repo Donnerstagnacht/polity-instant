@@ -19,6 +19,10 @@ export interface ElectionCandidate {
   name: string;
   avatarUrl?: string;
   votePercentage?: number;
+  voteCount?: number;
+  // Indication support
+  indicationPercentage?: number;
+  indicationCount?: number;
 }
 
 export interface ElectionTimelineCardProps {
@@ -41,6 +45,8 @@ export interface ElectionTimelineCardProps {
     turnoutPercentage?: number;
     agendaEventId?: string;
     agendaItemId?: string;
+    // Indication support
+    isIndicationPhase?: boolean;
   };
   onCastVote?: () => void;
   onNominate?: () => void;
@@ -163,13 +169,20 @@ function CandidateAvatars({
   candidates,
   maxDisplay = 5,
   winnerId,
+  isIndicationPhase,
 }: {
   candidates: ElectionCandidate[];
   maxDisplay?: number;
   winnerId?: string;
+  isIndicationPhase?: boolean;
 }) {
+  const { t } = useTranslation();
   const displayCandidates = candidates.slice(0, maxDisplay);
   const remaining = candidates.length - maxDisplay;
+
+  // Check if we have indication data
+  const hasIndication = displayCandidates.some(c => c.indicationPercentage !== undefined);
+  const showBothResults = !isIndicationPhase && hasIndication;
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -198,14 +211,26 @@ function CandidateAvatars({
           </div>
         )}
       </div>
-      <div className="flex flex-wrap justify-center gap-1 text-xs text-muted-foreground">
-        {displayCandidates.slice(0, 4).map((candidate, i) => (
-          <span key={candidate.id}>
-            {candidate.name}
-            {i < Math.min(displayCandidates.length, 4) - 1 && ','}
+      {/* Candidate names and vote percentages */}
+      <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs">
+        {displayCandidates.slice(0, 3).map(candidate => (
+          <span key={candidate.id} className="flex items-center gap-1">
+            <span className="text-muted-foreground">{candidate.name}</span>
+            {/* Show indication or actual percentage */}
+            {isIndicationPhase && candidate.indicationPercentage !== undefined ? (
+              <span className="text-blue-500">{candidate.indicationPercentage}% *</span>
+            ) : showBothResults && candidate.indicationPercentage !== undefined ? (
+              <span className="text-muted-foreground">
+                <span className="text-blue-400">{candidate.indicationPercentage}%</span>
+                {' → '}
+                <span className="font-medium text-foreground">{candidate.votePercentage}%</span>
+              </span>
+            ) : candidate.votePercentage !== undefined ? (
+              <span className="font-medium">{candidate.votePercentage}%</span>
+            ) : null}
           </span>
         ))}
-        {candidates.length > 4 && <span>...</span>}
+        {candidates.length > 3 && <span className="text-muted-foreground">...</span>}
       </div>
     </div>
   );
@@ -368,6 +393,7 @@ export function ElectionTimelineCard({
             <CandidateAvatars
               candidates={election.candidates}
               winnerId={isWinnerAnnounced ? election.winnerId : undefined}
+              isIndicationPhase={election.isIndicationPhase}
             />
           )
         )}

@@ -73,15 +73,42 @@ export function useDecisionTerminal(
             : now;
 
       const entries = vote.voteEntries || [];
-      const support = entries.filter(
+
+      // Separate indication votes from actual votes
+      const indicationEntries = entries.filter((entry: any) => entry.isIndication === true);
+      const actualEntries = entries.filter((entry: any) => !entry.isIndication);
+
+      // Calculate actual vote counts
+      const support = actualEntries.filter(
         (entry: any) => entry.vote === 'yes' || entry.vote === 'accept'
       ).length;
-      const oppose = entries.filter(
+      const oppose = actualEntries.filter(
         (entry: any) => entry.vote === 'no' || entry.vote === 'reject'
       ).length;
-      const abstain = entries.filter((entry: any) => entry.vote === 'abstain').length;
+      const abstain = actualEntries.filter((entry: any) => entry.vote === 'abstain').length;
       const voteData = { support, oppose, abstain };
       const totalVotes = support + oppose + abstain;
+
+      // Calculate indication vote counts
+      const indicationSupport = indicationEntries.filter(
+        (entry: any) => entry.vote === 'yes' || entry.vote === 'accept'
+      ).length;
+      const indicationOppose = indicationEntries.filter(
+        (entry: any) => entry.vote === 'no' || entry.vote === 'reject'
+      ).length;
+      const indicationAbstain = indicationEntries.filter(
+        (entry: any) => entry.vote === 'abstain'
+      ).length;
+      const indicationVoteData = {
+        support: indicationSupport,
+        oppose: indicationOppose,
+        abstain: indicationAbstain,
+      };
+      const totalIndicationVotes = indicationSupport + indicationOppose + indicationAbstain;
+
+      // Determine if we're in indication phase (agenda status = planned)
+      const agendaStatus = vote.agendaItem?.status;
+      const isIndicationPhase = agendaStatus === 'planned';
 
       const closedByStatus = vote.status === 'completed';
       const isEnded = isClosed(endsAt) || closedByStatus;
@@ -109,6 +136,11 @@ export function useDecisionTerminal(
         votes: voteData,
         votedCount: totalVotes,
         supportPercentage: isEnded ? calculateSupportPercentage(voteData) : undefined,
+        // Indication phase data
+        isIndicationPhase,
+        indicationVotes: totalIndicationVotes > 0 ? indicationVoteData : undefined,
+        indicationSupportPercentage:
+          totalIndicationVotes > 0 ? calculateSupportPercentage(indicationVoteData) : undefined,
         href: `/amendment/${amendmentId}`,
         summary: vote.description || undefined,
         entity: amendment
@@ -142,13 +174,32 @@ export function useDecisionTerminal(
 
       const candidates = election.candidates || [];
       const votes = election.votes || [];
-      const voteCounts = new Map<string, number>();
 
-      for (const vote of votes) {
+      // Separate indication votes from actual votes
+      const indicationVotes = votes.filter((v: any) => v.isIndication === true);
+      const actualVotes = votes.filter((v: any) => !v.isIndication);
+
+      // Count actual votes per candidate
+      const voteCounts = new Map<string, number>();
+      for (const vote of actualVotes) {
         const candidateId = vote.candidate?.id;
         if (!candidateId) continue;
         voteCounts.set(candidateId, (voteCounts.get(candidateId) || 0) + 1);
       }
+
+      // Count indication votes per candidate
+      const indicationCounts = new Map<string, number>();
+      for (const vote of indicationVotes) {
+        const candidateId = vote.candidate?.id;
+        if (!candidateId) continue;
+        indicationCounts.set(candidateId, (indicationCounts.get(candidateId) || 0) + 1);
+      }
+
+      // Determine if we're in indication phase (agenda status = planned)
+      const agendaStatus = election.agendaItem?.status;
+      const isIndicationPhase = agendaStatus === 'planned';
+      const totalActualVotes = actualVotes.length;
+      const totalIndicationVotes = indicationVotes.length;
 
       const candidateSummaries: Array<{
         id: string;
@@ -156,13 +207,27 @@ export function useDecisionTerminal(
         avatarUrl?: string;
         votes: number;
         isWinner: boolean;
-      }> = candidates.map((candidate: any) => ({
-        id: candidate.id,
-        name: candidate.name,
-        avatarUrl: candidate.imageURL,
-        votes: voteCounts.get(candidate.id) || 0,
-        isWinner: false,
-      }));
+        indicationVotes?: number;
+        indicationPercentage?: number;
+        actualPercentage?: number;
+      }> = candidates.map((candidate: any) => {
+        const actualVoteCount = voteCounts.get(candidate.id) || 0;
+        const indicationVoteCount = indicationCounts.get(candidate.id) || 0;
+        return {
+          id: candidate.id,
+          name: candidate.name,
+          avatarUrl: candidate.imageURL,
+          votes: actualVoteCount,
+          isWinner: false,
+          indicationVotes: indicationVoteCount > 0 ? indicationVoteCount : undefined,
+          indicationPercentage:
+            totalIndicationVotes > 0
+              ? (indicationVoteCount / totalIndicationVotes) * 100
+              : undefined,
+          actualPercentage:
+            totalActualVotes > 0 ? (actualVoteCount / totalActualVotes) * 100 : undefined,
+        };
+      });
 
       const winner = [...candidateSummaries].sort((a, b) => (b.votes || 0) - (a.votes || 0))[0];
       const closedByStatus = election.status === 'completed';
@@ -189,11 +254,13 @@ export function useDecisionTerminal(
         isClosingSoon: isClosingSoon(endsAt),
         isUrgent: isUrgent(endsAt),
         trend: { direction: 'stable', percentage: 0 },
-        votedCount: votes.length,
+        votedCount: actualVotes.length,
         winnerName: isEnded ? winner?.name : undefined,
         href: `/create/election-candidate?electionId=${election.id}`,
         summary: election.description || undefined,
         candidates: candidateSummaries,
+        // Indication phase data
+        isIndicationPhase,
         agendaItem:
           agendaItemId && agendaEventId
             ? {

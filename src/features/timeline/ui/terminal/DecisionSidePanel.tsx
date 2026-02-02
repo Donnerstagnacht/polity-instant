@@ -84,7 +84,40 @@ export function DecisionSidePanel({ decision, onClose, className }: DecisionSide
           {/* Vote progress bar */}
           {decision.votes && (
             <div className="space-y-2">
-              <VoteProgressBar votes={decision.votes} showLabels showPercentages />
+              {/* Indication phase display */}
+              {decision.isIndicationPhase && decision.indicationVotes ? (
+                <>
+                  <div className="text-xs text-blue-500">
+                    * {t('timeline.terminal.indicationOnly', { defaultValue: 'Indication only' })}
+                  </div>
+                  <VoteProgressBar votes={decision.indicationVotes} showLabels showPercentages />
+                </>
+              ) : (
+                <>
+                  {/* Show indication comparison if available */}
+                  {decision.indicationVotes && !decision.isIndicationPhase && (
+                    <div className="rounded-md bg-blue-50 p-2 dark:bg-blue-950/30">
+                      <div className="mb-1 text-xs font-medium text-blue-600 dark:text-blue-400">
+                        {t('timeline.terminal.indicationComparison', {
+                          defaultValue: 'Indication vs Actual',
+                        })}
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-blue-500">
+                          {t('timeline.terminal.indication', { defaultValue: 'Ind' })}:{' '}
+                          {decision.indicationSupportPercentage}%
+                        </span>
+                        <span className="text-muted-foreground">→</span>
+                        <span className="font-medium">
+                          {t('timeline.terminal.actual', { defaultValue: 'Act' })}:{' '}
+                          {decision.supportPercentage}%
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  <VoteProgressBar votes={decision.votes} showLabels showPercentages />
+                </>
+              )}
             </div>
           )}
 
@@ -168,6 +201,11 @@ export function DecisionSidePanel({ decision, onClose, className }: DecisionSide
               <h3 className="text-sm font-semibold">
                 {t('timeline.terminal.candidates')} ({decision.candidates.length})
               </h3>
+              {decision.isIndicationPhase && (
+                <div className="text-xs text-blue-500">
+                  * {t('timeline.terminal.indicationOnly', { defaultValue: 'Indication only' })}
+                </div>
+              )}
               <div className="space-y-2">
                 {decision.candidates.map(candidate => (
                   <div
@@ -187,11 +225,28 @@ export function DecisionSidePanel({ decision, onClose, className }: DecisionSide
                         </span>
                       )}
                     </div>
-                    {candidate.votes !== undefined && (
-                      <span className="font-mono text-xs text-muted-foreground">
-                        {candidate.votes} {t('timeline.terminal.votes')}
-                      </span>
-                    )}
+                    <div className="text-right">
+                      {/* Show indication or actual votes */}
+                      {decision.isIndicationPhase && candidate.indicationVotes !== undefined ? (
+                        <span className="font-mono text-xs text-blue-500">
+                          {candidate.indicationVotes} * ({candidate.indicationPercentage}%)
+                        </span>
+                      ) : (
+                        <>
+                          {candidate.indicationPercentage !== undefined &&
+                            !decision.isIndicationPhase && (
+                              <span className="mr-1 text-[10px] text-blue-400">
+                                {candidate.indicationPercentage}% →
+                              </span>
+                            )}
+                          {candidate.votes !== undefined && (
+                            <span className="font-mono text-xs text-muted-foreground">
+                              {candidate.votes} {t('timeline.terminal.votes')}
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

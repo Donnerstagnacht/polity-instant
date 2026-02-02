@@ -142,6 +142,7 @@ export const DEFAULT_EVENT_ROLES = [
     permissions: [
       { resource: 'events' as ResourceType, action: 'view' as ActionType },
       { resource: 'events' as ResourceType, action: 'active_voting' as ActionType },
+      { resource: 'events' as ResourceType, action: 'passive_voting' as ActionType },
     ],
   },
 ];
@@ -171,6 +172,11 @@ export const ACTION_RIGHTS = [
   { resource: 'events', action: 'manage_speakers', label: 'Manage Speakers' },
   { resource: 'events', action: 'manage_votes', label: 'Manage Votes' },
   { resource: 'events', action: 'active_voting', label: 'Active Voting Rights' },
+  {
+    resource: 'events',
+    action: 'passive_voting',
+    label: 'Passive Voting Rights (Can Be Candidate)',
+  },
   { resource: 'events', action: 'view', label: 'View Events' },
   // groupDocuments
   { resource: 'groupDocuments', action: 'manage', label: 'Manage Documents' },

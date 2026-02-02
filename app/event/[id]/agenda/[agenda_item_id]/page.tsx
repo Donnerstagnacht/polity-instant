@@ -3,7 +3,6 @@
 import { use } from 'react';
 import { AuthGuard } from '@/features/auth/AuthGuard';
 import { PageWrapper } from '@/components/layout/page-wrapper';
-import { EventNav } from '@/components/layout/event-nav';
 import { EventAgendaItemDetail } from '@/features/events/ui/EventAgendaItemDetail';
 
 interface PageParams {
@@ -17,8 +16,7 @@ export default function AgendaItemDetailPage({ params }: PageParams) {
 
   return (
     <AuthGuard>
-      <PageWrapper>
-        <EventNav eventId={eventId} />
+      <PageWrapper className="container mx-auto p-6">
         <EventAgendaItemDetail eventId={eventId} agendaItemId={agendaItemId} />
       </PageWrapper>
     </AuthGuard>

@@ -26,6 +26,8 @@ const _amendments = {
       createdAt: i.date().indexed(),
       updatedAt: i.date().optional(),
       vote: i.string().indexed(),
+      isIndication: i.boolean().indexed().optional(), // true = indication vote before voting starts, false/undefined = actual vote
+      indicatedAt: i.date().optional(), // When the indication was originally made
     }),
     amendmentSupportVotes: i.entity({
       createdAt: i.date().indexed(),

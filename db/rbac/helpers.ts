@@ -44,10 +44,7 @@ function checkWithInheritance(userAction: ActionType, requiredAction: ActionType
  *   // Show edit button
  * }
  */
-export function isSelf(
-  targetUserId: string | undefined,
-  authUserId: string | undefined
-): boolean {
+export function isSelf(targetUserId: string | undefined, authUserId: string | undefined): boolean {
   if (!targetUserId || !authUserId) return false;
   return targetUserId === authUserId;
 }
@@ -121,6 +118,42 @@ export function hasEventPermission(
 }
 
 /**
+ * Check if user has active voting rights in an event.
+ * Active voting means the user can cast votes in elections and amendment votes.
+ *
+ * @param participations - User's event participations with roles
+ * @param eventId - ID of the event to check permissions for
+ * @returns true if user can vote
+ *
+ * @example
+ * const canVote = hasActiveVotingRight(user.participations, eventId);
+ */
+export function hasActiveVotingRight(
+  participations: Participation[] | undefined,
+  eventId: string
+): boolean {
+  return hasEventPermission(participations, eventId, 'events', 'active_voting');
+}
+
+/**
+ * Check if user has passive voting rights in an event.
+ * Passive voting means the user can be a candidate in elections.
+ *
+ * @param participations - User's event participations with roles
+ * @param eventId - ID of the event to check permissions for
+ * @returns true if user can be a candidate
+ *
+ * @example
+ * const canBeCandidate = hasPassiveVotingRight(user.participations, eventId);
+ */
+export function hasPassiveVotingRight(
+  participations: Participation[] | undefined,
+  eventId: string
+): boolean {
+  return hasEventPermission(participations, eventId, 'events', 'passive_voting');
+}
+
+/**
  * Check if user has blog-level permission for a specific resource and action.
  *
  * @param bloggerRelations - User's blog blogger relationships with roles
@@ -175,9 +208,7 @@ export function hasAmendmentPermission(
     const collaborator = amendment.amendmentRoleCollaborators.find(c => c.user?.id === userId);
     if (collaborator?.role?.actionRights) {
       return collaborator.role.actionRights.some(
-        right =>
-          right.resource === resource &&
-          checkWithInheritance(right.action, action)
+        right => right.resource === resource && checkWithInheritance(right.action, action)
       );
     }
   }
@@ -214,10 +245,7 @@ export function hasAmendmentPermission(
  *   // Show group content
  * }
  */
-export function isGroupMember(
-  memberships: Membership[] | undefined,
-  groupId: string
-): boolean {
+export function isGroupMember(memberships: Membership[] | undefined, groupId: string): boolean {
   if (!memberships) return false;
   return memberships.some(m => m.group?.id === groupId);
 }
@@ -264,10 +292,7 @@ export function isBlogger(
  * @param userId - ID of the user to check
  * @returns true if user is a collaborator
  */
-export function isAmendmentCollaborator(
-  amendment: Amendment | undefined,
-  userId: string
-): boolean {
+export function isAmendmentCollaborator(amendment: Amendment | undefined, userId: string): boolean {
   if (amendment?.amendmentRoleCollaborators) {
     return amendment.amendmentRoleCollaborators.some(c => c.user?.id === userId);
   }
@@ -282,10 +307,7 @@ export function isAmendmentCollaborator(
  * @param userId - ID of the user to check
  * @returns true if user is the author
  */
-export function isAmendmentAuthor(
-  amendment: Amendment | undefined,
-  userId: string
-): boolean {
+export function isAmendmentAuthor(amendment: Amendment | undefined, userId: string): boolean {
   if (amendment?.owner) return amendment.owner.id === userId;
   if (!amendment?.user) return false;
   return amendment.user.id === userId;

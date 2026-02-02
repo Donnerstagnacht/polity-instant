@@ -128,6 +128,7 @@ export const agendaAndVotingSeeder: EntitySeeder = {
                 name: faker.person.fullName(),
                 description: faker.lorem.sentence(),
                 order: faker.number.int({ min: 1, max: 10 }),
+                status: randomItem(['nominated', 'accepted']),
                 createdAt: faker.date.past({ years: 0.08 }),
               })
               .link({ election: electionId, user: candidateUserId })
@@ -222,6 +223,7 @@ export const agendaAndVotingSeeder: EntitySeeder = {
                   name: faker.person.fullName(),
                   description: faker.lorem.sentence(),
                   order: candidates.indexOf(candidateUserId) + 1,
+                  status: randomItem(['nominated', 'accepted']),
                   createdAt: faker.date.past({ years: 0.04 }),
                 })
                 .link({ election: electionId, user: candidateUserId })
@@ -234,15 +236,21 @@ export const agendaAndVotingSeeder: EntitySeeder = {
           if (faker.datatype.boolean(0.6)) {
             const voterCount = randomInt(3, Math.min(8, userIds.length));
             const voters = randomItems(userIds, voterCount);
+            const electionStatus = status; // Use parent agenda item status
 
             for (const voterId of voters) {
               const voteId = id();
               const votedCandidateId = randomItem(candidates);
+              // Votes before election starts are indications
+              const isIndication = electionStatus === 'planned';
+              const voteDate = faker.date.recent({ days: 30 });
 
               transactions.push(
                 tx.electionVotes[voteId]
                   .update({
-                    createdAt: faker.date.recent({ days: 30 }),
+                    createdAt: voteDate,
+                    isIndication,
+                    ...(isIndication ? { indicatedAt: voteDate } : {}),
                   })
                   .link({
                     election: electionId,
@@ -329,15 +337,21 @@ export const agendaAndVotingSeeder: EntitySeeder = {
           if (faker.datatype.boolean(0.7)) {
             const voterCount = randomInt(5, Math.min(12, userIds.length));
             const voters = randomItems(userIds, voterCount);
+            const voteStatus = status; // Use parent agenda item status
 
             for (const voterId of voters) {
               const voteEntryId = id();
+              // Votes before voting starts are indications
+              const isIndication = voteStatus === 'planned';
+              const voteDate = faker.date.recent({ days: 30 });
 
               transactions.push(
                 tx.amendmentVoteEntries[voteEntryId]
                   .update({
                     vote: randomItem(['yes', 'yes', 'no', 'abstain']),
-                    createdAt: faker.date.recent({ days: 30 }),
+                    createdAt: voteDate,
+                    isIndication,
+                    ...(isIndication ? { indicatedAt: voteDate } : {}),
                   })
                   .link({ amendmentVote: amendmentVoteId, voter: voterId })
               );

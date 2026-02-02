@@ -34,6 +34,8 @@ export {
   hasEventPermission,
   hasBlogPermission,
   hasAmendmentPermission,
+  hasActiveVotingRight,
+  hasPassiveVotingRight,
   isGroupMember,
   isEventParticipant,
   isBlogger,

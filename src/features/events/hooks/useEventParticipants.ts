@@ -8,11 +8,20 @@ import { useEventMutations } from './useEventMutations';
 
 // Define available action rights for events
 export const ACTION_RIGHTS = [
+  { resource: 'events', action: 'view', label: 'View Event' },
   { resource: 'events', action: 'update', label: 'Update Event' },
   { resource: 'events', action: 'delete', label: 'Delete Event' },
+  { resource: 'events', action: 'manage', label: 'Manage Event' },
   { resource: 'events', action: 'manage_participants', label: 'Manage Participants' },
   { resource: 'events', action: 'manage_speakers', label: 'Manage Speakers' },
   { resource: 'events', action: 'manage_votes', label: 'Manage Votes' },
+  { resource: 'events', action: 'active_voting', label: 'Active Voting Rights' },
+  {
+    resource: 'events',
+    action: 'passive_voting',
+    label: 'Passive Voting Rights (Can Be Candidate)',
+  },
+  { resource: 'agendaItems', action: 'view', label: 'View Agenda Items' },
   { resource: 'agendaItems', action: 'create', label: 'Create Agenda Items' },
   { resource: 'agendaItems', action: 'update', label: 'Update Agenda Items' },
   { resource: 'agendaItems', action: 'delete', label: 'Delete Agenda Items' },

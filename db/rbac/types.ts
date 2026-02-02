@@ -51,6 +51,7 @@ export type ActionType =
   | 'delete'
   | 'vote'
   | 'active_voting'
+  | 'passive_voting'
   | 'comment'
   | 'moderate'
   | 'invite_members'

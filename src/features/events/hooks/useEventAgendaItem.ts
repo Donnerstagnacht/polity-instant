@@ -22,12 +22,19 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
         organizer: {},
       },
       election: {
-        candidates: {},
-        votes: {},
+        candidates: {
+          user: {},
+        },
+        votes: {
+          voter: {},
+          candidate: {},
+        },
       },
       amendmentVote: {
         changeRequests: {},
-        voteEntries: {},
+        voteEntries: {
+          voter: {},
+        },
       },
       speakerList: {
         user: {},
@@ -63,6 +70,9 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
     try {
       const existingVote = userElectionVotes.find((vote: any) => vote.election?.id === electionId);
 
+      // Determine if this is an indication vote based on agenda item status
+      const isIndicationVote = agendaItem?.status === 'planned';
+
       if (existingVote) {
         if (existingVote.candidate?.id === candidateId) {
           await db.transact([tx.electionVotes[existingVote.id].delete()]);
@@ -73,6 +83,8 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
             tx.electionVotes[newVoteId]
               .update({
                 createdAt: Date.now(),
+                isIndication: isIndicationVote,
+                indicatedAt: isIndicationVote ? Date.now() : undefined,
               })
               .link({
                 voter: user.id,
@@ -87,6 +99,8 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
           tx.electionVotes[voteId]
             .update({
               createdAt: Date.now(),
+              isIndication: isIndicationVote,
+              indicatedAt: isIndicationVote ? Date.now() : undefined,
             })
             .link({
               voter: user.id,
@@ -115,11 +129,16 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
         (entry: any) => entry.amendmentVote?.id === amendmentVoteId
       );
 
+      // Determine if this is an indication vote based on agenda item status
+      const isIndicationVote = agendaItem?.status === 'planned';
+
       if (existingVote) {
         await db.transact([
           tx.amendmentVoteEntries[existingVote.id].update({
             vote: voteValue,
             updatedAt: Date.now(),
+            isIndication: isIndicationVote,
+            indicatedAt: isIndicationVote ? Date.now() : undefined,
           }),
         ]);
       } else {
@@ -129,6 +148,8 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
             .update({
               vote: voteValue,
               createdAt: Date.now(),
+              isIndication: isIndicationVote,
+              indicatedAt: isIndicationVote ? Date.now() : undefined,
             })
             .link({
               voter: user.id,

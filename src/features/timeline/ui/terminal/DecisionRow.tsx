@@ -100,23 +100,49 @@ export function DecisionRow({ decision, onClick, isSelected }: DecisionRowProps)
       <div className="flex items-center">
         {decision.votes ? (
           <div className="flex w-full flex-col gap-1">
-            <VoteBarCompact votes={decision.votes} className="w-full" />
-            <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                {t('timeline.terminal.support', { defaultValue: 'Support' })}:{' '}
-                {decision.votes.support}
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
-                {t('timeline.terminal.oppose', { defaultValue: 'Oppose' })}: {decision.votes.oppose}
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
-                {t('timeline.terminal.abstain', { defaultValue: 'Abstain' })}:{' '}
-                {decision.votes.abstain}
-              </span>
-            </div>
+            {/* Show indication bar if in indication phase */}
+            {decision.isIndicationPhase && decision.indicationVotes ? (
+              <>
+                <VoteBarCompact votes={decision.indicationVotes} className="w-full opacity-70" />
+                <div className="flex items-center gap-2 text-[10px] text-blue-500">
+                  <span>* {t('timeline.terminal.indication', { defaultValue: 'Ind' })}</span>
+                  <span>{decision.indicationVotes.support}</span>
+                  <span>/</span>
+                  <span>{decision.indicationVotes.oppose}</span>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Show both if we have indication data and not in indication phase */}
+                {decision.indicationVotes && !decision.isIndicationPhase && (
+                  <div className="mb-0.5 flex items-center gap-1 text-[9px] text-muted-foreground">
+                    <span className="text-blue-400">
+                      {t('timeline.terminal.indication', { defaultValue: 'Ind' })}:{' '}
+                      {decision.indicationSupportPercentage}%
+                    </span>
+                    <span>→</span>
+                  </div>
+                )}
+                <VoteBarCompact votes={decision.votes} className="w-full" />
+                <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                    {t('timeline.terminal.support', { defaultValue: 'Support' })}:{' '}
+                    {decision.votes.support}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                    {t('timeline.terminal.oppose', { defaultValue: 'Oppose' })}:{' '}
+                    {decision.votes.oppose}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
+                    {t('timeline.terminal.abstain', { defaultValue: 'Abstain' })}:{' '}
+                    {decision.votes.abstain}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         ) : (
           <span className="text-xs text-muted-foreground">—</span>

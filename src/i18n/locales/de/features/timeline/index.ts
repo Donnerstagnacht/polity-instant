@@ -116,6 +116,9 @@ export const timelineTranslations = {
     voteOppose: 'Dagegen stimmen',
     turnout: 'Beteiligung',
     voted: 'Abgestimmt',
+    // Indication support
+    indication: 'Stimmungsbild',
+    actual: 'Tatsächlich',
     play: 'Abspielen',
     like: 'Gefällt mir',
     liked: 'Gefällt mir',
