@@ -7,10 +7,10 @@ import { generateTestMagicCode } from './magic-code-helper';
 
 export const TEST_USERS = {
   main: {
-    email: 'tobias.hassebrock@gmail.com',
+    email: 'polity.live@gmail.com',
   },
   tobias: {
-    email: 'tobias.hassebrock@gmail.com',
+    email: 'polity.live@gmail.com',
   },
 };
 

@@ -171,7 +171,7 @@ export default function PricingPage() {
             </CardHeader>
             <CardContent className="flex-1">
               <ul className="space-y-3">
-                {tier.features.map((feature, featureIndex) => (
+                {tier.features.map((feature: string, featureIndex: number) => (
                   <li key={featureIndex} className="flex items-start">
                     <Check className="mr-2 h-5 w-5 shrink-0 text-primary" />
                     <span className="text-sm">{feature}</span>

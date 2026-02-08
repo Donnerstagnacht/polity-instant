@@ -14,6 +14,8 @@ export interface CommentWithReplies {
     id?: string;
     name?: string;
     handle?: string;
+    avatar?: string;
+    imageURL?: string;
   };
   votes?: {
     id: string;

@@ -27,7 +27,7 @@ const adminDB = init({
 });
 
 // Test users to ensure are active
-const TEST_USERS = [{ email: 'tobias.hassebrock@gmail.com' }];
+const TEST_USERS = [{ email: 'polity.live@gmail.com' }];
 
 async function globalSetup() {
   console.log('🔧 Running global test setup...\n');

@@ -6,7 +6,7 @@ import { generateTestMagicCode } from '../helpers/magic-code-helper';
 
 test.describe('Complete Authentication Flow End-to-End', () => {
   test('Full Magic Link Authentication Flow', async ({ page }) => {
-    const email = 'tobias.hassebrock@gmail.com';
+    const email = 'polity.live@gmail.com';
 
     // 1. Start at home page / (unauthenticated)
     await page.goto('/');
@@ -17,7 +17,7 @@ test.describe('Complete Authentication Flow End-to-End', () => {
     // 3. Wait for page load
     await page.getByText('Sign in to Polity').first().waitFor({ state: 'visible' });
 
-    // 4. Enter email: tobias.hassebrock@gmail.com
+    // 4. Enter email: polity.live@gmail.com
     await page.getByRole('textbox', { name: 'Email address' }).fill(email);
 
     // 5. Click "Send code" button

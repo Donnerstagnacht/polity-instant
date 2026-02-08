@@ -9,7 +9,7 @@ import db from '../../../../db/db';
  */
 export function useGroupAmendments(
   groupId: string,
-  cursor: { after?: string; first: number } = { first: 20 }
+  cursor: { after?: any; first: number } = { first: 20 }
 ) {
   const { data, isLoading, error, pageInfo } = db.useQuery({
     amendments: {

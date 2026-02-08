@@ -9,7 +9,7 @@ test.describe('OTP Code Verification', () => {
     // 1. Navigate to /auth/verify (via email entry flow)
     await page.goto('/auth');
     await page.getByText('Sign in to Polity').first().waitFor({ state: 'visible' });
-    const email = 'tobias.hassebrock@gmail.com';
+    const email = 'polity.live@gmail.com';
     await page.getByRole('textbox', { name: 'Email address' }).fill(email);
     await page.getByRole('button', { name: 'Send magic code' }).click();
 

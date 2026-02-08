@@ -30,6 +30,7 @@ import {
   handleSuggestionDeclined,
   handleVoteOnSuggestion,
   type EditorUser,
+  type EditorMode,
 } from '@/features/editor';
 import db from '@db/db';
 
@@ -153,13 +154,14 @@ export function DocumentEditorView({
       if (!document?.id || !userId || !editorValue || !amendment?.id) return;
 
       const { updatedDiscussions } = await handleSuggestionAccepted(
+        'amendment',
         document.id,
-        amendment.id,
         userId,
         editorValue,
         discussions,
         suggestion,
-        document.editingMode,
+        document.editingMode as EditorMode,
+        amendment.id,
         amendment.title
       );
 
@@ -182,13 +184,14 @@ export function DocumentEditorView({
       if (!document?.id || !userId || !editorValue || !amendment?.id) return;
 
       const { updatedDiscussions } = await handleSuggestionDeclined(
+        'amendment',
         document.id,
-        amendment.id,
         userId,
         editorValue,
         discussions,
         suggestion,
-        document.editingMode,
+        document.editingMode as EditorMode,
+        amendment.id,
         amendment.title
       );
 
@@ -211,6 +214,7 @@ export function DocumentEditorView({
       if (!document?.id || !userId || !amendment?.id) return;
 
       await handleVoteOnSuggestion(
+        'amendment',
         document.id,
         amendment.id,
         userId,
@@ -236,9 +240,10 @@ export function DocumentEditorView({
   );
 
   // Check if user is owner or collaborator (supplementary check from queried data)
+  // Note: This check is currently unused and may be removed in the future
   const isOwnerOrCollabFromData =
     (document &&
-      (document.owner?.id === userId ||
+      ((document as any).owner?.id === userId ||
         document.collaborators?.some((c: any) => c.user?.id === userId))) ||
     amendment?.amendmentRoleCollaborators?.some(
       (c: any) => c.user?.id === userId && c.status === 'admin'

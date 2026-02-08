@@ -16,7 +16,7 @@ interface MonthViewProps {
 
 export const MonthView = ({ selectedDate, onDateSelect, events, allEvents }: MonthViewProps) => {
   const router = useRouter();
-  const { t, currentLanguage } = useTranslation();
+  const { t, language } = useTranslation();
 
   const getEventsForDate = (date: Date) => {
     return allEvents.filter(event => isSameDay(event.startDate, date));
@@ -61,7 +61,7 @@ export const MonthView = ({ selectedDate, onDateSelect, events, allEvents }: Mon
         <Card>
           <CardHeader>
             <CardTitle>
-              {selectedDate.toLocaleDateString(currentLanguage === 'de' ? 'de-DE' : 'en-US', {
+              {selectedDate.toLocaleDateString(language === 'de' ? 'de-DE' : 'en-US', {
                 month: 'short',
                 day: 'numeric',
               })}

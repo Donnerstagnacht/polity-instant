@@ -178,7 +178,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sortBy, setSortBy] = useState<CommentSortBy>('votes');
-  const [commentCursor, setCommentCursor] = useState<{ after?: CommentCursor; first: number }>({
+  const [commentCursor, setCommentCursor] = useState<{ after?: any; first: number }>({
     first: 10,
   });
 

@@ -3,7 +3,7 @@ import { Conversation } from '../types';
 
 export function useConversationData(
   userId?: string,
-  cursor: { after?: string; first: number } = { first: 20 }
+  cursor: { after?: any; first: number } = { first: 20 }
 ) {
   const { data, isLoading, pageInfo } = db.useQuery(
     userId

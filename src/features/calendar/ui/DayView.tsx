@@ -64,7 +64,7 @@ export const DayView = ({ selectedDate, events, allEvents, onDateSelect }: DayVi
                   {sortedEvents.map((event, index) => {
                     const startTime = new Date(event.startDate);
                     const endTime = new Date(event.endDate);
-                    const duration = calculateDuration(event.startDate, event.endDate);
+                    const duration = calculateDuration(startTime.getTime(), endTime.getTime());
                     const baseEventId = getBaseEventId(event.id);
 
                     return (
@@ -81,7 +81,7 @@ export const DayView = ({ selectedDate, events, allEvents, onDateSelect }: DayVi
                           description={event.description}
                           type="discussion" // Events shown as discussion type
                           status="planned"
-                          creatorName={event.creator?.name || event.creator?.email}
+                          creatorName={event.organizer?.name}
                           detailsLink={`/event/${baseEventId}`}
                           detailsLabel={t('features.calendar.viewEvent')}
                         />

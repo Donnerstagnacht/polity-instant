@@ -85,7 +85,7 @@ export const timelineAriaLabels = {
  */
 export function useScreenReaderAnnounce() {
   const [announcement, setAnnouncement] = React.useState('');
-  const timeoutRef = React.useRef<NodeJS.Timeout>();
+  const timeoutRef = React.useRef<NodeJS.Timeout | undefined>(undefined);
 
   const announce = React.useCallback(
     (message: string, priority: 'polite' | 'assertive' = 'polite') => {

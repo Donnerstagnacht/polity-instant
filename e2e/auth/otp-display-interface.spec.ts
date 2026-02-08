@@ -8,7 +8,7 @@ test.describe('OTP Code Verification', () => {
     // 1. Navigate through email entry
     await page.goto('/auth');
     await page.getByText('Sign in to Polity').first().waitFor({ state: 'visible' });
-    await page.getByRole('textbox', { name: 'Email address' }).fill('tobias.hassebrock@gmail.com');
+    await page.getByRole('textbox', { name: 'Email address' }).fill('polity.live@gmail.com');
     await page.getByRole('button', { name: 'Send magic code' }).click();
 
     // 2. Wait for /auth/verify page to load

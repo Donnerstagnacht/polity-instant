@@ -1,0 +1,1426 @@
+"filename", "language", "JSON", "TypeScript", "JSON with Comments", "YAML", "PostCSS", "Markdown", "JavaScript", "TypeScript JSX", "XML", "comment", "blank", "total"
+"c:\react\polity\.cta.json", "JSON", 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 12
+"c:\react\polity\.github\ISSUE_TEMPLATE\bug-report.yml", "YAML", 0, 0, 0, 30, 0, 0, 0, 0, 0, 7, 7, 44
+"c:\react\polity\.github\ISSUE_TEMPLATE\epic.yml", "YAML", 0, 0, 0, 16, 0, 0, 0, 0, 0, 2, 2, 20
+"c:\react\polity\.github\ISSUE_TEMPLATE\feature-request.yml", "YAML", 0, 0, 0, 20, 0, 0, 0, 0, 0, 4, 4, 28
+"c:\react\polity\.github\ISSUE_TEMPLATE\user-story.yml", "YAML", 0, 0, 0, 23, 0, 0, 0, 0, 0, 3, 4, 30
+"c:\react\polity\.github\agent.md", "Markdown", 0, 0, 0, 0, 0, 614, 0, 0, 0, 0, 98, 712
+"c:\react\polity\.github\agents\plan-with-md.agent.md", "Markdown", 0, 0, 0, 0, 0, 95, 0, 0, 0, 0, 36, 131
+"c:\react\polity\.github\agents\test-generator.agent.md", "Markdown", 0, 0, 0, 0, 0, 49, 0, 0, 0, 0, 10, 59
+"c:\react\polity\.github\agents\test-healer.agent.md", "Markdown", 0, 0, 0, 0, 0, 41, 0, 0, 0, 0, 3, 44
+"c:\react\polity\.github\agents\test-planner.agent.md", "Markdown", 0, 0, 0, 0, 0, 70, 0, 0, 0, 0, 22, 92
+"c:\react\polity\.github\copilot-instructions.md", "Markdown", 0, 0, 0, 0, 0, 330, 0, 0, 0, 0, 89, 419
+"c:\react\polity\.github\workflows\playwright.yml", "YAML", 0, 0, 0, 27, 0, 0, 0, 0, 0, 0, 1, 28
+"c:\react\polity\.lintstagedrc.json", "JSON", 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7
+"c:\react\polity\.prettierrc.json", "JSON", 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 16
+"c:\react\polity\.storybook\decorators.ts", "TypeScript", 0, 29, 0, 0, 0, 0, 0, 0, 0, 11, 2, 42
+"c:\react\polity\.storybook\main.ts", "TypeScript", 0, 17, 0, 0, 0, 0, 0, 0, 0, 0, 2, 19
+"c:\react\polity\.storybook\preview.ts", "TypeScript", 0, 63, 0, 0, 0, 0, 0, 0, 0, 0, 3, 66
+"c:\react\polity\.storybook\vitest.setup.ts", "TypeScript", 0, 4, 0, 0, 0, 0, 0, 0, 0, 2, 2, 8
+"c:\react\polity\README.md", "Markdown", 0, 0, 0, 0, 0, 112, 0, 0, 0, 0, 50, 162
+"c:\react\polity\app\amendment\[id]\change-requests\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 29, 0, 0, 4, 33
+"c:\react\polity\app\amendment\[id]\collaborators\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 34, 0, 0, 6, 40
+"c:\react\polity\app\amendment\[id]\discussions\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 14, 0, 0, 4, 18
+"c:\react\polity\app\amendment\[id]\edit\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 32, 0, 0, 4, 36
+"c:\react\polity\app\amendment\[id]\notifications\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 35, 0, 0, 4, 39
+"c:\react\polity\app\amendment\[id]\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 4, 19
+"c:\react\polity\app\amendment\[id]\process\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 23, 0, 0, 5, 28
+"c:\react\polity\app\amendment\[id]\text\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 42, 0, 2, 6, 50
+"c:\react\polity\app\amendment\[id]\text\page.unified.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 51, 0, 6, 6, 63
+"c:\react\polity\app\api\events\finalize-delegates\route.ts", "TypeScript", 0, 67, 0, 0, 0, 0, 0, 0, 0, 4, 11, 82
+"c:\react\polity\app\api\push\send\route.ts", "TypeScript", 0, 163, 0, 0, 0, 0, 0, 0, 0, 10, 28, 201
+"c:\react\polity\app\api\stripe\cancel-subscription\route.ts", "TypeScript", 0, 31, 0, 0, 0, 0, 0, 0, 0, 1, 6, 38
+"c:\react\polity\app\api\stripe\create-checkout\route.ts", "TypeScript", 0, 103, 0, 0, 0, 0, 0, 0, 0, 12, 12, 127
+"c:\react\polity\app\api\stripe\create-portal\route.ts", "TypeScript", 0, 32, 0, 0, 0, 0, 0, 0, 0, 0, 8, 40
+"c:\react\polity\app\api\stripe\subscription-status\route.ts", "TypeScript", 0, 108, 0, 0, 0, 0, 0, 0, 0, 9, 16, 133
+"c:\react\polity\app\api\stripe\webhook\route.ts", "TypeScript", 0, 282, 0, 0, 0, 0, 0, 0, 0, 11, 31, 324
+"c:\react\polity\app\auth\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 3, 13
+"c:\react\polity\app\auth\verify\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 25, 0, 0, 3, 28
+"c:\react\polity\app\blog\[id]\bloggers\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 19, 0, 0, 4, 23
+"c:\react\polity\app\blog\[id]\edit\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 25, 0, 0, 5, 30
+"c:\react\polity\app\blog\[id]\editor\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 39, 0, 2, 6, 47
+"c:\react\polity\app\blog\[id]\editor\page.unified.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 44, 0, 6, 6, 56
+"c:\react\polity\app\blog\[id]\notifications\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 19, 0, 0, 4, 23
+"c:\react\polity\app\blog\[id]\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 4, 16
+"c:\react\polity\app\calendar\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 2, 6
+"c:\react\polity\app\client-layout.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 165, 0, 7, 27, 199
+"c:\react\polity\app\create\agenda-item\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 27, 0, 0, 4, 31
+"c:\react\polity\app\create\amendment\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 609, 0, 28, 50, 687
+"c:\react\polity\app\create\blog\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 3, 13
+"c:\react\polity\app\create\election-candidate\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 271, 0, 5, 22, 298
+"c:\react\polity\app\create\event\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 1121, 0, 58, 76, 1255
+"c:\react\polity\app\create\group\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 1040, 0, 48, 82, 1170
+"c:\react\polity\app\create\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 3, 13
+"c:\react\polity\app\create\position\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 296, 0, 4, 19, 319
+"c:\react\polity\app\create\statement\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 171, 0, 3, 11, 185
+"c:\react\polity\app\create\todo\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 354, 0, 4, 15, 373
+"c:\react\polity\app\editor\[id]\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 43, 0, 6, 6, 55
+"c:\react\polity\app\editor\[id]\page.unified.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 43, 0, 6, 6, 55
+"c:\react\polity\app\editor\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 196, 0, 7, 16, 219
+"c:\react\polity\app\event\[id]\agenda\[agenda_item_id]\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 5, 25
+"c:\react\polity\app\event\[id]\agenda\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 4, 20
+"c:\react\polity\app\event\[id]\edit\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 25, 0, 0, 5, 30
+"c:\react\polity\app\event\[id]\network\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 50, 0, 1, 9, 60
+"c:\react\polity\app\event\[id]\notifications\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 28, 0, 1, 5, 34
+"c:\react\polity\app\event\[id]\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 4, 19
+"c:\react\polity\app\event\[id]\participants\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 26, 0, 0, 6, 32
+"c:\react\polity\app\event\[id]\positions\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 26, 0, 0, 6, 32
+"c:\react\polity\app\event\[id]\stream\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 4, 20
+"c:\react\polity\app\features\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 260, 0, 4, 12, 276
+"c:\react\polity\app\globals.css", "PostCSS", 0, 0, 0, 0, 159, 0, 0, 0, 0, 2, 17, 178
+"c:\react\polity\app\group\[id]\amendments\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 135, 0, 11, 16, 162
+"c:\react\polity\app\group\[id]\edit\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 25, 0, 0, 5, 30
+"c:\react\polity\app\group\[id]\editor\[docId]\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 82, 0, 2, 10, 94
+"c:\react\polity\app\group\[id]\editor\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 34, 0, 1, 6, 41
+"c:\react\polity\app\group\[id]\events\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 247, 0, 17, 28, 292
+"c:\react\polity\app\group\[id]\memberships\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 398, 0, 21, 43, 462
+"c:\react\polity\app\group\[id]\network\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 304, 0, 16, 42, 362
+"c:\react\polity\app\group\[id]\notifications\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 28, 0, 1, 5, 34
+"c:\react\polity\app\group\[id]\operation\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 228, 0, 9, 15, 252
+"c:\react\polity\app\group\[id]\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 4, 19
+"c:\react\polity\app\group\[id]\relationships\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 28, 0, 0, 4, 32
+"c:\react\polity\app\layout.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 36, 0, 0, 3, 39
+"c:\react\polity\app\meet\[id]\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 4, 19
+"c:\react\polity\app\messages\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 2, 6
+"c:\react\polity\app\not-found.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 52, 0, 0, 7, 59
+"c:\react\polity\app\notifications\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 13, 0, 0, 3, 16
+"c:\react\polity\app\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 199, 0, 14, 19, 232
+"c:\react\polity\app\pricing\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 231, 0, 5, 15, 251
+"c:\react\polity\app\search\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 18, 0, 0, 4, 22
+"c:\react\polity\app\solutions\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 155, 0, 6, 13, 174
+"c:\react\polity\app\statement\[id]\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 4, 16
+"c:\react\polity\app\support\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 263, 0, 8, 14, 285
+"c:\react\polity\app\todos\[id]\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 4, 20
+"c:\react\polity\app\todos\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 13, 0, 0, 3, 16
+"c:\react\polity\app\user\[id]\edit\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 129, 0, 2, 13, 144
+"c:\react\polity\app\user\[id]\meet\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 4, 16
+"c:\react\polity\app\user\[id]\memberships\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 182, 0, 8, 14, 204
+"c:\react\polity\app\user\[id]\network\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 49, 0, 0, 7, 56
+"c:\react\polity\app\user\[id]\notifications\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 31, 0, 1, 6, 38
+"c:\react\polity\app\user\[id]\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 40, 0, 6, 11, 57
+"c:\react\polity\app\user\[id]\subscriptions\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 119, 0, 3, 16, 138
+"c:\react\polity\app\user\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 23, 0, 3, 5, 31
+"c:\react\polity\components.json", "JSON", 21, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 22
+"c:\react\polity\db\db.ts", "TypeScript", 0, 11, 0, 0, 0, 0, 0, 0, 0, 9, 7, 27
+"c:\react\polity\db\instant.perms.ts", "TypeScript", 0, 26, 0, 0, 0, 0, 0, 0, 0, 1, 4, 31
+"c:\react\polity\db\instant.schema.ts", "TypeScript", 0, 64, 0, 0, 0, 0, 0, 0, 0, 2, 5, 71
+"c:\react\polity\db\perms\agendas.ts", "TypeScript", 0, 116, 0, 0, 0, 0, 0, 0, 0, 0, 3, 119
+"c:\react\polity\db\perms\amendment-workflow.perms.ts", "TypeScript", 0, 91, 0, 0, 0, 0, 0, 0, 0, 5, 4, 100
+"c:\react\polity\db\perms\amendments.ts", "TypeScript", 0, 306, 0, 0, 0, 0, 0, 0, 0, 0, 3, 309
+"c:\react\polity\db\perms\blog.ts", "TypeScript", 0, 76, 0, 0, 0, 0, 0, 0, 0, 0, 3, 79
+"c:\react\polity\db\perms\common.ts", "TypeScript", 0, 93, 0, 0, 0, 0, 0, 0, 0, 0, 3, 96
+"c:\react\polity\db\perms\events.ts", "TypeScript", 0, 115, 0, 0, 0, 0, 0, 0, 0, 0, 3, 118
+"c:\react\polity\db\perms\groups.ts", "TypeScript", 0, 131, 0, 0, 0, 0, 0, 0, 0, 0, 3, 134
+"c:\react\polity\db\perms\messages.ts", "TypeScript", 0, 50, 0, 0, 0, 0, 0, 0, 0, 0, 3, 53
+"c:\react\polity\db\perms\notifications.ts", "TypeScript", 0, 32, 0, 0, 0, 0, 0, 0, 0, 0, 3, 35
+"c:\react\polity\db\perms\payments.ts", "TypeScript", 0, 74, 0, 0, 0, 0, 0, 0, 0, 0, 3, 77
+"c:\react\polity\db\perms\todos.ts", "TypeScript", 0, 58, 0, 0, 0, 0, 0, 0, 0, 0, 3, 61
+"c:\react\polity\db\perms\users.ts", "TypeScript", 0, 89, 0, 0, 0, 0, 0, 0, 0, 0, 3, 92
+"c:\react\polity\db\rbac\constants.ts", "TypeScript", 0, 162, 0, 0, 0, 0, 0, 0, 0, 44, 8, 214
+"c:\react\polity\db\rbac\helpers.ts", "TypeScript", 0, 139, 0, 0, 0, 0, 0, 0, 0, 150, 26, 315
+"c:\react\polity\db\rbac\index.ts", "TypeScript", 0, 34, 0, 0, 0, 0, 0, 0, 0, 9, 5, 48
+"c:\react\polity\db\rbac\types.ts", "TypeScript", 0, 114, 0, 0, 0, 0, 0, 0, 0, 7, 12, 133
+"c:\react\polity\db\rbac\usePermissions.ts", "TypeScript", 0, 161, 0, 0, 0, 0, 0, 0, 0, 67, 28, 256
+"c:\react\polity\db\rbac\workflow-constants.ts", "TypeScript", 0, 149, 0, 0, 0, 0, 0, 0, 0, 51, 16, 216
+"c:\react\polity\db\schema\agendas.ts", "TypeScript", 0, 213, 0, 0, 0, 0, 0, 0, 0, 1, 3, 217
+"c:\react\polity\db\schema\amendments.ts", "TypeScript", 0, 829, 0, 0, 0, 0, 0, 0, 0, 2, 3, 834
+"c:\react\polity\db\schema\blog.ts", "TypeScript", 0, 137, 0, 0, 0, 0, 0, 0, 0, 0, 3, 140
+"c:\react\polity\db\schema\common.ts", "TypeScript", 0, 314, 0, 0, 0, 0, 0, 0, 0, 8, 3, 325
+"c:\react\polity\db\schema\events.ts", "TypeScript", 0, 502, 0, 0, 0, 0, 0, 0, 0, 13, 9, 524
+"c:\react\polity\db\schema\groups.ts", "TypeScript", 0, 197, 0, 0, 0, 0, 0, 0, 0, 0, 3, 200
+"c:\react\polity\db\schema\messages.ts", "TypeScript", 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 3, 103
+"c:\react\polity\db\schema\notifications.ts", "TypeScript", 0, 317, 0, 0, 0, 0, 0, 0, 0, 14, 3, 334
+"c:\react\polity\db\schema\payments.ts", "TypeScript", 0, 140, 0, 0, 0, 0, 0, 0, 0, 0, 3, 143
+"c:\react\polity\db\schema\statements.ts", "TypeScript", 0, 37, 0, 0, 0, 0, 0, 0, 0, 0, 3, 40
+"c:\react\polity\db\schema\todos.ts", "TypeScript", 0, 96, 0, 0, 0, 0, 0, 0, 0, 0, 3, 99
+"c:\react\polity\db\schema\users.ts", "TypeScript", 0, 101, 0, 0, 0, 0, 0, 0, 0, 0, 3, 104
+"c:\react\polity\e2e\agenda-items\agenda-error-handling.spec.ts", "TypeScript", 0, 58, 0, 0, 0, 0, 0, 0, 0, 31, 31, 120
+"c:\react\polity\e2e\agenda-items\agenda-item-display.spec.ts", "TypeScript", 0, 34, 0, 0, 0, 0, 0, 0, 0, 19, 15, 68
+"c:\react\polity\e2e\agenda-items\agenda-item-ordering.spec.ts", "TypeScript", 0, 33, 0, 0, 0, 0, 0, 0, 0, 19, 15, 67
+"c:\react\polity\e2e\agenda-items\agenda-item-permissions.spec.ts", "TypeScript", 0, 50, 0, 0, 0, 0, 0, 0, 0, 24, 25, 99
+"c:\react\polity\e2e\agenda-items\agenda-item-status.spec.ts", "TypeScript", 0, 54, 0, 0, 0, 0, 0, 0, 0, 23, 26, 103
+"c:\react\polity\e2e\agenda-items\agenda-item-types.spec.ts", "TypeScript", 0, 53, 0, 0, 0, 0, 0, 0, 0, 16, 22, 91
+"c:\react\polity\e2e\agenda-items\agenda-loading-states.spec.ts", "TypeScript", 0, 35, 0, 0, 0, 0, 0, 0, 0, 19, 20, 74
+"c:\react\polity\e2e\agenda-items\agenda-scheduling.spec.ts", "TypeScript", 0, 45, 0, 0, 0, 0, 0, 0, 0, 16, 20, 81
+"c:\react\polity\e2e\agenda-items\amendment-linking.spec.ts", "TypeScript", 0, 50, 0, 0, 0, 0, 0, 0, 0, 18, 22, 90
+"c:\react\polity\e2e\agenda-items\create-agenda-item.spec.ts", "TypeScript", 0, 31, 0, 0, 0, 0, 0, 0, 0, 14, 14, 59
+"c:\react\polity\e2e\agenda-items\duration-management.spec.ts", "TypeScript", 0, 73, 0, 0, 0, 0, 0, 0, 0, 27, 34, 134
+"c:\react\polity\e2e\agenda-items\forwarding-system.spec.ts", "TypeScript", 0, 72, 0, 0, 0, 0, 0, 0, 0, 29, 32, 133
+"c:\react\polity\e2e\amendment-collaboration\access-control-non-collaborator.spec.ts", "TypeScript", 0, 12, 0, 0, 0, 0, 0, 0, 0, 6, 6, 24
+"c:\react\polity\e2e\amendment-collaboration\assign-action-rights.spec.ts", "TypeScript", 0, 25, 0, 0, 0, 0, 0, 0, 0, 7, 10, 42
+"c:\react\polity\e2e\amendment-collaboration\author-approve-request.spec.ts", "TypeScript", 0, 17, 0, 0, 0, 0, 0, 0, 0, 8, 7, 32
+"c:\react\polity\e2e\amendment-collaboration\author-demote-to-collaborator.spec.ts", "TypeScript", 0, 20, 0, 0, 0, 0, 0, 0, 0, 7, 7, 34
+"c:\react\polity\e2e\amendment-collaboration\author-invite-collaborators.spec.ts", "TypeScript", 0, 23, 0, 0, 0, 0, 0, 0, 0, 8, 10, 41
+"c:\react\polity\e2e\amendment-collaboration\author-promote-to-admin.spec.ts", "TypeScript", 0, 18, 0, 0, 0, 0, 0, 0, 0, 7, 7, 32
+"c:\react\polity\e2e\amendment-collaboration\author-reject-request.spec.ts", "TypeScript", 0, 16, 0, 0, 0, 0, 0, 0, 0, 7, 8, 31
+"c:\react\polity\e2e\amendment-collaboration\author-remove-collaborator.spec.ts", "TypeScript", 0, 16, 0, 0, 0, 0, 0, 0, 0, 8, 8, 32
+"c:\react\polity\e2e\amendment-collaboration\auto-accept-unanimous.spec.ts", "TypeScript", 0, 17, 0, 0, 0, 0, 0, 0, 0, 7, 8, 32
+"c:\react\polity\e2e\amendment-collaboration\auto-reject-majority.spec.ts", "TypeScript", 0, 17, 0, 0, 0, 0, 0, 0, 0, 7, 8, 32
+"c:\react\polity\e2e\amendment-collaboration\change-vote.spec.ts", "TypeScript", 0, 20, 0, 0, 0, 0, 0, 0, 0, 8, 8, 36
+"c:\react\polity\e2e\amendment-collaboration\collaborator-count-accuracy.spec.ts", "TypeScript", 0, 22, 0, 0, 0, 0, 0, 0, 0, 6, 9, 37
+"c:\react\polity\e2e\amendment-collaboration\create-change-request.spec.ts", "TypeScript", 0, 26, 0, 0, 0, 0, 0, 0, 0, 9, 11, 46
+"c:\react\polity\e2e\amendment-collaboration\create-role.spec.ts", "TypeScript", 0, 26, 0, 0, 0, 0, 0, 0, 0, 9, 12, 47
+"c:\react\polity\e2e\amendment-collaboration\delete-role.spec.ts", "TypeScript", 0, 25, 0, 0, 0, 0, 0, 0, 0, 8, 11, 44
+"c:\react\polity\e2e\amendment-collaboration\discussion-threads.spec.ts", "TypeScript", 0, 26, 0, 0, 0, 0, 0, 0, 0, 7, 11, 44
+"c:\react\polity\e2e\amendment-collaboration\document-title-auto-save.spec.ts", "TypeScript", 0, 20, 0, 0, 0, 0, 0, 0, 0, 7, 10, 37
+"c:\react\polity\e2e\amendment-collaboration\duplicate-request-prevention.spec.ts", "TypeScript", 0, 20, 0, 0, 0, 0, 0, 0, 0, 8, 10, 38
+"c:\react\polity\e2e\amendment-collaboration\edit-mode-direct-edits.spec.ts", "TypeScript", 0, 17, 0, 0, 0, 0, 0, 0, 0, 7, 7, 31
+"c:\react\polity\e2e\amendment-collaboration\loading-states.spec.ts", "TypeScript", 0, 17, 0, 0, 0, 0, 0, 0, 0, 6, 9, 32
+"c:\react\polity\e2e\amendment-collaboration\mode-switching.spec.ts", "TypeScript", 0, 19, 0, 0, 0, 0, 0, 0, 0, 7, 9, 35
+"c:\react\polity\e2e\amendment-collaboration\search-collaborators.spec.ts", "TypeScript", 0, 21, 0, 0, 0, 0, 0, 0, 0, 6, 9, 36
+"c:\react\polity\e2e\amendment-collaboration\suggest-mode-editing.spec.ts", "TypeScript", 0, 17, 0, 0, 0, 0, 0, 0, 0, 7, 7, 31
+"c:\react\polity\e2e\amendment-collaboration\user-accept-invitation.spec.ts", "TypeScript", 0, 14, 0, 0, 0, 0, 0, 0, 0, 8, 7, 29
+"c:\react\polity\e2e\amendment-collaboration\user-cancel-request.spec.ts", "TypeScript", 0, 14, 0, 0, 0, 0, 0, 0, 0, 6, 7, 27
+"c:\react\polity\e2e\amendment-collaboration\user-leave-collaboration.spec.ts", "TypeScript", 0, 14, 0, 0, 0, 0, 0, 0, 0, 6, 7, 27
+"c:\react\polity\e2e\amendment-collaboration\user-request-to-collaborate.spec.ts", "TypeScript", 0, 14, 0, 0, 0, 0, 0, 0, 0, 6, 6, 26
+"c:\react\polity\e2e\amendment-collaboration\version-history.spec.ts", "TypeScript", 0, 20, 0, 0, 0, 0, 0, 0, 0, 7, 8, 35
+"c:\react\polity\e2e\amendment-collaboration\view-mode-readonly.spec.ts", "TypeScript", 0, 17, 0, 0, 0, 0, 0, 0, 0, 7, 8, 32
+"c:\react\polity\e2e\amendment-collaboration\view-vote-status.spec.ts", "TypeScript", 0, 15, 0, 0, 0, 0, 0, 0, 0, 7, 9, 31
+"c:\react\polity\e2e\amendment-collaboration\visibility-controls.spec.ts", "TypeScript", 0, 20, 0, 0, 0, 0, 0, 0, 0, 8, 9, 37
+"c:\react\polity\e2e\amendment-collaboration\vote-abstain-change-request.spec.ts", "TypeScript", 0, 15, 0, 0, 0, 0, 0, 0, 0, 7, 7, 29
+"c:\react\polity\e2e\amendment-collaboration\vote-accept-change-request.spec.ts", "TypeScript", 0, 16, 0, 0, 0, 0, 0, 0, 0, 8, 8, 32
+"c:\react\polity\e2e\amendment-collaboration\vote-reject-change-request.spec.ts", "TypeScript", 0, 16, 0, 0, 0, 0, 0, 0, 0, 8, 8, 32
+"c:\react\polity\e2e\amendment-collaboration\withdraw-invitation.spec.ts", "TypeScript", 0, 24, 0, 0, 0, 0, 0, 0, 0, 7, 9, 40
+"c:\react\polity\e2e\amendments\amendment-error-handling.spec.ts", "TypeScript", 0, 22, 0, 0, 0, 0, 0, 0, 0, 16, 14, 52
+"c:\react\polity\e2e\amendments\amendment-loading-states.spec.ts", "TypeScript", 0, 21, 0, 0, 0, 0, 0, 0, 0, 10, 10, 41
+"c:\react\polity\e2e\amendments\change-requests.spec.ts", "TypeScript", 0, 50, 0, 0, 0, 0, 0, 0, 0, 30, 26, 106
+"c:\react\polity\e2e\amendments\create-amendment.spec.ts", "TypeScript", 0, 20, 0, 0, 0, 0, 0, 0, 0, 12, 11, 43
+"c:\react\polity\e2e\amendments\display-amendment.spec.ts", "TypeScript", 0, 27, 0, 0, 0, 0, 0, 0, 0, 17, 17, 61
+"c:\react\polity\e2e\amendments\search-amendments.spec.ts", "TypeScript", 0, 40, 0, 0, 0, 0, 0, 0, 0, 28, 23, 91
+"c:\react\polity\e2e\amendments\version-control.spec.ts", "TypeScript", 0, 52, 0, 0, 0, 0, 0, 0, 0, 28, 28, 108
+"c:\react\polity\e2e\aria-kai.ts", "TypeScript", 0, 37, 0, 0, 0, 0, 0, 0, 0, 7, 4, 48
+"c:\react\polity\e2e\auth\auth-enter-valid-email.spec.ts", "TypeScript", 0, 13, 0, 0, 0, 0, 0, 0, 0, 7, 7, 27
+"c:\react\polity\e2e\auth\auth-full-flow-end-to-end.spec.ts", "TypeScript", 0, 21, 0, 0, 0, 0, 0, 0, 0, 14, 14, 49
+"c:\react\polity\e2e\auth\auth-load-authentication-page.spec.ts", "TypeScript", 0, 12, 0, 0, 0, 0, 0, 0, 0, 8, 8, 28
+"c:\react\polity\e2e\auth\auth-send-magic-code.spec.ts", "TypeScript", 0, 11, 0, 0, 0, 0, 0, 0, 0, 9, 8, 28
+"c:\react\polity\e2e\auth\auth-validate-email-format.spec.ts", "TypeScript", 0, 12, 0, 0, 0, 0, 0, 0, 0, 8, 8, 28
+"c:\react\polity\e2e\auth\magic-link-auth-test-plan.md", "Markdown", 0, 0, 0, 0, 0, 449, 0, 0, 0, 0, 163, 612
+"c:\react\polity\e2e\auth\otp-display-interface.spec.ts", "TypeScript", 0, 16, 0, 0, 0, 0, 0, 0, 0, 9, 8, 33
+"c:\react\polity\e2e\auth\otp-enter-valid-code-and-authenticate.spec.ts", "TypeScript", 0, 20, 0, 0, 0, 0, 0, 0, 0, 12, 11, 43
+"c:\react\polity\e2e\auth\otp-test-invalid-code.spec.ts", "TypeScript", 0, 18, 0, 0, 0, 0, 0, 0, 0, 7, 8, 33
+"c:\react\polity\e2e\blogs\blog-comments.spec.ts", "TypeScript", 0, 74, 0, 0, 0, 0, 0, 0, 0, 42, 38, 154
+"c:\react\polity\e2e\blogs\blog-error-handling.spec.ts", "TypeScript", 0, 25, 0, 0, 0, 0, 0, 0, 0, 16, 16, 57
+"c:\react\polity\e2e\blogs\blog-hashtags.spec.ts", "TypeScript", 0, 30, 0, 0, 0, 0, 0, 0, 0, 16, 14, 60
+"c:\react\polity\e2e\blogs\blog-loading-states.spec.ts", "TypeScript", 0, 29, 0, 0, 0, 0, 0, 0, 0, 17, 15, 61
+"c:\react\polity\e2e\blogs\blog-subscription.spec.ts", "TypeScript", 0, 36, 0, 0, 0, 0, 0, 0, 0, 16, 17, 69
+"c:\react\polity\e2e\blogs\create-public-blog.spec.ts", "TypeScript", 0, 26, 0, 0, 0, 0, 0, 0, 0, 13, 12, 51
+"c:\react\polity\e2e\blogs\display-blog-content.spec.ts", "TypeScript", 0, 29, 0, 0, 0, 0, 0, 0, 0, 18, 18, 65
+"c:\react\polity\e2e\blogs\search-blogs.spec.ts", "TypeScript", 0, 40, 0, 0, 0, 0, 0, 0, 0, 26, 22, 88
+"c:\react\polity\e2e\calendar\click-event-details.spec.ts", "TypeScript", 0, 19, 0, 0, 0, 0, 0, 0, 0, 7, 7, 33
+"c:\react\polity\e2e\calendar\empty-state.spec.ts", "TypeScript", 0, 25, 0, 0, 0, 0, 0, 0, 0, 8, 7, 40
+"c:\react\polity\e2e\calendar\load-calendar-page.spec.ts", "TypeScript", 0, 14, 0, 0, 0, 0, 0, 0, 0, 7, 7, 28
+"c:\react\polity\e2e\calendar\loading-states.spec.ts", "TypeScript", 0, 29, 0, 0, 0, 0, 0, 0, 0, 9, 10, 48
+"c:\react\polity\e2e\calendar\navigate-dates.spec.ts", "TypeScript", 0, 28, 0, 0, 0, 0, 0, 0, 0, 9, 9, 46
+"c:\react\polity\e2e\calendar\view-day-events.spec.ts", "TypeScript", 0, 22, 0, 0, 0, 0, 0, 0, 0, 6, 7, 35
+"c:\react\polity\e2e\calendar\view-event-statistics.spec.ts", "TypeScript", 0, 15, 0, 0, 0, 0, 0, 0, 0, 9, 7, 31
+"c:\react\polity\e2e\calendar\view-month-events.spec.ts", "TypeScript", 0, 14, 0, 0, 0, 0, 0, 0, 0, 9, 7, 30
+"c:\react\polity\e2e\calendar\view-week-events.spec.ts", "TypeScript", 0, 15, 0, 0, 0, 0, 0, 0, 0, 9, 7, 31
+"c:\react\polity\e2e\change-requests\change-request-display.spec.ts", "TypeScript", 0, 63, 0, 0, 0, 0, 0, 0, 0, 37, 31, 131
+"c:\react\polity\e2e\change-requests\change-request-loading-errors.spec.ts", "TypeScript", 0, 54, 0, 0, 0, 0, 0, 0, 0, 27, 30, 111
+"c:\react\polity\e2e\change-requests\change-request-permissions.spec.ts", "TypeScript", 0, 65, 0, 0, 0, 0, 0, 0, 0, 29, 30, 124
+"c:\react\polity\e2e\change-requests\change-request-status.spec.ts", "TypeScript", 0, 49, 0, 0, 0, 0, 0, 0, 0, 29, 24, 102
+"c:\react\polity\e2e\change-requests\change-request-voting.spec.ts", "TypeScript", 0, 92, 0, 0, 0, 0, 0, 0, 0, 32, 38, 162
+"c:\react\polity\e2e\change-requests\create-change-request.spec.ts", "TypeScript", 0, 61, 0, 0, 0, 0, 0, 0, 0, 21, 26, 108
+"c:\react\polity\e2e\change-requests\voting-thresholds.spec.ts", "TypeScript", 0, 46, 0, 0, 0, 0, 0, 0, 0, 24, 22, 92
+"c:\react\polity\e2e\comments\comment-creation.spec.ts", "TypeScript", 0, 52, 0, 0, 0, 0, 0, 0, 0, 26, 26, 104
+"c:\react\polity\e2e\comments\comment-display.spec.ts", "TypeScript", 0, 43, 0, 0, 0, 0, 0, 0, 0, 36, 22, 101
+"c:\react\polity\e2e\comments\comment-loading-errors.spec.ts", "TypeScript", 0, 64, 0, 0, 0, 0, 0, 0, 0, 44, 38, 146
+"c:\react\polity\e2e\comments\comment-moderation.spec.ts", "TypeScript", 0, 75, 0, 0, 0, 0, 0, 0, 0, 44, 33, 152
+"c:\react\polity\e2e\comments\comment-sorting.spec.ts", "TypeScript", 0, 37, 0, 0, 0, 0, 0, 0, 0, 27, 20, 84
+"c:\react\polity\e2e\comments\comment-threading.spec.ts", "TypeScript", 0, 59, 0, 0, 0, 0, 0, 0, 0, 28, 27, 114
+"c:\react\polity\e2e\comments\comment-timestamps-notifications.spec.ts", "TypeScript", 0, 56, 0, 0, 0, 0, 0, 0, 0, 34, 28, 118
+"c:\react\polity\e2e\comments\comment-voting.spec.ts", "TypeScript", 0, 112, 0, 0, 0, 0, 0, 0, 0, 48, 42, 202
+"c:\react\polity\e2e\create\associate-entity-with-group.spec.ts", "TypeScript", 0, 62, 0, 0, 0, 0, 0, 0, 0, 11, 13, 86
+"c:\react\polity\e2e\create\cancel-creation.spec.ts", "TypeScript", 0, 36, 0, 0, 0, 0, 0, 0, 0, 0, 9, 45
+"c:\react\polity\e2e\create\carousel-and-loading.spec.ts", "TypeScript", 0, 58, 0, 0, 0, 0, 0, 0, 0, 0, 17, 75
+"c:\react\polity\e2e\create\create-agenda-item.spec.ts", "TypeScript", 0, 55, 0, 0, 0, 0, 0, 0, 0, 10, 13, 78
+"c:\react\polity\e2e\create\create-change-request.spec.ts", "TypeScript", 0, 63, 0, 0, 0, 0, 0, 0, 0, 11, 15, 89
+"c:\react\polity\e2e\create\create-election-candidate.spec.ts", "TypeScript", 0, 52, 0, 0, 0, 0, 0, 0, 0, 10, 13, 75
+"c:\react\polity\e2e\create\create-position.spec.ts", "TypeScript", 0, 60, 0, 0, 0, 0, 0, 0, 0, 11, 14, 85
+"c:\react\polity\e2e\create\date-time-picker.spec.ts", "TypeScript", 0, 65, 0, 0, 0, 0, 0, 0, 0, 14, 17, 96
+"c:\react\polity\e2e\create\form-mode-create-event.spec.ts", "TypeScript", 0, 62, 0, 0, 0, 0, 0, 0, 0, 10, 14, 86
+"c:\react\polity\e2e\create\form-mode-create-group.spec.ts", "TypeScript", 0, 61, 0, 0, 0, 0, 0, 0, 0, 9, 13, 83
+"c:\react\polity\e2e\create\guided-mode-create-amendment.spec.ts", "TypeScript", 0, 57, 0, 0, 0, 0, 0, 0, 0, 9, 13, 79
+"c:\react\polity\e2e\create\guided-mode-create-blog.spec.ts", "TypeScript", 0, 59, 0, 0, 0, 0, 0, 0, 0, 9, 13, 81
+"c:\react\polity\e2e\create\guided-mode-create-event.spec.ts", "TypeScript", 0, 72, 0, 0, 0, 0, 0, 0, 0, 11, 16, 99
+"c:\react\polity\e2e\create\guided-mode-create-group.spec.ts", "TypeScript", 0, 57, 0, 0, 0, 0, 0, 0, 0, 12, 14, 83
+"c:\react\polity\e2e\create\guided-mode-create-statement.spec.ts", "TypeScript", 0, 46, 0, 0, 0, 0, 0, 0, 0, 8, 11, 65
+"c:\react\polity\e2e\create\guided-mode-create-todo.spec.ts", "TypeScript", 0, 63, 0, 0, 0, 0, 0, 0, 0, 10, 15, 88
+"c:\react\polity\e2e\create\hashtag-management.spec.ts", "TypeScript", 0, 64, 0, 0, 0, 0, 0, 0, 0, 11, 15, 90
+"c:\react\polity\e2e\create\image-upload.spec.ts", "TypeScript", 0, 60, 0, 0, 0, 0, 0, 0, 0, 10, 12, 82
+"c:\react\polity\e2e\create\load-create-page.spec.ts", "TypeScript", 0, 22, 0, 0, 0, 0, 0, 0, 0, 5, 6, 33
+"c:\react\polity\e2e\create\privacy-settings.spec.ts", "TypeScript", 0, 38, 0, 0, 0, 0, 0, 0, 0, 0, 9, 47
+"c:\react\polity\e2e\create\remaining-create-tests.spec.ts", "TypeScript", 0, 85, 0, 0, 0, 0, 0, 0, 0, 0, 26, 111
+"c:\react\polity\e2e\create\rich-text-editor.spec.ts", "TypeScript", 0, 75, 0, 0, 0, 0, 0, 0, 0, 13, 19, 107
+"c:\react\polity\e2e\create\toggle-guided-form-mode.spec.ts", "TypeScript", 0, 31, 0, 0, 0, 0, 0, 0, 0, 8, 9, 48
+"c:\react\polity\e2e\create\validation-required-fields.spec.ts", "TypeScript", 0, 61, 0, 0, 0, 0, 0, 0, 0, 11, 16, 88
+"c:\react\polity\e2e\election-candidates\candidate-display.spec.ts", "TypeScript", 0, 45, 0, 0, 0, 0, 0, 0, 0, 25, 22, 92
+"c:\react\polity\e2e\election-candidates\candidate-loading-errors.spec.ts", "TypeScript", 0, 40, 0, 0, 0, 0, 0, 0, 0, 27, 25, 92
+"c:\react\polity\e2e\election-candidates\candidate-permissions.spec.ts", "TypeScript", 0, 48, 0, 0, 0, 0, 0, 0, 0, 27, 25, 100
+"c:\react\polity\e2e\election-candidates\candidate-voting.spec.ts", "TypeScript", 0, 37, 0, 0, 0, 0, 0, 0, 0, 18, 17, 72
+"c:\react\polity\e2e\election-candidates\create-candidate.spec.ts", "TypeScript", 0, 55, 0, 0, 0, 0, 0, 0, 0, 20, 23, 98
+"c:\react\polity\e2e\election-candidates\multiple-selection-nomination.spec.ts", "TypeScript", 0, 50, 0, 0, 0, 0, 0, 0, 0, 28, 27, 105
+"c:\react\polity\e2e\election-candidates\vote-counting.spec.ts", "TypeScript", 0, 31, 0, 0, 0, 0, 0, 0, 0, 26, 15, 72
+"c:\react\polity\e2e\event-participation\access-control-non-organizer.spec.ts", "TypeScript", 0, 13, 0, 0, 0, 0, 0, 0, 0, 5, 5, 23
+"c:\react\polity\e2e\event-participation\calendar-integration.spec.ts", "TypeScript", 0, 25, 0, 0, 0, 0, 0, 0, 0, 8, 11, 44
+"c:\react\polity\e2e\event-participation\duplicate-request-prevention.spec.ts", "TypeScript", 0, 19, 0, 0, 0, 0, 0, 0, 0, 8, 8, 35
+"c:\react\polity\e2e\event-participation\loading-states.spec.ts", "TypeScript", 0, 16, 0, 0, 0, 0, 0, 0, 0, 8, 8, 32
+"c:\react\polity\e2e\event-participation\organizer-approve-request.spec.ts", "TypeScript", 0, 14, 0, 0, 0, 0, 0, 0, 0, 8, 8, 30
+"c:\react\polity\e2e\event-participation\organizer-assign-action-rights.spec.ts", "TypeScript", 0, 18, 0, 0, 0, 0, 0, 0, 0, 7, 9, 34
+"c:\react\polity\e2e\event-participation\organizer-change-role.spec.ts", "TypeScript", 0, 15, 0, 0, 0, 0, 0, 0, 0, 8, 8, 31
+"c:\react\polity\e2e\event-participation\organizer-create-role.spec.ts", "TypeScript", 0, 25, 0, 0, 0, 0, 0, 0, 0, 11, 11, 47
+"c:\react\polity\e2e\event-participation\organizer-delete-role.spec.ts", "TypeScript", 0, 19, 0, 0, 0, 0, 0, 0, 0, 8, 10, 37
+"c:\react\polity\e2e\event-participation\organizer-demote-participant.spec.ts", "TypeScript", 0, 16, 0, 0, 0, 0, 0, 0, 0, 6, 7, 29
+"c:\react\polity\e2e\event-participation\organizer-invite-participants.spec.ts", "TypeScript", 0, 21, 0, 0, 0, 0, 0, 0, 0, 10, 10, 41
+"c:\react\polity\e2e\event-participation\organizer-promote-participant.spec.ts", "TypeScript", 0, 16, 0, 0, 0, 0, 0, 0, 0, 6, 7, 29
+"c:\react\polity\e2e\event-participation\organizer-reject-request.spec.ts", "TypeScript", 0, 12, 0, 0, 0, 0, 0, 0, 0, 7, 7, 26
+"c:\react\polity\e2e\event-participation\organizer-remove-participant.spec.ts", "TypeScript", 0, 22, 0, 0, 0, 0, 0, 0, 0, 8, 9, 39
+"c:\react\polity\e2e\event-participation\organizer-search-participants.spec.ts", "TypeScript", 0, 17, 0, 0, 0, 0, 0, 0, 0, 7, 7, 31
+"c:\react\polity\e2e\event-participation\organizer-withdraw-invitation.spec.ts", "TypeScript", 0, 14, 0, 0, 0, 0, 0, 0, 0, 8, 7, 29
+"c:\react\polity\e2e\event-participation\participant-count-accuracy.spec.ts", "TypeScript", 0, 14, 0, 0, 0, 0, 0, 0, 0, 6, 7, 27
+"c:\react\polity\e2e\event-participation\user-accept-invitation.spec.ts", "TypeScript", 0, 14, 0, 0, 0, 0, 0, 0, 0, 7, 7, 28
+"c:\react\polity\e2e\event-participation\user-cancel-request.spec.ts", "TypeScript", 0, 18, 0, 0, 0, 0, 0, 0, 0, 7, 9, 34
+"c:\react\polity\e2e\event-participation\user-leave-event.spec.ts", "TypeScript", 0, 19, 0, 0, 0, 0, 0, 0, 0, 7, 9, 35
+"c:\react\polity\e2e\event-participation\user-request-to-participate.spec.ts", "TypeScript", 0, 14, 0, 0, 0, 0, 0, 0, 0, 7, 7, 28
+"c:\react\polity\e2e\event-participation\view-participants-list.spec.ts", "TypeScript", 0, 16, 0, 0, 0, 0, 0, 0, 0, 7, 7, 30
+"c:\react\polity\e2e\events\calendar-integration.spec.ts", "TypeScript", 0, 28, 0, 0, 0, 0, 0, 0, 0, 16, 13, 57
+"c:\react\polity\e2e\events\create-public-event.spec.ts", "TypeScript", 0, 32, 0, 0, 0, 0, 0, 0, 0, 12, 12, 56
+"c:\react\polity\e2e\events\display-event-details.spec.ts", "TypeScript", 0, 13, 0, 0, 0, 0, 0, 0, 0, 10, 7, 30
+"c:\react\polity\e2e\events\event-error-handling.spec.ts", "TypeScript", 0, 21, 0, 0, 0, 0, 0, 0, 0, 16, 13, 50
+"c:\react\polity\e2e\events\event-loading-states.spec.ts", "TypeScript", 0, 16, 0, 0, 0, 0, 0, 0, 0, 9, 8, 33
+"c:\react\polity\e2e\events\event-stats-bar.spec.ts", "TypeScript", 0, 10, 0, 0, 0, 0, 0, 0, 0, 11, 7, 28
+"c:\react\polity\e2e\events\search-events.spec.ts", "TypeScript", 0, 29, 0, 0, 0, 0, 0, 0, 0, 18, 16, 63
+"c:\react\polity\e2e\events\subscribe-to-event.spec.ts", "TypeScript", 0, 36, 0, 0, 0, 0, 0, 0, 0, 15, 17, 68
+"c:\react\polity\e2e\global-setup.ts", "TypeScript", 0, 54, 0, 0, 0, 0, 0, 0, 0, 11, 12, 77
+"c:\react\polity\e2e\group-membership\access-control-non-admin.spec.ts", "TypeScript", 0, 13, 0, 0, 0, 0, 0, 0, 0, 5, 5, 23
+"c:\react\polity\e2e\group-membership\admin-approve-request.spec.ts", "TypeScript", 0, 14, 0, 0, 0, 0, 0, 0, 0, 8, 8, 30
+"c:\react\polity\e2e\group-membership\admin-assign-action-rights.spec.ts", "TypeScript", 0, 18, 0, 0, 0, 0, 0, 0, 0, 7, 9, 34
+"c:\react\polity\e2e\group-membership\admin-change-role.spec.ts", "TypeScript", 0, 15, 0, 0, 0, 0, 0, 0, 0, 8, 8, 31
+"c:\react\polity\e2e\group-membership\admin-create-role.spec.ts", "TypeScript", 0, 25, 0, 0, 0, 0, 0, 0, 0, 11, 11, 47
+"c:\react\polity\e2e\group-membership\admin-delete-role.spec.ts", "TypeScript", 0, 19, 0, 0, 0, 0, 0, 0, 0, 8, 10, 37
+"c:\react\polity\e2e\group-membership\admin-demote-member.spec.ts", "TypeScript", 0, 16, 0, 0, 0, 0, 0, 0, 0, 6, 7, 29
+"c:\react\polity\e2e\group-membership\admin-invite-members.spec.ts", "TypeScript", 0, 21, 0, 0, 0, 0, 0, 0, 0, 10, 10, 41
+"c:\react\polity\e2e\group-membership\admin-promote-member.spec.ts", "TypeScript", 0, 14, 0, 0, 0, 0, 0, 0, 0, 6, 7, 27
+"c:\react\polity\e2e\group-membership\admin-reject-request.spec.ts", "TypeScript", 0, 12, 0, 0, 0, 0, 0, 0, 0, 7, 7, 26
+"c:\react\polity\e2e\group-membership\admin-remove-member.spec.ts", "TypeScript", 0, 22, 0, 0, 0, 0, 0, 0, 0, 8, 9, 39
+"c:\react\polity\e2e\group-membership\admin-search-members.spec.ts", "TypeScript", 0, 17, 0, 0, 0, 0, 0, 0, 0, 7, 7, 31
+"c:\react\polity\e2e\group-membership\admin-withdraw-invitation.spec.ts", "TypeScript", 0, 12, 0, 0, 0, 0, 0, 0, 0, 8, 7, 27
+"c:\react\polity\e2e\group-membership\duplicate-request-prevention.spec.ts", "TypeScript", 0, 20, 0, 0, 0, 0, 0, 0, 0, 8, 8, 36
+"c:\react\polity\e2e\group-membership\loading-states.spec.ts", "TypeScript", 0, 17, 0, 0, 0, 0, 0, 0, 0, 8, 8, 33
+"c:\react\polity\e2e\group-membership\member-count-accuracy.spec.ts", "TypeScript", 0, 15, 0, 0, 0, 0, 0, 0, 0, 6, 7, 28
+"c:\react\polity\e2e\group-membership\user-accept-invitation.spec.ts", "TypeScript", 0, 15, 0, 0, 0, 0, 0, 0, 0, 7, 7, 29
+"c:\react\polity\e2e\group-membership\user-cancel-request.spec.ts", "TypeScript", 0, 19, 0, 0, 0, 0, 0, 0, 0, 7, 9, 35
+"c:\react\polity\e2e\group-membership\user-leave-group.spec.ts", "TypeScript", 0, 20, 0, 0, 0, 0, 0, 0, 0, 7, 9, 36
+"c:\react\polity\e2e\group-membership\user-request-to-join.spec.ts", "TypeScript", 0, 15, 0, 0, 0, 0, 0, 0, 0, 7, 7, 29
+"c:\react\polity\e2e\groups\create-public-group.spec.ts", "TypeScript", 0, 27, 0, 0, 0, 0, 0, 0, 0, 13, 12, 52
+"c:\react\polity\e2e\groups\display-group-details.spec.ts", "TypeScript", 0, 28, 0, 0, 0, 0, 0, 0, 0, 18, 18, 64
+"c:\react\polity\e2e\groups\group-content-association.spec.ts", "TypeScript", 0, 53, 0, 0, 0, 0, 0, 0, 0, 20, 20, 93
+"c:\react\polity\e2e\groups\group-error-handling.spec.ts", "TypeScript", 0, 22, 0, 0, 0, 0, 0, 0, 0, 15, 13, 50
+"c:\react\polity\e2e\groups\group-loading-states.spec.ts", "TypeScript", 0, 21, 0, 0, 0, 0, 0, 0, 0, 10, 10, 41
+"c:\react\polity\e2e\groups\search-groups.spec.ts", "TypeScript", 0, 29, 0, 0, 0, 0, 0, 0, 0, 19, 17, 65
+"c:\react\polity\e2e\groups\subscribe-to-group.spec.ts", "TypeScript", 0, 45, 0, 0, 0, 0, 0, 0, 0, 21, 22, 88
+"c:\react\polity\e2e\helpers\auth.ts", "TypeScript", 0, 56, 0, 0, 0, 0, 0, 0, 0, 34, 17, 107
+"c:\react\polity\e2e\helpers\magic-code-helper.ts", "TypeScript", 0, 59, 0, 0, 0, 0, 0, 0, 0, 32, 12, 103
+"c:\react\polity\e2e\helpers\navigation.ts", "TypeScript", 0, 45, 0, 0, 0, 0, 0, 0, 0, 31, 16, 92
+"c:\react\polity\e2e\helpers\subscription.ts", "TypeScript", 0, 63, 0, 0, 0, 0, 0, 0, 0, 42, 15, 120
+"c:\react\polity\e2e\messages\auto-scroll.spec.ts", "TypeScript", 0, 74, 0, 0, 0, 0, 0, 0, 0, 23, 29, 126
+"c:\react\polity\e2e\messages\conversation-requests.spec.ts", "TypeScript", 0, 134, 0, 0, 0, 0, 0, 0, 0, 32, 44, 210
+"c:\react\polity\e2e\messages\conversation-sorting.spec.ts", "TypeScript", 0, 61, 0, 0, 0, 0, 0, 0, 0, 19, 22, 102
+"c:\react\polity\e2e\messages\copy-message-text.spec.ts", "TypeScript", 0, 28, 0, 0, 0, 0, 0, 0, 0, 10, 11, 49
+"c:\react\polity\e2e\messages\delete-conversations.spec.ts", "TypeScript", 0, 177, 0, 0, 0, 0, 0, 0, 0, 36, 55, 268
+"c:\react\polity\e2e\messages\empty-states.spec.ts", "TypeScript", 0, 41, 0, 0, 0, 0, 0, 0, 0, 16, 17, 74
+"c:\react\polity\e2e\messages\group-conversation-sync.spec.ts", "TypeScript", 0, 102, 0, 0, 0, 0, 0, 0, 0, 29, 42, 173
+"c:\react\polity\e2e\messages\group-conversations.spec.ts", "TypeScript", 0, 128, 0, 0, 0, 0, 0, 0, 0, 25, 43, 196
+"c:\react\polity\e2e\messages\group-rename-sync.spec.ts", "TypeScript", 0, 105, 0, 0, 0, 0, 0, 0, 0, 23, 46, 174
+"c:\react\polity\e2e\messages\keyboard-shortcuts.spec.ts", "TypeScript", 0, 88, 0, 0, 0, 0, 0, 0, 0, 31, 37, 156
+"c:\react\polity\e2e\messages\load-messages-page.spec.ts", "TypeScript", 0, 13, 0, 0, 0, 0, 0, 0, 0, 7, 7, 27
+"c:\react\polity\e2e\messages\loading-states.spec.ts", "TypeScript", 0, 51, 0, 0, 0, 0, 0, 0, 0, 20, 21, 92
+"c:\react\polity\e2e\messages\mark-messages-read.spec.ts", "TypeScript", 0, 32, 0, 0, 0, 0, 0, 0, 0, 12, 12, 56
+"c:\react\polity\e2e\messages\message-alignment.spec.ts", "TypeScript", 0, 68, 0, 0, 0, 0, 0, 0, 0, 19, 23, 110
+"c:\react\polity\e2e\messages\message-handling.spec.ts", "TypeScript", 0, 107, 0, 0, 0, 0, 0, 0, 0, 31, 39, 177
+"c:\react\polity\e2e\messages\message-timestamps.spec.ts", "TypeScript", 0, 47, 0, 0, 0, 0, 0, 0, 0, 16, 17, 80
+"c:\react\polity\e2e\messages\mobile-responsive.spec.ts", "TypeScript", 0, 54, 0, 0, 0, 0, 0, 0, 0, 19, 21, 94
+"c:\react\polity\e2e\messages\participant-information.spec.ts", "TypeScript", 0, 48, 0, 0, 0, 0, 0, 0, 0, 16, 19, 83
+"c:\react\polity\e2e\messages\pin-conversations.spec.ts", "TypeScript", 0, 139, 0, 0, 0, 0, 0, 0, 0, 30, 45, 214
+"c:\react\polity\e2e\messages\search-conversations.spec.ts", "TypeScript", 0, 35, 0, 0, 0, 0, 0, 0, 0, 18, 16, 69
+"c:\react\polity\e2e\messages\select-conversation.spec.ts", "TypeScript", 0, 34, 0, 0, 0, 0, 0, 0, 0, 14, 12, 60
+"c:\react\polity\e2e\messages\send-text-message.spec.ts", "TypeScript", 0, 54, 0, 0, 0, 0, 0, 0, 0, 19, 22, 95
+"c:\react\polity\e2e\messages\unread-message-count.spec.ts", "TypeScript", 0, 54, 0, 0, 0, 0, 0, 0, 0, 21, 21, 96
+"c:\react\polity\e2e\messages\user-search-dialog.spec.ts", "TypeScript", 0, 186, 0, 0, 0, 0, 0, 0, 0, 46, 62, 294
+"c:\react\polity\e2e\messages\view-conversations-list.spec.ts", "TypeScript", 0, 21, 0, 0, 0, 0, 0, 0, 0, 10, 8, 39
+"c:\react\polity\e2e\notifications\delete-notification.spec.ts", "TypeScript", 0, 38, 0, 0, 0, 0, 0, 0, 0, 12, 11, 61
+"c:\react\polity\e2e\notifications\empty-states.spec.ts", "TypeScript", 0, 40, 0, 0, 0, 0, 0, 0, 0, 20, 20, 80
+"c:\react\polity\e2e\notifications\load-notifications-page.spec.ts", "TypeScript", 0, 14, 0, 0, 0, 0, 0, 0, 0, 7, 7, 28
+"c:\react\polity\e2e\notifications\loading-states.spec.ts", "TypeScript", 0, 44, 0, 0, 0, 0, 0, 0, 0, 20, 20, 84
+"c:\react\polity\e2e\notifications\mark-as-read.spec.ts", "TypeScript", 0, 32, 0, 0, 0, 0, 0, 0, 0, 18, 15, 65
+"c:\react\polity\e2e\notifications\notification-icons-types.spec.ts", "TypeScript", 0, 40, 0, 0, 0, 0, 0, 0, 0, 14, 15, 69
+"c:\react\polity\e2e\notifications\tab-filtering.spec.ts", "TypeScript", 0, 38, 0, 0, 0, 0, 0, 0, 0, 15, 14, 67
+"c:\react\polity\e2e\notifications\timestamps.spec.ts", "TypeScript", 0, 41, 0, 0, 0, 0, 0, 0, 0, 14, 14, 69
+"c:\react\polity\e2e\notifications\unread-count-badge.spec.ts", "TypeScript", 0, 41, 0, 0, 0, 0, 0, 0, 0, 17, 18, 76
+"c:\react\polity\e2e\notifications\view-all-notifications.spec.ts", "TypeScript", 0, 27, 0, 0, 0, 0, 0, 0, 0, 11, 10, 48
+"c:\react\polity\e2e\positions\assign-holder.spec.ts", "TypeScript", 0, 85, 0, 0, 0, 0, 0, 0, 0, 28, 38, 151
+"c:\react\polity\e2e\positions\create-position.spec.ts", "TypeScript", 0, 59, 0, 0, 0, 0, 0, 0, 0, 22, 26, 107
+"c:\react\polity\e2e\positions\position-display.spec.ts", "TypeScript", 0, 33, 0, 0, 0, 0, 0, 0, 0, 27, 14, 74
+"c:\react\polity\e2e\positions\position-loading-errors.spec.ts", "TypeScript", 0, 61, 0, 0, 0, 0, 0, 0, 0, 34, 32, 127
+"c:\react\polity\e2e\positions\position-permissions.spec.ts", "TypeScript", 0, 66, 0, 0, 0, 0, 0, 0, 0, 31, 31, 128
+"c:\react\polity\e2e\positions\term-management.spec.ts", "TypeScript", 0, 57, 0, 0, 0, 0, 0, 0, 0, 27, 27, 111
+"c:\react\polity\e2e\positions\vacant-status-deletion.spec.ts", "TypeScript", 0, 50, 0, 0, 0, 0, 0, 0, 0, 25, 22, 97
+"c:\react\polity\e2e\profile-unauth\profile-unauth-access-edit-page.spec.ts", "TypeScript", 0, 15, 0, 0, 0, 0, 0, 0, 0, 9, 8, 32
+"c:\react\polity\e2e\profile-unauth\profile-unauth-access-own-route.spec.ts", "TypeScript", 0, 16, 0, 0, 0, 0, 0, 0, 0, 8, 9, 33
+"c:\react\polity\e2e\profile-unauth\profile-unauth-content-limitations.spec.ts", "TypeScript", 0, 27, 0, 0, 0, 0, 0, 0, 0, 13, 10, 50
+"c:\react\polity\e2e\profile-unauth\profile-unauth-deep-link.spec.ts", "TypeScript", 0, 21, 0, 0, 0, 0, 0, 0, 0, 9, 7, 37
+"c:\react\polity\e2e\profile-unauth\profile-unauth-invalid-session.spec.ts", "TypeScript", 0, 25, 0, 0, 0, 0, 0, 0, 0, 10, 8, 43
+"c:\react\polity\e2e\profile-unauth\profile-unauth-invalid-user-id.spec.ts", "TypeScript", 0, 19, 0, 0, 0, 0, 0, 0, 0, 8, 10, 37
+"c:\react\polity\e2e\profile-unauth\profile-unauth-multiple-routes.spec.ts", "TypeScript", 0, 29, 0, 0, 0, 0, 0, 0, 0, 10, 11, 50
+"c:\react\polity\e2e\profile-unauth\profile-unauth-no-edit-button.spec.ts", "TypeScript", 0, 17, 0, 0, 0, 0, 0, 0, 0, 9, 8, 34
+"c:\react\polity\e2e\profile-unauth\profile-unauth-rapid-switching.spec.ts", "TypeScript", 0, 25, 0, 0, 0, 0, 0, 0, 0, 10, 8, 43
+"c:\react\polity\e2e\profile-unauth\profile-unauth-redirect-messaging.spec.ts", "TypeScript", 0, 19, 0, 0, 0, 0, 0, 0, 0, 9, 9, 37
+"c:\react\polity\e2e\profile-unauth\profile-unauth-subscriptions-access.spec.ts", "TypeScript", 0, 17, 0, 0, 0, 0, 0, 0, 0, 8, 9, 34
+"c:\react\polity\e2e\profile-unauth\profile-unauth-verify-cookies.spec.ts", "TypeScript", 0, 15, 0, 0, 0, 0, 0, 0, 0, 7, 7, 29
+"c:\react\polity\e2e\profile-unauth\profile-unauth-verify-header.spec.ts", "TypeScript", 0, 20, 0, 0, 0, 0, 0, 0, 0, 8, 9, 37
+"c:\react\polity\e2e\profile-unauth\profile-unauth-view-profile.spec.ts", "TypeScript", 0, 21, 0, 0, 0, 0, 0, 0, 0, 14, 12, 47
+"c:\react\polity\e2e\profile\profile-access-avatar-upload.spec.ts", "TypeScript", 0, 18, 0, 0, 0, 0, 0, 0, 0, 9, 9, 36
+"c:\react\polity\e2e\profile\profile-cancel-edit.spec.ts", "TypeScript", 0, 22, 0, 0, 0, 0, 0, 0, 0, 9, 8, 39
+"c:\react\polity\e2e\profile\profile-direct-url-edit-page.spec.ts", "TypeScript", 0, 21, 0, 0, 0, 0, 0, 0, 0, 7, 8, 36
+"c:\react\polity\e2e\profile\profile-direct-url-own-profile.spec.ts", "TypeScript", 0, 11, 0, 0, 0, 0, 0, 0, 0, 8, 7, 26
+"c:\react\polity\e2e\profile\profile-display-basic-information.spec.ts", "TypeScript", 0, 15, 0, 0, 0, 0, 0, 0, 0, 8, 8, 31
+"c:\react\polity\e2e\profile\profile-display-user-hashtags.spec.ts", "TypeScript", 0, 18, 0, 0, 0, 0, 0, 0, 0, 7, 7, 32
+"c:\react\polity\e2e\profile\profile-navigate-content-tabs.spec.ts", "TypeScript", 0, 22, 0, 0, 0, 0, 0, 0, 0, 12, 10, 44
+"c:\react\polity\e2e\profile\profile-navigate-to-edit-page.spec.ts", "TypeScript", 0, 16, 0, 0, 0, 0, 0, 0, 0, 9, 9, 34
+"c:\react\polity\e2e\profile\profile-navigate-to-subscriptions.spec.ts", "TypeScript", 0, 18, 0, 0, 0, 0, 0, 0, 0, 9, 7, 34
+"c:\react\polity\e2e\profile\profile-save-changes.spec.ts", "TypeScript", 0, 32, 0, 0, 0, 0, 0, 0, 0, 17, 11, 60
+"c:\react\polity\e2e\profile\profile-update-basic-information.spec.ts", "TypeScript", 0, 37, 0, 0, 0, 0, 0, 0, 0, 9, 9, 55
+"c:\react\polity\e2e\profile\profile-update-contact-information.spec.ts", "TypeScript", 0, 30, 0, 0, 0, 0, 0, 0, 0, 9, 9, 48
+"c:\react\polity\e2e\profile\profile-verify-action-bar.spec.ts", "TypeScript", 0, 18, 0, 0, 0, 0, 0, 0, 0, 7, 6, 31
+"c:\react\polity\e2e\profile\profile-verify-avatar-constraints.spec.ts", "TypeScript", 0, 21, 0, 0, 0, 0, 0, 0, 0, 7, 7, 35
+"c:\react\polity\e2e\profile\profile-verify-avatar-display.spec.ts", "TypeScript", 0, 17, 0, 0, 0, 0, 0, 0, 0, 7, 7, 31
+"c:\react\polity\e2e\profile\profile-verify-statistics-display.spec.ts", "TypeScript", 0, 24, 0, 0, 0, 0, 0, 0, 0, 6, 6, 36
+"c:\react\polity\e2e\profile\profile-verify-tab-panel-loading.spec.ts", "TypeScript", 0, 23, 0, 0, 0, 0, 0, 0, 0, 11, 10, 44
+"c:\react\polity\e2e\search\clear-search.spec.ts", "TypeScript", 0, 24, 0, 0, 0, 0, 0, 0, 0, 15, 15, 54
+"c:\react\polity\e2e\search\empty-states-results.spec.ts", "TypeScript", 0, 32, 0, 0, 0, 0, 0, 0, 0, 17, 17, 66
+"c:\react\polity\e2e\search\entity-type-filtering.spec.ts", "TypeScript", 0, 49, 0, 0, 0, 0, 0, 0, 0, 26, 26, 101
+"c:\react\polity\e2e\search\hashtag-search.spec.ts", "TypeScript", 0, 47, 0, 0, 0, 0, 0, 0, 0, 21, 23, 91
+"c:\react\polity\e2e\search\load-search-page.spec.ts", "TypeScript", 0, 15, 0, 0, 0, 0, 0, 0, 0, 7, 7, 29
+"c:\react\polity\e2e\search\sort-and-filter-options.spec.ts", "TypeScript", 0, 69, 0, 0, 0, 0, 0, 0, 0, 18, 23, 110
+"c:\react\polity\e2e\search\type-ahead-search.spec.ts", "TypeScript", 0, 21, 0, 0, 0, 0, 0, 0, 0, 12, 12, 45
+"c:\react\polity\e2e\seed.spec.ts", "TypeScript", 0, 5, 0, 0, 0, 0, 0, 0, 0, 1, 2, 8
+"c:\react\polity\e2e\statements\create-public-statement.spec.ts", "TypeScript", 0, 29, 0, 0, 0, 0, 0, 0, 0, 11, 11, 51
+"c:\react\polity\e2e\statements\display-statement.spec.ts", "TypeScript", 0, 23, 0, 0, 0, 0, 0, 0, 0, 18, 13, 54
+"c:\react\polity\e2e\statements\related-statements.spec.ts", "TypeScript", 0, 35, 0, 0, 0, 0, 0, 0, 0, 15, 14, 64
+"c:\react\polity\e2e\statements\search-statements.spec.ts", "TypeScript", 0, 39, 0, 0, 0, 0, 0, 0, 0, 26, 21, 86
+"c:\react\polity\e2e\statements\statement-error-handling.spec.ts", "TypeScript", 0, 23, 0, 0, 0, 0, 0, 0, 0, 16, 14, 53
+"c:\react\polity\e2e\statements\statement-loading-states.spec.ts", "TypeScript", 0, 16, 0, 0, 0, 0, 0, 0, 0, 9, 8, 33
+"c:\react\polity\e2e\statements\statement-social-features.spec.ts", "TypeScript", 0, 32, 0, 0, 0, 0, 0, 0, 0, 14, 14, 60
+"c:\react\polity\e2e\subscription\amendment-subscription.spec.ts", "TypeScript", 0, 34, 0, 0, 0, 0, 0, 0, 0, 16, 17, 67
+"c:\react\polity\e2e\subscription\blog-subscription.spec.ts", "TypeScript", 0, 34, 0, 0, 0, 0, 0, 0, 0, 16, 17, 67
+"c:\react\polity\e2e\subscription\event-subscription.spec.ts", "TypeScript", 0, 34, 0, 0, 0, 0, 0, 0, 0, 16, 17, 67
+"c:\react\polity\e2e\subscription\group-subscription.spec.ts", "TypeScript", 0, 34, 0, 0, 0, 0, 0, 0, 0, 16, 17, 67
+"c:\react\polity\e2e\subscription\subscription-auth.spec.ts", "TypeScript", 0, 16, 0, 0, 0, 0, 0, 0, 0, 8, 7, 31
+"c:\react\polity\e2e\subscription\subscription-bulk-actions.spec.ts", "TypeScript", 0, 33, 0, 0, 0, 0, 0, 0, 0, 11, 12, 56
+"c:\react\polity\e2e\subscription\subscription-counts.spec.ts", "TypeScript", 0, 31, 0, 0, 0, 0, 0, 0, 0, 11, 12, 54
+"c:\react\polity\e2e\subscription\subscription-errors.spec.ts", "TypeScript", 0, 30, 0, 0, 0, 0, 0, 0, 0, 13, 13, 56
+"c:\react\polity\e2e\subscription\subscription-list.spec.ts", "TypeScript", 0, 22, 0, 0, 0, 0, 0, 0, 0, 9, 9, 40
+"c:\react\polity\e2e\subscription\subscription-timeline.spec.ts", "TypeScript", 0, 34, 0, 0, 0, 0, 0, 0, 0, 16, 15, 65
+"c:\react\polity\e2e\subscription\subscription-ui.spec.ts", "TypeScript", 0, 24, 0, 0, 0, 0, 0, 0, 0, 11, 10, 45
+"c:\react\polity\e2e\subscription\subscription-validation.spec.ts", "TypeScript", 0, 33, 0, 0, 0, 0, 0, 0, 0, 14, 14, 61
+"c:\react\polity\e2e\subscription\user-subscription.spec.ts", "TypeScript", 0, 34, 0, 0, 0, 0, 0, 0, 0, 16, 17, 67
+"c:\react\polity\e2e\test-entity-ids.ts", "TypeScript", 0, 69, 0, 0, 0, 0, 0, 0, 0, 28, 20, 117
+"c:\react\polity\e2e\test-plans\agenda-items-test-plan.md", "Markdown", 0, 0, 0, 0, 0, 632, 0, 0, 0, 0, 325, 957
+"c:\react\polity\e2e\test-plans\amendment-collaboration-test-plan.md", "Markdown", 0, 0, 0, 0, 0, 405, 0, 0, 0, 0, 83, 488
+"c:\react\polity\e2e\test-plans\amendments-test-plan.md", "Markdown", 0, 0, 0, 0, 0, 567, 0, 0, 0, 0, 291, 858
+"c:\react\polity\e2e\test-plans\blogs-test-plan.md", "Markdown", 0, 0, 0, 0, 0, 679, 0, 0, 0, 0, 345, 1024
+"c:\react\polity\e2e\test-plans\calendar-test-plan.md", "Markdown", 0, 0, 0, 0, 0, 303, 0, 0, 0, 0, 71, 374
+"c:\react\polity\e2e\test-plans\change-requests-test-plan.md", "Markdown", 0, 0, 0, 0, 0, 663, 0, 0, 0, 0, 345, 1008
+"c:\react\polity\e2e\test-plans\chat-test-plan.md", "Markdown", 0, 0, 0, 0, 0, 301, 0, 0, 0, 0, 71, 372
+"c:\react\polity\e2e\test-plans\comments-test-plan.md", "Markdown", 0, 0, 0, 0, 0, 613, 0, 0, 0, 0, 320, 933
+"c:\react\polity\e2e\test-plans\create-test-plan.md", "Markdown", 0, 0, 0, 0, 0, 329, 0, 0, 0, 0, 71, 400
+"c:\react\polity\e2e\test-plans\election-candidates-test-plan.md", "Markdown", 0, 0, 0, 0, 0, 610, 0, 0, 0, 0, 310, 920
+"c:\react\polity\e2e\test-plans\event-participation-test-plan.md", "Markdown", 0, 0, 0, 0, 0, 253, 0, 0, 0, 0, 57, 310
+"c:\react\polity\e2e\test-plans\events-test-plan.md", "Markdown", 0, 0, 0, 0, 0, 710, 0, 0, 0, 0, 362, 1072
+"c:\react\polity\e2e\test-plans\group-membership-test-plan.md", "Markdown", 0, 0, 0, 0, 0, 235, 0, 0, 0, 0, 53, 288
+"c:\react\polity\e2e\test-plans\groups-test-plan.md", "Markdown", 0, 0, 0, 0, 0, 796, 0, 0, 0, 0, 397, 1193
+"c:\react\polity\e2e\test-plans\notifications-test-plan.md", "Markdown", 0, 0, 0, 0, 0, 297, 0, 0, 0, 0, 71, 368
+"c:\react\polity\e2e\test-plans\positions-test-plan.md", "Markdown", 0, 0, 0, 0, 0, 555, 0, 0, 0, 0, 285, 840
+"c:\react\polity\e2e\test-plans\profile-feature-test-plan.md", "Markdown", 0, 0, 0, 0, 0, 296, 0, 0, 0, 0, 125, 421
+"c:\react\polity\e2e\test-plans\profile-unauthenticated-test-plan.md", "Markdown", 0, 0, 0, 0, 0, 270, 0, 0, 0, 0, 110, 380
+"c:\react\polity\e2e\test-plans\search-test-plan.md", "Markdown", 0, 0, 0, 0, 0, 321, 0, 0, 0, 0, 71, 392
+"c:\react\polity\e2e\test-plans\statements-test-plan.md", "Markdown", 0, 0, 0, 0, 0, 506, 0, 0, 0, 0, 265, 771
+"c:\react\polity\e2e\test-plans\subscription-test-plan.md", "Markdown", 0, 0, 0, 0, 0, 385, 0, 0, 0, 0, 84, 469
+"c:\react\polity\e2e\test-plans\timeline-test-plan.md", "Markdown", 0, 0, 0, 0, 0, 296, 0, 0, 0, 0, 71, 367
+"c:\react\polity\e2e\test-plans\todos-test-plan.md", "Markdown", 0, 0, 0, 0, 0, 310, 0, 0, 0, 0, 71, 381
+"c:\react\polity\e2e\timeline\content-cards.spec.ts", "TypeScript", 0, 143, 0, 0, 0, 0, 0, 0, 0, 17, 46, 206
+"c:\react\polity\e2e\timeline\decision-terminal.spec.ts", "TypeScript", 0, 177, 0, 0, 0, 0, 0, 0, 0, 17, 61, 255
+"c:\react\polity\e2e\timeline\empty-state.spec.ts", "TypeScript", 0, 19, 0, 0, 0, 0, 0, 0, 0, 10, 10, 39
+"c:\react\polity\e2e\timeline\event-card-navigation.spec.ts", "TypeScript", 0, 26, 0, 0, 0, 0, 0, 0, 0, 10, 10, 46
+"c:\react\polity\e2e\timeline\event-type-filtering.spec.ts", "TypeScript", 0, 46, 0, 0, 0, 0, 0, 0, 0, 18, 20, 84
+"c:\react\polity\e2e\timeline\filter-badges-counts.spec.ts", "TypeScript", 0, 56, 0, 0, 0, 0, 0, 0, 0, 15, 18, 89
+"c:\react\polity\e2e\timeline\filtering.spec.ts", "TypeScript", 0, 129, 0, 0, 0, 0, 0, 0, 0, 23, 41, 193
+"c:\react\polity\e2e\timeline\grid-layout.spec.ts", "TypeScript", 0, 41, 0, 0, 0, 0, 0, 0, 0, 14, 16, 71
+"c:\react\polity\e2e\timeline\interactions.spec.ts", "TypeScript", 0, 141, 0, 0, 0, 0, 0, 0, 0, 21, 46, 208
+"c:\react\polity\e2e\timeline\load-timeline-page.spec.ts", "TypeScript", 0, 17, 0, 0, 0, 0, 0, 0, 0, 9, 8, 34
+"c:\react\polity\e2e\timeline\loading-states.spec.ts", "TypeScript", 0, 50, 0, 0, 0, 0, 0, 0, 0, 20, 22, 92
+"c:\react\polity\e2e\timeline\timeline-events-display.spec.ts", "TypeScript", 0, 50, 0, 0, 0, 0, 0, 0, 0, 19, 20, 89
+"c:\react\polity\e2e\timeline\timeline-icons.spec.ts", "TypeScript", 0, 52, 0, 0, 0, 0, 0, 0, 0, 16, 19, 87
+"c:\react\polity\e2e\timeline\timeline-modes.spec.ts", "TypeScript", 0, 105, 0, 0, 0, 0, 0, 0, 0, 34, 39, 178
+"c:\react\polity\e2e\timeline\view-subscription-timeline.spec.ts", "TypeScript", 0, 21, 0, 0, 0, 0, 0, 0, 0, 10, 9, 40
+"c:\react\polity\e2e\todos\create-new-todo.spec.ts", "TypeScript", 0, 31, 0, 0, 0, 0, 0, 0, 0, 9, 10, 50
+"c:\react\polity\e2e\todos\empty-state.spec.ts", "TypeScript", 0, 26, 0, 0, 0, 0, 0, 0, 0, 9, 8, 43
+"c:\react\polity\e2e\todos\filter-by-priority.spec.ts", "TypeScript", 0, 33, 0, 0, 0, 0, 0, 0, 0, 8, 9, 50
+"c:\react\polity\e2e\todos\filter-by-status.spec.ts", "TypeScript", 0, 28, 0, 0, 0, 0, 0, 0, 0, 9, 9, 46
+"c:\react\polity\e2e\todos\load-todos-page.spec.ts", "TypeScript", 0, 15, 0, 0, 0, 0, 0, 0, 0, 7, 7, 29
+"c:\react\polity\e2e\todos\loading-states.spec.ts", "TypeScript", 0, 29, 0, 0, 0, 0, 0, 0, 0, 9, 10, 48
+"c:\react\polity\e2e\todos\mark-todo-complete.spec.ts", "TypeScript", 0, 19, 0, 0, 0, 0, 0, 0, 0, 10, 8, 37
+"c:\react\polity\e2e\todos\search-todos.spec.ts", "TypeScript", 0, 14, 0, 0, 0, 0, 0, 0, 0, 10, 8, 32
+"c:\react\polity\e2e\todos\sort-todos.spec.ts", "TypeScript", 0, 27, 0, 0, 0, 0, 0, 0, 0, 9, 9, 45
+"c:\react\polity\e2e\todos\view-kanban-todos.spec.ts", "TypeScript", 0, 14, 0, 0, 0, 0, 0, 0, 0, 8, 6, 28
+"c:\react\polity\e2e\todos\view-list-todos.spec.ts", "TypeScript", 0, 14, 0, 0, 0, 0, 0, 0, 0, 8, 6, 28
+"c:\react\polity\eslint.config.mjs", "JavaScript", 0, 0, 0, 0, 0, 0, 46, 0, 0, 3, 3, 52
+"c:\react\polity\next-env.d.ts", "TypeScript", 0, 1, 0, 0, 0, 0, 0, 0, 0, 4, 2, 7
+"c:\react\polity\next.config.mjs", "JavaScript", 0, 0, 0, 0, 0, 0, 138, 0, 0, 3, 3, 144
+"c:\react\polity\package-lock.json", "JSON", 22282, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 22283
+"c:\react\polity\package.json", "JSON", 185, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 186
+"c:\react\polity\playwright.config.ts", "TypeScript", 0, 27, 0, 0, 0, 0, 0, 0, 0, 33, 7, 67
+"c:\react\polity\postcss.config.js", "JavaScript", 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 1, 7
+"c:\react\polity\public\custom-sw.js", "JavaScript", 0, 0, 0, 0, 0, 0, 146, 0, 0, 54, 33, 233
+"c:\react\polity\public\manifest.json", "JSON", 31, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 32
+"c:\react\polity\public\placeholder-user.svg", "XML", 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 6
+"c:\react\polity\scripts\README.md", "Markdown", 0, 0, 0, 0, 0, 126, 0, 0, 0, 0, 52, 178
+"c:\react\polity\scripts\check-tobias.ts", "TypeScript", 0, 51, 0, 0, 0, 0, 0, 0, 0, 4, 11, 66
+"c:\react\polity\scripts\config\seed.config.ts", "TypeScript", 0, 131, 0, 0, 0, 0, 0, 0, 0, 10, 8, 149
+"c:\react\polity\scripts\generate-vapid-keys.ts", "TypeScript", 0, 22, 0, 0, 0, 0, 0, 0, 0, 10, 7, 39
+"c:\react\polity\scripts\helpers\entity.helpers.ts", "TypeScript", 0, 77, 0, 0, 0, 0, 0, 0, 0, 13, 12, 102
+"c:\react\polity\scripts\helpers\random.helpers.ts", "TypeScript", 0, 18, 0, 0, 0, 0, 0, 0, 0, 15, 5, 38
+"c:\react\polity\scripts\helpers\transaction.helpers.ts", "TypeScript", 0, 24, 0, 0, 0, 0, 0, 0, 0, 8, 4, 36
+"c:\react\polity\scripts\seed.orchestrator.ts", "TypeScript", 0, 490, 0, 0, 0, 0, 0, 0, 0, 60, 49, 599
+"c:\react\polity\scripts\seed.ts", "TypeScript", 0, 106, 0, 0, 0, 0, 0, 0, 0, 17, 13, 136
+"c:\react\polity\scripts\seeders\agendaAndVoting.seeder.ts", "TypeScript", 0, 347, 0, 0, 0, 0, 0, 0, 0, 22, 41, 410
+"c:\react\polity\scripts\seeders\amendments.seeder.ts", "TypeScript", 0, 589, 0, 0, 0, 0, 0, 0, 0, 57, 70, 716
+"c:\react\polity\scripts\seeders\blogComments.seeder.ts", "TypeScript", 0, 134, 0, 0, 0, 0, 0, 0, 0, 10, 21, 165
+"c:\react\polity\scripts\seeders\blogs.seeder.ts", "TypeScript", 0, 157, 0, 0, 0, 0, 0, 0, 0, 21, 31, 209
+"c:\react\polity\scripts\seeders\cleanDatabase.seeder.ts", "TypeScript", 0, 146, 0, 0, 0, 0, 0, 0, 0, 9, 12, 167
+"c:\react\polity\scripts\seeders\conversations.seeder.ts", "TypeScript", 0, 122, 0, 0, 0, 0, 0, 0, 0, 3, 15, 140
+"c:\react\polity\scripts\seeders\delegates.seeder.ts", "TypeScript", 0, 131, 0, 0, 0, 0, 0, 0, 0, 9, 23, 163
+"c:\react\polity\scripts\seeders\documents.seeder.ts", "TypeScript", 0, 55, 0, 0, 0, 0, 0, 0, 0, 1, 10, 66
+"c:\react\polity\scripts\seeders\eventPositions.seeder.ts", "TypeScript", 0, 90, 0, 0, 0, 0, 0, 0, 0, 1, 14, 105
+"c:\react\polity\scripts\seeders\eventVotingSessions.seeder.ts", "TypeScript", 0, 93, 0, 0, 0, 0, 0, 0, 0, 8, 20, 121
+"c:\react\polity\scripts\seeders\events.seeder.ts", "TypeScript", 0, 353, 0, 0, 0, 0, 0, 0, 0, 28, 48, 429
+"c:\react\polity\scripts\seeders\follows.seeder.ts", "TypeScript", 0, 82, 0, 0, 0, 0, 0, 0, 0, 3, 10, 95
+"c:\react\polity\scripts\seeders\groupRelationships.seeder.ts", "TypeScript", 0, 288, 0, 0, 0, 0, 0, 0, 0, 29, 32, 349
+"c:\react\polity\scripts\seeders\groups.seeder.ts", "TypeScript", 0, 468, 0, 0, 0, 0, 0, 0, 0, 40, 57, 565
+"c:\react\polity\scripts\seeders\invitations.seeder.ts", "TypeScript", 0, 330, 0, 0, 0, 0, 0, 0, 0, 28, 38, 396
+"c:\react\polity\scripts\seeders\links.seeder.ts", "TypeScript", 0, 75, 0, 0, 0, 0, 0, 0, 0, 0, 10, 85
+"c:\react\polity\scripts\seeders\meetingSlots.seeder.ts", "TypeScript", 0, 122, 0, 0, 0, 0, 0, 0, 0, 8, 16, 146
+"c:\react\polity\scripts\seeders\notifications.seeder.ts", "TypeScript", 0, 121, 0, 0, 0, 0, 0, 0, 0, 2, 13, 136
+"c:\react\polity\scripts\seeders\payments.seeder.ts", "TypeScript", 0, 71, 0, 0, 0, 0, 0, 0, 0, 0, 9, 80
+"c:\react\polity\scripts\seeders\positions.seeder.ts", "TypeScript", 0, 125, 0, 0, 0, 0, 0, 0, 0, 2, 20, 147
+"c:\react\polity\scripts\seeders\rbac.seeder.ts", "TypeScript", 0, 267, 0, 0, 0, 0, 0, 0, 0, 26, 36, 329
+"c:\react\polity\scripts\seeders\reactions.seeder.ts", "TypeScript", 0, 105, 0, 0, 0, 0, 0, 0, 0, 22, 27, 154
+"c:\react\polity\scripts\seeders\stripeData.seeder.ts", "TypeScript", 0, 160, 0, 0, 0, 0, 0, 0, 0, 11, 21, 192
+"c:\react\polity\scripts\seeders\subscriptions.seeder.ts", "TypeScript", 0, 211, 0, 0, 0, 0, 0, 0, 0, 12, 17, 240
+"c:\react\polity\scripts\seeders\supportConfirmations.seeder.ts", "TypeScript", 0, 67, 0, 0, 0, 0, 0, 0, 0, 10, 18, 95
+"c:\react\polity\scripts\seeders\timelineEvents.seeder.ts", "TypeScript", 0, 666, 0, 0, 0, 0, 0, 0, 0, 32, 72, 770
+"c:\react\polity\scripts\seeders\tobiasSubscriptions.seeder.ts", "TypeScript", 0, 106, 0, 0, 0, 0, 0, 0, 0, 11, 14, 131
+"c:\react\polity\scripts\seeders\todos.seeder.ts", "TypeScript", 0, 61, 0, 0, 0, 0, 0, 0, 0, 0, 10, 71
+"c:\react\polity\scripts\seeders\topics.seeder.ts", "TypeScript", 0, 150, 0, 0, 0, 0, 0, 0, 0, 4, 10, 164
+"c:\react\polity\scripts\seeders\users.seeder.ts", "TypeScript", 0, 385, 0, 0, 0, 0, 0, 0, 0, 19, 36, 440
+"c:\react\polity\scripts\types\seeder.types.ts", "TypeScript", 0, 199, 0, 0, 0, 0, 0, 0, 0, 57, 32, 288
+"c:\react\polity\src\@types\i18next.d.ts", "TypeScript", 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7
+"c:\react\polity\src\@types\lodash.d.ts", "TypeScript", 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3
+"c:\react\polity\src\app\api\ai\command\route.ts", "TypeScript", 0, 148, 0, 0, 0, 0, 0, 0, 0, 25, 33, 206
+"c:\react\polity\src\app\api\ai\copilot\route.ts", "TypeScript", 0, 28, 0, 0, 0, 0, 0, 0, 0, 0, 9, 37
+"c:\react\polity\src\app\api\stripe\create-checkout\route.ts", "TypeScript", 0, 50, 0, 0, 0, 0, 0, 0, 0, 2, 7, 59
+"c:\react\polity\src\app\api\stripe\create-portal\route.ts", "TypeScript", 0, 32, 0, 0, 0, 0, 0, 0, 0, 0, 8, 40
+"c:\react\polity\src\app\api\stripe\webhook\route.ts", "TypeScript", 0, 52, 0, 0, 0, 0, 0, 0, 0, 12, 9, 73
+"c:\react\polity\src\components\auth\UserMenu.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 190, 0, 3, 22, 215
+"c:\react\polity\src\components\dev\DuplicateMembershipCleaner.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 105, 0, 5, 12, 122
+"c:\react\polity\src\components\dialogs\AriaKaiWelcomeDialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 106, 0, 0, 13, 119
+"c:\react\polity\src\components\groups\GroupHierarchyFlow.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 479, 0, 23, 44, 546
+"c:\react\polity\src\components\groups\GroupNetworkFlow.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 526, 0, 43, 68, 637
+"c:\react\polity\src\components\groups\GroupRelationshipsManager.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 362, 0, 10, 24, 396
+"c:\react\polity\src\components\groups\LinkGroupDialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 328, 0, 28, 37, 393
+"c:\react\polity\src\components\kit-platejs\ai-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 169, 0, 0, 11, 180
+"c:\react\polity\src\components\kit-platejs\align-base-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 2, 17
+"c:\react\polity\src\components\kit-platejs\align-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 2, 17
+"c:\react\polity\src\components\kit-platejs\autoformat-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 223, 0, 6, 6, 235
+"c:\react\polity\src\components\kit-platejs\basic-blocks-base-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 24, 0, 0, 3, 27
+"c:\react\polity\src\components\kit-platejs\basic-blocks-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 47, 0, 0, 3, 50
+"c:\react\polity\src\components\kit-platejs\basic-marks-base-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 25, 0, 0, 3, 28
+"c:\react\polity\src\components\kit-platejs\basic-marks-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 37, 0, 0, 3, 40
+"c:\react\polity\src\components\kit-platejs\basic-nodes-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 2, 5
+"c:\react\polity\src\components\kit-platejs\block-menu-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 4, 13
+"c:\react\polity\src\components\kit-platejs\block-placeholder-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 2, 18
+"c:\react\polity\src\components\kit-platejs\block-selection-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 4, 25
+"c:\react\polity\src\components\kit-platejs\callout-base-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 3, 6
+"c:\react\polity\src\components\kit-platejs\callout-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 3, 6
+"c:\react\polity\src\components\kit-platejs\code-block-base-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 4, 20
+"c:\react\polity\src\components\kit-platejs\code-block-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 17, 0, 0, 4, 21
+"c:\react\polity\src\components\kit-platejs\column-base-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 3, 12
+"c:\react\polity\src\components\kit-platejs\column-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 3, 9
+"c:\react\polity\src\components\kit-platejs\comment-base-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 3, 6
+"c:\react\polity\src\components\kit-platejs\comment-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 77, 0, 0, 18, 95
+"c:\react\polity\src\components\kit-platejs\copilot-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 67, 0, 1, 9, 77
+"c:\react\polity\src\components\kit-platejs\cursor-overlay-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 3, 12
+"c:\react\polity\src\components\kit-platejs\date-base-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 3, 6
+"c:\react\polity\src\components\kit-platejs\date-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 3, 6
+"c:\react\polity\src\components\kit-platejs\discussion-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 147, 0, 2, 9, 158
+"c:\react\polity\src\components\kit-platejs\dnd-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 4, 25
+"c:\react\polity\src\components\kit-platejs\docx-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 2, 5
+"c:\react\polity\src\components\kit-platejs\editor-base-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 42, 0, 0, 2, 44
+"c:\react\polity\src\components\kit-platejs\editor-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 75, 0, 7, 12, 94
+"c:\react\polity\src\components\kit-platejs\emoji-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 3, 12
+"c:\react\polity\src\components\kit-platejs\exit-break-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 2, 11
+"c:\react\polity\src\components\kit-platejs\fixed-toolbar-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 3, 18
+"c:\react\polity\src\components\kit-platejs\floating-toolbar-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 3, 18
+"c:\react\polity\src\components\kit-platejs\font-base-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 17, 0, 0, 4, 21
+"c:\react\polity\src\components\kit-platejs\font-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 24, 0, 0, 4, 28
+"c:\react\polity\src\components\kit-platejs\indent-base-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 2, 14
+"c:\react\polity\src\components\kit-platejs\indent-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 2, 14
+"c:\react\polity\src\components\kit-platejs\line-height-base-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 13, 0, 0, 2, 15
+"c:\react\polity\src\components\kit-platejs\line-height-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 13, 0, 0, 2, 15
+"c:\react\polity\src\components\kit-platejs\link-base-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 3, 6
+"c:\react\polity\src\components\kit-platejs\link-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 11, 0, 0, 3, 14
+"c:\react\polity\src\components\kit-platejs\list-base-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 3, 18
+"c:\react\polity\src\components\kit-platejs\list-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 3, 18
+"c:\react\polity\src\components\kit-platejs\markdown-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 2, 14
+"c:\react\polity\src\components\kit-platejs\math-base-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 3, 12
+"c:\react\polity\src\components\kit-platejs\math-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 3, 9
+"c:\react\polity\src\components\kit-platejs\media-base-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 29, 0, 0, 3, 32
+"c:\react\polity\src\components\kit-platejs\media-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 39, 0, 0, 3, 42
+"c:\react\polity\src\components\kit-platejs\mention-base-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 3, 6
+"c:\react\polity\src\components\kit-platejs\mention-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 3, 11
+"c:\react\polity\src\components\kit-platejs\mode-context.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 5, 20
+"c:\react\polity\src\components\kit-platejs\mode-sync.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 19, 0, 6, 7, 32
+"c:\react\polity\src\components\kit-platejs\plate-editor.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 763, 0, 52, 37, 852
+"c:\react\polity\src\components\kit-platejs\plate-types.ts", "TypeScript", 0, 114, 0, 0, 0, 0, 0, 0, 0, 1, 24, 139
+"c:\react\polity\src\components\kit-platejs\settings-dialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 215, 0, 18, 22, 255
+"c:\react\polity\src\components\kit-platejs\slash-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 14, 0, 0, 3, 17
+"c:\react\polity\src\components\kit-platejs\suggestion-base-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 3, 6
+"c:\react\polity\src\components\kit-platejs\suggestion-callbacks-context.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 26, 0, 0, 6, 32
+"c:\react\polity\src\components\kit-platejs\suggestion-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 73, 0, 1, 17, 91
+"c:\react\polity\src\components\kit-platejs\table-base-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 18, 0, 0, 3, 21
+"c:\react\polity\src\components\kit-platejs\table-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 18, 0, 0, 3, 21
+"c:\react\polity\src\components\kit-platejs\toc-base-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 2, 5
+"c:\react\polity\src\components\kit-platejs\toc-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 9, 0, 1, 2, 12
+"c:\react\polity\src\components\kit-platejs\toggle-base-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 3, 6
+"c:\react\polity\src\components\kit-platejs\toggle-kit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 3, 7
+"c:\react\polity\src\components\kit-platejs\transforms.ts", "TypeScript", 0, 137, 0, 0, 0, 0, 0, 0, 0, 0, 20, 157
+"c:\react\polity\src\components\kit-platejs\use-chat.ts", "TypeScript", 0, 1186, 0, 0, 0, 0, 0, 0, 0, 37, 34, 1257
+"c:\react\polity\src\components\layout\event-nav.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 88, 0, 2, 9, 99
+"c:\react\polity\src\components\layout\page-wrapper.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 29, 0, 7, 6, 42
+"c:\react\polity\src\components\messages\AriaKaiMessageActions.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 135, 0, 3, 17, 155
+"c:\react\polity\src\components\messages\LinkPreview.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 424, 0, 6, 49, 479
+"c:\react\polity\src\components\messages\MessageContent.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 41, 0, 2, 6, 49
+"c:\react\polity\src\components\notifications\EntityNotifications.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 329, 0, 6, 25, 360
+"c:\react\polity\src\components\push-notification-toggle.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 187, 0, 18, 14, 219
+"c:\react\polity\src\components\pwa\index.ts", "TypeScript", 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2
+"c:\react\polity\src\components\pwa\pwa-install-prompt.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 86, 0, 9, 17, 112
+"c:\react\polity\src\components\shared\AccessDenied.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 54, 0, 0, 7, 61
+"c:\react\polity\src\components\shared\CommentSortSelect.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 39, 0, 0, 5, 44
+"c:\react\polity\src\components\shared\ConversationSelectorDialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 207, 0, 7, 19, 233
+"c:\react\polity\src\components\shared\FilteredNetworkFlow.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 615, 0, 28, 59, 702
+"c:\react\polity\src\components\shared\GroupDetailsWithEvents.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 42, 0, 2, 7, 51
+"c:\react\polity\src\components\shared\GroupEventsList.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 123, 0, 10, 17, 150
+"c:\react\polity\src\components\shared\ImageUpload.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 105, 0, 3, 11, 119
+"c:\react\polity\src\components\shared\InfoTabs.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 164, 0, 4, 15, 183
+"c:\react\polity\src\components\shared\NetworkEntityDialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 211, 0, 7, 12, 230
+"c:\react\polity\src\components\shared\NetworkFlowBase.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 104, 0, 0, 5, 109
+"c:\react\polity\src\components\shared\RightFilters.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 62, 0, 2, 13, 77
+"c:\react\polity\src\components\shared\ShareButton.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 64, 0, 0, 8, 72
+"c:\react\polity\src\components\shared\ShareButton.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 138, 0, 1, 18, 157
+"c:\react\polity\src\components\shared\VideoUpload.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 152, 0, 7, 13, 172
+"c:\react\polity\src\components\shared\action-buttons\MembershipButton.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 92, 0, 20, 20, 132
+"c:\react\polity\src\components\shared\action-buttons\SubscribeButton.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 41, 0, 4, 6, 51
+"c:\react\polity\src\components\shared\action-buttons\index.ts", "TypeScript", 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5
+"c:\react\polity\src\components\shared\timeline\AgendaCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 155, 0, 0, 11, 166
+"c:\react\polity\src\components\shared\timeline\TimelineItem.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 39, 0, 2, 5, 46
+"c:\react\polity\src\components\shared\timeline\index.ts", "TypeScript", 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4
+"c:\react\polity\src\components\todos\kanban-board.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 231, 0, 5, 34, 270
+"c:\react\polity\src\components\todos\todo-card.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 207, 0, 10, 20, 237
+"c:\react\polity\src\components\todos\todo-detail-dialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 595, 0, 15, 36, 646
+"c:\react\polity\src\components\todos\todo-list.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 23, 0, 0, 4, 27
+"c:\react\polity\src\components\ui-flow\ClickableBaseEdge.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 48, 0, 0, 5, 53
+"c:\react\polity\src\components\ui-flow\PositionableEdge.css", "PostCSS", 0, 0, 0, 0, 31, 0, 0, 0, 0, 0, 5, 36
+"c:\react\polity\src\components\ui-flow\PositionableEdge.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 247, 0, 1, 14, 262
+"c:\react\polity\src\components\ui-flow\flowEditor.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 652, 0, 62, 58, 772
+"c:\react\polity\src\components\ui-platejs\ai-chat-editor.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 7, 19
+"c:\react\polity\src\components\ui-platejs\ai-menu.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 482, 0, 1, 47, 530
+"c:\react\polity\src\components\ui-platejs\ai-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 33, 0, 0, 6, 39
+"c:\react\polity\src\components\ui-platejs\ai-toolbar-button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 18, 0, 0, 5, 23
+"c:\react\polity\src\components\ui-platejs\align-toolbar-button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 72, 0, 0, 11, 83
+"c:\react\polity\src\components\ui-platejs\block-context-menu.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 167, 0, 2, 17, 186
+"c:\react\polity\src\components\ui-platejs\block-discussion.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 343, 0, 7, 57, 407
+"c:\react\polity\src\components\ui-platejs\block-draggable.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 192, 0, 0, 26, 218
+"c:\react\polity\src\components\ui-platejs\block-list-static.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 62, 0, 0, 11, 73
+"c:\react\polity\src\components\ui-platejs\block-list.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 59, 0, 0, 12, 71
+"c:\react\polity\src\components\ui-platejs\block-selection.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 31, 0, 0, 5, 36
+"c:\react\polity\src\components\ui-platejs\block-suggestion.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 703, 0, 26, 101, 830
+"c:\react\polity\src\components\ui-platejs\blockquote-node-static.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 2, 6
+"c:\react\polity\src\components\ui-platejs\blockquote-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 2, 6
+"c:\react\polity\src\components\ui-platejs\callout-node-static.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 27, 0, 0, 4, 31
+"c:\react\polity\src\components\ui-platejs\callout-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 56, 0, 0, 7, 63
+"c:\react\polity\src\components\ui-platejs\caption.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 48, 0, 0, 8, 56
+"c:\react\polity\src\components\ui-platejs\code-block-node-static.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 28, 0, 0, 5, 33
+"c:\react\polity\src\components\ui-platejs\code-block-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 245, 0, 0, 20, 265
+"c:\react\polity\src\components\ui-platejs\code-node-static.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 13, 0, 0, 3, 16
+"c:\react\polity\src\components\ui-platejs\code-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 13, 0, 0, 3, 16
+"c:\react\polity\src\components\ui-platejs\column-node-static.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 22, 0, 0, 5, 27
+"c:\react\polity\src\components\ui-platejs\column-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 264, 0, 0, 28, 292
+"c:\react\polity\src\components\ui-platejs\comment-node-static.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 3, 12
+"c:\react\polity\src\components\ui-platejs\comment-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 35, 0, 0, 7, 42
+"c:\react\polity\src\components\ui-platejs\comment-toolbar-button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 5, 25
+"c:\react\polity\src\components\ui-platejs\comment.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 500, 0, 12, 72, 584
+"c:\react\polity\src\components\ui-platejs\cursor-overlay.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 60, 0, 0, 7, 67
+"c:\react\polity\src\components\ui-platejs\date-node-static.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 40, 0, 0, 7, 47
+"c:\react\polity\src\components\ui-platejs\date-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 75, 0, 0, 11, 86
+"c:\react\polity\src\components\ui-platejs\editor-static.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 43, 0, 0, 5, 48
+"c:\react\polity\src\components\ui-platejs\editor.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 101, 0, 0, 10, 111
+"c:\react\polity\src\components\ui-platejs\emoji-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 54, 0, 0, 12, 66
+"c:\react\polity\src\components\ui-platejs\emoji-toolbar-button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 563, 0, 0, 40, 603
+"c:\react\polity\src\components\ui-platejs\equation-node-static.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 86, 0, 0, 8, 94
+"c:\react\polity\src\components\ui-platejs\equation-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 199, 0, 0, 23, 222
+"c:\react\polity\src\components\ui-platejs\equation-toolbar-button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 5, 26
+"c:\react\polity\src\components\ui-platejs\export-toolbar-button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 149, 0, 1, 29, 179
+"c:\react\polity\src\components\ui-platejs\fixed-toolbar-buttons.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 162, 0, 0, 24, 186
+"c:\react\polity\src\components\ui-platejs\fixed-toolbar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 58, 0, 7, 19, 84
+"c:\react\polity\src\components\ui-platejs\floating-toolbar-buttons.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 78, 0, 0, 14, 92
+"c:\react\polity\src\components\ui-platejs\floating-toolbar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 67, 0, 0, 10, 77
+"c:\react\polity\src\components\ui-platejs\font-color-toolbar-button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 771, 0, 0, 43, 814
+"c:\react\polity\src\components\ui-platejs\font-size-toolbar-button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 120, 0, 0, 23, 143
+"c:\react\polity\src\components\ui-platejs\ghost-text.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 19, 0, 0, 7, 26
+"c:\react\polity\src\components\ui-platejs\heading-node-static.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 44, 0, 0, 11, 55
+"c:\react\polity\src\components\ui-platejs\heading-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 43, 0, 0, 10, 53
+"c:\react\polity\src\components\ui-platejs\highlight-node-static.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 3, 12
+"c:\react\polity\src\components\ui-platejs\highlight-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 3, 12
+"c:\react\polity\src\components\ui-platejs\history-toolbar-button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 37, 0, 0, 7, 44
+"c:\react\polity\src\components\ui-platejs\hr-node-static.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 13, 0, 0, 4, 17
+"c:\react\polity\src\components\ui-platejs\hr-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 22, 0, 0, 5, 27
+"c:\react\polity\src\components\ui-platejs\import-toolbar-button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 80, 0, 0, 20, 100
+"c:\react\polity\src\components\ui-platejs\indent-toolbar-button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 31, 0, 0, 7, 38
+"c:\react\polity\src\components\ui-platejs\insert-toolbar-button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 239, 0, 0, 11, 250
+"c:\react\polity\src\components\ui-platejs\kbd-node-static.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 13, 0, 0, 3, 16
+"c:\react\polity\src\components\ui-platejs\kbd-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 13, 0, 0, 3, 16
+"c:\react\polity\src\components\ui-platejs\line-height-toolbar-button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 63, 0, 0, 10, 73
+"c:\react\polity\src\components\ui-platejs\link-node-static.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 13, 0, 0, 3, 16
+"c:\react\polity\src\components\ui-platejs\link-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 4, 24
+"c:\react\polity\src\components\ui-platejs\link-toolbar-button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 5, 25
+"c:\react\polity\src\components\ui-platejs\link-toolbar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 170, 0, 0, 23, 193
+"c:\react\polity\src\components\ui-platejs\list-toolbar-button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 187, 0, 0, 16, 203
+"c:\react\polity\src\components\ui-platejs\mark-toolbar-button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 5, 20
+"c:\react\polity\src\components\ui-platejs\media-audio-node-static.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 14, 0, 0, 3, 17
+"c:\react\polity\src\components\ui-platejs\media-audio-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 31, 0, 0, 6, 37
+"c:\react\polity\src\components\ui-platejs\media-embed-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 123, 0, 0, 12, 135
+"c:\react\polity\src\components\ui-platejs\media-file-node-static.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 25, 0, 0, 4, 29
+"c:\react\polity\src\components\ui-platejs\media-file-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 42, 0, 0, 6, 48
+"c:\react\polity\src\components\ui-platejs\media-image-node-static.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 27, 0, 0, 5, 32
+"c:\react\polity\src\components\ui-platejs\media-image-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 67, 0, 0, 10, 77
+"c:\react\polity\src\components\ui-platejs\media-placeholder-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 206, 0, 12, 46, 264
+"c:\react\polity\src\components\ui-platejs\media-preview-dialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 135, 0, 1, 8, 144
+"c:\react\polity\src\components\ui-platejs\media-toolbar-button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 186, 0, 0, 17, 203
+"c:\react\polity\src\components\ui-platejs\media-toolbar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 89, 0, 0, 17, 106
+"c:\react\polity\src\components\ui-platejs\media-upload-toast.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 62, 0, 0, 8, 70
+"c:\react\polity\src\components\ui-platejs\media-video-node-static.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 18, 0, 0, 4, 22
+"c:\react\polity\src\components\ui-platejs\media-video-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 93, 0, 0, 14, 107
+"c:\react\polity\src\components\ui-platejs\mention-node-static.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 41, 0, 2, 6, 49
+"c:\react\polity\src\components\ui-platejs\mention-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 173, 0, 2, 14, 189
+"c:\react\polity\src\components\ui-platejs\mode-toolbar-button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 154, 0, 5, 20, 179
+"c:\react\polity\src\components\ui-platejs\more-toolbar-button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 67, 0, 2, 9, 78
+"c:\react\polity\src\components\ui-platejs\paragraph-node-static.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 4, 14
+"c:\react\polity\src\components\ui-platejs\paragraph-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 4, 14
+"c:\react\polity\src\components\ui-platejs\slash-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 258, 0, 2, 15, 275
+"c:\react\polity\src\components\ui-platejs\suggestion-node-static.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 23, 0, 0, 7, 30
+"c:\react\polity\src\components\ui-platejs\suggestion-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 85, 0, 0, 19, 104
+"c:\react\polity\src\components\ui-platejs\suggestion-toolbar-button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 25, 0, 0, 5, 30
+"c:\react\polity\src\components\ui-platejs\table-icons.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 731, 0, 0, 7, 738
+"c:\react\polity\src\components\ui-platejs\table-node-static.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 75, 0, 0, 11, 86
+"c:\react\polity\src\components\ui-platejs\table-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 558, 0, 0, 43, 601
+"c:\react\polity\src\components\ui-platejs\table-toolbar-button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 244, 0, 0, 20, 264
+"c:\react\polity\src\components\ui-platejs\toc-node-static.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 78, 0, 0, 15, 93
+"c:\react\polity\src\components\ui-platejs\toc-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 50, 0, 0, 5, 55
+"c:\react\polity\src\components\ui-platejs\toggle-node-static.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 3, 19
+"c:\react\polity\src\components\ui-platejs\toggle-node.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 30, 0, 0, 5, 35
+"c:\react\polity\src\components\ui-platejs\toggle-toolbar-button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 19, 0, 0, 5, 24
+"c:\react\polity\src\components\ui-platejs\turn-into-toolbar-button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 160, 0, 2, 10, 172
+"c:\react\polity\src\components\ui\ActionBar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 8, 0, 4, 3, 15
+"c:\react\polity\src\components\ui\StatsBar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 26, 0, 1, 6, 33
+"c:\react\polity\src\components\ui\SubscriberStatsBar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 83, 0, 10, 10, 103
+"c:\react\polity\src\components\ui\accordion.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 45, 0, 0, 8, 53
+"c:\react\polity\src\components\ui\alert-dialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 120, 0, 0, 14, 134
+"c:\react\polity\src\components\ui\alert.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 43, 0, 0, 7, 50
+"c:\react\polity\src\components\ui\aspect-ratio.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 3, 6
+"c:\react\polity\src\components\ui\avatar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 34, 0, 0, 6, 40
+"c:\react\polity\src\components\ui\badge.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 28, 0, 0, 6, 34
+"c:\react\polity\src\components\ui\breadcrumb.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 91, 0, 0, 11, 102
+"c:\react\polity\src\components\ui\button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 47, 0, 0, 7, 54
+"c:\react\polity\src\components\ui\calendar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 166, 0, 0, 10, 176
+"c:\react\polity\src\components\ui\card.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 47, 0, 0, 9, 56
+"c:\react\polity\src\components\ui\carousel.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 211, 0, 0, 30, 241
+"c:\react\polity\src\components\ui\chart.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 295, 0, 2, 32, 329
+"c:\react\polity\src\components\ui\checkbox.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 24, 0, 0, 4, 28
+"c:\react\polity\src\components\ui\collapsible.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 5, 10
+"c:\react\polity\src\components\ui\command.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 148, 0, 0, 12, 160
+"c:\react\polity\src\components\ui\context-menu.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 205, 0, 0, 18, 223
+"c:\react\polity\src\components\ui\dialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 116, 0, 0, 14, 130
+"c:\react\polity\src\components\ui\drawer.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 86, 0, 0, 13, 99
+"c:\react\polity\src\components\ui\dropdown-menu.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 209, 0, 0, 18, 227
+"c:\react\polity\src\components\ui\entity-select-cards.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 193, 0, 7, 10, 210
+"c:\react\polity\src\components\ui\form.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 143, 0, 0, 25, 168
+"c:\react\polity\src\components\ui\hashtag-display.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 49, 0, 1, 7, 57
+"c:\react\polity\src\components\ui\hashtag-input.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 88, 0, 1, 8, 97
+"c:\react\polity\src\components\ui\hover-card.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 22, 0, 0, 6, 28
+"c:\react\polity\src\components\ui\inline-combobox.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 284, 0, 17, 54, 355
+"c:\react\polity\src\components\ui\input-otp.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 62, 0, 0, 8, 70
+"c:\react\polity\src\components\ui\input.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 18, 0, 0, 4, 22
+"c:\react\polity\src\components\ui\label.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 5, 20
+"c:\react\polity\src\components\ui\loading-spinner.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 32, 0, 0, 7, 39
+"c:\react\polity\src\components\ui\menubar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 201, 0, 0, 19, 220
+"c:\react\polity\src\components\ui\pagination.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 91, 0, 0, 11, 102
+"c:\react\polity\src\components\ui\popover.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 34, 0, 0, 7, 41
+"c:\react\polity\src\components\ui\progress.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 4, 24
+"c:\react\polity\src\components\ui\radio-group.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 32, 0, 0, 5, 37
+"c:\react\polity\src\components\ui\remote-cursor-overlay.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 41, 0, 2, 6, 49
+"c:\react\polity\src\components\ui\resizable.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 35, 0, 0, 6, 41
+"c:\react\polity\src\components\ui\resize-handle.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 67, 0, 0, 11, 78
+"c:\react\polity\src\components\ui\scroll-area.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 40, 0, 0, 5, 45
+"c:\react\polity\src\components\ui\scrollable-tabs.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 26, 0, 19, 3, 48
+"c:\react\polity\src\components\ui\select.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 138, 0, 0, 14, 152
+"c:\react\polity\src\components\ui\separator.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 24, 0, 0, 5, 29
+"c:\react\polity\src\components\ui\sheet.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 105, 0, 0, 15, 120
+"c:\react\polity\src\components\ui\sidebar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 678, 0, 12, 53, 743
+"c:\react\polity\src\components\ui\skeleton.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 3, 8
+"c:\react\polity\src\components\ui\slider.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 4, 24
+"c:\react\polity\src\components\ui\sonner.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 23, 0, 0, 5, 28
+"c:\react\polity\src\components\ui\switch.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 24, 0, 0, 4, 28
+"c:\react\polity\src\components\ui\table.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 81, 0, 0, 11, 92
+"c:\react\polity\src\components\ui\tabs.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 47, 0, 0, 7, 54
+"c:\react\polity\src\components\ui\textarea.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 18, 0, 0, 4, 22
+"c:\react\polity\src\components\ui\toggle-group.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 47, 0, 0, 9, 56
+"c:\react\polity\src\components\ui\toggle.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 36, 0, 0, 6, 42
+"c:\react\polity\src\components\ui\toolbar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 332, 0, 4, 28, 364
+"c:\react\polity\src\components\ui\tooltip.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 49, 0, 0, 7, 56
+"c:\react\polity\src\components\ui\type-ahead-select.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 122, 0, 4, 14, 140
+"c:\react\polity\src\components\ui\type-selector.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 83, 0, 0, 8, 91
+"c:\react\polity\src\components\ui\user-select-card.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 46, 0, 0, 4, 50
+"c:\react\polity\src\components\ui\visibility-selector.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 81, 0, 0, 10, 91
+"c:\react\polity\src\components\ui\visually-hidden.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 31, 0, 4, 4, 39
+"c:\react\polity\src\features\amendments\AmendmentWiki.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 845, 0, 47, 65, 957
+"c:\react\polity\src\features\amendments\change-requests\hooks\useChangeRequests.ts", "TypeScript", 0, 168, 0, 0, 0, 0, 0, 0, 0, 11, 19, 198
+"c:\react\polity\src\features\amendments\change-requests\ui\ChangeRequestsView.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 388, 0, 13, 23, 424
+"c:\react\polity\src\features\amendments\change-requests\utils\suggestion-extraction.ts", "TypeScript", 0, 55, 0, 0, 0, 0, 0, 0, 0, 11, 9, 75
+"c:\react\polity\src\features\amendments\collaborators\hooks\useCollaborators.ts", "TypeScript", 0, 112, 0, 0, 0, 0, 0, 0, 0, 7, 14, 133
+"c:\react\polity\src\features\amendments\collaborators\hooks\useUserSearch.ts", "TypeScript", 0, 35, 0, 0, 0, 0, 0, 0, 0, 5, 9, 49
+"c:\react\polity\src\features\amendments\collaborators\ui\ActiveCollaboratorsCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 158, 0, 3, 5, 166
+"c:\react\polity\src\features\amendments\collaborators\ui\CollaboratorsView.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 90, 0, 11, 14, 115
+"c:\react\polity\src\features\amendments\collaborators\ui\InviteDialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 185, 0, 8, 17, 210
+"c:\react\polity\src\features\amendments\collaborators\ui\PendingInvitationsCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 97, 0, 3, 5, 105
+"c:\react\polity\src\features\amendments\collaborators\ui\PendingRequestsCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 104, 0, 3, 5, 112
+"c:\react\polity\src\features\amendments\collaborators\ui\RolesManagementCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 212, 0, 3, 11, 226
+"c:\react\polity\src\features\amendments\collaborators\ui\index.ts", "TypeScript", 0, 6, 0, 0, 0, 0, 0, 0, 0, 3, 2, 11
+"c:\react\polity\src\features\amendments\collaborators\utils\action-rights.ts", "TypeScript", 0, 18, 0, 0, 0, 0, 0, 0, 0, 3, 3, 24
+"c:\react\polity\src\features\amendments\collaborators\utils\collaborator-operations.ts", "TypeScript", 0, 227, 0, 0, 0, 0, 0, 0, 0, 48, 30, 305
+"c:\react\polity\src\features\amendments\discussions\hooks\useDiscussions.ts", "TypeScript", 0, 94, 0, 0, 0, 0, 0, 0, 0, 6, 12, 112
+"c:\react\polity\src\features\amendments\discussions\ui\CommentTree.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 138, 0, 3, 12, 153
+"c:\react\polity\src\features\amendments\discussions\ui\CreateThreadDialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 129, 0, 2, 8, 139
+"c:\react\polity\src\features\amendments\discussions\ui\DiscussionsView.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 131, 0, 5, 11, 147
+"c:\react\polity\src\features\amendments\discussions\ui\ThreadCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 162, 0, 4, 14, 180
+"c:\react\polity\src\features\amendments\discussions\utils\comment-tree.ts", "TypeScript", 0, 72, 0, 0, 0, 0, 0, 0, 0, 14, 11, 97
+"c:\react\polity\src\features\amendments\discussions\utils\thread-operations.ts", "TypeScript", 0, 65, 0, 0, 0, 0, 0, 0, 0, 14, 10, 89
+"c:\react\polity\src\features\amendments\document-editor\hooks\useDocumentEditor.ts", "TypeScript", 0, 281, 0, 0, 0, 0, 0, 0, 0, 26, 49, 356
+"c:\react\polity\src\features\amendments\document-editor\hooks\useDocumentPresence.ts", "TypeScript", 0, 43, 0, 0, 0, 0, 0, 0, 0, 11, 8, 62
+"c:\react\polity\src\features\amendments\document-editor\hooks\useEditorUsers.ts", "TypeScript", 0, 55, 0, 0, 0, 0, 0, 0, 0, 10, 10, 75
+"c:\react\polity\src\features\amendments\document-editor\ui\DocumentEditorView.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 432, 0, 23, 37, 492
+"c:\react\polity\src\features\amendments\document-editor\utils\document-operations.ts", "TypeScript", 0, 247, 0, 0, 0, 0, 0, 0, 0, 39, 37, 323
+"c:\react\polity\src\features\amendments\hooks\useAmendmentCollaboration.ts", "TypeScript", 0, 124, 0, 0, 0, 0, 0, 0, 0, 8, 16, 148
+"c:\react\polity\src\features\amendments\hooks\useAmendmentData.ts", "TypeScript", 0, 86, 0, 0, 0, 0, 0, 0, 0, 6, 10, 102
+"c:\react\polity\src\features\amendments\hooks\useAmendmentWorkflow.ts", "TypeScript", 0, 212, 0, 0, 0, 0, 0, 0, 0, 26, 33, 271
+"c:\react\polity\src\features\amendments\hooks\useSubscribeAmendment.ts", "TypeScript", 0, 130, 0, 0, 0, 0, 0, 0, 0, 12, 16, 158
+"c:\react\polity\src\features\amendments\hooks\useSupportConfirmation.ts", "TypeScript", 0, 241, 0, 0, 0, 0, 0, 0, 0, 20, 32, 293
+"c:\react\polity\src\features\amendments\ui\AmendmentCollaborationButton.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 53, 0, 0, 6, 59
+"c:\react\polity\src\features\amendments\ui\AmendmentEditContent.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 464, 0, 2, 23, 489
+"c:\react\polity\src\features\amendments\ui\AmendmentPathVisualization.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 258, 0, 8, 20, 286
+"c:\react\polity\src\features\amendments\ui\AmendmentProcessFlow.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 1610, 0, 104, 140, 1854
+"c:\react\polity\src\features\amendments\ui\AmendmentSubscribeButton.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 33, 0, 0, 6, 39
+"c:\react\polity\src\features\amendments\ui\ConfirmationRequestNotice.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 130, 0, 8, 14, 152
+"c:\react\polity\src\features\amendments\ui\ModeSelector.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 133, 0, 5, 14, 152
+"c:\react\polity\src\features\amendments\ui\SupportConfirmationPanel.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 144, 0, 9, 16, 169
+"c:\react\polity\src\features\amendments\ui\SupporterStatusBadge.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 69, 0, 7, 11, 87
+"c:\react\polity\src\features\amendments\ui\TargetGroupEventSelector.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 550, 0, 32, 50, 632
+"c:\react\polity\src\features\amendments\ui\TargetSelectionDialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 335, 0, 6, 25, 366
+"c:\react\polity\src\features\amendments\ui\VersionComparisonView.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 138, 0, 8, 16, 162
+"c:\react\polity\src\features\amendments\ui\VersionControl.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 375, 0, 6, 33, 414
+"c:\react\polity\src\features\amendments\ui\VoteControls.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 299, 0, 0, 28, 327
+"c:\react\polity\src\features\amendments\utils\path-recalculation.ts", "TypeScript", 0, 213, 0, 0, 0, 0, 0, 0, 0, 39, 33, 285
+"c:\react\polity\src\features\amendments\utils\version-utils.ts", "TypeScript", 0, 82, 0, 0, 0, 0, 0, 0, 0, 10, 12, 104
+"c:\react\polity\src\features\amendments\utils\voting-results.ts", "TypeScript", 0, 177, 0, 0, 0, 0, 0, 0, 0, 40, 27, 244
+"c:\react\polity\src\features\amendments\utils\voting-utils.ts", "TypeScript", 0, 126, 0, 0, 0, 0, 0, 0, 0, 24, 9, 159
+"c:\react\polity\src\features\auth\AuthGuard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 72, 0, 15, 13, 100
+"c:\react\polity\src\features\auth\EnsureUser.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 57, 0, 20, 11, 88
+"c:\react\polity\src\features\auth\PermissionGuard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 37, 0, 7, 7, 51
+"c:\react\polity\src\features\auth\auth.ts", "TypeScript", 0, 125, 0, 0, 0, 0, 0, 0, 0, 17, 23, 165
+"c:\react\polity\src\features\auth\index.ts", "TypeScript", 0, 4, 0, 0, 0, 0, 0, 0, 0, 1, 0, 5
+"c:\react\polity\src\features\auth\ui\LoginForm.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 119, 0, 1, 14, 134
+"c:\react\polity\src\features\auth\ui\VerifyForm.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 214, 0, 11, 33, 258
+"c:\react\polity\src\features\auth\ui\onboarding\AriaKaiStep.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 83, 0, 0, 8, 91
+"c:\react\polity\src\features\auth\ui\onboarding\GroupSearchStep.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 162, 0, 5, 14, 181
+"c:\react\polity\src\features\auth\ui\onboarding\MembershipConfirmStep.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 105, 0, 3, 10, 118
+"c:\react\polity\src\features\auth\ui\onboarding\NameStep.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 112, 0, 0, 13, 125
+"c:\react\polity\src\features\auth\ui\onboarding\OnboardingWizard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 285, 0, 6, 30, 321
+"c:\react\polity\src\features\auth\ui\onboarding\SummaryStep.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 129, 0, 5, 11, 145
+"c:\react\polity\src\features\auth\ui\onboarding\index.ts", "TypeScript", 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 1, 8
+"c:\react\polity\src\features\auth\ui\onboarding\useOnboarding.ts", "TypeScript", 0, 190, 0, 0, 0, 0, 0, 0, 0, 4, 30, 224
+"c:\react\polity\src\features\blogs\hooks\useBlogEditor.ts", "TypeScript", 0, 232, 0, 0, 0, 0, 0, 0, 0, 23, 42, 297
+"c:\react\polity\src\features\blogs\hooks\useBlogPermissions.ts", "TypeScript", 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 3, 14
+"c:\react\polity\src\features\blogs\hooks\useBlogUpdate.ts", "TypeScript", 0, 127, 0, 0, 0, 0, 0, 0, 0, 14, 25, 166
+"c:\react\polity\src\features\blogs\hooks\useSubscribeBlog.ts", "TypeScript", 0, 130, 0, 0, 0, 0, 0, 0, 0, 12, 16, 158
+"c:\react\polity\src\features\blogs\ui\BlogBloggersManager.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 827, 0, 27, 53, 907
+"c:\react\polity\src\features\blogs\ui\BlogDetail.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 538, 0, 32, 49, 619
+"c:\react\polity\src\features\blogs\ui\BlogEdit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 170, 0, 13, 11, 194
+"c:\react\polity\src\features\blogs\ui\BlogEditor.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 96, 0, 2, 12, 110
+"c:\react\polity\src\features\blogs\ui\BlogEditorView.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 248, 0, 15, 19, 282
+"c:\react\polity\src\features\blogs\ui\BlogNotifications.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 24, 0, 1, 6, 31
+"c:\react\polity\src\features\blogs\ui\BlogSubscribeButton.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 30, 0, 0, 6, 36
+"c:\react\polity\src\features\blogs\ui\CreateBlogForm.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 264, 0, 16, 28, 308
+"c:\react\polity\src\features\blogs\ui\ModeSelector.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 129, 0, 5, 14, 148
+"c:\react\polity\src\features\blogs\ui\VersionControl.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 355, 0, 15, 31, 401
+"c:\react\polity\src\features\blogs\utils\version-utils.ts", "TypeScript", 0, 82, 0, 0, 0, 0, 0, 0, 0, 13, 12, 107
+"c:\react\polity\src\features\calendar\CalendarPage.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 99, 0, 1, 10, 110
+"c:\react\polity\src\features\calendar\hooks\useCalendarData.ts", "TypeScript", 0, 127, 0, 0, 0, 0, 0, 0, 0, 11, 20, 158
+"c:\react\polity\src\features\calendar\hooks\useCalendarNavigation.ts", "TypeScript", 0, 38, 0, 0, 0, 0, 0, 0, 0, 0, 5, 43
+"c:\react\polity\src\features\calendar\hooks\useCalendarState.ts", "TypeScript", 0, 12, 0, 0, 0, 0, 0, 0, 0, 0, 3, 15
+"c:\react\polity\src\features\calendar\types.ts", "TypeScript", 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 3, 22
+"c:\react\polity\src\features\calendar\ui\CalendarHeader.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 75, 0, 0, 6, 81
+"c:\react\polity\src\features\calendar\ui\CalendarStats.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 47, 0, 0, 4, 51
+"c:\react\polity\src\features\calendar\ui\DayView.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 95, 0, 1, 9, 105
+"c:\react\polity\src\features\calendar\ui\EventCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 120, 0, 0, 8, 128
+"c:\react\polity\src\features\calendar\ui\MiniCalendar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 36, 0, 0, 5, 41
+"c:\react\polity\src\features\calendar\ui\MonthView.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 116, 0, 1, 7, 124
+"c:\react\polity\src\features\calendar\ui\WeekView.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 93, 0, 0, 6, 99
+"c:\react\polity\src\features\calendar\utils\dateUtils.ts", "TypeScript", 0, 64, 0, 0, 0, 0, 0, 0, 0, 0, 11, 75
+"c:\react\polity\src\features\calendar\utils\eventIdUtils.ts", "TypeScript", 0, 6, 0, 0, 0, 0, 0, 0, 0, 11, 2, 19
+"c:\react\polity\src\features\create\ui\CreateDashboard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 158, 0, 5, 12, 175
+"c:\react\polity\src\features\documents\index.ts", "TypeScript", 0, 10, 0, 0, 0, 0, 0, 0, 0, 8, 5, 23
+"c:\react\polity\src\features\documents\ui\InviteCollaboratorDialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 228, 0, 7, 21, 256
+"c:\react\polity\src\features\documents\ui\VersionControl.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 269, 0, 12, 21, 302
+"c:\react\polity\src\features\documents\utils\version-utils.ts", "TypeScript", 0, 87, 0, 0, 0, 0, 0, 0, 0, 12, 12, 111
+"c:\react\polity\src\features\editor\hooks\index.ts", "TypeScript", 0, 3, 0, 0, 0, 0, 0, 0, 0, 5, 2, 10
+"c:\react\polity\src\features\editor\hooks\useEditor.ts", "TypeScript", 0, 318, 0, 0, 0, 0, 0, 0, 0, 71, 47, 436
+"c:\react\polity\src\features\editor\hooks\useEditorPresence.ts", "TypeScript", 0, 58, 0, 0, 0, 0, 0, 0, 0, 33, 12, 103
+"c:\react\polity\src\features\editor\hooks\useEditorUsers.ts", "TypeScript", 0, 45, 0, 0, 0, 0, 0, 0, 0, 15, 9, 69
+"c:\react\polity\src\features\editor\hooks\useEditorVersion.ts", "TypeScript", 0, 149, 0, 0, 0, 0, 0, 0, 0, 42, 22, 213
+"c:\react\polity\src\features\editor\index.ts", "TypeScript", 0, 48, 0, 0, 0, 0, 0, 0, 0, 10, 9, 67
+"c:\react\polity\src\features\editor\types\index.ts", "TypeScript", 0, 218, 0, 0, 0, 0, 0, 0, 0, 99, 29, 346
+"c:\react\polity\src\features\editor\ui\EditorHeader.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 119, 0, 8, 9, 136
+"c:\react\polity\src\features\editor\ui\EditorToolbar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 137, 0, 35, 11, 183
+"c:\react\polity\src\features\editor\ui\EditorView.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 433, 0, 29, 37, 499
+"c:\react\polity\src\features\editor\ui\InviteCollaboratorDialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 226, 0, 12, 22, 260
+"c:\react\polity\src\features\editor\ui\ModeSelector.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 124, 0, 7, 15, 146
+"c:\react\polity\src\features\editor\ui\VersionControl.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 350, 0, 19, 27, 396
+"c:\react\polity\src\features\editor\ui\index.ts", "TypeScript", 0, 5, 0, 0, 0, 0, 0, 0, 0, 5, 2, 12
+"c:\react\polity\src\features\editor\ui\metadata\AmendmentMetadata.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 85, 0, 14, 8, 107
+"c:\react\polity\src\features\editor\ui\metadata\BlogMetadata.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 89, 0, 13, 8, 110
+"c:\react\polity\src\features\editor\ui\metadata\DocumentMetadata.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 117, 0, 15, 11, 143
+"c:\react\polity\src\features\editor\ui\metadata\index.ts", "TypeScript", 0, 3, 0, 0, 0, 0, 0, 0, 0, 5, 2, 10
+"c:\react\polity\src\features\editor\utils\editor-operations.ts", "TypeScript", 0, 208, 0, 0, 0, 0, 0, 0, 0, 32, 26, 266
+"c:\react\polity\src\features\editor\utils\entity-adapter.ts", "TypeScript", 0, 290, 0, 0, 0, 0, 0, 0, 0, 37, 36, 363
+"c:\react\polity\src\features\editor\utils\index.ts", "TypeScript", 0, 3, 0, 0, 0, 0, 0, 0, 0, 5, 2, 10
+"c:\react\polity\src\features\editor\utils\version-queries.ts", "TypeScript", 0, 67, 0, 0, 0, 0, 0, 0, 0, 52, 11, 130
+"c:\react\polity\src\features\editor\utils\version-utils.ts", "TypeScript", 0, 248, 0, 0, 0, 0, 0, 0, 0, 37, 27, 312
+"c:\react\polity\src\features\events\EventWiki.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 780, 0, 26, 43, 849
+"c:\react\polity\src\features\events\components\DelegatesOverview.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 228, 0, 7, 15, 250
+"c:\react\polity\src\features\events\hooks\useAgendaItemDetail.ts", "TypeScript", 0, 46, 0, 0, 0, 0, 0, 0, 0, 0, 4, 50
+"c:\react\polity\src\features\events\hooks\useAgendaItemMutations.ts", "TypeScript", 0, 75, 0, 0, 0, 0, 0, 0, 0, 4, 13, 92
+"c:\react\polity\src\features\events\hooks\useAgendaItemVoting.ts", "TypeScript", 0, 110, 0, 0, 0, 0, 0, 0, 0, 15, 19, 144
+"c:\react\polity\src\features\events\hooks\useAgendaItems.ts", "TypeScript", 0, 47, 0, 0, 0, 0, 0, 0, 0, 0, 4, 51
+"c:\react\polity\src\features\events\hooks\useAgendaNavigation.ts", "TypeScript", 0, 217, 0, 0, 0, 0, 0, 0, 0, 13, 29, 259
+"c:\react\polity\src\features\events\hooks\useCancelEvent.ts", "TypeScript", 0, 193, 0, 0, 0, 0, 0, 0, 0, 15, 24, 232
+"c:\react\polity\src\features\events\hooks\useChangeRequestVoting.ts", "TypeScript", 0, 293, 0, 0, 0, 0, 0, 0, 0, 36, 43, 372
+"c:\react\polity\src\features\events\hooks\useElectionVoting.ts", "TypeScript", 0, 348, 0, 0, 0, 0, 0, 0, 0, 36, 58, 442
+"c:\react\polity\src\features\events\hooks\useEventAgendaItem.ts", "TypeScript", 0, 203, 0, 0, 0, 0, 0, 0, 0, 9, 19, 231
+"c:\react\polity\src\features\events\hooks\useEventData.ts", "TypeScript", 0, 134, 0, 0, 0, 0, 0, 0, 0, 9, 16, 159
+"c:\react\polity\src\features\events\hooks\useEventMutations.ts", "TypeScript", 0, 247, 0, 0, 0, 0, 0, 0, 0, 29, 26, 302
+"c:\react\polity\src\features\events\hooks\useEventParticipants.ts", "TypeScript", 0, 249, 0, 0, 0, 0, 0, 0, 0, 14, 33, 296
+"c:\react\polity\src\features\events\hooks\useEventParticipation.ts", "TypeScript", 0, 165, 0, 0, 0, 0, 0, 0, 0, 13, 23, 201
+"c:\react\polity\src\features\events\hooks\useEventPositions.ts", "TypeScript", 0, 168, 0, 0, 0, 0, 0, 0, 0, 7, 24, 199
+"c:\react\polity\src\features\events\hooks\useEventStream.ts", "TypeScript", 0, 220, 0, 0, 0, 0, 0, 0, 0, 11, 27, 258
+"c:\react\polity\src\features\events\hooks\useEventUpdate.ts", "TypeScript", 0, 111, 0, 0, 0, 0, 0, 0, 0, 8, 19, 138
+"c:\react\polity\src\features\events\hooks\useEventVoting.ts", "TypeScript", 0, 417, 0, 0, 0, 0, 0, 0, 0, 19, 58, 494
+"c:\react\polity\src\features\events\hooks\useSpeakerList.ts", "TypeScript", 0, 52, 0, 0, 0, 0, 0, 0, 0, 0, 8, 60
+"c:\react\polity\src\features\events\hooks\useSubscribeEvent.ts", "TypeScript", 0, 130, 0, 0, 0, 0, 0, 0, 0, 12, 16, 158
+"c:\react\polity\src\features\events\hooks\useVoting.ts", "TypeScript", 0, 90, 0, 0, 0, 0, 0, 0, 0, 0, 7, 97
+"c:\react\polity\src\features\events\hooks\useVotingTimer.ts", "TypeScript", 0, 150, 0, 0, 0, 0, 0, 0, 0, 15, 26, 191
+"c:\react\polity\src\features\events\types\agenda-section-types.ts", "TypeScript", 0, 70, 0, 0, 0, 0, 0, 0, 0, 3, 10, 83
+"c:\react\polity\src\features\events\ui\AgendaElectionSection.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 564, 0, 28, 43, 635
+"c:\react\polity\src\features\events\ui\AgendaItemContextCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 276, 0, 23, 17, 316
+"c:\react\polity\src\features\events\ui\AgendaNavigationControls.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 115, 0, 4, 11, 130
+"c:\react\polity\src\features\events\ui\AgendaSpeakerListSection.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 273, 0, 17, 15, 305
+"c:\react\polity\src\features\events\ui\AgendaVoteSection.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 589, 0, 28, 39, 656
+"c:\react\polity\src\features\events\ui\AmendmentVotingQueue.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 421, 0, 9, 33, 463
+"c:\react\polity\src\features\events\ui\CancelEventDialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 224, 0, 12, 22, 258
+"c:\react\polity\src\features\events\ui\CancelledEventBanner.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 64, 0, 9, 8, 81
+"c:\react\polity\src\features\events\ui\CreateAgendaItemForm.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 359, 0, 10, 26, 395
+"c:\react\polity\src\features\events\ui\EventAgenda.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 461, 0, 19, 39, 519
+"c:\react\polity\src\features\events\ui\EventAgendaItemDetail.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 617, 0, 33, 55, 705
+"c:\react\polity\src\features\events\ui\EventEdit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 259, 0, 17, 17, 293
+"c:\react\polity\src\features\events\ui\EventNetworkFlow.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 571, 0, 28, 60, 659
+"c:\react\polity\src\features\events\ui\EventParticipants.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 578, 0, 13, 17, 608
+"c:\react\polity\src\features\events\ui\EventParticipationButton.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 53, 0, 0, 6, 59
+"c:\react\polity\src\features\events\ui\EventPositions.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 316, 0, 3, 18, 337
+"c:\react\polity\src\features\events\ui\EventStream.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 680, 0, 27, 42, 749
+"c:\react\polity\src\features\events\ui\EventSubscribeButton.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 30, 0, 0, 6, 36
+"c:\react\polity\src\features\events\ui\TransferAgendaItemDialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 209, 0, 10, 24, 243
+"c:\react\polity\src\features\events\ui\VoteButtons.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 104, 0, 3, 12, 119
+"c:\react\polity\src\features\events\ui\VotingPhaseIndicator.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 148, 0, 14, 20, 182
+"c:\react\polity\src\features\events\ui\VotingSessionManager.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 257, 0, 7, 20, 284
+"c:\react\polity\src\features\events\utils\event-reassignment.ts", "TypeScript", 0, 197, 0, 0, 0, 0, 0, 0, 0, 35, 33, 265
+"c:\react\polity\src\features\events\utils\revote-scheduling.ts", "TypeScript", 0, 202, 0, 0, 0, 0, 0, 0, 0, 45, 32, 279
+"c:\react\polity\src\features\groups\GroupWiki.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 380, 0, 13, 26, 419
+"c:\react\polity\src\features\groups\GroupsPage.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 18, 0, 0, 4, 22
+"c:\react\polity\src\features\groups\hooks\useAmendmentFilters.ts", "TypeScript", 0, 97, 0, 0, 0, 0, 0, 0, 0, 17, 19, 133
+"c:\react\polity\src\features\groups\hooks\useDocumentEditor.ts", "TypeScript", 0, 162, 0, 0, 0, 0, 0, 0, 0, 42, 28, 232
+"c:\react\polity\src\features\groups\hooks\useDocumentMutations.ts", "TypeScript", 0, 117, 0, 0, 0, 0, 0, 0, 0, 24, 16, 157
+"c:\react\polity\src\features\groups\hooks\useDocumentPresence.ts", "TypeScript", 0, 68, 0, 0, 0, 0, 0, 0, 0, 31, 13, 112
+"c:\react\polity\src\features\groups\hooks\useFinancialData.ts", "TypeScript", 0, 58, 0, 0, 0, 0, 0, 0, 0, 7, 14, 79
+"c:\react\polity\src\features\groups\hooks\useGroupAmendments.ts", "TypeScript", 0, 25, 0, 0, 0, 0, 0, 0, 0, 5, 4, 34
+"c:\react\polity\src\features\groups\hooks\useGroupData.ts", "TypeScript", 0, 169, 0, 0, 0, 0, 0, 0, 0, 18, 21, 208
+"c:\react\polity\src\features\groups\hooks\useGroupDocuments.ts", "TypeScript", 0, 75, 0, 0, 0, 0, 0, 0, 0, 32, 13, 120
+"c:\react\polity\src\features\groups\hooks\useGroupLinks.ts", "TypeScript", 0, 101, 0, 0, 0, 0, 0, 0, 0, 6, 12, 119
+"c:\react\polity\src\features\groups\hooks\useGroupMembership.ts", "TypeScript", 0, 196, 0, 0, 0, 0, 0, 0, 0, 16, 30, 242
+"c:\react\polity\src\features\groups\hooks\useGroupMutations.ts", "TypeScript", 0, 388, 0, 0, 0, 0, 0, 0, 0, 45, 40, 473
+"c:\react\polity\src\features\groups\hooks\useGroupNetwork.ts", "TypeScript", 0, 227, 0, 0, 0, 0, 0, 0, 0, 24, 37, 288
+"c:\react\polity\src\features\groups\hooks\useGroupPayments.ts", "TypeScript", 0, 120, 0, 0, 0, 0, 0, 0, 0, 6, 16, 142
+"c:\react\polity\src\features\groups\hooks\useGroupPositions.ts", "TypeScript", 0, 436, 0, 0, 0, 0, 0, 0, 0, 47, 50, 533
+"c:\react\polity\src\features\groups\hooks\useGroupTodos.ts", "TypeScript", 0, 182, 0, 0, 0, 0, 0, 0, 0, 8, 22, 212
+"c:\react\polity\src\features\groups\hooks\useGroupUpdate.ts", "TypeScript", 0, 154, 0, 0, 0, 0, 0, 0, 0, 32, 20, 206
+"c:\react\polity\src\features\groups\hooks\useMembershipSearch.ts", "TypeScript", 0, 41, 0, 0, 0, 0, 0, 0, 0, 3, 8, 52
+"c:\react\polity\src\features\groups\hooks\useRoleManagement.ts", "TypeScript", 0, 113, 0, 0, 0, 0, 0, 0, 0, 6, 14, 133
+"c:\react\polity\src\features\groups\hooks\useSubscribeGroup.ts", "TypeScript", 0, 130, 0, 0, 0, 0, 0, 0, 0, 12, 16, 158
+"c:\react\polity\src\features\groups\types\group.types.ts", "TypeScript", 0, 143, 0, 0, 0, 0, 0, 0, 0, 5, 12, 160
+"c:\react\polity\src\features\groups\ui\ActiveMembersTable.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 162, 0, 5, 5, 172
+"c:\react\polity\src\features\groups\ui\ActiveRelationshipsTable.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 167, 0, 5, 7, 179
+"c:\react\polity\src\features\groups\ui\AddLinkDialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 73, 0, 5, 6, 84
+"c:\react\polity\src\features\groups\ui\AddPaymentDialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 358, 0, 8, 16, 382
+"c:\react\polity\src\features\groups\ui\AddPositionDialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 140, 0, 0, 5, 145
+"c:\react\polity\src\features\groups\ui\AddRoleDialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 85, 0, 5, 4, 94
+"c:\react\polity\src\features\groups\ui\AddTodoDialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 113, 0, 0, 6, 119
+"c:\react\polity\src\features\groups\ui\AmendmentGroups.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 229, 0, 4, 10, 243
+"c:\react\polity\src\features\groups\ui\AmendmentSearchAndFilters.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 138, 0, 2, 7, 147
+"c:\react\polity\src\features\groups\ui\AssignHolderDialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 237, 0, 2, 14, 253
+"c:\react\polity\src\features\groups\ui\BasicInfoSection.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 41, 0, 5, 4, 50
+"c:\react\polity\src\features\groups\ui\CreateDocumentDialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 81, 0, 5, 8, 94
+"c:\react\polity\src\features\groups\ui\DocumentEditor.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 99, 0, 12, 11, 122
+"c:\react\polity\src\features\groups\ui\DocumentHeader.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 51, 0, 5, 5, 61
+"c:\react\polity\src\features\groups\ui\EditPositionDialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 111, 0, 0, 5, 116
+"c:\react\polity\src\features\groups\ui\GroupDocumentCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 56, 0, 8, 6, 70
+"c:\react\polity\src\features\groups\ui\GroupDocumentsList.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 84, 0, 5, 10, 99
+"c:\react\polity\src\features\groups\ui\GroupEdit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 54, 0, 9, 8, 71
+"c:\react\polity\src\features\groups\ui\GroupEditForm.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 52, 0, 11, 9, 72
+"c:\react\polity\src\features\groups\ui\GroupMembershipButton.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 55, 0, 0, 7, 62
+"c:\react\polity\src\features\groups\ui\GroupSubscribeButton.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 38, 0, 4, 4, 46
+"c:\react\polity\src\features\groups\ui\GroupsFilters.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 77, 0, 3, 9, 89
+"c:\react\polity\src\features\groups\ui\GroupsHeader.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 3, 24
+"c:\react\polity\src\features\groups\ui\GroupsList.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 58, 0, 0, 7, 65
+"c:\react\polity\src\features\groups\ui\IncomingRelationshipRequestsTable.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 111, 0, 5, 7, 123
+"c:\react\polity\src\features\groups\ui\InviteMembersDialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 175, 0, 7, 9, 191
+"c:\react\polity\src\features\groups\ui\LinksSection.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 39, 0, 5, 4, 48
+"c:\react\polity\src\features\groups\ui\LocationInfoSection.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 47, 0, 5, 4, 56
+"c:\react\polity\src\features\groups\ui\MembershipTabs.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 39, 0, 5, 7, 51
+"c:\react\polity\src\features\groups\ui\OutgoingRelationshipRequestsTable.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 101, 0, 5, 7, 113
+"c:\react\polity\src\features\groups\ui\PendingInvitationsTable.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 105, 0, 5, 6, 116
+"c:\react\polity\src\features\groups\ui\PendingRequestsTable.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 115, 0, 5, 6, 126
+"c:\react\polity\src\features\groups\ui\PositionHolderHistoryDialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 234, 0, 5, 14, 253
+"c:\react\polity\src\features\groups\ui\PositionsTable.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 321, 0, 7, 15, 343
+"c:\react\polity\src\features\groups\ui\PresenceIndicators.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 31, 0, 5, 5, 41
+"c:\react\polity\src\features\groups\ui\RolesPermissionsTable.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 117, 0, 5, 4, 126
+"c:\react\polity\src\features\groups\ui\SocialMediaSection.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 65, 0, 5, 4, 74
+"c:\react\polity\src\features\meet\MeetingPage.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 81, 0, 0, 13, 94
+"c:\react\polity\src\features\meet\hooks\useMeetingBooking.ts", "TypeScript", 0, 69, 0, 0, 0, 0, 0, 0, 0, 2, 8, 79
+"c:\react\polity\src\features\meet\hooks\useMeetingData.ts", "TypeScript", 0, 48, 0, 0, 0, 0, 0, 0, 0, 0, 8, 56
+"c:\react\polity\src\features\meet\ui\MeetingActions.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 59, 0, 0, 8, 67
+"c:\react\polity\src\features\meet\ui\MeetingDetails.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 59, 0, 0, 6, 65
+"c:\react\polity\src\features\meet\ui\MeetingHeader.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 46, 0, 0, 5, 51
+"c:\react\polity\src\features\meet\ui\MeetingParticipants.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 54, 0, 0, 6, 60
+"c:\react\polity\src\features\meet\utils\meetingFormatters.ts", "TypeScript", 0, 17, 0, 0, 0, 0, 0, 0, 0, 0, 3, 20
+"c:\react\polity\src\features\meet\utils\meetingUtils.ts", "TypeScript", 0, 27, 0, 0, 0, 0, 0, 0, 0, 0, 8, 35
+"c:\react\polity\src\features\messages\MessagesPage.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 216, 0, 9, 26, 251
+"c:\react\polity\src\features\messages\hooks\useConversationData.ts", "TypeScript", 0, 40, 0, 0, 0, 0, 0, 0, 0, 0, 4, 44
+"c:\react\polity\src\features\messages\hooks\useConversationFilters.ts", "TypeScript", 0, 42, 0, 0, 0, 0, 0, 0, 0, 7, 9, 58
+"c:\react\polity\src\features\messages\hooks\useConversationSelection.ts", "TypeScript", 0, 41, 0, 0, 0, 0, 0, 0, 0, 5, 9, 55
+"c:\react\polity\src\features\messages\hooks\useMessageMutations.ts", "TypeScript", 0, 253, 0, 0, 0, 0, 0, 0, 0, 17, 27, 297
+"c:\react\polity\src\features\messages\types.ts", "TypeScript", 0, 46, 0, 0, 0, 0, 0, 0, 0, 0, 4, 50
+"c:\react\polity\src\features\messages\ui\ConversationHeader.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 102, 0, 3, 6, 111
+"c:\react\polity\src\features\messages\ui\ConversationItem.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 73, 0, 0, 4, 77
+"c:\react\polity\src\features\messages\ui\ConversationList.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 114, 0, 1, 5, 120
+"c:\react\polity\src\features\messages\ui\DeleteConversationDialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 47, 0, 0, 4, 51
+"c:\react\polity\src\features\messages\ui\GroupMembersDialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 62, 0, 0, 4, 66
+"c:\react\polity\src\features\messages\ui\MessageBubble.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 44, 0, 0, 3, 47
+"c:\react\polity\src\features\messages\ui\MessageInput.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 66, 0, 0, 6, 72
+"c:\react\polity\src\features\messages\ui\MessageList.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 93, 0, 3, 9, 105
+"c:\react\polity\src\features\messages\ui\MessageView.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 75, 0, 0, 4, 79
+"c:\react\polity\src\features\messages\ui\NewConversationDialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 124, 0, 3, 9, 136
+"c:\react\polity\src\features\messages\utils.ts", "TypeScript", 0, 47, 0, 0, 0, 0, 0, 0, 0, 3, 7, 57
+"c:\react\polity\src\features\notifications\NotificationsPage.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 228, 0, 3, 20, 251
+"c:\react\polity\src\features\notifications\hooks\useNotificationActions.ts", "TypeScript", 0, 63, 0, 0, 0, 0, 0, 0, 0, 2, 6, 71
+"c:\react\polity\src\features\notifications\hooks\useNotificationData.ts", "TypeScript", 0, 103, 0, 0, 0, 0, 0, 0, 0, 15, 14, 132
+"c:\react\polity\src\features\notifications\hooks\useNotificationFilters.ts", "TypeScript", 0, 80, 0, 0, 0, 0, 0, 0, 0, 7, 13, 100
+"c:\react\polity\src\features\notifications\hooks\useNotificationSettings.ts", "TypeScript", 0, 243, 0, 0, 0, 0, 0, 0, 0, 22, 21, 286
+"c:\react\polity\src\features\notifications\types\notification-settings.types.ts", "TypeScript", 0, 184, 0, 0, 0, 0, 0, 0, 0, 100, 30, 314
+"c:\react\polity\src\features\notifications\types\notification.types.ts", "TypeScript", 0, 250, 0, 0, 0, 0, 0, 0, 0, 13, 3, 266
+"c:\react\polity\src\features\notifications\ui\NotificationHeader.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 27, 0, 0, 4, 31
+"c:\react\polity\src\features\notifications\ui\NotificationItem.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 128, 0, 6, 9, 143
+"c:\react\polity\src\features\notifications\ui\NotificationSettingsPage.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 886, 0, 9, 19, 914
+"c:\react\polity\src\features\notifications\ui\NotificationTabs.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 49, 0, 0, 4, 53
+"c:\react\polity\src\features\notifications\ui\NotificationsList.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 43, 0, 0, 4, 47
+"c:\react\polity\src\features\notifications\utils\notificationConstants.ts", "TypeScript", 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 3, 23
+"c:\react\polity\src\features\notifications\utils\notificationHelpers.ts", "TypeScript", 0, 19, 0, 0, 0, 0, 0, 0, 0, 1, 2, 22
+"c:\react\polity\src\features\search\SearchPage.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 802, 0, 0, 39, 841
+"c:\react\polity\src\features\search\hooks\useSearchData.ts", "TypeScript", 0, 257, 0, 0, 0, 0, 0, 0, 0, 3, 16, 276
+"c:\react\polity\src\features\search\hooks\useSearchFilters.ts", "TypeScript", 0, 210, 0, 0, 0, 0, 0, 0, 0, 7, 33, 250
+"c:\react\polity\src\features\search\hooks\useSearchURL.ts", "TypeScript", 0, 93, 0, 0, 0, 0, 0, 0, 0, 4, 13, 110
+"c:\react\polity\src\features\search\types\search.types.ts", "TypeScript", 0, 34, 0, 0, 0, 0, 0, 0, 0, 0, 3, 37
+"c:\react\polity\src\features\search\ui\AmendmentSearchCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 91, 0, 4, 11, 106
+"c:\react\polity\src\features\search\ui\BlogSearchCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 27, 0, 1, 4, 32
+"c:\react\polity\src\features\search\ui\GroupSearchCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 27, 0, 3, 6, 36
+"c:\react\polity\src\features\search\ui\SearchHeader.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 88, 0, 3, 7, 98
+"c:\react\polity\src\features\search\ui\StatementSearchCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 27, 0, 0, 4, 31
+"c:\react\polity\src\features\search\ui\UserSearchCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 53, 0, 7, 10, 70
+"c:\react\polity\src\features\search\utils\searchUtils.ts", "TypeScript", 0, 33, 0, 0, 0, 0, 0, 0, 0, 2, 6, 41
+"c:\react\polity\src\features\statements\hooks\useStatementData.ts", "TypeScript", 0, 127, 0, 0, 0, 0, 0, 0, 0, 17, 13, 157
+"c:\react\polity\src\features\statements\ui\StatementDetail.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 153, 0, 9, 16, 178
+"c:\react\polity\src\features\timeline\README.md", "Markdown", 0, 0, 0, 0, 0, 269, 0, 0, 0, 0, 85, 354
+"c:\react\polity\src\features\timeline\constants\content-type-config.ts", "TypeScript", 0, 152, 0, 0, 0, 0, 0, 0, 0, 10, 7, 169
+"c:\react\polity\src\features\timeline\constants\index.ts", "TypeScript", 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2
+"c:\react\polity\src\features\timeline\hooks\useDecisionFlash.ts", "TypeScript", 0, 107, 0, 0, 0, 0, 0, 0, 0, 24, 26, 157
+"c:\react\polity\src\features\timeline\hooks\useDecisionTerminal.ts", "TypeScript", 0, 260, 0, 0, 0, 0, 0, 0, 0, 19, 35, 314
+"c:\react\polity\src\features\timeline\hooks\useInfiniteTimeline.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 146, 0, 33, 25, 204
+"c:\react\polity\src\features\timeline\hooks\useIsMobile.ts", "TypeScript", 0, 71, 0, 0, 0, 0, 0, 0, 0, 25, 20, 116
+"c:\react\polity\src\features\timeline\hooks\useReactions.ts", "TypeScript", 0, 116, 0, 0, 0, 0, 0, 0, 0, 37, 21, 174
+"c:\react\polity\src\features\timeline\hooks\useSubscribedTimeline.ts", "TypeScript", 0, 292, 0, 0, 0, 0, 0, 0, 0, 22, 25, 339
+"c:\react\polity\src\features\timeline\hooks\useSubscriptionTimeline.ts", "TypeScript", 0, 166, 0, 0, 0, 0, 0, 0, 0, 8, 21, 195
+"c:\react\polity\src\features\timeline\hooks\useSwipeGestures.ts", "TypeScript", 0, 178, 0, 0, 0, 0, 0, 0, 0, 52, 32, 262
+"c:\react\polity\src\features\timeline\hooks\useTerminalSubscription.ts", "TypeScript", 0, 118, 0, 0, 0, 0, 0, 0, 0, 40, 26, 184
+"c:\react\polity\src\features\timeline\hooks\useTimelineFilters.ts", "TypeScript", 0, 144, 0, 0, 0, 0, 0, 0, 0, 104, 32, 280
+"c:\react\polity\src\features\timeline\hooks\useTimelineMode.ts", "TypeScript", 0, 56, 0, 0, 0, 0, 0, 0, 0, 45, 17, 118
+"c:\react\polity\src\features\timeline\index.ts", "TypeScript", 0, 70, 0, 0, 0, 0, 0, 0, 0, 6, 7, 83
+"c:\react\polity\src\features\timeline\ui\LazyCardComponents.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 118, 0, 60, 28, 206
+"c:\react\polity\src\features\timeline\ui\MasonryGrid.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 130, 0, 25, 20, 175
+"c:\react\polity\src\features\timeline\ui\ModernTimeline.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 722, 0, 20, 54, 796
+"c:\react\polity\src\features\timeline\ui\TimelineFilterPanel.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 224, 0, 35, 18, 277
+"c:\react\polity\src\features\timeline\ui\TimelineHeader.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 107, 0, 31, 12, 150
+"c:\react\polity\src\features\timeline\ui\TimelineModeToggle.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 101, 0, 23, 11, 135
+"c:\react\polity\src\features\timeline\ui\cards\ActionBar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 274, 0, 26, 13, 313
+"c:\react\polity\src\features\timeline\ui\cards\ActionTimelineCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 327, 0, 36, 25, 388
+"c:\react\polity\src\features\timeline\ui\cards\AmendmentTimelineCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 405, 0, 47, 23, 475
+"c:\react\polity\src\features\timeline\ui\cards\BlogTimelineCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 174, 0, 28, 17, 219
+"c:\react\polity\src\features\timeline\ui\cards\ElectionTimelineCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 423, 0, 49, 29, 501
+"c:\react\polity\src\features\timeline\ui\cards\EventTimelineCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 365, 0, 53, 27, 445
+"c:\react\polity\src\features\timeline\ui\cards\GroupTimelineCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 268, 0, 31, 17, 316
+"c:\react\polity\src\features\timeline\ui\cards\ImageTimelineCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 144, 0, 22, 13, 179
+"c:\react\polity\src\features\timeline\ui\cards\QuickComment.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 180, 0, 17, 17, 214
+"c:\react\polity\src\features\timeline\ui\cards\ReasonTooltip.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 114, 0, 13, 11, 138
+"c:\react\polity\src\features\timeline\ui\cards\StatementTimelineCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 221, 0, 17, 14, 252
+"c:\react\polity\src\features\timeline\ui\cards\TimelineCardBase.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 249, 0, 32, 25, 306
+"c:\react\polity\src\features\timeline\ui\cards\TodoTimelineCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 318, 0, 19, 22, 359
+"c:\react\polity\src\features\timeline\ui\cards\TopicPill.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 163, 0, 14, 11, 188
+"c:\react\polity\src\features\timeline\ui\cards\UserTimelineCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 186, 0, 15, 12, 213
+"c:\react\polity\src\features\timeline\ui\cards\VideoTimelineCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 193, 0, 28, 18, 239
+"c:\react\polity\src\features\timeline\ui\cards\VoteTimelineCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 258, 0, 27, 22, 307
+"c:\react\polity\src\features\timeline\ui\cards\index.ts", "TypeScript", 0, 17, 0, 0, 0, 0, 0, 0, 0, 4, 4, 25
+"c:\react\polity\src\features\timeline\ui\terminal\CountdownTimer.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 142, 0, 21, 28, 191
+"c:\react\polity\src\features\timeline\ui\terminal\DecisionRow.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 137, 0, 15, 13, 165
+"c:\react\polity\src\features\timeline\ui\terminal\DecisionSidePanel.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 252, 0, 20, 17, 289
+"c:\react\polity\src\features\timeline\ui\terminal\DecisionSummary.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 207, 0, 14, 21, 242
+"c:\react\polity\src\features\timeline\ui\terminal\DecisionTable.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 58, 0, 6, 6, 70
+"c:\react\polity\src\features\timeline\ui\terminal\DecisionTerminal.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 139, 0, 22, 19, 180
+"c:\react\polity\src\features\timeline\ui\terminal\FlashRow.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 112, 0, 19, 18, 149
+"c:\react\polity\src\features\timeline\ui\terminal\MobileDecisionCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 122, 0, 10, 8, 140
+"c:\react\polity\src\features\timeline\ui\terminal\ResultBadge.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 97, 0, 10, 9, 116
+"c:\react\polity\src\features\timeline\ui\terminal\StatusBadge.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 111, 0, 10, 9, 130
+"c:\react\polity\src\features\timeline\ui\terminal\TerminalHeader.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 120, 0, 8, 10, 138
+"c:\react\polity\src\features\timeline\ui\terminal\TrendIndicator.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 109, 0, 13, 12, 134
+"c:\react\polity\src\features\timeline\ui\terminal\VoteProgressBar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 145, 0, 15, 13, 173
+"c:\react\polity\src\features\timeline\ui\terminal\index.ts", "TypeScript", 0, 45, 0, 0, 0, 0, 0, 0, 0, 3, 3, 51
+"c:\react\polity\src\features\timeline\ui\terminal\types.ts", "TypeScript", 0, 69, 0, 0, 0, 0, 0, 0, 0, 43, 34, 146
+"c:\react\polity\src\features\timeline\utils\__tests__\content-reasons.test.ts", "TypeScript", 0, 148, 0, 0, 0, 0, 0, 0, 0, 3, 39, 190
+"c:\react\polity\src\features\timeline\utils\__tests__\content-scoring.test.ts", "TypeScript", 0, 153, 0, 0, 0, 0, 0, 0, 0, 4, 40, 197
+"c:\react\polity\src\features\timeline\utils\__tests__\gradient-assignment.test.ts", "TypeScript", 0, 119, 0, 0, 0, 0, 0, 0, 0, 3, 22, 144
+"c:\react\polity\src\features\timeline\utils\accessibility.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 191, 0, 36, 31, 258
+"c:\react\polity\src\features\timeline\utils\content-reasons.ts", "TypeScript", 0, 117, 0, 0, 0, 0, 0, 0, 0, 29, 20, 166
+"c:\react\polity\src\features\timeline\utils\content-scoring.ts", "TypeScript", 0, 133, 0, 0, 0, 0, 0, 0, 0, 52, 31, 216
+"c:\react\polity\src\features\timeline\utils\createTimelineEvent.ts", "TypeScript", 0, 182, 0, 0, 0, 0, 0, 0, 0, 83, 17, 282
+"c:\react\polity\src\features\timeline\utils\decision-status.ts", "TypeScript", 0, 85, 0, 0, 0, 0, 0, 0, 0, 26, 18, 129
+"c:\react\polity\src\features\timeline\utils\gradient-assignment.ts", "TypeScript", 0, 73, 0, 0, 0, 0, 0, 0, 0, 37, 16, 126
+"c:\react\polity\src\features\timeline\utils\image-optimization.ts", "TypeScript", 0, 114, 0, 0, 0, 0, 0, 0, 0, 56, 24, 194
+"c:\react\polity\src\features\timeline\utils\own-content-query.ts", "TypeScript", 0, 133, 0, 0, 0, 0, 0, 0, 0, 44, 22, 199
+"c:\react\polity\src\features\timeline\utils\public-content-query.ts", "TypeScript", 0, 105, 0, 0, 0, 0, 0, 0, 0, 43, 20, 168
+"c:\react\polity\src\features\timeline\utils\trend-calculation.ts", "TypeScript", 0, 80, 0, 0, 0, 0, 0, 0, 0, 31, 22, 133
+"c:\react\polity\src\features\timeline\utils\video-thumbnail.ts", "TypeScript", 0, 130, 0, 0, 0, 0, 0, 0, 0, 44, 22, 196
+"c:\react\polity\src\features\todos\TodoDetailPage.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 154, 0, 0, 17, 171
+"c:\react\polity\src\features\todos\TodosPage.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 147, 0, 1, 19, 167
+"c:\react\polity\src\features\todos\hooks\useTodoData.ts", "TypeScript", 0, 249, 0, 0, 0, 0, 0, 0, 0, 23, 25, 297
+"c:\react\polity\src\features\todos\hooks\useTodoFilters.ts", "TypeScript", 0, 69, 0, 0, 0, 0, 0, 0, 0, 5, 12, 86
+"c:\react\polity\src\features\todos\hooks\useTodoStats.ts", "TypeScript", 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 4, 22
+"c:\react\polity\src\features\todos\types\todo.types.ts", "TypeScript", 0, 38, 0, 0, 0, 0, 0, 0, 0, 0, 3, 41
+"c:\react\polity\src\features\todos\ui\TodoDetailEdit.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 114, 0, 3, 6, 123
+"c:\react\polity\src\features\todos\ui\TodoDetailHeader.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 59, 0, 0, 3, 62
+"c:\react\polity\src\features\todos\ui\TodoDetailView.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 141, 0, 8, 12, 161
+"c:\react\polity\src\features\todos\ui\TodoPriorityBadge.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 33, 0, 0, 5, 38
+"c:\react\polity\src\features\todos\ui\TodoStatusIcon.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 17, 0, 0, 3, 20
+"c:\react\polity\src\features\todos\ui\TodosFilters.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 75, 0, 0, 4, 79
+"c:\react\polity\src\features\todos\ui\TodosHeader.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 43, 0, 0, 5, 48
+"c:\react\polity\src\features\todos\ui\TodosTabs.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 60, 0, 0, 5, 65
+"c:\react\polity\src\features\todos\utils\todoFormatters.ts", "TypeScript", 0, 26, 0, 0, 0, 0, 0, 0, 0, 0, 6, 32
+"c:\react\polity\src\features\user\hooks\useAvatarUpload.ts", "TypeScript", 0, 34, 0, 0, 0, 0, 0, 0, 0, 4, 8, 46
+"c:\react\polity\src\features\user\hooks\useFollowUser.ts", "TypeScript", 0, 104, 0, 0, 0, 0, 0, 0, 0, 12, 14, 130
+"c:\react\polity\src\features\user\hooks\useStripeCheckout.ts", "TypeScript", 0, 111, 0, 0, 0, 0, 0, 0, 0, 4, 18, 133
+"c:\react\polity\src\features\user\hooks\useSubscribeUser.ts", "TypeScript", 0, 111, 0, 0, 0, 0, 0, 0, 0, 12, 15, 138
+"c:\react\polity\src\features\user\hooks\useSubscriptionManagement.ts", "TypeScript", 0, 67, 0, 0, 0, 0, 0, 0, 0, 5, 13, 85
+"c:\react\polity\src\features\user\hooks\useSubscriptionsFilters.ts", "TypeScript", 0, 104, 0, 0, 0, 0, 0, 0, 0, 6, 14, 124
+"c:\react\polity\src\features\user\hooks\useUserData.ts", "TypeScript", 0, 184, 0, 0, 0, 0, 0, 0, 0, 27, 19, 230
+"c:\react\polity\src\features\user\hooks\useUserMemberships.ts", "TypeScript", 0, 463, 0, 0, 0, 0, 0, 0, 0, 84, 65, 612
+"c:\react\polity\src\features\user\hooks\useUserMembershipsFilters.ts", "TypeScript", 0, 128, 0, 0, 0, 0, 0, 0, 0, 11, 20, 159
+"c:\react\polity\src\features\user\hooks\useUserMutations.ts", "TypeScript", 0, 207, 0, 0, 0, 0, 0, 0, 0, 21, 19, 247
+"c:\react\polity\src\features\user\hooks\useUserProfileForm.ts", "TypeScript", 0, 114, 0, 0, 0, 0, 0, 0, 0, 4, 14, 132
+"c:\react\polity\src\features\user\hooks\useUserSubscriptions.ts", "TypeScript", 0, 90, 0, 0, 0, 0, 0, 0, 0, 15, 11, 116
+"c:\react\polity\src\features\user\state\badgeColors.ts", "TypeScript", 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 1, 10
+"c:\react\polity\src\features\user\state\gradientColors.ts", "TypeScript", 0, 17, 0, 0, 0, 0, 0, 0, 0, 9, 4, 30
+"c:\react\polity\src\features\user\state\useUserWikiContentSearch.ts", "TypeScript", 0, 34, 0, 0, 0, 0, 0, 0, 0, 2, 6, 42
+"c:\react\polity\src\features\user\state\user.data.ts", "TypeScript", 0, 151, 0, 0, 0, 0, 0, 0, 0, 0, 2, 153
+"c:\react\polity\src\features\user\types\user.types.ts", "TypeScript", 0, 86, 0, 0, 0, 0, 0, 0, 0, 0, 10, 96
+"c:\react\polity\src\features\user\ui\AboutSection.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 29, 0, 0, 3, 32
+"c:\react\polity\src\features\user\ui\AmendmentCollaborationsTab.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 58, 0, 0, 5, 63
+"c:\react\polity\src\features\user\ui\AmendmentListTab.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 22, 0, 2, 5, 29
+"c:\react\polity\src\features\user\ui\AmendmentListTab.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 111, 0, 0, 5, 116
+"c:\react\polity\src\features\user\ui\AmendmentsCard.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 7, 0, 49, 5, 61
+"c:\react\polity\src\features\user\ui\AvatarUploadSection.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 61, 0, 0, 3, 64
+"c:\react\polity\src\features\user\ui\BasicInformationSection.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 45, 0, 0, 3, 48
+"c:\react\polity\src\features\user\ui\BlogListTab.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 22, 0, 0, 5, 27
+"c:\react\polity\src\features\user\ui\BlogListTab.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 67, 0, 0, 4, 71
+"c:\react\polity\src\features\user\ui\BlogRelationsTab.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 58, 0, 0, 5, 63
+"c:\react\polity\src\features\user\ui\BlogTab.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"c:\react\polity\src\features\user\ui\BlogsCard.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 4, 20
+"c:\react\polity\src\features\user\ui\BlogsCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 41, 0, 0, 5, 46
+"c:\react\polity\src\features\user\ui\CalendarViewSelector.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 55, 0, 0, 6, 61
+"c:\react\polity\src\features\user\ui\ContactInformationSection.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 75, 0, 0, 3, 78
+"c:\react\polity\src\features\user\ui\DayView.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 108, 0, 2, 6, 116
+"c:\react\polity\src\features\user\ui\EventParticipationsTab.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 58, 0, 0, 5, 63
+"c:\react\polity\src\features\user\ui\GroupListTab.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 22, 0, 0, 5, 27
+"c:\react\polity\src\features\user\ui\GroupListTab.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 64, 0, 0, 5, 69
+"c:\react\polity\src\features\user\ui\GroupMembershipsTab.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 58, 0, 0, 5, 63
+"c:\react\polity\src\features\user\ui\GroupsCard.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 6, 0, 13, 4, 23
+"c:\react\polity\src\features\user\ui\HashtagsSection.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 23, 0, 0, 3, 26
+"c:\react\polity\src\features\user\ui\MeetingSlotCard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 87, 0, 2, 7, 96
+"c:\react\polity\src\features\user\ui\MembershipStatusTable.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 201, 0, 0, 11, 212
+"c:\react\polity\src\features\user\ui\MonthView.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 95, 0, 1, 6, 102
+"c:\react\polity\src\features\user\ui\SocialBar.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 11, 0, 0, 5, 16
+"c:\react\polity\src\features\user\ui\SocialBar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 71, 0, 2, 6, 79
+"c:\react\polity\src\features\user\ui\SocialItem.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 4, 16
+"c:\react\polity\src\features\user\ui\SocialItem.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 3, 24
+"c:\react\polity\src\features\user\ui\StatementCard.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 6, 0, 15, 5, 26
+"c:\react\polity\src\features\user\ui\StatementCarousel.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 19, 0, 0, 5, 24
+"c:\react\polity\src\features\user\ui\StatementCarousel.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 56, 0, 0, 5, 61
+"c:\react\polity\src\features\user\ui\StatsBar.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 11, 0, 0, 5, 16
+"c:\react\polity\src\features\user\ui\StatsBar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 33, 0, 4, 4, 41
+"c:\react\polity\src\features\user\ui\StatsItem.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 18, 0, 0, 6, 24
+"c:\react\polity\src\features\user\ui\StatsItem.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 43, 0, 5, 3, 51
+"c:\react\polity\src\features\user\ui\SubscribersTable.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 94, 0, 0, 6, 100
+"c:\react\polity\src\features\user\ui\SubscriptionPlansGrid.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 253, 0, 7, 13, 273
+"c:\react\polity\src\features\user\ui\SubscriptionStatus.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 290, 0, 3, 22, 315
+"c:\react\polity\src\features\user\ui\SubscriptionTypeFilters.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 44, 0, 0, 3, 47
+"c:\react\polity\src\features\user\ui\SubscriptionsTable.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 153, 0, 0, 7, 160
+"c:\react\polity\src\features\user\ui\UserAbout.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 11, 0, 0, 6, 17
+"c:\react\polity\src\features\user\ui\UserAbout.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 3, 15
+"c:\react\polity\src\features\user\ui\UserContact.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 11, 0, 0, 5, 16
+"c:\react\polity\src\features\user\ui\UserContact.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 32, 0, 0, 3, 35
+"c:\react\polity\src\features\user\ui\UserInfoTabs.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 11, 0, 0, 5, 16
+"c:\react\polity\src\features\user\ui\UserInfoTabs.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 28, 0, 0, 3, 31
+"c:\react\polity\src\features\user\ui\UserMeetingScheduler.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 936, 0, 34, 63, 1033
+"c:\react\polity\src\features\user\ui\UserNetworkFlow.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 669, 0, 51, 76, 796
+"c:\react\polity\src\features\user\ui\UserProfileEditForm.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 113, 0, 0, 11, 124
+"c:\react\polity\src\features\user\ui\UserWikiContentTabs.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 27, 0, 0, 4, 31
+"c:\react\polity\src\features\user\ui\UserWikiContentTabs.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 52, 0, 0, 7, 59
+"c:\react\polity\src\features\user\ui\UserWikiHeader.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 5, 20
+"c:\react\polity\src\features\user\ui\UserWikiHeader.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 3, 19
+"c:\react\polity\src\features\user\ui\WeekView.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 77, 0, 2, 6, 85
+"c:\react\polity\src\features\user\ui\WikiAvatar.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 11, 0, 0, 6, 17
+"c:\react\polity\src\features\user\ui\WikiAvatar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 18, 0, 4, 3, 25
+"c:\react\polity\src\features\user\ui\WikiFollowButton.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 16, 0, 1, 6, 23
+"c:\react\polity\src\features\user\ui\WikiFollowButton.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 16, 0, 4, 3, 23
+"c:\react\polity\src\features\user\ui\WikiSubscribeButton.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 16, 0, 4, 3, 23
+"c:\react\polity\src\features\user\utils\userWiki.utils.ts", "TypeScript", 0, 89, 0, 0, 0, 0, 0, 0, 0, 6, 7, 102
+"c:\react\polity\src\features\user\wiki.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 141, 0, 10, 20, 171
+"c:\react\polity\src\global-state\groups.store.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 123, 0, 5, 14, 142
+"c:\react\polity\src\global-state\language.store.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 18, 0, 0, 4, 22
+"c:\react\polity\src\global-state\screen.store.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 43, 0, 10, 14, 67
+"c:\react\polity\src\global-state\theme.store.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 118, 0, 35, 29, 182
+"c:\react\polity\src\hooks\use-debounce.ts", "TypeScript", 0, 13, 0, 0, 0, 0, 0, 0, 0, 1, 5, 19
+"c:\react\polity\src\hooks\use-instant-upload.ts", "TypeScript", 0, 43, 0, 0, 0, 0, 0, 0, 0, 0, 8, 51
+"c:\react\polity\src\hooks\use-is-touch-device.ts", "TypeScript", 0, 17, 0, 0, 0, 0, 0, 0, 0, 0, 6, 23
+"c:\react\polity\src\hooks\use-mounted.ts", "TypeScript", 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 4, 12
+"c:\react\polity\src\hooks\use-navigation-progress.ts", "TypeScript", 0, 19, 0, 0, 0, 0, 0, 0, 0, 3, 7, 29
+"c:\react\polity\src\hooks\use-suggestion-id-assignment.ts", "TypeScript", 0, 60, 0, 0, 0, 0, 0, 0, 0, 14, 16, 90
+"c:\react\polity\src\hooks\use-toast.ts", "TypeScript", 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 2, 8
+"c:\react\polity\src\hooks\use-translation.ts", "TypeScript", 0, 65, 0, 0, 0, 0, 0, 0, 0, 15, 17, 97
+"c:\react\polity\src\hooks\use-unread-counts.ts", "TypeScript", 0, 190, 0, 0, 0, 0, 0, 0, 0, 16, 24, 230
+"c:\react\polity\src\hooks\use-upload-file.ts", "TypeScript", 0, 105, 0, 0, 0, 0, 0, 0, 0, 5, 26, 136
+"c:\react\polity\src\hooks\useAutoSave.ts", "TypeScript", 0, 119, 0, 0, 0, 0, 0, 0, 0, 77, 30, 226
+"c:\react\polity\src\hooks\useInfiniteScroll.ts", "TypeScript", 0, 39, 0, 0, 0, 0, 0, 0, 0, 30, 8, 77
+"c:\react\polity\src\hooks\usePushSubscription.ts", "TypeScript", 0, 242, 0, 0, 0, 0, 0, 0, 0, 39, 54, 335
+"c:\react\polity\src\i18n\i18n-sync-provider.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 25, 0, 7, 8, 40
+"c:\react\polity\src\i18n\i18n.ts", "TypeScript", 0, 36, 0, 0, 0, 0, 0, 0, 0, 5, 5, 46
+"c:\react\polity\src\i18n\i18n.types.ts", "TypeScript", 0, 12, 0, 0, 0, 0, 0, 0, 0, 0, 2, 14
+"c:\react\polity\src\i18n\locales\de\common.ts", "TypeScript", 0, 190, 0, 0, 0, 0, 0, 0, 0, 0, 1, 191
+"c:\react\polity\src\i18n\locales\de\components.ts", "TypeScript", 0, 138, 0, 0, 0, 0, 0, 0, 0, 0, 1, 139
+"c:\react\polity\src\i18n\locales\de\deTranslation.ts", "TypeScript", 0, 66, 0, 0, 0, 0, 0, 0, 0, 10, 12, 88
+"c:\react\polity\src\i18n\locales\de\features\amendments\index.ts", "TypeScript", 0, 334, 0, 0, 0, 0, 0, 0, 0, 1, 1, 336
+"c:\react\polity\src\i18n\locales\de\features\auth\index.ts", "TypeScript", 0, 96, 0, 0, 0, 0, 0, 0, 0, 0, 1, 97
+"c:\react\polity\src\i18n\locales\de\features\blogs\index.ts", "TypeScript", 0, 171, 0, 0, 0, 0, 0, 0, 0, 0, 1, 172
+"c:\react\polity\src\i18n\locales\de\features\calendar\index.ts", "TypeScript", 0, 77, 0, 0, 0, 0, 0, 0, 0, 0, 1, 78
+"c:\react\polity\src\i18n\locales\de\features\create\index.ts", "TypeScript", 0, 70, 0, 0, 0, 0, 0, 0, 0, 0, 1, 71
+"c:\react\polity\src\i18n\locales\de\features\documents\index.ts", "TypeScript", 0, 43, 0, 0, 0, 0, 0, 0, 0, 0, 1, 44
+"c:\react\polity\src\i18n\locales\de\features\editor\index.ts", "TypeScript", 0, 104, 0, 0, 0, 0, 0, 0, 0, 11, 9, 124
+"c:\react\polity\src\i18n\locales\de\features\events\index.ts", "TypeScript", 0, 432, 0, 0, 0, 0, 0, 0, 0, 10, 1, 443
+"c:\react\polity\src\i18n\locales\de\features\groups\index.ts", "TypeScript", 0, 118, 0, 0, 0, 0, 0, 0, 0, 0, 1, 119
+"c:\react\polity\src\i18n\locales\de\features\index.ts", "TypeScript", 0, 36, 0, 0, 0, 0, 0, 0, 0, 0, 2, 38
+"c:\react\polity\src\i18n\locales\de\features\meet\index.ts", "TypeScript", 0, 68, 0, 0, 0, 0, 0, 0, 0, 0, 1, 69
+"c:\react\polity\src\i18n\locales\de\features\messages\index.ts", "TypeScript", 0, 77, 0, 0, 0, 0, 0, 0, 0, 0, 1, 78
+"c:\react\polity\src\i18n\locales\de\features\notifications\index.ts", "TypeScript", 0, 81, 0, 0, 0, 0, 0, 0, 0, 0, 1, 82
+"c:\react\polity\src\i18n\locales\de\features\search\index.ts", "TypeScript", 0, 62, 0, 0, 0, 0, 0, 0, 0, 0, 1, 63
+"c:\react\polity\src\i18n\locales\de\features\statements\index.ts", "TypeScript", 0, 96, 0, 0, 0, 0, 0, 0, 0, 0, 1, 97
+"c:\react\polity\src\i18n\locales\de\features\timeline\index.ts", "TypeScript", 0, 434, 0, 0, 0, 0, 0, 0, 0, 21, 1, 456
+"c:\react\polity\src\i18n\locales\de\features\todos\index.ts", "TypeScript", 0, 151, 0, 0, 0, 0, 0, 0, 0, 0, 1, 152
+"c:\react\polity\src\i18n\locales\de\features\user\index.ts", "TypeScript", 0, 99, 0, 0, 0, 0, 0, 0, 0, 0, 1, 100
+"c:\react\polity\src\i18n\locales\de\navigation.ts", "TypeScript", 0, 177, 0, 0, 0, 0, 0, 0, 0, 0, 1, 178
+"c:\react\polity\src\i18n\locales\de\pages\amendment\index.ts", "TypeScript", 0, 36, 0, 0, 0, 0, 0, 0, 0, 0, 1, 37
+"c:\react\polity\src\i18n\locales\de\pages\auth\index.ts", "TypeScript", 0, 38, 0, 0, 0, 0, 0, 0, 0, 0, 1, 39
+"c:\react\polity\src\i18n\locales\de\pages\blog\index.ts", "TypeScript", 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 1, 21
+"c:\react\polity\src\i18n\locales\de\pages\calendar\index.ts", "TypeScript", 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 1, 11
+"c:\react\polity\src\i18n\locales\de\pages\create\index.ts", "TypeScript", 0, 350, 0, 0, 0, 0, 0, 0, 0, 0, 1, 351
+"c:\react\polity\src\i18n\locales\de\pages\editor\index.ts", "TypeScript", 0, 68, 0, 0, 0, 0, 0, 0, 0, 0, 1, 69
+"c:\react\polity\src\i18n\locales\de\pages\event\index.ts", "TypeScript", 0, 31, 0, 0, 0, 0, 0, 0, 0, 0, 1, 32
+"c:\react\polity\src\i18n\locales\de\pages\features\index.ts", "TypeScript", 0, 232, 0, 0, 0, 0, 0, 0, 0, 0, 1, 233
+"c:\react\polity\src\i18n\locales\de\pages\group\index.ts", "TypeScript", 0, 81, 0, 0, 0, 0, 0, 0, 0, 0, 1, 82
+"c:\react\polity\src\i18n\locales\de\pages\home\index.ts", "TypeScript", 0, 61, 0, 0, 0, 0, 0, 0, 0, 0, 1, 62
+"c:\react\polity\src\i18n\locales\de\pages\home\landing.ts", "TypeScript", 0, 61, 0, 0, 0, 0, 0, 0, 0, 0, 1, 62
+"c:\react\polity\src\i18n\locales\de\pages\index.ts", "TypeScript", 0, 42, 0, 0, 0, 0, 0, 0, 0, 0, 2, 44
+"c:\react\polity\src\i18n\locales\de\pages\meet\index.ts", "TypeScript", 0, 33, 0, 0, 0, 0, 0, 0, 0, 0, 1, 34
+"c:\react\polity\src\i18n\locales\de\pages\messages\index.ts", "TypeScript", 0, 14, 0, 0, 0, 0, 0, 0, 0, 0, 1, 15
+"c:\react\polity\src\i18n\locales\de\pages\notifications\index.ts", "TypeScript", 0, 208, 0, 0, 0, 0, 0, 0, 0, 0, 1, 209
+"c:\react\polity\src\i18n\locales\de\pages\pricing\index.ts", "TypeScript", 0, 115, 0, 0, 0, 0, 0, 0, 0, 0, 1, 116
+"c:\react\polity\src\i18n\locales\de\pages\search\index.ts", "TypeScript", 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 1, 14
+"c:\react\polity\src\i18n\locales\de\pages\solutions\index.ts", "TypeScript", 0, 131, 0, 0, 0, 0, 0, 0, 0, 0, 1, 132
+"c:\react\polity\src\i18n\locales\de\pages\statement\index.ts", "TypeScript", 0, 33, 0, 0, 0, 0, 0, 0, 0, 0, 1, 34
+"c:\react\polity\src\i18n\locales\de\pages\support\index.ts", "TypeScript", 0, 62, 0, 0, 0, 0, 0, 0, 0, 0, 1, 63
+"c:\react\polity\src\i18n\locales\de\pages\todos\index.ts", "TypeScript", 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 1, 14
+"c:\react\polity\src\i18n\locales\de\pages\user\index.ts", "TypeScript", 0, 47, 0, 0, 0, 0, 0, 0, 0, 0, 1, 48
+"c:\react\polity\src\i18n\locales\de\plateJs.ts", "TypeScript", 0, 272, 0, 0, 0, 0, 0, 0, 0, 0, 1, 273
+"c:\react\polity\src\i18n\locales\en\common.ts", "TypeScript", 0, 188, 0, 0, 0, 0, 0, 0, 0, 0, 1, 189
+"c:\react\polity\src\i18n\locales\en\components.ts", "TypeScript", 0, 138, 0, 0, 0, 0, 0, 0, 0, 0, 1, 139
+"c:\react\polity\src\i18n\locales\en\enTranslation.ts", "TypeScript", 0, 67, 0, 0, 0, 0, 0, 0, 0, 10, 13, 90
+"c:\react\polity\src\i18n\locales\en\features\amendments\index.ts", "TypeScript", 0, 331, 0, 0, 0, 0, 0, 0, 0, 1, 1, 333
+"c:\react\polity\src\i18n\locales\en\features\auth\index.ts", "TypeScript", 0, 93, 0, 0, 0, 0, 0, 0, 0, 0, 1, 94
+"c:\react\polity\src\i18n\locales\en\features\blogs\index.ts", "TypeScript", 0, 171, 0, 0, 0, 0, 0, 0, 0, 0, 1, 172
+"c:\react\polity\src\i18n\locales\en\features\calendar\index.ts", "TypeScript", 0, 77, 0, 0, 0, 0, 0, 0, 0, 0, 1, 78
+"c:\react\polity\src\i18n\locales\en\features\create\index.ts", "TypeScript", 0, 70, 0, 0, 0, 0, 0, 0, 0, 0, 1, 71
+"c:\react\polity\src\i18n\locales\en\features\documents\index.ts", "TypeScript", 0, 43, 0, 0, 0, 0, 0, 0, 0, 0, 1, 44
+"c:\react\polity\src\i18n\locales\en\features\editor\index.ts", "TypeScript", 0, 103, 0, 0, 0, 0, 0, 0, 0, 11, 9, 123
+"c:\react\polity\src\i18n\locales\en\features\events\index.ts", "TypeScript", 0, 426, 0, 0, 0, 0, 0, 0, 0, 10, 1, 437
+"c:\react\polity\src\i18n\locales\en\features\groups\index.ts", "TypeScript", 0, 118, 0, 0, 0, 0, 0, 0, 0, 0, 1, 119
+"c:\react\polity\src\i18n\locales\en\features\index.ts", "TypeScript", 0, 36, 0, 0, 0, 0, 0, 0, 0, 0, 2, 38
+"c:\react\polity\src\i18n\locales\en\features\meet\index.ts", "TypeScript", 0, 68, 0, 0, 0, 0, 0, 0, 0, 0, 1, 69
+"c:\react\polity\src\i18n\locales\en\features\messages\index.ts", "TypeScript", 0, 77, 0, 0, 0, 0, 0, 0, 0, 0, 1, 78
+"c:\react\polity\src\i18n\locales\en\features\notifications\index.ts", "TypeScript", 0, 81, 0, 0, 0, 0, 0, 0, 0, 0, 1, 82
+"c:\react\polity\src\i18n\locales\en\features\search\index.ts", "TypeScript", 0, 62, 0, 0, 0, 0, 0, 0, 0, 0, 1, 63
+"c:\react\polity\src\i18n\locales\en\features\statements\index.ts", "TypeScript", 0, 96, 0, 0, 0, 0, 0, 0, 0, 0, 1, 97
+"c:\react\polity\src\i18n\locales\en\features\timeline\index.ts", "TypeScript", 0, 434, 0, 0, 0, 0, 0, 0, 0, 21, 1, 456
+"c:\react\polity\src\i18n\locales\en\features\todos\index.ts", "TypeScript", 0, 151, 0, 0, 0, 0, 0, 0, 0, 0, 1, 152
+"c:\react\polity\src\i18n\locales\en\features\user\index.ts", "TypeScript", 0, 99, 0, 0, 0, 0, 0, 0, 0, 0, 1, 100
+"c:\react\polity\src\i18n\locales\en\navigation.ts", "TypeScript", 0, 177, 0, 0, 0, 0, 0, 0, 0, 0, 1, 178
+"c:\react\polity\src\i18n\locales\en\pages\amendment\index.ts", "TypeScript", 0, 36, 0, 0, 0, 0, 0, 0, 0, 0, 1, 37
+"c:\react\polity\src\i18n\locales\en\pages\auth\index.ts", "TypeScript", 0, 38, 0, 0, 0, 0, 0, 0, 0, 0, 1, 39
+"c:\react\polity\src\i18n\locales\en\pages\blog\index.ts", "TypeScript", 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 1, 21
+"c:\react\polity\src\i18n\locales\en\pages\calendar\index.ts", "TypeScript", 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 1, 11
+"c:\react\polity\src\i18n\locales\en\pages\create\index.ts", "TypeScript", 0, 350, 0, 0, 0, 0, 0, 0, 0, 0, 1, 351
+"c:\react\polity\src\i18n\locales\en\pages\editor\index.ts", "TypeScript", 0, 68, 0, 0, 0, 0, 0, 0, 0, 0, 1, 69
+"c:\react\polity\src\i18n\locales\en\pages\event\index.ts", "TypeScript", 0, 31, 0, 0, 0, 0, 0, 0, 0, 0, 1, 32
+"c:\react\polity\src\i18n\locales\en\pages\features\index.ts", "TypeScript", 0, 229, 0, 0, 0, 0, 0, 0, 0, 0, 1, 230
+"c:\react\polity\src\i18n\locales\en\pages\group\index.ts", "TypeScript", 0, 81, 0, 0, 0, 0, 0, 0, 0, 0, 2, 83
+"c:\react\polity\src\i18n\locales\en\pages\home\index.ts", "TypeScript", 0, 60, 0, 0, 0, 0, 0, 0, 0, 0, 1, 61
+"c:\react\polity\src\i18n\locales\en\pages\home\landing.ts", "TypeScript", 0, 60, 0, 0, 0, 0, 0, 0, 0, 0, 1, 61
+"c:\react\polity\src\i18n\locales\en\pages\index.ts", "TypeScript", 0, 42, 0, 0, 0, 0, 0, 0, 0, 0, 2, 44
+"c:\react\polity\src\i18n\locales\en\pages\meet\index.ts", "TypeScript", 0, 33, 0, 0, 0, 0, 0, 0, 0, 0, 1, 34
+"c:\react\polity\src\i18n\locales\en\pages\messages\index.ts", "TypeScript", 0, 14, 0, 0, 0, 0, 0, 0, 0, 0, 1, 15
+"c:\react\polity\src\i18n\locales\en\pages\notifications\index.ts", "TypeScript", 0, 208, 0, 0, 0, 0, 0, 0, 0, 0, 1, 209
+"c:\react\polity\src\i18n\locales\en\pages\pricing\index.ts", "TypeScript", 0, 115, 0, 0, 0, 0, 0, 0, 0, 0, 1, 116
+"c:\react\polity\src\i18n\locales\en\pages\search\index.ts", "TypeScript", 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 1, 14
+"c:\react\polity\src\i18n\locales\en\pages\solutions\index.ts", "TypeScript", 0, 131, 0, 0, 0, 0, 0, 0, 0, 0, 1, 132
+"c:\react\polity\src\i18n\locales\en\pages\statement\index.ts", "TypeScript", 0, 33, 0, 0, 0, 0, 0, 0, 0, 0, 1, 34
+"c:\react\polity\src\i18n\locales\en\pages\support\index.ts", "TypeScript", 0, 62, 0, 0, 0, 0, 0, 0, 0, 0, 1, 63
+"c:\react\polity\src\i18n\locales\en\pages\todos\index.ts", "TypeScript", 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 1, 14
+"c:\react\polity\src\i18n\locales\en\pages\user\index.ts", "TypeScript", 0, 47, 0, 0, 0, 0, 0, 0, 0, 0, 1, 48
+"c:\react\polity\src\i18n\locales\en\plateJs.ts", "TypeScript", 0, 272, 0, 0, 0, 0, 0, 0, 0, 0, 1, 273
+"c:\react\polity\src\i18n\locales\index.ts", "TypeScript", 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 3, 14
+"c:\react\polity\src\logo.svg", "XML", 0, 0, 0, 0, 0, 0, 0, 0, 51, 1, 1, 53
+"c:\react\polity\src\navigation\NavigationDemo.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 180, 0, 3, 6, 189
+"c:\react\polity\src\navigation\as-button-list-navigation.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 78, 0, 1, 5, 84
+"c:\react\polity\src\navigation\as-button-navigation.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 98, 0, 0, 6, 104
+"c:\react\polity\src\navigation\as-labeled-button-list-navigation.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 65, 0, 1, 7, 73
+"c:\react\polity\src\navigation\command-dialog.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 40, 0, 1, 6, 47
+"c:\react\polity\src\navigation\command-dialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 142, 0, 4, 11, 157
+"c:\react\polity\src\navigation\dynamic-navigation.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 147, 0, 3, 20, 170
+"c:\react\polity\src\navigation\dynamic-navigation.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 55, 0, 0, 7, 62
+"c:\react\polity\src\navigation\nav-items\icon-map.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 75, 0, 5, 4, 84
+"c:\react\polity\src\navigation\nav-items\nav-helpers.ts", "TypeScript", 0, 65, 0, 0, 0, 0, 0, 0, 0, 7, 14, 86
+"c:\react\polity\src\navigation\nav-items\nav-item-list.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 43, 0, 3, 9, 55
+"c:\react\polity\src\navigation\nav-items\nav-item-list.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 327, 0, 7, 9, 343
+"c:\react\polity\src\navigation\nav-items\nav-items-authenticated.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 499, 0, 21, 30, 550
+"c:\react\polity\src\navigation\nav-items\nav-items-unauthenticated.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 61, 0, 3, 4, 68
+"c:\react\polity\src\navigation\nav-items\nav-user-avatar.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 13, 0, 0, 5, 18
+"c:\react\polity\src\navigation\nav-items\nav-user-avatar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 94, 0, 2, 13, 109
+"c:\react\polity\src\navigation\nav-items\nav-user-avatar2.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 121, 0, 3, 10, 134
+"c:\react\polity\src\navigation\nav-keyboard\keyboard-navigation.ts", "TypeScript", 0, 21, 0, 0, 0, 0, 0, 0, 0, 18, 6, 45
+"c:\react\polity\src\navigation\nav-keyboard\use-navigation-keyboard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 60, 0, 10, 10, 80
+"c:\react\polity\src\navigation\state\navigation.store.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 27, 0, 3, 6, 36
+"c:\react\polity\src\navigation\state\useInitialRoute.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 11, 0, 1, 3, 15
+"c:\react\polity\src\navigation\state\useNavigation.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 135, 0, 22, 23, 180
+"c:\react\polity\src\navigation\toggles\language-toggle.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 5, 15
+"c:\react\polity\src\navigation\toggles\language-toggle.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 131, 0, 7, 8, 146
+"c:\react\polity\src\navigation\toggles\state-switcher.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 17, 0, 0, 6, 23
+"c:\react\polity\src\navigation\toggles\state-switcher.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 183, 0, 8, 8, 199
+"c:\react\polity\src\navigation\toggles\state-toggle.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 18, 0, 0, 7, 25
+"c:\react\polity\src\navigation\toggles\state-toggle.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 79, 0, 0, 5, 84
+"c:\react\polity\src\navigation\toggles\theme-toggle.stories.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 45, 0, 2, 8, 55
+"c:\react\polity\src\navigation\toggles\theme-toggle.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 69, 0, 1, 6, 76
+"c:\react\polity\src\navigation\types\navigation.types.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 23, 0, 3, 8, 34
+"c:\react\polity\src\reportWebVitals.ts", "TypeScript", 0, 12, 0, 0, 0, 0, 0, 0, 0, 0, 2, 14
+"c:\react\polity\src\styles.css", "PostCSS", 0, 0, 0, 0, 143, 0, 0, 0, 0, 1, 13, 157
+"c:\react\polity\src\styles\animations.css", "PostCSS", 0, 0, 0, 0, 45, 0, 0, 0, 0, 0, 6, 51
+"c:\react\polity\src\utils\amendment-process-helpers.ts", "TypeScript", 0, 205, 0, 0, 0, 0, 0, 0, 0, 53, 32, 290
+"c:\react\polity\src\utils\date-helpers.ts", "TypeScript", 0, 64, 0, 0, 0, 0, 0, 0, 0, 3, 12, 79
+"c:\react\polity\src\utils\delegate-calculations.ts", "TypeScript", 0, 113, 0, 0, 0, 0, 0, 0, 0, 56, 22, 191
+"c:\react\polity\src\utils\diff-utils.ts", "TypeScript", 0, 69, 0, 0, 0, 0, 0, 0, 0, 39, 15, 123
+"c:\react\polity\src\utils\ensure-suggestion-discussions.ts", "TypeScript", 0, 52, 0, 0, 0, 0, 0, 0, 0, 14, 13, 79
+"c:\react\polity\src\utils\finalize-delegates.ts", "TypeScript", 0, 93, 0, 0, 0, 0, 0, 0, 0, 25, 20, 138
+"c:\react\polity\src\utils\groupConversationSync.ts", "TypeScript", 0, 131, 0, 0, 0, 0, 0, 0, 0, 20, 18, 169
+"c:\react\polity\src\utils\notification-helpers.ts", "TypeScript", 0, 2569, 0, 0, 0, 0, 0, 0, 0, 464, 171, 3204
+"c:\react\polity\src\utils\path-finding.ts", "TypeScript", 0, 172, 0, 0, 0, 0, 0, 0, 0, 27, 27, 226
+"c:\react\polity\src\utils\suggestion-utils.ts", "TypeScript", 0, 42, 0, 0, 0, 0, 0, 0, 0, 23, 13, 78
+"c:\react\polity\src\utils\url-utils.ts", "TypeScript", 0, 42, 0, 0, 0, 0, 0, 0, 0, 6, 11, 59
+"c:\react\polity\src\utils\utils.ts", "TypeScript", 0, 5, 0, 0, 0, 0, 0, 0, 0, 7, 2, 14
+"c:\react\polity\src\utils\voting-utils.ts", "TypeScript", 0, 151, 0, 0, 0, 0, 0, 0, 0, 43, 32, 226
+"c:\react\polity\tailwind.config.js", "JavaScript", 0, 0, 0, 0, 0, 0, 90, 0, 0, 1, 1, 92
+"c:\react\polity\tasks\NOTIFICATION-SYSTEM-SPECIFICATION.md", "Markdown", 0, 0, 0, 0, 0, 1467, 0, 0, 0, 0, 491, 1958
+"c:\react\polity\tasks\PUSH-NOTIFICATIONS.md", "Markdown", 0, 0, 0, 0, 0, 269, 0, 0, 0, 0, 95, 364
+"c:\react\polity\tasks\PWA-GUIDE.md", "Markdown", 0, 0, 0, 0, 0, 214, 0, 0, 0, 0, 99, 313
+"c:\react\polity\tasks\agenda-item-transfer-tasks.md", "Markdown", 0, 0, 0, 0, 0, 224, 0, 0, 0, 0, 86, 310
+"c:\react\polity\tasks\agenda-item-vote-election-linking-tasks.md", "Markdown", 0, 0, 0, 0, 0, 246, 0, 0, 0, 0, 115, 361
+"c:\react\polity\tasks\conversation-request-ui-fix-tasks.md", "Markdown", 0, 0, 0, 0, 0, 97, 0, 0, 0, 0, 58, 155
+"c:\react\polity\tasks\editor-unification-tasks.md", "Markdown", 0, 0, 0, 0, 0, 337, 0, 0, 0, 0, 103, 440
+"c:\react\polity\tasks\event-voting-system-tasks.md", "Markdown", 0, 0, 0, 0, 0, 515, 0, 0, 0, 0, 211, 726
+"c:\react\polity\tasks\i18n-implementation-tasks.md", "Markdown", 0, 0, 0, 0, 0, 271, 0, 0, 0, 0, 122, 393
+"c:\react\polity\tasks\timeline-cards-refresh-tasks.md", "Markdown", 0, 0, 0, 0, 0, 151, 0, 0, 0, 0, 85, 236
+"c:\react\polity\tasks\timeline-event-triggers-tasks.md", "Markdown", 0, 0, 0, 0, 0, 242, 0, 0, 0, 0, 102, 344
+"c:\react\polity\tasks\timeline-pinterest-redesign-tasks.md", "Markdown", 0, 0, 0, 0, 0, 1596, 0, 0, 0, 0, 509, 2105
+"c:\react\polity\tasks\timeline-terminal-cards-triage-tasks.md", "Markdown", 0, 0, 0, 0, 0, 66, 0, 0, 0, 0, 40, 106
+"c:\react\polity\tasks\vote-election-agenda-linking-tasks.md", "Markdown", 0, 0, 0, 0, 0, 122, 0, 0, 0, 0, 72, 194
+"c:\react\polity\tsconfig.json", "JSON with Comments", 0, 0, 36, 0, 0, 0, 0, 0, 0, 0, 1, 37
+"c:\react\polity\vitest.shims.d.ts", "TypeScript", 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1
+"Total", "-", 22551, 62782, 36, 116, 378, 18304, 426, 83320, 57, 13475, 24981, 226426

@@ -11,8 +11,8 @@ test.describe('Email Entry and Magic Code Request', () => {
     // 2. Verify heading "Sign in to Polity" is visible
     await expect(page.getByRole('heading', { name: 'Sign in to Polity' })).toBeVisible();
 
-    // 3. Fill email input with tobias.hassebrock@gmail.com
-    await page.getByRole('textbox', { name: 'Email address' }).fill('tobias.hassebrock@gmail.com');
+    // 3. Fill email input with polity.live@gmail.com
+    await page.getByRole('textbox', { name: 'Email address' }).fill('polity.live@gmail.com');
 
     // 4. Click "Send code" button
     await page.getByRole('button', { name: 'Send magic code' }).click();

@@ -1,15 +1,17 @@
 import { useMemo } from 'react';
 import db from '../../../../db/db';
 
+type Cursor = [string, string, any, number];
+
 export function useSearchData(
   cursors: {
-    users?: { after?: string; first: number };
-    groups?: { after?: string; first: number };
-    statements?: { after?: string; first: number };
-    todos?: { after?: string; first: number };
-    blogs?: { after?: string; first: number };
-    amendments?: { after?: string; first: number };
-    events?: { after?: string; first: number };
+    users?: { after?: Cursor; first: number };
+    groups?: { after?: Cursor; first: number };
+    statements?: { after?: Cursor; first: number };
+    todos?: { after?: Cursor; first: number };
+    blogs?: { after?: Cursor; first: number };
+    amendments?: { after?: Cursor; first: number };
+    events?: { after?: Cursor; first: number };
   } = {
     users: { first: 20 },
     groups: { first: 20 },
@@ -152,7 +154,7 @@ export function useSearchData(
       ? {
           todos: {
             $: {
-              where: todoWhere,
+              where: todoWhere as any,
               ...cursors.todos,
             },
             group: {},

@@ -34,7 +34,7 @@ export default function GroupEventsPage({ params }: { params: Promise<{ id: stri
   const [publicOnly, setPublicOnly] = useState(false);
   const [hashtagFilter, setHashtagFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [eventCursor, setEventCursor] = useState<{ after?: string; first: number }>({ first: 20 });
+  const [eventCursor, setEventCursor] = useState<{ after?: any; first: number }>({ first: 20 });
 
   // Fetch group data using hook
   const { group, isLoading: groupLoading } = useGroupData(resolvedParams.id);

@@ -1,5 +1,10 @@
+import { Suspense } from 'react';
 import MessagesPage from '@/features/messages/MessagesPage';
 
 export default function Page() {
-  return <MessagesPage />;
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <MessagesPage />
+    </Suspense>
+  );
 }

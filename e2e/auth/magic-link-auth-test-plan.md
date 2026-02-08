@@ -23,7 +23,7 @@ The Polity application uses a passwordless authentication system based on magic 
 
 **Test User:**
 
-- Email: `tobias.hassebrock@gmail.com`
+- Email: `polity.live@gmail.com`
 
 ## Test Scenarios
 
@@ -59,7 +59,7 @@ The Polity application uses a passwordless authentication system based on magic 
 
 1. Navigate to `/auth` and wait for page load
 2. Locate email input using `page.getByPlaceholder(/enter your email/i)`
-3. Fill input with test email: `tobias.hassebrock@gmail.com`
+3. Fill input with test email: `polity.live@gmail.com`
 4. Verify email is displayed in the input field
 5. Check that "Send code" button becomes enabled
 6. Verify no validation errors are shown for valid email
@@ -103,7 +103,7 @@ The Polity application uses a passwordless authentication system based on magic 
 
 1. Navigate to `/auth` and wait for load
 2. Verify heading "Sign in to Polity" is visible
-3. Fill email input with `tobias.hassebrock@gmail.com`
+3. Fill email input with `polity.live@gmail.com`
 4. Click "Send code" button
 5. Wait for navigation to `/auth/verify` (timeout: 10 seconds)
 6. Verify URL contains `/auth/verify`
@@ -177,7 +177,7 @@ The Polity application uses a passwordless authentication system based on magic 
 1. Navigate to `/auth/verify` (via email entry flow)
 2. Generate test magic code using:
    ```javascript
-   const code = await generateTestMagicCode('tobias.hassebrock@gmail.com');
+   const code = await generateTestMagicCode('polity.live@gmail.com');
    ```
 3. Log the generated code: `console.log(\`🔐 Generated magic code: \${code}\`)`
 4. Split code into digits: `const codeDigits = code.split('')`
@@ -352,7 +352,7 @@ The Polity application uses a passwordless authentication system based on magic 
 1. Start at home page `/` (unauthenticated)
 2. Navigate to `/auth`
 3. Wait for page load (networkidle)
-4. Enter email: `tobias.hassebrock@gmail.com`
+4. Enter email: `polity.live@gmail.com`
 5. Click "Send code" button
 6. Wait for navigation to `/auth/verify`
 7. Generate magic code: `const code = await generateTestMagicCode(email)`
@@ -527,7 +527,7 @@ The Polity application uses a passwordless authentication system based on magic 
 The `e2e/helpers/auth.ts` file provides a comprehensive login helper:
 
 ```typescript
-await login(page, 'tobias.hassebrock@gmail.com', true);
+await login(page, 'polity.live@gmail.com', true);
 ```
 
 **Parameters:**

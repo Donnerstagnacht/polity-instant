@@ -146,6 +146,8 @@ export function SearchPage() {
     result?: string;
     candidates?: any[];
     totalCandidates?: number;
+    agendaEventId?: string;
+    agendaItemId?: string;
     stats?: {
       reactions?: number;
       comments?: number;
@@ -330,7 +332,7 @@ export function SearchPage() {
             totalCandidates: item.candidates?.length || 0,
             agendaEventId: item.agendaItem?.event?.id,
             agendaItemId: item.agendaItem?.id,
-          });
+          } as SearchContentItem);
           break;
         case 'vote':
           acc.push({

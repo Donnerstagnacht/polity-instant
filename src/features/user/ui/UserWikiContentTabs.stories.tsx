@@ -23,7 +23,6 @@ export const UserWikiContentTabsDefault: StoryObj = {
         user={user}
         searchTerms={searchTerms}
         handleSearchChange={handleSearchChange}
-        getBlogGradient={(id: number) => getBlogGradient(id, GRADIENTS)}
         {...args}
       />
     );

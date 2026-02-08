@@ -21,7 +21,7 @@ export default function GroupAmendmentsPage({ params }: { params: Promise<{ id: 
   const resolvedParams = use(params);
   const { t } = useTranslation();
   const { currentPrimaryRoute } = useNavigation();
-  const [cursor, setCursor] = useState<{ after?: string; first: number }>({ first: 20 });
+  const [cursor, setCursor] = useState<{ after?: any; first: number }>({ first: 20 });
 
   // Set current route to 'group' when this page is loaded
   useEffect(() => {

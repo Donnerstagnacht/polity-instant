@@ -3,7 +3,6 @@
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { GroupSearchCard } from '@/features/search/ui/GroupSearchCard';
 import { GroupEventsList } from './GroupEventsList';
-import { GRADIENTS } from '@/features/user/state/gradientColors';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/hooks/use-translation';
@@ -22,9 +21,6 @@ export function GroupDetailsWithEvents({
   onClose,
 }: GroupDetailsWithEventsProps) {
   const { t } = useTranslation();
-  // Use a random gradient based on group ID
-  const gradientIndex = parseInt(groupId.substring(0, 8), 16) % GRADIENTS.length;
-  const gradientClass = GRADIENTS[gradientIndex];
 
   return (
     <div className="space-y-4">
@@ -38,7 +34,7 @@ export function GroupDetailsWithEvents({
       </div>
 
       {/* Group Card */}
-      <GroupSearchCard group={groupData} gradientClass={gradientClass} />
+      <GroupSearchCard group={groupData} />
 
       {/* Future Events Section */}
       <Card>

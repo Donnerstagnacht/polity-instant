@@ -1,15 +1,17 @@
 import { USER } from '../state/user.data';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { StatementCard } from './StatementCard';
+// import { StatementCard } from './StatementCard';
 
+// Component not found, story disabled
 const meta: Meta = {
-  component: StatementCard,
+  // component: StatementCard,
 };
 
 export default meta;
 
 type Story = StoryObj;
 
+/*
 export const StatementCardDefault: Story = {
   render: args => (
     <StatementCard
@@ -20,3 +22,4 @@ export const StatementCardDefault: Story = {
     />
   ),
 };
+*/

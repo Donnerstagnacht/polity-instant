@@ -185,6 +185,7 @@ export function preloadCard(cardType: CardType): void {
     vote: () => import('./cards/VoteTimelineCard'),
     election: () => import('./cards/ElectionTimelineCard'),
     action: () => import('./cards/ActionTimelineCard'),
+    user: () => import('./cards/UserTimelineCard'),
   };
 
   componentMap[cardType]?.();

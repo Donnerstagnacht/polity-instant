@@ -285,7 +285,6 @@ export function EventEdit({ eventId }: EventEditProps) {
           eventId={eventId}
           open={cancelDialogOpen}
           onOpenChange={setCancelDialogOpen}
-          onCancelled={() => router.push('/calendar')}
         />
       )}
     </div>

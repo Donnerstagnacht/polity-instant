@@ -1,14 +1,16 @@
 import { USER } from '../state/user.data';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { GroupsCard } from './GroupsCard';
+// import { GroupsCard } from './GroupsCard';
 import { getRoleBadgeColor } from '../utils/userWiki.utils';
 
+// Component not found, story disabled
 const meta: Meta = {
-  component: GroupsCard,
+  // component: GroupsCard,
 };
 
 export default meta;
 
+/*
 export const GroupsCardDefault: StoryObj = {
   render: args => {
     const group = USER.groups[0];
@@ -17,3 +19,4 @@ export const GroupsCardDefault: StoryObj = {
     return <GroupsCard group={group} badgeClasses={badgeClasses} {...args} />;
   },
 };
+*/

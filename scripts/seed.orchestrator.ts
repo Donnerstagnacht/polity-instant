@@ -259,7 +259,7 @@ export class SeedOrchestrator {
         { label: 'Participants → Users', count: context.linkCounts.participantsToUsers },
         // Follows
         { label: 'Follows → Followers', count: context.linkCounts.followsToFollowers },
-        { label: 'Follows → Followed', count: context.linkCounts.followsToFollowed },
+        { label: 'Follows → Followees', count: context.linkCounts.followsToFollowees },
         // Groups
         { label: 'Groups → Owners', count: context.linkCounts.groupsToOwners },
         { label: 'Group Memberships → Users', count: context.linkCounts.groupMembershipsToUsers },
@@ -357,7 +357,11 @@ export class SeedOrchestrator {
         },
 
         // Payments
-        { label: 'Payments → Groups', count: context.linkCounts.paymentsToGroups },
+        { label: 'Payments → Payer Groups', count: context.linkCounts.paymentsToPayerGroups },
+        {
+          label: 'Payments → Receiver Groups',
+          count: context.linkCounts.paymentsToReceiverGroups,
+        },
         { label: 'Payments → Payer Users', count: context.linkCounts.paymentsToPayerUsers },
         { label: 'Payments → Receiver Users', count: context.linkCounts.paymentsToReceiverUsers },
 

@@ -59,10 +59,7 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
           {/* Group Details with Events */}
           {entity.type === 'group' && entity.data && (
             <div className="space-y-4">
-              <GroupSearchCard
-                group={entity.data}
-                gradientClass={GRADIENTS[Math.floor(Math.random() * GRADIENTS.length)]}
-              />
+              <GroupSearchCard group={entity.data} />
 
               {/* Upcoming Events Section */}
               <div className="rounded-lg border p-4">

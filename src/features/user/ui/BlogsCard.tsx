@@ -9,7 +9,7 @@ export interface BlogsCardProps {
     date: string;
     supporters?: number;
     likes?: number; // Legacy support
-    comments: number;
+    comments?: number;
   };
   gradientClass: string;
 }

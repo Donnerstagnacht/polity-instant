@@ -54,7 +54,7 @@ export const BlogListTab: React.FC<BlogListTabProps> = ({ blogs, searchValue, on
                   title: blog.title,
                   excerpt: blog.description,
                   coverImageUrl: blog.imageURL,
-                  commentCount: blog.commentCount ?? blog.comments,
+                  commentCount: blog.commentCount ?? 0,
                   hashtags: blog.hashtags,
                   authorName: blog.authorName ?? t('common.unknownUser'),
                   authorAvatar: blog.authorAvatar,

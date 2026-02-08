@@ -6,7 +6,6 @@ import { loginAsTestUser } from '../helpers/auth';
 
 // test.use() must be at top-level, not inside describe blocks
 test.use({ ...devices['iPhone 12'] });
-
 test.describe('Chat/Messages - Mobile Responsive Layout', () => {
   test('Messages page works on mobile devices', async ({ page }) => {
     // 1. Authenticate as test user

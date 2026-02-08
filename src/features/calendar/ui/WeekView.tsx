@@ -15,7 +15,7 @@ interface WeekViewProps {
 
 export const WeekView = ({ selectedDate, events, allEvents }: WeekViewProps) => {
   const router = useRouter();
-  const { t, currentLanguage } = useTranslation();
+  const { t, language } = useTranslation();
   const weekDays = getWeekDays(selectedDate);
 
   const getEventsForDate = (date: Date) => {
@@ -50,7 +50,7 @@ export const WeekView = ({ selectedDate, events, allEvents }: WeekViewProps) => 
               >
                 <div className="mb-2 text-center">
                   <p className="text-xs font-medium text-muted-foreground">
-                    {day.toLocaleDateString(currentLanguage === 'de' ? 'de-DE' : 'en-US', {
+                    {day.toLocaleDateString(language === 'de' ? 'de-DE' : 'en-US', {
                       weekday: 'short',
                     })}
                   </p>

@@ -31,6 +31,7 @@ import { GRADIENTS } from '@/features/user/state/gradientColors';
 import { findShortestPath } from '@/utils/path-finding';
 import { TargetSelectionDialog } from '@/features/amendments/ui/TargetSelectionDialog';
 import Link from 'next/link';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface AmendmentWikiProps {
   amendmentId: string;
@@ -39,6 +40,7 @@ interface AmendmentWikiProps {
 export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
   const router = useRouter();
   const user = useAuthStore((state: any) => state.user);
+  const { t } = useTranslation();
   const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
   const [isCloning, setIsCloning] = useState(false);
   const [selectedTargetGroupId, setSelectedTargetGroupId] = useState<string>('');

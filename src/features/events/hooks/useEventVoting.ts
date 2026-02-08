@@ -388,7 +388,7 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
             description: event?.title || undefined,
             contentType: 'vote',
             status: {
-              voteStatus: result,
+              voteStatus: result === 'tie' ? 'closed' : result,
             },
           })
         );

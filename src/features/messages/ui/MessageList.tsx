@@ -57,16 +57,6 @@ export function MessageList({
         {/* Conversation Request - Only for direct messages */}
         {conversation.type !== 'group' && conversation.status === 'pending' && (
           <div className="border-t pt-4">
-            {console.log('[MessageList] Pending conversation check:', {
-              conversationId: conversation.id,
-              status: conversation.status,
-              type: conversation.type,
-              requestedBy: conversation.requestedBy,
-              requestedById: conversation.requestedBy?.id,
-              currentUserId,
-              isRequester: conversation.requestedBy?.id === currentUserId,
-              otherParticipantName,
-            })}
             <Card className="bg-muted/50">
               <CardContent className="flex flex-col items-center gap-3 p-4">
                 {conversation.requestedBy?.id === currentUserId ? (

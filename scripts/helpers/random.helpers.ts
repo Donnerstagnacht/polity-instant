@@ -12,7 +12,7 @@ export function randomInt(min: number, max: number): number {
 /**
  * Returns a random item from the array
  */
-export function randomItem<T>(array: T[]): T {
+export function randomItem<T>(array: readonly T[]): T {
   return array[Math.floor(Math.random() * array.length)];
 }
 

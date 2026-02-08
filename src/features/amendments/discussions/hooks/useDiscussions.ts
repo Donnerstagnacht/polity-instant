@@ -20,6 +20,8 @@ export interface Thread {
     id: string;
     name?: string;
     handle?: string;
+    avatar?: string;
+    imageURL?: string;
   };
   file?: {
     url?: string;
@@ -37,7 +39,7 @@ export interface Thread {
 
 export function useDiscussions(amendmentId: string, sortBy: 'votes' | 'time' = 'votes') {
   // Cursor state for pagination
-  const [cursor, setCursor] = useState<{ after?: string; first: number }>({ first: 10 });
+  const [cursor, setCursor] = useState<{ after?: any; first: number }>({ first: 10 });
 
   // Fetch amendment data
   const { amendment, isLoading: amendmentLoading } = useAmendmentData(amendmentId);

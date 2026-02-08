@@ -23,7 +23,7 @@ The Polity Profile Feature allows authenticated users to view and manage their p
 
 **Test User:**
 
-- Email: `tobias.hassebrock@gmail.com`
+- Email: `polity.live@gmail.com`
 - User ID: `f598596e-d379-413e-9c6e-c218e5e3cf17` (from seed data)
 
 **Helper Functions Available:**
@@ -379,7 +379,7 @@ The Polity Profile Feature allows authenticated users to view and manage their p
 
 ## Known Issues and Notes
 
-1. **Test Data Dependency**: Tests use specific test user email `tobias.hassebrock@gmail.com`
+1. **Test Data Dependency**: Tests use specific test user email `polity.live@gmail.com`
 2. **Magic Code Generation**: Requires `INSTANT_ADMIN_TOKEN` environment variable
 3. **Profile Edit**: Changes persist in database - consider cleanup or use unique identifiers
 4. **Avatar Upload**: File upload testing skipped to avoid side effects
