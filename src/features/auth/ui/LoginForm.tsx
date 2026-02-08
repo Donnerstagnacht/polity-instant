@@ -10,11 +10,13 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Mail, ArrowRight, CheckCircle } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
 import { useAuthStore } from '@/features/auth/auth.ts';
+import { useAuthLogin } from '@/features/auth/utils/useAuthLogin';
 
 export function LoginForm() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { requestMagicCode, isLoading, error } = useAuthStore();
+  const { error } = useAuthStore();
+  const { isSending, sendMagicLink } = useAuthLogin();
 
   const [email, setEmail] = useState('');
   const [isCodeSent, setIsCodeSent] = useState(false);
@@ -29,17 +31,17 @@ export function LoginForm() {
       return;
     }
 
-    console.log('📤 Requesting magic code for:', email);
-    const success = await requestMagicCode(email);
-    console.log('📤 Request magic code result:', success);
+    console.log('📤 Sending magic link to:', email);
+    const result = await sendMagicLink(email);
+    console.log('📤 Send magic link result:', result.success);
 
-    if (success) {
+    if (result.success) {
       console.log('✅ Code sent successfully, redirecting to verify page');
       setIsCodeSent(true);
       // Redirect to verification page with email parameter
       router.push(`/auth/verify?email=${encodeURIComponent(email)}`);
     } else {
-      console.log('❌ Failed to send code');
+      console.log('❌ Failed to send code:', result.error);
     }
   };
 
@@ -97,7 +99,7 @@ export function LoginForm() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
-                disabled={isLoading}
+                disabled={isSending}
               />
             </div>
 
@@ -107,8 +109,8 @@ export function LoginForm() {
               </Alert>
             )}
 
-            <Button type="submit" className="w-full" disabled={isLoading || !email}>
-              {isLoading ? (
+            <Button type="submit" className="w-full" disabled={isSending || !email}>
+              {isSending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   {t('auth.login.sending')}

@@ -161,6 +161,7 @@ export function createTimelineEvent({
   const updateData: Record<string, unknown> = {
     eventType,
     entityType,
+    entityId,
     title,
     description,
     createdAt: new Date(),

@@ -93,4 +93,22 @@ export const authTranslations = {
       continue: 'Weiter',
     },
   },
+  errors: {
+    systemAssistantNotFound: 'Systemassistent (Aria & Kai) ist nicht verfügbar. Bitte kontaktiere den Support oder führe das Seed-Skript aus, um Systembenutzer zu initialisieren.',
+    systemAssistantCheckFailed: 'Fehler bei der Überprüfung der Systemassistenten-Verfügbarkeit. Bitte versuche es erneut.',
+    verificationFailed: 'Verifizierung fehlgeschlagen',
+    invalidOrExpiredCode: 'Ungültiger oder abgelaufener Code',
+    authenticationFailed: 'Authentifizierung fehlgeschlagen',
+    userInitializationFailed: 'Dein Konto konnte nicht initialisiert werden. Bitte kontaktiere den Support.',
+    magicLinkFailed: 'Magic-Link konnte nicht gesendet werden',
+    unexpectedError: 'Ein unerwarteter Fehler ist aufgetreten',
+    fillBothFields: 'Bitte fülle beide Felder aus',
+    nameTooShort: 'Name muss mindestens 2 Zeichen lang sein',
+    membershipRequestFailed: 'Anfrage konnte nicht gesendet werden',
+    profileUpdateFailed: 'Profil konnte nicht aktualisiert werden',
+  },
+  success: {
+    welcome: 'Willkommen bei Polity! 🎉',
+    membershipRequestSent: 'Beitrittsanfrage gesendet!',
+  },
 } as const;

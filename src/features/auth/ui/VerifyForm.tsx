@@ -10,17 +10,19 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Shield, ArrowLeft, RotateCcw } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
 import { useAuthStore } from '@/features/auth/auth.ts';
-import { db } from '../../../../db/db';
+import { useAuthVerification } from '@/features/auth/utils/useAuthVerification';
 
 export function VerifyForm() {
   const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { verifyMagicCode, requestMagicCode, isLoading, error, clearError } = useAuthStore();
+  const { requestMagicCode, error, clearError } = useAuthStore();
+  const { isVerifying, verifyAndInitialize } = useAuthVerification();
 
   const email = searchParams.get('email') || '';
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [isResending, setIsResending] = useState(false);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
@@ -83,58 +85,26 @@ export function VerifyForm() {
       return;
     }
 
-    const success = await verifyMagicCode(email, verificationCode);
+    console.log('🔐 Starting verification with Aria & Kai initialization');
+    setVerificationError(null);
 
-    if (success) {
-      try {
-        const { user } = useAuthStore.getState();
+    const result = await verifyAndInitialize(email, verificationCode);
 
-        if (user?.id) {
-          // Wait a bit for InstantDB to sync the user record
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // Check if user already has a name (existing user)
-          const { data } = await db.queryOnce({
-            $users: {
-              $: { where: { id: user.id } },
-            },
-          });
-
-          const userRecord = data?.$users?.[0];
-          
-          // Check if user was just created (within last 2 minutes) or has no name
-          const now = Date.now();
-          const userCreatedAt = userRecord?.createdAt 
-            ? (typeof userRecord.createdAt === 'number' ? userRecord.createdAt : new Date(userRecord.createdAt).getTime())
-            : now;
-          const isNewUser = (now - userCreatedAt) < 2 * 60 * 1000; // 2 minutes
-          const hasNoName = !userRecord?.name || userRecord.name.trim() === '';
-
-          console.log('🔍 First-time user check:', {
-            userId: user.id,
-            hasName: !!userRecord?.name,
-            name: userRecord?.name,
-            createdAt: userRecord?.createdAt,
-            isNewUser,
-            hasNoName,
-            willShowOnboarding: isNewUser || hasNoName,
-          });
-
-          if (isNewUser || hasNoName) {
-            // New user or user without name - redirect to homepage with onboarding flag
-            console.log('🎉 Redirecting to onboarding');
-            router.push('/?onboarding=true');
-          } else {
-            // Existing user, redirect normally
-            console.log('✅ Existing user, redirecting to homepage');
-            router.push('/');
-          }
-        }
-      } catch (error) {
-        console.error('❌ Error checking user:', error);
-        // Don't block login on check failure
+    if (result.success) {
+      console.log('✅ Verification successful, isNewUser:', result.isNewUser);
+      
+      if (result.isNewUser) {
+        // New user - redirect to onboarding
+        console.log('🎉 Redirecting to onboarding');
+        router.push('/?onboarding=true');
+      } else {
+        // Existing user - redirect to homepage
+        console.log('✅ Existing user, redirecting to homepage');
         router.push('/');
       }
+    } else {
+      console.log('❌ Verification failed:', result.error);
+      setVerificationError(result.error || 'Verification failed');
     }
   };
 
@@ -187,15 +157,15 @@ export function VerifyForm() {
                   onChange={e => handleCodeChange(index, e.target.value)}
                   onKeyDown={e => handleKeyDown(index, e)}
                   onPaste={index === 0 ? handlePaste : undefined}
-                  disabled={isLoading}
+                  disabled={isVerifying}
                 />
               ))}
             </div>
           </div>
 
-          {error && (
+          {(error || verificationError) && (
             <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{verificationError || error}</AlertDescription>
             </Alert>
           )}
 
@@ -203,9 +173,9 @@ export function VerifyForm() {
             <Button
               onClick={() => handleVerify()}
               className="w-full"
-              disabled={isLoading || code.some(digit => digit === '')}
+              disabled={isVerifying || code.some(digit => digit === '')}
             >
-              {isLoading ? (
+              {isVerifying ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   {t('auth.verify.verifying')}
@@ -220,7 +190,7 @@ export function VerifyForm() {
                 variant="outline"
                 onClick={handleBackToEmail}
                 className="flex-1"
-                disabled={isLoading}
+                disabled={isVerifying}
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 {t('auth.verify.back')}
@@ -229,7 +199,7 @@ export function VerifyForm() {
               <Button
                 variant="outline"
                 onClick={handleResendCode}
-                disabled={isLoading || isResending}
+                disabled={isVerifying || isResending}
                 className="flex-1"
               >
                 {isResending ? (

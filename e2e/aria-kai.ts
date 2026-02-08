@@ -1,12 +1,13 @@
 /**
  * Constants for Aria & Kai - Personal Assistant Duo
+ * Re-exported from auth constants for backward compatibility in E2E tests
  */
 
-// Use a valid v4 UUID for Aria & Kai (deterministic but valid)
-export const ARIA_KAI_USER_ID = 'a12a0000-0000-4000-a000-000000000001';
-export const ARIA_KAI_EMAIL = 'aria-kai-assistants@polity.com';
-export const ARIA_KAI_WELCOME_MESSAGE =
-  'Hey, we are Aria & Kai - your personal assistants! Welcome to Polity! We would love to show you around in the app. Shall we?';
+export {
+  ARIA_KAI_USER_ID,
+  ARIA_KAI_EMAIL,
+  ARIA_KAI_WELCOME_MESSAGE,
+} from '../src/features/auth/constants';
 
 /**
  * Educational content for the interactive tutorial

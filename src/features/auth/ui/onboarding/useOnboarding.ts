@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { db, tx, id } from '../../../../../db/db';
 import { toast } from 'sonner';
 import { notifyMembershipRequest } from '@/utils/notification-helpers';
+import { useTranslation } from '@/hooks/use-translation';
 
 export type OnboardingStep = 'name' | 'groupSearch' | 'confirm' | 'ariaKai' | 'summary';
 
@@ -46,6 +47,7 @@ interface UseOnboardingReturn {
 const STEP_ORDER: OnboardingStep[] = ['name', 'groupSearch', 'confirm', 'ariaKai', 'summary'];
 
 export function useOnboarding(): UseOnboardingReturn {
+  const { t } = useTranslation();
   const { user } = db.useAuth();
   const [step, setStep] = useState<OnboardingStep>('name');
   const [isLoading, setIsLoading] = useState(false);
@@ -104,18 +106,18 @@ export function useOnboarding(): UseOnboardingReturn {
 
   const submitName = useCallback(async (): Promise<boolean> => {
     if (!data.firstName.trim() || !data.lastName.trim()) {
-      setError('Bitte fülle beide Felder aus');
+      setError(t('features.auth.errors.fillBothFields'));
       return false;
     }
 
     if (data.firstName.length < 2 || data.lastName.length < 2) {
-      setError('Name muss mindestens 2 Zeichen lang sein');
+      setError(t('features.auth.errors.nameTooShort'));
       return false;
     }
 
     setError(null);
     return true;
-  }, [data.firstName, data.lastName]);
+  }, [data.firstName, data.lastName, t]);
 
   const sendMembershipRequest = useCallback(async (): Promise<boolean> => {
     if (!data.selectedGroup) {
@@ -157,12 +159,13 @@ export function useOnboarding(): UseOnboardingReturn {
       await db.transact(transactions);
 
       setData(prev => ({ ...prev, requestMembership: true, membershipRequestSent: true }));
-      toast.success('Beitrittsanfrage gesendet!');
+      toast.success(t('features.auth.success.membershipRequestSent'));
       return true;
     } catch (err) {
       console.error('Failed to send membership request:', err);
-      setError('Anfrage konnte nicht gesendet werden');
-      toast.error('Anfrage konnte nicht gesendet werden');
+      const errorMsg = t('features.auth.errors.membershipRequestFailed');
+      setError(errorMsg);
+      toast.error(errorMsg);
       return false;
     } finally {
       setIsLoading(false);
@@ -194,13 +197,14 @@ export function useOnboarding(): UseOnboardingReturn {
         console.log('✅ Onboarding completed:', { userId, fullName });
       } catch (err) {
         console.error('Failed to complete onboarding:', err);
-        setError('Profil konnte nicht aktualisiert werden');
+        const errorMsg = t('features.auth.errors.profileUpdateFailed');
+        setError(errorMsg);
         throw err;
       } finally {
         setIsLoading(false);
       }
     },
-    [data.firstName, data.lastName]
+    [data.firstName, data.lastName, t]
   );
 
   return {

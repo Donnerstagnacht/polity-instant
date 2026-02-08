@@ -90,4 +90,22 @@ export const authTranslations = {
       continue: 'Continue',
     },
   },
+  errors: {
+    systemAssistantNotFound: 'System assistant (Aria & Kai) is not available. Please contact support or run the seed script to initialize system users.',
+    systemAssistantCheckFailed: 'Failed to verify system assistant availability. Please try again.',
+    verificationFailed: 'Verification failed',
+    invalidOrExpiredCode: 'Invalid or expired code',
+    authenticationFailed: 'Authentication failed',
+    userInitializationFailed: 'Failed to initialize your account. Please contact support.',
+    magicLinkFailed: 'Failed to send magic link',
+    unexpectedError: 'An unexpected error occurred',
+    fillBothFields: 'Please fill in both fields',
+    nameTooShort: 'Name must be at least 2 characters long',
+    membershipRequestFailed: 'Request could not be sent',
+    profileUpdateFailed: 'Profile could not be updated',
+  },
+  success: {
+    welcome: 'Welcome to Polity! 🎉',
+    membershipRequestSent: 'Membership request sent!',
+  },
 } as const;

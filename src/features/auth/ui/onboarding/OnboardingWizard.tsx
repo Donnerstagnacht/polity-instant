@@ -10,8 +10,7 @@ import { GroupSearchStep } from './GroupSearchStep';
 import { MembershipConfirmStep } from './MembershipConfirmStep';
 import { SummaryStep } from './SummaryStep';
 import { AriaKaiStep } from './AriaKaiStep';
-import { db, tx, id } from '../../../../../db/db';
-import { ARIA_KAI_USER_ID, ARIA_KAI_WELCOME_MESSAGE } from 'e2e/aria-kai';
+import { db, tx } from '../../../../../db/db';
 
 interface OnboardingWizardProps {
   userId: string;
@@ -52,131 +51,27 @@ export function OnboardingWizard({ userId, userEmail, onComplete }: OnboardingWi
   
   console.log('🎯 OnboardingWizard state:', { step, isLoading, data });
 
-  const initializeUserAndAriaKai = async () => {
-    console.log('🚀 initializeUserAndAriaKai started for user:', userId);
-    const now = Date.now();
-    const threeYearsAgo = now - 3 * 365 * 24 * 60 * 60 * 1000;
-    const conversationId = id();
-    const messageId = id();
-    console.log('📝 Generated IDs:', { conversationId, messageId });
-
-    // Generate random handle
-    const adjectives = [
-      'Quick',
-      'Lazy',
-      'Happy',
-      'Sad',
-      'Bright',
-      'Dark',
-      'Clever',
-      'Bold',
-      'Swift',
-      'Calm',
-    ];
-    const nouns = [
-      'Fox',
-      'Dog',
-      'Cat',
-      'Bird',
-      'Fish',
-      'Mouse',
-      'Lion',
-      'Bear',
-      'Wolf',
-      'Eagle',
-    ];
-    const randomHandle = `${adjectives[Math.floor(Math.random() * adjectives.length)]}${nouns[Math.floor(Math.random() * nouns.length)]}${Math.floor(Math.random() * 9000) + 1000}`;
-    console.log('🎲 Generated random handle:', randomHandle);
-
-    // First ensure Aria & Kai exists
-    console.log('👥 Creating/updating Aria & Kai user...');
-    await db.transact([
-      tx.$users[ARIA_KAI_USER_ID].update({
-        name: 'Aria & Kai',
-        handle: '@ariakai',
-        subtitle: 'Your Personal Assistants',
-        bio: 'Aria & Kai are your personal AI assistants dedicated to helping you get the most out of Polity.',
-        createdAt: threeYearsAgo,
-        updatedAt: threeYearsAgo,
-        lastSeenAt: now,
-        visibility: 'public',
-      }),
-    ]);
-    console.log('✅ Aria & Kai user created/updated');
-
-    const fullName = `${data.firstName.trim()} ${data.lastName.trim()}`;
-    console.log('👤 Setting up user:', { userId, fullName, randomHandle });
-
-    // Initialize user and create conversation
-    console.log('💬 Creating conversation and initial message...');
-    await db.transact([
-      tx.$users[userId].update({
-        handle: randomHandle,
-        name: fullName,
-        updatedAt: now,
-        lastSeenAt: now,
-      }),
-      tx.conversations[conversationId].update({
-        lastMessageAt: now,
-        createdAt: now,
-        type: 'direct',
-        status: 'accepted',
-      }),
-      tx.conversations[conversationId].link({
-        requestedBy: ARIA_KAI_USER_ID,
-      }),
-      tx.conversationParticipants[id()]
-        .update({
-          lastReadAt: null,
-          joinedAt: now,
-          leftAt: null,
-        })
-        .link({ user: userId, conversation: conversationId }),
-      tx.conversationParticipants[id()]
-        .update({
-          lastReadAt: now,
-          joinedAt: now,
-          leftAt: null,
-        })
-        .link({ user: ARIA_KAI_USER_ID, conversation: conversationId }),
-      tx.messages[messageId]
-        .update({
-          content: ARIA_KAI_WELCOME_MESSAGE,
-          isRead: false,
-          createdAt: now,
-          updatedAt: null,
-          deletedAt: null,
-        })
-        .link({ conversation: conversationId, sender: ARIA_KAI_USER_ID }),
-    ]);
-
-    console.log('✅ User and Aria & Kai conversation created successfully', {
-      conversationId,
-      messageId,
-      fullName,
-      handle: randomHandle
-    });
-  };
-
   const handleNameNext = async () => {
-    // Basic validation is done in NameStep component
+    // Save name to database immediately after name step
+    await completeOnboarding(userId);
     nextStep();
   };
 
-  const handleGroupNext = () => {
+  const handleGroupNext = async () => {
+    // Name is already saved in handleNameNext
     nextStep();
   };
 
   const handleMembershipConfirm = async () => {
     const success = await sendMembershipRequest();
     if (success) {
-      // Initialize user and Aria & Kai before moving to ariaKai step
-      await initializeUserAndAriaKai();
+      // Move to ariaKai step
       goToStep('ariaKai');
     }
   };
 
-  const handleMembershipDecline = () => {
+  const handleMembershipDecline = async () => {
+    // Name is already saved in handleNameNext
     skipMembership();
   };
 
