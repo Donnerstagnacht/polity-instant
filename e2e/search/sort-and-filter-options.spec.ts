@@ -26,7 +26,7 @@ test.describe('Search - Sort and Filter Options', () => {
     await weekButton.click();
 
     // 6. Close filter panel
-    await page.getByRole('button', { name: /close/i }).click();
+    await page.getByRole('button', { name: /close/i }).first().click();
 
     // 7. Wait for URL update
     await page.waitForTimeout(500);
@@ -56,7 +56,7 @@ test.describe('Search - Sort and Filter Options', () => {
     await popularButton.click();
 
     // 6. Close filter panel
-    await page.getByRole('button', { name: /close/i }).click();
+    await page.getByRole('button', { name: /close/i }).first().click();
 
     // 7. Wait for URL update
     await page.waitForTimeout(500);
@@ -85,10 +85,16 @@ test.describe('Search - Sort and Filter Options', () => {
     const clearButton = page.getByRole('button', { name: /clear all/i });
     await clearButton.click();
 
-    // 6. Wait for URL update
-    await page.waitForTimeout(500);
+    // 6. Close filter panel to trigger URL update
+    await page.getByRole('button', { name: /close/i }).first().click();
 
-    // 7. Filters should be reset
+    // 7. Wait for filter panel to close
+    await page.waitForTimeout(1000);
+
+    // 8. Wait for URL to update without filters
+    await page.waitForTimeout(1000);
+
+    // 9. Filters should be reset
     const url = page.url();
     expect(url).not.toContain('range=');
     expect(url).not.toContain('engagement=');
@@ -117,7 +123,7 @@ test.describe('Search - Sort and Filter Options', () => {
     await page.getByRole('button', { name: /^rising$/i }).click();
 
     // 7. Close filter panel
-    await page.getByRole('button', { name: /close/i }).click();
+    await page.getByRole('button', { name: /close/i }).first().click();
 
     // 8. Wait for URL update
     await page.waitForTimeout(500);

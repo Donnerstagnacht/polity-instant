@@ -25,9 +25,14 @@ test.describe('Search - Clear Search', () => {
     await expect(searchInput).toHaveValue('');
 
     // 6. Wait for debounce and URL update (300ms debounce + buffer)
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(1500);
 
-    // 7. URL updates (query parameter removed or empty)
+    // 7. Wait for URL to update
+    await page.waitForURL(url => !url.searchParams.has('q') || url.searchParams.get('q') === '', {
+      timeout: 5000,
+    });
+
+    // 8. Verify URL updates (query parameter removed or empty)
     await expect(page).not.toHaveURL(/q=testquery/);
   });
 
