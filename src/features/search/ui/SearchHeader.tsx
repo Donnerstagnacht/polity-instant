@@ -43,8 +43,17 @@ export function SearchHeader({
               placeholder={t('features.search.placeholderDetailed')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 pr-10"
             />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label={t('common.actions.clear')}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
           <Button variant="outline" size="icon" onClick={() => setShowFilters(!showFilters)}>
             <Filter className="h-4 w-4" />

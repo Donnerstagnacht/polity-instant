@@ -5,105 +5,125 @@ import { test, expect } from '@playwright/test';
 import { loginAsTestUser } from '../helpers/auth';
 
 test.describe('Search - Sort and Filter Options', () => {
-  test('User sorts results by relevance', async ({ page }) => {
+  test('User applies date range filter', async ({ page }) => {
     // 1. Authenticate as test user
     await loginAsTestUser(page);
 
     // 2. Navigate to search with query
-    await page.goto('/search?q=test');
+    await page.goto('/search?q=test', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1000);
 
     // 3. Open filters
-    const filterButton = page
-      .getByRole('button', { name: '' })
-      .filter({ has: page.locator('svg') })
-      .first();
+    const filterButton = page.getByRole('button', { name: /filter/i });
     await filterButton.click();
 
-    // 4. Select sort by relevance
-    const sortSelect = page
-      .locator('select, [role="combobox"]')
-      .filter({ hasText: /sort|relevance|date/i })
-      .first();
-    const hasSort = await sortSelect.isVisible().catch(() => false);
-
-    if (hasSort) {
-      await sortSelect.click();
-      const relevanceOption = page.getByRole('option', { name: /relevance/i });
-      const hasOption = await relevanceOption.isVisible().catch(() => false);
-
-      if (hasOption) {
-        await relevanceOption.click();
-      }
-    }
-
-    // 5. URL updates with sort parameter
+    // 4. Wait for filter panel
     await page.waitForTimeout(500);
+    await expect(page.getByText('Date Range')).toBeVisible();
+
+    // 5. Click on "Last 7 Days" button
+    const weekButton = page.getByRole('button', { name: /last 7 days/i });
+    await weekButton.click();
+
+    // 6. Close filter panel
+    await page.getByRole('button', { name: /close/i }).click();
+
+    // 7. Wait for URL update
+    await page.waitForTimeout(500);
+
+    // 8. URL updates with range parameter
+    await expect(page).toHaveURL(/range=week/);
   });
 
-  test('User sorts results by date', async ({ page }) => {
+  test('User applies engagement filter', async ({ page }) => {
     // 1. Authenticate as test user
     await loginAsTestUser(page);
 
     // 2. Navigate to search
-    await page.goto('/search?q=test');
+    await page.goto('/search?q=test', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1000);
 
     // 3. Open filters
-    const filterButton = page
-      .getByRole('button', { name: '' })
-      .filter({ has: page.locator('svg') })
-      .first();
+    const filterButton = page.getByRole('button', { name: /filter/i });
     await filterButton.click();
 
-    // 4. Find sort dropdown
-    const sortTrigger = page
-      .locator('[id="sort"]')
-      .or(page.locator('button').filter({ hasText: /sort|relevance|date/i }))
-      .first();
-    const hasSort = await sortTrigger.isVisible().catch(() => false);
+    // 4. Wait for filter panel
+    await page.waitForTimeout(500);
+    await expect(page.getByText('Engagement')).toBeVisible();
 
-    if (hasSort) {
-      await sortTrigger.click();
+    // 5. Select "Popular" engagement
+    const popularButton = page.getByRole('button', { name: /^popular$/i });
+    await popularButton.click();
 
-      // 5. Select Date option
-      const dateOption = page
-        .getByRole('option', { name: /date/i })
-        .or(page.getByText('Date', { exact: true }));
-      const hasOption = await dateOption.isVisible().catch(() => false);
+    // 6. Close filter panel
+    await page.getByRole('button', { name: /close/i }).click();
 
-      if (hasOption) {
-        await dateOption.click();
-        await page.waitForTimeout(500);
-        await expect(page).toHaveURL(/sort=date/);
-      }
-    }
+    // 7. Wait for URL update
+    await page.waitForTimeout(500);
+
+    // 8. URL updates with engagement parameter
+    await expect(page).toHaveURL(/engagement=popular/);
   });
 
-  test('User filters to public content only', async ({ page }) => {
+  test('User clears all filters', async ({ page }) => {
+    // 1. Authenticate as test user
+    await loginAsTestUser(page);
+
+    // 2. Navigate with multiple filters
+    await page.goto('/search?q=test&range=week&engagement=popular', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1000);
+
+    // 3. Open filters
+    const filterButton = page.getByRole('button', { name: /filter/i });
+    await filterButton.click();
+
+    // 4. Wait for filter panel
+    await page.waitForTimeout(500);
+    await expect(page.getByText('Filters')).toBeVisible();
+
+    // 5. Click "Clear all" button
+    const clearButton = page.getByRole('button', { name: /clear all/i });
+    await clearButton.click();
+
+    // 6. Wait for URL update
+    await page.waitForTimeout(500);
+
+    // 7. Filters should be reset
+    const url = page.url();
+    expect(url).not.toContain('range=');
+    expect(url).not.toContain('engagement=');
+  });
+
+  test('User applies multiple filters together', async ({ page }) => {
     // 1. Authenticate as test user
     await loginAsTestUser(page);
 
     // 2. Navigate to search
-    await page.goto('/search?q=test');
+    await page.goto('/search?q=test', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1000);
 
     // 3. Open filters
-    const filterButton = page
-      .getByRole('button', { name: '' })
-      .filter({ has: page.locator('svg') })
-      .first();
+    const filterButton = page.getByRole('button', { name: /filter/i });
     await filterButton.click();
 
-    // 4. Toggle "Public Only" switch
-    const publicSwitch = page.locator('[id="public-only"]').or(page.getByRole('switch'));
-    const hasSwitch = await publicSwitch.isVisible().catch(() => false);
+    // 4. Wait for filter panel
+    await page.waitForTimeout(500);
+    await expect(page.getByText('Content Types')).toBeVisible();
 
-    if (hasSwitch) {
-      await publicSwitch.click();
+    // 5. Apply date range filter
+    await page.getByRole('button', { name: /last 30 days/i }).click();
 
-      // 5. Wait for filter to apply
-      await page.waitForTimeout(500);
+    // 6. Apply engagement filter
+    await page.getByRole('button', { name: /^rising$/i }).click();
 
-      // 6. URL updates with public parameter
-      await expect(page).toHaveURL(/public=true/);
-    }
+    // 7. Close filter panel
+    await page.getByRole('button', { name: /close/i }).click();
+
+    // 8. Wait for URL update
+    await page.waitForTimeout(500);
+
+    // 9. URL should contain both filters
+    await expect(page).toHaveURL(/range=month/);
+    await expect(page).toHaveURL(/engagement=rising/);
   });
 });

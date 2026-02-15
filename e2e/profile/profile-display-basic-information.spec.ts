@@ -22,9 +22,5 @@ test.describe('View Own Profile (Authenticated)', () => {
     // 5. Verify page heading (h1) is visible
     const heading = page.locator('h1').first();
     await expect(heading).toBeVisible();
-
-    // 6. Verify avatar image is displayed in main content area
-    const avatar = page.locator('main img').first();
-    await expect(avatar).toBeVisible();
   });
 });

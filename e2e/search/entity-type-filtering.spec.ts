@@ -10,29 +10,32 @@ test.describe('Search - Entity Type Filtering', () => {
     await loginAsTestUser(page);
 
     // 2. Navigate to search
-    await page.goto('/search?q=test');
+    await page.goto('/search?q=test', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1000);
 
-    // 3. Click "Users" tab
-    const usersTab = page.getByRole('tab', { name: /users/i });
-    await usersTab.click();
+    // 3. Open filter panel
+    const filterButton = page.getByRole('button', { name: /filter/i });
+    await filterButton.click();
 
-    // 4. Verify tab is active
-    await expect(usersTab).toHaveAttribute('data-state', 'active');
+    // 4. Wait for filter panel to open
+    await page.waitForTimeout(500);
+    await expect(page.getByText('Content Types')).toBeVisible();
 
-    // 5. URL updates with type parameter
-    await expect(page).toHaveURL(/type=users/);
+    // 5. Uncheck all content types first
+    await page.getByRole('button', { name: /none/i }).click();
 
-    // 6. Only user profiles shown or empty state
-    const emptyState = page.getByText(/no users found/i);
-    const hasResults = !(await emptyState.isVisible().catch(() => false));
+    // 6. Check only "User" checkbox
+    const userCheckbox = page.getByLabel(/user/i);
+    await userCheckbox.check();
 
-    if (hasResults) {
-      // Check for user card elements
-      const userCards = page
-        .locator('[class*="Card"]')
-        .filter({ has: page.locator('[alt*="User"]') });
-      expect(await userCards.count()).toBeGreaterThanOrEqual(0);
-    }
+    // 7. Close filter panel
+    await page.getByRole('button', { name: /close/i }).click();
+
+    // 8. Wait for URL update
+    await page.waitForTimeout(500);
+
+    // 9. URL updates with types parameter
+    await expect(page).toHaveURL(/types=user/);
   });
 
   test('User filters search to groups only', async ({ page }) => {
@@ -40,17 +43,32 @@ test.describe('Search - Entity Type Filtering', () => {
     await loginAsTestUser(page);
 
     // 2. Navigate to search
-    await page.goto('/search');
+    await page.goto('/search', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1000);
 
-    // 3. Select "Groups" tab
-    const groupsTab = page.getByRole('tab', { name: /groups/i });
-    await groupsTab.click();
+    // 3. Open filter panel
+    const filterButton = page.getByRole('button', { name: /filter/i });
+    await filterButton.click();
 
-    // 4. Verify tab is active
-    await expect(groupsTab).toHaveAttribute('data-state', 'active');
+    // 4. Wait for filter panel
+    await page.waitForTimeout(500);
+    await expect(page.getByText('Content Types')).toBeVisible();
 
-    // 5. URL updates
-    await expect(page).toHaveURL(/type=groups/);
+    // 5. Uncheck all
+    await page.getByRole('button', { name: /none/i }).click();
+
+    // 6. Check only "Group" checkbox
+    const groupCheckbox = page.getByLabel(/group/i).first();
+    await groupCheckbox.check();
+
+    // 7. Close filter panel
+    await page.getByRole('button', { name: /close/i }).click();
+
+    // 8. Wait for URL
+    await page.waitForTimeout(500);
+
+    // 9. URL updates
+    await expect(page).toHaveURL(/types=group/);
   });
 
   test('User filters search to blogs only', async ({ page }) => {
@@ -58,14 +76,32 @@ test.describe('Search - Entity Type Filtering', () => {
     await loginAsTestUser(page);
 
     // 2. Navigate to search
-    await page.goto('/search');
+    await page.goto('/search', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1000);
 
-    // 3. Select "Blogs" tab
-    const blogsTab = page.getByRole('tab', { name: /blogs/i });
-    await blogsTab.click();
+    // 3. Open filter panel
+    const filterButton = page.getByRole('button', { name: /filter/i });
+    await filterButton.click();
 
-    // 4. Verify tab is active
-    await expect(blogsTab).toHaveAttribute('data-state', 'active');
+    // 4. Wait for filter panel
+    await page.waitForTimeout(500);
+    await expect(page.getByText('Content Types')).toBeVisible();
+
+    // 5. Uncheck all
+    await page.getByRole('button', { name: /none/i }).click();
+
+    // 6. Check only "Blog" checkbox
+    const blogCheckbox = page.getByLabel(/blog/i);
+    await blogCheckbox.check();
+
+    // 7. Close filter panel
+    await page.getByRole('button', { name: /close/i }).click();
+
+    // 8. Wait for URL
+    await page.waitForTimeout(500);
+
+    // 9. URL should contain blog type
+    await expect(page).toHaveURL(/types=blog/);
   });
 
   test('User filters search to amendments only', async ({ page }) => {
@@ -73,14 +109,32 @@ test.describe('Search - Entity Type Filtering', () => {
     await loginAsTestUser(page);
 
     // 2. Navigate to search
-    await page.goto('/search');
+    await page.goto('/search', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1000);
 
-    // 3. Select "Amendments" tab
-    const amendmentsTab = page.getByRole('tab', { name: /amendments/i });
-    await amendmentsTab.click();
+    // 3. Open filter panel
+    const filterButton = page.getByRole('button', { name: /filter/i });
+    await filterButton.click();
 
-    // 4. Verify tab is active
-    await expect(amendmentsTab).toHaveAttribute('data-state', 'active');
+    // 4. Wait for filter panel
+    await page.waitForTimeout(500);
+    await expect(page.getByText('Content Types')).toBeVisible();
+
+    // 5. Uncheck all
+    await page.getByRole('button', { name: /none/i }).click();
+
+    // 6. Check only "Amendment" checkbox
+    const amendmentCheckbox = page.getByLabel(/amendment/i);
+    await amendmentCheckbox.check();
+
+    // 7. Close filter panel
+    await page.getByRole('button', { name: /close/i }).click();
+
+    // 8. Wait for URL
+    await page.waitForTimeout(500);
+
+    // 9. URL should contain amendment type
+    await expect(page).toHaveURL(/types=amendment/);
   });
 
   test('User filters search to events only', async ({ page }) => {
@@ -88,13 +142,65 @@ test.describe('Search - Entity Type Filtering', () => {
     await loginAsTestUser(page);
 
     // 2. Navigate to search
-    await page.goto('/search');
+    await page.goto('/search', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1000);
 
-    // 3. Select "Events" tab
-    const eventsTab = page.getByRole('tab', { name: /events/i });
-    await eventsTab.click();
+    // 3. Open filter panel
+    const filterButton = page.getByRole('button', { name: /filter/i });
+    await filterButton.click();
 
-    // 4. Verify tab is active
-    await expect(eventsTab).toHaveAttribute('data-state', 'active');
+    // 4. Wait for filter panel
+    await page.waitForTimeout(500);
+    await expect(page.getByText('Content Types')).toBeVisible();
+
+    // 5. Uncheck all
+    await page.getByRole('button', { name: /none/i }).click();
+
+    // 6. Check only "Event" checkbox
+    const eventCheckbox = page.getByLabel(/event/i);
+    await eventCheckbox.check();
+
+    // 7. Close filter panel
+    await page.getByRole('button', { name: /close/i }).click();
+
+    // 8. Wait for URL
+    await page.waitForTimeout(500);
+
+    // 9. URL should contain event type
+    await expect(page).toHaveURL(/types=event/);
+  });
+
+  test('User filters search to multiple types', async ({ page }) => {
+    // 1. Authenticate as test user
+    await loginAsTestUser(page);
+
+    // 2. Navigate to search
+    await page.goto('/search?q=test', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1000);
+
+    // 3. Open filter panel
+    const filterButton = page.getByRole('button', { name: /filter/i });
+    await filterButton.click();
+
+    // 4. Wait for filter panel
+    await page.waitForTimeout(500);
+    await expect(page.getByText('Content Types')).toBeVisible();
+
+    // 5. Uncheck all
+    await page.getByRole('button', { name: /none/i }).click();
+
+    // 6. Check multiple types: Group and Event
+    await page.getByLabel(/group/i).first().check();
+    await page.getByLabel(/event/i).check();
+
+    // 7. Close filter panel
+    await page.getByRole('button', { name: /close/i }).click();
+
+    // 8. Wait for URL
+    await page.waitForTimeout(500);
+
+    // 9. URL should contain both types
+    const url = page.url();
+    expect(url).toMatch(/types=(group,event|event,group)/);
   });
 });
