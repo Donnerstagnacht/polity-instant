@@ -55,7 +55,12 @@ export function SearchHeader({
               </button>
             )}
           </div>
-          <Button variant="outline" size="icon" onClick={() => setShowFilters(!showFilters)}>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setShowFilters(!showFilters)}
+            aria-label={t('features.search.filters.title')}
+          >
             <Filter className="h-4 w-4" />
           </Button>
         </div>

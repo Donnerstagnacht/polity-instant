@@ -16,18 +16,19 @@ test.describe('Search - Clear Search', () => {
     const searchInput = page.getByPlaceholder(/search groups, events, amendments, users/i);
     await expect(searchInput).toHaveValue('testquery');
 
-    // 4. Clear the search input
-    await searchInput.clear();
+    // 4. Click the clear button (ensure it's visible first)
+    const clearButton = page.getByRole('button', { name: /clear/i });
+    await expect(clearButton).toBeVisible();
+    await clearButton.click();
 
-    // 5. Wait for debounce (300ms)
-    await page.waitForTimeout(500);
-
-    // 6. URL updates (query parameter removed or empty)
-    const url = page.url();
-    expect(url).not.toContain('q=testquery');
-
-    // 7. Search input is empty
+    // 5. Wait for search input to be cleared first
     await expect(searchInput).toHaveValue('');
+
+    // 6. Wait for debounce and URL update (300ms debounce + buffer)
+    await page.waitForTimeout(1000);
+
+    // 7. URL updates (query parameter removed or empty)
+    await expect(page).not.toHaveURL(/q=testquery/);
   });
 
   test('Clear button functionality', async ({ page }) => {

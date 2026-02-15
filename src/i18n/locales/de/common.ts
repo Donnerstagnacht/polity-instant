@@ -30,6 +30,7 @@ export const commonTranslations = {
     uploadVideo: 'Video hochladen',
     uploading: 'Wird hochgeladen...',
     actions: 'Aktionen',
+    clear: 'Löschen',
   },
   labels: {
     groups: 'Gruppen',

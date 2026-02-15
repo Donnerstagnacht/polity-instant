@@ -29,7 +29,7 @@ test.describe('Search - Entity Type Filtering', () => {
     await userCheckbox.check();
 
     // 7. Close filter panel
-    await page.getByRole('button', { name: /close/i }).click();
+    await page.getByRole('button', { name: /close/i }).first().click();
 
     // 8. Wait for URL update
     await page.waitForTimeout(500);
@@ -62,7 +62,7 @@ test.describe('Search - Entity Type Filtering', () => {
     await groupCheckbox.check();
 
     // 7. Close filter panel
-    await page.getByRole('button', { name: /close/i }).click();
+    await page.getByRole('button', { name: /close/i }).first().click();
 
     // 8. Wait for URL
     await page.waitForTimeout(500);
@@ -80,7 +80,7 @@ test.describe('Search - Entity Type Filtering', () => {
     await page.waitForTimeout(1000);
 
     // 3. Open filter panel
-    const filterButton = page.getByRole('button', { name: /filter/i });
+    const filterButton = page.getByRole('button', { name: /filters/i });
     await filterButton.click();
 
     // 4. Wait for filter panel
@@ -95,7 +95,7 @@ test.describe('Search - Entity Type Filtering', () => {
     await blogCheckbox.check();
 
     // 7. Close filter panel
-    await page.getByRole('button', { name: /close/i }).click();
+    await page.getByRole('button', { name: /close/i }).first().click();
 
     // 8. Wait for URL
     await page.waitForTimeout(500);
@@ -113,7 +113,7 @@ test.describe('Search - Entity Type Filtering', () => {
     await page.waitForTimeout(1000);
 
     // 3. Open filter panel
-    const filterButton = page.getByRole('button', { name: /filter/i });
+    const filterButton = page.getByRole('button', { name: /filters/i });
     await filterButton.click();
 
     // 4. Wait for filter panel
@@ -128,10 +128,10 @@ test.describe('Search - Entity Type Filtering', () => {
     await amendmentCheckbox.check();
 
     // 7. Close filter panel
-    await page.getByRole('button', { name: /close/i }).click();
+    await page.getByRole('button', { name: /close/i }).first().click();
 
-    // 8. Wait for URL
-    await page.waitForTimeout(500);
+    // 8. Wait for URL (300ms debounce + navigation)
+    await page.waitForTimeout(800);
 
     // 9. URL should contain amendment type
     await expect(page).toHaveURL(/types=amendment/);
@@ -146,7 +146,7 @@ test.describe('Search - Entity Type Filtering', () => {
     await page.waitForTimeout(1000);
 
     // 3. Open filter panel
-    const filterButton = page.getByRole('button', { name: /filter/i });
+    const filterButton = page.getByRole('button', { name: /filters/i });
     await filterButton.click();
 
     // 4. Wait for filter panel
@@ -161,7 +161,7 @@ test.describe('Search - Entity Type Filtering', () => {
     await eventCheckbox.check();
 
     // 7. Close filter panel
-    await page.getByRole('button', { name: /close/i }).click();
+    await page.getByRole('button', { name: /close/i }).first().click();
 
     // 8. Wait for URL
     await page.waitForTimeout(500);
@@ -179,7 +179,7 @@ test.describe('Search - Entity Type Filtering', () => {
     await page.waitForTimeout(1000);
 
     // 3. Open filter panel
-    const filterButton = page.getByRole('button', { name: /filter/i });
+    const filterButton = page.getByRole('button', { name: /filters/i });
     await filterButton.click();
 
     // 4. Wait for filter panel
@@ -194,13 +194,13 @@ test.describe('Search - Entity Type Filtering', () => {
     await page.getByLabel(/event/i).check();
 
     // 7. Close filter panel
-    await page.getByRole('button', { name: /close/i }).click();
+    await page.getByRole('button', { name: /close/i }).first().click();
 
-    // 8. Wait for URL
-    await page.waitForTimeout(500);
+    // 8. Wait for URL (300ms debounce + navigation)
+    await page.waitForTimeout(800);
 
     // 9. URL should contain both types
     const url = page.url();
-    expect(url).toMatch(/types=(group,event|event,group)/);
+    expect(url).toMatch(/types=(group(%2C|,)event|event(%2C|,)group)/);
   });
 });
