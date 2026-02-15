@@ -18,7 +18,7 @@ function getDB() {
 export async function POST(request: NextRequest) {
   const db = getDB();
   try {
-    const { eventId } = await request.json();
+    const { eventId, senderId } = await request.json();
 
     if (!eventId) {
       return NextResponse.json({ error: 'Event ID is required' }, { status: 400 });
@@ -56,11 +56,14 @@ export async function POST(request: NextRequest) {
     });
 
     // Build transactions
-    const chunks = buildFinalizeDelegatesTransactions({
-      event,
-      groupRelationships: relData.groupRelationships || [],
-      parentGroupId,
-    });
+    const chunks = buildFinalizeDelegatesTransactions(
+      {
+        event,
+        groupRelationships: relData.groupRelationships || [],
+        parentGroupId,
+      },
+      senderId
+    );
 
     // Execute transaction
     await db.transact(chunks);

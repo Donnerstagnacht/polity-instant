@@ -63,6 +63,7 @@ export function ConversationList({
             variant="default" 
             className="rounded-full"
             onClick={onNewConversationClick}
+            aria-label={t('features.messages.compose.startNew')}
           >
             <Plus className="h-5 w-5" />
           </Button>

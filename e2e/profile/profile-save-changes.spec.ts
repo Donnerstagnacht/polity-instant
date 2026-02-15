@@ -6,9 +6,6 @@ import { loginAsTestUser } from '../helpers/auth';
 import { navigateToProfileEdit } from '../helpers/navigation';
 
 test.describe('Edit Profile Information', () => {
-  // FIXME: Profile save functionality has permission issues - "Permission denied: not perms-pass?"
-  // The $users entity permissions appear to be configured but the update is failing
-  // This needs investigation of the InstantDB permissions setup
   test('Save Profile Changes', async ({ page }) => {
     // 1. Authenticate and navigate to edit page
     await loginAsTestUser(page);

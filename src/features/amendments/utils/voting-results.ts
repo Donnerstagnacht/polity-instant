@@ -6,7 +6,7 @@
  */
 
 import { db, tx, id } from 'db/db';
-import { notifyAmendmentForwarded } from '@/utils/notification-helpers';
+import { notifyAmendmentForwarded, notifyAmendmentRejected } from '@/utils/notification-helpers';
 
 interface VoteResultContext {
   amendmentId: string;
@@ -106,7 +106,16 @@ async function handleAmendmentPassed(context: VoteResultContext) {
  * Handle when an amendment is rejected at an event
  */
 async function handleAmendmentRejected(context: VoteResultContext) {
-  const { amendmentId, agendaItemId } = context;
+  const { amendmentId, amendmentTitle, eventId, eventTitle, agendaItemId, userId } = context;
+
+  // Notify about rejection
+  const notifTxs = notifyAmendmentRejected({
+    senderId: userId,
+    amendmentId,
+    amendmentTitle,
+    eventId,
+    eventTitle,
+  });
 
   // Update agenda item status
   await db.transact([
@@ -118,9 +127,8 @@ async function handleAmendmentRejected(context: VoteResultContext) {
       workflowStatus: 'rejected',
       rejectedAt: Date.now(),
     }),
+    ...notifTxs,
   ]);
-
-  // TODO: Add notification when notifyAmendmentRejected is created
 
   return { success: true, action: 'rejected' };
 }

@@ -16,6 +16,7 @@ import { useTodoMutations } from '@/features/todos/hooks/useTodoData';
 import type { TodoStatus } from '@/features/todos/types/todo.types';
 import { db, tx, id } from '@db/db';
 import { toast } from 'sonner';
+import { notifyStandaloneTodoAssigned } from '@/utils/notification-helpers';
 import {
   TimelineCardBase,
   TimelineCardContent,
@@ -181,6 +182,20 @@ export function TodoTimelineCard({ todo, onToggle, className }: TodoTimelineCard
             user: user.id,
           }),
       ]);
+
+      // Notify the todo creator that someone volunteered
+      if (todo.creatorId && todo.creatorId !== user.id) {
+        const notifTxs = notifyStandaloneTodoAssigned({
+          senderId: user.id,
+          recipientUserId: todo.creatorId,
+          todoId: todo.id,
+          todoTitle: todo.title || 'Todo',
+        });
+        if (notifTxs.length > 0) {
+          await db.transact(notifTxs);
+        }
+      }
+
       toast.success(t('features.todos.assignee.assignedToMe'));
     } catch (error) {
       console.error('Failed to assign todo:', error);

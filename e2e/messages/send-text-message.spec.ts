@@ -13,14 +13,12 @@ test.describe('Chat/Messages - Send Text Message', () => {
     await page.goto('/messages');
 
     // 3. Select a conversation or verify conversation exists
-    const firstConversation = page
-      .locator('button')
-      .filter({ hasText: /Unknown User|@/ })
-      .first();
-
-    const hasConversations = await firstConversation.isVisible().catch(() => false);
+    const conversationList = page.locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
+    const conversationCount = await conversationList.count();
+    const hasConversations = conversationCount > 0;
 
     if (hasConversations) {
+      const firstConversation = conversationList.first();
       // 4. User has conversation selected
       await firstConversation.click();
 

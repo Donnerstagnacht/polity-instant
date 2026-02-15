@@ -28,6 +28,7 @@ import { TargetGroupEventSelector } from '@/features/amendments/ui/TargetGroupEv
 import { VideoUpload } from '@/components/shared/VideoUpload';
 import { CalendarIcon, Target, Video, ChevronRight } from 'lucide-react';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
+import { notifyGroupNewAmendment } from '@/utils/notification-helpers';
 import { useTranslation } from '@/hooks/use-translation';
 
 function CreateAmendmentForm() {
@@ -330,6 +331,18 @@ function CreateAmendmentForm() {
               : undefined,
           })
         );
+      }
+
+      // Notify group members about the new amendment
+      if (formData.targetGroupId && formData.targetGroupData?.name) {
+        const notifTxs = notifyGroupNewAmendment({
+          senderId: user.id,
+          groupId: formData.targetGroupId,
+          groupName: formData.targetGroupData.name,
+          amendmentId: amendmentId,
+          amendmentTitle: formData.title,
+        });
+        transactions.push(...notifTxs);
       }
 
       await db.transact(transactions);

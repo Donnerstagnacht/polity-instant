@@ -16,6 +16,7 @@ import { useDiscussions } from '../hooks/useDiscussions';
 import { ThreadCard } from './ThreadCard';
 import { CreateThreadDialog } from './CreateThreadDialog';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import dbClient from '../../../../../db/db';
 
 interface DiscussionsViewProps {
   amendmentId: string;
@@ -25,6 +26,7 @@ interface DiscussionsViewProps {
 export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [sortBy, setSortBy] = useState<'votes' | 'time'>('votes');
+  const { user: authUser } = dbClient.useAuth();
 
   const { amendment, threads, isLoading, hasMore, loadMore } = useDiscussions(amendmentId, sortBy);
 
@@ -127,7 +129,14 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
         ) : (
           <>
             {threads.map(thread => (
-              <ThreadCard key={thread.id} thread={thread} userId={userId} />
+              <ThreadCard
+                key={thread.id}
+                thread={thread}
+                userId={userId}
+                amendmentId={amendmentId}
+                amendmentTitle={amendment?.title}
+                senderName={authUser?.email}
+              />
             ))}
             {hasMore && <div ref={loadMoreRef} className="h-px" />}
           </>
@@ -138,6 +147,8 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
       <CreateThreadDialog
         amendmentId={amendmentId}
         userId={userId}
+        amendmentTitle={amendment?.title}
+        senderName={authUser?.email}
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
       />

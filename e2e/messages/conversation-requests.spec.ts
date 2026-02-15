@@ -13,10 +13,7 @@ test.describe('Chat/Messages - Conversation Requests', () => {
     await page.goto('/messages');
 
     // 3. Find and click the floating "+" button
-    const newConversationButton = page
-      .getByRole('button')
-      .filter({ has: page.locator('svg').filter({ hasText: /plus/i }) })
-      .first();
+    const newConversationButton = page.getByRole('button', { name: /start a new conversation/i });
     await expect(newConversationButton).toBeVisible();
     await newConversationButton.click();
 
@@ -31,10 +28,7 @@ test.describe('Chat/Messages - Conversation Requests', () => {
 
     // 2. Navigate to messages page and open dialog
     await page.goto('/messages');
-    const newConversationButton = page
-      .getByRole('button')
-      .filter({ has: page.locator('svg').filter({ hasText: /plus/i }) })
-      .first();
+    const newConversationButton = page.getByRole('button', { name: /start a new conversation/i });
     await newConversationButton.click();
 
     // 3. Type in search input
@@ -46,7 +40,7 @@ test.describe('Chat/Messages - Conversation Requests', () => {
     await page.waitForTimeout(500);
 
     // 5. Verify user results are displayed (if any exist)
-    const userResults = page.locator('button').filter({ has: page.locator('img[alt]') });
+    const userResults = page.locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
     const hasResults = (await userResults.count()) > 0;
 
     if (hasResults) {
@@ -60,10 +54,7 @@ test.describe('Chat/Messages - Conversation Requests', () => {
 
     // 2. Navigate to messages page and open dialog
     await page.goto('/messages');
-    const newConversationButton = page
-      .getByRole('button')
-      .filter({ has: page.locator('svg').filter({ hasText: /plus/i }) })
-      .first();
+    const newConversationButton = page.getByRole('button', { name: /start a new conversation/i });
     await newConversationButton.click();
 
     // 3. Search for a user
@@ -72,7 +63,7 @@ test.describe('Chat/Messages - Conversation Requests', () => {
     await page.waitForTimeout(500);
 
     // 4. Click on first user result
-    const userResults = page.locator('button').filter({ has: page.locator('img[alt]') });
+    const userResults = page.locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
     const hasResults = (await userResults.count()) > 0;
 
     if (hasResults) {
@@ -110,17 +101,14 @@ test.describe('Chat/Messages - Conversation Requests', () => {
     await page.goto('/messages');
 
     // Create a new conversation request
-    const newConversationButton = page
-      .getByRole('button')
-      .filter({ has: page.locator('svg').filter({ hasText: /plus/i }) })
-      .first();
+    const newConversationButton = page.getByRole('button', { name: /start a new conversation/i });
     await newConversationButton.click();
 
     const searchInput = page.getByPlaceholder(/search users by name or handle/i);
     await searchInput.fill('test');
     await page.waitForTimeout(500);
 
-    const userResults = page.locator('button').filter({ has: page.locator('img[alt]') });
+    const userResults = page.locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
     const hasResults = (await userResults.count()) > 0;
 
     if (hasResults) {
@@ -141,10 +129,7 @@ test.describe('Chat/Messages - Conversation Requests', () => {
     await page.goto('/messages');
 
     // Open dialog
-    const newConversationButton = page
-      .getByRole('button')
-      .filter({ has: page.locator('svg').filter({ hasText: /plus/i }) })
-      .first();
+    const newConversationButton = page.getByRole('button', { name: /start a new conversation/i });
     await newConversationButton.click();
 
     // Get current user info from page
@@ -155,7 +140,7 @@ test.describe('Chat/Messages - Conversation Requests', () => {
 
     // Verify the dialog doesn't show the current user in results
     // This is implicitly tested by the search functionality
-    const userResults = page.locator('button').filter({ has: page.locator('img[alt]') });
+    const userResults = page.locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
     await expect(userResults.first())
       .toBeVisible()
       .catch(() => {
@@ -170,10 +155,7 @@ test.describe('Chat/Messages - Conversation Requests', () => {
     await page.goto('/messages');
 
     // Open dialog
-    const newConversationButton = page
-      .getByRole('button')
-      .filter({ has: page.locator('svg').filter({ hasText: /plus/i }) })
-      .first();
+    const newConversationButton = page.getByRole('button', { name: /start a new conversation/i });
     await newConversationButton.click();
 
     // Search for a user
@@ -181,7 +163,7 @@ test.describe('Chat/Messages - Conversation Requests', () => {
     await searchInput.fill('test');
     await page.waitForTimeout(500);
 
-    const userResults = page.locator('button').filter({ has: page.locator('img[alt]') });
+    const userResults = page.locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
     const hasResults = (await userResults.count()) > 0;
 
     if (hasResults) {
@@ -189,10 +171,7 @@ test.describe('Chat/Messages - Conversation Requests', () => {
       await firstResult.click();
 
       // Now try to create another conversation with the same user
-      const newConversationButton2 = page
-        .getByRole('button')
-        .filter({ has: page.locator('svg').filter({ hasText: /plus/i }) })
-        .first();
+      const newConversationButton2 = page.getByRole('button', { name: /start a new conversation/i });
       await newConversationButton2.click();
 
       const searchInput2 = page.getByPlaceholder(/search users by name or handle/i);
@@ -207,3 +186,4 @@ test.describe('Chat/Messages - Conversation Requests', () => {
     }
   });
 });
+

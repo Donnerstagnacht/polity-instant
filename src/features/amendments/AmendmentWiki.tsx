@@ -32,6 +32,7 @@ import { findShortestPath } from '@/utils/path-finding';
 import { TargetSelectionDialog } from '@/features/amendments/ui/TargetSelectionDialog';
 import Link from 'next/link';
 import { useTranslation } from '@/hooks/use-translation';
+import { notifyAmendmentVoted, notifyAmendmentCloned } from '@/utils/notification-helpers';
 
 interface AmendmentWikiProps {
   amendmentId: string;
@@ -254,6 +255,23 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
             downvotes: voteValue === -1 ? (amendment.downvotes || 0) + 1 : amendment.downvotes,
           }),
         ]);
+      }
+
+      // Notify amendment author about vote (skip on vote removal)
+      if (!(userVote && userVote.vote === voteValue)) {
+        const adminCollab = collaborators.find((c: any) => c.status === 'admin');
+        const authorUserId = adminCollab?.user?.id;
+        if (authorUserId && authorUserId !== user.id) {
+          const notifTxs = notifyAmendmentVoted({
+            senderId: user.id,
+            senderName: user.email || 'Someone',
+            recipientUserId: authorUserId,
+            amendmentId,
+            amendmentTitle: amendment.title,
+            voteType: voteValue === 1 ? 'upvote' : 'downvote',
+          });
+          await db.transact(notifTxs);
+        }
       }
     } catch (error) {
       console.error('Error voting:', error);
@@ -549,6 +567,16 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
             .link(segmentLinks)
         );
       });
+
+      // Notify about the clone
+      const cloneNotifTxs = notifyAmendmentCloned({
+        senderId: user.id,
+        senderName: user.email || 'Someone',
+        originalAmendmentId: amendmentId,
+        originalAmendmentTitle: amendment.title,
+        newAmendmentId: cloneId,
+      });
+      transactions.push(...cloneNotifTxs);
 
       await db.transact(transactions);
 

@@ -23,6 +23,7 @@ import { useAuthStore } from '@/features/auth/auth.ts';
 import { toast } from 'sonner';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { PageWrapper } from '@/components/layout/page-wrapper';
+import { notifyCandidateAdded } from '@/utils/notification-helpers';
 import { useTranslation } from '@/hooks/use-translation';
 
 function CreateElectionCandidateForm() {
@@ -57,7 +58,11 @@ function CreateElectionCandidateForm() {
 
   // Query available elections for the dropdown
   const { data: electionsData } = db.useQuery({
-    elections: {},
+    elections: {
+      agendaItem: {
+        event: {},
+      },
+    },
   });
 
   const userElections = electionsData?.elections || [];
@@ -101,6 +106,19 @@ function CreateElectionCandidateForm() {
             user: formData.userId,
           })
         );
+      }
+
+      // Notify event participants about the new candidate
+      const selectedElection = userElections.find(el => el.id === formData.electionId);
+      const electionEvent = (selectedElection as any)?.agendaItem?.event;
+      if (electionEvent?.id) {
+        const notifTxs = notifyCandidateAdded({
+          senderId: user.id,
+          eventId: electionEvent.id,
+          eventTitle: electionEvent.title || '',
+          candidateName: formData.name,
+        });
+        transactions.push(...notifTxs);
       }
 
       await db.transact(transactions);

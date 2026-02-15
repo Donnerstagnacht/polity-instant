@@ -34,6 +34,7 @@ import type {
 import {
   notifyVotingSessionStarted,
   notifyVotingSessionCompleted,
+  notifyCandidateAdded,
 } from '@/utils/notification-helpers';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { useTranslation } from '@/hooks/use-translation';
@@ -252,6 +253,13 @@ export function EventAgendaItemDetail({
         (user as any).name || (user as any).fullName || (user as any).email || 'Candidate';
       const candidateOrder = electionCandidates.length + 1;
       const candidateId = generateId();
+      const notifTxs = notifyCandidateAdded({
+        senderId: user.id,
+        eventId,
+        eventTitle: event?.title || 'Event',
+        candidateName,
+      });
+
       await db.transact([
         tx.electionCandidates[candidateId]
           .update({
@@ -264,6 +272,7 @@ export function EventAgendaItemDetail({
             user: user.id,
             election: agendaItem.election.id,
           }),
+        ...notifTxs,
       ]);
       toast.success(t('features.events.agenda.becomeCandidate'));
     } catch (error) {

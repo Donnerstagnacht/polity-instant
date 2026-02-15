@@ -31,6 +31,7 @@ import { db, tx, id } from '@db/db';
 import { UserPlus, X, Loader2, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/use-translation';
+import { notifyDocumentCollaboratorInvited, notifyBloggerInvited } from '@/utils/notification-helpers';
 import type { EditorEntityType } from '../types';
 
 interface InviteCollaboratorDialogProps {
@@ -119,6 +120,27 @@ export function InviteCollaboratorDialog({
           );
         });
       }
+
+      // Send notifications to invited users
+      selectedUsers.forEach(userId => {
+        if (entityType === 'blog') {
+          const notifTxs = notifyBloggerInvited({
+            senderId: currentUserId,
+            recipientUserId: userId,
+            blogId: entityId,
+            blogTitle: entityTitle || 'Blog',
+          });
+          transactions.push(...notifTxs);
+        } else {
+          const notifTxs = notifyDocumentCollaboratorInvited({
+            senderId: currentUserId,
+            recipientUserId: userId,
+            documentId: entityId,
+            documentTitle: entityTitle || 'Document',
+          });
+          transactions.push(...notifTxs);
+        }
+      });
 
       await db.transact(transactions);
 

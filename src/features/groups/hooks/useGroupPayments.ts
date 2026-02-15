@@ -6,7 +6,7 @@ import { useState, useMemo } from 'react';
 import db, { tx, id } from '../../../../db/db';
 import { toast } from 'sonner';
 import type { GroupPayment, FinancialSummary, ChartData } from '../types/group.types';
-import { notifyPaymentCreated } from '@/utils/notification-helpers';
+import { notifyPaymentCreated, notifyPaymentDeleted } from '@/utils/notification-helpers';
 
 export function useGroupPayments(groupId: string) {
   const [isLoading, setIsLoading] = useState(false);
@@ -109,11 +109,11 @@ export function useGroupPayments(groupId: string) {
       if (senderId && paymentLabel && groupName && adminUserIds) {
         adminUserIds.forEach(adminId => {
           if (adminId !== senderId) {
-            const notificationTxs = notifyPaymentCreated({
+            const notificationTxs = notifyPaymentDeleted({
               senderId,
               groupId,
               groupName,
-              paymentDescription: `Deleted: ${paymentLabel}`,
+              paymentDescription: paymentLabel,
             });
             transactions.push(...notificationTxs);
           }

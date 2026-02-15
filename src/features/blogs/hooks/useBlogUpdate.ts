@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import db from '../../../../db/db';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
+import { notifyBlogPublished } from '@/utils/notification-helpers';
 
 export interface BlogFormData {
   title: string;
@@ -105,6 +106,16 @@ export function useBlogUpdate(blogId: string, actorId?: string) {
             })
           );
         }
+      }
+
+      // Notify subscribers when blog visibility changes to public
+      if (formData.isPublic && !blog.isPublic && actorId) {
+        const notifTxs = notifyBlogPublished({
+          senderId: actorId,
+          blogId,
+          blogTitle: formData.title,
+        });
+        transactions.push(...notifTxs);
       }
 
       // Update blog

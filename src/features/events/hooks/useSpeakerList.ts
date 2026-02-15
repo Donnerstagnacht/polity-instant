@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { db, id, tx } from '../../../../db/db';
+import { notifySpeakerListJoined } from '@/utils/notification-helpers';
 
-export function useSpeakerList(agendaItemId?: string) {
+export function useSpeakerList(agendaItemId?: string, eventContext?: { eventId: string; eventTitle: string }) {
   const { user } = db.useAuth();
   const [addingSpeaker, setAddingSpeaker] = useState(false);
   const [removingSpeaker, setRemovingSpeaker] = useState<string | null>(null);
@@ -28,6 +29,17 @@ export function useSpeakerList(agendaItemId?: string) {
           agendaItem: agendaItemId,
         }),
       ]);
+
+      // Notify event organizers about new speaker
+      if (eventContext) {
+        const notifTxs = notifySpeakerListJoined({
+          senderId: user.id,
+          senderName: user.email,
+          eventId: eventContext.eventId,
+          eventTitle: eventContext.eventTitle,
+        });
+        await db.transact(notifTxs);
+      }
     } catch (error) {
       console.error('Error adding to speaker list:', error);
       throw error;

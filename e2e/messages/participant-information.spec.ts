@@ -36,7 +36,7 @@ test.describe('Chat/Messages - Participant Information', () => {
       // 8. Verify avatar in header
       const headerAvatar = page
         .locator('[class*="CardHeader"]')
-        .locator('[class*="avatar"]')
+        .locator('[data-slot="avatar"]')
         .first();
       await expect(headerAvatar).toBeVisible();
 

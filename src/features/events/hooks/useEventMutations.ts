@@ -7,6 +7,7 @@ import {
   notifyParticipationRejected,
   notifyParticipationRemoved,
   notifyOrganizerPromoted,
+  notifyScheduleChanged,
 } from '@/utils/notification-helpers';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 
@@ -275,6 +276,18 @@ export function useEventMutations(eventId: string) {
             })
           );
         }
+      }
+
+      // Notify subscribers if schedule fields changed
+      const scheduleFields = ['startDate', 'endDate', 'date', 'startTime', 'endTime'];
+      const isScheduleChange = scheduleFields.some(field => field in updates);
+      if (isScheduleChange && options?.actorId && options?.eventTitle) {
+        const scheduleNotifTxs = notifyScheduleChanged({
+          senderId: options.actorId,
+          eventId,
+          eventTitle: options.eventTitle,
+        });
+        transactions.push(...scheduleNotifTxs);
       }
 
       await db.transact(transactions);

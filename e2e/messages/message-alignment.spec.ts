@@ -13,13 +13,12 @@ test.describe('Chat/Messages - Message Alignment', () => {
     await page.goto('/messages');
 
     // 3. Select a conversation
-    const firstConversation = page
-      .locator('button')
-      .filter({ hasText: /Unknown User|@/ })
-      .first();
-    const hasConversations = await firstConversation.isVisible().catch(() => false);
+    const conversationList = page.locator('button').filter({ has: page.locator('[class*="Avatar"]') });
+    const conversationCount = await conversationList.count();
+    const hasConversations = conversationCount > 0;
 
     if (hasConversations) {
+      const firstConversation = conversationList.first();
       await firstConversation.click();
 
       // 4. Send a message from current user
@@ -77,13 +76,12 @@ test.describe('Chat/Messages - Message Alignment', () => {
     await page.goto('/messages');
 
     // 3. Select a conversation
-    const firstConversation = page
-      .locator('button')
-      .filter({ hasText: /Unknown User|@/ })
-      .first();
-    const hasConversations = await firstConversation.isVisible().catch(() => false);
+    const conversationList = page.locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
+    const conversationCount = await conversationList.count();
+    const hasConversations = conversationCount > 0;
 
     if (hasConversations) {
+      const firstConversation = conversationList.first();
       await firstConversation.click();
 
       // 4. Send a message

@@ -18,14 +18,13 @@ test.describe('Chat/Messages - View Conversations List', () => {
 
     // 4. Verify conversations sorted by most recent message
     // 5. Each conversation shows avatar, name, last message preview, timestamp
-    const firstConversation = page
-      .locator('button')
-      .filter({ hasText: /Unknown User|@/ })
-      .first();
+    const conversationList = page.locator('button').filter({ has: page.locator('[class*="Avatar"]') });
+    const conversationCount = await conversationList.count();
 
-    if (await firstConversation.isVisible()) {
+    if (conversationCount > 0) {
+      const firstConversation = conversationList.first();
       // Verify avatar is present
-      const avatar = firstConversation.locator('[class*="avatar"]').first();
+      const avatar = firstConversation.locator('[data-slot="avatar"]').first();
       await expect(avatar).toBeVisible();
 
       // Verify participant name or handle is visible

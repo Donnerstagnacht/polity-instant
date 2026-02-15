@@ -88,14 +88,17 @@ export type NotificationType =
   | 'amendment_path_advanced'      // 3.10: Path advanced
   | 'amendment_cloned'             // 3.11: Amendment cloned
   | 'amendment_group_support'      // 3.12: Group support added
+  | 'amendment_target_set'         // 3.12b: Target group/event set
   | 'amendment_comment_added'      // 3.13: Comment added
   | 'change_request_created'       // 3.14: Change request created
   | 'change_request_accepted'      // 3.14: Change request accepted
   | 'change_request_rejected'      // 3.14: Change request rejected
+  | 'change_request_vote_cast'     // 3.14: Change request vote cast
   | 'amendment_version_created'    // 3.15: Version created
   | 'voting_session_started'       // 3.16: Voting session started
   | 'voting_session_completed'     // 3.16: Voting session completed
   | 'amendment_vote_cast'          // Support vote cast
+  | 'amendment_rejected'           // Amendment rejected at vote
   | 'collaboration_invitation_accepted'   // 3.17: Invitation accepted
   | 'collaboration_invitation_declined'   // 3.18: Invitation declined
   | 'collaboration_request_withdrawn'     // 3.19: Request withdrawn
@@ -104,6 +107,7 @@ export type NotificationType =
   | 'blog_vote_cast'               // 4.2: Vote cast
   | 'blog_updated'                 // 4.3: Blog updated
   | 'blog_published'               // 4.3: Blog published
+  | 'blog_deleted'                 // 4.3b: Blog deleted
   | 'blog_writer_joined'           // 4.4: Writer joined
   | 'blog_role_changed'            // 4.5: Role changed
   | 'blog_comment_added'           // 4.6: Comment added

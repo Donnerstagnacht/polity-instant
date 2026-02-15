@@ -44,6 +44,7 @@ interface ChangeRequestCardProps {
   document?: any;
   collaborators: any[];
   amendmentId: string;
+  amendmentTitle?: string;
   userId?: string;
   isClosed?: boolean;
 }
@@ -54,6 +55,7 @@ function ChangeRequestCard({
   document,
   collaborators,
   amendmentId,
+  amendmentTitle,
   userId,
   isClosed = false,
 }: ChangeRequestCardProps) {
@@ -268,6 +270,7 @@ function ChangeRequestCard({
                   }))}
                 status={request.status}
                 amendmentId={amendmentId}
+                amendmentTitle={amendmentTitle}
                 documentId={document?.id || ''}
                 suggestionData={
                   !request.changeRequestEntityId
@@ -387,6 +390,7 @@ export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewPr
                 document={document}
                 collaborators={collaborators}
                 amendmentId={amendmentId}
+                amendmentTitle={amendment?.title}
                 userId={userId}
               />
             ))
@@ -411,6 +415,7 @@ export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewPr
                 document={document}
                 collaborators={collaborators}
                 amendmentId={amendmentId}
+                amendmentTitle={amendment?.title}
                 userId={userId}
                 isClosed={true}
               />

@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import db, { tx } from '../../../../db/db';
 import { syncGroupNameToConversation } from '@/utils/groupConversationSync';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
+import { notifyGroupProfileUpdated } from '@/utils/notification-helpers';
 
 export interface GroupFormData {
   name: string;
@@ -170,6 +171,16 @@ export function useGroupUpdate(
             description: nameChanged ? `Group name changed to ${formData.name}` : 'Group profile has been updated',
           })
         );
+      }
+
+      // Send notification for group profile update
+      if (options?.actorId) {
+        const notifTxs = notifyGroupProfileUpdated({
+          senderId: options.actorId,
+          groupId,
+          groupName: formData.name,
+        });
+        transactions.push(...notifTxs);
       }
 
       // Update the group in Instant DB

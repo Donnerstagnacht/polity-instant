@@ -37,6 +37,7 @@ import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useTranslation } from '@/hooks/use-translation';
 import { ShareButton } from '@/components/shared/ShareButton';
+import { notifyCandidateAdded } from '@/utils/notification-helpers';
 import { DelegatesOverview } from './components/DelegatesOverview';
 import {
   Carousel,
@@ -198,10 +199,18 @@ export function EventWiki({ eventId }: EventWikiProps) {
         ...(selectedElection.candidates || []).map((c: any) => c.order || 0)
       );
 
+      const candidateName = currentUserProfile?.name || user.email || 'Unbenannt';
+      const notifTxs = notifyCandidateAdded({
+        senderId: user.id,
+        eventId,
+        eventTitle: event.title || 'Event',
+        candidateName,
+      });
+
       await db.transact([
         tx.electionCandidates[candidateId]
           .update({
-            name: currentUserProfile?.name || user.email || 'Unbenannt',
+            name: candidateName,
             description: '',
             imageURL: currentUserProfile?.avatar || '',
             order: maxOrder + 1,
@@ -211,6 +220,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
             election: selectedElection.id,
             user: user.id,
           }),
+        ...notifTxs,
       ]);
 
       toast.success('Sie wurden erfolgreich als Kandidat hinzugefügt!');

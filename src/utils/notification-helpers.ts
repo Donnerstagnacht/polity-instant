@@ -114,6 +114,7 @@ export type NotificationType =
   | 'change_request_created'
   | 'change_request_accepted'
   | 'change_request_rejected'
+  | 'change_request_vote_cast'
   | 'amendment_version_created'
   | 'voting_session_started'
   | 'voting_session_completed'
@@ -156,7 +157,19 @@ export type NotificationType =
   | 'blog_invitation_accepted'
   | 'blog_invitation_declined'
   | 'blog_request_withdrawn'
-  | 'blog_writer_left';
+  | 'blog_writer_left'
+  // Profile update notifications
+  | 'amendment_profile_updated'
+  | 'group_profile_updated'
+  | 'event_profile_updated'
+  // Amendment additional notifications
+  | 'amendment_target_set'
+  | 'amendment_rejected'
+  // Blog additional notifications
+  | 'blog_published'
+  | 'blog_deleted'
+  // Group additional notifications
+  | 'group_new_amendment';
 
 export interface NotificationConfig {
   // Sender information
@@ -3199,5 +3212,189 @@ export function notifyBlogWriterLeft(params: {
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
     relatedUserId: params.senderId,
+  });
+}
+
+// ============================================================================
+// PROFILE UPDATE NOTIFICATIONS
+// ============================================================================
+
+/**
+ * Send notification when an amendment's profile is updated
+ */
+export function notifyAmendmentProfileUpdated(params: {
+  senderId: string;
+  amendmentId: string;
+  amendmentTitle: string;
+}) {
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'amendment',
+    recipientEntityId: params.amendmentId,
+    type: 'amendment_profile_updated',
+    title: 'Amendment Updated',
+    message: `${params.amendmentTitle} has been updated`,
+    actionUrl: `/amendment/${params.amendmentId}`,
+    relatedEntityType: 'amendment',
+    relatedAmendmentId: params.amendmentId,
+  });
+}
+
+/**
+ * Send notification when an amendment's target group/event is set
+ */
+export function notifyAmendmentTargetSet(params: {
+  senderId: string;
+  amendmentId: string;
+  amendmentTitle: string;
+  groupId?: string;
+  groupName?: string;
+  eventId?: string;
+  eventTitle?: string;
+}) {
+  const target = params.eventTitle || params.groupName || 'unknown';
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'amendment',
+    recipientEntityId: params.amendmentId,
+    type: 'amendment_target_set',
+    title: 'Target Set',
+    message: `${params.amendmentTitle} has been targeted at ${target}`,
+    actionUrl: `/amendment/${params.amendmentId}/process`,
+    relatedEntityType: 'amendment',
+    relatedAmendmentId: params.amendmentId,
+    relatedGroupId: params.groupId,
+    relatedEventId: params.eventId,
+  });
+}
+
+/**
+ * Send notification when an amendment is rejected at vote
+ */
+export function notifyAmendmentRejected(params: {
+  senderId: string;
+  amendmentId: string;
+  amendmentTitle: string;
+  eventId?: string;
+  eventTitle?: string;
+}) {
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'amendment',
+    recipientEntityId: params.amendmentId,
+    type: 'amendment_rejected',
+    title: 'Amendment Rejected',
+    message: `${params.amendmentTitle} has been rejected${params.eventTitle ? ` at ${params.eventTitle}` : ''}`,
+    actionUrl: `/amendment/${params.amendmentId}`,
+    relatedEntityType: 'amendment',
+    relatedAmendmentId: params.amendmentId,
+    relatedEventId: params.eventId,
+  });
+}
+
+/**
+ * Send notification when a blog is deleted
+ */
+export function notifyBlogDeleted(params: {
+  senderId: string;
+  blogId: string;
+  blogTitle: string;
+}) {
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'blog',
+    recipientEntityId: params.blogId,
+    type: 'blog_deleted',
+    title: 'Blog Deleted',
+    message: `${params.blogTitle} has been deleted`,
+    relatedEntityType: 'blog',
+    relatedBlogId: params.blogId,
+  });
+}
+
+/**
+ * Send notification when a blog is published or made public
+ */
+export function notifyBlogPublished(params: {
+  senderId: string;
+  blogId: string;
+  blogTitle: string;
+}) {
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'blog',
+    recipientEntityId: params.blogId,
+    type: 'blog_published',
+    title: 'Blog Published',
+    message: `${params.blogTitle} has been published`,
+    actionUrl: `/blog/${params.blogId}`,
+    relatedEntityType: 'blog',
+    relatedBlogId: params.blogId,
+  });
+}
+
+/**
+ * Send notification when a group's profile is updated
+ */
+export function notifyGroupProfileUpdated(params: {
+  senderId: string;
+  groupId: string;
+  groupName: string;
+}) {
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'group',
+    recipientEntityId: params.groupId,
+    type: 'group_profile_updated',
+    title: 'Group Updated',
+    message: `${params.groupName} has been updated`,
+    actionUrl: `/group/${params.groupId}`,
+    relatedEntityType: 'group',
+    relatedGroupId: params.groupId,
+  });
+}
+
+/**
+ * Send notification when an event's profile is updated
+ */
+export function notifyEventProfileUpdated(params: {
+  senderId: string;
+  eventId: string;
+  eventTitle: string;
+}) {
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'event',
+    recipientEntityId: params.eventId,
+    type: 'event_profile_updated',
+    title: 'Event Updated',
+    message: `${params.eventTitle} has been updated`,
+    actionUrl: `/event/${params.eventId}`,
+    relatedEntityType: 'event',
+    relatedEventId: params.eventId,
+  });
+}
+
+/**
+ * Send notification when a new amendment is linked to a group
+ */
+export function notifyGroupNewAmendment(params: {
+  senderId: string;
+  groupId: string;
+  groupName: string;
+  amendmentId: string;
+  amendmentTitle: string;
+}) {
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'group',
+    recipientEntityId: params.groupId,
+    type: 'group_new_amendment',
+    title: 'New Amendment',
+    message: `A new amendment "${params.amendmentTitle}" has been linked to ${params.groupName}`,
+    actionUrl: `/amendment/${params.amendmentId}`,
+    relatedEntityType: 'amendment',
+    relatedAmendmentId: params.amendmentId,
+    relatedGroupId: params.groupId,
   });
 }

@@ -88,7 +88,7 @@ export function useEventParticipants(eventId: string) {
 
     setIsInviting(true);
     try {
-      await inviteParticipants(selectedUsers);
+      await inviteParticipants(selectedUsers, undefined, currentUserId, event?.title);
 
       // Reset state
       setSelectedUsers([]);
@@ -102,9 +102,9 @@ export function useEventParticipants(eventId: string) {
   };
 
   // Handle removing participant
-  const handleRemoveParticipant = async (participantId: string) => {
+  const handleRemoveParticipant = async (participantId: string, userId?: string) => {
     try {
-      await removeParticipant(participantId);
+      await removeParticipant(participantId, userId, currentUserId, event?.title);
     } catch (err) {
       console.error('Error removing participant:', err);
     }
@@ -120,9 +120,9 @@ export function useEventParticipants(eventId: string) {
   };
 
   // Handle accepting request
-  const handleAcceptRequest = async (participantId: string) => {
+  const handleAcceptRequest = async (participantId: string, userId?: string) => {
     try {
-      await approveParticipation(participantId);
+      await approveParticipation(participantId, userId, currentUserId, event?.title);
     } catch (err) {
       console.error('Error accepting request:', err);
     }

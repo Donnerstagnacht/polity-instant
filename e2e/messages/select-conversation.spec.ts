@@ -12,15 +12,13 @@ test.describe('Chat/Messages - Select Conversation', () => {
     // 2. Navigate to messages page
     await page.goto('/messages');
 
-    // 3. Check if conversations exist
-    const firstConversation = page
-      .locator('button')
-      .filter({ hasText: /Unknown User|@/ })
-      .first();
-
-    const hasConversations = await firstConversation.isVisible().catch(() => false);
+    // 3. Check if conversations exist - look for conversation items (buttons with avatars)
+    const conversationList = page.locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
+    const conversationCount = await conversationList.count();
+    const hasConversations = conversationCount > 0;
 
     if (hasConversations) {
+      const firstConversation = conversationList.first();
       // 4. User clicks on conversation in list
       await firstConversation.click();
 

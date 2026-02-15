@@ -28,6 +28,7 @@ import {
 } from '@db/rbac/workflow-constants';
 import { useTranslation } from '@/hooks/use-translation';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
+import { notifyAmendmentProfileUpdated } from '@/utils/notification-helpers';
 
 interface AmendmentEditContentProps {
   amendmentId: string;
@@ -155,6 +156,13 @@ export function AmendmentEditContent({
           );
         }
       }
+      // Notify about profile update
+      const notifTxs = notifyAmendmentProfileUpdated({
+        senderId: currentUserId,
+        amendmentId,
+        amendmentTitle: formData.title,
+      });
+      transactions.push(...notifTxs);
       await db.transact(transactions);
       toast.success(t('features.amendments.editContent.updateSuccess'));
       setTimeout(() => {

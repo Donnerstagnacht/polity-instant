@@ -14,9 +14,12 @@ import type { Thread } from '../hooks/useDiscussions';
 interface ThreadCardProps {
   thread: Thread;
   userId?: string;
+  amendmentId?: string;
+  amendmentTitle?: string;
+  senderName?: string;
 }
 
-export function ThreadCard({ thread, userId }: ThreadCardProps) {
+export function ThreadCard({ thread, userId, amendmentId, amendmentTitle, senderName }: ThreadCardProps) {
   const [isCommenting, setIsCommenting] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,7 +57,13 @@ export function ThreadCard({ thread, userId }: ThreadCardProps) {
 
     setIsSubmitting(true);
     try {
-      await createComment(thread.id, commentText, userId);
+      await createComment(
+        thread.id,
+        commentText,
+        userId,
+        undefined,
+        senderName && amendmentId && amendmentTitle ? { senderName, amendmentId, amendmentTitle } : undefined
+      );
       toast.success('Comment posted successfully');
       setCommentText('');
       setIsCommenting(false);
@@ -137,7 +146,15 @@ export function ThreadCard({ thread, userId }: ThreadCardProps) {
         {/* Comments */}
         <div className="space-y-4">
           {sortedComments.map(comment => (
-            <CommentTree key={comment.id} comment={comment} threadId={thread.id} userId={userId} />
+            <CommentTree
+              key={comment.id}
+              comment={comment}
+              threadId={thread.id}
+              userId={userId}
+              amendmentId={amendmentId}
+              amendmentTitle={amendmentTitle}
+              senderName={senderName}
+            />
           ))}
 
           {sortedComments.length === 0 && !isCommenting && (

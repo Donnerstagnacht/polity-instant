@@ -9,6 +9,7 @@ import { Check, X, Minus } from 'lucide-react';
 import { db, tx, id } from 'db/db';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/use-translation';
+import { notifyChangeRequestVoteCast } from '@/utils/notification-helpers';
 
 interface VoteControlsProps {
   changeRequestId: string;
@@ -35,6 +36,7 @@ interface VoteControlsProps {
   }[];
   status: string;
   amendmentId: string;
+  amendmentTitle?: string;
   documentId: string;
   suggestionData?: {
     crId: string;
@@ -54,6 +56,7 @@ export function VoteControls({
   collaborators,
   status,
   amendmentId,
+  amendmentTitle,
   suggestionData,
   onVoteComplete,
 }: VoteControlsProps) {
@@ -130,6 +133,20 @@ export function VoteControls({
           .link({ changeRequest: crId })
           .link({ voter: currentUserId }),
       ]);
+
+      // Notify change request author about the vote
+      if (amendmentTitle && suggestionData?.userId && suggestionData.userId !== currentUserId) {
+        const notifTxs = notifyChangeRequestVoteCast({
+          senderId: currentUserId,
+          senderName: 'A collaborator',
+          recipientUserId: suggestionData.userId,
+          changeRequestId: crId,
+          amendmentId,
+          amendmentTitle,
+          voteType,
+        });
+        await db.transact(notifTxs);
+      }
 
       toast.success(t('features.amendments.voteControls.voteRecorded'), {
         description: t('features.amendments.voteControls.yourVote').replace('{{vote}}', voteType),

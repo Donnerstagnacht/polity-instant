@@ -31,7 +31,7 @@ import { CommentSortSelect, CommentSortBy } from '@/components/shared/CommentSor
 import { useBlogPermissions } from '../hooks/useBlogPermissions';
 import { PlateEditor } from '@/components/kit-platejs/plate-editor';
 import Link from 'next/link';
-import { notifyBlogCommentAdded } from '@/utils/notification-helpers';
+import { notifyBlogCommentAdded, notifyBlogVoted, notifyBlogDeleted } from '@/utils/notification-helpers';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
 // Comment component for blog comments
@@ -312,7 +312,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
       } else {
         // Create new vote
         const voteId = id();
-        await db.transact([
+        const voteTxs: any[] = [
           db.tx.blogSupportVotes[voteId].update({
             vote: voteValue,
             createdAt: Date.now(),
@@ -325,7 +325,23 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
             upvotes: voteValue === 1 ? (blog.upvotes || 0) + 1 : blog.upvotes,
             downvotes: voteValue === -1 ? (blog.downvotes || 0) + 1 : blog.downvotes,
           }),
-        ]);
+        ];
+
+        // Notify blog owner about the vote
+        const blogAuthor = blog.blogRoleBloggers?.find((b: any) => b.status === 'owner')?.user || blog.blogRoleBloggers?.[0]?.user;
+        if (blogAuthor?.id && blogAuthor.id !== user.id) {
+          const notifTxs = notifyBlogVoted({
+            senderId: user.id,
+            senderName: currentUserName,
+            recipientUserId: blogAuthor.id,
+            blogId,
+            blogTitle: blog.title || 'Blog',
+            voteType: voteValue === 1 ? 'upvote' : 'downvote',
+          });
+          voteTxs.push(...notifTxs);
+        }
+
+        await db.transact(voteTxs);
       }
     } catch (error) {
       console.error('Error voting:', error);
@@ -392,6 +408,15 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
   const handleDeleteBlog = async () => {
     if (!confirm(t('features.blogs.detail.confirmDelete'))) return;
     try {
+      // Send deletion notifications before removing the blog entity
+      if (user?.id && blog) {
+        const notifTxs = notifyBlogDeleted({
+          senderId: user.id,
+          blogId,
+          blogTitle: blog.title || 'Blog',
+        });
+        await db.transact(notifTxs);
+      }
       await db.transact([db.tx.blogs[blogId].delete()]);
       toast.success(t('features.blogs.detail.blogDeleted'));
       router.push('/');

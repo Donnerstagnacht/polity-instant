@@ -295,13 +295,13 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                       <TableCell>{new Date(participant.createdAt).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button size="sm" onClick={() => actions.acceptRequest(participant.id)}>
+                          <Button size="sm" onClick={() => actions.acceptRequest(participant.id, participant.user?.id)}>
                             {t('features.events.participants.actions.accept')}
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => actions.removeParticipant(participant.id)}
+                            onClick={() => actions.removeParticipant(participant.id, participant.user?.id)}
                           >
                             {t('features.events.participants.actions.decline')}
                           </Button>
@@ -389,7 +389,7 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                           <Button
                             size="sm"
                             variant="destructive"
-                            onClick={() => actions.removeParticipant(participant.id)}
+                            onClick={() => actions.removeParticipant(participant.id, participant.user?.id)}
                           >
                             <UserX className="mr-1 h-4 w-4" />
                             {t('features.events.participants.actions.remove')}
@@ -440,7 +440,7 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => actions.removeParticipant(participant.id)}
+                          onClick={() => actions.removeParticipant(participant.id, participant.user?.id)}
                         >
                           {t('features.events.participants.actions.cancelInvitation')}
                         </Button>

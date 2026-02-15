@@ -13,9 +13,12 @@ interface CommentTreeProps {
   comment: CommentWithReplies;
   threadId: string;
   userId?: string;
+  amendmentId?: string;
+  amendmentTitle?: string;
+  senderName?: string;
 }
 
-export function CommentTree({ comment, threadId, userId }: CommentTreeProps) {
+export function CommentTree({ comment, threadId, userId, amendmentId, amendmentTitle, senderName }: CommentTreeProps) {
   const [isReplying, setIsReplying] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,7 +54,13 @@ export function CommentTree({ comment, threadId, userId }: CommentTreeProps) {
 
     setIsSubmitting(true);
     try {
-      await createComment(threadId, replyText, userId, comment.id);
+      await createComment(
+        threadId,
+        replyText,
+        userId,
+        comment.id,
+        senderName && amendmentId && amendmentTitle ? { senderName, amendmentId, amendmentTitle } : undefined
+      );
       toast.success('Reply posted successfully');
       setReplyText('');
       setIsReplying(false);
@@ -143,7 +152,15 @@ export function CommentTree({ comment, threadId, userId }: CommentTreeProps) {
       {comment.replies && comment.replies.length > 0 && (
         <div className="ml-8 space-y-3 border-l-2 border-muted pl-4">
           {comment.replies.map(reply => (
-            <CommentTree key={reply.id} comment={reply} threadId={threadId} userId={userId} />
+            <CommentTree
+              key={reply.id}
+              comment={reply}
+              threadId={threadId}
+              userId={userId}
+              amendmentId={amendmentId}
+              amendmentTitle={amendmentTitle}
+              senderName={senderName}
+            />
           ))}
         </div>
       )}

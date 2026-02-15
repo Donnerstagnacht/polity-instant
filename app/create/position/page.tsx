@@ -21,6 +21,7 @@ import { GroupSelectCard } from '@/components/ui/entity-select-cards';
 import { db, tx, id } from 'db/db';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { toast } from 'sonner';
+import { notifyGroupPositionCreated } from '@/utils/notification-helpers';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { useTranslation } from '@/hooks/use-translation';
@@ -95,6 +96,18 @@ function CreatePositionForm() {
           })
           .link({ group: formData.groupId }),
       ]);
+
+      // Notify group members about the new position
+      const groupName = data?.groups?.find(g => g.id === formData.groupId)?.name;
+      if (groupName) {
+        const notifTxs = notifyGroupPositionCreated({
+          senderId: user.id,
+          groupId: formData.groupId,
+          groupName,
+          positionTitle: formData.title,
+        });
+        await db.transact(notifTxs);
+      }
 
       toast.success(`Position ${t('pages.create.success.created')}`);
       router.push(`/group/${formData.groupId}`);

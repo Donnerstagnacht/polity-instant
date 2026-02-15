@@ -26,6 +26,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TypeAheadSelect } from '@/components/ui/type-ahead-select';
 import { useTranslation } from '@/hooks/use-translation';
+import { notifyAmendmentTargetSet } from '@/utils/notification-helpers';
 
 interface AmendmentProcessFlowProps {
   amendmentId: string;
@@ -450,6 +451,18 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
             targetEvent: eventId,
           })
       );
+
+      // Notify about target being set
+      const targetNotifTxs = notifyAmendmentTargetSet({
+        senderId: user.id,
+        amendmentId,
+        amendmentTitle: amendment.title,
+        groupId,
+        groupName: groupData.name,
+        eventId,
+        eventTitle: eventData.title,
+      });
+      transactions.push(...targetNotifTxs);
 
       await db.transact(transactions);
 

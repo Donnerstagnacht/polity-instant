@@ -4,6 +4,7 @@
 
 import db, { id as generateId } from '../../../../../db/db';
 import { toast } from 'sonner';
+import { notifyAmendmentCommentAdded } from '@/utils/notification-helpers';
 
 /**
  * Create a new discussion thread
@@ -13,7 +14,8 @@ export async function createThread(
   title: string,
   description: string,
   userId: string,
-  fileId?: string
+  fileId?: string,
+  notificationContext?: { senderName: string; amendmentTitle: string }
 ): Promise<string> {
   const threadId = generateId();
   const now = Date.now();
@@ -36,6 +38,18 @@ export async function createThread(
     transactions.push(db.tx.threads[threadId].link({ file: fileId }));
   }
 
+  // Send notification to amendment collaborators
+  if (notificationContext) {
+    transactions.push(
+      ...notifyAmendmentCommentAdded({
+        senderId: userId,
+        senderName: notificationContext.senderName,
+        amendmentId,
+        amendmentTitle: notificationContext.amendmentTitle,
+      })
+    );
+  }
+
   await db.transact(transactions);
   return threadId;
 }
@@ -47,7 +61,8 @@ export async function createComment(
   threadId: string,
   text: string,
   userId: string,
-  parentCommentId?: string
+  parentCommentId?: string,
+  notificationContext?: { senderName: string; amendmentId: string; amendmentTitle: string }
 ): Promise<string> {
   const commentId = generateId();
   const transactions = [
@@ -64,6 +79,18 @@ export async function createComment(
   // Link to parent comment if this is a reply
   if (parentCommentId) {
     transactions.push(db.tx.comments[commentId].link({ parentComment: parentCommentId }));
+  }
+
+  // Send notification to amendment collaborators
+  if (notificationContext) {
+    transactions.push(
+      ...notifyAmendmentCommentAdded({
+        senderId: userId,
+        senderName: notificationContext.senderName,
+        amendmentId: notificationContext.amendmentId,
+        amendmentTitle: notificationContext.amendmentTitle,
+      })
+    );
   }
 
   await db.transact(transactions);

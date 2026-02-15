@@ -19,6 +19,8 @@ import { createThread, uploadThreadFile } from '../utils/thread-operations';
 interface CreateThreadDialogProps {
   amendmentId: string;
   userId?: string;
+  amendmentTitle?: string;
+  senderName?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -26,6 +28,8 @@ interface CreateThreadDialogProps {
 export function CreateThreadDialog({
   amendmentId,
   userId,
+  amendmentTitle,
+  senderName,
   open,
   onOpenChange,
 }: CreateThreadDialogProps) {
@@ -47,7 +51,14 @@ export function CreateThreadDialog({
       }
 
       // Create thread
-      await createThread(amendmentId, title, description, userId, uploadedFileId || undefined);
+      await createThread(
+        amendmentId,
+        title,
+        description,
+        userId,
+        uploadedFileId || undefined,
+        senderName && amendmentTitle ? { senderName, amendmentTitle } : undefined
+      );
 
       toast.success('Thread created successfully');
       setTitle('');
