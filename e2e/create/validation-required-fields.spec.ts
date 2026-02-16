@@ -1,5 +1,4 @@
-import { test, expect } from '@playwright/test';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Create Feature', () => {
   test('Validation - Required Fields', async ({ page }) => {
     // Navigate to create page
@@ -12,7 +11,6 @@ test.describe('Create Feature', () => {
       .first();
     await groupsOption.click();
 
-    await page.waitForTimeout(500);
 
     // Try to create without filling required fields
     const createButton = page
@@ -29,7 +27,6 @@ test.describe('Create Feature', () => {
       if (await createButton.isVisible()) break;
       if (await nextButton.isVisible()) {
         await nextButton.click();
-        await page.waitForTimeout(300);
       } else {
         break;
       }
@@ -40,7 +37,6 @@ test.describe('Create Feature', () => {
       await createButton.click();
     }
 
-    await page.waitForTimeout(500);
 
     // Verify error messages display
     const errorMessage = await page
@@ -73,7 +69,7 @@ test.describe('Create Feature', () => {
     }
 
     // Verify validation passes (either redirected or success message)
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('networkidle');
     const isRedirected = !page.url().includes('/create') || page.url().includes('/group/');
     const successMessage = await page
       .locator('text=created')

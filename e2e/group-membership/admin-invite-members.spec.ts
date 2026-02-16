@@ -1,17 +1,18 @@
 // spec: e2e/test-plans/group-membership-test-plan.md
-// seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Group Membership - Admin Invite', () => {
-  test('Admin can invite new members', async ({ page }) => {
-    // 1. Authenticate as admin user
-    await loginAsTestUser(page);
+  test('Admin can invite new members', async ({ authenticatedPage: page, groupFactory, userFactory }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const group = await groupFactory.createGroup(user.id, {
+      name: `Test Group ${Date.now()}`,
+    });
 
+    // 1. Authenticate as admin user
     // 2. Navigate to memberships management page
-    await page.goto(`/group/${TEST_ENTITY_IDS.testGroup1}/memberships`);
+    await page.goto(`/group/${group.id}/memberships`);
 
     // 3. Click "Invite Member" button
     const inviteButton = page.getByRole('button', { name: /invite member|invite/i });

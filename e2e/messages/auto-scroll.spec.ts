@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/chat-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Chat/Messages - Auto-Scroll Behavior', () => {
-  test('Message area scrolls to latest message on open', async ({ page }) => {
+  test('Message area scrolls to latest message on open', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 
@@ -39,7 +35,6 @@ test.describe('Chat/Messages - Auto-Scroll Behavior', () => {
           const lastMessage = messages.last();
 
           // Wait a bit for auto-scroll
-          await page.waitForTimeout(500);
 
           // Last message should be visible
           await expect(lastMessage).toBeVisible();
@@ -48,10 +43,8 @@ test.describe('Chat/Messages - Auto-Scroll Behavior', () => {
     }
   });
 
-  test('Auto-scroll on new message sent', async ({ page }) => {
+  test('Auto-scroll on new message sent', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 
@@ -90,10 +83,8 @@ test.describe('Chat/Messages - Auto-Scroll Behavior', () => {
     }
   });
 
-  test('Scroll container is present and functional', async ({ page }) => {
+  test('Scroll container is present and functional', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 

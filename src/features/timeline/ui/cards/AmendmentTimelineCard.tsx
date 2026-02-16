@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   ScrollText,
   ThumbsUp,
@@ -138,7 +138,6 @@ export function AmendmentTimelineCard({
   className,
 }: AmendmentTimelineCardProps) {
   const { t } = useTranslation();
-  const router = useRouter();
   const [collaborationOpen, setCollaborationOpen] = useState(false);
   const collaboration = useAmendmentCollaboration(amendment.id);
   const subscription = useSubscribeAmendment(amendment.id);
@@ -221,11 +220,6 @@ export function AmendmentTimelineCard({
       : []),
   ];
 
-  const handleDiscuss = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    router.push(`/amendment/${amendment.id}/discussions`);
-  };
-
   return (
     <TimelineCardBase
       contentType="amendment"
@@ -235,6 +229,7 @@ export function AmendmentTimelineCard({
       <TimelineCardHeader
         contentType="amendment"
         title={amendment.title}
+        href={`/amendment/${amendment.id}`}
         subtitle={amendment.groupName}
         subtitleHref={amendment.groupId ? `/group/${amendment.groupId}` : undefined}
         badge={
@@ -432,14 +427,11 @@ export function AmendmentTimelineCard({
         </Popover>
 
         {/* Discuss Button (links to discussion page) */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleDiscuss}
-          className="flex items-center gap-1.5"
-        >
-          <MessageSquare className="h-3.5 w-3.5" />
-          <span className="text-xs">{t('features.timeline.cards.discuss')}</span>
+        <Button variant="outline" size="sm" asChild className="flex items-center gap-1.5">
+          <Link href={`/amendment/${amendment.id}/discussions`} onClick={e => e.stopPropagation()}>
+            <MessageSquare className="h-3.5 w-3.5" />
+            <span className="text-xs">{t('features.timeline.cards.discuss')}</span>
+          </Link>
         </Button>
 
         {/* Subscribe Button */}

@@ -1,13 +1,10 @@
 // spec: e2e/test-plans/todos-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Todos - Search Todos', () => {
-  test('User searches for todos by title or description', async ({ page }) => {
+  test('User searches for todos by title or description', async ({ authenticatedPage: page }) => {
     // 1. Navigate to /todos
-    await loginAsTestUser(page);
     await page.goto('/todos');
 
     // 2. Locate search input field
@@ -18,13 +15,11 @@ test.describe('Todos - Search Todos', () => {
     await searchInput.first().fill('meeting');
 
     // 4. Wait for search results (debounced)
-    await page.waitForTimeout(400);
 
     // 5. Only matching todos are displayed
     // Results should contain the search term
     // 6. Clear search to show all todos
     await searchInput.first().clear();
-    await page.waitForTimeout(400);
 
     // All todos displayed again
   });

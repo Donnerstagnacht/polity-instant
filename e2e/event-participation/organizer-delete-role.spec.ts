@@ -1,17 +1,18 @@
 // spec: e2e/test-plans/event-participation-test-plan.md
-// seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Event Participation - Role Deletion', () => {
-  test('Organizer can delete role', async ({ page }) => {
-    // 1. Authenticate as organizer user
-    await loginAsTestUser(page);
+  test('Organizer can delete role', async ({ authenticatedPage: page, eventFactory, userFactory }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const event = await eventFactory.createEvent(user.id, {
+      title: `Test Event ${Date.now()}`,
+    });
 
+    // 1. Authenticate as organizer user
     // 2. Navigate to Roles tab
-    await page.goto(`/event/${TEST_ENTITY_IDS.testEvent1}/participants`);
+    await page.goto(`/event/${event.id}/participants`);
 
     const rolesTab = page.getByRole('tab', { name: /role/i });
     await rolesTab.click();

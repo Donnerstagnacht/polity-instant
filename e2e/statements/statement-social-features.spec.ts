@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/statements-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Statements - Statement Social Features', () => {
-  test('User shares a statement', async ({ page }) => {
+  test('User shares a statement', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to statement page
     await page.goto(`/statement/${TEST_ENTITY_IDS.STATEMENT}`);
     await page.waitForLoadState('networkidle');
@@ -21,7 +18,6 @@ test.describe('Statements - Statement Social Features', () => {
       await shareButton.click();
 
       // 4. View share options
-      await page.waitForTimeout(300);
 
       // 5. Share URL generated
       // Social media options available
@@ -30,10 +26,8 @@ test.describe('Statements - Statement Social Features', () => {
     }
   });
 
-  test('Statement displays engagement actions', async ({ page }) => {
+  test('Statement displays engagement actions', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to statement page
     await page.goto(`/statement/${TEST_ENTITY_IDS.STATEMENT}`);
     await page.waitForLoadState('networkidle');

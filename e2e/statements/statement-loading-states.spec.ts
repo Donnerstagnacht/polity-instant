@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/statements-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test } from '../fixtures/test-base';
 test.describe('Statements - Statement Loading States', () => {
-  test('Statement page displays loading indicator', async ({ page }) => {
+  test('Statement page displays loading indicator', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Intercept network requests to delay response
     await page.route('**/api/**', async route => {
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -25,7 +21,6 @@ test.describe('Statements - Statement Loading States', () => {
     });
 
     // 6. Smooth transition to loaded state
-    await page.waitForTimeout(500);
 
     // No layout shift
   });

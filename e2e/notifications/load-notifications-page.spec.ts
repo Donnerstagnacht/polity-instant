@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/notifications-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Notifications - Load Notifications Page', () => {
-  test('User accesses the notifications page', async ({ page }) => {
+  test('User accesses the notifications page', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to /notifications
     await page.goto('/notifications');
 
@@ -18,7 +14,7 @@ test.describe('Notifications - Load Notifications Page', () => {
     // 4. Tabs visible for "All", "Unread", "Read"
     await expect(page.getByRole('tab', { name: /all/i })).toBeVisible();
     await expect(page.getByRole('tab', { name: /unread/i })).toBeVisible();
-    await expect(page.getByRole('tab', { name: /read/i })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Read', exact: true })).toBeVisible();
 
     // 5. Verify page layout
     const allTab = page.getByRole('tab', { name: /all/i });

@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/profile-feature-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { navigateToOwnProfile } from '../helpers/navigation';
 
 test.describe('Edit Profile Information', () => {
-  test('Navigate to Profile Edit Page', async ({ page }) => {
+  test('Navigate to Profile Edit Page', async ({ authenticatedPage: page }) => {
     // 1. Use loginAsTestUser(page) to authenticate
-    await loginAsTestUser(page);
-
     // 2. Use navigateToOwnProfile(page) helper
     await navigateToOwnProfile(page);
 

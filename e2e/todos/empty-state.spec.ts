@@ -1,13 +1,10 @@
 // spec: e2e/test-plans/todos-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Todos - Empty State', () => {
-  test('Todos page displays appropriate empty state when no todos exist', async ({ page }) => {
+  test('Todos page displays appropriate empty state when no todos exist', async ({ authenticatedPage: page }) => {
     // 1. Navigate to /todos as user with no todos
-    await loginAsTestUser(page);
     await page.goto('/todos');
 
     // 2. Check if there are any todos
@@ -27,7 +24,7 @@ test.describe('Todos - Empty State', () => {
         .getByText(/no todos/i)
         .or(page.getByText(/no tasks/i))
         .or(page.getByText(/create your first todo/i));
-      await expect(emptyState).toBeVisible();
+      await expect(emptyState.first()).toBeVisible();
 
       // 4. Call-to-action button to create first todo
       const createButton = page

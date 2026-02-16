@@ -1,14 +1,11 @@
 // spec: e2e/test-plans/amendment-collaboration-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Amendment Collaboration', () => {
-  test('Non-collaborator cannot access collaboration management', async ({ page }) => {
-    await loginAsTestUser(page);
-
+  test('Non-collaborator cannot access collaboration management', async ({ authenticatedPage: page }) => {
     // 1. Non-collaborator tries to access /amendment/[id]/collaborators
     await page.goto(`/amendment/${TEST_ENTITY_IDS.testAmendment2}/collaborators`);
 

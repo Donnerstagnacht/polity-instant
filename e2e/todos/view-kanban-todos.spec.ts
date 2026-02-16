@@ -1,17 +1,15 @@
 // spec: e2e/test-plans/todos-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Todos - View Todos in Kanban View', () => {
-  test('User views todos organized in kanban columns by status', async ({ page }) => {
+  test('User views todos organized in kanban columns by status', async ({ authenticatedPage: page }) => {
     // 1. Navigate to /todos
-    await loginAsTestUser(page);
     await page.goto('/todos');
 
-    // 2. Select Kanban view tab
-    await page.getByRole('tab', { name: /kanban/i }).click();
+    // 2. Kanban is the default view, no need to click a tab
+    // The view toggle uses icon-only buttons, not tabs
+    await page.waitForLoadState('domcontentloaded');
 
     // 3. Kanban board displays with status columns
     const kanbanView = page

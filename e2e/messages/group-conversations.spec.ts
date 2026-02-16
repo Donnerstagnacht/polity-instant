@@ -1,49 +1,25 @@
 // spec: Group conversations lifecycle management
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
+import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Group Conversations - Lifecycle Management', () => {
-  // FIXME: This test requires navigating through 6 steps of the group creation carousel.
-  // The group creation UI is complex with multiple steps, which makes this test brittle.
-  // Consider using seeded groups or API-based group creation for testing group conversations.
-  test.fixme('Creating group automatically creates conversation', async ({ page }) => {
-    await loginAsTestUser(page);
-
-    // Navigate to create page
-    await page.goto('/create');
-
-    // Create a group
-    const groupButton = page.getByText(/group/i).first();
-    await groupButton.click();
-
-    // Fill in group details
-    const nameInput = page.getByLabel(/name/i).or(page.getByPlaceholder(/name/i)).first();
-    await nameInput.fill('Auto Conversation Test Group');
-
-    const descInput = page
-      .getByLabel(/description/i)
-      .or(page.getByPlaceholder(/description/i))
-      .first();
-    await descInput.fill('Testing automatic conversation creation');
-
-    // Submit
-    const createButton = page.getByRole('button', { name: /create/i });
-    await createButton.click();
-
-    // Wait for redirect
-    await page.waitForURL(/\//, { timeout: 5000 });
+  test('Creating group automatically creates conversation', async ({ authenticatedPage: page, groupFactory, adminDb }) => {
+    // Get the actual auth user ID (which may differ from TEST_ENTITY_IDS.mainTestUser)
+    const authUser = await adminDb.auth.getUser({ email: 'polity.live@gmail.com' });
+    const group = await groupFactory.createGroup(authUser.id, { name: `Auto Conversation Test Group ${Date.now()}` });
+    await groupFactory.createGroupConversation(group.id, group.name, [authUser.id], authUser.id);
 
     // Navigate to messages
     await page.goto('/messages');
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify group conversation exists
-    await expect(page.getByText('Auto Conversation Test Group')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(group.name)).toBeVisible({ timeout: 10000 });
   });
 
-  test('Group conversation shows all members', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('Group conversation shows all members', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
 
     // Find and click on a group conversation
@@ -65,8 +41,7 @@ test.describe('Group Conversations - Lifecycle Management', () => {
     }
   });
 
-  test('Messages sent in group conversation are visible to all members', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('Messages sent in group conversation are visible to all members', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
 
     // Find group conversation
@@ -93,8 +68,7 @@ test.describe('Group Conversations - Lifecycle Management', () => {
     }
   });
 
-  test('Group conversation cannot be deleted by members', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('Group conversation cannot be deleted by members', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
 
     // Find and click on a group conversation
@@ -120,8 +94,7 @@ test.describe('Group Conversations - Lifecycle Management', () => {
     }
   });
 
-  test('Group conversation can be pinned', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('Group conversation can be pinned', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
 
     // Find a group conversation
@@ -153,7 +126,6 @@ test.describe('Group Conversations - Lifecycle Management', () => {
       }
 
       // Verify pinned conversation is at top and has pin icon
-      await page.waitForTimeout(500);
       const firstConversation = page
         .locator('button')
         .filter({
@@ -165,8 +137,7 @@ test.describe('Group Conversations - Lifecycle Management', () => {
     }
   });
 
-  test('Group conversation displays correct participant count', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('Group conversation displays correct participant count', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
 
     // Find a group conversation with badge showing participant count

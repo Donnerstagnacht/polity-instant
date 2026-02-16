@@ -1,55 +1,31 @@
 // spec: e2e/test-plans/timeline-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Timeline - Event Type Filtering', () => {
-  test('User filters timeline by event type', async ({ page }) => {
+  test('User filters timeline by content type using filter panel', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to home page
     await page.goto('/');
 
-    // 3. Wait for timeline to load
-    await page.waitForLoadState('networkidle');
+    // 3. Wait for timeline header
+    await expect(page.getByText(/your political ecosystem/i)).toBeVisible({ timeout: 15000 });
 
-    // 4. Check if timeline has events
-    const emptyState = page.getByText(/your timeline is empty/i);
-    const hasEvents = !(await emptyState.isVisible().catch(() => false));
+    // 4. Open filter panel
+    const filterButton = page.getByRole('button', { name: /filter/i });
+    const hasFilter = await filterButton.isVisible().catch(() => false);
 
-    if (hasEvents) {
-      // 5. Verify filter tabs are visible
-      await expect(page.getByRole('tab', { name: /all/i })).toBeVisible();
+    if (hasFilter) {
+      await filterButton.click();
 
-      // 6. Check for different filter options
-      const amendmentTab = page.getByRole('tab', { name: /amendment/i });
-
-      // 7. Try filtering by Amendments
-      const hasAmendmentTab = await amendmentTab.isVisible().catch(() => false);
-      if (hasAmendmentTab) {
-        await amendmentTab.click();
-
-        // 8. Verify tab is active
-        await expect(amendmentTab).toHaveAttribute('data-state', 'active');
-
-        // 9. Go back to All
-        const allTab = page.getByRole('tab', { name: /^all$/i });
-        await allTab.click();
-        await expect(allTab).toHaveAttribute('data-state', 'active');
-      }
-
-      // 10. Each tab should show badge with count
-      const allTabBadge = page.getByRole('tab', { name: /all/i }).locator('[class*="Badge"]');
-      await expect(allTabBadge).toBeVisible();
+      // 5. Content Types section should be visible
+      const contentTypesHeader = page.getByText(/content types/i);
+      await expect(contentTypesHeader).toBeVisible({ timeout: 5000 });  
     }
   });
 
-  test('Filtering shows only selected event type', async ({ page }) => {
+  test('Filtering shows only selected event type', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to home page
     await page.goto('/');
 

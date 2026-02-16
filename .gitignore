@@ -138,6 +138,7 @@ dist/
 # Playwright
 /blob-report/
 /playwright/.auth/
+/e2e/.auth/
 
 # PWA files
 **/public/sw.js

@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/agenda-items-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Agenda Items - Error Handling', () => {
-  test('Handle create agenda item validation errors', async ({ page }) => {
+  test('Handle create agenda item validation errors', async ({ authenticatedPage: page }) => {
     // 1. Login as organizer
-    await loginAsTestUser(page);
-
     // 2. Navigate to event agenda
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
     await page.waitForLoadState('networkidle');
@@ -30,7 +27,6 @@ test.describe('Agenda Items - Error Handling', () => {
       await createButton.click();
 
       // 5. Validation error displayed
-      await page.waitForTimeout(300);
 
       // Error message shown (e.g., "Title is required")
       page.getByText(/required|error/i);
@@ -40,10 +36,8 @@ test.describe('Agenda Items - Error Handling', () => {
     }
   });
 
-  test('Handle agenda item not found error', async ({ page }) => {
+  test('Handle agenda item not found error', async ({ authenticatedPage: page }) => {
     // 1. Login as user
-    await loginAsTestUser(page);
-
     // 2. Navigate to non-existent agenda item
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda/invalid-id`);
 
@@ -55,10 +49,8 @@ test.describe('Agenda Items - Error Handling', () => {
     page.getByText(/not found|doesn't exist/i);
   });
 
-  test('Handle unauthorized access to edit agenda', async ({ page }) => {
+  test('Handle unauthorized access to edit agenda', async ({ authenticatedPage: page }) => {
     // 1. Login as non-organizer
-    await loginAsTestUser(page);
-
     // 2. Navigate to event agenda
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
     await page.waitForLoadState('networkidle');
@@ -77,10 +69,8 @@ test.describe('Agenda Items - Error Handling', () => {
     // Clear error explanation
   });
 
-  test('Handle network error during agenda update', async ({ page }) => {
+  test('Handle network error during agenda update', async ({ authenticatedPage: page }) => {
     // 1. Login as organizer
-    await loginAsTestUser(page);
-
     // 2. Navigate to event agenda
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
     await page.waitForLoadState('networkidle');
@@ -106,7 +96,6 @@ test.describe('Agenda Items - Error Handling', () => {
       await createButton.click();
 
       // 5. Error message shown
-      await page.waitForTimeout(500);
 
       // "Network error" or "Connection failed"
       // Option to retry

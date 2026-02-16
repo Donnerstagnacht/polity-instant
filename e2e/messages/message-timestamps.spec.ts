@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/chat-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Chat/Messages - Message Timestamps', () => {
-  test('Messages display relative timestamps', async ({ page }) => {
+  test('Messages display relative timestamps', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 
@@ -48,10 +44,8 @@ test.describe('Chat/Messages - Message Timestamps', () => {
     }
   });
 
-  test('Conversation preview shows last message timestamp', async ({ page }) => {
+  test('Conversation preview shows last message timestamp', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 

@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/search-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Search - Type-Ahead Search', () => {
-  test('Results update as user types', async ({ page }) => {
+  test('Results update as user types', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to search page
     await page.goto('/search');
 
@@ -17,7 +13,6 @@ test.describe('Search - Type-Ahead Search', () => {
     await searchInput.fill('test');
 
     // 4. Wait for debounce (300ms)
-    await page.waitForTimeout(500);
 
     // 5. URL updates with query parameter
     await expect(page).toHaveURL(/q=test/);
@@ -34,10 +29,8 @@ test.describe('Search - Type-Ahead Search', () => {
     expect(hasResultsText).toBeDefined();
   });
 
-  test('Search query persists in URL', async ({ page }) => {
+  test('Search query persists in URL', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to search with query parameter
     await page.goto('/search?q=democracy');
 

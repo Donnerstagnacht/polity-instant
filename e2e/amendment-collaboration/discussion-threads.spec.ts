@@ -1,15 +1,16 @@
 // spec: e2e/test-plans/amendment-collaboration-test-plan.md
-// seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Amendment Collaboration', () => {
-  test('Collaborators can discuss suggestions', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('Collaborators can discuss suggestions', async ({ authenticatedPage: page, amendmentFactory, userFactory }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const amendment = await amendmentFactory.createAmendment(user.id, {
+      title: `Test Amendment ${Date.now()}`,
+    });
 
-    await page.goto(`/amendment/${TEST_ENTITY_IDS.testAmendment1}/text`);
+    await page.goto(`/amendment/${amendment.id}/text`);
 
     // 1. User makes suggestion
     const editor = page.locator('[contenteditable="true"]').first();

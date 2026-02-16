@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/profile-feature-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { navigateToOwnProfile } from '../helpers/navigation';
 
 test.describe('Navigation and URL Handling', () => {
-  test('Direct URL Access to Edit Page', async ({ page }) => {
+  test('Direct URL Access to Edit Page', async ({ authenticatedPage: page }) => {
     // 1. Authenticate using loginAsTestUser(page)
-    await loginAsTestUser(page);
-
     // 2. Get current user ID from URL after navigating to profile
     await navigateToOwnProfile(page);
     const currentUrl = page.url();

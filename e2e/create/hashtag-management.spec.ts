@@ -1,5 +1,4 @@
-import { test, expect } from '@playwright/test';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Create Feature', () => {
   test('Hashtag Management', async ({ page }) => {
     // Navigate to create page
@@ -12,7 +11,6 @@ test.describe('Create Feature', () => {
       .first();
     await groupsOption.click();
 
-    await page.waitForTimeout(500);
 
     // Navigate to hashtag field (may need to advance carousel)
     const nextButton = page
@@ -29,7 +27,6 @@ test.describe('Create Feature', () => {
       if (await hashtagInput.isVisible()) break;
       if (await nextButton.isVisible()) {
         await nextButton.click();
-        await page.waitForTimeout(300);
       } else {
         break;
       }
@@ -40,7 +37,6 @@ test.describe('Create Feature', () => {
       await hashtagInput.fill('#technology');
       await page.keyboard.press('Enter');
 
-      await page.waitForTimeout(300);
 
       // Verify hashtag appears as chip/badge
       const hashtagChip = page
@@ -56,7 +52,6 @@ test.describe('Create Feature', () => {
       await hashtagInput.fill('#berlin');
       await page.keyboard.press('Enter');
 
-      await page.waitForTimeout(300);
 
       // Verify multiple hashtags
       const innovationTag = await page
@@ -75,7 +70,6 @@ test.describe('Create Feature', () => {
         .first();
       if (await removeButton.isVisible()) {
         await removeButton.click();
-        await page.waitForTimeout(300);
       }
 
       // Verify at least one functionality worked

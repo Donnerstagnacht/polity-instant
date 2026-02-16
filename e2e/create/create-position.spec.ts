@@ -1,5 +1,4 @@
-import { test, expect } from '@playwright/test';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Create Feature', () => {
   test('Create Position', async ({ page }) => {
     // Navigate to create page
@@ -12,7 +11,6 @@ test.describe('Create Feature', () => {
       .first();
     await positionsOption.click();
 
-    await page.waitForTimeout(500);
 
     // Enter position name
     const nameInput = page
@@ -68,7 +66,7 @@ test.describe('Create Feature', () => {
     await createButton.click();
 
     // Wait for success
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('networkidle');
 
     // Verify success
     const successMessage = await page

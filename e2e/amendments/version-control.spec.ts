@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/amendments-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Amendments - Version Control', () => {
-  test('Save version of amendment', async ({ page }) => {
+  test('Save version of amendment', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user (author)
-    await loginAsTestUser(page);
-
     // 2. Navigate to amendment page
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');
@@ -35,7 +32,6 @@ test.describe('Amendments - Version Control', () => {
         await confirmButton.click();
 
         // 7. Version created with snapshot
-        await page.waitForTimeout(500);
 
         // Timestamp recorded
         // Version appears in history
@@ -43,10 +39,8 @@ test.describe('Amendments - Version Control', () => {
     }
   });
 
-  test('View version history', async ({ page }) => {
+  test('View version history', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to amendment
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');
@@ -67,10 +61,8 @@ test.describe('Amendments - Version Control', () => {
     }
   });
 
-  test('Restore previous version', async ({ page }) => {
+  test('Restore previous version', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user (author)
-    await loginAsTestUser(page);
-
     // 2. Navigate to amendment
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');
@@ -96,7 +88,6 @@ test.describe('Amendments - Version Control', () => {
           await confirmButton.click();
 
           // 7. Document reverted to selected version
-          await page.waitForTimeout(500);
 
           // New version created (restore event)
           // All collaborators notified

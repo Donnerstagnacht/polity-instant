@@ -1,13 +1,10 @@
 // spec: e2e/test-plans/calendar-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test } from '../fixtures/test-base';
 test.describe('Calendar - View Event Statistics', () => {
-  test('User views statistics showing total events and breakdown by type', async ({ page }) => {
+  test('User views statistics showing total events and breakdown by type', async ({ authenticatedPage: page }) => {
     // 1. Navigate to /calendar
-    await loginAsTestUser(page);
     await page.goto('/calendar');
 
     // 2. Locate stats section on the page

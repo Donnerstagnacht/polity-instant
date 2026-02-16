@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/notifications-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Notifications - Loading States', () => {
-  test('Loading state shown while fetching notifications', async ({ page }) => {
+  test('Loading state shown while fetching notifications', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to notifications page
     await page.goto('/notifications');
 
@@ -22,7 +18,7 @@ test.describe('Notifications - Loading States', () => {
     }
 
     // 5. Wait for content to load
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('networkidle');
 
     // 6. Verify page loaded successfully
     await expect(page.getByRole('heading', { name: /notifications/i })).toBeVisible();
@@ -31,10 +27,8 @@ test.describe('Notifications - Loading States', () => {
     await expect(page.getByRole('tab', { name: /all/i })).toBeVisible();
   });
 
-  test('Page renders correctly after loading', async ({ page }) => {
+  test('Page renders correctly after loading', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to notifications page
     await page.goto('/notifications');
 
@@ -61,15 +55,13 @@ test.describe('Notifications - Loading States', () => {
     expect(hasNotifications || hasEmptyState).toBeTruthy();
   });
 
-  test('No loading state stuck on screen', async ({ page }) => {
+  test('No loading state stuck on screen', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to notifications page
     await page.goto('/notifications');
 
     // 3. Wait for loading to complete
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle');
 
     // 4. Verify loading text is not stuck on screen
     const loadingText = page.getByText(/loading notifications/i);

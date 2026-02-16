@@ -1,14 +1,12 @@
 // spec: e2e/test-plans/profile-feature-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { navigateToProfileEdit } from '../helpers/navigation';
 
 test.describe('Edit Profile Information', () => {
-  test('Save Profile Changes', async ({ page }) => {
+  test('Save Profile Changes', async ({ authenticatedPage: page }) => {
     // 1. Authenticate and navigate to edit page
-    await loginAsTestUser(page);
     await navigateToProfileEdit(page);
 
     // 2. Fill in basic information
@@ -32,7 +30,7 @@ test.describe('Edit Profile Information', () => {
     await saveButton.click();
 
     // 5. Wait a moment for save to complete
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle');
 
     // NOTE: Currently fails with "Permission denied: not perms-pass?" error
     // The UI accepts the input and attempts to save, but InstantDB rejects the update

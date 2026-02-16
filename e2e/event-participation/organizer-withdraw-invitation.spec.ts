@@ -1,17 +1,21 @@
 // spec: e2e/test-plans/event-participation-test-plan.md
-// seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Event Participation - Organizer Withdraw Invitation', () => {
-  test('Organizer can withdraw invitation', async ({ page }) => {
-    // 1. Authenticate as organizer user
-    await loginAsTestUser(page);
+  test('Organizer can withdraw invitation', async ({ authenticatedPage: page, eventFactory, userFactory }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const event = await eventFactory.createEvent(user.id, {
+      title: `Test Event ${Date.now()}`,
+    });
+    // Create an invited participant
+    const invited = await userFactory.createUser();
+    await eventFactory.addParticipant(event.id, invited.id, event.participantRoleId, 'invited');
 
+    // 1. Authenticate as organizer user
     // 2. Navigate to participants page
-    await page.goto(`/event/${TEST_ENTITY_IDS.testEvent1}/participants`);
+    await page.goto(`/event/${event.id}/participants`);
 
     // 3. Find pending invitations section
     const withdrawButton = page

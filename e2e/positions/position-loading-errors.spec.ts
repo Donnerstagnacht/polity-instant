@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/positions-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Positions - Loading States and Error Handling', () => {
-  test('Display loading state while fetching positions', async ({ page }) => {
+  test('Display loading state while fetching positions', async ({ authenticatedPage: page }) => {
     // 1. Login as user
-    await loginAsTestUser(page);
-
     // 2. Navigate to group page
     const navigationPromise = page.goto(`/group/${TEST_ENTITY_IDS.GROUP}`);
 
@@ -25,17 +22,14 @@ test.describe('Positions - Loading States and Error Handling', () => {
       await positionsTab.click();
 
       // 4. Positions displayed when loaded
-      await page.waitForTimeout(500);
 
       // Loading state replaced with content
       // Smooth transition
     }
   });
 
-  test('Handle create position validation errors', async ({ page }) => {
+  test('Handle create position validation errors', async ({ authenticatedPage: page }) => {
     // 1. Login as admin
-    await loginAsTestUser(page);
-
     // 2. Navigate to group
     await page.goto(`/group/${TEST_ENTITY_IDS.GROUP}`);
     await page.waitForLoadState('networkidle');
@@ -56,7 +50,6 @@ test.describe('Positions - Loading States and Error Handling', () => {
       await submitButton.click();
 
       // 5. Validation error displayed
-      await page.waitForTimeout(300);
 
       // Error message shown (e.g., "Title is required")
       // Form not submitted
@@ -64,10 +57,8 @@ test.describe('Positions - Loading States and Error Handling', () => {
     }
   });
 
-  test('Handle network error during position creation', async ({ page }) => {
+  test('Handle network error during position creation', async ({ authenticatedPage: page }) => {
     // 1. Login as admin
-    await loginAsTestUser(page);
-
     // 2. Navigate to group
     await page.goto(`/group/${TEST_ENTITY_IDS.GROUP}`);
     await page.waitForLoadState('networkidle');
@@ -93,7 +84,6 @@ test.describe('Positions - Loading States and Error Handling', () => {
       await submitButton.click();
 
       // 5. Error message shown
-      await page.waitForTimeout(500);
 
       // "Network error" or "Connection failed"
       // Option to retry
@@ -104,10 +94,8 @@ test.describe('Positions - Loading States and Error Handling', () => {
     }
   });
 
-  test('Handle unauthorized access to create position', async ({ page }) => {
+  test('Handle unauthorized access to create position', async ({ authenticatedPage: page }) => {
     // 1. Login as non-admin
-    await loginAsTestUser(page);
-
     // 2. Navigate to group
     await page.goto(`/group/${TEST_ENTITY_IDS.GROUP}`);
     await page.waitForLoadState('networkidle');

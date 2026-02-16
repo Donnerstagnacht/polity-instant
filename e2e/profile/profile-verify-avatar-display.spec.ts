@@ -1,15 +1,13 @@
 // spec: e2e/test-plans/profile-feature-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/test-base';
 import path from 'path';
-import { loginAsTestUser } from '../helpers/auth';
 import { navigateToOwnProfile, navigateToProfileEdit } from '../helpers/navigation';
 
 test.describe('Responsive Behavior and Visual Elements', () => {
-  test('Update Profile Avatar and Verify Display', async ({ page }) => {
+  test('Update Profile Avatar and Verify Display', async ({ authenticatedPage: page }) => {
     // 1. Authenticate and navigate to profile edit page
-    await loginAsTestUser(page);
     await navigateToProfileEdit(page);
 
     // 2. Upload new avatar
@@ -34,7 +32,7 @@ test.describe('Responsive Behavior and Visual Elements', () => {
 
     // Wait for upload to process
     // NOTE: Upload fails here with "Permission denied: not has-storage-permission?"
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('networkidle');
 
     // 3. Save changes
     const saveButton = page.locator('button:has-text("Save")').or(
@@ -43,7 +41,7 @@ test.describe('Responsive Behavior and Visual Elements', () => {
     await saveButton.click();
 
     // Wait for save to complete
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('networkidle');
 
     // 4. Navigate to profile view to verify avatar display
     await navigateToOwnProfile(page);

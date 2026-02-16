@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/change-requests-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Change Requests - Create Basic Change Request', () => {
-  test('Create change request with required fields', async ({ page }) => {
+  test('Create change request with required fields', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user (collaborator)
-    await loginAsTestUser(page);
-
     // 2. Navigate to amendment change requests
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');
@@ -45,7 +42,6 @@ test.describe('Change Requests - Create Basic Change Request', () => {
       await submitButton.click();
 
       // 9. Change request created
-      await page.waitForTimeout(500);
 
       // Status: "pending"
       // Appears in change requests list
@@ -53,10 +49,8 @@ test.describe('Change Requests - Create Basic Change Request', () => {
     }
   });
 
-  test('Create change request with full details', async ({ page }) => {
+  test('Create change request with full details', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as collaborator
-    await loginAsTestUser(page);
-
     // 2. Navigate to amendment
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');
@@ -97,7 +91,6 @@ test.describe('Change Requests - Create Basic Change Request', () => {
       await submitButton.click();
 
       // 6. All fields saved correctly
-      await page.waitForTimeout(500);
 
       // Voting configured
       // Collaborators notified

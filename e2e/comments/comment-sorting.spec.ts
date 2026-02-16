@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/comments-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Comments - Comment Sorting', () => {
-  test('Sort by votes (top comments)', async ({ page }) => {
+  test('Sort by votes (top comments)', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to blog with multiple comments
     await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
     await page.waitForLoadState('networkidle');
@@ -25,7 +22,6 @@ test.describe('Comments - Comment Sorting', () => {
       await votesOption.click();
 
       // 5. View sorted list
-      await page.waitForTimeout(300);
 
       // Highest scored comments first
       // Score calculation accurate
@@ -34,10 +30,8 @@ test.describe('Comments - Comment Sorting', () => {
     }
   });
 
-  test('Sort by date (newest first)', async ({ page }) => {
+  test('Sort by date (newest first)', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to blog
     await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
     await page.waitForLoadState('networkidle');
@@ -53,7 +47,6 @@ test.describe('Comments - Comment Sorting', () => {
       await dateOption.click();
 
       // 5. View sorted list
-      await page.waitForTimeout(300);
 
       // Newest comments first
       // Based on createdAt timestamp
@@ -62,10 +55,8 @@ test.describe('Comments - Comment Sorting', () => {
     }
   });
 
-  test('Default sort order', async ({ page }) => {
+  test('Default sort order', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to entity with comments
     await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
     await page.waitForLoadState('networkidle');

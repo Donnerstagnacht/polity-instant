@@ -1,8 +1,7 @@
 // spec: e2e/test-plans/profile-unauthenticated-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Access Control for Edit Pages', () => {
   test('Verify No Edit Button on Public Profile (If Accessible)', async ({ page }) => {
     // 1. Do NOT authenticate

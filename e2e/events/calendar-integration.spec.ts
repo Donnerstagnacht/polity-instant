@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/events-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Events - Event Calendar Integration', () => {
-  test('Participated event appears in calendar', async ({ page }) => {
+  test('Participated event appears in calendar', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to /calendar
     await page.goto('/calendar');
 
@@ -35,10 +31,8 @@ test.describe('Events - Event Calendar Integration', () => {
     }
   });
 
-  test('Multi-day event spans multiple calendar days', async ({ page }) => {
+  test('Multi-day event spans multiple calendar days', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to /calendar
     await page.goto('/calendar');
 
@@ -46,7 +40,6 @@ test.describe('Events - Event Calendar Integration', () => {
     const weekTab = page.getByRole('tab', { name: /week/i });
     if ((await weekTab.count()) > 0) {
       await weekTab.click();
-      await page.waitForTimeout(500);
     }
 
     // 4. Check for multi-day event display

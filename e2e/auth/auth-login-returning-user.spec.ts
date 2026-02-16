@@ -1,7 +1,7 @@
 // spec: e2e/auth/magic-link-auth-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/test-base';
 import { generateTestMagicCode } from '../helpers/magic-code-helper';
 
 test.describe('Returning User Authentication', () => {

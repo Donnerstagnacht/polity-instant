@@ -1,17 +1,18 @@
 // spec: e2e/test-plans/event-participation-test-plan.md
-// seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Event Participation - Organizer Invite', () => {
-  test('Organizer can invite participants', async ({ page }) => {
-    // 1. Authenticate as organizer user
-    await loginAsTestUser(page);
+  test('Organizer can invite participants', async ({ authenticatedPage: page, eventFactory, userFactory }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const event = await eventFactory.createEvent(user.id, {
+      title: `Test Event ${Date.now()}`,
+    });
 
+    // 1. Authenticate as organizer user
     // 2. Navigate to participants management page
-    await page.goto(`/event/${TEST_ENTITY_IDS.testEvent1}/participants`);
+    await page.goto(`/event/${event.id}/participants`);
 
     // 3. Click "Invite Participant" button
     const inviteButton = page.getByRole('button', { name: /invite participant|invite/i });

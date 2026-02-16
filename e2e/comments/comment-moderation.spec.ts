@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/comments-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Comments - Comment Editing and Deletion', () => {
-  test('Edit own comment', async ({ page }) => {
+  test('Edit own comment', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to blog
     await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
     await page.waitForLoadState('networkidle');
@@ -36,7 +33,6 @@ test.describe('Comments - Comment Editing and Deletion', () => {
         await saveButton.click();
 
         // 7. Comment text updated
-        await page.waitForTimeout(500);
 
         // UpdatedAt timestamp changed
         // "Edited" indicator displayed
@@ -47,10 +43,8 @@ test.describe('Comments - Comment Editing and Deletion', () => {
     }
   });
 
-  test('Cannot edit others comments', async ({ page }) => {
+  test('Cannot edit others comments', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to blog
     await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
     await page.waitForLoadState('networkidle');
@@ -69,10 +63,8 @@ test.describe('Comments - Comment Editing and Deletion', () => {
     }
   });
 
-  test('Delete own comment', async ({ page }) => {
+  test('Delete own comment', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to blog
     await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
     await page.waitForLoadState('networkidle');
@@ -89,7 +81,6 @@ test.describe('Comments - Comment Editing and Deletion', () => {
         await confirmButton.click();
 
         // 5. Comment deleted
-        await page.waitForTimeout(500);
 
         // Removed from list
         // Replies handled (deleted or orphaned)
@@ -98,10 +89,8 @@ test.describe('Comments - Comment Editing and Deletion', () => {
     }
   });
 
-  test('Cannot delete others comments', async ({ page }) => {
+  test('Cannot delete others comments', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to blog
     await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
     await page.waitForLoadState('networkidle');
@@ -120,10 +109,8 @@ test.describe('Comments - Comment Editing and Deletion', () => {
     }
   });
 
-  test('Delete comment with replies', async ({ page }) => {
+  test('Delete comment with replies', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to blog
     await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
     await page.waitForLoadState('networkidle');
@@ -142,7 +129,6 @@ test.describe('Comments - Comment Editing and Deletion', () => {
         await confirmButton.click();
 
         // 5. Consistent handling
-        await page.waitForTimeout(500);
 
         // User choice respected
       }

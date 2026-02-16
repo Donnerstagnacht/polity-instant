@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/election-candidates-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Election Candidates - Vote Counting and Results', () => {
-  test('Display vote count', async ({ page }) => {
+  test('Display vote count', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to election
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/stream`);
     await page.waitForLoadState('networkidle');
@@ -25,10 +22,8 @@ test.describe('Election Candidates - Vote Counting and Results', () => {
     }
   });
 
-  test('Calculate vote percentage', async ({ page }) => {
+  test('Calculate vote percentage', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to election with results
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/stream`);
     await page.waitForLoadState('networkidle');
@@ -47,10 +42,8 @@ test.describe('Election Candidates - Vote Counting and Results', () => {
     }
   });
 
-  test('Display election results', async ({ page }) => {
+  test('Display election results', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Voting ends
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/stream`);
     await page.waitForLoadState('networkidle');

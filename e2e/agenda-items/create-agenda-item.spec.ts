@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/agenda-items-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Agenda Items - Create Simple Agenda Item', () => {
-  test('Event organizer creates agenda item', async ({ page }) => {
+  test('Event organizer creates agenda item', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user (event organizer)
-    await loginAsTestUser(page);
-
     // 2. Navigate to event agenda management
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
     await page.waitForLoadState('networkidle');
@@ -18,7 +15,6 @@ test.describe('Agenda Items - Create Simple Agenda Item', () => {
     const agendaTab = page.getByRole('tab', { name: /agenda/i });
     if ((await agendaTab.count()) > 0) {
       await agendaTab.click();
-      await page.waitForTimeout(300);
     }
 
     // 4. Click "Add Agenda Item" button
@@ -46,7 +42,6 @@ test.describe('Agenda Items - Create Simple Agenda Item', () => {
       await createButton.click();
 
       // 9. Agenda item created
-      await page.waitForTimeout(500);
 
       // Item appears in agenda list
       await expect(page.getByText('Welcome and Introduction')).toBeVisible({ timeout: 3000 });

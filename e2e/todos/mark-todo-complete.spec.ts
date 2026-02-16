@@ -1,13 +1,10 @@
 // spec: e2e/test-plans/todos-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test } from '../fixtures/test-base';
 test.describe('Todos - Mark Todo as Complete', () => {
-  test('User marks a todo item as complete', async ({ page }) => {
+  test('User marks a todo item as complete', async ({ authenticatedPage: page }) => {
     // 1. Navigate to /todos
-    await loginAsTestUser(page);
     await page.goto('/todos');
 
     // 2. Locate a todo item that is not complete
@@ -28,7 +25,6 @@ test.describe('Todos - Mark Todo as Complete', () => {
     }
 
     // 4. Todo status changes to "Done"
-    await page.waitForTimeout(300);
 
     // 5. Todo may move to "Done" column in Kanban view
     // Verify status change or visual indicator

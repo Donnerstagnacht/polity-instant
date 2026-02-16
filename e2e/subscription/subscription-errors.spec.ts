@@ -1,8 +1,7 @@
 // spec: e2e/test-plans/subscription-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 import {
   navigateToUserProfile,
@@ -11,15 +10,12 @@ import {
   ensureNotSubscribed,
 } from '../helpers/subscription';
 
-const TEST_USER_ID = TEST_ENTITY_IDS.testUser1;
-
 test.describe('Subscription Error Handling', () => {
-  test('Subscription errors are handled', async ({ page }) => {
-    // 1. Authenticate as test user
-    await loginAsTestUser(page);
+  test('Subscription errors are handled', async ({ authenticatedPage: page, userFactory }) => {
+    await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const otherUser = await userFactory.createUser();
 
-    // 2. Navigate to user profile
-    await navigateToUserProfile(page, TEST_USER_ID);
+    await navigateToUserProfile(page, otherUser.id);
 
     // 3. Ensure starting unsubscribed state
     await ensureNotSubscribed(page);
@@ -31,7 +27,7 @@ test.describe('Subscription Error Handling', () => {
     await clickSubscribeButton(page);
 
     // 6. Wait a moment for error to occur
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(2000);
 
     // 7. Go back online
     await page.context().setOffline(false);

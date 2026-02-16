@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/statements-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Statements - Statement Error Handling', () => {
-  test('Statement not found displays error message', async ({ page }) => {
+  test('Statement not found displays error message', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to invalid statement ID
     await page.goto('/statement/non-existent-statement-12345');
 
@@ -27,10 +23,8 @@ test.describe('Statements - Statement Error Handling', () => {
     // No broken UI
   });
 
-  test('Permission denied for private statement displays error', async ({ page }) => {
+  test('Permission denied for private statement displays error', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Attempt to access private statement (if available)
     await page.goto('/statement/private-statement-id');
 

@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/agenda-items-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Agenda Items - Agenda Scheduling', () => {
-  test('Set scheduled time for agenda item', async ({ page }) => {
+  test('Set scheduled time for agenda item', async ({ authenticatedPage: page }) => {
     // 1. Login as organizer
-    await loginAsTestUser(page);
-
     // 2. Navigate to event agenda
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
     await page.waitForLoadState('networkidle');
@@ -44,7 +41,6 @@ test.describe('Agenda Items - Agenda Scheduling', () => {
       await createButton.click();
 
       // 5. Time saved
-      await page.waitForTimeout(500);
 
       // Start time: 10:00 AM
       // End time calculated: 11:00 AM
@@ -52,10 +48,8 @@ test.describe('Agenda Items - Agenda Scheduling', () => {
     }
   });
 
-  test('View auto-calculated agenda timeline', async ({ page }) => {
+  test('View auto-calculated agenda timeline', async ({ authenticatedPage: page }) => {
     // 1. Login as user
-    await loginAsTestUser(page);
-
     // 2. Navigate to event agenda with multiple items
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
     await page.waitForLoadState('networkidle');

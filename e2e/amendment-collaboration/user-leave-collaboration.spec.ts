@@ -1,15 +1,19 @@
 // spec: e2e/test-plans/amendment-collaboration-test-plan.md
-// seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Amendment Collaboration', () => {
-  test('Collaborator can leave amendment', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('Collaborator can leave amendment', async ({ authenticatedPage: page, amendmentFactory, userFactory }) => {
+    // Create amendment owned by another user, add test user as collaborator
+    const owner = await userFactory.createUser();
+    const amendment = await amendmentFactory.createAmendment(owner.id, {
+      title: `Test Amendment ${Date.now()}`,
+    });
+    const testUser = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    await amendmentFactory.addCollaborator(amendment.id, testUser.id, amendment.collaboratorRoleId, 'member');
 
-    await page.goto(`/amendment/${TEST_ENTITY_IDS.testAmendment3}`);
+    await page.goto(`/amendment/${amendment.id}`);
 
     // 1. User is a collaborator of amendment
     const leaveButton = page.getByRole('button', { name: /leave collaboration/i });

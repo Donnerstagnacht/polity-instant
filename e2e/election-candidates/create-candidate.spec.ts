@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/election-candidates-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Election Candidates - Create Basic Election Candidate', () => {
-  test('Create candidate with required fields', async ({ page }) => {
+  test('Create candidate with required fields', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user (election organizer)
-    await loginAsTestUser(page);
-
     // 2. Navigate to election management
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda`);
     await page.waitForLoadState('networkidle');
@@ -43,7 +40,6 @@ test.describe('Election Candidates - Create Basic Election Candidate', () => {
         await createButton.click();
 
         // 8. Candidate created
-        await page.waitForTimeout(500);
 
         // Appears in candidates list
         await expect(page.getByText('Jane Smith')).toBeVisible({ timeout: 3000 });
@@ -51,10 +47,8 @@ test.describe('Election Candidates - Create Basic Election Candidate', () => {
     }
   });
 
-  test('Create candidate with all fields', async ({ page }) => {
+  test('Create candidate with all fields', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to election management
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda`);
     await page.waitForLoadState('networkidle');
@@ -88,7 +82,6 @@ test.describe('Election Candidates - Create Basic Election Candidate', () => {
       await createButton.click();
 
       // 7. All fields saved correctly
-      await page.waitForTimeout(500);
 
       // Full profile available
       await expect(page.getByText('John Doe')).toBeVisible({ timeout: 3000 });

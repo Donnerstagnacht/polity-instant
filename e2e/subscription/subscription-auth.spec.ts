@@ -1,7 +1,7 @@
 // spec: e2e/test-plans/subscription-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 import { navigateToUserProfile } from '../helpers/subscription';
 

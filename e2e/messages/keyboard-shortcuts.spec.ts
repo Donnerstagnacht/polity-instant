@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/chat-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Chat/Messages - Keyboard Shortcuts', () => {
-  test('Enter key sends message', async ({ page }) => {
+  test('Enter key sends message', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 
@@ -39,10 +35,8 @@ test.describe('Chat/Messages - Keyboard Shortcuts', () => {
     }
   });
 
-  test('Shift+Enter creates new line without sending', async ({ page }) => {
+  test('Shift+Enter creates new line without sending', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 
@@ -66,7 +60,6 @@ test.describe('Chat/Messages - Keyboard Shortcuts', () => {
       await messageInput.press('Shift+Enter');
 
       // 6. Wait a moment
-      await page.waitForTimeout(300);
 
       // 7. Verify message was NOT sent
       const currentMessageCount = await page.locator('[class*="rounded-lg px-4 py-2"]').count();
@@ -78,10 +71,8 @@ test.describe('Chat/Messages - Keyboard Shortcuts', () => {
     }
   });
 
-  test('Input focus management', async ({ page }) => {
+  test('Input focus management', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 
@@ -107,17 +98,14 @@ test.describe('Chat/Messages - Keyboard Shortcuts', () => {
       await messageInput.press('Enter');
 
       // 7. Wait for send
-      await page.waitForTimeout(300);
 
       // 8. Input should be ready for next message
       await expect(messageInput).toHaveValue('');
     }
   });
 
-  test('Send button works as alternative to Enter', async ({ page }) => {
+  test('Send button works as alternative to Enter', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 

@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/agenda-items-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Agenda Items - Agenda Item Ordering', () => {
-  test('View agenda items in order', async ({ page }) => {
+  test('View agenda items in order', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to event with agenda
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
     await page.waitForLoadState('networkidle');
@@ -18,7 +15,6 @@ test.describe('Agenda Items - Agenda Item Ordering', () => {
     const agendaTab = page.getByRole('tab', { name: /agenda/i });
     if ((await agendaTab.count()) > 0) {
       await agendaTab.click();
-      await page.waitForTimeout(300);
     }
 
     // 4. Items displayed in order
@@ -33,10 +29,8 @@ test.describe('Agenda Items - Agenda Item Ordering', () => {
     }
   });
 
-  test('Reorder agenda items via drag-and-drop', async ({ page }) => {
+  test('Reorder agenda items via drag-and-drop', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user (organizer)
-    await loginAsTestUser(page);
-
     // 2. Navigate to event agenda
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
     await page.waitForLoadState('networkidle');

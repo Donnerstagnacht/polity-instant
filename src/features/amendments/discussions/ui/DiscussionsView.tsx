@@ -135,7 +135,7 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
                 userId={userId}
                 amendmentId={amendmentId}
                 amendmentTitle={amendment?.title}
-                senderName={authUser?.email}
+                senderName={authUser?.email ?? undefined}
               />
             ))}
             {hasMore && <div ref={loadMoreRef} className="h-px" />}
@@ -148,7 +148,7 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
         amendmentId={amendmentId}
         userId={userId}
         amendmentTitle={amendment?.title}
-        senderName={authUser?.email}
+        senderName={authUser?.email ?? undefined}
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
       />

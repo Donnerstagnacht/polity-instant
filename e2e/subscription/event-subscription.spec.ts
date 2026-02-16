@@ -1,8 +1,7 @@
 // spec: e2e/test-plans/subscription-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 import {
   navigateToEvent,
@@ -13,15 +12,12 @@ import {
   ensureSubscribed,
 } from '../helpers/subscription';
 
-const TEST_EVENT_ID = TEST_ENTITY_IDS.testEvent1;
-
 test.describe('Subscribe to Event', () => {
-  test('User can subscribe to event', async ({ page }) => {
-    // 1. Authenticate as test user
-    await loginAsTestUser(page);
+  test('User can subscribe to event', async ({ authenticatedPage: page, eventFactory, userFactory }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const event = await eventFactory.createEvent(user.id, { title: `Sub Event ${Date.now()}` });
 
-    // 2. Navigate to event page
-    await navigateToEvent(page, TEST_EVENT_ID);
+    await navigateToEvent(page, event.id);
 
     // 3. Ensure we start unsubscribed
     await ensureNotSubscribed(page);
@@ -40,12 +36,11 @@ test.describe('Subscribe to Event', () => {
     expect(newCount).toBe(initialCount + 1);
   });
 
-  test('User can unsubscribe from event', async ({ page }) => {
-    // 1. Authenticate as test user
-    await loginAsTestUser(page);
+  test('User can unsubscribe from event', async ({ authenticatedPage: page, eventFactory, userFactory }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const event = await eventFactory.createEvent(user.id, { title: `Unsub Event ${Date.now()}` });
 
-    // 2. Navigate to event page
-    await navigateToEvent(page, TEST_EVENT_ID);
+    await navigateToEvent(page, event.id);
 
     // 3. Ensure we're subscribed first
     await ensureSubscribed(page);

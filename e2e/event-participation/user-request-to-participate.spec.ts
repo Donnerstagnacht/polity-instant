@@ -1,17 +1,18 @@
 // spec: e2e/test-plans/event-participation-test-plan.md
-// seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Event Participation - Request to Participate', () => {
-  test('User can request to participate in event', async ({ page }) => {
-    // 1. Authenticate as test user
-    await loginAsTestUser(page);
+  test('User can request to participate in event', async ({ authenticatedPage: page, eventFactory, userFactory }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const event = await eventFactory.createEvent(user.id, {
+      title: `Test Event ${Date.now()}`,
+    });
 
+    // 1. Authenticate as test user
     // 2. Navigate to event page
-    await page.goto(`/event/${TEST_ENTITY_IDS.testEvent1}`);
+    await page.goto(`/event/${event.id}`);
 
     // 3. Verify "Request to Participate" button is visible
     const requestButton = page.getByRole('button', { name: /request to participate/i });

@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/positions-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Positions - Assign Current Holder', () => {
-  test('Assign user to position', async ({ page }) => {
+  test('Assign user to position', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as admin
-    await loginAsTestUser(page);
-
     // 2. Navigate to position management
     await page.goto(`/group/${TEST_ENTITY_IDS.GROUP}`);
     await page.waitForLoadState('networkidle');
@@ -35,7 +32,6 @@ test.describe('Positions - Assign Current Holder', () => {
         const userSearch = page.getByPlaceholder(/search.*user/i);
         await userSearch.fill('test');
 
-        await page.waitForTimeout(300);
 
         // 6. Select user and confirm
         const userOption = page.getByRole('option').first();
@@ -48,7 +44,6 @@ test.describe('Positions - Assign Current Holder', () => {
           await confirmButton.click();
 
           // 7. User assigned as currentHolder
-          await page.waitForTimeout(500);
 
           // User's name and avatar displayed
           // User receives notification
@@ -57,10 +52,8 @@ test.describe('Positions - Assign Current Holder', () => {
     }
   });
 
-  test('Replace current holder', async ({ page }) => {
+  test('Replace current holder', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as admin
-    await loginAsTestUser(page);
-
     // 2. Navigate to position with current holder
     await page.goto(`/group/${TEST_ENTITY_IDS.GROUP}`);
     await page.waitForLoadState('networkidle');
@@ -85,7 +78,6 @@ test.describe('Positions - Assign Current Holder', () => {
         const userSearch = page.getByPlaceholder(/search/i);
         await userSearch.fill('new user');
 
-        await page.waitForTimeout(300);
 
         const userOption = page.getByRole('option').first();
         if ((await userOption.count()) > 0) {
@@ -98,7 +90,6 @@ test.describe('Positions - Assign Current Holder', () => {
           await confirmButton.click();
 
           // 6. Previous holder removed
-          await page.waitForTimeout(500);
 
           // New holder assigned
           // Both users notified
@@ -108,10 +99,8 @@ test.describe('Positions - Assign Current Holder', () => {
     }
   });
 
-  test('Remove current holder', async ({ page }) => {
+  test('Remove current holder', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as admin
-    await loginAsTestUser(page);
-
     // 2. Navigate to position
     await page.goto(`/group/${TEST_ENTITY_IDS.GROUP}`);
     await page.waitForLoadState('networkidle');
@@ -138,7 +127,6 @@ test.describe('Positions - Assign Current Holder', () => {
           await confirmButton.click();
 
           // 5. CurrentHolder link removed
-          await page.waitForTimeout(500);
 
           // Position marked as vacant
           // User notified

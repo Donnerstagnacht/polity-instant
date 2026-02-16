@@ -1,8 +1,7 @@
 // spec: e2e/test-plans/subscription-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 import {
   navigateToUserProfile,
@@ -11,15 +10,12 @@ import {
   ensureNotSubscribed,
 } from '../helpers/subscription';
 
-const TEST_USER_ID = TEST_ENTITY_IDS.testUser1;
-
 test.describe('Subscription Validation', () => {
-  test('Cannot create duplicate subscriptions', async ({ page }) => {
-    // 1. Authenticate as test user
-    await loginAsTestUser(page);
+  test('Cannot create duplicate subscriptions', async ({ authenticatedPage: page, userFactory }) => {
+    await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const otherUser = await userFactory.createUser();
 
-    // 2. Navigate to user profile
-    await navigateToUserProfile(page, TEST_USER_ID);
+    await navigateToUserProfile(page, otherUser.id);
 
     // 3. Ensure we start unsubscribed
     await ensureNotSubscribed(page);
@@ -39,13 +35,11 @@ test.describe('Subscription Validation', () => {
     await expect(page.getByRole('button', { name: /^subscribe$/i })).toBeVisible();
   });
 
-  test('Cannot subscribe to own content', async ({ page }) => {
+  test('Cannot subscribe to own content', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to own profile
     await page.goto('/user/page');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // 3. Verify subscribe button is either hidden or disabled
     const subscribeButtons = page.getByRole('button', { name: /^subscribe$/i });

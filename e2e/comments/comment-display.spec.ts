@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/comments-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Comments - Comment Display', () => {
-  test('Display comment card', async ({ page }) => {
+  test('Display comment card', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to blog with comments
     await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
     await page.waitForLoadState('networkidle');
@@ -34,10 +31,8 @@ test.describe('Comments - Comment Display', () => {
     }
   });
 
-  test('Display nested replies', async ({ page }) => {
+  test('Display nested replies', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to blog
     await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
     await page.waitForLoadState('networkidle');
@@ -54,10 +49,8 @@ test.describe('Comments - Comment Display', () => {
     }
   });
 
-  test('Empty state for no comments', async ({ page }) => {
+  test('Empty state for no comments', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to entity with no comments (use statement)
     await page.goto(`/statement/${TEST_ENTITY_IDS.STATEMENT || 'new-statement'}`);
     await page.waitForLoadState('networkidle');
@@ -71,10 +64,8 @@ test.describe('Comments - Comment Display', () => {
     // Clean UI
   });
 
-  test('Display creator info', async ({ page }) => {
+  test('Display creator info', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to blog
     await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
     await page.waitForLoadState('networkidle');

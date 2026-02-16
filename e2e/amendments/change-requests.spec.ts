@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/amendments-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Amendments - Change Request System', () => {
-  test('Create change request for amendment', async ({ page }) => {
+  test('Create change request for amendment', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user (collaborator)
-    await loginAsTestUser(page);
-
     // 2. Navigate to amendment change requests page
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}/change-requests`);
 
@@ -39,7 +36,6 @@ test.describe('Amendments - Change Request System', () => {
       await submitButton.click();
 
       // 9. ChangeRequest created
-      await page.waitForTimeout(500);
 
       // Status: "pending"
       // Collaborators notified
@@ -47,10 +43,8 @@ test.describe('Amendments - Change Request System', () => {
     }
   });
 
-  test('Vote on change request', async ({ page }) => {
+  test('Vote on change request', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to change requests page
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}/change-requests`);
     await page.waitForLoadState('networkidle');
@@ -70,7 +64,6 @@ test.describe('Amendments - Change Request System', () => {
         await acceptButton.click();
 
         // 5. Vote recorded
-        await page.waitForTimeout(300);
 
         // Vote count updated
         // Vote visible to all
@@ -79,10 +72,8 @@ test.describe('Amendments - Change Request System', () => {
     }
   });
 
-  test('View vote status on change request', async ({ page }) => {
+  test('View vote status on change request', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to change requests
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}/change-requests`);
     await page.waitForLoadState('networkidle');

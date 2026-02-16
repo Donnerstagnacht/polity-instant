@@ -114,31 +114,6 @@ export const navItemsAuthenticated = (
     },
   ];
 
-  // Define calendar secondary navigation items
-  const calendarSecondaryNavItems: NavigationItem[] = [
-    {
-      id: 'day',
-      label: 'Day View',
-      icon: 'List',
-      href: '/calendar?view=day',
-      onClick: () => router.push('/calendar?view=day'),
-    },
-    {
-      id: 'week',
-      label: 'Week View',
-      icon: 'Grid3x3',
-      href: '/calendar?view=week',
-      onClick: () => router.push('/calendar?view=week'),
-    },
-    {
-      id: 'month',
-      label: 'Month View',
-      icon: 'Calendar',
-      href: '/calendar?view=month',
-      onClick: () => router.push('/calendar?view=month'),
-    },
-  ];
-
   // Function to create event secondary navigation items for a specific event
   const getEventSecondaryNavItems = (eventId: string, isAdmin = false): NavigationItem[] => {
     const items: NavigationItem[] = [
@@ -500,7 +475,6 @@ export const navItemsAuthenticated = (
   return {
     primaryNavItems,
     projectSecondaryNavItems,
-    calendarSecondaryNavItems,
     getEventSecondaryNavItems,
     getUserSecondaryNavItems,
     getGroupSecondaryNavItems,
@@ -527,8 +501,6 @@ export const navItemsAuthenticated = (
       switch (currentPrimaryRoute) {
         case 'projects':
           return projectSecondaryNavItems;
-        case 'calendar':
-          return calendarSecondaryNavItems;
         case 'event':
           return eventId ? getEventSecondaryNavItems(eventId, isEventAdmin ?? false) : null;
         case 'user':

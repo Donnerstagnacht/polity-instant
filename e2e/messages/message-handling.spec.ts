@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/chat-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Chat/Messages - Message Handling', () => {
-  test('Long messages display properly', async ({ page }) => {
+  test('Long messages display properly', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 
@@ -49,10 +45,8 @@ test.describe('Chat/Messages - Message Handling', () => {
     }
   });
 
-  test('Special characters in messages', async ({ page }) => {
+  test('Special characters in messages', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 
@@ -94,10 +88,8 @@ test.describe('Chat/Messages - Message Handling', () => {
     }
   });
 
-  test('Multi-line message composition', async ({ page }) => {
+  test('Multi-line message composition', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 
@@ -135,10 +127,8 @@ test.describe('Chat/Messages - Message Handling', () => {
     }
   });
 
-  test('Empty or whitespace-only messages are not sent', async ({ page }) => {
+  test('Empty or whitespace-only messages are not sent', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 

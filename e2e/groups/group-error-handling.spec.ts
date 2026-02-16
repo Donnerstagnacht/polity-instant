@@ -1,38 +1,32 @@
 // spec: e2e/test-plans/groups-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Groups - Group Error Handling', () => {
-  test('Group not found displays error message', async ({ page }) => {
+  test('Group not found displays error message', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
-    // 2. Navigate to non-existent group ID
-    await page.goto('/group/non-existent-group-12345');
+    // 2. Navigate to non-existent group ID (must be valid UUID for InstantDB)
+    await page.goto('/group/00000000-0000-4000-8000-000000000001');
 
     // 3. Wait for page to load
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // 4. Clear "Group Not Found" message
-    const notFoundMessage = page.getByText(/not found/i).or(page.getByText(/doesn't exist/i));
-    await expect(notFoundMessage).toBeVisible({ timeout: 5000 });
+    const notFoundMessage = page.getByRole('heading', { name: /not found/i });
+    await expect(notFoundMessage).toBeVisible({ timeout: 10000 });
 
     // 5. Explanation text
     // 6. Link to groups listing or home
     // No broken UI elements
   });
 
-  test('Permission denied for private group displays error', async ({ page }) => {
+  test('Permission denied for private group displays error', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
-    // 2. Attempt to access private group (if available)
-    await page.goto('/group/private-group-id');
+    // 2. Attempt to access private group (valid UUID for InstantDB)
+    await page.goto('/group/00000000-0000-4000-8000-000000000002');
 
     // 3. Wait for page load
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // 4. Check for access denied message or group display
     const accessDenied = page.getByText(/access denied|permission|not authorized/i);

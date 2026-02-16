@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/agenda-items-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Agenda Items - Agenda Item Types', () => {
-  test('Create discussion agenda item', async ({ page }) => {
+  test('Create discussion agenda item', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to event agenda
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
     await page.waitForLoadState('networkidle');
@@ -41,17 +38,14 @@ test.describe('Agenda Items - Agenda Item Types', () => {
       await createButton.click();
 
       // 6. Type set correctly
-      await page.waitForTimeout(500);
 
       // Icon/indicator for discussion
       // Timer functionality available
     }
   });
 
-  test('Create voting agenda item', async ({ page }) => {
+  test('Create voting agenda item', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to event agenda
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
     await page.waitForLoadState('networkidle');
@@ -81,7 +75,6 @@ test.describe('Agenda Items - Agenda Item Types', () => {
       await createButton.click();
 
       // 4. Type indicated
-      await page.waitForTimeout(500);
 
       // Voting interface available
       // Vote tracking enabled

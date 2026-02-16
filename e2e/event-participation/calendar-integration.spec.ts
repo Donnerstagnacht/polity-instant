@@ -1,17 +1,18 @@
 // spec: e2e/test-plans/event-participation-test-plan.md
-// seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Event Participation - Calendar Integration', () => {
-  test('Participated events appear in calendar', async ({ page }) => {
-    // 1. Authenticate as test user
-    await loginAsTestUser(page);
+  test('Participated events appear in calendar', async ({ authenticatedPage: page, eventFactory, userFactory }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const event = await eventFactory.createEvent(user.id, {
+      title: `Test Event ${Date.now()}`,
+    });
 
+    // 1. Authenticate as test user
     // 2. Ensure user participates in event
-    await page.goto(`/event/${TEST_ENTITY_IDS.testEvent1}`);
+    await page.goto(`/event/${event.id}`);
 
     const leaveButton = page.getByRole('button', { name: /leave event|leave/i });
     const acceptButton = page.getByRole('button', { name: /accept invitation/i });

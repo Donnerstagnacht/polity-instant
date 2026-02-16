@@ -1,7 +1,7 @@
 // spec: e2e/auth/magic-link-auth-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/test-base';
 import { generateTestMagicCode } from '../helpers/magic-code-helper';
 
 /**
@@ -62,7 +62,6 @@ test.describe('First-Time User Authentication & Onboarding', () => {
     await searchInput.fill('Test');
     
     // Wait for search results and click first group
-    await page.waitForTimeout(500); // Debounce
     const groupCard = page.locator('[class*="cursor-pointer"]').first();
     await expect(groupCard).toBeVisible();
     await groupCard.click();
@@ -121,7 +120,6 @@ test.describe('First-Time User Authentication & Onboarding', () => {
     const locationSearchTerm = 'Fort'; // Matches "Fort City" in seed data
     await searchInput.fill(locationSearchTerm);
     
-    await page.waitForTimeout(500);
     const groupCard = page.locator('[class*="cursor-pointer"]').first();
     await expect(groupCard).toBeVisible();
     await groupCard.click();
@@ -167,7 +165,6 @@ test.describe('First-Time User Authentication & Onboarding', () => {
     await expect(page.getByText(/Find your group/i)).toBeVisible();
     const searchInput = page.getByPlaceholder(/Search groups or locations/i);
     await searchInput.fill('Test');
-    await page.waitForTimeout(500);
     
     const groupCard = page.locator('[class*="cursor-pointer"]').first();
     await groupCard.click();
@@ -209,7 +206,6 @@ test.describe('First-Time User Authentication & Onboarding', () => {
     await page.getByText(/Aria.*Kai/i).first().click();
     
     // Wait for the message window to open beside the chat list
-    await page.waitForTimeout(500);
     
     // Verify the Aria & Kai welcome message appears in the chat window (use .last() to get the full message, not the preview)
     await expect(page.getByText(/Hey.*we.*are Aria.*Kai/i).last()).toBeVisible({ timeout: 5000 });
@@ -261,7 +257,6 @@ test.describe('First-Time User Authentication & Onboarding', () => {
     // Search and select a group to see all steps
     const searchInput = page.getByPlaceholder(/Search groups or locations/i);
     await searchInput.fill('Test');
-    await page.waitForTimeout(500);
     const groupCard = page.locator('[class*="cursor-pointer"]').first();
     await groupCard.click();
     await page.getByRole('button', { name: /Continue/i }).click();
@@ -295,7 +290,6 @@ test.describe('First-Time User Authentication & Onboarding', () => {
     
     const searchInput = page.getByPlaceholder(/Search groups or locations/i);
     await searchInput.fill('Test Main');
-    await page.waitForTimeout(500);
     const groupCard = page.locator('[class*="cursor-pointer"]').first();
     await groupCard.click();
     await page.getByRole('button', { name: /Continue/i }).click();
@@ -336,7 +330,6 @@ test.describe('First-Time User Authentication & Onboarding', () => {
     await expect(page.getByText(/Find your group/i)).toBeVisible();
     const searchInput = page.getByPlaceholder(/Search groups or locations/i);
     await searchInput.fill('Test');
-    await page.waitForTimeout(500);
     const groupCard = page.locator('[class*="cursor-pointer"]').first();
     await groupCard.click();
     await page.getByRole('button', { name: /Continue/i }).click();
@@ -382,7 +375,6 @@ test.describe('First-Time User Authentication & Onboarding', () => {
     // Select a group and continue
     const searchInput = page.getByPlaceholder(/Search groups or locations/i);
     await searchInput.fill('Test');
-    await page.waitForTimeout(500);
     const groupCard = page.locator('[class*="cursor-pointer"]').first();
     await groupCard.click();
     await page.getByRole('button', { name: /Continue/i }).click();

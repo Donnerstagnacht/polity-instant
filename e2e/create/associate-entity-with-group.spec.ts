@@ -1,5 +1,4 @@
-import { test, expect } from '@playwright/test';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Create Feature', () => {
   test('Associate Entity with Group', async ({ page }) => {
     // Navigate to create page
@@ -12,7 +11,6 @@ test.describe('Create Feature', () => {
       .first();
     await eventsOption.click();
 
-    await page.waitForTimeout(500);
 
     // Fill in required fields
     const titleInput = page.locator('input[name="title"]').first();
@@ -36,7 +34,6 @@ test.describe('Create Feature', () => {
       if (await groupSelect.isVisible()) break;
       if (await nextButton.isVisible()) {
         await nextButton.click();
-        await page.waitForTimeout(300);
       } else {
         break;
       }
@@ -54,7 +51,6 @@ test.describe('Create Feature', () => {
           // Select first non-empty option (usually index 1, as 0 is often "Select...")
           await groupSelect.selectOption({ index: 1 });
 
-          await page.waitForTimeout(300);
 
           // Verify selection was made
           const selectedValue = await groupSelect.inputValue();
@@ -66,7 +62,6 @@ test.describe('Create Feature', () => {
       } else {
         // Might be a custom dropdown/autocomplete
         await groupSelect.click();
-        await page.waitForTimeout(300);
 
         // Look for dropdown options
         const firstOption = page

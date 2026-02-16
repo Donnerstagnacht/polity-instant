@@ -349,6 +349,7 @@ export function ElectionTimelineCard({
       <TimelineCardHeader
         contentType="election"
         title={election.title}
+        href={agendaHref || fallbackHref}
         subtitle={election.groupName}
         subtitleHref={election.groupId ? `/group/${election.groupId}` : undefined}
         badge={

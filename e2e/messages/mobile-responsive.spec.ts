@@ -1,93 +1,79 @@
 // spec: e2e/test-plans/chat-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect, devices } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
+import { devices } from '@playwright/test';
 // test.use() must be at top-level, not inside describe blocks
 test.use({ ...devices['iPhone 12'] });
 test.describe('Chat/Messages - Mobile Responsive Layout', () => {
-  test('Messages page works on mobile devices', async ({ page }) => {
-    // 1. Authenticate as test user
-    await loginAsTestUser(page);
+  test('Messages page works on mobile devices', async ({
+    authenticatedPage: page,
+    conversationFactory,
+    userFactory,
+    adminDb,
+  }) => {
+    const authUser = await adminDb.auth.getUser({ email: 'polity.live@gmail.com' });
+    const otherUser = await userFactory.createUser({ name: 'Mobile Test User' });
+    await conversationFactory.createConversation(authUser.id, [otherUser.id], {
+      name: 'Mobile Conv Test',
+    });
 
-    // 2. Navigate to messages page on mobile
     await page.goto('/messages');
+    await page.waitForLoadState('domcontentloaded');
 
-    // 3. Conversation list shown first
-    await expect(page.getByRole('heading', { name: /messages/i })).toBeVisible();
+    // Conversation list shown first
+    await expect(page.getByRole('heading', { name: /messages/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByPlaceholder(/search conversations/i)).toBeVisible();
 
-    const searchInput = page.getByPlaceholder(/search conversations/i);
-    await expect(searchInput).toBeVisible();
+    // Select the conversation we created
+    const conversation = page.getByText('Mobile Test User');
+    await expect(conversation).toBeVisible({ timeout: 10000 });
+    await conversation.click();
 
-    // 4. Check if conversations exist
-    const firstConversation = page
-      .locator('button')
-      .filter({ hasText: /Unknown User|@/ })
-      .first();
-    const hasConversations = await firstConversation.isVisible().catch(() => false);
+    // Message view takes full screen — conversation list heading should be hidden
+    await expect(page.getByRole('heading', { name: /messages/i })).not.toBeVisible();
 
-    if (hasConversations) {
-      // 5. User selects conversation
-      await firstConversation.click();
+    // Back arrow (ArrowLeft icon) returns to conversation list
+    const backButton = page.locator('button:has(svg.lucide-arrow-left)');
+    await expect(backButton).toBeVisible();
+    await backButton.click();
 
-      // 6. Message view takes full screen
-      const messageHeader = page.locator('h3');
-      await expect(messageHeader).toBeVisible();
-
-      // 7. Back arrow returns to conversation list
-      const backButton = page
-        .getByRole('button')
-        .filter({ has: page.locator('svg') })
-        .first();
-      await expect(backButton).toBeVisible();
-
-      await backButton.click();
-
-      // 8. Verify back on conversation list
-      await expect(page.getByRole('heading', { name: /messages/i })).toBeVisible();
-    }
+    // Verify back on conversation list
+    await expect(page.getByRole('heading', { name: /messages/i })).toBeVisible({ timeout: 5000 });
   });
 
-  test('Mobile layout switches between list and conversation view', async ({ page }) => {
-    // 1. Set mobile viewport
-    await page.setViewportSize({ width: 375, height: 667 });
+  test('Mobile layout switches between list and conversation view', async ({
+    authenticatedPage: page,
+    conversationFactory,
+    userFactory,
+    adminDb,
+  }) => {
+    const authUser = await adminDb.auth.getUser({ email: 'polity.live@gmail.com' });
+    const otherUser = await userFactory.createUser({ name: 'Mobile Switch User' });
+    await conversationFactory.createConversation(authUser.id, [otherUser.id], {
+      name: 'Mobile Switch Conv',
+    });
 
-    // 2. Authenticate as test user
-    await loginAsTestUser(page);
-
-    // 3. Navigate to messages
     await page.goto('/messages');
+    await page.waitForLoadState('domcontentloaded');
 
-    // 4. Verify conversation list is visible
-    const conversationList = page.locator('[class*="space-y-1"]').first();
-    await expect(conversationList).toBeVisible();
+    // Verify conversation list is visible
+    await expect(page.getByRole('heading', { name: /messages/i })).toBeVisible({ timeout: 10000 });
 
-    // 5. Select conversation if exists
-    const firstConversation = page
-      .locator('button')
-      .filter({ hasText: /Unknown User|@/ })
-      .first();
-    const hasConversations = await firstConversation.isVisible().catch(() => false);
+    // Select conversation
+    const conversation = page.getByText('Mobile Switch User');
+    await expect(conversation).toBeVisible({ timeout: 10000 });
+    await conversation.click();
 
-    if (hasConversations) {
-      await firstConversation.click();
+    // Verify message view is now visible
+    const messageInput = page.getByPlaceholder(/type a message/i);
+    await expect(messageInput).toBeVisible({ timeout: 5000 });
 
-      // 6. Verify message view is now visible
-      const messageInput = page.getByPlaceholder(/type a message/i);
-      await expect(messageInput).toBeVisible();
+    // Conversation list should be hidden when conversation is open on mobile
+    await expect(page.getByRole('heading', { name: /messages/i })).not.toBeVisible();
 
-      // 7. On mobile, list should be hidden when conversation is open
-      // This is managed by responsive classes
-      const backButton = page
-        .getByRole('button')
-        .filter({ has: page.locator('svg') })
-        .first();
-      const hasBackButton = await backButton.isVisible().catch(() => false);
-
-      if (hasBackButton) {
-        await expect(backButton).toBeVisible();
-      }
-    }
+    // Back button should be visible on mobile
+    const backButton = page.locator('button:has(svg.lucide-arrow-left)');
+    await expect(backButton).toBeVisible();
   });
 });

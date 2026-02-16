@@ -1,13 +1,10 @@
 // spec: e2e/test-plans/todos-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test } from '../fixtures/test-base';
 test.describe('Todos - Sort Todos', () => {
-  test('User sorts todos by due date, priority, or creation date', async ({ page }) => {
+  test('User sorts todos by due date, priority, or creation date', async ({ authenticatedPage: page }) => {
     // 1. Navigate to /todos
-    await loginAsTestUser(page);
     await page.goto('/todos');
 
     // 2. Locate sort dropdown or controls
@@ -22,7 +19,6 @@ test.describe('Todos - Sort Todos', () => {
       await dueDateOption.click();
 
       // 4. Todos are sorted by due date
-      await page.waitForTimeout(300);
 
       // 5. Change sort to "Priority"
       await sortControl.click();
@@ -30,14 +26,12 @@ test.describe('Todos - Sort Todos', () => {
       await priorityOption.click();
 
       // Todos are sorted by priority level
-      await page.waitForTimeout(300);
     } else {
       // Alternative: column headers as sort controls
       const dueDateHeader = page.getByRole('columnheader', { name: /due date/i });
 
       if ((await dueDateHeader.count()) > 0) {
         await dueDateHeader.click();
-        await page.waitForTimeout(300);
       }
     }
   });

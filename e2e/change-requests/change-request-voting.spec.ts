@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/change-requests-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Change Requests - Voting System', () => {
-  test('Vote accept on change request', async ({ page }) => {
+  test('Vote accept on change request', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as collaborator
-    await loginAsTestUser(page);
-
     // 2. Navigate to change request
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');
@@ -39,7 +36,6 @@ test.describe('Change Requests - Voting System', () => {
         }
 
         // 6. Vote recorded
-        await page.waitForTimeout(500);
 
         // Vote count increases
         // User cannot vote again
@@ -47,10 +43,8 @@ test.describe('Change Requests - Voting System', () => {
     }
   });
 
-  test('Vote reject on change request', async ({ page }) => {
+  test('Vote reject on change request', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as collaborator
-    await loginAsTestUser(page);
-
     // 2. Navigate to change request
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');
@@ -76,7 +70,6 @@ test.describe('Change Requests - Voting System', () => {
         }
 
         // 5. Vote recorded
-        await page.waitForTimeout(500);
 
         // Rejection count increases
         // User's vote shown
@@ -84,10 +77,8 @@ test.describe('Change Requests - Voting System', () => {
     }
   });
 
-  test('Vote abstain on change request', async ({ page }) => {
+  test('Vote abstain on change request', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as collaborator
-    await loginAsTestUser(page);
-
     // 2. Navigate to change request
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');
@@ -113,7 +104,6 @@ test.describe('Change Requests - Voting System', () => {
         }
 
         // 5. Abstain count increases
-        await page.waitForTimeout(500);
 
         // Not counted toward decision threshold
         // Can change vote later
@@ -121,10 +111,8 @@ test.describe('Change Requests - Voting System', () => {
     }
   });
 
-  test('Change vote', async ({ page }) => {
+  test('Change vote', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as collaborator
-    await loginAsTestUser(page);
-
     // 2. Navigate to change request
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');
@@ -150,7 +138,6 @@ test.describe('Change Requests - Voting System', () => {
         }
 
         // 5. Existing vote updated
-        await page.waitForTimeout(500);
 
         // Counts adjusted
         // Only one vote per user maintained

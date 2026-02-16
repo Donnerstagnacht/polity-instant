@@ -5,6 +5,10 @@
  * These IDs are fixed to ensure tests can reliably find test data.
  *
  * Convention: e2e-test-{entity}-{number:12 digits}
+ *
+ * @deprecated New tests should use entity factories from `e2e/fixtures/entity-factories`
+ * instead of relying on pre-seeded shared IDs. See `e2e/fixtures/MIGRATION-GUIDE.md`.
+ * Only `mainTestUser` and `tobiasUser` remain in active use for auth fixtures.
  */
 
 export const TEST_ENTITY_IDS = {
@@ -85,6 +89,18 @@ export const TEST_ENTITY_IDS = {
   testPayment1: 'e2ee0001-0000-4000-8000-000000000001',
   testPayment2: 'e2ee0002-0000-4000-8000-000000000002',
   testPayment3: 'e2ee0003-0000-4000-8000-000000000003',
+
+  // ===== LINKS =====
+  testLink1: 'e2ef1001-0000-4000-8000-000000000001',
+  testLink2: 'e2ef1002-0000-4000-8000-000000000002',
+
+  // ===== GROUP DOCUMENTS =====
+  testGroupDocument1: 'e2ef2001-0000-4000-8000-000000000001',
+  testGroupDocument2: 'e2ef2002-0000-4000-8000-000000000002',
+
+  // ===== VOTING SESSIONS =====
+  testVotingSession1: 'e2ef3001-0000-4000-8000-000000000001',
+  testVotingSession2: 'e2ef3002-0000-4000-8000-000000000002',
 
   // ===== CONVENIENCE ALIASES =====
   // These aliases make tests more readable

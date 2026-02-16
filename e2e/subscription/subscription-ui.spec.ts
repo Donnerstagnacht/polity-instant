@@ -1,8 +1,7 @@
 // spec: e2e/test-plans/subscription-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 import {
   navigateToUserProfile,
@@ -10,15 +9,12 @@ import {
   ensureNotSubscribed,
 } from '../helpers/subscription';
 
-const TEST_USER_ID = TEST_ENTITY_IDS.testUser1;
-
 test.describe('Subscription Loading States', () => {
-  test('Subscribe button shows loading state', async ({ page }) => {
-    // 1. Authenticate as test user
-    await loginAsTestUser(page);
+  test('Subscribe button shows loading state', async ({ authenticatedPage: page, userFactory }) => {
+    await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const otherUser = await userFactory.createUser();
 
-    // 2. Navigate to user profile
-    await navigateToUserProfile(page, TEST_USER_ID);
+    await navigateToUserProfile(page, otherUser.id);
 
     // 3. Ensure starting state is unsubscribed
     await ensureNotSubscribed(page);

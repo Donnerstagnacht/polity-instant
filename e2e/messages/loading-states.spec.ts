@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/chat-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Chat/Messages - Loading States', () => {
-  test('Loading state shown while fetching conversations', async ({ page }) => {
+  test('Loading state shown while fetching conversations', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     page
       .waitForResponse(
@@ -29,7 +25,7 @@ test.describe('Chat/Messages - Loading States', () => {
     }
 
     // 5. Wait for content to load
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     // 6. Verify page loaded successfully
     await expect(page.getByRole('heading', { name: /messages/i })).toBeVisible();
@@ -39,15 +35,13 @@ test.describe('Chat/Messages - Loading States', () => {
     await expect(searchInput).toBeVisible();
   });
 
-  test('Page renders correctly after loading', async ({ page }) => {
+  test('Page renders correctly after loading', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 
     // 3. Wait for page to fully load
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // 4. Verify main elements are visible
     await expect(page.getByRole('heading', { name: /messages/i })).toBeVisible();
@@ -69,15 +63,13 @@ test.describe('Chat/Messages - Loading States', () => {
     expect(hasConversations || hasEmptyState).toBeTruthy();
   });
 
-  test('No loading state stuck on screen', async ({ page }) => {
+  test('No loading state stuck on screen', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 
     // 3. Wait for loading to complete
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // 4. Verify loading text is not stuck on screen
     const loadingText = page.getByText(/loading conversations/i);

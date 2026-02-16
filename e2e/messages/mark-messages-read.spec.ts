@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/chat-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Chat/Messages - Mark Messages as Read', () => {
-  test('Messages are marked read when conversation viewed', async ({ page }) => {
+  test('Messages are marked read when conversation viewed', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 
@@ -29,7 +25,7 @@ test.describe('Chat/Messages - Mark Messages as Read', () => {
       await conversationWithUnread.click();
 
       // 6. Wait for messages to be marked as read
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('networkidle');
 
       // 7. Navigate back to conversation list (on mobile)
       const backButton = page
@@ -44,7 +40,6 @@ test.describe('Chat/Messages - Mark Messages as Read', () => {
 
       // 8. Verify unread badge disappears or count decreases
       // Badge should be gone or have lower count after viewing
-      await page.waitForTimeout(500);
     } else {
       // No unread messages - verify no badges present
       const allBadges = page.locator('[class*="Badge"]');

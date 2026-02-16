@@ -1,17 +1,14 @@
 // spec: e2e/test-plans/timeline-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Timeline - Decision Terminal', () => {
-  test.beforeEach(async ({ page }) => {
-    await loginAsTestUser(page);
+  test.beforeEach(async ({ authenticatedPage: page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
   });
 
-  test('Decision Terminal tab is visible', async ({ page }) => {
+  test('Decision Terminal tab is visible', async ({ authenticatedPage: page }) => {
     const decisionsTab = page.getByRole('tab', { name: /decisions/i });
     const decisionTerminal = page.locator('[data-testid="decision-terminal"]');
 
@@ -21,7 +18,7 @@ test.describe('Timeline - Decision Terminal', () => {
     console.log(`Decision Terminal - Tab: ${hasTab}, Terminal: ${hasTerminal}`);
   });
 
-  test('Decision Terminal shows vote rows', async ({ page }) => {
+  test('Decision Terminal shows vote rows', async ({ authenticatedPage: page }) => {
     const decisionsTab = page.getByRole('tab', { name: /decisions/i });
 
     if (await decisionsTab.isVisible()) {
@@ -37,7 +34,7 @@ test.describe('Timeline - Decision Terminal', () => {
     }
   });
 
-  test('Decision Terminal shows election rows', async ({ page }) => {
+  test('Decision Terminal shows election rows', async ({ authenticatedPage: page }) => {
     const decisionsTab = page.getByRole('tab', { name: /decisions/i });
 
     if (await decisionsTab.isVisible()) {
@@ -53,7 +50,7 @@ test.describe('Timeline - Decision Terminal', () => {
     }
   });
 
-  test('Decision Terminal has status indicators', async ({ page }) => {
+  test('Decision Terminal has status indicators', async ({ authenticatedPage: page }) => {
     const decisionsTab = page.getByRole('tab', { name: /decisions/i });
 
     if (await decisionsTab.isVisible()) {
@@ -78,7 +75,7 @@ test.describe('Timeline - Decision Terminal', () => {
     }
   });
 
-  test('Decision Terminal shows countdown timers', async ({ page }) => {
+  test('Decision Terminal shows countdown timers', async ({ authenticatedPage: page }) => {
     const decisionsTab = page.getByRole('tab', { name: /decisions/i });
 
     if (await decisionsTab.isVisible()) {
@@ -94,7 +91,7 @@ test.describe('Timeline - Decision Terminal', () => {
     }
   });
 
-  test('Clicking row opens side panel', async ({ page }) => {
+  test('Clicking row opens side panel', async ({ authenticatedPage: page }) => {
     const decisionsTab = page.getByRole('tab', { name: /decisions/i });
 
     if (await decisionsTab.isVisible()) {
@@ -125,7 +122,7 @@ test.describe('Timeline - Decision Terminal', () => {
     }
   });
 
-  test('Side panel has voting controls', async ({ page }) => {
+  test('Side panel has voting controls', async ({ authenticatedPage: page }) => {
     const decisionsTab = page.getByRole('tab', { name: /decisions/i });
 
     if (await decisionsTab.isVisible()) {
@@ -153,7 +150,7 @@ test.describe('Timeline - Decision Terminal', () => {
     }
   });
 
-  test('Decision Terminal has filter tabs', async ({ page }) => {
+  test('Decision Terminal has filter tabs', async ({ authenticatedPage: page }) => {
     const decisionsTab = page.getByRole('tab', { name: /decisions/i });
 
     if (await decisionsTab.isVisible()) {
@@ -173,7 +170,7 @@ test.describe('Timeline - Decision Terminal', () => {
     }
   });
 
-  test('Recently Closed section shows results', async ({ page }) => {
+  test('Recently Closed section shows results', async ({ authenticatedPage: page }) => {
     const decisionsTab = page.getByRole('tab', { name: /decisions/i });
 
     if (await decisionsTab.isVisible()) {
@@ -200,15 +197,14 @@ test.describe('Timeline - Decision Terminal', () => {
 });
 
 test.describe('Timeline - Decision Terminal Mobile', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ authenticatedPage: page }) => {
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
-    await loginAsTestUser(page);
     await page.goto('/');
     await page.waitForLoadState('networkidle');
   });
 
-  test('Decision Terminal adapts to mobile', async ({ page }) => {
+  test('Decision Terminal adapts to mobile', async ({ authenticatedPage: page }) => {
     const decisionsTab = page.getByRole('tab', { name: /decisions/i });
 
     if (await decisionsTab.isVisible()) {
@@ -225,7 +221,7 @@ test.describe('Timeline - Decision Terminal Mobile', () => {
     }
   });
 
-  test('Mobile Decision Terminal has swipe actions', async ({ page }) => {
+  test('Mobile Decision Terminal has swipe actions', async ({ authenticatedPage: page }) => {
     const decisionsTab = page.getByRole('tab', { name: /decisions/i });
 
     if (await decisionsTab.isVisible()) {
@@ -239,7 +235,7 @@ test.describe('Timeline - Decision Terminal Mobile', () => {
     }
   });
 
-  test('Cast Vote button is prominent on mobile', async ({ page }) => {
+  test('Cast Vote button is prominent on mobile', async ({ authenticatedPage: page }) => {
     const decisionsTab = page.getByRole('tab', { name: /decisions/i });
 
     if (await decisionsTab.isVisible()) {

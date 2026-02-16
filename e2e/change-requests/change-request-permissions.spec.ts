@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/change-requests-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Change Requests - Permissions and Management', () => {
-  test('Collaborator can create change request', async ({ page }) => {
+  test('Collaborator can create change request', async ({ authenticatedPage: page }) => {
     // 1. Login as collaborator
-    await loginAsTestUser(page);
-
     // 2. Navigate to amendment
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');
@@ -32,10 +29,8 @@ test.describe('Change Requests - Permissions and Management', () => {
     }
   });
 
-  test('Non-collaborator cannot create change request', async ({ page }) => {
+  test('Non-collaborator cannot create change request', async ({ authenticatedPage: page }) => {
     // 1. Login as non-collaborator
-    await loginAsTestUser(page);
-
     // 2. Navigate to amendment
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');
@@ -53,10 +48,8 @@ test.describe('Change Requests - Permissions and Management', () => {
     // Amendment integrity protected
   });
 
-  test('Edit change request before voting', async ({ page }) => {
+  test('Edit change request before voting', async ({ authenticatedPage: page }) => {
     // 1. Login as creator
-    await loginAsTestUser(page);
-
     // 2. Navigate to change request
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');
@@ -81,17 +74,14 @@ test.describe('Change Requests - Permissions and Management', () => {
       await saveButton.click();
 
       // 6. Changes saved successfully
-      await page.waitForTimeout(500);
 
       // Collaborators notified
       await expect(page.getByText('Updated Change Request Title')).toBeVisible({ timeout: 3000 });
     }
   });
 
-  test('Delete change request without votes', async ({ page }) => {
+  test('Delete change request without votes', async ({ authenticatedPage: page }) => {
     // 1. Login as creator
-    await loginAsTestUser(page);
-
     // 2. Navigate to change request
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');
@@ -113,7 +103,6 @@ test.describe('Change Requests - Permissions and Management', () => {
         await confirmButton.click();
 
         // 5. Change request deleted
-        await page.waitForTimeout(500);
 
         // Removed from list
         // No impact on amendment

@@ -1,12 +1,9 @@
 // spec: e2e/test-plans/chat-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Chat/Messages - Pin Conversations', () => {
-  test('Pin button is visible in conversation header', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('Pin button is visible in conversation header', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
 
     // Select a conversation
@@ -31,8 +28,7 @@ test.describe('Chat/Messages - Pin Conversations', () => {
     }
   });
 
-  test('User can pin a conversation', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('User can pin a conversation', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
 
     // Select a conversation
@@ -53,7 +49,6 @@ test.describe('Chat/Messages - Pin Conversations', () => {
         await pinButton.click();
 
         // Wait for state to update
-        await page.waitForTimeout(500);
 
         // Verify pin icon appears in conversation list
         // Pin icon might be visible in the list
@@ -61,8 +56,7 @@ test.describe('Chat/Messages - Pin Conversations', () => {
     }
   });
 
-  test('User can unpin a conversation', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('User can unpin a conversation', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
 
     // Select a conversation
@@ -82,12 +76,10 @@ test.describe('Chat/Messages - Pin Conversations', () => {
       if (isPinButtonVisible) {
         // Click to pin
         await pinButton.click();
-        await page.waitForTimeout(500);
 
         // Click again to unpin
         const unpinButton = page.locator('button[title*="Unpin"]').first();
         await unpinButton.click();
-        await page.waitForTimeout(500);
 
         // Verify pin is removed
         // Pin icon should not be filled anymore
@@ -95,8 +87,7 @@ test.describe('Chat/Messages - Pin Conversations', () => {
     }
   });
 
-  test('Pinned conversations appear at the top of the list', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('Pinned conversations appear at the top of the list', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
 
     // Get all conversations
@@ -112,7 +103,7 @@ test.describe('Chat/Messages - Pin Conversations', () => {
 
       if (isPinButtonVisible) {
         await pinButton.click();
-        await page.waitForTimeout(1000);
+        await page.waitForLoadState('networkidle');
 
         // Go back to conversation list (on mobile)
         const backButton = page
@@ -133,8 +124,7 @@ test.describe('Chat/Messages - Pin Conversations', () => {
     }
   });
 
-  test('Multiple conversations can be pinned', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('Multiple conversations can be pinned', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
 
     const conversations = page.locator('button').filter({ hasText: /Unknown User|@/ });
@@ -148,7 +138,6 @@ test.describe('Chat/Messages - Pin Conversations', () => {
 
       if (isPinButtonVisible) {
         await pinButton.click();
-        await page.waitForTimeout(500);
 
         // Go back and pin second conversation
         const backButton = page
@@ -157,7 +146,6 @@ test.describe('Chat/Messages - Pin Conversations', () => {
         const hasBackButton = await backButton.isVisible().catch(() => false);
         if (hasBackButton) {
           await backButton.click();
-          await page.waitForTimeout(300);
         }
 
         await conversations.nth(1).click();
@@ -166,7 +154,6 @@ test.describe('Chat/Messages - Pin Conversations', () => {
 
         if (isPinButtonVisible) {
           await pinButton.click();
-          await page.waitForTimeout(500);
         }
 
         // Verify both are pinned (would need to check the list)
@@ -174,8 +161,7 @@ test.describe('Chat/Messages - Pin Conversations', () => {
     }
   });
 
-  test('Pin icon is displayed in conversation list for pinned conversations', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('Pin icon is displayed in conversation list for pinned conversations', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
 
     // Select a conversation
@@ -194,7 +180,6 @@ test.describe('Chat/Messages - Pin Conversations', () => {
 
       if (isPinButtonVisible) {
         await pinButton.click();
-        await page.waitForTimeout(500);
 
         // Go back to list
         const backButton = page

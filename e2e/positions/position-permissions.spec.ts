@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/positions-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Positions - Permissions and Election Integration', () => {
-  test('Admin can create positions', async ({ page }) => {
+  test('Admin can create positions', async ({ authenticatedPage: page }) => {
     // 1. Login as group admin
-    await loginAsTestUser(page);
-
     // 2. Navigate to group
     await page.goto(`/group/${TEST_ENTITY_IDS.GROUP}`);
     await page.waitForLoadState('networkidle');
@@ -32,10 +29,8 @@ test.describe('Positions - Permissions and Election Integration', () => {
     }
   });
 
-  test('Member cannot create positions', async ({ page }) => {
+  test('Member cannot create positions', async ({ authenticatedPage: page }) => {
     // 1. Login as regular member
-    await loginAsTestUser(page);
-
     // 2. Navigate to group
     await page.goto(`/group/${TEST_ENTITY_IDS.GROUP}`);
     await page.waitForLoadState('networkidle');
@@ -51,10 +46,8 @@ test.describe('Positions - Permissions and Election Integration', () => {
     // Error message clear
   });
 
-  test('Admin can edit positions', async ({ page }) => {
+  test('Admin can edit positions', async ({ authenticatedPage: page }) => {
     // 1. Login as admin
-    await loginAsTestUser(page);
-
     // 2. Navigate to group
     await page.goto(`/group/${TEST_ENTITY_IDS.GROUP}`);
     await page.waitForLoadState('networkidle');
@@ -79,7 +72,6 @@ test.describe('Positions - Permissions and Election Integration', () => {
       await saveButton.click();
 
       // 6. Changes saved successfully
-      await page.waitForTimeout(500);
 
       // Position updated
       // Holder notified if applicable
@@ -87,10 +79,8 @@ test.describe('Positions - Permissions and Election Integration', () => {
     }
   });
 
-  test('Link position to election', async ({ page }) => {
+  test('Link position to election', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as admin
-    await loginAsTestUser(page);
-
     // 2. Navigate to election creation
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda`);
     await page.waitForLoadState('networkidle');
@@ -118,7 +108,6 @@ test.describe('Positions - Permissions and Election Integration', () => {
       await submitButton.click();
 
       // 6. Position linked to election
-      await page.waitForTimeout(500);
 
       // Winner automatically assigned to position
       // Transition handled smoothly

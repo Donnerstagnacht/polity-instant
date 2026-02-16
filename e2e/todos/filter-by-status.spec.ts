@@ -1,13 +1,10 @@
 // spec: e2e/test-plans/todos-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test } from '../fixtures/test-base';
 test.describe('Todos - Filter by Status', () => {
-  test('User filters todos by status (All, Todo, In Progress, Done)', async ({ page }) => {
+  test('User filters todos by status (All, Todo, In Progress, Done)', async ({ authenticatedPage: page }) => {
     // 1. Navigate to /todos
-    await loginAsTestUser(page);
     await page.goto('/todos');
 
     // 2. Locate status filter dropdown or tabs
@@ -22,7 +19,6 @@ test.describe('Todos - Filter by Status', () => {
       await inProgressOption.click();
 
       // 4. Only "In Progress" todos are displayed
-      await page.waitForTimeout(300);
 
       // 5. Select "All" to show all todos
       await statusFilter.click();
@@ -30,7 +26,6 @@ test.describe('Todos - Filter by Status', () => {
       await allOption.click();
 
       // All todos displayed
-      await page.waitForTimeout(300);
     } else {
       // Alternative: status tabs
       const statusTabs = page.locator('[role="tablist"]').filter({ hasText: /status/i });
@@ -38,7 +33,6 @@ test.describe('Todos - Filter by Status', () => {
       if ((await statusTabs.count()) > 0) {
         const inProgressTab = page.getByRole('tab', { name: /in progress/i });
         await inProgressTab.click();
-        await page.waitForTimeout(300);
       }
     }
   });

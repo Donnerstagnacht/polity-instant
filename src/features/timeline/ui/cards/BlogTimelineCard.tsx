@@ -1,6 +1,7 @@
 'use client';
 
 import { BookOpen, Clock, User, Bell, Users, MessageSquare } from 'lucide-react';
+import Link from 'next/link';
 import { useTranslation } from '@/hooks/use-translation';
 import { cn } from '@/utils/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -97,7 +98,9 @@ export function BlogTimelineCard({ blog, className }: BlogTimelineCardProps) {
           {/* Title Overlay */}
           <div className="absolute bottom-0 left-0 right-0 p-4">
             <h3 className="line-clamp-2 text-lg font-bold leading-tight text-white">
-              {blog.title}
+              <Link href={`/blog/${blog.id}`} onClick={e => e.stopPropagation()} className="hover:underline">
+                {blog.title}
+              </Link>
             </h3>
           </div>
         </div>
@@ -107,14 +110,22 @@ export function BlogTimelineCard({ blog, className }: BlogTimelineCardProps) {
             <BookOpen className="mt-0.5 h-5 w-5 flex-shrink-0 text-teal-600 dark:text-teal-400" />
             <TimelineCardBadge label={t('features.timeline.contentTypes.blog')} icon={BookOpen} />
           </div>
-          <h3 className="line-clamp-2 text-lg font-bold leading-tight">{blog.title}</h3>
+          <h3 className="line-clamp-2 text-lg font-bold leading-tight">
+            <Link href={`/blog/${blog.id}`} onClick={e => e.stopPropagation()} className="hover:underline">
+              {blog.title}
+            </Link>
+          </h3>
         </div>
       )}
 
       <TimelineCardContent className={blog.coverImageUrl ? undefined : 'pt-0'}>
         {/* Title (if there's a cover image, it's in the overlay) */}
         {blog.coverImageUrl && (
-          <h3 className="mb-2 line-clamp-2 text-base font-bold leading-tight">{blog.title}</h3>
+          <h3 className="mb-2 line-clamp-2 text-base font-bold leading-tight">
+            <Link href={`/blog/${blog.id}`} onClick={e => e.stopPropagation()} className="hover:underline">
+              {blog.title}
+            </Link>
+          </h3>
         )}
 
         {/* Excerpt */}

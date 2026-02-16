@@ -1,17 +1,14 @@
 // spec: e2e/test-plans/timeline-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Timeline - Content Cards', () => {
-  test.beforeEach(async ({ page }) => {
-    await loginAsTestUser(page);
+  test.beforeEach(async ({ authenticatedPage: page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
-  test('Group cards render with correct structure', async ({ page }) => {
+  test('Group cards render with correct structure', async ({ authenticatedPage: page }) => {
     const groupCards = page.locator('[data-testid="group-card"], [class*="GroupTimelineCard"]');
 
     if ((await groupCards.count()) > 0) {
@@ -32,7 +29,7 @@ test.describe('Timeline - Content Cards', () => {
     }
   });
 
-  test('Event cards render with correct structure', async ({ page }) => {
+  test('Event cards render with correct structure', async ({ authenticatedPage: page }) => {
     const eventCards = page.locator('[data-testid="event-card"], [class*="EventTimelineCard"]');
 
     if ((await eventCards.count()) > 0) {
@@ -45,7 +42,7 @@ test.describe('Timeline - Content Cards', () => {
     }
   });
 
-  test('Amendment cards render with correct structure', async ({ page }) => {
+  test('Amendment cards render with correct structure', async ({ authenticatedPage: page }) => {
     const amendmentCards = page.locator(
       '[data-testid="amendment-card"], [class*="AmendmentTimelineCard"]'
     );
@@ -60,7 +57,7 @@ test.describe('Timeline - Content Cards', () => {
     }
   });
 
-  test('Vote cards render with voting UI', async ({ page }) => {
+  test('Vote cards render with voting UI', async ({ authenticatedPage: page }) => {
     const voteCards = page.locator('[data-testid="vote-card"], [class*="VoteTimelineCard"]');
 
     if ((await voteCards.count()) > 0) {
@@ -77,7 +74,7 @@ test.describe('Timeline - Content Cards', () => {
     }
   });
 
-  test('Election cards render with election info', async ({ page }) => {
+  test('Election cards render with election info', async ({ authenticatedPage: page }) => {
     const electionCards = page.locator(
       '[data-testid="election-card"], [class*="ElectionTimelineCard"]'
     );
@@ -96,7 +93,7 @@ test.describe('Timeline - Content Cards', () => {
     }
   });
 
-  test('Blog cards render with preview content', async ({ page }) => {
+  test('Blog cards render with preview content', async ({ authenticatedPage: page }) => {
     const blogCards = page.locator('[data-testid="blog-card"], [class*="BlogTimelineCard"]');
 
     if ((await blogCards.count()) > 0) {
@@ -109,7 +106,7 @@ test.describe('Timeline - Content Cards', () => {
     }
   });
 
-  test('Todo cards render with completion status', async ({ page }) => {
+  test('Todo cards render with completion status', async ({ authenticatedPage: page }) => {
     const todoCards = page.locator('[data-testid="todo-card"], [class*="TodoTimelineCard"]');
 
     if ((await todoCards.count()) > 0) {
@@ -122,7 +119,7 @@ test.describe('Timeline - Content Cards', () => {
     }
   });
 
-  test('Cards have gradient headers for visual distinction', async ({ page }) => {
+  test('Cards have gradient headers for visual distinction', async ({ authenticatedPage: page }) => {
     // Look for cards with gradient backgrounds
     const cards = page.locator('[class*="card"], [class*="Card"]');
 
@@ -133,8 +130,8 @@ test.describe('Timeline - Content Cards', () => {
       const hasGradient = await firstCard.evaluate(el => {
         const computedStyle = window.getComputedStyle(el);
         const bgImage = computedStyle.backgroundImage;
-        const className = el.className;
-        return bgImage.includes('gradient') || className.includes('gradient');
+        const classStr = typeof el.className === 'string' ? el.className : el.className?.baseVal || '';
+        return bgImage.includes('gradient') || classStr.includes('gradient');
       });
 
       console.log(`First card has gradient styling: ${hasGradient}`);
@@ -143,13 +140,12 @@ test.describe('Timeline - Content Cards', () => {
 });
 
 test.describe('Timeline - Card Action Buttons', () => {
-  test.beforeEach(async ({ page }) => {
-    await loginAsTestUser(page);
+  test.beforeEach(async ({ authenticatedPage: page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
-  test('Cards have share button', async ({ page }) => {
+  test('Cards have share button', async ({ authenticatedPage: page }) => {
     const cards = page.locator('[class*="card"], [class*="Card"]');
 
     if ((await cards.count()) > 0) {
@@ -162,7 +158,7 @@ test.describe('Timeline - Card Action Buttons', () => {
     }
   });
 
-  test('Cards have discuss/comment button', async ({ page }) => {
+  test('Cards have discuss/comment button', async ({ authenticatedPage: page }) => {
     const discussButtons = page.getByRole('button', { name: /discuss|comment/i });
     const commentIcons = page.locator('[aria-label*="comment"], [aria-label*="discuss"]');
 
@@ -171,7 +167,7 @@ test.describe('Timeline - Card Action Buttons', () => {
     );
   });
 
-  test('Cards have reaction buttons', async ({ page }) => {
+  test('Cards have reaction buttons', async ({ authenticatedPage: page }) => {
     const reactionButtons = page.locator(
       '[data-testid="reaction-buttons"], [class*="reaction"], button[aria-label*="support"], button[aria-label*="oppose"]'
     );
@@ -179,7 +175,7 @@ test.describe('Timeline - Card Action Buttons', () => {
     console.log(`Reaction elements: ${await reactionButtons.count()}`);
   });
 
-  test('Clicking card navigates to detail page', async ({ page }) => {
+  test('Clicking card navigates to detail page', async ({ authenticatedPage: page }) => {
     const cards = page.locator('[class*="card"], [class*="Card"]');
 
     if ((await cards.count()) > 0) {

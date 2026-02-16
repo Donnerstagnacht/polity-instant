@@ -1,8 +1,7 @@
 // spec: e2e/test-plans/subscription-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 import {
   navigateToUserProfile,
@@ -13,15 +12,12 @@ import {
   ensureSubscribed,
 } from '../helpers/subscription';
 
-const TEST_USER_ID = TEST_ENTITY_IDS.testUser1;
-
 test.describe('Subscribe to User', () => {
-  test('User can subscribe to another user', async ({ page }) => {
-    // 1. Authenticate as test user
-    await loginAsTestUser(page);
+  test('User can subscribe to another user', async ({ authenticatedPage: page, userFactory }) => {
+    await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const otherUser = await userFactory.createUser();
 
-    // 2. Navigate to another user's profile page
-    await navigateToUserProfile(page, TEST_USER_ID);
+    await navigateToUserProfile(page, otherUser.id);
 
     // 3. Ensure we start unsubscribed
     await ensureNotSubscribed(page);
@@ -40,12 +36,11 @@ test.describe('Subscribe to User', () => {
     expect(newCount).toBe(initialCount + 1);
   });
 
-  test('User can unsubscribe from user', async ({ page }) => {
-    // 1. Authenticate as test user
-    await loginAsTestUser(page);
+  test('User can unsubscribe from user', async ({ authenticatedPage: page, userFactory }) => {
+    await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const otherUser = await userFactory.createUser();
 
-    // 2. Navigate to user profile
-    await navigateToUserProfile(page, TEST_USER_ID);
+    await navigateToUserProfile(page, otherUser.id);
 
     // 3. Ensure we're subscribed first
     await ensureSubscribed(page);

@@ -119,14 +119,6 @@ export function NotificationsPage() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex h-[400px] items-center justify-center">
-        <p className="text-muted-foreground">{t('features.notifications.loading')}</p>
-      </div>
-    );
-  }
-
   // Filter notifications based on search query
   const searchFilteredNotifications = {
     all: filteredNotifications.all.filter(

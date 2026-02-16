@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/agenda-items-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Agenda Items - Agenda Item Permissions', () => {
-  test('Organizer can create agenda items', async ({ page }) => {
+  test('Organizer can create agenda items', async ({ authenticatedPage: page }) => {
     // 1. Login as event organizer
-    await loginAsTestUser(page);
-
     // 2. Navigate to event agenda
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
     await page.waitForLoadState('networkidle');
@@ -32,10 +29,8 @@ test.describe('Agenda Items - Agenda Item Permissions', () => {
     }
   });
 
-  test('Participant cannot create agenda items', async ({ page }) => {
+  test('Participant cannot create agenda items', async ({ authenticatedPage: page }) => {
     // 1. Login as regular participant (not organizer)
-    await loginAsTestUser(page);
-
     // 2. Navigate to event agenda
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
     await page.waitForLoadState('networkidle');
@@ -54,10 +49,8 @@ test.describe('Agenda Items - Agenda Item Permissions', () => {
     // Access denied if attempted
   });
 
-  test('Organizer can edit agenda items', async ({ page }) => {
+  test('Organizer can edit agenda items', async ({ authenticatedPage: page }) => {
     // 1. Login as organizer
-    await loginAsTestUser(page);
-
     // 2. Navigate to event agenda
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
     await page.waitForLoadState('networkidle');
@@ -88,7 +81,6 @@ test.describe('Agenda Items - Agenda Item Permissions', () => {
         await saveButton.click();
 
         // 7. Changes saved
-        await page.waitForTimeout(500);
 
         // Participants notified if significant
         // Timeline updated

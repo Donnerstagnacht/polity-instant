@@ -1,19 +1,15 @@
 // spec: e2e/test-plans/chat-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Chat/Messages - Message Alignment', () => {
-  test('User messages aligned right, other messages aligned left', async ({ page }) => {
+  test('User messages aligned right, other messages aligned left', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 
     // 3. Select a conversation
-    const conversationList = page.locator('button').filter({ has: page.locator('[class*="Avatar"]') });
+    const conversationList = page.locator('main').locator('button').filter({ has: page.locator('p') });
     const conversationCount = await conversationList.count();
     const hasConversations = conversationCount > 0;
 
@@ -68,15 +64,13 @@ test.describe('Chat/Messages - Message Alignment', () => {
     }
   });
 
-  test('Message bubbles have correct styling', async ({ page }) => {
+  test('Message bubbles have correct styling', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 
     // 3. Select a conversation
-    const conversationList = page.locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
+    const conversationList = page.locator('main').locator('button').filter({ has: page.locator('p') });
     const conversationCount = await conversationList.count();
     const hasConversations = conversationCount > 0;
 

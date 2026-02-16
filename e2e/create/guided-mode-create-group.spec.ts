@@ -1,5 +1,4 @@
-import { test, expect } from '@playwright/test';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Create Feature', () => {
   test('Guided Mode - Create Group', async ({ page }) => {
     // Navigate to create page
@@ -13,7 +12,6 @@ test.describe('Create Feature', () => {
     await groupsOption.click();
 
     // Wait for name field to appear
-    await page.waitForTimeout(500);
 
     // Enter group name
     const nameInput = page.locator('input[name="name"]').or(page.getByPlaceholder(/name/i)).first();

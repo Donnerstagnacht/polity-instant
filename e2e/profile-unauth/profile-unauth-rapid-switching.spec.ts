@@ -1,8 +1,7 @@
 // spec: e2e/test-plans/profile-unauthenticated-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Edge Cases and Security Considerations', () => {
   test('Rapid Route Switching', async ({ page }) => {
     // 1. Do NOT authenticate

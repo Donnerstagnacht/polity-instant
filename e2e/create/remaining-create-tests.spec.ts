@@ -1,12 +1,10 @@
-import { test, expect } from '@playwright/test';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Create Feature', () => {
   test('Success Redirect', async ({ page }) => {
     await page.goto('/create');
 
     const groupsOption = page.locator('text=Groups').first();
     await groupsOption.click();
-    await page.waitForTimeout(500);
 
     const nameInput = page.locator('input[name="name"]').first();
     await nameInput.fill('Redirect Test Group');
@@ -23,7 +21,6 @@ test.describe('Create Feature', () => {
       if (await createButton.isVisible()) break;
       if (await nextButton.isVisible()) {
         await nextButton.click();
-        await page.waitForTimeout(200);
       }
     }
 
@@ -47,7 +44,6 @@ test.describe('Create Feature', () => {
 
     const groupsOption = page.locator('text=Groups').first();
     await groupsOption.click();
-    await page.waitForTimeout(500);
 
     const nameInput = page.locator('input[name="name"]').first();
     await nameInput.fill('Error Test Group');
@@ -60,7 +56,6 @@ test.describe('Create Feature', () => {
 
     const groupsOption = page.locator('text=Groups').first();
     await groupsOption.click();
-    await page.waitForTimeout(500);
 
     const nameInput = page.locator('input[name="name"]').first();
     await nameInput.fill('Persistence Test');
@@ -68,7 +63,6 @@ test.describe('Create Feature', () => {
     const nextButton = page.locator('button:has-text("Next")').first();
     if (await nextButton.isVisible()) {
       await nextButton.click();
-      await page.waitForTimeout(300);
 
       const prevButton = page
         .locator('button:has-text("Previous")')
@@ -76,7 +70,6 @@ test.describe('Create Feature', () => {
         .first();
       if (await prevButton.isVisible()) {
         await prevButton.click();
-        await page.waitForTimeout(300);
 
         const nameValue = await nameInput.inputValue();
         expect(nameValue).toBe('Persistence Test');
@@ -89,7 +82,6 @@ test.describe('Create Feature', () => {
 
     const groupsOption = page.locator('text=Groups').first();
     await groupsOption.click();
-    await page.waitForTimeout(500);
 
     const nameInput = page.locator('input[name="name"]').first();
     await nameInput.fill('First Entity');
@@ -101,7 +93,6 @@ test.describe('Create Feature', () => {
       if (await createButton.isVisible()) break;
       if (await nextButton.isVisible()) {
         await nextButton.click();
-        await page.waitForTimeout(200);
       }
     }
 

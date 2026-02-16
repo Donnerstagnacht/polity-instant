@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/agenda-items-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Agenda Items - Loading States', () => {
-  test('Display loading state while fetching agenda', async ({ page }) => {
+  test('Display loading state while fetching agenda', async ({ authenticatedPage: page }) => {
     // 1. Login as user
-    await loginAsTestUser(page);
-
     // 2. Navigate to event page
     const navigationPromise = page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
 
@@ -25,7 +22,6 @@ test.describe('Agenda Items - Loading States', () => {
       await agendaTab.click();
 
       // 4. Agenda items displayed when loaded
-      await page.waitForTimeout(500);
 
       page.locator('[data-testid="agenda-item"]').or(page.getByRole('article'));
 
@@ -34,10 +30,8 @@ test.describe('Agenda Items - Loading States', () => {
     }
   });
 
-  test('Display loading during agenda item creation', async ({ page }) => {
+  test('Display loading during agenda item creation', async ({ authenticatedPage: page }) => {
     // 1. Login as organizer
-    await loginAsTestUser(page);
-
     // 2. Navigate to event agenda
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
     await page.waitForLoadState('networkidle');
@@ -64,7 +58,6 @@ test.describe('Agenda Items - Loading States', () => {
       // Button disabled during operation
 
       // 6. Success state when complete
-      await page.waitForTimeout(500);
 
       // New item visible
       // Form closed or reset

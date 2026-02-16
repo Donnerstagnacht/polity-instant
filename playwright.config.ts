@@ -7,6 +7,8 @@ export default defineConfig({
   testDir: './e2e',
   /* Global setup to prepare test users */
   globalSetup: './e2e/global-setup.ts',
+  /* Global teardown to clean up orphaned test entities */
+  globalTeardown: './e2e/global-teardown.ts',
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -29,8 +31,16 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
+      name: 'setup',
+      testMatch: /auth\.setup\.ts/,
+    },
+    {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: './e2e/.auth/user.json',
+      },
+      dependencies: ['setup'],
     },
 
     // Uncomment to test on Firefox (requires: npx playwright install firefox)

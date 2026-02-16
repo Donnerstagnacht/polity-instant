@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/positions-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Positions - Position Display', () => {
-  test('View position on group page', async ({ page }) => {
+  test('View position on group page', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to group page
     await page.goto(`/group/${TEST_ENTITY_IDS.GROUP}`);
     await page.waitForLoadState('networkidle');
@@ -29,10 +26,8 @@ test.describe('Positions - Position Display', () => {
     }
   });
 
-  test('View position card details', async ({ page }) => {
+  test('View position card details', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to group page
     await page.goto(`/group/${TEST_ENTITY_IDS.GROUP}`);
     await page.waitForLoadState('networkidle');
@@ -51,10 +46,8 @@ test.describe('Positions - Position Display', () => {
     }
   });
 
-  test('Empty state for no positions', async ({ page }) => {
+  test('Empty state for no positions', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to group with no positions
     await page.goto(`/group/${TEST_ENTITY_IDS.GROUP}`);
     await page.waitForLoadState('networkidle');

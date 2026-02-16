@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/amendments-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Amendments - Display Amendment Details', () => {
-  test('User views amendment page with details', async ({ page }) => {
+  test('User views amendment page with details', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to amendment page
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
 
@@ -36,10 +33,8 @@ test.describe('Amendments - Display Amendment Details', () => {
     await expect(page).toHaveURL(/\/amendment\/.+/);
   });
 
-  test('Amendment stats bar displays accurate counts', async ({ page }) => {
+  test('Amendment stats bar displays accurate counts', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to amendment page
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');

@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/chat-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Chat/Messages - Conversation Sorting', () => {
-  test('Conversations sorted by most recent message', async ({ page }) => {
+  test('Conversations sorted by most recent message', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 
@@ -60,14 +56,11 @@ test.describe('Chat/Messages - Conversation Sorting', () => {
 
       // 8. Verify conversation moved to top
       // Wait for reordering
-      await page.waitForTimeout(500);
     }
   });
 
-  test('New message updates conversation position', async ({ page }) => {
+  test('New message updates conversation position', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 

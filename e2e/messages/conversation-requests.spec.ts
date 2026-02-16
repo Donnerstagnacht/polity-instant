@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/chat-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Chat/Messages - Conversation Requests', () => {
-  test('User can open new conversation dialog with floating button', async ({ page }) => {
+  test('User can open new conversation dialog with floating button', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 
@@ -22,10 +18,8 @@ test.describe('Chat/Messages - Conversation Requests', () => {
     await expect(page.getByText('Start a New Conversation')).toBeVisible();
   });
 
-  test('User can search for users in new conversation dialog', async ({ page }) => {
+  test('User can search for users in new conversation dialog', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page and open dialog
     await page.goto('/messages');
     const newConversationButton = page.getByRole('button', { name: /start a new conversation/i });
@@ -37,10 +31,9 @@ test.describe('Chat/Messages - Conversation Requests', () => {
     await searchInput.fill('test');
 
     // 4. Wait for search results to appear
-    await page.waitForTimeout(500);
 
     // 5. Verify user results are displayed (if any exist)
-    const userResults = page.locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
+    const userResults = page.getByRole('dialog').locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
     const hasResults = (await userResults.count()) > 0;
 
     if (hasResults) {
@@ -48,10 +41,8 @@ test.describe('Chat/Messages - Conversation Requests', () => {
     }
   });
 
-  test('User can create a conversation request', async ({ page }) => {
+  test('User can create a conversation request', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page and open dialog
     await page.goto('/messages');
     const newConversationButton = page.getByRole('button', { name: /start a new conversation/i });
@@ -60,17 +51,17 @@ test.describe('Chat/Messages - Conversation Requests', () => {
     // 3. Search for a user
     const searchInput = page.getByPlaceholder(/search users by name or handle/i);
     await searchInput.fill('test');
-    await page.waitForTimeout(500);
 
-    // 4. Click on first user result
-    const userResults = page.locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
+    // 4. Click on first user result (scoped to dialog)
+    const dialog = page.getByRole('dialog');
+    const userResults = dialog.locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
     const hasResults = (await userResults.count()) > 0;
 
     if (hasResults) {
       await userResults.first().click();
 
       // 5. Verify dialog closed and conversation is selected
-      await expect(page.getByRole('dialog')).not.toBeVisible();
+      await expect(dialog).not.toBeVisible();
 
       // 6. Verify conversation window is displayed
       const conversationHeader = page.locator('h3').first();
@@ -78,9 +69,8 @@ test.describe('Chat/Messages - Conversation Requests', () => {
     }
   });
 
-  test('Recipient sees accept/reject buttons for pending conversation', async ({ page }) => {
+  test('Recipient sees accept/reject buttons for pending conversation', async ({ authenticatedPage: page }) => {
     // This test would require two users, so we'll check the UI elements exist
-    await loginAsTestUser(page);
     await page.goto('/messages');
 
     // Look for any pending conversations with accept/reject buttons
@@ -96,9 +86,10 @@ test.describe('Chat/Messages - Conversation Requests', () => {
     }
   });
 
-  test('User cannot send messages in pending conversation they initiated', async ({ page }) => {
-    await loginAsTestUser(page);
+  // Flaky under parallel execution: "Start a New Conversation" button times out intermittently
+  test('User cannot send messages in pending conversation they initiated', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
+    await page.waitForLoadState('domcontentloaded');
 
     // Create a new conversation request
     const newConversationButton = page.getByRole('button', { name: /start a new conversation/i });
@@ -106,9 +97,9 @@ test.describe('Chat/Messages - Conversation Requests', () => {
 
     const searchInput = page.getByPlaceholder(/search users by name or handle/i);
     await searchInput.fill('test');
-    await page.waitForTimeout(500);
 
-    const userResults = page.locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
+    const dialog = page.getByRole('dialog');
+    const userResults = dialog.locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
     const hasResults = (await userResults.count()) > 0;
 
     if (hasResults) {
@@ -124,9 +115,10 @@ test.describe('Chat/Messages - Conversation Requests', () => {
     }
   });
 
-  test('Conversation dialog shows only other users (not current user)', async ({ page }) => {
-    await loginAsTestUser(page);
+  // Flaky under parallel execution: "Start a New Conversation" button times out intermittently
+  test('Conversation dialog shows only other users (not current user)', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
+    await page.waitForLoadState('domcontentloaded');
 
     // Open dialog
     const newConversationButton = page.getByRole('button', { name: /start a new conversation/i });
@@ -136,11 +128,10 @@ test.describe('Chat/Messages - Conversation Requests', () => {
     const searchInput = page.getByPlaceholder(/search users by name or handle/i);
     await searchInput.fill(''); // Show all users
 
-    await page.waitForTimeout(500);
 
     // Verify the dialog doesn't show the current user in results
     // This is implicitly tested by the search functionality
-    const userResults = page.locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
+    const userResults = page.getByRole('dialog').locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
     await expect(userResults.first())
       .toBeVisible()
       .catch(() => {
@@ -148,11 +139,12 @@ test.describe('Chat/Messages - Conversation Requests', () => {
       });
   });
 
+  // Previously used unauthenticated page — now uses authenticatedPage
   test('Clicking on existing conversation selects it instead of creating duplicate', async ({
-    page,
+    authenticatedPage: page,
   }) => {
-    await loginAsTestUser(page);
     await page.goto('/messages');
+    await page.waitForLoadState('domcontentloaded');
 
     // Open dialog
     const newConversationButton = page.getByRole('button', { name: /start a new conversation/i });
@@ -161,9 +153,8 @@ test.describe('Chat/Messages - Conversation Requests', () => {
     // Search for a user
     const searchInput = page.getByPlaceholder(/search users by name or handle/i);
     await searchInput.fill('test');
-    await page.waitForTimeout(500);
 
-    const userResults = page.locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
+    const userResults = page.getByRole('dialog').locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
     const hasResults = (await userResults.count()) > 0;
 
     if (hasResults) {
@@ -176,7 +167,6 @@ test.describe('Chat/Messages - Conversation Requests', () => {
 
       const searchInput2 = page.getByPlaceholder(/search users by name or handle/i);
       await searchInput2.fill('test');
-      await page.waitForTimeout(500);
 
       await userResults.first().click();
 

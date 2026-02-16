@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/election-candidates-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Election Candidates - Loading States and Error Handling', () => {
-  test('Display loading state while fetching candidates', async ({ page }) => {
+  test('Display loading state while fetching candidates', async ({ authenticatedPage: page }) => {
     // 1. Login as user
-    await loginAsTestUser(page);
-
     // 2. Navigate to election page
     const navigationPromise = page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/stream`);
 
@@ -21,16 +18,13 @@ test.describe('Election Candidates - Loading States and Error Handling', () => {
     await page.waitForLoadState('networkidle');
 
     // 4. Candidates displayed when loaded
-    await page.waitForTimeout(500);
 
     // Loading state replaced with content
     // Smooth transition
   });
 
-  test('Handle create candidate validation errors', async ({ page }) => {
+  test('Handle create candidate validation errors', async ({ authenticatedPage: page }) => {
     // 1. Login as organizer
-    await loginAsTestUser(page);
-
     // 2. Navigate to election management
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda`);
     await page.waitForLoadState('networkidle');
@@ -46,7 +40,6 @@ test.describe('Election Candidates - Loading States and Error Handling', () => {
       await createButton.click();
 
       // 5. Validation error displayed
-      await page.waitForTimeout(300);
 
       // Error message shown (e.g., "Name is required")
       // Form not submitted
@@ -54,10 +47,8 @@ test.describe('Election Candidates - Loading States and Error Handling', () => {
     }
   });
 
-  test('Handle network error during candidate creation', async ({ page }) => {
+  test('Handle network error during candidate creation', async ({ authenticatedPage: page }) => {
     // 1. Login as organizer
-    await loginAsTestUser(page);
-
     // 2. Navigate to election management
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda`);
     await page.waitForLoadState('networkidle');
@@ -78,7 +69,6 @@ test.describe('Election Candidates - Loading States and Error Handling', () => {
       await createButton.click();
 
       // 5. Error message shown
-      await page.waitForTimeout(500);
 
       // "Network error" or "Connection failed"
       // Option to retry

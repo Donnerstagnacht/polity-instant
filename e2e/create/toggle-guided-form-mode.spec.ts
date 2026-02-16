@@ -1,5 +1,4 @@
-import { test, expect } from '@playwright/test';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Create Feature', () => {
   test('Toggle Between Guided and Form Mode', async ({ page }) => {
     // Navigate to create page

@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/change-requests-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Change Requests - Loading States and Error Handling', () => {
-  test('Display loading state while fetching change requests', async ({ page }) => {
+  test('Display loading state while fetching change requests', async ({ authenticatedPage: page }) => {
     // 1. Login as user
-    await loginAsTestUser(page);
-
     // 2. Navigate to amendment
     const navigationPromise = page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
 
@@ -25,7 +22,6 @@ test.describe('Change Requests - Loading States and Error Handling', () => {
       await changeRequestsTab.click();
 
       // 4. Change requests displayed when loaded
-      await page.waitForTimeout(500);
 
       page.locator('[data-testid="change-request"]').or(page.getByRole('article'));
 
@@ -34,10 +30,8 @@ test.describe('Change Requests - Loading States and Error Handling', () => {
     }
   });
 
-  test('Handle create change request validation errors', async ({ page }) => {
+  test('Handle create change request validation errors', async ({ authenticatedPage: page }) => {
     // 1. Login as collaborator
-    await loginAsTestUser(page);
-
     // 2. Navigate to amendment
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');
@@ -58,7 +52,6 @@ test.describe('Change Requests - Loading States and Error Handling', () => {
       await submitButton.click();
 
       // 5. Validation error displayed
-      await page.waitForTimeout(300);
 
       // Error message shown (e.g., "Title is required")
       page.getByText(/required|error/i);
@@ -68,10 +61,8 @@ test.describe('Change Requests - Loading States and Error Handling', () => {
     }
   });
 
-  test('Handle network error during change request creation', async ({ page }) => {
+  test('Handle network error during change request creation', async ({ authenticatedPage: page }) => {
     // 1. Login as collaborator
-    await loginAsTestUser(page);
-
     // 2. Navigate to amendment
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');
@@ -97,7 +88,6 @@ test.describe('Change Requests - Loading States and Error Handling', () => {
       await submitButton.click();
 
       // 5. Error message shown
-      await page.waitForTimeout(500);
 
       // "Network error" or "Connection failed"
       // Option to retry

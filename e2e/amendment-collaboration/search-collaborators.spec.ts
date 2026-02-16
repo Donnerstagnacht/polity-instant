@@ -1,16 +1,17 @@
 // spec: e2e/test-plans/amendment-collaboration-test-plan.md
-// seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Amendment Collaboration', () => {
-  test('Author can search collaborators', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('Author can search collaborators', async ({ authenticatedPage: page, amendmentFactory, userFactory }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const amendment = await amendmentFactory.createAmendment(user.id, {
+      title: `Test Amendment ${Date.now()}`,
+    });
 
     // 1. Author enters search term in collaborators page
-    await page.goto(`/amendment/${TEST_ENTITY_IDS.testAmendment1}/collaborators`);
+    await page.goto(`/amendment/${amendment.id}/collaborators`);
 
     const searchInput = page.getByRole('textbox', { name: /search/i });
     await expect(searchInput).toBeVisible();

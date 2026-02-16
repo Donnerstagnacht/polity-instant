@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/subscription-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Subscription Timeline', () => {
-  test('User can view subscription timeline', async ({ page }) => {
+  test('User can view subscription timeline', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to their subscriptions page
     await page.goto('/user/page/subscriptions');
     await page.waitForLoadState('networkidle');
@@ -31,10 +27,8 @@ test.describe('Subscription Timeline', () => {
     expect(bodyContent).toBeTruthy();
   });
 
-  test('User can filter subscription timeline', async ({ page }) => {
+  test('User can filter subscription timeline', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to subscriptions page
     await page.goto('/user/page/subscriptions');
     await page.waitForLoadState('networkidle');
@@ -47,7 +41,6 @@ test.describe('Subscription Timeline', () => {
       await filterButton.first().click();
 
       // 5. Timeline updates (wait for potential reload)
-      await page.waitForTimeout(500);
 
       // 6. User can toggle multiple filters
       // 7. User can clear filters to see all activity

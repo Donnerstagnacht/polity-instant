@@ -1,13 +1,11 @@
 // spec: e2e/test-plans/blogs-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';import { TEST_ENTITY_IDS } from '../test-entity-ids';
+import { test } from '../fixtures/test-base';
+import { TEST_ENTITY_IDS } from '../test-entity-ids';
 test.describe('Blogs - Blog Loading States', () => {
-  test('Blog page displays loading indicator', async ({ page }) => {
+  test('Blog page displays loading indicator', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Intercept network requests to delay response
     await page.route('**/api/**', async route => {
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -32,15 +30,12 @@ test.describe('Blogs - Blog Loading States', () => {
     });
 
     // 6. Smooth transition when loaded
-    await page.waitForTimeout(500);
 
     // No layout shift
   });
 
-  test('Comments section loads smoothly', async ({ page }) => {
+  test('Comments section loads smoothly', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to blog with many comments
     await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
 
@@ -55,6 +50,5 @@ test.describe('Blogs - Blog Loading States', () => {
 
     // 6. Smooth rendering
     // Pagination if many comments
-    await page.waitForTimeout(300);
   });
 });

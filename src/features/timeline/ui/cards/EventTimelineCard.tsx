@@ -237,6 +237,7 @@ export function EventTimelineCard({
       <TimelineCardHeader
         contentType="event"
         title={event.title}
+        href={`/event/${event.id}`}
         subtitle={event.organizerName}
         subtitleHref={event.groupId ? `/group/${event.groupId}` : undefined}
         badge={

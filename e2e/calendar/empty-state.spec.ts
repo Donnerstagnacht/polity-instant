@@ -1,13 +1,10 @@
 // spec: e2e/test-plans/calendar-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Calendar - Empty State', () => {
-  test('Calendar displays appropriate empty state when no events exist', async ({ page }) => {
+  test('Calendar displays appropriate empty state when no events exist', async ({ authenticatedPage: page }) => {
     // 1. Navigate to /calendar as user with no events
-    await loginAsTestUser(page);
     await page.goto('/calendar');
 
     // 2. Check if there are any events

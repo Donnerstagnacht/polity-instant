@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/positions-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Positions - Create Basic Position', () => {
-  test('Create position with required fields', async ({ page }) => {
+  test('Create position with required fields', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user (group admin)
-    await loginAsTestUser(page);
-
     // 2. Navigate to group positions management
     await page.goto(`/group/${TEST_ENTITY_IDS.GROUP}`);
     await page.waitForLoadState('networkidle');
@@ -51,17 +48,14 @@ test.describe('Positions - Create Basic Position', () => {
       await submitButton.click();
 
       // 10. Position created
-      await page.waitForTimeout(500);
 
       // Appears in positions list
       await expect(page.getByText('President')).toBeVisible({ timeout: 3000 });
     }
   });
 
-  test('Create position with all fields', async ({ page }) => {
+  test('Create position with all fields', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as group admin
-    await loginAsTestUser(page);
-
     // 2. Navigate to group positions
     await page.goto(`/group/${TEST_ENTITY_IDS.GROUP}`);
     await page.waitForLoadState('networkidle');
@@ -96,7 +90,6 @@ test.describe('Positions - Create Basic Position', () => {
       await submitButton.click();
 
       // 5. All fields saved correctly
-      await page.waitForTimeout(500);
 
       // Position fully configured
       // Ready for assignment

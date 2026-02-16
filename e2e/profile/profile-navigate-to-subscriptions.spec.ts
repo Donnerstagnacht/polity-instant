@@ -1,14 +1,12 @@
 // spec: e2e/test-plans/profile-feature-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { navigateToOwnProfile } from '../helpers/navigation';
 
 test.describe('Navigation and URL Handling', () => {
-  test('Navigate to Subscriptions Page', async ({ page }) => {
+  test('Navigate to Subscriptions Page', async ({ authenticatedPage: page }) => {
     // 1. Authenticate and navigate to own profile
-    await loginAsTestUser(page);
     await navigateToOwnProfile(page);
 
     // 2. Locate subscriptions link

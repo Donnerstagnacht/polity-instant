@@ -1,13 +1,10 @@
 // spec: e2e/test-plans/calendar-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Calendar - View Events in Day View', () => {
-  test('User views events scheduled for today', async ({ page }) => {
+  test('User views events scheduled for today', async ({ authenticatedPage: page }) => {
     // 1. Navigate to /calendar
-    await loginAsTestUser(page);
     await page.goto('/calendar');
 
     // 2. Select Day view tab

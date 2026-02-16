@@ -1,16 +1,17 @@
 // spec: e2e/test-plans/amendment-collaboration-test-plan.md
-// seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Amendment Collaboration', () => {
-  test('Amendment visibility controls work correctly', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('Amendment visibility controls work correctly', async ({ authenticatedPage: page, amendmentFactory, userFactory }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const amendment = await amendmentFactory.createAmendment(user.id, {
+      title: `Test Amendment ${Date.now()}`,
+    });
 
     // 1. Author creates private amendment
-    await page.goto(`/amendment/${TEST_ENTITY_IDS.testAmendment1}`);
+    await page.goto(`/amendment/${amendment.id}`);
 
     const settingsButton = page.getByRole('button', { name: /settings/i });
     await expect(settingsButton).toBeVisible();
@@ -27,7 +28,7 @@ test.describe('Amendment Collaboration', () => {
     // 4. Non-collaborator can view (read-only)
     // Log out and try to access
     await page.goto('/auth');
-    await page.goto(`/amendment/${TEST_ENTITY_IDS.testAmendment1}`);
+    await page.goto(`/amendment/${amendment.id}`);
 
     // 5. Only collaborators can edit
     await expect(page.getByText(/view only|read-only/i)).toBeVisible();

@@ -1155,6 +1155,28 @@ export function notifyPositionCreated(params: {
 }
 
 /**
+ * Send notification to a group when a position is created
+ */
+export function notifyGroupPositionCreated(params: {
+  senderId: string;
+  groupId: string;
+  groupName: string;
+  positionTitle: string;
+}) {
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'group',
+    recipientEntityId: params.groupId,
+    type: 'group_position_created',
+    title: 'New Position Created',
+    message: `A new position "${params.positionTitle}" has been created in ${params.groupName}`,
+    actionUrl: `/group/${params.groupId}`,
+    relatedEntityType: 'group',
+    relatedGroupId: params.groupId,
+  });
+}
+
+/**
  * Send notification when a position is deleted
  */
 export function notifyPositionDeleted(params: {
@@ -1836,6 +1858,28 @@ export function notifySpeakerAdded(params: {
 }
 
 /**
+ * Send notification when a user joins the speaker list
+ */
+export function notifySpeakerListJoined(params: {
+  senderId: string;
+  senderName: string;
+  eventId: string;
+  eventTitle: string;
+}) {
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'event',
+    recipientEntityId: params.eventId,
+    type: 'event_speaker_added',
+    title: 'Speaker Joined',
+    message: `${params.senderName} has joined the speaker list for ${params.eventTitle}`,
+    actionUrl: `/event/${params.eventId}`,
+    relatedEntityType: 'event',
+    relatedEventId: params.eventId,
+  });
+}
+
+/**
  * Send notification when a new subscriber joins the event
  */
 export function notifyEventNewSubscriber(params: {
@@ -2367,6 +2411,32 @@ export function notifyChangeRequestRejected(params: {
     title: 'Change Request Rejected',
     message: `Your change request for ${params.amendmentTitle} has been rejected`,
     actionUrl: `/amendment/${params.amendmentId}`,
+    relatedEntityType: 'amendment',
+    relatedAmendmentId: params.amendmentId,
+  });
+}
+
+/**
+ * Send notification when a vote is cast on a change request
+ */
+export function notifyChangeRequestVoteCast(params: {
+  senderId: string;
+  senderName: string;
+  recipientUserId: string;
+  changeRequestId: string;
+  amendmentId: string;
+  amendmentTitle: string;
+  voteType: string;
+}) {
+  return createNotification({
+    senderId: params.senderId,
+    recipientUserId: params.recipientUserId,
+    onBehalfOfEntityType: 'amendment',
+    onBehalfOfEntityId: params.amendmentId,
+    type: 'change_request_vote_cast',
+    title: 'Vote Cast on Change Request',
+    message: `${params.senderName} voted "${params.voteType}" on your change request for ${params.amendmentTitle}`,
+    actionUrl: `/amendment/${params.amendmentId}/change-requests`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
   });

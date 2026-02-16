@@ -1,5 +1,4 @@
-import { test, expect } from '@playwright/test';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Create Feature', () => {
   test('Create Agenda Item', async ({ page }) => {
     // Navigate to create page
@@ -11,8 +10,6 @@ test.describe('Create Feature', () => {
       .or(page.locator('[data-entity="agendaitems"]'))
       .first();
     await agendaItemsOption.click();
-
-    await page.waitForTimeout(500);
 
     // Enter agenda item title
     const titleInput = page
@@ -61,7 +58,7 @@ test.describe('Create Feature', () => {
     await createButton.click();
 
     // Wait for success
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('networkidle');
 
     // Verify success message
     const successMessage = await page

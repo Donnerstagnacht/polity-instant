@@ -1,17 +1,19 @@
 import './globals.css';
 import { ClientLayout } from './client-layout';
+import type { Viewport } from 'next';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: '#000000',
+};
 
 export const metadata = {
   title: 'Polity',
   description: 'A modern political platform',
   manifest: '/manifest.json',
-  themeColor: '#000000',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',

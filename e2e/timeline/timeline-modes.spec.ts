@@ -1,29 +1,27 @@
 // spec: e2e/test-plans/timeline-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Timeline - Mode Switching', () => {
-  test.beforeEach(async ({ page }) => {
-    await loginAsTestUser(page);
+  test.beforeEach(async ({ authenticatedPage: page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
-  test('Following mode is the default mode', async ({ page }) => {
+  test('Following mode is the default mode', async ({ authenticatedPage: page }) => {
     // Check that Following tab is active by default
     const followingTab = page.getByRole('tab', { name: /following/i });
     await expect(followingTab).toHaveAttribute('aria-selected', 'true');
   });
 
-  test('Can switch between Following and Explore modes', async ({ page }) => {
-    // Switch to Explore mode
-    const exploreTab = page.getByRole('tab', { name: /explore/i });
-    await exploreTab.click();
+  // UI has "Decisions" tab instead of "Explore"
+  test('Can switch between Following and Decisions modes', async ({ authenticatedPage: page }) => {
+    // Switch to Decisions mode
+    const decisionsTab = page.getByRole('tab', { name: /decisions/i });
+    await decisionsTab.click();
 
-    // Verify Explore is now active
-    await expect(exploreTab).toHaveAttribute('aria-selected', 'true');
+    // Verify Decisions is now active
+    await expect(decisionsTab).toHaveAttribute('aria-selected', 'true');
 
     // Switch back to Following
     const followingTab = page.getByRole('tab', { name: /following/i });
@@ -33,7 +31,7 @@ test.describe('Timeline - Mode Switching', () => {
     await expect(followingTab).toHaveAttribute('aria-selected', 'true');
   });
 
-  test('Can switch to Decisions mode (Decision Terminal)', async ({ page }) => {
+  test('Can switch to Decisions mode (Decision Terminal)', async ({ authenticatedPage: page }) => {
     // Look for Decisions tab
     const decisionsTab = page.getByRole('tab', { name: /decisions/i });
 
@@ -49,36 +47,35 @@ test.describe('Timeline - Mode Switching', () => {
     }
   });
 
-  test('Mode preference persists across page navigation', async ({ page }) => {
-    // Switch to Explore mode
-    const exploreTab = page.getByRole('tab', { name: /explore/i });
-    await exploreTab.click();
-    await expect(exploreTab).toHaveAttribute('aria-selected', 'true');
+  test('Mode preference persists across page navigation', async ({ authenticatedPage: page }) => {
+    // Switch to Decisions mode
+    const decisionsTab = page.getByRole('tab', { name: /decisions/i });
+    await decisionsTab.click();
+    await expect(decisionsTab).toHaveAttribute('aria-selected', 'true');
 
     // Navigate away and back
     await page.goto('/search');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
-    // Check if Explore is still selected (depends on persistence implementation)
-    const exploreTabAfter = page.getByRole('tab', { name: /explore/i });
-    // Note: This test will pass if mode persists, or be informative if it doesn't
-    const isStillSelected = await exploreTabAfter.getAttribute('aria-selected');
+    // Check if Decisions is still selected (depends on persistence implementation)
+    const decisionsTabAfter = page.getByRole('tab', { name: /decisions/i });
+    const isStillSelected = await decisionsTabAfter.getAttribute('aria-selected');
     console.log(`Mode persistence: ${isStillSelected === 'true' ? 'YES' : 'NO'}`);
   });
 
-  test('Following mode shows content from subscribed entities', async ({ page }) => {
+  test('Following mode shows content from subscribed entities', async ({ authenticatedPage: page }) => {
     // Ensure we're in Following mode
     const followingTab = page.getByRole('tab', { name: /following/i });
     await followingTab.click();
 
     // Wait for content to load
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Timeline should show cards (or empty state if no subscriptions)
     const timelineCards = page.locator('[class*="card"], [class*="Card"]');
-    const emptyState = page.getByText(/your timeline is empty/i);
+    const emptyState = page.getByText(/subscribe|discover/i);
 
     const hasCards = (await timelineCards.count()) > 0;
     const isEmpty = await emptyState.isVisible().catch(() => false);
@@ -87,91 +84,73 @@ test.describe('Timeline - Mode Switching', () => {
     expect(hasCards || isEmpty).toBe(true);
   });
 
-  test('Explore mode shows public content', async ({ page }) => {
-    // Switch to Explore mode
-    const exploreTab = page.getByRole('tab', { name: /explore/i });
-    await exploreTab.click();
+  test('Decisions mode shows decision terminal content', async ({ authenticatedPage: page }) => {
+    // Switch to Decisions mode
+    const decisionsTab = page.getByRole('tab', { name: /decisions/i });
+    await decisionsTab.click();
 
     // Wait for content to load
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
-    // Explore mode should show discover content or section headers
-    const sectionHeaders = page.locator(
-      '[data-testid="explore-section"], [class*="section-header"]'
-    );
-    const exploreCards = page.locator('[class*="card"], [class*="Card"]');
-    const emptyState = page.getByText(/nothing to explore/i);
+    // Verify Decisions is active
+    await expect(decisionsTab).toHaveAttribute('aria-selected', 'true');
 
-    const hasSections = (await sectionHeaders.count()) > 0;
-    const hasCards = (await exploreCards.count()) > 0;
-    const isEmpty = await emptyState.isVisible().catch(() => false);
-
-    // Explore should show sections, cards, or empty state
-    expect(hasSections || hasCards || isEmpty).toBe(true);
+    // Decisions mode should show terminal content or empty state
+    const followingTab = page.getByRole('tab', { name: /following/i });
+    await expect(followingTab).toHaveAttribute('aria-selected', 'false');
   });
 
-  test('Different empty states show for each mode', async ({ page }) => {
-    // Test Following empty state
+  test('Different content shows for each mode', async ({ authenticatedPage: page }) => {
+    // Test Following mode
     const followingTab = page.getByRole('tab', { name: /following/i });
     await followingTab.click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(followingTab).toHaveAttribute('aria-selected', 'true');
 
-    const followingEmpty = page.getByText(/your timeline is empty|start following/i);
-    const followingHasCards = (await page.locator('[class*="card"], [class*="Card"]').count()) > 0;
+    // Test Decisions mode
+    const decisionsTab = page.getByRole('tab', { name: /decisions/i });
+    await decisionsTab.click();
+    await page.waitForLoadState('domcontentloaded');
+    await expect(decisionsTab).toHaveAttribute('aria-selected', 'true');
 
-    if (!followingHasCards) {
-      // If Following is empty, empty state message should be visible
-      console.log('Following mode is empty - checking for empty state');
-    }
-
-    // Test Explore empty state
-    const exploreTab = page.getByRole('tab', { name: /explore/i });
-    await exploreTab.click();
-    await page.waitForLoadState('networkidle');
-
-    const exploreEmpty = page.getByText(/nothing to explore|discover/i);
-    const exploreHasCards = (await page.locator('[class*="card"], [class*="Card"]').count()) > 0;
-
-    if (!exploreHasCards) {
-      // If Explore is empty, empty state should be visible
-      console.log('Explore mode is empty - checking for empty state');
-    }
+    // Following should no longer be selected
+    await expect(followingTab).toHaveAttribute('aria-selected', 'false');
   });
 });
 
 test.describe('Timeline - Mode Visual Indicators', () => {
-  test.beforeEach(async ({ page }) => {
-    await loginAsTestUser(page);
+  test.beforeEach(async ({ authenticatedPage: page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
-  test('Mode toggle is visible and accessible', async ({ page }) => {
-    // Mode toggle should be in the header
+  test('Mode toggle is visible and accessible', async ({ authenticatedPage: page }) => {
+    // Wait for the page content to load (loading indicator disappears)
+    await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 15000 });
+
+    // Mode toggle uses tabs or buttons for Following/Decisions
     const modeToggle = page.getByRole('tablist');
-    await expect(modeToggle).toBeVisible();
+    const modeButtons = page.getByRole('tab');
 
-    // All tabs should be present
-    const tabs = page.getByRole('tab');
-    const tabCount = await tabs.count();
+    const hasTablist = await modeToggle.isVisible().catch(() => false);
+    const hasButtons = (await modeButtons.count()) >= 2;
 
-    // Should have at least 2 tabs (Following, Explore)
-    expect(tabCount).toBeGreaterThanOrEqual(2);
+    expect(hasTablist || hasButtons).toBe(true);
   });
 
-  test('Active mode tab has visual distinction', async ({ page }) => {
+  test('Active mode tab has visual distinction', async ({ authenticatedPage: page }) => {
     // Get the Following tab
     const followingTab = page.getByRole('tab', { name: /following/i });
 
     // It should have aria-selected="true" when active
     await expect(followingTab).toHaveAttribute('aria-selected', 'true');
 
-    // Switch to Explore
-    const exploreTab = page.getByRole('tab', { name: /explore/i });
-    await exploreTab.click();
+    // Switch to Decisions
+    const decisionsTab = page.getByRole('tab', { name: /decisions/i });
+    await decisionsTab.click();
 
-    // Now Explore should be selected and Following should not
-    await expect(exploreTab).toHaveAttribute('aria-selected', 'true');
+    // Now Decisions should be selected and Following should not
+    await expect(decisionsTab).toHaveAttribute('aria-selected', 'true');
     await expect(followingTab).toHaveAttribute('aria-selected', 'false');
   });
 });

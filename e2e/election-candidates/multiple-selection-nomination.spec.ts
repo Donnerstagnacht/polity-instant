@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/election-candidates-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Election Candidates - Multiple Selection and Nomination', () => {
-  test('Select multiple candidates', async ({ page }) => {
+  test('Select multiple candidates', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as voter
-    await loginAsTestUser(page);
-
     // 2. Election allows multiple selections
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/stream`);
     await page.waitForLoadState('networkidle');
@@ -33,17 +30,14 @@ test.describe('Election Candidates - Multiple Selection and Nomination', () => {
         await voteButton.click();
 
         // 5. All selections recorded
-        await page.waitForTimeout(500);
 
         // All votes counted
       }
     }
   });
 
-  test('Self-nominate as candidate', async ({ page }) => {
+  test('Self-nominate as candidate', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as user
-    await loginAsTestUser(page);
-
     // 2. Navigate to election
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/stream`);
     await page.waitForLoadState('networkidle');
@@ -66,7 +60,6 @@ test.describe('Election Candidates - Multiple Selection and Nomination', () => {
       await submitButton.click();
 
       // 6. Nomination created
-      await page.waitForTimeout(500);
 
       // Status: "pending"
       // Organizer receives nomination
@@ -74,10 +67,8 @@ test.describe('Election Candidates - Multiple Selection and Nomination', () => {
     }
   });
 
-  test('Approve nomination', async ({ page }) => {
+  test('Approve nomination', async ({ authenticatedPage: page }) => {
     // 1. Login as organizer
-    await loginAsTestUser(page);
-
     // 2. Navigate to pending nominations
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda`);
     await page.waitForLoadState('networkidle');
@@ -93,7 +84,6 @@ test.describe('Election Candidates - Multiple Selection and Nomination', () => {
         await approveButton.click();
 
         // 5. Candidate approved
-        await page.waitForTimeout(500);
 
         // Status changes to active
         // Candidate appears in election

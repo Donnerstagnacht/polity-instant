@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/todos-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Todos - Loading States', () => {
-  test('Todos page displays loading indicator while fetching data', async ({ page }) => {
+  test('Todos page displays loading indicator while fetching data', async ({ authenticatedPage: page }) => {
     // 1. Navigate to /todos
-    await loginAsTestUser(page);
-
     // 2. Intercept network requests to delay response
     await page.route('**/api/**', async route => {
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -42,6 +38,5 @@ test.describe('Todos - Loading States', () => {
     }
 
     // Todos or empty state is displayed
-    await page.waitForTimeout(500);
   });
 });

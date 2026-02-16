@@ -1,8 +1,7 @@
 // spec: e2e/test-plans/magic-link-auth-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('OTP Code Verification', () => {
   test('Test Invalid OTP Code', async ({ page }) => {
     // 1. Navigate to /auth/verify via email flow
@@ -24,7 +23,7 @@ test.describe('OTP Code Verification', () => {
     }
 
     // 4. Wait for form submission attempt
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle');
 
     // 7. Verify user remains on /auth/verify page (invalid code rejected)
     await expect(page).toHaveURL(/\/auth\/verify/);

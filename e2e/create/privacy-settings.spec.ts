@@ -1,12 +1,10 @@
-import { test, expect } from '@playwright/test';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Create Feature', () => {
   test('Privacy Settings', async ({ page }) => {
     await page.goto('/create');
 
     const groupsOption = page.locator('text=Groups').first();
     await groupsOption.click();
-    await page.waitForTimeout(500);
 
     const nameInput = page.locator('input[name="name"]').first();
     if (await nameInput.isVisible()) {
@@ -23,7 +21,6 @@ test.describe('Create Feature', () => {
       if (await privacyToggle.isVisible()) break;
       if (await nextButton.isVisible()) {
         await nextButton.click();
-        await page.waitForTimeout(300);
       }
     }
 
@@ -32,7 +29,6 @@ test.describe('Create Feature', () => {
 
       if (tagName === 'SELECT') {
         await privacyToggle.selectOption('public');
-        await page.waitForTimeout(300);
         await privacyToggle.selectOption('private');
       } else if (tagName === 'INPUT') {
         await privacyToggle.click();

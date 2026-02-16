@@ -1,18 +1,16 @@
 // spec: e2e/test-plans/comments-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Comments - Timestamps and Notifications', () => {
-  test('Display creation time', async ({ page }) => {
-    // 1. Authenticate as test user
-    await loginAsTestUser(page);
+  test('Display creation time', async ({ authenticatedPage: page, blogFactory, userFactory }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const blog = await blogFactory.createBlog(user.id, { title: `Timestamp Blog ${Date.now()}` });
 
-    // 2. Navigate to blog
-    await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
-    await page.waitForLoadState('networkidle');
+    await page.goto(`/blog/${blog.id}`);
+    await page.waitForLoadState('domcontentloaded');
 
     // 3. View comment
     const comments = page
@@ -32,13 +30,12 @@ test.describe('Comments - Timestamps and Notifications', () => {
     }
   });
 
-  test('Display updated time', async ({ page }) => {
-    // 1. Authenticate as test user
-    await loginAsTestUser(page);
+  test('Display updated time', async ({ authenticatedPage: page, blogFactory, userFactory }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const blog = await blogFactory.createBlog(user.id, { title: `Updated Blog ${Date.now()}` });
 
-    // 2. Navigate to blog
-    await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
-    await page.waitForLoadState('networkidle');
+    await page.goto(`/blog/${blog.id}`);
+    await page.waitForLoadState('domcontentloaded');
 
     // 3. Comment has been edited
     const editedIndicator = page.getByText(/edited/i);
@@ -52,26 +49,24 @@ test.describe('Comments - Timestamps and Notifications', () => {
     }
   });
 
-  test('Notify of new comment', async ({ page }) => {
-    // 1. User comments on blog
-    await loginAsTestUser(page);
+  test('Notify of new comment', async ({ authenticatedPage: page, blogFactory, userFactory }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const blog = await blogFactory.createBlog(user.id, { title: `Notify Blog ${Date.now()}` });
 
-    // 2. Navigate to blog
-    await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
-    await page.waitForLoadState('networkidle');
+    await page.goto(`/blog/${blog.id}`);
+    await page.waitForLoadState('domcontentloaded');
 
     // 3. Add comment
     const addCommentButton = page.getByRole('button', { name: /add comment/i });
     await addCommentButton.click();
 
-    const commentInput = page.getByRole('textbox');
+    const commentInput = page.getByPlaceholder('Write your comment...');
     await commentInput.fill('Test notification comment');
 
     const postButton = page.getByRole('button', { name: /post/i });
     await postButton.click();
 
     // 4. Blog creator checks notifications
-    await page.waitForTimeout(500);
 
     // Creator receives notification
     // Notification type: "comment_added"
@@ -79,13 +74,12 @@ test.describe('Comments - Timestamps and Notifications', () => {
     // Link to comment
   });
 
-  test('Notify of reply', async ({ page }) => {
-    // 1. Authenticate as test user
-    await loginAsTestUser(page);
+  test('Notify of reply', async ({ authenticatedPage: page, blogFactory, userFactory }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const blog = await blogFactory.createBlog(user.id, { title: `Reply Blog ${Date.now()}` });
 
-    // 2. Navigate to blog
-    await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
-    await page.waitForLoadState('networkidle');
+    await page.goto(`/blog/${blog.id}`);
+    await page.waitForLoadState('domcontentloaded');
 
     // 3. User replies to comment
     const comments = page
@@ -105,7 +99,6 @@ test.describe('Comments - Timestamps and Notifications', () => {
         await postButton.click();
 
         // 4. Original commenter checks notifications
-        await page.waitForTimeout(500);
 
         // Original commenter notified
         // Notification type: "comment_reply"

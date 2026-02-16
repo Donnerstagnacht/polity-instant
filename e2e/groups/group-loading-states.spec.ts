@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/groups-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test } from '../fixtures/test-base';
 test.describe('Groups - Group Loading States', () => {
-  test('Group page displays loading indicator', async ({ page }) => {
+  test('Group page displays loading indicator', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Intercept network requests to delay response
     await page.route('**/api/**', async route => {
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -33,7 +29,6 @@ test.describe('Groups - Group Loading States', () => {
     });
 
     // 6. Smooth transition to loaded state
-    await page.waitForTimeout(500);
 
     // No layout shift should occur
   });

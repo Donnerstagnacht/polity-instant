@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/events-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Events - Event Stats Bar', () => {
-  test('Event stats bar displays accurate counts', async ({ page }) => {
+  test('Event stats bar displays accurate counts', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to event page
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
 

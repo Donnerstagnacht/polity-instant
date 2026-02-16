@@ -1,12 +1,9 @@
 // spec: e2e/test-plans/chat-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Chat/Messages - User Search Dialog', () => {
-  test('New conversation button opens dialog', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('New conversation button opens dialog', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
 
     // Find the "+" floating button
@@ -21,9 +18,9 @@ test.describe('Chat/Messages - User Search Dialog', () => {
     await expect(page.getByText('Start a New Conversation')).toBeVisible();
   });
 
-  test('Dialog has search input field', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('Dialog has search input field', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
+    await page.waitForLoadState('domcontentloaded');
 
     // Open dialog
     const newConversationButton = page.getByRole('button', { name: /start a new conversation/i });
@@ -35,8 +32,7 @@ test.describe('Chat/Messages - User Search Dialog', () => {
     await expect(searchInput).toBeEditable();
   });
 
-  test('Search input filters users on type (type-ahead)', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('Search input filters users on type (type-ahead)', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
 
     // Open dialog
@@ -48,7 +44,6 @@ test.describe('Chat/Messages - User Search Dialog', () => {
     await searchInput.fill('tes');
 
     // Wait for type-ahead to filter
-    await page.waitForTimeout(500);
 
     // User results should be filtered
     const userResults = page.locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
@@ -62,9 +57,12 @@ test.describe('Chat/Messages - User Search Dialog', () => {
     }
   });
 
-  test('User results show profile image and name', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('User results show profile image and name', async ({ authenticatedPage: page, userFactory }) => {
+    // Create a searchable user so we get results
+    const otherUser = await userFactory.createUser();
+
     await page.goto('/messages');
+    await page.waitForLoadState('domcontentloaded');
 
     // Open dialog
     const newConversationButton = page.getByRole('button', { name: /start a new conversation/i });
@@ -72,11 +70,8 @@ test.describe('Chat/Messages - User Search Dialog', () => {
 
     // Search for users
     const searchInput = page.getByPlaceholder(/search users by name or handle/i);
-    await searchInput.fill('test');
-    await page.waitForTimeout(500);
-
-    // Check user result structure
-    const userResults = page.locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
+    await searchInput.fill(otherUser.name || 'test');
+    const userResults = page.getByRole('dialog').locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
     const hasResults = (await userResults.count()) > 0;
 
     if (hasResults) {
@@ -87,13 +82,12 @@ test.describe('Chat/Messages - User Search Dialog', () => {
       await expect(avatar.first()).toBeVisible();
 
       // Should have name
-      const userName = firstResult.locator('p').first();
+      const userName = firstResult.locator('p, span').first();
       await expect(userName).toBeVisible();
     }
   });
 
-  test('User results show handle if available', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('User results show handle if available', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
 
     // Open dialog
@@ -103,7 +97,6 @@ test.describe('Chat/Messages - User Search Dialog', () => {
     // Search for users
     const searchInput = page.getByPlaceholder(/search users by name or handle/i);
     await searchInput.fill('test');
-    await page.waitForTimeout(500);
 
     // Check for handles in results
     const userResults = page.locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
@@ -122,23 +115,22 @@ test.describe('Chat/Messages - User Search Dialog', () => {
     }
   });
 
-  test('Empty search shows placeholder message', async ({ page }) => {
-    await loginAsTestUser(page);
+  // Dialog shows "Search for users to start a conversation with" not "start typing to search users"
+  test('Empty search shows placeholder message', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
+    await page.waitForLoadState('domcontentloaded');
 
     // Open dialog
     const newConversationButton = page.getByRole('button', { name: /start a new conversation/i });
     await newConversationButton.click();
 
     // Don't type anything
-    await page.waitForTimeout(300);
 
     // Should show placeholder message
-    await expect(page.getByText(/start typing to search users/i)).toBeVisible();
+    await expect(page.getByText(/search for users/i)).toBeVisible();
   });
 
-  test('No results message appears when search has no matches', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('No results message appears when search has no matches', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
 
     // Open dialog
@@ -148,15 +140,17 @@ test.describe('Chat/Messages - User Search Dialog', () => {
     // Search for something that won't match
     const searchInput = page.getByPlaceholder(/search users by name or handle/i);
     await searchInput.fill('xyzzzznonexistent12345');
-    await page.waitForTimeout(500);
 
     // Should show "no users found"
     await expect(page.getByText(/no users found/i)).toBeVisible();
   });
 
-  test('Clicking user result creates conversation and closes dialog', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('Clicking user result creates conversation and closes dialog', async ({ authenticatedPage: page, userFactory }) => {
+    // Create a searchable user so we get results
+    const otherUser = await userFactory.createUser();
+
     await page.goto('/messages');
+    await page.waitForLoadState('domcontentloaded');
 
     // Open dialog
     const newConversationButton = page.getByRole('button', { name: /start a new conversation/i });
@@ -164,10 +158,9 @@ test.describe('Chat/Messages - User Search Dialog', () => {
 
     // Search and select user
     const searchInput = page.getByPlaceholder(/search users by name or handle/i);
-    await searchInput.fill('test');
-    await page.waitForTimeout(500);
+    await searchInput.fill(otherUser.name || 'test');
 
-    const userResults = page.locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
+    const userResults = page.getByRole('dialog').locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
     const hasResults = (await userResults.count()) > 0;
 
     if (hasResults) {
@@ -182,9 +175,9 @@ test.describe('Chat/Messages - User Search Dialog', () => {
     }
   });
 
-  test('Dialog can be closed without creating conversation', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('Dialog can be closed without creating conversation', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
+    await page.waitForLoadState('domcontentloaded');
 
     // Open dialog
     const newConversationButton = page.getByRole('button', { name: /start a new conversation/i });
@@ -195,14 +188,12 @@ test.describe('Chat/Messages - User Search Dialog', () => {
 
     // Close dialog (click outside or close button)
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(300);
 
     // Dialog should be closed
     await expect(page.getByRole('dialog')).not.toBeVisible();
   });
 
-  test('Search is case-insensitive', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('Search is case-insensitive', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
 
     // Open dialog
@@ -214,7 +205,6 @@ test.describe('Chat/Messages - User Search Dialog', () => {
 
     // Try uppercase
     await searchInput.fill('TEST');
-    await page.waitForTimeout(500);
 
     const upperResults = await page
       .locator('button')
@@ -224,7 +214,6 @@ test.describe('Chat/Messages - User Search Dialog', () => {
     // Clear and try lowercase
     await searchInput.fill('');
     await searchInput.fill('test');
-    await page.waitForTimeout(500);
 
     const lowerResults = await page
       .locator('button')
@@ -235,8 +224,7 @@ test.describe('Chat/Messages - User Search Dialog', () => {
     expect(upperResults).toBe(lowerResults);
   });
 
-  test('Current user is excluded from search results', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('Current user is excluded from search results', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
 
     // Open dialog
@@ -247,7 +235,6 @@ test.describe('Chat/Messages - User Search Dialog', () => {
     // Search for all users
     const searchInput = page.getByPlaceholder(/search users by name or handle/i);
     await searchInput.fill(''); // Show all users
-    await page.waitForTimeout(500);
 
     // Verify current user is not in the list
     // This is implicitly tested - the dialog filters out the current user

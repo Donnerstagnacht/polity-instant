@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/subscription-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('View Subscriptions List', () => {
-  test('User can view all subscriptions', async ({ page }) => {
+  test('User can view all subscriptions', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to own profile first
     await page.goto('/user/page');
     await page.waitForLoadState('networkidle');

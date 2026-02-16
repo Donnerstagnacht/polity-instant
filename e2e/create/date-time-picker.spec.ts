@@ -1,5 +1,4 @@
-import { test, expect } from '@playwright/test';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Create Feature', () => {
   test('Date and Time Picker', async ({ page }) => {
     // Navigate to create page
@@ -12,7 +11,6 @@ test.describe('Create Feature', () => {
       .first();
     await eventsOption.click();
 
-    await page.waitForTimeout(500);
 
     // Fill in title first (may be required)
     const titleInput = page.locator('input[name="title"]').first();
@@ -35,7 +33,6 @@ test.describe('Create Feature', () => {
       if (await dateInput.isVisible()) break;
       if (await nextButton.isVisible()) {
         await nextButton.click();
-        await page.waitForTimeout(300);
       } else {
         break;
       }
@@ -49,7 +46,6 @@ test.describe('Create Feature', () => {
       // Set date value
       await dateInput.fill('2024-12-25');
 
-      await page.waitForTimeout(300);
 
       // Verify date is set
       const dateValue = await dateInput.inputValue();
@@ -68,7 +64,6 @@ test.describe('Create Feature', () => {
         // Set time value
         await timeInput.fill('14:30');
 
-        await page.waitForTimeout(300);
 
         // Verify time is set
         const timeValue = await timeInput.inputValue();
@@ -77,7 +72,6 @@ test.describe('Create Feature', () => {
         // Time field might be on next step
         if (await nextButton.isVisible()) {
           await nextButton.click();
-          await page.waitForTimeout(300);
 
           const timeInputNext = page.locator('input[type="time"]').first();
           if (await timeInputNext.isVisible()) {

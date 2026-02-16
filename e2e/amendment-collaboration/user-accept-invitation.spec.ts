@@ -1,17 +1,21 @@
 // spec: e2e/test-plans/amendment-collaboration-test-plan.md
-// seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Amendment Collaboration', () => {
-  test('User can accept collaboration invitation', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('User can accept collaboration invitation', async ({ authenticatedPage: page, amendmentFactory, userFactory }) => {
+    // Create amendment owned by another user, invite the test user
+    const owner = await userFactory.createUser();
+    const amendment = await amendmentFactory.createAmendment(owner.id, {
+      title: `Test Amendment ${Date.now()}`,
+    });
+    const testUser = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    await amendmentFactory.addCollaborator(amendment.id, testUser.id, amendment.collaboratorRoleId, 'invited');
 
     // 1. User is invited to amendment (status: "invited")
     // 2. User navigates to amendment page
-    await page.goto(`/amendment/${TEST_ENTITY_IDS.testAmendment2}`);
+    await page.goto(`/amendment/${amendment.id}`);
 
     // 3. User sees "Accept Invitation" button
     const acceptButton = page.getByRole('button', { name: /accept invitation/i });

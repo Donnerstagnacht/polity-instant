@@ -19,7 +19,7 @@ export async function navigateToOwnProfile(page: Page) {
  */
 export async function navigateToUserProfile(page: Page, userId: string) {
   await page.goto(`/user/${userId}`);
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
 }
 
 /**
@@ -55,7 +55,7 @@ export async function navigateToSubscriptions(page: Page, userId?: string) {
  */
 export async function navigateToGroup(page: Page, groupId: string) {
   await page.goto(`/group/${groupId}`);
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
 }
 
 /**
@@ -63,7 +63,7 @@ export async function navigateToGroup(page: Page, groupId: string) {
  */
 export async function navigateToAmendment(page: Page, amendmentId: string) {
   await page.goto(`/amendment/${amendmentId}`);
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
 }
 
 /**
@@ -71,7 +71,69 @@ export async function navigateToAmendment(page: Page, amendmentId: string) {
  */
 export async function navigateToBlog(page: Page, blogId: string) {
   await page.goto(`/blog/${blogId}`);
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
+}
+
+/**
+ * Navigates to an event page
+ */
+export async function navigateToEvent(page: Page, eventId: string) {
+  await page.goto(`/event/${eventId}`);
+  await page.waitForLoadState('domcontentloaded');
+}
+
+/**
+ * Navigates to a statement page
+ */
+export async function navigateToStatement(page: Page, statementId: string) {
+  await page.goto(`/statement/${statementId}`);
+  await page.waitForLoadState('domcontentloaded');
+}
+
+/**
+ * Navigates to a todo detail page
+ */
+export async function navigateToTodo(page: Page, todoId: string) {
+  await page.goto(`/todos/${todoId}`);
+  await page.waitForLoadState('domcontentloaded');
+}
+
+/**
+ * Navigates to a meeting page
+ */
+export async function navigateToMeeting(page: Page, meetingId: string) {
+  await page.goto(`/meet/${meetingId}`);
+  await page.waitForLoadState('domcontentloaded');
+}
+
+/**
+ * Navigates to a group's operation page
+ */
+export async function navigateToGroupOperation(page: Page, groupId: string) {
+  await page.goto(`/group/${groupId}/operation`);
+  await page.waitForLoadState('domcontentloaded');
+}
+
+/**
+ * Navigates to a group's documents page
+ */
+export async function navigateToGroupDocuments(page: Page, groupId: string) {
+  await page.goto(`/group/${groupId}/editor`);
+  await page.waitForLoadState('domcontentloaded');
+}
+
+/**
+ * Navigates to a user's memberships page
+ */
+export async function navigateToUserMemberships(page: Page, userId?: string) {
+  if (userId) {
+    await page.goto(`/user/${userId}/memberships`);
+  } else {
+    await navigateToOwnProfile(page);
+    const membershipsLink = page.getByRole('link', { name: /membership/i });
+    await membershipsLink.click();
+  }
+  await page.waitForLoadState('domcontentloaded');
 }
 
 /**

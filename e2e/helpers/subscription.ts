@@ -1,54 +1,18 @@
 import { type Page, expect } from '@playwright/test';
 
-/**
- * Subscription helper utilities for E2E tests
- */
-
-/**
- * Navigates to a user's profile page
- */
-export async function navigateToUserProfile(page: Page, userId: string) {
-  await page.goto(`/user/${userId}`);
-  await page.waitForLoadState('networkidle');
-}
-
-/**
- * Navigates to a group page
- */
-export async function navigateToGroup(page: Page, groupId: string) {
-  await page.goto(`/group/${groupId}`);
-  await page.waitForLoadState('networkidle');
-}
-
-/**
- * Navigates to an event page
- */
-export async function navigateToEvent(page: Page, eventId: string) {
-  await page.goto(`/event/${eventId}`);
-  await page.waitForLoadState('networkidle');
-}
-
-/**
- * Navigates to a blog page
- */
-export async function navigateToBlog(page: Page, blogId: string) {
-  await page.goto(`/blog/${blogId}`);
-  await page.waitForLoadState('networkidle');
-}
-
-/**
- * Navigates to an amendment page
- */
-export async function navigateToAmendment(page: Page, amendmentId: string) {
-  await page.goto(`/amendment/${amendmentId}`);
-  await page.waitForLoadState('networkidle');
-}
+// Re-export navigation helpers from canonical source to avoid breaking existing imports
+export {
+  navigateToUserProfile,
+  navigateToGroup,
+  navigateToEvent,
+  navigateToBlog,
+  navigateToAmendment,
+} from './navigation';
 
 /**
  * Finds and returns the subscribe/unsubscribe button
  */
 export async function getSubscribeButton(page: Page) {
-  // Try multiple selectors to find the subscribe button
   const button = page.getByRole('button', { name: /subscribe|unsubscribe/i });
   return button.first();
 }
@@ -65,7 +29,6 @@ export async function clickSubscribeButton(page: Page) {
  * Gets the current subscriber count from the page
  */
 export async function getSubscriberCount(page: Page): Promise<number> {
-  // Look for subscriber count in various formats
   const subscriberElement = page.locator('text=/\\d+\\s*subscriber/i').first();
 
   try {
@@ -73,7 +36,6 @@ export async function getSubscriberCount(page: Page): Promise<number> {
     const match = text?.match(/(\d+)/);
     return match ? parseInt(match[1], 10) : 0;
   } catch {
-    // If not found, return 0
     return 0;
   }
 }

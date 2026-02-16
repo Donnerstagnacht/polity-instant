@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/chat-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Chat/Messages - Unread Message Count', () => {
-  test('Unread messages show count badge', async ({ page }) => {
+  test('Unread messages show count badge', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 
@@ -32,7 +28,7 @@ test.describe('Chat/Messages - Unread Message Count', () => {
       await conversationWithBadge.click();
 
       // 8. Wait for read status to update
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('networkidle');
 
       // 9. Go back to conversation list
       const backButton = page
@@ -48,7 +44,6 @@ test.describe('Chat/Messages - Unread Message Count', () => {
       }
 
       // 10. Count should update when messages read
-      await page.waitForTimeout(500);
     } else {
       // No unread messages - all conversations read
       const conversations = page.locator('button').filter({ hasText: /Unknown User|@/ });
@@ -65,10 +60,8 @@ test.describe('Chat/Messages - Unread Message Count', () => {
     }
   });
 
-  test('Badge shows 99+ for high unread counts', async ({ page }) => {
+  test('Badge shows 99+ for high unread counts', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 

@@ -1,55 +1,44 @@
 // spec: e2e/test-plans/events-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Events - Create Public Event with Required Fields', () => {
-  test('User creates public event with required fields', async ({ page }) => {
-    // 1. Authenticate as test user
-    await loginAsTestUser(page);
+  test('User creates public event with required fields', async ({ authenticatedPage: page }) => {
+    // 1. Navigate to /create/event directly
+    await page.goto('/create/event');
+    await page.waitForLoadState('domcontentloaded');
 
-    // 2. Navigate to /create page
-    await page.goto('/create');
-
-    // 3. Select "Event" entity type
-    const eventOption = page
-      .getByRole('radio', { name: /event/i })
-      .or(page.getByText(/event/i).first());
-    await eventOption.click();
-
-    // 4. Enter event title
+    // 2. Step 1: Enter event title
     const titleInput = page.getByLabel(/title/i).or(page.getByPlaceholder(/title/i));
+    await expect(titleInput).toBeVisible({ timeout: 10000 });
     await titleInput.fill('Community Meetup');
 
-    // 5. Enter description
+    // 3. Enter description if available
     const descInput = page.getByLabel(/description/i).or(page.getByPlaceholder(/description/i));
-    await descInput.fill('Monthly community gathering');
-
-    // 6. Select start date (future date)
-    const dateInput = page.getByLabel(/date/i).or(page.getByLabel(/start/i));
-    const futureDate = new Date();
-    futureDate.setDate(futureDate.getDate() + 7);
-    const dateString = futureDate.toISOString().split('T')[0];
-    await dateInput.fill(dateString);
-
-    // 7. Set event as public
-    const publicOption = page
-      .getByRole('radio', { name: /public/i })
-      .or(page.getByLabel(/public/i));
-    if ((await publicOption.count()) > 0) {
-      await publicOption.click();
+    if ((await descInput.count()) > 0) {
+      await descInput.fill('Monthly community gathering');
     }
 
-    // 8. Click "Create" button
-    const createButton = page.getByRole('button', { name: /create/i });
-    await createButton.click();
+    // 4. Click Next through wizard steps
+    const nextButton = page.getByRole('button', { name: /next/i });
+    await nextButton.click();
 
-    // 9. Verify redirect to event page
-    await page.waitForURL(/\/event\/.+/, { timeout: 5000 });
+    // Keep clicking Next until we reach the Create/Submit step
+    for (let i = 0; i < 5; i++) {
+      const createButton = page.getByRole('button', { name: /create/i });
+      if ((await createButton.count()) > 0 && await createButton.isEnabled()) {
+        await createButton.click();
+        break;
+      }
+      if ((await nextButton.count()) > 0 && await nextButton.isEnabled()) {
+        await nextButton.click();
+      }
+    }
 
-    // 10. Verify event details displayed
-    await expect(page.getByText('Community Meetup')).toBeVisible();
-    await expect(page.getByText('Monthly community gathering')).toBeVisible();
+    // 5. Verify redirect to event page
+    await page.waitForURL(/\/event\/.+/, { timeout: 10000 });
+
+    // 6. Verify event details displayed
+    await expect(page.getByText('Community Meetup')).toBeVisible({ timeout: 5000 });
   });
 });

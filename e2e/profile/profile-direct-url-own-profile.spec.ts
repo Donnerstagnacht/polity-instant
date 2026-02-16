@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/profile-feature-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Navigation and URL Handling', () => {
-  test('Direct URL Access to Own Profile', async ({ page }) => {
+  test('Direct URL Access to Own Profile', async ({ authenticatedPage: page }) => {
     // 1. Authenticate using loginAsTestUser(page)
-    await loginAsTestUser(page);
-
     // 2. Use page.goto('/user') to navigate
     await page.goto('/user');
 

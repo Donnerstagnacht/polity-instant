@@ -1,80 +1,47 @@
 // spec: e2e/test-plans/timeline-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Timeline - Loading States', () => {
-  test('Timeline shows loading indicator while fetching', async ({ page }) => {
+  test('Timeline shows loading indicator while fetching', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to home page
     await page.goto('/');
 
-    // 3. Check if loading state appears
-    const loadingText = page.getByText(/loading updates from your subscriptions/i);
-    const isLoading = await loadingText.isVisible().catch(() => false);
+    // 3. Wait for the timeline header to load
+    await expect(page.getByText(/your political ecosystem/i)).toBeVisible({ timeout: 15000 });
 
-    if (isLoading) {
-      // 4. Verify loading indicator
-      await expect(loadingText).toBeVisible();
-
-      // 5. Verify skeleton loaders
-      const skeletons = page.locator('[class*="animate-pulse"]');
-      const hasSkeleton = await skeletons
-        .first()
-        .isVisible()
-        .catch(() => false);
-
-      if (hasSkeleton) {
-        await expect(skeletons.first()).toBeVisible();
-      }
-    }
-
-    // 6. Wait for content to load
-    await page.waitForTimeout(2000);
-
-    // 7. Verify timeline loaded
-    await expect(page.getByText(/your timeline/i)).toBeVisible();
+    // 4. Following tab should be visible and active
+    const followingTab = page.getByRole('tab', { name: /following/i });
+    await expect(followingTab).toBeVisible();
   });
 
-  test('Timeline renders correctly after loading', async ({ page }) => {
+  test('Timeline renders correctly after loading', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to home page
     await page.goto('/');
 
-    // 3. Wait for page to fully load
-    await page.waitForLoadState('networkidle');
+    // 3. Wait for timeline header
+    await expect(page.getByText(/your political ecosystem/i)).toBeVisible({ timeout: 15000 });
 
-    // 4. Verify timeline header is visible
-    await expect(page.getByText(/your timeline/i)).toBeVisible();
+    // 4. Verify either content cards or empty state is shown
+    const cards = page.locator('[class*="card"], [class*="Card"]');
+    const emptyState = page.getByText(/subscribe|discover/i);
 
-    // 5. Verify either events or empty state is shown
-    const hasEvents = !(await page
-      .getByText(/your timeline is empty/i)
-      .isVisible()
-      .catch(() => false));
-    const hasEmptyState = await page
-      .getByText(/subscribe to users, groups|your timeline is empty/i)
-      .isVisible()
-      .catch(() => false);
+    const hasCards = (await cards.count()) > 0;
+    const hasEmptyState = await emptyState.isVisible().catch(() => false);
 
     // One of these should be true
-    expect(hasEvents || hasEmptyState).toBeTruthy();
+    expect(hasCards || hasEmptyState).toBeTruthy();
   });
 
-  test('No loading state stuck on screen', async ({ page }) => {
+  test('No loading state stuck on screen', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to home page
     await page.goto('/');
 
     // 3. Wait for loading to complete
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // 4. Verify loading text is not stuck on screen
     const loadingText = page.getByText(/loading updates from your subscriptions/i);

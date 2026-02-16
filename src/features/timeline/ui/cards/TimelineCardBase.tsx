@@ -2,6 +2,7 @@
 
 import { ReactNode, MouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { cn } from '@/utils/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -109,6 +110,8 @@ export function TimelineCardBase({
 export interface TimelineCardHeaderProps {
   contentType: ContentType;
   title: string;
+  /** URL for the card's primary link (makes title right-clickable) */
+  href?: string;
   subtitle?: string;
   /** URL for the subtitle link (e.g., group page) */
   subtitleHref?: string;
@@ -124,6 +127,7 @@ export interface TimelineCardHeaderProps {
 export function TimelineCardHeader({
   contentType,
   title,
+  href,
   subtitle,
   subtitleHref,
   badge,
@@ -134,19 +138,6 @@ export function TimelineCardHeader({
   const config = CONTENT_TYPE_CONFIG[contentType];
   const gradient = getContentTypeGradient(contentType);
   const Icon = config.icon;
-  const router = useRouter();
-
-  const handleSubtitleClick = (e: MouseEvent<HTMLSpanElement>) => {
-    if (!subtitleHref) return;
-    e.stopPropagation();
-
-    // Ctrl+click or Cmd+click opens in new tab
-    if (e.ctrlKey || e.metaKey) {
-      window.open(subtitleHref, '_blank');
-    } else {
-      router.push(subtitleHref);
-    }
-  };
 
   return (
     <div className={cn('p-4', gradient, className)}>
@@ -154,30 +145,24 @@ export function TimelineCardHeader({
         <div className="flex min-w-0 flex-1 items-start gap-2">
           {showIcon && <Icon className={cn('mt-0.5 h-5 w-5 flex-shrink-0', config.accentColor)} />}
           <div className="min-w-0 flex-1">
-            <h3 className="truncate text-base font-semibold leading-tight">{title}</h3>
+            <h3 className="truncate text-base font-semibold leading-tight">
+              {href ? (
+                <Link href={href} onClick={e => e.stopPropagation()} className="hover:underline">
+                  {title}
+                </Link>
+              ) : (
+                title
+              )}
+            </h3>
             {subtitle &&
               (subtitleHref ? (
-                <span
-                  onClick={handleSubtitleClick}
-                  onAuxClick={e => {
-                    if (e.button === 1) {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      window.open(subtitleHref, '_blank');
-                    }
-                  }}
-                  role="link"
-                  tabIndex={0}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      router.push(subtitleHref);
-                    }
-                  }}
-                  className="mt-0.5 block cursor-pointer truncate text-xs text-muted-foreground hover:text-foreground hover:underline"
+                <Link
+                  href={subtitleHref}
+                  onClick={e => e.stopPropagation()}
+                  className="mt-0.5 block truncate text-xs text-muted-foreground hover:text-foreground hover:underline"
                 >
                   {subtitle}
-                </span>
+                </Link>
               ) : (
                 <p className="mt-0.5 truncate text-xs text-muted-foreground">{subtitle}</p>
               ))}

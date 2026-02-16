@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/chat-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Chat/Messages - Empty States', () => {
-  test('Empty state when no conversations exist', async ({ page }) => {
+  test('Empty state when no conversations exist', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 
@@ -25,10 +21,8 @@ test.describe('Chat/Messages - Empty States', () => {
     }
   });
 
-  test('Empty state when no conversation selected', async ({ page }) => {
+  test('Empty state when no conversation selected', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 
@@ -43,10 +37,8 @@ test.describe('Chat/Messages - Empty States', () => {
     }
   });
 
-  test('Empty state within conversation with no messages', async ({ page }) => {
+  test('Empty state within conversation with no messages', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 

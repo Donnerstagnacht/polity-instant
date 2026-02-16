@@ -1,8 +1,7 @@
 // spec: e2e/test-plans/subscription-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 import {
   navigateToAmendment,
@@ -13,15 +12,12 @@ import {
   ensureSubscribed,
 } from '../helpers/subscription';
 
-const TEST_AMENDMENT_ID = TEST_ENTITY_IDS.testAmendment1;
-
 test.describe('Subscribe to Amendment', () => {
-  test('User can subscribe to amendment', async ({ page }) => {
-    // 1. Authenticate as test user
-    await loginAsTestUser(page);
+  test('User can subscribe to amendment', async ({ authenticatedPage: page, amendmentFactory, userFactory }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const amendment = await amendmentFactory.createAmendment(user.id, { title: `Sub Amendment ${Date.now()}` });
 
-    // 2. Navigate to amendment page
-    await navigateToAmendment(page, TEST_AMENDMENT_ID);
+    await navigateToAmendment(page, amendment.id);
 
     // 3. Ensure we start unsubscribed
     await ensureNotSubscribed(page);
@@ -40,12 +36,11 @@ test.describe('Subscribe to Amendment', () => {
     expect(newCount).toBe(initialCount + 1);
   });
 
-  test('User can unsubscribe from amendment', async ({ page }) => {
-    // 1. Authenticate as test user
-    await loginAsTestUser(page);
+  test('User can unsubscribe from amendment', async ({ authenticatedPage: page, amendmentFactory, userFactory }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const amendment = await amendmentFactory.createAmendment(user.id, { title: `Unsub Amendment ${Date.now()}` });
 
-    // 2. Navigate to amendment page
-    await navigateToAmendment(page, TEST_AMENDMENT_ID);
+    await navigateToAmendment(page, amendment.id);
 
     // 3. Ensure we're subscribed first
     await ensureSubscribed(page);

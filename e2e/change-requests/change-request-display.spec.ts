@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/change-requests-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Change Requests - Discussion and Display', () => {
-  test('Add comment to change request', async ({ page }) => {
+  test('Add comment to change request', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as collaborator
-    await loginAsTestUser(page);
-
     // 2. Navigate to change request
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');
@@ -36,7 +33,6 @@ test.describe('Change Requests - Discussion and Display', () => {
         await postButton.click();
 
         // 6. Comment added
-        await page.waitForTimeout(500);
 
         // Discussion thread created/updated
         // Participants notified
@@ -47,10 +43,8 @@ test.describe('Change Requests - Discussion and Display', () => {
     }
   });
 
-  test('View change requests list', async ({ page }) => {
+  test('View change requests list', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as collaborator
-    await loginAsTestUser(page);
-
     // 2. Navigate to amendment change requests tab
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');
@@ -69,10 +63,8 @@ test.describe('Change Requests - Discussion and Display', () => {
     // Sorted by date or status
   });
 
-  test('View change request details', async ({ page }) => {
+  test('View change request details', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as collaborator
-    await loginAsTestUser(page);
-
     // 2. Navigate to change requests
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');
@@ -89,7 +81,6 @@ test.describe('Change Requests - Discussion and Display', () => {
       await changeRequest.click();
 
       // 4. View full details page
-      await page.waitForTimeout(300);
 
       // Full title, description, justification
       // Proposed change text clearly shown
@@ -99,10 +90,8 @@ test.describe('Change Requests - Discussion and Display', () => {
     }
   });
 
-  test('Show vote counts and percentages', async ({ page }) => {
+  test('Show vote counts and percentages', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as collaborator
-    await loginAsTestUser(page);
-
     // 2. Navigate to change request
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');

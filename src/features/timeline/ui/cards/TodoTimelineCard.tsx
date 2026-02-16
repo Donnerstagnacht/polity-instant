@@ -229,7 +229,9 @@ export function TodoTimelineCard({ todo, onToggle, className }: TodoTimelineCard
               todo.isCompleted && 'text-muted-foreground line-through'
             )}
           >
-            {todo.title}
+            <Link href={`/todos/${todo.id}`} onClick={e => e.stopPropagation()} className="hover:underline">
+              {todo.title}
+            </Link>
           </h3>
         </div>
 

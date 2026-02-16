@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/agenda-items-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Agenda Items - Forwarding System', () => {
-  test('Forward agenda item to another event', async ({ page }) => {
+  test('Forward agenda item to another event', async ({ authenticatedPage: page }) => {
     // 1. Login as organizer
-    await loginAsTestUser(page);
-
     // 2. Navigate to event agenda
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
     await page.waitForLoadState('networkidle');
@@ -48,7 +45,6 @@ test.describe('Agenda Items - Forwarding System', () => {
         await confirmButton.click();
 
         // 7. Forwarding request created
-        await page.waitForTimeout(500);
 
         // Original item marked as "forwarded"
         // Target event receives request
@@ -57,10 +53,8 @@ test.describe('Agenda Items - Forwarding System', () => {
     }
   });
 
-  test('Accept forwarded agenda item', async ({ page }) => {
+  test('Accept forwarded agenda item', async ({ authenticatedPage: page }) => {
     // 1. Login as target event organizer
-    await loginAsTestUser(page);
-
     // 2. Navigate to event with forwarding request
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
     await page.waitForLoadState('networkidle');
@@ -82,7 +76,6 @@ test.describe('Agenda Items - Forwarding System', () => {
         await acceptButton.click();
 
         // 6. Request accepted
-        await page.waitForTimeout(500);
 
         // Item added to agenda
         // Source organizer notified
@@ -91,10 +84,8 @@ test.describe('Agenda Items - Forwarding System', () => {
     }
   });
 
-  test('Reject forwarded agenda item', async ({ page }) => {
+  test('Reject forwarded agenda item', async ({ authenticatedPage: page }) => {
     // 1. Login as target event organizer
-    await loginAsTestUser(page);
-
     // 2. Navigate to event with request
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
     await page.waitForLoadState('networkidle');
@@ -123,7 +114,6 @@ test.describe('Agenda Items - Forwarding System', () => {
       }
 
       // 6. Request rejected
-      await page.waitForTimeout(500);
 
       // Source organizer notified with reason
       // Original item status updated

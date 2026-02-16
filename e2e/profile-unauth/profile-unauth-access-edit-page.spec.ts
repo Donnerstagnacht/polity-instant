@@ -1,8 +1,7 @@
 // spec: e2e/test-plans/profile-unauthenticated-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Access Control for Edit Pages', () => {
   test('Attempt to Access Edit Page Without Authentication', async ({ page }) => {
     // 1. Do NOT authenticate (start with fresh browser context)

@@ -1,13 +1,10 @@
 // spec: e2e/test-plans/todos-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test } from '../fixtures/test-base';
 test.describe('Todos - Filter by Priority', () => {
-  test('User filters todos by priority level (High, Medium, Low)', async ({ page }) => {
+  test('User filters todos by priority level (High, Medium, Low)', async ({ authenticatedPage: page }) => {
     // 1. Navigate to /todos
-    await loginAsTestUser(page);
     await page.goto('/todos');
 
     // 2. Locate priority filter dropdown
@@ -22,7 +19,6 @@ test.describe('Todos - Filter by Priority', () => {
       await highOption.click();
 
       // 4. Only high-priority todos are displayed
-      await page.waitForTimeout(300);
 
       // 5. Clear filter to show all priorities
       await priorityFilter.click();
@@ -32,7 +28,6 @@ test.describe('Todos - Filter by Priority', () => {
 
       if ((await allOption.count()) > 0) {
         await allOption.click();
-        await page.waitForTimeout(300);
       }
     } else {
       // Alternative: priority badges or chips as filters
@@ -42,7 +37,6 @@ test.describe('Todos - Filter by Priority', () => {
 
       if ((await highPriorityFilter.count()) > 0) {
         await highPriorityFilter.click();
-        await page.waitForTimeout(300);
       }
     }
   });

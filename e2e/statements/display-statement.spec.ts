@@ -1,53 +1,65 @@
 // spec: e2e/test-plans/statements-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
+import { test, expect } from '../fixtures/test-base';
 
 test.describe('Statements - Display Statement Page', () => {
-  test('User views statement with tag, text, and creator info', async ({ page }) => {
-    // 1. Authenticate as test user
-    await loginAsTestUser(page);
+  test('User views statement with tag, text, and creator info', async ({ authenticatedPage: page }) => {
+    // First, create a statement via UI so we have one to view
+    await page.goto('/create/statement');
+    await page.waitForLoadState('domcontentloaded');
 
-    // 2. Navigate to statement page
-    await page.goto(`/statement/${TEST_ENTITY_IDS.STATEMENT}`);
+    // Step 1: Enter statement text
+    const textInput = page.locator('#statement-text');
+    await textInput.fill('Test statement for display verification');
 
-    // 3. Wait for page to load
-    await page.waitForLoadState('networkidle');
+    const nextButton = page.getByRole('button', { name: /next/i });
+    await nextButton.click();
 
-    // 4. Tag displayed prominently with badge
-    const tag = page.locator('[class*="Badge"]').or(page.getByRole('status'));
-    await expect(tag.first()).toBeVisible();
+    // Step 2: Enter tag
+    const tagInput = page.locator('#statement-tag');
+    await tagInput.fill('TestTag');
+    await nextButton.click();
 
-    // 5. Statement text in quotes
-    const statementText = page.locator('blockquote').or(page.getByText(/"/));
-    await expect(statementText.first()).toBeVisible();
+    // Step 3: Create
+    const createButton = page.getByRole('button', { name: /create/i });
+    await createButton.click();
 
-    // 6. Creator avatar and name shown
-    // 7. Creation date displayed (if available)
-    // 8. Visibility indicator present
+    // Wait for redirect to statement page
+    await page.waitForURL(/\/statement\/.+/, { timeout: 10000 });
 
-    // Statement details are visible
+    // Verify statement details are visible
     await expect(page).toHaveURL(/\/statement\/.+/);
+    await expect(page.getByText('Test statement for display verification')).toBeVisible();
+    await expect(page.getByText('TestTag').first()).toBeVisible();
   });
 
-  test('Creator information displays correctly', async ({ page }) => {
-    // 1. Authenticate as test user
-    await loginAsTestUser(page);
+  test('Creator information displays correctly', async ({ authenticatedPage: page }) => {
+    // Create a statement first
+    await page.goto('/create/statement');
+    await page.waitForLoadState('domcontentloaded');
 
-    // 2. Navigate to statement page
-    await page.goto(`/statement/${TEST_ENTITY_IDS.STATEMENT}`);
-    await page.waitForLoadState('networkidle');
+    const textInput = page.locator('#statement-text');
+    await textInput.fill('Creator info test statement');
 
-    // 3. Check creator section
+    const nextButton = page.getByRole('button', { name: /next/i });
+    await nextButton.click();
+
+    const tagInput = page.locator('#statement-tag');
+    await tagInput.fill('CreatorTest');
+    await nextButton.click();
+
+    const createButton = page.getByRole('button', { name: /create/i });
+    await createButton.click();
+
+    await page.waitForURL(/\/statement\/.+/, { timeout: 10000 });
+
+    // Check creator section
     const authorCard = page.locator('[class*="Card"]').filter({ hasText: /author/i });
 
     if ((await authorCard.count()) > 0) {
-      // 4. Avatar displayed
-      // 5. Name clickable to profile (if implemented)
-      // 6. Handle shown if available
-      // 7. "Created by" or "Author" label present
+      // Avatar displayed, name shown
+      await expect(authorCard.first()).toBeVisible();
     }
   });
 });

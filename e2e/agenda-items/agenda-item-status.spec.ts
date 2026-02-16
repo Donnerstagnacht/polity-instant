@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/agenda-items-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Agenda Items - Agenda Item Status Management', () => {
-  test('New agenda item has pending status', async ({ page }) => {
+  test('New agenda item has pending status', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to event agenda
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
     await page.waitForLoadState('networkidle');
@@ -31,10 +28,8 @@ test.describe('Agenda Items - Agenda Item Status Management', () => {
     }
   });
 
-  test('Mark agenda item as active', async ({ page }) => {
+  test('Mark agenda item as active', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user (organizer)
-    await loginAsTestUser(page);
-
     // 2. Navigate to event agenda
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
     await page.waitForLoadState('networkidle');
@@ -57,7 +52,6 @@ test.describe('Agenda Items - Agenda Item Status Management', () => {
         await activateButton.click();
 
         // 5. Status changes to "active"
-        await page.waitForTimeout(300);
 
         // Visual highlight/indicator
         // Timer starts if applicable
@@ -66,10 +60,8 @@ test.describe('Agenda Items - Agenda Item Status Management', () => {
     }
   });
 
-  test('Mark agenda item as completed', async ({ page }) => {
+  test('Mark agenda item as completed', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user (organizer)
-    await loginAsTestUser(page);
-
     // 2. Navigate to event agenda
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
     await page.waitForLoadState('networkidle');
@@ -91,7 +83,6 @@ test.describe('Agenda Items - Agenda Item Status Management', () => {
         await completeButton.click();
 
         // 4. Status changes to "completed"
-        await page.waitForTimeout(300);
 
         // Item marked with checkmark
         // Next item becomes active

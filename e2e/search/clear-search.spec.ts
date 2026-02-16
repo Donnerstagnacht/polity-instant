@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/search-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Search - Clear Search', () => {
-  test('User clears search query', async ({ page }) => {
+  test('User clears search query', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to search with query
     await page.goto('/search?q=testquery');
 
@@ -25,7 +21,7 @@ test.describe('Search - Clear Search', () => {
     await expect(searchInput).toHaveValue('');
 
     // 6. Wait for debounce and URL update (300ms debounce + buffer)
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     // 7. Wait for URL to update
     await page.waitForURL(url => !url.searchParams.has('q') || url.searchParams.get('q') === '', {
@@ -36,10 +32,8 @@ test.describe('Search - Clear Search', () => {
     await expect(page).not.toHaveURL(/q=testquery/);
   });
 
-  test('Clear button functionality', async ({ page }) => {
+  test('Clear button functionality', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to search with query
     await page.goto('/search?q=cleartest');
 
@@ -52,7 +46,6 @@ test.describe('Search - Clear Search', () => {
     await searchInput.fill('newquery');
 
     // 5. Wait for update (300ms debounce)
-    await page.waitForTimeout(500);
 
     // 6. URL reflects new query
     await expect(page).toHaveURL(/q=newquery/);

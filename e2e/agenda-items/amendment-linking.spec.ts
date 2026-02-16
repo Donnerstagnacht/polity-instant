@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/agenda-items-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Agenda Items - Amendment Linking', () => {
-  test('Link amendment to agenda item', async ({ page }) => {
+  test('Link amendment to agenda item', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user (organizer)
-    await loginAsTestUser(page);
-
     // 2. Navigate to event agenda
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
     await page.waitForLoadState('networkidle');
@@ -35,7 +32,6 @@ test.describe('Agenda Items - Amendment Linking', () => {
 
       if ((await amendmentInput.count()) > 0) {
         await amendmentInput.fill('climate');
-        await page.waitForTimeout(300);
 
         // 5. Select from dropdown
         const amendmentOption = page.getByRole('option').first();
@@ -48,7 +44,6 @@ test.describe('Agenda Items - Amendment Linking', () => {
       await createButton.click();
 
       // 6. Amendment linked
-      await page.waitForTimeout(500);
 
       // Amendment displayed on item
       // Click navigates to amendment
@@ -56,10 +51,8 @@ test.describe('Agenda Items - Amendment Linking', () => {
     }
   });
 
-  test('View linked amendment from agenda item', async ({ page }) => {
+  test('View linked amendment from agenda item', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to event agenda
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
     await page.waitForLoadState('networkidle');

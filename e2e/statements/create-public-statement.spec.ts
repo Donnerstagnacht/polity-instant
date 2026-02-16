@@ -1,50 +1,37 @@
 // spec: e2e/test-plans/statements-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Statements - Create Public Statement', () => {
-  test('User creates public statement with tag and text', async ({ page }) => {
-    // 1. Authenticate as test user
-    await loginAsTestUser(page);
+  test('User creates public statement with tag and text', async ({ authenticatedPage: page }) => {
+    // Navigate to statement creation page
+    await page.goto('/create/statement');
+    await page.waitForLoadState('domcontentloaded');
 
-    // 2. Navigate to /create page
-    await page.goto('/create');
-
-    // 3. Select "Statement" entity type
-    const statementOption = page
-      .getByRole('radio', { name: /statement/i })
-      .or(page.getByText(/statement/i).first());
-    await statementOption.click();
-
-    // 4. Select or enter tag
-    const tagInput = page.getByLabel(/tag|category/i).or(page.getByPlaceholder(/tag|category/i));
-    await tagInput.fill('Climate Change');
-
-    // 5. Enter statement text
-    const textInput = page
-      .getByLabel(/statement|text/i)
-      .or(page.getByPlaceholder(/statement|text/i));
+    // Step 1: Enter statement text
+    const textInput = page.locator('#statement-text');
     await textInput.fill('We need urgent action on climate change');
 
-    // 6. Set visibility to public
-    const publicOption = page
-      .getByRole('radio', { name: /public/i })
-      .or(page.getByLabel(/public/i));
-    if ((await publicOption.count()) > 0) {
-      await publicOption.click();
-    }
+    // Go to next step
+    const nextButton = page.getByRole('button', { name: /next/i });
+    await nextButton.click();
 
-    // 7. Click "Create" button
+    // Step 2: Enter tag and visibility
+    const tagInput = page.locator('#statement-tag');
+    await tagInput.fill('Climate Change');
+
+    // Go to next step (review)
+    await nextButton.click();
+
+    // Step 3: Review and create
     const createButton = page.getByRole('button', { name: /create/i });
     await createButton.click();
 
-    // 8. Verify redirect to statement page
-    await page.waitForURL(/\/statement\/.+/, { timeout: 5000 });
+    // Verify redirect to statement page
+    await page.waitForURL(/\/statement\/.+/, { timeout: 10000 });
 
-    // 9. Verify statement details displayed
+    // Verify statement details displayed
     await expect(page.getByText('We need urgent action on climate change')).toBeVisible();
-    await expect(page.getByText('Climate Change')).toBeVisible();
+    await expect(page.getByText('Climate Change').first()).toBeVisible();
   });
 });

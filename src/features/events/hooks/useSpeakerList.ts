@@ -34,7 +34,7 @@ export function useSpeakerList(agendaItemId?: string, eventContext?: { eventId: 
       if (eventContext) {
         const notifTxs = notifySpeakerListJoined({
           senderId: user.id,
-          senderName: user.email,
+          senderName: user.email || 'A participant',
           eventId: eventContext.eventId,
           eventTitle: eventContext.eventTitle,
         });

@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/statements-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Statements - Related Statements', () => {
-  test('View related statements with same tag', async ({ page }) => {
+  test('View related statements with same tag', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to statement page
     await page.goto(`/statement/${TEST_ENTITY_IDS.STATEMENT}`);
     await page.waitForLoadState('networkidle');
@@ -35,10 +32,8 @@ test.describe('Statements - Related Statements', () => {
     }
   });
 
-  test('Display empty state when no related statements exist', async ({ page }) => {
+  test('Display empty state when no related statements exist', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to statement with unique tag
     await page.goto(`/statement/${TEST_ENTITY_IDS.STATEMENT}`);
     await page.waitForLoadState('networkidle');

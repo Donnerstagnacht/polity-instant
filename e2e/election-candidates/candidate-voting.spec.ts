@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/election-candidates-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Election Candidates - Candidate Voting Integration', () => {
-  test('Vote for candidate', async ({ page }) => {
+  test('Vote for candidate', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as voter
-    await loginAsTestUser(page);
-
     // 2. Navigate to election
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/stream`);
     await page.waitForLoadState('networkidle');
@@ -31,7 +28,6 @@ test.describe('Election Candidates - Candidate Voting Integration', () => {
         await voteButton.click();
 
         // 6. Vote recorded
-        await page.waitForTimeout(500);
 
         // Voter can see vote recorded
         // Visual indicator shown
@@ -39,10 +35,8 @@ test.describe('Election Candidates - Candidate Voting Integration', () => {
     }
   });
 
-  test('Change vote to different candidate', async ({ page }) => {
+  test('Change vote to different candidate', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as voter
-    await loginAsTestUser(page);
-
     // 2. Navigate to election
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/stream`);
     await page.waitForLoadState('networkidle');
@@ -61,7 +55,6 @@ test.describe('Election Candidates - Candidate Voting Integration', () => {
         await confirmButton.click();
 
         // 6. Vote count adjusted
-        await page.waitForTimeout(500);
 
         // Only one vote per voter
         // Change reflected immediately

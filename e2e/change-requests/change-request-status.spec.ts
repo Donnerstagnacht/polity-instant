@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/change-requests-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Change Requests - Status Management', () => {
-  test('Pending status', async ({ page }) => {
+  test('Pending status', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as collaborator
-    await loginAsTestUser(page);
-
     // 2. Create new change request
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');
@@ -27,10 +24,8 @@ test.describe('Change Requests - Status Management', () => {
     // Awaiting decision
   });
 
-  test('Accepted status', async ({ page }) => {
+  test('Accepted status', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as collaborator
-    await loginAsTestUser(page);
-
     // 2. Navigate to change request
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');
@@ -49,10 +44,8 @@ test.describe('Change Requests - Status Management', () => {
     // Indicator shown
   });
 
-  test('Rejected status', async ({ page }) => {
+  test('Rejected status', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as collaborator
-    await loginAsTestUser(page);
-
     // 2. Navigate to change request
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');
@@ -71,10 +64,8 @@ test.describe('Change Requests - Status Management', () => {
     // Historical record kept
   });
 
-  test('Applied status', async ({ page }) => {
+  test('Applied status', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as collaborator
-    await loginAsTestUser(page);
-
     // 2. Navigate to change request
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');
@@ -91,7 +82,6 @@ test.describe('Change Requests - Status Management', () => {
       await applyButton.click();
 
       // 4. Mark as "applied"
-      await page.waitForTimeout(500);
 
       // Status: "applied"
       // Change incorporated

@@ -1,9 +1,7 @@
 'use client';
 
 import { use, useState, useMemo } from 'react';
-import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { PageWrapper } from '@/components/layout/page-wrapper';
-import { PermissionGuard } from '@/features/auth/PermissionGuard';
 import { GroupNetworkFlow } from '@/components/groups/GroupNetworkFlow';
 import { LinkGroupDialog } from '@/components/groups/LinkGroupDialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -255,107 +253,103 @@ export default function GroupNetworkPage({ params }: { params: Promise<{ id: str
   };
 
   return (
-    <AuthGuard requireAuth={true}>
-      <PermissionGuard action="view" resource="groupRelationships" context={{ groupId }}>
-        <PageWrapper className="container mx-auto p-8">
-          <div className="mb-8">
-            <h1 className="mb-4 text-4xl font-bold">{t('pages.group.network.title')}</h1>
-            <p className="text-muted-foreground">
-              {group?.name || t('navigation.primary.groups')}
-            </p>
+    <PageWrapper className="container mx-auto p-8">
+      <div className="mb-8">
+        <h1 className="mb-4 text-4xl font-bold">{t('pages.group.network.title')}</h1>
+        <p className="text-muted-foreground">
+          {group?.name || t('navigation.primary.groups')}
+        </p>
+      </div>
+
+      <Tabs defaultValue="relationships" className="w-full">
+        <TabsList>
+          <TabsTrigger value="relationships">Relationships</TabsTrigger>
+          <TabsTrigger value="network">Network Visualization</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="relationships" className="mt-6">
+          {/* Search Bar and Add Relationship Button */}
+          <div className="mb-6 flex gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder={t('pages.group.network.searchPlaceholder')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={directionFilter} onValueChange={(v: any) => setDirectionFilter(v)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Direction" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Directions</SelectItem>
+                <SelectItem value="parent">Parents Only</SelectItem>
+                <SelectItem value="child">Children Only</SelectItem>
+              </SelectContent>
+            </Select>
+            {canManageRelationships && (
+              <LinkGroupDialog
+                currentGroupId={groupId}
+                currentGroupName={group?.name || 'Group'}
+                allRelationships={allRelationships}
+              />
+            )}
           </div>
 
-          <Tabs defaultValue="relationships" className="w-full">
-            <TabsList>
-              <TabsTrigger value="relationships">Relationships</TabsTrigger>
-              <TabsTrigger value="network">Network Visualization</TabsTrigger>
-            </TabsList>
+          {/* Rights Filter */}
+          <div className="mb-6 flex flex-wrap gap-2">
+            {RIGHT_TYPES.map((right) => (
+              <Badge
+                key={right}
+                variant={selectedRights.has(right) ? 'default' : 'outline'}
+                className="cursor-pointer"
+                onClick={() => toggleRight(right)}
+              >
+                {formatRights([right])}
+              </Badge>
+            ))}
+            {selectedRights.size > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedRights(new Set())}
+              >
+                Clear Filters
+              </Button>
+            )}
+          </div>
 
-            <TabsContent value="relationships" className="mt-6">
-              {/* Search Bar and Add Relationship Button */}
-              <div className="mb-6 flex gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder={t('pages.group.network.searchPlaceholder')}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-                <Select value={directionFilter} onValueChange={(v: any) => setDirectionFilter(v)}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Direction" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Directions</SelectItem>
-                    <SelectItem value="parent">Parents Only</SelectItem>
-                    <SelectItem value="child">Children Only</SelectItem>
-                  </SelectContent>
-                </Select>
-                {canManageRelationships && (
-                  <LinkGroupDialog
-                    currentGroupId={groupId}
-                    currentGroupName={group?.name || 'Group'}
-                    allRelationships={allRelationships}
-                  />
-                )}
-              </div>
+          {/* Relationship Tables */}
+          {canManageRelationships && (
+            <IncomingRelationshipRequestsTable
+              requests={groupedIncoming}
+              onAccept={handleAcceptRequest}
+              onReject={handleRejectRequest}
+            />
+          )}
 
-              {/* Rights Filter */}
-              <div className="mb-6 flex flex-wrap gap-2">
-                {RIGHT_TYPES.map((right) => (
-                  <Badge
-                    key={right}
-                    variant={selectedRights.has(right) ? 'default' : 'outline'}
-                    className="cursor-pointer"
-                    onClick={() => toggleRight(right)}
-                  >
-                    {formatRights([right])}
-                  </Badge>
-                ))}
-                {selectedRights.size > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedRights(new Set())}
-                  >
-                    Clear Filters
-                  </Button>
-                )}
-              </div>
+          <ActiveRelationshipsTable
+            relationships={groupedActiveRelationships}
+            groupId={groupId}
+            groupName={group?.name || 'Group'}
+            allRelationships={allRelationships}
+            onDelete={handleDeleteRelationship}
+          />
 
-              {/* Relationship Tables */}
-              {canManageRelationships && (
-                <IncomingRelationshipRequestsTable
-                  requests={groupedIncoming}
-                  onAccept={handleAcceptRequest}
-                  onReject={handleRejectRequest}
-                />
-              )}
+          {canManageRelationships && (
+            <OutgoingRelationshipRequestsTable
+              requests={groupedOutgoing}
+              onCancel={handleRejectRequest}
+            />
+          )}
+        </TabsContent>
 
-              <ActiveRelationshipsTable
-                relationships={groupedActiveRelationships}
-                groupId={groupId}
-                groupName={group?.name || 'Group'}
-                allRelationships={allRelationships}
-                onDelete={handleDeleteRelationship}
-              />
-
-              {canManageRelationships && (
-                <OutgoingRelationshipRequestsTable
-                  requests={groupedOutgoing}
-                  onCancel={handleRejectRequest}
-                />
-              )}
-            </TabsContent>
-
-            <TabsContent value="network" className="mt-6">
-              <GroupNetworkFlow groupId={groupId} />
-            </TabsContent>
-          </Tabs>
-        </PageWrapper>
-      </PermissionGuard>
-    </AuthGuard>
+        <TabsContent value="network" className="mt-6">
+          <GroupNetworkFlow groupId={groupId} />
+        </TabsContent>
+      </Tabs>
+    </PageWrapper>
   );
 }

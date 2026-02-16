@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/timeline-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Timeline - Event Card Click Navigation', () => {
-  test('User clicks timeline event to navigate', async ({ page }) => {
+  test('User clicks timeline event to navigate', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to home page
     await page.goto('/');
 
@@ -34,7 +30,6 @@ test.describe('Timeline - Event Card Click Navigation', () => {
         await eventCard.click();
 
         // 7. Verify navigation occurred (URL changed or new page loaded)
-        await page.waitForTimeout(500);
 
         // 8. Back button should return to timeline
         await page.goBack();

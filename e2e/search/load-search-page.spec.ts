@@ -1,19 +1,15 @@
 // spec: e2e/test-plans/search-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Search - Load Search Page', () => {
-  test('User accesses the search page', async ({ page }) => {
+  test('User accesses the search page', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to /search
     await page.goto('/search', { waitUntil: 'domcontentloaded' });
 
     // 3. Wait a bit for React to hydrate
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     // 4. Verify we're on the search page by checking the URL
     expect(page.url()).toContain('/search');
@@ -37,7 +33,6 @@ test.describe('Search - Load Search Page', () => {
       await filterButton.click();
 
       // 9. Wait for filter panel to appear
-      await page.waitForTimeout(500);
 
       // 10. Verify filter panel opens with content type checkboxes
       const contentTypesHeading = page.getByText('Content Types');

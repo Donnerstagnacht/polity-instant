@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/profile-feature-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { navigateToProfileEdit } from '../helpers/navigation';
 
 test.describe('Avatar Management', () => {
-  test('Access Avatar Upload Interface', async ({ page }) => {
+  test('Access Avatar Upload Interface', async ({ authenticatedPage: page }) => {
     // 1. Use loginAsTestUser(page) to authenticate
-    await loginAsTestUser(page);
-
     // 2. Use navigateToProfileEdit(page) helper to open edit page
     await navigateToProfileEdit(page);
 

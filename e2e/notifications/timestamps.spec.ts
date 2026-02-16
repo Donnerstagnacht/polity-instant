@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/notifications-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Notifications - Timestamps', () => {
-  test('Notifications show relative timestamps', async ({ page }) => {
+  test('Notifications show relative timestamps', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to notifications page
     await page.goto('/notifications');
 
@@ -34,10 +30,8 @@ test.describe('Notifications - Timestamps', () => {
     }
   });
 
-  test('Recent notifications show minutes/hours ago', async ({ page }) => {
+  test('Recent notifications show minutes/hours ago', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to notifications page
     await page.goto('/notifications');
 

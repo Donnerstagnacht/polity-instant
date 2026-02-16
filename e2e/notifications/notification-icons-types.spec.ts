@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/notifications-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Notifications - Notification Icons and Types', () => {
-  test('Different notification types have appropriate icons', async ({ page }) => {
+  test('Different notification types have appropriate icons', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to notifications page
     await page.goto('/notifications');
 
@@ -34,10 +30,8 @@ test.describe('Notifications - Notification Icons and Types', () => {
     }
   });
 
-  test('Unread notifications have visual indicators', async ({ page }) => {
+  test('Unread notifications have visual indicators', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to notifications page
     await page.goto('/notifications');
 

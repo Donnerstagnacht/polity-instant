@@ -150,6 +150,7 @@ export function GroupTimelineCard({
       <TimelineCardHeader
         contentType="group"
         title={group.name}
+        href={`/group/${group.id}`}
         badge={<TimelineCardBadge label={t('features.timeline.contentTypes.group')} icon={Users} />}
       />
 

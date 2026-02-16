@@ -1,8 +1,7 @@
 // spec: e2e/test-plans/subscription-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 import {
   navigateToUserProfile,
@@ -12,15 +11,12 @@ import {
   ensureNotSubscribed,
 } from '../helpers/subscription';
 
-const TEST_USER_ID = TEST_ENTITY_IDS.testUser1;
-
 test.describe('Subscriber Count Accuracy', () => {
-  test('Subscriber count updates correctly', async ({ page }) => {
-    // 1. Authenticate as test user
-    await loginAsTestUser(page);
+  test('Subscriber count updates correctly', async ({ authenticatedPage: page, userFactory }) => {
+    await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const otherUser = await userFactory.createUser();
 
-    // 2. Navigate to user profile
-    await navigateToUserProfile(page, TEST_USER_ID);
+    await navigateToUserProfile(page, otherUser.id);
 
     // 3. Ensure we start unsubscribed
     await ensureNotSubscribed(page);
@@ -46,7 +42,7 @@ test.describe('Subscriber Count Accuracy', () => {
 
     // 9. Count updates in real-time across all instances
     await page.reload();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     const reloadedCount = await getSubscriberCount(page);
     expect(reloadedCount).toBe(initialCount);
   });

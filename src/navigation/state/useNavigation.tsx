@@ -149,9 +149,7 @@ export function useNavigation() {
           ? t(`navigation.secondary.projects.${item.id}`)
           : currentPrimaryRoute === 'dashboard'
             ? t(`navigation.secondary.dashboard.${item.id}`)
-            : currentPrimaryRoute === 'calendar'
-              ? t(`navigation.secondary.calendar.${item.id}`)
-              : currentPrimaryRoute === 'event'
+            : currentPrimaryRoute === 'event'
                 ? t(`navigation.secondary.event.${item.id}`)
                 : currentPrimaryRoute === 'user'
                   ? t(`navigation.secondary.user.${item.id}`)

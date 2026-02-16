@@ -1,50 +1,36 @@
 // spec: e2e/test-plans/blogs-test-plan.md
-// seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 
 test.describe('Blogs - Create Public Blog with Required Fields', () => {
-  test('User creates public blog with required fields', async ({ page }) => {
-    // 1. Authenticate as test user
-    await loginAsTestUser(page);
+  test('User creates public blog with required fields', async ({ authenticatedPage: page }) => {
+    const blogTitle = `E2E Blog ${Date.now()}`;
 
-    // 2. Navigate to /create page
-    await page.goto('/create');
+    // 1. Navigate to /create/blog directly
+    await page.goto('/create/blog');
+    await page.waitForLoadState('domcontentloaded');
 
-    // 3. Select "Blog" entity type
-    const blogOption = page
-      .getByRole('radio', { name: /blog/i })
-      .or(page.getByText(/blog/i).first());
-    await blogOption.click();
-
-    // 4. Enter blog title
+    // 2. Step 1: Enter blog title
     const titleInput = page.getByLabel(/title/i).or(page.getByPlaceholder(/title/i));
-    await titleInput.fill('Tech Insights Weekly');
+    await expect(titleInput).toBeVisible({ timeout: 10000 });
+    await titleInput.fill(blogTitle);
 
-    // 5. Enter description
-    const descInput = page.getByLabel(/description/i).or(page.getByPlaceholder(/description/i));
-    await descInput.fill('Weekly insights on technology trends');
+    // 3. Click Next to go to Step 2
+    const nextButton = page.getByRole('button', { name: /next/i });
+    await nextButton.click();
 
-    // 6. Set visibility to public
-    const publicOption = page
-      .getByRole('radio', { name: /public/i })
-      .or(page.getByLabel(/public/i));
-    if ((await publicOption.count()) > 0) {
-      await publicOption.click();
-    }
+    // 4. Step 2: Visibility (default is public) - click Next
+    await nextButton.click();
 
-    // 7. Click "Create" button
+    // 5. Step 3: Review - click Create
     const createButton = page.getByRole('button', { name: /create/i });
+    await expect(createButton).toBeVisible({ timeout: 5000 });
     await createButton.click();
 
-    // 8. Verify redirect to blog page
-    await page.waitForURL(/\/blog\/.+/, { timeout: 5000 });
+    // 6. Verify redirect to blog page
+    await page.waitForURL(/\/blog\/.+/, { timeout: 10000 });
 
-    // 9. Verify blog details displayed
-    await expect(page.getByText('Tech Insights Weekly')).toBeVisible();
-
-    // 10. User automatically set as owner/blogger
-    // Blog visible in public listings
+    // 7. Verify blog details displayed
+    await expect(page.getByText(blogTitle)).toBeVisible({ timeout: 5000 });
   });
 });

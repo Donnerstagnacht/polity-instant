@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/timeline-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Timeline - Timeline Events Display', () => {
-  test('Timeline events show proper information', async ({ page }) => {
+  test('Timeline events show proper information', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to home page
     await page.goto('/');
 
@@ -40,10 +36,8 @@ test.describe('Timeline - Timeline Events Display', () => {
     }
   });
 
-  test('Timeline shows event count', async ({ page }) => {
+  test('Timeline shows event count', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to home page
     await page.goto('/');
 
@@ -62,10 +56,8 @@ test.describe('Timeline - Timeline Events Display', () => {
     }
   });
 
-  test('Timeline events are sorted by most recent', async ({ page }) => {
+  test('Timeline events are sorted by most recent', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to home page
     await page.goto('/');
 

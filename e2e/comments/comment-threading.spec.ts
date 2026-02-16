@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/comments-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Comments - Reply to Comments (Threading)', () => {
-  test('Reply to top-level comment', async ({ page }) => {
+  test('Reply to top-level comment', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to blog with comments
     await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
     await page.waitForLoadState('networkidle');
@@ -39,7 +36,6 @@ test.describe('Comments - Reply to Comments (Threading)', () => {
         await postButton.click();
 
         // 7. Reply created
-        await page.waitForTimeout(500);
 
         // Linked as parentComment
         // Displayed nested under parent
@@ -53,10 +49,8 @@ test.describe('Comments - Reply to Comments (Threading)', () => {
     }
   });
 
-  test('Reply to reply (deep threading)', async ({ page }) => {
+  test('Reply to reply (deep threading)', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to blog
     await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
     await page.waitForLoadState('networkidle');
@@ -80,7 +74,6 @@ test.describe('Comments - Reply to Comments (Threading)', () => {
         await postButton.click();
 
         // 5. Deep threading supported
-        await page.waitForTimeout(500);
 
         // Visual hierarchy clear
         // Indentation increases with depth
@@ -89,10 +82,8 @@ test.describe('Comments - Reply to Comments (Threading)', () => {
     }
   });
 
-  test('View reply chain', async ({ page }) => {
+  test('View reply chain', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to blog with threaded comments
     await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
     await page.waitForLoadState('networkidle');

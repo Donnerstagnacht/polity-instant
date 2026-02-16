@@ -21,15 +21,42 @@ export function AuthGuard({ children, requireAuth = true, redirectTo, fallback }
   const { user, isLoading } = db.useAuth();
   const isAuthenticated = !!user;
   const [isMounted, setIsMounted] = useState(false);
+  const [authInitialized, setAuthInitialized] = useState(false);
 
   // Track when component has mounted to avoid hydration issues
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
+  // Track auth initialization to avoid acting on transient states.
+  // db.useAuth() can briefly return {isLoading: false, user: null} before
+  // the IndexedDB token read completes, especially during re-render cascades
+  // triggered by other state updates (e.g., mobile screen detection).
   useEffect(() => {
-    // Don't redirect while loading or before mount
-    if (isLoading || !isMounted) return;
+    if (authInitialized) return;
+
+    if (isLoading) {
+      // Auth is actively loading — wait for it to finish
+      return;
+    }
+
+    if (user) {
+      // User is present — auth is definitely initialized
+      setAuthInitialized(true);
+      return;
+    }
+
+    // isLoading=false, user=null: could be transient or genuine.
+    // Wait briefly to let auth state settle before acting.
+    const timer = setTimeout(() => {
+      setAuthInitialized(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [isLoading, user, authInitialized]);
+
+  useEffect(() => {
+    // Don't redirect before auth is fully initialized and component is mounted
+    if (!authInitialized || !isMounted) return;
 
     if (requireAuth && !isAuthenticated) {
       // User needs to be authenticated but isn't
@@ -40,10 +67,10 @@ export function AuthGuard({ children, requireAuth = true, redirectTo, fallback }
       const destination = redirectTo || '/';
       router.push(destination);
     }
-  }, [isAuthenticated, isLoading, requireAuth, router, pathname, redirectTo, isMounted]);
+  }, [isAuthenticated, authInitialized, requireAuth, router, pathname, redirectTo, isMounted]);
 
   // Show loading spinner while checking auth status or before mount
-  if (isLoading || !isMounted) {
+  if (!authInitialized || !isMounted) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4">

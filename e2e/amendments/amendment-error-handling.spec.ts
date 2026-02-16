@@ -1,23 +1,16 @@
 // spec: e2e/test-plans/amendments-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Amendments - Amendment Error Handling', () => {
-  test('Amendment not found displays error message', async ({ page }) => {
+  test('Amendment not found displays error message', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
+    // 2. Access non-existent amendment with valid UUID format
+    await page.goto('/amendment/00000000-0000-4000-8000-000000000000');
 
-    // 2. Access invalid amendment ID
-    await page.goto('/amendment/non-existent-amendment-12345');
-
-    // 3. Wait for page to load
-    await page.waitForLoadState('networkidle');
-
-    // 4. Clear error message
-    const notFoundMessage = page.getByText(/amendment not found|not found/i);
-    await expect(notFoundMessage).toBeVisible({ timeout: 5000 });
+    // 3. Wait for not found message
+    const notFoundMessage = page.getByRole('heading', { name: /not found/i });
+    await expect(notFoundMessage).toBeVisible({ timeout: 10000 });
 
     // 5. Explanation
     page.getByText(/doesn't exist|removed/i);
@@ -26,15 +19,10 @@ test.describe('Amendments - Amendment Error Handling', () => {
     // No broken UI
   });
 
-  test('Permission denied for private amendment', async ({ page }) => {
+  test('Permission denied for private amendment', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
-    // 2. Non-collaborator accesses private amendment
-    await page.goto('/amendment/private-amendment-id');
-
-    // 3. Wait for page load
-    await page.waitForLoadState('networkidle');
+    // 2. Non-collaborator accesses non-existent private amendment
+    await page.goto('/amendment/00000000-0000-4000-8000-000000000001');
 
     // 4. Check for access denied message
     const accessDenied = page.getByText(/access denied|permission|not authorized/i);

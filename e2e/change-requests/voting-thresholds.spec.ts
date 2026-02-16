@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/change-requests-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Change Requests - Voting Thresholds and Periods', () => {
-  test('Simple majority threshold (50%+)', async ({ page }) => {
+  test('Simple majority threshold (50%+)', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as collaborator
-    await loginAsTestUser(page);
-
     // 2. Navigate to change request with 50% threshold
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');
@@ -28,10 +25,8 @@ test.describe('Change Requests - Voting Thresholds and Periods', () => {
     // Clear indication of requirement
   });
 
-  test('Supermajority threshold (75%)', async ({ page }) => {
+  test('Supermajority threshold (75%)', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as collaborator
-    await loginAsTestUser(page);
-
     // 2. Navigate to change request
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');
@@ -50,10 +45,8 @@ test.describe('Change Requests - Voting Thresholds and Periods', () => {
     // Threshold clearly displayed
   });
 
-  test('Set voting end time', async ({ page }) => {
+  test('Set voting end time', async ({ authenticatedPage: page }) => {
     // 1. Login as creator
-    await loginAsTestUser(page);
-
     // 2. Navigate to change request creation
     await page.goto(`/amendment/${TEST_ENTITY_IDS.AMENDMENT}`);
     await page.waitForLoadState('networkidle');
@@ -81,7 +74,6 @@ test.describe('Change Requests - Voting Thresholds and Periods', () => {
       await submitButton.click();
 
       // 4. Voting closes at end time
-      await page.waitForTimeout(500);
 
       // No votes accepted after deadline
       // Results calculated

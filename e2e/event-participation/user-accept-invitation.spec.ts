@@ -1,17 +1,21 @@
 // spec: e2e/test-plans/event-participation-test-plan.md
-// seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Event Participation - Accept Invitation', () => {
-  test('User can accept event invitation', async ({ page }) => {
-    // 1. Authenticate as test user
-    await loginAsTestUser(page);
+  test('User can accept event invitation', async ({ authenticatedPage: page, eventFactory, userFactory }) => {
+    // Create event owned by another user, invite the test user
+    const owner = await userFactory.createUser();
+    const event = await eventFactory.createEvent(owner.id, {
+      title: `Test Event ${Date.now()}`,
+    });
+    const testUser = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    await eventFactory.addParticipant(event.id, testUser.id, event.participantRoleId, 'invited');
 
+    // 1. Authenticate as test user
     // 2. Navigate to event page where user is invited
-    await page.goto(`/event/${TEST_ENTITY_IDS.testEvent2}`);
+    await page.goto(`/event/${event.id}`);
 
     // 3. Verify "Accept Invitation" button is visible
     const acceptButton = page.getByRole('button', { name: /accept invitation|accept/i });

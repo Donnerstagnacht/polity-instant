@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/timeline-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Timeline - Empty State', () => {
-  test('User with no subscriptions sees empty state', async ({ page }) => {
+  test('User with no subscriptions sees empty state', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to home page
     await page.goto('/');
 

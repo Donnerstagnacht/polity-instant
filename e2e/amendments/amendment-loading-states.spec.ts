@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/amendments-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test } from '../fixtures/test-base';
 test.describe('Amendments - Amendment Loading States', () => {
-  test('Amendment page displays loading indicator', async ({ page }) => {
+  test('Amendment page displays loading indicator', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Intercept network requests to delay response
     await page.route('**/api/**', async route => {
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -33,7 +29,6 @@ test.describe('Amendments - Amendment Loading States', () => {
     });
 
     // 6. Smooth transition
-    await page.waitForTimeout(500);
 
     // No layout shift
   });

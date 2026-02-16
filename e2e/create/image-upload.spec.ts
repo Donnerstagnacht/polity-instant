@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/test-base';
 import path from 'path';
 
 test.describe('Create Feature', () => {
@@ -13,7 +13,6 @@ test.describe('Create Feature', () => {
       .first();
     await eventsOption.click();
 
-    await page.waitForTimeout(500);
 
     // Fill required fields first
     const titleInput = page.locator('input[name="title"]').first();
@@ -36,7 +35,6 @@ test.describe('Create Feature', () => {
       if (await imageInput.isVisible()) break;
       if (await nextButton.isVisible()) {
         await nextButton.click();
-        await page.waitForTimeout(300);
       } else {
         break;
       }
@@ -59,7 +57,9 @@ test.describe('Create Feature', () => {
           });
         });
 
-        await page.waitForTimeout(1000);
+
+
+        await page.waitForLoadState('networkidle');
 
         // Verify image preview displays
         const imagePreview = page

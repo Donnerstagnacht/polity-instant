@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/event-participation-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Event Participation - Duplicate Prevention', () => {
-  test('Duplicate participation request prevention', async ({ page }) => {
+  test('Duplicate participation request prevention', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to event page
     await page.goto(`/event/${TEST_ENTITY_IDS.testEvent1}`);
 

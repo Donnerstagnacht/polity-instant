@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/election-candidates-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Election Candidates - Display and Ordering', () => {
-  test('View candidates list', async ({ page }) => {
+  test('View candidates list', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to election page
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/stream`);
     await page.waitForLoadState('networkidle');
@@ -29,10 +26,8 @@ test.describe('Election Candidates - Display and Ordering', () => {
     }
   });
 
-  test('Set candidate display order', async ({ page }) => {
+  test('Set candidate display order', async ({ authenticatedPage: page }) => {
     // 1. Login as election organizer
-    await loginAsTestUser(page);
-
     // 2. Navigate to election management
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda`);
     await page.waitForLoadState('networkidle');
@@ -55,7 +50,6 @@ test.describe('Election Candidates - Display and Ordering', () => {
         await saveButton.click();
 
         // 6. Candidates displayed in order
-        await page.waitForTimeout(500);
 
         // Order numbers visible to organizers
         // Consistent ordering across views
@@ -63,10 +57,8 @@ test.describe('Election Candidates - Display and Ordering', () => {
     }
   });
 
-  test('View candidate details', async ({ page }) => {
+  test('View candidate details', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to election
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/stream`);
     await page.waitForLoadState('networkidle');

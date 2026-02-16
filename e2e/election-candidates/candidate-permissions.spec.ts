@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/election-candidates-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Election Candidates - Permissions and Management', () => {
-  test('Election organizer can add candidates', async ({ page }) => {
+  test('Election organizer can add candidates', async ({ authenticatedPage: page }) => {
     // 1. Login as election organizer
-    await loginAsTestUser(page);
-
     // 2. Navigate to election management
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda`);
     await page.waitForLoadState('networkidle');
@@ -26,10 +23,8 @@ test.describe('Election Candidates - Permissions and Management', () => {
     }
   });
 
-  test('Non-organizer cannot add candidates', async ({ page }) => {
+  test('Non-organizer cannot add candidates', async ({ authenticatedPage: page }) => {
     // 1. Login as regular user/voter
-    await loginAsTestUser(page);
-
     // 2. Navigate to election
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/stream`);
     await page.waitForLoadState('networkidle');
@@ -39,10 +34,8 @@ test.describe('Election Candidates - Permissions and Management', () => {
     // Election integrity protected
   });
 
-  test('Edit candidate information', async ({ page }) => {
+  test('Edit candidate information', async ({ authenticatedPage: page }) => {
     // 1. Login as organizer
-    await loginAsTestUser(page);
-
     // 2. Navigate to election management
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda`);
     await page.waitForLoadState('networkidle');
@@ -62,17 +55,14 @@ test.describe('Election Candidates - Permissions and Management', () => {
       await saveButton.click();
 
       // 6. Changes saved successfully
-      await page.waitForTimeout(500);
 
       // Updates visible immediately
       await expect(page.getByText('Updated Candidate Name')).toBeVisible({ timeout: 3000 });
     }
   });
 
-  test('Delete candidate before voting', async ({ page }) => {
+  test('Delete candidate before voting', async ({ authenticatedPage: page }) => {
     // 1. Login as organizer
-    await loginAsTestUser(page);
-
     // 2. Navigate to election management
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda`);
     await page.waitForLoadState('networkidle');
@@ -89,7 +79,6 @@ test.describe('Election Candidates - Permissions and Management', () => {
         await confirmButton.click();
 
         // 5. Candidate deleted
-        await page.waitForTimeout(500);
 
         // Removed from candidates list
         // No impact on election

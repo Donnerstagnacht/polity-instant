@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/agenda-items-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Agenda Items - Duration Management', () => {
-  test('Set agenda item duration', async ({ page }) => {
+  test('Set agenda item duration', async ({ authenticatedPage: page }) => {
     // 1. Login as organizer
-    await loginAsTestUser(page);
-
     // 2. Navigate to event agenda
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
     await page.waitForLoadState('networkidle');
@@ -39,7 +36,6 @@ test.describe('Agenda Items - Duration Management', () => {
       await createButton.click();
 
       // 5. Duration saved
-      await page.waitForTimeout(500);
 
       // Displayed on item
       // Used in timeline calculation
@@ -47,10 +43,8 @@ test.describe('Agenda Items - Duration Management', () => {
     }
   });
 
-  test('Update agenda item duration', async ({ page }) => {
+  test('Update agenda item duration', async ({ authenticatedPage: page }) => {
     // 1. Login as organizer
-    await loginAsTestUser(page);
-
     // 2. Navigate to event agenda
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
     await page.waitForLoadState('networkidle');
@@ -81,7 +75,6 @@ test.describe('Agenda Items - Duration Management', () => {
         await saveButton.click();
 
         // 7. Duration updated
-        await page.waitForTimeout(500);
 
         // Timeline recalculated
         // Subsequent item times adjusted
@@ -89,10 +82,8 @@ test.describe('Agenda Items - Duration Management', () => {
     }
   });
 
-  test('Extend duration during active event', async ({ page }) => {
+  test('Extend duration during active event', async ({ authenticatedPage: page }) => {
     // 1. Login as organizer
-    await loginAsTestUser(page);
-
     // 2. Navigate to active event agenda
     await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}`);
     await page.waitForLoadState('networkidle');
@@ -122,7 +113,6 @@ test.describe('Agenda Items - Duration Management', () => {
         await confirmButton.click();
 
         // 6. Duration extended
-        await page.waitForTimeout(300);
 
         // Timer updated
         // Following items delayed

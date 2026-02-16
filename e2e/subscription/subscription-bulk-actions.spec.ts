@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/subscription-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Bulk Unsubscribe', () => {
-  test('User can bulk unsubscribe', async ({ page }) => {
+  test('User can bulk unsubscribe', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to subscriptions page
     await page.goto('/user/page/subscriptions');
     await page.waitForLoadState('networkidle');
@@ -44,7 +40,7 @@ test.describe('Bulk Unsubscribe', () => {
         }
 
         // 8. Wait for operation to complete
-        await page.waitForTimeout(1000);
+        await page.waitForLoadState('networkidle');
       }
     }
 

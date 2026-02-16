@@ -1,39 +1,32 @@
 // spec: e2e/test-plans/events-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Events - Event Error Handling', () => {
-  test('Event not found displays error message', async ({ page }) => {
+  test('Event not found displays error message', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
-    // 2. Navigate to non-existent event ID
-    await page.goto('/event/non-existent-event-12345');
+    // 2. Navigate to non-existent event ID (must be valid UUID for InstantDB)
+    await page.goto('/event/00000000-0000-4000-8000-000000000001');
 
     // 3. Wait for page to load
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // 4. Clear "Event Not Found" message
-    const notFoundMessage = page.getByText(/not found/i).or(page.getByText(/doesn't exist/i));
-    await expect(notFoundMessage).toBeVisible({ timeout: 5000 });
+    const notFoundMessage = page.getByRole('heading', { name: /not found/i });
+    await expect(notFoundMessage).toBeVisible({ timeout: 10000 });
 
     // 5. Explanation text
     // 6. Link to events listing or home
     // No broken UI elements
   });
 
-  test('Permission denied for private event displays error', async ({ page }) => {
+  test('Permission denied for private event displays error', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
-    // 2. Attempt to access private event (if available)
-    // This test assumes there's a private event the user cannot access
-    await page.goto('/event/private-event-id');
+    // 2. Attempt to access private event (valid UUID for InstantDB)
+    await page.goto('/event/00000000-0000-4000-8000-000000000002');
 
     // 3. Wait for page load
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // 4. Check for access denied message or event display
     const accessDenied = page.getByText(/access denied|permission|not authorized/i);

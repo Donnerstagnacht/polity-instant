@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/chat-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Chat/Messages - Search Conversations', () => {
-  test('User searches through conversations', async ({ page }) => {
+  test('User searches through conversations', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to messages page
     await page.goto('/messages');
 
@@ -27,7 +23,6 @@ test.describe('Chat/Messages - Search Conversations', () => {
 
       // 6. Conversations filter by participant name
       // 7. Results update in real-time as user types
-      await page.waitForTimeout(300); // Allow for filtering
 
       // Verify filtered results
       await conversationButtons.count();
@@ -36,7 +31,6 @@ test.describe('Chat/Messages - Search Conversations', () => {
       await searchInput.clear();
 
       // 9. All conversations reappear
-      await page.waitForTimeout(300);
       const finalCount = await conversationButtons.count();
       expect(finalCount).toBe(initialCount);
     } else {
@@ -47,12 +41,10 @@ test.describe('Chat/Messages - Search Conversations', () => {
     }
   });
 
-  test('Search filters by message content', async ({ page }) => {
-    // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
-    // 2. Navigate to messages page
+  // Flaky: search input placeholder found in first test but times out here intermittently
+  test('Search filters by message content', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
+    await page.waitForLoadState('domcontentloaded');
 
     // 3. Try searching for message content
     const searchInput = page.getByPlaceholder(/search conversations/i);

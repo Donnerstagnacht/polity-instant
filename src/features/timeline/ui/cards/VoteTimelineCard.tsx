@@ -1,6 +1,7 @@
 'use client';
 
 import { Vote, ThumbsUp, ThumbsDown, Clock, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import Link from 'next/link';
 import { useTranslation } from '@/hooks/use-translation';
 import { cn } from '@/utils/utils';
 import { Badge } from '@/components/ui/badge';
@@ -129,6 +130,7 @@ export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
       <TimelineCardHeader
         contentType="vote"
         title={t('features.timeline.contentTypes.vote')}
+        href={agendaHref || fallbackHref}
         badge={
           <Badge
             variant="outline"
@@ -168,7 +170,11 @@ export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
 
       <TimelineCardContent>
         {/* Amendment Title (card click handles navigation) */}
-        <p className="mb-2 line-clamp-2 text-sm font-medium">{vote.amendmentTitle}</p>
+        <p className="mb-2 line-clamp-2 text-sm font-medium">
+          <Link href={agendaHref || fallbackHref} onClick={e => e.stopPropagation()} className="hover:underline">
+            {vote.amendmentTitle}
+          </Link>
+        </p>
 
         {vote.question && (
           <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">{vote.question}</p>

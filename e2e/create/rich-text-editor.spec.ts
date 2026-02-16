@@ -1,5 +1,4 @@
-import { test, expect } from '@playwright/test';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Create Feature', () => {
   test('Rich Text Editor', async ({ page }) => {
     // Navigate to create page
@@ -12,7 +11,6 @@ test.describe('Create Feature', () => {
       .first();
     await blogsOption.click();
 
-    await page.waitForTimeout(500);
 
     // Fill in title first
     const titleInput = page.locator('input[name="title"]').first();
@@ -36,7 +34,6 @@ test.describe('Create Feature', () => {
       if (await richTextEditor.isVisible()) break;
       if (await nextButton.isVisible()) {
         await nextButton.click();
-        await page.waitForTimeout(300);
       } else {
         break;
       }
@@ -49,7 +46,6 @@ test.describe('Create Feature', () => {
       // Type some text
       await richTextEditor.fill('This is a test blog post with formatting.');
 
-      await page.waitForTimeout(300);
 
       // Try to apply formatting (bold) - look for toolbar buttons
       const boldButton = page
@@ -65,7 +61,6 @@ test.describe('Create Feature', () => {
         // Apply bold
         await boldButton.click();
 
-        await page.waitForTimeout(300);
       }
 
       // Try italic
@@ -77,7 +72,6 @@ test.describe('Create Feature', () => {
 
       if (await italicButton.isVisible()) {
         await italicButton.click();
-        await page.waitForTimeout(300);
       }
 
       // Try to add a heading

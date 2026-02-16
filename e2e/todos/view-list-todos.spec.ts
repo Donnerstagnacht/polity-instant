@@ -1,17 +1,15 @@
 // spec: e2e/test-plans/todos-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Todos - View Todos in List View', () => {
-  test('User switches to list view and sees todos in a table format', async ({ page }) => {
+  test('User switches to list view and sees todos in a table format', async ({ authenticatedPage: page }) => {
     // 1. Navigate to /todos
-    await loginAsTestUser(page);
     await page.goto('/todos');
 
-    // 2. Click List view tab
-    await page.getByRole('tab', { name: /list/i }).click();
+    // 2. Click List view button (icon-only button, first in the toggle container)
+    const viewToggle = page.locator('.flex.gap-1.rounded-lg.border');
+    await viewToggle.locator('button').first().click();
 
     // 3. List view displays todos in table format
     const listView = page

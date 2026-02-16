@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/positions-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Positions - Vacant Status and Deletion', () => {
-  test('Display vacant position', async ({ page }) => {
+  test('Display vacant position', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to group
     await page.goto(`/group/${TEST_ENTITY_IDS.GROUP}`);
     await page.waitForLoadState('networkidle');
@@ -26,10 +23,8 @@ test.describe('Positions - Vacant Status and Deletion', () => {
     // Distinct visual styling
   });
 
-  test('Delete vacant position', async ({ page }) => {
+  test('Delete vacant position', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as admin
-    await loginAsTestUser(page);
-
     // 2. Navigate to group
     await page.goto(`/group/${TEST_ENTITY_IDS.GROUP}`);
     await page.waitForLoadState('networkidle');
@@ -51,7 +46,6 @@ test.describe('Positions - Vacant Status and Deletion', () => {
         await confirmButton.click();
 
         // 5. Position deleted
-        await page.waitForTimeout(500);
 
         // Removed from positions list
         // Group updated
@@ -60,10 +54,8 @@ test.describe('Positions - Vacant Status and Deletion', () => {
     }
   });
 
-  test('Delete position with holder', async ({ page }) => {
+  test('Delete position with holder', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as admin
-    await loginAsTestUser(page);
-
     // 2. Navigate to group
     await page.goto(`/group/${TEST_ENTITY_IDS.GROUP}`);
     await page.waitForLoadState('networkidle');
@@ -86,7 +78,6 @@ test.describe('Positions - Vacant Status and Deletion', () => {
         await confirmButton.click();
 
         // 6. Deletion proceeds
-        await page.waitForTimeout(500);
 
         // Holder notified
         // Historical record maintained

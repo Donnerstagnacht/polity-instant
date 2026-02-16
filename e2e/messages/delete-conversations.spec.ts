@@ -1,12 +1,9 @@
 // spec: e2e/test-plans/chat-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Chat/Messages - Delete Conversations', () => {
-  test('Delete button is visible in conversation header', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('Delete button is visible in conversation header', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
 
     // Select a conversation
@@ -31,8 +28,7 @@ test.describe('Chat/Messages - Delete Conversations', () => {
     }
   });
 
-  test('Delete button shows confirmation dialog', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('Delete button shows confirmation dialog', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
 
     // Select a conversation
@@ -62,8 +58,7 @@ test.describe('Chat/Messages - Delete Conversations', () => {
     }
   });
 
-  test('User can cancel conversation deletion', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('User can cancel conversation deletion', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
 
     // Select a conversation
@@ -90,7 +85,6 @@ test.describe('Chat/Messages - Delete Conversations', () => {
 
       if (isDeleteButtonVisible) {
         await deleteButton.click();
-        await page.waitForTimeout(500);
 
         // Verify conversation still exists
         const conversationStillExists = await page
@@ -105,8 +99,7 @@ test.describe('Chat/Messages - Delete Conversations', () => {
     }
   });
 
-  test('User can delete a conversation', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('User can delete a conversation', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
 
     // Get initial conversation count
@@ -128,7 +121,7 @@ test.describe('Chat/Messages - Delete Conversations', () => {
 
       if (isDeleteButtonVisible) {
         await deleteButton.click();
-        await page.waitForTimeout(1000);
+        await page.waitForLoadState('networkidle');
 
         // Verify conversation is deleted
         // Should redirect to empty state or conversation list
@@ -139,8 +132,7 @@ test.describe('Chat/Messages - Delete Conversations', () => {
     }
   });
 
-  test('Deleted conversation is removed from list', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('Deleted conversation is removed from list', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
 
     const conversations = page.locator('button').filter({ hasText: /Unknown User|@/ });
@@ -162,7 +154,7 @@ test.describe('Chat/Messages - Delete Conversations', () => {
 
       if (isDeleteButtonVisible) {
         await deleteButton.click();
-        await page.waitForTimeout(1000);
+        await page.waitForLoadState('networkidle');
 
         // Go back to list view (on mobile)
         const backButton = page
@@ -186,8 +178,7 @@ test.describe('Chat/Messages - Delete Conversations', () => {
     }
   });
 
-  test('Delete button is only visible for accepted conversations', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('Delete button is only visible for accepted conversations', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
 
     // This test verifies that pending conversations don't show delete button
@@ -221,8 +212,7 @@ test.describe('Chat/Messages - Delete Conversations', () => {
     }
   });
 
-  test('Deleting conversation removes all messages', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('Deleting conversation removes all messages', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
 
     const conversations = page.locator('button').filter({ hasText: /Unknown User|@/ });
@@ -246,7 +236,7 @@ test.describe('Chat/Messages - Delete Conversations', () => {
 
         if (isDeleteButtonVisible) {
           await deleteButton.click();
-          await page.waitForTimeout(1000);
+          await page.waitForLoadState('networkidle');
 
           // Verify messages are gone (conversation should be deleted)
           const conversationStillExists = await page

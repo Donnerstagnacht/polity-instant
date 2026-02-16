@@ -1,17 +1,14 @@
 // spec: e2e/test-plans/profile-feature-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { navigateToOwnProfile } from '../helpers/navigation';
 
 test.describe('View Own Profile (Authenticated)', () => {
-  test('Display Profile Basic Information', async ({ page }) => {
+  test('Display Profile Basic Information', async ({ authenticatedPage: page }) => {
     // 1. Use loginAsTestUser(page) to authenticate
-    await loginAsTestUser(page);
-
-    // 2. Verify redirect to home page at /
-    await expect(page).toHaveURL('/');
+    // 2. Verify we're authenticated (fixture lands on /notifications)
+    await expect(page).toHaveURL(/\/(notifications)?/);
 
     // 3. Use navigateToOwnProfile(page) helper
     await navigateToOwnProfile(page);

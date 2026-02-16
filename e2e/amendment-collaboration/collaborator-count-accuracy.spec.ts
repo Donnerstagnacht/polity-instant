@@ -1,15 +1,19 @@
 // spec: e2e/test-plans/amendment-collaboration-test-plan.md
-// seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Amendment Collaboration', () => {
-  test('Collaborator count updates accurately', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('Collaborator count updates accurately', async ({ authenticatedPage: page, amendmentFactory, userFactory }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const amendment = await amendmentFactory.createAmendment(user.id, {
+      title: `Test Amendment ${Date.now()}`,
+    });
+    // Create collaborators to verify count
+    const collaborator = await userFactory.createUser();
+    await amendmentFactory.addCollaborator(amendment.id, collaborator.id, amendment.collaboratorRoleId, 'member');
 
-    await page.goto(`/amendment/${TEST_ENTITY_IDS.testAmendment1}`);
+    await page.goto(`/amendment/${amendment.id}`);
 
     // 1. Count only includes status "member" and "admin"
     const collaboratorCount = page.getByText(/\d+ collaborators?/i);
@@ -18,7 +22,7 @@ test.describe('Amendment Collaboration', () => {
 
     // 2. Excludes "invited" and "requested" statuses
     // Navigate to collaborators page to verify
-    await page.goto(`/amendment/${TEST_ENTITY_IDS.testAmendment1}/collaborators`);
+    await page.goto(`/amendment/${amendment.id}/collaborators`);
 
     const activeCollaborators = page.locator('.active-collaborators, [data-active-collaborators]');
     await expect(activeCollaborators).toBeVisible();
@@ -28,7 +32,7 @@ test.describe('Amendment Collaboration', () => {
     if (await removeButton.isVisible()) {
       await removeButton.click();
 
-      await page.goto(`/amendment/${TEST_ENTITY_IDS.testAmendment1}`);
+      await page.goto(`/amendment/${amendment.id}`);
       const updatedCount = await page.getByText(/\d+ collaborators?/i).textContent();
       expect(updatedCount).not.toBe(initialCount);
     }

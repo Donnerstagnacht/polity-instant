@@ -1,17 +1,21 @@
 // spec: e2e/test-plans/event-participation-test-plan.md
-// seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Event Participation - Organizer Approve Request', () => {
-  test('Organizer can approve participation request', async ({ page }) => {
-    // 1. Authenticate as organizer user
-    await loginAsTestUser(page);
+  test('Organizer can approve participation request', async ({ authenticatedPage: page, eventFactory, userFactory }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const event = await eventFactory.createEvent(user.id, {
+      title: `Test Event ${Date.now()}`,
+    });
+    // Create a user who requested to participate
+    const requester = await userFactory.createUser();
+    await eventFactory.addParticipant(event.id, requester.id, event.participantRoleId, 'requested');
 
+    // 1. Authenticate as organizer user
     // 2. Navigate to participants management page
-    await page.goto(`/event/${TEST_ENTITY_IDS.testEvent1}/participants`);
+    await page.goto(`/event/${event.id}/participants`);
 
     // 3. Verify participants page loaded
     const heading = page.getByRole('heading', { name: /participant|manage/i });

@@ -1,15 +1,14 @@
 // spec: Group conversation member synchronization
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
+import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Group Conversations - Member Synchronization', () => {
-  test('Joining group adds user to group conversation', async ({ page }) => {
-    await loginAsTestUser(page);
-
+  test('Joining group adds user to group conversation', async ({ authenticatedPage: page }) => {
     // Find a public group to join
     await page.goto('/search?type=groups');
+    await page.waitForLoadState('domcontentloaded');
 
     // Find a group with "Join" or "Request to Join" button
     const joinButton = page.getByRole('button', { name: /request to join|join/i }).first();
@@ -24,7 +23,7 @@ test.describe('Group Conversations - Member Synchronization', () => {
 
       // Join the group
       await joinButton.click();
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
 
       // Navigate to messages
       await page.goto('/messages');
@@ -36,9 +35,7 @@ test.describe('Group Conversations - Member Synchronization', () => {
     }
   });
 
-  test('Leaving group removes user from conversation', async ({ page }) => {
-    await loginAsTestUser(page);
-
+  test('Leaving group removes user from conversation', async ({ authenticatedPage: page }) => {
     // Go to messages to find a group conversation
     await page.goto('/messages');
 
@@ -67,8 +64,7 @@ test.describe('Group Conversations - Member Synchronization', () => {
         const groupCard = groupCards.first();
         const groupName = await groupCard.textContent();
         await leaveButton.click();
-        await page.waitForTimeout(1000);
-
+      await page.waitForLoadState('domcontentloaded');
         // Navigate to messages
         await page.goto('/messages');
 
@@ -81,9 +77,7 @@ test.describe('Group Conversations - Member Synchronization', () => {
     }
   });
 
-  test('Accepting group invitation adds user to conversation', async ({ page }) => {
-    await loginAsTestUser(page);
-
+  test('Accepting group invitation adds user to conversation', async ({ authenticatedPage: page }) => {
     // Check if there are any group invitations
     await page.goto('/');
 
@@ -94,7 +88,7 @@ test.describe('Group Conversations - Member Synchronization', () => {
     if (hasInvitation) {
       // Accept the invitation
       await acceptInviteButton.click();
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('domcontentloaded');
 
       // Navigate to messages
       await page.goto('/messages');
@@ -109,28 +103,15 @@ test.describe('Group Conversations - Member Synchronization', () => {
     }
   });
 
-  // FIXME: This test requires navigating through 6 steps of the group creation carousel.
-  // The group creation UI is complex with multiple steps. Consider using seeded groups instead.
-  test.fixme('Group creator is automatically added to conversation', async ({ page }) => {
-    await loginAsTestUser(page);
-
-    // Create a new group
-    await page.goto('/create');
-
-    const groupButton = page.getByText(/group/i).first();
-    await groupButton.click();
-
+  test('Group creator is automatically added to conversation', async ({ authenticatedPage: page, groupFactory, adminDb }) => {
+    const authUser = await adminDb.auth.getUser({ email: 'polity.live@gmail.com' });
     const uniqueName = `Member Sync Test ${Date.now()}`;
-    const nameInput = page.getByLabel(/name/i).or(page.getByPlaceholder(/name/i)).first();
-    await nameInput.fill(uniqueName);
-
-    const createButton = page.getByRole('button', { name: /create/i });
-    await createButton.click();
-
-    await page.waitForURL(/\//, { timeout: 5000 });
+    const group = await groupFactory.createGroup(authUser.id, { name: uniqueName });
+    await groupFactory.createGroupConversation(group.id, uniqueName, [authUser.id], authUser.id);
 
     // Navigate to messages
     await page.goto('/messages');
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify conversation exists
     await expect(page.getByText(uniqueName)).toBeVisible({ timeout: 10000 });
@@ -142,8 +123,7 @@ test.describe('Group Conversations - Member Synchronization', () => {
     await expect(page.getByText(/1 member/i)).toBeVisible();
   });
 
-  test('Multiple members can see the same group conversation', async ({ page }) => {
-    await loginAsTestUser(page);
+  test('Multiple members can see the same group conversation', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
 
     // Find a group conversation with multiple members

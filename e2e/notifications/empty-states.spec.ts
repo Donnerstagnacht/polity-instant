@@ -1,19 +1,15 @@
 // spec: e2e/test-plans/notifications-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Notifications - Empty States', () => {
-  test('Empty state when no notifications exist', async ({ page }) => {
+  test('Empty state when no notifications exist', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to notifications page
     await page.goto('/notifications');
 
     // 3. Check for notifications
-    const emptyState = page.getByText(/no notifications yet/i);
+    const emptyState = page.getByText(/no notifications|all caught up/i);
     const hasNoNotifications = await emptyState.isVisible().catch(() => false);
 
     if (hasNoNotifications) {
@@ -29,10 +25,8 @@ test.describe('Notifications - Empty States', () => {
     }
   });
 
-  test('Empty state for unread tab when all caught up', async ({ page }) => {
+  test('Empty state for unread tab when all caught up', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to notifications page
     await page.goto('/notifications');
 
@@ -53,10 +47,8 @@ test.describe('Notifications - Empty States', () => {
     }
   });
 
-  test('Empty state for read tab when no read notifications', async ({ page }) => {
+  test('Empty state for read tab when no read notifications', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to notifications page
     await page.goto('/notifications');
 

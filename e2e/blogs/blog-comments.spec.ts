@@ -1,18 +1,22 @@
 // spec: e2e/test-plans/blogs-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Blogs - Blog Comments System', () => {
-  test('User adds top-level comment to blog', async ({ page }) => {
-    // 1. Authenticate as test user
-    await loginAsTestUser(page);
+  test('User adds top-level comment to blog', async ({
+    authenticatedPage: page,
+    blogFactory,
+    userFactory,
+  }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const blog = await blogFactory.createBlog(user.id, {
+      title: `Comment Blog Test ${Date.now()}`,
+    });
 
-    // 2. Navigate to blog page
-    await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
-    await page.waitForLoadState('networkidle');
+    await page.goto(`/blog/${blog.id}`);
+    await page.waitForLoadState('domcontentloaded');
 
     // 3. Click "Add Comment" button
     const addCommentButton = page.getByRole('button', { name: /add comment|comment/i });
@@ -28,18 +32,12 @@ test.describe('Blogs - Blog Comments System', () => {
 
     // 6. Comment appears in comments list
     await expect(page.getByText('This is a test comment on the blog post')).toBeVisible({
-      timeout: 3000,
+      timeout: 5000,
     });
-
-    // 7. Comment count increases
-    // User shown as comment creator
-    // Timestamp displayed
   });
 
-  test('User upvotes a comment', async ({ page }) => {
+  test('User upvotes a comment', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to blog page with comments
     await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
     await page.waitForLoadState('networkidle');
@@ -64,17 +62,14 @@ test.describe('Blogs - Blog Comments System', () => {
 
       // 5. Vote count increases
       // Upvote arrow highlighted
-      await page.waitForTimeout(300);
 
       // Cannot upvote same comment twice
       // Can change vote to downvote
     }
   });
 
-  test('User downvotes a comment', async ({ page }) => {
+  test('User downvotes a comment', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to blog page with comments
     await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
     await page.waitForLoadState('networkidle');
@@ -96,17 +91,14 @@ test.describe('Blogs - Blog Comments System', () => {
 
       // 5. Vote count decreases
       // Downvote arrow highlighted
-      await page.waitForTimeout(300);
 
       // Cannot downvote same comment twice
       // Can change vote to upvote
     }
   });
 
-  test('User sorts comments by votes', async ({ page }) => {
+  test('User sorts comments by votes', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to blog with multiple comments
     await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
     await page.waitForLoadState('networkidle');
@@ -120,17 +112,14 @@ test.describe('Blogs - Blog Comments System', () => {
       await votesOption.click();
 
       // 4. Highest voted comments appear first
-      await page.waitForTimeout(300);
 
       // Score calculated as upvotes - downvotes
       // Sorting updates immediately
     }
   });
 
-  test('User sorts comments by date', async ({ page }) => {
+  test('User sorts comments by date', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to blog with multiple comments
     await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
     await page.waitForLoadState('networkidle');
@@ -144,7 +133,6 @@ test.describe('Blogs - Blog Comments System', () => {
       await dateOption.click();
 
       // 4. Newest comments appear first
-      await page.waitForTimeout(300);
 
       // Timestamp used for sorting
       // Sorting updates immediately

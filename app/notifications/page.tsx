@@ -7,7 +7,7 @@ import { NotificationsPage } from '@/features/notifications/NotificationsPage';
 export default function NotificationsRoute() {
   return (
     <AuthGuard requireAuth={true}>
-      <PageWrapper className="container mx-auto min-h-screen max-w-4xl p-4">
+      <PageWrapper className="container mx-auto p-8">
         <NotificationsPage />
       </PageWrapper>
     </AuthGuard>

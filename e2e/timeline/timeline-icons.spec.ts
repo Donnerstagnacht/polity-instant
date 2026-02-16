@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/timeline-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Timeline - Timeline Icons', () => {
-  test('Different event types have distinct icons', async ({ page }) => {
+  test('Different event types have distinct icons', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to home page
     await page.goto('/');
 
@@ -61,10 +57,8 @@ test.describe('Timeline - Timeline Icons', () => {
     }
   });
 
-  test('Timeline header shows RSS icon', async ({ page }) => {
+  test('Timeline header shows RSS icon', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to home page
     await page.goto('/');
 

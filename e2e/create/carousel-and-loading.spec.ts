@@ -1,12 +1,10 @@
-import { test, expect } from '@playwright/test';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Create Feature - Carousel Navigation', () => {
   test('Carousel Navigation', async ({ page }) => {
     await page.goto('/create');
 
     const groupsOption = page.locator('text=Groups').first();
     await groupsOption.click();
-    await page.waitForTimeout(500);
 
     const nextButton = page
       .locator('[data-testid="next-button"]')
@@ -20,11 +18,9 @@ test.describe('Create Feature - Carousel Navigation', () => {
 
     if (await nextButton.isVisible()) {
       await nextButton.click();
-      await page.waitForTimeout(300);
 
       if (await prevButton.isVisible()) {
         await prevButton.click();
-        await page.waitForTimeout(300);
       }
     }
 
@@ -38,7 +34,6 @@ test.describe('Create Feature - Loading States', () => {
 
     const groupsOption = page.locator('text=Groups').first();
     await groupsOption.click();
-    await page.waitForTimeout(500);
 
     const nameInput = page.locator('input[name="name"]').first();
     if (await nameInput.isVisible()) {
@@ -57,7 +52,6 @@ test.describe('Create Feature - Loading States', () => {
       if (await createButton.isVisible()) break;
       if (await nextButton.isVisible()) {
         await nextButton.click();
-        await page.waitForTimeout(200);
       }
     }
 

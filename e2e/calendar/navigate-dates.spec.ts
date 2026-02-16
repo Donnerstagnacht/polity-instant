@@ -1,13 +1,10 @@
 // spec: e2e/test-plans/calendar-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Calendar - Navigate Between Dates', () => {
-  test('User navigates to previous and next day/week/month', async ({ page }) => {
+  test('User navigates to previous and next day/week/month', async ({ authenticatedPage: page }) => {
     // 1. Navigate to /calendar
-    await loginAsTestUser(page);
     await page.goto('/calendar');
 
     // 2. In Day view, click Previous button
@@ -20,7 +17,6 @@ test.describe('Calendar - Navigate Between Dates', () => {
     if ((await prevButton.count()) > 0) {
       await prevButton.first().click();
       // Date updates to previous day
-      await page.waitForTimeout(300);
     }
 
     // 3. Click Next button
@@ -32,14 +28,12 @@ test.describe('Calendar - Navigate Between Dates', () => {
     if ((await nextButton.count()) > 0) {
       await nextButton.first().click();
       // Date updates to next day
-      await page.waitForTimeout(300);
     }
 
     // 4. Click Today button to return to current date
-    const todayButton = page.getByRole('button', { name: /today/i });
+    const todayButton = page.getByRole('button', { name: 'Today', exact: true });
     await todayButton.click();
 
     // Current date is displayed
-    await page.waitForTimeout(300);
   });
 });

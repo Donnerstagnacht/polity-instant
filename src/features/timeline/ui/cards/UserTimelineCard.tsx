@@ -1,7 +1,7 @@
 'use client';
 
 import { User, Users, MapPin, Mail, Bell, Star } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useTranslation } from '@/hooks/use-translation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -48,7 +48,6 @@ export interface UserTimelineCardProps {
  */
 export function UserTimelineCard({ user, onFollow, onMessage, className }: UserTimelineCardProps) {
   const { t } = useTranslation();
-  const router = useRouter();
   const subscription = useSubscribeUser(user.id);
   const amendmentStyle = CONTENT_TYPE_CONFIG.amendment;
 
@@ -66,6 +65,7 @@ export function UserTimelineCard({ user, onFollow, onMessage, className }: UserT
       <TimelineCardHeader
         contentType="user"
         title={user.name}
+        href={`/user/${user.id}`}
         badge={<TimelineCardBadge label={t('features.timeline.contentTypes.user')} icon={User} />}
       />
 
@@ -183,19 +183,16 @@ export function UserTimelineCard({ user, onFollow, onMessage, className }: UserT
         >
           <Bell className={`h-3.5 w-3.5 ${subscription.isSubscribed ? 'fill-current' : ''}`} />
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={e => {
-            e.preventDefault();
-            router.push(
-              `/messages?userId=${encodeURIComponent(user.id)}&name=${encodeURIComponent(user.name)}`
-            );
-            onMessage?.();
-          }}
-          className="flex items-center gap-1.5"
-        >
-          <Mail className="h-3.5 w-3.5" />
+        <Button variant="outline" size="sm" asChild className="flex items-center gap-1.5">
+          <Link
+            href={`/messages?userId=${encodeURIComponent(user.id)}&name=${encodeURIComponent(user.name)}`}
+            onClick={e => {
+              e.stopPropagation();
+              onMessage?.();
+            }}
+          >
+            <Mail className="h-3.5 w-3.5" />
+          </Link>
         </Button>
         <div onClick={e => e.preventDefault()}>
           <ShareButton

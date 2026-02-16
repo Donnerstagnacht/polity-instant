@@ -1,5 +1,4 @@
-import { test, expect } from '@playwright/test';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Create Feature', () => {
   test('Guided Mode - Create Statement', async ({ page }) => {
     // Navigate to create page
@@ -12,7 +11,6 @@ test.describe('Create Feature', () => {
       .first();
     await statementsOption.click();
 
-    await page.waitForTimeout(500);
 
     // Enter statement text
     const textInput = page
@@ -48,7 +46,7 @@ test.describe('Create Feature', () => {
     await createButton.click();
 
     // Wait for success
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('networkidle');
 
     // Verify success message or redirect
     const successMessage = await page

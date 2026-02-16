@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/notifications-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Notifications - Mark as Read', () => {
-  test('User marks individual notification as read by clicking', async ({ page }) => {
+  test('User marks individual notification as read by clicking', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to notifications page
     await page.goto('/notifications');
 
@@ -22,17 +18,14 @@ test.describe('Notifications - Mark as Read', () => {
 
       // 5. Notification should be marked as read (navigation will occur)
       // Wait for potential navigation
-      await page.waitForTimeout(500);
     } else {
       // No unread notifications
       await expect(page.getByText(/all caught up|no notifications/i)).toBeVisible();
     }
   });
 
-  test('User marks all notifications as read', async ({ page }) => {
+  test('User marks all notifications as read', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to notifications page
     await page.goto('/notifications');
 
@@ -49,7 +42,7 @@ test.describe('Notifications - Mark as Read', () => {
       await markAllButton.click();
 
       // 6. Wait for update
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState('networkidle');
 
       // 7. Verify unread count is now 0
       await expect(page.getByText(/all caught up/i)).toBeVisible();
@@ -58,7 +51,7 @@ test.describe('Notifications - Mark as Read', () => {
       await expect(markAllButton).not.toBeVisible();
     } else {
       // All already read
-      await expect(page.getByText(/all caught up/i)).toBeVisible();
+      await expect(page.getByText(/all caught up|no notifications/i)).toBeVisible();
     }
   });
 });

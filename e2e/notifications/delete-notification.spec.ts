@@ -1,14 +1,10 @@
 // spec: e2e/test-plans/notifications-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
-
+import { test, expect } from '../fixtures/test-base';
 test.describe('Notifications - Delete Notifications', () => {
-  test('User deletes individual notification', async ({ page }) => {
+  test('User deletes individual notification', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to notifications page
     await page.goto('/notifications');
 
@@ -38,7 +34,6 @@ test.describe('Notifications - Delete Notifications', () => {
       await deleteButton.click();
 
       // 7. Wait for deletion
-      await page.waitForTimeout(500);
 
       // 8. Verify notification count decreased or empty state shown
       const newCount = await page
@@ -48,13 +43,13 @@ test.describe('Notifications - Delete Notifications', () => {
 
       if (newCount === 0) {
         // All notifications deleted
-        await expect(page.getByText(/no notifications yet/i)).toBeVisible();
+        await expect(page.getByText(/no notifications|all caught up/i)).toBeVisible();
       } else {
         expect(newCount).toBe(initialCount - 1);
       }
     } else {
       // No notifications to delete
-      await expect(page.getByText(/no notifications yet/i)).toBeVisible();
+      await expect(page.getByText(/no notifications|all caught up/i)).toBeVisible();
     }
   });
 });

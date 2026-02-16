@@ -1,15 +1,12 @@
 // spec: e2e/test-plans/positions-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Positions - Term Management', () => {
-  test('Set term length', async ({ page }) => {
+  test('Set term length', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as admin
-    await loginAsTestUser(page);
-
     // 2. Navigate to group positions
     await page.goto(`/group/${TEST_ENTITY_IDS.GROUP}`);
     await page.waitForLoadState('networkidle');
@@ -37,7 +34,6 @@ test.describe('Positions - Term Management', () => {
       await submitButton.click();
 
       // 6. Term length stored
-      await page.waitForTimeout(500);
 
       // Used for term expiration calculation
       // Displayed on position card
@@ -45,10 +41,8 @@ test.describe('Positions - Term Management', () => {
     }
   });
 
-  test('Set first term start date', async ({ page }) => {
+  test('Set first term start date', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as admin
-    await loginAsTestUser(page);
-
     // 2. Navigate to positions
     await page.goto(`/group/${TEST_ENTITY_IDS.GROUP}`);
     await page.waitForLoadState('networkidle');
@@ -75,7 +69,6 @@ test.describe('Positions - Term Management', () => {
       await saveButton.click();
 
       // 5. Start date saved
-      await page.waitForTimeout(500);
 
       // Displayed on position
       // Used for term expiration calculation
@@ -83,10 +76,8 @@ test.describe('Positions - Term Management', () => {
     }
   });
 
-  test('Calculate term expiration', async ({ page }) => {
+  test('Calculate term expiration', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
-    await loginAsTestUser(page);
-
     // 2. Navigate to position
     await page.goto(`/group/${TEST_ENTITY_IDS.GROUP}`);
     await page.waitForLoadState('networkidle');

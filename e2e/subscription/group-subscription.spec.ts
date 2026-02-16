@@ -1,8 +1,7 @@
 // spec: e2e/test-plans/subscription-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 import {
   navigateToGroup,
@@ -13,15 +12,12 @@ import {
   ensureSubscribed,
 } from '../helpers/subscription';
 
-const TEST_GROUP_ID = TEST_ENTITY_IDS.testGroup1;
-
 test.describe('Subscribe to Group', () => {
-  test('User can subscribe to group', async ({ page }) => {
-    // 1. Authenticate as test user
-    await loginAsTestUser(page);
+  test('User can subscribe to group', async ({ authenticatedPage: page, groupFactory, userFactory }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const group = await groupFactory.createGroup(user.id, { name: `Sub Group ${Date.now()}` });
 
-    // 2. Navigate to group page
-    await navigateToGroup(page, TEST_GROUP_ID);
+    await navigateToGroup(page, group.id);
 
     // 3. Ensure we start unsubscribed
     await ensureNotSubscribed(page);
@@ -40,12 +36,11 @@ test.describe('Subscribe to Group', () => {
     expect(newCount).toBe(initialCount + 1);
   });
 
-  test('User can unsubscribe from group', async ({ page }) => {
-    // 1. Authenticate as test user
-    await loginAsTestUser(page);
+  test('User can unsubscribe from group', async ({ authenticatedPage: page, groupFactory, userFactory }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const group = await groupFactory.createGroup(user.id, { name: `Unsub Group ${Date.now()}` });
 
-    // 2. Navigate to group page
-    await navigateToGroup(page, TEST_GROUP_ID);
+    await navigateToGroup(page, group.id);
 
     // 3. Ensure we're subscribed first
     await ensureSubscribed(page);

@@ -1,27 +1,20 @@
 // spec: e2e/test-plans/comments-test-plan.md
 // seed: e2e/seed.spec.ts
 
-import { test } from '@playwright/test';
-import { loginAsTestUser } from '../helpers/auth';
+import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Comments - Loading States and Error Handling', () => {
-  test('Display loading state while fetching comments', async ({ page }) => {
-    // 1. Login as user
-    await loginAsTestUser(page);
+  test('Display loading state while fetching comments', async ({ authenticatedPage: page, blogFactory, userFactory }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const blog = await blogFactory.createBlog(user.id, { title: `Loading Blog ${Date.now()}` });
 
-    // 2. Navigate to blog page
-    const navigationPromise = page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
-
-    // 3. Comments section loads
-    // Initial loading state shown
-    // Skeleton/spinner visible
+    const navigationPromise = page.goto(`/blog/${blog.id}`);
 
     await navigationPromise;
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // 4. Comments displayed when loaded
-    await page.waitForTimeout(500);
 
     page
       .locator('[data-testid="comment"]')
@@ -31,55 +24,45 @@ test.describe('Comments - Loading States and Error Handling', () => {
     // Smooth transition
   });
 
-  test('Handle create comment validation errors', async ({ page }) => {
-    // 1. Login as user
-    await loginAsTestUser(page);
+  test('Handle create comment validation errors', async ({ authenticatedPage: page, blogFactory, userFactory }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const blog = await blogFactory.createBlog(user.id, { title: `Validation Blog ${Date.now()}` });
 
-    // 2. Navigate to blog
-    await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
-    await page.waitForLoadState('networkidle');
+    await page.goto(`/blog/${blog.id}`);
+    await page.waitForLoadState('domcontentloaded');
 
-    // 3. Attempt to create comment without text
+    // 3. Click Add Comment to reveal comment form
     const addCommentButton = page.getByRole('button', { name: /add comment/i });
     await addCommentButton.click();
 
-    // 4. Submit without entering text
+    // 4. Post button should be disabled when no text is entered
     const postButton = page.getByRole('button', { name: /post/i });
-    await postButton.click();
+    await expect(postButton).toBeDisabled({ timeout: 5000 });
 
-    // 5. Validation error displayed
-    await page.waitForTimeout(300);
-
-    // Error message shown (e.g., "Comment text is required")
-    page.getByText(/required|cannot be empty|enter.*comment/i);
-
-    // Form not submitted
-    // User can correct and retry
+    // 5. Validation enforced via disabled button - user cannot submit empty comment
   });
 
-  test('Handle network error during comment creation', async ({ page }) => {
-    // 1. Login as user
-    await loginAsTestUser(page);
+  test('Handle network error during comment creation', async ({ authenticatedPage: page, blogFactory, userFactory }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const blog = await blogFactory.createBlog(user.id, { title: `Network Error Blog ${Date.now()}` });
 
-    // 2. Navigate to blog
-    await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
-    await page.waitForLoadState('networkidle');
+    await page.goto(`/blog/${blog.id}`);
+    await page.waitForLoadState('domcontentloaded');
 
-    // 3. Simulate network issue
+    // 3. Open comment form first, then simulate network issue
+    const addCommentButton = page.getByRole('button', { name: /add comment/i });
+    await addCommentButton.click();
+
     await page.context().setOffline(true);
 
     // 4. Attempt to create comment
-    const addCommentButton = page.getByRole('button', { name: /add comment/i });
-    await addCommentButton.click();
-
-    const commentInput = page.getByRole('textbox');
+    const commentInput = page.getByPlaceholder('Write your comment...');
     await commentInput.fill('Network test comment');
 
     const postButton = page.getByRole('button', { name: /post/i });
     await postButton.click();
 
     // 5. Error message shown
-    await page.waitForTimeout(500);
 
     // "Network error" or "Connection failed"
     // Option to retry
@@ -89,13 +72,12 @@ test.describe('Comments - Loading States and Error Handling', () => {
     await page.context().setOffline(false);
   });
 
-  test('Handle comment pagination', async ({ page }) => {
-    // 1. Login as user
-    await loginAsTestUser(page);
+  test('Handle comment pagination', async ({ authenticatedPage: page, blogFactory, userFactory }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const blog = await blogFactory.createBlog(user.id, { title: `Pagination Blog ${Date.now()}` });
 
-    // 2. Navigate to entity with 100+ comments
-    await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
-    await page.waitForLoadState('networkidle');
+    await page.goto(`/blog/${blog.id}`);
+    await page.waitForLoadState('domcontentloaded');
 
     // 3. View comments section
     const loadMoreButton = page.getByRole('button', { name: /load more|show more/i });
@@ -105,7 +87,6 @@ test.describe('Comments - Loading States and Error Handling', () => {
       await loadMoreButton.click();
 
       // 5. Additional comments load
-      await page.waitForTimeout(500);
 
       // Next batch loads
       // Smooth loading
@@ -114,26 +95,24 @@ test.describe('Comments - Loading States and Error Handling', () => {
     }
   });
 
-  test('Handle rate limiting', async ({ page }) => {
-    // 1. Login as user
-    await loginAsTestUser(page);
+  test('Handle rate limiting', async ({ authenticatedPage: page, blogFactory, userFactory }) => {
+    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    const blog = await blogFactory.createBlog(user.id, { title: `Rate Limit Blog ${Date.now()}` });
 
-    // 2. Navigate to blog
-    await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
-    await page.waitForLoadState('networkidle');
+    await page.goto(`/blog/${blog.id}`);
+    await page.waitForLoadState('domcontentloaded');
 
     // 3. User posts multiple comments rapidly
     for (let i = 0; i < 5; i++) {
       const addCommentButton = page.getByRole('button', { name: /add comment/i });
       await addCommentButton.click();
 
-      const commentInput = page.getByRole('textbox');
+      const commentInput = page.getByPlaceholder('Write your comment...');
       await commentInput.fill(`Rapid comment ${i + 1}`);
 
       const postButton = page.getByRole('button', { name: /post/i });
       await postButton.click();
 
-      await page.waitForTimeout(100);
     }
 
     // 4. Check rate limit
