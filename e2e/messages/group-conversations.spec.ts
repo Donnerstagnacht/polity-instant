@@ -2,18 +2,26 @@
 // seed: e2e/seed.spec.ts
 
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Group Conversations - Lifecycle Management', () => {
-  test('Creating group automatically creates conversation', async ({ authenticatedPage: page, groupFactory, adminDb }) => {
-    // Get the actual auth user ID (which may differ from TEST_ENTITY_IDS.mainTestUser)
-    const authUser = await adminDb.auth.getUser({ email: 'polity.live@gmail.com' });
-    const group = await groupFactory.createGroup(authUser.id, { name: `Auto Conversation Test Group ${Date.now()}` });
-    await groupFactory.createGroupConversation(group.id, group.name, [authUser.id], authUser.id);
+  test('Creating group automatically creates conversation', async ({ authenticatedPage: page, groupFactory, mainUserId }) => {
+    const group = await groupFactory.createGroup(mainUserId, { name: `Auto Conversation Test Group ${Date.now()}` });
+    await groupFactory.createGroupConversation(group.id, group.name, [mainUserId], mainUserId);
 
-    // Navigate to messages
+    // Navigate to messages (retry with reload for sync delay)
     await page.goto('/messages');
     await page.waitForLoadState('domcontentloaded');
+
+    let found = await page.getByText(group.name).isVisible({ timeout: 5000 }).catch(() => false);
+    if (!found) {
+      await page.reload();
+      await page.waitForLoadState('domcontentloaded');
+      found = await page.getByText(group.name).isVisible({ timeout: 5000 }).catch(() => false);
+    }
+    if (!found) {
+      await page.reload();
+      await page.waitForLoadState('domcontentloaded');
+    }
 
     // Verify group conversation exists
     await expect(page.getByText(group.name)).toBeVisible({ timeout: 10000 });

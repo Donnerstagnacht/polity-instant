@@ -11,15 +11,12 @@ test.describe('Timeline - Grid Layout', () => {
     // 3. Wait for timeline header
     await expect(page.getByText(/your political ecosystem/i)).toBeVisible({ timeout: 15000 });
 
-    // 4. Check if timeline has cards or empty state
+    // 4. Check if timeline has cards or empty state (use proper waiting)
     const cards = page.locator('[class*="card"], [class*="Card"]');
     const emptyState = page.getByText(/subscribe|discover/i);
 
-    const hasCards = (await cards.count()) > 0;
-    const isEmpty = await emptyState.isVisible().catch(() => false);
-
-    // Either cards or empty state should exist
-    expect(hasCards || isEmpty).toBeTruthy();
+    // Wait for either cards or empty state to appear
+    await expect(cards.first().or(emptyState.first())).toBeVisible({ timeout: 15000 });
   });
 
   test('Grid layout is responsive on different screen sizes', async ({ authenticatedPage: page }) => {

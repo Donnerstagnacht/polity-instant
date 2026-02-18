@@ -74,21 +74,28 @@ export function useAuthVerification(): UseAuthVerificationReturn {
 
         // Step 4: Check if user is new
         console.log('🔍 Checking if user is new:', user.id);
-        const { data } = await db.queryOnce({
-          $users: {
-            $: { where: { id: user.id } },
-          },
-        });
+        let userRecord: any;
+        for (let attempt = 0; attempt < 2; attempt++) {
+          const { data } = await db.queryOnce({
+            $users: {
+              $: { where: { id: user.id } },
+            },
+          });
+          userRecord = data?.$users?.[0];
+          if (userRecord) break;
+          // Retry once if record not found (InstantDB sync may be delayed)
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
 
-        const userRecord = data?.$users?.[0];
         const now = Date.now();
+        // Only treat as new if createdAt is present and recent; missing createdAt = existing user
         const userCreatedAt = userRecord?.createdAt
           ? typeof userRecord.createdAt === 'number'
             ? userRecord.createdAt
             : new Date(userRecord.createdAt).getTime()
-          : now;
-        const isNewUser = now - userCreatedAt < 2 * 60 * 1000; // Within last 2 minutes
-        const hasNoName = !userRecord?.name || userRecord.name.trim() === '';
+          : 0;
+        const isNewUser = userCreatedAt > 0 && (now - userCreatedAt < 2 * 60 * 1000);
+        const hasNoName = userRecord ? (!userRecord.name || userRecord.name.trim() === '') : false;
 
         console.log('🔍 User check:', {
           userId: user.id,

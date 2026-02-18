@@ -23,7 +23,7 @@ test.describe('Edit Profile Information', () => {
       await cancelButton.click();
 
       // 5. Verify navigation back to profile view page
-      await expect(page).toHaveURL(/\/user\/[a-f0-9-]+$/, { timeout: 5000 });
+      await expect(page).toHaveURL(/\/user\/[a-f0-9-]+$/, { timeout: 15000 });
 
       // 6. Verify changes were not saved
       const heading = page.locator('h1').first();

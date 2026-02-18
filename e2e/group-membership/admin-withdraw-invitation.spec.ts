@@ -1,12 +1,10 @@
 // spec: e2e/test-plans/group-membership-test-plan.md
 
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Group Membership - Admin Withdraw Invitation', () => {
-  test('Admin can withdraw invitation', async ({ authenticatedPage: page, groupFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const group = await groupFactory.createGroup(user.id, {
+  test('Admin can withdraw invitation', async ({ authenticatedPage: page, groupFactory, userFactory, mainUserId }) => {
+    const group = await groupFactory.createGroup(mainUserId, {
       name: `Test Group ${Date.now()}`,
     });
     const invited = await userFactory.createUser();
@@ -16,9 +14,9 @@ test.describe('Group Membership - Admin Withdraw Invitation', () => {
     // 2. Navigate to memberships page
     await page.goto(`/group/${group.id}/memberships`);
 
-    // 3. Find pending invitations section
+    // 3. Find pending invitations section (wait for PermissionGuard to resolve)
     const withdrawButton = page.getByRole('button', { name: /withdraw|remove/i }).first();
-    await expect(withdrawButton).toBeVisible();
+    await expect(withdrawButton).toBeVisible({ timeout: 15000 });
 
     // 4. Click "Withdraw Invitation"
     await withdrawButton.click();

@@ -1,83 +1,34 @@
 import { test, expect } from '../fixtures/test-base';
 test.describe('Create Feature', () => {
-  test('Validation - Required Fields', async ({ page }) => {
-    // Navigate to create page
-    await page.goto('/create');
+  test('Validation - Required Fields', async ({ authenticatedPage: page }) => {
+    await page.goto('/create/group');
 
-    // Select an entity type (e.g., Groups)
-    const groupsOption = page
-      .locator('text=Groups')
-      .or(page.locator('[data-entity="groups"]'))
-      .first();
-    await groupsOption.click();
+    // Next button should be disabled when name is empty
+    const nextButton = page.getByRole('button', { name: 'Next', exact: true });
+    await expect(nextButton).toBeDisabled();
 
+    // Fill in name - Next should become enabled
+    await page.locator('#group-name').fill('Valid Group Name');
+    await expect(nextButton).toBeEnabled();
 
-    // Try to create without filling required fields
-    const createButton = page
-      .locator('button:has-text("Create")')
-      .or(page.locator('[data-testid="create-button"]'))
-      .first();
-
-    // Skip to the create button if in carousel mode
-    const nextButton = page
-      .locator('[data-testid="next-button"]')
-      .or(page.locator('button:has-text("Next")'))
-      .first();
+    // Navigate through all steps
     for (let i = 0; i < 5; i++) {
-      if (await createButton.isVisible()) break;
-      if (await nextButton.isVisible()) {
-        await nextButton.click();
-      } else {
-        break;
-      }
+      await nextButton.click();
     }
 
-    // Attempt to create with empty required fields
-    if (await createButton.isVisible()) {
-      await createButton.click();
-    }
+    // Create button should be visible on review step
+    const createButton = page.getByRole('button', { name: /create group/i });
+    await expect(createButton).toBeVisible();
+    await createButton.click();
 
-
-    // Verify error messages display
-    const errorMessage = await page
-      .locator('text=required')
-      .or(page.locator('[role="alert"]'))
-      .or(page.locator('.error'))
-      .first()
-      .isVisible()
-      .catch(() => false);
-
-    // Alternatively, verify form validation prevents submission
-    const stillOnCreatePage = page.url().includes('/create');
-
-    expect(errorMessage || stillOnCreatePage).toBeTruthy();
-
-    // Now fill in required fields
-    const nameInput = page.locator('input[name="name"]').first();
-    if (await nameInput.isVisible()) {
-      await nameInput.fill('Valid Group Name');
-    }
-
-    const descriptionInput = page.locator('textarea[name="description"]').first();
-    if (await descriptionInput.isVisible()) {
-      await descriptionInput.fill('Valid description');
-    }
-
-    // Try to create again
-    if (await createButton.isVisible()) {
-      await createButton.click();
-    }
-
-    // Verify validation passes (either redirected or success message)
-    await page.waitForLoadState('networkidle');
-    const isRedirected = !page.url().includes('/create') || page.url().includes('/group/');
+    // Verify we get redirected or see success
+    await page.waitForURL(/\/group\//, { timeout: 10000 }).catch(() => {});
+    const isRedirected = page.url().includes('/group/');
     const successMessage = await page
       .locator('text=created')
       .first()
       .isVisible()
       .catch(() => false);
-
-    // At least one should be true
     expect(isRedirected || successMessage).toBeTruthy();
   });
 });

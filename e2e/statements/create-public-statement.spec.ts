@@ -13,7 +13,7 @@ test.describe('Statements - Create Public Statement', () => {
     await textInput.fill('We need urgent action on climate change');
 
     // Go to next step
-    const nextButton = page.getByRole('button', { name: /next/i });
+    const nextButton = page.getByRole('button', { name: 'Next', exact: true });
     await nextButton.click();
 
     // Step 2: Enter tag and visibility

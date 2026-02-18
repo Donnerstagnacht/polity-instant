@@ -149,7 +149,7 @@ export function useEventParticipants(eventId: string) {
             description: newRoleDescription,
             scope: 'event',
           })
-          .link({ group: event.group.id }),
+          .link({ event: eventId }),
       ]);
 
       toast.success('Role created successfully');

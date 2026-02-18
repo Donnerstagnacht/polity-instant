@@ -1,14 +1,12 @@
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Group Operations - View Tasks', () => {
   test('should display the Tasks section', async ({
     authenticatedPage: page,
     groupFactory,
-    userFactory,
+    mainUserId,
   }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const group = await groupFactory.createGroup(user.id, {
+    const group = await groupFactory.createGroup(mainUserId, {
       name: `Tasks Group Test ${Date.now()}`,
     });
     await page.goto(`/group/${group.id}/operation`);
@@ -21,10 +19,9 @@ test.describe('Group Operations - View Tasks', () => {
   test('should show list/kanban view toggle buttons', async ({
     authenticatedPage: page,
     groupFactory,
-    userFactory,
+    mainUserId,
   }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const group = await groupFactory.createGroup(user.id, {
+    const group = await groupFactory.createGroup(mainUserId, {
       name: `Tasks Toggle Test ${Date.now()}`,
     });
     await page.goto(`/group/${group.id}/operation`);
@@ -41,10 +38,9 @@ test.describe('Group Operations - View Tasks', () => {
   test('should display task cards when tasks exist', async ({
     authenticatedPage: page,
     groupFactory,
-    userFactory,
+    mainUserId,
   }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const group = await groupFactory.createGroup(user.id, {
+    const group = await groupFactory.createGroup(mainUserId, {
       name: `Tasks Cards Test ${Date.now()}`,
     });
     await page.goto(`/group/${group.id}/operation`);

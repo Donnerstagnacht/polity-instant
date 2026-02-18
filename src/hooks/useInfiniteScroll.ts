@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 
 interface UseInfiniteScrollOptions {
   /**
@@ -24,7 +24,8 @@ interface UseInfiniteScrollOptions {
 }
 
 /**
- * Hook for implementing infinite scroll with intersection observer
+ * Hook for implementing infinite scroll with intersection observer.
+ * Uses a ref for onLoadMore to avoid re-creating the observer when the callback changes.
  *
  * Usage:
  * ```tsx
@@ -46,15 +47,17 @@ export function useInfiniteScroll({
   threshold = 0.1,
 }: UseInfiniteScrollOptions) {
   const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
+  const onLoadMoreRef = useRef(onLoadMore);
+  onLoadMoreRef.current = onLoadMore;
 
   useEffect(() => {
-    if (!hasMore || !onLoadMore || isLoading) return;
+    if (!hasMore || isLoading) return;
 
     const observer = new IntersectionObserver(
       entries => {
         const [entry] = entries;
         if (entry.isIntersecting) {
-          onLoadMore();
+          onLoadMoreRef.current();
         }
       },
       { threshold, rootMargin }
@@ -70,7 +73,7 @@ export function useInfiniteScroll({
         observer.unobserve(currentTrigger);
       }
     };
-  }, [hasMore, onLoadMore, isLoading, threshold, rootMargin]);
+  }, [hasMore, isLoading, threshold, rootMargin]);
 
   return loadMoreTriggerRef;
 }

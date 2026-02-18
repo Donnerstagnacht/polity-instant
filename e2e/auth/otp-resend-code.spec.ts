@@ -3,39 +3,43 @@ import { test, expect } from '../fixtures/test-base';
 test.describe('Auth - OTP Resend Code', () => {
   test('Resend code button appears on OTP verification page', async ({ page }) => {
     await page.goto('/auth');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
-    // Enter email to get to OTP page
-    const emailInput = page.getByRole('textbox', { name: /email address/i });
+    // Wait for auth page to fully load (may show loading spinner initially)
+    const emailInput = page.getByRole('textbox', { name: /email/i }).first();
+    await expect(emailInput).toBeVisible({ timeout: 15000 });
     await emailInput.fill('polity.live@gmail.com');
 
+    const sendButton = page.getByRole('button', { name: /send.*code|sign in|log in|continue/i }).first();
+    await expect(sendButton).toBeVisible({ timeout: 5000 });
+
     await Promise.all([
-      page.waitForURL(/\/auth\/verify/, { timeout: 10000 }),
-      page.getByRole('button', { name: /send.*code/i }).click(),
+      page.waitForURL(/\/auth\/verify/, { timeout: 15000 }),
+      sendButton.click(),
     ]);
 
     await expect(page).toHaveURL(/\/auth\/verify/);
 
-    // Verify resend code button is visible
-    const resendButton = page.getByRole('button', { name: /resend|send.*again|new.*code/i });
-    const resendLink = page.getByText(/resend|send.*again|didn.*receive/i);
+    // Verify resend code button is visible (wait for verify page to fully render)
+    const resendButton = page.getByRole('button', { name: /resend/i });
 
-    const hasResendButton = await resendButton.isVisible().catch(() => false);
-    const hasResendLink = await resendLink.isVisible().catch(() => false);
-
-    expect(hasResendButton || hasResendLink).toBeTruthy();
+    await expect(resendButton).toBeVisible({ timeout: 15000 });
   });
 
   test('Resend code triggers new code generation', async ({ page }) => {
     await page.goto('/auth');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
-    const emailInput = page.getByRole('textbox', { name: /email address/i });
+    const emailInput = page.getByRole('textbox', { name: /email/i }).first();
+    await expect(emailInput).toBeVisible({ timeout: 15000 });
     await emailInput.fill('polity.live@gmail.com');
 
+    const sendButton = page.getByRole('button', { name: /send.*code|sign in|log in|continue/i }).first();
+    await expect(sendButton).toBeVisible({ timeout: 5000 });
+
     await Promise.all([
-      page.waitForURL(/\/auth\/verify/, { timeout: 10000 }),
-      page.getByRole('button', { name: /send.*code/i }).click(),
+      page.waitForURL(/\/auth\/verify/, { timeout: 15000 }),
+      sendButton.click(),
     ]);
 
     // Click resend
@@ -52,7 +56,6 @@ test.describe('Auth - OTP Resend Code', () => {
         .or(page.locator('[role="status"]'));
       const hasFeedback = await feedback.isVisible().catch(() => false);
 
-      // Either feedback shown or button is disabled after click
       const isDisabled = await resendButton.first().isDisabled().catch(() => false);
       expect(hasFeedback || isDisabled || true).toBeTruthy();
     }

@@ -1,16 +1,14 @@
 // spec: e2e/test-plans/group-membership-test-plan.md
 
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Group Membership - Accept Invitation', () => {
-  test('User can accept group invitation', async ({ authenticatedPage: page, groupFactory, userFactory }) => {
+  test('User can accept group invitation', async ({ authenticatedPage: page, groupFactory, userFactory, mainUserId }) => {
     const owner = await userFactory.createUser();
     const group = await groupFactory.createGroup(owner.id, {
       name: `Test Group ${Date.now()}`,
     });
-    const testUser = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    await groupFactory.addMember(group.id, testUser.id, group.memberRoleId, { status: 'invited' });
+    await groupFactory.addMember(group.id, mainUserId, group.memberRoleId, { status: 'invited' });
 
     // 1. Authenticate as test user
     // 2. Navigate to group page where user is invited

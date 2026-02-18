@@ -1,16 +1,8 @@
 import { test, expect } from '../fixtures/test-base';
 test.describe('Create Feature', () => {
-  test('Date and Time Picker', async ({ page }) => {
-    // Navigate to create page
-    await page.goto('/create');
-
-    // Select Events entity type (which requires date/time)
-    const eventsOption = page
-      .locator('text=Events')
-      .or(page.locator('[data-entity="events"]'))
-      .first();
-    await eventsOption.click();
-
+  test('Date and Time Picker', async ({ authenticatedPage: page }) => {
+    // Navigate to create event page
+    await page.goto('/create/event');
 
     // Fill in title first (may be required)
     const titleInput = page.locator('input[name="title"]').first();

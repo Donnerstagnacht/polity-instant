@@ -1,5 +1,4 @@
-import db from '../../../db/db';
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Bell, Check, Users, Search } from 'lucide-react';
@@ -7,151 +6,83 @@ import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { useNotificationMutations } from './hooks/useNotificationData';
 import { useNotificationFilters } from './hooks/useNotificationFilters';
 import { useNotificationActions } from './hooks/useNotificationActions';
+import { useUserNotifications } from './hooks/useUserNotifications';
 import { NotificationHeader } from './ui/NotificationHeader';
 import { NotificationTabs } from './ui/NotificationTabs';
 import { NotificationsList } from './ui/NotificationsList';
 import { useTranslation } from '@/hooks/use-translation';
 
+const EMPTY_NOTIFICATIONS: any[] = [];
+const PAGE_SIZE = 30;
+
 export function NotificationsPage() {
   const { t } = useTranslation();
-  const { user } = db.useAuth();
   const [searchQuery, setSearchQuery] = useState('');
-  const [cursor, setCursor] = useState<{ after?: any; first: number }>({ first: 20 });
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  const { data, isLoading, pageInfo } = db.useQuery({
-    notifications: {
-      $: {
-        order: {
-          serverCreatedAt: 'desc' as const,
-        },
-        ...cursor,
-      },
-      recipient: {},
-      sender: {},
-      relatedUser: {},
-      relatedGroup: {},
-      relatedEvent: {},
-      relatedAmendment: {},
-      relatedBlog: {},
-      onBehalfOfGroup: {},
-      onBehalfOfEvent: {},
-      onBehalfOfAmendment: {},
-      onBehalfOfBlog: {},
-      recipientGroup: {
-        memberships: {
-          $: {
-            where: {
-              'user.id': user?.id,
-            },
-          },
-          role: {
-            actionRights: {},
-          },
-        },
-      },
-      recipientEvent: {
-        participants: {
-          $: {
-            where: {
-              'user.id': user?.id,
-            },
-          },
-          role: {
-            actionRights: {},
-          },
-        },
-      },
-      recipientAmendment: {
-        amendmentRoleCollaborators: {
-          $: {
-            where: {
-              'user.id': user?.id,
-            },
-          },
-          role: {
-            actionRights: {},
-          },
-        },
-      },
-      recipientBlog: {
-        blogRoleBloggers: {
-          $: {
-            where: {
-              'user.id': user?.id,
-            },
-          },
-          role: {
-            actionRights: {},
-          },
-        },
-      },
-    },
-  });
+  // Fetch only notifications relevant to the current user via server-side filtering
+  const { data, isLoading, userId } = useUserNotifications();
 
-  const notifications = (data?.notifications || []) as any[];
+  const notifications = useMemo(
+    () => (data?.notifications as any[] | undefined) ?? EMPTY_NOTIFICATIONS,
+    [data?.notifications]
+  );
+
   const filteredNotifications = useNotificationFilters({
     notifications,
-    userId: user?.id,
+    userId,
   });
 
   const { markAllAsRead } = useNotificationMutations();
   const { handleNotificationClick, handleDeleteNotification } = useNotificationActions();
 
-  const handleLoadMore = () => {
-    const endCursor = pageInfo?.notifications?.endCursor;
-    if (endCursor) {
-      setCursor({ after: endCursor, first: 20 });
-    }
-  };
-
-  const hasMore = pageInfo?.notifications?.hasNextPage ?? false;
-
-  const loadMoreRef = useInfiniteScroll({
-    hasMore,
-    isLoading,
-    onLoadMore: handleLoadMore,
-  });
-
-  const handleMarkAllAsRead = async () => {
+  const handleMarkAllAsRead = useCallback(async () => {
     const unreadIds = filteredNotifications.unread.map(n => n.id);
     if (unreadIds.length > 0) {
       await markAllAsRead(unreadIds);
     }
-  };
+  }, [filteredNotifications.unread, markAllAsRead]);
 
   // Filter notifications based on search query
-  const searchFilteredNotifications = {
-    all: filteredNotifications.all.filter(
-      (n: any) =>
-        !searchQuery ||
-        n.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        n.message?.toLowerCase().includes(searchQuery.toLowerCase())
-    ),
-    unread: filteredNotifications.unread.filter(
-      (n: any) =>
-        !searchQuery ||
-        n.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        n.message?.toLowerCase().includes(searchQuery.toLowerCase())
-    ),
-    read: filteredNotifications.read.filter(
-      (n: any) =>
-        !searchQuery ||
-        n.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        n.message?.toLowerCase().includes(searchQuery.toLowerCase())
-    ),
-    personal: filteredNotifications.personal.filter(
-      (n: any) =>
-        !searchQuery ||
-        n.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        n.message?.toLowerCase().includes(searchQuery.toLowerCase())
-    ),
-    entity: filteredNotifications.entity.filter(
-      (n: any) =>
-        !searchQuery ||
-        n.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        n.message?.toLowerCase().includes(searchQuery.toLowerCase())
-    ),
-  };
+  const searchFilteredNotifications = useMemo(() => {
+    const lowerQuery = searchQuery.toLowerCase();
+    const matchesSearch = (n: any) =>
+      !searchQuery ||
+      n.title?.toLowerCase().includes(lowerQuery) ||
+      n.message?.toLowerCase().includes(lowerQuery);
+
+    return {
+      all: filteredNotifications.all.filter(matchesSearch),
+      unread: filteredNotifications.unread.filter(matchesSearch),
+      read: filteredNotifications.read.filter(matchesSearch),
+      personal: filteredNotifications.personal.filter(matchesSearch),
+      entity: filteredNotifications.entity.filter(matchesSearch),
+    };
+  }, [filteredNotifications, searchQuery]);
+
+  // Client-side pagination: only show up to visibleCount items
+  const paginatedNotifications = useMemo(() => ({
+    all: searchFilteredNotifications.all.slice(0, visibleCount),
+    unread: searchFilteredNotifications.unread.slice(0, visibleCount),
+    read: searchFilteredNotifications.read.slice(0, visibleCount),
+    personal: searchFilteredNotifications.personal.slice(0, visibleCount),
+    entity: searchFilteredNotifications.entity.slice(0, visibleCount),
+  }), [searchFilteredNotifications, visibleCount]);
+
+  const hasMore = searchFilteredNotifications.all.length > visibleCount;
+
+  const handleLoadMore = useCallback(() => {
+    setVisibleCount(prev => prev + PAGE_SIZE);
+  }, []);
+
+  const loadMoreRef = useInfiniteScroll({
+    hasMore,
+    isLoading: false,
+    onLoadMore: handleLoadMore,
+  });
+
+  // Only show loading state on initial load (no data yet)
+  const isInitialLoading = isLoading && notifications.length === 0;
 
   return (
     <Tabs defaultValue="all" className="w-full">
@@ -182,7 +113,8 @@ export function NotificationsPage() {
 
       <TabsContent value="all" className="mt-0">
         <NotificationsList
-          notifications={searchFilteredNotifications.all}
+          notifications={paginatedNotifications.all}
+          isLoading={isInitialLoading}
           emptyIcon={Bell}
           emptyTitle={t('features.notifications.empty.noNotificationsYet')}
           emptyDescription={t('features.notifications.empty.whenYouGet')}
@@ -193,7 +125,8 @@ export function NotificationsPage() {
 
       <TabsContent value="unread" className="mt-0">
         <NotificationsList
-          notifications={searchFilteredNotifications.unread}
+          notifications={paginatedNotifications.unread}
+          isLoading={isInitialLoading}
           emptyIcon={Check}
           emptyTitle={t('features.notifications.allCaughtUp')}
           emptyDescription={t('features.notifications.empty.allRead')}
@@ -204,7 +137,8 @@ export function NotificationsPage() {
 
       <TabsContent value="read" className="mt-0">
         <NotificationsList
-          notifications={searchFilteredNotifications.read}
+          notifications={paginatedNotifications.read}
+          isLoading={isInitialLoading}
           emptyIcon={Bell}
           emptyTitle={t('features.notifications.empty.noRead')}
           emptyDescription={t('features.notifications.empty.readAppear')}
@@ -215,7 +149,8 @@ export function NotificationsPage() {
 
       <TabsContent value="personal" className="mt-0">
         <NotificationsList
-          notifications={searchFilteredNotifications.personal}
+          notifications={paginatedNotifications.personal}
+          isLoading={isInitialLoading}
           emptyIcon={Bell}
           emptyTitle={t('features.notifications.empty.noPersonal')}
           emptyDescription={t('features.notifications.empty.personalAppear')}
@@ -226,7 +161,8 @@ export function NotificationsPage() {
 
       <TabsContent value="entity" className="mt-0">
         <NotificationsList
-          notifications={searchFilteredNotifications.entity}
+          notifications={paginatedNotifications.entity}
+          isLoading={isInitialLoading}
           emptyIcon={Users}
           emptyTitle={t('features.notifications.empty.noEntity')}
           emptyDescription={t('features.notifications.empty.entityAppear')}
@@ -235,7 +171,7 @@ export function NotificationsPage() {
         />
       </TabsContent>
 
-      {/* Infinite scroll trigger */}
+      {/* Infinite scroll trigger for client-side pagination */}
       {hasMore && <div ref={loadMoreRef} className="h-px" />}
     </Tabs>
   );

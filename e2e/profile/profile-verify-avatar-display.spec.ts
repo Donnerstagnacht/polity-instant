@@ -7,6 +7,7 @@ import { navigateToOwnProfile, navigateToProfileEdit } from '../helpers/navigati
 
 test.describe('Responsive Behavior and Visual Elements', () => {
   test('Update Profile Avatar and Verify Display', async ({ authenticatedPage: page }) => {
+    test.setTimeout(60000);
     // 1. Authenticate and navigate to profile edit page
     await navigateToProfileEdit(page);
 

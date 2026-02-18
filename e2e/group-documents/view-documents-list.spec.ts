@@ -1,14 +1,13 @@
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Group Documents - View Documents List', () => {
   test('should display group documents page title', async ({
     authenticatedPage: page,
     groupFactory,
-    userFactory,
+    mainUserId,
   }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const group = await groupFactory.createGroup(user.id, {
+    test.setTimeout(60000);
+    const group = await groupFactory.createGroup(mainUserId, {
       name: `Docs Group Test ${Date.now()}`,
     });
     await page.goto(`/group/${group.id}/editor`);
@@ -21,10 +20,9 @@ test.describe('Group Documents - View Documents List', () => {
   test('should display New Document button', async ({
     authenticatedPage: page,
     groupFactory,
-    userFactory,
+    mainUserId,
   }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const group = await groupFactory.createGroup(user.id, {
+    const group = await groupFactory.createGroup(mainUserId, {
       name: `Docs Button Test ${Date.now()}`,
     });
     await page.goto(`/group/${group.id}/editor`);

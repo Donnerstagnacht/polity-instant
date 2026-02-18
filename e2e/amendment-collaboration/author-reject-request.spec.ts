@@ -1,34 +1,28 @@
 // spec: e2e/test-plans/amendment-collaboration-test-plan.md
 
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
+import { gotoWithRetry } from '../helpers/navigation';
 
 test.describe('Amendment Collaboration', () => {
-  test('Author can reject collaboration request', async ({ authenticatedPage: page, amendmentFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const amendment = await amendmentFactory.createAmendment(user.id, {
+  test('Author can reject collaboration request', async ({ authenticatedPage: page, amendmentFactory, userFactory, mainUserId }) => {
+    test.setTimeout(60000);
+    const amendment = await amendmentFactory.createAmendment(mainUserId, {
       title: `Test Amendment ${Date.now()}`,
     });
-    // Create a user who requested to collaborate
     const requester = await userFactory.createUser();
     await amendmentFactory.addCollaborator(amendment.id, requester.id, amendment.collaboratorRoleId, 'requested');
 
-    // 1. Author navigates to collaborators management page
-    await page.goto(`/amendment/${amendment.id}/collaborators`);
+    await gotoWithRetry(page, `/amendment/${amendment.id}/collaborators`);
 
-    // 2. Author sees list of pending requests
-    const pendingSection = page.getByText(/pending requests/i).locator('..');
-    await expect(pendingSection).toBeVisible();
+    // Author sees pending collaboration requests
+    await expect(page.getByText(/Pending Collaboration Requests/i)).toBeVisible({ timeout: 15000 });
 
-    const requestCount = await pendingSection.getByRole('button', { name: /remove/i }).count();
+    // Author clicks "Decline" for a request
+    const declineButton = page.getByRole('button', { name: /decline/i }).first();
+    await expect(declineButton).toBeVisible();
+    await declineButton.click();
 
-    // 3. Author clicks "Remove" for a request
-    const removeButton = pendingSection.getByRole('button', { name: /remove/i }).first();
-    await removeButton.click();
-
-    // 4. Request is deleted
-    // 5. User disappears from pending list
-    const newRequestCount = await pendingSection.getByRole('button', { name: /remove/i }).count();
-    expect(newRequestCount).toBe(requestCount - 1);
+    // Request is rejected - Decline button disappears
+    await expect(declineButton).not.toBeVisible({ timeout: 5000 });
   });
 });

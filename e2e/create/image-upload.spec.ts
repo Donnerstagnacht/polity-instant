@@ -2,17 +2,9 @@ import { test, expect } from '../fixtures/test-base';
 import path from 'path';
 
 test.describe('Create Feature', () => {
-  test('Image Upload', async ({ page }) => {
-    // Navigate to create page
-    await page.goto('/create');
-
-    // Select an entity type that supports images (e.g., Events)
-    const eventsOption = page
-      .locator('text=Events')
-      .or(page.locator('[data-entity="events"]'))
-      .first();
-    await eventsOption.click();
-
+  test('Image Upload', async ({ authenticatedPage: page }) => {
+    // Navigate to create event page
+    await page.goto('/create/event');
 
     // Fill required fields first
     const titleInput = page.locator('input[name="title"]').first();

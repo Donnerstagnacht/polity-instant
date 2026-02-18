@@ -1,10 +1,7 @@
 import { test, expect } from '../fixtures/test-base';
 test.describe('Create Feature', () => {
-  test('Privacy Settings', async ({ page }) => {
-    await page.goto('/create');
-
-    const groupsOption = page.locator('text=Groups').first();
-    await groupsOption.click();
+  test('Privacy Settings', async ({ authenticatedPage: page }) => {
+    await page.goto('/create/group');
 
     const nameInput = page.locator('input[name="name"]').first();
     if (await nameInput.isVisible()) {

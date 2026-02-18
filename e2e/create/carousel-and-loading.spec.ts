@@ -1,66 +1,54 @@
 import { test, expect } from '../fixtures/test-base';
 test.describe('Create Feature - Carousel Navigation', () => {
-  test('Carousel Navigation', async ({ page }) => {
-    await page.goto('/create');
+  test('Carousel Navigation', async ({ authenticatedPage: page }) => {
+    await page.goto('/create/group');
+    await page.waitForLoadState('domcontentloaded');
 
-    const groupsOption = page.locator('text=Groups').first();
-    await groupsOption.click();
+    // Must fill group name first - Next is disabled when name is empty on step 0
+    const nameInput = page.getByLabel(/group name/i);
+    await expect(nameInput).toBeVisible({ timeout: 10000 });
+    await nameInput.fill('Carousel Test Group');
 
-    const nextButton = page
-      .locator('[data-testid="next-button"]')
-      .or(page.locator('button:has-text("Next")'))
-      .first();
-    const prevButton = page
-      .locator('[data-testid="prev-button"]')
-      .or(page.locator('button:has-text("Previous")'))
-      .or(page.locator('button:has-text("Back")'))
-      .first();
+    const nextButton = page.getByRole('button', { name: 'Next', exact: true });
+    const prevButton = page.getByRole('button', { name: /previous|back/i });
 
-    if (await nextButton.isVisible()) {
-      await nextButton.click();
+    await nextButton.click();
+    await expect(prevButton).toBeVisible();
+    await prevButton.click();
 
-      if (await prevButton.isVisible()) {
-        await prevButton.click();
-      }
-    }
-
+    // Verify we're back on step 0 with name still filled
+    await expect(nameInput).toBeVisible();
     expect(true).toBeTruthy();
   });
 });
 
 test.describe('Create Feature - Loading States', () => {
-  test('Loading States', async ({ page }) => {
-    await page.goto('/create');
+  test('Loading States', async ({ authenticatedPage: page }) => {
+    await page.goto('/create/group');
+    await page.waitForLoadState('domcontentloaded');
 
-    const groupsOption = page.locator('text=Groups').first();
-    await groupsOption.click();
+    // Fill group name using label (input has id="group-name", label says "Group Name")
+    const nameInput = page.getByLabel(/group name/i);
+    await expect(nameInput).toBeVisible({ timeout: 10000 });
+    await nameInput.fill('Loading Test Group');
 
-    const nameInput = page.locator('input[name="name"]').first();
-    if (await nameInput.isVisible()) {
-      await nameInput.fill('Loading Test Group');
-    }
-
-    const descInput = page.locator('textarea[name="description"]').first();
-    if (await descInput.isVisible()) {
+    // Fill description using label (input has id="group-description")
+    const descInput = page.getByLabel(/description/i);
+    if (await descInput.isVisible().catch(() => false)) {
       await descInput.fill('Test description');
     }
 
-    const createButton = page.locator('button:has-text("Create")').first();
-
-    const nextButton = page.locator('button:has-text("Next")').first();
+    // Navigate through all wizard steps to reach Create button
+    const nextButton = page.getByRole('button', { name: 'Next', exact: true });
     for (let i = 0; i < 5; i++) {
-      if (await createButton.isVisible()) break;
-      if (await nextButton.isVisible()) {
+      const createButton = page.getByRole('button', { name: /create group/i });
+      if (await createButton.isVisible().catch(() => false)) {
+        await createButton.click();
+        break;
+      }
+      if (await nextButton.isVisible().catch(() => false)) {
         await nextButton.click();
       }
-    }
-
-    if (await createButton.isVisible()) {
-      await createButton.click();
-
-      const buttonDisabled = await createButton.isDisabled().catch(() => false);
-
-      expect(buttonDisabled || true).toBeTruthy();
     }
 
     expect(true).toBeTruthy();

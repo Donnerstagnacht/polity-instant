@@ -1,54 +1,35 @@
 import { test, expect } from '../fixtures/test-base';
 test.describe('Create Feature', () => {
-  test('Guided Mode - Create Statement', async ({ page }) => {
-    // Navigate to create page
-    await page.goto('/create');
+  test('Guided Mode - Create Statement', async ({ authenticatedPage: page }) => {
+    await page.goto('/create/statement');
 
-    // Select Statements entity type
-    const statementsOption = page
-      .locator('text=Statements')
-      .or(page.locator('[data-entity="statements"]'))
-      .first();
-    await statementsOption.click();
-
-
-    // Enter statement text
-    const textInput = page
-      .locator('textarea[name="text"]')
-      .or(page.locator('input[name="text"]'))
-      .or(page.getByPlaceholder(/statement/i))
-      .first();
+    // Step 0: Statement text
+    const textInput = page.locator('#statement-text');
+    await expect(textInput).toBeVisible();
     await textInput.fill('We should increase funding for renewable energy projects');
 
-    // Advance carousel
-    const nextButton = page
-      .locator('[data-testid="next-button"]')
-      .or(page.locator('button:has-text("Next")'))
-      .first();
-    if (await nextButton.isVisible()) {
-      await nextButton.click();
+    const nextButton = page.getByRole('button', { name: 'Next', exact: true });
+
+    // Step 0→1 (Tag & Visibility)
+    await nextButton.click();
+
+    // Step 1: Fill required tag
+    const tagInput = page.locator('#statement-tag');
+    if (await tagInput.isVisible()) {
+      await tagInput.fill('energy');
     }
 
-    // Select statement type
-    const typeSelect = page
-      .locator('select[name="type"]')
-      .or(page.locator('[data-testid="statement-type"]'))
-      .first();
-    if (await typeSelect.isVisible()) {
-      await typeSelect.selectOption('position');
-    }
+    // Step 1→2 (Review)
+    await nextButton.click();
 
-    // Click Create Statement button
-    const createButton = page
-      .locator('button:has-text("Create")')
-      .or(page.locator('[data-testid="create-button"]'))
-      .first();
+    // Step 2: Review - Click Create Statement
+    const createButton = page.getByRole('button', { name: /create.*statement/i });
+    await expect(createButton).toBeVisible();
     await createButton.click();
 
     // Wait for success
     await page.waitForLoadState('networkidle');
 
-    // Verify success message or redirect
     const successMessage = await page
       .locator('text=created')
       .or(page.locator('[role="alert"]'))
@@ -56,7 +37,6 @@ test.describe('Create Feature', () => {
       .isVisible()
       .catch(() => false);
     const isRedirected = page.url().includes('/statement/') || page.url().includes('/user/');
-
     expect(successMessage || isRedirected).toBeTruthy();
   });
 });

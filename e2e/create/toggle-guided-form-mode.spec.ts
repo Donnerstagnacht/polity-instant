@@ -1,46 +1,16 @@
 import { test, expect } from '../fixtures/test-base';
 test.describe('Create Feature', () => {
-  test('Toggle Between Guided and Form Mode', async ({ page }) => {
-    // Navigate to create page
+  test('Navigate from dashboard to entity creation', async ({ authenticatedPage: page }) => {
+    // Navigate to create dashboard
     await page.goto('/create');
 
-    // Verify starting in guided mode
-    const guidedModeIndicator = page
-      .locator('[data-testid="guided-mode"]')
-      .or(page.locator('text=Guided Mode'))
-      .first();
-    await expect(guidedModeIndicator).toBeVisible();
+    // Verify entity creation links are visible
+    await expect(page.locator('a[href="/create/group"]')).toBeVisible();
+    await expect(page.locator('a[href="/create/event"]')).toBeVisible();
+    await expect(page.locator('a[href="/create/statement"]')).toBeVisible();
 
-    // Click mode toggle to switch to form mode
-    const modeToggle = page
-      .locator('[data-testid="mode-toggle"]')
-      .or(page.getByRole('switch'))
-      .first();
-    await modeToggle.click();
-
-    // Verify form mode is active
-    const formModeIndicator = page
-      .locator('[data-testid="form-mode"]')
-      .or(page.locator('text=Form Mode'))
-      .first();
-    await expect(formModeIndicator).toBeVisible();
-
-    // Verify tabs display for entity types
-    await expect(page.locator('text=Groups')).toBeVisible();
-    await expect(page.locator('text=Events')).toBeVisible();
-    await expect(page.locator('text=Statements')).toBeVisible();
-
-    // Toggle back to guided mode
-    await modeToggle.click();
-
-    // Verify back in guided mode
-    await expect(guidedModeIndicator).toBeVisible();
-
-    // Verify carousel is back
-    const carousel = page
-      .locator('[data-testid="entity-carousel"]')
-      .or(page.locator('.carousel'))
-      .first();
-    await expect(carousel).toBeVisible();
+    // Click group link to navigate to create group page
+    await page.locator('a[href="/create/group"]').click();
+    await expect(page).toHaveURL('/create/group');
   });
 });

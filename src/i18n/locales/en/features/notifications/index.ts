@@ -11,6 +11,7 @@ export const notificationsTranslations = {
   unreadCount: '{{count}} unread notification',
   unreadCountPlural: '{{count}} unread notifications',
   allCaughtUp: 'All caught up!',
+  loadMore: 'Load more',
   empty: {
     title: 'All caught up!',
     description: "You don't have any notifications right now.",

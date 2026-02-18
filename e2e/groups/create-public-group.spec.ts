@@ -11,7 +11,7 @@ test.describe('Groups - Create Public Group with Required Fields', () => {
     await page.waitForLoadState('domcontentloaded');
 
     // 2. Step 1: Enter group name
-    const nameInput = page.getByLabel(/name/i).or(page.getByPlaceholder(/name/i));
+    const nameInput = page.getByRole('textbox', { name: /group name/i });
     await expect(nameInput).toBeVisible({ timeout: 10000 });
     await nameInput.fill(groupName);
 
@@ -21,18 +21,18 @@ test.describe('Groups - Create Public Group with Required Fields', () => {
       await descInput.fill('A community for tech enthusiasts in Berlin');
     }
 
-    // 4. Click Next through wizard steps
-    const nextButton = page.getByRole('button', { name: /next/i });
+    // 4. Click Next through wizard steps (carousel renders all steps in DOM, use isVisible)
+    const nextButton = page.getByRole('button', { name: 'Next', exact: true });
     await nextButton.click();
 
     // Keep clicking Next until we reach the Create/Submit step
     for (let i = 0; i < 5; i++) {
-      const createButton = page.getByRole('button', { name: /create/i });
-      if ((await createButton.count()) > 0 && await createButton.isEnabled()) {
+      const createButton = page.getByRole('button', { name: /create group/i });
+      if (await createButton.isVisible().catch(() => false)) {
         await createButton.click();
         break;
       }
-      if ((await nextButton.count()) > 0 && await nextButton.isEnabled()) {
+      if (await nextButton.isVisible().catch(() => false)) {
         await nextButton.click();
       }
     }

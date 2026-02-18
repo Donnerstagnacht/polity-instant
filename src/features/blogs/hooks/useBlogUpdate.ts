@@ -90,36 +90,40 @@ export function useBlogUpdate(blogId: string, actorId?: string) {
 
       const transactions: any[] = [db.tx.blogs[blogId].update(updateData)];
 
-      // Add timeline event for public blogs when image is uploaded
-      if (formData.isPublic && actorId) {
-        // Check if image was uploaded/changed
-        if (formData.imageURL && formData.imageURL !== blog.imageURL) {
-          transactions.push(
-            createTimelineEvent({
-              eventType: 'image_uploaded',
-              entityType: 'blog',
-              entityId: blogId,
-              actorId,
-              title: `${formData.title} image updated`,
-              description: 'A new image was uploaded to this blog post',
-              contentType: 'image',
-            })
-          );
-        }
-      }
-
-      // Notify subscribers when blog visibility changes to public
-      if (formData.isPublic && !blog.isPublic && actorId) {
-        const notifTxs = notifyBlogPublished({
-          senderId: actorId,
-          blogId,
-          blogTitle: formData.title,
-        });
-        transactions.push(...notifTxs);
-      }
-
       // Update blog
       await db.transact(transactions);
+
+      // Timeline and notifications are server-only — send separately
+      try {
+        const sideEffects: any[] = [];
+
+        if (formData.isPublic && actorId) {
+          if (formData.imageURL && formData.imageURL !== blog.imageURL) {
+            sideEffects.push(
+              createTimelineEvent({
+                eventType: 'image_uploaded',
+                entityType: 'blog',
+                entityId: blogId,
+                actorId,
+                title: `${formData.title} image updated`,
+                description: 'A new image was uploaded to this blog post',
+                contentType: 'image',
+              })
+            );
+          }
+        }
+
+        if (formData.isPublic && !blog.isPublic && actorId) {
+          const notifTxs = notifyBlogPublished({
+            senderId: actorId,
+            blogId,
+            blogTitle: formData.title,
+          });
+          sideEffects.push(...notifTxs);
+        }
+
+        if (sideEffects.length > 0) await db.transact(sideEffects);
+      } catch { /* timeline/notification delivery is best-effort */ }
 
       // Handle hashtags - remove old and add new
       if (blog.hashtags) {

@@ -9,10 +9,18 @@ test.describe('Amendments - Create Amendment with Required Fields', () => {
 
     // 1. Navigate to /create/amendment (carousel wizard)
     await page.goto('/create/amendment');
+    await page.waitForLoadState('domcontentloaded');
+
+    // Reload on client-side app crash
+    const errorHeading = page.getByText('Application error');
+    if (await errorHeading.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await page.reload();
+      await page.waitForLoadState('domcontentloaded');
+    }
 
     // 2. Wait for the form to load
     const titleInput = page.getByPlaceholder(/title/i).first();
-    await expect(titleInput).toBeVisible({ timeout: 10000 });
+    await expect(titleInput).toBeVisible({ timeout: 15000 });
 
     // 3. Fill in title (Step 1: Basic Info)
     await titleInput.fill(amendmentTitle);
@@ -24,7 +32,7 @@ test.describe('Amendments - Create Amendment with Required Fields', () => {
     }
 
     // 5. Navigate through carousel steps using Next button
-    const nextButton = page.getByRole('button', { name: /next/i });
+    const nextButton = page.getByRole('button', { name: 'Next', exact: true });
     await nextButton.click(); // Step 1 → Step 2 (Target Group & Event)
 
     // Step 2 may require group/event selection - skip to review if possible

@@ -159,30 +159,6 @@ export function useGroupUpdate(
         }),
       ];
 
-      // Add timeline event for public groups
-      if (options?.actorId && options?.visibility === 'public') {
-        transactions.push(
-          createTimelineEvent({
-            eventType: 'updated',
-            entityType: 'group',
-            entityId: groupId,
-            actorId: options.actorId,
-            title: `${formData.name} updated their profile`,
-            description: nameChanged ? `Group name changed to ${formData.name}` : 'Group profile has been updated',
-          })
-        );
-      }
-
-      // Send notification for group profile update
-      if (options?.actorId) {
-        const notifTxs = notifyGroupProfileUpdated({
-          senderId: options.actorId,
-          groupId,
-          groupName: formData.name,
-        });
-        transactions.push(...notifTxs);
-      }
-
       // Update the group in Instant DB
       await db.transact(transactions);
 
@@ -190,6 +166,35 @@ export function useGroupUpdate(
       if (nameChanged) {
         await syncGroupNameToConversation(groupId, formData.name);
       }
+
+      // Timeline and notifications are server-only (create: 'false') — send separately
+      try {
+        const sideEffects: any[] = [];
+
+        if (options?.actorId && options?.visibility === 'public') {
+          sideEffects.push(
+            createTimelineEvent({
+              eventType: 'updated',
+              entityType: 'group',
+              entityId: groupId,
+              actorId: options.actorId,
+              title: `${formData.name} updated their profile`,
+              description: nameChanged ? `Group name changed to ${formData.name}` : 'Group profile has been updated',
+            })
+          );
+        }
+
+        if (options?.actorId) {
+          const notifTxs = notifyGroupProfileUpdated({
+            senderId: options.actorId,
+            groupId,
+            groupName: formData.name,
+          });
+          sideEffects.push(...notifTxs);
+        }
+
+        if (sideEffects.length > 0) await db.transact(sideEffects);
+      } catch { /* timeline/notification delivery is best-effort */ }
 
       toast.success('Group updated successfully');
 

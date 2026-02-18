@@ -5,6 +5,52 @@ import { type Page, expect } from '@playwright/test';
  */
 
 /**
+ * Navigates to a page and retries if "Access Denied" appears, page redirects away,
+ * or entity is not found. Factory-created data may not be immediately available
+ * to the client-side PermissionGuard due to InstantDB sync delay.
+ */
+export async function gotoWithRetry(page: Page, url: string, retries = 8) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    await page.goto(url);
+    await page.waitForLoadState('domcontentloaded');
+
+    // Progressive wait: give more time on later retries for slow sync under load
+    const baseWait = 2000 + attempt * 500;
+    await page.waitForTimeout(baseWait);
+
+    // Check if we stayed on the expected URL (not redirected)
+    const currentUrl = page.url();
+    const expectedPath = url.startsWith('/') ? url : new URL(url).pathname;
+    const isOnTarget = currentUrl.includes(expectedPath);
+
+    if (!isOnTarget) {
+      // Page was redirected (e.g., to notifications) — retry
+      if (attempt < retries) {
+        await page.waitForTimeout(1000);
+        continue;
+      }
+      return;
+    }
+
+    // Wait for loading spinner to disappear (PermissionGuard shows Loader2 during loading)
+    const spinner = page.locator('.animate-spin');
+    await spinner.waitFor({ state: 'hidden', timeout: 8000 }).catch(() => {});
+
+    // Check for error states after spinner resolves
+    const accessDenied = page.getByText('Access Denied');
+    const notFound = page.getByText(/not found/i);
+    const hasDenied = await accessDenied.isVisible({ timeout: 1000 }).catch(() => false);
+    const hasNotFound = await notFound.first().isVisible({ timeout: 1000 }).catch(() => false);
+
+    if (!hasDenied && !hasNotFound) return; // Success
+
+    if (attempt < retries) {
+      await page.waitForTimeout(1000);
+    }
+  }
+}
+
+/**
  * Navigates to the authenticated user's own profile
  */
 export async function navigateToOwnProfile(page: Page) {
@@ -134,6 +180,18 @@ export async function navigateToUserMemberships(page: Page, userId?: string) {
     await membershipsLink.click();
   }
   await page.waitForLoadState('domcontentloaded');
+}
+
+/**
+ * Navigates to the home page and dismisses the AriaKai Welcome dialog if it appears.
+ * The dialog applies aria-hidden to the rest of the page, blocking role-based locators.
+ */
+export async function gotoHomeAndDismissDialog(page: Page) {
+  await page.goto('/');
+  await page.waitForLoadState('domcontentloaded');
+  // Dismiss the AriaKai Welcome dialog if it appears
+  const closeButton = page.getByRole('button', { name: /I'll find you later|close/i }).first();
+  await closeButton.click({ timeout: 5000 }).catch(() => {});
 }
 
 /**

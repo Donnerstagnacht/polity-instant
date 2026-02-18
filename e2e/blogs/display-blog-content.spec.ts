@@ -2,16 +2,14 @@
 // seed: e2e/seed.spec.ts
 
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Blogs - Display Blog Content', () => {
   test('User views blog with header, stats, and content', async ({
     authenticatedPage: page,
     blogFactory,
-    userFactory,
+    mainUserId,
   }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const blog = await blogFactory.createBlog(user.id, {
+    const blog = await blogFactory.createBlog(mainUserId, {
       title: `Display Blog Test ${Date.now()}`,
     });
 
@@ -19,7 +17,7 @@ test.describe('Blogs - Display Blog Content', () => {
     await page.waitForLoadState('domcontentloaded');
 
     // 4. Title displayed prominently
-    const title = page.locator('h1').or(page.getByRole('heading', { level: 1 }));
+    const title = page.getByRole('heading', { level: 1 }).first();
     await expect(title).toBeVisible({ timeout: 10000 });
 
     // Blog content is visible
@@ -29,10 +27,9 @@ test.describe('Blogs - Display Blog Content', () => {
   test('Blog stats bar displays accurate counts', async ({
     authenticatedPage: page,
     blogFactory,
-    userFactory,
+    mainUserId,
   }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const blog = await blogFactory.createBlog(user.id, {
+    const blog = await blogFactory.createBlog(mainUserId, {
       title: `Stats Blog Test ${Date.now()}`,
     });
 
@@ -43,7 +40,7 @@ test.describe('Blogs - Display Blog Content', () => {
     await expect(page).toHaveURL(/\/blog\/.+/);
 
     // Page should show something (title or blog content)
-    const heading = page.locator('h1').or(page.getByRole('heading', { level: 1 }));
+    const heading = page.getByRole('heading', { level: 1 }).first();
     await expect(heading).toBeVisible({ timeout: 10000 });
   });
 });

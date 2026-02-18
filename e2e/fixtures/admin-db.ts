@@ -35,22 +35,33 @@ export function getAdminDb() {
 export { tx, id };
 
 /**
- * Execute transactions in batches with retry on conflict.
+ * Execute transactions in batches with retry on transient errors.
  * Ported from scripts/helpers/transaction.helpers.ts for E2E use.
  */
 export async function adminTransact(txns: any[], batchSize = 20): Promise<void> {
   const db = getAdminDb();
   for (let i = 0; i < txns.length; i += batchSize) {
     const batch = txns.slice(i, i + batchSize);
-    let retries = 3;
+    let retries = 5;
 
     while (retries > 0) {
       try {
         await db.transact(batch);
         break;
       } catch (error: any) {
-        if (error?.body?.type === 'record-not-unique' || error?.status === 409) {
-          const backoff = (4 - retries) * 1000;
+        const isRetryable =
+          error?.body?.type === 'record-not-unique' ||
+          error?.status === 409 ||
+          error?.status === 429 ||
+          error?.status >= 500 ||
+          error?.message?.includes('took too long') ||
+          error?.message?.includes('ETIMEDOUT') ||
+          error?.message?.includes('ECONNRESET') ||
+          error?.code === 'ETIMEDOUT' ||
+          error?.code === 'ECONNRESET';
+
+        if (isRetryable) {
+          const backoff = (6 - retries) * 1000;
           await new Promise(resolve => setTimeout(resolve, backoff));
           retries--;
         } else {
@@ -60,7 +71,7 @@ export async function adminTransact(txns: any[], batchSize = 20): Promise<void> 
     }
 
     if (retries === 0) {
-      throw new Error('Failed to execute batch after 3 retries');
+      throw new Error('Failed to execute batch after 5 retries');
     }
   }
 }

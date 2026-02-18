@@ -1,9 +1,9 @@
 import { test, expect } from '../fixtures/test-base';
 
 test.describe('Subscription - Remove Subscriber', () => {
-  test('Remove option visible for subscribers', async ({ authenticatedPage: page }) => {
-    await page.goto('/user/page/subscriptions');
-    await page.waitForLoadState('networkidle');
+  test('Remove option visible for subscribers', async ({ authenticatedPage: page, mainUserId }) => {
+    await page.goto(`/user/${mainUserId}/subscriptions`);
+    await page.waitForLoadState('domcontentloaded');
 
     const subscriptionItems = page.locator('[class*="card"], [class*="subscription"]');
     const hasItems = (await subscriptionItems.count()) > 0;
@@ -20,9 +20,9 @@ test.describe('Subscription - Remove Subscriber', () => {
     }
   });
 
-  test('Remove subscriber shows confirmation', async ({ authenticatedPage: page }) => {
-    await page.goto('/user/page/subscriptions');
-    await page.waitForLoadState('networkidle');
+  test('Remove subscriber shows confirmation', async ({ authenticatedPage: page, mainUserId }) => {
+    await page.goto(`/user/${mainUserId}/subscriptions`);
+    await page.waitForLoadState('domcontentloaded');
 
     const subscriptionItems = page.locator('[class*="card"], [class*="subscription"]');
     const hasItems = (await subscriptionItems.count()) > 0;

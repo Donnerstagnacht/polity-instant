@@ -18,10 +18,9 @@ test.describe('Notifications - Loading States', () => {
     }
 
     // 5. Wait for content to load
-    await page.waitForLoadState('networkidle');
+    await expect(page.getByRole('heading', { name: /notifications/i })).toBeVisible({ timeout: 15000 });
 
-    // 6. Verify page loaded successfully
-    await expect(page.getByRole('heading', { name: /notifications/i })).toBeVisible();
+    // 6. Verify page loaded successfully - heading already verified above
 
     // 7. Tabs should be visible when loaded
     await expect(page.getByRole('tab', { name: /all/i })).toBeVisible();
@@ -33,26 +32,18 @@ test.describe('Notifications - Loading States', () => {
     await page.goto('/notifications');
 
     // 3. Wait for page to fully load
-    await page.waitForLoadState('networkidle');
-
-    // 4. Verify main elements are visible
-    await expect(page.getByRole('heading', { name: /notifications/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /notifications/i })).toBeVisible({ timeout: 15000 });
     await expect(page.getByRole('tab', { name: /all/i })).toBeVisible();
 
     // 5. Verify either notifications or empty state is shown
-    const hasNotifications = await page
-      .locator('[class*="CardContent"]')
-      .filter({ has: page.locator('p[class*="font-medium"]') })
-      .first()
-      .isVisible()
-      .catch(() => false);
-    const hasEmptyState = await page
-      .getByText(/no notifications yet|all caught up/i)
-      .isVisible()
-      .catch(() => false);
+    const tabPanel = page.getByRole('tabpanel');
+    await expect(tabPanel).toBeVisible({ timeout: 10000 });
 
-    // One of these should be true
-    expect(hasNotifications || hasEmptyState).toBeTruthy();
+    const notificationCard = tabPanel.locator('div[class*="cursor-pointer"]').first();
+    const emptyState = page.getByText(/no notifications yet|all caught up/i);
+
+    // Wait for data to load: either notifications or empty state
+    await expect(notificationCard.or(emptyState)).toBeVisible({ timeout: 15000 });
   });
 
   test('No loading state stuck on screen', async ({ authenticatedPage: page }) => {
@@ -61,7 +52,7 @@ test.describe('Notifications - Loading States', () => {
     await page.goto('/notifications');
 
     // 3. Wait for loading to complete
-    await page.waitForLoadState('networkidle');
+    await expect(page.getByRole('heading', { name: /notifications/i })).toBeVisible({ timeout: 15000 });
 
     // 4. Verify loading text is not stuck on screen
     const loadingText = page.getByText(/loading notifications/i);

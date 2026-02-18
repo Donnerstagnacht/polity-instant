@@ -8,8 +8,20 @@ test.describe('Notifications - Mark as Read', () => {
     // 2. Navigate to notifications page
     await page.goto('/notifications');
 
-    // 3. Check for unread notifications
-    const unreadNotification = page.locator('[class*="border-l-4"]').first();
+    // Wait for page to load
+    await expect(page.getByRole('heading', { name: /notifications/i })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('tab', { name: /all/i })).toBeVisible();
+
+    // 3. Check for unread notifications (border-l-4 indicates unread)
+    const tabPanel = page.getByRole('tabpanel');
+    await expect(tabPanel).toBeVisible({ timeout: 10000 });
+
+    // Wait for data to load
+    const notificationCard = tabPanel.locator('div[class*="cursor-pointer"]').first();
+    const emptyState = page.getByText(/all caught up|no notifications/i);
+    await expect(notificationCard.or(emptyState)).toBeVisible({ timeout: 15000 });
+
+    const unreadNotification = tabPanel.locator('div[class*="border-l-4"]').first();
     const hasUnread = await unreadNotification.isVisible().catch(() => false);
 
     if (hasUnread) {
@@ -18,9 +30,6 @@ test.describe('Notifications - Mark as Read', () => {
 
       // 5. Notification should be marked as read (navigation will occur)
       // Wait for potential navigation
-    } else {
-      // No unread notifications
-      await expect(page.getByText(/all caught up|no notifications/i)).toBeVisible();
     }
   });
 
@@ -29,29 +38,37 @@ test.describe('Notifications - Mark as Read', () => {
     // 2. Navigate to notifications page
     await page.goto('/notifications');
 
+    // Wait for page to load
+    await expect(page.getByRole('heading', { name: /notifications/i })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('tab', { name: /all/i })).toBeVisible();
+
     // 3. Check if mark all as read button exists
     const markAllButton = page.getByRole('button', { name: /mark all as read/i });
     const hasUnreadNotifications = await markAllButton.isVisible().catch(() => false);
 
+    // Wait for data to load before checking
+    const tabPanel2 = page.getByRole('tabpanel');
+    await expect(tabPanel2).toBeVisible({ timeout: 10000 });
+    const notificationCard = tabPanel2.locator('div[class*="cursor-pointer"]').first();
+    const emptyState = page.getByText(/all caught up|no notifications/i);
+    await expect(notificationCard.or(emptyState)).toBeVisible({ timeout: 15000 });
+
     if (hasUnreadNotifications) {
       // 4. Get count of unread before
-      const unreadCountBefore = await page.locator('[class*="border-l-4"]').count();
+      const unreadCountBefore = await page.locator('div[class*="border-l-4"]').count();
       expect(unreadCountBefore).toBeGreaterThan(0);
 
       // 5. Click mark all as read
       await markAllButton.click();
 
       // 6. Wait for update
-      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
 
       // 7. Verify unread count is now 0
       await expect(page.getByText(/all caught up/i)).toBeVisible();
 
       // 8. Button should no longer be visible
       await expect(markAllButton).not.toBeVisible();
-    } else {
-      // All already read
-      await expect(page.getByText(/all caught up|no notifications/i)).toBeVisible();
     }
   });
 });

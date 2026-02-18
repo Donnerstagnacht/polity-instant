@@ -1,12 +1,10 @@
 // spec: e2e/test-plans/group-membership-test-plan.md
 
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Group Membership - Loading States', () => {
-  test('Loading states display during operations', async ({ authenticatedPage: page, groupFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const group = await groupFactory.createGroup(user.id, {
+  test('Loading states display during operations', async ({ authenticatedPage: page, groupFactory, mainUserId }) => {
+    const group = await groupFactory.createGroup(mainUserId, {
       name: `Test Group ${Date.now()}`,
     });
 

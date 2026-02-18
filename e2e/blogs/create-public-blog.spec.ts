@@ -16,7 +16,7 @@ test.describe('Blogs - Create Public Blog with Required Fields', () => {
     await titleInput.fill(blogTitle);
 
     // 3. Click Next to go to Step 2
-    const nextButton = page.getByRole('button', { name: /next/i });
+    const nextButton = page.getByRole('button', { name: 'Next', exact: true });
     await nextButton.click();
 
     // 4. Step 2: Visibility (default is public) - click Next

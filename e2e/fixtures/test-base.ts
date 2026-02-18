@@ -31,6 +31,8 @@ import { loginAsTestUser, login } from '../helpers/auth';
 
 type TestFixtures = {
   adminDb: ReturnType<typeof getAdminDb>;
+  /** The actual InstantDB user ID for the main test user (polity.live@gmail.com) */
+  mainUserId: string;
   userFactory: UserFactory;
   groupFactory: GroupFactory;
   eventFactory: EventFactory;
@@ -45,6 +47,12 @@ type TestFixtures = {
 export const test = base.extend<TestFixtures>({
   adminDb: async ({}, use) => {
     await use(getAdminDb());
+  },
+
+  mainUserId: async ({}, use) => {
+    const db = getAdminDb();
+    const user = await db.auth.getUser({ email: 'polity.live@gmail.com' });
+    await use(user.id);
   },
 
   userFactory: async ({}, use) => {

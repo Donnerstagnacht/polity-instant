@@ -1,70 +1,27 @@
 import { test, expect } from '../fixtures/test-base';
 test.describe('Create Feature', () => {
-  test('Guided Mode - Create Blog', async ({ page }) => {
-    // Navigate to create page
-    await page.goto('/create');
+  test('Guided Mode - Create Blog', async ({ authenticatedPage: page }) => {
+    await page.goto('/create/blog');
 
-    // Select Blogs entity type
-    const blogsOption = page
-      .locator('text=Blogs')
-      .or(page.locator('[data-entity="blogs"]'))
-      .first();
-    await blogsOption.click();
-
-
-    // Enter blog title
-    const titleInput = page
-      .locator('input[name="title"]')
-      .or(page.getByPlaceholder(/title/i))
-      .first();
+    // Step 0: Title + Date
+    const titleInput = page.locator('#blog-title');
+    await expect(titleInput).toBeVisible();
     await titleInput.fill('The Future of Technology in 2024');
 
-    // Advance carousel
-    const nextButton = page
-      .locator('[data-testid="next-button"]')
-      .or(page.locator('button:has-text("Next")'))
-      .first();
-    if (await nextButton.isVisible()) {
-      await nextButton.click();
-    }
+    const nextButton = page.getByRole('button', { name: 'Next', exact: true });
 
-    // Enter blog content
-    const contentInput = page
-      .locator('textarea[name="content"]')
-      .or(page.locator('[contenteditable="true"]'))
-      .or(page.getByPlaceholder(/content/i))
-      .first();
-    await contentInput.fill(
-      'Technology continues to evolve at a rapid pace. This blog explores the trends shaping our future.'
-    );
+    // Navigate: Step 0→1→2 (2 clicks to reach review)
+    await nextButton.click();
+    await nextButton.click();
 
-    if (await nextButton.isVisible()) {
-      await nextButton.click();
-    }
-
-    // Add hashtags
-    const hashtagInput = page
-      .locator('input[name="hashtags"]')
-      .or(page.getByPlaceholder(/tag/i))
-      .first();
-    if (await hashtagInput.isVisible()) {
-      await hashtagInput.fill('#technology #future');
-      await page.keyboard.press('Enter');
-    }
-
-    // Click Create Blog button
-    const createButton = page
-      .locator('button:has-text("Create")')
-      .or(page.locator('[data-testid="create-button"]'))
-      .first();
+    // Step 2: Review - Click Create Blog Post
+    const createButton = page.getByRole('button', { name: /create blog/i });
+    await expect(createButton).toBeVisible();
     await createButton.click();
 
-    // Wait for navigation or success
-    await page.waitForURL(/\/blog\//, { timeout: 5000 }).catch(() => {
-      return;
-    });
+    // Wait for redirect
+    await page.waitForURL(/\/blog\//, { timeout: 10000 }).catch(() => {});
 
-    // Verify success
     const isRedirected = page.url().includes('/blog/');
     const successMessage = await page
       .locator('text=created')
@@ -72,7 +29,6 @@ test.describe('Create Feature', () => {
       .first()
       .isVisible()
       .catch(() => false);
-
     expect(isRedirected || successMessage).toBeTruthy();
   });
 });

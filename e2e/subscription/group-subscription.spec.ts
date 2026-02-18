@@ -2,7 +2,6 @@
 // seed: e2e/seed.spec.ts
 
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 import {
   navigateToGroup,
   clickSubscribeButton,
@@ -13,9 +12,8 @@ import {
 } from '../helpers/subscription';
 
 test.describe('Subscribe to Group', () => {
-  test('User can subscribe to group', async ({ authenticatedPage: page, groupFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const group = await groupFactory.createGroup(user.id, { name: `Sub Group ${Date.now()}` });
+  test('User can subscribe to group', async ({ authenticatedPage: page, groupFactory, mainUserId }) => {
+    const group = await groupFactory.createGroup(mainUserId, { name: `Sub Group ${Date.now()}` });
 
     await navigateToGroup(page, group.id);
 
@@ -36,9 +34,8 @@ test.describe('Subscribe to Group', () => {
     expect(newCount).toBe(initialCount + 1);
   });
 
-  test('User can unsubscribe from group', async ({ authenticatedPage: page, groupFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const group = await groupFactory.createGroup(user.id, { name: `Unsub Group ${Date.now()}` });
+  test('User can unsubscribe from group', async ({ authenticatedPage: page, groupFactory, mainUserId }) => {
+    const group = await groupFactory.createGroup(mainUserId, { name: `Unsub Group ${Date.now()}` });
 
     await navigateToGroup(page, group.id);
 

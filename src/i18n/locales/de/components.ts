@@ -97,6 +97,17 @@ export const componentsTranslations = {
     },
     errors: {
       changeFailed: 'Fehler beim Ändern der Einstellung',
+      notSupported: 'Push-Benachrichtigungen werden in diesem Browser nicht unterstützt',
+      notLoggedIn: 'Sie müssen angemeldet sein, um Benachrichtigungen zu aktivieren',
+      permissionBlocked: 'Benachrichtigungen wurden blockiert. Bitte in den Browser-Einstellungen aktivieren.',
+      permissionDismissed: 'Bitte erlauben Sie Benachrichtigungen im Browser-Dialog.',
+      permissionRequest: 'Fehler beim Anfordern der Benachrichtigungsberechtigung',
+      swRegistration: 'Service Worker konnte nicht registriert werden. Bitte laden Sie die Seite neu.',
+      swTimeout: 'Service Worker Timeout — bitte Seite neu laden',
+      vapidMissing: 'VAPID Public Key nicht konfiguriert',
+      invalidKeys: 'Ungültige Abonnement-Schlüssel',
+      subscribeFailed: 'Fehler beim Aktivieren der Push-Benachrichtigungen',
+      unsubscribeFailed: 'Fehler beim Deaktivieren der Push-Benachrichtigungen',
     },
   },
   ariaKaiWelcome: {

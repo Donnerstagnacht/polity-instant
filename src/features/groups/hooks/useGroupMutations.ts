@@ -56,20 +56,25 @@ export function useGroupMutations(groupId: string) {
         }
 
         transactions.push(membershipTx);
-
-        // Send notification
-        if (senderId && groupName) {
-          const notificationTxs = notifyGroupInvite({
-            senderId,
-            recipientUserId: userId,
-            groupId,
-            groupName,
-          });
-          transactions.push(...notificationTxs);
-        }
       });
 
       await db.transact(transactions);
+
+      // Notifications are server-only — send separately
+      try {
+        if (senderId && groupName) {
+          const notifTxs: any[] = [];
+          userIds.forEach(userId => {
+            notifTxs.push(...notifyGroupInvite({
+              senderId,
+              recipientUserId: userId,
+              groupId,
+              groupName,
+            }));
+          });
+          if (notifTxs.length > 0) await db.transact(notifTxs);
+        }
+      } catch { /* notification delivery is best-effort */ }
       toast.success(`Successfully invited ${userIds.length} user(s)`);
       return { success: true };
     } catch (error) {
@@ -100,35 +105,37 @@ export function useGroupMutations(groupId: string) {
         }),
       ];
 
-      // Add timeline event for member joining
-      transactions.push(
-        createTimelineEvent({
-          eventType: 'member_added',
-          entityType: 'group',
-          entityId: groupId,
-          actorId: userId,
-          title: `New member joined ${groupName || 'the group'}`,
-          description: 'A new member has joined the group',
-        })
-      );
-
       // Add user to group conversation if it exists
       if (conversationId) {
         await addUserToGroupConversation(conversationId, userId);
       }
 
-      // Send notification
-      if (senderId) {
-        const notificationTxs = notifyMembershipApproved({
-          senderId,
-          recipientUserId: userId,
-          groupId,
-          groupName: groupName || '',
-        });
-        transactions.push(...notificationTxs);
-      }
-
       await db.transact(transactions);
+
+      // Timeline and notifications are server-only — send separately
+      try {
+        const sideEffects: any[] = [
+          createTimelineEvent({
+            eventType: 'member_added',
+            entityType: 'group',
+            entityId: groupId,
+            actorId: userId,
+            title: `New member joined ${groupName || 'the group'}`,
+            description: 'A new member has joined the group',
+          }),
+        ];
+
+        if (senderId) {
+          sideEffects.push(...notifyMembershipApproved({
+            senderId,
+            recipientUserId: userId,
+            groupId,
+            groupName: groupName || '',
+          }));
+        }
+
+        await db.transact(sideEffects);
+      } catch { /* timeline/notification delivery is best-effort */ }
       toast.success('Membership approved');
       return { success: true };
     } catch (error) {
@@ -153,18 +160,21 @@ export function useGroupMutations(groupId: string) {
     try {
       const transactions = [tx.groupMemberships[membershipId].delete()];
 
-      // Send notification
-      if (senderId) {
-        const notificationTxs = notifyMembershipRejected({
-          senderId,
-          recipientUserId: userId,
-          groupId,
-          groupName: '',
-        });
-        transactions.push(...notificationTxs);
-      }
-
       await db.transact(transactions);
+
+      // Notification is server-only — send separately
+      try {
+        if (senderId) {
+          const notificationTxs = notifyMembershipRejected({
+            senderId,
+            recipientUserId: userId,
+            groupId,
+            groupName: '',
+          });
+          if (notificationTxs.length > 0) await db.transact(notificationTxs);
+        }
+      } catch { /* notification delivery is best-effort */ }
+
       toast.success('Membership request rejected');
       return { success: true };
     } catch (error) {
@@ -209,18 +219,20 @@ export function useGroupMutations(groupId: string) {
         }
       }
 
-      // Send notification
-      if (senderId) {
-        const notificationTxs = notifyMembershipRemoved({
-          senderId,
-          recipientUserId: userId,
-          groupId,
-          groupName: '',
-        });
-        transactions.push(...notificationTxs);
-      }
-
       await db.transact(transactions);
+
+      // Notification is server-only — send separately
+      try {
+        if (senderId) {
+          const notificationTxs = notifyMembershipRemoved({
+            senderId,
+            recipientUserId: userId,
+            groupId,
+            groupName: '',
+          });
+          if (notificationTxs.length > 0) await db.transact(notificationTxs);
+        }
+      } catch { /* notification delivery is best-effort */ }
       toast.success('Member removed successfully');
       return { success: true };
     } catch (error) {
@@ -246,19 +258,21 @@ export function useGroupMutations(groupId: string) {
     try {
       const transactions = [tx.groupMemberships[membershipId].link({ role: roleId })];
 
-      // Send notification
-      if (senderId) {
-        const notificationTxs = notifyMembershipRoleChanged({
-          senderId,
-          recipientUserId: userId,
-          groupId,
-          groupName: '',
-          newRole: '',
-        });
-        transactions.push(...notificationTxs);
-      }
-
       await db.transact(transactions);
+
+      // Notification is server-only — send separately
+      try {
+        if (senderId) {
+          const notificationTxs = notifyMembershipRoleChanged({
+            senderId,
+            recipientUserId: userId,
+            groupId,
+            groupName: '',
+            newRole: '',
+          });
+          if (notificationTxs.length > 0) await db.transact(notificationTxs);
+        }
+      } catch { /* notification delivery is best-effort */ }
       toast.success('Member role updated');
       return { success: true };
     } catch (error) {
@@ -307,23 +321,26 @@ export function useGroupMutations(groupId: string) {
         );
       });
 
-      // Send notifications to admins
-      if (senderId && groupName && adminUserIds) {
-        adminUserIds.forEach(adminId => {
-          if (adminId !== senderId) {
-            const notificationTxs = notifyRoleCreated({
-              senderId,
-              recipientUserId: adminId,
-              groupId,
-              groupName,
-              roleName: name,
-            });
-            transactions.push(...notificationTxs);
-          }
-        });
-      }
-
       await db.transact(transactions);
+
+      // Notifications are server-only — send separately
+      try {
+        if (senderId && groupName && adminUserIds) {
+          const notifTxs: any[] = [];
+          adminUserIds.forEach(adminId => {
+            if (adminId !== senderId) {
+              notifTxs.push(...notifyRoleCreated({
+                senderId,
+                recipientUserId: adminId,
+                groupId,
+                groupName,
+                roleName: name,
+              }));
+            }
+          });
+          if (notifTxs.length > 0) await db.transact(notifTxs);
+        }
+      } catch { /* notification delivery is best-effort */ }
       toast.success('Role created successfully');
       return { success: true, roleId };
     } catch (error) {
@@ -349,23 +366,26 @@ export function useGroupMutations(groupId: string) {
     try {
       const transactions: any[] = [tx.roles[roleId].delete()];
 
-      // Send notifications to admins
-      if (senderId && roleName && groupName && adminUserIds) {
-        adminUserIds.forEach(adminId => {
-          if (adminId !== senderId) {
-            const notificationTxs = notifyRoleDeleted({
-              senderId,
-              recipientUserId: adminId,
-              groupId,
-              groupName,
-              roleName,
-            });
-            transactions.push(...notificationTxs);
-          }
-        });
-      }
-
       await db.transact(transactions);
+
+      // Notifications are server-only — send separately
+      try {
+        if (senderId && roleName && groupName && adminUserIds) {
+          const notifTxs: any[] = [];
+          adminUserIds.forEach(adminId => {
+            if (adminId !== senderId) {
+              notifTxs.push(...notifyRoleDeleted({
+                senderId,
+                recipientUserId: adminId,
+                groupId,
+                groupName,
+                roleName,
+              }));
+            }
+          });
+          if (notifTxs.length > 0) await db.transact(notifTxs);
+        }
+      } catch { /* notification delivery is best-effort */ }
       toast.success('Role deleted successfully');
       return { success: true };
     } catch (error) {
@@ -394,18 +414,20 @@ export function useGroupMutations(groupId: string) {
         }),
       ];
 
-      // Send notification
-      if (senderId && groupName) {
-        const notificationTxs = notifyAdminPromoted({
-          senderId,
-          recipientUserId: userId,
-          groupId,
-          groupName,
-        });
-        transactions.push(...notificationTxs);
-      }
-
       await db.transact(transactions);
+
+      // Notification is server-only — send separately
+      try {
+        if (senderId && groupName) {
+          const notificationTxs = notifyAdminPromoted({
+            senderId,
+            recipientUserId: userId,
+            groupId,
+            groupName,
+          });
+          if (notificationTxs.length > 0) await db.transact(notificationTxs);
+        }
+      } catch { /* notification delivery is best-effort */ }
       toast.success('Member promoted to admin');
       return { success: true };
     } catch (error) {
@@ -434,18 +456,20 @@ export function useGroupMutations(groupId: string) {
         }),
       ];
 
-      // Send notification
-      if (senderId && userId && groupName) {
-        const notificationTxs = notifyAdminDemoted({
-          senderId,
-          recipientUserId: userId,
-          groupId,
-          groupName,
-        });
-        transactions.push(...notificationTxs);
-      }
-
       await db.transact(transactions);
+
+      // Notification is server-only — send separately
+      try {
+        if (senderId && userId && groupName) {
+          const notificationTxs = notifyAdminDemoted({
+            senderId,
+            recipientUserId: userId,
+            groupId,
+            groupName,
+          });
+          if (notificationTxs.length > 0) await db.transact(notificationTxs);
+        }
+      } catch { /* notification delivery is best-effort */ }
       toast.success('Admin demoted to member');
       return { success: true };
     } catch (error) {

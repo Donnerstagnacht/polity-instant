@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { navItemsAuthenticated } from '@/navigation/nav-items/nav-items-authenticated';
 import { createNavItemsUnauthenticated } from '@/navigation/nav-items/nav-items-unauthenticated';
 import { useInitialRoute } from '@/navigation/state/useInitialRoute';
@@ -26,39 +26,60 @@ export function useNavigation() {
   const { count: unreadMessagesCount } = useUnreadMessagesCount();
 
   // Create unauthenticated navigation items using the factory function
-  const unauthenticatedNavItems = createNavItemsUnauthenticated(router, t);
+  const unauthenticatedNavItems = useMemo(
+    () => createNavItemsUnauthenticated(router, t),
+    [router, t]
+  );
+
+  // Stable reference for setCurrentPrimaryRoute to avoid recreating nav items
+  const setCurrentPrimaryRouteRef = useRef(setCurrentPrimaryRoute);
+  setCurrentPrimaryRouteRef.current = setCurrentPrimaryRoute;
+  const stableSetRoute = useMemo(
+    () => (route: string) => setCurrentPrimaryRouteRef.current(route),
+    []
+  );
 
   // Create a mock router object that matches the expected interface
-  const mockRouter = {
-    ...router,
-    state: {
-      location: {
-        pathname: pathname,
+  const mockRouter = useMemo(
+    () => ({
+      ...router,
+      state: {
+        location: {
+          pathname: pathname,
+        },
       },
-    },
-  };
+    }),
+    [router, pathname]
+  );
 
   // Get navigation items from the navigation config
   const { primaryNavItems: basePrimaryNavItems, getSecondaryNavItems: baseGetSecondaryNavItems } =
-    navItemsAuthenticated(mockRouter, setCurrentPrimaryRoute, t);
+    useMemo(
+      () => navItemsAuthenticated(mockRouter, stableSetRoute, t),
+      [mockRouter, stableSetRoute, t]
+    );
 
   // Override labels with translations and add dynamic badge counts
-  const primaryNavItems: NavigationItem[] = basePrimaryNavItems.map(item => {
-    let badge = item.badge;
+  const primaryNavItems: NavigationItem[] = useMemo(
+    () =>
+      basePrimaryNavItems.map(item => {
+        let badge = item.badge;
 
-    // Update badge counts for notifications and messages
-    if (item.id === 'notifications') {
-      badge = unreadNotificationsCount > 0 ? unreadNotificationsCount : undefined;
-    } else if (item.id === 'messages') {
-      badge = unreadMessagesCount > 0 ? unreadMessagesCount : undefined;
-    }
+        // Update badge counts for notifications and messages
+        if (item.id === 'notifications') {
+          badge = unreadNotificationsCount > 0 ? unreadNotificationsCount : undefined;
+        } else if (item.id === 'messages') {
+          badge = unreadMessagesCount > 0 ? unreadMessagesCount : undefined;
+        }
 
-    return {
-      ...item,
-      label: t(`navigation.primary.${item.id}`),
-      badge,
-    };
-  });
+        return {
+          ...item,
+          label: t(`navigation.primary.${item.id}`),
+          badge,
+        };
+      }),
+    [basePrimaryNavItems, unreadNotificationsCount, unreadMessagesCount, t]
+  );
 
   // Extract IDs from pathname
   const eventId = pathname.match(/^\/event\/([^/]+)/)?.[1];

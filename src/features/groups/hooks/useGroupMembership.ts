@@ -91,8 +91,7 @@ export function useGroupMembership(groupId: string) {
 
       const newMembershipId = crypto.randomUUID();
 
-      // Build transactions
-      const transactions: any[] = [
+      await db.transact([
         tx.groupMemberships[newMembershipId]
           .update({
             createdAt: new Date().toISOString(),
@@ -102,18 +101,18 @@ export function useGroupMembership(groupId: string) {
             user: user.id,
             group: groupId,
           }),
-      ];
+      ]);
 
-      // Add notification to group admins/members with manage rights
-      const notificationTxs = notifyMembershipRequest({
-        senderId: user.id,
-        senderName: user.email?.split('@')[0] || 'A user',
-        groupId,
-        groupName,
-      });
-      transactions.push(...notificationTxs);
-
-      await db.transact(transactions);
+      // Send notification separately — notifications.create is server-only
+      try {
+        const notificationTxs = notifyMembershipRequest({
+          senderId: user.id,
+          senderName: user.email?.split('@')[0] || 'A user',
+          groupId,
+          groupName,
+        });
+        if (notificationTxs.length > 0) await db.transact(notificationTxs);
+      } catch { /* notification delivery is best-effort */ }
       toast.success('Membership request sent successfully');
     } catch (error) {
       console.error('Failed to request membership:', error);

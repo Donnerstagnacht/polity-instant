@@ -1,17 +1,15 @@
 // spec: e2e/test-plans/amendments-test-plan.md
 
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Amendments - Amendment Voting (Support)', () => {
   test('User upvotes an amendment', async ({
     authenticatedPage: page,
     amendmentFactory,
-    userFactory,
+    mainUserId,
   }) => {
     // SETUP: Create amendment via factory for test isolation
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const amendment = await amendmentFactory.createAmendment(user.id, {
+    const amendment = await amendmentFactory.createAmendment(mainUserId, {
       title: `Vote Test Amendment ${Date.now()}`,
     });
 
@@ -36,11 +34,10 @@ test.describe('Amendments - Amendment Voting (Support)', () => {
   test('User downvotes an amendment', async ({
     authenticatedPage: page,
     amendmentFactory,
-    userFactory,
+    mainUserId,
   }) => {
     // SETUP: Create amendment via factory for test isolation
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const amendment = await amendmentFactory.createAmendment(user.id, {
+    const amendment = await amendmentFactory.createAmendment(mainUserId, {
       title: `Downvote Test Amendment ${Date.now()}`,
     });
 

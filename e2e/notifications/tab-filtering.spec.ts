@@ -16,17 +16,22 @@ test.describe('Notifications - Tab Filtering', () => {
     await expect(unreadTab).toHaveAttribute('data-state', 'active');
 
     // 5. Check content
-    const emptyState = page.getByText(/all caught up/i);
-    const hasUnreadNotifications = !(await emptyState.isVisible().catch(() => false));
+    const tabPanel = page.getByRole('tabpanel');
+    await expect(tabPanel).toBeVisible({ timeout: 10000 });
 
-    if (hasUnreadNotifications) {
-      // Verify unread notifications are shown
-      const notifications = page.locator('[class*="border-l-4"]');
+    const notificationCard = tabPanel.locator('div[class*="cursor-pointer"]').first();
+    const emptyState = page.getByText(/all caught up/i);
+
+    // Wait for data to load
+    await expect(notificationCard.or(emptyState)).toBeVisible({ timeout: 15000 });
+
+    const hasEmptyState = await emptyState.isVisible().catch(() => false);
+
+    if (!hasEmptyState) {
+      // Verify unread notifications are shown (border-l-4 indicates unread)
+      const notifications = tabPanel.locator('div[class*="border-l-4"]');
       const unreadCount = await notifications.count();
       expect(unreadCount).toBeGreaterThan(0);
-    } else {
-      // Verify empty state for no unread
-      await expect(emptyState).toBeVisible();
     }
   });
 
@@ -43,19 +48,21 @@ test.describe('Notifications - Tab Filtering', () => {
     await expect(readTab).toHaveAttribute('data-state', 'active');
 
     // 5. Check for read notifications or empty state
-    const emptyState = page.getByText(/no read notifications|no notifications/i);
-    const hasReadNotifications = !(await emptyState.isVisible().catch(() => false));
+    const tabPanel = page.getByRole('tabpanel');
+    await expect(tabPanel).toBeVisible({ timeout: 10000 });
+
+    const notificationCard = tabPanel.locator('div[class*="cursor-pointer"]').first();
+    const emptyState = page.getByText(/no read|no notifications/i);
+
+    // Wait for data to load
+    await expect(notificationCard.or(emptyState)).toBeVisible({ timeout: 15000 });
+
+    const hasReadNotifications = await notificationCard.isVisible().catch(() => false);
 
     if (hasReadNotifications) {
-      // Verify notifications shown do not have unread indicator
-      const notifications = page
-        .locator('[class*="CardContent"]')
-        .filter({ has: page.locator('p[class*="font-medium"]') });
-      const count = await notifications.count();
-      // It's valid to have 0 read notifications
-      expect(count).toBeGreaterThanOrEqual(0);
-    } else {
-      await expect(emptyState).toBeVisible();
+      // Read tab should show notification cards
+      const notificationCount = await tabPanel.locator('div[class*="cursor-pointer"]').count();
+      expect(notificationCount).toBeGreaterThan(0);
     }
   });
 });

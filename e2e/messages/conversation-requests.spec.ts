@@ -22,7 +22,9 @@ test.describe('Chat/Messages - Conversation Requests', () => {
     // 1. Authenticate as test user
     // 2. Navigate to messages page and open dialog
     await page.goto('/messages');
+    await page.waitForLoadState('domcontentloaded');
     const newConversationButton = page.getByRole('button', { name: /start a new conversation/i });
+    await expect(newConversationButton).toBeVisible({ timeout: 15000 });
     await newConversationButton.click();
 
     // 3. Type in search input
@@ -45,7 +47,9 @@ test.describe('Chat/Messages - Conversation Requests', () => {
     // 1. Authenticate as test user
     // 2. Navigate to messages page and open dialog
     await page.goto('/messages');
+    await page.waitForLoadState('domcontentloaded');
     const newConversationButton = page.getByRole('button', { name: /start a new conversation/i });
+    await expect(newConversationButton).toBeVisible({ timeout: 15000 });
     await newConversationButton.click();
 
     // 3. Search for a user
@@ -86,13 +90,13 @@ test.describe('Chat/Messages - Conversation Requests', () => {
     }
   });
 
-  // Flaky under parallel execution: "Start a New Conversation" button times out intermittently
   test('User cannot send messages in pending conversation they initiated', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
     await page.waitForLoadState('domcontentloaded');
 
     // Create a new conversation request
     const newConversationButton = page.getByRole('button', { name: /start a new conversation/i });
+    await expect(newConversationButton).toBeVisible({ timeout: 15000 });
     await newConversationButton.click();
 
     const searchInput = page.getByPlaceholder(/search users by name or handle/i);
@@ -115,13 +119,13 @@ test.describe('Chat/Messages - Conversation Requests', () => {
     }
   });
 
-  // Flaky under parallel execution: "Start a New Conversation" button times out intermittently
   test('Conversation dialog shows only other users (not current user)', async ({ authenticatedPage: page }) => {
     await page.goto('/messages');
     await page.waitForLoadState('domcontentloaded');
 
     // Open dialog
     const newConversationButton = page.getByRole('button', { name: /start a new conversation/i });
+    await expect(newConversationButton).toBeVisible({ timeout: 15000 });
     await newConversationButton.click();
 
     // Get current user info from page
@@ -139,7 +143,6 @@ test.describe('Chat/Messages - Conversation Requests', () => {
       });
   });
 
-  // Previously used unauthenticated page — now uses authenticatedPage
   test('Clicking on existing conversation selects it instead of creating duplicate', async ({
     authenticatedPage: page,
   }) => {
@@ -148,6 +151,7 @@ test.describe('Chat/Messages - Conversation Requests', () => {
 
     // Open dialog
     const newConversationButton = page.getByRole('button', { name: /start a new conversation/i });
+    await expect(newConversationButton).toBeVisible({ timeout: 15000 });
     await newConversationButton.click();
 
     // Search for a user

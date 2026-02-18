@@ -1,16 +1,8 @@
 import { test, expect } from '../fixtures/test-base';
 test.describe('Create Feature', () => {
-  test('Hashtag Management', async ({ page }) => {
-    // Navigate to create page
-    await page.goto('/create');
-
-    // Select an entity type that supports hashtags (e.g., Groups)
-    const groupsOption = page
-      .locator('text=Groups')
-      .or(page.locator('[data-entity="groups"]'))
-      .first();
-    await groupsOption.click();
-
+  test('Hashtag Management', async ({ authenticatedPage: page }) => {
+    // Navigate to create group page
+    await page.goto('/create/group');
 
     // Navigate to hashtag field (may need to advance carousel)
     const nextButton = page

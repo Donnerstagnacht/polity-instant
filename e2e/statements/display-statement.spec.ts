@@ -4,7 +4,9 @@
 import { test, expect } from '../fixtures/test-base';
 
 test.describe('Statements - Display Statement Page', () => {
-  test('User views statement with tag, text, and creator info', async ({ authenticatedPage: page }) => {
+  test('User views statement with tag, text, and creator info', async ({
+    authenticatedPage: page,
+  }) => {
     // First, create a statement via UI so we have one to view
     await page.goto('/create/statement');
     await page.waitForLoadState('domcontentloaded');
@@ -13,7 +15,7 @@ test.describe('Statements - Display Statement Page', () => {
     const textInput = page.locator('#statement-text');
     await textInput.fill('Test statement for display verification');
 
-    const nextButton = page.getByRole('button', { name: /next/i });
+    const nextButton = page.getByRole('button', { name: 'Next', exact: true });
     await nextButton.click();
 
     // Step 2: Enter tag
@@ -42,7 +44,7 @@ test.describe('Statements - Display Statement Page', () => {
     const textInput = page.locator('#statement-text');
     await textInput.fill('Creator info test statement');
 
-    const nextButton = page.getByRole('button', { name: /next/i });
+    const nextButton = page.getByRole('button', { name: 'Next', exact: true });
     await nextButton.click();
 
     const tagInput = page.locator('#statement-tag');

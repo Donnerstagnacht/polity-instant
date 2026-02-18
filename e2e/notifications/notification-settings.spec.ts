@@ -1,10 +1,9 @@
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Notification Settings', () => {
-  test.beforeEach(async ({ authenticatedPage: page }) => {
-    await page.goto(`/user/${TEST_ENTITY_IDS.mainTestUser}/notifications`);
-    await page.waitForLoadState('networkidle');
+  test.beforeEach(async ({ authenticatedPage: page, mainUserId }) => {
+    await page.goto(`/user/${mainUserId}/notifications`);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should display notification settings page', async ({ authenticatedPage: page }) => {

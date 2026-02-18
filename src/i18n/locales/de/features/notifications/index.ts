@@ -11,6 +11,7 @@ export const notificationsTranslations = {
   unreadCount: '{{count}} ungelesene Benachrichtigung',
   unreadCountPlural: '{{count}} ungelesene Benachrichtigungen',
   allCaughtUp: 'Alles erledigt!',
+  loadMore: 'Mehr laden',
   empty: {
     title: 'Alles erledigt!',
     description: 'Du hast momentan keine Benachrichtigungen.',

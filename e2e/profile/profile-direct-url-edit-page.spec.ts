@@ -17,13 +17,14 @@ test.describe('Navigation and URL Handling', () => {
 
     // 3. Navigate directly to /user/{userId}/edit
     await page.goto(`/user/${userId}/edit`);
+    await page.waitForLoadState('domcontentloaded');
 
     // 4. Verify edit page loads
     await expect(page).toHaveURL(/\/user\/[a-f0-9-]+\/edit/);
 
     // 5. Verify form fields are populated with current user data
     const nameField = page.getByLabel(/name/i);
-    await expect(nameField).toBeVisible();
+    await expect(nameField).toBeVisible({ timeout: 10000 });
 
     const nameValue = await nameField.inputValue();
     expect(nameValue).toBeTruthy();

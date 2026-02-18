@@ -1,30 +1,52 @@
 // spec: e2e/test-plans/group-membership-test-plan.md
 
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
+import { gotoWithRetry } from '../helpers/navigation';
 
 test.describe('Group Membership - Role Deletion', () => {
-  test('Admin can delete role', async ({ authenticatedPage: page, groupFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const group = await groupFactory.createGroup(user.id, {
+  test('Admin can delete role', async ({ authenticatedPage: page, groupFactory, mainUserId }) => {
+    const group = await groupFactory.createGroup(mainUserId, {
       name: `Test Group ${Date.now()}`,
     });
 
-    // 1. Authenticate as admin user
-    // 2. Navigate to Roles tab
-    await page.goto(`/group/${group.id}/memberships`);
+    // Navigate to memberships page (retry on Access Denied)
+    await gotoWithRetry(page, `/group/${group.id}/memberships`);
 
+    // Click Roles tab
     const rolesTab = page.getByRole('tab', { name: /role/i });
+    await expect(rolesTab).toBeVisible({ timeout: 10000 });
     await rolesTab.click();
 
-    // 3. Find role to delete
-    const deleteButton = page.getByRole('button', { name: /delete/i }).first();
-    await expect(deleteButton).toBeVisible();
+    // First create a custom role to delete (default Admin/Member roles may not be deletable)
+    const addRoleButton = page.getByRole('button', { name: /add role/i });
+    await expect(addRoleButton).toBeVisible({ timeout: 10000 });
+    await addRoleButton.click();
 
-    // 4. Click delete button
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible({ timeout: 5000 });
+
+    const nameInput = dialog.getByLabel(/name|title/i);
+    await nameInput.fill(`Delete Me ${Date.now()}`);
+    const descInput = dialog.getByLabel(/description/i);
+    if ((await descInput.count()) > 0) {
+      await descInput.fill('Temp role for deletion test');
+    }
+    const createButton = dialog.getByRole('button', { name: /create|save/i });
+    await createButton.click();
+    await expect(dialog).not.toBeVisible({ timeout: 10000 });
+
+    // Wait for role to appear in the table
+    await page.waitForTimeout(2000);
+
+    // Find the trash/delete icon button - try multiple selectors
+    const deleteButton = page.locator('button:has(svg.lucide-trash-2)').first()
+      .or(page.locator('button:has(svg.lucide-trash)').first())
+      .or(page.locator('button:has(.text-destructive)').first())
+      .or(page.locator('button svg[class*="trash"]').locator('..').first());
+    await expect(deleteButton).toBeVisible({ timeout: 10000 });
     await deleteButton.click();
 
-    // 5. Confirm deletion if needed
+    // Confirm deletion if dialog appears
     const confirmButton = page.getByRole('button', { name: /confirm|yes|delete/i }).first();
     const isConfirmVisible = await confirmButton.isVisible().catch(() => false);
 
@@ -32,6 +54,6 @@ test.describe('Group Membership - Role Deletion', () => {
       await confirmButton.click();
     }
 
-    // 6. Verify role is removed
+    await page.waitForTimeout(1000);
   });
 });

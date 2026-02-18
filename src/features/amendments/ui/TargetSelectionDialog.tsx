@@ -105,7 +105,7 @@ export function TargetSelectionDialog({
       (m: any) => (m.status === 'member' || m.status === 'admin') && m.user?.id === targetUserId
     ) || [];
 
-  const userGroupIds = userMemberships.map((m: any) => m.group.id);
+  const userGroupIds = userMemberships.map((m: any) => m.group?.id).filter(Boolean);
   const allGroups = (networkData as any)?.groups || [];
   const relationships = (networkData as any)?.groupRelationships || [];
 

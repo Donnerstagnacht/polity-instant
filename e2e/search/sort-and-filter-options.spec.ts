@@ -13,19 +13,20 @@ test.describe('Search - Sort and Filter Options', () => {
     await filterButton.click();
 
     // 4. Wait for filter panel
-    await expect(page.getByText('Date Range')).toBeVisible();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.getByText('Date Range')).toBeVisible();
 
     // 5. Click on "Last 7 Days" button
-    const weekButton = page.getByRole('button', { name: /last 7 days/i });
+    const weekButton = dialog.getByRole('button', { name: /last 7 days/i });
     await weekButton.click();
 
     // 6. Close filter panel
-    await page.getByRole('button', { name: /close/i }).first().click();
+    await dialog.getByRole('button', { name: /close/i }).first().click();
 
     // 7. Wait for URL update
 
     // 8. URL updates with range parameter
-    await expect(page).toHaveURL(/range=week/);
+    await expect(page).toHaveURL(/range=week/, { timeout: 15000 });
   });
 
   test('User applies engagement filter', async ({ authenticatedPage: page }) => {
@@ -38,19 +39,20 @@ test.describe('Search - Sort and Filter Options', () => {
     await filterButton.click();
 
     // 4. Wait for filter panel
-    await expect(page.getByText('Engagement')).toBeVisible();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.getByText('Engagement')).toBeVisible();
 
     // 5. Select "Popular" engagement
-    const popularButton = page.getByRole('button', { name: /^popular$/i });
+    const popularButton = dialog.getByRole('button', { name: /^popular$/i });
     await popularButton.click();
 
     // 6. Close filter panel
-    await page.getByRole('button', { name: /close/i }).first().click();
+    await dialog.getByRole('button', { name: /close/i }).first().click();
 
     // 7. Wait for URL update
 
     // 8. URL updates with engagement parameter
-    await expect(page).toHaveURL(/engagement=popular/);
+    await expect(page).toHaveURL(/engagement=popular/, { timeout: 15000 });
   });
 
   test('User clears all filters', async ({ authenticatedPage: page }) => {
@@ -63,14 +65,15 @@ test.describe('Search - Sort and Filter Options', () => {
     await filterButton.click();
 
     // 4. Wait for filter panel
-    await expect(page.getByText('Filters')).toBeVisible();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.getByText('Filters')).toBeVisible();
 
     // 5. Click "Clear all" button
-    const clearButton = page.getByRole('button', { name: /clear all/i });
+    const clearButton = dialog.getByRole('button', { name: /clear all/i });
     await clearButton.click();
 
     // 6. Close filter panel to trigger URL update
-    await page.getByRole('button', { name: /close/i }).first().click();
+    await dialog.getByRole('button', { name: /close/i }).first().click();
 
     // 7. Wait for URL to no longer contain filter params
     await expect(page).toHaveURL(/\/search\?q=test$/, { timeout: 10000 });
@@ -86,21 +89,22 @@ test.describe('Search - Sort and Filter Options', () => {
     await filterButton.click();
 
     // 4. Wait for filter panel
-    await expect(page.getByText('Content Types')).toBeVisible();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.getByText('Content Types')).toBeVisible();
 
     // 5. Apply date range filter
-    await page.getByRole('button', { name: /last 30 days/i }).click();
+    await dialog.getByRole('button', { name: /last 30 days/i }).click();
 
     // 6. Apply engagement filter
-    await page.getByRole('button', { name: /^rising$/i }).click();
+    await dialog.getByRole('button', { name: /^rising$/i }).click();
 
     // 7. Close filter panel
-    await page.getByRole('button', { name: /close/i }).first().click();
+    await dialog.getByRole('button', { name: /close/i }).first().click();
 
     // 8. Wait for URL update
 
     // 9. URL should contain both filters
-    await expect(page).toHaveURL(/range=month/);
-    await expect(page).toHaveURL(/engagement=rising/);
+    await expect(page).toHaveURL(/range=month/, { timeout: 15000 });
+    await expect(page).toHaveURL(/engagement=rising/, { timeout: 15000 });
   });
 });

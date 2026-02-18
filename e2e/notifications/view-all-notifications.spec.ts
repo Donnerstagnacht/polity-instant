@@ -8,25 +8,28 @@ test.describe('Notifications - View All Notifications', () => {
     // 2. Navigate to notifications page
     await page.goto('/notifications');
 
+    // Wait for page to load
+    await expect(page.getByRole('heading', { name: /notifications/i })).toBeVisible({ timeout: 15000 });
+
     // 3. User is on "All" tab
     const allTab = page.getByRole('tab', { name: /all/i });
     await expect(allTab).toHaveAttribute('data-state', 'active');
 
-    // 4. Check if notifications exist
-    const notificationCards = page
-      .locator('[class*="CardContent"]')
-      .filter({ has: page.locator('p[class*="font-medium"]') });
-    const hasNotifications = await notificationCards
-      .first()
-      .isVisible()
-      .catch(() => false);
+    // 4. Check if notifications exist via the tab panel
+    const tabPanel = page.getByRole('tabpanel');
+    await expect(tabPanel).toBeVisible({ timeout: 10000 });
+
+    const notificationCards = tabPanel.locator('div[class*="cursor-pointer"]');
+    const emptyState = page.getByText(/no notifications yet|no notifications/i);
+
+    // Wait for data to load: either notifications or empty state will appear
+    await expect(notificationCards.first().or(emptyState)).toBeVisible({ timeout: 15000 });
+
+    const hasNotifications = await notificationCards.first().isVisible().catch(() => false);
 
     if (hasNotifications) {
       // 5. Each notification shows icon, sender, message, timestamp
       const firstNotification = notificationCards.first();
-
-      // Verify notification structure
-      await expect(firstNotification).toBeVisible();
 
       // Check for icon presence
       const icon = firstNotification.locator('svg').first();
@@ -37,7 +40,7 @@ test.describe('Notifications - View All Notifications', () => {
       await expect(timestamp).toBeVisible();
     } else {
       // No notifications - verify empty state
-      await expect(page.getByText(/no notifications yet/i)).toBeVisible();
+      await expect(page.getByText(/no notifications yet|no notifications/i)).toBeVisible();
     }
   });
 });

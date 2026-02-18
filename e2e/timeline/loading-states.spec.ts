@@ -2,11 +2,12 @@
 // seed: e2e/seed.spec.ts
 
 import { test, expect } from '../fixtures/test-base';
+import { gotoHomeAndDismissDialog } from '../helpers/navigation';
 test.describe('Timeline - Loading States', () => {
   test('Timeline shows loading indicator while fetching', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
     // 2. Navigate to home page
-    await page.goto('/');
+    await gotoHomeAndDismissDialog(page);
 
     // 3. Wait for the timeline header to load
     await expect(page.getByText(/your political ecosystem/i)).toBeVisible({ timeout: 15000 });
@@ -19,26 +20,23 @@ test.describe('Timeline - Loading States', () => {
   test('Timeline renders correctly after loading', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
     // 2. Navigate to home page
-    await page.goto('/');
+    await gotoHomeAndDismissDialog(page);
 
     // 3. Wait for timeline header
     await expect(page.getByText(/your political ecosystem/i)).toBeVisible({ timeout: 15000 });
 
-    // 4. Verify either content cards or empty state is shown
+    // 4. Verify either content cards or empty state is shown (use proper waiting)
     const cards = page.locator('[class*="card"], [class*="Card"]');
     const emptyState = page.getByText(/subscribe|discover/i);
 
-    const hasCards = (await cards.count()) > 0;
-    const hasEmptyState = await emptyState.isVisible().catch(() => false);
-
-    // One of these should be true
-    expect(hasCards || hasEmptyState).toBeTruthy();
+    // Wait for either cards or empty state to appear
+    await expect(cards.first().or(emptyState.first())).toBeVisible({ timeout: 15000 });
   });
 
   test('No loading state stuck on screen', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
     // 2. Navigate to home page
-    await page.goto('/');
+    await gotoHomeAndDismissDialog(page);
 
     // 3. Wait for loading to complete
     await page.waitForLoadState('networkidle');

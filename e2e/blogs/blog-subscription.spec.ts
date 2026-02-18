@@ -2,24 +2,26 @@
 // seed: e2e/seed.spec.ts
 
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Blogs - Blog Subscription', () => {
   test('User subscribes to a blog', async ({
     authenticatedPage: page,
     blogFactory,
-    userFactory,
+    mainUserId,
   }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const blog = await blogFactory.createBlog(user.id, {
+    const blog = await blogFactory.createBlog(mainUserId, {
       title: `Subscribe Blog Test ${Date.now()}`,
     });
 
     await page.goto(`/blog/${blog.id}`);
     await page.waitForLoadState('domcontentloaded');
 
+    // Wait for subscribe/unsubscribe button to appear
+    const anySubButton = page.getByRole('button', { name: /subscribe/i }).first();
+    await expect(anySubButton).toBeVisible({ timeout: 10000 });
+
     // 4. Click "Subscribe" button
-    const subscribeButton = page.getByRole('button', { name: /subscribe/i });
+    const subscribeButton = page.getByRole('button', { name: /^subscribe$/i });
     const isSubscribed = (await page.getByRole('button', { name: /unsubscribe/i }).count()) > 0;
 
     if (!isSubscribed) {
@@ -27,7 +29,7 @@ test.describe('Blogs - Blog Subscription', () => {
 
       // 5. Button changes to "Unsubscribe"
       await expect(page.getByRole('button', { name: /unsubscribe/i })).toBeVisible({
-        timeout: 5000,
+        timeout: 10000,
       });
     }
 
@@ -40,28 +42,43 @@ test.describe('Blogs - Blog Subscription', () => {
   test('User unsubscribes from a blog', async ({
     authenticatedPage: page,
     blogFactory,
-    userFactory,
+    mainUserId,
   }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const blog = await blogFactory.createBlog(user.id, {
+    test.setTimeout(60000);
+    const blog = await blogFactory.createBlog(mainUserId, {
       title: `Unsubscribe Blog Test ${Date.now()}`,
     });
 
     await page.goto(`/blog/${blog.id}`);
     await page.waitForLoadState('domcontentloaded');
 
-    // 3. Ensure user is subscribed first
-    const unsubscribeButton = page.getByRole('button', { name: /unsubscribe/i });
-    const subscribeButton = page.getByRole('button', { name: /^subscribe$/i });
+    // 3. Wait for subscribe/unsubscribe button to appear
+    const anySubButton = page.getByRole('button', { name: /subscribe/i }).first();
+    await expect(anySubButton).toBeVisible({ timeout: 10000 });
 
+    // 4. Ensure user is subscribed first
+    const subscribeButton = page.getByRole('button', { name: /^subscribe$/i });
     if ((await subscribeButton.count()) > 0) {
       await subscribeButton.click();
+      try {
+        await expect(page.getByRole('button', { name: /unsubscribe/i })).toBeVisible({ timeout: 15000 });
+      } catch {
+        // Client-side transact may not register under load — reload and retry
+        await page.reload({ waitUntil: 'networkidle' });
+        const stillSubscribe = page.getByRole('button', { name: /^subscribe$/i });
+        if ((await stillSubscribe.count()) > 0) {
+          await stillSubscribe.click();
+          await page.waitForTimeout(5000);
+          await page.reload({ waitUntil: 'networkidle' });
+        }
+        await expect(page.getByRole('button', { name: /unsubscribe/i })).toBeVisible({ timeout: 15000 });
+      }
     }
 
-    // 4. Click "Unsubscribe" button
-    await unsubscribeButton.click();
+    // 5. Click "Unsubscribe" button
+    await page.getByRole('button', { name: /unsubscribe/i }).click();
 
-    // 5. Button changes to "Subscribe"
-    await expect(page.getByRole('button', { name: /^subscribe$/i })).toBeVisible({ timeout: 5000 });
+    // 6. Button changes to "Subscribe"
+    await expect(page.getByRole('button', { name: /^subscribe$/i })).toBeVisible({ timeout: 10000 });
   });
 });

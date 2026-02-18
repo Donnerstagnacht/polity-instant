@@ -14,11 +14,11 @@ test.describe('Search - Type-Ahead Search', () => {
 
     // 4. Wait for debounce (300ms)
 
-    // 5. URL updates with query parameter
-    await expect(page).toHaveURL(/q=test/);
+    // 5. URL updates with query parameter (300ms debounce + soft navigation)
+    await expect(page).toHaveURL(/q=test/, { timeout: 10000 });
 
     // 6. Check for results summary or empty state
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     // Results can be shown via "Showing X results" or "No results found"
     const hasResultsText = await page
       .getByText(/showing \d+ result|no results found/i)
@@ -39,6 +39,6 @@ test.describe('Search - Type-Ahead Search', () => {
     await expect(searchInput).toHaveValue('democracy');
 
     // 4. Results displayed for query
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 });

@@ -2,7 +2,6 @@
 // seed: e2e/seed.spec.ts
 
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 import {
   navigateToBlog,
   clickSubscribeButton,
@@ -13,9 +12,8 @@ import {
 } from '../helpers/subscription';
 
 test.describe('Subscribe to Blog', () => {
-  test('User can subscribe to blog', async ({ authenticatedPage: page, blogFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const blog = await blogFactory.createBlog(user.id, { title: `Sub Blog ${Date.now()}` });
+  test('User can subscribe to blog', async ({ authenticatedPage: page, blogFactory, mainUserId }) => {
+    const blog = await blogFactory.createBlog(mainUserId, { title: `Sub Blog ${Date.now()}` });
 
     await navigateToBlog(page, blog.id);
 
@@ -36,9 +34,8 @@ test.describe('Subscribe to Blog', () => {
     expect(newCount).toBe(initialCount + 1);
   });
 
-  test('User can unsubscribe from blog', async ({ authenticatedPage: page, blogFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const blog = await blogFactory.createBlog(user.id, { title: `Unsub Blog ${Date.now()}` });
+  test('User can unsubscribe from blog', async ({ authenticatedPage: page, blogFactory, mainUserId }) => {
+    const blog = await blogFactory.createBlog(mainUserId, { title: `Unsub Blog ${Date.now()}` });
 
     await navigateToBlog(page, blog.id);
 

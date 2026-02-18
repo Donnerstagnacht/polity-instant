@@ -1,12 +1,11 @@
 // spec: e2e/test-plans/group-membership-test-plan.md
 
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Group Membership - Request to Join', () => {
   test('User can request to join a group', async ({ authenticatedPage: page, groupFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const group = await groupFactory.createGroup(user.id, {
+    const owner = await userFactory.createUser();
+    const group = await groupFactory.createGroup(owner.id, {
       name: `Test Group ${Date.now()}`,
     });
 
@@ -24,6 +23,6 @@ test.describe('Group Membership - Request to Join', () => {
 
     // 5. Verify button changes to "Request Pending"
     const pendingButton = page.getByRole('button', { name: /request pending|pending/i });
-    await expect(pendingButton).toBeVisible();
+    await expect(pendingButton).toBeVisible({ timeout: 15000 });
   });
 });

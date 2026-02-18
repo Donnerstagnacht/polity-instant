@@ -1,13 +1,11 @@
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Blog - Editor (Rich Text)', () => {
   let blogId: string;
 
-  test.beforeEach(async ({ authenticatedPage: page, blogFactory, userFactory }) => {
+  test.beforeEach(async ({ authenticatedPage: page, blogFactory, mainUserId }) => {
     // SETUP: Create a blog via factory so this test is self-contained
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const blog = await blogFactory.createBlog(user.id, {
+    const blog = await blogFactory.createBlog(mainUserId, {
       title: `Editor Test Blog ${Date.now()}`,
     });
     blogId = blog.id;

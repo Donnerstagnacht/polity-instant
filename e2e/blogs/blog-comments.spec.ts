@@ -8,31 +8,34 @@ test.describe('Blogs - Blog Comments System', () => {
   test('User adds top-level comment to blog', async ({
     authenticatedPage: page,
     blogFactory,
-    userFactory,
+    mainUserId,
   }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const blog = await blogFactory.createBlog(user.id, {
+    const blog = await blogFactory.createBlog(mainUserId, {
       title: `Comment Blog Test ${Date.now()}`,
     });
 
     await page.goto(`/blog/${blog.id}`);
     await page.waitForLoadState('domcontentloaded');
 
-    // 3. Click "Add Comment" button
-    const addCommentButton = page.getByRole('button', { name: /add comment|comment/i });
+    // Click "Add Comment" button to reveal the comment form (it's hidden by default)
+    const addCommentButton = page.getByRole('button', { name: /add comment/i });
+    await expect(addCommentButton).toBeVisible({ timeout: 15000 });
     await addCommentButton.click();
 
-    // 4. Enter comment text
-    const commentInput = page.getByPlaceholder(/write your comment/i).or(page.getByRole('textbox'));
-    await commentInput.fill('This is a test comment on the blog post');
+    // Fill the comment textarea
+    const commentInput = page.getByPlaceholder(/write your comment/i);
+    await expect(commentInput.first()).toBeVisible({ timeout: 5000 });
+    await commentInput.first().click();
+    await commentInput.first().fill('This is a test comment on the blog post');
 
-    // 5. Click "Post Comment"
-    const postButton = page.getByRole('button', { name: /post comment|post/i });
+    // Click "Post Comment" (should be enabled after text is entered)
+    const postButton = page.getByRole('button', { name: /post comment/i });
+    await expect(postButton).toBeEnabled({ timeout: 5000 });
     await postButton.click();
 
     // 6. Comment appears in comments list
-    await expect(page.getByText('This is a test comment on the blog post')).toBeVisible({
-      timeout: 5000,
+    await expect(page.getByText('This is a test comment on the blog post').first()).toBeVisible({
+      timeout: 10000,
     });
   });
 
@@ -40,7 +43,7 @@ test.describe('Blogs - Blog Comments System', () => {
     // 1. Authenticate as test user
     // 2. Navigate to blog page with comments
     await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // 3. Find a comment
     const comments = page.locator('[class*="flex gap-4 rounded-lg border p-4"]');
@@ -72,7 +75,7 @@ test.describe('Blogs - Blog Comments System', () => {
     // 1. Authenticate as test user
     // 2. Navigate to blog page with comments
     await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // 3. Find a comment
     const comments = page.locator('[class*="flex gap-4 rounded-lg border p-4"]');
@@ -101,7 +104,7 @@ test.describe('Blogs - Blog Comments System', () => {
     // 1. Authenticate as test user
     // 2. Navigate to blog with multiple comments
     await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // 3. Select "Sort by Votes" option
     const sortSelect = page.getByRole('combobox', { name: /sort/i });
@@ -122,7 +125,7 @@ test.describe('Blogs - Blog Comments System', () => {
     // 1. Authenticate as test user
     // 2. Navigate to blog with multiple comments
     await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // 3. Select "Sort by Date" option
     const sortSelect = page.getByRole('combobox', { name: /sort/i });

@@ -1,12 +1,10 @@
 // spec: e2e/test-plans/event-participation-test-plan.md
 
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Event Participation - View Participants', () => {
-  test('User can view participants list', async ({ authenticatedPage: page, eventFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const event = await eventFactory.createEvent(user.id, {
+  test('User can view participants list', async ({ authenticatedPage: page, eventFactory, mainUserId }) => {
+    const event = await eventFactory.createEvent(mainUserId, {
       title: `Test Event ${Date.now()}`,
     });
 

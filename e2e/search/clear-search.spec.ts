@@ -23,13 +23,8 @@ test.describe('Search - Clear Search', () => {
     // 6. Wait for debounce and URL update (300ms debounce + buffer)
     await page.waitForLoadState('domcontentloaded');
 
-    // 7. Wait for URL to update
-    await page.waitForURL(url => !url.searchParams.has('q') || url.searchParams.get('q') === '', {
-      timeout: 5000,
-    });
-
-    // 8. Verify URL updates (query parameter removed or empty)
-    await expect(page).not.toHaveURL(/q=testquery/);
+    // 7. Wait for URL to update (300ms debounce + soft navigation via pushState)
+    await expect(page).not.toHaveURL(/q=testquery/, { timeout: 20000 });
   });
 
   test('Clear button functionality', async ({ authenticatedPage: page }) => {
@@ -48,6 +43,6 @@ test.describe('Search - Clear Search', () => {
     // 5. Wait for update (300ms debounce)
 
     // 6. URL reflects new query
-    await expect(page).toHaveURL(/q=newquery/);
+    await expect(page).toHaveURL(/q=newquery/, { timeout: 10000 });
   });
 });

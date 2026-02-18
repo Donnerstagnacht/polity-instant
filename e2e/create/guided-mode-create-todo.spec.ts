@@ -1,77 +1,33 @@
 import { test, expect } from '../fixtures/test-base';
 test.describe('Create Feature', () => {
-  test('Guided Mode - Create Todo', async ({ page }) => {
-    // Navigate to create page
-    await page.goto('/create');
+  test('Guided Mode - Create Todo', async ({ authenticatedPage: page }) => {
+    await page.goto('/create/todo');
 
-    // Select Todos entity type
-    const todosOption = page
-      .locator('text=Todos')
-      .or(page.locator('[data-entity="todos"]'))
-      .first();
-    await todosOption.click();
-
-
-    // Enter todo title
-    const titleInput = page
-      .locator('input[name="title"]')
-      .or(page.getByPlaceholder(/title/i))
-      .first();
+    // Step 0: Title + Description (both on same step)
+    const titleInput = page.locator('#todo-title');
+    await expect(titleInput).toBeVisible();
     await titleInput.fill('Complete project documentation');
 
-    // Advance carousel
-    const nextButton = page
-      .locator('[data-testid="next-button"]')
-      .or(page.locator('button:has-text("Next")'))
-      .first();
-    if (await nextButton.isVisible()) {
+    const descInput = page.locator('#todo-description');
+    if (await descInput.isVisible()) {
+      await descInput.fill('Write comprehensive documentation for the new feature');
+    }
+
+    const nextButton = page.getByRole('button', { name: 'Next', exact: true });
+
+    // Navigate: Step 0→1→2→3 (3 clicks to reach review)
+    for (let i = 0; i < 3; i++) {
       await nextButton.click();
     }
 
-    // Enter description
-    const descriptionInput = page
-      .locator('textarea[name="description"]')
-      .or(page.getByPlaceholder(/description/i))
-      .first();
-    await descriptionInput.fill('Write comprehensive documentation for the new feature');
-
-    if (await nextButton.isVisible()) {
-      await nextButton.click();
-    }
-
-    // Set priority
-    const prioritySelect = page
-      .locator('select[name="priority"]')
-      .or(page.locator('[data-testid="priority-select"]'))
-      .first();
-    if (await prioritySelect.isVisible()) {
-      await prioritySelect.selectOption('high');
-    }
-
-    if (await nextButton.isVisible()) {
-      await nextButton.click();
-    }
-
-    // Set due date
-    const dueDateInput = page
-      .locator('input[type="date"]')
-      .or(page.locator('input[name="dueDate"]'))
-      .first();
-    if (await dueDateInput.isVisible()) {
-      await dueDateInput.fill('2024-12-31');
-    }
-
-    // Click Create Todo button
-    const createButton = page
-      .locator('button:has-text("Create")')
-      .or(page.locator('[data-testid="create-button"]'))
-      .first();
+    // Step 3: Review - Click Create Todo
+    const createButton = page.getByRole('button', { name: /create.*todo/i });
+    await expect(createButton).toBeVisible();
     await createButton.click();
 
     // Wait for success
     await page.waitForLoadState('networkidle');
 
-    // Verify success message or redirect
     const successMessage = await page
       .locator('text=created')
       .or(page.locator('[role="alert"]'))
@@ -79,7 +35,6 @@ test.describe('Create Feature', () => {
       .isVisible()
       .catch(() => false);
     const isRedirected = page.url().includes('/todos');
-
     expect(successMessage || isRedirected).toBeTruthy();
   });
 });

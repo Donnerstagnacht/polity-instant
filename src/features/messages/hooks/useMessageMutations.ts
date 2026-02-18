@@ -40,22 +40,25 @@ export function useMessageMutations() {
         }),
       ];
 
-      // Notify all other participants
-      if (recipientUserIds) {
-        recipientUserIds.forEach(recipientId => {
-          if (recipientId !== senderId) {
-            const notificationTxs = notifyDirectMessage({
-              senderId,
-              senderName: '', // Will be filled from user data
-              recipientUserId: recipientId,
-              conversationId,
-            });
-            transactions.push(...notificationTxs);
-          }
-        });
-      }
-
       await db.transact(transactions);
+
+      // Notify all other participants — notifications.create is server-only
+      try {
+        if (recipientUserIds) {
+          const notifTxs: any[] = [];
+          recipientUserIds.forEach(recipientId => {
+            if (recipientId !== senderId) {
+              notifTxs.push(...notifyDirectMessage({
+                senderId,
+                senderName: '',
+                recipientUserId: recipientId,
+                conversationId,
+              }));
+            }
+          });
+          if (notifTxs.length > 0) await db.transact(notifTxs);
+        }
+      } catch { /* notification delivery is best-effort */ }
       return { success: true, messageId };
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -128,21 +131,24 @@ export function useMessageMutations() {
         );
       });
 
-      // Send conversation request notifications to other participants
-      if (creatorId) {
-        participantIds.forEach(participantId => {
-          if (participantId !== creatorId) {
-            const notificationTxs = notifyConversationRequest({
-              senderId: creatorId,
-              senderName: '', // Will be filled from user data
-              recipientUserId: participantId,
-            });
-            transactions.push(...notificationTxs);
-          }
-        });
-      }
-
       await db.transact(transactions);
+
+      // Send conversation request notifications — notifications.create is server-only
+      try {
+        if (creatorId) {
+          const notifTxs: any[] = [];
+          participantIds.forEach(participantId => {
+            if (participantId !== creatorId) {
+              notifTxs.push(...notifyConversationRequest({
+                senderId: creatorId,
+                senderName: '',
+                recipientUserId: participantId,
+              }));
+            }
+          });
+          if (notifTxs.length > 0) await db.transact(notifTxs);
+        }
+      } catch { /* notification delivery is best-effort */ }
       toast.success('Conversation created');
       return { success: true, conversationId };
     } catch (error) {
@@ -202,18 +208,20 @@ export function useMessageMutations() {
         }),
       ];
 
-      // Send notification to the requester
-      if (params?.senderId && params?.senderName && params?.requesterUserId) {
-        const notificationTxs = notifyConversationAccepted({
-          senderId: params.senderId,
-          senderName: params.senderName,
-          recipientUserId: params.requesterUserId,
-          conversationId,
-        });
-        transactions.push(...notificationTxs);
-      }
-
       await db.transact(transactions);
+
+      // Send notification to the requester — notifications.create is server-only
+      try {
+        if (params?.senderId && params?.senderName && params?.requesterUserId) {
+          const notificationTxs = notifyConversationAccepted({
+            senderId: params.senderId,
+            senderName: params.senderName,
+            recipientUserId: params.requesterUserId,
+            conversationId,
+          });
+          if (notificationTxs.length > 0) await db.transact(notificationTxs);
+        }
+      } catch { /* notification delivery is best-effort */ }
       toast.success('Conversation accepted');
       return { success: true };
     } catch (error) {

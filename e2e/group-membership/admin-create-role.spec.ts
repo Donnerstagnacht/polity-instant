@@ -1,18 +1,17 @@
 // spec: e2e/test-plans/group-membership-test-plan.md
 
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
+import { gotoWithRetry } from '../helpers/navigation';
 
 test.describe('Group Membership - Role Creation', () => {
-  test('Admin can create new role', async ({ authenticatedPage: page, groupFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const group = await groupFactory.createGroup(user.id, {
+  test('Admin can create new role', async ({ authenticatedPage: page, groupFactory, mainUserId }) => {
+    const group = await groupFactory.createGroup(mainUserId, {
       name: `Test Group ${Date.now()}`,
     });
 
     // 1. Authenticate as admin user
-    // 2. Navigate to memberships page
-    await page.goto(`/group/${group.id}/memberships`);
+    // 2. Navigate to memberships page (retry on Access Denied from sync delay)
+    await gotoWithRetry(page, `/group/${group.id}/memberships`);
 
     // 3. Navigate to Roles tab
     const rolesTab = page.getByRole('tab', { name: /role/i });

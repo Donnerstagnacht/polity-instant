@@ -19,12 +19,16 @@ interface EnsureUserProps {
 export function EnsureUser({ children }: EnsureUserProps) {
   const { user } = db.useAuth();
 
-  // Query the user data directly
-  const { isLoading, error } = db.useQuery({
-    $users: {
-      $: { where: { id: user?.id } },
-    },
-  });
+  // Query the user data directly — skip when user is not yet resolved
+  const { isLoading, error } = db.useQuery(
+    user?.id
+      ? {
+          $users: {
+            $: { where: { id: user.id } },
+          },
+        }
+      : null
+  );
 
   // Show loading state while fetching user record
   if (isLoading) {

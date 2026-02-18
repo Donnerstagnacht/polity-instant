@@ -2,16 +2,14 @@
 // seed: e2e/seed.spec.ts
 
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Events - Display Event Details', () => {
   test('User views event details on event page', async ({
     authenticatedPage: page,
     eventFactory,
-    userFactory,
+    mainUserId,
   }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const event = await eventFactory.createEvent(user.id, {
+    const event = await eventFactory.createEvent(mainUserId, {
       title: `Display Event Test ${Date.now()}`,
     });
 

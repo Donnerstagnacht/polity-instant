@@ -109,9 +109,20 @@ test.describe('Group Conversations - Member Synchronization', () => {
     const group = await groupFactory.createGroup(authUser.id, { name: uniqueName });
     await groupFactory.createGroupConversation(group.id, uniqueName, [authUser.id], authUser.id);
 
-    // Navigate to messages
+    // Navigate to messages (retry with reload for sync delay)
     await page.goto('/messages');
     await page.waitForLoadState('domcontentloaded');
+
+    let found = await page.getByText(uniqueName).isVisible({ timeout: 5000 }).catch(() => false);
+    if (!found) {
+      await page.reload();
+      await page.waitForLoadState('domcontentloaded');
+      found = await page.getByText(uniqueName).isVisible({ timeout: 5000 }).catch(() => false);
+    }
+    if (!found) {
+      await page.reload();
+      await page.waitForLoadState('domcontentloaded');
+    }
 
     // Verify conversation exists
     await expect(page.getByText(uniqueName)).toBeVisible({ timeout: 10000 });
@@ -120,7 +131,7 @@ test.describe('Group Conversations - Member Synchronization', () => {
     await page.getByText(uniqueName).click();
 
     // Verify "1 members" or similar
-    await expect(page.getByText(/1 member/i)).toBeVisible();
+    await expect(page.getByText(/1 member/i)).toBeVisible({ timeout: 10000 });
   });
 
   test('Multiple members can see the same group conversation', async ({ authenticatedPage: page }) => {

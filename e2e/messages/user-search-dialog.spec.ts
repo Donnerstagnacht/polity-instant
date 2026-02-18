@@ -146,6 +146,7 @@ test.describe('Chat/Messages - User Search Dialog', () => {
   });
 
   test('Clicking user result creates conversation and closes dialog', async ({ authenticatedPage: page, userFactory }) => {
+    test.setTimeout(60000);
     // Create a searchable user so we get results
     const otherUser = await userFactory.createUser();
 
@@ -160,19 +161,18 @@ test.describe('Chat/Messages - User Search Dialog', () => {
     const searchInput = page.getByPlaceholder(/search users by name or handle/i);
     await searchInput.fill(otherUser.name || 'test');
 
+    // Wait for search results to appear (type-ahead with debounce)
     const userResults = page.getByRole('dialog').locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
-    const hasResults = (await userResults.count()) > 0;
+    await expect(userResults.first()).toBeVisible({ timeout: 10000 });
 
-    if (hasResults) {
-      await userResults.first().click();
+    await userResults.first().click();
 
-      // Dialog should close
-      await expect(page.getByRole('dialog')).not.toBeVisible();
+    // Dialog should close
+    await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 10000 });
 
-      // Conversation should be selected
-      const conversationHeader = page.locator('h3').first();
-      await expect(conversationHeader).toBeVisible();
-    }
+    // Conversation should be selected
+    const conversationHeader = page.locator('h3').first();
+    await expect(conversationHeader).toBeVisible({ timeout: 10000 });
   });
 
   test('Dialog can be closed without creating conversation', async ({ authenticatedPage: page }) => {

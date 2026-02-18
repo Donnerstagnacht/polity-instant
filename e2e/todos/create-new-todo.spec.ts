@@ -31,7 +31,7 @@ test.describe('Todos - Create New Todo', () => {
     }
 
     // 5. Navigate through carousel steps to reach the Create button
-    const nextButton = page.getByRole('button', { name: /next/i });
+    const nextButton = page.getByRole('button', { name: 'Next', exact: true });
     await nextButton.click(); // Step 1 → Step 2 (Details)
     await nextButton.click(); // Step 2 → Step 3 (Settings)
     await nextButton.click(); // Step 3 → Step 4 (Review)

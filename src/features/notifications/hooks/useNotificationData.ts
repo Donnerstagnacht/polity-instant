@@ -29,7 +29,7 @@ export function useUserNotifications(userId?: string) {
     const read: any[] = [];
 
     notifications.forEach((notification: any) => {
-      if (notification.read) {
+      if (notification.isRead) {
         read.push(notification);
       } else {
         unread.push(notification);

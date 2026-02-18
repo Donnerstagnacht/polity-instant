@@ -1,31 +1,18 @@
 import { test, expect } from '../fixtures/test-base';
 test.describe('Create Feature', () => {
-  test('Load Create Page', async ({ page }) => {
+  test('Load Create Page', async ({ authenticatedPage: page }) => {
     // Navigate to create page
     await page.goto('/create');
 
     // Verify page loads successfully
     await expect(page).toHaveURL('/create');
 
-    // Verify guided mode is default
-    const guidedModeIndicator = page
-      .locator('[data-testid="guided-mode"]')
-      .or(page.locator('text=Guided Mode'))
-      .first();
-    await expect(guidedModeIndicator).toBeVisible();
-
-    // Verify mode toggle is visible
-    const modeToggle = page
-      .locator('[data-testid="mode-toggle"]')
-      .or(page.getByRole('switch'))
-      .first();
-    await expect(modeToggle).toBeVisible();
-
-    // Verify entity type selection carousel displays
-    const entityCarousel = page
-      .locator('[data-testid="entity-carousel"]')
-      .or(page.locator('text=Groups').or(page.locator('text=Events')))
-      .first();
-    await expect(entityCarousel).toBeVisible();
+    // Verify dashboard shows entity creation links
+    await expect(page.locator('a[href="/create/group"]')).toBeVisible();
+    await expect(page.locator('a[href="/create/event"]')).toBeVisible();
+    await expect(page.locator('a[href="/create/amendment"]')).toBeVisible();
+    await expect(page.locator('a[href="/create/blog"]')).toBeVisible();
+    await expect(page.locator('a[href="/create/todo"]')).toBeVisible();
+    await expect(page.locator('a[href="/create/statement"]')).toBeVisible();
   });
 });

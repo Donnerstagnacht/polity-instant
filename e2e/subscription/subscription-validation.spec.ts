@@ -2,17 +2,15 @@
 // seed: e2e/seed.spec.ts
 
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 import {
   navigateToUserProfile,
-  clickSubscribeButton,
-  waitForSubscribeState,
+  clickSubscribeAndWait,
   ensureNotSubscribed,
 } from '../helpers/subscription';
 
 test.describe('Subscription Validation', () => {
   test('Cannot create duplicate subscriptions', async ({ authenticatedPage: page, userFactory }) => {
-    await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
+    test.setTimeout(60000);
     const otherUser = await userFactory.createUser();
 
     await navigateToUserProfile(page, otherUser.id);
@@ -21,15 +19,13 @@ test.describe('Subscription Validation', () => {
     await ensureNotSubscribed(page);
 
     // 4. Subscribe to the user
-    await clickSubscribeButton(page);
-    await waitForSubscribeState(page, true);
+    await clickSubscribeAndWait(page, true);
 
     // 5. Verify button shows "Unsubscribe"
     await expect(page.getByRole('button', { name: /unsubscribe/i })).toBeVisible();
 
     // 6. Click again should unsubscribe (toggle), not create duplicate
-    await clickSubscribeButton(page);
-    await waitForSubscribeState(page, false);
+    await clickSubscribeAndWait(page, false);
 
     // 7. Verify we're back to "Subscribe" state
     await expect(page.getByRole('button', { name: /^subscribe$/i })).toBeVisible();

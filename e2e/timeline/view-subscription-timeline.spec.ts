@@ -2,11 +2,12 @@
 // seed: e2e/seed.spec.ts
 
 import { test, expect } from '../fixtures/test-base';
+import { gotoHomeAndDismissDialog } from '../helpers/navigation';
 test.describe('Timeline - View Subscription-Based Timeline', () => {
   test('User sees timeline events from their subscriptions', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
     // 2. Navigate to home page
-    await page.goto('/');
+    await gotoHomeAndDismissDialog(page);
 
     // 3. Wait for timeline header to appear
     await expect(page.getByText(/your political ecosystem/i)).toBeVisible({ timeout: 15000 });

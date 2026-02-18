@@ -2,26 +2,22 @@
 // seed: e2e/seed.spec.ts
 
 import { test, expect } from '../fixtures/test-base';
+import { gotoHomeAndDismissDialog } from '../helpers/navigation';
 test.describe('Timeline - Filtering', () => {
   test.beforeEach(async ({ authenticatedPage: page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('domcontentloaded');
+    await gotoHomeAndDismissDialog(page);
   });
 
   test('Filter panel is accessible', async ({ authenticatedPage: page }) => {
-    // Wait for the page content to load (loading indicator disappears)
-    await expect(page.getByText(/loading/i)).not.toBeVisible({ timeout: 15000 });
-
-    // Look for filter button, panel, or filter-related UI
+    // Wait for the filter button to be visible in the timeline header
     const filterButton = page.getByRole('button', { name: /filter/i });
-    const filterPanel = page.locator('[data-testid="filter-panel"], [class*="filter"]');
-    const filterCheckbox = page.locator('input[type="checkbox"]');
+    await expect(filterButton).toBeVisible({ timeout: 15000 });
 
-    const hasFilterButton = await filterButton.isVisible().catch(() => false);
-    const hasFilterPanel = (await filterPanel.count()) > 0;
-    const hasCheckbox = (await filterCheckbox.count()) > 0;
+    // Click the filter button to open the filter panel (Sheet)
+    await filterButton.click();
 
-    expect(hasFilterButton || hasFilterPanel || hasCheckbox).toBe(true);
+    // Verify the filter panel opens with content type checkboxes
+    await expect(page.getByText('Content Types')).toBeVisible({ timeout: 5000 });
   });
 
   test('Can filter by content type', async ({ authenticatedPage: page }) => {
@@ -159,8 +155,7 @@ test.describe('Timeline - Filtering', () => {
 
 test.describe('Timeline - Filter UI', () => {
   test.beforeEach(async ({ authenticatedPage: page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('domcontentloaded');
+    await gotoHomeAndDismissDialog(page);
   });
 
   test('Active filters are displayed as removable pills', async ({ authenticatedPage: page }) => {

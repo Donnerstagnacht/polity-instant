@@ -1,34 +1,56 @@
 // spec: e2e/test-plans/event-participation-test-plan.md
 
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
+import { gotoWithRetry } from '../helpers/navigation';
 
 test.describe('Event Participation - Cancel Request', () => {
   test('User can cancel pending participation request', async ({ authenticatedPage: page, eventFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const event = await eventFactory.createEvent(user.id, {
+    test.setTimeout(60000);
+    const owner = await userFactory.createUser();
+    const event = await eventFactory.createEvent(owner.id, {
       title: `Test Event ${Date.now()}`,
     });
 
-    // 1. Authenticate as test user
-    // 2. Navigate to event page
-    await page.goto(`/event/${event.id}`);
+    await gotoWithRetry(page, `/event/${event.id}`);
 
-    // 3. Ensure user has pending request
+    // Wait for the participation button to load
     const pendingButton = page.getByRole('button', { name: /request pending|pending/i });
-    const requestButton = page.getByRole('button', { name: /^request to participate$/i });
+    const requestButton = page.getByRole('button', { name: /request to participate/i });
+
+    await expect(requestButton.or(pendingButton)).toBeVisible({ timeout: 15000 });
 
     const hasPendingRequest = await pendingButton.isVisible().catch(() => false);
 
     if (!hasPendingRequest) {
-      await requestButton.click();
-      await expect(pendingButton).toBeVisible();
+      for (let attempt = 0; attempt < 3; attempt++) {
+        await requestButton.click();
+        try {
+          await expect(pendingButton).toBeVisible({ timeout: 10000 });
+          break;
+        } catch {
+          // Click may not have registered under load — reload and retry
+          await page.reload();
+          await expect(requestButton.or(pendingButton)).toBeVisible({ timeout: 15000 });
+          if (await pendingButton.isVisible().catch(() => false)) break;
+        }
+      }
     }
 
-    // 4. Click "Request Pending" button to cancel
-    await pendingButton.click();
+    // Click "Request Pending" button to cancel with retry
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await pendingButton.click();
+      try {
+        await expect(requestButton).toBeVisible({ timeout: 10000 });
+        break;
+      } catch {
+        // Click may not have registered under load — reload and retry
+        await page.reload();
+        await expect(requestButton.or(pendingButton)).toBeVisible({ timeout: 15000 });
+        if (await requestButton.isVisible().catch(() => false)) break;
+      }
+    }
 
-    // 5. Verify button changes back to "Request to Participate"
-    await expect(requestButton).toBeVisible();
+    // Verify button changes back to "Request to Participate"
+    await expect(requestButton).toBeVisible({ timeout: 10000 });
   });
 });

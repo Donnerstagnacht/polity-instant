@@ -187,7 +187,7 @@ export class AmendmentFactory extends FactoryBase {
     amendmentId: string,
     userId: string,
     roleId: string,
-    status: string = 'member'
+    status = 'member'
   ): Promise<string> {
     const collaboratorId = this.generateId();
     await adminTransact([
@@ -201,6 +201,7 @@ export class AmendmentFactory extends FactoryBase {
 
   /**
    * Create a change request for an amendment.
+   * Pass documentId to also create a document discussion entry so the CR appears in the Open tab.
    */
   async createChangeRequest(
     amendmentId: string,
@@ -211,19 +212,24 @@ export class AmendmentFactory extends FactoryBase {
       description?: string;
       proposedChange?: string;
       status?: string;
+      documentId?: string;
     } = {}
   ): Promise<string> {
     const changeRequestId = overrides.id ?? this.generateId();
     const now = new Date();
+    const crTitle = overrides.title ?? 'E2E Change Request';
+    const crDescription = overrides.description ?? 'Test change request';
+    const crProposedChange = overrides.proposedChange ?? 'Proposed text change';
+    const txns: any[] = [];
 
-    await adminTransact([
+    txns.push(
       tx.changeRequests[changeRequestId]
         .update({
-          title: overrides.title ?? 'E2E Change Request',
-          description: overrides.description ?? 'Test change request',
-          proposedChange: overrides.proposedChange ?? 'Proposed text change',
+          title: crTitle,
+          description: crDescription,
+          proposedChange: crProposedChange,
           status: overrides.status ?? 'proposed',
-          characterCount: (overrides.proposedChange ?? 'Proposed text change').length,
+          characterCount: crProposedChange.length,
           source: 'collaborator',
           requiresVoting: false,
           votingThreshold: 50,
@@ -231,8 +237,45 @@ export class AmendmentFactory extends FactoryBase {
           createdAt: now,
           updatedAt: now,
         })
-        .link({ amendment: amendmentId, creator: creatorId }),
-    ]);
+        .link({ amendment: amendmentId, creator: creatorId })
+    );
+
+    // If documentId provided, add discussion entry so the CR appears in the
+    // ChangeRequestsView "Open" tab (which reads from document.discussions).
+    if (overrides.documentId) {
+      const discussionId = this.generateId();
+      txns.push(
+        tx.documents[overrides.documentId].update({
+          discussions: [
+            {
+              id: discussionId,
+              crId: crTitle,
+              title: crTitle,
+              description: crDescription,
+              justification: '',
+              createdAt: now.getTime(),
+              userId: creatorId,
+              comments: [],
+            },
+          ],
+          content: [
+            { type: 'h1', children: [{ text: 'Amendment Title' }] },
+            {
+              type: 'p',
+              children: [
+                { text: 'Amendment content for E2E testing. ' },
+                {
+                  text: crProposedChange,
+                  [`suggestion_${discussionId}`]: { id: discussionId, type: 'insert' },
+                },
+              ],
+            },
+          ],
+        })
+      );
+    }
+
+    await adminTransact(txns);
     this.trackEntity('changeRequests', changeRequestId);
     return changeRequestId;
   }

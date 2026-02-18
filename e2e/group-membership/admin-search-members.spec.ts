@@ -1,12 +1,10 @@
 // spec: e2e/test-plans/group-membership-test-plan.md
 
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Group Membership - Search Members', () => {
-  test('Admin can search members by name', async ({ authenticatedPage: page, groupFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const group = await groupFactory.createGroup(user.id, {
+  test('Admin can search members by name', async ({ authenticatedPage: page, groupFactory, mainUserId }) => {
+    const group = await groupFactory.createGroup(mainUserId, {
       name: `Test Group ${Date.now()}`,
     });
 
@@ -14,11 +12,11 @@ test.describe('Group Membership - Search Members', () => {
     // 2. Navigate to memberships page
     await page.goto(`/group/${group.id}/memberships`);
 
-    // 3. Find search input
+    // 3. Find search input (wait for PermissionGuard to resolve)
     const searchInput = page
       .getByRole('textbox', { name: /search/i })
       .or(page.getByPlaceholder(/search/i));
-    await expect(searchInput).toBeVisible();
+    await expect(searchInput).toBeVisible({ timeout: 15000 });
 
     // 4. Enter search term
     await searchInput.fill('test');

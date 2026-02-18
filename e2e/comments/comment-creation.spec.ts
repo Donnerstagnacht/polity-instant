@@ -2,12 +2,10 @@
 // seed: e2e/seed.spec.ts
 
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Comments - Create Basic Comment', () => {
-  test('Create top-level comment', async ({ authenticatedPage: page, blogFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const blog = await blogFactory.createBlog(user.id, { title: `Comment Blog ${Date.now()}` });
+  test('Create top-level comment', async ({ authenticatedPage: page, blogFactory, mainUserId }) => {
+    const blog = await blogFactory.createBlog(mainUserId, { title: `Comment Blog ${Date.now()}` });
 
     await page.goto(`/blog/${blog.id}`);
     await page.waitForLoadState('domcontentloaded');
@@ -33,9 +31,8 @@ test.describe('Comments - Create Basic Comment', () => {
     // Timestamp recorded
   });
 
-  test('Create comment with long text', async ({ authenticatedPage: page, blogFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const blog = await blogFactory.createBlog(user.id, { title: `Long Comment Blog ${Date.now()}` });
+  test('Create comment with long text', async ({ authenticatedPage: page, blogFactory, mainUserId }) => {
+    const blog = await blogFactory.createBlog(mainUserId, { title: `Long Comment Blog ${Date.now()}` });
 
     await page.goto(`/blog/${blog.id}`);
     await page.waitForLoadState('domcontentloaded');
@@ -65,9 +62,8 @@ The formatting should be preserved when the comment is posted and displayed.`;
     await expect(page.locator('p').filter({ hasText: /This is a very long comment/i })).toBeVisible({ timeout: 3000 });
   });
 
-  test('Create comment with special characters', async ({ authenticatedPage: page, blogFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const blog = await blogFactory.createBlog(user.id, { title: `Special Comment Blog ${Date.now()}` });
+  test('Create comment with special characters', async ({ authenticatedPage: page, blogFactory, mainUserId }) => {
+    const blog = await blogFactory.createBlog(mainUserId, { title: `Special Comment Blog ${Date.now()}` });
 
     await page.goto(`/blog/${blog.id}`);
     await page.waitForLoadState('domcontentloaded');

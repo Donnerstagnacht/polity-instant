@@ -1,9 +1,11 @@
 import { Card, CardContent } from '@/components/ui/card';
+import { Loader2 } from 'lucide-react';
 import { Notification } from '../types/notification.types';
 import { NotificationItem } from './NotificationItem';
 
 interface NotificationsListProps {
   notifications: Notification[];
+  isLoading?: boolean;
   emptyIcon: React.ComponentType<{ className?: string }>;
   emptyTitle: string;
   emptyDescription: string;
@@ -13,12 +15,23 @@ interface NotificationsListProps {
 
 export function NotificationsList({
   notifications,
+  isLoading,
   emptyIcon: EmptyIcon,
   emptyTitle,
   emptyDescription,
   onNotificationClick,
   onDeleteNotification,
 }: NotificationsListProps) {
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center py-12">
+          <Loader2 className="mb-4 h-12 w-12 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (notifications.length === 0) {
     return (
       <Card>

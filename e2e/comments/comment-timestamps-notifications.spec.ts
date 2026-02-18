@@ -2,12 +2,10 @@
 // seed: e2e/seed.spec.ts
 
 import { test } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Comments - Timestamps and Notifications', () => {
-  test('Display creation time', async ({ authenticatedPage: page, blogFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const blog = await blogFactory.createBlog(user.id, { title: `Timestamp Blog ${Date.now()}` });
+  test('Display creation time', async ({ authenticatedPage: page, blogFactory, mainUserId }) => {
+    const blog = await blogFactory.createBlog(mainUserId, { title: `Timestamp Blog ${Date.now()}` });
 
     await page.goto(`/blog/${blog.id}`);
     await page.waitForLoadState('domcontentloaded');
@@ -30,9 +28,8 @@ test.describe('Comments - Timestamps and Notifications', () => {
     }
   });
 
-  test('Display updated time', async ({ authenticatedPage: page, blogFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const blog = await blogFactory.createBlog(user.id, { title: `Updated Blog ${Date.now()}` });
+  test('Display updated time', async ({ authenticatedPage: page, blogFactory, mainUserId }) => {
+    const blog = await blogFactory.createBlog(mainUserId, { title: `Updated Blog ${Date.now()}` });
 
     await page.goto(`/blog/${blog.id}`);
     await page.waitForLoadState('domcontentloaded');
@@ -49,9 +46,8 @@ test.describe('Comments - Timestamps and Notifications', () => {
     }
   });
 
-  test('Notify of new comment', async ({ authenticatedPage: page, blogFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const blog = await blogFactory.createBlog(user.id, { title: `Notify Blog ${Date.now()}` });
+  test('Notify of new comment', async ({ authenticatedPage: page, blogFactory, mainUserId }) => {
+    const blog = await blogFactory.createBlog(mainUserId, { title: `Notify Blog ${Date.now()}` });
 
     await page.goto(`/blog/${blog.id}`);
     await page.waitForLoadState('domcontentloaded');
@@ -74,9 +70,8 @@ test.describe('Comments - Timestamps and Notifications', () => {
     // Link to comment
   });
 
-  test('Notify of reply', async ({ authenticatedPage: page, blogFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const blog = await blogFactory.createBlog(user.id, { title: `Reply Blog ${Date.now()}` });
+  test('Notify of reply', async ({ authenticatedPage: page, blogFactory, mainUserId }) => {
+    const blog = await blogFactory.createBlog(mainUserId, { title: `Reply Blog ${Date.now()}` });
 
     await page.goto(`/blog/${blog.id}`);
     await page.waitForLoadState('domcontentloaded');

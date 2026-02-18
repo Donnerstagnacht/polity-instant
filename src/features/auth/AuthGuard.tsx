@@ -23,6 +23,8 @@ export function AuthGuard({ children, requireAuth = true, redirectTo, fallback }
   const [isMounted, setIsMounted] = useState(false);
   const [authInitialized, setAuthInitialized] = useState(false);
 
+
+
   // Track when component has mounted to avoid hydration issues
   useEffect(() => {
     setIsMounted(true);

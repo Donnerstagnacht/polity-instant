@@ -2,12 +2,14 @@
 // seed: e2e/seed.spec.ts
 
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Comments - Loading States and Error Handling', () => {
-  test('Display loading state while fetching comments', async ({ authenticatedPage: page, blogFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const blog = await blogFactory.createBlog(user.id, { title: `Loading Blog ${Date.now()}` });
+  test('Display loading state while fetching comments', async ({
+    authenticatedPage: page,
+    blogFactory,
+    mainUserId,
+  }) => {
+    const blog = await blogFactory.createBlog(mainUserId, { title: `Loading Blog ${Date.now()}` });
 
     const navigationPromise = page.goto(`/blog/${blog.id}`);
 
@@ -24,9 +26,14 @@ test.describe('Comments - Loading States and Error Handling', () => {
     // Smooth transition
   });
 
-  test('Handle create comment validation errors', async ({ authenticatedPage: page, blogFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const blog = await blogFactory.createBlog(user.id, { title: `Validation Blog ${Date.now()}` });
+  test('Handle create comment validation errors', async ({
+    authenticatedPage: page,
+    blogFactory,
+    mainUserId,
+  }) => {
+    const blog = await blogFactory.createBlog(mainUserId, {
+      title: `Validation Blog ${Date.now()}`,
+    });
 
     await page.goto(`/blog/${blog.id}`);
     await page.waitForLoadState('domcontentloaded');
@@ -42,9 +49,14 @@ test.describe('Comments - Loading States and Error Handling', () => {
     // 5. Validation enforced via disabled button - user cannot submit empty comment
   });
 
-  test('Handle network error during comment creation', async ({ authenticatedPage: page, blogFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const blog = await blogFactory.createBlog(user.id, { title: `Network Error Blog ${Date.now()}` });
+  test('Handle network error during comment creation', async ({
+    authenticatedPage: page,
+    blogFactory,
+    mainUserId,
+  }) => {
+    const blog = await blogFactory.createBlog(mainUserId, {
+      title: `Network Error Blog ${Date.now()}`,
+    });
 
     await page.goto(`/blog/${blog.id}`);
     await page.waitForLoadState('domcontentloaded');
@@ -72,9 +84,14 @@ test.describe('Comments - Loading States and Error Handling', () => {
     await page.context().setOffline(false);
   });
 
-  test('Handle comment pagination', async ({ authenticatedPage: page, blogFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const blog = await blogFactory.createBlog(user.id, { title: `Pagination Blog ${Date.now()}` });
+  test('Handle comment pagination', async ({
+    authenticatedPage: page,
+    blogFactory,
+    mainUserId,
+  }) => {
+    const blog = await blogFactory.createBlog(mainUserId, {
+      title: `Pagination Blog ${Date.now()}`,
+    });
 
     await page.goto(`/blog/${blog.id}`);
     await page.waitForLoadState('domcontentloaded');
@@ -95,24 +112,37 @@ test.describe('Comments - Loading States and Error Handling', () => {
     }
   });
 
-  test('Handle rate limiting', async ({ authenticatedPage: page, blogFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const blog = await blogFactory.createBlog(user.id, { title: `Rate Limit Blog ${Date.now()}` });
+  test('Handle rate limiting', async ({ authenticatedPage: page, blogFactory, mainUserId }) => {
+    test.setTimeout(60000);
+    const blog = await blogFactory.createBlog(mainUserId, {
+      title: `Rate Limit Blog ${Date.now()}`,
+    });
 
     await page.goto(`/blog/${blog.id}`);
     await page.waitForLoadState('domcontentloaded');
 
     // 3. User posts multiple comments rapidly
     for (let i = 0; i < 5; i++) {
+      // Wait for "Add Comment" button to appear (form is closed after each post)
       const addCommentButton = page.getByRole('button', { name: /add comment/i });
+      await expect(addCommentButton).toBeVisible({ timeout: 10000 });
       await addCommentButton.click();
 
+      // Wait for form to appear and React to settle
       const commentInput = page.getByPlaceholder('Write your comment...');
+      await expect(commentInput).toBeVisible({ timeout: 5000 });
+
       await commentInput.fill(`Rapid comment ${i + 1}`);
 
+      // Wait for post button to be enabled after filling text
       const postButton = page.getByRole('button', { name: /post/i });
+      await expect(postButton).toBeEnabled({ timeout: 5000 });
       await postButton.click();
 
+      // Wait for comment to appear in the list (use paragraph to avoid matching the textarea)
+      await expect(page.locator('p').filter({ hasText: `Rapid comment ${i + 1}` })).toBeVisible({
+        timeout: 10000,
+      });
     }
 
     // 4. Check rate limit

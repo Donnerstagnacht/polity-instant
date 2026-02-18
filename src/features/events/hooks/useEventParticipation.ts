@@ -107,7 +107,8 @@ export function useEventParticipation(eventId: string) {
     setIsLoading(true);
     try {
       const newParticipationId = id();
-      const transactions: any[] = [
+
+      await db.transact([
         tx.eventParticipants[newParticipationId]
           .update({
             createdAt: new Date().toISOString(),
@@ -117,18 +118,18 @@ export function useEventParticipation(eventId: string) {
             user: user.id,
             event: eventId,
           }),
-      ];
+      ]);
 
-      // Send notification to event admins
-      const notificationTxs = notifyParticipationRequest({
-        senderId: user.id,
-        senderName: user.email?.split('@')[0] || 'A user',
-        eventId,
-        eventTitle: event?.title || 'Event',
-      });
-      transactions.push(...notificationTxs);
-
-      await db.transact(transactions);
+      // Send notification separately — notifications.create is server-only
+      try {
+        const notificationTxs = notifyParticipationRequest({
+          senderId: user.id,
+          senderName: user.email?.split('@')[0] || 'A user',
+          eventId,
+          eventTitle: event?.title || 'Event',
+        });
+        if (notificationTxs.length > 0) await db.transact(notificationTxs);
+      } catch { /* notification delivery is best-effort */ }
       toast.success('Participation request sent successfully');
     } catch (error) {
       console.error('Failed to request participation:', error);

@@ -1,17 +1,15 @@
 // spec: e2e/test-plans/groups-test-plan.md
 
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Groups - Display Group Details', () => {
   test('User views group details on group page', async ({
     authenticatedPage: page,
     groupFactory,
-    userFactory,
+    mainUserId,
   }) => {
     // SETUP: Create a group via factory so this test is self-contained
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const group = await groupFactory.createGroup(user.id, {
+    const group = await groupFactory.createGroup(mainUserId, {
       name: `Details Test Group ${Date.now()}`,
       description: 'E2E test group for display details',
     });
@@ -31,11 +29,10 @@ test.describe('Groups - Display Group Details', () => {
   test('Group stats bar displays accurate counts', async ({
     authenticatedPage: page,
     groupFactory,
-    userFactory,
+    mainUserId,
   }) => {
     // SETUP: Create a group via factory
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const group = await groupFactory.createGroup(user.id, {
+    const group = await groupFactory.createGroup(mainUserId, {
       name: `Stats Test Group ${Date.now()}`,
     });
 

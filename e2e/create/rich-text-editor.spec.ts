@@ -1,16 +1,8 @@
 import { test, expect } from '../fixtures/test-base';
 test.describe('Create Feature', () => {
-  test('Rich Text Editor', async ({ page }) => {
-    // Navigate to create page
-    await page.goto('/create');
-
-    // Select Blog entity type (which typically has rich text editor)
-    const blogsOption = page
-      .locator('text=Blogs')
-      .or(page.locator('[data-entity="blogs"]'))
-      .first();
-    await blogsOption.click();
-
+  test('Rich Text Editor', async ({ authenticatedPage: page }) => {
+    // Navigate to create blog page
+    await page.goto('/create/blog');
 
     // Fill in title first
     const titleInput = page.locator('input[name="title"]').first();

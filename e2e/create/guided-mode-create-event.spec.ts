@@ -1,88 +1,40 @@
 import { test, expect } from '../fixtures/test-base';
 test.describe('Create Feature', () => {
-  test('Guided Mode - Create Event', async ({ page }) => {
-    // Navigate to create page
-    await page.goto('/create');
+  test('Guided Mode - Create Event', async ({ authenticatedPage: page }) => {
+    await page.goto('/create/event');
 
-    // Select Events entity type
-    const eventsOption = page
-      .locator('text=Events')
-      .or(page.locator('[data-entity="events"]'))
-      .first();
-    await eventsOption.click();
+    // Step 0: Title + Description
+    await page.locator('#event-title').fill('Community Meetup 2024');
+    await page.locator('#event-description').fill('Monthly community gathering for tech enthusiasts');
 
+    const nextButton = page.getByRole('button', { name: 'Next', exact: true });
 
-    // Enter event title
-    const titleInput = page
-      .locator('input[name="title"]')
-      .or(page.getByPlaceholder(/title/i))
-      .first();
-    await titleInput.fill('Community Meetup 2024');
+    // Step 0→1 (Date & Time)
+    await nextButton.click();
 
-    // Advance carousel
-    const nextButton = page
-      .locator('[data-testid="next-button"]')
-      .or(page.locator('button:has-text("Next")'))
-      .first();
-    if (await nextButton.isVisible()) {
+    // Step 1: Set start date and time
+    const startDate = page.locator('#event-start-date');
+    if (await startDate.isVisible()) {
+      await startDate.fill('2025-12-15');
+    }
+    const startTime = page.locator('#event-start-time');
+    if (await startTime.isVisible()) {
+      await startTime.fill('18:00');
+    }
+
+    // Navigate through remaining steps: 1→2→3→4→5→6→7 (6 more clicks)
+    for (let i = 0; i < 6; i++) {
       await nextButton.click();
     }
 
-    // Enter event description
-    const descriptionInput = page
-      .locator('textarea[name="description"]')
-      .or(page.getByPlaceholder(/description/i))
-      .first();
-    await descriptionInput.fill('Monthly community gathering for tech enthusiasts');
-
-    if (await nextButton.isVisible()) {
-      await nextButton.click();
-    }
-
-    // Select event date
-    const dateInput = page
-      .locator('input[type="date"]')
-      .or(page.locator('input[name="date"]'))
-      .first();
-    if (await dateInput.isVisible()) {
-      await dateInput.fill('2024-12-15');
-    }
-
-    // Select event time
-    const timeInput = page
-      .locator('input[type="time"]')
-      .or(page.locator('input[name="time"]'))
-      .first();
-    if (await timeInput.isVisible()) {
-      await timeInput.fill('18:00');
-    }
-
-    if (await nextButton.isVisible()) {
-      await nextButton.click();
-    }
-
-    // Set location
-    const locationInput = page
-      .locator('input[name="location"]')
-      .or(page.getByPlaceholder(/location/i))
-      .first();
-    if (await locationInput.isVisible()) {
-      await locationInput.fill('Berlin Tech Hub');
-    }
-
-    // Click Create Event button
-    const createButton = page
-      .locator('button:has-text("Create")')
-      .or(page.locator('[data-testid="create-button"]'))
-      .first();
+    // Step 7: Review - Click Create Event
+    const createButton = page.getByRole('button', { name: /create.*event/i });
+    await expect(createButton).toBeVisible();
     await createButton.click();
 
-    // Wait for navigation or success
-    await page.waitForURL(/\/event\//, { timeout: 5000 }).catch(() => {
-      return;
-    });
+    // Wait for redirect
+    await page.waitForURL(/\/event\//, { timeout: 10000 }).catch(() => {});
 
-    // Verify success
     const isRedirected = page.url().includes('/event/');
     const successMessage = await page
       .locator('text=created')
@@ -90,7 +42,6 @@ test.describe('Create Feature', () => {
       .first()
       .isVisible()
       .catch(() => false);
-
     expect(isRedirected || successMessage).toBeTruthy();
   });
 });

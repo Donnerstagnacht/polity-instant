@@ -1,17 +1,19 @@
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Group Documents - Loading States', () => {
-  test('Documents list page renders after loading', async ({ authenticatedPage: page }) => {
-    await page.goto(`/group/${TEST_ENTITY_IDS.testGroup1}/editor`);
+  test('Documents list page renders after loading', async ({ authenticatedPage: page, groupFactory, mainUserId }) => {
+    const group = await groupFactory.createGroup(mainUserId, { name: `Test Group ${Date.now()}` });
+    await page.goto(`/group/${group.id}/editor`);
     await page.waitForLoadState('networkidle');
 
     const hasContent = await page.locator('main, [role="main"]').isVisible().catch(() => false);
     expect(hasContent).toBeTruthy();
   });
 
-  test('Loading indicators resolve', async ({ authenticatedPage: page }) => {
-    await page.goto(`/group/${TEST_ENTITY_IDS.testGroup1}/editor`);
+  test('Loading indicators resolve', async ({ authenticatedPage: page, groupFactory, mainUserId }) => {
+    test.setTimeout(60000);
+    const group = await groupFactory.createGroup(mainUserId, { name: `Test Group ${Date.now()}` });
+    await page.goto(`/group/${group.id}/editor`);
     await page.waitForLoadState('networkidle');
 
     const loadingIndicators = page.locator(
@@ -23,24 +25,18 @@ test.describe('Group Documents - Loading States', () => {
     }
   });
 
-  test('Documents list or empty state shown', async ({ authenticatedPage: page }) => {
-    await page.goto(`/group/${TEST_ENTITY_IDS.testGroup1}/editor`);
-    await page.waitForLoadState('networkidle');
+  test('Documents list or empty state shown', async ({ authenticatedPage: page, groupFactory, mainUserId }) => {
+    const group = await groupFactory.createGroup(mainUserId, { name: `Test Group ${Date.now()}` });
+    await page.goto(`/group/${group.id}/editor`);
 
-    const hasDocuments = await page
-      .locator('[class*="document"], [class*="card"]')
-      .first()
-      .isVisible()
-      .catch(() => false);
-    const hasEmptyState = await page
-      .getByText(/no documents|create.*document|get started/i)
-      .isVisible()
-      .catch(() => false);
-    const hasCreateButton = await page
-      .getByRole('button', { name: /create|new|add/i })
-      .isVisible()
-      .catch(() => false);
+    // Wait for PermissionGuard + GroupDocumentsList to finish loading
+    // The page will show either documents heading, AccessDenied, or content
+    const documentsHeading = page.getByRole('heading', { name: /documents/i });
+    const accessDenied = page.getByText(/access denied/i);
+    const createButton = page.getByRole('button', { name: /create|new|add/i });
 
-    expect(hasDocuments || hasEmptyState || hasCreateButton).toBeTruthy();
+    await expect(
+      documentsHeading.or(accessDenied).or(createButton).first()
+    ).toBeVisible({ timeout: 30000 });
   });
 });

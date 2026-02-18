@@ -13,6 +13,9 @@ export function useConversationData(
               where: {
                 'participants.user.id': userId,
               },
+              order: {
+                serverCreatedAt: 'desc' as const,
+              },
               ...cursor,
             },
             group: {}, // Load group data for group conversations

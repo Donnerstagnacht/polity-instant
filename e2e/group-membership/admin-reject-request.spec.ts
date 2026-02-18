@@ -1,12 +1,10 @@
 // spec: e2e/test-plans/group-membership-test-plan.md
 
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Group Membership - Admin Reject Request', () => {
-  test('Admin can reject membership request', async ({ authenticatedPage: page, groupFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const group = await groupFactory.createGroup(user.id, {
+  test('Admin can reject membership request', async ({ authenticatedPage: page, groupFactory, userFactory, mainUserId }) => {
+    const group = await groupFactory.createGroup(mainUserId, {
       name: `Test Group ${Date.now()}`,
     });
     const requester = await userFactory.createUser();
@@ -18,7 +16,7 @@ test.describe('Group Membership - Admin Reject Request', () => {
 
     // 3. Find pending request and click "Remove"
     const removeButton = page.getByRole('button', { name: /remove|reject/i }).first();
-    await expect(removeButton).toBeVisible();
+    await expect(removeButton).toBeVisible({ timeout: 15000 });
 
     await removeButton.click();
 

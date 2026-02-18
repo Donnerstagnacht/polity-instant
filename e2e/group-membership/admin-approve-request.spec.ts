@@ -1,32 +1,30 @@
 // spec: e2e/test-plans/group-membership-test-plan.md
 
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
+import { gotoWithRetry } from '../helpers/navigation';
 
 test.describe('Group Membership - Admin Approve Request', () => {
-  test('Admin can approve membership request', async ({ authenticatedPage: page, groupFactory, userFactory }) => {
-    const user = await userFactory.createUser({ id: TEST_ENTITY_IDS.mainTestUser });
-    const group = await groupFactory.createGroup(user.id, {
+  test('Admin can approve membership request', async ({ authenticatedPage: page, groupFactory, userFactory, mainUserId }) => {
+    const group = await groupFactory.createGroup(mainUserId, {
       name: `Test Group ${Date.now()}`,
     });
     const requester = await userFactory.createUser();
     await groupFactory.addMember(group.id, requester.id, group.memberRoleId, { status: 'requested' });
 
-    // 1. Authenticate as admin user
-    // 2. Navigate to memberships management page
-    await page.goto(`/group/${group.id}/memberships`);
+    // Navigate to memberships management page (retry on Access Denied)
+    await gotoWithRetry(page, `/group/${group.id}/memberships`);
 
-    // 3. Verify memberships page loaded
-    const heading = page.getByRole('heading', { name: /member|membership/i });
-    await expect(heading).toBeVisible();
+    // Verify memberships page loaded
+    const heading = page.getByRole('heading', { name: /member|membership/i }).first();
+    await expect(heading).toBeVisible({ timeout: 10000 });
 
-    // 4. Find first pending request and click "Accept"
+    // Find first pending request and click "Accept"
     const acceptButton = page.getByRole('button', { name: /accept/i }).first();
-    await expect(acceptButton).toBeVisible();
+    await expect(acceptButton).toBeVisible({ timeout: 10000 });
 
     await acceptButton.click();
 
-    // 5. Verify user appears in active members list
-    // Request should be removed from pending section
+    // Verify request is removed from pending section
+    await expect(acceptButton).not.toBeVisible({ timeout: 5000 });
   });
 });

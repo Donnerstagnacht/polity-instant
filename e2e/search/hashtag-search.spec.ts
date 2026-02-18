@@ -7,26 +7,27 @@ test.describe('Search - Hashtag Search', () => {
     // 1. Authenticate as test user
     // 2. Navigate to search page with a query to populate results with topics
     await page.goto('/search?q=test', { waitUntil: 'domcontentloaded' });
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // 3. Open filters
     const filterButton = page.getByRole('button', { name: /filter/i });
     await filterButton.click();
 
     // 4. Wait for filter panel
-    await expect(page.getByText('Filters')).toBeVisible();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.getByText('Filters')).toBeVisible();
 
     // 6. Check if Topics section is visible (only visible if topics exist in results)
-    const topicsSection = page.getByText('Topics');
+    const topicsSection = dialog.getByText('Topics');
     const hasTopics = await topicsSection.isVisible().catch(() => false);
 
     if (hasTopics) {
-      // 7. Click on first available topic badge
-      const firstTopic = page.locator('[class*="Badge"]').first();
+      // 7. Click on first available topic badge (Badge renders as div with rounded-full class)
+      const firstTopic = dialog.locator('div[class*="rounded-full"][class*="cursor-pointer"]').first();
       await firstTopic.click();
 
       // 8. Close filter panel
-      await page.getByRole('button', { name: /close/i }).click();
+      await dialog.getByRole('button', { name: /close/i }).first().click();
 
       // 9. Wait for URL update
 
@@ -34,7 +35,7 @@ test.describe('Search - Hashtag Search', () => {
       await expect(page).toHaveURL(/topics=/);
     } else {
       // If no topics available, just verify the filter panel opened
-      await expect(page.getByText('Content Types')).toBeVisible();
+      await expect(dialog.getByText('Content Types')).toBeVisible();
     }
   });
 
@@ -42,7 +43,7 @@ test.describe('Search - Hashtag Search', () => {
     // 1. Authenticate as test user
     // 2. Navigate with topic filter
     await page.goto('/search?q=test&topics=education', { waitUntil: 'domcontentloaded' });
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // 4. Active topic badge should be visible in header (when filter panel is closed)
     const topicBadge = page.locator('[class*="Badge"]').filter({ hasText: /education/i });
@@ -60,7 +61,7 @@ test.describe('Search - Hashtag Search', () => {
     // 1. Authenticate as test user
     // 2. Navigate with topic filter
     await page.goto('/search?q=test&topics=sustainability', { waitUntil: 'domcontentloaded' });
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // 4. Check if active filter badge is visible
     const filterBadge = page.locator('[class*="Badge"]').filter({ hasText: /sustainability/i });
@@ -92,7 +93,7 @@ test.describe('Search - Hashtag Search', () => {
 
         if (hasTopicInPanel) {
           await topicInPanel.click();
-          await page.getByRole('button', { name: /close/i }).click();
+          await page.getByRole('button', { name: /close/i }).first().click();
 
           const url = page.url();
           expect(url).not.toContain('topics=sustainability');
@@ -105,7 +106,7 @@ test.describe('Search - Hashtag Search', () => {
     // 1. Authenticate as test user
     // 2. Navigate to search
     await page.goto('/search?q=test', { waitUntil: 'domcontentloaded' });
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // 3. Open filters
     const filterButton = page.getByRole('button', { name: /filter/i });
@@ -125,7 +126,7 @@ test.describe('Search - Hashtag Search', () => {
         await topicBadges.nth(1).click();
 
         // 7. Close filter panel
-        await page.getByRole('button', { name: /close/i }).click();
+        await page.getByRole('button', { name: /close/i }).first().click();
 
         // 8. Wait for URL update
 
