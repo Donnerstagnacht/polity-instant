@@ -129,6 +129,11 @@ count.txt
 # Build outputs specific to this project
 dist/
 
+# Test output files
+test-result.json
+test-results-isolated.json
+test-output.txt
+
 # Playwright Test Results
 /test-results/
 /playwright-report/
