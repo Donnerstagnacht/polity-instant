@@ -1,6 +1,6 @@
 export const notificationsTranslations = {
   title: 'Notifications',
-  titleVersion: 'Notifications v1',
+  titleVersion: 'Notifications',
   description: 'Stay updated on activity',
   searchPlaceholder: 'Search notifications...',
   markAllRead: 'Mark all as read',

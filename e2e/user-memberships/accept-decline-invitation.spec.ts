@@ -1,42 +1,65 @@
 import { test, expect } from '../fixtures/test-base';
 
 test.describe('User Memberships - Accept/Decline Invitation', () => {
-  test.beforeEach(async ({ authenticatedPage: page, adminDb }) => {
-    const authUser = await adminDb.auth.getUser({ email: 'polity.live@gmail.com' });
-    await page.goto(`/user/${authUser.id}/memberships`);
+  test('should show Pending Invitations section', async ({
+    authenticatedPage: page,
+    mainUserId,
+    groupFactory,
+    userFactory,
+  }) => {
+    // Create a group owned by another user and invite mainUser
+    const otherUser = await userFactory.createUser({ name: 'E2E Inviter' });
+    const group = await groupFactory.createGroup(otherUser.id, { name: 'E2E Invitation Group' });
+    await groupFactory.addMember(group.id, mainUserId, group.memberRoleId, { status: 'invited' });
+
+    await page.goto(`/user/${mainUserId}/memberships`);
     await page.waitForLoadState('domcontentloaded');
-  });
 
-  test('should show Pending Invitations section', async ({ authenticatedPage: page }) => {
     const pendingInvitations = page.getByText(/pending invitations/i);
-    if ((await pendingInvitations.count()) > 0) {
-      await expect(pendingInvitations.first()).toBeVisible();
-    }
+    await expect(pendingInvitations.first()).toBeVisible({ timeout: 10000 });
   });
 
-  test('should show Accept and Decline buttons on invitations', async ({ authenticatedPage: page }) => {
+  test('should show Accept and Decline buttons on invitations', async ({
+    authenticatedPage: page,
+    mainUserId,
+    groupFactory,
+    userFactory,
+  }) => {
+    const otherUser = await userFactory.createUser({ name: 'E2E Inviter 2' });
+    const group = await groupFactory.createGroup(otherUser.id, { name: 'E2E Accept/Decline Group' });
+    await groupFactory.addMember(group.id, mainUserId, group.memberRoleId, { status: 'invited' });
+
+    await page.goto(`/user/${mainUserId}/memberships`);
+    await page.waitForLoadState('domcontentloaded');
+
     const acceptButton = page.getByRole('button', { name: /accept/i });
+    await expect(acceptButton.first()).toBeVisible({ timeout: 10000 });
+
     const declineButton = page.getByRole('button', { name: /decline/i });
-
-    if ((await acceptButton.count()) > 0) {
-      await expect(acceptButton.first()).toBeVisible();
-      await expect(declineButton.first()).toBeVisible();
-    }
+    await expect(declineButton.first()).toBeVisible();
   });
 
-  test('should accept a group invitation', async ({ authenticatedPage: page }) => {
-    const acceptButton = page.getByRole('button', { name: /accept/i });
-    if ((await acceptButton.count()) === 0) {
-      test.skip();
-      return;
-    }
+  test('should accept a group invitation', async ({
+    authenticatedPage: page,
+    mainUserId,
+    groupFactory,
+    userFactory,
+  }) => {
+    const otherUser = await userFactory.createUser({ name: 'E2E Inviter 3' });
+    const group = await groupFactory.createGroup(otherUser.id, { name: 'E2E Accept Group' });
+    await groupFactory.addMember(group.id, mainUserId, group.memberRoleId, { status: 'invited' });
 
+    await page.goto(`/user/${mainUserId}/memberships`);
+    await page.waitForLoadState('domcontentloaded');
+
+    const acceptButton = page.getByRole('button', { name: /accept/i });
+    await expect(acceptButton.first()).toBeVisible({ timeout: 10000 });
     await acceptButton.first().click();
 
-    // Verify success toast
-    const toast = page.getByText(/invitation accepted|accepted/i);
-    if ((await toast.count()) > 0) {
-      await expect(toast.first()).toBeVisible({ timeout: 5000 });
-    }
+    // Verify the invitation row with Accept/Decline buttons disappears
+    // (the row moves from Pending Invitations to Active Memberships with a Leave button)
+    await expect(
+      page.getByRole('row', { name: /E2E Accept Group.*Accept.*Decline/i })
+    ).toBeHidden({ timeout: 15000 });
   });
 });

@@ -39,10 +39,7 @@ test.describe('Blog - Editor (Rich Text)', () => {
 
   test('should allow typing in the editor', async ({ authenticatedPage: page }) => {
     const editor = page.locator('[contenteditable="true"]');
-    if ((await editor.count()) === 0) {
-      test.skip();
-      return;
-    }
+    await expect(editor.first()).toBeVisible({ timeout: 10000 });
 
     // Click into the editor and type
     await editor.first().click();

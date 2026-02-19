@@ -1,41 +1,56 @@
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
+import { gotoWithRetry } from '../helpers/navigation';
 
 test.describe('Group Documents - Edit Document', () => {
-  test.beforeEach(async ({ authenticatedPage: page }) => {
-    await page.goto(
-      `/group/${TEST_ENTITY_IDS.GROUP}/editor/${TEST_ENTITY_IDS.testGroupDocument1}`
+  test('should display Plate.js editor', async ({
+    authenticatedPage: page,
+    groupFactory,
+    mainUserId,
+    adminDb,
+  }) => {
+    const group = await groupFactory.createGroup(mainUserId, { name: 'E2E Doc Edit Group' });
+    // Create a group document via admin SDK
+    const docId = crypto.randomUUID();
+    await adminDb.transact(
+      adminDb.tx.documents[docId]
+        .update({
+          title: 'E2E Test Document',
+          content: [{ type: 'p', children: [{ text: '' }] }],
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        })
+        .link({ group: group.id, owner: mainUserId })
     );
-    await page.waitForLoadState('networkidle');
-  });
 
-  test('should display Plate.js editor', async ({ authenticatedPage: page }) => {
+    await gotoWithRetry(page, `/group/${group.id}/editor/${docId}`);
+
     const editor = page.locator('[contenteditable="true"]');
-    if ((await editor.count()) > 0) {
-      await expect(editor.first()).toBeVisible();
-    }
+    await expect(editor.first()).toBeVisible({ timeout: 10000 });
   });
 
-  test('should display Back to Documents button', async ({ authenticatedPage: page }) => {
-    const backButton = page.getByText(/back to documents/i);
-    if ((await backButton.count()) > 0) {
-      await expect(backButton.first()).toBeVisible();
-    }
-  });
+  test('should allow typing in the group document editor', async ({
+    authenticatedPage: page,
+    groupFactory,
+    mainUserId,
+    adminDb,
+  }) => {
+    const group = await groupFactory.createGroup(mainUserId, { name: 'E2E Doc Type Group' });
+    const docId = crypto.randomUUID();
+    await adminDb.transact(
+      adminDb.tx.documents[docId]
+        .update({
+          title: 'E2E Type Document',
+          content: [{ type: 'p', children: [{ text: '' }] }],
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        })
+        .link({ group: group.id, owner: mainUserId })
+    );
 
-  test('should show saving/auto-save indicator', async ({ authenticatedPage: page }) => {
-    const saveStatus = page.getByText(/saving|auto-save|all changes saved/i);
-    if ((await saveStatus.count()) > 0) {
-      await expect(saveStatus.first()).toBeVisible();
-    }
-  });
+    await gotoWithRetry(page, `/group/${group.id}/editor/${docId}`);
 
-  test('should allow typing in the group document editor', async ({ authenticatedPage: page }) => {
     const editor = page.locator('[contenteditable="true"]');
-    if ((await editor.count()) === 0) {
-      test.skip();
-      return;
-    }
+    await expect(editor.first()).toBeVisible({ timeout: 10000 });
 
     await editor.first().click();
     await page.keyboard.type('E2E Group Doc Content');

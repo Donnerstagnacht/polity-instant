@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { CheckCheck } from 'lucide-react';
-// import { PushNotificationToggle } from '@/components/push-notification-toggle';
+import { PushNotificationToggle } from '@/components/push-notification-toggle';
 import { useTranslation } from '@/hooks/use-translation';
 
 interface NotificationHeaderProps {
@@ -16,7 +16,6 @@ export function NotificationHeader({ unreadCount, onMarkAllAsRead }: Notificatio
       <div>
         <h1 className="text-3xl font-bold">{t('features.notifications.titleVersion')}</h1>
       </div>
-      {/* Actions 
       <div className="flex items-center gap-2">
         <PushNotificationToggle variant="minimal" />
         {unreadCount > 0 && (
@@ -25,8 +24,7 @@ export function NotificationHeader({ unreadCount, onMarkAllAsRead }: Notificatio
             {t('features.notifications.markAllAsRead')}
           </Button>
         )}
-          
-      </div>*/}
+      </div>
     </div>
   );
 }

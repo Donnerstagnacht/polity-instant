@@ -17,7 +17,6 @@ import { LayoutList, LayoutGrid } from 'lucide-react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { KanbanBoard } from '@/components/todos/kanban-board';
 import { TodoList } from '@/components/todos/todo-list';
-import { PermissionGuard } from '@/features/auth/PermissionGuard';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { usePermissions } from 'db/rbac/usePermissions';
 import { AccessDenied } from '@/components/shared/AccessDenied';
@@ -26,7 +25,7 @@ import { PageWrapper } from '@/components/layout/page-wrapper';
 export default function GroupOperationPage() {
   const params = useParams();
   const groupId = params.id as string;
-  const user = useAuthStore((state) => state.user);
+  const user = useAuthStore(state => state.user);
 
   // Permissions
   const { can, isLoading: isLoadingPermissions } = usePermissions({ groupId });
@@ -46,7 +45,7 @@ export default function GroupOperationPage() {
   const { links, addLink } = useGroupLinks(groupId);
   const { payments, addPayment } = useGroupPayments(groupId);
   const { todos, addTodo, toggleTodoComplete, updateTodoStatus } = useGroupTodos(groupId, user?.id);
-  const { summary, incomeData, expenditureData, colors } = useFinancialData(payments, groupId);
+  const { summary, incomeData, expenditureData } = useFinancialData(payments, groupId);
 
   // Handlers
   const handleAddLink = async (data: { label: string; url: string }) => {
@@ -64,7 +63,12 @@ export default function GroupOperationPage() {
     }
   };
 
-  const handleAddTodo = async (data: { title: string; description: string; priority: string; dueDate: string }) => {
+  const handleAddTodo = async (data: {
+    title: string;
+    description: string;
+    priority: string;
+    dueDate: string;
+  }) => {
     const result = await addTodo(data);
     if (result.success) {
       setIsAddTodoOpen(false);
@@ -134,7 +138,7 @@ export default function GroupOperationPage() {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={(entry) => `${entry.name}: $${entry.value}`}
+                        label={entry => `${entry.name}: $${entry.value}`}
                         outerRadius={80}
                         fill="#8884d8"
                         dataKey="value"
@@ -171,14 +175,18 @@ export default function GroupOperationPage() {
                 {expenditureData.length === 0 ? (
                   <p className="text-muted-foreground">No expenditure data</p>
                 ) : (
-                  <ResponsiveContainer width="100%" height={300} key={`expenditure-${payments.length}`}>
+                  <ResponsiveContainer
+                    width="100%"
+                    height={300}
+                    key={`expenditure-${payments.length}`}
+                  >
                     <PieChart>
                       <Pie
                         data={expenditureData}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={(entry) => `${entry.name}: $${entry.value}`}
+                        label={entry => `${entry.name}: $${entry.value}`}
                         outerRadius={80}
                         fill="#8884d8"
                         dataKey="value"
@@ -209,6 +217,7 @@ export default function GroupOperationPage() {
                       variant={viewMode === 'list' ? 'secondary' : 'ghost'}
                       size="sm"
                       onClick={() => setViewMode('list')}
+                      aria-label="List view"
                     >
                       <LayoutList className="h-4 w-4" />
                     </Button>
@@ -216,6 +225,7 @@ export default function GroupOperationPage() {
                       variant={viewMode === 'kanban' ? 'secondary' : 'ghost'}
                       size="sm"
                       onClick={() => setViewMode('kanban')}
+                      aria-label="Kanban view"
                     >
                       <LayoutGrid className="h-4 w-4" />
                     </Button>

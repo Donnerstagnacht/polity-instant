@@ -1,6 +1,6 @@
 export const notificationsTranslations = {
   title: 'Benachrichtigungen',
-  titleVersion: 'Benachrichtigungen v1',
+  titleVersion: 'Benachrichtigungen',
   description: 'Bleibe über Aktivitäten auf dem Laufenden',
   searchPlaceholder: 'Benachrichtigungen suchen...',
   markAllRead: 'Alle als gelesen markieren',

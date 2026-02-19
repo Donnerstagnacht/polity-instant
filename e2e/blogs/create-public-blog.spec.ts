@@ -17,10 +17,18 @@ test.describe('Blogs - Create Public Blog with Required Fields', () => {
 
     // 3. Click Next to go to Step 2
     const nextButton = page.getByRole('button', { name: 'Next', exact: true });
+    await expect(nextButton).toBeEnabled({ timeout: 5000 });
     await nextButton.click();
 
+    // Wait for carousel animation to settle
+    await page.waitForTimeout(500);
+
     // 4. Step 2: Visibility (default is public) - click Next
+    await expect(nextButton).toBeVisible({ timeout: 5000 });
     await nextButton.click();
+
+    // Wait for carousel animation to settle
+    await page.waitForTimeout(500);
 
     // 5. Step 3: Review - click Create
     const createButton = page.getByRole('button', { name: /create/i });

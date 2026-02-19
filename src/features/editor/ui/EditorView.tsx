@@ -238,6 +238,26 @@ export function EditorView({
     return ids;
   }, [entity]);
 
+  // Status badge based on entity type
+  const statusBadge = useMemo(() => {
+    if (!entity) return null;
+    if (entityType === 'amendment' && entity.metadata?.amendmentStatus) {
+      return (
+        <Badge variant="outline" className="capitalize">
+          {entity.metadata.amendmentStatus}
+        </Badge>
+      );
+    }
+    if (entityType === 'blog') {
+      return (
+        <Badge variant="outline" className="capitalize">
+          {entity.isPublic ? 'Public' : 'Private'}
+        </Badge>
+      );
+    }
+    return null;
+  }, [entityType, entity]);
+
   // Default back navigation
   const defaultBackUrl = useMemo(() => {
     switch (entityType) {
@@ -313,25 +333,6 @@ export function EditorView({
       </Card>
     );
   }
-
-  // Status badge based on entity type
-  const statusBadge = useMemo(() => {
-    if (entityType === 'amendment' && entity.metadata?.amendmentStatus) {
-      return (
-        <Badge variant="outline" className="capitalize">
-          {entity.metadata.amendmentStatus}
-        </Badge>
-      );
-    }
-    if (entityType === 'blog') {
-      return (
-        <Badge variant="outline" className="capitalize">
-          {entity.isPublic ? 'Public' : 'Private'}
-        </Badge>
-      );
-    }
-    return null;
-  }, [entityType, entity]);
 
   return (
     <div className="container mx-auto p-8">

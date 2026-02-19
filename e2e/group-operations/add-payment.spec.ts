@@ -1,79 +1,102 @@
 import { test, expect } from '../fixtures/test-base';
-import { navigateToGroupOperation } from '../helpers/navigation';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
+import { gotoWithRetry } from '../helpers/navigation';
 
 test.describe('Group Operations - Add Payment', () => {
-  test.beforeEach(async ({ authenticatedPage: page }) => {
-    await navigateToGroupOperation(page, TEST_ENTITY_IDS.GROUP);
-  });
+  test('should display Add Income button', async ({
+    authenticatedPage: page,
+    groupFactory,
+    mainUserId,
+  }) => {
+    const group = await groupFactory.createGroup(mainUserId, { name: 'E2E Payment Group' });
+    await gotoWithRetry(page, `/group/${group.id}/operation`);
 
-  test('should display Add Income button', async ({ authenticatedPage: page }) => {
     const addIncomeButton = page.getByRole('button', { name: /add income/i });
-    if ((await addIncomeButton.count()) > 0) {
-      await expect(addIncomeButton).toBeVisible();
-    }
+    await expect(addIncomeButton).toBeVisible({ timeout: 10000 });
   });
 
-  test('should display Add Expense button', async ({ authenticatedPage: page }) => {
+  test('should display Add Expense button', async ({
+    authenticatedPage: page,
+    groupFactory,
+    mainUserId,
+  }) => {
+    const group = await groupFactory.createGroup(mainUserId, { name: 'E2E Expense Group' });
+    await gotoWithRetry(page, `/group/${group.id}/operation`);
+
     const addExpenseButton = page.getByRole('button', { name: /add expense/i });
-    if ((await addExpenseButton.count()) > 0) {
-      await expect(addExpenseButton).toBeVisible();
-    }
+    await expect(addExpenseButton).toBeVisible({ timeout: 10000 });
   });
 
-  test('should open Add Income dialog with form fields', async ({ authenticatedPage: page }) => {
-    const addIncomeButton = page.getByRole('button', { name: /add income/i });
-    if ((await addIncomeButton.count()) === 0) {
-      test.skip();
-      return;
-    }
+  test('should open Add Income dialog with form fields', async ({
+    authenticatedPage: page,
+    groupFactory,
+    mainUserId,
+  }) => {
+    const group = await groupFactory.createGroup(mainUserId, { name: 'E2E Income Dialog Group' });
+    await gotoWithRetry(page, `/group/${group.id}/operation`);
 
+    const addIncomeButton = page.getByRole('button', { name: /add income/i });
+    await expect(addIncomeButton).toBeVisible({ timeout: 10000 });
     await addIncomeButton.click();
 
-    // Dialog should show
-    await expect(page.getByText('Add Income')).toBeVisible();
-    await expect(page.locator('#payment-label')).toBeVisible();
-    await expect(page.locator('#payment-type')).toBeVisible();
-    await expect(page.locator('#payment-amount')).toBeVisible();
+    // Dialog should show - scope to dialog to avoid strict mode violation
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog.locator('#payment-label')).toBeVisible();
+    await expect(dialog.locator('#payment-amount')).toBeVisible();
   });
 
-  test('should add an income payment via the dialog', async ({ authenticatedPage: page }) => {
-    const addIncomeButton = page.getByRole('button', { name: /add income/i });
-    if ((await addIncomeButton.count()) === 0) {
-      test.skip();
-      return;
-    }
+  test('should add an income payment via the dialog', async ({
+    authenticatedPage: page,
+    groupFactory,
+    mainUserId,
+  }) => {
+    const group = await groupFactory.createGroup(mainUserId, { name: 'E2E Add Income Group' });
+    await gotoWithRetry(page, `/group/${group.id}/operation`);
 
+    const addIncomeButton = page.getByRole('button', { name: /add income/i });
+    await expect(addIncomeButton).toBeVisible({ timeout: 10000 });
     await addIncomeButton.click();
-    await expect(page.getByText('Add Income')).toBeVisible();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible({ timeout: 5000 });
 
     // Fill in the form
-    await page.locator('#payment-label').fill('Test Membership Fee');
-
-    // Select payment type
-    await page.locator('#payment-type').click();
-    await page.getByRole('option', { name: /membership fee/i }).click();
+    await dialog.locator('#payment-label').fill('Test Membership Fee');
 
     // Enter amount
-    await page.locator('#payment-amount').fill('50.00');
+    await dialog.locator('#payment-amount').fill('50.00');
+
+    // Select a payer entity (required) — open the combobox popover
+    const entityCombobox = dialog.locator('#payment-entity');
+    await entityCombobox.click();
+    await page.waitForTimeout(500);
+
+    // Select the first user from the list
+    const firstUser = page.getByRole('option').first();
+    await expect(firstUser).toBeVisible({ timeout: 5000 });
+    await firstUser.click();
+    await page.waitForTimeout(300);
 
     // Submit
-    const submitButton = page.getByRole('button', { name: /add payment/i });
+    const submitButton = dialog.getByRole('button', { name: /add payment/i });
     await submitButton.click();
 
     // Verify success toast
-    const toast = page.getByText('Payment added successfully!');
+    const toast = page.getByText(/payment added/i);
     await expect(toast).toBeVisible({ timeout: 5000 });
   });
 
-  test('should open Add Expense dialog', async ({ authenticatedPage: page }) => {
-    const addExpenseButton = page.getByRole('button', { name: /add expense/i });
-    if ((await addExpenseButton.count()) === 0) {
-      test.skip();
-      return;
-    }
+  test('should open Add Expense dialog', async ({
+    authenticatedPage: page,
+    groupFactory,
+    mainUserId,
+  }) => {
+    const group = await groupFactory.createGroup(mainUserId, { name: 'E2E Expense Dialog Group' });
+    await gotoWithRetry(page, `/group/${group.id}/operation`);
 
+    const addExpenseButton = page.getByRole('button', { name: /add expense/i });
+    await expect(addExpenseButton).toBeVisible({ timeout: 10000 });
     await addExpenseButton.click();
-    await expect(page.getByText('Add Expense')).toBeVisible();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible({ timeout: 5000 });
   });
 });

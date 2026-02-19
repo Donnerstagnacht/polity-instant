@@ -40,8 +40,8 @@ test.describe('Notifications - Tab Filtering', () => {
     // 2. Navigate to notifications page
     await page.goto('/notifications');
 
-    // 3. User clicks "Read" tab
-    const readTab = page.getByRole('tab', { name: /read/i }).first();
+    // 3. User clicks "Read" tab (use ^read to avoid matching "Unread")
+    const readTab = page.getByRole('tab', { name: /^read/i });
     await readTab.click();
 
     // 4. Verify read tab is active
@@ -52,7 +52,7 @@ test.describe('Notifications - Tab Filtering', () => {
     await expect(tabPanel).toBeVisible({ timeout: 10000 });
 
     const notificationCard = tabPanel.locator('div[class*="cursor-pointer"]').first();
-    const emptyState = page.getByText(/no read|no notifications/i);
+    const emptyState = page.getByText(/no read|no notifications|read will appear|appear here/i);
 
     // Wait for data to load
     await expect(notificationCard.or(emptyState)).toBeVisible({ timeout: 15000 });

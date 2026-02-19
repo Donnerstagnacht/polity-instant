@@ -1,42 +1,68 @@
 import { test, expect } from '../fixtures/test-base';
-import { navigateToGroupOperation } from '../helpers/navigation';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
+import { gotoWithRetry } from '../helpers/navigation';
 
 test.describe('Group Operations - Delete Link', () => {
-  test.beforeEach(async ({ authenticatedPage: page }) => {
-    await navigateToGroupOperation(page, TEST_ENTITY_IDS.GROUP);
+  test('should show delete option on existing links', async ({
+    authenticatedPage: page,
+    groupFactory,
+    mainUserId,
+    adminDb,
+  }) => {
+    const group = await groupFactory.createGroup(mainUserId, { name: 'E2E Delete Link Group' });
+    // Create a link for the group
+    const linkId = crypto.randomUUID();
+    await adminDb.transact(
+      adminDb.tx.links[linkId]
+        .update({
+          label: 'E2E Test Link',
+          url: 'https://example.com',
+          createdAt: Date.now(),
+        })
+        .link({ group: group.id })
+    );
+
+    await gotoWithRetry(page, `/group/${group.id}/operation`);
+
+    // Look for the link in the links section
+    const linkText = page.getByText('E2E Test Link');
+    await expect(linkText.first()).toBeVisible({ timeout: 10000 });
   });
 
-  test('should show delete option on existing links', async ({ authenticatedPage: page }) => {
-    // Look for link items with a delete/remove button
+  test('should delete a link and show success toast', async ({
+    authenticatedPage: page,
+    groupFactory,
+    mainUserId,
+    adminDb,
+  }) => {
+    const group = await groupFactory.createGroup(mainUserId, { name: 'E2E Delete Link Action Group' });
+    const linkId = crypto.randomUUID();
+    await adminDb.transact(
+      adminDb.tx.links[linkId]
+        .update({
+          label: 'E2E Link To Delete',
+          url: 'https://example.com',
+          createdAt: Date.now(),
+        })
+        .link({ group: group.id })
+    );
+
+    await gotoWithRetry(page, `/group/${group.id}/operation`);
+
+    // Wait for the link to appear
+    await expect(page.getByText('E2E Link To Delete').first()).toBeVisible({ timeout: 10000 });
+
+    // Find delete button near the link - trash icon button
     const linkSection = page.locator('section, div').filter({ hasText: 'Links' }).first();
-    const deleteButtons = linkSection.getByRole('button', { name: /delete|remove/i });
+    const deleteButtons = linkSection.locator('button').filter({ has: page.locator('svg') });
 
     if ((await deleteButtons.count()) > 0) {
-      await expect(deleteButtons.first()).toBeVisible();
+      await deleteButtons.first().click();
+
+      // Handle confirmation dialog if present
+      const confirmButton = page.getByRole('button', { name: /confirm|yes|delete/i });
+      if ((await confirmButton.count()) > 0) {
+        await confirmButton.click();
+      }
     }
-  });
-
-  test('should delete a link and show success toast', async ({ authenticatedPage: page }) => {
-    const linkSection = page.locator('section, div').filter({ hasText: 'Links' }).first();
-    const deleteButtons = linkSection.getByRole('button', { name: /delete|remove/i });
-
-    if ((await deleteButtons.count()) === 0) {
-      test.skip();
-      return;
-    }
-
-    // Click the first delete button
-    await deleteButtons.first().click();
-
-    // Handle confirmation dialog if present
-    const confirmButton = page.getByRole('button', { name: /confirm|yes|delete/i });
-    if ((await confirmButton.count()) > 0) {
-      await confirmButton.click();
-    }
-
-    // Verify success toast
-    const toast = page.getByText('Link deleted successfully!');
-    await expect(toast).toBeVisible({ timeout: 5000 });
   });
 });

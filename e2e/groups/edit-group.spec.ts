@@ -1,50 +1,60 @@
 import { test, expect } from '../fixtures/test-base';
-import { navigateToGroup } from '../helpers/navigation';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
+import { gotoWithRetry } from '../helpers/navigation';
 
 test.describe('Groups - Edit Group', () => {
-  test.beforeEach(async ({ authenticatedPage: page }) => {
-    await page.goto(`/group/${TEST_ENTITY_IDS.GROUP}/edit`);
+  test('should display group edit form', async ({
+    authenticatedPage: page,
+    mainUserId,
+    groupFactory,
+  }) => {
+    const group = await groupFactory.createGroup(mainUserId);
+    await gotoWithRetry(page, `/group/${group.id}/edit`);
+
+    const nameInput = page.locator('#name');
+    await expect(nameInput).toBeVisible({ timeout: 10000 });
+  });
+
+  test('should display description field', async ({
+    authenticatedPage: page,
+    mainUserId,
+    groupFactory,
+  }) => {
+    const group = await groupFactory.createGroup(mainUserId);
+    await gotoWithRetry(page, `/group/${group.id}/edit`);
+
+    const descriptionInput = page.locator('#description');
+    await expect(descriptionInput).toBeVisible({ timeout: 10000 });
+  });
+
+  test('should save group changes', async ({
+    authenticatedPage: page,
+    mainUserId,
+    groupFactory,
+  }) => {
+    const group = await groupFactory.createGroup(mainUserId);
+    await gotoWithRetry(page, `/group/${group.id}/edit`);
+
+    const nameInput = page.locator('#name');
+    await expect(nameInput).toBeVisible({ timeout: 10000 });
+
+    await nameInput.clear();
+    await nameInput.fill('Updated E2E Group');
+
+    const saveButton = page.getByRole('button', { name: /save changes/i });
+    await expect(saveButton).toBeVisible();
+    await saveButton.click();
     await page.waitForLoadState('networkidle');
-  });
-
-  test('should display group edit form', async ({ authenticatedPage: page }) => {
-    const titleInput = page.getByRole('textbox', { name: /name|title/i });
-    if ((await titleInput.count()) > 0) {
-      await expect(titleInput).toBeVisible();
-    }
-  });
-
-  test('should display description field', async ({ authenticatedPage: page }) => {
-    const descriptionInput = page.locator('textarea');
-    if ((await descriptionInput.count()) > 0) {
-      await expect(descriptionInput.first()).toBeVisible();
-    }
-  });
-
-  test('should save group changes', async ({ authenticatedPage: page }) => {
-    const titleInput = page.getByRole('textbox', { name: /name|title/i });
-    if ((await titleInput.count()) === 0) {
-      test.skip();
-      return;
-    }
-
-    // Modify the name
-    await titleInput.clear();
-    await titleInput.fill('Updated E2E Group');
-
-    const saveButton = page.getByRole('button', { name: /save/i });
-    if ((await saveButton.count()) > 0) {
-      await saveButton.click();
-      await page.waitForLoadState('networkidle');
-    }
   });
 });
 
 test.describe('Groups - Network', () => {
-  test('should display group network page', async ({ authenticatedPage: page }) => {
-    await page.goto(`/group/${TEST_ENTITY_IDS.GROUP}/network`);
-    await page.waitForLoadState('networkidle');
+  test('should display group network page', async ({
+    authenticatedPage: page,
+    mainUserId,
+    groupFactory,
+  }) => {
+    const group = await groupFactory.createGroup(mainUserId);
+    await gotoWithRetry(page, `/group/${group.id}/network`);
 
     const networkContent = page.getByText(/network|relationships|parent|child/i);
     if ((await networkContent.count()) > 0) {
@@ -54,11 +64,14 @@ test.describe('Groups - Network', () => {
 });
 
 test.describe('Groups - Relationships', () => {
-  test('should display group relationships page', async ({ authenticatedPage: page }) => {
-    await page.goto(`/group/${TEST_ENTITY_IDS.GROUP}/relationships`);
-    await page.waitForLoadState('networkidle');
+  test('should display group relationships page', async ({
+    authenticatedPage: page,
+    mainUserId,
+    groupFactory,
+  }) => {
+    const group = await groupFactory.createGroup(mainUserId);
+    await gotoWithRetry(page, `/group/${group.id}/relationships`);
 
-    // Relationships page should load
     await page.waitForLoadState('networkidle');
   });
 });

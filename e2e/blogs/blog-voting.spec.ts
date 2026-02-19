@@ -1,53 +1,52 @@
 import { test, expect } from '../fixtures/test-base';
-import { navigateToBlog } from '../helpers/navigation';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Blog - Voting', () => {
-  test.beforeEach(async ({ authenticatedPage: page }) => {
-    await navigateToBlog(page, TEST_ENTITY_IDS.BLOG);
+  test('should display upvote and downvote buttons', async ({
+    authenticatedPage: page,
+    blogFactory,
+    mainUserId,
+  }) => {
+    const blog = await blogFactory.createBlog(mainUserId, { title: 'E2E Vote Blog' });
+    await page.goto(`/blog/${blog.id}`);
+    await page.waitForLoadState('networkidle');
+
+    // The blog detail page has ArrowUp/ArrowDown icon buttons for voting
+    // They are ghost buttons with SVG icons
+    const voteButtons = page.locator('button').filter({ has: page.locator('svg') });
+    await expect(voteButtons.first()).toBeVisible({ timeout: 10000 });
   });
 
-  test('should display upvote and downvote buttons', async ({ authenticatedPage: page }) => {
-    // Upvote/Downvote are rendered as buttons with ArrowUp/ArrowDown icons
-    const upvoteButton = page.getByRole('button', { name: /upvote|arrow.*up/i });
-    const downvoteButton = page.getByRole('button', { name: /downvote|arrow.*down/i });
+  test('should display supporter score in stats bar', async ({
+    authenticatedPage: page,
+    blogFactory,
+    mainUserId,
+  }) => {
+    const blog = await blogFactory.createBlog(mainUserId, { title: 'E2E Stats Blog' });
+    await page.goto(`/blog/${blog.id}`);
+    await page.waitForLoadState('networkidle');
 
-    // They might also be identified by icon-only buttons near a score
-    const arrowButtons = page.locator('button').filter({
-      has: page.locator('svg'),
-    });
-
-    // There should be votable buttons on the blog detail page
-    if ((await upvoteButton.count()) > 0) {
-      await expect(upvoteButton.first()).toBeVisible();
-    }
-    if ((await downvoteButton.count()) > 0) {
-      await expect(downvoteButton.first()).toBeVisible();
-    }
-  });
-
-  test('should display supporter score in stats bar', async ({ authenticatedPage: page }) => {
     // StatsBar shows subscribers, supporters (score), comments
-    const statsBar = page.locator('[class*="stats"], [class*="Stats"]');
-    if ((await statsBar.count()) > 0) {
-      await expect(statsBar.first()).toBeVisible();
-    }
+    const supporters = page.getByText(/supporters/i);
+    await expect(supporters).toBeVisible({ timeout: 10000 });
   });
 
-  test('should toggle upvote on click', async ({ authenticatedPage: page }) => {
-    const upvoteButton = page.getByRole('button', { name: /upvote|arrow.*up/i });
-    if ((await upvoteButton.count()) === 0) {
-      // Try finding arrow buttons near the action bar
-      const actionButtons = page.locator('button svg').locator('..');
-      if ((await actionButtons.count()) === 0) {
-        test.skip();
-        return;
-      }
-    }
+  test('should toggle upvote on click', async ({
+    authenticatedPage: page,
+    blogFactory,
+    mainUserId,
+  }) => {
+    const blog = await blogFactory.createBlog(mainUserId, { title: 'E2E Upvote Blog' });
+    await page.goto(`/blog/${blog.id}`);
+    await page.waitForLoadState('networkidle');
 
-    if ((await upvoteButton.count()) > 0) {
-      await upvoteButton.first().click();
-      // Vote should be registered (button may change color/style)
-    }
+    // Wait for the blog detail page to load
+    await expect(page.getByText('E2E Upvote Blog').first()).toBeVisible({ timeout: 10000 });
+
+    // Find action buttons with SVG icons (upvote/downvote are ghost buttons)
+    const actionButtons = page.locator('button').filter({ has: page.locator('svg') });
+    await expect(actionButtons.first()).toBeVisible({ timeout: 5000 });
+
+    // Click the first action button (upvote)
+    await actionButtons.first().click();
   });
 });

@@ -1,35 +1,42 @@
 import { test, expect } from '../fixtures/test-base';
 
 test.describe('User Memberships - Leave Group', () => {
-  test.beforeEach(async ({ authenticatedPage: page, adminDb }) => {
-    const authUser = await adminDb.auth.getUser({ email: 'polity.live@gmail.com' });
-    await page.goto(`/user/${authUser.id}/memberships`);
-    await page.waitForLoadState('domcontentloaded');
-  });
+  test('should show Leave button on active memberships', async ({
+    authenticatedPage: page,
+    mainUserId,
+    groupFactory,
+  }) => {
+    // Create a group where the user is a member (not admin/owner)
+    const group = await groupFactory.createGroup(mainUserId);
 
-  test('should show Leave button on active memberships', async ({ authenticatedPage: page }) => {
+    await page.goto(`/user/${mainUserId}/memberships`);
+    await page.waitForLoadState('domcontentloaded');
+
     const activeMemberships = page.getByText(/active memberships/i);
-    if ((await activeMemberships.count()) === 0) {
-      test.skip();
-      return;
-    }
+    await expect(activeMemberships.first()).toBeVisible({ timeout: 10000 });
 
     const leaveButton = page.getByRole('button', { name: /leave/i });
-    if ((await leaveButton.count()) > 0) {
-      await expect(leaveButton.first()).toBeVisible();
-    }
+    await expect(leaveButton.first()).toBeVisible({ timeout: 5000 });
   });
 
-  test('should show Withdraw Request button on pending requests', async ({ authenticatedPage: page }) => {
-    const pendingRequests = page.getByText(/pending requests/i);
-    if ((await pendingRequests.count()) === 0) {
-      test.skip();
-      return;
-    }
+  test('should show Withdraw Request button on pending requests', async ({
+    authenticatedPage: page,
+    mainUserId,
+    groupFactory,
+    userFactory,
+  }) => {
+    // Create a group owned by another user, then add mainUser as 'requested'
+    const otherUser = await userFactory.createUser({ name: 'E2E Group Owner' });
+    const group = await groupFactory.createGroup(otherUser.id);
+    await groupFactory.addMember(group.id, mainUserId, group.memberRoleId, { status: 'requested' });
 
-    const withdrawButton = page.getByRole('button', { name: /withdraw request/i });
-    if ((await withdrawButton.count()) > 0) {
-      await expect(withdrawButton.first()).toBeVisible();
-    }
+    await page.goto(`/user/${mainUserId}/memberships`);
+    await page.waitForLoadState('domcontentloaded');
+
+    const pendingRequests = page.getByText(/pending requests/i);
+    await expect(pendingRequests.first()).toBeVisible({ timeout: 10000 });
+
+    const withdrawButton = page.getByRole('button', { name: /withdraw/i });
+    await expect(withdrawButton.first()).toBeVisible({ timeout: 5000 });
   });
 });

@@ -1,46 +1,83 @@
 import { test, expect } from '../fixtures/test-base';
-import { navigateToStatement } from '../helpers/navigation';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Statement - Agree Interaction', () => {
-  test.beforeEach(async ({ authenticatedPage: page }) => {
-    await navigateToStatement(page, TEST_ENTITY_IDS.STATEMENT);
-  });
+  test('should toggle agree when clicking agree button', async ({
+    authenticatedPage: page,
+    mainUserId,
+    adminDb,
+  }) => {
+    // Create a statement via adminDb
+    const statementId = crypto.randomUUID();
+    await adminDb.transact(
+      adminDb.tx.statements[statementId]
+        .update({
+          text: 'E2E Agree Statement',
+          tag: 'politics',
+          agreeCount: 0,
+          disagreeCount: 0,
+          createdAt: Date.now(),
+        })
+        .link({ creator: mainUserId })
+    );
 
-  test('should toggle agree when clicking agree button', async ({ authenticatedPage: page }) => {
+    await page.goto(`/statement/${statementId}`);
+    await page.waitForLoadState('networkidle');
+
     const agreeButton = page.getByRole('button', { name: /agree/i });
-    if ((await agreeButton.count()) === 0) {
-      test.skip();
-      return;
-    }
-
+    await expect(agreeButton.first()).toBeVisible({ timeout: 10000 });
     await agreeButton.first().click();
-    // Agree state should change (button style/color updates)
   });
 
-  test('should open comment section when clicking comment button', async ({ authenticatedPage: page }) => {
+  test('should open comment section when clicking comment button', async ({
+    authenticatedPage: page,
+    mainUserId,
+    adminDb,
+  }) => {
+    const statementId = crypto.randomUUID();
+    await adminDb.transact(
+      adminDb.tx.statements[statementId]
+        .update({
+          text: 'E2E Comment Statement',
+          tag: 'education',
+          agreeCount: 0,
+          disagreeCount: 0,
+          createdAt: Date.now(),
+        })
+        .link({ creator: mainUserId })
+    );
+
+    await page.goto(`/statement/${statementId}`);
+    await page.waitForLoadState('networkidle');
+
     const commentButton = page.getByRole('button', { name: /comment/i });
-    if ((await commentButton.count()) === 0) {
-      test.skip();
-      return;
-    }
-
+    await expect(commentButton.first()).toBeVisible({ timeout: 10000 });
     await commentButton.first().click();
-
-    // Comment input area should become visible
-    const commentInput = page.locator('textarea, [contenteditable="true"]');
-    if ((await commentInput.count()) > 0) {
-      await expect(commentInput.first()).toBeVisible();
-    }
   });
 
-  test('should save statement for later', async ({ authenticatedPage: page }) => {
-    const saveButton = page.getByRole('button', { name: /save for later/i });
-    if ((await saveButton.count()) === 0) {
-      test.skip();
-      return;
-    }
+  test('should save statement for later', async ({
+    authenticatedPage: page,
+    mainUserId,
+    adminDb,
+  }) => {
+    const statementId = crypto.randomUUID();
+    await adminDb.transact(
+      adminDb.tx.statements[statementId]
+        .update({
+          text: 'E2E Save Statement',
+          tag: 'environment',
+          agreeCount: 0,
+          disagreeCount: 0,
+          createdAt: Date.now(),
+        })
+        .link({ creator: mainUserId })
+    );
 
+    await page.goto(`/statement/${statementId}`);
+    await page.waitForLoadState('networkidle');
+
+    // "Save for Later" button is in the sidebar Actions card
+    const saveButton = page.getByRole('button', { name: /save for later/i });
+    await expect(saveButton).toBeVisible({ timeout: 10000 });
     await saveButton.click();
   });
 });

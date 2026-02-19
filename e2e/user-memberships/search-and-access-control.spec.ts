@@ -1,22 +1,23 @@
 import { test, expect } from '../fixtures/test-base';
 
 test.describe('User Memberships - Search', () => {
-  test.beforeEach(async ({ authenticatedPage: page, adminDb }) => {
-    const authUser = await adminDb.auth.getUser({ email: 'polity.live@gmail.com' });
-    await page.goto(`/user/${authUser.id}/memberships`);
+  test('should filter memberships by search text', async ({
+    authenticatedPage: page,
+    mainUserId,
+    groupFactory,
+  }) => {
+    // Create a group membership so the search has data
+    const group = await groupFactory.createGroup(mainUserId, { name: 'Searchable E2E Group' });
+
+    await page.goto(`/user/${mainUserId}/memberships`);
     await page.waitForLoadState('domcontentloaded');
-  });
 
-  test('should filter memberships by search text', async ({ authenticatedPage: page }) => {
-    const searchInput = page.getByPlaceholder(/search by name|search/i);
-    if ((await searchInput.count()) === 0) {
-      test.skip();
-      return;
-    }
+    const searchInput = page.getByPlaceholder(/search by name/i);
+    await expect(searchInput).toBeVisible({ timeout: 10000 });
 
-    await searchInput.fill('test');
-
-    // Results should be filtered (fewer items visible)
+    await searchInput.fill('Searchable');
+    // Results should be filtered (search is type-ahead)
+    await page.waitForTimeout(500);
   });
 });
 

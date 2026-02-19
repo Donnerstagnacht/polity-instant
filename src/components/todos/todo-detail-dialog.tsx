@@ -211,7 +211,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                   placeholder={t('features.todos.detail.todoTitle')}
                 />
               ) : (
-                <span className="text-2xl">{todo.title}</span>
+                <span className="text-2xl">{formData.title}</span>
               )}
             </DialogTitle>
             <div className="flex gap-2">

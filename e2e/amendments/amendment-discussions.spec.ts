@@ -1,41 +1,60 @@
 import { test, expect } from '../fixtures/test-base';
-import { navigateToAmendment } from '../helpers/navigation';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Amendment - Discussions', () => {
-  test.beforeEach(async ({ authenticatedPage: page }) => {
-    await navigateToAmendment(page, TEST_ENTITY_IDS.AMENDMENT);
+  test('should display discussion/comments section', async ({
+    authenticatedPage: page,
+    mainUserId,
+    amendmentFactory,
+  }) => {
+    const amendment = await amendmentFactory.createAmendment(mainUserId);
+    await page.goto(`/amendment/${amendment.id}/discussions`);
+    await page.waitForLoadState('domcontentloaded');
+
+    const discussionsHeading = page.getByText(/discussion/i);
+    await expect(discussionsHeading.first()).toBeVisible({ timeout: 10000 });
   });
 
-  test('should display discussion/comments section', async ({ authenticatedPage: page }) => {
-    const commentsSection = page.getByText(/comment|discussion/i);
-    if ((await commentsSection.count()) > 0) {
-      await expect(commentsSection.first()).toBeVisible();
-    }
+  test('should open New Thread dialog and create a discussion thread', async ({
+    authenticatedPage: page,
+    mainUserId,
+    amendmentFactory,
+  }) => {
+    const amendment = await amendmentFactory.createAmendment(mainUserId);
+    await page.goto(`/amendment/${amendment.id}/discussions`);
+    await page.waitForLoadState('domcontentloaded');
+
+    // Click "New Thread" or "Create First Thread" button
+    const newThreadButton = page.getByRole('button', { name: /new thread|create first thread/i });
+    await expect(newThreadButton.first()).toBeVisible({ timeout: 10000 });
+    await newThreadButton.first().click();
+
+    // Dialog should appear
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible({ timeout: 5000 });
+
+    // Fill in thread title
+    const titleInput = dialog.getByPlaceholder(/enter thread title/i);
+    await expect(titleInput).toBeVisible();
+    await titleInput.fill('E2E Test Discussion Thread');
+
+    // Submit
+    const createButton = dialog.getByRole('button', { name: /create thread/i });
+    await expect(createButton).toBeVisible();
+    await createButton.click();
+
+    await page.waitForLoadState('networkidle');
   });
 
-  test('should add a comment to the amendment', async ({ authenticatedPage: page }) => {
-    // Find comment input area
-    const commentInput = page.locator(
-      'textarea[placeholder*="comment"], textarea[placeholder*="Comment"], [contenteditable="true"]'
-    );
-    if ((await commentInput.count()) === 0) {
-      test.skip();
-      return;
-    }
+  test('should display threaded replies', async ({
+    authenticatedPage: page,
+    mainUserId,
+    amendmentFactory,
+  }) => {
+    const amendment = await amendmentFactory.createAmendment(mainUserId);
+    await page.goto(`/amendment/${amendment.id}/discussions`);
+    await page.waitForLoadState('domcontentloaded');
 
-    await commentInput.first().fill('E2E Test Comment');
-
-    // Submit comment
-    const submitButton = page.getByRole('button', { name: /post|submit|send|comment/i });
-    if ((await submitButton.count()) > 0) {
-      await submitButton.first().click();
-      await page.waitForLoadState('networkidle');
-    }
-  });
-
-  test('should display threaded replies', async ({ authenticatedPage: page }) => {
-    // Check for reply buttons on existing comments
+    // Check for reply buttons on existing comments (if any threads exist)
     const replyButtons = page.getByRole('button', { name: /reply/i });
     if ((await replyButtons.count()) > 0) {
       await expect(replyButtons.first()).toBeVisible();

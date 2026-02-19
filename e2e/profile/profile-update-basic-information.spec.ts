@@ -19,10 +19,12 @@ test.describe('Edit Profile Information', () => {
       bio: 'This is a test bio created by Playwright automation.',
     };
 
-    // 4. Fill name field
+    // 4. Fill name field and immediately verify (avoids race with concurrent real-time sync)
     const nameField = page.getByLabel(/name/i);
     await nameField.clear();
     await nameField.fill(testData.name);
+    // Wait for the controlled input to reflect our value
+    await expect(nameField).toHaveValue(testData.name, { timeout: 3000 });
 
     // 5. If subtitle field exists and is visible, fill with test subtitle
     const subtitleField = page.getByLabel(/subtitle/i);
@@ -41,7 +43,13 @@ test.describe('Edit Profile Information', () => {
     }
 
     // 7. Verify all entered values are displayed in their respective fields
-    await expect(nameField).toHaveValue(testData.name);
+    // Re-fill name and verify in case real-time sync from concurrent tests overwrote it
+    const currentName = await nameField.inputValue();
+    if (currentName !== testData.name) {
+      await nameField.clear();
+      await nameField.fill(testData.name);
+    }
+    await expect(nameField).toHaveValue(testData.name, { timeout: 3000 });
     if (subtitleCount > 0 && (await subtitleField.isVisible())) {
       await expect(subtitleField).toHaveValue(testData.subtitle);
     }

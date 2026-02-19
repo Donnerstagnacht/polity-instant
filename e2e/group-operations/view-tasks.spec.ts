@@ -38,25 +38,21 @@ test.describe('Group Operations - View Tasks', () => {
   test('should display task cards when tasks exist', async ({
     authenticatedPage: page,
     groupFactory,
+    todoFactory,
     mainUserId,
   }) => {
     const group = await groupFactory.createGroup(mainUserId, {
       name: `Tasks Cards Test ${Date.now()}`,
     });
+    await todoFactory.createTodo(mainUserId, {
+      title: 'E2E Task Card Test',
+      status: 'pending',
+      groupId: group.id,
+    });
     await page.goto(`/group/${group.id}/operation`);
     await page.waitForLoadState('domcontentloaded');
 
-    // Look for task items (checkboxes or task cards)
-    const taskCheckboxes = page.getByRole('checkbox');
-    const taskCards = page.locator('[class*="todo"], [class*="task"]');
-
-    const hasCheckboxes = (await taskCheckboxes.count()) > 0;
-    const hasCards = (await taskCards.count()) > 0;
-
-    if (hasCheckboxes || hasCards) {
-      if (hasCheckboxes) {
-        await expect(taskCheckboxes.first()).toBeVisible();
-      }
-    }
+    // Default view is kanban - task should appear in a kanban column
+    await expect(page.getByText('E2E Task Card Test')).toBeVisible({ timeout: 10000 });
   });
 });

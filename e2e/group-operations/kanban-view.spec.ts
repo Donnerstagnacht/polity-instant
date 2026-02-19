@@ -1,61 +1,71 @@
 import { test, expect } from '../fixtures/test-base';
-import { navigateToGroupOperation } from '../helpers/navigation';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
+import { gotoWithRetry } from '../helpers/navigation';
 
 test.describe('Group Operations - Kanban View', () => {
-  test.beforeEach(async ({ authenticatedPage: page }) => {
-    await navigateToGroupOperation(page, TEST_ENTITY_IDS.GROUP);
+  test('should switch between list and kanban views', async ({
+    authenticatedPage: page,
+    groupFactory,
+    todoFactory,
+    mainUserId,
+  }) => {
+    const group = await groupFactory.createGroup(mainUserId, { name: 'E2E Kanban Group' });
+    await todoFactory.createTodo(mainUserId, {
+      title: 'E2E Kanban Task',
+      status: 'pending',
+      groupId: group.id,
+    });
+
+    // Navigate and wait for todo to sync (InstantDB eventual consistency)
+    for (let attempt = 0; attempt < 5; attempt++) {
+      await page.goto(`/group/${group.id}/operation`);
+      await page.waitForLoadState('domcontentloaded');
+      await page.waitForTimeout(2000 + attempt * 1000);
+      if (await page.getByText('E2E Kanban Task').isVisible({ timeout: 3000 }).catch(() => false)) break;
+    }
+
+    await expect(page.getByText('E2E Kanban Task')).toBeVisible({ timeout: 10000 });
+
+    // Default view is kanban. Find the list toggle button
+    const listButton = page.getByRole('button', { name: /list view/i });
+    await expect(listButton).toBeVisible({ timeout: 10000 });
+
+    // Click list button to switch to list view
+    await listButton.click();
+    await page.waitForTimeout(500);
+
+    // The task should be visible in list view with a status select
+    const statusSelect = page.locator('[role="combobox"]');
+    await expect(statusSelect.first()).toBeVisible({ timeout: 5000 });
+
+    // Switch back to kanban
+    const kanbanButton = page.getByRole('button', { name: /kanban view/i });
+    await kanbanButton.click();
+    await page.waitForTimeout(500);
   });
 
-  test('should switch between list and kanban views', async ({ authenticatedPage: page }) => {
-    const tasksSection = page.locator('section, div').filter({ hasText: 'Tasks' }).first();
+  test('should display kanban column headers', async ({
+    authenticatedPage: page,
+    groupFactory,
+    todoFactory,
+    mainUserId,
+  }) => {
+    const group = await groupFactory.createGroup(mainUserId, { name: 'E2E Kanban Headers Group' });
+    await todoFactory.createTodo(mainUserId, {
+      title: 'E2E Kanban Header Task',
+      status: 'pending',
+      groupId: group.id,
+    });
 
-    // Find toggle buttons (LayoutList and LayoutGrid icons)
-    const toggleButtons = tasksSection.getByRole('button');
-
-    if ((await toggleButtons.count()) < 2) {
-      test.skip();
-      return;
+    // Navigate and wait for todo to sync
+    for (let attempt = 0; attempt < 5; attempt++) {
+      await page.goto(`/group/${group.id}/operation`);
+      await page.waitForLoadState('domcontentloaded');
+      await page.waitForTimeout(2000 + attempt * 1000);
+      if (await page.getByText('E2E Kanban Header Task').isVisible({ timeout: 3000 }).catch(() => false)) break;
     }
 
-    // Click the kanban toggle (second button typically)
-    await toggleButtons.nth(1).click();
-
-    // Kanban columns should appear: To Do, In Progress, Completed, Cancelled
-    const toDoColumn = page.getByText('To Do');
-    const inProgressColumn = page.getByText('In Progress');
-    const completedColumn = page.getByText('Completed');
-
-    if ((await toDoColumn.count()) > 0) {
-      await expect(toDoColumn.first()).toBeVisible();
-    }
-    if ((await inProgressColumn.count()) > 0) {
-      await expect(inProgressColumn.first()).toBeVisible();
-    }
-    if ((await completedColumn.count()) > 0) {
-      await expect(completedColumn.first()).toBeVisible();
-    }
-  });
-
-  test('should display kanban column headers', async ({ authenticatedPage: page }) => {
-    // Switch to kanban view first
-    const tasksSection = page.locator('section, div').filter({ hasText: 'Tasks' }).first();
-    const toggleButtons = tasksSection.getByRole('button');
-
-    if ((await toggleButtons.count()) < 2) {
-      test.skip();
-      return;
-    }
-
-    await toggleButtons.nth(1).click();
-
-    // Verify column headers exist
-    const expectedColumns = ['To Do', 'In Progress', 'Completed', 'Cancelled'];
-    for (const column of expectedColumns) {
-      const header = page.getByText(column, { exact: true });
-      if ((await header.count()) > 0) {
-        await expect(header.first()).toBeVisible();
-      }
-    }
+    // Default view is kanban - column headers should be visible
+    const toDoColumn = page.getByText(/to do/i);
+    await expect(toDoColumn.first()).toBeVisible({ timeout: 10000 });
   });
 });

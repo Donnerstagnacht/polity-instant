@@ -1,63 +1,58 @@
 import { test, expect } from '../fixtures/test-base';
 import { navigateToUserProfile } from '../helpers/navigation';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Profile - View Other User', () => {
-  test.beforeEach(async ({ authenticatedPage: page }) => {
-    // Navigate to another user's profile
-    await navigateToUserProfile(page, TEST_ENTITY_IDS.testUser1);
+  test('should display other user profile with action bar', async ({
+    authenticatedPage: page,
+    userFactory,
+  }) => {
+    const otherUser = await userFactory.createUser({ name: 'E2E Other User' });
+    await navigateToUserProfile(page, otherUser.id);
+
+    const subscribeButton = page.getByRole('button', { name: /subscribe/i });
+    await expect(subscribeButton).toBeVisible({ timeout: 10000 });
   });
 
-  test('should display other user profile with action bar', async ({ authenticatedPage: page }) => {
-    // Action bar should show Subscribe, Message, Share buttons
-    const subscribeButton = page.getByRole('button', { name: /subscribe/i });
-    if ((await subscribeButton.count()) > 0) {
-      await expect(subscribeButton).toBeVisible();
-    }
-  });
+  test('should subscribe to another user', async ({
+    authenticatedPage: page,
+    userFactory,
+  }) => {
+    const otherUser = await userFactory.createUser({ name: 'E2E Subscribe Target' });
+    await navigateToUserProfile(page, otherUser.id);
 
-  test('should subscribe to another user', async ({ authenticatedPage: page }) => {
     const subscribeButton = page.getByRole('button', { name: /subscribe/i });
-    if ((await subscribeButton.count()) === 0) {
-      test.skip();
-      return;
-    }
-
+    await expect(subscribeButton).toBeVisible({ timeout: 10000 });
     await subscribeButton.click();
-    await page.waitForLoadState('networkidle');
 
     // Button should change to "Unsubscribe"
     const unsubscribeButton = page.getByRole('button', { name: /unsubscribe/i });
-    if ((await unsubscribeButton.count()) > 0) {
-      await expect(unsubscribeButton).toBeVisible();
-    }
+    await expect(unsubscribeButton).toBeVisible({ timeout: 5000 });
   });
 
-  test('should click message button and navigate to messages', async ({ authenticatedPage: page }) => {
-    const messageButton = page.getByRole('button', { name: /message/i });
-    if ((await messageButton.count()) === 0) {
-      // May use mail icon button
-      const mailButton = page.getByRole('link', { name: /message|mail/i });
-      if ((await mailButton.count()) > 0) {
-        await mailButton.first().click();
-        await page.waitForURL(/\/messages/, { timeout: 5000 });
-        await expect(page).toHaveURL(/\/messages/);
-      } else {
-        test.skip();
-      }
-      return;
-    }
+  test('should click message button and navigate to messages', async ({
+    authenticatedPage: page,
+    userFactory,
+  }) => {
+    const otherUser = await userFactory.createUser({ name: 'E2E Message Target' });
+    await navigateToUserProfile(page, otherUser.id);
 
-    await messageButton.first().click();
-    await page.waitForURL(/\/messages/, { timeout: 5000 });
+    // Message button is a Button with onClick, not a Link
+    const messageButton = page.getByRole('button', { name: /message/i });
+    await expect(messageButton).toBeVisible({ timeout: 10000 });
+    await messageButton.click();
+    await page.waitForURL(/\/messages/, { timeout: 10000 });
     await expect(page).toHaveURL(/\/messages/);
   });
 
-  test('should display share button on other user profile', async ({ authenticatedPage: page }) => {
+  test('should display share button on other user profile', async ({
+    authenticatedPage: page,
+    userFactory,
+  }) => {
+    const otherUser = await userFactory.createUser({ name: 'E2E Share Target' });
+    await navigateToUserProfile(page, otherUser.id);
+
     const shareButton = page.getByRole('button', { name: /share/i });
-    if ((await shareButton.count()) > 0) {
-      await expect(shareButton.first()).toBeVisible();
-    }
+    await expect(shareButton.first()).toBeVisible({ timeout: 10000 });
   });
 });
 
@@ -76,7 +71,6 @@ test.describe('Profile - Statement Carousel & Social Bar', () => {
     await page.goto('/user');
     await page.waitForURL(/\/user\/[a-f0-9-]+/, { timeout: 5000 });
 
-    // Social bar renders social media links
     const socialLinks = page.locator('a[href*="twitter"], a[href*="linkedin"], a[href*="github"]');
     if ((await socialLinks.count()) > 0) {
       await expect(socialLinks.first()).toBeVisible();

@@ -1,58 +1,73 @@
 import { test, expect } from '../fixtures/test-base';
-import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Blog - Edit Blog', () => {
-  test.beforeEach(async ({ authenticatedPage: page }) => {
-    await page.goto(`/blog/${TEST_ENTITY_IDS.BLOG}/edit`);
+  test('should display blog edit form fields', async ({
+    authenticatedPage: page,
+    blogFactory,
+    mainUserId,
+  }) => {
+    const blog = await blogFactory.createBlog(mainUserId, { title: 'E2E Edit Form Blog' });
+    await page.goto(`/blog/${blog.id}/edit`);
     await page.waitForLoadState('networkidle');
+
+    // Title field - id="title"
+    const titleInput = page.locator('#title');
+    await expect(titleInput).toBeVisible({ timeout: 10000 });
+
+    // Description field - id="description"
+    const descriptionInput = page.locator('#description');
+    await expect(descriptionInput).toBeVisible();
   });
 
-  test('should display blog edit form fields', async ({ authenticatedPage: page }) => {
-    // Title field (required)
-    const titleInput = page.getByRole('textbox', { name: /title/i });
-    if ((await titleInput.count()) > 0) {
-      await expect(titleInput).toBeVisible();
-    }
+  test('should display public/private toggle', async ({
+    authenticatedPage: page,
+    blogFactory,
+    mainUserId,
+  }) => {
+    const blog = await blogFactory.createBlog(mainUserId, { title: 'E2E Toggle Blog' });
+    await page.goto(`/blog/${blog.id}/edit`);
+    await page.waitForLoadState('networkidle');
 
-    // Description field
-    const descriptionInput = page.getByRole('textbox', { name: /description/i });
-    if ((await descriptionInput.count()) > 0) {
-      await expect(descriptionInput).toBeVisible();
-    }
-  });
-
-  test('should display public/private toggle', async ({ authenticatedPage: page }) => {
     const publicSwitch = page.getByRole('switch');
-    if ((await publicSwitch.count()) > 0) {
-      await expect(publicSwitch.first()).toBeVisible();
-    }
+    await expect(publicSwitch.first()).toBeVisible({ timeout: 10000 });
   });
 
-  test('should save changes to blog metadata', async ({ authenticatedPage: page }) => {
-    const titleInput = page.getByRole('textbox', { name: /title/i });
-    if ((await titleInput.count()) === 0) {
-      test.skip();
-      return;
-    }
+  test('should save changes to blog metadata', async ({
+    authenticatedPage: page,
+    blogFactory,
+    mainUserId,
+  }) => {
+    const blog = await blogFactory.createBlog(mainUserId, { title: 'E2E Save Blog' });
+    await page.goto(`/blog/${blog.id}/edit`);
+    await page.waitForLoadState('networkidle');
+
+    const titleInput = page.locator('#title');
+    await expect(titleInput).toBeVisible({ timeout: 10000 });
 
     // Modify the title
     await titleInput.clear();
     await titleInput.fill('Updated Blog Title E2E');
 
-    // Save
+    // Save - button text is "Save Changes"
     const saveButton = page.getByRole('button', { name: /save changes/i });
-    if ((await saveButton.count()) > 0) {
-      await saveButton.click();
-      await page.waitForLoadState('networkidle');
-    }
+    await expect(saveButton).toBeVisible();
+    await saveButton.click();
+    await page.waitForLoadState('networkidle');
   });
 
-  test('should cancel editing and go back', async ({ authenticatedPage: page }) => {
+  test('should cancel editing and go back', async ({
+    authenticatedPage: page,
+    blogFactory,
+    mainUserId,
+  }) => {
+    const blog = await blogFactory.createBlog(mainUserId, { title: 'E2E Cancel Blog' });
+    await page.goto(`/blog/${blog.id}/edit`);
+    await page.waitForLoadState('networkidle');
+
     const cancelButton = page.getByRole('button', { name: /cancel/i });
-    if ((await cancelButton.count()) > 0) {
-      await cancelButton.click();
-      // Should navigate back
-      await page.waitForLoadState('networkidle');
-    }
+    await expect(cancelButton).toBeVisible({ timeout: 10000 });
+    await cancelButton.click();
+    // Should navigate back to blog detail
+    await page.waitForLoadState('networkidle');
   });
 });
