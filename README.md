@@ -99,7 +99,7 @@ We welcome contributions! There are multiple ways to help:
 - 🐛 **Testing**: Report bugs, write test cases
 - 💰 **Support**: Help sustain the project ([Support Page](/support))
 
-Check out our [GitHub repository](https://github.com/Donnerstagnacht/polity-instant) to get started!
+Please read our [Contributing Guide](CONTRIBUTING.md) to learn how to create issues and submit pull requests!
 
 ## 🎨 Timeline Feature
 

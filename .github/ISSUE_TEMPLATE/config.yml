@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 💬 Fragen & Diskussionen / Questions & Discussions
+    url: https://github.com/Donnerstagnacht/polity-instant/discussions
+    about: Stelle Fragen oder diskutiere Ideen / Ask questions or discuss ideas
+  - name: 📧 Email Support
+    url: mailto:tobias.hassebrock@gmail.com
+    about: Kontaktiere das Team direkt / Contact the team directly
+  - name: 🎨 Design Feedback (Figma)
+    url: https://www.figma.com/proto/cAT8Aonu8P7ojwgnKcVlkz/Polity
+    about: Gib Feedback zum Design / Provide design feedback
