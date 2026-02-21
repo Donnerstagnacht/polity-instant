@@ -5,157 +5,159 @@
 [![Open Source](https://img.shields.io/badge/Open%20Source-%E2%9D%A4%EF%B8%8F-green)](https://github.com/Donnerstagnacht/polity-instant)
 [![Early Alpha](https://img.shields.io/badge/Status-Early%20Alpha-orange)](#)
 
-## 🚀 What is Polity?
+---
 
-Polity is a modern platform for democratic processes, enabling:
+## Prerequisites
 
-- 📝 **Collaborative Document Editing** - Work together on amendments and proposals
-- 🗳️ **Democratic Voting** - Conduct transparent and secure voting processes
-- 👥 **Group Management** - Organize parties, NGOs, and communities
-- 📅 **Event Planning** - Schedule meetings and democratic assemblies
-- 💬 **AI-Powered Assistant** - Get help from Aria & Kai, your democratic companions
-- 🔐 **Secure & Transparent** - Open source with privacy-first approach
+- **Node.js 22+** (recommended via [nvm](https://github.com/nvm-sh/nvm))
+- **npm**
+- **Docker Desktop** (for Supabase & Zero Cache)
+- **Supabase CLI** (`npm i -g supabase` or use `npx supabase`)
 
-## ⚡ Quick Start
+---
 
-### Prerequisites
+## Running the Project
 
-- Node.js 18+
-- npm or pnpm
-
-### Installation
+### 1. Install dependencies
 
 ```bash
-# Clone the repository
-git clone https://github.com/Donnerstagnacht/polity-instant.git
-cd polity-instant
-
-# Install dependencies
 npm install
+```
 
-# Run development server
+### 2. Start Supabase (local)
+
+```bash
+npx supabase start
+```
+
+This boots up a local Supabase stack (Postgres, Auth, Studio, Inbucket, etc.) via Docker.
+
+### 3. Start Zero Cache
+
+In a **separate terminal**:
+
+```bash
+npm run zero:cache
+```
+
+Or via Docker Compose (which also starts the app):
+
+```bash
+docker compose up -d
+```
+
+### 4. Start the dev server
+
+In a **separate terminal**:
+
+```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser 🎉
-
-## 🛠️ Development
-
-### Building for Production
+### 5. (Optional) Seed the database
 
 ```bash
-npm run build
+npm run seed
 ```
 
-### 🧪 Testing
+---
 
-Run tests with [Vitest](https://vitest.dev/) and [Playwright](https://playwright.dev/):
+## Where to Find What
+
+| Service               | URL                                                       | Description                                    |
+| --------------------- | --------------------------------------------------------- | ---------------------------------------------- |
+| **App (Dev)**         | [http://localhost:3000](http://localhost:3000)            | Polity frontend (TanStack Start / Vinxi)       |
+| **Supabase Studio**   | [http://localhost:54323](http://localhost:54323)          | Database GUI, table editor, SQL editor         |
+| **Supabase API**      | [http://localhost:54321](http://localhost:54321)          | Supabase REST & Auth API                       |
+| **Supabase Inbucket** | [http://localhost:54324](http://localhost:54324)          | Local email inbox (captures auth emails, OTPs) |
+| **Postgres (direct)** | `postgresql://postgres:postgres@127.0.0.1:54322/postgres` | Direct DB connection (e.g. for psql, DBeaver)  |
+| **Zero Cache**        | [http://localhost:4848](http://localhost:4848)            | Zero sync engine (realtime cache server)       |
+
+---
+
+## All npm Scripts
+
+| Command                   | Description                       |
+| ------------------------- | --------------------------------- |
+| `npm run dev`             | Start the dev server on port 3000 |
+| `npm run build`           | Production build                  |
+| `npm run start`           | Start production server           |
+| `npm run seed`            | Seed the database with test data  |
+| `npm run zero:cache`      | Start zero-cache-dev locally      |
+| `npm run supabase:start`  | Start local Supabase              |
+| `npm run supabase:stop`   | Stop local Supabase               |
+| `npm run test`            | Run unit tests (Vitest)           |
+| `npm run test:e2e`        | Run E2E tests (Playwright)        |
+| `npm run test:e2e:ui`     | Run E2E tests with Playwright UI  |
+| `npm run test:e2e:headed` | Run E2E tests in headed browser   |
+| `npm run lint`            | Lint with ESLint                  |
+| `npm run lint:fix`        | Lint and auto-fix                 |
+| `npm run format`          | Format code with Prettier         |
+| `npm run format:check`    | Check formatting                  |
+| `npm run storybook`       | Start Storybook on port 6006      |
+
+---
+
+## Docker Compose
+
+`docker compose up -d` starts:
+
+- **zero-cache** — Zero sync server on port 4848, connected to Supabase Postgres
+- **app** — The Polity dev server on port 3000
+
+> **Note:** Supabase must be running first (`npx supabase start`) since Docker Compose connects to the Supabase Docker network (`supabase_network_polity`).
+
+### Stopping everything
 
 ```bash
-# Unit tests
-npm run test
-
-# E2E tests
-npm run test:e2e
+docker compose down      # Stop zero-cache & app containers
+npx supabase stop        # Stop local Supabase
 ```
 
-### 🎨 Code Quality
+---
 
-```bash
-# Format code with Prettier
-npm run format
-npm run format:check
+## Project Structure
 
-# Lint with ESLint
-npm run lint
-npm run lint:fix
+```
+app/              # TanStack Start entry points (client, ssr, router)
+src/
+  routes/         # File-based route pages
+  components/     # Reusable UI components (shadcn/ui)
+  features/       # Feature modules (amendments, groups, events, etc.)
+  hooks/          # Custom React hooks
+  i18n/           # Internationalization (DE & EN)
+  zero/           # Zero schema & sync setup
+  utils/          # Utility functions
+supabase/         # Supabase config & schema SQL
+scripts/          # Database seeding scripts
+e2e/              # Playwright E2E tests
 ```
 
-### 🎭 UI Components
+## Tech Stack
 
-Add components using [Shadcn UI](https://ui.shadcn.com/):
-
-```bash
-pnpx shadcn@latest add button
-```
-
-## 🏗️ Tech Stack
-
-- **Framework**: [Next.js 14](https://nextjs.org/) with App Router
-- **Database**: [InstantDB](https://instantdb.com/) - Realtime database with permissions
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/) + [Shadcn UI](https://ui.shadcn.com/)
-- **Editor**: [Plate.js](https://platejs.org/) - Rich text collaborative editor
-- **AI**: Custom AI assistants (Aria & Kai) for democratic guidance
-- **Auth**: Magic link authentication via InstantDB
+- **Framework**: [TanStack Start](https://tanstack.com/start) (Vinxi)
+- **Database**: [Supabase](https://supabase.com/) (Postgres) + [Zero](https://zero.rocicorp.dev/) (realtime sync)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/)
+- **Editor**: [Plate.js](https://platejs.org/) — Rich text collaborative editor
+- **AI**: Custom AI assistants (Aria & Kai)
+- **Auth**: Supabase Auth (email OTP)
 - **Testing**: Vitest + Playwright
+- **i18n**: i18next (German & English)
 
-## 🤝 Contributing
+---
 
-We welcome contributions! There are multiple ways to help:
+## Contributing
 
 - 💻 **Code**: Fix bugs, add features, improve tests
-- 🎨 **Design**: Improve UX/UI, create flows ([Figma](https://www.figma.com/proto/cAT8Aonu8P7ojwgnKcVlkz/Polity))
-- 📝 **Documentation**: Write guides, tutorials, API docs
+- 🎨 **Design**: Improve UX/UI ([Figma](https://www.figma.com/proto/cAT8Aonu8P7ojwgnKcVlkz/Polity))
+- 📝 **Docs**: Write guides, tutorials, API docs
 - 🐛 **Testing**: Report bugs, write test cases
-- 💰 **Support**: Help sustain the project ([Support Page](/support))
 
-Check out our [GitHub repository](https://github.com/Donnerstagnacht/polity-instant) to get started!
-
-## 🎨 Timeline Feature
-
-Polity features a **Pinterest/Instagram-style discovery timeline** with three distinct modes:
-
-### Timeline Modes
-
-- **📌 Following** - Content from groups, events, and amendments you subscribe to
-- **🔭 Explore** - Discover trending content, popular topics, and new groups to join
-- **🖥️ Decisions** - Bloomberg-style terminal for active votes and elections
-
-### Content Cards
-
-The timeline displays rich content cards for:
-
-- 👥 Groups - Community cards with member counts and topics
-- 📅 Events - Event cards with dates and participation status
-- 📝 Amendments - Amendment cards with workflow status and voting
-- 🗳️ Votes - Live vote cards with progress bars and countdowns
-- 🏛️ Elections - Election cards with candidate info and phases
-- ✅ Todos - Task cards with completion status
-- 📰 Blogs - Blog post cards with previews
-- 💬 Statements - Statement cards with discussion counts
-
-### Discovery Features
-
-- **Topic Filtering** - Filter by topics like Climate, Transport, Budget, Education
-- **Gradient Cards** - Beautiful gradient headers for visual variety
-- **Reactions** - Support, Oppose, or show Interest in content
-- **Real-time Updates** - Live updates via InstantDB subscriptions
-- **Infinite Scroll** - Smooth loading of more content
-- **Responsive Design** - Masonry grid adapts from 1-4 columns
-
-## 📄 Project Structure
-
-```
-app/              # Next.js App Router pages
-src/
-  components/     # Reusable UI components
-  features/       # Feature-specific code
-  hooks/          # Custom React hooks
-  utils/          # Utility functions
-e2e/              # End-to-end tests
-scripts/          # Database seeding scripts
-instant.*.ts      # InstantDB configuration
-```
-
-## 📜 License
-
-Open Source - Building tools for democracy, together.
-
-## 💬 Community
+## Community
 
 - **Email**: tobias.hassebrock@gmail.com
 - **GitHub**: [Donnerstagnacht/polity-instant](https://github.com/Donnerstagnacht/polity-instant)
 
 ---
 
-**⚠️ Note**: This is an early alpha version. Database overwrites can happen. Use with caution!
+**⚠️ Early Alpha** — Database resets can happen. Use with caution!

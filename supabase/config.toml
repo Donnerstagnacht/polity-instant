@@ -22,3 +22,6 @@ site_url = "http://localhost:3000"
 enable_signup = true
 double_confirm_changes = false
 enable_confirmations = false
+
+[analytics]
+enabled = false
