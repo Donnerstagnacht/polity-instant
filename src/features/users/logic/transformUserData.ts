@@ -11,6 +11,8 @@ export function transformUserData(userData: any): User {
   return {
     id: userData.id,
     name: fullName,
+    firstName: userData.first_name || '',
+    lastName: userData.last_name || '',
     subtitle: userData.bio || '',
     avatar: userData.avatar || '',
 

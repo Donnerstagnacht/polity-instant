@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button.tsx';
 import { Loader2, CheckCircle2, XCircle, Clock, ExternalLink } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useEffect, useState } from 'react';
+import { stripeSubscriptionStatusFn } from '@/server/stripe-subscription-status';
+import { stripeCreatePortalFn } from '@/server/stripe-create-portal';
 
 interface SubscriptionStatusProps {
   userId: string;
@@ -52,19 +54,7 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
       try {
         setIsLoading(true);
 
-        const response = await fetch('/api/stripe/subscription-status', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId }),
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('[SubscriptionStatus] Error response:', errorText);
-          throw new Error('Failed to fetch subscription status');
-        }
-
-        const result = await response.json();
+        const result = await stripeSubscriptionStatusFn({ data: { userId } });
         setData(result);
       } catch (err) {
         console.error('[SubscriptionStatus] Fetch error:', err);
@@ -165,11 +155,10 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
 
   const handleManageSubscription = async () => {
     try {
-      const response = await fetch('/api/stripe/create-portal', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      if (!data?.subscription?.id) return;
+      const portalData = await stripeCreatePortalFn({
+        data: { customerId: data.subscription.id },
       });
-      const portalData = await response.json();
       if (portalData.url) {
         window.location.href = portalData.url;
       }

@@ -94,7 +94,7 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
       try {
         if (formData.isPublic && actorId) {
           if (formData.imageURL && formData.imageURL !== blog.image_url) {
-            await createTimelineEvent({
+            await createTimelineEvent({ data: {
               eventType: 'image_uploaded',
               entityType: 'blog',
               entityId: blogId,
@@ -102,7 +102,7 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
               title: `${formData.title} image updated`,
               description: 'A new image was uploaded to this blog post',
               contentType: 'image',
-            });
+            } });
           }
         }
 

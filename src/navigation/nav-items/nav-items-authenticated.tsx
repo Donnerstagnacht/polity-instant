@@ -166,8 +166,8 @@ export const navItemsAuthenticated = (
           id: 'edit',
           label: t ? t('navigation.secondary.event.edit') : 'Edit Event',
           icon: 'Settings',
-          href: `/event/${eventId}/edit`,
-          onClick: () => navigate({ to: `/event/${eventId}/edit` }),
+          href: `/event/${eventId}/settings`,
+          onClick: () => navigate({ to: `/event/${eventId}/settings` }),
         }
       );
     }
@@ -236,8 +236,8 @@ export const navItemsAuthenticated = (
           id: 'edit',
           label: t ? t('navigation.secondary.user.edit') : 'Edit User',
           icon: 'Settings',
-          href: `/user/${userId}/edit`,
-          onClick: () => navigate({ to: `/user/${userId}/edit` }),
+          href: `/user/${userId}/settings`,
+          onClick: () => navigate({ to: `/user/${userId}/settings` }),
         }
       );
     }
@@ -328,8 +328,8 @@ export const navItemsAuthenticated = (
           id: 'edit',
           label: t ? t('navigation.secondary.group.edit') : 'Edit Group',
           icon: 'Settings',
-          href: `/group/${groupId}/edit`,
-          onClick: () => navigate({ to: `/group/${groupId}/edit` }),
+          href: `/group/${groupId}/settings`,
+          onClick: () => navigate({ to: `/group/${groupId}/settings` }),
         }
       );
     }
@@ -406,8 +406,8 @@ export const navItemsAuthenticated = (
           id: 'edit',
           label: t ? t('navigation.secondary.amendment.edit') : 'Edit Amendment',
           icon: 'Settings',
-          href: `/amendment/${amendmentId}/edit`,
-          onClick: () => navigate({ to: `/amendment/${amendmentId}/edit` }),
+          href: `/amendment/${amendmentId}/settings`,
+          onClick: () => navigate({ to: `/amendment/${amendmentId}/settings` }),
         }
       );
     }
@@ -454,8 +454,8 @@ export const navItemsAuthenticated = (
           id: 'edit',
           label: t ? t('navigation.secondary.blog.edit') : 'Edit Blog',
           icon: 'Settings',
-          href: `/blog/${blogId}/edit`,
-          onClick: () => navigate({ to: `/blog/${blogId}/edit` }),
+          href: `/blog/${blogId}/settings`,
+          onClick: () => navigate({ to: `/blog/${blogId}/settings` }),
         }
       );
     }

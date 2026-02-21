@@ -24,7 +24,7 @@ export const stripeCreateCheckoutFn = createServerFn({ method: 'POST' })
     try {
       const stripe = getStripe()
       const { priceId, amount, userId, origin: clientOrigin } = data
-      const origin = clientOrigin || process.env.NEXT_PUBLIC_APP_URL
+      const origin = clientOrigin || process.env.VITE_APP_URL
 
       // Check if customer already exists
       let existingCustomer: Stripe.Customer | undefined

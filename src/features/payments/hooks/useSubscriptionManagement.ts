@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { stripeSubscriptionStatusFn } from '@/server/stripe-subscription-status';
 
 // Co-located types
 export interface SubscriptionData {
@@ -33,16 +34,8 @@ export function useSubscriptionManagement({
 
     setIsLoading(true);
     try {
-      const response = await fetch('/api/stripe/subscription-status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setActiveSubscription(data.subscription);
-      }
+      const data = await stripeSubscriptionStatusFn({ data: { userId } });
+      setActiveSubscription(data.subscription);
     } catch (error) {
       console.error('Failed to fetch subscription:', error);
     } finally {

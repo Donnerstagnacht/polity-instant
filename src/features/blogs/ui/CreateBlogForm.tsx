@@ -173,14 +173,14 @@ export function CreateBlogForm() {
 
       // Add timeline event for public blogs
       if (formData.visibility === 'public') {
-        await createTimelineEvent({
+        await createTimelineEvent({ data: {
           eventType: 'created',
           entityType: 'blog',
           entityId: blogId,
           actorId: user.id,
           title: `New blog post: ${formData.title}`,
           description: 'A new blog post has been published',
-        });
+        } });
       }
 
       toast.success('Blog post created successfully!');

@@ -170,7 +170,7 @@ export async function progressToNextEvent(
         .eq('id', amendmentId);
 
       // Add timeline event for rejection
-      await createTimelineEvent({
+      await createTimelineEvent({ data: {
         eventType: 'vote_rejected',
         entityType: 'amendment',
         entityId: amendmentId,
@@ -181,7 +181,7 @@ export async function progressToNextEvent(
         status: {
           voteStatus: 'rejected',
         },
-      });
+      } });
 
       toast.error('Amendment wurde abgelehnt');
       return null;
@@ -201,7 +201,7 @@ export async function progressToNextEvent(
         .eq('id', amendmentId);
 
       // Add timeline event for passing
-      await createTimelineEvent({
+      await createTimelineEvent({ data: {
         eventType: 'vote_passed',
         entityType: 'amendment',
         entityId: amendmentId,
@@ -212,7 +212,7 @@ export async function progressToNextEvent(
         status: {
           voteStatus: 'passed',
         },
-      });
+      } });
 
       toast.success('🎉 Amendment wurde angenommen!');
       return null;

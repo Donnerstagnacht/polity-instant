@@ -74,6 +74,8 @@ export interface UserHashtag {
 export interface User {
   id: string; // Add the user ID
   name: string;
+  firstName: string;
+  lastName: string;
   subtitle: string;
   avatar: string;
   stats: UserStat[];

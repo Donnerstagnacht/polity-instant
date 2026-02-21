@@ -62,7 +62,7 @@ export function useUserMutations() {
         avatar: fileId,
       });
 
-      await createTimelineEvent({
+      await createTimelineEvent({ data: {
           eventType: 'image_uploaded',
           entityType: 'user',
           entityId: userId,
@@ -71,7 +71,7 @@ export function useUserMutations() {
           description: 'User uploaded a new profile image',
           contentType: 'image',
           status: {},
-        });
+        } });
       return { success: true };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update avatar';
@@ -200,14 +200,14 @@ export function useUserMutations() {
       }
 
       // Add timeline event for profile update
-      await createTimelineEvent({
+      await createTimelineEvent({ data: {
           eventType: 'updated',
           entityType: 'user',
           entityId: userId,
           actorId: userId,
           title: profileData.first_name ? `${profileData.first_name}${profileData.last_name ? ' ' + profileData.last_name : ''} updated their profile` : 'Profile updated',
           description: profileData.about?.substring(0, 100) || undefined,
-        });
+        } });
 
       return { success: true };
     } catch (err) {

@@ -170,7 +170,7 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
       let subscription = await registration.pushManager.getSubscription();
 
       if (!subscription) {
-        const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+        const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
         if (!vapidPublicKey) {
           throw new Error(tRef.current('components.pushNotifications.errors.vapidMissing'));

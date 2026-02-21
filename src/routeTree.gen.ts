@@ -42,6 +42,10 @@ import { Route as AuthedCreateBlogEntryImport } from './routes/_authed/create/bl
 import { Route as AuthedCreateAmendmentImport } from './routes/_authed/create/amendment'
 import { Route as AuthedCreateAgendaItemImport } from './routes/_authed/create/agenda-item'
 import { Route as AuthedAmendmentIdImport } from './routes/_authed/amendment/$id'
+import { Route as AuthedUserIdIndexImport } from './routes/_authed/user/$id/index'
+import { Route as AuthedGroupIdIndexImport } from './routes/_authed/group/$id/index'
+import { Route as AuthedEventIdIndexImport } from './routes/_authed/event/$id/index'
+import { Route as AuthedAmendmentIdIndexImport } from './routes/_authed/amendment/$id/index'
 import { Route as AuthedUserIdSubscriptionsImport } from './routes/_authed/user/$id/subscriptions'
 import { Route as AuthedUserIdSettingsImport } from './routes/_authed/user/$id/settings'
 import { Route as AuthedUserIdNotificationsImport } from './routes/_authed/user/$id/notifications'
@@ -266,6 +270,30 @@ const AuthedAmendmentIdRoute = AuthedAmendmentIdImport.update({
   id: '/amendment/$id',
   path: '/amendment/$id',
   getParentRoute: () => AuthedRoute,
+} as any)
+
+const AuthedUserIdIndexRoute = AuthedUserIdIndexImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedUserIdRoute,
+} as any)
+
+const AuthedGroupIdIndexRoute = AuthedGroupIdIndexImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedGroupIdRoute,
+} as any)
+
+const AuthedEventIdIndexRoute = AuthedEventIdIndexImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedEventIdRoute,
+} as any)
+
+const AuthedAmendmentIdIndexRoute = AuthedAmendmentIdIndexImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedAmendmentIdRoute,
 } as any)
 
 const AuthedUserIdSubscriptionsRoute = AuthedUserIdSubscriptionsImport.update({
@@ -946,6 +974,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedUserIdSubscriptionsImport
       parentRoute: typeof AuthedUserIdImport
     }
+    '/_authed/amendment/$id/': {
+      id: '/_authed/amendment/$id/'
+      path: '/'
+      fullPath: '/amendment/$id/'
+      preLoaderRoute: typeof AuthedAmendmentIdIndexImport
+      parentRoute: typeof AuthedAmendmentIdImport
+    }
+    '/_authed/event/$id/': {
+      id: '/_authed/event/$id/'
+      path: '/'
+      fullPath: '/event/$id/'
+      preLoaderRoute: typeof AuthedEventIdIndexImport
+      parentRoute: typeof AuthedEventIdImport
+    }
+    '/_authed/group/$id/': {
+      id: '/_authed/group/$id/'
+      path: '/'
+      fullPath: '/group/$id/'
+      preLoaderRoute: typeof AuthedGroupIdIndexImport
+      parentRoute: typeof AuthedGroupIdImport
+    }
+    '/_authed/user/$id/': {
+      id: '/_authed/user/$id/'
+      path: '/'
+      fullPath: '/user/$id/'
+      preLoaderRoute: typeof AuthedUserIdIndexImport
+      parentRoute: typeof AuthedUserIdImport
+    }
     '/_authed/event/$id/agenda/$agendaItemId': {
       id: '/_authed/event/$id/agenda/$agendaItemId'
       path: '/$agendaItemId'
@@ -1006,6 +1062,7 @@ interface AuthedAmendmentIdRouteChildren {
   AuthedAmendmentIdProcessRoute: typeof AuthedAmendmentIdProcessRoute
   AuthedAmendmentIdSettingsRoute: typeof AuthedAmendmentIdSettingsRoute
   AuthedAmendmentIdTextRoute: typeof AuthedAmendmentIdTextRoute
+  AuthedAmendmentIdIndexRoute: typeof AuthedAmendmentIdIndexRoute
 }
 
 const AuthedAmendmentIdRouteChildren: AuthedAmendmentIdRouteChildren = {
@@ -1016,6 +1073,7 @@ const AuthedAmendmentIdRouteChildren: AuthedAmendmentIdRouteChildren = {
   AuthedAmendmentIdProcessRoute: AuthedAmendmentIdProcessRoute,
   AuthedAmendmentIdSettingsRoute: AuthedAmendmentIdSettingsRoute,
   AuthedAmendmentIdTextRoute: AuthedAmendmentIdTextRoute,
+  AuthedAmendmentIdIndexRoute: AuthedAmendmentIdIndexRoute,
 }
 
 const AuthedAmendmentIdRouteWithChildren =
@@ -1040,6 +1098,7 @@ interface AuthedEventIdRouteChildren {
   AuthedEventIdPositionsRoute: typeof AuthedEventIdPositionsRoute
   AuthedEventIdSettingsRoute: typeof AuthedEventIdSettingsRoute
   AuthedEventIdStreamRoute: typeof AuthedEventIdStreamRoute
+  AuthedEventIdIndexRoute: typeof AuthedEventIdIndexRoute
 }
 
 const AuthedEventIdRouteChildren: AuthedEventIdRouteChildren = {
@@ -1050,6 +1109,7 @@ const AuthedEventIdRouteChildren: AuthedEventIdRouteChildren = {
   AuthedEventIdPositionsRoute: AuthedEventIdPositionsRoute,
   AuthedEventIdSettingsRoute: AuthedEventIdSettingsRoute,
   AuthedEventIdStreamRoute: AuthedEventIdStreamRoute,
+  AuthedEventIdIndexRoute: AuthedEventIdIndexRoute,
 }
 
 const AuthedEventIdRouteWithChildren = AuthedEventIdRoute._addFileChildren(
@@ -1089,6 +1149,7 @@ interface AuthedGroupIdRouteChildren {
   AuthedGroupIdOperationRoute: typeof AuthedGroupIdOperationRoute
   AuthedGroupIdRelationshipsRoute: typeof AuthedGroupIdRelationshipsRoute
   AuthedGroupIdSettingsRoute: typeof AuthedGroupIdSettingsRoute
+  AuthedGroupIdIndexRoute: typeof AuthedGroupIdIndexRoute
 }
 
 const AuthedGroupIdRouteChildren: AuthedGroupIdRouteChildren = {
@@ -1102,6 +1163,7 @@ const AuthedGroupIdRouteChildren: AuthedGroupIdRouteChildren = {
   AuthedGroupIdOperationRoute: AuthedGroupIdOperationRoute,
   AuthedGroupIdRelationshipsRoute: AuthedGroupIdRelationshipsRoute,
   AuthedGroupIdSettingsRoute: AuthedGroupIdSettingsRoute,
+  AuthedGroupIdIndexRoute: AuthedGroupIdIndexRoute,
 }
 
 const AuthedGroupIdRouteWithChildren = AuthedGroupIdRoute._addFileChildren(
@@ -1139,6 +1201,7 @@ interface AuthedUserIdRouteChildren {
   AuthedUserIdNotificationsRoute: typeof AuthedUserIdNotificationsRoute
   AuthedUserIdSettingsRoute: typeof AuthedUserIdSettingsRoute
   AuthedUserIdSubscriptionsRoute: typeof AuthedUserIdSubscriptionsRoute
+  AuthedUserIdIndexRoute: typeof AuthedUserIdIndexRoute
 }
 
 const AuthedUserIdRouteChildren: AuthedUserIdRouteChildren = {
@@ -1150,6 +1213,7 @@ const AuthedUserIdRouteChildren: AuthedUserIdRouteChildren = {
   AuthedUserIdNotificationsRoute: AuthedUserIdNotificationsRoute,
   AuthedUserIdSettingsRoute: AuthedUserIdSettingsRoute,
   AuthedUserIdSubscriptionsRoute: AuthedUserIdSubscriptionsRoute,
+  AuthedUserIdIndexRoute: AuthedUserIdIndexRoute,
 }
 
 const AuthedUserIdRouteWithChildren = AuthedUserIdRoute._addFileChildren(
@@ -1281,6 +1345,10 @@ export interface FileRoutesByFullPath {
   '/user/$id/notifications': typeof AuthedUserIdNotificationsRoute
   '/user/$id/settings': typeof AuthedUserIdSettingsRoute
   '/user/$id/subscriptions': typeof AuthedUserIdSubscriptionsRoute
+  '/amendment/$id/': typeof AuthedAmendmentIdIndexRoute
+  '/event/$id/': typeof AuthedEventIdIndexRoute
+  '/group/$id/': typeof AuthedGroupIdIndexRoute
+  '/user/$id/': typeof AuthedUserIdIndexRoute
   '/event/$id/agenda/$agendaItemId': typeof AuthedEventIdAgendaAgendaItemIdRoute
   '/group/$id/blog/$entryId': typeof AuthedGroupIdBlogEntryIdRoute
   '/group/$id/editor/$docId': typeof AuthedGroupIdEditorDocIdRoute
@@ -1304,7 +1372,6 @@ export interface FileRoutesByTo {
   '/search': typeof AuthedSearchRoute
   '/todos': typeof AuthedTodosRouteWithChildren
   '/auth/verify': typeof AuthVerifyRoute
-  '/amendment/$id': typeof AuthedAmendmentIdRouteWithChildren
   '/create/agenda-item': typeof AuthedCreateAgendaItemRoute
   '/create/amendment': typeof AuthedCreateAmendmentRoute
   '/create/blog-entry': typeof AuthedCreateBlogEntryRoute
@@ -1314,11 +1381,8 @@ export interface FileRoutesByTo {
   '/create/position': typeof AuthedCreatePositionRoute
   '/create/statement': typeof AuthedCreateStatementRoute
   '/create/todo': typeof AuthedCreateTodoRoute
-  '/event/$id': typeof AuthedEventIdRouteWithChildren
-  '/group/$id': typeof AuthedGroupIdRouteWithChildren
   '/statement/$id': typeof AuthedStatementIdRoute
   '/todos/$id': typeof AuthedTodosIdRoute
-  '/user/$id': typeof AuthedUserIdRouteWithChildren
   '/create': typeof AuthedCreateIndexRoute
   '/amendment/$id/change-requests': typeof AuthedAmendmentIdChangeRequestsRoute
   '/amendment/$id/collaborators': typeof AuthedAmendmentIdCollaboratorsRoute
@@ -1352,6 +1416,10 @@ export interface FileRoutesByTo {
   '/user/$id/notifications': typeof AuthedUserIdNotificationsRoute
   '/user/$id/settings': typeof AuthedUserIdSettingsRoute
   '/user/$id/subscriptions': typeof AuthedUserIdSubscriptionsRoute
+  '/amendment/$id': typeof AuthedAmendmentIdIndexRoute
+  '/event/$id': typeof AuthedEventIdIndexRoute
+  '/group/$id': typeof AuthedGroupIdIndexRoute
+  '/user/$id': typeof AuthedUserIdIndexRoute
   '/event/$id/agenda/$agendaItemId': typeof AuthedEventIdAgendaAgendaItemIdRoute
   '/group/$id/blog/$entryId': typeof AuthedGroupIdBlogEntryIdRoute
   '/group/$id/editor/$docId': typeof AuthedGroupIdEditorDocIdRoute
@@ -1424,6 +1492,10 @@ export interface FileRoutesById {
   '/_authed/user/$id/notifications': typeof AuthedUserIdNotificationsRoute
   '/_authed/user/$id/settings': typeof AuthedUserIdSettingsRoute
   '/_authed/user/$id/subscriptions': typeof AuthedUserIdSubscriptionsRoute
+  '/_authed/amendment/$id/': typeof AuthedAmendmentIdIndexRoute
+  '/_authed/event/$id/': typeof AuthedEventIdIndexRoute
+  '/_authed/group/$id/': typeof AuthedGroupIdIndexRoute
+  '/_authed/user/$id/': typeof AuthedUserIdIndexRoute
   '/_authed/event/$id/agenda/$agendaItemId': typeof AuthedEventIdAgendaAgendaItemIdRoute
   '/_authed/group/$id/blog/$entryId': typeof AuthedGroupIdBlogEntryIdRoute
   '/_authed/group/$id/editor/$docId': typeof AuthedGroupIdEditorDocIdRoute
@@ -1497,6 +1569,10 @@ export interface FileRouteTypes {
     | '/user/$id/notifications'
     | '/user/$id/settings'
     | '/user/$id/subscriptions'
+    | '/amendment/$id/'
+    | '/event/$id/'
+    | '/group/$id/'
+    | '/user/$id/'
     | '/event/$id/agenda/$agendaItemId'
     | '/group/$id/blog/$entryId'
     | '/group/$id/editor/$docId'
@@ -1519,7 +1595,6 @@ export interface FileRouteTypes {
     | '/search'
     | '/todos'
     | '/auth/verify'
-    | '/amendment/$id'
     | '/create/agenda-item'
     | '/create/amendment'
     | '/create/blog-entry'
@@ -1529,11 +1604,8 @@ export interface FileRouteTypes {
     | '/create/position'
     | '/create/statement'
     | '/create/todo'
-    | '/event/$id'
-    | '/group/$id'
     | '/statement/$id'
     | '/todos/$id'
-    | '/user/$id'
     | '/create'
     | '/amendment/$id/change-requests'
     | '/amendment/$id/collaborators'
@@ -1567,6 +1639,10 @@ export interface FileRouteTypes {
     | '/user/$id/notifications'
     | '/user/$id/settings'
     | '/user/$id/subscriptions'
+    | '/amendment/$id'
+    | '/event/$id'
+    | '/group/$id'
+    | '/user/$id'
     | '/event/$id/agenda/$agendaItemId'
     | '/group/$id/blog/$entryId'
     | '/group/$id/editor/$docId'
@@ -1637,6 +1713,10 @@ export interface FileRouteTypes {
     | '/_authed/user/$id/notifications'
     | '/_authed/user/$id/settings'
     | '/_authed/user/$id/subscriptions'
+    | '/_authed/amendment/$id/'
+    | '/_authed/event/$id/'
+    | '/_authed/group/$id/'
+    | '/_authed/user/$id/'
     | '/_authed/event/$id/agenda/$agendaItemId'
     | '/_authed/group/$id/blog/$entryId'
     | '/_authed/group/$id/editor/$docId'
@@ -1778,7 +1858,8 @@ export const routeTree = rootRoute
         "/_authed/amendment/$id/notifications",
         "/_authed/amendment/$id/process",
         "/_authed/amendment/$id/settings",
-        "/_authed/amendment/$id/text"
+        "/_authed/amendment/$id/text",
+        "/_authed/amendment/$id/"
       ]
     },
     "/_authed/create/agenda-item": {
@@ -1827,7 +1908,8 @@ export const routeTree = rootRoute
         "/_authed/event/$id/participants",
         "/_authed/event/$id/positions",
         "/_authed/event/$id/settings",
-        "/_authed/event/$id/stream"
+        "/_authed/event/$id/stream",
+        "/_authed/event/$id/"
       ]
     },
     "/_authed/group/$id": {
@@ -1843,7 +1925,8 @@ export const routeTree = rootRoute
         "/_authed/group/$id/notifications",
         "/_authed/group/$id/operation",
         "/_authed/group/$id/relationships",
-        "/_authed/group/$id/settings"
+        "/_authed/group/$id/settings",
+        "/_authed/group/$id/"
       ]
     },
     "/_authed/statement/$id": {
@@ -1865,7 +1948,8 @@ export const routeTree = rootRoute
         "/_authed/user/$id/network",
         "/_authed/user/$id/notifications",
         "/_authed/user/$id/settings",
-        "/_authed/user/$id/subscriptions"
+        "/_authed/user/$id/subscriptions",
+        "/_authed/user/$id/"
       ]
     },
     "/_authed/create/": {
@@ -2013,6 +2097,22 @@ export const routeTree = rootRoute
     },
     "/_authed/user/$id/subscriptions": {
       "filePath": "_authed/user/$id/subscriptions.tsx",
+      "parent": "/_authed/user/$id"
+    },
+    "/_authed/amendment/$id/": {
+      "filePath": "_authed/amendment/$id/index.tsx",
+      "parent": "/_authed/amendment/$id"
+    },
+    "/_authed/event/$id/": {
+      "filePath": "_authed/event/$id/index.tsx",
+      "parent": "/_authed/event/$id"
+    },
+    "/_authed/group/$id/": {
+      "filePath": "_authed/group/$id/index.tsx",
+      "parent": "/_authed/group/$id"
+    },
+    "/_authed/user/$id/": {
+      "filePath": "_authed/user/$id/index.tsx",
       "parent": "/_authed/user/$id"
     },
     "/_authed/event/$id/agenda/$agendaItemId": {

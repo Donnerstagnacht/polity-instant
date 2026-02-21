@@ -5,8 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
 
 const PRICE_IDS = {
-  running: process.env.NEXT_PUBLIC_STRIPE_PRICE_RUNNING || '',
-  development: process.env.NEXT_PUBLIC_STRIPE_PRICE_DEVELOPMENT || '',
+  running: import.meta.env.VITE_STRIPE_PRICE_RUNNING || '',
+  development: import.meta.env.VITE_STRIPE_PRICE_DEVELOPMENT || '',
 } as const;
 
 interface SubscriptionPlansGridProps {

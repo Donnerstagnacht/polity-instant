@@ -13,7 +13,6 @@ import {
   notifyRoleDeleted,
 } from '@/utils/notification-helpers';
 import { addUserToGroupConversation } from '@/utils/groupConversationSync';
-import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { sendNotificationFn } from '@/server/notifications';
 
 /**

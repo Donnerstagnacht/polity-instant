@@ -13,6 +13,7 @@ export interface ZeroAuthContext {
 export async function getAuthFromRequest(request: Request): Promise<ZeroAuthContext> {
   const authHeader = request.headers.get('authorization')
   if (!authHeader?.startsWith('Bearer ')) {
+    console.warn('[zero-auth] No Bearer token found in request — returning anon')
     return { userID: 'anon', email: '' }
   }
 
@@ -24,10 +25,16 @@ export async function getAuthFromRequest(request: Request): Promise<ZeroAuthCont
 
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser(token)
 
+  if (error || !user) {
+    console.warn('[zero-auth] Token validation failed:', error?.message ?? 'no user returned')
+    return { userID: 'anon', email: '' }
+  }
+
   return {
-    userID: user?.id ?? 'anon',
-    email: user?.email ?? '',
+    userID: user.id,
+    email: user.email ?? '',
   }
 }

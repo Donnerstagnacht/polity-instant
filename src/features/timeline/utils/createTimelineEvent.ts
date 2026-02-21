@@ -1,8 +1,18 @@
-import { createClient } from '@supabase/supabase-js';
-const supabase = createClient(
-  process.env.SUPABASE_URL ?? '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
-);
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { createServerFn } from '@tanstack/start';
+
+let _supabase: SupabaseClient | null = null;
+function getSupabase(): SupabaseClient {
+  if (!_supabase) {
+    const url = process.env.SUPABASE_URL ?? '';
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
+    if (!url) {
+      throw new Error('[Timeline] SUPABASE_URL is not configured');
+    }
+    _supabase = createClient(url, key);
+  }
+  return _supabase;
+}
 
 /**
  * Event types for timeline
@@ -123,20 +133,22 @@ interface CreateTimelineEventParams {
  * });
  * ```
  */
-export async function createTimelineEvent({
-  eventType,
-  entityType,
-  entityId,
-  actorId,
-  title,
-  description,
-  metadata,
-  tags,
-  contentType,
-  media,
-  status,
-  stats,
-}: CreateTimelineEventParams): Promise<void> {
+export const createTimelineEvent = createServerFn({ method: 'POST' })
+  .validator((data: unknown) => data as CreateTimelineEventParams)
+  .handler(async ({ data: {
+    eventType,
+    entityType,
+    entityId,
+    actorId,
+    title,
+    description,
+    metadata,
+    tags,
+    contentType,
+    media,
+    status,
+    stats,
+  } }): Promise<void> => {
   const eventId = crypto.randomUUID();
 
   const insertData: Record<string, unknown> = {
@@ -179,11 +191,11 @@ export async function createTimelineEvent({
     insertData.stats = stats;
   }
 
-  const { error } = await supabase.from('timeline_event').insert(insertData);
+  const { error } = await getSupabase().from('timeline_event').insert(insertData);
   if (error) {
     console.error('[Timeline] Failed to create timeline event:', error);
   }
-}
+});
 
 /**
  * Helper to create a video upload timeline event
@@ -210,18 +222,20 @@ export async function createVideoUploadEvent({
   tags?: string[];
 }): Promise<void> {
   return createTimelineEvent({
-    eventType: 'video_uploaded',
-    entityType: linkedEntityType || 'user',
-    entityId: linkedEntityId || actorId,
-    actorId,
-    title,
-    description,
-    contentType: 'video',
-    tags,
-    media: {
-      videoURL,
-      videoThumbnailURL,
-      videoDuration,
+    data: {
+      eventType: 'video_uploaded',
+      entityType: linkedEntityType || 'user',
+      entityId: linkedEntityId || actorId,
+      actorId,
+      title,
+      description,
+      contentType: 'video',
+      tags,
+      media: {
+        videoURL,
+        videoThumbnailURL,
+        videoDuration,
+      },
     },
   });
 }
@@ -247,16 +261,18 @@ export async function createImageUploadEvent({
   tags?: string[];
 }): Promise<void> {
   return createTimelineEvent({
-    eventType: 'image_uploaded',
-    entityType: linkedEntityType || 'user',
-    entityId: linkedEntityId || actorId,
-    actorId,
-    title,
-    description,
-    contentType: 'image',
-    tags,
-    media: {
-      imageURL,
+    data: {
+      eventType: 'image_uploaded',
+      entityType: linkedEntityType || 'user',
+      entityId: linkedEntityId || actorId,
+      actorId,
+      title,
+      description,
+      contentType: 'image',
+      tags,
+      media: {
+        imageURL,
+      },
     },
   });
 }

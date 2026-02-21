@@ -6,7 +6,8 @@ import type { User } from '../types/user.types';
 
 // Co-located types
 export interface UserProfileFormData {
-  name: string;
+  firstName: string;
+  lastName: string;
   subtitle: string;
   about: string;
   email: string;
@@ -43,7 +44,8 @@ export function useUserProfileForm({
   const { updateCompleteProfile } = useUserMutations();
 
   const [formData, setFormData] = useState<UserProfileFormData>({
-    name: '',
+    firstName: '',
+    lastName: '',
     subtitle: '',
     about: '',
     email: '',
@@ -60,7 +62,8 @@ export function useUserProfileForm({
   useEffect(() => {
     if (user) {
       setFormData({
-        name: user.name || '',
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
         subtitle: user.subtitle || '',
         about: user.about || '',
         email: user.contact?.email || '',
@@ -92,7 +95,8 @@ export function useUserProfileForm({
 
       // Update the user using the mutations hook
       const result = await updateCompleteProfile(userId, {
-        first_name: formData.name,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
         bio: formData.subtitle,
         about: formData.about,
         avatar: formData.avatar,

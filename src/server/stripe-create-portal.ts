@@ -27,7 +27,7 @@ export const stripeCreatePortalFn = createServerFn({ method: 'POST' })
         throw new Error('Customer ID is required')
       }
 
-      const origin = returnOrigin || process.env.NEXT_PUBLIC_APP_URL
+      const origin = returnOrigin || process.env.VITE_APP_URL
 
       const session = await stripe.billingPortal.sessions.create({
         customer: customerId,

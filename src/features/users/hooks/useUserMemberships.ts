@@ -167,14 +167,14 @@ export function useUserMemberships(userId?: string, userName?: string) {
 
       // Add timeline event for member joining (if group is public)
       if (membership?.group && userId) {
-        await createTimelineEvent({
+        await createTimelineEvent({ data: {
             eventType: 'member_added',
             entityType: 'group',
             entityId: membership.group.id,
             actorId: userId,
             title: `${userName || 'New member'} joined ${membership.group.name || 'the group'}`,
             description: 'A new member has joined the group',
-          });
+          } });
       }
 
       // Notify the group (entity notification)
@@ -344,7 +344,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
 
       // Add timeline event for public amendments
       if (collaboration?.amendment && collaboration.amendment.visibility === 'public' && userId) {
-        await createTimelineEvent({
+        await createTimelineEvent({ data: {
             eventType: 'member_added',
             entityType: 'amendment',
             entityId: collaboration.amendment.id,
@@ -352,7 +352,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
             title: userName || 'User',
             description: collaboration.amendment.title || 'Amendment',
             contentType: 'amendment',
-          });
+          } });
       }
 
       // Notify the amendment (entity notification)

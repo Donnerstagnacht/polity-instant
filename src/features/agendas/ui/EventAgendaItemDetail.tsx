@@ -133,14 +133,14 @@ export function EventAgendaItemDetail({
 
       // Add timeline event for public amendments
       if (amendment.visibility === 'public') {
-        await createTimelineEvent({
+        await createTimelineEvent({ data: {
           eventType: 'vote_started',
           entityType: 'amendment',
           entityId: amendment.id,
           actorId: user.id,
           title: `Voting started for ${amendment.title || 'amendment'}`,
           description: 'Event voting has begun',
-        });
+        } });
       }
 
       // Send notification

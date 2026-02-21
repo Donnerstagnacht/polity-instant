@@ -3,16 +3,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 interface BasicInformationSectionProps {
-  name: string;
+  firstName: string;
+  lastName: string;
   subtitle: string;
-  onNameChange: (value: string) => void;
+  onFirstNameChange: (value: string) => void;
+  onLastNameChange: (value: string) => void;
   onSubtitleChange: (value: string) => void;
 }
 
 export function BasicInformationSection({
-  name,
+  firstName,
+  lastName,
   subtitle,
-  onNameChange,
+  onFirstNameChange,
+  onLastNameChange,
   onSubtitleChange,
 }: BasicInformationSectionProps) {
   return (
@@ -22,15 +26,26 @@ export function BasicInformationSection({
         <CardDescription>Your public user information</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Name *</Label>
-          <Input
-            id="name"
-            value={name}
-            onChange={e => onNameChange(e.target.value)}
-            placeholder="Your full name"
-            required
-          />
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="firstName">First Name *</Label>
+            <Input
+              id="firstName"
+              value={firstName}
+              onChange={e => onFirstNameChange(e.target.value)}
+              placeholder="First name"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="lastName">Last Name</Label>
+            <Input
+              id="lastName"
+              value={lastName}
+              onChange={e => onLastNameChange(e.target.value)}
+              placeholder="Last name"
+            />
+          </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="subtitle">Subtitle</Label>

@@ -1,11 +1,9 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { GroupWiki } from '@/features/groups/GroupWiki'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_authed/group/$id')({
-  component: GroupWikiPage,
+  component: GroupLayout,
 })
 
-function GroupWikiPage() {
-  const { id } = Route.useParams()
-  return <GroupWiki groupId={id} />
+function GroupLayout() {
+  return <Outlet />
 }

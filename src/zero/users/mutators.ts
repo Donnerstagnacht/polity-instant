@@ -11,6 +11,9 @@ import {
 
 export const userMutators = {
   updateProfile: defineMutator(userUpdateSchema, async ({ tx, ctx: { userID }, args }) => {
+    if (userID === 'anon') {
+      throw new Error('Authentication required to update profile')
+    }
     await tx.mutate.user.update({ ...args, id: userID, updated_at: Date.now() })
   }),
 

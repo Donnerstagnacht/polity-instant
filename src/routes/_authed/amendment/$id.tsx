@@ -1,11 +1,9 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { AmendmentWiki } from '@/features/amendments/AmendmentWiki'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_authed/amendment/$id')({
-  component: AmendmentPage,
+  component: AmendmentLayout,
 })
 
-function AmendmentPage() {
-  const { id } = Route.useParams()
-  return <AmendmentWiki amendmentId={id} />
+function AmendmentLayout() {
+  return <Outlet />
 }

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { toast } from 'sonner';
+import { stripeCreateCheckoutFn } from '@/server/stripe-create-checkout';
+import { stripeCancelSubscriptionFn } from '@/server/stripe-cancel-subscription';
 
 // Co-located types
 export interface UseStripeCheckoutOptions {
@@ -43,20 +45,14 @@ export function useStripeCheckout({
   const handleSubscribe = async (priceId: string) => {
     setIsCheckoutLoading(true);
     try {
-      const response = await fetch('/api/stripe/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId, userId }),
+      const data = await stripeCreateCheckoutFn({
+        data: { priceId, userId, origin: window.location.origin },
       });
-
-      const data = await response.json();
 
       if (data.url) {
         window.location.href = data.url;
       } else {
-        const errorMessage = data.error || 'Failed to create checkout session';
-        toast.error(errorMessage);
-        console.error('Checkout error:', data);
+        toast.error('Failed to create checkout session');
       }
     } catch (error) {
       toast.error('Checkout error');
@@ -71,20 +67,14 @@ export function useStripeCheckout({
 
     setIsCheckoutLoading(true);
     try {
-      const response = await fetch('/api/stripe/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: euros * 100, userId }),
+      const data = await stripeCreateCheckoutFn({
+        data: { amount: euros * 100, userId, origin: window.location.origin },
       });
-
-      const data = await response.json();
 
       if (data.url) {
         window.location.href = data.url;
       } else {
-        const errorMessage = data.error || 'Failed to create checkout session';
-        toast.error(errorMessage);
-        console.error('Checkout error:', data);
+        toast.error('Failed to create checkout session');
       }
     } catch (error) {
       toast.error('Checkout error');
@@ -99,21 +89,15 @@ export function useStripeCheckout({
 
     setIsCheckoutLoading(true);
     try {
-      const response = await fetch('/api/stripe/cancel-subscription', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subscriptionId }),
+      const data = await stripeCancelSubscriptionFn({
+        data: { subscriptionId },
       });
-
-      const data = await response.json();
 
       if (data.success) {
         toast.success('Subscription canceled successfully');
         onSubscriptionChange?.();
       } else {
-        const errorMessage = data.error || 'Failed to cancel subscription';
-        toast.error(errorMessage);
-        console.error('Cancel error:', data);
+        toast.error('Failed to cancel subscription');
       }
     } catch (error) {
       toast.error('Failed to cancel subscription');

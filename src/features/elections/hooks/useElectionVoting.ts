@@ -15,7 +15,6 @@ import { calculateElectionWinner, type MajorityType } from '@/utils/voting-utils
 import { notifyPositionAssigned } from '@/utils/notification-helpers';
 import { sendNotificationFn } from '@/server/notifications';
 import { schedulePositionRevote } from '@/features/votes/utils/revote-scheduling';
-import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 
 interface UseElectionVotingOptions {
   eventId: string;

@@ -10,7 +10,6 @@ import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { syncGroupNameToConversation } from '@/utils/groupConversationSync';
-import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { notifyGroupProfileUpdated } from '@/utils/notification-helpers';
 import { sendNotificationFn } from '@/server/notifications';
 

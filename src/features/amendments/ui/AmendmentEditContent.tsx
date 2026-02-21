@@ -119,7 +119,7 @@ export function AmendmentEditContent({
       // Only create timeline events for public amendments
       if (amendment.visibility === 'public') {
         if (formData.imageURL && formData.imageURL !== amendment.imageURL) {
-          await createTimelineEvent({
+          await createTimelineEvent({ data: {
             eventType: 'image_uploaded',
             entityType: 'amendment',
             entityId: amendmentId,
@@ -130,10 +130,10 @@ export function AmendmentEditContent({
             }),
             contentType: 'image',
             status: {},
-          });
+          } });
         }
         if (formData.videoURL && formData.videoURL !== amendment.videoURL) {
-          await createTimelineEvent({
+          await createTimelineEvent({ data: {
             eventType: 'video_uploaded',
             entityType: 'amendment',
             entityId: amendmentId,
@@ -144,7 +144,7 @@ export function AmendmentEditContent({
             }),
             contentType: 'video',
             status: {},
-          });
+          } });
         }
       }
       // Notify about profile update
