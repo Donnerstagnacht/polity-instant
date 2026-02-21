@@ -9,7 +9,7 @@ function UserNetworkPage() {
   const { id } = Route.useParams()
 
   return (
-    <div className="container mx-auto py-6">
+    <div>
       <UserNetworkFlow userId={id} />
     </div>
   )

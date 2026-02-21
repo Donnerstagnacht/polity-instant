@@ -25,7 +25,7 @@ function UserBlogPage() {
     .filter((b: any) => b.id)
 
   return (
-    <div className="container mx-auto max-w-4xl p-4">
+    <div>
       <h1 className="mb-6 text-3xl font-bold">Blog Posts</h1>
       <BlogListTab blogs={blogs} searchValue={searchValue} onSearchChange={setSearchValue} />
     </div>

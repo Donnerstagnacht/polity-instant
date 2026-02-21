@@ -12,7 +12,7 @@ export function BlogNotifications({ blogId }: BlogNotificationsProps) {
   const { blog } = useBlogState({ blogId });
 
   return (
-    <PageWrapper className="container mx-auto max-w-4xl p-8">
+    <PageWrapper>
       <EntityNotifications
         entityId={blogId}
         entityType="blog"

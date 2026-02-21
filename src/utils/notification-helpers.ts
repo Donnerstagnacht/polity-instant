@@ -5,8 +5,20 @@
  * and sending notifications to entity recipients.
  */
 
-import { createClient } from '@supabase/supabase-js';
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+
+let _supabase: SupabaseClient | null = null;
+function getSupabase() {
+  if (!_supabase) {
+    const url = process.env.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
+    if (!url || !key) {
+      throw new Error('Supabase URL and key are required for notification helpers');
+    }
+    _supabase = createClient(url, key);
+  }
+  return _supabase;
+}
 
 export type EntityType = 'group' | 'event' | 'amendment' | 'blog' | 'user';
 
@@ -240,7 +252,7 @@ export async function createNotification(config: NotificationConfig): Promise<st
     notification[key] = config.recipientEntityId;
   }
 
-  const { error } = await supabase.from('notification').insert(notification);
+  const { error } = await getSupabase().from('notification').insert(notification);
   if (error) {
     console.error('[Notification] Failed to create notification:', error);
   }

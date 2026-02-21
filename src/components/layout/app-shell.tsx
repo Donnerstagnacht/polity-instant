@@ -1,5 +1,5 @@
 import { type ReactNode, useState, useEffect, useMemo } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { Toaster } from '@/components/ui/sonner'
 import { DynamicNavigation } from '@/navigation/dynamic-navigation'
 import { NavigationCommandDialog } from '@/navigation/command-dialog'
@@ -90,8 +90,10 @@ function AuthenticatedShell({ children }: { children: ReactNode }) {
   const { screenType, isMobileScreen } = useScreenStore()
   const { navigationType, navigationView } = useNavigationStore()
   const { primaryNavItems, secondaryNavItems } = useNavigation()
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
 
   const isMobile = screenType === 'mobile' || (screenType === 'automatic' && isMobileScreen)
+  const isFullWidth = pathname === '/home' || pathname === '/search'
 
   return (
     <I18nSyncProvider>
@@ -121,7 +123,9 @@ function AuthenticatedShell({ children }: { children: ReactNode }) {
             secondaryNavItems,
           })}`}
         >
-          {children}
+          <div className={`mx-auto px-4 py-6 ${isFullWidth ? '' : 'max-w-5xl'}`}>
+            {children}
+          </div>
         </main>
 
         <NavigationCommandDialog

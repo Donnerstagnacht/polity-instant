@@ -19,9 +19,9 @@ export const navItemsAuthenticated = (
       id: 'home',
       label: 'Home',
       icon: 'Home',
-      href: '/',
+      href: '/home',
       onClick: () => {
-        navigate({ to: '/' });
+        navigate({ to: '/home' });
         if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('home');
       },
     },

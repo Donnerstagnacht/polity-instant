@@ -68,17 +68,17 @@ export function EventParticipants({ eventId }: { eventId: string }) {
   } = useEventParticipants(eventId);
 
   if (isLoading) {
-    return <div className="container mx-auto p-4">{t('features.events.participants.loading')}</div>;
+    return <div>{t('features.events.participants.loading')}</div>;
   }
 
   if (error || !event) {
     return (
-      <div className="container mx-auto p-4">{t('features.events.participants.notFound')}</div>
+      <div>{t('features.events.participants.notFound')}</div>
     );
   }
 
   return (
-    <div className="container mx-auto p-4">
+    <div>
       <div className="mb-4 flex items-center justify-between">
         <Button variant="ghost" onClick={actions.goBack}>
           <ArrowLeft className="mr-2 h-4 w-4" />

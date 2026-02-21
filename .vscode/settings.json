@@ -1,4 +1,7 @@
 {
+  "terminal.integrated.env.windows": {
+    "PATH": "${env:LOCALAPPDATA}\\nvm\\v22.16.0;${env:PATH}"
+  },
   "files.watcherExclude": {
     "**/routeTree.gen.ts": true
   },

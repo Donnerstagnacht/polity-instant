@@ -41,7 +41,7 @@ export function EventPositions({ eventId }: { eventId: string }) {
   const { event, positions, dialogs, form, actions } = useEventPositions(eventId);
 
   return (
-      <div className='container mx-auto max-w-7xl p-8'>
+      <div>
         <div className='mb-6'>
           <h1 className='text-3xl font-bold'>Manage Event Positions</h1>
           <p className='mt-2 text-muted-foreground'>

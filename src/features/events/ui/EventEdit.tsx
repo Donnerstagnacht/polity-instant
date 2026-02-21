@@ -75,7 +75,7 @@ export function EventEdit({ eventId }: EventEditProps) {
 
   // Main edit form
   return (
-    <div className="container mx-auto max-w-4xl p-4">
+    <div>
       <div className="mb-6">
         <h1 className="text-3xl font-bold">{t('features.events.editPage.title')}</h1>
         <p className="text-muted-foreground">{t('features.events.editPage.subtitle')}</p>

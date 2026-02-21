@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { useUserState } from '@/zero/users/useUserState';
 import { Loader2 } from 'lucide-react';
@@ -9,15 +9,28 @@ interface EnsureUserProps {
   children: ReactNode;
 }
 
+const ZERO_SYNC_TIMEOUT_MS = 8000;
+
 /**
  * EnsureUser component ensures that every authenticated user has a user record.
  * Queries Zero for the user record and shows a loading state until ready.
+ * Times out after ZERO_SYNC_TIMEOUT_MS to avoid infinite loading when Zero can't sync.
  */
 export function EnsureUser({ children }: EnsureUserProps) {
   const { user, loading } = useAuth();
   const { currentUser, isLoading: userStateLoading } = useUserState();
+  const [timedOut, setTimedOut] = useState(false);
 
-  const isLoading = loading || (user?.id ? userStateLoading : false);
+  useEffect(() => {
+    if (!userStateLoading) {
+      setTimedOut(false);
+      return;
+    }
+    const timer = setTimeout(() => setTimedOut(true), ZERO_SYNC_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [userStateLoading]);
+
+  const isLoading = loading || (user?.id ? userStateLoading && !timedOut : false);
 
   if (isLoading) {
     return (

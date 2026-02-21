@@ -11,7 +11,7 @@ function GroupRelationshipsPage() {
   const { id } = Route.useParams()
 
   return (
-    <div className="container mx-auto max-w-4xl py-6">
+    <div>
       <h1 className="mb-6 text-2xl font-bold">Relationships</h1>
       <GroupRelationshipsManager groupId={id} />
     </div>

@@ -38,7 +38,7 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
 
   if (isLoading) {
     return (
-      <PageWrapper className="container mx-auto p-8">
+      <PageWrapper>
         <div className="py-12 text-center">Loading discussions...</div>
       </PageWrapper>
     );
@@ -46,7 +46,7 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
 
   if (!amendment) {
     return (
-      <PageWrapper className="container mx-auto p-8">
+      <PageWrapper>
         <div className="py-12 text-center">
           <h1 className="mb-4 text-2xl font-bold">Amendment Not Found</h1>
           <p className="text-muted-foreground">
@@ -58,7 +58,7 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
   }
 
   return (
-    <PageWrapper className="container mx-auto p-8">
+    <PageWrapper>
       {/* Back button */}
       <div className="mb-6">
         <Link to={`/amendment/${amendmentId}`}>

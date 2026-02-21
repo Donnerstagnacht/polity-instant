@@ -48,7 +48,7 @@ export function UserProfileEditForm({
   onCancelSubscription,
 }: UserProfileEditFormProps) {
   return (
-    <div className="container mx-auto max-w-4xl p-4">
+    <div>
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Edit User</h1>
         <p className="text-muted-foreground">Update your user information</p>

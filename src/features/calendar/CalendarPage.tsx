@@ -14,7 +14,7 @@ export default function CalendarPage() {
   if (cp.isLoading) {
     return (
       <AuthGuard requireAuth={true}>
-        <PageWrapper className="container mx-auto p-4">
+        <PageWrapper>
           <div className="flex h-[400px] items-center justify-center">
             <p className="text-muted-foreground">{cp.t('features.calendar.loading')}</p>
           </div>
@@ -25,7 +25,7 @@ export default function CalendarPage() {
 
   return (
     <AuthGuard requireAuth={true}>
-      <PageWrapper className="container mx-auto p-4">
+      <PageWrapper>
         <CalendarHeader
           view={cp.view}
           setView={cp.setView}

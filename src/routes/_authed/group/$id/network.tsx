@@ -9,7 +9,7 @@ function GroupNetworkPage() {
   const { id } = Route.useParams()
 
   return (
-    <div className="container mx-auto max-w-6xl p-4">
+    <div>
       <GroupNetworkFlow groupId={id} />
     </div>
   )

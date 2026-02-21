@@ -41,7 +41,7 @@ export function CollaboratorsView({
   };
 
   return (
-    <div className="container mx-auto max-w-7xl p-8">
+    <div>
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Manage Amendment Collaborators</h1>
         <p className="mt-2 text-muted-foreground">

@@ -1,7 +1,9 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, Navigate } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { useTranslation } from '@/hooks/use-translation'
+import { useAuth } from '@/providers/auth-provider'
+import { useZeroReady } from '@/providers/zero-provider'
 
 export const Route = createFileRoute('/')({
   component: HomePage,
@@ -12,6 +14,12 @@ const featureKeys = ['groups', 'events', 'amendments', 'messages'] as const
 
 function HomePage() {
   const { t } = useTranslation()
+  const { user } = useAuth()
+  const zeroReady = useZeroReady()
+
+  if (user && zeroReady) {
+    return <Navigate to="/home" />
+  }
 
   const quickLinks = [
     { to: '/solutions' as const, label: t('pages.home.quickLinks.solutions.title'), desc: t('pages.home.quickLinks.solutions.description') },

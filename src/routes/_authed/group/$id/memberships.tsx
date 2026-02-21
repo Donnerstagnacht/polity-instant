@@ -15,7 +15,7 @@ function GroupMembershipsPage() {
     useGroupMemberships(id)
 
   return (
-    <div className="container mx-auto max-w-4xl p-4">
+    <div>
       <h1 className="mb-6 text-3xl font-bold">Group Memberships</h1>
       <MembershipTabs
         activeTab={activeTab}

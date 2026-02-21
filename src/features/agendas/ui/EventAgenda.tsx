@@ -187,7 +187,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
 
   if (isLoading || eventLoading) {
     return (
-      <div className="container mx-auto p-6">
+      <div>
         <div className="space-y-6">
           <div className="h-8 animate-pulse rounded bg-muted"></div>
           <div className="grid gap-4">
@@ -202,7 +202,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
 
   if (!event) {
     return (
-      <div className="container mx-auto p-6">
+      <div>
         <Card>
           <CardContent className="p-6 text-center">
             <h2 className="mb-2 text-2xl font-bold">{t('features.events.wiki.notFound')}</h2>

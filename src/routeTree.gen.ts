@@ -17,12 +17,14 @@ import { Route as PricingImport } from './routes/pricing'
 import { Route as FeaturesImport } from './routes/features'
 import { Route as AuthImport } from './routes/auth'
 import { Route as AuthedImport } from './routes/_authed'
+import { Route as SplatImport } from './routes/$'
 import { Route as IndexImport } from './routes/index'
 import { Route as AuthVerifyImport } from './routes/auth/verify'
 import { Route as AuthedTodosImport } from './routes/_authed/todos'
 import { Route as AuthedSearchImport } from './routes/_authed/search'
 import { Route as AuthedNotificationsImport } from './routes/_authed/notifications'
 import { Route as AuthedMessagesImport } from './routes/_authed/messages'
+import { Route as AuthedHomeImport } from './routes/_authed/home'
 import { Route as AuthedCalendarImport } from './routes/_authed/calendar'
 import { Route as AuthedCreateIndexImport } from './routes/_authed/create/index'
 import { Route as AuthedUserIdImport } from './routes/_authed/user/$id'
@@ -115,6 +117,12 @@ const AuthedRoute = AuthedImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const SplatRoute = SplatImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
@@ -148,6 +156,12 @@ const AuthedNotificationsRoute = AuthedNotificationsImport.update({
 const AuthedMessagesRoute = AuthedMessagesImport.update({
   id: '/messages',
   path: '/messages',
+  getParentRoute: () => AuthedRoute,
+} as any)
+
+const AuthedHomeRoute = AuthedHomeImport.update({
+  id: '/home',
+  path: '/home',
   getParentRoute: () => AuthedRoute,
 } as any)
 
@@ -498,6 +512,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
+    '/$': {
+      id: '/$'
+      path: '/$'
+      fullPath: '/$'
+      preLoaderRoute: typeof SplatImport
+      parentRoute: typeof rootRoute
+    }
     '/_authed': {
       id: '/_authed'
       path: ''
@@ -545,6 +566,13 @@ declare module '@tanstack/react-router' {
       path: '/calendar'
       fullPath: '/calendar'
       preLoaderRoute: typeof AuthedCalendarImport
+      parentRoute: typeof AuthedImport
+    }
+    '/_authed/home': {
+      id: '/_authed/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AuthedHomeImport
       parentRoute: typeof AuthedImport
     }
     '/_authed/messages': {
@@ -1130,6 +1158,7 @@ const AuthedUserIdRouteWithChildren = AuthedUserIdRoute._addFileChildren(
 
 interface AuthedRouteChildren {
   AuthedCalendarRoute: typeof AuthedCalendarRoute
+  AuthedHomeRoute: typeof AuthedHomeRoute
   AuthedMessagesRoute: typeof AuthedMessagesRoute
   AuthedNotificationsRoute: typeof AuthedNotificationsRoute
   AuthedSearchRoute: typeof AuthedSearchRoute
@@ -1153,6 +1182,7 @@ interface AuthedRouteChildren {
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedCalendarRoute: AuthedCalendarRoute,
+  AuthedHomeRoute: AuthedHomeRoute,
   AuthedMessagesRoute: AuthedMessagesRoute,
   AuthedNotificationsRoute: AuthedNotificationsRoute,
   AuthedSearchRoute: AuthedSearchRoute,
@@ -1189,6 +1219,7 @@ const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
   '': typeof AuthedRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
   '/features': typeof FeaturesRoute
@@ -1196,6 +1227,7 @@ export interface FileRoutesByFullPath {
   '/solutions': typeof SolutionsRoute
   '/support': typeof SupportRoute
   '/calendar': typeof AuthedCalendarRoute
+  '/home': typeof AuthedHomeRoute
   '/messages': typeof AuthedMessagesRoute
   '/notifications': typeof AuthedNotificationsRoute
   '/search': typeof AuthedSearchRoute
@@ -1258,6 +1290,7 @@ export interface FileRoutesByFullPath {
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
   '': typeof AuthedRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
   '/features': typeof FeaturesRoute
@@ -1265,6 +1298,7 @@ export interface FileRoutesByTo {
   '/solutions': typeof SolutionsRoute
   '/support': typeof SupportRoute
   '/calendar': typeof AuthedCalendarRoute
+  '/home': typeof AuthedHomeRoute
   '/messages': typeof AuthedMessagesRoute
   '/notifications': typeof AuthedNotificationsRoute
   '/search': typeof AuthedSearchRoute
@@ -1328,6 +1362,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
   '/_authed': typeof AuthedRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
   '/features': typeof FeaturesRoute
@@ -1335,6 +1370,7 @@ export interface FileRoutesById {
   '/solutions': typeof SolutionsRoute
   '/support': typeof SupportRoute
   '/_authed/calendar': typeof AuthedCalendarRoute
+  '/_authed/home': typeof AuthedHomeRoute
   '/_authed/messages': typeof AuthedMessagesRoute
   '/_authed/notifications': typeof AuthedNotificationsRoute
   '/_authed/search': typeof AuthedSearchRoute
@@ -1399,6 +1435,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/$'
     | ''
     | '/auth'
     | '/features'
@@ -1406,6 +1443,7 @@ export interface FileRouteTypes {
     | '/solutions'
     | '/support'
     | '/calendar'
+    | '/home'
     | '/messages'
     | '/notifications'
     | '/search'
@@ -1467,6 +1505,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/$'
     | ''
     | '/auth'
     | '/features'
@@ -1474,6 +1513,7 @@ export interface FileRouteTypes {
     | '/solutions'
     | '/support'
     | '/calendar'
+    | '/home'
     | '/messages'
     | '/notifications'
     | '/search'
@@ -1535,6 +1575,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/$'
     | '/_authed'
     | '/auth'
     | '/features'
@@ -1542,6 +1583,7 @@ export interface FileRouteTypes {
     | '/solutions'
     | '/support'
     | '/_authed/calendar'
+    | '/_authed/home'
     | '/_authed/messages'
     | '/_authed/notifications'
     | '/_authed/search'
@@ -1605,6 +1647,7 @@ export interface FileRouteTypes {
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SplatRoute: typeof SplatRoute
   AuthedRoute: typeof AuthedRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
   FeaturesRoute: typeof FeaturesRoute
@@ -1615,6 +1658,7 @@ export interface RootRouteChildren {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SplatRoute: SplatRoute,
   AuthedRoute: AuthedRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
   FeaturesRoute: FeaturesRoute,
@@ -1634,6 +1678,7 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
+        "/$",
         "/_authed",
         "/auth",
         "/features",
@@ -1645,10 +1690,14 @@ export const routeTree = rootRoute
     "/": {
       "filePath": "index.tsx"
     },
+    "/$": {
+      "filePath": "$.tsx"
+    },
     "/_authed": {
       "filePath": "_authed.tsx",
       "children": [
         "/_authed/calendar",
+        "/_authed/home",
         "/_authed/messages",
         "/_authed/notifications",
         "/_authed/search",
@@ -1690,6 +1739,10 @@ export const routeTree = rootRoute
     },
     "/_authed/calendar": {
       "filePath": "_authed/calendar.tsx",
+      "parent": "/_authed"
+    },
+    "/_authed/home": {
+      "filePath": "_authed/home.tsx",
       "parent": "/_authed"
     },
     "/_authed/messages": {

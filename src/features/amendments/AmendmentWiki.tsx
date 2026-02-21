@@ -68,7 +68,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
 
   if (!amendment) {
     return (
-      <div className="container mx-auto max-w-6xl p-4">
+      <div>
         <div className="py-12 text-center">
           <h1 className="mb-4 text-2xl font-bold">Amendment Not Found</h1>
           <p className="text-muted-foreground">
@@ -80,7 +80,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
   }
 
   return (
-    <div className="container mx-auto max-w-6xl p-4">
+    <div>
       {/* Header with centered title and subtitle */}
       <div className="mb-8 text-center">
         <div className="mb-2 flex items-center justify-center gap-3">

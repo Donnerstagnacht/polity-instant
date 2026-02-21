@@ -18,7 +18,7 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
 
   if (!statement) {
     return (
-      <PageWrapper className="container mx-auto p-8">
+      <PageWrapper>
         <div className="py-12 text-center">
           <h1 className="mb-4 text-2xl font-bold">{t('features.statements.detail.notFound')}</h1>
           <p className="text-muted-foreground">
@@ -32,7 +32,7 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
   const author = statement.user;
 
   return (
-    <PageWrapper className="container mx-auto p-8">
+    <PageWrapper>
       {/* Header */}
       <div className="mb-8">
         <div className="mb-4 flex items-center gap-3">

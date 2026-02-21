@@ -51,7 +51,7 @@ function CreateElectionCandidatePage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl p-6">
+    <div>
       <h1 className="mb-6 text-2xl font-bold">Register as Election Candidate</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">

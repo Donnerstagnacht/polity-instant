@@ -19,6 +19,13 @@ import { meetPageTranslations } from './meet';
 import { statementPageTranslations } from './statement';
 import { authPageTranslations } from './auth';
 
+const notFoundTranslations = {
+  title: 'Seite nicht gefunden',
+  description: 'Die gesuchte Seite existiert nicht oder wurde verschoben.',
+  goBack: 'Zurück',
+  goHome: 'Zur Startseite',
+} as const;
+
 export const pagesTranslations = {
   home: homePageTranslations,
   group: groupPageTranslations,
@@ -40,4 +47,5 @@ export const pagesTranslations = {
   meet: meetPageTranslations,
   statement: statementPageTranslations,
   auth: authPageTranslations,
+  notFound: notFoundTranslations,
 } as const;

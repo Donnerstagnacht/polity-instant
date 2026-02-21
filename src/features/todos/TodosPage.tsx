@@ -48,7 +48,7 @@ export function TodosPage() {
   }
 
   return (
-    <>
+    <div>
       <TodosHeader viewMode={viewMode} setViewMode={setViewMode} />
 
       <TodosFilters
@@ -108,6 +108,6 @@ export function TodosPage() {
           onOpenChange={setIsDetailDialogOpen}
         />
       )}
-    </>
+    </div>
   );
 }

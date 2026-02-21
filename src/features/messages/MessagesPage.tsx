@@ -15,7 +15,7 @@ export default function MessagesPage() {
   if (mp.isLoading) {
     return (
       <AuthGuard requireAuth={true}>
-        <PageWrapper className="container mx-auto p-4">
+        <PageWrapper>
           <div className="flex h-[600px] items-center justify-center">
             <p className="text-muted-foreground">{mp.t('features.messages.loading')}</p>
           </div>
@@ -26,7 +26,7 @@ export default function MessagesPage() {
 
   return (
     <AuthGuard requireAuth={true}>
-      <PageWrapper className="container mx-auto min-h-screen p-4">
+      <PageWrapper className="min-h-screen">
         <div className="flex h-[calc(100vh-6rem)] flex-col gap-4 md:grid md:h-[calc(100vh-3rem)] md:grid-cols-3">
           <ConversationList
             conversations={mp.filteredConversations}

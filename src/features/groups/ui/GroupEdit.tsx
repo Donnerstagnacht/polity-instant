@@ -52,7 +52,7 @@ export function GroupEdit({ groupId }: GroupEditProps) {
 
   // Main edit view
   return (
-    <div className="container mx-auto max-w-4xl p-4">
+    <div>
       <div className="mb-6">
         <h1 className="text-3xl font-bold">{t('features.groups.editPage.title')}</h1>
         <p className="text-muted-foreground">{t('features.groups.editPage.subtitle')}</p>

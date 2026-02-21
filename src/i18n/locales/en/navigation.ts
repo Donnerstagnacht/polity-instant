@@ -43,6 +43,7 @@ export const navigationTranslations = {
       edit: 'Edit Event',
     },
     user: {
+      user: 'Profile',
       profile: 'Profile',
       subscriptions: 'Subscriptions',
       memberships: 'Memberships',

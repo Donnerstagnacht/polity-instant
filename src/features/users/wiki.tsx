@@ -54,7 +54,7 @@ export function UserWiki(_props: UserWikiProps) {
   return (
     <>
       {isLoading && (
-        <div className="container mx-auto max-w-6xl p-4">
+        <div>
           <div className="flex items-center justify-center py-12">
             <div className="text-lg text-muted-foreground">Loading user...</div>
           </div>
@@ -62,7 +62,7 @@ export function UserWiki(_props: UserWikiProps) {
       )}
 
       {error && (
-        <div className="container mx-auto max-w-6xl p-4">
+        <div>
           <div className="flex items-center justify-center py-12">
             <div className="text-lg text-red-500">Error loading user: {error}</div>
           </div>
@@ -70,7 +70,7 @@ export function UserWiki(_props: UserWikiProps) {
       )}
 
       {!isLoading && !error && !dbUser && (
-        <div className="container mx-auto max-w-6xl p-4">
+        <div>
           <div className="flex flex-col items-center justify-center py-12">
             <div className="text-center">
               <h2 className="mb-2 text-2xl font-semibold">User Not Found</h2>
@@ -81,7 +81,7 @@ export function UserWiki(_props: UserWikiProps) {
       )}
 
       {!isLoading && !error && dbUser && (
-        <div className="container mx-auto max-w-6xl p-4">
+        <div>
           {/* Header with centered title and subtitle */}
           <div className="mb-8 text-center">
             <h1 className="text-4xl font-bold">{dbUser.name}</h1>

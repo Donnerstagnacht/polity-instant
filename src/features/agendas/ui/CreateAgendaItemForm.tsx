@@ -150,7 +150,7 @@ export function CreateAgendaItemForm() {
   };
 
   return (
-    <PageWrapper className="flex min-h-screen items-center justify-center p-8">
+    <PageWrapper className="flex min-h-screen items-center justify-center">
       <Card className="w-full max-w-2xl">
         <CardHeader>
           <CardTitle>Create a New Agenda Item</CardTitle>

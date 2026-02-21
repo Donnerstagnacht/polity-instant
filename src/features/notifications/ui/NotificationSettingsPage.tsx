@@ -104,7 +104,7 @@ export function NotificationSettingsPage({ userId }: NotificationSettingsPagePro
   }
 
   return (
-    <div className="container mx-auto max-w-4xl p-6">
+    <div>
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>

@@ -39,7 +39,7 @@ function CreateTodoPage() {
   };
 
   return (
-    <div className="container mx-auto max-w-2xl p-6">
+    <div>
       <h1 className="mb-6 text-3xl font-bold">Create Todo</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>

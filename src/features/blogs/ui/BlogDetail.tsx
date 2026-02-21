@@ -361,7 +361,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
 
   if (!blogWithDetails) {
     return (
-      <PageWrapper className="container mx-auto p-8">
+      <PageWrapper>
         <div className="py-12 text-center">{t('features.blogs.detail.loading')}</div>
       </PageWrapper>
     );
@@ -369,7 +369,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
 
   if (!blog) {
     return (
-      <PageWrapper className="container mx-auto p-8">
+      <PageWrapper>
         <div className="py-12 text-center">
           <h1 className="mb-4 text-2xl font-bold">{t('features.blogs.detail.notFound')}</h1>
           <p className="text-muted-foreground">{t('features.blogs.detail.notFoundDescription')}</p>
@@ -384,7 +384,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
     blog.bloggers?.[0]?.user;
 
   return (
-    <PageWrapper className="container mx-auto max-w-6xl p-4">
+    <PageWrapper>
       {/* Header with centered title */}
       <div className="mb-8 text-center">
         <div className="mb-2 flex items-center justify-center gap-3">

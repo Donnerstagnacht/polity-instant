@@ -81,7 +81,7 @@ export function CreateDashboard() {
   ];
 
   return (
-    <PageWrapper className="container mx-auto p-8">
+    <PageWrapper>
       <div className="mb-6">
         <h1 className="mb-2 text-3xl font-bold">{t('pages.create.dashboard.title')}</h1>
         <p className="text-muted-foreground">{t('pages.create.dashboard.subtitle')}</p>

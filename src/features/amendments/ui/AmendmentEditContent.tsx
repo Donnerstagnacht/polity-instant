@@ -193,7 +193,7 @@ export function AmendmentEditContent({
   }
 
   return (
-    <div className="container mx-auto max-w-4xl p-4">
+    <div>
       <div className="mb-6">
         <h1 className="text-3xl font-bold">{t('features.amendments.editContent.pageTitle')}</h1>
         <p className="text-muted-foreground">

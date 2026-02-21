@@ -38,7 +38,7 @@ function GroupAmendmentsPage() {
   }, [amendments])
 
   return (
-    <div className="container mx-auto max-w-4xl p-4">
+    <div>
       <h1 className="mb-6 text-3xl font-bold">Amendments</h1>
       <AmendmentGroups
         groupedAmendments={groupedAmendments}

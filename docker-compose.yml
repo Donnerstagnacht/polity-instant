@@ -12,10 +12,6 @@ services:
       ZERO_CVR_DB: postgres://postgres:postgres@supabase_db_polity:5432/postgres
       ZERO_CHANGE_DB: postgres://postgres:postgres@supabase_db_polity:5432/postgres
       ZERO_REPLICA_FILE: /tmp/zero.db
-      ZERO_QUERY_URL: http://app:3000/api/zero/query
-      ZERO_MUTATE_URL: http://app:3000/api/zero/mutate
-      ZERO_QUERY_FORWARD_COOKIES: "true"
-      ZERO_MUTATE_FORWARD_COOKIES: "true"
     ports:
       - "4848:4848"
     volumes:

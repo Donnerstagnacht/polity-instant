@@ -42,7 +42,7 @@ export function SearchPage() {
   );
 
   return (
-    <>
+    <div>
       <SearchHeader
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -88,6 +88,6 @@ export function SearchPage() {
           isLoading={isLoading}
         />
       )}
-    </>
+    </div>
   );
 }

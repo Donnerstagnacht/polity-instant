@@ -12,7 +12,7 @@ function UserSubscriptionsPage() {
   const { subscriptions, unsubscribe } = useUserSubscriptions(id)
 
   return (
-    <div className="container mx-auto py-6 space-y-4">
+    <div className="space-y-4">
       <h1 className="text-2xl font-bold">Subscriptions</h1>
       <SubscriptionsTable
         subscriptions={subscriptions}

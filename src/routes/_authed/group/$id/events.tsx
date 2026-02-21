@@ -10,7 +10,7 @@ function GroupEventsPage() {
   const { eventsByGroup: events } = useEventState({ groupId: id })
 
   return (
-    <div className="container mx-auto max-w-4xl p-4">
+    <div>
       <h1 className="mb-6 text-3xl font-bold">Group Events</h1>
       {(!events || events.length === 0) ? (
         <p className="text-muted-foreground">No events found for this group.</p>

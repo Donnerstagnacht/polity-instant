@@ -32,19 +32,19 @@ npx supabase start
 
 This boots up a local Supabase stack (Postgres, Auth, Studio, Inbucket, etc.) via Docker.
 
-### 3. Start Zero Cache
-
-In a **separate terminal**:
+### 3. Apply the database schema
 
 ```bash
-npm run zero:cache
+Get-ChildItem supabase/schemas/*.sql | Sort-Object Name | ForEach-Object { docker exec -i supabase_db_polity psql -U postgres -d postgres -c (Get-Content $_.FullName -Raw) }
 ```
 
-Or via Docker Compose (which also starts the app):
+On Linux/macOS:
 
 ```bash
-docker compose up -d
+for f in supabase/schemas/*.sql; do docker exec -i supabase_db_polity psql -U postgres -d postgres < "$f"; done
 ```
+
+This creates all 69 tables, indexes, RLS policies, and functions from `supabase/schemas/`.
 
 ### 4. Start the dev server
 
@@ -54,7 +54,21 @@ In a **separate terminal**:
 npm run dev
 ```
 
-### 5. (Optional) Seed the database
+### 5. Start Zero Cache
+
+In a **separate terminal**:
+
+```bash
+npm run zero:dev
+```
+
+Or via Docker Compose (which also starts the app):
+
+```bash
+docker compose up -d
+```
+
+### 6. (Optional) Seed the database
 
 ```bash
 npm run seed
@@ -77,24 +91,25 @@ npm run seed
 
 ## All npm Scripts
 
-| Command                   | Description                       |
-| ------------------------- | --------------------------------- |
-| `npm run dev`             | Start the dev server on port 3000 |
-| `npm run build`           | Production build                  |
-| `npm run start`           | Start production server           |
-| `npm run seed`            | Seed the database with test data  |
-| `npm run zero:cache`      | Start zero-cache-dev locally      |
-| `npm run supabase:start`  | Start local Supabase              |
-| `npm run supabase:stop`   | Stop local Supabase               |
-| `npm run test`            | Run unit tests (Vitest)           |
-| `npm run test:e2e`        | Run E2E tests (Playwright)        |
-| `npm run test:e2e:ui`     | Run E2E tests with Playwright UI  |
-| `npm run test:e2e:headed` | Run E2E tests in headed browser   |
-| `npm run lint`            | Lint with ESLint                  |
-| `npm run lint:fix`        | Lint and auto-fix                 |
-| `npm run format`          | Format code with Prettier         |
-| `npm run format:check`    | Check formatting                  |
-| `npm run storybook`       | Start Storybook on port 6006      |
+| Command                   | Description                                    |
+| ------------------------- | ---------------------------------------------- |
+| `npm run dev`             | Start the dev server on port 3000              |
+| `npm run build`           | Production build                               |
+| `npm run start`           | Start production server                        |
+| `npm run seed`            | Seed the database with test data               |
+| `npm run zero:dev`        | Start zero-cache-dev with env vars (local dev) |
+| `npm run zero:cache`      | Start zero-cache-dev (no env vars)             |
+| `npm run supabase:start`  | Start local Supabase                           |
+| `npm run supabase:stop`   | Stop local Supabase                            |
+| `npm run test`            | Run unit tests (Vitest)                        |
+| `npm run test:e2e`        | Run E2E tests (Playwright)                     |
+| `npm run test:e2e:ui`     | Run E2E tests with Playwright UI               |
+| `npm run test:e2e:headed` | Run E2E tests in headed browser                |
+| `npm run lint`            | Lint with ESLint                               |
+| `npm run lint:fix`        | Lint and auto-fix                              |
+| `npm run format`          | Format code with Prettier                      |
+| `npm run format:check`    | Check formatting                               |
+| `npm run storybook`       | Start Storybook on port 6006                   |
 
 ---
 

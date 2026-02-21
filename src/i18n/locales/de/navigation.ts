@@ -43,6 +43,7 @@ export const navigationTranslations = {
       edit: 'Veranstaltung bearbeiten',
     },
     user: {
+      user: 'Profil',
       profile: 'Profil',
       subscriptions: 'Abonnements',
       memberships: 'Mitgliedschaften',

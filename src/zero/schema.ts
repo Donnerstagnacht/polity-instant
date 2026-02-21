@@ -78,8 +78,6 @@ export const schema = createSchema({
     hashtag, link, timelineEvent, reaction,
   ],
   relationships: allRelationships,
-  enableLegacyQueries: true,
-  enableLegacyMutators: true,
 })
 
 export type Schema = typeof schema

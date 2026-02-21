@@ -25,7 +25,7 @@ function UserMembershipsPage() {
   const requested = memberships.filter((m: any) => m.status === 'requested') as any[]
 
   return (
-    <div className="container mx-auto max-w-4xl space-y-6 p-4">
+    <div className="space-y-6">
       <h1 className="text-3xl font-bold">Memberships</h1>
       <MembershipStatusTable
         title="Group Invitations"

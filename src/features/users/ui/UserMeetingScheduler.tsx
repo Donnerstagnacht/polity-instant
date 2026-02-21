@@ -360,7 +360,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
   };
 
   return (
-    <div className="container mx-auto max-w-7xl py-8">
+    <div>
       <div className="mb-8">
         <h1 className="mb-2 text-3xl font-bold">
           {isOwner ? 'Manage Your Meetings' : `Book a Meeting with ${owner?.first_name || 'User'}`}

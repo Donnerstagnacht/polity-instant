@@ -41,24 +41,11 @@ export function useNavigation() {
     []
   );
 
-  // Create a mock router object that matches the expected interface
-  const mockRouter = useMemo(
-    () => ({
-      navigate,
-      state: {
-        location: {
-          pathname: pathname,
-        },
-      },
-    }),
-    [navigate, pathname]
-  );
-
   // Get navigation items from the navigation config
   const { primaryNavItems: basePrimaryNavItems, getSecondaryNavItems: baseGetSecondaryNavItems } =
     useMemo(
-      () => navItemsAuthenticated(mockRouter as any, stableSetRoute, t),
-      [mockRouter, stableSetRoute, t]
+      () => navItemsAuthenticated(navigate, stableSetRoute, t),
+      [navigate, stableSetRoute, t]
     );
 
   // Override labels with translations and add dynamic badge counts

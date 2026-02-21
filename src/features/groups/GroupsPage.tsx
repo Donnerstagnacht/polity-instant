@@ -8,7 +8,7 @@ export const GroupsPage: React.FC = () => {
   const gp = useGroupsPage();
 
   return (
-    <div className="container mx-auto max-w-6xl p-4">
+    <div>
       <GroupsHeader />
       <GroupsFilters
         searchTerm={gp.searchTerm}

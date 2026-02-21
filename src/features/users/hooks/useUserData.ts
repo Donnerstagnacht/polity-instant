@@ -9,10 +9,9 @@ import { transformUserData } from '../logic/transformUserData';
  * @returns User data with loading and error states
  */
 export function useUserData(userId?: string) {
-  const { fullProfile } = useUserState({ userId, includeFullProfile: true });
+  const { fullProfile, isLoading } = useUserState({ userId, includeFullProfile: true });
 
   const data = fullProfile;
-  const isLoading = false; // Zero queries are synchronous
   const error = null;
 
   const user: User | null = useMemo(() => {
