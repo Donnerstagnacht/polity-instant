@@ -16,7 +16,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Trash2, Send } from 'lucide-react';
-import { formatRights } from '@/components/shared/RightFilters';
+import { formatRights } from '@/features/network/ui/RightFilters';
 
 interface GroupedRequest {
   group: any;

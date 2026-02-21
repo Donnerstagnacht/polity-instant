@@ -3,12 +3,19 @@
  */
 
 import { useState } from 'react';
-import db, { tx, id } from '../../../../db/db';
+import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { toast } from 'sonner';
 import { notifyActionRightsChanged } from '@/utils/notification-helpers';
+import { sendNotificationFn } from '@/server/notifications';
 
 export function useRoleManagement(groupId: string) {
   const [isLoading, setIsLoading] = useState(false);
+  const {
+    createRole: createRoleAction,
+    deleteRole: deleteRoleAction,
+    assignActionRight,
+    removeActionRight,
+  } = useGroupActions();
 
   const addRole = async (name: string, description: string) => {
     if (!name.trim()) {
@@ -18,18 +25,18 @@ export function useRoleManagement(groupId: string) {
 
     setIsLoading(true);
     try {
-      const roleId = id();
+      const roleId = crypto.randomUUID();
 
-      await db.transact([
-        tx.roles[roleId]
-          .update({
-            name,
-            description,
-            scope: 'group',
-            createdAt: Date.now(),
-          })
-          .link({ group: groupId }),
-      ]);
+      await createRoleAction({
+        id: roleId,
+        name,
+        description,
+        scope: 'group',
+        group_id: groupId,
+        event_id: '',
+        amendment_id: '',
+        blog_id: '',
+      });
 
       toast.success('Role created successfully');
 
@@ -46,7 +53,7 @@ export function useRoleManagement(groupId: string) {
   const removeRole = async (roleId: string) => {
     setIsLoading(true);
     try {
-      await db.transact([tx.roles[roleId].delete()]);
+      await deleteRoleAction({ id: roleId });
       toast.success('Role removed successfully');
       return { success: true };
     } catch (error) {
@@ -71,48 +78,30 @@ export function useRoleManagement(groupId: string) {
   ) => {
     setIsLoading(true);
     try {
-      const transactions: any[] = [];
-
       if (currentlyHasRight) {
         // Find and remove the action right
         const actionRightToRemove = roleActionRights.find(
           (ar) => ar.resource === resource && ar.action === action
         );
         if (actionRightToRemove) {
-          transactions.push(tx.actionRights[actionRightToRemove.id].delete());
+          await removeActionRight({ id: actionRightToRemove.id });
         }
       } else {
         // Add the action right
-        const actionRightId = id();
-        transactions.push(
-          tx.actionRights[actionRightId]
-            .update({
-              resource,
-              action,
-              groupId,
-              createdAt: Date.now(),
-            })
-            .link({ role: roleId })
-        );
-      }
-
-      // Send notifications to admins
-      if (senderId && groupName && roleName && adminUserIds) {
-        adminUserIds.forEach(adminId => {
-          if (adminId !== senderId) {
-            const notificationTxs = notifyActionRightsChanged({
-              senderId,
-              recipientUserId: adminId,
-              groupId,
-              groupName,
-              roleName,
-            });
-            transactions.push(...notificationTxs);
-          }
+        const actionRightId = crypto.randomUUID();
+        await assignActionRight({
+          id: actionRightId,
+          resource,
+          action,
+          group_id: groupId,
+          event_id: '',
+          amendment_id: '',
+          blog_id: '',
+          role_id: roleId,
         });
       }
 
-      await db.transact(transactions);
+      sendNotificationFn({ data: { helper: 'notifyActionRightsChanged', params: { senderId, groupId, groupName, roleName } } }).catch(console.error)
       return { success: true };
     } catch (error) {
       console.error('Failed to toggle action right:', error);

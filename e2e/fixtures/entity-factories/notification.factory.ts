@@ -5,7 +5,7 @@
  */
 
 import { FactoryBase } from './factory-base';
-import { adminTransact, tx } from '../admin-db';
+import { adminUpsert } from '../admin-db';
 
 export interface CreateNotificationOptions {
   id?: string;
@@ -38,41 +38,24 @@ export class NotificationFactory extends FactoryBase {
     this._counter++;
     const notificationId = overrides.id ?? this.generateId();
     const type = overrides.type ?? 'comment_added';
-    const now = new Date();
-    const txns: any[] = [];
+    const now = new Date().toISOString();
 
-    txns.push(
-      tx.notifications[notificationId]
-        .update({
-          type,
-          title: overrides.title ?? `E2E Notification ${this._counter}`,
-          message: overrides.message ?? 'Test notification message',
-          isRead: overrides.isRead ?? false,
-          createdAt: now,
-        })
-        .link({ recipient: recipientId, sender: senderId })
-    );
-    this.trackEntity('notifications', notificationId);
+    await adminUpsert('notification', {
+      id: notificationId,
+      recipient_id: recipientId,
+      sender_id: senderId,
+      type,
+      title: overrides.title ?? `E2E Notification ${this._counter}`,
+      message: overrides.message ?? 'Test notification message',
+      is_read: overrides.isRead ?? false,
+      related_group_id: overrides.relatedGroupId ?? null,
+      related_event_id: overrides.relatedEventId ?? null,
+      related_amendment_id: overrides.relatedAmendmentId ?? null,
+      related_user_id: overrides.relatedUserId ?? null,
+      created_at: now,
+    });
 
-    // Link to related entities if provided
-    if (overrides.relatedGroupId) {
-      txns.push(tx.notifications[notificationId].link({ relatedGroup: overrides.relatedGroupId }));
-      this.trackLink('notifications', notificationId, 'relatedGroup', overrides.relatedGroupId);
-    }
-    if (overrides.relatedEventId) {
-      txns.push(tx.notifications[notificationId].link({ relatedEvent: overrides.relatedEventId }));
-      this.trackLink('notifications', notificationId, 'relatedEvent', overrides.relatedEventId);
-    }
-    if (overrides.relatedAmendmentId) {
-      txns.push(tx.notifications[notificationId].link({ relatedAmendment: overrides.relatedAmendmentId }));
-      this.trackLink('notifications', notificationId, 'relatedAmendment', overrides.relatedAmendmentId);
-    }
-    if (overrides.relatedUserId) {
-      txns.push(tx.notifications[notificationId].link({ relatedUser: overrides.relatedUserId }));
-      this.trackLink('notifications', notificationId, 'relatedUser', overrides.relatedUserId);
-    }
-
-    await adminTransact(txns);
+    this.trackEntity('notification', notificationId);
     return { id: notificationId, type };
   }
 }

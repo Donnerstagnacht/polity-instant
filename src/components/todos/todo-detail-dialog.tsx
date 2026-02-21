@@ -47,8 +47,9 @@ import {
   Check,
   ChevronsUpDown,
 } from 'lucide-react';
-import Link from 'next/link';
-import { db, tx } from '../../../db/db';
+import { Link } from '@tanstack/react-router';
+import { useGroupState } from '@/zero/groups/useGroupState';
+import { useTodoActions } from '@/zero/todos/useTodoActions';
 import { toast } from 'sonner';
 import { cn } from '@/utils/utils';
 import { useTranslation } from '@/hooks/use-translation';
@@ -64,6 +65,7 @@ interface TodoDetailDialogProps {
 
 export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogProps) {
   const { t } = useTranslation();
+  const { updateTodo, assignUser, unassignUser } = useTodoActions();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -82,23 +84,13 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
   const isOverdue = todo.dueDate && todo.status !== 'completed' && todo.dueDate < Date.now();
 
   // Query group members if the todo belongs to a group
-  const { data: membersData } = db.useQuery(
+  const { membershipsWithUsers: membershipsRaw } = useGroupState(
     todo.group?.id
-      ? {
-          groupMemberships: {
-            $: {
-              where: {
-                'group.id': todo.group.id,
-                status: 'member',
-              },
-            },
-            user: {},
-          },
-        }
-      : null
+      ? { groupId: todo.group.id, includeMembershipsWithUsers: true }
+      : {}
   );
 
-  const members = membersData?.groupMemberships || [];
+  const members = membershipsRaw || [];
 
   // Filter members based on search query
   const filteredMembers = members.filter((membership: any) => {
@@ -130,7 +122,8 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
         updates.completedAt = null;
       }
 
-      const transactions: any[] = [tx.todos[todo.id].update(updates)];
+      // Update todo
+      await updateTodo({ id: todo.id, ...updates });
 
       // Handle assignment changes
       const currentAssignmentIds = todo.assignments?.map((a: any) => a.user?.id).filter(Boolean) || [];
@@ -140,26 +133,22 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
       ) || [];
 
       // Remove old assignments
-      removedAssignments.forEach((assignment: any) => {
-        transactions.push(tx.todoAssignments[assignment.id].delete());
-      });
+      for (const assignment of removedAssignments) {
+        await unassignUser(assignment.id);
+      }
 
       // Add new assignments
-      addedUserIds.forEach((userId: string) => {
+      for (const userId of addedUserIds) {
         const assignmentId = crypto.randomUUID();
-        transactions.push(
-          tx.todoAssignments[assignmentId]
-            .update({
-              createdAt: Date.now(),
-            })
-            .link({
-              todo: todo.id,
-              user: userId,
-            })
-        );
-      });
+        await assignUser({
+          id: assignmentId,
+          todo_id: todo.id,
+          user_id: userId,
+          role: 'assignee',
+        });
+      }
 
-      await db.transact(transactions);
+      // Mutations already executed above
       toast.success(t('features.todos.notifications.todoUpdated'));
       setIsEditing(false);
     } catch (error) {
@@ -379,7 +368,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
             <div>
               <label className="mb-2 block text-sm font-medium">{t('features.todos.detail.createdBy')}</label>
               <Link
-                href={`/user/${todo.creator.id}`}
+                to={`/user/${todo.creator.id}`}
                 className="flex items-center gap-2 text-sm hover:underline"
               >
                 <Avatar className="h-6 w-6">
@@ -507,7 +496,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                 {todo.assignments.map((assignment: any, idx: number) => (
                   <Link
                     key={idx}
-                    href={`/user/${assignment.user?.id}`}
+                    to={`/user/${assignment.user?.id}`}
                     className="flex items-center gap-2 text-sm hover:underline"
                   >
                     <Avatar className="h-6 w-6">
@@ -533,7 +522,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                 {t('features.todos.group.title')}
               </label>
               <Link
-                href={`/group/${todo.group.id}`}
+                to={`/group/${todo.group.id}`}
                 className="flex items-center gap-2 text-sm hover:underline"
               >
                 <Avatar className="h-6 w-6">

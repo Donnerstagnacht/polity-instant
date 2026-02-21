@@ -1,7 +1,7 @@
 'use client';
 
 import { Quote, ThumbsUp, ThumbsDown, HelpCircle, MessageSquare, User } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@tanstack/react-router';
 import { useTranslation } from '@/hooks/use-translation';
 import { cn } from '@/utils/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -73,7 +73,7 @@ export function StatementTimelineCard({
         {/* Statement Text */}
         <blockquote className="relative z-10 px-4 py-2 text-center">
           <p className="line-clamp-6 text-base font-medium italic leading-relaxed">
-            <Link href={`/statement/${statement.id}`} onClick={e => e.stopPropagation()} className="hover:underline">
+            <Link to={`/statement/${statement.id}`} onClick={e => e.stopPropagation()} className="hover:underline">
               &ldquo;{statement.content}&rdquo;
             </Link>
           </p>

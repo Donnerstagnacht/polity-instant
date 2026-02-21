@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,16 +10,16 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Shield, ArrowLeft, RotateCcw } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
 import { useAuthStore } from '@/features/auth/auth.ts';
-import { useAuthVerification } from '@/features/auth/utils/useAuthVerification';
+import { useAuthVerification } from '@/features/auth/hooks/useAuthVerification';
 
 export function VerifyForm() {
   const { t } = useTranslation();
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const navigate = useNavigate();
+  const searchParams = useSearch({ strict: false }) as Record<string, string>;
   const { requestMagicCode, error, clearError } = useAuthStore();
   const { isVerifying, verifyAndInitialize } = useAuthVerification();
 
-  const email = searchParams.get('email') || '';
+  const email = searchParams.email || '';
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [isResending, setIsResending] = useState(false);
   const [verificationError, setVerificationError] = useState<string | null>(null);
@@ -27,9 +27,9 @@ export function VerifyForm() {
 
   useEffect(() => {
     if (!email) {
-      router.push('/auth');
+      navigate({ to: '/auth' });
     }
-  }, [email, router]);
+  }, [email, navigate]);
 
   useEffect(() => {
     // Focus the first input on mount
@@ -96,11 +96,11 @@ export function VerifyForm() {
       if (result.isNewUser) {
         // New user - redirect to onboarding
         console.log('🎉 Redirecting to onboarding');
-        router.push('/?onboarding=true');
+        navigate({ to: '/?onboarding=true' });
       } else {
         // Existing user - redirect to homepage
         console.log('✅ Existing user, redirecting to homepage');
-        router.push('/');
+        navigate({ to: '/' });
       }
     } else {
       console.log('❌ Verification failed:', result.error);
@@ -124,7 +124,7 @@ export function VerifyForm() {
   };
 
   const handleBackToEmail = () => {
-    router.push('/auth');
+    navigate({ to: '/auth' });
   };
 
   return (

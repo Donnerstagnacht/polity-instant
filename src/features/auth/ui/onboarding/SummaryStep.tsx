@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Check, User, Users, Mail, ArrowRight, Sparkles, MessageCircle } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
-import type { Group } from './useOnboarding';
+import type { Group } from '../../hooks/useOnboarding';
 
 interface SummaryStepProps {
   firstName: string;

@@ -2,13 +2,14 @@
  * Type definitions for the seeding system
  */
 
+import type { SupabaseClient } from '@supabase/supabase-js';
+
 /**
  * Context object passed between seeders
- * Contains database instance, transaction builder, and arrays of created entity IDs
+ * Contains Supabase client instance and arrays of created entity IDs
  */
 export interface SeedContext {
-  db: any;
-  tx: any;
+  db: SupabaseClient;
   userIds: string[];
   groupIds: string[];
   eventIds: string[];

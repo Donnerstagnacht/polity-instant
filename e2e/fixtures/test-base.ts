@@ -18,6 +18,7 @@
  */
 
 import { test as base, type Page } from '@playwright/test';
+import { type SupabaseClient } from '@supabase/supabase-js';
 import { getAdminDb } from './admin-db';
 import { UserFactory } from './entity-factories/user.factory';
 import { GroupFactory } from './entity-factories/group.factory';
@@ -30,8 +31,8 @@ import { NotificationFactory } from './entity-factories/notification.factory';
 import { loginAsTestUser, login } from '../helpers/auth';
 
 type TestFixtures = {
-  adminDb: ReturnType<typeof getAdminDb>;
-  /** The actual InstantDB user ID for the main test user (polity.live@gmail.com) */
+  adminDb: SupabaseClient;
+  /** The Supabase user ID for the main test user (polity.live@gmail.com) */
   mainUserId: string;
   userFactory: UserFactory;
   groupFactory: GroupFactory;
@@ -51,8 +52,9 @@ export const test = base.extend<TestFixtures>({
 
   mainUserId: async ({}, use) => {
     const db = getAdminDb();
-    const user = await db.auth.getUser({ email: 'polity.live@gmail.com' });
-    await use(user.id);
+    const { data } = await db.from('user').select('id').eq('email', 'polity.live@gmail.com').single();
+    if (!data) throw new Error('Main test user not found in database');
+    await use(data.id);
   },
 
   userFactory: async ({}, use) => {
@@ -104,8 +106,7 @@ export const test = base.extend<TestFixtures>({
   },
 
   authenticatedPage: async ({ page }, use) => {
-    // InstantDB stores auth tokens in IndexedDB which storageState doesn't capture.
-    // Always inject a fresh auth token to ensure reliable authentication.
+    // Inject a fresh Supabase session to ensure reliable authentication.
     await loginAsTestUser(page);
     await use(page);
   },

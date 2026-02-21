@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/select';
 import { Search, Plus, Filter } from 'lucide-react';
 import { cn } from '@/utils/utils';
-import { Conversation } from '../types';
+import { Conversation } from '../types/message.types';
 import { ConversationItem } from './ConversationItem';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { useTranslation } from '@/hooks/use-translation';

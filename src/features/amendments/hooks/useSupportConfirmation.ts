@@ -6,32 +6,28 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import { db, tx, id } from '../../../../db/db';
+import { useAuth } from '@/providers/auth-provider';
 import { notifySupportConfirmed, notifySupportDeclined } from '@/utils/notification-helpers';
 import { toast } from 'sonner';
+import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
+import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
+import { mutators } from '@/zero/mutators';
 
 interface SupportConfirmation {
   id: string;
-  status: 'pending' | 'confirmed' | 'declined';
-  changeRequestId: string;
-  originalVersion: any;
-  createdAt: number;
-  respondedAt?: number;
+  amendment_id: string;
+  group_id: string;
+  event_id: string;
+  confirmed_by_id: string;
+  status: string;
+  confirmed_at: number;
+  created_at: number;
   amendment?: {
     id: string;
     title: string;
-    document?: {
+    documents?: Array<{
       content: any;
-    };
-  };
-  group?: {
-    id: string;
-    name: string;
-  };
-  changeRequest?: {
-    id: string;
-    title: string;
-    description: string;
+    }>;
   };
 }
 
@@ -43,34 +39,23 @@ interface UseSupportConfirmationResult {
 }
 
 export function useSupportConfirmation(groupId?: string): UseSupportConfirmationResult {
-  const { user } = db.useAuth();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const { updateSupportConfirmation: updateSupportAction } = useAmendmentActions();
 
-  // Query support confirmations for the group
-  const { data, isLoading: queryLoading } = db.useQuery(
-    groupId
-      ? {
-          supportConfirmations: {
-            $: {
-              where: {
-                'group.id': groupId,
-                status: 'pending',
-              },
-            },
-            amendment: {
-              document: {},
-            },
-            group: {},
-            changeRequest: {},
-          },
-        }
-      : null
-  );
+  // Query support confirmations for the group via facade
+  const {
+    supportConfirmationsByGroup: confirmationsData,
+    isLoading: queryLoading,
+  } = useAmendmentState({
+    includeSupportConfirmationsByGroup: true,
+    groupId,
+  });
 
   const pendingConfirmations = useMemo((): SupportConfirmation[] => {
-    if (!data?.supportConfirmations) return [];
-    return data.supportConfirmations as SupportConfirmation[];
-  }, [data?.supportConfirmations]);
+    if (!confirmationsData) return [];
+    return confirmationsData as unknown as SupportConfirmation[];
+  }, [confirmationsData]);
 
   const confirmSupport = useCallback(
     async (confirmationId: string) => {
@@ -87,26 +72,22 @@ export function useSupportConfirmation(groupId?: string): UseSupportConfirmation
 
       setIsLoading(true);
       try {
-        const transactions: any[] = [
-          tx.supportConfirmations[confirmationId].update({
-            status: 'confirmed',
-            respondedAt: Date.now(),
-          }),
-        ];
+        await updateSupportAction({
+          id: confirmationId,
+          status: 'confirmed',
+          confirmed_at: Date.now(),
+        });
 
         // Send notification to amendment owner
-        if (confirmation.amendment && confirmation.group) {
-          const notificationTxs = notifySupportConfirmed({
+        if (confirmation.amendment) {
+          await notifySupportConfirmed({
             senderId: user.id,
             amendmentId: confirmation.amendment.id,
             amendmentTitle: confirmation.amendment.title,
-            groupId: confirmation.group.id,
-            groupName: confirmation.group.name,
+            groupId: confirmation.group_id,
+            groupName: confirmation.group_id,
           });
-          transactions.push(...notificationTxs);
         }
-
-        await db.transact(transactions);
         toast.success('Support confirmed');
       } catch (error) {
         console.error('Error confirming support:', error);
@@ -134,33 +115,23 @@ export function useSupportConfirmation(groupId?: string): UseSupportConfirmation
 
       setIsLoading(true);
       try {
-        const transactions: any[] = [
-          tx.supportConfirmations[confirmationId].update({
-            status: 'declined',
-            respondedAt: Date.now(),
-          }),
-        ];
+        await updateSupportAction({
+          id: confirmationId,
+          status: 'declined',
+          confirmed_at: Date.now(),
+        });
 
-        // Remove group from amendment supporters
-        if (confirmation.amendment && confirmation.group) {
-          transactions.push(
-            tx.amendments[confirmation.amendment.id].unlink({
-              groupSupporters: confirmation.group.id,
-            })
-          );
-
+        // Known limitation: Zero has no unlink operation. Supporter removal requires direct record deletion.
+        if (confirmation.amendment) {
           // Send notification
-          const notificationTxs = notifySupportDeclined({
+          await notifySupportDeclined({
             senderId: user.id,
             amendmentId: confirmation.amendment.id,
             amendmentTitle: confirmation.amendment.title,
-            groupId: confirmation.group.id,
-            groupName: confirmation.group.name,
+            groupId: confirmation.group_id,
+            groupName: confirmation.group_id,
           });
-          transactions.push(...notificationTxs);
         }
-
-        await db.transact(transactions);
         toast.success('Support declined');
       } catch (error) {
         console.error('Error declining support:', error);
@@ -182,111 +153,102 @@ export function useSupportConfirmation(groupId?: string): UseSupportConfirmation
 }
 
 /**
- * Trigger support confirmation when a change request is accepted
+ * Trigger support confirmation when a change request is accepted.
+ * Accepts a mutate function (from useMutate) instead of a Zero instance.
+ * Caller must provide supporterGroups since this is a plain function, not a hook.
  */
-export async function triggerSupporterConfirmation(params: {
-  amendmentId: string;
-  changeRequestId: string;
-  changeRequestTitle?: string;
-  userId: string;
-}): Promise<void> {
-  const { amendmentId, changeRequestId, userId } = params;
+export async function triggerSupporterConfirmation(
+  mutate: (mutation: any) => any,
+  params: {
+    amendmentId: string;
+    changeRequestId: string;
+    changeRequestTitle?: string;
+    userId: string;
+    amendmentTitle?: string;
+    supporterGroups?: Array<{ id: string }>;
+  }
+): Promise<void> {
+  const { amendmentId, supporterGroups, amendmentTitle } = params;
 
-  // Query the amendment to get its supporter groups and current document
-  const { data } = await db.queryOnce({
-    amendments: {
-      $: { where: { id: amendmentId } },
-      groupSupporters: {},
-      document: {},
-    },
-  });
-
-  const amendment = (data as any)?.amendments?.[0];
-  if (!amendment?.groupSupporters?.length) {
+  if (!supporterGroups?.length) {
     return; // No supporter groups to confirm
   }
 
-  const transactions: any[] = [];
-
-  for (const group of amendment.groupSupporters) {
-    const confirmationId = id();
+  for (const group of supporterGroups) {
+    const confirmationId = crypto.randomUUID();
 
     // Create support confirmation record
-    transactions.push(
-      tx.supportConfirmations[confirmationId]
-        .update({
-          status: 'pending',
-          changeRequestId,
-          originalVersion: amendment.document?.content || null,
-          createdAt: Date.now(),
-        })
-        .link({
-          amendment: amendmentId,
-          group: group.id,
-          changeRequest: changeRequestId,
-        })
-    );
+    await mutate(mutators.amendments.createSupportConfirmation({
+      id: confirmationId,
+      status: 'pending',
+      amendment_id: amendmentId,
+      group_id: group.id,
+      event_id: '',
+      confirmed_by_id: '',
+      confirmed_at: 0,
+    }));
 
     // Create agenda item for confirmation at group's next event
-    const agendaItemId = id();
-    transactions.push(
-      tx.agendaItems[agendaItemId]
-        .update({
-          title: `Support Confirmation: ${amendment.title || 'Amendment'}`,
-          type: 'support_confirmation',
-          status: 'scheduled',
-          createdAt: Date.now(),
-        })
-        .link({
-          amendment: amendmentId,
-          supportConfirmation: confirmationId,
-        })
-    );
+    const agendaItemId = crypto.randomUUID();
+    await mutate(mutators.agendas.createAgendaItem({
+      id: agendaItemId,
+      title: `Support Confirmation: ${amendmentTitle || 'Amendment'}`,
+      type: 'support_confirmation',
+      status: 'scheduled',
+      amendment_id: amendmentId,
+      event_id: '',
+      description: '',
+      forwarding_status: '',
+      order_index: 0,
+      duration: 0,
+      scheduled_time: '',
+      start_time: 0,
+      end_time: 0,
+      activated_at: 0,
+      completed_at: 0,
+    }));
 
-    // Link agenda item to support confirmation
-    transactions.push(
-      tx.supportConfirmations[confirmationId].link({
-        agendaItem: agendaItemId,
-      })
-    );
-  }
-
-  if (transactions.length > 0) {
-    await db.transact(transactions);
+    // NOTE: agenda_item_id column does not exist on support_confirmation table
   }
 }
 
 /**
- * Create a confirmation agenda item for a specific group's event
+ * Create a confirmation agenda item for a specific group's event.
+ * Accepts a mutate function (from useMutate) instead of a Zero instance.
  */
-export async function createConfirmationAgendaItem(params: {
-  confirmationId: string;
-  amendmentTitle: string;
-  eventId: string;
-  groupId: string;
-}): Promise<string> {
-  const { confirmationId, amendmentTitle, eventId, groupId } = params;
+export async function createConfirmationAgendaItem(
+  mutate: (mutation: any) => any,
+  params: {
+    confirmationId: string;
+    amendmentTitle: string;
+    eventId: string;
+    groupId: string;
+  }
+): Promise<string> {
+  const { confirmationId, amendmentTitle, eventId } = params;
 
-  const agendaItemId = id();
+  const agendaItemId = crypto.randomUUID();
 
-  await db.transact([
-    tx.agendaItems[agendaItemId]
-      .update({
-        title: `Support Confirmation: ${amendmentTitle}`,
-        type: 'support_confirmation',
-        status: 'scheduled',
-        description:
-          'Vote to confirm or decline continued support for this amendment after recent changes.',
-        createdAt: Date.now(),
-      })
-      .link({
-        event: eventId,
-        supportConfirmation: confirmationId,
-      }),
-    tx.supportConfirmations[confirmationId].link({
-      agendaItem: agendaItemId,
-    }),
-  ]);
+  await mutate(mutators.agendas.createAgendaItem({
+    id: agendaItemId,
+    title: `Support Confirmation: ${amendmentTitle}`,
+    type: 'support_confirmation',
+    status: 'scheduled',
+    description:
+      'Vote to confirm or decline continued support for this amendment after recent changes.',
+    event_id: eventId,
+    amendment_id: '',
+    forwarding_status: '',
+    order_index: 0,
+    duration: 0,
+    scheduled_time: '',
+    start_time: 0,
+    end_time: 0,
+    activated_at: 0,
+    completed_at: 0,
+  }));
+
+  // NOTE: agenda_item_id column does not exist on support_confirmation table
 
   return agendaItemId;
 }

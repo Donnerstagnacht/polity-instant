@@ -16,7 +16,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Shield, Trash2 } from 'lucide-react';
-import { ACTION_RIGHTS } from '../../../../db/rbac/constants';
+import { ACTION_RIGHTS } from '@/zero/rbac/constants';
 import type { GroupRole } from '../types/group.types';
 
 interface RolesPermissionsTableProps {

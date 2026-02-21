@@ -1,47 +1,49 @@
-import { id, tx } from '@instantdb/admin';
+import { id } from './id.helper';
 import { faker } from '@faker-js/faker';
+import type { InsertOp } from './transaction.helpers';
 
 /**
  * Entity-specific helper functions
  */
 
 /**
- * Creates hashtag entities and links them to the specified entity
+ * Creates hashtag row operations and links them to the specified entity
  */
-export function createHashtagTransactions(
+export function createHashtagRows(
   entityId: string,
   entityType: 'user' | 'group' | 'amendment' | 'event' | 'blog',
   tags: string[]
-): any[] {
-  const transactions = [];
+): InsertOp[] {
+  const ops: InsertOp[] = [];
 
   for (const tag of tags) {
     const hashtagId = id();
-    const linkKey = entityType;
+    const linkKey = `${entityType}Id`;
 
-    transactions.push(
-      tx.hashtags[hashtagId]
-        .update({
-          tag,
-          createdAt: new Date(),
-        })
-        .link({ [linkKey]: entityId })
-    );
+    ops.push({
+      table: 'hashtags',
+      row: {
+        id: hashtagId,
+        tag,
+        createdAt: new Date(),
+        [linkKey]: entityId,
+      },
+    });
   }
 
-  return transactions;
+  return ops;
 }
 
 /**
  * Creates a structured document for an amendment
  */
-export function createAmendmentDocument(
+export function createAmendmentDocumentRows(
   amendmentId: string,
   amendmentTitle: string,
   ownerId: string,
   workflowStatus?: string
-): any[] {
-  const transactions = [];
+): InsertOp[] {
+  const ops: InsertOp[] = [];
   const documentId = id();
 
   // Create document content based on amendment
@@ -79,23 +81,30 @@ export function createAmendmentDocument(
   };
 
   // Create the document
-  transactions.push(
-    tx.documents[documentId]
-      .update({
-        title: amendmentTitle,
-        content: documentContent,
-        editingMode: getEditingMode(workflowStatus),
-        suggestionCounter: 0,
-        createdAt: faker.date.past({ years: 0.5 }),
-        updatedAt: faker.date.recent({ days: 7 }),
-        isPublic: true,
-        tags: ['amendment', 'proposal', 'policy'],
-      })
-      .link({ owner: ownerId })
-  );
+  ops.push({
+    table: 'documents',
+    row: {
+      id: documentId,
+      title: amendmentTitle,
+      content: documentContent,
+      editingMode: getEditingMode(workflowStatus),
+      suggestionCounter: 0,
+      createdAt: faker.date.past({ years: 0.5 }),
+      updatedAt: faker.date.recent({ days: 7 }),
+      isPublic: true,
+      tags: ['amendment', 'proposal', 'policy'],
+      ownerId,
+    },
+  });
 
   // Link the document to the amendment
-  transactions.push(tx.amendments[amendmentId].link({ document: documentId }));
+  ops.push({
+    table: 'amendments',
+    row: {
+      id: amendmentId,
+      documentId,
+    },
+  });
 
-  return transactions;
+  return ops;
 }

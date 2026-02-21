@@ -4,8 +4,8 @@ import {
   scoreAndSortContent,
   getTopScoredContent,
   type ScoredContent,
-} from '../content-scoring';
-import type { ContentItem, UserContext } from '../content-reasons';
+} from '../../logic/content-scoring';
+import type { ContentItem, UserContext } from '../../logic/content-reasons';
 
 describe('content-scoring', () => {
   // Helper to create mock content

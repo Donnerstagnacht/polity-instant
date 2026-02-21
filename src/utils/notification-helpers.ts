@@ -5,7 +5,8 @@
  * and sending notifications to entity recipients.
  */
 
-import { id, tx } from '../../db/db';
+import { createClient } from '@supabase/supabase-js';
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
 export type EntityType = 'group' | 'event' | 'amendment' | 'blog' | 'user';
 
@@ -200,82 +201,52 @@ export interface NotificationConfig {
 }
 
 /**
- * Creates a notification transaction and triggers push notification
+ * Creates a notification via Supabase insert and triggers push notification
  */
-export function createNotification(config: NotificationConfig) {
-  const notificationId = id();
+export async function createNotification(config: NotificationConfig): Promise<string> {
+  const notificationId = crypto.randomUUID();
 
-  const baseNotification = {
+  const notification: Record<string, unknown> = {
     id: notificationId,
     type: config.type,
     title: config.title,
     message: config.message,
-    actionUrl: config.actionUrl,
-    relatedEntityType: config.relatedEntityType,
-    isRead: false,
-    createdAt: new Date().toISOString(),
-    onBehalfOfEntityType: config.onBehalfOfEntityType,
-    onBehalfOfEntityId: config.onBehalfOfEntityId,
-    recipientEntityType: config.recipientEntityType,
-    recipientEntityId: config.recipientEntityId,
+    action_url: config.actionUrl ?? null,
+    related_entity_type: config.relatedEntityType ?? null,
+    is_read: false,
+    created_at: Date.now(),
+    sender_id: config.senderId,
+    recipient_id: config.recipientUserId ?? null,
+    on_behalf_of_entity_type: config.onBehalfOfEntityType ?? null,
+    on_behalf_of_entity_id: config.onBehalfOfEntityId ?? null,
+    recipient_entity_type: config.recipientEntityType ?? null,
+    recipient_entity_id: config.recipientEntityId ?? null,
+    related_user_id: config.relatedUserId ?? null,
+    related_group_id: config.relatedGroupId ?? null,
+    related_amendment_id: config.relatedAmendmentId ?? null,
+    related_event_id: config.relatedEventId ?? null,
+    related_blog_id: config.relatedBlogId ?? null,
   };
 
-  const transactions: any[] = [tx.notifications[notificationId].update(baseNotification)];
-
-  // Link sender
-  transactions.push(tx.notifications[notificationId].link({ sender: config.senderId }));
-
-  // Link recipient (user or entity)
-  if (config.recipientUserId) {
-    transactions.push(tx.notifications[notificationId].link({ recipient: config.recipientUserId }));
-  }
-
-  // Link recipient entity
-  if (config.recipientEntityType && config.recipientEntityId) {
-    const recipientKey = getRecipientEntityKey(config.recipientEntityType);
-    transactions.push(
-      tx.notifications[notificationId].link({ [recipientKey]: config.recipientEntityId })
-    );
-  }
-
-  // Link onBehalfOf entity
+  // Map onBehalfOf entity to specific FK columns
   if (config.onBehalfOfEntityType && config.onBehalfOfEntityId) {
-    const onBehalfKey = getOnBehalfEntityKey(config.onBehalfOfEntityType);
-    transactions.push(
-      tx.notifications[notificationId].link({ [onBehalfKey]: config.onBehalfOfEntityId })
-    );
+    const key = `on_behalf_of_${config.onBehalfOfEntityType}_id`;
+    notification[key] = config.onBehalfOfEntityId;
   }
 
-  // Link related entities
-  if (config.relatedGroupId) {
-    transactions.push(
-      tx.notifications[notificationId].link({ relatedGroup: config.relatedGroupId })
-    );
+  // Map recipient entity to specific FK columns
+  if (config.recipientEntityType && config.recipientEntityId) {
+    const key = `recipient_${config.recipientEntityType}_id`;
+    notification[key] = config.recipientEntityId;
   }
 
-  if (config.relatedEventId) {
-    transactions.push(
-      tx.notifications[notificationId].link({ relatedEvent: config.relatedEventId })
-    );
-  }
-
-  if (config.relatedAmendmentId) {
-    transactions.push(
-      tx.notifications[notificationId].link({ relatedAmendment: config.relatedAmendmentId })
-    );
-  }
-
-  if (config.relatedBlogId) {
-    transactions.push(tx.notifications[notificationId].link({ relatedBlog: config.relatedBlogId }));
-  }
-
-  if (config.relatedUserId) {
-    transactions.push(tx.notifications[notificationId].link({ relatedUser: config.relatedUserId }));
+  const { error } = await supabase.from('notification').insert(notification);
+  if (error) {
+    console.error('[Notification] Failed to create notification:', error);
   }
 
   // Trigger push notification if recipient is a user (client-side only)
   if (typeof window !== 'undefined' && config.recipientUserId) {
-    // Use setTimeout to not block the notification creation
     const userId = config.recipientUserId;
     setTimeout(() => {
       sendPushNotification(userId, {
@@ -286,12 +257,11 @@ export function createNotification(config: NotificationConfig) {
         type: config.type,
       }).catch(error => {
         console.error('[Notification] Failed to send push notification:', error);
-        // Don't throw - notification was already created in DB
       });
     }, 0);
   }
 
-  return transactions;
+  return notificationId;
 }
 
 /**
@@ -332,46 +302,12 @@ async function sendPushNotification(
   }
 }
 
-/**
- * Helper to get the recipient entity key for linking
- */
-function getRecipientEntityKey(entityType: EntityType): string {
-  switch (entityType) {
-    case 'group':
-      return 'recipientGroup';
-    case 'event':
-      return 'recipientEvent';
-    case 'amendment':
-      return 'recipientAmendment';
-    case 'blog':
-      return 'recipientBlog';
-    case 'user':
-      return 'recipientUser';
-  }
-}
 
-/**
- * Helper to get the onBehalfOf entity key for linking
- */
-function getOnBehalfEntityKey(entityType: EntityType): string {
-  switch (entityType) {
-    case 'group':
-      return 'onBehalfOfGroup';
-    case 'event':
-      return 'onBehalfOfEvent';
-    case 'amendment':
-      return 'onBehalfOfAmendment';
-    case 'blog':
-      return 'onBehalfOfBlog';
-    case 'user':
-      return 'onBehalfOfUser';
-  }
-}
 
 /**
  * Send notification when a user is invited to a group
  */
-export function notifyGroupInvite(params: {
+export async function notifyGroupInvite(params: {
   senderId: string;
   recipientUserId: string;
   groupId: string;
@@ -394,7 +330,7 @@ export function notifyGroupInvite(params: {
 /**
  * Send notification when membership is approved
  */
-export function notifyMembershipApproved(params: {
+export async function notifyMembershipApproved(params: {
   senderId: string;
   recipientUserId: string;
   groupId: string;
@@ -417,7 +353,7 @@ export function notifyMembershipApproved(params: {
 /**
  * Send notification when membership is rejected
  */
-export function notifyMembershipRejected(params: {
+export async function notifyMembershipRejected(params: {
   senderId: string;
   recipientUserId: string;
   groupId: string;
@@ -439,7 +375,7 @@ export function notifyMembershipRejected(params: {
 /**
  * Send notification when membership role is changed
  */
-export function notifyMembershipRoleChanged(params: {
+export async function notifyMembershipRoleChanged(params: {
   senderId: string;
   recipientUserId: string;
   groupId: string;
@@ -463,7 +399,7 @@ export function notifyMembershipRoleChanged(params: {
 /**
  * Send notification when member is removed
  */
-export function notifyMembershipRemoved(params: {
+export async function notifyMembershipRemoved(params: {
   senderId: string;
   recipientUserId: string;
   groupId: string;
@@ -485,7 +421,7 @@ export function notifyMembershipRemoved(params: {
 /**
  * Send notification to group when a member withdraws
  */
-export function notifyMembershipWithdrawn(params: {
+export async function notifyMembershipWithdrawn(params: {
   senderId: string;
   senderName: string;
   groupId: string;
@@ -508,7 +444,7 @@ export function notifyMembershipWithdrawn(params: {
 /**
  * Send notification to group when a user requests membership
  */
-export function notifyMembershipRequest(params: {
+export async function notifyMembershipRequest(params: {
   senderId: string;
   senderName: string;
   groupId: string;
@@ -531,7 +467,7 @@ export function notifyMembershipRequest(params: {
 /**
  * Send notification when a user is invited to an event
  */
-export function notifyEventInvite(params: {
+export async function notifyEventInvite(params: {
   senderId: string;
   recipientUserId: string;
   eventId: string;
@@ -554,7 +490,7 @@ export function notifyEventInvite(params: {
 /**
  * Send notification when participation is approved
  */
-export function notifyParticipationApproved(params: {
+export async function notifyParticipationApproved(params: {
   senderId: string;
   recipientUserId: string;
   eventId: string;
@@ -577,7 +513,7 @@ export function notifyParticipationApproved(params: {
 /**
  * Send notification when participation is rejected
  */
-export function notifyParticipationRejected(params: {
+export async function notifyParticipationRejected(params: {
   senderId: string;
   recipientUserId: string;
   eventId: string;
@@ -599,7 +535,7 @@ export function notifyParticipationRejected(params: {
 /**
  * Send notification when participant role is changed
  */
-export function notifyParticipationRoleChanged(params: {
+export async function notifyParticipationRoleChanged(params: {
   senderId: string;
   recipientUserId: string;
   eventId: string;
@@ -623,7 +559,7 @@ export function notifyParticipationRoleChanged(params: {
 /**
  * Send notification when participant is removed
  */
-export function notifyParticipationRemoved(params: {
+export async function notifyParticipationRemoved(params: {
   senderId: string;
   recipientUserId: string;
   eventId: string;
@@ -645,7 +581,7 @@ export function notifyParticipationRemoved(params: {
 /**
  * Send notification to event when a participant withdraws
  */
-export function notifyParticipationWithdrawn(params: {
+export async function notifyParticipationWithdrawn(params: {
   senderId: string;
   senderName: string;
   eventId: string;
@@ -668,7 +604,7 @@ export function notifyParticipationWithdrawn(params: {
 /**
  * Send notification to event when a user requests participation
  */
-export function notifyParticipationRequest(params: {
+export async function notifyParticipationRequest(params: {
   senderId: string;
   senderName: string;
   eventId: string;
@@ -691,7 +627,7 @@ export function notifyParticipationRequest(params: {
 /**
  * Send notification to a user when an event is created in a group they're a member of
  */
-export function notifyGroupEventCreated(params: {
+export async function notifyGroupEventCreated(params: {
   senderId: string;
   recipientUserId: string;
   groupId: string;
@@ -717,7 +653,7 @@ export function notifyGroupEventCreated(params: {
 /**
  * Send notification when a user is invited to collaborate on an amendment
  */
-export function notifyCollaborationInvite(params: {
+export async function notifyCollaborationInvite(params: {
   senderId: string;
   recipientUserId: string;
   amendmentId: string;
@@ -740,7 +676,7 @@ export function notifyCollaborationInvite(params: {
 /**
  * Send notification when collaboration is approved
  */
-export function notifyCollaborationApproved(params: {
+export async function notifyCollaborationApproved(params: {
   senderId: string;
   recipientUserId: string;
   amendmentId: string;
@@ -763,7 +699,7 @@ export function notifyCollaborationApproved(params: {
 /**
  * Send notification when collaboration is rejected
  */
-export function notifyCollaborationRejected(params: {
+export async function notifyCollaborationRejected(params: {
   senderId: string;
   recipientUserId: string;
   amendmentId: string;
@@ -785,7 +721,7 @@ export function notifyCollaborationRejected(params: {
 /**
  * Send notification when collaborator role is changed
  */
-export function notifyCollaborationRoleChanged(params: {
+export async function notifyCollaborationRoleChanged(params: {
   senderId: string;
   recipientUserId: string;
   amendmentId: string;
@@ -809,7 +745,7 @@ export function notifyCollaborationRoleChanged(params: {
 /**
  * Send notification when collaborator is removed
  */
-export function notifyCollaborationRemoved(params: {
+export async function notifyCollaborationRemoved(params: {
   senderId: string;
   recipientUserId: string;
   amendmentId: string;
@@ -831,7 +767,7 @@ export function notifyCollaborationRemoved(params: {
 /**
  * Send notification to amendment when a collaborator withdraws
  */
-export function notifyCollaborationWithdrawn(params: {
+export async function notifyCollaborationWithdrawn(params: {
   senderId: string;
   senderName: string;
   amendmentId: string;
@@ -854,7 +790,7 @@ export function notifyCollaborationWithdrawn(params: {
 /**
  * Send notification to amendment when a user requests collaboration
  */
-export function notifyCollaborationRequest(params: {
+export async function notifyCollaborationRequest(params: {
   senderId: string;
   senderName: string;
   amendmentId: string;
@@ -881,7 +817,7 @@ export function notifyCollaborationRequest(params: {
 /**
  * Send notification when a member is promoted to admin
  */
-export function notifyAdminPromoted(params: {
+export async function notifyAdminPromoted(params: {
   senderId: string;
   recipientUserId: string;
   groupId: string;
@@ -904,7 +840,7 @@ export function notifyAdminPromoted(params: {
 /**
  * Send notification when an admin is demoted to member
  */
-export function notifyAdminDemoted(params: {
+export async function notifyAdminDemoted(params: {
   senderId: string;
   recipientUserId: string;
   groupId: string;
@@ -927,7 +863,7 @@ export function notifyAdminDemoted(params: {
 /**
  * Send notification when a role is created
  */
-export function notifyRoleCreated(params: {
+export async function notifyRoleCreated(params: {
   senderId: string;
   recipientUserId: string;
   groupId: string;
@@ -950,7 +886,7 @@ export function notifyRoleCreated(params: {
 /**
  * Send notification when a role is deleted
  */
-export function notifyRoleDeleted(params: {
+export async function notifyRoleDeleted(params: {
   senderId: string;
   recipientUserId: string;
   groupId: string;
@@ -973,7 +909,7 @@ export function notifyRoleDeleted(params: {
 /**
  * Send notification when role action rights are updated
  */
-export function notifyActionRightsChanged(params: {
+export async function notifyActionRightsChanged(params: {
   senderId: string;
   recipientUserId: string;
   groupId: string;
@@ -1000,7 +936,7 @@ export function notifyActionRightsChanged(params: {
 /**
  * Send notification when a link is added to the group
  */
-export function notifyLinkAdded(params: {
+export async function notifyLinkAdded(params: {
   senderId: string;
   groupId: string;
   groupName: string;
@@ -1022,7 +958,7 @@ export function notifyLinkAdded(params: {
 /**
  * Send notification when a link is removed from the group
  */
-export function notifyLinkRemoved(params: {
+export async function notifyLinkRemoved(params: {
   senderId: string;
   groupId: string;
   groupName: string;
@@ -1044,7 +980,7 @@ export function notifyLinkRemoved(params: {
 /**
  * Send notification when a document is added to the group
  */
-export function notifyDocumentCreated(params: {
+export async function notifyDocumentCreated(params: {
   senderId: string;
   groupId: string;
   groupName: string;
@@ -1066,7 +1002,7 @@ export function notifyDocumentCreated(params: {
 /**
  * Send notification when a document is removed from the group
  */
-export function notifyDocumentDeleted(params: {
+export async function notifyDocumentDeleted(params: {
   senderId: string;
   groupId: string;
   groupName: string;
@@ -1088,7 +1024,7 @@ export function notifyDocumentDeleted(params: {
 /**
  * Send notification when a user is invited to collaborate on a standalone document
  */
-export function notifyDocumentCollaboratorInvited(params: {
+export async function notifyDocumentCollaboratorInvited(params: {
   senderId: string;
   recipientUserId: string;
   documentId: string;
@@ -1107,7 +1043,7 @@ export function notifyDocumentCollaboratorInvited(params: {
 /**
  * Send notification when a new subscriber joins the group
  */
-export function notifyGroupNewSubscriber(params: {
+export async function notifyGroupNewSubscriber(params: {
   senderId: string;
   senderName: string;
   groupId: string;
@@ -1134,7 +1070,7 @@ export function notifyGroupNewSubscriber(params: {
 /**
  * Send notification when a position is created
  */
-export function notifyPositionCreated(params: {
+export async function notifyPositionCreated(params: {
   senderId: string;
   recipientUserId: string;
   groupId: string;
@@ -1157,7 +1093,7 @@ export function notifyPositionCreated(params: {
 /**
  * Send notification to a group when a position is created
  */
-export function notifyGroupPositionCreated(params: {
+export async function notifyGroupPositionCreated(params: {
   senderId: string;
   groupId: string;
   groupName: string;
@@ -1179,7 +1115,7 @@ export function notifyGroupPositionCreated(params: {
 /**
  * Send notification when a position is deleted
  */
-export function notifyPositionDeleted(params: {
+export async function notifyPositionDeleted(params: {
   senderId: string;
   recipientUserId: string;
   groupId: string;
@@ -1202,7 +1138,7 @@ export function notifyPositionDeleted(params: {
 /**
  * Send notification when a user is assigned to a position
  */
-export function notifyPositionAssigned(params: {
+export async function notifyPositionAssigned(params: {
   senderId: string;
   recipientUserId: string;
   groupId: string;
@@ -1226,7 +1162,7 @@ export function notifyPositionAssigned(params: {
 /**
  * Send notification when a user is removed from a position
  */
-export function notifyPositionVacated(params: {
+export async function notifyPositionVacated(params: {
   senderId: string;
   recipientUserId: string;
   groupId: string;
@@ -1250,7 +1186,7 @@ export function notifyPositionVacated(params: {
 /**
  * Send notification when an election is created for a position
  */
-export function notifyElectionCreated(params: {
+export async function notifyElectionCreated(params: {
   senderId: string;
   recipientUserId: string;
   groupId: string;
@@ -1277,7 +1213,7 @@ export function notifyElectionCreated(params: {
 /**
  * Send notification when a group relationship is requested
  */
-export function notifyRelationshipRequested(params: {
+export async function notifyRelationshipRequested(params: {
   senderId: string;
   sourceGroupId: string;
   sourceGroupName: string;
@@ -1301,7 +1237,7 @@ export function notifyRelationshipRequested(params: {
 /**
  * Send notification when a group relationship is approved
  */
-export function notifyRelationshipApproved(params: {
+export async function notifyRelationshipApproved(params: {
   senderId: string;
   sourceGroupId: string;
   sourceGroupName: string;
@@ -1324,7 +1260,7 @@ export function notifyRelationshipApproved(params: {
 /**
  * Send notification when a group relationship is rejected
  */
-export function notifyRelationshipRejected(params: {
+export async function notifyRelationshipRejected(params: {
   senderId: string;
   sourceGroupId: string;
   sourceGroupName: string;
@@ -1351,7 +1287,7 @@ export function notifyRelationshipRejected(params: {
 /**
  * Send notification when a todo is assigned
  */
-export function notifyTodoAssigned(params: {
+export async function notifyTodoAssigned(params: {
   senderId: string;
   recipientUserId: string;
   groupId: string;
@@ -1375,7 +1311,7 @@ export function notifyTodoAssigned(params: {
 /**
  * Send notification when a todo is updated
  */
-export function notifyTodoUpdated(params: {
+export async function notifyTodoUpdated(params: {
   senderId: string;
   recipientUserId: string;
   groupId: string;
@@ -1399,7 +1335,7 @@ export function notifyTodoUpdated(params: {
 /**
  * Send notification when a todo is deleted
  */
-export function notifyTodoDeleted(params: {
+export async function notifyTodoDeleted(params: {
   senderId: string;
   recipientUserId: string;
   groupId: string;
@@ -1427,7 +1363,7 @@ export function notifyTodoDeleted(params: {
 /**
  * Send notification when a payment is created
  */
-export function notifyPaymentCreated(params: {
+export async function notifyPaymentCreated(params: {
   senderId: string;
   groupId: string;
   groupName: string;
@@ -1449,7 +1385,7 @@ export function notifyPaymentCreated(params: {
 /**
  * Send notification when a payment is deleted
  */
-export function notifyPaymentDeleted(params: {
+export async function notifyPaymentDeleted(params: {
   senderId: string;
   groupId: string;
   groupName: string;
@@ -1475,7 +1411,7 @@ export function notifyPaymentDeleted(params: {
 /**
  * Send notification when a participant is promoted to organizer
  */
-export function notifyOrganizerPromoted(params: {
+export async function notifyOrganizerPromoted(params: {
   senderId: string;
   recipientUserId: string;
   eventId: string;
@@ -1498,7 +1434,7 @@ export function notifyOrganizerPromoted(params: {
 /**
  * Send notification when an organizer is demoted
  */
-export function notifyOrganizerDemoted(params: {
+export async function notifyOrganizerDemoted(params: {
   senderId: string;
   recipientUserId: string;
   eventId: string;
@@ -1521,7 +1457,7 @@ export function notifyOrganizerDemoted(params: {
 /**
  * Send notification when an agenda item is created
  */
-export function notifyAgendaItemCreated(params: {
+export async function notifyAgendaItemCreated(params: {
   senderId: string;
   eventId: string;
   eventTitle: string;
@@ -1543,7 +1479,7 @@ export function notifyAgendaItemCreated(params: {
 /**
  * Send notification when an agenda item is deleted
  */
-export function notifyAgendaItemDeleted(params: {
+export async function notifyAgendaItemDeleted(params: {
   senderId: string;
   eventId: string;
   eventTitle: string;
@@ -1566,53 +1502,47 @@ export function notifyAgendaItemDeleted(params: {
  * Send notification when an agenda item is transferred to another event
  * Sends notifications to both source and target event participants
  */
-export function notifyAgendaItemTransferred(params: {
+export async function notifyAgendaItemTransferred(params: {
   senderId: string;
   sourceEventId: string;
   sourceEventTitle: string;
   targetEventId: string;
   targetEventTitle: string;
   agendaItemTitle: string;
-}) {
-  const transactions: any[] = [];
-
+}): Promise<string[]> {
   // Notify source event participants
-  transactions.push(
-    ...createNotification({
-      senderId: params.senderId,
-      recipientEntityType: 'event',
-      recipientEntityId: params.sourceEventId,
-      type: 'event_agenda_item_transferred',
-      title: 'Agenda Item Moved',
-      message: `"${params.agendaItemTitle}" has been moved to ${params.targetEventTitle}`,
-      actionUrl: `/event/${params.targetEventId}/agenda`,
-      relatedEntityType: 'event',
-      relatedEventId: params.targetEventId,
-    })
-  );
+  const id1 = await createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'event',
+    recipientEntityId: params.sourceEventId,
+    type: 'event_agenda_item_transferred',
+    title: 'Agenda Item Moved',
+    message: `"${params.agendaItemTitle}" has been moved to ${params.targetEventTitle}`,
+    actionUrl: `/event/${params.targetEventId}/agenda`,
+    relatedEntityType: 'event',
+    relatedEventId: params.targetEventId,
+  });
 
   // Notify target event participants
-  transactions.push(
-    ...createNotification({
-      senderId: params.senderId,
-      recipientEntityType: 'event',
-      recipientEntityId: params.targetEventId,
-      type: 'event_agenda_item_transferred',
-      title: 'Agenda Item Added',
-      message: `"${params.agendaItemTitle}" has been moved from ${params.sourceEventTitle}`,
-      actionUrl: `/event/${params.targetEventId}/agenda`,
-      relatedEntityType: 'event',
-      relatedEventId: params.sourceEventId,
-    })
-  );
+  const id2 = await createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'event',
+    recipientEntityId: params.targetEventId,
+    type: 'event_agenda_item_transferred',
+    title: 'Agenda Item Added',
+    message: `"${params.agendaItemTitle}" has been moved from ${params.sourceEventTitle}`,
+    actionUrl: `/event/${params.targetEventId}/agenda`,
+    relatedEntityType: 'event',
+    relatedEventId: params.sourceEventId,
+  });
 
-  return transactions;
+  return [id1, id2];
 }
 
 /**
  * Send notification when event schedule changes
  */
-export function notifyScheduleChanged(params: {
+export async function notifyScheduleChanged(params: {
   senderId: string;
   eventId: string;
   eventTitle: string;
@@ -1633,7 +1563,7 @@ export function notifyScheduleChanged(params: {
 /**
  * Send notification when a candidate is added to an election
  */
-export function notifyCandidateAdded(params: {
+export async function notifyCandidateAdded(params: {
   senderId: string;
   eventId: string;
   eventTitle: string;
@@ -1655,7 +1585,7 @@ export function notifyCandidateAdded(params: {
 /**
  * Send notification when an election starts
  */
-export function notifyElectionStarted(params: {
+export async function notifyElectionStarted(params: {
   senderId: string;
   eventId: string;
   eventTitle: string;
@@ -1677,7 +1607,7 @@ export function notifyElectionStarted(params: {
 /**
  * Send notification when an election ends
  */
-export function notifyElectionEnded(params: {
+export async function notifyElectionEnded(params: {
   senderId: string;
   eventId: string;
   eventTitle: string;
@@ -1699,7 +1629,7 @@ export function notifyElectionEnded(params: {
 /**
  * Send notification when an event position is created
  */
-export function notifyEventPositionCreated(params: {
+export async function notifyEventPositionCreated(params: {
   senderId: string;
   eventId: string;
   eventTitle: string;
@@ -1721,7 +1651,7 @@ export function notifyEventPositionCreated(params: {
 /**
  * Send notification when an event position is deleted
  */
-export function notifyEventPositionDeleted(params: {
+export async function notifyEventPositionDeleted(params: {
   senderId: string;
   eventId: string;
   eventTitle: string;
@@ -1743,7 +1673,7 @@ export function notifyEventPositionDeleted(params: {
 /**
  * Send notification when delegates are finalized
  */
-export function notifyDelegatesFinalized(params: {
+export async function notifyDelegatesFinalized(params: {
   senderId: string;
   eventId: string;
   eventTitle: string;
@@ -1764,7 +1694,7 @@ export function notifyDelegatesFinalized(params: {
 /**
  * Send notification when a delegate is nominated
  */
-export function notifyDelegateNominated(params: {
+export async function notifyDelegateNominated(params: {
   senderId: string;
   recipientUserId: string;
   eventId: string;
@@ -1787,7 +1717,7 @@ export function notifyDelegateNominated(params: {
 /**
  * Send notification when a meeting is booked
  */
-export function notifyMeetingBooked(params: {
+export async function notifyMeetingBooked(params: {
   senderId: string;
   senderName: string;
   recipientUserId: string;
@@ -1812,7 +1742,7 @@ export function notifyMeetingBooked(params: {
 /**
  * Send notification when a meeting is cancelled
  */
-export function notifyMeetingCancelled(params: {
+export async function notifyMeetingCancelled(params: {
   senderId: string;
   senderName: string;
   recipientUserId: string;
@@ -1837,7 +1767,7 @@ export function notifyMeetingCancelled(params: {
 /**
  * Send notification when a speaker is added
  */
-export function notifySpeakerAdded(params: {
+export async function notifySpeakerAdded(params: {
   senderId: string;
   recipientUserId: string;
   eventId: string;
@@ -1860,7 +1790,7 @@ export function notifySpeakerAdded(params: {
 /**
  * Send notification when a user joins the speaker list
  */
-export function notifySpeakerListJoined(params: {
+export async function notifySpeakerListJoined(params: {
   senderId: string;
   senderName: string;
   eventId: string;
@@ -1882,7 +1812,7 @@ export function notifySpeakerListJoined(params: {
 /**
  * Send notification when a new subscriber joins the event
  */
-export function notifyEventNewSubscriber(params: {
+export async function notifyEventNewSubscriber(params: {
   senderId: string;
   senderName: string;
   eventId: string;
@@ -1909,7 +1839,7 @@ export function notifyEventNewSubscriber(params: {
 /**
  * Send notification when an agenda item is activated
  */
-export function notifyAgendaItemActivated(params: {
+export async function notifyAgendaItemActivated(params: {
   senderId: string;
   eventId: string;
   eventTitle: string;
@@ -1933,7 +1863,7 @@ export function notifyAgendaItemActivated(params: {
 /**
  * Send notification when voting phase starts
  */
-export function notifyVotingPhaseStarted(params: {
+export async function notifyVotingPhaseStarted(params: {
   senderId: string;
   eventId: string;
   eventTitle: string;
@@ -1957,7 +1887,7 @@ export function notifyVotingPhaseStarted(params: {
 /**
  * Send notification when voting is ending soon
  */
-export function notifyVotingPhaseEndingSoon(params: {
+export async function notifyVotingPhaseEndingSoon(params: {
   senderId: string;
   eventId: string;
   eventTitle: string;
@@ -1980,7 +1910,7 @@ export function notifyVotingPhaseEndingSoon(params: {
 /**
  * Send notification when voting is completed
  */
-export function notifyVotingCompleted(params: {
+export async function notifyVotingCompleted(params: {
   senderId: string;
   eventId: string;
   eventTitle: string;
@@ -2006,7 +1936,7 @@ export function notifyVotingCompleted(params: {
 /**
  * Send notification when an amendment is forwarded to next event
  */
-export function notifyAmendmentForwarded(params: {
+export async function notifyAmendmentForwarded(params: {
   senderId: string;
   amendmentId: string;
   amendmentTitle: string;
@@ -2030,7 +1960,7 @@ export function notifyAmendmentForwarded(params: {
 /**
  * Send notification when an election result is determined
  */
-export function notifyElectionResult(params: {
+export async function notifyElectionResult(params: {
   senderId: string;
   eventId: string;
   eventTitle: string;
@@ -2055,7 +1985,7 @@ export function notifyElectionResult(params: {
 /**
  * Send notification when a revote is scheduled
  */
-export function notifyRevoteScheduled(params: {
+export async function notifyRevoteScheduled(params: {
   senderId: string;
   groupId: string;
   groupName: string;
@@ -2080,7 +2010,7 @@ export function notifyRevoteScheduled(params: {
 /**
  * Send notification when an event is cancelled
  */
-export function notifyEventCancelled(params: {
+export async function notifyEventCancelled(params: {
   senderId: string;
   eventId: string;
   eventTitle: string;
@@ -2108,7 +2038,7 @@ export function notifyEventCancelled(params: {
 /**
  * Send notification when agenda items are reassigned to another event
  */
-export function notifyAgendaItemsReassigned(params: {
+export async function notifyAgendaItemsReassigned(params: {
   senderId: string;
   sourceEventId: string;
   sourceEventTitle: string;
@@ -2132,7 +2062,7 @@ export function notifyAgendaItemsReassigned(params: {
 /**
  * Send notification when amendment path needs recalculation
  */
-export function notifyAmendmentPathRecalculationRequired(params: {
+export async function notifyAmendmentPathRecalculationRequired(params: {
   senderId: string;
   amendmentId: string;
   amendmentTitle: string;
@@ -2158,7 +2088,7 @@ export function notifyAmendmentPathRecalculationRequired(params: {
 /**
  * Send notification when a group needs to confirm support after a change request
  */
-export function notifySupportConfirmationRequired(params: {
+export async function notifySupportConfirmationRequired(params: {
   senderId: string;
   groupId: string;
   groupName: string;
@@ -2186,7 +2116,7 @@ export function notifySupportConfirmationRequired(params: {
 /**
  * Send notification when a group confirms support for an amendment
  */
-export function notifySupportConfirmed(params: {
+export async function notifySupportConfirmed(params: {
   senderId: string;
   amendmentId: string;
   amendmentTitle: string;
@@ -2210,7 +2140,7 @@ export function notifySupportConfirmed(params: {
 /**
  * Send notification when a group declines support for an amendment
  */
-export function notifySupportDeclined(params: {
+export async function notifySupportDeclined(params: {
   senderId: string;
   amendmentId: string;
   amendmentTitle: string;
@@ -2238,7 +2168,7 @@ export function notifySupportDeclined(params: {
 /**
  * Send notification when workflow status changes
  */
-export function notifyWorkflowChanged(params: {
+export async function notifyWorkflowChanged(params: {
   senderId: string;
   amendmentId: string;
   amendmentTitle: string;
@@ -2260,7 +2190,7 @@ export function notifyWorkflowChanged(params: {
 /**
  * Send notification when amendment advances through path
  */
-export function notifyPathAdvanced(params: {
+export async function notifyPathAdvanced(params: {
   senderId: string;
   amendmentId: string;
   amendmentTitle: string;
@@ -2282,7 +2212,7 @@ export function notifyPathAdvanced(params: {
 /**
  * Send notification when an amendment is cloned
  */
-export function notifyAmendmentCloned(params: {
+export async function notifyAmendmentCloned(params: {
   senderId: string;
   senderName: string;
   originalAmendmentId: string;
@@ -2305,7 +2235,7 @@ export function notifyAmendmentCloned(params: {
 /**
  * Send notification when a group adds support
  */
-export function notifyGroupSupportAdded(params: {
+export async function notifyGroupSupportAdded(params: {
   senderId: string;
   amendmentId: string;
   amendmentTitle: string;
@@ -2327,7 +2257,7 @@ export function notifyGroupSupportAdded(params: {
 /**
  * Send notification when a comment is added
  */
-export function notifyAmendmentCommentAdded(params: {
+export async function notifyAmendmentCommentAdded(params: {
   senderId: string;
   senderName: string;
   amendmentId: string;
@@ -2350,7 +2280,7 @@ export function notifyAmendmentCommentAdded(params: {
 /**
  * Send notification when a change request is created
  */
-export function notifyChangeRequestCreated(params: {
+export async function notifyChangeRequestCreated(params: {
   senderId: string;
   senderName: string;
   amendmentId: string;
@@ -2373,7 +2303,7 @@ export function notifyChangeRequestCreated(params: {
 /**
  * Send notification when a change request is accepted
  */
-export function notifyChangeRequestAccepted(params: {
+export async function notifyChangeRequestAccepted(params: {
   senderId: string;
   recipientUserId: string;
   amendmentId: string;
@@ -2396,7 +2326,7 @@ export function notifyChangeRequestAccepted(params: {
 /**
  * Send notification when a change request is rejected
  */
-export function notifyChangeRequestRejected(params: {
+export async function notifyChangeRequestRejected(params: {
   senderId: string;
   recipientUserId: string;
   amendmentId: string;
@@ -2419,7 +2349,7 @@ export function notifyChangeRequestRejected(params: {
 /**
  * Send notification when a vote is cast on a change request
  */
-export function notifyChangeRequestVoteCast(params: {
+export async function notifyChangeRequestVoteCast(params: {
   senderId: string;
   senderName: string;
   recipientUserId: string;
@@ -2445,7 +2375,7 @@ export function notifyChangeRequestVoteCast(params: {
 /**
  * Send notification when a new version is created
  */
-export function notifyVersionCreated(params: {
+export async function notifyVersionCreated(params: {
   senderId: string;
   amendmentId: string;
   amendmentTitle: string;
@@ -2467,7 +2397,7 @@ export function notifyVersionCreated(params: {
 /**
  * Send notification when a voting session starts
  */
-export function notifyVotingSessionStarted(params: {
+export async function notifyVotingSessionStarted(params: {
   senderId: string;
   amendmentId: string;
   amendmentTitle: string;
@@ -2490,7 +2420,7 @@ export function notifyVotingSessionStarted(params: {
 /**
  * Send notification when a voting session completes
  */
-export function notifyVotingSessionCompleted(params: {
+export async function notifyVotingSessionCompleted(params: {
   senderId: string;
   amendmentId: string;
   amendmentTitle: string;
@@ -2513,7 +2443,7 @@ export function notifyVotingSessionCompleted(params: {
 /**
  * Send notification when a support vote is cast
  */
-export function notifyAmendmentVoted(params: {
+export async function notifyAmendmentVoted(params: {
   senderId: string;
   senderName: string;
   recipientUserId: string;
@@ -2538,7 +2468,7 @@ export function notifyAmendmentVoted(params: {
 /**
  * Send notification when a new subscriber joins the amendment
  */
-export function notifyAmendmentNewSubscriber(params: {
+export async function notifyAmendmentNewSubscriber(params: {
   senderId: string;
   senderName: string;
   amendmentId: string;
@@ -2565,7 +2495,7 @@ export function notifyAmendmentNewSubscriber(params: {
 /**
  * Send notification when a new subscriber joins the blog
  */
-export function notifyBlogNewSubscriber(params: {
+export async function notifyBlogNewSubscriber(params: {
   senderId: string;
   senderName: string;
   blogId: string;
@@ -2588,7 +2518,7 @@ export function notifyBlogNewSubscriber(params: {
 /**
  * Send notification when a blog receives a vote
  */
-export function notifyBlogVoted(params: {
+export async function notifyBlogVoted(params: {
   senderId: string;
   senderName: string;
   recipientUserId: string;
@@ -2613,7 +2543,7 @@ export function notifyBlogVoted(params: {
 /**
  * Send notification when a writer joins the blog
  */
-export function notifyBloggerJoined(params: {
+export async function notifyBloggerJoined(params: {
   senderId: string;
   senderName: string;
   blogId: string;
@@ -2636,7 +2566,7 @@ export function notifyBloggerJoined(params: {
 /**
  * Send notification when a blogger's role is changed
  */
-export function notifyBloggerRoleChanged(params: {
+export async function notifyBloggerRoleChanged(params: {
   senderId: string;
   recipientUserId: string;
   blogId: string;
@@ -2660,7 +2590,7 @@ export function notifyBloggerRoleChanged(params: {
 /**
  * Send notification when a comment is added to a blog
  */
-export function notifyBlogCommentAdded(params: {
+export async function notifyBlogCommentAdded(params: {
   senderId: string;
   senderName: string;
   blogId: string;
@@ -2683,7 +2613,7 @@ export function notifyBlogCommentAdded(params: {
 /**
  * Send notification when a writer request is received
  */
-export function notifyBlogWriterRequest(params: {
+export async function notifyBlogWriterRequest(params: {
   senderId: string;
   senderName: string;
   blogId: string;
@@ -2706,7 +2636,7 @@ export function notifyBlogWriterRequest(params: {
 /**
  * Send notification when a user is invited to write for a blog
  */
-export function notifyBloggerInvited(params: {
+export async function notifyBloggerInvited(params: {
   senderId: string;
   recipientUserId: string;
   blogId: string;
@@ -2729,7 +2659,7 @@ export function notifyBloggerInvited(params: {
 /**
  * Send notification when a blogger is removed from a blog
  */
-export function notifyBloggerRemoved(params: {
+export async function notifyBloggerRemoved(params: {
   senderId: string;
   recipientUserId: string;
   blogId: string;
@@ -2752,7 +2682,7 @@ export function notifyBloggerRemoved(params: {
 /**
  * Send notification when a blog role is created
  */
-export function notifyBlogRoleCreated(params: {
+export async function notifyBlogRoleCreated(params: {
   senderId: string;
   blogId: string;
   blogTitle: string;
@@ -2774,7 +2704,7 @@ export function notifyBlogRoleCreated(params: {
 /**
  * Send notification when a blog role is deleted
  */
-export function notifyBlogRoleDeleted(params: {
+export async function notifyBlogRoleDeleted(params: {
   senderId: string;
   blogId: string;
   blogTitle: string;
@@ -2800,7 +2730,7 @@ export function notifyBlogRoleDeleted(params: {
 /**
  * Send notification when a todo is assigned (standalone)
  */
-export function notifyStandaloneTodoAssigned(params: {
+export async function notifyStandaloneTodoAssigned(params: {
   senderId: string;
   recipientUserId: string;
   todoId: string;
@@ -2819,7 +2749,7 @@ export function notifyStandaloneTodoAssigned(params: {
 /**
  * Send notification when a todo is completed
  */
-export function notifyTodoCompleted(params: {
+export async function notifyTodoCompleted(params: {
   senderId: string;
   senderName: string;
   recipientUserId: string;
@@ -2838,7 +2768,7 @@ export function notifyTodoCompleted(params: {
 /**
  * Send notification when a standalone todo is deleted
  */
-export function notifyStandaloneTodoDeleted(params: {
+export async function notifyStandaloneTodoDeleted(params: {
   senderId: string;
   senderName: string;
   recipientUserId: string;
@@ -2857,7 +2787,7 @@ export function notifyStandaloneTodoDeleted(params: {
 /**
  * Send notification when a todo is due soon
  */
-export function notifyTodoDueSoon(params: {
+export async function notifyTodoDueSoon(params: {
   senderId: string;
   recipientUserId: string;
   todoTitle: string;
@@ -2876,7 +2806,7 @@ export function notifyTodoDueSoon(params: {
 /**
  * Send notification when a todo is overdue
  */
-export function notifyTodoOverdue(params: {
+export async function notifyTodoOverdue(params: {
   senderId: string;
   recipientUserId: string;
   todoTitle: string;
@@ -2898,7 +2828,7 @@ export function notifyTodoOverdue(params: {
 /**
  * Send notification when a user gets a new follower
  */
-export function notifyNewFollower(params: {
+export async function notifyNewFollower(params: {
   senderId: string;
   senderName: string;
   recipientUserId: string;
@@ -2917,7 +2847,7 @@ export function notifyNewFollower(params: {
 /**
  * Send notification when a direct message is received
  */
-export function notifyDirectMessage(params: {
+export async function notifyDirectMessage(params: {
   senderId: string;
   senderName: string;
   recipientUserId: string;
@@ -2937,7 +2867,7 @@ export function notifyDirectMessage(params: {
 /**
  * Send notification when a conversation request is received
  */
-export function notifyConversationRequest(params: {
+export async function notifyConversationRequest(params: {
   senderId: string;
   senderName: string;
   recipientUserId: string;
@@ -2956,7 +2886,7 @@ export function notifyConversationRequest(params: {
 /**
  * Send notification when a conversation request is accepted
  */
-export function notifyConversationAccepted(params: {
+export async function notifyConversationAccepted(params: {
   senderId: string;
   senderName: string;
   recipientUserId: string;
@@ -2983,7 +2913,7 @@ export function notifyConversationAccepted(params: {
 /**
  * Send notification to group when a user accepts an invitation
  */
-export function notifyGroupInvitationAccepted(params: {
+export async function notifyGroupInvitationAccepted(params: {
   senderId: string;
   senderName: string;
   groupId: string;
@@ -3006,7 +2936,7 @@ export function notifyGroupInvitationAccepted(params: {
 /**
  * Send notification to group when a user declines an invitation
  */
-export function notifyGroupInvitationDeclined(params: {
+export async function notifyGroupInvitationDeclined(params: {
   senderId: string;
   senderName: string;
   groupId: string;
@@ -3029,7 +2959,7 @@ export function notifyGroupInvitationDeclined(params: {
 /**
  * Send notification to group when a user withdraws their membership request
  */
-export function notifyGroupRequestWithdrawn(params: {
+export async function notifyGroupRequestWithdrawn(params: {
   senderId: string;
   senderName: string;
   groupId: string;
@@ -3054,7 +2984,7 @@ export function notifyGroupRequestWithdrawn(params: {
 /**
  * Send notification to event when a user accepts an invitation
  */
-export function notifyEventInvitationAccepted(params: {
+export async function notifyEventInvitationAccepted(params: {
   senderId: string;
   senderName: string;
   eventId: string;
@@ -3077,7 +3007,7 @@ export function notifyEventInvitationAccepted(params: {
 /**
  * Send notification to event when a user declines an invitation
  */
-export function notifyEventInvitationDeclined(params: {
+export async function notifyEventInvitationDeclined(params: {
   senderId: string;
   senderName: string;
   eventId: string;
@@ -3100,7 +3030,7 @@ export function notifyEventInvitationDeclined(params: {
 /**
  * Send notification to event when a user withdraws their participation request
  */
-export function notifyEventRequestWithdrawn(params: {
+export async function notifyEventRequestWithdrawn(params: {
   senderId: string;
   senderName: string;
   eventId: string;
@@ -3125,7 +3055,7 @@ export function notifyEventRequestWithdrawn(params: {
 /**
  * Send notification to amendment when a user accepts a collaboration invitation
  */
-export function notifyCollaborationInvitationAccepted(params: {
+export async function notifyCollaborationInvitationAccepted(params: {
   senderId: string;
   senderName: string;
   amendmentId: string;
@@ -3148,7 +3078,7 @@ export function notifyCollaborationInvitationAccepted(params: {
 /**
  * Send notification to amendment when a user declines a collaboration invitation
  */
-export function notifyCollaborationInvitationDeclined(params: {
+export async function notifyCollaborationInvitationDeclined(params: {
   senderId: string;
   senderName: string;
   amendmentId: string;
@@ -3171,7 +3101,7 @@ export function notifyCollaborationInvitationDeclined(params: {
 /**
  * Send notification to amendment when a user withdraws their collaboration request
  */
-export function notifyCollaborationRequestWithdrawn(params: {
+export async function notifyCollaborationRequestWithdrawn(params: {
   senderId: string;
   senderName: string;
   amendmentId: string;
@@ -3196,7 +3126,7 @@ export function notifyCollaborationRequestWithdrawn(params: {
 /**
  * Send notification to blog when a user accepts an invitation to write
  */
-export function notifyBlogInvitationAccepted(params: {
+export async function notifyBlogInvitationAccepted(params: {
   senderId: string;
   senderName: string;
   blogId: string;
@@ -3219,7 +3149,7 @@ export function notifyBlogInvitationAccepted(params: {
 /**
  * Send notification to blog when a user declines an invitation to write
  */
-export function notifyBlogInvitationDeclined(params: {
+export async function notifyBlogInvitationDeclined(params: {
   senderId: string;
   senderName: string;
   blogId: string;
@@ -3242,7 +3172,7 @@ export function notifyBlogInvitationDeclined(params: {
 /**
  * Send notification to blog when a user withdraws their writer request
  */
-export function notifyBlogRequestWithdrawn(params: {
+export async function notifyBlogRequestWithdrawn(params: {
   senderId: string;
   senderName: string;
   blogId: string;
@@ -3265,7 +3195,7 @@ export function notifyBlogRequestWithdrawn(params: {
 /**
  * Send notification to blog when a writer leaves
  */
-export function notifyBlogWriterLeft(params: {
+export async function notifyBlogWriterLeft(params: {
   senderId: string;
   senderName: string;
   blogId: string;
@@ -3292,7 +3222,7 @@ export function notifyBlogWriterLeft(params: {
 /**
  * Send notification when an amendment's profile is updated
  */
-export function notifyAmendmentProfileUpdated(params: {
+export async function notifyAmendmentProfileUpdated(params: {
   senderId: string;
   amendmentId: string;
   amendmentTitle: string;
@@ -3313,7 +3243,7 @@ export function notifyAmendmentProfileUpdated(params: {
 /**
  * Send notification when an amendment's target group/event is set
  */
-export function notifyAmendmentTargetSet(params: {
+export async function notifyAmendmentTargetSet(params: {
   senderId: string;
   amendmentId: string;
   amendmentTitle: string;
@@ -3341,7 +3271,7 @@ export function notifyAmendmentTargetSet(params: {
 /**
  * Send notification when an amendment is rejected at vote
  */
-export function notifyAmendmentRejected(params: {
+export async function notifyAmendmentRejected(params: {
   senderId: string;
   amendmentId: string;
   amendmentTitle: string;
@@ -3365,7 +3295,7 @@ export function notifyAmendmentRejected(params: {
 /**
  * Send notification when a blog is deleted
  */
-export function notifyBlogDeleted(params: {
+export async function notifyBlogDeleted(params: {
   senderId: string;
   blogId: string;
   blogTitle: string;
@@ -3385,7 +3315,7 @@ export function notifyBlogDeleted(params: {
 /**
  * Send notification when a blog is published or made public
  */
-export function notifyBlogPublished(params: {
+export async function notifyBlogPublished(params: {
   senderId: string;
   blogId: string;
   blogTitle: string;
@@ -3406,7 +3336,7 @@ export function notifyBlogPublished(params: {
 /**
  * Send notification when a group's profile is updated
  */
-export function notifyGroupProfileUpdated(params: {
+export async function notifyGroupProfileUpdated(params: {
   senderId: string;
   groupId: string;
   groupName: string;
@@ -3427,7 +3357,7 @@ export function notifyGroupProfileUpdated(params: {
 /**
  * Send notification when an event's profile is updated
  */
-export function notifyEventProfileUpdated(params: {
+export async function notifyEventProfileUpdated(params: {
   senderId: string;
   eventId: string;
   eventTitle: string;
@@ -3448,7 +3378,7 @@ export function notifyEventProfileUpdated(params: {
 /**
  * Send notification when a new amendment is linked to a group
  */
-export function notifyGroupNewAmendment(params: {
+export async function notifyGroupNewAmendment(params: {
   senderId: string;
   groupId: string;
   groupName: string;

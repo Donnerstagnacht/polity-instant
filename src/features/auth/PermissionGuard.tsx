@@ -1,8 +1,8 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { usePermissions } from '../../../db/rbac/usePermissions';
-import { ActionType, ResourceType, PermissionContext } from '../../../db/rbac/types';
+import { usePermissions } from '@/zero/rbac/usePermissions';
+import { ActionType, ResourceType, PermissionContext } from '@/zero/rbac/types';
 import { AccessDenied } from '@/components/shared/AccessDenied';
 import { Loader2 } from 'lucide-react';
 

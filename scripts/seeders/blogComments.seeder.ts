@@ -3,7 +3,10 @@
  * Seeds comments, replies, and votes on blog posts
  */
 
-import { id, tx } from '@instantdb/admin';
+import { id } from '../helpers/id.helper';
+import { tx } from '../helpers/compat';
+import { batchTransact } from '../helpers/transaction.helpers';
+import type { InsertOp } from '../helpers/transaction.helpers';
 import { faker } from '@faker-js/faker';
 import type { EntitySeeder, SeedContext } from '../types/seeder.types';
 import { randomInt, randomItem, randomItems } from '../helpers/random.helpers';
@@ -18,7 +21,7 @@ export const blogCommentsSeeder: EntitySeeder = {
     const blogIds = context.blogIds || [];
 
     console.log('Seeding blog comments and likes...');
-    const transactions = [];
+    const transactions: InsertOp[] = [];
     let totalComments = 0;
     let totalReplies = 0;
     let totalVotes = 0;
@@ -139,7 +142,7 @@ export const blogCommentsSeeder: EntitySeeder = {
       const batchSize = 20;
       for (let i = 0; i < transactions.length; i += batchSize) {
         const batch = transactions.slice(i, i + batchSize);
-        await db.transact(batch);
+        await batchTransact(db, batch);
       }
     }
 

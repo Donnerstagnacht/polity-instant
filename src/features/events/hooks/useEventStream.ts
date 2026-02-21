@@ -1,59 +1,41 @@
 import { useState, useEffect } from 'react';
-import db, { id, tx } from '../../../../db/db';
+import { useAuth } from '@/providers/auth-provider';
+import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
+import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
+import { useEventStreamData } from '@/zero/events/useEventState';
+import {
+  calculateSpeakerTime as calcSpeakerTime,
+  formatTime,
+} from '../logic/eventStreamHelpers';
 
 export function useEventStream(eventId: string) {
-  const { user } = db.useAuth();
+  const { user } = useAuth();
+  const { addSpeaker, removeSpeaker, castElectionVote, deleteElectionVote } = useAgendaActions();
+  const { createVoteEntry, updateVoteEntry } = useAmendmentActions();
   const [addingSpeaker, setAddingSpeaker] = useState(false);
   const [removingSpeaker, setRemovingSpeaker] = useState<string | null>(null);
   const [votingLoading, setVotingLoading] = useState<string | null>(null);
 
   // Query event and agenda items
-  const { data, isLoading } = db.useQuery({
-    events: {
-      $: {
-        where: {
-          id: eventId,
-        },
-      },
-      organizer: {},
-      agendaItems: {
-        creator: {},
-        speakerList: {
-          user: {},
-        },
-        election: {
-          candidates: {},
-          votes: {},
-        },
-        amendmentVote: {
-          changeRequests: {},
-          voteEntries: {},
-        },
-      },
-    },
-    electionVotes: {
-      voter: {},
-      candidate: {},
-      election: {},
-    },
-    amendmentVoteEntries: {
-      voter: {},
-      amendmentVote: {},
-    },
-  });
+  const { event: eventRaw, electionVotes: electionVotesData, amendmentVoteEntries: amendmentVoteEntriesData, isLoading } = useEventStreamData(eventId);
 
-  const event = data?.events?.[0];
+  const data = {
+    electionVotes: electionVotesData,
+    amendmentVoteEntries: amendmentVoteEntriesData,
+  };
+
+  const event = eventRaw as any;
 
   // Get current agenda item (in-progress or first pending)
-  const agendaItems = event?.agendaItems || [];
+  const agendaItems = event?.agenda_items || [];
   const currentAgendaItem =
     agendaItems.find((item: any) => item.status === 'in-progress') ||
     agendaItems.find((item: any) => item.status === 'pending') ||
     agendaItems.sort((a: any, b: any) => a.order - b.order)[0];
 
   // Get speaker list for current agenda item, sorted by order
-  const speakerList = currentAgendaItem?.speakerList
-    ? [...currentAgendaItem.speakerList].sort((a: any, b: any) => a.order - b.order)
+  const speakerList = currentAgendaItem?.speaker_list
+    ? [...currentAgendaItem.speaker_list].sort((a: any, b: any) => a.order - b.order)
     : [];
 
   // Calculate current time and speaker times
@@ -72,22 +54,7 @@ export function useEventStream(eventId: string) {
     const startTime = currentAgendaItem?.startTime
       ? new Date(currentAgendaItem.startTime)
       : currentTime;
-
-    let accumulatedMinutes = 0;
-    for (let i = 0; i < index; i++) {
-      accumulatedMinutes += speakerList[i]?.time || 0;
-    }
-
-    const speakerTime = new Date(startTime.getTime() + accumulatedMinutes * 60000);
-    return speakerTime;
-  };
-
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
+    return calcSpeakerTime(index, speakerList, startTime);
   };
 
   // Handle adding yourself to speakers list
@@ -100,20 +67,16 @@ export function useEventStream(eventId: string) {
       const maxOrder =
         speakerList.length > 0 ? Math.max(...speakerList.map((s: any) => s.order || 0)) : 0;
 
-      const speakerId = id();
-      await db.transact([
-        tx.speakerList[speakerId].update({
-          title: 'Speaker',
-          time: 3, // Default 3 minutes
-          completed: false,
-          order: maxOrder + 1,
-          createdAt: new Date(),
-        }),
-        tx.speakerList[speakerId].link({
-          user: user.id,
-          agendaItem: currentAgendaItem.id,
-        }),
-      ]);
+      const speakerId = crypto.randomUUID();
+      await addSpeaker({
+        id: speakerId,
+        title: 'Speaker',
+        time: 3,
+        completed: false,
+        order_index: maxOrder + 1,
+        user_id: user.id,
+        agenda_item_id: currentAgendaItem.id,
+      });
     } catch (error) {
       console.error('Error adding to speaker list:', error);
     } finally {
@@ -127,7 +90,7 @@ export function useEventStream(eventId: string) {
 
     setRemovingSpeaker(speakerId);
     try {
-      await db.transact([tx.speakerList[speakerId].delete()]);
+      await removeSpeaker(speakerId);
     } catch (error) {
       console.error('Error removing from speaker list:', error);
     } finally {
@@ -156,35 +119,27 @@ export function useEventStream(eventId: string) {
 
       if (existingVote) {
         if (existingVote.candidate?.id === candidateId) {
-          await db.transact([tx.electionVotes[existingVote.id].delete()]);
+          await deleteElectionVote(existingVote.id);
         } else {
-          const newVoteId = id();
-          await db.transact([
-            tx.electionVotes[existingVote.id].delete(),
-            tx.electionVotes[newVoteId]
-              .update({
-                createdAt: Date.now(),
-              })
-              .link({
-                voter: user.id,
-                election: electionId,
-                candidate: candidateId,
-              }),
-          ]);
+          const newVoteId = crypto.randomUUID();
+          await deleteElectionVote(existingVote.id);
+          await castElectionVote({
+            id: newVoteId,
+            election_id: electionId,
+            candidate_id: candidateId,
+            is_indication: false,
+            indicated_at: 0,
+          });
         }
       } else {
-        const voteId = id();
-        await db.transact([
-          tx.electionVotes[voteId]
-            .update({
-              createdAt: Date.now(),
-            })
-            .link({
-              voter: user.id,
-              election: electionId,
-              candidate: candidateId,
-            }),
-        ]);
+        const voteId = crypto.randomUUID();
+        await castElectionVote({
+          id: voteId,
+          election_id: electionId,
+          candidate_id: candidateId,
+          is_indication: false,
+          indicated_at: 0,
+        });
       }
     } catch (error) {
       console.error('Error voting:', error);
@@ -195,37 +150,30 @@ export function useEventStream(eventId: string) {
 
   // Handle amendment vote
   const handleAmendmentVote = async (
-    amendmentVoteId: string,
+    amendmentId: string,
     voteValue: 'yes' | 'no' | 'abstain'
   ) => {
     if (!user) return;
 
-    setVotingLoading(amendmentVoteId);
+    const voteMap = { yes: 1, no: -1, abstain: 0 } as const;
+    setVotingLoading(amendmentId);
     try {
       const existingVote = userAmendmentVotes.find(
-        (entry: any) => entry.amendmentVote?.id === amendmentVoteId
+        (entry: any) => entry.amendment?.id === amendmentId
       );
 
       if (existingVote) {
-        await db.transact([
-          tx.amendmentVoteEntries[existingVote.id].update({
-            vote: voteValue,
-            updatedAt: Date.now(),
-          }),
-        ]);
+        await updateVoteEntry({
+          id: existingVote.id,
+          vote: voteMap[voteValue],
+        });
       } else {
-        const entryId = id();
-        await db.transact([
-          tx.amendmentVoteEntries[entryId]
-            .update({
-              vote: voteValue,
-              createdAt: Date.now(),
-            })
-            .link({
-              voter: user.id,
-              amendmentVote: amendmentVoteId,
-            }),
-        ]);
+        const entryId = crypto.randomUUID();
+        await createVoteEntry({
+          id: entryId,
+          vote: voteMap[voteValue],
+          amendment_id: amendmentId,
+        });
       }
     } catch (error) {
       console.error('Error voting:', error);

@@ -1,13 +1,13 @@
 /**
  * Unified Editor Presence Hook
  *
- * Manages InstantDB room setup and peer presence tracking for collaborative editing.
- * Works with all entity types (amendments, blogs, documents, group documents).
+ * Manages peer presence tracking for collaborative editing.
+ * Uses the custom WebSocket presence system from src/presence/usePresence.ts.
  */
 
-import { useMemo, useEffect } from 'react';
-import db from '@db/db';
-import { generateUserColor } from '../utils/editor-operations';
+import { useMemo } from 'react';
+import { usePresence } from '@/presence/usePresence';
+import { generateUserColor } from '../logic/editor-helpers';
 import type { EditorPresencePeer } from '../types';
 
 interface UseEditorPresenceOptions {
@@ -34,69 +34,45 @@ interface UseEditorPresenceResult {
 
 /**
  * Hook for managing document presence and collaboration
- *
- * @param options - Configuration options
- * @returns Online peers, user color, and presence publishing function
- *
- * @example
- * const { onlinePeers, userColor } = useEditorPresence({
- *   entityId: documentId,
- *   userId: user.id,
- *   userName: user.name,
- *   userAvatar: user.avatar,
- * });
  */
 export function useEditorPresence(options: UseEditorPresenceOptions): UseEditorPresenceResult {
   const { entityId, userId, userName, userAvatar, enabled = true } = options;
 
-  // Generate consistent user color
   const userColor = useMemo(() => {
     return userId ? generateUserColor(userId) : '#888888';
   }, [userId]);
 
-  // Create room for presence
-  const room = db.room('editor', entityId);
-
-  // Presence hook - show who's online
-  const { peers, publishPresence } = db.rooms.usePresence(room, {
-    initialData: {
-      name: userName || 'Anonymous',
-      avatar: userAvatar,
-      color: userColor,
-      userId: userId || '',
-    },
-  });
-
-  // Publish presence when user data changes
-  useEffect(() => {
-    if (userId && publishPresence && enabled) {
-      publishPresence({
-        name: userName || 'Anonymous',
-        avatar: userAvatar,
-        color: userColor,
-        userId,
-      });
+  const { peers, publishPresence: wsPublish } = usePresence(
+    `editor:${entityId}`,
+    {
+      enabled,
+      initialData: userId
+        ? { userId, name: userName || 'Anonymous', avatar: userAvatar, color: userColor }
+        : undefined,
     }
-  }, [userId, publishPresence, userName, userAvatar, userColor, enabled]);
+  );
 
-  // Get online peers (excluding current user)
   const onlinePeers = useMemo<EditorPresencePeer[]>(() => {
-    if (!enabled) return [];
-
-    return Object.values(peers)
-      .filter((peer: any) => peer.userId !== userId)
-      .map((peer: any) => ({
-        peerId: peer.peerId || '',
-        userId: peer.userId || '',
+    return peers
+      .filter(peer => peer.userId !== userId)
+      .map(peer => ({
+        peerId: peer.userId,
+        odUserId: peer.userId,
+        userId: peer.userId,
         name: peer.name || 'Anonymous',
         avatar: peer.avatar,
         color: peer.color || '#888888',
-      }));
-  }, [peers, userId, enabled]);
+      })) as EditorPresencePeer[];
+  }, [peers, userId]);
+
+  const publishPresence = useMemo(() => {
+    if (!enabled) return null;
+    return (data: any) => wsPublish(data);
+  }, [enabled, wsPublish]);
 
   return {
     onlinePeers,
     userColor,
-    publishPresence: enabled ? publishPresence : null,
+    publishPresence,
   };
 }

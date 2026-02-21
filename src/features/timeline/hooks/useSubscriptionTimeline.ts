@@ -1,42 +1,21 @@
 'use client';
 
 import { useMemo } from 'react';
-import db from '../../../../db/db';
+import { useAuth } from '@/providers/auth-provider';
+import { useAgendaState } from '@/zero/agendas/useAgendaState';
+import { useCommonState } from '@/zero/common/useCommonState';
 
 export function useSubscriptionTimeline() {
-  // Use InstantDB's native auth hook instead of zustand store
-  const { user: authUser } = db.useAuth();
-
+  const { user: authUser } = useAuth();
   // Don't query if user is not authenticated
   const shouldQuery = !!authUser?.id;
 
   // Fetch all subscriptions for the current user
-  const subscriptionsWhere = useMemo(() => {
-    if (!authUser?.id) return null;
-    if (!authUser.email) {
-      return { 'subscriber.id': authUser.id };
-    }
-    return {
-      or: [{ 'subscriber.id': authUser.id }, { 'subscriber.email': authUser.email }],
-    };
-  }, [authUser?.id, authUser?.email]);
-
-  const { data: subscriptionsData, isLoading: subscriptionsLoading } = db.useQuery(
-    shouldQuery && subscriptionsWhere
-      ? {
-          subscribers: {
-            $: {
-              where: subscriptionsWhere,
-            },
-            user: {},
-            group: { hashtags: {}, events: {}, amendments: {} },
-            amendment: {},
-            event: { organizer: {} },
-            blog: {}, // Blogs don't have a direct user link - they use blogBloggers junction table
-          },
-        }
-      : null
-  );
+  const { userSubscriptionsForTimeline: subscriptionRows } = useCommonState({
+    subscriberIdForTimeline: shouldQuery ? authUser?.id : undefined,
+  });
+  const subscriptionsLoading = false;
+  const subscriptionsData = { subscribers: subscriptionRows };
 
   const subscribedEventIds = useMemo(() => {
     if (!subscriptionsData?.subscribers) return [] as string[];
@@ -71,70 +50,24 @@ export function useSubscriptionTimeline() {
     };
   }, [subscriptionsData]);
 
-  // Build the where clause for timeline events
-  const whereClause = useMemo(() => {
-    if (!subscribedEntityIds) return null;
-
-    const conditions = [];
-
-    if (subscribedEntityIds.users.length > 0) {
-      conditions.push({ 'user.id': { in: subscribedEntityIds.users } });
-      conditions.push({ 'actor.id': { in: subscribedEntityIds.users } });
-    }
-    if (subscribedEntityIds.groups.length > 0) {
-      conditions.push({ 'group.id': { in: subscribedEntityIds.groups } });
-    }
-    if (subscribedEntityIds.amendments.length > 0) {
-      conditions.push({ 'amendment.id': { in: subscribedEntityIds.amendments } });
-    }
-    if (subscribedEntityIds.events.length > 0) {
-      conditions.push({ 'event.id': { in: subscribedEntityIds.events } });
-    }
-    if (subscribedEntityIds.blogs.length > 0) {
-      conditions.push({ 'blog.id': { in: subscribedEntityIds.blogs } });
-    }
-
-    return conditions.length > 0 ? { or: conditions } : null;
+  // Fetch timeline events for subscribed entities
+  // Build a flat list of entity IDs to query timeline events
+  const timelineEntityIds = useMemo(() => {
+    if (!subscribedEntityIds) return [];
+    return [
+      ...subscribedEntityIds.users,
+      ...subscribedEntityIds.groups,
+      ...subscribedEntityIds.amendments,
+      ...subscribedEntityIds.events,
+      ...subscribedEntityIds.blogs,
+    ];
   }, [subscribedEntityIds]);
 
-  // Fetch timeline events for subscribed entities
-  const { data: timelineData, isLoading: timelineLoading } = db.useQuery(
-    whereClause
-      ? {
-          timelineEvents: {
-            $: {
-              where: whereClause,
-            },
-            actor: {},
-            user: { hashtags: {}, memberships: {}, collaborations: {} },
-            group: {},
-            amendment: {
-              document: {},
-              hashtags: {},
-              amendmentRoleCollaborators: {},
-              groupSupporters: {},
-              changeRequests: {},
-            },
-            event: {
-              organizer: {},
-              hashtags: {},
-              participants: {},
-              votingSessions: { election: {}, amendment: {} },
-              targetedAmendments: {},
-              eventPositions: { election: {} },
-              scheduledElections: {},
-              agendaItems: { election: {}, amendmentVote: {} },
-            },
-            blog: { hashtags: {}, comments: {} }, // Blogs don't have a direct user link - they use blogBloggers junction table
-            todo: { group: {}, creator: {} },
-            statement: { user: {} },
-            // Link to elections and votes for agenda item navigation
-            election: { agendaItem: { event: {} } },
-            amendmentVote: { agendaItem: { event: {} } },
-          },
-        }
-      : null
-  );
+  const { timelineByEntityIds: timelineRows } = useCommonState({
+    timelineEntityIds: timelineEntityIds.length > 0 ? timelineEntityIds : undefined,
+  });
+  const timelineLoading = false;
+  const timelineData = { timelineEvents: timelineRows };
 
   const timelineEventIds = useMemo(() => {
     if (!timelineData?.timelineEvents) return [] as string[];
@@ -149,20 +82,11 @@ export function useSubscriptionTimeline() {
     [subscribedEventIds, timelineEventIds]
   );
 
-  const { data: agendaItemsData, isLoading: agendaItemsLoading } = db.useQuery(
-    agendaEventIds.length > 0
-      ? {
-          agendaItems: {
-            $: {
-              where: { 'event.id': { in: agendaEventIds } },
-            },
-            event: {},
-            election: {},
-            amendmentVote: {},
-          },
-        }
-      : null
-  );
+  const { agendaItems: agendaItemRows } = useAgendaState({
+    eventIds: agendaEventIds.length > 0 ? agendaEventIds : undefined,
+  });
+  const agendaItemsLoading = false;
+  const agendaItemsData = { agendaItems: agendaItemRows };
 
   const agendaItemsByEventId = useMemo(() => {
     const map = new Map<string, Array<{ election?: unknown; amendmentVote?: unknown }>>();
@@ -181,7 +105,7 @@ export function useSubscriptionTimeline() {
     if (!timelineData?.timelineEvents) return [];
 
     return [...timelineData.timelineEvents].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      (a, b) => (b.created_at ?? 0) - (a.created_at ?? 0)
     );
   }, [timelineData]);
 

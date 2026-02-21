@@ -2,22 +2,24 @@ import { useState, useMemo, useRef } from 'react';
 import { navItemsAuthenticated } from '@/navigation/nav-items/nav-items-authenticated';
 import { createNavItemsUnauthenticated } from '@/navigation/nav-items/nav-items-unauthenticated';
 import { useInitialRoute } from '@/navigation/state/useInitialRoute';
-import { useRouter, usePathname } from 'next/navigation';
+import { useNavigate, useLocation } from '@tanstack/react-router';
 import { useTranslation } from '@/hooks/use-translation';
 import { useUnreadNotificationsCount, useUnreadMessagesCount } from '@/hooks/use-unread-counts';
-import { db } from '../../../db/db';
+import { useAuth } from '@/providers/auth-provider';
+import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import type { NavigationItem } from '@/navigation/types/navigation.types';
-import { usePermissions } from '../../../db/rbac/usePermissions.ts';
-import type { Amendment } from '../../../db/rbac/types';
+import { usePermissions } from '@/zero/rbac/usePermissions';
+import type { Amendment } from '@/zero/rbac/types';
 
 /**
  * Custom hook that manages navigation items for primary and secondary navigation
  * @returns Object containing primary and secondary navigation items
  */
 export function useNavigation() {
-  // Get router instance and pathname for Next.js
-  const router = useRouter();
-  const pathname = usePathname();
+  // Get router instance and pathname for TanStack Router
+  const navigate = useNavigate();
+  const location = useLocation();
+  const pathname = location.pathname;
   const [currentPrimaryRoute, setCurrentPrimaryRoute] = useState<string | null>(null);
   const { t } = useTranslation();
 
@@ -27,8 +29,8 @@ export function useNavigation() {
 
   // Create unauthenticated navigation items using the factory function
   const unauthenticatedNavItems = useMemo(
-    () => createNavItemsUnauthenticated(router, t),
-    [router, t]
+    () => createNavItemsUnauthenticated(navigate, t),
+    [navigate, t]
   );
 
   // Stable reference for setCurrentPrimaryRoute to avoid recreating nav items
@@ -42,20 +44,20 @@ export function useNavigation() {
   // Create a mock router object that matches the expected interface
   const mockRouter = useMemo(
     () => ({
-      ...router,
+      navigate,
       state: {
         location: {
           pathname: pathname,
         },
       },
     }),
-    [router, pathname]
+    [navigate, pathname]
   );
 
   // Get navigation items from the navigation config
   const { primaryNavItems: basePrimaryNavItems, getSecondaryNavItems: baseGetSecondaryNavItems } =
     useMemo(
-      () => navItemsAuthenticated(mockRouter, stableSetRoute, t),
+      () => navItemsAuthenticated(mockRouter as any, stableSetRoute, t),
       [mockRouter, stableSetRoute, t]
     );
 
@@ -88,26 +90,11 @@ export function useNavigation() {
   const amendmentId = pathname.match(/^\/amendment\/([^/]+)/)?.[1];
   const blogId = pathname.match(/^\/blog\/([^/]+)/)?.[1];
 
-  // Fetch amendment data if needed for permission context
-  const { data: amendmentData } = db.useQuery(
-    amendmentId
-      ? {
-          amendments: {
-            $: { where: { id: amendmentId } },
-            amendmentRoleCollaborators: { 
-              user: {},
-              role: {
-                actionRights: {}
-              }
-            },
-            roles: { actionRights: {} },
-          },
-        }
-      : null
-  );
+  // Fetch amendment data via facade for permission context
+  const { amendment: amendmentData } = useAmendmentState({ amendmentId: amendmentId || undefined });
   
   // Map the query result to match the Amendment interface expected by usePermissions
-  const amendment = amendmentData?.amendments?.[0] as unknown as Amendment;
+  const amendment = amendmentData as unknown as Amendment;
   
   // Let's use the permission hook
   const { 

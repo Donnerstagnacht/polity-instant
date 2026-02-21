@@ -5,8 +5,8 @@
  */
 
 import { FactoryBase } from './factory-base';
-import { adminTransact, tx } from '../admin-db';
-import { DEFAULT_GROUP_ROLES } from '../../../db/rbac/constants';
+import { adminUpsert } from '../admin-db';
+import { DEFAULT_GROUP_ROLES } from '../../../src/zero/rbac/constants';
 
 export interface CreateGroupOptions {
   id?: string;
@@ -41,104 +41,94 @@ export class GroupFactory extends FactoryBase {
     this._counter++;
     const groupId = overrides.id ?? this.generateId();
     const name = overrides.name ?? `E2E Group ${this._counter}`;
-    const now = new Date();
+    const now = new Date().toISOString();
 
     const adminRoleId = this.generateId();
     const memberRoleId = this.generateId();
 
-    const txns: any[] = [];
-
     // Create group entity
-    txns.push(
-      tx.groups[groupId]
-        .update({
-          name,
-          description: overrides.description ?? `Test group ${this._counter}`,
-          isPublic: overrides.isPublic ?? true,
-          memberCount: 1,
-          visibility: overrides.visibility ?? 'public',
-          location: overrides.location ?? '',
-          imageURL: overrides.imageURL ?? '',
-          createdAt: now,
-          updatedAt: now,
-        })
-        .link({ owner: ownerId })
-    );
-    this.trackEntity('groups', groupId);
-    this.trackLink('groups', groupId, 'owner', ownerId);
+    await adminUpsert('group', {
+      id: groupId,
+      name,
+      description: overrides.description ?? `Test group ${this._counter}`,
+      is_public: overrides.isPublic ?? true,
+      member_count: 1,
+      visibility: overrides.visibility ?? 'public',
+      location: overrides.location ?? '',
+      owner_id: ownerId,
+      created_at: now,
+      updated_at: now,
+    });
+    this.trackEntity('group', groupId);
 
     // Create Admin role
-    const adminTemplate = DEFAULT_GROUP_ROLES.find(r => r.name === 'Admin');
-    txns.push(
-      tx.roles[adminRoleId]
-        .update({
-          name: 'Admin',
-          description: 'Full group control',
-          scope: 'group',
-          createdAt: now,
-          updatedAt: now,
-        })
-        .link({ group: groupId })
-    );
-    this.trackEntity('roles', adminRoleId);
-    this.trackLink('roles', adminRoleId, 'group', groupId);
+    await adminUpsert('role', {
+      id: adminRoleId,
+      name: 'Admin',
+      description: 'Full group control',
+      scope: 'group',
+      group_id: groupId,
+      created_at: now,
+    });
+    this.trackEntity('role', adminRoleId);
 
     // Create Member role
-    txns.push(
-      tx.roles[memberRoleId]
-        .update({
-          name: 'Member',
-          description: 'Standard member access',
-          scope: 'group',
-          createdAt: now,
-          updatedAt: now,
-        })
-        .link({ group: groupId })
-    );
-    this.trackEntity('roles', memberRoleId);
-    this.trackLink('roles', memberRoleId, 'group', groupId);
+    await adminUpsert('role', {
+      id: memberRoleId,
+      name: 'Member',
+      description: 'Standard member access',
+      scope: 'group',
+      group_id: groupId,
+      created_at: now,
+    });
+    this.trackEntity('role', memberRoleId);
 
     // Create action rights for Admin role
+    const adminTemplate = DEFAULT_GROUP_ROLES.find(r => r.name === 'Admin');
     if (adminTemplate) {
-      for (const perm of adminTemplate.permissions) {
+      const rights = adminTemplate.permissions.map(perm => {
         const rightId = this.generateId();
-        txns.push(
-          tx.actionRights[rightId]
-            .update({ resource: perm.resource, action: perm.action })
-            .link({ roles: adminRoleId, group: groupId })
-        );
-        this.trackEntity('actionRights', rightId);
-      }
+        this.trackEntity('action_right', rightId);
+        return {
+          id: rightId,
+          resource: perm.resource,
+          action: perm.action,
+          role_id: adminRoleId,
+          group_id: groupId,
+        };
+      });
+      await adminUpsert('action_right', rights);
     }
 
     // Create action rights for Member role
     const memberTemplate = DEFAULT_GROUP_ROLES.find(r => r.name === 'Member');
     if (memberTemplate) {
-      for (const perm of memberTemplate.permissions) {
+      const rights = memberTemplate.permissions.map(perm => {
         const rightId = this.generateId();
-        txns.push(
-          tx.actionRights[rightId]
-            .update({ resource: perm.resource, action: perm.action })
-            .link({ roles: memberRoleId, group: groupId })
-        );
-        this.trackEntity('actionRights', rightId);
-      }
+        this.trackEntity('action_right', rightId);
+        return {
+          id: rightId,
+          resource: perm.resource,
+          action: perm.action,
+          role_id: memberRoleId,
+          group_id: groupId,
+        };
+      });
+      await adminUpsert('action_right', rights);
     }
 
     // Create owner membership (Admin role)
     const ownerMembershipId = this.generateId();
-    txns.push(
-      tx.groupMemberships[ownerMembershipId]
-        .update({
-          status: 'member',
-          createdAt: now,
-          visibility: 'public',
-        })
-        .link({ user: ownerId, group: groupId, role: adminRoleId })
-    );
-    this.trackEntity('groupMemberships', ownerMembershipId);
-
-    await adminTransact(txns);
+    await adminUpsert('group_membership', {
+      id: ownerMembershipId,
+      group_id: groupId,
+      user_id: ownerId,
+      role_id: adminRoleId,
+      status: 'member',
+      visibility: 'public',
+      created_at: now,
+    });
+    this.trackEntity('group_membership', ownerMembershipId);
 
     return { id: groupId, name, adminRoleId, memberRoleId };
   }
@@ -153,19 +143,19 @@ export class GroupFactory extends FactoryBase {
     options: AddMemberOptions = {}
   ): Promise<string> {
     const membershipId = this.generateId();
-    const now = new Date();
+    const now = new Date().toISOString();
 
-    await adminTransact([
-      tx.groupMemberships[membershipId]
-        .update({
-          status: options.status ?? 'member',
-          createdAt: now,
-          visibility: options.visibility ?? 'public',
-        })
-        .link({ user: userId, group: groupId, role: roleId }),
-    ]);
+    await adminUpsert('group_membership', {
+      id: membershipId,
+      group_id: groupId,
+      user_id: userId,
+      role_id: roleId,
+      status: options.status ?? 'member',
+      visibility: options.visibility ?? 'public',
+      created_at: now,
+    });
 
-    this.trackEntity('groupMemberships', membershipId);
+    this.trackEntity('group_membership', membershipId);
     return membershipId;
   }
 
@@ -179,33 +169,33 @@ export class GroupFactory extends FactoryBase {
     requestedById: string
   ): Promise<string> {
     const conversationId = this.generateId();
-    const now = new Date();
-    const txns: any[] = [];
+    const now = new Date().toISOString();
 
-    txns.push(
-      tx.conversations[conversationId]
-        .update({
-          type: 'group',
-          name: groupName,
-          status: 'accepted',
-          createdAt: now,
-          lastMessageAt: now,
-        })
-        .link({ group: groupId, requestedBy: requestedById })
-    );
-    this.trackEntity('conversations', conversationId);
+    await adminUpsert('conversation', {
+      id: conversationId,
+      type: 'group',
+      name: groupName,
+      status: 'accepted',
+      group_id: groupId,
+      requested_by_id: requestedById,
+      created_at: now,
+      last_message_at: now,
+    });
+    this.trackEntity('conversation', conversationId);
 
-    for (const memberId of memberIds) {
+    const participants = memberIds.map(memberId => {
       const participantId = this.generateId();
-      txns.push(
-        tx.conversationParticipants[participantId]
-          .update({ joinedAt: now, lastReadAt: now })
-          .link({ conversation: conversationId, user: memberId })
-      );
-      this.trackEntity('conversationParticipants', participantId);
-    }
+      this.trackEntity('conversation_participant', participantId);
+      return {
+        id: participantId,
+        conversation_id: conversationId,
+        user_id: memberId,
+        joined_at: now,
+        last_read_at: now,
+      };
+    });
+    await adminUpsert('conversation_participant', participants);
 
-    await adminTransact(txns);
     return conversationId;
   }
 }

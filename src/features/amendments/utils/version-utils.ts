@@ -1,4 +1,6 @@
-import { db, tx, id } from '../../../../db/db';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
 export type VersionCreationType =
   | 'manual'
@@ -25,32 +27,30 @@ export async function createDocumentVersion({
   creationType,
   title,
 }: CreateVersionParams): Promise<void> {
-  const { data: versionsData } = await db.queryOnce({
-    documentVersions: {
-      $: {
-        where: { 'document.id': documentId },
-      },
-    },
-  });
+  const { data: versions } = await supabase
+    .from('document_version')
+    .select('version_number')
+    .eq('document_id', documentId);
 
-  const versions = versionsData?.documentVersions || [];
+  const versionList = versions || [];
   const nextVersionNumber =
-    versions.length > 0 ? Math.max(...versions.map((v: any) => v.versionNumber)) + 1 : 1;
+    versionList.length > 0
+      ? Math.max(...versionList.map((v: any) => v.version_number)) + 1
+      : 1;
 
   const versionTitle = title || getDefaultVersionTitle(creationType);
 
-  const versionId = id();
-  await db.transact([
-    tx.documentVersions[versionId]
-      .update({
-        versionNumber: nextVersionNumber,
-        title: versionTitle,
-        content: content,
-        createdAt: Date.now(),
-        creationType,
-      })
-      .link({ document: documentId, creator: userId }),
-  ]);
+  const versionId = crypto.randomUUID();
+  await supabase.from('document_version').insert({
+    id: versionId,
+    version_number: nextVersionNumber,
+    title: versionTitle,
+    content,
+    created_at: new Date().toISOString(),
+    creation_type: creationType,
+    document_id: documentId,
+    creator_id: userId,
+  });
 }
 
 /**
@@ -84,18 +84,15 @@ function getDefaultVersionTitle(creationType: VersionCreationType): string {
  */
 export async function getLatestVersionNumber(documentId: string): Promise<number> {
   try {
-    const { data: versionsData } = await db.queryOnce({
-      documentVersions: {
-        $: {
-          where: { 'document.id': documentId },
-        },
-      },
-    });
+    const { data: versions } = await supabase
+      .from('document_version')
+      .select('version_number')
+      .eq('document_id', documentId);
 
-    const versions = versionsData?.documentVersions || [];
-    if (versions.length === 0) return 0;
+    const versionList = versions || [];
+    if (versionList.length === 0) return 0;
 
-    return Math.max(...versions.map((v: any) => v.versionNumber));
+    return Math.max(...versionList.map((v: any) => v.version_number));
   } catch (error) {
     console.error('Failed to get latest version number:', error);
     return 0;

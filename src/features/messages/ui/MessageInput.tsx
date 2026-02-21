@@ -3,8 +3,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Send } from 'lucide-react';
 import { CardContent } from '@/components/ui/card';
-import { Conversation } from '../types';
-import { getOtherParticipant } from '../utils';
+import { Conversation } from '../types/message.types';
+import { getOtherParticipant } from '../logic/messageUtils';
 import { useTranslation } from '@/hooks/use-translation';
 
 interface MessageInputProps {

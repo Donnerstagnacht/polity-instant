@@ -1,0 +1,21 @@
+node_modules
+.output
+.vinxi
+dist
+.git
+.gitignore
+*.md
+e2e
+playwright-report
+test-results
+test-output.txt
+test-result.json
+test-results-isolated.json
+tsc-es-check.txt
+tsc-eventstream.txt
+.env
+.env.local
+.env.*.local
+zero docs
+tasks
+scripts

@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Edit, Eye, MessageSquare, Vote, ChevronDown } from 'lucide-react';
-import { db, tx } from '../../../../db/db';
+import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/use-translation';
 
@@ -35,6 +35,7 @@ export function ModeSelector({
   isOwnerOrCollaborator,
 }: ModeSelectorProps) {
   const { t } = useTranslation();
+  const { updateDocument } = useDocumentActions();
 
   const modes = [
     {
@@ -79,12 +80,10 @@ export function ModeSelector({
     }
 
     try {
-      await db.transact([
-        tx.documents[documentId].update({
-          editingMode: newMode,
-          updatedAt: Date.now(),
-        }),
-      ]);
+      await updateDocument({
+        id: documentId,
+        editing_mode: newMode,
+      });
 
       const modeConfig = modes.find(m => m.value === newMode);
       toast.success(`${t('features.amendments.modeSelector.title')}: ${modeConfig?.label}`);

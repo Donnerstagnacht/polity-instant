@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Notification, NotificationFilters } from '../types/notification.types';
-import { filterAccessibleNotifications } from '../utils/notificationHelpers';
+import { filterAccessibleNotifications } from '../logic/notificationHelpers';
 
 interface UseNotificationFiltersProps {
   notifications: Notification[];

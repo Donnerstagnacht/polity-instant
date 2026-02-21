@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { CheckSquare, Square, Users, Clock, UserPlus, Activity, UserCheck } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@tanstack/react-router';
 import { useTranslation } from '@/hooks/use-translation';
 import { cn } from '@/utils/utils';
 import { Badge } from '@/components/ui/badge';
@@ -12,9 +12,11 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { differenceInDays, format, isPast, isToday } from 'date-fns';
 import { ShareButton } from '@/components/shared/ShareButton';
-import { useTodoMutations } from '@/features/todos/hooks/useTodoData';
+import { useTodoMutations } from '@/features/todos/hooks/useTodoMutations';
 import type { TodoStatus } from '@/features/todos/types/todo.types';
-import { db, tx, id } from '@db/db';
+import { useAuth } from '@/providers/auth-provider';
+import { useTodoActions } from '@/zero/todos/useTodoActions';
+import { useTodoState } from '@/zero/todos/useTodoState';
 import { toast } from 'sonner';
 import { notifyStandaloneTodoAssigned } from '@/utils/notification-helpers';
 import {
@@ -107,24 +109,12 @@ function getUrgencyConfig(dueDate: Date): { color: string; bgColor: string; labe
  */
 export function TodoTimelineCard({ todo, onToggle, className }: TodoTimelineCardProps) {
   const { t } = useTranslation();
-  const { user } = db.useAuth();
+  const { user } = useAuth();
   const [statusOpen, setStatusOpen] = useState(false);
   const [assigning, setAssigning] = useState(false);
   const { updateTodo, isLoading } = useTodoMutations();
-  const { data: assignmentsData } = db.useQuery(
-    todo.id
-      ? {
-          todoAssignments: {
-            $: {
-              where: {
-                'todo.id': todo.id,
-              },
-            },
-            user: {},
-          },
-        }
-      : null
-  );
+  const { assignUser } = useTodoActions();
+  const { assignments: assignmentsRaw } = useTodoState({ todoId: todo.id });
 
   const dueDate = todo.dueDate ? new Date(todo.dueDate) : null;
   const urgency = dueDate ? getUrgencyConfig(dueDate) : null;
@@ -133,7 +123,7 @@ export function TodoTimelineCard({ todo, onToggle, className }: TodoTimelineCard
     (todo.currentValue && todo.targetValue
       ? Math.round((todo.currentValue / todo.targetValue) * 100)
       : undefined);
-  const assignments = assignmentsData?.todoAssignments ?? [];
+  const assignments = assignmentsRaw ?? [];
   const isAssignedToMe = !!user?.id && assignments.some(a => a.user?.id === user.id);
 
   const currentStatus = todo.status || (todo.isCompleted ? 'completed' : 'pending');
@@ -170,30 +160,22 @@ export function TodoTimelineCard({ todo, onToggle, className }: TodoTimelineCard
     }
     setAssigning(true);
     try {
-      const assignmentId = id();
-      await db.transact([
-        tx.todoAssignments[assignmentId]
-          .update({
-            assignedAt: new Date().toISOString(),
-            role: 'assignee',
-          })
-          .link({
-            todo: todo.id,
-            user: user.id,
-          }),
-      ]);
+      const assignmentId = crypto.randomUUID();
+      await assignUser({
+        id: assignmentId,
+        todo_id: todo.id,
+        user_id: user.id,
+        role: 'assignee',
+      });
 
       // Notify the todo creator that someone volunteered
       if (todo.creatorId && todo.creatorId !== user.id) {
-        const notifTxs = notifyStandaloneTodoAssigned({
+        await notifyStandaloneTodoAssigned({
           senderId: user.id,
           recipientUserId: todo.creatorId,
           todoId: todo.id,
           todoTitle: todo.title || 'Todo',
         });
-        if (notifTxs.length > 0) {
-          await db.transact(notifTxs);
-        }
       }
 
       toast.success(t('features.todos.assignee.assignedToMe'));
@@ -229,7 +211,11 @@ export function TodoTimelineCard({ todo, onToggle, className }: TodoTimelineCard
               todo.isCompleted && 'text-muted-foreground line-through'
             )}
           >
-            <Link href={`/todos/${todo.id}`} onClick={e => e.stopPropagation()} className="hover:underline">
+            <Link
+              to={`/todos/${todo.id}`}
+              onClick={e => e.stopPropagation()}
+              className="hover:underline"
+            >
               {todo.title}
             </Link>
           </h3>
@@ -302,7 +288,7 @@ export function TodoTimelineCard({ todo, onToggle, className }: TodoTimelineCard
           )}
           {todo.groupName && (
             <Link
-              href={`/group/${todo.groupId}`}
+              to={`/group/${todo.groupId}`}
               className="truncate hover:underline"
               onClick={e => e.stopPropagation()}
             >

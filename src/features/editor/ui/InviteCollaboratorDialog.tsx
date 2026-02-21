@@ -27,7 +27,9 @@ import {
 } from '@/components/ui/command';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { db, tx, id } from '@db/db';
+import { useBlogActions } from '@/zero/blogs/useBlogActions';
+import { useDocumentActions } from '@/zero/documents/useDocumentActions';
+import { useUserState } from '@/zero/users/useUserState';
 import { UserPlus, X, Loader2, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/use-translation';
@@ -54,23 +56,24 @@ export function InviteCollaboratorDialog({
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isInviting, setIsInviting] = useState(false);
+  const { createEntry } = useBlogActions();
+  const { addCollaborator } = useDocumentActions();
 
-  // Query all users
-  const { data: usersData, isLoading } = db.useQuery({
-    $users: {},
-  });
+  // Query all users via facade
+  const { allUsers: users, isLoading } = useUserState({ includeAllUsers: true });
 
   // Filter users based on search and exclude existing collaborators
-  const filteredUsers = usersData?.$users?.filter(user => {
+  const filteredUsers = users?.filter(user => {
     if (!user?.id) return false;
     if (user.id === currentUserId) return false;
     if (existingCollaboratorIds.includes(user.id)) return false;
 
     const query = searchQuery.toLowerCase();
     return (
-      user.name?.toLowerCase().includes(query) ||
+      user.first_name?.toLowerCase().includes(query) ||
+      user.last_name?.toLowerCase().includes(query) ||
       user.handle?.toLowerCase().includes(query) ||
-      user.contactEmail?.toLowerCase().includes(query)
+      user.email?.toLowerCase().includes(query)
     );
   });
 
@@ -85,64 +88,49 @@ export function InviteCollaboratorDialog({
 
     setIsInviting(true);
     try {
-      const transactions: any[] = [];
-
-      if (entityType === 'blog') {
-        // For blogs, add as bloggers
-        selectedUsers.forEach(userId => {
-          const bloggerId = id();
-          transactions.push(
-            tx.blogRoleBloggers[bloggerId]
-              .update({
-                status: 'collaborator',
-                addedAt: Date.now(),
-              })
-              .link({
-                blog: entityId,
-                user: userId,
-              })
-          );
-        });
-      } else {
-        // For documents, add as collaborators
-        selectedUsers.forEach(userId => {
-          const collaboratorId = id();
-          transactions.push(
-            tx.documentCollaborators[collaboratorId]
-              .update({
-                canEdit: true,
-                addedAt: Date.now(),
-              })
-              .link({
-                document: entityId,
-                user: userId,
-              })
-          );
-        });
+      // Create collaborator/blogger entries
+      for (const userId of selectedUsers) {
+        if (entityType === 'blog') {
+          const bloggerId = crypto.randomUUID();
+          await createEntry({
+            id: bloggerId,
+            blog_id: entityId,
+            user_id: userId,
+            role_id: '',
+            status: 'collaborator',
+            visibility: '',
+          });
+        } else {
+          const collaboratorId = crypto.randomUUID();
+          await addCollaborator({
+            id: collaboratorId,
+            document_id: entityId,
+            user_id: userId,
+            role_id: '',
+            status: 'collaborator',
+            visibility: '',
+          });
+        }
       }
 
       // Send notifications to invited users
-      selectedUsers.forEach(userId => {
+      for (const userId of selectedUsers) {
         if (entityType === 'blog') {
-          const notifTxs = notifyBloggerInvited({
+          await notifyBloggerInvited({
             senderId: currentUserId,
             recipientUserId: userId,
             blogId: entityId,
             blogTitle: entityTitle || 'Blog',
           });
-          transactions.push(...notifTxs);
         } else {
-          const notifTxs = notifyDocumentCollaboratorInvited({
+          await notifyDocumentCollaboratorInvited({
             senderId: currentUserId,
             recipientUserId: userId,
             documentId: entityId,
             documentTitle: entityTitle || 'Document',
           });
-          transactions.push(...notifTxs);
         }
-      });
-
-      await db.transact(transactions);
+      }
 
       const message =
         selectedUsers.length === 1
@@ -185,18 +173,18 @@ export function InviteCollaboratorDialog({
           {selectedUsers.length > 0 && (
             <div className="mb-4 flex flex-wrap gap-2">
               {selectedUsers.map(userId => {
-                const user = usersData?.$users?.find((u: any) => u.id === userId);
+                const user = users?.find((u: any) => u.id === userId);
                 if (!user) return null;
 
                 return (
                   <Badge key={userId} variant="secondary" className="flex items-center gap-1 pr-1">
                     <Avatar className="h-4 w-4">
-                      {user.avatar ? <AvatarImage src={user.avatar} alt={user.name || ''} /> : null}
+                      {user.avatar ? <AvatarImage src={user.avatar} alt={[user.first_name, user.last_name].filter(Boolean).join(' ')} /> : null}
                       <AvatarFallback className="text-[8px]">
-                        {user.name?.[0]?.toUpperCase() || '?'}
+                        {user.first_name?.[0]?.toUpperCase() || '?'}
                       </AvatarFallback>
                     </Avatar>
-                    <span>{user.name || user.handle || 'User'}</span>
+                    <span>{[user.first_name, user.last_name].filter(Boolean).join(' ') || user.handle || 'User'}</span>
                     <Button
                       variant="ghost"
                       size="sm"

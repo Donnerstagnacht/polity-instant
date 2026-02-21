@@ -3,12 +3,12 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Home, ArrowLeft, Search, ShieldAlert } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { useTranslation } from '@/hooks/use-translation';
 
 export function AccessDenied() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { t } = useTranslation();
 
   return (
@@ -31,12 +31,12 @@ export function AccessDenied() {
 
         <CardContent className="space-y-4">
           <div className="space-y-3">
-            <Button onClick={() => router.back()} variant="outline" className="w-full">
+            <Button onClick={() => window.history.back()} variant="outline" className="w-full">
               <ArrowLeft className="mr-2 h-4 w-4" />
               {t('common.goBack', 'Go Back')}
             </Button>
 
-            <Link href="/" className="block">
+            <Link to="/" className="block">
               <Button className="w-full">
                 <Home className="mr-2 h-4 w-4" />
                 {t('common.goHome', 'Go Home')}

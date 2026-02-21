@@ -1,18 +1,16 @@
 import { test, expect } from '../fixtures/test-base';
 
 test.describe('User Memberships - Loading States', () => {
-  test('Memberships page renders after loading', async ({ authenticatedPage: page, adminDb }) => {
-    const authUser = await adminDb.auth.getUser({ email: 'polity.live@gmail.com' });
-    await page.goto(`/user/${authUser.id}/memberships`);
+  test('Memberships page renders after loading', async ({ authenticatedPage: page, mainUserId }) => {
+    await page.goto(`/user/${mainUserId}/memberships`);
     await page.waitForLoadState('domcontentloaded');
 
     const hasContent = await page.locator('main, [role="main"]').isVisible().catch(() => false);
     expect(hasContent).toBeTruthy();
   });
 
-  test('Loading indicators resolve', async ({ authenticatedPage: page, adminDb }) => {
-    const authUser = await adminDb.auth.getUser({ email: 'polity.live@gmail.com' });
-    await page.goto(`/user/${authUser.id}/memberships`);
+  test('Loading indicators resolve', async ({ authenticatedPage: page, mainUserId }) => {
+    await page.goto(`/user/${mainUserId}/memberships`);
     await page.waitForLoadState('domcontentloaded');
 
     const loadingIndicators = page.locator(
@@ -24,9 +22,8 @@ test.describe('User Memberships - Loading States', () => {
     }
   });
 
-  test('Membership tabs render correctly', async ({ authenticatedPage: page, adminDb }) => {
-    const authUser = await adminDb.auth.getUser({ email: 'polity.live@gmail.com' });
-    await page.goto(`/user/${authUser.id}/memberships`);
+  test('Membership tabs render correctly', async ({ authenticatedPage: page, mainUserId }) => {
+    await page.goto(`/user/${mainUserId}/memberships`);
     await page.waitForLoadState('domcontentloaded');
 
     // Should have tabs for different membership types

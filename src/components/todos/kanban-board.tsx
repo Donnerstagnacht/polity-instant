@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Calendar } from 'lucide-react';
 import { useState } from 'react';
-import { db, tx } from '../../../db/db';
+import { useTodoActions } from '@/zero/todos/useTodoActions';
 import { toast } from 'sonner';
 import { TodoDetailDialog } from './todo-detail-dialog';
 import { useTranslation } from '@/hooks/use-translation';
@@ -32,6 +32,7 @@ interface KanbanBoardProps {
 
 export function KanbanBoard({ todos }: KanbanBoardProps) {
   const { t } = useTranslation();
+  const { updateTodo } = useTodoActions();
   const [draggedTodoId, setDraggedTodoId] = useState<string | null>(null);
   const [selectedTodo, setSelectedTodo] = useState<Todo | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
@@ -66,7 +67,7 @@ export function KanbanBoard({ todos }: KanbanBoardProps) {
         updates.completedAt = null;
       }
 
-      await db.transact([tx.todos[draggedTodoId].update(updates)]);
+      await updateTodo({ id: draggedTodoId, ...updates });
       toast.success(t('features.todos.kanban.statusUpdated'));
     } catch (error) {
       console.error('Failed to update todo:', error);

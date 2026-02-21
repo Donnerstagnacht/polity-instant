@@ -6,12 +6,11 @@ import { TEST_ENTITY_IDS } from '../test-entity-ids';
 import { gotoWithRetry } from '../helpers/navigation';
 
 test.describe('Group Conversations - Rename Synchronization', () => {
-  test('Renaming group updates conversation name', async ({ authenticatedPage: page, groupFactory, adminDb }) => {
+  test('Renaming group updates conversation name', async ({ authenticatedPage: page, groupFactory, mainUserId }) => {
     test.setTimeout(90000);
-    const authUser = await adminDb.auth.getUser({ email: 'polity.live@gmail.com' });
     const originalName = `Rename Test ${Date.now()}`;
-    const group = await groupFactory.createGroup(authUser.id, { name: originalName });
-    await groupFactory.createGroupConversation(group.id, originalName, [authUser.id], authUser.id);
+    const group = await groupFactory.createGroup(mainUserId, { name: originalName });
+    await groupFactory.createGroupConversation(group.id, originalName, [mainUserId], mainUserId);
 
     // Verify conversation exists with original name (retry on sync delay)
     await page.goto('/messages');
@@ -58,13 +57,12 @@ test.describe('Group Conversations - Rename Synchronization', () => {
     authenticatedPage: page,
     context,
     groupFactory,
-    adminDb,
+    mainUserId,
   }) => {
     test.setTimeout(90000);
-    const authUser = await adminDb.auth.getUser({ email: 'polity.live@gmail.com' });
     const originalName = `Real-time Rename ${Date.now()}`;
-    const group = await groupFactory.createGroup(authUser.id, { name: originalName });
-    await groupFactory.createGroupConversation(group.id, originalName, [authUser.id], authUser.id);
+    const group = await groupFactory.createGroup(mainUserId, { name: originalName });
+    await groupFactory.createGroupConversation(group.id, originalName, [mainUserId], mainUserId);
 
     // Open messages in first tab (retry on sync delay)
     await page.goto('/messages');
@@ -119,12 +117,11 @@ test.describe('Group Conversations - Rename Synchronization', () => {
     await page2.close();
   });
 
-  test('Conversation name appears correctly in message thread after rename', async ({ authenticatedPage: page, groupFactory, adminDb }) => {
+  test('Conversation name appears correctly in message thread after rename', async ({ authenticatedPage: page, groupFactory, mainUserId }) => {
     test.setTimeout(90000);
-    const authUser = await adminDb.auth.getUser({ email: 'polity.live@gmail.com' });
     const originalName = `Thread Rename ${Date.now()}`;
-    const group = await groupFactory.createGroup(authUser.id, { name: originalName });
-    await groupFactory.createGroupConversation(group.id, originalName, [authUser.id], authUser.id);
+    const group = await groupFactory.createGroup(mainUserId, { name: originalName });
+    await groupFactory.createGroupConversation(group.id, originalName, [mainUserId], mainUserId);
 
     // Go to messages and open the conversation (retry on sync delay)
     await page.goto('/messages');

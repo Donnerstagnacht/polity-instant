@@ -1,14 +1,14 @@
 'use client';
 
 import { User, Users, MapPin, Mail, Bell, Star } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@tanstack/react-router';
 import { useTranslation } from '@/hooks/use-translation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ShareButton } from '@/components/shared/ShareButton';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { Button } from '@/components/ui/button';
-import { useSubscribeUser } from '@/features/user/hooks/useSubscribeUser';
+import { useSubscribeUser } from '@/features/payments/hooks/useSubscribeUser';
 import { CONTENT_TYPE_CONFIG } from '../../constants/content-type-config';
 import {
   TimelineCardBase,
@@ -185,7 +185,7 @@ export function UserTimelineCard({ user, onFollow, onMessage, className }: UserT
         </Button>
         <Button variant="outline" size="sm" asChild className="flex items-center gap-1.5">
           <Link
-            href={`/messages?userId=${encodeURIComponent(user.id)}&name=${encodeURIComponent(user.name)}`}
+            to={`/messages?userId=${encodeURIComponent(user.id)}&name=${encodeURIComponent(user.name)}`}
             onClick={e => {
               e.stopPropagation();
               onMessage?.();

@@ -1,53 +1,30 @@
 import { useState } from 'react';
-import db, { tx, id } from '../../../../db/db';
-import { useAuthStore } from '@/features/auth/auth';
+import { useAuth } from '@/providers/auth-provider';
 import { toast } from 'sonner';
 import { notifyCollaborationRequest } from '@/utils/notification-helpers';
+import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
+import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 
 export type CollaborationStatus = 'invited' | 'requested' | 'member' | 'admin';
 
 export function useAmendmentCollaboration(amendmentId: string) {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const { requestCollaboration: addCollaboratorAction, leaveCollaboration: removeCollaboratorAction, acceptInvitation: acceptInvitationAction } = useAmendmentActions();
 
-  // Query current user's collaboration status
-  const { data, isLoading: queryLoading } = db.useQuery(
-    user?.id
-      ? {
-          amendmentCollaborators: {
-            $: {
-              where: {
-                'user.id': user.id,
-                'amendment.id': amendmentId,
-              },
-            },
-          },
-        }
-      : { amendmentCollaborators: {} }
-  );
-
-  // Query all collaborators for collaborator count (including both members and admins)
-  const { data: allCollaboratorsData } = db.useQuery({
-    amendmentCollaborators: {
-      $: {
-        where: {
-          'amendment.id': amendmentId,
-        },
-      },
-    },
+  const {
+    collaboration,
+    status,
+    isCollaborator,
+    isAdmin,
+    hasRequested,
+    isInvited,
+    collaboratorCount,
+    isLoading: queryLoading,
+  } = useAmendmentState({
+    amendmentId,
+    userId: user?.id,
   });
-
-  const collaboration = data?.amendmentCollaborators?.[0];
-  // Filter to count only members and admins (excluding invited and requested)
-  const collaboratorCount =
-    allCollaboratorsData?.amendmentCollaborators?.filter(
-      (c: any) => c.status === 'member' || c.status === 'admin'
-    ).length || 0;
-  const status: CollaborationStatus | null = (collaboration?.status as CollaborationStatus) || null;
-  const isCollaborator = status === 'member' || status === 'admin';
-  const isAdmin = status === 'admin';
-  const hasRequested = status === 'requested';
-  const isInvited = status === 'invited';
 
   // Request to collaborate on the amendment
   const requestCollaboration = async () => {
@@ -61,30 +38,24 @@ export function useAmendmentCollaboration(amendmentId: string) {
 
     setIsLoading(true);
     try {
-      const newCollaborationId = id();
-      const transactions: any[] = [
-        tx.amendmentCollaborators[newCollaborationId]
-          .update({
-            createdAt: new Date().toISOString(),
-            status: 'requested',
-          })
-          .link({
-            user: user.id,
-            amendment: amendmentId,
-          }),
-      ];
+      const newCollaborationId = crypto.randomUUID();
+
+      await addCollaboratorAction({
+        id: newCollaborationId,
+        status: 'requested',
+        user_id: user.id,
+        amendment_id: amendmentId,
+        role_id: '',
+        visibility: '',
+      });
 
       // Send notification to amendment admins
-      const notificationTxs = notifyCollaborationRequest({
+      await notifyCollaborationRequest({
         senderId: user.id,
         senderName: user.email?.split('@')[0] || 'A user',
         amendmentId,
         amendmentTitle: 'Amendment',
       });
-      transactions.push(...notificationTxs);
-
-      await db.transact(transactions);
-      toast.success('Collaboration request sent successfully');
     } catch (error) {
       console.error('Failed to request collaboration:', error);
       console.error('Amendment ID:', amendmentId);
@@ -101,8 +72,7 @@ export function useAmendmentCollaboration(amendmentId: string) {
 
     setIsLoading(true);
     try {
-      await db.transact([tx.amendmentCollaborators[collaboration.id].delete()]);
-      toast.success('Successfully left the collaboration');
+      await removeCollaboratorAction(collaboration.id);
     } catch (error) {
       console.error('Failed to leave collaboration:', error);
       toast.error('Failed to leave collaboration. Please try again.');
@@ -117,12 +87,7 @@ export function useAmendmentCollaboration(amendmentId: string) {
 
     setIsLoading(true);
     try {
-      await db.transact([
-        tx.amendmentCollaborators[collaboration.id].update({
-          status: 'member',
-        }),
-      ]);
-      toast.success('Successfully joined the collaboration');
+      await acceptInvitationAction(collaboration.id);
     } catch (error) {
       console.error('Failed to accept invitation:', error);
       toast.error('Failed to accept invitation. Please try again.');

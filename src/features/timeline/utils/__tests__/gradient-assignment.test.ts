@@ -5,7 +5,7 @@ import {
   getGradientByEntityId,
   getGradientForContentType,
   getTimelineCardGradient,
-} from '../gradient-assignment';
+} from '../../logic/gradient-assignment';
 
 describe('gradient-assignment', () => {
   describe('EXTENDED_GRADIENTS', () => {

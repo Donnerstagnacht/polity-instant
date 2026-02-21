@@ -6,7 +6,10 @@
  * - Amendment collaboration
  */
 
-import { id, tx } from '@instantdb/admin';
+import { id } from '../helpers/id.helper';
+import { tx } from '../helpers/compat';
+import { batchTransact } from '../helpers/transaction.helpers';
+import type { InsertOp } from '../helpers/transaction.helpers';
 import { faker } from '@faker-js/faker';
 import type { EntitySeeder, SeedContext } from '../types/seeder.types';
 import { randomInt, randomItem, randomItems } from '../helpers/random.helpers';
@@ -32,7 +35,7 @@ export const invitationsSeeder: EntitySeeder = {
     const eventIds = context.eventIds || [];
     const amendmentIds = context.amendmentIds || [];
 
-    const transactions = [];
+    const transactions: InsertOp[] = [];
     const invitationIds: string[] = [];
     const requestIds: string[] = [];
     let totalGroupInvitations = 0;
@@ -297,7 +300,7 @@ export const invitationsSeeder: EntitySeeder = {
       const batchSize = 20;
       for (let i = 0; i < transactions.length; i += batchSize) {
         const batch = transactions.slice(i, i + batchSize);
-        await db.transact(batch);
+        await batchTransact(db, batch);
       }
     }
 

@@ -5,7 +5,7 @@
  */
 
 import { FactoryBase } from './factory-base';
-import { adminTransact, tx } from '../admin-db';
+import { adminUpsert } from '../admin-db';
 
 export interface CreateTodoOptions {
   id?: string;
@@ -33,28 +33,23 @@ export class TodoFactory extends FactoryBase {
     this._counter++;
     const todoId = overrides.id ?? this.generateId();
     const title = overrides.title ?? `E2E Todo ${this._counter}`;
-    const now = new Date();
+    const now = new Date().toISOString();
 
-    const todoTx = tx.todos[todoId].update({
+    await adminUpsert('todo', {
+      id: todoId,
       title,
       description: overrides.description ?? '',
       status: overrides.status ?? 'pending',
       priority: overrides.priority ?? 'medium',
-      dueDate: overrides.dueDate ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      due_date: overrides.dueDate ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       visibility: overrides.visibility ?? 'public',
-      createdAt: now,
-      updatedAt: now,
+      creator_id: creatorId,
+      group_id: overrides.groupId ?? null,
+      created_at: now,
+      updated_at: now,
     });
 
-    if (overrides.groupId) {
-      await adminTransact([todoTx.link({ creator: creatorId, group: overrides.groupId })]);
-      this.trackLink('todos', todoId, 'group', overrides.groupId);
-    } else {
-      await adminTransact([todoTx.link({ creator: creatorId })]);
-    }
-
-    this.trackEntity('todos', todoId);
-    this.trackLink('todos', todoId, 'creator', creatorId);
+    this.trackEntity('todo', todoId);
 
     return { id: todoId, title };
   }
@@ -64,12 +59,14 @@ export class TodoFactory extends FactoryBase {
    */
   async assignTodo(todoId: string, userId: string, role: string = 'assignee'): Promise<string> {
     const assignmentId = this.generateId();
-    await adminTransact([
-      tx.todoAssignments[assignmentId]
-        .update({ assignedAt: new Date(), role })
-        .link({ todo: todoId, user: userId }),
-    ]);
-    this.trackEntity('todoAssignments', assignmentId);
+    await adminUpsert('todo_assignment', {
+      id: assignmentId,
+      todo_id: todoId,
+      user_id: userId,
+      role,
+      assigned_at: new Date().toISOString(),
+    });
+    this.trackEntity('todo_assignment', assignmentId);
     return assignmentId;
   }
 }

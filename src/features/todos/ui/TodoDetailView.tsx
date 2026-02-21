@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Calendar, Tag, Users, Building2, AlertTriangle } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@tanstack/react-router';
 import { Todo } from '../types/todo.types';
 import { formatTodoDate, formatTodoDateTime, isOverdue } from '../utils/todoFormatters';
 import { TodoStatusIcon } from './TodoStatusIcon';
@@ -69,7 +69,7 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
         <div>
           <label className="mb-2 block text-sm font-medium">Created By</label>
           <Link
-            href={`/user/${todo.creator.id}`}
+            to={`/user/${todo.creator.id}`}
             className="flex items-center gap-2 text-sm hover:underline"
           >
             <Avatar className="h-6 w-6">
@@ -92,7 +92,7 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
             {todo.assignments.map((assignment, idx) => (
               <Link
                 key={idx}
-                href={`/user/${assignment.user?.id}`}
+                to={`/user/${assignment.user?.id}`}
                 className="flex items-center gap-2 text-sm hover:underline"
               >
                 <Avatar className="h-6 w-6">
@@ -116,7 +116,7 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
             Group
           </label>
           <Link
-            href={`/group/${todo.group.id}`}
+            to={`/group/${todo.group.id}`}
             className="flex items-center gap-2 text-sm hover:underline"
           >
             <Avatar className="h-6 w-6">

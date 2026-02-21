@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { db, tx, id } from '../../../../db/db';
-import { useAuthStore } from '@/features/auth/auth.ts';
+import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
+import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
+import { useAuth } from '@/providers/auth-provider';
 import { notifyAmendmentNewSubscriber } from '@/utils/notification-helpers';
 import { toast } from 'sonner';
 
@@ -9,67 +10,37 @@ import { toast } from 'sonner';
  * @param targetAmendmentId - The ID of the amendment to subscribe/unsubscribe
  */
 export function useSubscribeAmendment(targetAmendmentId?: string) {
-  const { user: authUser } = useAuthStore();
+  const { user: authUser } = useAuth();
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscriberCount, setSubscriberCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const optimisticTargetRef = useRef<boolean | null>(null);
   const createdSubscriptionIdRef = useRef<string | null>(null);
+  const { subscribe: subscribeAction, unsubscribe: unsubscribeAction } = useAmendmentActions();
 
-  // Query current user's name for notifications
-  const { data: currentUserData } = db.useQuery(
-    authUser?.id
-      ? {
-          $users: {
-            $: {
-              where: { id: authUser.id },
-              limit: 1,
-            },
-          },
-        }
-      : null
-  );
-  const currentUserName = currentUserData?.$users?.[0]?.name || 'Someone';
+  // Use facade state for amendment data and subscribers
+  const {
+    amendment: amendmentRows,
+    subscribers: subscriptionData,
+    isLoading: subscriptionLoading,
+  } = useAmendmentState({
+    amendmentId: targetAmendmentId,
+    userId: authUser?.id,
+  });
 
-  // Query amendment title for notifications
-  const { data: amendmentData } = db.useQuery(
-    targetAmendmentId
-      ? {
-          amendments: {
-            $: {
-              where: { id: targetAmendmentId },
-              limit: 1,
-            },
-          },
-        }
-      : null
-  );
-  const amendmentTitle = amendmentData?.amendments?.[0]?.title || 'Amendment';
+  // Get user name from auth user (no separate query needed)
+  const currentUserName = authUser?.email?.split('@')[0] || 'Someone';
 
-  // Query to get all subscribers for the target amendment
-  const { data: subscriptionData, isLoading: subscriptionLoading } = db.useQuery(
-    targetAmendmentId
-      ? {
-          subscribers: {
-            $: {
-              where: {
-                'amendment.id': targetAmendmentId,
-              },
-            },
-            subscriber: {},
-            amendment: {},
-          },
-        }
-      : null
-  );
+  // Get amendment title from facade
+  const amendmentTitle = (amendmentRows as any)?.title || 'Amendment';
 
   // Update subscription state when data changes
   useEffect(() => {
-    const subscribers = subscriptionData?.subscribers || [];
+    const subscribers = subscriptionData || [];
 
     // Check if the current user is subscribed
     const subscribed = authUser?.id
-      ? subscribers.some(sub => sub.subscriber?.id === authUser.id)
+      ? subscribers.some(sub => sub.subscriber_user?.id === authUser.id)
       : false;
 
     if (optimisticTargetRef.current !== null) {
@@ -93,8 +64,8 @@ export function useSubscribeAmendment(targetAmendmentId?: string) {
     }
 
     // Prevent duplicate subscriptions
-    const existing = (subscriptionData?.subscribers || []).find(
-      sub => sub.subscriber?.id === authUser.id
+    const existing = (subscriptionData || []).find(
+      sub => sub.subscriber_user?.id === authUser.id
     );
     if (existing) return;
 
@@ -104,29 +75,22 @@ export function useSubscribeAmendment(targetAmendmentId?: string) {
     setSubscriberCount(prev => prev + 1);
     setIsLoading(true);
     try {
-      const subscriptionId = id();
+      const subscriptionId = crypto.randomUUID();
       createdSubscriptionIdRef.current = subscriptionId;
 
-      await db.transact([
-        tx.subscribers[subscriptionId]
-          .update({
-            createdAt: new Date(),
-          })
-          .link({
-            subscriber: authUser.id,
-            amendment: targetAmendmentId,
-          }),
-      ]);
+      await subscribeAction({
+        id: subscriptionId,
+        amendment_id: targetAmendmentId,
+      });
 
-      // Send notification separately — notifications.create is server-only
+      // Send notification separately
       try {
-        const notification = notifyAmendmentNewSubscriber({
+        await notifyAmendmentNewSubscriber({
           senderId: authUser.id,
           senderName: currentUserName,
           amendmentId: targetAmendmentId,
           amendmentTitle: amendmentTitle,
         });
-        if (notification.length > 0) await db.transact(notification);
       } catch { /* notification delivery is best-effort */ }
       toast.success('Successfully subscribed to amendment');
     } catch (error) {
@@ -148,8 +112,8 @@ export function useSubscribeAmendment(targetAmendmentId?: string) {
       return;
     }
 
-    const subscribers = subscriptionData?.subscribers || [];
-    let subsToDelete = subscribers.filter(sub => sub.subscriber?.id === authUser.id);
+    const subscribers = subscriptionData || [];
+    let subsToDelete = subscribers.filter(sub => sub.subscriber_user?.id === authUser.id);
 
     // Fallback: if reactive query hasn't caught up, use stored subscription ID
     if (subsToDelete.length === 0 && createdSubscriptionIdRef.current) {
@@ -166,7 +130,9 @@ export function useSubscribeAmendment(targetAmendmentId?: string) {
     setSubscriberCount(prev => Math.max(0, prev - subsToDelete.length));
     setIsLoading(true);
     try {
-      await db.transact(subsToDelete.map(sub => tx.subscribers[sub.id].delete()));
+      for (const sub of subsToDelete) {
+        await unsubscribeAction(sub.id);
+      }
       createdSubscriptionIdRef.current = null;
       toast.success('Successfully unsubscribed from amendment');
     } catch (error) {

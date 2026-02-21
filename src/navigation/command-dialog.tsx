@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { getIconComponent } from '@/navigation/nav-items/icon-map';
 import { getShortcutForItem } from '@/navigation/nav-keyboard/keyboard-navigation';
 import { useTranslation } from '@/hooks/use-translation';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import {
   useCommandDialogShortcut,
@@ -21,7 +21,7 @@ import {
 import { navItemsAuthenticated } from '@/navigation/nav-items/nav-items-authenticated';
 import { useNavigationStore } from '@/navigation/state/navigation.store';
 import type { NavigationItem } from '@/navigation/types/navigation.types';
-import { useAuthStore } from '@/features/auth/auth.ts';
+import { useAuth } from '@/providers/auth-provider';
 
 export function NavigationCommandDialog({
   primaryNavItems,
@@ -31,13 +31,14 @@ export function NavigationCommandDialog({
   secondaryNavItems: NavigationItem[] | null;
 }) {
   const { t } = useTranslation();
-  const router = useRouter();
+  const navigate = useNavigate();
 
   const [open, setOpen] = useState(false);
 
   useCommandDialogShortcut(setOpen, open);
-  const authenticated = useAuthStore(state => state.isAuthenticated);
-  const userId = useAuthStore(state => state.user?.id);
+  const { user } = useAuth();
+  const authenticated = !!user;
+  const userId = user?.id;
 
   const { setNavigationType } = useNavigationStore();
 
@@ -47,12 +48,12 @@ export function NavigationCommandDialog({
       const navItems = [...primaryNavItems, ...(secondaryNavItems || [])];
       const navItem = navItems.find(navItem => navItem.id === navId);
       if (navItem) {
-        // Navigate to the appropriate route using Next.js Router
+        // Navigate to the appropriate route
         if (navItem.onClick) {
           navItem.onClick();
         } else {
           const route = navId === 'home' ? '/' : `/${navId}`;
-          router.push(route);
+          navigate({ to: route });
         }
 
         // Toggle priority based on navigation item if it exists in both
@@ -88,12 +89,12 @@ export function NavigationCommandDialog({
               <CommandItem
                 key={item.id}
                 onSelect={() => {
-                  // Navigate to the appropriate route using Next.js Router
+                  // Navigate to the appropriate route
                   if (item.onClick) {
                     item.onClick();
                   } else {
                     const route = item.id === 'home' ? '/' : `/${item.id}`;
-                    router.push(route);
+                    navigate({ to: route });
                   }
                   setOpen(false);
                 }}
@@ -117,7 +118,7 @@ export function NavigationCommandDialog({
           <>
             <CommandSeparator />
             <CommandGroup heading={t('navigation.commandDialog.groups.userNavigation', 'User Navigation')}>
-              {navItemsAuthenticated(router)
+              {navItemsAuthenticated(navigate)
                 .getUserSecondaryNavItems(userId, true)
                 .map((item: NavigationItem) => {
                   const IconComponent = getIconComponent(item.icon);
@@ -125,11 +126,11 @@ export function NavigationCommandDialog({
                     <CommandItem
                       key={item.id}
                       onSelect={() => {
-                        // Navigate to the appropriate route using Next.js Router
+                        // Navigate to the appropriate route
                         if (item.onClick) {
                           item.onClick();
                         } else if (item.href) {
-                          router.push(item.href);
+                          navigate({ to: item.href });
                         }
                         setOpen(false);
                       }}

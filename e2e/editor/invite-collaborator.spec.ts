@@ -8,8 +8,8 @@ test.describe('Editor - Invite Collaborator', () => {
     adminDb,
   }) => {
     const docId = crypto.randomUUID();
-    await adminDb.transact(
-      adminDb.tx.documents[docId]
+    await (adminDb as any).transact(
+      (adminDb as any).tx.documents[docId]
         .update({
           title: 'E2E Invite Doc',
           content: [{ type: 'p', children: [{ text: '' }] }],
@@ -31,8 +31,8 @@ test.describe('Editor - Invite Collaborator', () => {
     adminDb,
   }) => {
     const docId = crypto.randomUUID();
-    await adminDb.transact(
-      adminDb.tx.documents[docId]
+    await (adminDb as any).transact(
+      (adminDb as any).tx.documents[docId]
         .update({
           title: 'E2E Invite Dialog Doc',
           content: [{ type: 'p', children: [{ text: '' }] }],

@@ -1,9 +1,12 @@
 import { useState } from 'react';
-import { db, id, tx } from '../../../../db/db';
+import { useAuth } from '@/providers/auth-provider';
 import { notifySpeakerListJoined } from '@/utils/notification-helpers';
+import { sendNotificationFn } from '@/server/notifications';
+import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 
 export function useSpeakerList(agendaItemId?: string, eventContext?: { eventId: string; eventTitle: string }) {
-  const { user } = db.useAuth();
+  const { user } = useAuth();
+  const { addSpeaker, removeSpeaker } = useAgendaActions();
   const [addingSpeaker, setAddingSpeaker] = useState(false);
   const [removingSpeaker, setRemovingSpeaker] = useState<string | null>(null);
 
@@ -15,30 +18,19 @@ export function useSpeakerList(agendaItemId?: string, eventContext?: { eventId: 
       const maxOrder =
         speakerList.length > 0 ? Math.max(...speakerList.map((s: any) => s.order || 0)) : 0;
 
-      const speakerId = id();
-      await db.transact([
-        tx.speakerList[speakerId].update({
-          title: 'Speaker',
-          time: 3,
-          completed: false,
-          order: maxOrder + 1,
-          createdAt: new Date(),
-        }),
-        tx.speakerList[speakerId].link({
-          user: user.id,
-          agendaItem: agendaItemId,
-        }),
-      ]);
+      const speakerId = crypto.randomUUID();
+      await addSpeaker({
+        id: speakerId,
+        title: 'Speaker',
+        time: 3,
+        completed: false,
+        order_index: maxOrder + 1,
+        user_id: user.id,
+        agenda_item_id: agendaItemId,
+      });
 
-      // Notify event organizers about new speaker
       if (eventContext) {
-        const notifTxs = notifySpeakerListJoined({
-          senderId: user.id,
-          senderName: user.email || 'A participant',
-          eventId: eventContext.eventId,
-          eventTitle: eventContext.eventTitle,
-        });
-        await db.transact(notifTxs);
+        sendNotificationFn({ data: { helper: 'notifySpeakerListJoined', params: { senderId: user.id, eventId: eventContext.eventId, eventTitle: eventContext.eventTitle, agendaItemId } } }).catch(console.error)
       }
     } catch (error) {
       console.error('Error adding to speaker list:', error);
@@ -53,7 +45,7 @@ export function useSpeakerList(agendaItemId?: string, eventContext?: { eventId: 
 
     setRemovingSpeaker(speakerId);
     try {
-      await db.transact([tx.speakerList[speakerId].delete()]);
+      await removeSpeaker(speakerId);
     } catch (error) {
       console.error('Error removing from speaker list:', error);
       throw error;

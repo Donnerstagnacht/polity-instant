@@ -1,0 +1,212 @@
+# Install Zero
+
+This guide walks you through adding Zero to any TypeScript-based web app.
+
+It should take about 20 minutes to complete. When you're done, you'll have Zero up and running and will understand its core ideas.
+
+## Integrate Zero
+
+### Set Up Your Database
+
+You'll need a local Postgres database for development. If you don't have a preferred method, we recommend using [Docker](https://www.docker.com/):
+
+```bash
+docker run -d --name zero-postgres \
+  -e POSTGRES_PASSWORD="password" \
+  -p 5432:5432 \
+  postgres:16-alpine \
+  # IMPORTANT: logical WAL level is required for Zero
+  # to sync data to its SQLite replica
+  postgres -c wal_level=logical
+```
+
+This will start a Postgres database running in the background.
+
+> **More Information**: See [Connecting to Postgres](https://zero.rocicorp.dev/docs/connecting-to-postgres)for more details on what Postgres features are required for Zero to work.
+
+### Install and Run Zero-Cache
+
+Add Zero to your project:
+
+Start the development `zero-cache` by running the following command:
+
+Zero works by continuously replicating your upstream database into a SQLite *replica*.
+
+Zero-cache runs client queries against the replica. If there are tables or columns that will **not** be queried by Zero clients ever, you can exclude them.
+
+You can use the [`zero-sqlite3`](https://zero.rocicorp.dev/docs/debug/replication#inspecting) tool to explore `zero.db`. Try it out by connecting to Postgres and the Zero replica in two different terminals. If you change something in Postgres, you'll see it immediately show up in the replica:
+
+[Zero-cache syncing between Postgres and SQLite](https://zero.rocicorp.dev/video/onboarding/zero-cache-sync.mp4)
+
+### Set Up Your Zero Schema
+
+Zero uses a file called `schema.ts` to provide a type-safe query API.
+
+If you use Drizzle or Prisma, you can generate `schema.ts` automatically. Otherwise, you can create it manually.
+
+> **Having trouble using your own schema?**: Zero has some restrictions on the [Postgres features it supports](https://zero.rocicorp.dev/docs/postgres-support). You can continue this tutorial with [a sample schema and seed data](https://github.com/rocicorp/onboarding) to evaluate it.
+
+### Set Up the Zero Client
+
+Zero has first-class support for React and SolidJS, and community support for Svelte and Vue.
+
+There is also a low-level API you can use in any TypeScript-based project.
+
+## Sync Data
+
+### Define Query
+
+Alright, let's sync some data!
+
+In Zero, we do this with *queries*. Queries are conventionally found in a `queries.ts` file. Here is an example of how queries are defined - you can adapt this to your own schema:
+
+```tsx
+// zero/queries.ts
+import {defineQueries, defineQuery} from '@rocicorp/zero'
+import {z} from 'zod'
+import {zql} from './schema.ts'
+
+export const queries = defineQueries({
+  albums: {
+    byArtist: defineQuery(
+      z.object({artistID: z.string()}),
+      ({args: {artistID}}) =>
+        zql.albums
+          .where('artistId', artistID)
+          .orderBy('createdAt', 'asc')
+          .limit(10)
+          .related('artist', q => q.one())
+    )
+  }
+})
+```
+
+Use `zql` from `schema.ts` to construct and return a ZQL query. ZQL is quite powerful and allows you to build queries with filters, sorts, relationships, and more:
+
+[Code editor with ZQL autocomplete](https://zero.rocicorp.dev/video/onboarding/onboarding-zql-autocomplete.mp4)
+
+See [queries](https://zero.rocicorp.dev/doc/queries) for more information on defining queries.
+
+### Invoke Query
+
+Querying for data is framework-specific. Most of the time, you will use a helper like `useQuery` that integrates into your framework's rendering model:
+
+When you reload your app, you should see an error like:
+
+This is expected. We now need to implement a queries endpoint so that zero-cache can get the ZQL for the `albums.byArtist` query.
+
+### Implement Query Backend
+
+Zero doesn't allow clients to run any arbitrary ZQL against zero-cache, for both security and performance reasons.
+
+Instead, Zero sends the name and arguments of the query to a *queries endpoint* on your server that is responsible for transforming the named query into ZQL.
+
+Zero provides utilities to make it easy to implement the queries endpoint in any full-stack framework:
+
+Stop and re-run zero-cache with the URL of the queries endpoint:
+
+If you reload the page, you will see data! Zero queries update live, so if you edit data in Postgres directly, you will see it update in the Zero replica AND the UI:
+
+[Zero-cache syncing between Postgres and SQLite and UI](https://zero.rocicorp.dev/video/onboarding/zero-cache-ui-sync.mp4)
+
+### More about Queries
+
+You now know the basics, but there are a few more important pieces you'll need to learn for your first real app:
+
+* [How authentication and permissions work](https://zero.rocicorp.dev/docs/auth).
+* [Preloading queries to create instantly responsive UI](https://zero.rocicorp.dev/docs/queries#for-preloading).
+
+For these details and more, see [Reading Data](https://zero.rocicorp.dev/docs/queries).
+
+But for now, let's move on to writes!
+
+## Mutate Data
+
+### Define Mutators
+
+Data is written in Zero apps using *mutators*. Similar to queries, we use a shared `mutators.ts` file:
+
+```tsx
+// zero/mutators.ts
+import {defineMutators, defineMutator} from '@rocicorp/zero'
+import {z} from 'zod'
+
+export const mutators = defineMutators({
+  albums: {
+    create: defineMutator(
+      z.object({
+        id: z.string(),
+        artistID: z.string(),
+        title: z.string(),
+        year: z.number(),
+        createdAt: z.number()
+      }),
+      async ({args, tx}) => {
+        await tx.mutate.albums.insert({
+          id: args.id,
+          artistId: args.artistID,
+          title: args.title,
+          releaseYear: args.year,
+          createdAt: args.createdAt
+        })
+      }
+    )
+  }
+})
+```
+
+You can use the [CRUD-style API](https://zero.rocicorp.dev/docs/mutators#writing-data) with `tx.mutate.<table>.<method>()`to write data. You can also use `tx.run(zql.<table>.<method>)` to run queries within your mutator.
+
+> **Always await operations in mutators**: Mutators almost always run in the same frame on the client, against local data. The reason mutators are marked `async` is because on the server, reading from the `tx`object goes over the network to Postgres. Also, in edge cases on the client, reads and writes can go to local storage (IndexedDB or SQLite).
+
+Once you've defined your mutators, you must register them with Zero before you can use them:
+
+```tsx
+import {mutators} from './zero/mutators.ts'
+
+const opts: ZeroOptions = {
+  // ... userID, cacheURL, etc.
+  // add mutators
+  mutators
+}
+```
+
+### Invoke Mutators
+
+You can now call mutators via `zero.mutate`:
+
+> ⚠️ **Client-generated IDs are recommended**: Client-generated random IDs (from libraries like [uuid](https://www.npmjs.com/package/uuid), [ulid](https://www.npmjs.com/package/ulid), or [nanoid](https://www.npmjs.com/package/nanoid)) work much better than auto-incrementing integers in sync engines like Zero. [Learn more](https://zero.rocicorp.dev/docs/postgres-support#ids).
+
+If you run this app now, you should be able to see the UI update optimistically, but you'll also see an error in zero-cache:
+
+Similar to queries, we need to wire up a mutate endpoint in our API. Let's do that now.
+
+### Implement Mutate Endpoint
+
+Zero requires a *mutate endpoint* which runs on your server and connects directly to your Postgres database. Zero provides helpers to implement this easily.
+
+Use the Zero Postgres adapters to create a `dbProvider` instance:
+
+Then, use the `dbProvider` to handle the mutate request:
+
+Restart zero-cache to tell it about this new endpoint:
+
+If you refresh the page, your mutation should commit to the database and sync to other clients:
+
+[Zero syncing data between multiple clients](https://zero.rocicorp.dev/video/onboarding/zero-cache-multiple-clients.mp4)
+
+### More about Mutators
+
+Just as with queries, the separate server implementation of mutators extends elegantly to enable write permissions. Zero also has built-in helpers to do work after a mutator runs on the server, like send notifications.
+
+For these details and more, see [Writing Data](https://zero.rocicorp.dev/docs/mutators).
+
+## That's It!
+
+Congratulations! You now know the basics for building with Zero 🤯.
+
+Possible next steps:
+
+* [Learn about authentication and permissions](https://zero.rocicorp.dev/docs/auth)
+* [See some samples of built-out Zero apps](https://zero.rocicorp.dev/docs/samples)
+* [Learn how to deploy your app to production](https://zero.rocicorp.dev/docs/deployment)

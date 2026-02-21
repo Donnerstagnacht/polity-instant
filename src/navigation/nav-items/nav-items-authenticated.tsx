@@ -1,18 +1,11 @@
 import type { NavigationItem } from '@/navigation/types/navigation.types';
 
-// Next.js router type interface
-interface NextRouter {
-  push: (url: string) => void;
-  state?: {
-    location: {
-      pathname: string;
-    };
-  };
-}
+// TanStack Router navigate function type
+type NavigateFn = (opts: { to: string }) => void;
 
 // This function factory creates navigation items with router integration
 export const navItemsAuthenticated = (
-  router: NextRouter, // Use Next.js router type
+  navigate: NavigateFn,
   setCurrentPrimaryRoute?: (route: string) => void,
   t?: (key: string) => string // Optional translation function
 ) => {
@@ -28,7 +21,7 @@ export const navItemsAuthenticated = (
       icon: 'Home',
       href: '/',
       onClick: () => {
-        router.push('/');
+        navigate({ to: '/' });
         if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('home');
       },
     },
@@ -38,7 +31,7 @@ export const navItemsAuthenticated = (
       icon: 'MessageSquare',
       href: '/messages',
       onClick: () => {
-        router.push('/messages');
+        navigate({ to: '/messages' });
         if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('messages');
       },
     },
@@ -48,7 +41,7 @@ export const navItemsAuthenticated = (
       icon: 'Search',
       href: '/search',
       onClick: () => {
-        router.push('/search');
+        navigate({ to: '/search' });
         if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('search');
       },
     },
@@ -58,7 +51,7 @@ export const navItemsAuthenticated = (
       icon: 'PlusCircle',
       href: '/create',
       onClick: () => {
-        router.push('/create');
+        navigate({ to: '/create' });
         if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('create');
       },
     },
@@ -69,7 +62,7 @@ export const navItemsAuthenticated = (
       icon: 'Calendar',
       href: '/calendar',
       onClick: () => {
-        router.push('/calendar');
+        navigate({ to: '/calendar' });
         if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('calendar');
       },
     },
@@ -79,7 +72,7 @@ export const navItemsAuthenticated = (
       icon: 'CheckSquare',
       href: '/todos',
       onClick: () => {
-        router.push('/todos');
+        navigate({ to: '/todos' });
         if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('todos');
       },
     },
@@ -89,7 +82,7 @@ export const navItemsAuthenticated = (
       icon: 'Bell',
       href: '/notifications',
       onClick: () => {
-        router.push('/notifications');
+        navigate({ to: '/notifications' });
         if (setCurrentPrimaryRoute) setCurrentPrimaryRoute('notifications');
       },
     },
@@ -101,14 +94,14 @@ export const navItemsAuthenticated = (
       label: 'Tasks',
       icon: 'File',
       href: '/projects/tasks',
-      onClick: () => router.push('/projects/tasks'),
+      onClick: () => navigate({ to: '/projects/tasks' }),
     },
     {
       id: 'tests',
       label: 'Tests',
       icon: 'FolderOpen',
       href: '/projects/tests',
-      onClick: () => router.push('/projects/tests'),
+      onClick: () => navigate({ to: '/projects/tests' }),
     },
   ];
 
@@ -120,28 +113,28 @@ export const navItemsAuthenticated = (
         label: t ? t('navigation.secondary.event.overview') : 'Overview',
         icon: 'FileText',
         href: `/event/${eventId}`,
-        onClick: () => router.push(`/event/${eventId}`),
+        onClick: () => navigate({ to: `/event/${eventId}` }),
       },
       {
         id: 'agenda',
         label: t ? t('navigation.secondary.event.agenda') : 'Agenda',
         icon: 'Calendar',
         href: `/event/${eventId}/agenda`,
-        onClick: () => router.push(`/event/${eventId}/agenda`),
+        onClick: () => navigate({ to: `/event/${eventId}/agenda` }),
       },
       {
         id: 'stream',
         label: t ? t('navigation.secondary.event.stream') : 'Stream',
         icon: 'Radio',
         href: `/event/${eventId}/stream`,
-        onClick: () => router.push(`/event/${eventId}/stream`),
+        onClick: () => navigate({ to: `/event/${eventId}/stream` }),
       },
       {
         id: 'network',
         label: t ? t('navigation.secondary.event.network') : 'Network',
         icon: 'Network',
         href: `/event/${eventId}/network`,
-        onClick: () => router.push(`/event/${eventId}/network`),
+        onClick: () => navigate({ to: `/event/${eventId}/network` }),
       },
     ];
 
@@ -153,28 +146,28 @@ export const navItemsAuthenticated = (
           label: t ? t('navigation.secondary.event.positions') : 'Positions',
           icon: 'UserCheck',
           href: `/event/${eventId}/positions`,
-          onClick: () => router.push(`/event/${eventId}/positions`),
+          onClick: () => navigate({ to: `/event/${eventId}/positions` }),
         },
         {
           id: 'participants',
           label: t ? t('navigation.secondary.event.participants') : 'Participants',
           icon: 'Users',
           href: `/event/${eventId}/participants`,
-          onClick: () => router.push(`/event/${eventId}/participants`),
+          onClick: () => navigate({ to: `/event/${eventId}/participants` }),
         },
         {
           id: 'notifications',
           label: t ? t('navigation.secondary.event.notifications') : 'Notifications',
           icon: 'Bell',
           href: `/event/${eventId}/notifications`,
-          onClick: () => router.push(`/event/${eventId}/notifications`),
+          onClick: () => navigate({ to: `/event/${eventId}/notifications` }),
         },
         {
           id: 'edit',
           label: t ? t('navigation.secondary.event.edit') : 'Edit Event',
           icon: 'Settings',
           href: `/event/${eventId}/edit`,
-          onClick: () => router.push(`/event/${eventId}/edit`),
+          onClick: () => navigate({ to: `/event/${eventId}/edit` }),
         }
       );
     }
@@ -189,7 +182,7 @@ export const navItemsAuthenticated = (
         label: t ? t('navigation.secondary.user.profile') : 'User',
         icon: 'User',
         href: `/user/${userId}`,
-        onClick: () => router.push(`/user/${userId}`),
+        onClick: () => navigate({ to: `/user/${userId}` }),
       },
     ];
 
@@ -201,14 +194,14 @@ export const navItemsAuthenticated = (
           label: t ? t('navigation.secondary.user.subscriptions') : 'Subscriptions',
           icon: 'Bell',
           href: `/user/${userId}/subscriptions`,
-          onClick: () => router.push(`/user/${userId}/subscriptions`),
+          onClick: () => navigate({ to: `/user/${userId}/subscriptions` }),
         },
         {
           id: 'memberships',
           label: t ? t('navigation.secondary.user.memberships') : 'Memberships',
           icon: 'Users',
           href: `/user/${userId}/memberships`,
-          onClick: () => router.push(`/user/${userId}/memberships`),
+          onClick: () => navigate({ to: `/user/${userId}/memberships` }),
         }
       );
     }
@@ -219,14 +212,14 @@ export const navItemsAuthenticated = (
         label: t ? t('navigation.secondary.user.network') : 'Network',
         icon: 'Network',
         href: `/user/${userId}/network`,
-        onClick: () => router.push(`/user/${userId}/network`),
+        onClick: () => navigate({ to: `/user/${userId}/network` }),
       },
       {
         id: 'meet',
         label: t ? t('navigation.secondary.user.meet') : 'Meet',
         icon: 'Calendar',
         href: `/user/${userId}/meet`,
-        onClick: () => router.push(`/user/${userId}/meet`),
+        onClick: () => navigate({ to: `/user/${userId}/meet` }),
       }
     );
 
@@ -237,14 +230,14 @@ export const navItemsAuthenticated = (
           label: t ? t('navigation.secondary.user.notifications') : 'Notifications',
           icon: 'Bell',
           href: `/user/${userId}/notifications`,
-          onClick: () => router.push(`/user/${userId}/notifications`),
+          onClick: () => navigate({ to: `/user/${userId}/notifications` }),
         },
         {
           id: 'edit',
           label: t ? t('navigation.secondary.user.edit') : 'Edit User',
           icon: 'Settings',
           href: `/user/${userId}/edit`,
-          onClick: () => router.push(`/user/${userId}/edit`),
+          onClick: () => navigate({ to: `/user/${userId}/edit` }),
         }
       );
     }
@@ -260,7 +253,7 @@ export const navItemsAuthenticated = (
         label: t ? t('navigation.secondary.group.overview') : 'Overview',
         icon: 'Home',
         href: `/group/${groupId}`,
-        onClick: () => router.push(`/group/${groupId}`),
+        onClick: () => navigate({ to: `/group/${groupId}` }),
       },
     ];
 
@@ -271,7 +264,7 @@ export const navItemsAuthenticated = (
         label: t ? t('navigation.secondary.group.operation') : 'Operation',
         icon: 'AreaChart',
         href: `/group/${groupId}/operation`,
-        onClick: () => router.push(`/group/${groupId}/operation`),
+        onClick: () => navigate({ to: `/group/${groupId}/operation` }),
       });
     }
 
@@ -281,21 +274,21 @@ export const navItemsAuthenticated = (
         label: t ? t('navigation.secondary.group.events') : 'Events',
         icon: 'Calendar',
         href: `/group/${groupId}/events`,
-        onClick: () => router.push(`/group/${groupId}/events`),
+        onClick: () => navigate({ to: `/group/${groupId}/events` }),
       },
       {
         id: 'amendments',
         label: t ? t('navigation.secondary.group.amendments') : 'Amendments',
         icon: 'FileText',
         href: `/group/${groupId}/amendments`,
-        onClick: () => router.push(`/group/${groupId}/amendments`),
+        onClick: () => navigate({ to: `/group/${groupId}/amendments` }),
       },
       {
         id: 'network',
         label: t ? t('navigation.secondary.group.network') : 'Network',
         icon: 'Network',
         href: `/group/${groupId}/network`,
-        onClick: () => router.push(`/group/${groupId}/network`),
+        onClick: () => navigate({ to: `/group/${groupId}/network` }),
       }
     );
 
@@ -306,7 +299,7 @@ export const navItemsAuthenticated = (
         label: t ? t('navigation.secondary.group.editor') : 'Documents',
         icon: 'FileText',
         href: `/group/${groupId}/editor`,
-        onClick: () => router.push(`/group/${groupId}/editor`),
+        onClick: () => navigate({ to: `/group/${groupId}/editor` }),
       });
     }
 
@@ -317,7 +310,7 @@ export const navItemsAuthenticated = (
         label: t ? t('navigation.secondary.group.memberships') : 'Members',
         icon: 'Users',
         href: `/group/${groupId}/memberships`,
-        onClick: () => router.push(`/group/${groupId}/memberships`),
+        onClick: () => navigate({ to: `/group/${groupId}/memberships` }),
       });
     }
 
@@ -329,14 +322,14 @@ export const navItemsAuthenticated = (
           label: t ? t('navigation.secondary.group.notifications') : 'Notifications',
           icon: 'Bell',
           href: `/group/${groupId}/notifications`,
-          onClick: () => router.push(`/group/${groupId}/notifications`),
+          onClick: () => navigate({ to: `/group/${groupId}/notifications` }),
         },
         {
           id: 'edit',
           label: t ? t('navigation.secondary.group.edit') : 'Edit Group',
           icon: 'Settings',
           href: `/group/${groupId}/edit`,
-          onClick: () => router.push(`/group/${groupId}/edit`),
+          onClick: () => navigate({ to: `/group/${groupId}/edit` }),
         }
       );
     }
@@ -356,21 +349,21 @@ export const navItemsAuthenticated = (
         label: t ? t('navigation.secondary.amendment.overview') : 'Overview',
         icon: 'FileText',
         href: `/amendment/${amendmentId}`,
-        onClick: () => router.push(`/amendment/${amendmentId}`),
+        onClick: () => navigate({ to: `/amendment/${amendmentId}` }),
       },
       {
         id: 'discussions',
         label: t ? t('navigation.secondary.amendment.discussions') : 'Discussions',
         icon: 'MessageSquare',
         href: `/amendment/${amendmentId}/discussions`,
-        onClick: () => router.push(`/amendment/${amendmentId}/discussions`),
+        onClick: () => navigate({ to: `/amendment/${amendmentId}/discussions` }),
       },
       {
         id: 'process',
         label: t ? t('navigation.secondary.amendment.process') : 'Process',
         icon: 'Workflow',
         href: `/amendment/${amendmentId}/process`,
-        onClick: () => router.push(`/amendment/${amendmentId}/process`),
+        onClick: () => navigate({ to: `/amendment/${amendmentId}/process` }),
       },
     ];
 
@@ -381,7 +374,7 @@ export const navItemsAuthenticated = (
         label: t ? t('navigation.secondary.amendment.changeRequests') : 'Change Requests',
         icon: 'FileText',
         href: `/amendment/${amendmentId}/change-requests`,
-        onClick: () => router.push(`/amendment/${amendmentId}/change-requests`),
+        onClick: () => navigate({ to: `/amendment/${amendmentId}/change-requests` }),
       });
     }
 
@@ -393,28 +386,28 @@ export const navItemsAuthenticated = (
           label: t ? t('navigation.secondary.amendment.text') : 'Full Text',
           icon: 'File',
           href: `/amendment/${amendmentId}/text`,
-          onClick: () => router.push(`/amendment/${amendmentId}/text`),
+          onClick: () => navigate({ to: `/amendment/${amendmentId}/text` }),
         },
         {
           id: 'collaborators',
           label: t ? t('navigation.secondary.amendment.collaborators') : 'Collaborators',
           icon: 'Users',
           href: `/amendment/${amendmentId}/collaborators`,
-          onClick: () => router.push(`/amendment/${amendmentId}/collaborators`),
+          onClick: () => navigate({ to: `/amendment/${amendmentId}/collaborators` }),
         },
         {
           id: 'notifications',
           label: t ? t('navigation.secondary.amendment.notifications') : 'Notifications',
           icon: 'Bell',
           href: `/amendment/${amendmentId}/notifications`,
-          onClick: () => router.push(`/amendment/${amendmentId}/notifications`),
+          onClick: () => navigate({ to: `/amendment/${amendmentId}/notifications` }),
         },
         {
           id: 'edit',
           label: t ? t('navigation.secondary.amendment.edit') : 'Edit Amendment',
           icon: 'Settings',
           href: `/amendment/${amendmentId}/edit`,
-          onClick: () => router.push(`/amendment/${amendmentId}/edit`),
+          onClick: () => navigate({ to: `/amendment/${amendmentId}/edit` }),
         }
       );
     }
@@ -429,7 +422,7 @@ export const navItemsAuthenticated = (
         label: t ? t('navigation.secondary.blog.overview') : 'Overview',
         icon: 'FileText',
         href: `/blog/${blogId}`,
-        onClick: () => router.push(`/blog/${blogId}`),
+        onClick: () => navigate({ to: `/blog/${blogId}` }),
       },
     ];
 
@@ -441,28 +434,28 @@ export const navItemsAuthenticated = (
           label: t ? t('navigation.secondary.blog.bloggers') : 'Bloggers',
           icon: 'Users',
           href: `/blog/${blogId}/bloggers`,
-          onClick: () => router.push(`/blog/${blogId}/bloggers`),
+          onClick: () => navigate({ to: `/blog/${blogId}/bloggers` }),
         },
         {
           id: 'editor',
           label: t ? t('navigation.secondary.blog.editor') : 'Editor',
           icon: 'Edit',
           href: `/blog/${blogId}/editor`,
-          onClick: () => router.push(`/blog/${blogId}/editor`),
+          onClick: () => navigate({ to: `/blog/${blogId}/editor` }),
         },
         {
           id: 'notifications',
           label: t ? t('navigation.secondary.blog.notifications') : 'Notifications',
           icon: 'Bell',
           href: `/blog/${blogId}/notifications`,
-          onClick: () => router.push(`/blog/${blogId}/notifications`),
+          onClick: () => navigate({ to: `/blog/${blogId}/notifications` }),
         },
         {
           id: 'edit',
           label: t ? t('navigation.secondary.blog.edit') : 'Edit Blog',
           icon: 'Settings',
           href: `/blog/${blogId}/edit`,
-          onClick: () => router.push(`/blog/${blogId}/edit`),
+          onClick: () => navigate({ to: `/blog/${blogId}/edit` }),
         }
       );
     }

@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Edit, Eye, MessageSquare, Vote, ChevronDown } from 'lucide-react';
-import { db, tx } from '@db/db';
+import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/use-translation';
 
@@ -31,6 +31,7 @@ interface ModeSelectorProps {
 
 export function ModeSelector({ blogId, currentMode, isOwnerOrCollaborator }: ModeSelectorProps) {
   const { t } = useTranslation();
+  const { updateBlog } = useBlogActions();
 
   const modes = [
     {
@@ -75,12 +76,10 @@ export function ModeSelector({ blogId, currentMode, isOwnerOrCollaborator }: Mod
     }
 
     try {
-      await db.transact([
-        tx.blogs[blogId].update({
-          editingMode: newMode,
-          updatedAt: Date.now(),
-        }),
-      ]);
+      await updateBlog({
+        id: blogId,
+        editing_mode: newMode,
+      });
 
       const modeConfig = modes.find(m => m.value === newMode);
       toast.success(`${t('features.blogs.modeSelector.title')}: ${modeConfig?.label}`);

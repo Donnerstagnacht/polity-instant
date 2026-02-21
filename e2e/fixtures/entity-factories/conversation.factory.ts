@@ -5,7 +5,7 @@
  */
 
 import { FactoryBase } from './factory-base';
-import { adminTransact, tx } from '../admin-db';
+import { adminUpsert } from '../admin-db';
 
 export interface CreateConversationOptions {
   id?: string;
@@ -34,40 +34,36 @@ export class ConversationFactory extends FactoryBase {
     this._counter++;
     const conversationId = overrides.id ?? this.generateId();
     const name = overrides.name ?? `E2E Conversation ${this._counter}`;
-    const now = new Date();
-    const txns: any[] = [];
+    const now = new Date().toISOString();
 
     // Create conversation
-    const convTx = tx.conversations[conversationId].update({
+    await adminUpsert('conversation', {
+      id: conversationId,
       type: overrides.type ?? 'direct',
       name,
       status: overrides.status ?? 'accepted',
-      createdAt: now,
-      lastMessageAt: now,
+      group_id: overrides.groupId ?? null,
+      requested_by_id: requestedById,
+      created_at: now,
+      last_message_at: now,
     });
-
-    if (overrides.groupId) {
-      txns.push(convTx.link({ group: overrides.groupId, requestedBy: requestedById }));
-      this.trackLink('conversations', conversationId, 'group', overrides.groupId);
-    } else {
-      txns.push(convTx.link({ requestedBy: requestedById }));
-    }
-    this.trackEntity('conversations', conversationId);
-    this.trackLink('conversations', conversationId, 'requestedBy', requestedById);
+    this.trackEntity('conversation', conversationId);
 
     // Add all participants (including the requester)
     const allParticipants = [requestedById, ...participantIds.filter(id => id !== requestedById)];
-    for (const memberId of allParticipants) {
+    const participants = allParticipants.map(memberId => {
       const participantId = this.generateId();
-      txns.push(
-        tx.conversationParticipants[participantId]
-          .update({ joinedAt: now, lastReadAt: now })
-          .link({ conversation: conversationId, user: memberId })
-      );
-      this.trackEntity('conversationParticipants', participantId);
-    }
+      this.trackEntity('conversation_participant', participantId);
+      return {
+        id: participantId,
+        conversation_id: conversationId,
+        user_id: memberId,
+        joined_at: now,
+        last_read_at: now,
+      };
+    });
+    await adminUpsert('conversation_participant', participants);
 
-    await adminTransact(txns);
     return { id: conversationId, name };
   }
 
@@ -80,18 +76,18 @@ export class ConversationFactory extends FactoryBase {
     content: string
   ): Promise<string> {
     const messageId = this.generateId();
-    await adminTransact([
-      tx.messages[messageId]
-        .update({
-          content,
-          isRead: false,
-          createdAt: new Date(),
-          updatedAt: null,
-          deletedAt: null,
-        })
-        .link({ conversation: conversationId, sender: senderId }),
-    ]);
-    this.trackEntity('messages', messageId);
+    const now = new Date().toISOString();
+
+    await adminUpsert('message', {
+      id: messageId,
+      conversation_id: conversationId,
+      sender_id: senderId,
+      content,
+      is_read: false,
+      created_at: now,
+      updated_at: now,
+    });
+    this.trackEntity('message', messageId);
     return messageId;
   }
 }

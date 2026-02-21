@@ -3,7 +3,7 @@
  * Queries content created by or managed by the user
  */
 
-import type { ContentItem } from './content-reasons';
+import type { ContentItem } from '../logic/content-reasons';
 
 export interface OwnContentQueryOptions {
   /** User ID to query content for */

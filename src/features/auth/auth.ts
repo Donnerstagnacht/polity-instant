@@ -1,164 +1,121 @@
 // auth.ts
-// Real InstantDB authentication implementation using InstantDB's built-in auth
-// This uses InstantDB's native magic code system
+// Supabase authentication implementation using magic links
+// Uses Supabase's built-in OTP/magic link system
 
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import { db } from '../../../db/db.ts';
-
-// Define the user interface
-interface User {
-  id: string;
-  email: string;
-  [key: string]: any; // InstantDB user can have additional fields
-}
+import { createClient } from '@/lib/supabase/client';
 
 // Define the authentication store state interface
+// Note: Auth session state is managed by Supabase + AuthProvider.
+// This store handles imperative auth operations (send OTP, verify, sign out)
+// and their associated loading/error UI state.
 interface AuthState {
-  // Authentication state
-  isAuthenticated: boolean;
-  user: User | null;
-
   // Loading and error states
   isLoading: boolean;
   error: string | null;
 
-  // Magic code flow state
+  // Magic link flow state
   pendingEmail: string | null;
 
   // Actions
-  login: (user: User) => void;
-  logout: () => void;
   requestMagicCode: (email: string) => Promise<boolean>;
   verifyMagicCode: (email: string, code: string) => Promise<boolean>;
+  signOut: () => Promise<void>;
   clearError: () => void;
   setLoading: (loading: boolean) => void;
 }
 
-// Create the authentication store with persistence
+// Create the authentication store (no persistence — Supabase manages auth tokens)
 export const useAuthStore = create<AuthState>()(
-  persist(
-    immer(set => ({
-      // Initial state
-      isAuthenticated: false,
-      user: null,
-      isLoading: false,
-      error: null,
-      pendingEmail: null,
+  immer(set => ({
+    // Initial state
+    isLoading: false,
+    error: null,
+    pendingEmail: null,
 
-      // Actions
-      login: (user: User) =>
-        set(state => {
-          state.isAuthenticated = true;
-          state.user = user;
-          state.error = null;
-        }),
+    // Actions
+    requestMagicCode: async (email: string) => {
+      set(state => {
+        state.isLoading = true;
+        state.error = null;
+        state.pendingEmail = email;
+      });
 
-      logout: () =>
-        set(state => {
-          state.isAuthenticated = false;
-          state.user = null;
-          state.pendingEmail = null;
-          state.error = null;
-        }),
+      try {
+        const supabase = createClient();
+        const { error } = await supabase.auth.signInWithOtp({ email });
 
-      requestMagicCode: async (email: string) => {
+        if (error) {
+          throw error;
+        }
+
         set(state => {
-          state.isLoading = true;
-          state.error = null;
-          state.pendingEmail = email;
+          state.isLoading = false;
         });
 
-        try {
-          // Use InstantDB's built-in magic code system
-          await db.auth.sendMagicCode({ email });
+        return true;
+      } catch (error) {
+        console.error('Failed to send magic link:', error);
+        set(state => {
+          state.isLoading = false;
+          state.error = error instanceof Error ? error.message : 'Failed to send magic link';
+        });
+        return false;
+      }
+    },
 
+    verifyMagicCode: async (email: string, code: string) => {
+      set(state => {
+        state.isLoading = true;
+        state.error = null;
+      });
+
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase.auth.verifyOtp({
+          email,
+          token: code,
+          type: 'magiclink',
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        if (data.user) {
           set(state => {
             state.isLoading = false;
+            state.pendingEmail = null;
           });
 
           return true;
-        } catch (error) {
-          console.error('Failed to send magic code:', error);
-          set(state => {
-            state.isLoading = false;
-            state.error = error instanceof Error ? error.message : 'Failed to send magic code';
-          });
-          return false;
+        } else {
+          throw new Error('Authentication failed');
         }
-      },
-
-      verifyMagicCode: async (email: string, code: string) => {
+      } catch (error) {
+        console.error('Failed to verify magic code:', error);
         set(state => {
-          state.isLoading = true;
-          state.error = null;
+          state.isLoading = false;
+          state.error = error instanceof Error ? error.message : 'Invalid or expired code';
         });
+        return false;
+      }
+    },
 
-        try {
-          // Use InstantDB's built-in magic code verification
-          const result = await db.auth.signInWithMagicCode({ email, code });
+    signOut: async () => {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+    },
 
-          if (result.user) {
-            const user: User = {
-              id: result.user.id,
-              email: result.user.email || '',
-              // Include any additional user fields
-              ...Object.fromEntries(
-                Object.entries(result.user).filter(([key]) => key !== 'id' && key !== 'email')
-              ),
-            };
-
-            set(state => {
-              state.isAuthenticated = true;
-              state.user = user;
-              state.isLoading = false;
-              state.pendingEmail = null;
-            });
-
-            return true;
-          } else {
-            throw new Error('Authentication failed');
-          }
-        } catch (error) {
-          console.error('Failed to verify magic code:', error);
-          set(state => {
-            state.isLoading = false;
-            state.error = error instanceof Error ? error.message : 'Invalid or expired code';
-          });
-          return false;
-        }
-      },
-
-      clearError: () =>
-        set(state => {
-          state.error = null;
-        }),
-
-      setLoading: (loading: boolean) =>
-        set(state => {
-          state.isLoading = loading;
-        }),
-    })),
-    {
-      name: 'auth-storage',
-      storage: createJSONStorage(() => localStorage),
-      partialize: state => ({
-        isAuthenticated: state.isAuthenticated,
-        user: state.user,
-        // Don't persist isLoading - it should always start as false on mount
+    clearError: () =>
+      set(state => {
+        state.error = null;
       }),
-    }
-  )
+
+    setLoading: (loading: boolean) =>
+      set(state => {
+        state.isLoading = loading;
+      }),
+  }))
 );
-
-// Hook to use InstantDB auth state directly
-export const useInstantAuth = () => {
-  const { user, isLoading } = db.useAuth();
-
-  return {
-    user,
-    isLoading,
-    isAuthenticated: !!user,
-  };
-};

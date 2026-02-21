@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { db, tx, id } from '../../../../db/db';
-import { useAuthStore } from '@/features/auth/auth.ts';
+import { useGroupSubscribers } from '@/zero/groups/useGroupState';
+import { useCommonActions } from '@/zero/common/useCommonActions';
+import { useUserState } from '@/zero/users/useUserState';
+import { useAuth } from '@/providers/auth-provider';
 import { notifyGroupNewSubscriber } from '@/utils/notification-helpers';
+import { sendNotificationFn } from '@/server/notifications';
 import { toast } from 'sonner';
 
 /**
@@ -9,59 +12,22 @@ import { toast } from 'sonner';
  * @param targetGroupId - The ID of the group to subscribe/unsubscribe
  */
 export function useSubscribeGroup(targetGroupId?: string) {
-  const { user: authUser } = useAuthStore();
+  const { user: authUser } = useAuth();
+  const { subscribe: subscribeAction, unsubscribe: unsubscribeAction } = useCommonActions();
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscriberCount, setSubscriberCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const optimisticTargetRef = useRef<boolean | null>(null);
   const createdSubscriptionIdRef = useRef<string | null>(null);
 
-  // Query current user's name for notifications
-  const { data: currentUserData } = db.useQuery(
-    authUser?.id
-      ? {
-          $users: {
-            $: {
-              where: { id: authUser.id },
-              limit: 1,
-            },
-          },
-        }
-      : null
-  );
-  const currentUserName = currentUserData?.$users?.[0]?.name || 'Someone';
+  // Get current user name for notifications
+  const { currentUser: currentUserRows } = useUserState({ userId: authUser?.id });
+  const currentUserName = (currentUserRows as any)?.[0]?.name || authUser?.email || 'Someone';
 
-  // Query group name for notifications
-  const { data: groupData } = db.useQuery(
-    targetGroupId
-      ? {
-          groups: {
-            $: {
-              where: { id: targetGroupId },
-              limit: 1,
-            },
-          },
-        }
-      : null
-  );
-  const groupName = groupData?.groups?.[0]?.name || 'Group';
+  // Get group + subscribers from facade
+  const { groupName, subscribers: subscribersData, isLoading: subscriptionLoading } = useGroupSubscribers(targetGroupId);
 
-  // Query to get all subscribers for the target group (we'll filter client-side)
-  const { data: subscriptionData, isLoading: subscriptionLoading } = db.useQuery(
-    targetGroupId
-      ? {
-          subscribers: {
-            $: {
-              where: {
-                'group.id': targetGroupId,
-              },
-            },
-            subscriber: {},
-            group: {},
-          },
-        }
-      : null
-  );
+  const subscriptionData = { subscribers: subscribersData || [] };
 
   // Update subscription state when data changes
   useEffect(() => {
@@ -69,7 +35,7 @@ export function useSubscribeGroup(targetGroupId?: string) {
 
     // Check if the current user is subscribed by looking for their ID in the subscriber list
     const subscribed = authUser?.id
-      ? subscribers.some(sub => sub.subscriber?.id === authUser.id)
+      ? subscribers.some(sub => sub.subscriber_user?.id === authUser.id)
       : false;
 
     if (optimisticTargetRef.current !== null) {
@@ -94,7 +60,7 @@ export function useSubscribeGroup(targetGroupId?: string) {
 
     // Prevent duplicate subscriptions
     const existing = (subscriptionData?.subscribers || []).find(
-      sub => sub.subscriber?.id === authUser.id
+      sub => sub.subscriber_user?.id === authUser.id
     );
     if (existing) return;
 
@@ -104,30 +70,19 @@ export function useSubscribeGroup(targetGroupId?: string) {
     setSubscriberCount(prev => prev + 1);
     setIsLoading(true);
     try {
-      const subscriptionId = id();
+      const subscriptionId = crypto.randomUUID();
       createdSubscriptionIdRef.current = subscriptionId;
 
-      await db.transact([
-        tx.subscribers[subscriptionId]
-          .update({
-            createdAt: new Date(),
-          })
-          .link({
-            subscriber: authUser.id,
-            group: targetGroupId,
-          }),
-      ]);
+      await subscribeAction({
+        id: subscriptionId,
+        user_id: '',
+        group_id: targetGroupId,
+        amendment_id: '',
+        event_id: '',
+        blog_id: '',
+      });
 
-      // Send notification separately — notifications.create is server-only
-      try {
-        const notification = notifyGroupNewSubscriber({
-          senderId: authUser.id,
-          senderName: currentUserName,
-          groupId: targetGroupId,
-          groupName: groupName,
-        });
-        if (notification.length > 0) await db.transact(notification);
-      } catch { /* notification delivery is best-effort */ }
+      sendNotificationFn({ data: { helper: 'notifyGroupNewSubscriber', params: { senderId: authUser.id, groupId: targetGroupId, groupName } } }).catch(console.error)
       toast.success('Successfully subscribed to group');
     } catch (error) {
       // Revert optimistic update
@@ -149,7 +104,7 @@ export function useSubscribeGroup(targetGroupId?: string) {
     }
 
     const subscribers = subscriptionData?.subscribers || [];
-    let subsToDelete = subscribers.filter(sub => sub.subscriber?.id === authUser.id);
+    let subsToDelete = subscribers.filter(sub => sub.subscriber_user?.id === authUser.id);
 
     // Fallback: if reactive query hasn't caught up, use stored subscription ID
     if (subsToDelete.length === 0 && createdSubscriptionIdRef.current) {
@@ -166,7 +121,7 @@ export function useSubscribeGroup(targetGroupId?: string) {
     setSubscriberCount(prev => Math.max(0, prev - subsToDelete.length));
     setIsLoading(true);
     try {
-      await db.transact(subsToDelete.map(sub => tx.subscribers[sub.id].delete()));
+      await Promise.all(subsToDelete.map(sub => unsubscribeAction({ id: sub.id })));
       createdSubscriptionIdRef.current = null;
       toast.success('Successfully unsubscribed from group');
     } catch (error) {

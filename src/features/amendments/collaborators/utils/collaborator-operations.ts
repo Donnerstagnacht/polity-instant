@@ -2,7 +2,7 @@
  * Operations for managing collaborators, roles, and permissions
  */
 
-import db, { tx, id as generateId } from '../../../../../db/db';
+import { createClient } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import {
   notifyCollaborationInvite,
@@ -11,6 +11,8 @@ import {
   notifyCollaborationRemoved,
   notifyCollaborationRoleChanged,
 } from '@/utils/notification-helpers';
+
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
 /**
  * Invite users as collaborators
@@ -22,32 +24,26 @@ export async function inviteUsers(
   senderId?: string,
   amendmentTitle?: string
 ): Promise<void> {
-  const transactions: any[] = [];
+  for (const userId of userIds) {
+    const collaboratorId = crypto.randomUUID();
+    await supabase.from('amendment_collaborator').insert({
+      id: collaboratorId,
+      status: 'invited',
+      created_at: new Date().toISOString(),
+      user_id: userId,
+      amendment_id: amendmentId,
+      role_id: collaboratorRoleId,
+    });
 
-  userIds.forEach(userId => {
-    const collaboratorId = generateId();
-    transactions.push(
-      tx.amendmentCollaborators[collaboratorId]
-        .update({
-          status: 'invited',
-          createdAt: Date.now(),
-        })
-        .link({ user: userId, amendment: amendmentId, role: collaboratorRoleId })
-    );
-
-    // Send notification
     if (senderId && amendmentTitle) {
-      const notificationTxs = notifyCollaborationInvite({
+      await notifyCollaborationInvite({
         senderId,
         recipientUserId: userId,
         amendmentId,
         amendmentTitle,
       });
-      transactions.push(...notificationTxs);
     }
-  });
-
-  await db.transact(transactions);
+  }
 }
 
 /**
@@ -57,11 +53,9 @@ export async function changeCollaboratorRole(
   collaboratorId: string,
   newRoleId: string
 ): Promise<void> {
-  await db.transact([
-    tx.amendmentCollaborators[collaboratorId].link({
-      role: newRoleId,
-    }),
-  ]);
+  await supabase.from('amendment_collaborator').update({
+    role_id: newRoleId,
+  }).eq('id', collaboratorId);
 }
 
 /**
@@ -71,11 +65,9 @@ export async function changeCollaboratorStatus(
   collaboratorId: string,
   newStatus: string
 ): Promise<void> {
-  await db.transact([
-    tx.amendmentCollaborators[collaboratorId].update({
-      status: newStatus,
-    }),
-  ]);
+  await supabase.from('amendment_collaborator').update({
+    status: newStatus,
+  }).eq('id', collaboratorId);
 }
 
 /**
@@ -88,20 +80,16 @@ export async function removeCollaborator(
   amendmentId?: string,
   amendmentTitle?: string
 ): Promise<void> {
-  const transactions: any[] = [tx.amendmentCollaborators[collaboratorId].delete()];
+  await supabase.from('amendment_collaborator').delete().eq('id', collaboratorId);
 
-  // Send notification
   if (userId && senderId && amendmentId && amendmentTitle) {
-    const notificationTxs = notifyCollaborationRemoved({
+    await notifyCollaborationRemoved({
       senderId,
       recipientUserId: userId,
       amendmentId,
       amendmentTitle,
     });
-    transactions.push(...notificationTxs);
   }
-
-  await db.transact(transactions);
 }
 
 /**
@@ -114,24 +102,18 @@ export async function approveRequest(
   amendmentId?: string,
   amendmentTitle?: string
 ): Promise<void> {
-  const transactions: any[] = [
-    tx.amendmentCollaborators[collaboratorId].update({
-      status: 'member',
-    }),
-  ];
+  await supabase.from('amendment_collaborator').update({
+    status: 'member',
+  }).eq('id', collaboratorId);
 
-  // Send notification
   if (userId && senderId && amendmentId && amendmentTitle) {
-    const notificationTxs = notifyCollaborationApproved({
+    await notifyCollaborationApproved({
       senderId,
       recipientUserId: userId,
       amendmentId,
       amendmentTitle,
     });
-    transactions.push(...notificationTxs);
   }
-
-  await db.transact(transactions);
 }
 
 /**
@@ -144,20 +126,16 @@ export async function rejectRequest(
   amendmentId?: string,
   amendmentTitle?: string
 ): Promise<void> {
-  const transactions: any[] = [tx.amendmentCollaborators[collaboratorId].delete()];
+  await supabase.from('amendment_collaborator').delete().eq('id', collaboratorId);
 
-  // Send notification
   if (userId && senderId && amendmentId && amendmentTitle) {
-    const notificationTxs = notifyCollaborationRejected({
+    await notifyCollaborationRejected({
       senderId,
       recipientUserId: userId,
       amendmentId,
       amendmentTitle,
     });
-    transactions.push(...notificationTxs);
   }
-
-  await db.transact(transactions);
 }
 
 /**
@@ -173,25 +151,19 @@ export async function promoteToAdmin(
 ): Promise<void> {
   const authorRole = roles.find(r => r.name === 'Author');
   if (authorRole) {
-    const transactions: any[] = [
-      tx.amendmentCollaborators[collaboratorId].link({
-        role: authorRole.id,
-      }),
-    ];
+    await supabase.from('amendment_collaborator').update({
+      role_id: authorRole.id,
+    }).eq('id', collaboratorId);
 
-    // Send notification
     if (userId && senderId && amendmentId && amendmentTitle) {
-      const notificationTxs = notifyCollaborationRoleChanged({
+      await notifyCollaborationRoleChanged({
         senderId,
         recipientUserId: userId,
         amendmentId,
         amendmentTitle,
         newRole: 'Author',
       });
-      transactions.push(...notificationTxs);
     }
-
-    await db.transact(transactions);
   }
 }
 
@@ -208,25 +180,19 @@ export async function demoteToMember(
 ): Promise<void> {
   const collaboratorRole = roles.find(r => r.name === 'Collaborator');
   if (collaboratorRole) {
-    const transactions: any[] = [
-      tx.amendmentCollaborators[collaboratorId].link({
-        role: collaboratorRole.id,
-      }),
-    ];
+    await supabase.from('amendment_collaborator').update({
+      role_id: collaboratorRole.id,
+    }).eq('id', collaboratorId);
 
-    // Send notification
     if (userId && senderId && amendmentId && amendmentTitle) {
-      const notificationTxs = notifyCollaborationRoleChanged({
+      await notifyCollaborationRoleChanged({
         senderId,
         recipientUserId: userId,
         amendmentId,
         amendmentTitle,
         newRole: 'Collaborator',
       });
-      transactions.push(...notificationTxs);
     }
-
-    await db.transact(transactions);
   }
 }
 
@@ -245,24 +211,21 @@ export async function createRole(
   description: string,
   amendmentId: string
 ): Promise<void> {
-  await db.transact([
-    db.tx.roles[generateId()]
-      .update({
-        name,
-        description: description || '',
-        scope: 'amendment',
-      })
-      .link({
-        amendment: amendmentId,
-      }),
-  ]);
+  const roleId = crypto.randomUUID();
+  await supabase.from('role').insert({
+    id: roleId,
+    name,
+    description: description || '',
+    scope: 'amendment',
+    amendment_id: amendmentId,
+  });
 }
 
 /**
  * Remove a role
  */
 export async function removeRole(roleId: string): Promise<void> {
-  await db.transact([db.tx.roles[roleId].delete()]);
+  await supabase.from('role').delete().eq('id', roleId);
 }
 
 /**
@@ -277,28 +240,28 @@ export async function toggleActionRight(
   amendmentId: string
 ): Promise<void> {
   if (currentlyHas) {
-    // Find and remove the action right
     const role = roles.find(r => r.id === roleId);
     const actionRight = role?.actionRights?.find(
       (ar: any) => ar.resource === resource && ar.action === action
     );
 
     if (actionRight) {
-      await db.transact([db.tx.actionRights[actionRight.id].unlink({ roles: roleId })]);
+      await supabase.from('action_right').delete().eq('id', actionRight.id);
     }
   } else {
-    // Create new action right and link to role
-    const actionRightId = generateId();
+    const actionRightId = crypto.randomUUID();
     const role = roles.find(r => r.id === roleId);
 
-    // Determine which ID field to use based on role scope
-    const updateData: any = { resource, action };
+    const insertData: any = {
+      id: actionRightId,
+      resource,
+      action,
+      role_id: roleId,
+    };
     if (role?.scope === 'amendment') {
-      updateData.amendmentId = amendmentId;
+      insertData.amendment_id = amendmentId;
     }
 
-    await db.transact([
-      db.tx.actionRights[actionRightId].update(updateData).link({ roles: roleId }),
-    ]);
+    await supabase.from('action_right').insert(insertData);
   }
 }

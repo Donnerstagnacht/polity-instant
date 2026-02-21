@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
-import db from '../../../../db/db';
+import { useBlogState } from '@/zero/blogs/useBlogState';
+import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { notifyBlogPublished } from '@/utils/notification-helpers';
+import { computeHashtagDiff } from '../logic/blogHashtagDiff';
 
 export interface BlogFormData {
   title: string;
@@ -17,7 +19,8 @@ export interface BlogFormData {
  * Hook for blog update functionality
  */
 export function useBlogUpdate(blogId: string, actorId?: string) {
-  const router = useRouter();
+  const navigate = useNavigate();
+  const { updateBlog, syncBlogHashtags } = useBlogActions();
 
   const [formData, setFormData] = useState<BlogFormData>({
     title: '',
@@ -31,14 +34,10 @@ export function useBlogUpdate(blogId: string, actorId?: string) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch blog data
-  const { data, isLoading } = db.useQuery({
-    blogs: {
-      $: { where: { id: blogId } },
-      hashtags: {},
-    },
-  });
+  const { blogWithHashtags } = useBlogState({ blogId, includeHashtags: true });
+  const isLoading = false;
 
-  const blog = data?.blogs?.[0];
+  const blog = blogWithHashtags;
 
   // Initialize form data when blog loads
   useEffect(() => {
@@ -46,8 +45,8 @@ export function useBlogUpdate(blogId: string, actorId?: string) {
       setFormData({
         title: blog.title || '',
         description: blog.description || '',
-        imageURL: blog.imageURL || '',
-        isPublic: blog.isPublic ?? true,
+        imageURL: blog.image_url || '',
+        isPublic: blog.is_public ?? true,
         tags: blog.hashtags?.map((ht: any) => ht.tag) || [],
       });
     }
@@ -82,80 +81,55 @@ export function useBlogUpdate(blogId: string, actorId?: string) {
       }
 
       const updateData: any = {
+        id: blogId,
         title: formData.title,
         description: formData.description,
-        imageURL: formData.imageURL,
-        isPublic: formData.isPublic,
+        image_url: formData.imageURL,
+        is_public: formData.isPublic,
       };
 
-      const transactions: any[] = [db.tx.blogs[blogId].update(updateData)];
-
-      // Update blog
-      await db.transact(transactions);
+      await updateBlog(updateData);
 
       // Timeline and notifications are server-only — send separately
       try {
-        const sideEffects: any[] = [];
-
         if (formData.isPublic && actorId) {
-          if (formData.imageURL && formData.imageURL !== blog.imageURL) {
-            sideEffects.push(
-              createTimelineEvent({
-                eventType: 'image_uploaded',
-                entityType: 'blog',
-                entityId: blogId,
-                actorId,
-                title: `${formData.title} image updated`,
-                description: 'A new image was uploaded to this blog post',
-                contentType: 'image',
-              })
-            );
+          if (formData.imageURL && formData.imageURL !== blog.image_url) {
+            await createTimelineEvent({
+              eventType: 'image_uploaded',
+              entityType: 'blog',
+              entityId: blogId,
+              actorId,
+              title: `${formData.title} image updated`,
+              description: 'A new image was uploaded to this blog post',
+              contentType: 'image',
+            });
           }
         }
 
-        if (formData.isPublic && !blog.isPublic && actorId) {
-          const notifTxs = notifyBlogPublished({
+        if (formData.isPublic && !blog.is_public && actorId) {
+          await notifyBlogPublished({
             senderId: actorId,
             blogId,
             blogTitle: formData.title,
           });
-          sideEffects.push(...notifTxs);
         }
-
-        if (sideEffects.length > 0) await db.transact(sideEffects);
       } catch { /* timeline/notification delivery is best-effort */ }
 
       // Handle hashtags - remove old and add new
       if (blog.hashtags) {
-        const existingTags = blog.hashtags.map((ht: any) => ht.tag);
-        const tagsToRemove = blog.hashtags.filter((ht: any) => !formData.tags.includes(ht.tag));
-        const tagsToAdd = formData.tags.filter(tag => !existingTags.includes(tag));
+        const { hashtagsToRemove, hashtagsToAdd } = computeHashtagDiff(
+          blog.hashtags as any[],
+          formData.tags,
+          blogId
+        );
 
-        const transactions: any[] = [];
-
-        // Remove old hashtags
-        tagsToRemove.forEach((ht: any) => {
-          transactions.push(db.tx.hashtags[ht.id].delete());
-        });
-
-        // Add new hashtags
-        tagsToAdd.forEach(tag => {
-          const hashtagId = `${blogId}_${tag}`;
-          transactions.push(
-            db.tx.hashtags[hashtagId].update({ tag }),
-            db.tx.hashtags[hashtagId].link({ blog: blogId })
-          );
-        });
-
-        if (transactions.length > 0) {
-          await db.transact(transactions);
-        }
+        await syncBlogHashtags({ hashtagsToRemove, hashtagsToAdd });
       }
 
       toast.success('Blog updated successfully');
 
       setTimeout(() => {
-        router.push(`/blog/${blogId}`);
+        navigate({ to: `/blog/${blogId}` });
       }, 500);
     } catch (error) {
       console.error('Update error:', error);

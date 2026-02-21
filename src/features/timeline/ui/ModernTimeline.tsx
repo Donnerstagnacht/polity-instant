@@ -6,7 +6,7 @@ import { Rss, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/utils/utils';
 import { useTranslation } from '@/hooks/use-translation';
-import { db } from '@db/db';
+import { useAuth } from '@/providers/auth-provider';
 
 // Existing components
 import { MasonryGrid } from './MasonryGrid';
@@ -18,10 +18,10 @@ import { useTimelineMode } from '../hooks/useTimelineMode';
 import { useTimelineFilters, type TimelineSortOption } from '../hooks/useTimelineFilters';
 import { useSubscribedTimeline, type TimelineItem } from '../hooks/useSubscribedTimeline';
 import { useSubscriptionTimeline } from '../hooks/useSubscriptionTimeline';
-import { useDecisionTerminal } from '../hooks/useDecisionTerminal';
+import { useDecisionTerminal } from '@/features/decision-terminal/hooks/useDecisionTerminal';
 
 // Decision Terminal
-import { DecisionTerminal } from './terminal/DecisionTerminal';
+import { DecisionTerminal } from '@/features/decision-terminal/ui/DecisionTerminal';
 import { DynamicTimelineCard, type CardType } from './LazyCardComponents';
 
 interface ModernTimelineProps {
@@ -39,7 +39,7 @@ interface ModernTimelineProps {
  */
 export function ModernTimeline({ className, userId: userIdProp, groupId }: ModernTimelineProps) {
   const { t } = useTranslation();
-  const { user } = db.useAuth();
+  const { user } = useAuth();
   const userId = userIdProp || user?.id || '';
 
   const { mode, setMode } = useTimelineMode();

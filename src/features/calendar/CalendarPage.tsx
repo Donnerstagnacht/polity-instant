@@ -1,65 +1,22 @@
 'use client';
 
-import { useMemo } from 'react';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
-import { useCalendarData } from './hooks/useCalendarData';
-import { useCalendarState } from './hooks/useCalendarState';
-import { useCalendarNavigation } from './hooks/useCalendarNavigation';
+import { useCalendarPage } from './hooks/useCalendarPage';
 import { CalendarHeader } from './ui/CalendarHeader';
 import { DayView } from './ui/DayView';
-import { useTranslation } from '@/hooks/use-translation';
 import { WeekView } from './ui/WeekView';
 import { MonthView } from './ui/MonthView';
-import {
-  startOfWeek,
-  endOfWeek,
-  startOfMonth,
-  endOfMonth,
-  isSameDay,
-  isDateInRange,
-  formatDate,
-  formatWeekRange,
-  formatMonth,
-} from './utils/dateUtils';
 
 export default function CalendarPage() {
-  const { t } = useTranslation();
-  const { events, isLoading } = useCalendarData();
-  const { view, setView, selectedDate, setSelectedDate } = useCalendarState();
-  const { goToPrevious, goToNext, goToToday } = useCalendarNavigation(
-    view,
-    selectedDate,
-    setSelectedDate
-  );
+  const cp = useCalendarPage();
 
-  // Filter events based on current view
-  const filteredEvents = useMemo(() => {
-    if (view === 'day') {
-      return events.filter((event) => isSameDay(event.startDate, selectedDate));
-    } else if (view === 'week') {
-      const start = startOfWeek(selectedDate);
-      const end = endOfWeek(selectedDate);
-      return events.filter((event) => isDateInRange(event.startDate, start, end));
-    } else {
-      const start = startOfMonth(selectedDate);
-      const end = endOfMonth(selectedDate);
-      return events.filter((event) => isDateInRange(event.startDate, start, end));
-    }
-  }, [events, view, selectedDate]);
-
-  const getCurrentViewTitle = () => {
-    if (view === 'day') return formatDate(selectedDate);
-    if (view === 'week') return formatWeekRange(selectedDate);
-    return formatMonth(selectedDate);
-  };
-
-  if (isLoading) {
+  if (cp.isLoading) {
     return (
       <AuthGuard requireAuth={true}>
         <PageWrapper className="container mx-auto p-4">
           <div className="flex h-[400px] items-center justify-center">
-            <p className="text-muted-foreground">{t('features.calendar.loading')}</p>
+            <p className="text-muted-foreground">{cp.t('features.calendar.loading')}</p>
           </div>
         </PageWrapper>
       </AuthGuard>
@@ -70,37 +27,37 @@ export default function CalendarPage() {
     <AuthGuard requireAuth={true}>
       <PageWrapper className="container mx-auto p-4">
         <CalendarHeader
-          view={view}
-          setView={setView}
-          currentViewTitle={getCurrentViewTitle()}
-          onPrevious={goToPrevious}
-          onNext={goToNext}
-          onToday={goToToday}
+          view={cp.view}
+          setView={cp.setView}
+          currentViewTitle={cp.currentViewTitle}
+          onPrevious={cp.goToPrevious}
+          onNext={cp.goToNext}
+          onToday={cp.goToToday}
         />
 
-        {view === 'day' && (
+        {cp.view === 'day' && (
           <DayView
-            selectedDate={selectedDate}
-            events={filteredEvents}
-            allEvents={events}
-            onDateSelect={setSelectedDate}
+            selectedDate={cp.selectedDate}
+            events={cp.filteredEvents}
+            allEvents={cp.events}
+            onDateSelect={cp.setSelectedDate}
           />
         )}
 
-        {view === 'week' && (
+        {cp.view === 'week' && (
           <WeekView
-            selectedDate={selectedDate}
-            events={filteredEvents}
-            allEvents={events}
+            selectedDate={cp.selectedDate}
+            events={cp.filteredEvents}
+            allEvents={cp.events}
           />
         )}
 
-        {view === 'month' && (
+        {cp.view === 'month' && (
           <MonthView
-            selectedDate={selectedDate}
-            onDateSelect={setSelectedDate}
-            events={filteredEvents}
-            allEvents={events}
+            selectedDate={cp.selectedDate}
+            onDateSelect={cp.setSelectedDate}
+            events={cp.filteredEvents}
+            allEvents={cp.events}
           />
         )}
       </PageWrapper>

@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import db from '../../../../db/db';
+import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { findShortestPath } from '@/utils/path-finding';
 import { CalendarIcon, Target, User, MapPin, Clock, Users, ChevronRight, Search } from 'lucide-react';
 
@@ -48,37 +48,27 @@ export function TargetGroupEventSelector({
   const [selectedEvent, setSelectedEvent] = useState<{ id: string; data: any } | null>(null);
   const [eventSearchQuery, setEventSearchQuery] = useState<string>('');
 
-  // Fetch network data
-  const { data: networkData } = db.useQuery({
-    groups: {},
-    groupRelationships: {
-      parentGroup: {},
-      childGroup: {},
-    },
-    groupMemberships: {
-      group: {},
-      user: {},
-    },
-    events: {
-      group: {},
-    },
-  } as any);
+  // Fetch network data via facade
+  const {
+    allGroups: groups,
+    allGroupRelationships: groupRelationshipsData,
+    allGroupMemberships: groupMembershipsData,
+    allEvents: eventsData,
+    eventsByGroup: groupEventsResult,
+  } = useAmendmentState({
+    includeNetworkData: true,
+    includeEventsByGroup: !!selectedGroup?.id,
+    eventGroupId: selectedGroup?.id,
+  });
 
-  // Query events for selected group
-  const { data: groupEventsData } = db.useQuery(
-    selectedGroup?.id
-      ? {
-          events: {
-            $: {
-              where: {
-                'group.id': selectedGroup.id,
-              },
-            },
-            group: {},
-          },
-        }
-      : { events: {} }
-  );
+  const networkData = {
+    groups: groups ?? [],
+    groupRelationships: groupRelationshipsData ?? [],
+    groupMemberships: groupMembershipsData ?? [],
+    events: eventsData ?? [],
+  } as any;
+
+  const groupEventsData = { events: groupEventsResult ?? [] } as any;
 
   // Reset selection when user changes
   useEffect(() => {

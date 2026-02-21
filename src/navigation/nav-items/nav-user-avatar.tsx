@@ -1,13 +1,29 @@
 import { useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/utils/utils.ts';
-import { db } from '../../../db/db';
-import { useUserData } from '@/features/user/hooks/useUserData';
+import { useAuth } from '@/providers/auth-provider';
+import { useZeroReady } from '@/providers/zero-provider';
+import { useUserData } from '@/features/users/hooks/useUserData';
 import { UserMenu } from '@/components/auth/UserMenu';
 import type { NavigationView } from '@/navigation/types/navigation.types';
 
-export function NavUserAvatar({
+export function NavUserAvatar(props: {
+  navigationView: NavigationView;
+  isMobile: boolean;
+  className?: string;
+}) {
+  const { user: authUser } = useAuth();
+  const zeroReady = useZeroReady();
+
+  if (!authUser || !zeroReady) {
+    return null;
+  }
+
+  return <NavUserAvatarInner {...props} />;
+}
+
+function NavUserAvatarInner({
   navigationView,
   className,
   isMobile,
@@ -16,8 +32,8 @@ export function NavUserAvatar({
   isMobile: boolean;
   className?: string;
 }) {
-  const router = useRouter();
-  const { user: authUser } = db.useAuth();
+  const navigate = useNavigate();
+  const { user: authUser } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -42,7 +58,7 @@ export function NavUserAvatar({
   if (navigationView === 'asButton') {
     const handleClick = () => {
       if (authUser?.id) {
-        router.push(`/user/${authUser.id}`);
+        navigate({ to: `/user/${authUser.id}` });
       }
     };
 

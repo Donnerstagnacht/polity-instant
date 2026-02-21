@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { ImageUpload } from '@/components/shared/ImageUpload';
@@ -19,13 +19,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import db, { tx } from '../../../../db/db';
-import type { WorkflowStatus } from '@db/rbac/workflow-constants';
+import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
+import type { WorkflowStatus } from '@/zero/rbac/workflow-constants';
 import {
   WORKFLOW_STATUS_METADATA,
   COLLABORATOR_SELECTABLE_STATUSES,
   isEventPhase,
-} from '@db/rbac/workflow-constants';
+} from '@/zero/rbac/workflow-constants';
 import { useTranslation } from '@/hooks/use-translation';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { notifyAmendmentProfileUpdated } from '@/utils/notification-helpers';
@@ -45,8 +45,9 @@ export function AmendmentEditContent({
   currentUserId,
   isLoading,
 }: AmendmentEditContentProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { t } = useTranslation();
+  const { updateAmendment } = useAmendmentActions();
 
   const [formData, setFormData] = useState({
     title: '',
@@ -106,67 +107,55 @@ export function AmendmentEditContent({
       }
       const transactions: any[] = [];
       // Only push update if something changed
-      transactions.push(
-        tx.amendments[amendmentId].update({
-          title: formData.title,
-          subtitle: formData.subtitle,
-          code: formData.code,
-          imageURL: formData.imageURL,
-          videoURL: formData.videoURL,
-          videoThumbnailURL: formData.videoThumbnailURL,
-          status: formData.status,
-          workflowStatus: formData.workflowStatus,
-          date: formData.date,
-          supporters: formData.supporters,
-          tags: formData.tags,
-        })
-      );
+      await updateAmendment({
+        id: amendmentId,
+        title: formData.title,
+        code: formData.code,
+        status: formData.status,
+        workflow_status: formData.workflowStatus,
+        supporters: formData.supporters,
+        tags: formData.tags,
+      });
       // Only create timeline events for public amendments
       if (amendment.visibility === 'public') {
         if (formData.imageURL && formData.imageURL !== amendment.imageURL) {
-          transactions.push(
-            createTimelineEvent({
-              eventType: 'image_uploaded',
-              entityType: 'amendment',
-              entityId: amendmentId,
-              actorId: currentUserId,
-              title: t('features.timeline.imageUploadedTitle'),
-              description: t('features.timeline.imageUploadedDescription', {
-                title: formData.title,
-              }),
-              contentType: 'image',
-              status: {},
-            })
-          );
+          await createTimelineEvent({
+            eventType: 'image_uploaded',
+            entityType: 'amendment',
+            entityId: amendmentId,
+            actorId: currentUserId,
+            title: t('features.timeline.imageUploadedTitle'),
+            description: t('features.timeline.imageUploadedDescription', {
+              title: formData.title,
+            }),
+            contentType: 'image',
+            status: {},
+          });
         }
         if (formData.videoURL && formData.videoURL !== amendment.videoURL) {
-          transactions.push(
-            createTimelineEvent({
-              eventType: 'video_uploaded',
-              entityType: 'amendment',
-              entityId: amendmentId,
-              actorId: currentUserId,
-              title: t('features.timeline.videoUploadedTitle'),
-              description: t('features.timeline.videoUploadedDescription', {
-                title: formData.title,
-              }),
-              contentType: 'video',
-              status: {},
-            })
-          );
+          await createTimelineEvent({
+            eventType: 'video_uploaded',
+            entityType: 'amendment',
+            entityId: amendmentId,
+            actorId: currentUserId,
+            title: t('features.timeline.videoUploadedTitle'),
+            description: t('features.timeline.videoUploadedDescription', {
+              title: formData.title,
+            }),
+            contentType: 'video',
+            status: {},
+          });
         }
       }
       // Notify about profile update
-      const notifTxs = notifyAmendmentProfileUpdated({
+      await notifyAmendmentProfileUpdated({
         senderId: currentUserId,
         amendmentId,
         amendmentTitle: formData.title,
       });
-      transactions.push(...notifTxs);
-      await db.transact(transactions);
       toast.success(t('features.amendments.editContent.updateSuccess'));
       setTimeout(() => {
-        router.push(`/amendment/${amendmentId}`);
+        navigate({ to: `/amendment/${amendmentId}` });
       }, 500);
     } catch (error) {
       toast.error(t('features.amendments.editContent.updateFailed'));
@@ -194,7 +183,7 @@ export function AmendmentEditContent({
             {t('features.amendments.editContent.noDataExists')}
           </p>
           <div className="mt-6">
-            <Button onClick={() => router.push(`/`)} variant="default">
+            <Button onClick={() => navigate({ to: `/` })} variant="default">
               {t('features.amendments.editContent.backToHome')}
             </Button>
           </div>
@@ -474,7 +463,7 @@ export function AmendmentEditContent({
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push(`/amendment/${amendmentId}`)}
+            onClick={() => navigate({ to: `/amendment/${amendmentId}` })}
             disabled={isSubmitting}
           >
             {t('features.amendments.editContent.cancel')}

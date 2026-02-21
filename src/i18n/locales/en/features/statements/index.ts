@@ -40,6 +40,14 @@ export const statementsTranslations = {
     shareStatement: 'Share Statement',
     saveForLater: 'Save for Later',
   },
+  // Toast messages for action hooks
+  toasts: {
+    created: 'Statement created',
+    createFailed: 'Failed to create statement',
+    updateFailed: 'Failed to update statement',
+    deleted: 'Statement deleted',
+    deleteFailed: 'Failed to delete statement',
+  },
   actions: {
     edit: 'Edit',
     delete: 'Delete',

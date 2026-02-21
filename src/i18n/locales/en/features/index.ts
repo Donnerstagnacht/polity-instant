@@ -1,37 +1,57 @@
 export { authTranslations } from './auth';
+export { agendasTranslations } from './agendas';
 export { amendmentsTranslations } from './amendments';
 export { blogsTranslations } from './blogs';
 export { calendarTranslations } from './calendar';
+export { changeRequestsTranslations } from './change-requests';
 export { createTranslations } from './create';
+export { decisionTerminalTranslations } from './decision-terminal';
+export { delegatesTranslations } from './delegates';
+export { discussionsTranslations } from './discussions';
 export { documentsTranslations } from './documents';
 export { editor as editorTranslations } from './editor';
+export { electionsTranslations } from './elections';
 export { eventsTranslations } from './events';
 export { groupsTranslations } from './groups';
 export { meetTranslations } from './meet';
 export { messagesTranslations } from './messages';
+export { networkTranslations } from './network';
 export { notificationsTranslations } from './notifications';
+export { paymentsTranslations } from './payments';
+export { positionsTranslations } from './positions';
 export { searchTranslations } from './search';
 export { statementsTranslations } from './statements';
 export { timelineTranslations } from './timeline';
 export { todosTranslations } from './todos';
-export { userTranslations } from './user';
+export { userTranslations } from './users';
+export { votesTranslations } from './votes';
 
 export const features = {
+  agendas: async () => (await import('./agendas')).agendasTranslations,
   auth: async () => (await import('./auth')).authTranslations,
   amendments: async () => (await import('./amendments')).amendmentsTranslations,
   blogs: async () => (await import('./blogs')).blogsTranslations,
   calendar: async () => (await import('./calendar')).calendarTranslations,
+  changeRequests: async () => (await import('./change-requests')).changeRequestsTranslations,
   create: async () => (await import('./create')).createTranslations,
+  decisionTerminal: async () => (await import('./decision-terminal')).decisionTerminalTranslations,
+  delegates: async () => (await import('./delegates')).delegatesTranslations,
+  discussions: async () => (await import('./discussions')).discussionsTranslations,
   documents: async () => (await import('./documents')).documentsTranslations,
   editor: async () => (await import('./editor')).editor,
+  elections: async () => (await import('./elections')).electionsTranslations,
   events: async () => (await import('./events')).eventsTranslations,
   groups: async () => (await import('./groups')).groupsTranslations,
   meet: async () => (await import('./meet')).meetTranslations,
   messages: async () => (await import('./messages')).messagesTranslations,
+  network: async () => (await import('./network')).networkTranslations,
   notifications: async () => (await import('./notifications')).notificationsTranslations,
+  payments: async () => (await import('./payments')).paymentsTranslations,
+  positions: async () => (await import('./positions')).positionsTranslations,
   search: async () => (await import('./search')).searchTranslations,
   statements: async () => (await import('./statements')).statementsTranslations,
   timeline: async () => (await import('./timeline')).timelineTranslations,
   todos: async () => (await import('./todos')).todosTranslations,
-  user: async () => (await import('./user')).userTranslations,
+  user: async () => (await import('./users')).userTranslations,
+  votes: async () => (await import('./votes')).votesTranslations,
 } as const;

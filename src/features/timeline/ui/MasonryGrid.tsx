@@ -5,7 +5,7 @@ import { cn } from '@/utils/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Rss, Search } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@tanstack/react-router';
 import { useTranslation } from '@/hooks/use-translation';
 
 export interface MasonryGridProps<T> {
@@ -164,7 +164,7 @@ export function MasonryGridEmpty() {
         </p>
       </div>
       <Button variant="outline" asChild>
-        <Link href="/search" className="flex items-center gap-2">
+        <Link to="/search" className="flex items-center gap-2">
           <Search className="h-4 w-4" />
           {t('features.timeline.discoverContent')}
         </Link>

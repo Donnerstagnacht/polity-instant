@@ -4,7 +4,10 @@
  * with various rights (amendmentRight, informationRight, etc.)
  */
 
-import { id, tx } from '@instantdb/admin';
+import { id } from '../helpers/id.helper';
+import { tx } from '../helpers/compat';
+import { batchTransact } from '../helpers/transaction.helpers';
+import type { InsertOp } from '../helpers/transaction.helpers';
 import { faker } from '@faker-js/faker';
 import type { EntitySeeder, SeedContext } from '../types/seeder.types';
 import { randomInt, randomItem, randomItems } from '../helpers/random.helpers';
@@ -23,7 +26,7 @@ export const groupRelationshipsSeeder: EntitySeeder = {
     }
 
     console.log('Seeding group relationships...');
-    const transactions = [];
+    const transactions: InsertOp[] = [];
     let totalRelationships = 0;
     let amendmentRightChains = 0;
     const groupRelationshipIds: string[] = [];
@@ -311,7 +314,7 @@ export const groupRelationshipsSeeder: EntitySeeder = {
     }
 
     if (transactions.length > 0) {
-      await db.transact(transactions);
+      await batchTransact(db, transactions);
     }
 
     let minConnections = Infinity;

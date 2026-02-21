@@ -1,4 +1,6 @@
-import { db, tx, id } from '@db/db';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
 export type VersionCreationType =
   | 'manual'
@@ -26,33 +28,31 @@ export async function createBlogVersion({
   title,
 }: CreateVersionParams): Promise<void> {
   // Query existing versions to determine next version number
-  const { data: versionsData } = await db.queryOnce({
-    documentVersions: {
-      $: {
-        where: { 'blog.id': blogId },
-      },
-    },
-  });
+  const { data: versionsData } = await supabase
+    .from('document_version')
+    .select('version_number')
+    .eq('blog_id', blogId);
 
-  const versions = versionsData?.documentVersions || [];
+  const versions = versionsData ?? [];
   const nextVersionNumber =
-    versions.length > 0 ? Math.max(...versions.map((v: any) => v.versionNumber)) + 1 : 1;
+    versions.length > 0
+      ? Math.max(...versions.map((v: any) => v.version_number)) + 1
+      : 1;
 
   // Generate title based on creation type if not provided
   const versionTitle = title || getDefaultVersionTitle(creationType);
 
-  const versionId = id();
-  await db.transact([
-    tx.documentVersions[versionId]
-      .update({
-        versionNumber: nextVersionNumber,
-        title: versionTitle,
-        content: content,
-        createdAt: Date.now(),
-        creationType,
-      })
-      .link({ blog: blogId, creator: userId }),
-  ]);
+  const versionId = crypto.randomUUID();
+  await supabase.from('document_version').insert({
+    id: versionId,
+    version_number: nextVersionNumber,
+    title: versionTitle,
+    content,
+    created_at: Date.now(),
+    creation_type: creationType,
+    blog_id: blogId,
+    creator_id: userId,
+  });
 }
 
 /**
@@ -87,18 +87,15 @@ function getDefaultVersionTitle(creationType: VersionCreationType): string {
  */
 export async function getLatestVersionNumber(blogId: string): Promise<number> {
   try {
-    const { data: versionsData } = await db.queryOnce({
-      documentVersions: {
-        $: {
-          where: { 'blog.id': blogId },
-        },
-      },
-    });
+    const { data: versionsData } = await supabase
+      .from('document_version')
+      .select('version_number')
+      .eq('blog_id', blogId);
 
-    const versions = versionsData?.documentVersions || [];
+    const versions = versionsData ?? [];
     if (versions.length === 0) return 0;
 
-    return Math.max(...versions.map((v: any) => v.versionNumber));
+    return Math.max(...versions.map((v: any) => v.version_number));
   } catch (error) {
     console.error('Failed to get latest version number:', error);
     return 0;

@@ -4,7 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/utils/utils.ts';
 import type { NavigationView } from '@/navigation/types/navigation.types';
 import { useState } from 'react';
-import { useAuthStore } from '@/features/auth/auth.ts';
+import { useAuth } from '@/providers/auth-provider';
 
 export function NavUserAvatar({
   navigationView,
@@ -16,7 +16,8 @@ export function NavUserAvatar({
   className?: string;
 }) {
   // const authenticated = true; // works with storybook
-  const authenticated = useAuthStore(state => state.isAuthenticated); // does not render in storybook
+  const { user: authUser } = useAuth();
+  const authenticated = !!authUser;
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
   const clickHandler = () => {

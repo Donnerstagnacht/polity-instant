@@ -1,11 +1,11 @@
 /**
  * Magic Code Helper for E2E Tests
  *
- * This helper uses the InstantDB Admin SDK to generate magic codes
+ * This helper uses the Supabase Admin API to generate OTP codes
  * for testing purposes, bypassing the need to check email.
  */
 
-import { init } from '@instantdb/admin';
+import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
 import { resolve } from 'path';
 
@@ -13,61 +13,75 @@ import { resolve } from 'path';
 config({ path: resolve(process.cwd(), '.env') });
 config({ path: resolve(process.cwd(), '.env.local'), override: true });
 
-const APP_ID = process.env.NEXT_PUBLIC_INSTANT_APP_ID;
-const ADMIN_TOKEN = process.env.INSTANT_ADMIN_TOKEN;
+const SUPABASE_URL =
+  process.env.SUPABASE_URL ??
+  process.env.NEXT_PUBLIC_SUPABASE_URL ??
+  'http://127.0.0.1:54321';
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!APP_ID || !ADMIN_TOKEN) {
-  throw new Error(
-    'Missing required environment variables: NEXT_PUBLIC_INSTANT_APP_ID and INSTANT_ADMIN_TOKEN'
-  );
+if (!SUPABASE_SERVICE_ROLE_KEY) {
+  throw new Error('Missing required environment variable: SUPABASE_SERVICE_ROLE_KEY');
 }
 
-// Initialize the admin SDK
-const adminDB = init({
-  appId: APP_ID,
-  adminToken: ADMIN_TOKEN,
-});
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 /**
- * Generates a magic code for testing
+ * Generates a magic code (OTP) for testing.
+ * Uses Supabase admin generateLink to get a token that can be verified.
+ *
  * @param email - The email address to generate a code for
- * @returns The generated magic code
+ * @returns The generated OTP code
  */
 export async function generateTestMagicCode(email: string): Promise<string> {
-  // First, ensure the user is active
+  // Ensure the user exists in Supabase Auth
   await ensureUserActive(email);
 
-  const { code } = await adminDB.auth.generateMagicCode(email);
-  return code;
+  // Generate a magic link which includes a token
+  const { data, error } = await supabase.auth.admin.generateLink({
+    type: 'magiclink',
+    email,
+  });
+
+  if (error) {
+    throw new Error(`Failed to generate magic code for ${email}: ${error.message}`);
+  }
+
+  // Extract the OTP from the action link URL
+  // The link format is: <redirect_url>#token_hash=<hash>&type=magiclink
+  // For local Supabase, the OTP is available in the response
+  const actionLink = data?.properties?.action_link ?? '';
+  const url = new URL(actionLink);
+  // The token is in the hash fragment or query params
+  const token = url.searchParams.get('token') ?? data?.properties?.hashed_token ?? '';
+
+  // For Supabase local dev, the OTP code is typically 6 digits
+  // extracted from the email_otp property if available
+  if (data?.properties?.email_otp) {
+    return data.properties.email_otp;
+  }
+
+  // Fallback: return the hashed token (caller should use token-based verification)
+  return token;
 }
 
 /**
- * Ensures a user is active for testing
+ * Ensures a user is active in Supabase Auth
  * @param email - The email address
  */
 async function ensureUserActive(email: string): Promise<void> {
   try {
-    // Get or create the user
-    let user;
-    try {
-      user = await adminDB.auth.getUser({ email });
-    } catch (error: any) {
-      // User doesn't exist, create them
-      if (error?.message?.includes('not found') || error?.status === 404) {
-        const token = await adminDB.auth.createToken(email);
-        user = await adminDB.auth.verifyToken(token);
-      } else {
+    const { data: users } = await supabase.auth.admin.listUsers();
+    const existing = users?.users?.find(u => u.email === email);
+
+    if (!existing) {
+      // Create the user
+      const { error } = await supabase.auth.admin.createUser({
+        email,
+        email_confirm: true,
+      });
+      if (error && !error.message?.includes('already been registered')) {
         throw error;
       }
-    }
-
-    // Update the user to be active
-    if (user?.id) {
-      await adminDB.transact([
-        adminDB.tx.$users[user.id].update({
-          updatedAt: new Date(),
-        }),
-      ]);
     }
   } catch (error) {
     console.error(`❌ Failed to ensure user is active:`, error);
@@ -76,27 +90,19 @@ async function ensureUserActive(email: string): Promise<void> {
 }
 
 /**
- * Creates a token for a user (alternative to magic code flow)
+ * Creates a session token for a user (alternative to magic code flow)
  * @param email - The email address to create a token for
- * @returns Authentication token
+ * @returns Authentication token hash
  */
 export async function createTestToken(email: string): Promise<string> {
-  const token = await adminDB.auth.createToken(email);
-  return token;
-}
+  const { data, error } = await supabase.auth.admin.generateLink({
+    type: 'magiclink',
+    email,
+  });
 
-/**
- * Verifies a magic code (for debugging)
- * @param email - The email address
- * @param code - The magic code to verify
- * @returns User object with refresh token
- */
-export async function verifyTestMagicCode(email: string, code: string) {
-  try {
-    const user = await adminDB.auth.verifyMagicCode(email, code);
-    return user;
-  } catch (error) {
-    console.error('❌ Failed to verify magic code:', error);
-    throw error;
+  if (error) {
+    throw new Error(`Failed to create test token for ${email}: ${error.message}`);
   }
+
+  return data?.properties?.hashed_token ?? '';
 }

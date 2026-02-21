@@ -1,6 +1,7 @@
 'use client';
 
-import { db, tx } from '../../../db/db';
+import { useNotificationState } from '@/zero/notifications/useNotificationState';
+import { useNotificationActions } from '@/zero/notifications/useNotificationActions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,7 +10,7 @@ import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollableTabsList } from '@/components/ui/scrollable-tabs';
 import { Bell, Check, CheckCheck, Users, Calendar, MessageSquare, UserPlus, X } from 'lucide-react';
 import { cn } from '@/utils/utils';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { EntityType } from '@/utils/notification-helpers';
 import { useTranslation } from '@/hooks/use-translation';
 
@@ -108,7 +109,8 @@ export function EntityNotifications({
   entityName,
 }: EntityNotificationsProps) {
   const { t } = useTranslation();
-  const router = useRouter();
+  const navigate = useNavigate();
+  const { markRead, deleteNotification: deleteNotif } = useNotificationActions();
 
   // Build the recipient key for the query
   const recipientKey = `recipient${entityType.charAt(0).toUpperCase() + entityType.slice(1)}` as
@@ -117,55 +119,34 @@ export function EntityNotifications({
     | 'recipientAmendment'
     | 'recipientBlog';
 
-  const { data, isLoading } = db.useQuery({
-    notifications: {
-      $: {
-        where: {
-          [`${recipientKey}.id`]: entityId,
-        },
-        order: {
-          serverCreatedAt: 'desc' as const,
-        },
-      },
-      sender: {},
-      relatedUser: {},
-      relatedGroup: {},
-      relatedEvent: {},
-      relatedAmendment: {},
-      relatedBlog: {},
-      [recipientKey]: {},
-    },
-  } as any) as any;
-
-  const notifications = data?.notifications || [];
-  const unreadNotifications = notifications.filter((n: any) => !n.isRead);
-  const readNotifications = notifications.filter((n: any) => n.isRead);
+  const { entityNotifications: notifications, isLoading: isLoadingState } = useNotificationState({
+    entityFilter: { entityId, entityType },
+  });
+  const isLoading = isLoadingState;
+  const unreadNotifications = notifications.filter((n: any) => !n.is_read);
+  const readNotifications = notifications.filter((n: any) => n.is_read);
 
   const handleNotificationClick = async (notification: any) => {
     // Navigate based on action URL or related entity
     if (notification.actionUrl) {
-      router.push(notification.actionUrl);
+      navigate({ to: notification.actionUrl });
     } else if (notification.relatedUser?.id) {
-      router.push(`/user/${notification.relatedUser.id}`);
+      navigate({ to: `/user/${notification.relatedUser.id}` });
     }
   };
 
   const markAllAsRead = async () => {
     const unreadIds = unreadNotifications.map((n: any) => n.id);
     if (unreadIds.length > 0) {
-      await db.transact(
-        unreadIds.map((notifId: string) =>
-          tx.notifications[notifId].update({
-            isRead: true,
-          })
-        )
-      );
+      for (const notifId of unreadIds) {
+        await markRead({ id: notifId });
+      }
     }
   };
 
   const deleteNotification = async (notificationId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    await db.transact([tx.notifications[notificationId].delete()]);
+    await deleteNotif({ id: notificationId });
   };
 
   const formatTime = (date: string | number) => {
@@ -213,7 +194,7 @@ export function EntityNotifications({
               className="h-10 w-10 cursor-pointer hover:ring-2 hover:ring-primary"
               onClick={e => {
                 e.stopPropagation();
-                router.push(`/user/${notification.sender.id}`);
+                navigate({ to: `/user/${notification.sender.id}` });
               }}
             >
               <AvatarImage src={notification.sender.avatar} />

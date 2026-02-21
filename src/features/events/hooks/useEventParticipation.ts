@@ -1,74 +1,42 @@
 import { useState } from 'react';
-import db, { tx, id } from '../../../../db/db';
-import { useAuthStore } from '@/features/auth/auth';
+import { useAuth } from '@/providers/auth-provider';
 import { toast } from 'sonner';
 import { notifyParticipationRequest } from '@/utils/notification-helpers';
+import { sendNotificationFn } from '@/server/notifications';
+import { useEventActions } from '@/zero/events/useEventActions';
+import { useEventById, useEventParticipantsQuery } from '@/zero/events/useEventState';
 
 export type ParticipationStatus = 'invited' | 'requested' | 'member' | 'admin' | 'confirmed';
 
 export function useEventParticipation(eventId: string) {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
+  const { joinEvent, leaveEvent: doLeaveEvent, updateParticipant } = useEventActions();
   const [isLoading, setIsLoading] = useState(false);
 
   // Query event details including type and group
-  const { data: eventData } = db.useQuery({
-    events: {
-      $: { where: { id: eventId } },
-      group: {
-        memberships: {
-          user: {},
-        },
-      },
-      delegates: {
-        user: {},
-      },
-    },
-  });
+  const { event, isLoading: eventLoading } = useEventById(eventId);
 
-  const event = eventData?.events?.[0];
-  const eventType = event?.eventType;
+  const eventType = event?.event_type;
 
   // Check if user is a member of the event's group
-  const isGroupMember = event?.group?.memberships?.some(
+  const isGroupMember = (event as any)?.group?.memberships?.some(
     (m: any) => m.user?.id === user?.id && (m.status === 'member' || m.status === 'admin')
   );
 
   // Check if user is a confirmed delegate
-  const isConfirmedDelegate = event?.delegates?.some(
+  const isConfirmedDelegate = (event as any)?.delegates?.some(
     (d: any) => d.user?.id === user?.id && d.status === 'confirmed'
   );
 
-  // Query current user's participation status
-  const { data, isLoading: queryLoading } = db.useQuery(
-    user?.id
-      ? {
-          eventParticipants: {
-            $: {
-              where: {
-                'user.id': user.id,
-                'event.id': eventId,
-              },
-            },
-          },
-        }
-      : { eventParticipants: {} }
-  );
+  // Query participants
+  const { participants: allParticipantsData, isLoading: participantsLoading } = useEventParticipantsQuery(eventId);
 
-  // Query all participants for participant count (including both members and admins)
-  const { data: allParticipantsData } = db.useQuery({
-    eventParticipants: {
-      $: {
-        where: {
-          'event.id': eventId,
-        },
-      },
-    },
-  });
+  const queryLoading = eventLoading || participantsLoading;
 
-  const participation = data?.eventParticipants?.[0];
+  const participation = allParticipantsData?.find((p: any) => p.user_id === user?.id);
 
   // Filter to count only active participants (excluding invited and requested)
-  const allParticipants = allParticipantsData?.eventParticipants || [];
+  const allParticipants = allParticipantsData || [];
   const filteredParticipants = allParticipants.filter(
     (p: any) => p.status === 'member' || p.status === 'admin' || p.status === 'confirmed'
   );
@@ -106,30 +74,19 @@ export function useEventParticipation(eventId: string) {
 
     setIsLoading(true);
     try {
-      const newParticipationId = id();
+      const newParticipationId = crypto.randomUUID();
 
-      await db.transact([
-        tx.eventParticipants[newParticipationId]
-          .update({
-            createdAt: new Date().toISOString(),
-            status: 'requested',
-          })
-          .link({
-            user: user.id,
-            event: eventId,
-          }),
-      ]);
+      await joinEvent({
+        id: newParticipationId,
+        status: 'requested',
+        event_id: eventId,
+        group_id: event?.group?.id || '',
+        role_id: '',
+        visibility: '',
+      });
 
-      // Send notification separately — notifications.create is server-only
-      try {
-        const notificationTxs = notifyParticipationRequest({
-          senderId: user.id,
-          senderName: user.email?.split('@')[0] || 'A user',
-          eventId,
-          eventTitle: event?.title || 'Event',
-        });
-        if (notificationTxs.length > 0) await db.transact(notificationTxs);
-      } catch { /* notification delivery is best-effort */ }
+      sendNotificationFn({ data: { helper: 'notifyParticipationRequest', params: { senderId: user.id, eventId, eventTitle: event?.title || 'Event' } } }).catch(console.error)
+
       toast.success('Participation request sent successfully');
     } catch (error) {
       console.error('Failed to request participation:', error);
@@ -147,7 +104,7 @@ export function useEventParticipation(eventId: string) {
 
     setIsLoading(true);
     try {
-      await db.transact([tx.eventParticipants[participation.id].delete()]);
+      await doLeaveEvent({ id: participation.id });
       toast.success('Successfully left the event');
     } catch (error) {
       console.error('Failed to leave event:', error);
@@ -163,11 +120,10 @@ export function useEventParticipation(eventId: string) {
 
     setIsLoading(true);
     try {
-      await db.transact([
-        tx.eventParticipants[participation.id].update({
-          status: 'member',
-        }),
-      ]);
+      await updateParticipant({
+        id: participation.id,
+        status: 'member',
+      });
       toast.success('Successfully joined the event');
     } catch (error) {
       console.error('Failed to accept invitation:', error);

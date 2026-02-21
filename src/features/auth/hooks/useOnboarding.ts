@@ -1,0 +1,219 @@
+'use client';
+
+import { useState, useCallback } from 'react';
+import { useUserActions } from '@/zero/users/useUserActions';
+import { useGroupActions } from '@/zero/groups/useGroupActions';
+import { useAuth } from '@/providers/auth-provider';
+import { toast } from 'sonner';
+import { notifyMembershipRequest } from '@/utils/notification-helpers';
+import { useTranslation } from '@/hooks/use-translation';
+
+export type OnboardingStep = 'name' | 'groupSearch' | 'confirm' | 'ariaKai' | 'summary';
+
+export interface Group {
+  id: string;
+  name: string;
+  description?: string;
+  memberCount: number;
+  location?: string;
+  isPublic: boolean;
+}
+
+export interface OnboardingData {
+  firstName: string;
+  lastName: string;
+  selectedGroup: Group | null;
+  requestMembership: boolean;
+  membershipRequestSent: boolean;
+  dontShowAriaKaiAgain: boolean;
+}
+
+interface UseOnboardingReturn {
+  step: OnboardingStep;
+  data: OnboardingData;
+  isLoading: boolean;
+  error: string | null;
+  setFirstName: (value: string) => void;
+  setLastName: (value: string) => void;
+  setSelectedGroup: (group: Group | null) => void;
+  setDontShowAriaKaiAgain: (value: boolean) => void;
+  goToStep: (step: OnboardingStep) => void;
+  nextStep: () => void;
+  previousStep: () => void;
+  submitName: () => Promise<boolean>;
+  sendMembershipRequest: () => Promise<boolean>;
+  skipMembership: () => void;
+  completeOnboarding: (userId: string) => Promise<void>;
+}
+
+const STEP_ORDER: OnboardingStep[] = ['name', 'groupSearch', 'confirm', 'ariaKai', 'summary'];
+
+export function useOnboarding(): UseOnboardingReturn {
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const { updateProfile } = useUserActions();
+  const { joinGroup } = useGroupActions();
+  const [step, setStep] = useState<OnboardingStep>('name');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<OnboardingData>({
+    firstName: '',
+    lastName: '',
+    selectedGroup: null,
+    requestMembership: false,
+    membershipRequestSent: false,
+    dontShowAriaKaiAgain: false,
+  });
+
+  const setFirstName = useCallback((value: string) => {
+    setData(prev => ({ ...prev, firstName: value }));
+  }, []);
+
+  const setLastName = useCallback((value: string) => {
+    setData(prev => ({ ...prev, lastName: value }));
+  }, []);
+
+  const setSelectedGroup = useCallback((group: Group | null) => {
+    setData(prev => ({ ...prev, selectedGroup: group }));
+  }, []);
+  const setDontShowAriaKaiAgain = useCallback((value: boolean) => {
+    setData(prev => ({ ...prev, dontShowAriaKaiAgain: value }));
+  }, []);
+  const goToStep = useCallback((newStep: OnboardingStep) => {
+    setStep(newStep);
+    setError(null);
+  }, []);
+
+  const nextStep = useCallback(() => {
+    const currentIndex = STEP_ORDER.indexOf(step);
+    if (currentIndex < STEP_ORDER.length - 1) {
+      // Skip confirm step if no group selected
+      if (step === 'groupSearch' && !data.selectedGroup) {
+        setStep('summary');
+      } else {
+        setStep(STEP_ORDER[currentIndex + 1]);
+      }
+    }
+  }, [step, data.selectedGroup]);
+
+  const previousStep = useCallback(() => {
+    const currentIndex = STEP_ORDER.indexOf(step);
+    if (currentIndex > 0) {
+      // Skip confirm step when going back if no group
+      if (step === 'summary' && !data.selectedGroup) {
+        setStep('groupSearch');
+      } else {
+        setStep(STEP_ORDER[currentIndex - 1]);
+      }
+    }
+  }, [step, data.selectedGroup]);
+
+  const submitName = useCallback(async (): Promise<boolean> => {
+    if (!data.firstName.trim() || !data.lastName.trim()) {
+      setError(t('features.auth.errors.fillBothFields'));
+      return false;
+    }
+
+    if (data.firstName.length < 2 || data.lastName.length < 2) {
+      setError(t('features.auth.errors.nameTooShort'));
+      return false;
+    }
+
+    setError(null);
+    return true;
+  }, [data.firstName, data.lastName, t]);
+
+  const sendMembershipRequest = useCallback(async (): Promise<boolean> => {
+    if (!data.selectedGroup) {
+      return false;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      if (!user?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      const membershipId = crypto.randomUUID();
+
+      await joinGroup({
+        id: membershipId,
+        group_id: data.selectedGroup.id,
+        status: 'requested',
+        visibility: '',
+        role_id: '',
+      });
+
+      // Notify group admins/members with manage rights
+      await notifyMembershipRequest({
+        senderId: user.id,
+        senderName: user.email?.split('@')[0] || 'A user',
+        groupId: data.selectedGroup.id,
+        groupName: data.selectedGroup.name,
+      });
+
+      setData(prev => ({ ...prev, requestMembership: true, membershipRequestSent: true }));
+      toast.success(t('features.auth.success.membershipRequestSent'));
+      return true;
+    } catch (err) {
+      console.error('Failed to send membership request:', err);
+      const errorMsg = t('features.auth.errors.membershipRequestFailed');
+      setError(errorMsg);
+      toast.error(errorMsg);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [data.selectedGroup, user?.id, user?.email]);
+
+  const skipMembership = useCallback(() => {
+    setData(prev => ({ ...prev, requestMembership: false }));
+    setStep('summary');
+  }, []);
+
+  const completeOnboarding = useCallback(
+    async (userId: string) => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const now = Date.now();
+
+await updateProfile({
+        first_name: data.firstName.trim(),
+        last_name: data.lastName.trim(),
+      });
+
+        console.log('✅ Onboarding completed:', { userId, firstName: data.firstName, lastName: data.lastName });
+      } catch (err) {
+        console.error('Failed to complete onboarding:', err);
+        const errorMsg = t('features.auth.errors.profileUpdateFailed');
+        setError(errorMsg);
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [data.firstName, data.lastName, t]
+  );
+
+  return {
+    step,
+    data,
+    isLoading,
+    error,
+    setFirstName,
+    setLastName,
+    setSelectedGroup,
+    setDontShowAriaKaiAgain,
+    goToStep,
+    nextStep,
+    previousStep,
+    submitName,
+    sendMembershipRequest,
+    skipMembership,
+    completeOnboarding,
+  };
+}

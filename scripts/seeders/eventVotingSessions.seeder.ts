@@ -3,7 +3,10 @@
  * Seeds event voting sessions for amendments at events
  */
 
-import { id, tx } from '@instantdb/admin';
+import { id } from '../helpers/id.helper';
+import { tx } from '../helpers/compat';
+import { batchTransact } from '../helpers/transaction.helpers';
+import type { InsertOp } from '../helpers/transaction.helpers';
 import { faker } from '@faker-js/faker';
 import type { EntitySeeder, SeedContext } from '../types/seeder.types';
 import { randomInt, randomItem, randomItems } from '../helpers/random.helpers';
@@ -18,22 +21,17 @@ export const eventVotingSessionsSeeder: EntitySeeder = {
     const eventIds = context.eventIds || [];
 
     console.log('Seeding event voting sessions...');
-    const transactions = [];
+    const transactions: InsertOp[] = [];
     let totalVotingSessions = 0;
     let totalEventVotes = 0;
 
     const voteTypes = ['accept', 'reject', 'abstain'];
 
     // Query agenda items to create voting sessions for
-    const agendaQuery = await db.query({
-      agendaItems: {
-        event: {},
-        amendment: {},
-      },
-    });
+    const { data: agendaItemsRaw } = await db.from('agendaItems').select('*');
 
-    const agendaItemsWithAmendments = (agendaQuery?.agendaItems || []).filter(
-      (item: any) => item.amendment?.id
+    const agendaItemsWithAmendments = (agendaItemsRaw || []).filter(
+      (item: any) => item.amendmentId
     );
 
     // Create voting sessions for some agenda items with amendments
@@ -43,8 +41,8 @@ export const eventVotingSessionsSeeder: EntitySeeder = {
     );
 
     for (const agendaItem of itemsToProcess as any[]) {
-      const eventId = agendaItem.event?.id;
-      const amendmentId = agendaItem.amendment?.id;
+      const eventId = agendaItem.eventId;
+      const amendmentId = agendaItem.amendmentId;
 
       if (!eventId || !amendmentId) continue;
 
@@ -109,7 +107,7 @@ export const eventVotingSessionsSeeder: EntitySeeder = {
     const batchSize = 100;
     for (let i = 0; i < transactions.length; i += batchSize) {
       const batch = transactions.slice(i, i + batchSize);
-      await db.transact(batch);
+      await batchTransact(db, batch);
     }
 
     console.log(`  Created ${totalVotingSessions} event voting sessions`);

@@ -4,7 +4,7 @@ import { PageWrapper } from '@/components/layout/page-wrapper';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { db } from '../../../../db/db';
+import { useStatementState } from '@/zero/statements/useStatementState';
 import { FileText, User, MessageSquare, Share2, ThumbsUp } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
 
@@ -14,24 +14,7 @@ interface StatementDetailProps {
 
 export function StatementDetail({ statementId }: StatementDetailProps) {
   const { t } = useTranslation();
-  
-  // Fetch statement data from InstantDB
-  const { data, isLoading } = db.useQuery({
-    statements: {
-      $: { where: { id: statementId } },
-      user: {},
-    },
-  });
-
-  const statement = data?.statements?.[0];
-
-  if (isLoading) {
-    return (
-      <PageWrapper className="container mx-auto p-8">
-        <div className="py-12 text-center">{t('features.statements.detail.loading')}</div>
-      </PageWrapper>
-    );
-  }
+  const { statement } = useStatementState({ id: statementId });
 
   if (!statement) {
     return (
@@ -127,7 +110,7 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <p className="font-medium">{author.name || 'Unknown'}</p>
+                  <p className="font-medium">{`${author.first_name} ${author.last_name}`.trim() || 'Unknown'}</p>
                   {author.handle && (
                     <p className="text-sm text-muted-foreground">@{author.handle}</p>
                   )}

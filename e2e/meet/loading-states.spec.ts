@@ -12,8 +12,8 @@ test.describe('Meet - Loading States', () => {
     const startTime = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const endTime = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000);
 
-    await adminDb.transact(
-      adminDb.tx.meetingSlots[meetingId]
+    await (adminDb as any).transact(
+      (adminDb as any).tx.meetingSlots[meetingId]
         .update({
           title: 'E2E Test Meeting',
           description: 'Meeting for E2E loading test',
@@ -46,8 +46,8 @@ test.describe('Meet - Loading States', () => {
     const startTime = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const endTime = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000);
 
-    await adminDb.transact(
-      adminDb.tx.meetingSlots[meetingId]
+    await (adminDb as any).transact(
+      (adminDb as any).tx.meetingSlots[meetingId]
         .update({
           title: 'E2E Loading Indicator Meeting',
           description: '',

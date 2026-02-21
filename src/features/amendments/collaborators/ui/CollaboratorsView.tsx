@@ -3,7 +3,7 @@
  */
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search } from 'lucide-react';
@@ -25,7 +25,7 @@ export function CollaboratorsView({
   amendmentTitle,
   currentUserId,
 }: CollaboratorsViewProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('collaborators');
 
@@ -37,7 +37,7 @@ export function CollaboratorsView({
   } = useCollaborators(amendmentId, currentUserId, searchQuery);
 
   const navigateToUser = (userId: string) => {
-    router.push(`/user/${userId}`);
+    navigate({ to: `/user/${userId}` });
   };
 
   return (

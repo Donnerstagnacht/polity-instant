@@ -2,7 +2,6 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   Carousel,
   CarouselContent,
@@ -11,91 +10,47 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel';
 import { LinkGroupDialog } from '@/components/groups/LinkGroupDialog';
-import db from '../../../db/db';
 import { UserCheck, BookOpen, Network } from 'lucide-react';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { BlogTimelineCard } from '@/features/timeline/ui/cards/BlogTimelineCard';
-import { GRADIENTS } from '@/features/user/state/gradientColors';
-import { useSubscribeGroup } from '@/features/groups/hooks/useSubscribeGroup';
+import { GRADIENTS } from '@/features/users/state/gradientColors';
 import { StatsBar } from '@/components/ui/StatsBar';
-import { useGroupMembership } from '@/features/groups/hooks/useGroupMembership';
 import { ActionBar } from '@/components/ui/ActionBar';
 import { SubscribeButton, MembershipButton } from '@/components/shared/action-buttons';
-import { SocialBar } from '@/features/user/ui/SocialBar';
+import { SocialBar } from '@/features/users/ui/SocialBar';
 import { InfoTabs } from '@/components/shared/InfoTabs';
-import { useRouter } from 'next/navigation';
 import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
-import Link from 'next/link';
+import { Link } from '@tanstack/react-router';
 import { useTranslation } from '@/hooks/use-translation';
 import { ShareButton } from '@/components/shared/ShareButton';
+import { useGroupWikiPage } from '@/features/groups/hooks/useGroupWikiPage';
+import { groupRelationshipsByGroup } from '@/features/groups/logic/groupWikiHelpers';
 
 interface GroupWikiProps {
   groupId: string;
 }
 
 export function GroupWiki({ groupId }: GroupWikiProps) {
-  const router = useRouter();
   const { t } = useTranslation();
 
-  // Subscribe hook
   const {
-    isSubscribed,
+    group,
+    memberCount,
+    eventsCount,
+    amendmentsCount,
     subscriberCount,
-    isLoading: subscribeLoading,
+    isSubscribed,
+    subscribeLoading,
     toggleSubscribe,
-  } = useSubscribeGroup(groupId);
-
-  // Membership hook
-  const {
     status,
     isMember,
     hasRequested,
     isInvited,
-    memberCount: membershipCount,
-    isLoading: membershipLoading,
+    membershipLoading,
     requestJoin,
     leaveGroup,
     acceptInvitation,
-  } = useGroupMembership(groupId);
-
-  // Fetch group data
-  const { data, isLoading } = db.useQuery({
-    groups: {
-      $: { where: { id: groupId } },
-      owner: {},
-      events: {},
-      amendments: {},
-      memberships: {
-        user: {},
-      },
-      childRelationships: {
-        childGroup: {
-          memberships: {},
-          events: {},
-          amendments: {},
-        },
-      },
-      hashtags: {},
-      positions: {
-        currentHolder: {},
-      },
-      blogs: {
-        hashtags: {},
-      },
-    },
-  });
-
-  const group = data?.groups?.[0];
-
-  if (isLoading) {
-    return (
-      <div className="container mx-auto max-w-6xl p-4">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-lg text-muted-foreground">Loading group...</div>
-        </div>
-      </div>
-    );
-  }
+  } = useGroupWikiPage(groupId);
 
   if (!group) {
     return (
@@ -110,69 +65,20 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
     );
   }
 
-  const memberCount = membershipCount || group.memberships?.length || group.memberCount || 0;
-  const eventsCount = group.events?.length || 0;
-  const amendmentsCount = group.amendments?.length || 0;
-
-  const formatRight = (right: string) => {
-    const labels: Record<string, string> = {
-      informationRight: 'Informationsrecht',
-      amendmentRight: 'Antragsrecht',
-      rightToSpeak: 'Rederecht',
-      activeVotingRight: 'Aktives Stimmrecht',
-      passiveVotingRight: 'Passives Stimmrecht',
-    };
-    return labels[right] || right.replace(/([A-Z])/g, ' $1').trim();
-  };
-
-  const groupRelationshipsByGroup = (relationships: any[], type: 'parent' | 'child') => {
-    const grouped = new Map<string, { group: any; rights: string[] }>();
-
-    relationships?.forEach((rel: any) => {
-      const targetGroup = type === 'parent' ? rel.parentGroup : rel.childGroup;
-      if (!targetGroup) return;
-
-      if (!grouped.has(targetGroup.id)) {
-        grouped.set(targetGroup.id, { group: targetGroup, rights: [] });
-      }
-      const entry = grouped.get(targetGroup.id);
-      if (entry) {
-        entry.rights.push(rel.withRight);
-      }
-    });
-
-    return Array.from(grouped.values());
-  };
-
   return (
     <div className="container mx-auto max-w-6xl p-4">
       {/* Header with centered title and subtitle */}
       <div className="mb-8 text-center">
         <div className="mb-2 flex items-center justify-center gap-3">
           <h1 className="text-4xl font-bold">{group.name}</h1>
-          {group.isPublic && (
+          {group.is_public && (
             <Badge variant="secondary" className="text-sm">
               {t('components.badges.public')}
             </Badge>
           )}
         </div>
-        {(group.location || group.region || group.country) && (
-          <p className="text-muted-foreground">
-            {[group.location, group.region, group.country].filter(Boolean).join(', ')}
-          </p>
-        )}
+        {group.location && <p className="text-muted-foreground">{group.location}</p>}
       </div>
-
-      {/* Group Image */}
-      {group.imageURL && (
-        <div className="mb-8">
-          <img
-            src={group.imageURL}
-            alt={group.name}
-            className="mx-auto h-64 w-full max-w-4xl rounded-lg object-cover shadow-lg"
-          />
-        </div>
-      )}
 
       {/* Stats Bar with Events and Amendments */}
       <StatsBar
@@ -186,7 +92,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
 
       {/* Action Bar */}
       <ActionBar>
-        <LinkGroupDialog currentGroupId={groupId} currentGroupName={group.name} />
+        <LinkGroupDialog currentGroupId={groupId} currentGroupName={group.name ?? ''} />
         <SubscribeButton
           entityType="group"
           entityId={groupId}
@@ -207,7 +113,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
         />
         <ShareButton
           url={`/group/${groupId}`}
-          title={group.name}
+          title={group.name ?? ''}
           description={group.description || ''}
         />
       </ActionBar>
@@ -215,28 +121,23 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
       {/* Hashtags */}
       {group.hashtags && group.hashtags.length > 0 && (
         <div className="mb-6">
-          <HashtagDisplay hashtags={group.hashtags} centered />
+          <HashtagDisplay hashtags={group.hashtags.map(h => ({ ...h, tag: h.tag ?? '' }))} centered />
         </div>
       )}
 
       {/* Social Media */}
       <SocialBar
         socialMedia={{
-          whatsapp: group.whatsapp,
-          instagram: group.instagram,
-          twitter: group.twitter,
-          facebook: group.facebook,
-          snapchat: group.snapchat,
+          twitter: group.x ?? undefined,
         }}
       />
 
       {/* About and Contact Tabs */}
       <InfoTabs
-        about={group.description}
+        about={group.description ?? undefined}
         contact={{
-          location: group.location,
-          region: group.region,
-          country: group.country,
+          location: group.location ?? undefined,
+          website: group.website ?? undefined,
         }}
         className="mb-12"
       />
@@ -278,39 +179,47 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
                       </CardHeader>
                       <CardContent className="space-y-3">
                         <div className="space-y-3">
-                          {position.currentHolder ? (
-                            <div className="rounded-lg border bg-background/80 p-3 shadow-sm backdrop-blur-sm">
-                              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                Current Holder
-                              </p>
-                              <div className="flex items-center gap-3">
-                                {position.currentHolder.imageURL && (
-                                  <img
-                                    src={position.currentHolder.imageURL}
-                                    alt={position.currentHolder?.name || 'User'}
-                                    className="h-10 w-10 rounded-full object-cover ring-2 ring-background"
-                                  />
-                                )}
-                                <div className="min-w-0 flex-1">
-                                  <p className="truncate font-semibold">
-                                    {position.currentHolder?.name || 'Unknown'}
-                                  </p>
-                                  {position.currentHolder?.handle && (
-                                    <p className="truncate text-sm text-muted-foreground">
-                                      @{position.currentHolder.handle}
-                                    </p>
+                          {(() => {
+                            const currentHistory = position.holder_history?.find(
+                              (h: any) => !h.end_date
+                            );
+                            const holder = currentHistory?.user;
+                            return holder ? (
+                              <div className="rounded-lg border bg-background/80 p-3 shadow-sm backdrop-blur-sm">
+                                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                  Current Holder
+                                </p>
+                                <div className="flex items-center gap-3">
+                                  {holder.avatar && (
+                                    <img
+                                      src={holder.avatar}
+                                      alt={holder.first_name || 'User'}
+                                      className="h-10 w-10 rounded-full object-cover ring-2 ring-background"
+                                    />
                                   )}
+                                  <div className="min-w-0 flex-1">
+                                    <p className="truncate font-semibold">
+                                      {[holder.first_name, holder.last_name]
+                                        .filter(Boolean)
+                                        .join(' ') || 'Unknown'}
+                                    </p>
+                                    {holder.handle && (
+                                      <p className="truncate text-sm text-muted-foreground">
+                                        @{holder.handle}
+                                      </p>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          ) : (
-                            <div className="rounded-lg border border-dashed border-border/50 bg-background/50 p-4 text-center">
-                              <p className="text-sm font-medium text-muted-foreground">
-                                Vacant Position
-                              </p>
-                            </div>
-                          )}
-                          {(position.term || position.firstTermStart) && (
+                            ) : (
+                              <div className="rounded-lg border border-dashed border-border/50 bg-background/50 p-4 text-center">
+                                <p className="text-sm font-medium text-muted-foreground">
+                                  Vacant Position
+                                </p>
+                              </div>
+                            );
+                          })()}
+                          {(position.term || position.first_term_start) && (
                             <div className="space-y-2 rounded-lg border border-border/50 bg-background/50 p-3 text-sm">
                               {position.term && (
                                 <div className="flex justify-between">
@@ -318,13 +227,13 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
                                   <span className="font-semibold">{position.term}</span>
                                 </div>
                               )}
-                              {position.firstTermStart && (
+                              {position.first_term_start && (
                                 <div className="flex justify-between">
                                   <span className="font-medium text-muted-foreground">
                                     Started:
                                   </span>
                                   <span className="font-semibold">
-                                    {new Date(position.firstTermStart).toLocaleDateString()}
+                                    {new Date(position.first_term_start).toLocaleDateString()}
                                   </span>
                                 </div>
                               )}
@@ -344,7 +253,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
       )}
 
       {/* Parent & Child Groups */}
-      {group.childRelationships && group.childRelationships.length > 0 && (
+      {group.relationships_as_source && group.relationships_as_source.length > 0 && (
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -355,22 +264,22 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {groupRelationshipsByGroup(group.childRelationships, 'child').map(
-                ({ group: childGroup, rights }, index) => (
+              {groupRelationshipsByGroup([...group.relationships_as_source], 'child').map(
+                ({ group: relatedGroup }) => (
                   <Link
-                    key={`child-${childGroup.id}`}
-                    href={`/group/${childGroup.id}`}
+                    key={`child-${relatedGroup.id}`}
+                    to={`/group/${relatedGroup.id}`}
                     className="block transition-opacity hover:opacity-90"
                   >
                     <GroupTimelineCard
                       group={{
-                        id: String(childGroup.id),
-                        name: childGroup.name || t('common.unknown'),
-                        description: childGroup.description,
-                        memberCount: childGroup.memberships?.length || childGroup.memberCount || 0,
-                        amendmentCount: childGroup.amendments?.length || 0,
-                        eventCount: childGroup.events?.length || 0,
-                        hashtags: childGroup.hashtags,
+                        id: String(relatedGroup.id),
+                        name: relatedGroup.name || t('common.unknown'),
+                        description: relatedGroup.description,
+                        memberCount:
+                          relatedGroup.memberships?.length || relatedGroup.member_count || 0,
+                        amendmentCount: relatedGroup.amendments?.length || 0,
+                        eventCount: relatedGroup.events?.length || 0,
                       }}
                     />
                   </Link>

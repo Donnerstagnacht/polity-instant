@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { LayoutList, LayoutGrid, Plus } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
@@ -35,7 +35,7 @@ export function TodosHeader({ viewMode, setViewMode }: TodosHeaderProps) {
             <LayoutGrid className="h-4 w-4" />
           </Button>
         </div>
-        <Link href="/create/todo">
+        <Link to="/create/todo">
           <Button>
             <Plus className="mr-2 h-4 w-4" />
             {t('features.todos.create.newTodo')}

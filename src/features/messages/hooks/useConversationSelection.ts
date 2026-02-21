@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Conversation } from '../types';
-import { ARIA_KAI_USER_ID } from '../../../../e2e/aria-kai';
+import { Conversation } from '../types/message.types';
+import { ARIA_KAI_USER_ID } from '@/features/auth/constants';
 
 export function useConversationSelection(conversations: Conversation[]) {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);

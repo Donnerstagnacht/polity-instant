@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import db from '../../../db/db';
+import { useGroupState } from '@/zero/groups/useGroupState';
 import { useTranslation } from '@/hooks/use-translation';
 
 interface GroupNode extends Node {
@@ -45,20 +45,18 @@ export function GroupHierarchyFlow() {
   const [isInteractive, setIsInteractive] = useState<boolean>(true);
 
   // Fetch all groups
-  const { data: groupsData } = db.useQuery({
-    groups: {},
+  const { searchResults: groupsRaw, allRelationships: allRelsRaw } = useGroupState({
+    includeSearch: true,
+    includeAllRelationships: true,
   });
 
-  // Fetch group relationships
-  const { data: relationshipsData } = db.useQuery({
-    groupRelationships: {
-      parentGroup: {},
-      childGroup: {},
-    },
-  });
+  // Fetch group relationships for selected group
+  const { relationships: hierarchyRaw } = useGroupState(
+    selectedGroupId ? { groupId: selectedGroupId } : {}
+  );
 
-  const groups = groupsData?.groups || [];
-  const relationships = relationshipsData?.groupRelationships || [];
+  const groups = groupsRaw || [];
+  const relationships = selectedGroupId ? (hierarchyRaw || []) : (allRelsRaw || []);
 
   // Build direct relationships
   const getDirectRelationships = useCallback(
@@ -215,8 +213,8 @@ export function GroupHierarchyFlow() {
       type: 'default',
       position: { x: 400, y: 300 },
       data: {
-        label: selectedGroup.name,
-        description: selectedGroup.description,
+        label: selectedGroup.name ?? '',
+        description: selectedGroup.description ?? '',
         level: 0,
       },
       style: {

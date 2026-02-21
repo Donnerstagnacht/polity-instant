@@ -25,6 +25,23 @@ export const notificationsTranslations = {
     noEntity: 'No entity notifications',
     entityAppear: "Notifications for groups, events, and amendments you're part of will appear here",
   },
+  // Toast messages for action hooks
+  toasts: {
+    markReadFailed: 'Failed to mark notification as read',
+    allMarkedRead: 'All notifications marked as read',
+    markAllReadFailed: 'Failed to mark all notifications as read',
+    deleted: 'Notification deleted',
+    deleteFailed: 'Failed to delete notification',
+    settingsUpdated: 'Notification settings updated',
+    settingsUpdateFailed: 'Failed to update notification settings',
+    settingsCreated: 'Notification settings created',
+    settingsCreateFailed: 'Failed to create notification settings',
+    pushEnabled: 'Push notifications enabled',
+    pushEnableFailed: 'Failed to enable push notifications',
+    pushDisabled: 'Push notifications disabled',
+    pushDisableFailed: 'Failed to disable push notifications',
+    createFailed: 'Failed to create notification',
+  },
   filters: {
     all: 'All',
     unread: 'Unread',

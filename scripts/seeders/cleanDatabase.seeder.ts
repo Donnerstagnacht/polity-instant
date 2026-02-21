@@ -4,7 +4,6 @@
  * This ensures a fresh start for the seeding process.
  */
 
-import { tx } from '@instantdb/admin';
 import type { EntitySeeder, SeedContext } from '../types/seeder.types';
 
 export const cleanDatabaseSeeder: EntitySeeder = {
@@ -16,83 +15,25 @@ export const cleanDatabaseSeeder: EntitySeeder = {
     console.log('🗑️  Cleaning existing data (deleting all entities)...\n');
 
     try {
-      // Query all entities to delete (including $users)
-      const query = {
-        $users: {},
-        stats: {},
-        statements: {},
-        blogs: {},
-        blogBloggers: {},
-        amendments: {},
-        amendmentCollaborators: {},
-        groups: {},
-        groupMemberships: {},
-        groupRelationships: {},
-        follows: {},
-        subscribers: {},
-        conversations: {},
-        conversationParticipants: {},
-        messages: {},
-        events: {},
-        eventParticipants: {},
-        notifications: {},
-        todos: {},
-        todoAssignments: {},
-        magicCodes: {},
-        agendaItems: {},
-        elections: {},
-        electionCandidates: {},
-        electionVotes: {},
-        amendmentVotes: {},
-        changeRequests: {},
-        changeRequestVotes: {},
-        amendmentVoteEntries: {},
-        positions: {},
-        documents: {},
-        documentCollaborators: {},
-        documentCursors: {},
-        documentVersions: {},
-        hashtags: {},
-        links: {},
-        payments: {},
-        meetingSlots: {},
-        meetingBookings: {},
-        comments: {},
-        commentVotes: {},
-        threads: {},
-        threadVotes: {},
-        timelineEvents: {},
-        speakerList: {},
-        amendmentPaths: {},
-        roles: {},
-        actionRights: {},
-        participants: {},
-        stripeCustomers: {},
-        stripeSubscriptions: {},
-        stripePayments: {},
-      };
-
-      const data = await db.query(query);
-      const deleteTransactions = [];
-
       // Delete all entities in dependency order (children first, then parents)
-      const entitiesToDelete = [
-        'stripePayments', // Delete Stripe payments first
-        'stripeSubscriptions', // Delete Stripe subscriptions
-        'stripeCustomers', // Delete Stripe customers
-        'commentVotes', // Delete comment votes first
-        'threadVotes', // Delete thread votes first
-        'comments', // Delete comments
-        'threads', // Delete threads
-        'meetingBookings', // Delete meeting bookings first
-        'meetingSlots', // Delete meeting slots
-        'hashtags', // Delete hashtags first (they link to other entities)
-        'links', // Delete links
-        'payments', // Delete payments
-        'timelineEvents', // Delete timeline events
-        'speakerList', // Delete speaker list
-        'amendmentPaths', // Delete amendment paths
-        'documentVersions', // Delete document versions
+      const tablesToDelete = [
+        'stripePayments',
+        'stripeSubscriptions',
+        'stripeCustomers',
+        'commentVotes',
+        'threadVotes',
+        'comments',
+        'threads',
+        'meetingBookings',
+        'meetingSlots',
+        'hashtags',
+        'links',
+        'payments',
+        'timelineEvents',
+        'speakerList',
+        'amendmentPathSegments',
+        'amendmentPaths',
+        'documentVersions',
         'documentCursors',
         'documentCollaborators',
         'documents',
@@ -105,53 +46,69 @@ export const cleanDatabaseSeeder: EntitySeeder = {
         'elections',
         'agendaItems',
         'positions',
+        'positionHolderHistory',
+        'scheduledElections',
+        'eventPositionHolders',
+        'eventPositions',
         'todoAssignments',
         'todos',
         'notifications',
-        'participants', // Delete participants
-        'actionRights', // Delete action rights before roles
-        'blogBloggers', // Delete blog bloggers
-        'amendmentCollaborators', // Delete amendment collaborators
+        'participants',
+        'actionRights',
+        'blogBloggers',
+        'amendmentCollaborators',
         'eventParticipants',
+        'eventVotes',
+        'eventVotingSessions',
+        'amendmentVotingSessions',
+        'supportConfirmations',
+        'eventDelegates',
+        'groupDelegateAllocations',
         'events',
         'messages',
         'conversationParticipants',
         'conversations',
-        'subscribers', // Delete subscribers
+        'subscribers',
         'follows',
-        'groupRelationships', // Delete group relationships
+        'reactions',
+        'groupRelationships',
         'groupMemberships',
         'groups',
         'amendments',
         'blogs',
         'statements',
         'stats',
-        'roles', // Delete roles after action rights but before users
+        'roles',
         'magicCodes',
-        '$users', // Delete $users last to avoid foreign key issues
+        'profiles',
       ];
 
-      for (const entityType of entitiesToDelete) {
-        const entities = (data as any)[entityType] || [];
-        for (const entity of entities) {
-          deleteTransactions.push((tx as any)[entityType][entity.id].delete());
+      let totalDeleted = 0;
+
+      for (const table of tablesToDelete) {
+        try {
+          const { count, error } = await db
+            .from(table)
+            .delete({ count: 'exact' })
+            .gte('id', '00000000-0000-0000-0000-000000000000');
+
+          if (error) {
+            // Table might not exist yet, skip silently
+            continue;
+          }
+
+          if (count && count > 0) {
+            totalDeleted += count;
+            console.log(`  Deleted ${count} rows from ${table}`);
+          }
+        } catch {
+          // Table might not exist, skip
+          continue;
         }
       }
 
-      if (deleteTransactions.length > 0) {
-        console.log(`  Deleting ${deleteTransactions.length} existing records...`);
-
-        // Delete in batches of 100 to avoid timeout
-        const batchSize = 100;
-        for (let i = 0; i < deleteTransactions.length; i += batchSize) {
-          const batch = deleteTransactions.slice(i, i + batchSize);
-          await db.transact(batch);
-          console.log(
-            `    Deleted ${Math.min(i + batchSize, deleteTransactions.length)} / ${deleteTransactions.length}`
-          );
-        }
-
-        console.log('  ✓ Database cleaned\n');
+      if (totalDeleted > 0) {
+        console.log(`\n  ✓ Database cleaned (${totalDeleted} total rows deleted)\n`);
       } else {
         console.log('  ✓ No existing data to clean\n');
       }

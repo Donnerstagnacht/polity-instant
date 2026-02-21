@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { UserGroup } from '@/features/user/types/user.types';
+import type { UserGroup } from '@/features/users/types/user.types';
 
 // Mock data for groups - in a real app this would come from an API
 const MOCK_GROUPS: UserGroup[] = [

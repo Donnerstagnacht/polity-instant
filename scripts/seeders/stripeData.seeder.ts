@@ -3,7 +3,10 @@
  * Seeds Stripe customers, subscriptions, and payment data
  */
 
-import { id, tx } from '@instantdb/admin';
+import { id } from '../helpers/id.helper';
+import { tx } from '../helpers/compat';
+import { batchTransact } from '../helpers/transaction.helpers';
+import type { InsertOp } from '../helpers/transaction.helpers';
 import { faker } from '@faker-js/faker';
 import type { EntitySeeder, SeedContext } from '../types/seeder.types';
 import { randomInt, randomItem } from '../helpers/random.helpers';
@@ -17,7 +20,7 @@ export const stripeDataSeeder: EntitySeeder = {
     const userIds = context.userIds || [];
 
     console.log('Seeding Stripe customers, subscriptions, and payments...');
-    const transactions = [];
+    const transactions: InsertOp[] = [];
     let totalCustomers = 0;
     let totalSubscriptions = 0;
     let totalPayments = 0;
@@ -160,7 +163,7 @@ export const stripeDataSeeder: EntitySeeder = {
       const batchSize = 20;
       for (let i = 0; i < transactions.length; i += batchSize) {
         const batch = transactions.slice(i, i + batchSize);
-        await db.transact(batch);
+        await batchTransact(db, batch);
       }
     }
 

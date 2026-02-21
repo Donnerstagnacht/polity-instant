@@ -2,8 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
-import { formatMeetingDate, formatMeetingTime, formatMeetingType } from '../utils/meetingFormatters';
-import { calculateDuration, getMeetingStatus } from '../utils/meetingUtils';
+import { formatMeetingDate, formatMeetingTime, formatMeetingType } from '../logic/meetingFormatters';
+import { calculateDuration, getMeetingStatus } from '../logic/meetingUtils';
 
 interface MeetingDetailsProps {
   startTime: string | number;

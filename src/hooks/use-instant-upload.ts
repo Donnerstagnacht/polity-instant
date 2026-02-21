@@ -1,10 +1,14 @@
 import { useState } from 'react';
-import db from '../../db/db';
+import { createClient } from '@/lib/supabase/client';
+
+const supabase = createClient();
 
 interface UploadOptions {
   contentType?: string;
   contentDisposition?: string;
 }
+
+const STORAGE_BUCKET = 'uploads';
 
 export function useInstantUpload() {
   const [isUploading, setIsUploading] = useState(false);
@@ -15,8 +19,20 @@ export function useInstantUpload() {
     setError(null);
 
     try {
-      const result = await db.storage.uploadFile(path, file, opts);
-      return result;
+      const { data, error: uploadError } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .upload(path, file, {
+          contentType: opts?.contentType,
+          upsert: false,
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from(STORAGE_BUCKET)
+        .getPublicUrl(path);
+
+      return { data: { id: data.path, url: urlData.publicUrl } };
     } catch (err) {
       const uploadError = err instanceof Error ? err : new Error('Upload failed');
       setError(uploadError);
@@ -31,11 +47,15 @@ export function useInstantUpload() {
     setError(null);
 
     try {
-      await db.storage.delete(path);
+      const { error: deleteError } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .remove([path]);
+
+      if (deleteError) throw deleteError;
     } catch (err) {
-      const deleteError = err instanceof Error ? err : new Error('Delete failed');
-      setError(deleteError);
-      throw deleteError;
+      const delError = err instanceof Error ? err : new Error('Delete failed');
+      setError(delError);
+      throw delError;
     } finally {
       setIsUploading(false);
     }

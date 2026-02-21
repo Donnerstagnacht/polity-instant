@@ -1,5 +1,5 @@
 import React from 'react';
-import { BlogsCard } from '@/features/user/ui/BlogsCard';
+import { BlogsCard } from '@/features/users/ui/BlogsCard';
 
 interface BlogSearchCardProps {
   blog: any;

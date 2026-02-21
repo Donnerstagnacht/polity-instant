@@ -3,7 +3,7 @@
  * Runs once before all tests to ensure test users are active
  */
 
-import { init } from '@instantdb/admin';
+import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
 import { resolve } from 'path';
 
@@ -11,20 +11,17 @@ import { resolve } from 'path';
 config({ path: resolve(process.cwd(), '.env') });
 config({ path: resolve(process.cwd(), '.env.local'), override: true });
 
-const APP_ID = process.env.NEXT_PUBLIC_INSTANT_APP_ID;
-const ADMIN_TOKEN = process.env.INSTANT_ADMIN_TOKEN;
+const SUPABASE_URL =
+  process.env.SUPABASE_URL ??
+  process.env.NEXT_PUBLIC_SUPABASE_URL ??
+  'http://127.0.0.1:54321';
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!APP_ID || !ADMIN_TOKEN) {
-  throw new Error(
-    'Missing required environment variables: NEXT_PUBLIC_INSTANT_APP_ID and INSTANT_ADMIN_TOKEN'
-  );
+if (!SUPABASE_SERVICE_ROLE_KEY) {
+  throw new Error('Missing required environment variable: SUPABASE_SERVICE_ROLE_KEY');
 }
 
-// Initialize the admin SDK
-const adminDB = init({
-  appId: APP_ID,
-  adminToken: ADMIN_TOKEN,
-});
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 // Test users to ensure are active
 const TEST_USERS = [
@@ -51,40 +48,53 @@ async function globalSetup() {
     try {
       console.log(`📧 Setting up user: ${testUser.email}`);
 
-      // Get or create the user
-      let user;
-      try {
-        user = await adminDB.auth.getUser({ email: testUser.email });
-      } catch (error: any) {
-        if (error?.message?.includes('not found') || error?.status === 404) {
-          user = null;
-        } else {
-          throw error;
-        }
-      }
+      // Check if the user already exists in Supabase Auth
+      const { data: existingUsers } = await supabase.auth.admin.listUsers();
+      const existingUser = existingUsers?.users?.find(u => u.email === testUser.email);
 
-      if (user) {
-        console.log(`   ✅ User exists (ID: ${user.id})`);
+      if (existingUser) {
+        console.log(`   ✅ Auth user exists (ID: ${existingUser.id})`);
+
+        // Ensure the profile row exists
+        const { data: profile } = await supabase
+          .from('user')
+          .select('id')
+          .eq('id', existingUser.id)
+          .single();
+
+        if (!profile) {
+          console.log(`   ℹ️  Creating profile row...`);
+          await supabase.from('user').upsert({
+            id: existingUser.id,
+            email: testUser.email,
+            visibility: 'public',
+            is_public: true,
+            updated_at: new Date().toISOString(),
+          });
+        }
       } else {
         console.log(`   ℹ️  User not found, creating...`);
-        const token = await adminDB.auth.createToken(testUser.email);
-        user = await adminDB.auth.verifyToken(token);
-        console.log(`   ✅ User created (ID: ${user.id})`);
-      }
+        const { data: newAuth, error } = await supabase.auth.admin.createUser({
+          email: testUser.email,
+          email_confirm: true,
+        });
 
-      // Activate the user in the $users table (only if user exists)
-      if (user && user.id) {
-        try {
-          await adminDB.transact([
-            adminDB.tx.$users[user.id].update({
-              linkedGuestUsers: true,
-              updatedAt: new Date(),
-              lastSeenAt: new Date(),
-            }),
-          ]);
-        } catch {
-          // Ignore errors updating user - may not have permissions
+        if (error) {
+          console.error(`   ❌ Failed to create auth user: ${error.message}`);
+          continue;
         }
+
+        // Create profile row
+        await supabase.from('user').upsert({
+          id: newAuth.user.id,
+          email: testUser.email,
+          visibility: 'public',
+          is_public: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+
+        console.log(`   ✅ User created (ID: ${newAuth.user.id})`);
       }
     } catch (error) {
       console.error(`   ❌ Failed to setup user ${testUser.email}:`, error);
@@ -106,9 +116,10 @@ async function ensureBaseSeed() {
 
   try {
     // Check if the primary test group exists
-    const { groups } = await adminDB.query({
-      groups: { $: { where: { id: 'e2e10001-0000-4000-8000-000000000001' } } },
-    });
+    const { data: groups } = await supabase
+      .from('group')
+      .select('id')
+      .eq('id', 'e2e10001-0000-4000-8000-000000000001');
 
     if (groups && groups.length > 0) {
       console.log('   ✅ Base seed data already exists');
@@ -118,10 +129,10 @@ async function ensureBaseSeed() {
     console.log('   ℹ️  Creating base seed data...');
 
     // Get the main test user
-    let mainUser;
-    try {
-      mainUser = await adminDB.auth.getUser({ email: 'polity.live@gmail.com' });
-    } catch {
+    const { data: existingUsers } = await supabase.auth.admin.listUsers();
+    const mainUser = existingUsers?.users?.find(u => u.email === 'polity.live@gmail.com');
+
+    if (!mainUser) {
       console.warn('   ⚠️  Main test user not found — skipping base seed');
       return;
     }
@@ -129,24 +140,17 @@ async function ensureBaseSeed() {
     const now = new Date().toISOString();
 
     // Create primary test group
-    await adminDB.transact([
-      adminDB.tx.groups['e2e10001-0000-4000-8000-000000000001'].update({
-        name: 'Test Main Group',
-        description: 'Primary test group for E2E tests',
-        isPublic: true,
-        visibility: 'public',
-        memberCount: 1,
-        createdAt: now,
-        updatedAt: now,
-      }),
-    ]);
-
-    // Link group to user
-    await adminDB.transact([
-      adminDB.tx.groups['e2e10001-0000-4000-8000-000000000001'].link({
-        users: mainUser.id,
-      }),
-    ]);
+    await supabase.from('group').upsert({
+      id: 'e2e10001-0000-4000-8000-000000000001',
+      name: 'Test Main Group',
+      description: 'Primary test group for E2E tests',
+      is_public: true,
+      visibility: 'public',
+      member_count: 1,
+      owner_id: mainUser.id,
+      created_at: now,
+      updated_at: now,
+    });
 
     console.log('   ✅ Base seed data created');
   } catch (error) {

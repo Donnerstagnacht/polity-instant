@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -23,10 +23,11 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { LogOut, User, Settings } from 'lucide-react';
-import { db } from '../../../db/db';
+import { useAuth } from '@/providers/auth-provider';
+import { useGroupState } from '@/zero/groups/useGroupState';
 import { useTranslation } from '@/hooks/use-translation';
 import { cn } from '@/utils/utils.ts';
-import type { User as UserType } from '@/features/user/types/user.types';
+import type { User as UserType } from '@/features/users/types/user.types';
 
 interface UserMenuProps {
   className?: string;
@@ -44,25 +45,15 @@ export function UserMenu({
   user: userData,
 }: UserMenuProps) {
   const { t } = useTranslation();
-  const router = useRouter();
-  const { user: authUser } = db.useAuth();
+  const navigate = useNavigate();
+  const { user: authUser, signOut } = useAuth();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
-  // Query user's group memberships
-  const { data: membershipsData } = db.useQuery(
-    authUser?.id
-      ? {
-          groupMemberships: {
-            $: {
-              where: {
-                'user.id': authUser.id,
-              },
-            },
-            group: {},
-          },
-        }
-      : { groupMemberships: {} }
-  );
+  // Query user's group memberships with nested group data
+  const { currentUserMembershipsWithGroups } = useGroupState({
+    includeCurrentUserMembershipsWithGroups: true,
+  });
+  const membershipsData = { groupMemberships: currentUserMembershipsWithGroups };
 
   // Filter active memberships (member or admin)
   const activeGroups = useMemo(() => {
@@ -84,8 +75,8 @@ export function UserMenu({
 
   const handleLogout = async () => {
     try {
-      await db.auth.signOut();
-      router.push('/');
+      await signOut();
+      navigate({ to: '/' });
       setShowLogoutDialog(false);
     } catch (error) {
       console.error('Failed to sign out:', error);
@@ -94,7 +85,7 @@ export function UserMenu({
 
   const handleUserClick = () => {
     if (authUser?.id) {
-      router.push(`/user/${authUser.id}`);
+      navigate({ to: `/user/${authUser.id}` });
     } else {
       console.error('User ID not found:', authUser);
     }
@@ -102,12 +93,12 @@ export function UserMenu({
 
   const handleSettingsClick = () => {
     if (authUser?.id) {
-      router.push(`/user/${authUser.id}/edit`);
+      navigate({ to: `/user/${authUser.id}/edit` });
     }
   };
 
   const handleGroupClick = (groupId: string) => {
-    router.push(`/group/${groupId}`);
+    navigate({ to: `/group/${groupId}` });
   };
 
   const userInitials = displayName

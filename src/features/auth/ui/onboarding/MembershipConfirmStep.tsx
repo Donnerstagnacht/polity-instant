@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Users, MapPin, ArrowLeft, Check, X, Loader2, UserPlus } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
-import type { Group } from './useOnboarding';
+import type { Group } from '../../hooks/useOnboarding';
 
 interface MembershipConfirmStepProps {
   group: Group;

@@ -1,11 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from '@/hooks/use-translation';
-import { CalendarEvent } from '../types';
-import { isSameDay, formatTime } from '../utils/dateUtils';
-import { getBaseEventId } from '../utils/eventIdUtils';
+import { CalendarEvent } from '../types/calendar.types';
+import { isSameDay, formatTime } from '../logic/dateUtils';
+import { getBaseEventId } from '../logic/eventIdUtils';
 
 interface MonthViewProps {
   selectedDate: Date;
@@ -15,7 +15,7 @@ interface MonthViewProps {
 }
 
 export const MonthView = ({ selectedDate, onDateSelect, events, allEvents }: MonthViewProps) => {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { t, language } = useTranslation();
 
   const getEventsForDate = (date: Date) => {
@@ -89,9 +89,9 @@ export const MonthView = ({ selectedDate, onDateSelect, events, allEvents }: Mon
                       onClick={() => {
                         const baseEventId = getBaseEventId(event.id);
                         if (event.isMeeting) {
-                          router.push(`/meet/${baseEventId}`);
+                          navigate({ to: `/meet/${baseEventId}` });
                         } else {
-                          router.push(`/event/${baseEventId}`);
+                          navigate({ to: `/event/${baseEventId}` });
                         }
                       }}
                     >

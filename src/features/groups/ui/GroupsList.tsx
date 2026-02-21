@@ -1,16 +1,27 @@
 import React from 'react';
-import { useGroupsStore } from '@/global-state/groups.store';
 import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
 import { Loader2 } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
 
-export const GroupsList: React.FC = () => {
+interface GroupDisplay {
+  id: string;
+  name: string;
+  description?: string;
+  memberCount?: number;
+  eventCount?: number;
+  amendmentCount?: number;
+  topics?: string[];
+}
+
+interface GroupsListProps {
+  groups: GroupDisplay[];
+  isLoading: boolean;
+}
+
+export const GroupsList: React.FC<GroupsListProps> = ({ groups, isLoading }) => {
   const { t } = useTranslation();
-  const { loading, getFilteredGroups } = useGroupsStore();
 
-  const filteredGroups = getFilteredGroups();
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -19,7 +30,7 @@ export const GroupsList: React.FC = () => {
     );
   }
 
-  if (filteredGroups.length === 0) {
+  if (groups.length === 0) {
     return (
       <div className="py-12 text-center">
         <div className="mb-4">
@@ -39,22 +50,22 @@ export const GroupsList: React.FC = () => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-foreground">
-          {t('features.groups.list.groupsFound', { count: filteredGroups.length })}
+          {t('features.groups.list.groupsFound', { count: groups.length })}
         </h2>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredGroups.map(group => (
+        {groups.map(group => (
           <GroupTimelineCard
             key={group.id}
             group={{
-              id: String(group.id),
+              id: group.id,
               name: group.name,
               description: group.description,
-              memberCount: group.members,
-              eventCount: group.events,
-              amendmentCount: group.amendments,
-              topics: group.tags,
+              memberCount: group.memberCount,
+              eventCount: group.eventCount,
+              amendmentCount: group.amendmentCount,
+              topics: group.topics,
             }}
           />
         ))}

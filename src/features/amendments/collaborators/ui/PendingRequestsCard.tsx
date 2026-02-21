@@ -44,11 +44,13 @@ export function PendingRequestsCard({ requests, onNavigateToUser }: PendingReque
           <TableBody>
             {requests.map(collaboration => {
               const user = collaboration.user;
-              const userName = user?.name || 'Unknown User';
+              const userName = user
+                ? [user.first_name, user.last_name].filter(Boolean).join(' ') || 'Unknown User'
+                : 'Unknown User';
               const userAvatar = user?.avatar || '';
               const userHandle = user?.handle || '';
-              const createdAt = collaboration.createdAt
-                ? new Date(collaboration.createdAt).toLocaleDateString()
+              const createdAt = collaboration.created_at
+                ? new Date(collaboration.created_at).toLocaleDateString()
                 : 'N/A';
 
               return (
@@ -57,7 +59,7 @@ export function PendingRequestsCard({ requests, onNavigateToUser }: PendingReque
                     <div className="flex items-center gap-3">
                       <Avatar
                         className="h-10 w-10 cursor-pointer"
-                        onClick={() => onNavigateToUser(user.id)}
+                        onClick={() => user && onNavigateToUser(user.id)}
                       >
                         <AvatarImage src={userAvatar} alt={userName} />
                         <AvatarFallback>
@@ -70,7 +72,7 @@ export function PendingRequestsCard({ requests, onNavigateToUser }: PendingReque
                       </Avatar>
                       <div
                         className="cursor-pointer hover:underline"
-                        onClick={() => onNavigateToUser(user.id)}
+                        onClick={() => user && onNavigateToUser(user.id)}
                       >
                         <div className="font-medium">{userName}</div>
                         {userHandle && (

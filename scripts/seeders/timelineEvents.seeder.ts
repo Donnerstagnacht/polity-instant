@@ -4,7 +4,10 @@
  * Updated for Pinterest-style timeline with media, votes, elections, and rich content types
  */
 
-import { id, tx } from '@instantdb/admin';
+import { id } from '../helpers/id.helper';
+import { tx } from '../helpers/compat';
+import { batchTransact } from '../helpers/transaction.helpers';
+import type { InsertOp } from '../helpers/transaction.helpers';
 import { faker } from '@faker-js/faker';
 import type { EntitySeeder, SeedContext } from '../types/seeder.types';
 import { randomInt, randomItem } from '../helpers/random.helpers';
@@ -89,36 +92,25 @@ export const timelineEventsSeeder: EntitySeeder = {
 
     const mainUserId = SEED_CONFIG.tobiasUserId;
 
-    const subscriptionsData = await db.query({
-      subscribers: {
-        $: {
-          where: {
-            'subscriber.id': mainUserId,
-          },
-        },
-        user: {},
-        group: {},
-        event: {},
-        amendment: {},
-        blog: {},
-      },
-    });
+    const { data: subscriberRows } = await db.from('subscribers')
+      .select('*')
+      .eq('subscriberId', mainUserId);
 
-    const subscribedUserIds = (subscriptionsData?.subscribers || [])
-      .filter((sub: any) => sub.user)
-      .map((sub: any) => sub.user.id);
-    const subscribedGroupIds = (subscriptionsData?.subscribers || [])
-      .filter((sub: any) => sub.group)
-      .map((sub: any) => sub.group.id);
-    const subscribedEventIds = (subscriptionsData?.subscribers || [])
-      .filter((sub: any) => sub.event)
-      .map((sub: any) => sub.event.id);
-    const subscribedAmendmentIds = (subscriptionsData?.subscribers || [])
-      .filter((sub: any) => sub.amendment)
-      .map((sub: any) => sub.amendment.id);
-    const subscribedBlogIds = (subscriptionsData?.subscribers || [])
-      .filter((sub: any) => sub.blog)
-      .map((sub: any) => sub.blog.id);
+    const subscribedUserIds = (subscriberRows || [])
+      .filter((sub: any) => sub.userId)
+      .map((sub: any) => sub.userId);
+    const subscribedGroupIds = (subscriberRows || [])
+      .filter((sub: any) => sub.groupId)
+      .map((sub: any) => sub.groupId);
+    const subscribedEventIds = (subscriberRows || [])
+      .filter((sub: any) => sub.eventId)
+      .map((sub: any) => sub.eventId);
+    const subscribedAmendmentIds = (subscriberRows || [])
+      .filter((sub: any) => sub.amendmentId)
+      .map((sub: any) => sub.amendmentId);
+    const subscribedBlogIds = (subscriberRows || [])
+      .filter((sub: any) => sub.blogId)
+      .map((sub: any) => sub.blogId);
 
     const pickFrom = <T>(preferred: T[], fallback: T[]): T | undefined =>
       preferred.length > 0
@@ -128,7 +120,7 @@ export const timelineEventsSeeder: EntitySeeder = {
           : undefined;
 
     console.log('Seeding timeline events with Pinterest-style content...');
-    const transactions = [];
+    const transactions: InsertOp[] = [];
     const timelineEventIds: string[] = [];
 
     // Initialize link counters
@@ -142,39 +134,30 @@ export const timelineEventsSeeder: EntitySeeder = {
     let timelineEventsToElections = 0;
     let timelineEventsToAmendmentVotes = 0;
 
-    // Query elections with their agenda items for linking
-    const electionsData = await db.query({
-      elections: {
-        agendaItem: {
-          event: {},
-        },
-      },
-    });
-    const electionsWithAgenda = (electionsData?.elections || []).map((election: any) => ({
+    // Query elections and agenda items for linking
+    const { data: electionRows } = await db.from('elections').select('*');
+    const { data: agendaItemRows } = await db.from('agendaItems').select('id, eventId');
+    const agendaItemMap = new Map((agendaItemRows || []).map((a: any) => [a.id, a]));
+
+    const electionsWithAgenda = (electionRows || []).map((election: any) => ({
       id: election.id,
       title: election.title,
       status: election.status,
       votingEndTime: election.votingEndTime,
-      agendaItemId: election.agendaItem?.id,
-      agendaEventId: election.agendaItem?.event?.id,
+      agendaItemId: election.agendaItemId,
+      agendaEventId: agendaItemMap.get(election.agendaItemId)?.eventId,
     }));
 
-    // Query amendmentVotes with their agenda items for linking
-    const amendmentVotesData = await db.query({
-      amendmentVotes: {
-        agendaItem: {
-          event: {},
-        },
-      },
-    });
-    const amendmentVotesWithAgenda = (amendmentVotesData?.amendmentVotes || []).map(
+    // Query amendmentVotes for linking (reuse agendaItemMap from above)
+    const { data: amendmentVoteRows } = await db.from('amendmentVotes').select('*');
+    const amendmentVotesWithAgenda = (amendmentVoteRows || []).map(
       (vote: any) => ({
         id: vote.id,
         title: vote.title,
         status: vote.status,
         votingEndTime: vote.votingEndTime,
-        agendaItemId: vote.agendaItem?.id,
-        agendaEventId: vote.agendaItem?.event?.id,
+        agendaItemId: vote.agendaItemId,
+        agendaEventId: agendaItemMap.get(vote.agendaItemId)?.eventId,
       })
     );
 
@@ -468,20 +451,13 @@ export const timelineEventsSeeder: EntitySeeder = {
     }> = [];
 
     if (statementIds.length > 0) {
-      const statementsData = await db.query({
-        statements: {
-          $: {
-            where: {
-              id: { in: statementIds },
-            },
-          },
-          user: {},
-        },
-      });
+      const { data: statementRows } = await db.from('statements')
+        .select('*')
+        .in('id', statementIds);
 
-      statementsForTimeline = (statementsData?.statements || []).map((statement: any) => ({
+      statementsForTimeline = (statementRows || []).map((statement: any) => ({
         id: statement.id,
-        user: statement.user ? { id: statement.user.id } : undefined,
+        user: statement.userId ? { id: statement.userId } : undefined,
         tag: statement.tag,
         text: statement.text,
       }));
@@ -667,22 +643,16 @@ export const timelineEventsSeeder: EntitySeeder = {
 
     if (todoIds && todoIds.length > 0) {
       const todosQuery = {
-        todos: {
-          $: {
-            where: {
-              id: { in: todoIds },
-            },
-          },
-          group: {},
-          creator: {},
-        },
+        ids: todoIds,
       };
 
-      const todosData = await db.query(todosQuery);
-      todosForTimeline = (todosData?.todos || []).map((todo: any) => ({
+      const { data: todoRows } = await db.from('todos')
+        .select('*')
+        .in('id', todosQuery.ids);
+      todosForTimeline = (todoRows || []).map((todo: any) => ({
         id: todo.id,
-        group: todo.group ? { id: todo.group.id } : undefined,
-        creator: todo.creator ? { id: todo.creator.id } : undefined,
+        group: todo.groupId ? { id: todo.groupId } : undefined,
+        creator: todo.creatorId ? { id: todo.creatorId } : undefined,
       }));
 
       if (todosForTimeline.length === 0) {
@@ -741,7 +711,7 @@ export const timelineEventsSeeder: EntitySeeder = {
       const batchSize = 20;
       for (let i = 0; i < transactions.length; i += batchSize) {
         const batch = transactions.slice(i, i + batchSize);
-        await db.transact(batch);
+        await batchTransact(db, batch);
       }
     }
 

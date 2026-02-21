@@ -6,12 +6,13 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
-import db, { tx } from '../../../../db/db';
+import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { syncGroupNameToConversation } from '@/utils/groupConversationSync';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { notifyGroupProfileUpdated } from '@/utils/notification-helpers';
+import { sendNotificationFn } from '@/server/notifications';
 
 export interface GroupFormData {
   name: string;
@@ -66,7 +67,8 @@ export function useGroupUpdate(
   initialData?: Partial<GroupFormData>,
   options?: { actorId?: string; visibility?: 'public' | 'private' | 'authenticated' }
 ): UseGroupUpdateResult {
-  const router = useRouter();
+  const navigate = useNavigate();
+  const { updateGroup } = useGroupActions();
   const [formData, setFormData] = useState<GroupFormData>(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [originalName, setOriginalName] = useState('');
@@ -142,65 +144,25 @@ export function useGroupUpdate(
       // Check if name changed
       const nameChanged = formData.name !== originalName;
 
-      const transactions: any[] = [
-        tx.groups[groupId].update({
-          name: formData.name,
-          description: formData.description,
-          location: formData.location,
-          region: formData.region,
-          country: formData.country,
-          imageURL: formData.imageURL,
-          whatsapp: formData.whatsapp,
-          instagram: formData.instagram,
-          twitter: formData.twitter,
-          facebook: formData.facebook,
-          snapchat: formData.snapchat,
-          updatedAt: new Date(),
-        }),
-      ];
-
-      // Update the group in Instant DB
-      await db.transact(transactions);
+      await updateGroup({
+        id: groupId,
+        name: formData.name,
+        description: formData.description,
+        location: formData.location,
+        x: formData.twitter,
+      });
 
       // Sync name to group conversation if it changed
       if (nameChanged) {
         await syncGroupNameToConversation(groupId, formData.name);
       }
 
-      // Timeline and notifications are server-only (create: 'false') — send separately
-      try {
-        const sideEffects: any[] = [];
-
-        if (options?.actorId && options?.visibility === 'public') {
-          sideEffects.push(
-            createTimelineEvent({
-              eventType: 'updated',
-              entityType: 'group',
-              entityId: groupId,
-              actorId: options.actorId,
-              title: `${formData.name} updated their profile`,
-              description: nameChanged ? `Group name changed to ${formData.name}` : 'Group profile has been updated',
-            })
-          );
-        }
-
-        if (options?.actorId) {
-          const notifTxs = notifyGroupProfileUpdated({
-            senderId: options.actorId,
-            groupId,
-            groupName: formData.name,
-          });
-          sideEffects.push(...notifTxs);
-        }
-
-        if (sideEffects.length > 0) await db.transact(sideEffects);
-      } catch { /* timeline/notification delivery is best-effort */ }
-
+      sendNotificationFn({ data: { helper: 'notifyGroupProfileUpdated', params: { senderId: options?.actorId, groupId, groupName: formData.name } } }).catch(console.error)
       toast.success('Group updated successfully');
 
       // Wait a moment for the DB to update, then navigate
       setTimeout(() => {
-        router.push(`/group/${groupId}`);
+        navigate({ to: `/group/${groupId}` });
       }, 500);
     } catch (error) {
       toast.error('Failed to update group');

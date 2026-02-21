@@ -1,12 +1,12 @@
 'use client';
 
 import { ReactNode, MouseEvent } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { cn } from '@/utils/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CARD_RADIUS, getCardShadowClasses } from '../../utils/gradient-assignment';
+import { CARD_RADIUS, getCardShadowClasses } from '../../logic/gradient-assignment';
 import {
   ContentType,
   CONTENT_TYPE_CONFIG,
@@ -40,7 +40,7 @@ export function TimelineCardBase({
   onClick,
   href,
 }: TimelineCardBaseProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const shadowClasses = getCardShadowClasses(elevated);
 
   const cardStyles = cn(
@@ -78,9 +78,9 @@ export function TimelineCardBase({
         return;
       }
 
-      // Use Next.js routing for standard left click
+      // Use TanStack Router navigation for standard left click
       e.preventDefault();
-      router.push(href);
+      navigate({ to: href });
     }
   };
 
@@ -93,7 +93,7 @@ export function TimelineCardBase({
       onKeyDown={e => {
         if (href && (e.key === 'Enter' || e.key === ' ')) {
           e.preventDefault();
-          router.push(href);
+          navigate({ to: href });
         }
         if (!href && onClick && (e.key === 'Enter' || e.key === ' ')) {
           e.preventDefault();
@@ -147,7 +147,7 @@ export function TimelineCardHeader({
           <div className="min-w-0 flex-1">
             <h3 className="truncate text-base font-semibold leading-tight">
               {href ? (
-                <Link href={href} onClick={e => e.stopPropagation()} className="hover:underline">
+                <Link to={href} onClick={e => e.stopPropagation()} className="hover:underline">
                   {title}
                 </Link>
               ) : (
@@ -157,7 +157,7 @@ export function TimelineCardHeader({
             {subtitle &&
               (subtitleHref ? (
                 <Link
-                  href={subtitleHref}
+                  to={subtitleHref}
                   onClick={e => e.stopPropagation()}
                   className="mt-0.5 block truncate text-xs text-muted-foreground hover:text-foreground hover:underline"
                 >

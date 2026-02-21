@@ -1,47 +1,21 @@
 import { useMemo } from 'react';
-import db from '../../../../db/db';
+import {
+  useEventById,
+  useEventParticipantsQuery,
+  useEventAgenda as useEventAgendaQuery,
+} from '@/zero/events/useEventState';
 
 /**
  * Hook to query event data with all related entities
  */
 export function useEventData(eventId?: string) {
-  const { data, isLoading, error } = db.useQuery(
-    eventId
-      ? {
-          events: {
-            $: { where: { id: eventId } },
-            organizer: {},
-            group: {
-              memberships: {
-                user: {},
-              },
-            },
-            roles: {
-              actionRights: {},
-            },
-            participants: {
-              user: {},
-              role: {
-                actionRights: {},
-              },
-            },
-            delegates: {
-              user: {},
-            },
-            agendaItems: {
-              election: {},
-            },
-            eventPositions: {},
-          },
-        }
-      : null
-  );
+  const { event, isLoading } = useEventById(eventId);
+  const error = undefined;
 
-  const event = useMemo(() => data?.events?.[0] || null, [data]);
   const participants = useMemo(() => event?.participants || [], [event]);
   const delegates = useMemo(() => event?.delegates || [], [event]);
-  const agendaItems = useMemo(() => event?.agendaItems || [], [event]);
-  const positions = useMemo(() => event?.eventPositions || [], [event]);
+  const agendaItems = useMemo(() => event?.agenda_items || [], [event]);
+  const positions = useMemo(() => event?.event_positions || [], [event]);
 
   const participantStats = useMemo(() => {
     const stats = {
@@ -78,23 +52,9 @@ export function useEventData(eventId?: string) {
  * Hook to query event participants with filtering
  */
 export function useEventParticipants(eventId?: string) {
-  const { data, isLoading } = db.useQuery(
-    eventId
-      ? {
-          eventParticipants: {
-            $: {
-              where: {
-                'event.id': eventId,
-              },
-            },
-            user: {},
-            role: {},
-          },
-        }
-      : null
-  );
+  const { participants: eventParticipants, isLoading } = useEventParticipantsQuery(eventId);
 
-  const participants = useMemo(() => data?.eventParticipants || [], [data]);
+  const participants = useMemo(() => eventParticipants || [], [eventParticipants]);
 
   const { activeParticipants, invitedParticipants, requestedParticipants } = useMemo(() => {
     const active: any[] = [];
@@ -131,25 +91,7 @@ export function useEventParticipants(eventId?: string) {
  * Hook to query event agenda items
  */
 export function useEventAgenda(eventId?: string) {
-  const { data, isLoading } = db.useQuery(
-    eventId
-      ? {
-          agendaItems: {
-            $: {
-              where: {
-                'event.id': eventId,
-              },
-            },
-            election: {
-              candidates: {},
-            },
-            amendment: {},
-          },
-        }
-      : null
-  );
-
-  const agendaItems = useMemo(() => data?.agendaItems || [], [data]);
+  const { agendaItems, isLoading } = useEventAgendaQuery(eventId);
 
   return {
     agendaItems,

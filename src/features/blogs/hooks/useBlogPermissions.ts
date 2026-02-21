@@ -1,4 +1,4 @@
-import { usePermissions } from '../../../../db/rbac/usePermissions';
+import { usePermissions } from '@/zero/rbac/usePermissions';
 
 export function useBlogPermissions(blogId: string) {
   const { can, isABlogger, isLoading } = usePermissions({ blogId });

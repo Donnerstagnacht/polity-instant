@@ -25,6 +25,23 @@ export const notificationsTranslations = {
     noEntity: 'Keine Entitäts-Benachrichtigungen',
     entityAppear: 'Benachrichtigungen für Gruppen, Veranstaltungen und Anträge, bei denen du dabei bist, werden hier angezeigt',
   },
+  // Toast-Nachrichten für Action-Hooks
+  toasts: {
+    markReadFailed: 'Benachrichtigung konnte nicht als gelesen markiert werden',
+    allMarkedRead: 'Alle Benachrichtigungen als gelesen markiert',
+    markAllReadFailed: 'Benachrichtigungen konnten nicht als gelesen markiert werden',
+    deleted: 'Benachrichtigung gelöscht',
+    deleteFailed: 'Benachrichtigung konnte nicht gelöscht werden',
+    settingsUpdated: 'Benachrichtigungseinstellungen aktualisiert',
+    settingsUpdateFailed: 'Benachrichtigungseinstellungen konnten nicht aktualisiert werden',
+    settingsCreated: 'Benachrichtigungseinstellungen erstellt',
+    settingsCreateFailed: 'Benachrichtigungseinstellungen konnten nicht erstellt werden',
+    pushEnabled: 'Push-Benachrichtigungen aktiviert',
+    pushEnableFailed: 'Push-Benachrichtigungen konnten nicht aktiviert werden',
+    pushDisabled: 'Push-Benachrichtigungen deaktiviert',
+    pushDisableFailed: 'Push-Benachrichtigungen konnten nicht deaktiviert werden',
+    createFailed: 'Benachrichtigung konnte nicht erstellt werden',
+  },
   filters: {
     all: 'Alle',
     unread: 'Ungelesen',

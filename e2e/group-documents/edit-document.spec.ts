@@ -11,8 +11,8 @@ test.describe('Group Documents - Edit Document', () => {
     const group = await groupFactory.createGroup(mainUserId, { name: 'E2E Doc Edit Group' });
     // Create a group document via admin SDK
     const docId = crypto.randomUUID();
-    await adminDb.transact(
-      adminDb.tx.documents[docId]
+    await (adminDb as any).transact(
+      (adminDb as any).tx.documents[docId]
         .update({
           title: 'E2E Test Document',
           content: [{ type: 'p', children: [{ text: '' }] }],
@@ -36,8 +36,8 @@ test.describe('Group Documents - Edit Document', () => {
   }) => {
     const group = await groupFactory.createGroup(mainUserId, { name: 'E2E Doc Type Group' });
     const docId = crypto.randomUUID();
-    await adminDb.transact(
-      adminDb.tx.documents[docId]
+    await (adminDb as any).transact(
+      (adminDb as any).tx.documents[docId]
         .update({
           title: 'E2E Type Document',
           content: [{ type: 'p', children: [{ text: '' }] }],

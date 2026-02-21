@@ -1,4 +1,26 @@
 export const documentsTranslations = {
+  // Toast messages for action hooks
+  toasts: {
+    created: 'Document created',
+    updateFailed: 'Failed to update document',
+    deleted: 'Document deleted',
+    deleteFailed: 'Failed to delete document',
+    versionCreated: 'Version created',
+    versionCreateFailed: 'Failed to create version',
+    versionUpdateFailed: 'Failed to update version',
+    versionDeleted: 'Version deleted',
+    versionDeleteFailed: 'Failed to delete version',
+    threadCreated: 'Thread created',
+    threadCreateFailed: 'Failed to create thread',
+    voteThreadFailed: 'Failed to vote on thread',
+    commentAdded: 'Comment added',
+    commentAddFailed: 'Failed to add comment',
+    voteCommentFailed: 'Failed to vote on comment',
+    updateCommentVoteFailed: 'Failed to update comment vote',
+    deleteCommentVoteFailed: 'Failed to delete comment vote',
+    collaboratorAdded: 'Collaborator added',
+    collaboratorAddFailed: 'Failed to add collaborator',
+  },
   inviteDialog: {
     invite: 'Invite',
     title: 'Invite Collaborators',

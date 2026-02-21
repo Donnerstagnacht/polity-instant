@@ -1,4 +1,8 @@
-import { tx, id } from '../../../../db/db';
+import { createClient } from '@supabase/supabase-js';
+const supabase = createClient(
+  process.env.SUPABASE_URL ?? '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
+);
 
 /**
  * Event types for timeline
@@ -103,45 +107,23 @@ interface CreateTimelineEventParams {
 }
 
 /**
- * Creates a timeline event transaction
- * Use this in your transact calls to create timeline events
+ * Creates a timeline event via Supabase insert
  *
  * @example
  * ```ts
  * import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
  *
- * await db.transact([
- *   // Your other transactions...
- *   createTimelineEvent({
- *     eventType: 'created',
- *     entityType: 'amendment',
- *     entityId: amendmentId,
- *     actorId: userId,
- *     title: 'New amendment created',
- *     description: 'A new amendment proposal has been drafted',
- *   }),
- * ]);
- * ```
- *
- * @example With media
- * ```ts
- * createTimelineEvent({
- *   eventType: 'video_uploaded',
- *   entityType: 'video',
- *   entityId: videoId,
+ * await createTimelineEvent({
+ *   eventType: 'created',
+ *   entityType: 'amendment',
+ *   entityId: amendmentId,
  *   actorId: userId,
- *   title: 'Amendment Explainer Video',
- *   description: 'Watch this video to understand the proposal',
- *   tags: ['climate', 'transport'],
- *   media: {
- *     videoURL: 'https://youtube.com/watch?v=...',
- *     videoThumbnailURL: 'https://img.youtube.com/...',
- *     videoDuration: 245,
- *   },
- * })
+ *   title: 'New amendment created',
+ *   description: 'A new amendment proposal has been drafted',
+ * });
  * ```
  */
-export function createTimelineEvent({
+export async function createTimelineEvent({
   eventType,
   entityType,
   entityId,
@@ -154,61 +136,59 @@ export function createTimelineEvent({
   media,
   status,
   stats,
-}: CreateTimelineEventParams) {
-  const eventId = id();
+}: CreateTimelineEventParams): Promise<void> {
+  const eventId = crypto.randomUUID();
 
-  // Build the update object
-  const updateData: Record<string, unknown> = {
-    eventType,
-    entityType,
-    entityId,
+  const insertData: Record<string, unknown> = {
+    id: eventId,
+    event_type: eventType,
+    entity_type: entityType,
+    entity_id: entityId,
+    actor_id: actorId,
     title,
-    description,
-    createdAt: new Date(),
-    // Content type for filtering (defaults to entityType)
-    contentType: contentType || entityType,
+    description: description ?? null,
+    created_at: new Date().toISOString(),
+    content_type: contentType || entityType,
   };
 
-  // Add tags if provided
+  // Map entity type to specific FK column
+  const entityFkKey = `${entityType}_id`;
+  insertData[entityFkKey] = entityId;
+
   if (tags && tags.length > 0) {
-    updateData.tags = tags;
+    insertData.tags = tags;
   }
 
-  // Add metadata if provided
   if (metadata) {
-    updateData.metadata = metadata;
+    insertData.metadata = metadata;
   }
 
-  // Add media fields if provided
   if (media) {
-    if (media.imageURL) updateData.imageURL = media.imageURL;
-    if (media.videoURL) updateData.videoURL = media.videoURL;
-    if (media.videoThumbnailURL) updateData.videoThumbnailURL = media.videoThumbnailURL;
-    if (media.videoDuration) updateData.videoDuration = media.videoDuration;
+    if (media.imageURL) insertData.image_url = media.imageURL;
+    if (media.videoURL) insertData.video_url = media.videoURL;
+    if (media.videoThumbnailURL) insertData.video_thumbnail_url = media.videoThumbnailURL;
   }
 
-  // Add status fields if provided
   if (status) {
-    if (status.voteStatus) updateData.voteStatus = status.voteStatus;
-    if (status.electionStatus) updateData.electionStatus = status.electionStatus;
-    if (status.endsAt) updateData.endsAt = status.endsAt;
+    if (status.voteStatus) insertData.vote_status = status.voteStatus;
+    if (status.electionStatus) insertData.election_status = status.electionStatus;
+    if (status.endsAt) insertData.ends_at = status.endsAt;
   }
 
-  // Add stats if provided
   if (stats) {
-    updateData.stats = stats;
+    insertData.stats = stats;
   }
 
-  return tx.timelineEvents[eventId].update(updateData).link({
-    actor: actorId,
-    [entityType]: entityId,
-  });
+  const { error } = await supabase.from('timeline_event').insert(insertData);
+  if (error) {
+    console.error('[Timeline] Failed to create timeline event:', error);
+  }
 }
 
 /**
  * Helper to create a video upload timeline event
  */
-export function createVideoUploadEvent({
+export async function createVideoUploadEvent({
   videoURL,
   videoThumbnailURL,
   videoDuration,
@@ -228,7 +208,7 @@ export function createVideoUploadEvent({
   linkedEntityType?: TimelineContentType;
   linkedEntityId?: string;
   tags?: string[];
-}) {
+}): Promise<void> {
   return createTimelineEvent({
     eventType: 'video_uploaded',
     entityType: linkedEntityType || 'user',
@@ -249,7 +229,7 @@ export function createVideoUploadEvent({
 /**
  * Helper to create an image upload timeline event
  */
-export function createImageUploadEvent({
+export async function createImageUploadEvent({
   imageURL,
   title,
   description,
@@ -265,7 +245,7 @@ export function createImageUploadEvent({
   linkedEntityType?: TimelineContentType;
   linkedEntityId?: string;
   tags?: string[];
-}) {
+}): Promise<void> {
   return createTimelineEvent({
     eventType: 'image_uploaded',
     entityType: linkedEntityType || 'user',

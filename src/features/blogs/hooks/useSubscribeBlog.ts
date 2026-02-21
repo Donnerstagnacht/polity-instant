@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { db, tx, id } from '../../../../db/db';
-import { useAuthStore } from '@/features/auth/auth.ts';
+import { useBlogState } from '@/zero/blogs/useBlogState';
+import { useBlogActions } from '@/zero/blogs/useBlogActions';
+import { useUserState } from '@/zero/users/useUserState';
+import { useAuth } from '@/providers/auth-provider';
 import { notifyBlogNewSubscriber } from '@/utils/notification-helpers';
 import { toast } from 'sonner';
 
@@ -9,67 +11,28 @@ import { toast } from 'sonner';
  * @param targetBlogId - The ID of the blog to subscribe/unsubscribe
  */
 export function useSubscribeBlog(targetBlogId?: string) {
-  const { user: authUser } = useAuthStore();
+  const { user: authUser } = useAuth();
+  const { blog, subscribers } = useBlogState({ blogId: targetBlogId, includeSubscribers: true });
+  const { subscribeToBlog, unsubscribeFromBlog, sendNotifications } = useBlogActions();
+  const { currentUser } = useUserState();
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscriberCount, setSubscriberCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const optimisticTargetRef = useRef<boolean | null>(null);
   const createdSubscriptionIdRef = useRef<string | null>(null);
 
-  // Query current user's name for notifications
-  const { data: currentUserData } = db.useQuery(
-    authUser?.id
-      ? {
-          $users: {
-            $: {
-              where: { id: authUser.id },
-              limit: 1,
-            },
-          },
-        }
-      : null
-  );
-  const currentUserName = currentUserData?.$users?.[0]?.name || 'Someone';
-
-  // Query to get all subscribers for the target blog
-  const { data: subscriptionData, isLoading: subscriptionLoading } = db.useQuery(
-    targetBlogId
-      ? {
-          subscribers: {
-            $: {
-              where: {
-                'blog.id': targetBlogId,
-              },
-            },
-            subscriber: {},
-            blog: {},
-          },
-        }
-      : null
-  );
-
-  // Query blog title for notifications
-  const { data: blogData } = db.useQuery(
-    targetBlogId
-      ? {
-          blogs: {
-            $: {
-              where: { id: targetBlogId },
-              limit: 1,
-            },
-          },
-        }
-      : null
-  );
-  const blogTitle = blogData?.blogs?.[0]?.title || 'Blog';
+  const currentUserName = currentUser?.first_name || 'Someone';
+  const blogTitle = blog?.title || 'Blog';
+  const subscriptionData = { subscribers: subscribers ?? [] };
+  const subscriptionLoading = false;
 
   // Update subscription state when data changes
   useEffect(() => {
-    const subscribers = subscriptionData?.subscribers || [];
+    const subs = subscriptionData?.subscribers || [];
 
     // Check if the current user is subscribed
     const subscribed = authUser?.id
-      ? subscribers.some(sub => sub.subscriber?.id === authUser.id)
+      ? subs.some(sub => sub.subscriber_user?.id === authUser.id)
       : false;
 
     if (optimisticTargetRef.current !== null) {
@@ -77,13 +40,13 @@ export function useSubscribeBlog(targetBlogId?: string) {
       if (subscribed === optimisticTargetRef.current) {
         optimisticTargetRef.current = null;
         createdSubscriptionIdRef.current = null;
-        setSubscriberCount(subscribers.length);
+        setSubscriberCount(subs.length);
       }
       return;
     }
 
     setIsSubscribed(subscribed);
-    setSubscriberCount(subscribers.length);
+    setSubscriberCount(subs.length);
   }, [subscriptionData, authUser?.id, targetBlogId, subscriptionLoading]);
 
   // Subscribe to a blog
@@ -94,7 +57,7 @@ export function useSubscribeBlog(targetBlogId?: string) {
 
     // Prevent duplicate subscriptions
     const existing = (subscriptionData?.subscribers || []).find(
-      sub => sub.subscriber?.id === authUser.id
+      sub => sub.subscriber_user?.id === authUser.id
     );
     if (existing) return;
 
@@ -104,29 +67,29 @@ export function useSubscribeBlog(targetBlogId?: string) {
     setSubscriberCount(prev => prev + 1);
     setIsLoading(true);
     try {
-      const subscriptionId = id();
+      const subscriptionId = crypto.randomUUID();
       createdSubscriptionIdRef.current = subscriptionId;
 
-      await db.transact([
-        tx.subscribers[subscriptionId]
-          .update({
-            createdAt: new Date(),
-          })
-          .link({
-            subscriber: authUser.id,
-            blog: targetBlogId,
-          }),
-      ]);
+      await subscribeToBlog({
+        id: subscriptionId,
+        user_id: '',
+        group_id: '',
+        amendment_id: '',
+        event_id: '',
+        blog_id: targetBlogId,
+      });
 
       // Send notification separately — notifications.create is server-only
       try {
-        const notification = notifyBlogNewSubscriber({
+        const notifications = await notifyBlogNewSubscriber({
           senderId: authUser.id,
           senderName: currentUserName,
           blogId: targetBlogId,
           blogTitle: blogTitle,
         });
-        if (notification.length > 0) await db.transact(notification);
+        if (Array.isArray(notifications) && notifications.length > 0) {
+          await sendNotifications(notifications);
+        }
       } catch { /* notification delivery is best-effort */ }
       toast.success('Successfully subscribed to blog');
     } catch (error) {
@@ -148,12 +111,12 @@ export function useSubscribeBlog(targetBlogId?: string) {
       return;
     }
 
-    const subscribers = subscriptionData?.subscribers || [];
-    let subsToDelete = subscribers.filter(sub => sub.subscriber?.id === authUser.id);
+    const subs = subscriptionData?.subscribers || [];
+    let subsToDelete = subs.filter(sub => sub.subscriber_user?.id === authUser.id);
 
     // Fallback: if reactive query hasn't caught up, use stored subscription ID
     if (subsToDelete.length === 0 && createdSubscriptionIdRef.current) {
-      subsToDelete = [{ id: createdSubscriptionIdRef.current } as (typeof subscribers)[0]];
+      subsToDelete = [{ id: createdSubscriptionIdRef.current } as (typeof subs)[0]];
     }
 
     if (subsToDelete.length === 0) {
@@ -166,7 +129,7 @@ export function useSubscribeBlog(targetBlogId?: string) {
     setSubscriberCount(prev => Math.max(0, prev - subsToDelete.length));
     setIsLoading(true);
     try {
-      await db.transact(subsToDelete.map(sub => tx.subscribers[sub.id].delete()));
+      await Promise.all(subsToDelete.map(sub => unsubscribeFromBlog(sub.id)));
       createdSubscriptionIdRef.current = null;
       toast.success('Successfully unsubscribed from blog');
     } catch (error) {

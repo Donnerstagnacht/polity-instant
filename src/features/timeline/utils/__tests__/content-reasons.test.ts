@@ -6,7 +6,7 @@ import {
   filterByReasonStrength,
   type ContentItem,
   type UserContext,
-} from '../content-reasons';
+} from '../../logic/content-reasons';
 
 describe('content-reasons', () => {
   // Helper to create mock content

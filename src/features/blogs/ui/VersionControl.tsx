@@ -22,7 +22,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { GitBranch, Clock, User, Plus, History, Search, Pencil, Check, X } from 'lucide-react';
-import { db, tx, id } from '@db/db';
+import { useBlogState } from '@/zero/blogs/useBlogState';
+import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/use-translation';
 
@@ -55,6 +56,8 @@ export function VersionControl({
   onRestoreVersion,
 }: VersionControlProps) {
   const { t } = useTranslation();
+  const { versions: versionsRaw } = useBlogState({ blogId, includeVersions: true });
+  const { createVersion, updateVersion } = useDocumentActions();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
   const [versionTitle, setVersionTitle] = useState('');
@@ -63,17 +66,15 @@ export function VersionControl({
   const [editingVersionId, setEditingVersionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
 
-  // Query all versions for this blog
-  const { data: versionsData, isLoading } = db.useQuery({
-    documentVersions: {
-      $: {
-        where: { 'blog.id': blogId },
-      },
-      creator: {},
-    },
-  });
-
-  const versions = (versionsData?.documentVersions || []) as Version[];
+  const versions = (versionsRaw || []).map(v => ({
+    id: v.id,
+    versionNumber: v.version_number,
+    title: v.change_summary || '',
+    content: v.content as any[],
+    createdAt: v.created_at,
+    creationType: 'manual',
+    creator: v.author ? { id: v.author.id, email: v.author.email, name: v.author.first_name, avatar: v.author.avatar } : undefined,
+  })) as Version[];
   const sortedVersions = [...versions].sort((a, b) => b.versionNumber - a.versionNumber);
 
   // Filter versions based on search query
@@ -101,18 +102,16 @@ export function VersionControl({
       const nextVersionNumber =
         versions.length > 0 ? Math.max(...versions.map(v => v.versionNumber)) + 1 : 1;
 
-      const versionId = id();
-      await db.transact([
-        tx.documentVersions[versionId]
-          .update({
-            versionNumber: nextVersionNumber,
-            title: versionTitle,
-            content: currentContent,
-            createdAt: Date.now(),
-            creationType: 'manual',
-          })
-          .link({ blog: blogId, creator: currentUserId }),
-      ]);
+      const versionId = crypto.randomUUID();
+      await createVersion({
+        id: versionId,
+        document_id: '',
+        amendment_id: '',
+        blog_id: blogId,
+        version_number: nextVersionNumber,
+        change_summary: versionTitle,
+        content: currentContent,
+      });
 
       toast.success(
         `${t('features.blogs.versionControl.versionNumber')} ${nextVersionNumber} ${t('features.blogs.versionControl.createdSuccess')}`
@@ -162,11 +161,10 @@ export function VersionControl({
     }
 
     try {
-      await db.transact([
-        tx.documentVersions[versionId].update({
-          title: newTitle,
-        }),
-      ]);
+      await updateVersion({
+        id: versionId,
+        change_summary: newTitle,
+      });
 
       toast.success(t('features.blogs.versionControl.titleUpdated'));
 
@@ -285,7 +283,7 @@ export function VersionControl({
           </div>
 
           <ScrollArea className="h-[400px] pr-4">
-            {isLoading ? (
+            {!versionsRaw ? (
               <div className="flex items-center justify-center py-8 text-muted-foreground">
                 {t('features.blogs.versionControl.loadingVersions')}
               </div>

@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { CalendarView } from '../types';
+import { CalendarView } from '../types/calendar.types';
 
 export const useCalendarNavigation = (
   view: CalendarView,

@@ -1,4 +1,4 @@
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,7 +7,7 @@ import { Users, X, Bell } from 'lucide-react';
 import { cn } from '@/utils/utils';
 import { Notification, NotificationType } from '../types/notification.types';
 import { notificationIcons, notificationColors } from '../utils/notificationConstants';
-import { formatTime } from '../utils/notificationHelpers';
+import { formatTime } from '../logic/notificationHelpers';
 import { useTranslation } from '@/hooks/use-translation';
 
 interface NotificationItemProps {
@@ -22,7 +22,7 @@ export function NotificationItem({
   onDeleteNotification,
 }: NotificationItemProps) {
   const { t } = useTranslation();
-  const router = useRouter();
+  const navigate = useNavigate();
   const Icon = notificationIcons[notification.type as NotificationType] || Bell;
   const iconColor = notificationColors[notification.type as NotificationType] || 'text-gray-500';
 
@@ -70,7 +70,7 @@ export function NotificationItem({
               className="h-10 w-10 cursor-pointer hover:ring-2 hover:ring-primary"
               onClick={(e) => {
                 e.stopPropagation();
-                router.push(`/user/${notification.sender!.id}`);
+                navigate({ to: `/user/${notification.sender!.id}` });
               }}
             >
               <AvatarImage src={notification.sender.avatar} />
@@ -92,7 +92,7 @@ export function NotificationItem({
                         : notification.onBehalfOfAmendment
                           ? 'amendment'
                           : 'blog';
-                    router.push(`/${entityType}/${onBehalfEntity.id}`);
+                    navigate({ to: `/${entityType}/${onBehalfEntity.id}` });
                   }}
                 >
                   <AvatarImage src={onBehalfEntity.imageURL} />

@@ -7,8 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Search, Users, MapPin, ArrowRight, ArrowLeft, Check, SkipForward } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
-import { db } from '../../../../../db/db';
-import type { Group } from './useOnboarding';
+import { usePublicGroups } from '@/zero/groups/useGroupState';
+import type { Group } from '../../hooks/useOnboarding';
 import { cn } from '@/utils/utils';
 
 interface GroupSearchStepProps {
@@ -29,21 +29,12 @@ export function GroupSearchStep({
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Query all public groups
-  const { data: groupsData, isLoading: groupsLoading } = db.useQuery({
-    groups: {
-      $: {
-        where: {
-          isPublic: true,
-        },
-        limit: 100,
-      },
-    },
-  });
+  // Query all public groups via facade
+  const { groups: groupsData, isLoading: groupsLoading } = usePublicGroups();
 
   // Filter groups based on search term
   const filteredGroups = useMemo(() => {
-    const groups = groupsData?.groups || [];
+    const groups = groupsData ?? [];
     if (!searchTerm.trim()) {
       return groups.slice(0, 10); // Show first 10 if no search
     }
@@ -55,7 +46,7 @@ export function GroupSearchStep({
         group.description?.toLowerCase().includes(term) ||
         group.location?.toLowerCase().includes(term)
     );
-  }, [groupsData?.groups, searchTerm]);
+  }, [groupsData, searchTerm]);
 
   const handleSelectGroup = (group: any) => {
     if (selectedGroup?.id === group.id) {

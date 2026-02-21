@@ -7,8 +7,8 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { PlateEditor } from '@/components/kit-platejs/plate-editor';
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -41,7 +41,7 @@ export function EditorView({
   backUrl,
   backLabel,
 }: EditorViewProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const [isEditingTitle, setIsEditingTitle] = useState(false);
 
@@ -308,7 +308,7 @@ export function EditorView({
           <p className="mb-4 text-lg text-muted-foreground">
             {t('features.editor.errors.notFound')}
           </p>
-          <Button onClick={() => router.push(backUrl || defaultBackUrl)}>
+          <Button onClick={() => navigate({ to: backUrl || defaultBackUrl })}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             {backLabel || defaultBackLabel}
           </Button>
@@ -325,7 +325,7 @@ export function EditorView({
           <p className="mb-4 text-lg text-muted-foreground">
             {t('features.editor.errors.noAccess')}
           </p>
-          <Button onClick={() => router.push(backUrl || defaultBackUrl)}>
+          <Button onClick={() => navigate({ to: backUrl || defaultBackUrl })}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             {backLabel || defaultBackLabel}
           </Button>
@@ -338,7 +338,7 @@ export function EditorView({
     <div className="container mx-auto p-8">
       {/* Top toolbar */}
       <div className="mb-6 flex items-center justify-between">
-        <Link href={backUrl || defaultBackUrl}>
+        <Link to={backUrl || defaultBackUrl}>
           <Button variant="ghost">
             <ArrowLeft className="mr-2 h-4 w-4" />
             {backLabel || defaultBackLabel}

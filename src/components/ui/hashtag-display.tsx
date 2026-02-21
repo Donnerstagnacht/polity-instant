@@ -1,7 +1,7 @@
 'use client';
 
 import { Hash } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/utils/utils';
 
@@ -22,7 +22,7 @@ export function HashtagDisplay({
   className,
   badgeClassName,
 }: HashtagDisplayProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
 
   if (!hashtags || hashtags.length === 0) {
     return null;
@@ -31,7 +31,7 @@ export function HashtagDisplay({
   const handleHashtagClick = (tag: string) => {
     if (clickable) {
       // Only set the hashtag filter, not the search query
-      router.push(`/search?hashtag=${encodeURIComponent(tag)}`);
+      navigate({ to: `/search?hashtag=${encodeURIComponent(tag)}` });
     }
   };
 

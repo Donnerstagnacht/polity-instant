@@ -1,24 +1,11 @@
 import { useMemo } from 'react';
-import { db } from '../../../../db/db';
+import { useAuth } from '@/providers/auth-provider';
+import { useMeetingSlotById } from '@/zero/events/useEventState';
 
 export function useMeetingData(meetingId: string) {
-  const { user } = db.useAuth();
+  const { user } = useAuth();
 
-  const { data, isLoading, error } = db.useQuery({
-    meetingSlots: {
-      $: {
-        where: {
-          id: meetingId,
-        },
-      },
-      owner: {},
-      bookings: {
-        booker: {},
-      },
-    },
-  });
-
-  const meetingSlot = data?.meetingSlots?.[0];
+  const { meetingSlot } = useMeetingSlotById(meetingId);
 
   const computed = useMemo(() => {
     if (!meetingSlot) {
@@ -31,11 +18,11 @@ export function useMeetingData(meetingId: string) {
       };
     }
 
-    const isOwner = meetingSlot.owner?.id === user?.id;
-    const hasBooked = meetingSlot.bookings?.some((b: any) => b.booker?.id === user?.id);
+    const isOwner = meetingSlot.user?.id === user?.id;
+    const hasBooked = meetingSlot.bookings?.some((b: any) => b.user?.id === user?.id);
     const bookingCount = meetingSlot.bookings?.length || 0;
-    const isPast = new Date(meetingSlot.startTime) < new Date();
-    const isAvailable = meetingSlot.isAvailable && !isPast;
+    const isPast = new Date(meetingSlot.start_time ?? 0) < new Date();
+    const isAvailable = meetingSlot.is_available && !isPast;
 
     return {
       isOwner,
@@ -48,8 +35,8 @@ export function useMeetingData(meetingId: string) {
 
   return {
     meetingSlot,
-    isLoading,
-    error,
+    isLoading: false,
+    error: null,
     ...computed,
   };
 }

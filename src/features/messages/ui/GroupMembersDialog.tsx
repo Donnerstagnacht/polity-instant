@@ -6,7 +6,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Conversation } from '../types';
+import { Conversation } from '../types/message.types';
 import { useTranslation } from '@/hooks/use-translation';
 
 interface GroupMembersDialogProps {

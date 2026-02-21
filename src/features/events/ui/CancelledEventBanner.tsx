@@ -11,7 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/hooks/use-translation';
 import { CalendarX, ArrowRight, User, Clock } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@tanstack/react-router';
 import { formatDistanceToNow } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
 
@@ -67,7 +67,7 @@ export function CancelledEventBanner({
           <div className="pt-2">
             <p className="mb-2 text-sm">{t('features.events.cancel.reassign.itemCount')}:</p>
             <Button asChild variant="outline" size="sm">
-              <Link href={`/event/${reassignmentEventId}`}>
+              <Link to={`/event/${reassignmentEventId}`}>
                 {reassignmentEventTitle}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>

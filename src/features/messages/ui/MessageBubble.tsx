@@ -1,8 +1,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MessageContent } from '@/components/messages/MessageContent';
 import { cn } from '@/utils/utils';
-import { Message } from '../types';
-import { formatTime } from '../utils';
+import { Message } from '../types/message.types';
+import { formatTime } from '../logic/messageUtils';
 
 interface MessageBubbleProps {
   message: Message;

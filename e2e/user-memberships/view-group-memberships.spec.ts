@@ -1,9 +1,8 @@
 import { test, expect } from '../fixtures/test-base';
 
 test.describe('User Memberships - View Group Memberships', () => {
-  test.beforeEach(async ({ authenticatedPage: page, adminDb }) => {
-    const authUser = await adminDb.auth.getUser({ email: 'polity.live@gmail.com' });
-    await page.goto(`/user/${authUser.id}/memberships`);
+  test.beforeEach(async ({ authenticatedPage: page, mainUserId }) => {
+    await page.goto(`/user/${mainUserId}/memberships`);
     await page.waitForLoadState('domcontentloaded');
   });
 

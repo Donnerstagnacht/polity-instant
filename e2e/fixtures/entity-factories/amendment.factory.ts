@@ -5,8 +5,8 @@
  */
 
 import { FactoryBase } from './factory-base';
-import { adminTransact, tx } from '../admin-db';
-import { DEFAULT_AMENDMENT_ROLES } from '../../../db/rbac/constants';
+import { adminUpsert } from '../admin-db';
+import { DEFAULT_AMENDMENT_ROLES } from '../../../src/zero/rbac/constants';
 
 export interface CreateAmendmentOptions {
   id?: string;
@@ -41,12 +41,11 @@ export class AmendmentFactory extends FactoryBase {
     const amendmentId = overrides.id ?? this.generateId();
     const title = overrides.title ?? `E2E Amendment ${this._counter}`;
     const workflowStatus = overrides.workflowStatus ?? 'collaborative_editing';
-    const now = new Date();
+    const now = new Date().toISOString();
 
     const documentId = this.generateId();
     const authorRoleId = this.generateId();
     const collaboratorRoleId = this.generateId();
-    const txns: any[] = [];
 
     // Map workflow status to editing mode
     const editingModeMap: Record<string, string> = {
@@ -61,27 +60,22 @@ export class AmendmentFactory extends FactoryBase {
     };
 
     // Create amendment entity
-    const amendmentTx = tx.amendments[amendmentId].update({
+    await adminUpsert('amendment', {
+      id: amendmentId,
       title,
-      subtitle: overrides.subtitle ?? '',
       status: overrides.status ?? 'Under Review',
-      workflowStatus,
-      currentEventId: overrides.currentEventId,
-      date: now.toISOString(),
+      workflow_status: workflowStatus,
+      event_id: overrides.currentEventId ?? null,
       code: `AMN-E2E-${this._counter}`,
       visibility: overrides.visibility ?? 'public',
+      is_public: true,
       supporters: 0,
-      createdAt: now,
-      updatedAt: now,
+      created_by_id: ownerId,
+      group_id: overrides.groupId ?? null,
+      created_at: now,
+      updated_at: now,
     });
-
-    if (overrides.groupId) {
-      txns.push(amendmentTx.link({ groups: overrides.groupId }));
-      this.trackLink('amendments', amendmentId, 'groups', overrides.groupId);
-    } else {
-      txns.push(amendmentTx);
-    }
-    this.trackEntity('amendments', amendmentId);
+    this.trackEntity('amendment', amendmentId);
 
     // Create document
     const documentContent = [
@@ -89,93 +83,76 @@ export class AmendmentFactory extends FactoryBase {
       { type: 'p', children: [{ text: 'Amendment content for E2E testing.' }] },
     ];
 
-    txns.push(
-      tx.documents[documentId]
-        .update({
-          title,
-          content: documentContent,
-          editingMode: editingModeMap[workflowStatus] ?? 'edit',
-          suggestionCounter: 0,
-          isPublic: true,
-          createdAt: now,
-          updatedAt: now,
-        })
-        .link({ owner: ownerId })
-    );
-    this.trackEntity('documents', documentId);
-    this.trackLink('documents', documentId, 'owner', ownerId);
-
-    // Link document to amendment
-    txns.push(tx.amendments[amendmentId].link({ document: documentId }));
-    this.trackLink('amendments', amendmentId, 'document', documentId);
+    await adminUpsert('document', {
+      id: documentId,
+      amendment_id: amendmentId,
+      content: documentContent,
+      editing_mode: editingModeMap[workflowStatus] ?? 'edit',
+      created_at: now,
+      updated_at: now,
+    });
+    this.trackEntity('document', documentId);
 
     // Create Author role
-    txns.push(
-      tx.roles[authorRoleId]
-        .update({
-          name: 'Author',
-          description: 'Full amendment control',
-          scope: 'amendment',
-          createdAt: now,
-          updatedAt: now,
-        })
-        .link({ amendment: amendmentId })
-    );
-    this.trackEntity('roles', authorRoleId);
-    this.trackLink('roles', authorRoleId, 'amendment', amendmentId);
+    await adminUpsert('role', {
+      id: authorRoleId,
+      name: 'Author',
+      description: 'Full amendment control',
+      scope: 'amendment',
+      amendment_id: amendmentId,
+      created_at: now,
+    });
+    this.trackEntity('role', authorRoleId);
 
     // Create Collaborator role
-    txns.push(
-      tx.roles[collaboratorRoleId]
-        .update({
-          name: 'Collaborator',
-          description: 'Can edit the amendment',
-          scope: 'amendment',
-          createdAt: now,
-          updatedAt: now,
-        })
-        .link({ amendment: amendmentId })
-    );
-    this.trackEntity('roles', collaboratorRoleId);
-    this.trackLink('roles', collaboratorRoleId, 'amendment', amendmentId);
+    await adminUpsert('role', {
+      id: collaboratorRoleId,
+      name: 'Collaborator',
+      description: 'Can edit the amendment',
+      scope: 'amendment',
+      amendment_id: amendmentId,
+      created_at: now,
+    });
+    this.trackEntity('role', collaboratorRoleId);
 
     // Create action rights for roles
     for (const roleDef of DEFAULT_AMENDMENT_ROLES) {
       const roleId = roleDef.name === 'Author' ? authorRoleId : collaboratorRoleId;
-      for (const perm of roleDef.permissions) {
+      const rights = roleDef.permissions.map(perm => {
         const rightId = this.generateId();
-        txns.push(
-          tx.actionRights[rightId]
-            .update({ resource: perm.resource, action: perm.action })
-            .link({ roles: roleId, amendment: amendmentId })
-        );
-        this.trackEntity('actionRights', rightId);
-      }
+        this.trackEntity('action_right', rightId);
+        return {
+          id: rightId,
+          resource: perm.resource,
+          action: perm.action,
+          role_id: roleId,
+          amendment_id: amendmentId,
+        };
+      });
+      await adminUpsert('action_right', rights);
     }
 
     // Create owner as Author collaborator
     const collaboratorId = this.generateId();
-    txns.push(
-      tx.amendmentCollaborators[collaboratorId]
-        .update({
-          status: 'admin',
-          createdAt: now,
-          visibility: 'public',
-        })
-        .link({ amendment: amendmentId, user: ownerId, role: authorRoleId })
-    );
-    this.trackEntity('amendmentCollaborators', collaboratorId);
+    await adminUpsert('amendment_collaborator', {
+      id: collaboratorId,
+      amendment_id: amendmentId,
+      user_id: ownerId,
+      role_id: authorRoleId,
+      status: 'admin',
+      visibility: 'public',
+      created_at: now,
+    });
+    this.trackEntity('amendment_collaborator', collaboratorId);
 
     // Create amendment path
     const pathId = this.generateId();
-    txns.push(
-      tx.amendmentPaths[pathId]
-        .update({ pathLength: 0, createdAt: now })
-        .link({ amendment: amendmentId, user: ownerId })
-    );
-    this.trackEntity('amendmentPaths', pathId);
-
-    await adminTransact(txns);
+    await adminUpsert('amendment_path', {
+      id: pathId,
+      amendment_id: amendmentId,
+      created_at: now,
+    });
+    this.trackEntity('amendment_path', pathId);
 
     return { id: amendmentId, title, documentId, authorRoleId, collaboratorRoleId };
   }
@@ -190,18 +167,22 @@ export class AmendmentFactory extends FactoryBase {
     status = 'member'
   ): Promise<string> {
     const collaboratorId = this.generateId();
-    await adminTransact([
-      tx.amendmentCollaborators[collaboratorId]
-        .update({ status, createdAt: new Date(), visibility: 'public' })
-        .link({ amendment: amendmentId, user: userId, role: roleId }),
-    ]);
-    this.trackEntity('amendmentCollaborators', collaboratorId);
+    await adminUpsert('amendment_collaborator', {
+      id: collaboratorId,
+      amendment_id: amendmentId,
+      user_id: userId,
+      role_id: roleId,
+      status,
+      visibility: 'public',
+      created_at: new Date().toISOString(),
+    });
+    this.trackEntity('amendment_collaborator', collaboratorId);
     return collaboratorId;
   }
 
   /**
    * Create a change request for an amendment.
-   * Pass documentId to also create a document discussion entry so the CR appears in the Open tab.
+   * Pass documentId to also update the document with a discussion entry.
    */
   async createChangeRequest(
     amendmentId: string,
@@ -216,48 +197,29 @@ export class AmendmentFactory extends FactoryBase {
     } = {}
   ): Promise<string> {
     const changeRequestId = overrides.id ?? this.generateId();
-    const now = new Date();
+    const now = new Date().toISOString();
     const crTitle = overrides.title ?? 'E2E Change Request';
     const crDescription = overrides.description ?? 'Test change request';
     const crProposedChange = overrides.proposedChange ?? 'Proposed text change';
-    const txns: any[] = [];
 
-    txns.push(
-      tx.changeRequests[changeRequestId]
-        .update({
-          title: crTitle,
-          description: crDescription,
-          proposedChange: crProposedChange,
-          status: overrides.status ?? 'proposed',
-          characterCount: crProposedChange.length,
-          source: 'collaborator',
-          requiresVoting: false,
-          votingThreshold: 50,
-          votingOrder: 0,
-          createdAt: now,
-          updatedAt: now,
-        })
-        .link({ amendment: amendmentId, creator: creatorId })
-    );
+    await adminUpsert('change_request', {
+      id: changeRequestId,
+      amendment_id: amendmentId,
+      user_id: creatorId,
+      title: crTitle,
+      description: crDescription,
+      status: overrides.status ?? 'proposed',
+      created_at: now,
+      updated_at: now,
+    });
 
-    // If documentId provided, add discussion entry so the CR appears in the
-    // ChangeRequestsView "Open" tab (which reads from document.discussions).
+    // If documentId provided, update document with discussion entry
     if (overrides.documentId) {
+      const db = (await import('../admin-db')).getAdminDb();
       const discussionId = this.generateId();
-      txns.push(
-        tx.documents[overrides.documentId].update({
-          discussions: [
-            {
-              id: discussionId,
-              crId: crTitle,
-              title: crTitle,
-              description: crDescription,
-              justification: '',
-              createdAt: now.getTime(),
-              userId: creatorId,
-              comments: [],
-            },
-          ],
+      await db
+        .from('document')
+        .update({
           content: [
             { type: 'h1', children: [{ text: 'Amendment Title' }] },
             {
@@ -272,11 +234,10 @@ export class AmendmentFactory extends FactoryBase {
             },
           ],
         })
-      );
+        .eq('id', overrides.documentId);
     }
 
-    await adminTransact(txns);
-    this.trackEntity('changeRequests', changeRequestId);
+    this.trackEntity('change_request', changeRequestId);
     return changeRequestId;
   }
 }

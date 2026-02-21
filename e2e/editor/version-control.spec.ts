@@ -8,8 +8,8 @@ test.describe('Editor - Version Control', () => {
     adminDb,
   }) => {
     const docId = crypto.randomUUID();
-    await adminDb.transact(
-      adminDb.tx.documents[docId]
+    await (adminDb as any).transact(
+      (adminDb as any).tx.documents[docId]
         .update({
           title: 'E2E Version Doc',
           content: [{ type: 'p', children: [{ text: '' }] }],
@@ -32,8 +32,8 @@ test.describe('Editor - Version Control', () => {
     adminDb,
   }) => {
     const docId = crypto.randomUUID();
-    await adminDb.transact(
-      adminDb.tx.documents[docId]
+    await (adminDb as any).transact(
+      (adminDb as any).tx.documents[docId]
         .update({
           title: 'E2E History Doc',
           content: [{ type: 'p', children: [{ text: '' }] }],
@@ -55,8 +55,8 @@ test.describe('Editor - Version Control', () => {
     adminDb,
   }) => {
     const docId = crypto.randomUUID();
-    await adminDb.transact(
-      adminDb.tx.documents[docId]
+    await (adminDb as any).transact(
+      (adminDb as any).tx.documents[docId]
         .update({
           title: 'E2E History Panel Doc',
           content: [{ type: 'p', children: [{ text: '' }] }],

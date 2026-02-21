@@ -5,9 +5,13 @@
  * supporter assignments, and status updates.
  */
 
-import db, { tx } from '../../db/db';
+import { createClient } from '@supabase/supabase-js';
+const supabase = createClient(
+  process.env.SUPABASE_URL ?? '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
+);
 import { toast } from 'sonner';
-import type { WorkflowStatus } from '@db/rbac/workflow-constants';
+import type { WorkflowStatus } from '@/zero/rbac/workflow-constants';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 
 /**
@@ -20,19 +24,18 @@ import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEve
 export async function addGroupAsSupporter(amendmentId: string, groupId: string): Promise<boolean> {
   try {
     // Fetch current amendment
-    const { data } = await db.queryOnce({
-      amendments: {
-        $: { where: { id: amendmentId } },
-      },
-    });
+    const { data: amendment } = await supabase
+      .from('amendment')
+      .select('*')
+      .eq('id', amendmentId)
+      .single();
 
-    const amendment = data?.amendments?.[0];
     if (!amendment) {
       console.error('Amendment not found');
       return false;
     }
 
-    const currentSupporters = amendment.supporterGroups || [];
+    const currentSupporters = amendment.supporter_groups || [];
 
     // Ensure it's an array
     if (!Array.isArray(currentSupporters)) {
@@ -48,12 +51,13 @@ export async function addGroupAsSupporter(amendmentId: string, groupId: string):
     // Add new supporter
     const updatedSupporters = [...currentSupporters, groupId];
 
-    await db.transact([
-      tx.amendments[amendmentId].update({
-        supporterGroups: updatedSupporters,
-        updatedAt: Date.now(),
-      }),
-    ]);
+    await supabase
+      .from('amendment')
+      .update({
+        supporter_groups: updatedSupporters,
+        updated_at: Date.now(),
+      })
+      .eq('id', amendmentId);
 
     return true;
   } catch (error) {
@@ -80,14 +84,15 @@ export async function handleEventVoteResult(
   try {
     if (!approved) {
       // Amendment rejected - set to rejected status
-      await db.transact([
-        tx.amendments[amendmentId].update({
-          workflowStatus: 'rejected' as WorkflowStatus,
+      await supabase
+        .from('amendment')
+        .update({
+          workflow_status: 'rejected' as WorkflowStatus,
           status: 'Rejected',
-          currentEventId: null,
-          updatedAt: Date.now(),
-        }),
-      ]);
+          current_event_id: null,
+          updated_at: Date.now(),
+        })
+        .eq('id', amendmentId);
 
       toast.error('Amendment wurde abgelehnt');
       return false;
@@ -123,25 +128,21 @@ export async function progressToNextEvent(
 ): Promise<string | null> {
   try {
     // Fetch amendment path
-    const { data } = await db.queryOnce({
-      amendmentPaths: {
-        $: { where: { amendment: amendmentId } },
-        segments: {
-          $: { where: {} },
-          event: {},
-          group: {},
-        },
-      },
-    });
+    const { data: paths } = await supabase
+      .from('amendment_path')
+      .select('*, amendment_path_segment(*, event:event_id(*), group:group_id(*))')
+      .eq('amendment_id', amendmentId);
 
-    const path = data?.amendmentPaths?.[0];
-    if (!path || !path.segments) {
+    const path = paths?.[0];
+    if (!path || !path.amendment_path_segment) {
       console.error('Amendment path not found');
       return null;
     }
 
     // Sort segments by order
-    const sortedSegments = [...path.segments].sort((a, b) => a.order - b.order);
+    const sortedSegments = [...path.amendment_path_segment].sort(
+      (a: any, b: any) => a.order - b.order
+    );
     const currentSegmentIndex = sortedSegments.findIndex(s => s.id === currentSegmentId);
 
     if (currentSegmentIndex === -1) {
@@ -151,35 +152,36 @@ export async function progressToNextEvent(
 
     // Update current segment status
     const segmentStatus = approved ? 'approved' : 'rejected';
-    await db.transact([
-      tx.amendmentPathSegments[currentSegmentId].update({
-        forwardingStatus: segmentStatus,
-      }),
-    ]);
+    await supabase
+      .from('amendment_path_segment')
+      .update({ forwarding_status: segmentStatus })
+      .eq('id', currentSegmentId);
 
     if (!approved) {
       // Amendment rejected - finalize as rejected
-      await db.transact([
-        tx.amendments[amendmentId].update({
-          workflowStatus: 'rejected' as WorkflowStatus,
+      await supabase
+        .from('amendment')
+        .update({
+          workflow_status: 'rejected' as WorkflowStatus,
           status: 'Rejected',
-          currentEventId: null,
-          updatedAt: Date.now(),
-        }),
-        // Add timeline event for rejection
-        createTimelineEvent({
-          eventType: 'vote_rejected',
-          entityType: 'amendment',
-          entityId: amendmentId,
-          actorId: 'system',
-          title: 'Amendment rejected',
-          description: 'The amendment was rejected at event voting',
-          contentType: 'vote',
-          status: {
-            voteStatus: 'rejected',
-          },
-        }),
-      ]);
+          current_event_id: null,
+          updated_at: Date.now(),
+        })
+        .eq('id', amendmentId);
+
+      // Add timeline event for rejection
+      await createTimelineEvent({
+        eventType: 'vote_rejected',
+        entityType: 'amendment',
+        entityId: amendmentId,
+        actorId: 'system',
+        title: 'Amendment rejected',
+        description: 'The amendment was rejected at event voting',
+        contentType: 'vote',
+        status: {
+          voteStatus: 'rejected',
+        },
+      });
 
       toast.error('Amendment wurde abgelehnt');
       return null;
@@ -188,27 +190,29 @@ export async function progressToNextEvent(
     // Check if this was the last segment
     if (currentSegmentIndex === sortedSegments.length - 1) {
       // Final event reached - mark as passed
-      await db.transact([
-        tx.amendments[amendmentId].update({
-          workflowStatus: 'passed' as WorkflowStatus,
+      await supabase
+        .from('amendment')
+        .update({
+          workflow_status: 'passed' as WorkflowStatus,
           status: 'Passed',
-          currentEventId: null,
-          updatedAt: Date.now(),
-        }),
-        // Add timeline event for passing
-        createTimelineEvent({
-          eventType: 'vote_passed',
-          entityType: 'amendment',
-          entityId: amendmentId,
-          actorId: 'system',
-          title: 'Amendment passed',
-          description: 'The amendment has been approved at all required events',
-          contentType: 'vote',
-          status: {
-            voteStatus: 'passed',
-          },
-        }),
-      ]);
+          current_event_id: null,
+          updated_at: Date.now(),
+        })
+        .eq('id', amendmentId);
+
+      // Add timeline event for passing
+      await createTimelineEvent({
+        eventType: 'vote_passed',
+        entityType: 'amendment',
+        entityId: amendmentId,
+        actorId: 'system',
+        title: 'Amendment passed',
+        description: 'The amendment has been approved at all required events',
+        contentType: 'vote',
+        status: {
+          voteStatus: 'passed',
+        },
+      });
 
       toast.success('🎉 Amendment wurde angenommen!');
       return null;
@@ -224,17 +228,20 @@ export async function progressToNextEvent(
     }
 
     // Update amendment to next event
-    await db.transact([
-      tx.amendments[amendmentId].update({
-        workflowStatus: 'event_suggesting' as WorkflowStatus,
-        currentEventId: nextEventId,
-        updatedAt: Date.now(),
-      }),
-      // Update next segment status
-      tx.amendmentPathSegments[nextSegment.id].update({
-        forwardingStatus: 'forward_confirmed',
-      }),
-    ]);
+    await supabase
+      .from('amendment')
+      .update({
+        workflow_status: 'event_suggesting' as WorkflowStatus,
+        current_event_id: nextEventId,
+        updated_at: Date.now(),
+      })
+      .eq('id', amendmentId);
+
+    // Update next segment status
+    await supabase
+      .from('amendment_path_segment')
+      .update({ forwarding_status: 'forward_confirmed' })
+      .eq('id', nextSegment.id);
 
     toast.success(`Amendment an nächstes Event weitergeleitet`);
     return nextSegment.id;
@@ -257,21 +264,18 @@ export async function getCurrentEventInfo(amendmentId: string): Promise<{
   segmentId: string;
 } | null> {
   try {
-    const { data } = await db.queryOnce({
-      amendments: {
-        $: { where: { id: amendmentId } },
-        path: {
-          segments: {
-            $: { where: { forwardingStatus: 'forward_confirmed' } },
-            event: {},
-            group: {},
-          },
-        },
-      },
-    });
+    const { data: amendments } = await supabase
+      .from('amendment')
+      .select(
+        '*, amendment_path(*, amendment_path_segment(*, event:event_id(*), group:group_id(*)))'
+      )
+      .eq('id', amendmentId);
 
-    const amendment = data?.amendments?.[0];
-    const currentSegment = amendment?.path?.segments?.[0];
+    const amendment = amendments?.[0];
+    const segments = amendment?.amendment_path?.[0]?.amendment_path_segment?.filter(
+      (s: any) => s.forwarding_status === 'forward_confirmed'
+    );
+    const currentSegment = segments?.[0];
 
     if (!currentSegment || !currentSegment.event || !currentSegment.group) {
       return null;

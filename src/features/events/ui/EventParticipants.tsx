@@ -162,25 +162,25 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                               return (
                                 <CommandItem
                                   key={user.id}
-                                  value={`${user.name} ${user.handle} ${user.contactEmail}`}
+                                  value={`${user.first_name} ${user.last_name} ${user.handle} ${user.email}`}
                                   onSelect={() => actions.toggleUserSelection(userId)}
                                   className="cursor-pointer"
                                 >
                                   <div className="flex flex-1 items-center gap-3">
                                     <Avatar className="h-8 w-8">
                                       {user.avatar ? (
-                                        <AvatarImage src={user.avatar} alt={user.name || ''} />
+                                        <AvatarImage src={user.avatar} alt={`${user.first_name || ''} ${user.last_name || ''}`.trim()} />
                                       ) : null}
                                       <AvatarFallback>
-                                        {user.name?.[0]?.toUpperCase() || '?'}
+                                        {user.first_name?.[0]?.toUpperCase() || '?'}
                                       </AvatarFallback>
                                     </Avatar>
                                     <div className="flex-1">
                                       <div className="font-medium">
-                                        {user.name || 'Unnamed User'}
+                                        {`${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unnamed User'}
                                       </div>
                                       <div className="text-xs text-muted-foreground">
-                                        {user.handle ? `@${user.handle}` : user.contactEmail}
+                                        {user.handle ? `@${user.handle}` : user.email}
                                       </div>
                                     </div>
                                   </div>
@@ -213,7 +213,7 @@ export function EventParticipants({ eventId }: { eventId: string }) {
 
                           return (
                             <Badge key={userId} variant="secondary" className="gap-1 pr-1">
-                              <span>{user?.name || 'User'}</span>
+                              <span>{`${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'User'}</span>
                               <button
                                 onClick={() => actions.toggleUserSelection(userId)}
                                 className="ml-1 rounded-full p-0.5 hover:bg-muted"

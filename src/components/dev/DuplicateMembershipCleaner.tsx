@@ -2,36 +2,31 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import db, { tx } from '../../../db/db';
+import { useAuth } from '@/providers/auth-provider';
+import { useGroupState } from '@/zero/groups/useGroupState';
+import { useGroupActions } from '@/zero/groups/useGroupActions';
 
 /**
  * Temporary utility component to clean up duplicate memberships
  * Add this to any page and navigate to it to see and clean duplicates
  */
 export function DuplicateMembershipCleaner() {
-  const { user } = db.useAuth();
+  const { user } = useAuth();
+  const { leaveGroup } = useGroupActions();
   const userId = user?.id || 'a1b2c3d4-e5f6-4789-a0b1-c2d3e4f5a6b7';
   const groupId = 'f6f136ee-2c23-43c9-acd3-eb0ac355d197';
 
   // Query memberships for this specific user/group
-  const { data, isLoading } = db.useQuery({
-    groupMemberships: {
-      $: {
-        where: {
-          'user.id': userId,
-          'group.id': groupId,
-        },
-      },
-      group: {},
-    },
-  });
+  // Client-side filtering is acceptable for this dev tool
+  const { memberships: membershipsRaw } = useGroupState({ groupId });
+  const data = { groupMemberships: (membershipsRaw || []).filter((m: any) => m.user_id === userId) };
 
   const memberships = data?.groupMemberships || [];
 
   const handleDelete = async (membershipId: string) => {
     if (confirm('Are you sure you want to delete this membership?')) {
       try {
-        await db.transact([tx.groupMemberships[membershipId].delete()]);
+        await leaveGroup({ id: membershipId });
         alert('Membership deleted successfully!');
       } catch (error) {
         console.error('Delete failed:', error);
@@ -40,7 +35,7 @@ export function DuplicateMembershipCleaner() {
     }
   };
 
-  if (isLoading) {
+  if (!membershipsRaw) {
     return <div>Loading...</div>;
   }
 

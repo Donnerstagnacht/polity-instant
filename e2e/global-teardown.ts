@@ -8,30 +8,33 @@
  * This is a safety net — per-test factory cleanup handles most cases.
  */
 
-import { init } from '@instantdb/admin';
+import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
 import { resolve } from 'path';
 
 config({ path: resolve(process.cwd(), '.env') });
 config({ path: resolve(process.cwd(), '.env.local'), override: true });
 
-const APP_ID = process.env.NEXT_PUBLIC_INSTANT_APP_ID;
-const ADMIN_TOKEN = process.env.INSTANT_ADMIN_TOKEN;
+const SUPABASE_URL =
+  process.env.SUPABASE_URL ??
+  process.env.NEXT_PUBLIC_SUPABASE_URL ??
+  'http://127.0.0.1:54321';
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 async function globalTeardown() {
-  if (!APP_ID || !ADMIN_TOKEN) {
+  if (!SUPABASE_SERVICE_ROLE_KEY) {
     console.log('⏭️  Skipping global teardown — missing env vars');
     return;
   }
 
   console.log('\n🧹 Running global test teardown...\n');
 
-  const adminDB = init({ appId: APP_ID, adminToken: ADMIN_TOKEN });
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  // Clean up orphaned test users (e2e- prefix emails)
+  // Clean up orphaned test users (e2e- prefix emails/handles)
   try {
-    const { $users } = await adminDB.query({ $users: {} });
-    const orphanUsers = ($users || []).filter(
+    const { data: users } = await supabase.from('user').select('id, email, handle');
+    const orphanUsers = (users || []).filter(
       (u: any) => u.email?.startsWith('e2e-') || u.handle?.startsWith('e2e-')
     );
 
@@ -40,7 +43,13 @@ async function globalTeardown() {
       const batchSize = 20;
       for (let i = 0; i < orphanUsers.length; i += batchSize) {
         const batch = orphanUsers.slice(i, i + batchSize);
-        await adminDB.transact(batch.map((u: any) => adminDB.tx.$users[u.id].delete()));
+        const ids = batch.map((u: any) => u.id);
+        await supabase.from('user').delete().in('id', ids);
+
+        // Also clean up auth users
+        for (const u of batch) {
+          await supabase.auth.admin.deleteUser(u.id).catch(() => {});
+        }
       }
     } else {
       console.log('   ✅ No orphaned test users found');
@@ -50,26 +59,33 @@ async function globalTeardown() {
   }
 
   // Clean up orphaned test entities by name pattern
-  const entityTables = ['groups', 'events', 'amendments', 'blogs', 'todos', 'conversations'];
+  const entityTables = [
+    { table: 'group', fields: ['name'] },
+    { table: 'event', fields: ['title'] },
+    { table: 'amendment', fields: ['title'] },
+    { table: 'blog', fields: ['title'] },
+    { table: 'todo', fields: ['title'] },
+    { table: 'conversation', fields: ['name'] },
+  ];
 
-  for (const table of entityTables) {
+  for (const { table, fields } of entityTables) {
     try {
-      const result = await adminDB.query({ [table]: {} });
-      const entities = result[table] || [];
-      const orphans = entities.filter(
-        (e: any) =>
-          e.name?.startsWith('E2E ') ||
-          e.title?.startsWith('E2E ') ||
-          e.name?.startsWith('e2e-') ||
-          e.title?.startsWith('e2e-')
+      const { data: entities } = await supabase.from(table).select(`id, ${fields.join(', ')}`);
+      const orphans = (entities || []).filter((e: any) =>
+        fields.some(
+          f =>
+            e[f]?.startsWith('E2E ') ||
+            e[f]?.startsWith('e2e-')
+        )
       );
 
       if (orphans.length > 0) {
-        console.log(`   🗑️ Cleaning ${orphans.length} orphaned ${table}`);
+        console.log(`   🗑️ Cleaning ${orphans.length} orphaned ${table} records`);
         const batchSize = 20;
         for (let i = 0; i < orphans.length; i += batchSize) {
           const batch = orphans.slice(i, i + batchSize);
-          await adminDB.transact(batch.map((e: any) => adminDB.tx[table][e.id].delete()));
+          const ids = batch.map((e: any) => e.id);
+          await supabase.from(table).delete().in('id', ids);
         }
       }
     } catch {

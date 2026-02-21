@@ -13,6 +13,23 @@ export const messagesTranslations = {
     direct: 'Direktnachrichten',
     group: 'Gruppenchats',
   },
+  // Toast-Nachrichten für Action-Hooks
+  toasts: {
+    conversationCreated: 'Unterhaltung erstellt',
+    conversationCreateFailed: 'Unterhaltung konnte nicht erstellt werden',
+    conversationUpdateFailed: 'Unterhaltung konnte nicht aktualisiert werden',
+    conversationDeleted: 'Unterhaltung gelöscht',
+    conversationDeleteFailed: 'Unterhaltung konnte nicht gelöscht werden',
+    sendFailed: 'Nachricht konnte nicht gesendet werden',
+    updateFailed: 'Nachricht konnte nicht aktualisiert werden',
+    messageDeleted: 'Nachricht gelöscht',
+    messageDeleteFailed: 'Nachricht konnte nicht gelöscht werden',
+    participantAdded: 'Teilnehmer hinzugefügt',
+    participantAddFailed: 'Teilnehmer konnte nicht hinzugefügt werden',
+    participantRemoved: 'Teilnehmer entfernt',
+    participantRemoveFailed: 'Teilnehmer konnte nicht entfernt werden',
+    markReadFailed: 'Als gelesen markieren fehlgeschlagen',
+  },
   compose: {
     title: 'Neue Unterhaltung',
     startNew: 'Neue Unterhaltung starten',

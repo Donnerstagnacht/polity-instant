@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
-import db, { tx, id } from '../../../../db/db';
-import { toast } from 'sonner';
+import { useNotificationState } from '@/zero/notifications/useNotificationState';
+import { useNotificationActions } from '@/zero/notifications/useNotificationActions';
 import {
   NotificationSettings,
   GroupNotificationSettings,
@@ -15,30 +15,19 @@ import {
 } from '../types/notification-settings.types';
 
 /**
- * Hook to query and manage notification settings for a user
+ * Hook to query and manage notification settings for a user.
+ * @param _userId — ignored; the facade derives user from Zero auth context.
  */
-export function useNotificationSettings(userId?: string) {
+export function useNotificationSettings(_userId?: string) {
+  const { settings: rawSettings, isLoading } = useNotificationState();
+  const {
+    updateSettings: facadeUpdateSettings,
+    createSettings: facadeCreateSettings,
+  } = useNotificationActions();
   const [isUpdating, setIsUpdating] = useState(false);
-
-  // Query user's notification settings
-  const { data, isLoading, error } = db.useQuery(
-    userId
-      ? {
-          notificationSettings: {
-            $: {
-              where: {
-                'user.id': userId,
-              },
-            },
-          },
-        }
-      : null
-  );
 
   // Get the settings or use defaults
   const settings = useMemo((): NotificationSettings => {
-    const rawSettings = data?.notificationSettings?.[0];
-
     if (!rawSettings) {
       return {
         ...DEFAULT_NOTIFICATION_SETTINGS,
@@ -50,40 +39,40 @@ export function useNotificationSettings(userId?: string) {
       id: rawSettings.id,
       groupNotifications: {
         ...DEFAULT_NOTIFICATION_SETTINGS.groupNotifications,
-        ...(rawSettings.groupNotifications as GroupNotificationSettings | undefined),
+        ...(rawSettings.group_notifications as unknown as GroupNotificationSettings | undefined),
       },
       eventNotifications: {
         ...DEFAULT_NOTIFICATION_SETTINGS.eventNotifications,
-        ...(rawSettings.eventNotifications as EventNotificationSettings | undefined),
+        ...(rawSettings.event_notifications as unknown as EventNotificationSettings | undefined),
       },
       amendmentNotifications: {
         ...DEFAULT_NOTIFICATION_SETTINGS.amendmentNotifications,
-        ...(rawSettings.amendmentNotifications as AmendmentNotificationSettings | undefined),
+        ...(rawSettings.amendment_notifications as unknown as AmendmentNotificationSettings | undefined),
       },
       blogNotifications: {
         ...DEFAULT_NOTIFICATION_SETTINGS.blogNotifications,
-        ...(rawSettings.blogNotifications as BlogNotificationSettings | undefined),
+        ...(rawSettings.blog_notifications as unknown as BlogNotificationSettings | undefined),
       },
       todoNotifications: {
         ...DEFAULT_NOTIFICATION_SETTINGS.todoNotifications,
-        ...(rawSettings.todoNotifications as TodoNotificationSettings | undefined),
+        ...(rawSettings.todo_notifications as unknown as TodoNotificationSettings | undefined),
       },
       socialNotifications: {
         ...DEFAULT_NOTIFICATION_SETTINGS.socialNotifications,
-        ...(rawSettings.socialNotifications as SocialNotificationSettings | undefined),
+        ...(rawSettings.social_notifications as unknown as SocialNotificationSettings | undefined),
       },
       deliverySettings: {
         ...DEFAULT_NOTIFICATION_SETTINGS.deliverySettings,
-        ...(rawSettings.deliverySettings as DeliverySettings | undefined),
+        ...(rawSettings.delivery_settings as unknown as DeliverySettings | undefined),
       },
       timelineSettings: {
         ...DEFAULT_NOTIFICATION_SETTINGS.timelineSettings,
-        ...(rawSettings.timelineSettings as TimelineSettings | undefined),
+        ...(rawSettings.timeline_settings as unknown as TimelineSettings | undefined),
       },
-      createdAt: rawSettings.createdAt ? new Date(rawSettings.createdAt) : undefined,
-      updatedAt: rawSettings.updatedAt ? new Date(rawSettings.updatedAt) : undefined,
+      createdAt: rawSettings.created_at ? new Date(rawSettings.created_at) : undefined,
+      updatedAt: rawSettings.updated_at ? new Date(rawSettings.updated_at) : undefined,
     };
-  }, [data]);
+  }, [rawSettings]);
 
   /**
    * Update notification settings
@@ -91,50 +80,53 @@ export function useNotificationSettings(userId?: string) {
    */
   const updateSettings = useCallback(
     async (updates: Partial<Omit<NotificationSettings, 'id' | 'createdAt' | 'updatedAt'>>) => {
-      if (!userId) {
-        toast.error('User ID is required to update settings');
-        return { success: false, error: new Error('User ID required') };
-      }
+      // Convert camelCase local keys to snake_case DB column names
+      const dbUpdates: Record<string, unknown> = {};
+      if (updates.groupNotifications !== undefined) dbUpdates.group_notifications = updates.groupNotifications;
+      if (updates.eventNotifications !== undefined) dbUpdates.event_notifications = updates.eventNotifications;
+      if (updates.amendmentNotifications !== undefined) dbUpdates.amendment_notifications = updates.amendmentNotifications;
+      if (updates.blogNotifications !== undefined) dbUpdates.blog_notifications = updates.blogNotifications;
+      if (updates.todoNotifications !== undefined) dbUpdates.todo_notifications = updates.todoNotifications;
+      if (updates.socialNotifications !== undefined) dbUpdates.social_notifications = updates.socialNotifications;
+      if (updates.deliverySettings !== undefined) dbUpdates.delivery_settings = updates.deliverySettings;
+      if (updates.timelineSettings !== undefined) dbUpdates.timeline_settings = updates.timelineSettings;
 
       setIsUpdating(true);
       try {
-        const now = new Date();
         const existingId = settings.id;
 
         if (existingId) {
-          // Update existing settings
-          await db.transact([
-            tx.notificationSettings[existingId].update({
-              ...updates,
-              updatedAt: now,
-            }),
-          ]);
+          // Update existing settings — facade shows toast
+          await facadeUpdateSettings({
+            id: existingId,
+            ...dbUpdates,
+          } as any);
         } else {
-          // Create new settings
-          const newId = id();
-          await db.transact([
-            tx.notificationSettings[newId]
-              .update({
-                ...DEFAULT_NOTIFICATION_SETTINGS,
-                ...updates,
-                createdAt: now,
-                updatedAt: now,
-              })
-              .link({ user: userId }),
-          ]);
+          // Create new settings — facade shows toast
+          const newId = crypto.randomUUID();
+          await facadeCreateSettings({
+            id: newId,
+            group_notifications: DEFAULT_NOTIFICATION_SETTINGS.groupNotifications,
+            event_notifications: DEFAULT_NOTIFICATION_SETTINGS.eventNotifications,
+            amendment_notifications: DEFAULT_NOTIFICATION_SETTINGS.amendmentNotifications,
+            blog_notifications: DEFAULT_NOTIFICATION_SETTINGS.blogNotifications,
+            todo_notifications: DEFAULT_NOTIFICATION_SETTINGS.todoNotifications,
+            social_notifications: DEFAULT_NOTIFICATION_SETTINGS.socialNotifications,
+            delivery_settings: DEFAULT_NOTIFICATION_SETTINGS.deliverySettings,
+            timeline_settings: DEFAULT_NOTIFICATION_SETTINGS.timelineSettings,
+            ...dbUpdates,
+          } as any);
         }
 
-        toast.success('Settings saved');
         return { success: true };
       } catch (err) {
         console.error('Failed to update notification settings:', err);
-        toast.error('Failed to save settings');
         return { success: false, error: err };
       } finally {
         setIsUpdating(false);
       }
     },
-    [userId, settings.id]
+    [settings.id, facadeUpdateSettings, facadeCreateSettings]
   );
 
   /**
@@ -245,7 +237,6 @@ export function useNotificationSettings(userId?: string) {
 
   /**
    * Toggle a specific boolean setting
-   * Note: This only works for settings that are boolean values
    */
   const toggleSetting = useCallback(
     <T extends 'groupNotifications' | 'eventNotifications' | 'amendmentNotifications' | 'blogNotifications' | 'todoNotifications' | 'socialNotifications' | 'deliverySettings'>(
@@ -269,7 +260,7 @@ export function useNotificationSettings(userId?: string) {
     settings,
     isLoading,
     isUpdating,
-    error,
+    error: null,
     updateSettings,
     updateGroupNotifications,
     updateEventNotifications,

@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { db, tx, id } from '../../../../db/db';
-import { useRouter } from 'next/navigation';
+import { useBlogState } from '@/zero/blogs/useBlogState';
+import { useBlogActions } from '@/zero/blogs/useBlogActions';
+import { useGroupActions } from '@/zero/groups/useGroupActions';
+import { useUserState } from '@/zero/users/useUserState';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -56,7 +58,9 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { toast } from 'sonner';
-import { usePermissions } from '../../../../db/rbac/usePermissions';
+import { useAuth } from '@/providers/auth-provider';
+import { usePermissions } from '@/zero/rbac/usePermissions';
+import type { User } from '@/zero';
 import {
   notifyBloggerInvited,
   notifyBloggerRoleChanged,
@@ -72,12 +76,26 @@ const ACTION_RIGHTS = [
   { resource: 'blogBloggers', action: 'manage', label: 'Manage Bloggers' },
 ];
 
+function displayName(u: Pick<User, 'first_name' | 'last_name'> | undefined | null): string {
+  if (!u) return 'Unknown';
+  return [u.first_name, u.last_name].filter(Boolean).join(' ') || 'Unknown';
+}
+
+function initials(u: Pick<User, 'first_name' | 'last_name'> | undefined | null): string {
+  if (!u) return 'U';
+  return u.first_name?.charAt(0) || u.last_name?.charAt(0) || 'U';
+}
+
 interface BlogBloggersManagerProps {
   blogId: string;
 }
 
 export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
-  const router = useRouter();
+  const blogActions = useBlogActions();
+  const groupActions = useGroupActions();
+  const { blogWithManagement } = useBlogState({ blogId, includeManagement: true });
+  const { allUsers } = useUserState({ includeAllUsers: true });
+  const usersData = allUsers;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [inviteSearchQuery, setInviteSearchQuery] = useState('');
@@ -89,61 +107,35 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
   const [newRoleDescription, setNewRoleDescription] = useState('');
   const [addRoleDialogOpen, setAddRoleDialogOpen] = useState(false);
 
-  // Query blog and bloggers
-  const { data, isLoading, error } = db.useQuery({
-    blogs: {
-      $: {
-        where: {
-          id: blogId,
-        },
-      },
-      blogRoleBloggers: {
-        user: {},
-        role: {
-          actionRights: {},
-        },
-      },
-      roles: {
-        $: {
-          where: {
-            scope: 'blog',
-          },
-        },
-        actionRights: {},
-      },
-    },
-  });
-
-  // Query all users for user search
-  const { data: usersData, isLoading: isLoadingUsers } = db.useQuery({
-    $users: {},
-  });
+  const blog = blogWithManagement;
+  const bloggers = blog?.bloggers || [];
+  const rolesData = { roles: blog?.roles || [] };
+  const isLoading = !blogWithManagement;
+  const isLoadingUsers = !usersData;
+  const error = null;
 
   // Check if current user is owner
-  const { user } = db.useAuth();
+  const { user } = useAuth();
   const currentUserId = user?.id;
-
-  const blog = data?.blogs?.[0];
-  const bloggers = blog?.blogRoleBloggers || [];
-  const rolesData = { roles: blog?.roles || [] };
 
   // Use permission hooks to check access
   const { can } = usePermissions({ blogId });
   const canManageBloggers = can('manage', 'blogBloggers');
 
   // Get existing blogger IDs to exclude from invite search
-  const existingBloggerIds = bloggers.map((b: any) => b.user?.id).filter(Boolean) as string[];
+  const existingBloggerIds = bloggers.map(b => b.user_id).filter(Boolean) as string[];
 
   // Filter users for invite search
-  const filteredUsers = usersData?.$users?.filter(user => {
-    if (!user?.id) return false;
-    if (existingBloggerIds.includes(user.id)) return false;
+  const filteredUsers = usersData?.filter(u => {
+    if (!u?.id) return false;
+    if (existingBloggerIds.includes(u.id)) return false;
 
-    const query = inviteSearchQuery.toLowerCase();
+    const q = inviteSearchQuery.toLowerCase();
     return (
-      user.name?.toLowerCase().includes(query) ||
-      user.handle?.toLowerCase().includes(query) ||
-      user.contactEmail?.toLowerCase().includes(query)
+      u.first_name?.toLowerCase().includes(q) ||
+      u.last_name?.toLowerCase().includes(q) ||
+      u.handle?.toLowerCase().includes(q) ||
+      u.email?.toLowerCase().includes(q)
     );
   });
 
@@ -159,35 +151,34 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
     setIsInviting(true);
     try {
       // Find Writer role ID
-      const writerRole = rolesData.roles.find((r: any) => r.name === 'Writer');
+      const writerRole = rolesData.roles.find(r => r.name === 'Writer');
       if (!writerRole) {
         throw new Error('Writer role not found');
       }
 
-      const inviteTransactions: any[] = selectedUsers.map(userId => {
-        const bloggerId = id();
-        return tx.blogBloggers[bloggerId]
-          .update({
-            status: 'invited',
-            createdAt: new Date(),
-          })
-          .link({ user: userId, blog: blogId, role: writerRole.id });
-      });
+      for (const userId of selectedUsers) {
+        const bloggerId = crypto.randomUUID();
+        await blogActions.createEntry({
+          id: bloggerId,
+          status: 'invited',
+          user_id: userId,
+          blog_id: blogId,
+          role_id: writerRole.id,
+          visibility: '',
+        });
+      }
 
       // Send notifications to invited users
       if (currentUserId) {
-        selectedUsers.forEach(userId => {
-          const notificationTxs = notifyBloggerInvited({
+        for (const userId of selectedUsers) {
+          await notifyBloggerInvited({
             senderId: currentUserId,
             recipientUserId: userId,
             blogId,
             blogTitle: blog?.title || 'Blog',
           });
-          inviteTransactions.push(...notificationTxs);
-        });
+        }
       }
-
-      await db.transact(inviteTransactions);
 
       toast.success(
         `Invited ${selectedUsers.length} ${selectedUsers.length === 1 ? 'blogger' : 'bloggers'}`
@@ -208,22 +199,19 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
   // Handle role updates
   const handleUpdateRole = async (bloggerId: string, newRoleId: string, userId?: string) => {
     try {
-      const transactions: any[] = [tx.blogBloggers[bloggerId].link({ role: newRoleId })];
+      await blogActions.updateEntry({ id: bloggerId, role_id: newRoleId });
 
       // Send notification to the blogger about role change
       if (currentUserId && userId) {
-        const newRole = rolesData.roles.find((r: any) => r.id === newRoleId);
-        const notificationTxs = notifyBloggerRoleChanged({
+        const newRole = rolesData.roles.find(r => r.id === newRoleId);
+        await notifyBloggerRoleChanged({
           senderId: currentUserId,
           recipientUserId: userId,
           blogId,
           blogTitle: blog?.title || 'Blog',
           newRole: newRole?.name || 'Unknown Role',
         });
-        transactions.push(...notificationTxs);
       }
-
-      await db.transact(transactions);
       toast.success('Blogger role updated successfully');
     } catch (err) {
       console.error('Error updating role:', err);
@@ -234,20 +222,17 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
   // Handle removing blogger
   const handleRemoveBlogger = async (bloggerId: string, userId?: string) => {
     try {
-      const transactions: any[] = [tx.blogBloggers[bloggerId].delete()];
+      await blogActions.deleteEntry(bloggerId);
 
       // Send notification to the removed blogger
       if (currentUserId && userId) {
-        const notificationTxs = notifyBloggerRemoved({
+        await notifyBloggerRemoved({
           senderId: currentUserId,
           recipientUserId: userId,
           blogId,
           blogTitle: blog?.title || 'Blog',
         });
-        transactions.push(...notificationTxs);
       }
-
-      await db.transact(transactions);
       toast.success('Blogger removed successfully');
     } catch (err) {
       console.error('Error removing blogger:', err);
@@ -265,24 +250,26 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
     try {
       if (currentlyHasRight) {
         // Find and remove the action right
-        const role = rolesData.roles.find((r: any) => r.id === roleId);
-        const actionRightToRemove = role?.actionRights?.find(
-          (ar: any) => ar.resource === resource && ar.action === action
+        const foundRole = rolesData.roles.find(r => r.id === roleId);
+        const actionRightToRemove = foundRole?.action_rights?.find(
+          ar => ar.resource === resource && ar.action === action
         );
         if (actionRightToRemove) {
-          await db.transact([tx.actionRights[actionRightToRemove.id].delete()]);
+          await groupActions.removeActionRight({ id: actionRightToRemove.id });
         }
       } else {
         // Add the action right
-        const actionRightId = id();
-        await db.transact([
-          tx.actionRights[actionRightId]
-            .update({
-              resource,
-              action,
-            })
-            .link({ roles: [roleId], blog: blogId }),
-        ]);
+        const actionRightId = crypto.randomUUID();
+        await groupActions.assignActionRight({
+          id: actionRightId,
+          resource,
+          action,
+          role_id: roleId,
+          blog_id: blogId,
+          group_id: '',
+          event_id: '',
+          amendment_id: '',
+        });
       }
       toast.success('Permission updated successfully');
     } catch (error) {
@@ -299,28 +286,27 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
     }
 
     try {
-      const roleId = id();
-      const transactions: any[] = [
-        tx.roles[roleId].update({
-          name: newRoleName,
-          description: newRoleDescription,
-          scope: 'blog',
-        }),
-        tx.roles[roleId].link({ blog: blogId }),
-      ];
+      const roleId = crypto.randomUUID();
+      await groupActions.createRole({
+        id: roleId,
+        name: newRoleName,
+        description: newRoleDescription,
+        scope: 'blog',
+        blog_id: blogId,
+        group_id: '',
+        event_id: '',
+        amendment_id: '',
+      });
 
       // Send notification about new role
       if (currentUserId) {
-        const notificationTxs = notifyBlogRoleCreated({
+        await notifyBlogRoleCreated({
           senderId: currentUserId,
           blogId,
           blogTitle: blog?.title || 'Blog',
           roleName: newRoleName,
         });
-        transactions.push(...notificationTxs);
       }
-
-      await db.transact(transactions);
 
       toast.success('Role created successfully');
 
@@ -336,20 +322,17 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
   // Handle deleting a role
   const handleDeleteRole = async (roleId: string, roleName?: string) => {
     try {
-      const transactions: any[] = [tx.roles[roleId].delete()];
+      await groupActions.deleteRole({ id: roleId });
 
       // Send notification about role deletion
       if (currentUserId && roleName) {
-        const notificationTxs = notifyBlogRoleDeleted({
+        await notifyBlogRoleDeleted({
           senderId: currentUserId,
           blogId,
           blogTitle: blog?.title || 'Blog',
           roleName,
         });
-        transactions.push(...notificationTxs);
       }
-
-      await db.transact(transactions);
       toast.success('Role deleted successfully');
     } catch (error) {
       console.error('Failed to delete role:', error);
@@ -358,19 +341,20 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
   };
 
   // Filter bloggers based on search and status
-  const filteredBloggers = bloggers.filter((blogger: any) => {
+  const filteredBloggers = bloggers.filter(blogger => {
+    const q = searchQuery.toLowerCase();
     const matchesSearch =
-      blogger.user?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      blogger.user?.handle?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      blogger.user?.contactEmail?.toLowerCase().includes(searchQuery.toLowerCase());
+      displayName(blogger.user).toLowerCase().includes(q) ||
+      blogger.user?.handle?.toLowerCase().includes(q) ||
+      blogger.user?.email?.toLowerCase().includes(q);
 
     return matchesSearch;
   });
 
   // Separate bloggers by status
-  const activeBloggers = filteredBloggers.filter((b: any) => b.status === 'member');
-  const invitedBloggers = filteredBloggers.filter((b: any) => b.status === 'invited');
-  const requestedBloggers = filteredBloggers.filter((b: any) => b.status === 'requested');
+  const activeBloggers = filteredBloggers.filter(b => b.status === 'member');
+  const invitedBloggers = filteredBloggers.filter(b => b.status === 'invited');
+  const requestedBloggers = filteredBloggers.filter(b => b.status === 'requested');
 
   if (isLoading) {
     return (
@@ -385,7 +369,7 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <h2 className="mb-2 text-2xl font-bold">Blog not found</h2>
-          <Button onClick={() => router.back()}>Go Back</Button>
+          <Button onClick={() => window.history.back()}>Go Back</Button>
         </div>
       </div>
     );
@@ -394,12 +378,12 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
   return (
     <div className="container mx-auto max-w-6xl p-8">
       <div className="mb-6">
-        <Button variant="ghost" onClick={() => router.back()} className="mb-4">
+        <Button variant="ghost" onClick={() => window.history.back()} className="mb-4">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Blog
         </Button>
         <h1 className="text-3xl font-bold">Manage Bloggers</h1>
-        <p className="mt-2 text-muted-foreground">
+        <p className="text-muted-foreground mt-2">
           Manage blogger access, roles, and permissions for {blog.title}
         </p>
       </div>
@@ -408,7 +392,7 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
       <div className="mb-6">
         <div className="flex items-center justify-between gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
             <Input
               placeholder="Search bloggers..."
               value={searchQuery}
@@ -446,24 +430,24 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                             <Loader2 className="mx-auto h-6 w-6 animate-spin" />
                           </div>
                         ) : (
-                          filteredUsers?.map(user => (
+                          filteredUsers?.map(u => (
                             <CommandItem
-                              key={user.id}
+                              key={u.id}
                               className="flex cursor-pointer items-center space-x-2"
-                              onSelect={() => toggleUserSelection(user.id)}
+                              onSelect={() => toggleUserSelection(u.id)}
                             >
                               <Checkbox
-                                checked={selectedUsers.includes(user.id)}
-                                onCheckedChange={() => toggleUserSelection(user.id)}
+                                checked={selectedUsers.includes(u.id)}
+                                onCheckedChange={() => toggleUserSelection(u.id)}
                               />
                               <Avatar className="h-8 w-8">
-                                <AvatarImage src={user.avatar || user.imageURL || ''} />
-                                <AvatarFallback>{user.name?.charAt(0) || 'U'}</AvatarFallback>
+                                <AvatarImage src={u.avatar || ''} />
+                                <AvatarFallback>{initials(u)}</AvatarFallback>
                               </Avatar>
                               <div className="flex-1">
-                                <div className="font-medium">{user.name || 'Unknown'}</div>
-                                <div className="text-sm text-muted-foreground">
-                                  @{user.handle || user.contactEmail || 'unknown'}
+                                <div className="font-medium">{displayName(u)}</div>
+                                <div className="text-muted-foreground text-sm">
+                                  @{u.handle || u.email || 'unknown'}
                                 </div>
                               </div>
                             </CommandItem>
@@ -473,7 +457,7 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                     </CommandList>
                   </Command>
                   {selectedUsers.length > 0 && (
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-muted-foreground text-sm">
                       Selected: {selectedUsers.length}{' '}
                       {selectedUsers.length === 1 ? 'user' : 'users'}
                     </div>
@@ -530,9 +514,9 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {invitedBloggers.map((blogger: any) => {
-                      const createdAt = blogger.createdAt
-                        ? new Date(blogger.createdAt).toLocaleDateString()
+                    {invitedBloggers.map(blogger => {
+                      const createdAt = blogger.created_at
+                        ? new Date(blogger.created_at).toLocaleDateString()
                         : 'N/A';
 
                       return (
@@ -540,16 +524,12 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                           <TableCell>
                             <div className="flex items-center space-x-3">
                               <Avatar>
-                                <AvatarImage
-                                  src={blogger.user?.avatar || blogger.user?.imageURL || ''}
-                                />
-                                <AvatarFallback>
-                                  {blogger.user?.name?.charAt(0) || 'U'}
-                                </AvatarFallback>
+                                <AvatarImage src={blogger.user?.avatar || ''} />
+                                <AvatarFallback>{initials(blogger.user)}</AvatarFallback>
                               </Avatar>
                               <div>
-                                <div className="font-medium">{blogger.user?.name || 'Unknown'}</div>
-                                <div className="text-sm text-muted-foreground">
+                                <div className="font-medium">{displayName(blogger.user)}</div>
+                                <div className="text-muted-foreground text-sm">
                                   @{blogger.user?.handle || 'unknown'}
                                 </div>
                               </div>
@@ -588,7 +568,7 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
             </CardHeader>
             <CardContent>
               {activeBloggers.length === 0 ? (
-                <p className="py-8 text-center text-muted-foreground">
+                <p className="text-muted-foreground py-8 text-center">
                   {bloggers.length === 0
                     ? 'No active bloggers yet'
                     : 'No active bloggers match your search'}
@@ -604,9 +584,9 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {activeBloggers.map((blogger: any) => {
-                      const createdAt = blogger.createdAt
-                        ? new Date(blogger.createdAt).toLocaleDateString()
+                    {activeBloggers.map(blogger => {
+                      const createdAt = blogger.created_at
+                        ? new Date(blogger.created_at).toLocaleDateString()
                         : 'N/A';
 
                       return (
@@ -614,16 +594,12 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                           <TableCell>
                             <div className="flex items-center space-x-3">
                               <Avatar>
-                                <AvatarImage
-                                  src={blogger.user?.avatar || blogger.user?.imageURL || ''}
-                                />
-                                <AvatarFallback>
-                                  {blogger.user?.name?.charAt(0) || 'U'}
-                                </AvatarFallback>
+                                <AvatarImage src={blogger.user?.avatar || ''} />
+                                <AvatarFallback>{initials(blogger.user)}</AvatarFallback>
                               </Avatar>
                               <div>
-                                <div className="font-medium">{blogger.user?.name || 'Unknown'}</div>
-                                <div className="text-sm text-muted-foreground">
+                                <div className="font-medium">{displayName(blogger.user)}</div>
+                                <div className="text-muted-foreground text-sm">
                                   @{blogger.user?.handle || 'unknown'}
                                 </div>
                               </div>
@@ -641,9 +617,9 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                                   <SelectValue placeholder="Select role" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {rolesData.roles.map((role: any) => (
-                                    <SelectItem key={role.id} value={role.id}>
-                                      {role.name}
+                                  {rolesData.roles.map(r => (
+                                    <SelectItem key={r.id} value={r.id}>
+                                      {r.name}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
@@ -692,9 +668,9 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {requestedBloggers.map((blogger: any) => {
-                      const createdAt = blogger.createdAt
-                        ? new Date(blogger.createdAt).toLocaleDateString()
+                    {requestedBloggers.map(blogger => {
+                      const createdAt = blogger.created_at
+                        ? new Date(blogger.created_at).toLocaleDateString()
                         : 'N/A';
 
                       return (
@@ -702,16 +678,12 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                           <TableCell>
                             <div className="flex items-center space-x-3">
                               <Avatar>
-                                <AvatarImage
-                                  src={blogger.user?.avatar || blogger.user?.imageURL || ''}
-                                />
-                                <AvatarFallback>
-                                  {blogger.user?.name?.charAt(0) || 'U'}
-                                </AvatarFallback>
+                                <AvatarImage src={blogger.user?.avatar || ''} />
+                                <AvatarFallback>{initials(blogger.user)}</AvatarFallback>
                               </Avatar>
                               <div>
-                                <div className="font-medium">{blogger.user?.name || 'Unknown'}</div>
-                                <div className="text-sm text-muted-foreground">
+                                <div className="font-medium">{displayName(blogger.user)}</div>
+                                <div className="text-muted-foreground text-sm">
                                   @{blogger.user?.handle || 'unknown'}
                                 </div>
                               </div>
@@ -728,11 +700,10 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                                   variant="default"
                                   size="sm"
                                   onClick={() => {
-                                    db.transact([
-                                      tx.blogBloggers[blogger.id].update({
-                                        status: 'member',
-                                      }),
-                                    ]);
+                                    blogActions.updateEntry({
+                                      id: blogger.id,
+                                      status: 'member',
+                                    });
                                   }}
                                 >
                                   <Check className="mr-1 h-4 w-4" />
@@ -835,23 +806,23 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="min-w-[200px]">Permission</TableHead>
-                        {rolesData.roles.map((role: any) => (
-                          <TableHead key={role.id} className="min-w-[120px] text-center">
+                        {rolesData.roles.map(r => (
+                          <TableHead key={r.id} className="min-w-[120px] text-center">
                             <div className="flex flex-col items-center gap-1">
-                              <span className="font-semibold">{role.name}</span>
-                              {role.description && (
-                                <span className="text-xs font-normal text-muted-foreground">
-                                  {role.description}
+                              <span className="font-semibold">{r.name}</span>
+                              {r.description && (
+                                <span className="text-muted-foreground text-xs font-normal">
+                                  {r.description}
                                 </span>
                               )}
-                              {canManageBloggers && role.name !== 'Owner' && (
+                              {canManageBloggers && r.name !== 'Owner' && (
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   className="mt-1 h-6 w-6 p-0"
-                                  onClick={() => handleDeleteRole(role.id)}
+                                  onClick={() => handleDeleteRole(r.id)}
                                 >
-                                  <Trash2 className="h-3 w-3 text-destructive" />
+                                  <Trash2 className="text-destructive h-3 w-3" />
                                 </Button>
                               )}
                             </div>
@@ -865,18 +836,18 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                         return (
                           <TableRow key={rightKey}>
                             <TableCell className="font-medium">{label}</TableCell>
-                            {rolesData.roles.map((role: any) => {
-                              const hasRight = role.actionRights?.some(
-                                (ar: any) => ar.resource === resource && ar.action === action
+                            {rolesData.roles.map(r => {
+                              const hasRight = r.action_rights?.some(
+                                ar => ar.resource === resource && ar.action === action
                               );
                               return (
-                                <TableCell key={role.id} className="text-center">
+                                <TableCell key={r.id} className="text-center">
                                   <div className="flex justify-center">
                                     <Checkbox
                                       checked={hasRight}
                                       disabled={!canManageBloggers}
                                       onCheckedChange={() =>
-                                        handleToggleActionRight(role.id, resource, action, hasRight)
+                                        handleToggleActionRight(r.id, resource, action, hasRight)
                                       }
                                     />
                                   </div>
@@ -891,8 +862,8 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                 </div>
               ) : (
                 <div className="py-12 text-center">
-                  <Shield className="mx-auto h-12 w-12 text-muted-foreground/50" />
-                  <p className="mt-4 text-muted-foreground">
+                  <Shield className="text-muted-foreground/50 mx-auto h-12 w-12" />
+                  <p className="text-muted-foreground mt-4">
                     No roles created yet. Click "Add Role" to create your first role.
                   </p>
                 </div>

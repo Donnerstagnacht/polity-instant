@@ -1,8 +1,11 @@
-import { db, id } from '../../../../db/db';
+import { useEventActions } from '@/zero/events/useEventActions';
+import { useNotificationActions } from '@/zero/notifications/useNotificationActions';
 import { toast } from 'sonner';
-import { notifyMeetingBooked, notifyMeetingCancelled } from '@/utils/notification-helpers';
 
 export function useMeetingBooking() {
+  const { createMeetingBooking, deleteMeetingBooking } = useEventActions();
+  const { createNotification } = useNotificationActions();
+
   const bookMeeting = async (
     meetingSlotId: string,
     notes?: string,
@@ -11,29 +14,47 @@ export function useMeetingBooking() {
     meetingTitle?: string
   ) => {
     try {
-      const bookingId = id();
-      const transactions: any[] = [
-        db.tx.meetingBookings[bookingId].update({
-          status: 'confirmed',
-          createdAt: Date.now(),
-          notes: notes || '',
-        }).link({
-          slot: meetingSlotId,
-        }),
-      ];
+      const bookingId = crypto.randomUUID();
+      const now = Date.now();
+
+      await createMeetingBooking({
+        id: bookingId,
+        status: 'confirmed',
+        message: notes || '',
+        slot_id: meetingSlotId,
+      });
 
       // Notify host about the booking
       if (senderId && hostUserId && meetingTitle) {
-        const notificationTxs = notifyMeetingBooked({
-          senderId,
-          senderName: '', // Will be filled from user data
-          recipientUserId: hostUserId,
-          meetingTime: meetingTitle, // Using title as time for now
+        await createNotification({
+          id: crypto.randomUUID(),
+          sender_id: senderId,
+          recipient_id: hostUserId,
+          type: 'event_meeting_booked',
+          title: 'Meeting Booked',
+          message: `A meeting has been booked at ${meetingTitle}`,
+          action_url: '/calendar',
+          related_entity_type: '',
+          on_behalf_of_entity_type: '',
+          on_behalf_of_entity_id: '',
+          recipient_entity_type: '',
+          recipient_entity_id: '',
+          related_user_id: '',
+          related_group_id: '',
+          related_amendment_id: '',
+          related_event_id: '',
+          related_blog_id: '',
+          on_behalf_of_group_id: '',
+          on_behalf_of_event_id: '',
+          on_behalf_of_amendment_id: '',
+          on_behalf_of_blog_id: '',
+          recipient_group_id: '',
+          recipient_event_id: '',
+          recipient_amendment_id: '',
+          recipient_blog_id: '',
         });
-        transactions.push(...notificationTxs);
       }
 
-      await db.transact(transactions);
       toast.success('Meeting booked successfully');
     } catch (error) {
       console.error('Error booking meeting:', error);
@@ -49,20 +70,39 @@ export function useMeetingBooking() {
     meetingTitle?: string
   ) => {
     try {
-      const transactions: any[] = [db.tx.meetingBookings[bookingId].delete()];
+      await deleteMeetingBooking({ id: bookingId });
 
       // Notify host about the cancellation
       if (senderId && hostUserId && meetingTitle) {
-        const notificationTxs = notifyMeetingCancelled({
-          senderId,
-          senderName: '', // Will be filled from user data
-          recipientUserId: hostUserId,
-          meetingTime: meetingTitle, // Using title as time for now
+        await createNotification({
+          id: crypto.randomUUID(),
+          sender_id: senderId,
+          recipient_id: hostUserId,
+          type: 'event_meeting_cancelled',
+          title: 'Meeting Cancelled',
+          message: `A meeting at ${meetingTitle} has been cancelled`,
+          action_url: '/calendar',
+          related_entity_type: '',
+          on_behalf_of_entity_type: '',
+          on_behalf_of_entity_id: '',
+          recipient_entity_type: '',
+          recipient_entity_id: '',
+          related_user_id: '',
+          related_group_id: '',
+          related_amendment_id: '',
+          related_event_id: '',
+          related_blog_id: '',
+          on_behalf_of_group_id: '',
+          on_behalf_of_event_id: '',
+          on_behalf_of_amendment_id: '',
+          on_behalf_of_blog_id: '',
+          recipient_group_id: '',
+          recipient_event_id: '',
+          recipient_amendment_id: '',
+          recipient_blog_id: '',
         });
-        transactions.push(...notificationTxs);
       }
 
-      await db.transact(transactions);
       toast.success('Booking cancelled');
     } catch (error) {
       console.error('Error cancelling booking:', error);

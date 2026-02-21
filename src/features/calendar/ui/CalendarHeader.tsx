@@ -8,8 +8,8 @@ import {
   ChevronRight,
   Plus,
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { CalendarView } from '../types';
+import { useNavigate } from '@tanstack/react-router';
+import { CalendarView } from '../types/calendar.types';
 import { useTranslation } from '@/hooks/use-translation';
 
 interface CalendarHeaderProps {
@@ -30,7 +30,7 @@ export const CalendarHeader = ({
   onToday,
 }: CalendarHeaderProps) => {
   const { t } = useTranslation();
-  const router = useRouter();
+  const navigate = useNavigate();
 
   return (
     <>
@@ -38,7 +38,7 @@ export const CalendarHeader = ({
         <div>
           <h1 className="text-3xl font-bold">{t('features.calendar.title')}</h1>
         </div>
-        <Button onClick={() => router.push('/create/event')}>
+        <Button onClick={() => navigate({ to: '/create/event' })}>
           <Plus className="mr-2 h-4 w-4" />
           {t('features.calendar.actions.createEvent')}
         </Button>

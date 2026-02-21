@@ -7,11 +7,14 @@
  * Note: Group roles are created in the groups seeder
  */
 
-import { id, tx } from '@instantdb/admin';
+import { id } from '../helpers/id.helper';
+import { tx } from '../helpers/compat';
+import { batchTransact } from '../helpers/transaction.helpers';
+import type { InsertOp } from '../helpers/transaction.helpers';
 import { faker } from '@faker-js/faker';
 import type { EntitySeeder, SeedContext } from '../types/seeder.types';
 import { randomInt, randomItem, randomItems, randomVisibility } from '../helpers/random.helpers';
-import { DEFAULT_EVENT_ROLES, DEFAULT_BLOG_ROLES } from '../../db/rbac/constants';
+import { DEFAULT_EVENT_ROLES, DEFAULT_BLOG_ROLES } from '../../src/zero/rbac/constants';
 import { SEED_CONFIG } from '../config/seed.config';
 
 export const rbacSeeder: EntitySeeder = {
@@ -27,7 +30,7 @@ export const rbacSeeder: EntitySeeder = {
     const eventOrganizers = context.eventOrganizers || new Map<string, string>();
 
     console.log('Seeding RBAC entities (roles, actionRights, participants, bloggers)...');
-    const transactions = [];
+    const transactions: InsertOp[] = [];
     let totalRoles = 0;
     let totalActionRights = 0;
     let totalParticipants = 0;
@@ -290,7 +293,7 @@ export const rbacSeeder: EntitySeeder = {
       const batchSize = 20;
       for (let i = 0; i < transactions.length; i += batchSize) {
         const batch = transactions.slice(i, i + batchSize);
-        await db.transact(batch);
+        await batchTransact(db, batch);
       }
     }
 

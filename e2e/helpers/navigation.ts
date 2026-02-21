@@ -7,7 +7,7 @@ import { type Page, expect } from '@playwright/test';
 /**
  * Navigates to a page and retries if "Access Denied" appears, page redirects away,
  * or entity is not found. Factory-created data may not be immediately available
- * to the client-side PermissionGuard due to InstantDB sync delay.
+ * to the client-side PermissionGuard due to sync delay.
  */
 export async function gotoWithRetry(page: Page, url: string, retries = 8) {
   for (let attempt = 0; attempt <= retries; attempt++) {

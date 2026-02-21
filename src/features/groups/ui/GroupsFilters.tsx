@@ -1,24 +1,31 @@
 import React from 'react';
-import { useGroupsStore } from '@/global-state/groups.store';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/hooks/use-translation';
 
-export const GroupsFilters: React.FC = () => {
+interface GroupsFiltersProps {
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
+  selectedTags: string[];
+  setSelectedTags: (tags: string[]) => void;
+  toggleTag: (tag: string) => void;
+  allTags: string[];
+  hasActiveFilters: boolean;
+  clearAllFilters: () => void;
+}
+
+export const GroupsFilters: React.FC<GroupsFiltersProps> = ({
+  searchTerm,
+  setSearchTerm,
+  selectedTags,
+  toggleTag,
+  allTags,
+  hasActiveFilters,
+  clearAllFilters,
+}) => {
   const { t } = useTranslation();
-  const { searchTerm, selectedTags, setSearchTerm, toggleTag, setSelectedTags, getAllTags } =
-    useGroupsStore();
-
-  const allTags = getAllTags();
-
-  const clearAllFilters = () => {
-    setSearchTerm('');
-    setSelectedTags([]);
-  };
-
-  const hasActiveFilters = searchTerm !== '' || selectedTags.length > 0;
 
   return (
     <div className="mb-6 space-y-4">

@@ -1,9 +1,8 @@
 import { test, expect } from '../fixtures/test-base';
 
 test.describe('Subscription - Type Filter', () => {
-  test.beforeEach(async ({ authenticatedPage: page, adminDb }) => {
-    const authUser = await adminDb.auth.getUser({ email: 'polity.live@gmail.com' });
-    await page.goto(`/user/${authUser.id}/subscriptions`);
+  test.beforeEach(async ({ authenticatedPage: page, mainUserId }) => {
+    await page.goto(`/user/${mainUserId}/subscriptions`);
     await page.waitForLoadState('domcontentloaded');
     // Wait for loading state to resolve
     await expect(page.getByText('Loading...')).not.toBeVisible({ timeout: 15000 });

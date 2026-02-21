@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { UserNetworkFlow } from '@/features/user/ui/UserNetworkFlow';
-import { NetworkEntityDialog } from '@/components/shared/NetworkEntityDialog';
+import { useNavigate } from '@tanstack/react-router';
+import { UserNetworkFlow } from '@/features/network/ui/UserNetworkFlow';
+import { NetworkEntityDialog } from '@/features/network/ui/NetworkEntityDialog';
 import {
   Dialog,
   DialogContent,
@@ -16,11 +16,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import db, { tx, id } from '../../../../db/db';
+import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
+import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
+import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useAuthStore } from '@/features/auth';
 import { toast } from 'sonner';
 import { findShortestPath } from '@/utils/path-finding';
-import { NetworkFlowBase } from '@/components/shared/NetworkFlowBase';
+import { NetworkFlowBase } from '@/features/network/ui/NetworkFlowBase';
 import { CalendarIcon, Target, X, RefreshCw, User } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -35,7 +37,7 @@ interface AmendmentProcessFlowProps {
 export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps) {
   const { t } = useTranslation();
   const user = useAuthStore((state: any) => state.user);
-  const router = useRouter();
+  const navigate = useNavigate();
   const [entityDialogOpen, setEntityDialogOpen] = useState(false);
   const [selectedEntity, setSelectedEntity] = useState<{
     type: 'group' | 'event' | 'relationship' | 'user';
@@ -65,84 +67,50 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
   } | null>(null);
   const [targetCollaboratorUserId, setTargetCollaboratorUserId] = useState<string>('');
 
-  // Query events for the group in the event change dialog
-  const { data: groupEventsData } = db.useQuery(
-    eventChangeDialog?.groupId
-      ? {
-          events: {
-            $: {
-              where: {
-                'group.id': eventChangeDialog.groupId,
-              },
-            },
-            group: {},
-          },
-        }
-      : { events: {} }
-  );
+  const {
+    updateAmendment,
+    deletePathSegment,
+    deleteAmendmentVote,
+    deletePath,
+    castAmendmentVote,
+    createPath,
+    createPathSegment,
+  } = useAmendmentActions();
+  const { createAgendaItem: createAgendaItemAction, deleteAgendaItem: deleteAgendaItemAction } = useAgendaActions();
 
-  // Query events for selected target group in the new dialog
-  const { data: targetGroupEventsData } = db.useQuery(
-    selectedTargetGroup?.id
-      ? {
-          events: {
-            $: {
-              where: {
-                'group.id': selectedTargetGroup.id,
-              },
-            },
-            group: {},
-          },
-        }
-      : { events: {} }
-  );
+  // All query data via facade
+  const {
+    amendmentProcess: amendmentResults,
+    collaborators: collaboratorsResult,
+    allGroups,
+    allGroupRelationships,
+    allGroupMemberships,
+    allEvents,
+    eventsByGroup: groupEventsResult,
+    isLoading: facadeLoading,
+  } = useAmendmentState({
+    amendmentId,
+    includeProcessData: true,
+    includeNetworkData: true,
+    includeEventsByGroup: !!(eventChangeDialog?.groupId || selectedTargetGroup?.id),
+    eventGroupId: eventChangeDialog?.groupId || selectedTargetGroup?.id,
+  });
 
-  // Fetch amendment data with target and path (now with segments!)
-  const { data: amendmentData, isLoading } = db.useQuery({
-    amendments: {
-      $: { where: { id: amendmentId } },
-      targetGroup: {},
-      targetEvent: {},
-      agendaItems: {
-        amendmentVote: {},
-      },
-      path: {
-        user: {}, // Include the user whose network was used for the path
-        segments: {
-          group: {},
-          event: {},
-          agendaItem: {
-            amendmentVote: {},
-          },
-          amendmentVote: {},
-        },
-      },
-    },
-  } as any);
+  const amendmentData = { amendments: amendmentResults } as any;
+  const isLoading = facadeLoading;
 
-  // Fetch all groups and relationships for path finding
-  const { data: networkData } = db.useQuery({
-    groups: {},
-    groupRelationships: {
-      parentGroup: {},
-      childGroup: {},
-    },
-    groupMemberships: {
-      group: {},
-      user: {},
-    },
-    events: {
-      group: {},
-    },
-  } as any);
+  const networkData = {
+    groups: allGroups ?? [],
+    groupRelationships: allGroupRelationships ?? [],
+    groupMemberships: allGroupMemberships ?? [],
+    events: allEvents ?? [],
+  } as any;
 
-  // Fetch collaborators for this specific amendment
-  const { data: collaboratorsData } = db.useQuery({
-    amendmentCollaborators: {
-      $: { where: { 'amendment.id': amendmentId } },
-      user: {},
-    },
-  } as any);
+  // Use the same events query for both dialogs
+  const groupEventsData = { events: groupEventsResult ?? [] } as any;
+  const targetGroupEventsData = { events: groupEventsResult ?? [] } as any;
+
+  const collaboratorsData = { amendmentCollaborators: collaboratorsResult ?? [] } as any;
 
   const allUsers =
     (collaboratorsData as any)?.amendmentCollaborators
@@ -152,28 +120,29 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
   const amendment = (amendmentData as any)?.amendments?.[0];
 
   // Default to the user stored on the path, or fallback to current user
-  const pathUserId = amendment?.path?.user?.id;
+  const amendmentPath = amendment?.paths?.[0];
+  const pathUserId = amendmentPath?.user?.id;
   const displayUserId = selectedUserId || pathUserId || user?.id || '';
 
   // Check if targetGroup/targetEvent exist (they should be objects with at least an id)
-  const hasTarget = Boolean(amendment?.targetGroup?.id && amendment?.targetEvent?.id);
+  const hasTarget = Boolean(amendment?.group?.id && amendment?.event?.id);
 
   // Use path segments directly and sort them by order field
-  const pathSegments = (amendment?.path?.segments || []).sort(
-    (a: any, b: any) => a.order - b.order
+  const pathSegments = (amendmentPath?.segments || []).sort(
+    (a: any, b: any) => a.order_index - b.order_index
   );
 
   // Create enrichedPathData from segments for backward compatibility
   const enrichedPathData = pathSegments.map((segment: any) => ({
-    groupId: segment.group?.id,
+    groupId: segment.group_id,
     groupName: segment.group?.name || 'Unknown Group',
-    eventId: segment.event?.id || null,
+    eventId: segment.event_id || null,
     eventTitle: segment.event?.title || 'No Event',
     eventStartDate: segment.event?.startDate || null,
     agendaItemId: segment.agendaItem?.id || null,
     amendmentVoteId: segment.amendmentVote?.id || null,
-    forwardingStatus: segment.forwardingStatus,
-    order: segment.order,
+    forwardingStatus: segment.status,
+    order: segment.order_index,
   }));
 
   // Set default tab based on whether target exists
@@ -281,30 +250,28 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
 
     setIsSaving(true);
     try {
-      const transactions: any[] = [];
-
       // If there's an existing target, remove old agenda items, votes, path segments, and path
-      if (hasTarget && amendment.path?.id) {
+      if (hasTarget && amendmentPath?.id) {
         // Delete all path segments first
         if (pathSegments && pathSegments.length > 0) {
           for (const segment of pathSegments) {
             // Delete the segment itself
             if (segment.id) {
-              transactions.push(tx.amendmentPathSegments[segment.id].delete());
+              await deletePathSegment({ id: segment.id });
             }
             // Delete agenda item if it exists
             if (segment.agendaItem?.id) {
               // First delete the vote if it exists
               if (segment.amendmentVote?.id) {
-                transactions.push(tx.amendmentVotes[segment.amendmentVote.id].delete());
+                await deleteAmendmentVote({ id: segment.amendmentVote.id });
               }
               // Then delete the agenda item
-              transactions.push(tx.agendaItems[segment.agendaItem.id].delete());
+              await deleteAgendaItemAction(segment.agendaItem.id);
             }
           }
         }
         // Delete the path itself
-        transactions.push(tx.amendmentPaths[amendment.path.id].delete());
+        await deletePath({ id: amendmentPath.id });
       }
 
       // Calculate shortest path with events
@@ -343,8 +310,8 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
 
         // Only create agenda item if the segment has an event
         if (segment.eventId) {
-          agendaItemId = id();
-          amendmentVoteId = id();
+          agendaItemId = crypto.randomUUID();
+          amendmentVoteId = crypto.randomUUID();
 
           // Determine forwarding status
           // The closest (earliest) event gets 'forward_confirmed'
@@ -354,42 +321,34 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
           }
 
           // Create agenda item
-          transactions.push(
-            tx.agendaItems[agendaItemId]
-              .update({
-                title: `Amendment: ${amendment.title}`,
-                description: amendment.subtitle || '',
-                type: 'amendment',
-                status: 'pending',
-                forwardingStatus: forwardingStatus,
-                order: 999,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-              })
-              .link({
-                event: segment.eventId,
-                creator: user.id,
-                amendment: amendmentId,
-              })
-          );
+          await createAgendaItemAction({
+            id: agendaItemId,
+            title: `Amendment: ${amendment.title}`,
+            description: amendment.reason || '',
+            type: 'amendment',
+            status: 'pending',
+            forwarding_status: forwardingStatus,
+            order_index: 999,
+            duration: 0,
+            scheduled_time: '',
+            start_time: 0,
+            end_time: 0,
+            activated_at: 0,
+            completed_at: 0,
+            event_id: segment.eventId,
+            amendment_id: amendmentId,
+          });
 
           // Create amendment vote for the agenda item
-          transactions.push(
-            tx.amendmentVotes[amendmentVoteId]
-              .update({
-                title: amendment.title,
-                description: amendment.subtitle || '',
-                proposedText: amendment.title,
-                originalText: '',
-                status: 'pending',
-                createdAt: new Date(),
-                updatedAt: new Date(),
-              })
-              .link({
-                agendaItem: agendaItemId,
-                creator: user.id,
-              })
-          );
+          await castAmendmentVote({
+            id: amendmentVoteId,
+            amendment_id: amendmentId,
+            event_id: segment.eventId,
+            vote: 'pending',
+            weight: 1,
+            is_delegate_vote: false,
+            group_id: '',
+          });
         }
 
         // Add to enriched path with IDs
@@ -403,57 +362,35 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
 
       // Create path record
       const pathUserId = targetCollaboratorUserId || user.id;
-      const pathId = id();
-      transactions.push(
-        tx.amendmentPaths[pathId]
-          .update({
-            pathLength: enrichedPath.length,
-            createdAt: new Date(),
-          })
-          .link({
-            amendment: amendmentId,
-            user: pathUserId,
-          })
-      );
-
-      // Create path segments
-      enrichedPath.forEach((segment, index) => {
-        const segmentId = id();
-        const segmentLinks: any = {
-          path: pathId,
-          group: segment.groupId,
-        };
-
-        // Add optional links if they exist
-        if (segment.eventId) segmentLinks.event = segment.eventId;
-        if (segment.agendaItemId) segmentLinks.agendaItem = segment.agendaItemId;
-        if (segment.amendmentVoteId) segmentLinks.amendmentVote = segment.amendmentVoteId;
-
-        transactions.push(
-          tx.amendmentPathSegments[segmentId]
-            .update({
-              order: index,
-              forwardingStatus: segment.forwardingStatus,
-              createdAt: new Date(),
-            })
-            .link(segmentLinks)
-        );
+      const pathId = crypto.randomUUID();
+      await createPath({
+        id: pathId,
+        amendment_id: amendmentId,
+        title: '',
       });
 
+      // Create path segments
+      for (const [index, segment] of enrichedPath.entries()) {
+        const segmentId = crypto.randomUUID();
+        await createPathSegment({
+          id: segmentId,
+          path_id: pathId,
+          group_id: segment.groupId,
+          event_id: segment.eventId || '',
+          order_index: index,
+          status: segment.forwardingStatus,
+        });
+      }
+
       // Update amendment with target group and event
-      transactions.push(
-        tx.amendments[amendmentId]
-          .update({
-            updatedAt: new Date(),
-          })
-          .link({
-            targetGroup: groupId,
-            targetEvent: eventId,
-          })
-      );
+      await updateAmendment({
+        id: amendmentId,
+        group_id: groupId,
+        event_id: eventId,
+      });
 
       // Notify about target being set
-      const targetNotifTxs = notifyAmendmentTargetSet({
+      await notifyAmendmentTargetSet({
         senderId: user.id,
         amendmentId,
         amendmentTitle: amendment.title,
@@ -462,9 +399,6 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
         eventId,
         eventTitle: eventData.title,
       });
-      transactions.push(...targetNotifTxs);
-
-      await db.transact(transactions);
 
       toast.success(hasTarget ? t('features.amendments.process.targetUpdatedSuccess') : t('features.amendments.process.targetSetSuccess'), {
         description: t('features.amendments.process.pathDescription', { groupName: groupData.name, count: enrichedPath.length }),
@@ -488,35 +422,29 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
 
     setIsSaving(true);
     try {
-      const transactions: any[] = [];
-
       // Remove all agenda items and votes from the path
       if (enrichedPathData && enrichedPathData.length > 0) {
         for (const segment of enrichedPathData) {
           if (segment.agendaItemId) {
             // First delete the vote if it exists
             if (segment.amendmentVoteId) {
-              transactions.push(tx.amendmentVotes[segment.amendmentVoteId].delete());
+              await deleteAmendmentVote({ id: segment.amendmentVoteId });
             }
             // Then delete the agenda item
-            transactions.push(tx.agendaItems[segment.agendaItemId].delete());
+            await deleteAgendaItemAction(segment.agendaItemId);
           }
         }
       }
 
       // Remove path
-      if (amendment.path) {
-        transactions.push(tx.amendmentPaths[amendment.path.id].delete());
+      if (amendmentPath) {
+        await deletePath({ id: amendmentPath.id });
       }
 
       // Update amendment to remove target
-      transactions.push(
-        tx.amendments[amendmentId].update({
-          updatedAt: new Date(),
-        })
-      );
-
-      await db.transact(transactions);
+      await updateAmendment({
+        id: amendmentId,
+      });
 
       toast.success(t('features.amendments.process.targetRemovedSuccess'));
       setRemoveDialogOpen(false);
@@ -532,7 +460,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
 
   // Handle changing event for a specific group in the path
   const handleChangeEvent = async (groupId: string, newEventId: string) => {
-    if (!amendment || !amendment.path || !enrichedPathData || enrichedPathData.length === 0) return;
+    if (!amendment || !amendmentPath || !enrichedPathData || enrichedPathData.length === 0) return;
 
     try {
       setIsSaving(true);
@@ -545,75 +473,65 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
       }
 
       const segment = pathData[segmentIndex];
-      const transactions = [];
 
       // Remove old agenda item and vote if they exist
       if (segment.agendaItemId) {
-        transactions.push(tx.agendaItems[segment.agendaItemId].delete());
+        await deleteAgendaItemAction(segment.agendaItemId);
       }
       if (segment.amendmentVoteId) {
-        transactions.push(tx.amendmentVotes[segment.amendmentVoteId].delete());
+        await deleteAmendmentVote({ id: segment.amendmentVoteId });
       }
 
       // Fetch the new event to get its details - we'll get it from the existing query data
       // For now, create the agenda item without event title/date and rely on the query to refresh
-      const newAgendaItemId = id();
-      const newAmendmentVoteId = id();
+      const newAgendaItemId = crypto.randomUUID();
+      const newAmendmentVoteId = crypto.randomUUID();
 
       // Determine forwarding status
-      const isTarget = groupId === amendment.targetGroup.id;
+      const isTarget = groupId === amendment.group?.id;
       const forwardingStatus = isTarget
         ? 'forward_confirmed'
         : segmentIndex === 0
           ? 'forward_confirmed'
           : 'previous_decision_outstanding';
 
-      transactions.push(
-        tx.agendaItems[newAgendaItemId]
-          .update({
-            title: `Amendment: ${amendment.title}`,
-            description: amendment.subtitle || '',
-            type: 'vote',
-            status: 'pending',
-            order: 999,
-            forwardingStatus: forwardingStatus,
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-          })
-          .link({
-            event: newEventId,
-            amendment: amendmentId,
-            creator: user.id,
-          })
-      );
+      await createAgendaItemAction({
+        id: newAgendaItemId,
+        title: `Amendment: ${amendment.title}`,
+        description: amendment.reason || '',
+        type: 'vote',
+        status: 'pending',
+        order_index: 999,
+        forwarding_status: forwardingStatus,
+        duration: 0,
+        scheduled_time: '',
+        start_time: 0,
+        end_time: 0,
+        activated_at: 0,
+        completed_at: 0,
+        event_id: newEventId,
+        amendment_id: amendmentId,
+      });
 
-      transactions.push(
-        tx.amendmentVotes[newAmendmentVoteId]
-          .update({
-            title: `Vote on: ${amendment.title}`,
-            description: amendment.subtitle || '',
-            proposedText: amendment.title,
-            status: 'pending',
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-          })
-          .link({
-            agendaItem: newAgendaItemId,
-          })
-      );
+      await castAmendmentVote({
+        id: newAmendmentVoteId,
+        amendment_id: amendmentId,
+        event_id: newEventId,
+        vote: 'pending',
+        weight: 1,
+        is_delegate_vote: false,
+        group_id: '',
+      });
 
       // Note: Segment is updated through the entity system, no need to update pathData
 
       // If this is the target group, also update the amendment's targetEvent
       if (isTarget) {
-        transactions.push(
-          tx.amendments[amendmentId]
-            .update({ updatedAt: Date.now() })
-            .link({ targetEvent: newEventId })
-        );
+        await updateAmendment({
+          id: amendmentId,
+          event_id: newEventId,
+        });
       }
-
-      await db.transact(transactions);
 
       toast.success(t('features.amendments.process.eventUpdatedSuccess'));
       setEventChangeDialog(null);
@@ -632,10 +550,10 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
     (event: any, node: any) => {
       // Only handle clicks on the target node with an event
       if (node.data.eventId) {
-        router.push(`/event/${node.data.eventId}`);
+        navigate({ to: `/event/${node.data.eventId}` });
       }
     },
-    [router]
+    [navigate]
   );
 
   if (!user) {
@@ -908,23 +826,15 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                   variant="outline"
                   onClick={async () => {
                     // Remove currently associated agenda item if it exists
-                    if (amendment?.agendaItems && amendment.agendaItems.length > 0) {
+                    if (amendment?.agenda_items && amendment.agenda_items.length > 0) {
                       try {
-                        const transactions: any[] = [];
-
-                        for (const agendaItem of amendment.agendaItems) {
+                        for (const agendaItem of amendment.agenda_items) {
                           // Delete the amendment vote if it exists
-                          if (agendaItem.amendmentVote?.id) {
-                            transactions.push(
-                              tx.amendmentVotes[agendaItem.amendmentVote.id].delete()
-                            );
+                          if (agendaItem.amendment_vote?.id) {
+                            await deleteAmendmentVote({ id: agendaItem.amendment_vote.id });
                           }
                           // Delete the agenda item
-                          transactions.push(tx.agendaItems[agendaItem.id].delete());
-                        }
-
-                        if (transactions.length > 0) {
-                          await db.transact(transactions);
+                          await deleteAgendaItemAction(agendaItem.id);
                         }
                       } catch (error) {
                         console.error('Error removing agenda items:', error);
@@ -932,7 +842,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                     }
 
                     // Pre-select the user from the existing path
-                    setTargetCollaboratorUserId(amendment?.path?.user?.id || '');
+                    setTargetCollaboratorUserId(amendmentPath?.user?.id || '');
                     setTargetSelectionDialog(true);
                     setSelectedTargetGroup(null);
                   }}
@@ -949,7 +859,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
           </CardHeader>
           <CardContent>
             {/* Path Overview - Timeline Style */}
-            {amendment.path && enrichedPathData && enrichedPathData.length > 0 && (
+            {amendmentPath && enrichedPathData && enrichedPathData.length > 0 && (
               <div className="space-y-4">
                 <div className="text-xs font-semibold uppercase text-muted-foreground">
                   {t('features.amendments.process.amendmentPath')} ({enrichedPathData.length} {t('common.groups')})
@@ -963,7 +873,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                   {/* Timeline items */}
                   <div className="space-y-6">
                     {enrichedPathData.map((segment: any, index: number) => {
-                      const isTarget = segment.groupId === amendment.targetGroup.id;
+                      const isTarget = segment.groupId === amendment.group?.id;
                       const isNextEvent = segment.forwardingStatus === 'forward_confirmed';
                       const isPending =
                         segment.forwardingStatus === 'previous_decision_outstanding';

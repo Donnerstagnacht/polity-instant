@@ -1,4 +1,6 @@
-import { id, tx } from '@instantdb/admin';
+import { id } from '../helpers/id.helper';
+import { tx } from '../helpers/compat';
+import type { InsertOp } from '../helpers/transaction.helpers';
 import { faker } from '@faker-js/faker';
 import { EntitySeeder, SeedContext } from '../types/seeder.types';
 import { randomInt, randomItems } from '../helpers/random.helpers';
@@ -11,7 +13,7 @@ export const linksSeeder: EntitySeeder = {
   async seed(context: SeedContext): Promise<SeedContext> {
     console.log('Seeding links...');
     const { db, groupIds } = context;
-    const transactions = [];
+    const transactions: InsertOp[] = [];
     const linkIds: string[] = [];
     let totalLinks = 0;
     let linksToGroups = 0;

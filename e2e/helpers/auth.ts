@@ -1,6 +1,6 @@
 import { type Page, expect } from '@playwright/test';
-import { generateTestMagicCode, createTestToken } from './magic-code-helper';
-import { init } from '@instantdb/admin';
+import { generateTestMagicCode } from './magic-code-helper';
+import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
 import { resolve } from 'path';
 
@@ -8,15 +8,20 @@ import { resolve } from 'path';
 config({ path: resolve(process.cwd(), '.env') });
 config({ path: resolve(process.cwd(), '.env.local'), override: true });
 
-const APP_ID = process.env.NEXT_PUBLIC_INSTANT_APP_ID || '869f3247-fd73-44fe-9b5f-caa541352f89';
-const ADMIN_TOKEN = process.env.INSTANT_ADMIN_TOKEN;
+const SUPABASE_URL =
+  process.env.SUPABASE_URL ??
+  process.env.NEXT_PUBLIC_SUPABASE_URL ??
+  'http://127.0.0.1:54321';
+const SUPABASE_ANON_KEY =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-let _adminDB: ReturnType<typeof init> | null = null;
-function getAdminDB() {
-  if (!_adminDB) {
-    _adminDB = init({ appId: APP_ID, adminToken: ADMIN_TOKEN! });
+let _adminClient: ReturnType<typeof createClient> | null = null;
+function getAdminClient() {
+  if (!_adminClient) {
+    _adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY!);
   }
-  return _adminDB;
+  return _adminClient;
 }
 
 /**
@@ -90,92 +95,119 @@ export async function loginAsTestUser(page: Page) {
 }
 
 /**
- * Authenticates by injecting an auth token directly into IndexedDB.
- * This avoids the magic code race condition when multiple workers
- * generate codes for the same email simultaneously.
+ * Authenticates by setting a Supabase session via cookies/localStorage.
+ * Uses the admin API to generate a magic link and extract the session token.
  */
 export async function loginWithToken(page: Page, email: string) {
-  const adminDB = getAdminDB();
+  const admin = getAdminClient();
 
-  // Create a token (doesn't invalidate other tokens - no race condition)
-  const token = await adminDB.auth.createToken(email);
+  // Generate a magic link for the user
+  const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
+    type: 'magiclink',
+    email,
+  });
 
-  // Get user info
-  const user = await adminDB.auth.getUser({ email });
+  if (linkError || !linkData) {
+    throw new Error(`Failed to generate magic link for ${email}: ${linkError?.message}`);
+  }
 
-  const dbName = `instant_${APP_ID}_5`;
+  // Extract the token hash and use it to verify the OTP
+  const tokenHash = linkData.properties?.hashed_token;
+  if (!tokenHash) {
+    throw new Error('No hashed_token returned from generateLink');
+  }
 
-  // Navigate to /auth — this page never redirects, so the evaluate
-  // will always run on a fully-loaded page at the correct origin.
+  // Navigate to the app origin first so we can set storage on the correct domain
   await page.goto('/auth', { waitUntil: 'domcontentloaded' });
 
-  // Inject auth token directly into IndexedDB
+  // Use the Supabase verifyOtp endpoint to get a session, then inject it
+  const verifyResponse = await fetch(`${SUPABASE_URL}/auth/v1/verify`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify({
+      type: 'magiclink',
+      token_hash: tokenHash,
+    }),
+  });
+
+  if (!verifyResponse.ok) {
+    throw new Error(`OTP verify failed: ${verifyResponse.status} ${await verifyResponse.text()}`);
+  }
+
+  const session = await verifyResponse.json();
+
+  // Inject the session into localStorage so Supabase client picks it up
+  const storageKey = `sb-${new URL(SUPABASE_URL).hostname.split('.')[0]}-auth-token`;
   await page.evaluate(
-    async ({ dbName, userData }) => {
-      return new Promise<void>((resolve, reject) => {
-        const request = indexedDB.open(dbName, 1);
-        request.onupgradeneeded = (event) => {
-          const db = (event.target as IDBOpenDBRequest).result;
-          if (!db.objectStoreNames.contains('kv')) {
-            db.createObjectStore('kv');
-          }
-        };
-        request.onsuccess = (event) => {
-          const db = (event.target as IDBOpenDBRequest).result;
-          const tx = db.transaction(['kv'], 'readwrite');
-          const store = tx.objectStore('kv');
-          store.put(JSON.stringify(userData), 'currentUser');
-          tx.oncomplete = () => resolve();
-          tx.onerror = () => reject(tx.error);
-        };
-        request.onerror = () => reject(request.error);
-      });
+    ({ key, sessionData }) => {
+      localStorage.setItem(
+        key,
+        JSON.stringify(sessionData)
+      );
     },
     {
-      dbName,
-      userData: {
-        id: user.id,
-        email: user.email,
-        refresh_token: token,
+      key: storageKey,
+      sessionData: {
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+        expires_in: session.expires_in,
+        expires_at: session.expires_at,
+        token_type: session.token_type,
+        user: session.user,
       },
     }
   );
 
-  // Navigate to a protected page — InstantDB will pick up the token from IndexedDB
+  // Navigate to a protected page — Supabase will pick up the session from localStorage
   await page.goto('/notifications', { waitUntil: 'domcontentloaded' });
 
-  // Verify auth succeeded — if still redirected to /auth, retry once with a fresh token
+  // Verify auth succeeded
   try {
     await page.waitForURL(/\/notifications/, { timeout: 5000 });
   } catch {
-    // Retry: create a new token and re-inject
-    const retryToken = await adminDB.auth.createToken(email);
-    await page.goto('/auth', { waitUntil: 'domcontentloaded' });
-    await page.evaluate(
-      async ({ dbName, userData }) => {
-        return new Promise<void>((resolve, reject) => {
-          const request = indexedDB.open(dbName, 1);
-          request.onsuccess = (event) => {
-            const db = (event.target as IDBOpenDBRequest).result;
-            const tx = db.transaction(['kv'], 'readwrite');
-            const store = tx.objectStore('kv');
-            store.put(JSON.stringify(userData), 'currentUser');
-            tx.oncomplete = () => resolve();
-            tx.onerror = () => reject(tx.error);
-          };
-          request.onerror = () => reject(request.error);
-        });
-      },
-      {
-        dbName,
-        userData: {
-          id: user.id,
-          email: user.email,
-          refresh_token: retryToken,
+    // Retry with a fresh token
+    const { data: retryLink } = await admin.auth.admin.generateLink({
+      type: 'magiclink',
+      email,
+    });
+    const retryHash = retryLink?.properties?.hashed_token;
+    if (retryHash) {
+      const retryResponse = await fetch(`${SUPABASE_URL}/auth/v1/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: SUPABASE_ANON_KEY,
         },
+        body: JSON.stringify({
+          type: 'magiclink',
+          token_hash: retryHash,
+        }),
+      });
+      if (retryResponse.ok) {
+        const retrySession = await retryResponse.json();
+        await page.goto('/auth', { waitUntil: 'domcontentloaded' });
+        await page.evaluate(
+          ({ key, sessionData }) => {
+            localStorage.setItem(key, JSON.stringify(sessionData));
+          },
+          {
+            key: storageKey,
+            sessionData: {
+              access_token: retrySession.access_token,
+              refresh_token: retrySession.refresh_token,
+              expires_in: retrySession.expires_in,
+              expires_at: retrySession.expires_at,
+              token_type: retrySession.token_type,
+              user: retrySession.user,
+            },
+          }
+        );
+        await page.goto('/notifications', { waitUntil: 'domcontentloaded' });
       }
-    );
-    await page.goto('/notifications', { waitUntil: 'domcontentloaded' });
+    }
   }
 }
 
@@ -190,9 +222,16 @@ export async function loginAsTobias(page: Page) {
  * Logs out the current user
  */
 export async function logout(page: Page) {
-  // Navigate to a logout endpoint or clear cookies
-  // Implementation depends on your auth system
   await page.context().clearCookies();
+  // Clear Supabase session from localStorage
+  await page.evaluate(() => {
+    const keys = Object.keys(localStorage);
+    for (const key of keys) {
+      if (key.includes('auth-token') || key.includes('supabase')) {
+        localStorage.removeItem(key);
+      }
+    }
+  });
   await page.goto('/auth');
 }
 
@@ -200,7 +239,6 @@ export async function logout(page: Page) {
  * Checks if the user is currently authenticated
  */
 export async function isAuthenticated(page: Page): Promise<boolean> {
-  // Check for user-specific elements or navigation items
   const userAvatar = page
     .locator('[role="button"]:has-text("@")')
     .or(page.locator('img[alt*="avatar"]'));

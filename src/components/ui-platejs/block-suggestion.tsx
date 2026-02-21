@@ -683,11 +683,6 @@ export const useResolveSuggestion = (
       const votes = (discussion as any)?.votes; // Get the votes from the discussion
       const createdAt = new Date(nodeData.createdAt);
 
-      // Debug logging for votes (currently disabled)
-      if (crId) {
-        // TODO: Add debug logging if needed
-      }
-
       const keyId = getSuggestionKey(id);
 
       if (nodeData.type === 'update') {

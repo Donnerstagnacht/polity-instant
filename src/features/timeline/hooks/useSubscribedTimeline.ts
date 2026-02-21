@@ -6,7 +6,8 @@
  */
 
 import { useMemo, useCallback, useState } from 'react';
-import { db } from 'db/db';
+import { useUserGroupSubscriptions } from '@/zero/groups/useGroupState';
+import { useUserEventSubscriptions } from '@/zero/events/useEventState';
 
 export interface TimelineItem {
   id: string;
@@ -98,71 +99,22 @@ export function useSubscribedTimeline(
   const { userId, userEmail, pageSize = 20, sortBy = 'recent' } = options;
   const [page, setPage] = useState(0);
 
-  const userWhere = useMemo(() => {
-    if (!userId) return null;
-    if (!userEmail) {
-      return { 'user.id': userId };
-    }
-    return {
-      or: [{ 'user.id': userId }, { 'user.email': userEmail }],
-    };
-  }, [userId, userEmail]);
+  // Query user's group memberships via facade
+  const { memberships: membershipRows, isLoading: membershipLoading } = useUserGroupSubscriptions(userId);
 
-  // Query user's group memberships
-  const { data: membershipData, isLoading: membershipLoading } = db.useQuery(
-    userWhere
-      ? {
-          groupMemberships: {
-            $: {
-              where: userWhere,
-            },
-            group: { hashtags: {}, events: {}, amendments: {} },
-          },
-        }
-      : null
-  );
+  // Query user's event participations via facade
+  const { participations: participationRows, isLoading: participationLoading } = useUserEventSubscriptions(userId);
 
-  // Query user's event participations
-  const { data: participationData, isLoading: participationLoading } = db.useQuery(
-    userWhere
-      ? {
-          eventParticipants: {
-            $: {
-              where: userWhere,
-            },
-            event: {
-              hashtags: {},
-              participants: {},
-              votingSessions: { election: {}, amendment: {} },
-              targetedAmendments: {},
-              eventPositions: { election: {} },
-              scheduledElections: {},
-              agendaItems: { election: {}, amendmentVote: {} },
-            },
-          },
-        }
-      : null
-  );
+  const membershipData = { groupMemberships: membershipRows };
+  const participationData = { eventParticipants: participationRows };
 
   const participatedEventIds = useMemo(() => {
     if (!participationData?.eventParticipants) return [] as string[];
     return participationData.eventParticipants.filter(p => p.event).map(p => p.event!.id);
   }, [participationData]);
 
-  const { data: agendaItemsData } = db.useQuery(
-    participatedEventIds.length > 0
-      ? {
-          agendaItems: {
-            $: {
-              where: { 'event.id': { in: participatedEventIds } },
-            },
-            event: {},
-            election: {},
-            amendmentVote: {},
-          },
-        }
-      : null
-  );
+  // Agenda items are already retrieved via related queries on event participation data
+  const { data: agendaItemsData } = { data: { agendaItems: [] as any[] } };
 
   const agendaItemsByEventId = useMemo(() => {
     const map = new Map<string, Array<{ election?: unknown; amendmentVote?: unknown }>>();

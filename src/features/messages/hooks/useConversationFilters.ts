@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Conversation, Message } from '../types';
+import { Conversation, Message } from '../types/message.types';
 
 export function useConversationFilters(conversations: Conversation[]) {
   const [searchQuery, setSearchQuery] = useState('');

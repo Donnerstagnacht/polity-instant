@@ -25,6 +25,18 @@ export const todosTranslations = {
     noStatusTodos: 'Du hast keine {{status}} Todos',
     addTask: 'Aufgabe hinzufügen',
   },
+  // Toast-Nachrichten für Action-Hooks
+  toasts: {
+    created: 'Aufgabe erstellt',
+    updateFailed: 'Aufgabe konnte nicht aktualisiert werden',
+    deleted: 'Aufgabe gelöscht',
+    deleteFailed: 'Aufgabe konnte nicht gelöscht werden',
+    toggleFailed: 'Aufgabenstatus konnte nicht geändert werden',
+    userAssigned: 'Benutzer zugewiesen',
+    assignFailed: 'Benutzer konnte nicht zugewiesen werden',
+    userUnassigned: 'Benutzerzuweisung aufgehoben',
+    unassignFailed: 'Benutzerzuweisung konnte nicht aufgehoben werden',
+  },
   kanban: {
     toDo: 'Zu erledigen',
     inProgress: 'In Bearbeitung',

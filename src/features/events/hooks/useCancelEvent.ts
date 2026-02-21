@@ -6,13 +6,18 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
-import { db, tx, id } from '../../../../db/db';
+import { useAuth } from '@/providers/auth-provider';
 import {
   notifyEventCancelled,
   notifyAgendaItemsReassigned,
   notifyRevoteScheduled,
 } from '@/utils/notification-helpers';
+import { sendNotificationFn } from '@/server/notifications';
 import { toast } from 'sonner';
+import { useEventActions } from '@/zero/events/useEventActions';
+import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
+import { useGroupActions } from '@/zero/groups/useGroupActions';
+import { useEventForCancel } from '@/zero/events/useEventState';
 
 interface AgendaItem {
   id: string;
@@ -52,40 +57,26 @@ interface CancelEventParams {
 }
 
 export function useCancelEvent(eventId: string): UseCancelEventResult {
-  const { user } = db.useAuth();
+  const { user } = useAuth();
+  const { cancelEvent: doCancelEvent } = useEventActions();
+  const { updateAgendaItem } = useAgendaActions();
+  const { updatePosition } = useGroupActions();
   const [isLoading, setIsLoading] = useState(false);
 
   // Query event data with agenda items
-  const { data } = db.useQuery({
-    events: {
-      $: {
-        where: { id: eventId },
-      },
-      agendaItems: {
-        amendment: {},
-        election: {
-          position: {},
-        },
-      },
-      participants: {
-        user: {},
-      },
-    },
-  });
-
-  const event = data?.events?.[0];
+  const { event } = useEventForCancel(eventId);
   const agendaItems = useMemo((): AgendaItem[] => {
-    if (!event?.agendaItems) return [];
-    return event.agendaItems
+    if (!event?.agenda_items) return [];
+    return event.agenda_items
       .map((item: any) => ({
         id: item.id,
         title: item.title,
-        sortOrder: item.sortOrder || 0,
+        sortOrder: item.order_index || 0,
         amendment: item.amendment,
         election: item.election,
       }))
       .sort((a: AgendaItem, b: AgendaItem) => a.sortOrder - b.sortOrder);
-  }, [event?.agendaItems]);
+  }, [event?.agenda_items]);
 
   const cancelEvent = useCallback(
     async (params: CancelEventParams) => {
@@ -96,76 +87,29 @@ export function useCancelEvent(eventId: string): UseCancelEventResult {
 
       setIsLoading(true);
       try {
-        const transactions: any[] = [];
-
         // Update event status to cancelled
-        transactions.push(
-          tx.events[params.eventId].update({
-            status: 'cancelled',
-            cancellationReason: params.reason,
-            cancelledAt: Date.now(),
-          })
-        );
-
-        // Get participant user IDs for notifications
-        const participantUserIds =
-          event?.participants
-            ?.filter((p: any) => p.user?.id !== user.id)
-            .map((p: any) => p.user?.id)
-            .filter(Boolean) || [];
-
-        // Notify participants about cancellation
-        const cancelNotifications = notifyEventCancelled({
-          senderId: user.id,
-          eventId: params.eventId,
-          eventTitle: event?.title || 'Event',
-          cancellationReason: params.reason,
+        await doCancelEvent({
+          id: params.eventId,
+          cancel_reason: params.reason,
         });
-        transactions.push(...cancelNotifications);
+
+        sendNotificationFn({ data: { helper: 'notifyEventCancelled', params: { senderId: user.id, eventId: params.eventId, eventTitle: event?.title || 'Event', reason: params.reason } } }).catch(console.error)
 
         // Reassign agenda items if specified
         if (params.reassignToEventId && params.itemsToReassign?.length) {
-          // Get the target event's current max sort order
-          const targetEventData = await db.queryOnce({
-            events: {
-              $: {
-                where: { id: params.reassignToEventId },
-              },
-              agendaItems: {},
-            },
-          });
-
-          const targetEvent = targetEventData.data?.events?.[0];
-          const maxSortOrder = Math.max(
-            0,
-            ...(targetEvent?.agendaItems?.map((item: any) => item.sortOrder || 0) || [0])
-          );
-
-          let newSortOrder = maxSortOrder + 1;
-
+          // Reassign items sequentially
+          let newSortOrder = 1;
           for (const itemId of params.itemsToReassign) {
-            // Unlink from current event and link to new event
-            transactions.push(
-              tx.agendaItems[itemId]
-                .unlink({ event: params.eventId })
-                .link({ event: params.reassignToEventId })
-                .update({ sortOrder: newSortOrder++ })
-            );
+            await updateAgendaItem({
+              id: itemId,
+              event_id: params.reassignToEventId,
+              order_index: newSortOrder++,
+            });
           }
 
-          // Notify about reassignment
-          const reassignNotifications = notifyAgendaItemsReassigned({
-            senderId: user.id,
-            sourceEventId: params.eventId,
-            sourceEventTitle: event?.title || 'Event',
-            targetEventId: params.reassignToEventId,
-            targetEventTitle: targetEvent?.title || 'Event',
-            itemCount: params.itemsToReassign.length,
-          });
-          transactions.push(...reassignNotifications);
+          sendNotificationFn({ data: { helper: 'notifyAgendaItemsReassigned', params: { senderId: user.id, sourceEventId: params.eventId, targetEventId: params.reassignToEventId, itemCount: params.itemsToReassign.length } } }).catch(console.error)
         }
 
-        await db.transact(transactions);
         toast.success('Event cancelled successfully');
       } catch (error) {
         console.error('Error cancelling event:', error);
@@ -193,23 +137,13 @@ export function useCancelEvent(eventId: string): UseCancelEventResult {
 
       setIsLoading(true);
       try {
-        const transactions: any[] = [
-          tx.positions[positionId].update({
-            scheduledRevoteDate: revoteDate.getTime(),
-          }),
-        ];
-
-        // Notify about scheduled revote
-        const notificationTxs = notifyRevoteScheduled({
-          senderId: user.id,
-          groupId,
-          groupName,
-          positionTitle,
-          scheduledDate: revoteDate.toISOString(),
+        await updatePosition({
+          id: positionId,
+          scheduled_revote_date: revoteDate.getTime(),
         });
-        transactions.push(...notificationTxs);
 
-        await db.transact(transactions);
+        sendNotificationFn({ data: { helper: 'notifyRevoteScheduled', params: { senderId: user.id, positionId, groupId, groupName, positionTitle, revoteDate: revoteDate.toISOString() } } }).catch(console.error)
+
         toast.success('Revote scheduled');
       } catch (error) {
         console.error('Error scheduling revote:', error);

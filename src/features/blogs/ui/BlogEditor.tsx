@@ -7,62 +7,46 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
-import db from '../../../../db/db';
+import { useBlogState } from '@/zero/blogs/useBlogState';
+import { useBlogActions } from '@/zero/blogs/useBlogActions';
 
 interface BlogEditorProps {
   blogId: string;
 }
 
 export function BlogEditor({ blogId }: BlogEditorProps) {
+  const { blog } = useBlogState({ blogId });
+  const { updateBlog } = useBlogActions();
   const [content, setContent] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-
-  // Fetch blog data
-  const { data, isLoading } = db.useQuery({
-    blogs: {
-      $: { where: { id: blogId } },
-    },
-  });
-
-  const blog = data?.blogs?.[0];
 
   // Initialize content when blog loads
   useEffect(() => {
     if (blog?.content) {
-      setContent(blog.content);
+      setContent(blog.content as string);
     }
   }, [blog]);
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await db.transact([
-        db.tx.blogs[blogId].update({
-          content,
-        }),
-      ]);
+      await updateBlog({
+        id: blogId,
+        content,
+      });
       toast.success('Blog content saved successfully');
     } catch (error) {
       console.error('Error saving blog content:', error);
-      toast.error('Failed to save blog content');
     } finally {
       setIsSaving(false);
     }
   };
 
-  if (isLoading) {
+  if (!blog) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <p className="text-muted-foreground">Loading blog editor...</p>
-      </div>
-    );
-  }
-
-  if (!blog) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-lg font-semibold">Blog not found</p>
       </div>
     );
   }

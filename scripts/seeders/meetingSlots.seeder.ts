@@ -3,7 +3,10 @@
  * Seeds meeting slots and bookings for users
  */
 
-import { id, tx } from '@instantdb/admin';
+import { id } from '../helpers/id.helper';
+import { tx } from '../helpers/compat';
+import { batchTransact } from '../helpers/transaction.helpers';
+import type { InsertOp } from '../helpers/transaction.helpers';
 import { faker } from '@faker-js/faker';
 import type { EntitySeeder, SeedContext } from '../types/seeder.types';
 import { randomInt, randomItem } from '../helpers/random.helpers';
@@ -17,7 +20,7 @@ export const meetingSlotsSeeder: EntitySeeder = {
     const userIds = context.userIds || [];
 
     console.log('Seeding meeting slots and bookings...');
-    const transactions = [];
+    const transactions: InsertOp[] = [];
     let totalSlots = 0;
     let totalBookings = 0;
 
@@ -117,7 +120,7 @@ export const meetingSlotsSeeder: EntitySeeder = {
       const batchSize = 20;
       for (let i = 0; i < transactions.length; i += batchSize) {
         const batch = transactions.slice(i, i + batchSize);
-        await db.transact(batch);
+        await batchTransact(db, batch);
       }
     }
 

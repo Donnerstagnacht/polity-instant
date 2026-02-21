@@ -13,6 +13,23 @@ export const messagesTranslations = {
     direct: 'Direct Messages',
     group: 'Group Chats',
   },
+  // Toast messages for action hooks
+  toasts: {
+    conversationCreated: 'Conversation created',
+    conversationCreateFailed: 'Failed to create conversation',
+    conversationUpdateFailed: 'Failed to update conversation',
+    conversationDeleted: 'Conversation deleted',
+    conversationDeleteFailed: 'Failed to delete conversation',
+    sendFailed: 'Failed to send message',
+    updateFailed: 'Failed to update message',
+    messageDeleted: 'Message deleted',
+    messageDeleteFailed: 'Failed to delete message',
+    participantAdded: 'Participant added',
+    participantAddFailed: 'Failed to add participant',
+    participantRemoved: 'Participant removed',
+    participantRemoveFailed: 'Failed to remove participant',
+    markReadFailed: 'Failed to mark as read',
+  },
   compose: {
     title: 'New Conversation',
     startNew: 'Start a New Conversation',

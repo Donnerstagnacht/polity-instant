@@ -1,10 +1,12 @@
-import { id, tx } from '@instantdb/admin';
+import { id } from '../helpers/id.helper';
+import { tx } from '../helpers/compat';
+import type { InsertOp } from '../helpers/transaction.helpers';
 import { faker } from '@faker-js/faker';
 import { EntitySeeder, SeedContext } from '../types/seeder.types';
 import { SEED_CONFIG, EVENT_HASHTAGS } from '../config/seed.config';
 import { randomInt, randomItem, randomItems, randomVisibility } from '../helpers/random.helpers';
 import { batchTransact } from '../helpers/transaction.helpers';
-import { createHashtagTransactions } from '../helpers/entity.helpers';
+import { createHashtagRows } from '../helpers/entity.helpers';
 
 // Helper to add days to a date
 const addDays = (date: Date, days: number): Date => {
@@ -77,7 +79,7 @@ export const eventsSeeder: EntitySeeder = {
     const { db, userIds, groupIds } = context;
     const eventIds: string[] = [];
     const eventOrganizers = new Map<string, string>();
-    const transactions = [];
+    const transactions: InsertOp[] = [];
     let eventsToOrganizers = 0;
     let eventsToGroups = 0;
 
@@ -191,7 +193,7 @@ export const eventsSeeder: EntitySeeder = {
 
       // Add hashtags for parent event
       const eventHashtags = randomItems(EVENT_HASHTAGS, randomInt(2, 4));
-      transactions.push(...createHashtagTransactions(parentEventId, 'event', eventHashtags));
+      transactions.push(...createHashtagRows(parentEventId, 'event', eventHashtags));
 
       // Generate recurring instances
       const instances = generateRecurringInstances(
@@ -399,7 +401,7 @@ export const eventsSeeder: EntitySeeder = {
 
       // Add hashtags for this event
       const eventHashtags = randomItems(EVENT_HASHTAGS, randomInt(2, 4));
-      transactions.push(...createHashtagTransactions(eventId, 'event', eventHashtags));
+      transactions.push(...createHashtagRows(eventId, 'event', eventHashtags));
     }
 
     // Batch transact

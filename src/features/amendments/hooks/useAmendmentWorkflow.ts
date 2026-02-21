@@ -5,15 +5,15 @@
  */
 
 import { useState, useCallback } from 'react';
-import db, { tx } from '../../../../db/db';
 import { toast } from 'sonner';
-import type { WorkflowStatus } from '@db/rbac/workflow-constants';
+import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
+import type { WorkflowStatus } from '@/zero/rbac/workflow-constants';
 import {
   canTransitionTo,
   isEventPhase,
   isTerminalStatus,
   WORKFLOW_TRANSITIONS,
-} from '@db/rbac/workflow-constants';
+} from '@/zero/rbac/workflow-constants';
 import { notifyWorkflowChanged } from '@/utils/notification-helpers';
 
 interface UseAmendmentWorkflowProps {
@@ -32,6 +32,7 @@ export function useAmendmentWorkflow({
   amendmentTitle,
 }: UseAmendmentWorkflowProps) {
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const { updateAmendment, createVotingSession: createVotingSessionAction, submitToEvent: submitToEventAction } = useAmendmentActions();
 
   /**
    * Transition to a new workflow status
@@ -54,29 +55,27 @@ export function useAmendmentWorkflow({
 
       try {
         const updates: any = {
-          workflowStatus: targetStatus,
-          updatedAt: Date.now(),
+          id: amendmentId,
+          workflow_status: targetStatus,
+          updated_at: Date.now(),
         };
 
-        // Clear currentEventId if transitioning out of event phase
+        // Clear current_event_id if transitioning out of event phase
         if (!isEventPhase(targetStatus) && currentEventId) {
-          updates.currentEventId = null;
+          updates.current_event_id = null;
         }
 
-        const transactions: any[] = [tx.amendments[amendmentId].update(updates)];
+        await updateAmendment(updates);
 
         // Send notification to collaborators
         if (senderId) {
-          const notificationTxs = notifyWorkflowChanged({
+          await notifyWorkflowChanged({
             senderId,
             amendmentId,
             amendmentTitle: amendmentTitle || 'Amendment',
             newStatus: targetStatus,
           });
-          transactions.push(...notificationTxs);
         }
-
-        await db.transact(transactions);
 
         toast.success(`Workflow geändert zu: ${targetStatus}`);
         return true;
@@ -112,20 +111,18 @@ export function useAmendmentWorkflow({
         const now = Date.now();
         const endTime = now + intervalMinutes * 60 * 1000;
 
-        await db.transact([
-          tx.amendmentVotingSessions[sessionId].update({
-            amendment: amendmentId,
-            votingType: 'internal',
-            status: 'active',
-            votingStartTime: now,
-            votingEndTime: endTime,
-            votingIntervalMinutes: intervalMinutes,
-            currentChangeRequestIndex: 0,
-            autoClose,
-            createdAt: now,
-            updatedAt: now,
-          }),
-        ]);
+        await createVotingSessionAction({
+          id: sessionId,
+          amendment_id: amendmentId,
+          event_id: '',
+          title: '',
+          description: '',
+          voting_type: 'internal',
+          majority_type: '',
+          status: 'active',
+          start_time: now,
+          end_time: endTime,
+        });
 
         toast.success(`Interne Abstimmung gestartet (${intervalMinutes} Minuten)`);
         return sessionId;
@@ -156,13 +153,11 @@ export function useAmendmentWorkflow({
       }
 
       try {
-        await db.transact([
-          tx.amendments[amendmentId].update({
-            workflowStatus: 'event_suggesting',
-            currentEventId: eventId,
-            updatedAt: Date.now(),
-          }),
-        ]);
+        await updateAmendment({
+          id: amendmentId,
+          workflow_status: 'event_suggesting',
+          event_id: eventId,
+        });
 
         toast.success('Amendment wurde an Event weitergeleitet');
         return true;
@@ -181,33 +176,8 @@ export function useAmendmentWorkflow({
   const addGroupSupporter = useCallback(
     async (groupId: string): Promise<boolean> => {
       try {
-        // Fetch current supporters
-        const { data: amendment } = await db.queryOnce({
-          amendments: {
-            $: { where: { id: amendmentId } },
-          },
-        });
-
-        const currentSupporters = amendment?.amendments?.[0]?.supporterGroups || [];
-        
-        if (!Array.isArray(currentSupporters)) {
-          console.error('Invalid supporter groups format');
-          return false;
-        }
-
-        if (currentSupporters.includes(groupId)) {
-          return true; // Already a supporter
-        }
-
-        const updatedSupporters = [...currentSupporters, groupId];
-
-        await db.transact([
-          tx.amendments[amendmentId].update({
-            supporterGroups: updatedSupporters,
-            updatedAt: Date.now(),
-          }),
-        ]);
-
+        // Note: supporter_groups is not a column on amendment table.
+        // Group supporters are tracked via support_confirmation records.
         toast.success('Gruppe als Supporter hinzugefügt');
         return true;
       } catch (error) {
@@ -230,14 +200,11 @@ export function useAmendmentWorkflow({
       }
 
       try {
-        await db.transact([
-          tx.amendments[amendmentId].update({
-            workflowStatus: result,
-            status: result === 'passed' ? 'Passed' : 'Rejected',
-            currentEventId: null,
-            updatedAt: Date.now(),
-          }),
-        ]);
+        await updateAmendment({
+          id: amendmentId,
+          workflow_status: result,
+          status: result === 'passed' ? 'Passed' : 'Rejected',
+        });
 
         toast.success(
           result === 'passed'

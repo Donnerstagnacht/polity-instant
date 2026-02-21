@@ -3,13 +3,16 @@
  * Creates amendment proposals for groups
  */
 
-import { id, tx } from '@instantdb/admin';
+import { id } from '../helpers/id.helper';
+import { tx } from '../helpers/compat';
+import { batchTransact } from '../helpers/transaction.helpers';
+import type { InsertOp } from '../helpers/transaction.helpers';
 import { faker } from '@faker-js/faker';
 import type { EntitySeeder, SeedContext } from '../types/seeder.types';
 import { randomInt, randomItem, randomItems, randomVisibility } from '../helpers/random.helpers';
-import { createHashtagTransactions, createAmendmentDocument } from '../helpers/entity.helpers';
+import { createHashtagRows, createAmendmentDocumentRows } from '../helpers/entity.helpers';
 import { AMENDMENT_HASHTAGS, SEED_CONFIG } from '../config/seed.config';
-import { DEFAULT_AMENDMENT_ROLES } from '../../db/rbac/constants';
+import { DEFAULT_AMENDMENT_ROLES } from '../../src/zero/rbac/constants';
 
 export const amendmentsSeeder: EntitySeeder = {
   name: 'amendments',
@@ -23,7 +26,7 @@ export const amendmentsSeeder: EntitySeeder = {
     const amendmentIds: string[] = [...(context.amendmentIds || [])];
     const amendmentPathIds: string[] = [];
     const amendmentVoteIds: string[] = [];
-    const transactions = [];
+    const transactions: InsertOp[] = [];
     let userLinks = 0;
     let groupLinks = 0;
     let pathsCreated = 0;
@@ -264,12 +267,12 @@ export const amendmentsSeeder: EntitySeeder = {
         // Add hashtags
         const amendmentHashtags = randomItems(AMENDMENT_HASHTAGS, randomInt(2, 4));
         transactions.push(
-          ...createHashtagTransactions(amendmentId, 'amendment', amendmentHashtags)
+          ...createHashtagRows(amendmentId, 'amendment', amendmentHashtags)
         );
 
         // Add document
         transactions.push(
-          ...createAmendmentDocument(amendmentId, amendmentTitle, mainUserId, workflowStatus)
+          ...createAmendmentDocumentRows(amendmentId, amendmentTitle, mainUserId, workflowStatus)
         );
 
         // Add change requests (2-5 per amendment if in suggesting/voting phase)
@@ -664,7 +667,7 @@ export const amendmentsSeeder: EntitySeeder = {
 
       // Clone the document (find original document and create a copy)
       transactions.push(
-        ...createAmendmentDocument(
+        ...createAmendmentDocumentRows(
           cloneId,
           `${originalAmendment.title} (Clone)`,
           cloneOwnerId,
@@ -680,7 +683,7 @@ export const amendmentsSeeder: EntitySeeder = {
       const batchSize = 20;
       for (let i = 0; i < transactions.length; i += batchSize) {
         const batch = transactions.slice(i, i + batchSize);
-        await db.transact(batch);
+        await batchTransact(db, batch);
       }
     }
 

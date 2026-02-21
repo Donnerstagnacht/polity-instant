@@ -2,21 +2,21 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Clock, MapPin, Users } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from '@/hooks/use-translation';
-import { db } from '../../../../db/db';
-import { CalendarEvent } from '../types';
-import { formatTime } from '../utils/dateUtils';
-import { getBaseEventId } from '../utils/eventIdUtils';
+import { useAuth } from '@/providers/auth-provider';
+import { CalendarEvent } from '../types/calendar.types';
+import { formatTime } from '../logic/dateUtils';
+import { getBaseEventId } from '../logic/eventIdUtils';
 
 interface EventCardProps {
   event: CalendarEvent;
 }
 
 export const EventCard = ({ event }: EventCardProps) => {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { t } = useTranslation();
-  const { user } = db.useAuth();
+  const { user } = useAuth();
 
   const participantCount = event.participants?.length || 0;
   const userIsParticipant = event.participants?.some((p: any) => p.user?.id === user?.id);
@@ -29,9 +29,9 @@ export const EventCard = ({ event }: EventCardProps) => {
       onClick={() => {
         const baseEventId = getBaseEventId(event.id);
         if (isMeeting) {
-          router.push(`/meet/${baseEventId}`);
+          navigate({ to: `/meet/${baseEventId}` });
         } else {
-          router.push(`/event/${baseEventId}`);
+          navigate({ to: `/event/${baseEventId}` });
         }
       }}
     >

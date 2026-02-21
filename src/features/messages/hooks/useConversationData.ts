@@ -1,46 +1,22 @@
-import db from '../../../../db/db';
-import { Conversation } from '../types';
+import { useMessageState } from '@/zero/messages/useMessageState';
+import { Conversation } from '../types/message.types';
 
 export function useConversationData(
   userId?: string,
   cursor: { after?: any; first: number } = { first: 20 }
 ) {
-  const { data, isLoading, pageInfo } = db.useQuery(
-    userId
-      ? {
-          conversations: {
-            $: {
-              where: {
-                'participants.user.id': userId,
-              },
-              order: {
-                serverCreatedAt: 'desc' as const,
-              },
-              ...cursor,
-            },
-            group: {}, // Load group data for group conversations
-            requestedBy: {}, // Load user who requested the conversation
-            participants: {
-              user: {},
-            },
-            messages: {
-              $: {
-                order: {
-                  createdAt: 'asc' as const, // Sort oldest to newest (newest at bottom like WhatsApp)
-                },
-              },
-              sender: {},
-            },
-          },
-        }
-      : null
-  );
+  const { conversationsWithRelations, isLoading } = useMessageState({
+    includeRelations: true,
+    limit: cursor.first,
+  });
 
-  const conversations = (data?.conversations || []) as Conversation[];
+  const filteredConversations = (userId
+    ? (conversationsWithRelations || []).filter((c: any) => c.participants?.some((p: any) => p.user_id === userId))
+    : []) as unknown as Conversation[];
 
   return {
-    conversations,
+    conversations: filteredConversations,
     isLoading,
-    pageInfo,
+    pageInfo: undefined,
   };
 }

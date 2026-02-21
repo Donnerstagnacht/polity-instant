@@ -1,4 +1,6 @@
-import { id, tx } from '@instantdb/admin';
+import { id } from '../helpers/id.helper';
+import { tx } from '../helpers/compat';
+import type { InsertOp } from '../helpers/transaction.helpers';
 import { EntitySeeder, SeedContext } from '../types/seeder.types';
 import { batchTransact } from '../helpers/transaction.helpers';
 
@@ -128,7 +130,7 @@ export const topicsSeeder: EntitySeeder = {
   async seed(context: SeedContext): Promise<SeedContext> {
     console.log('Seeding topics (hashtags with categories)...');
     const { db } = context;
-    const transactions = [];
+    const transactions: InsertOp[] = [];
     const hashtagIds: string[] = [];
 
     for (const topic of TOPIC_DEFINITIONS) {

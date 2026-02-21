@@ -40,6 +40,14 @@ export const statementsTranslations = {
     shareStatement: 'Stellungnahme teilen',
     saveForLater: 'Für später speichern',
   },
+  // Toast-Nachrichten für Action-Hooks
+  toasts: {
+    created: 'Stellungnahme erstellt',
+    createFailed: 'Stellungnahme konnte nicht erstellt werden',
+    updateFailed: 'Stellungnahme konnte nicht aktualisiert werden',
+    deleted: 'Stellungnahme gelöscht',
+    deleteFailed: 'Stellungnahme konnte nicht gelöscht werden',
+  },
   actions: {
     edit: 'Bearbeiten',
     delete: 'Löschen',

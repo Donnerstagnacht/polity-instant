@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,8 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { MessageCircle, Sparkles } from 'lucide-react';
-import { db } from '../../../db/db';
+import { useAuth } from '@/providers/auth-provider';
+import { useUserActions } from '@/zero/users/useUserActions';
 import { useTranslation } from '@/hooks/use-translation';
 
 interface AriaKaiWelcomeDialogProps {
@@ -23,16 +24,17 @@ interface AriaKaiWelcomeDialogProps {
 
 export function AriaKaiWelcomeDialog({ open, onOpenChange }: AriaKaiWelcomeDialogProps) {
   const { t } = useTranslation();
-  const router = useRouter();
+  const navigate = useNavigate();
   const [isNavigating, setIsNavigating] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
-  const { user } = db.useAuth();
+  const { user } = useAuth();
+  const { updateProfile } = useUserActions();
 
   console.log('🎭 AriaKaiWelcomeDialog render:', { open, isNavigating });
 
   const handleClose = async () => {
     if (dontShowAgain && user?.id) {
-      await db.transact(db.tx.$users[user.id].update({ assistantIntroduction: false }));
+      await updateProfile({ id: user.id, assistant_introduction: false });
     }
     onOpenChange(false);
   };
@@ -41,10 +43,10 @@ export function AriaKaiWelcomeDialog({ open, onOpenChange }: AriaKaiWelcomeDialo
     console.log('🚀 Navigating to messages...');
     setIsNavigating(true);
     if (dontShowAgain && user?.id) {
-      await db.transact(db.tx.$users[user.id].update({ assistantIntroduction: false }));
+      await updateProfile({ id: user.id, assistant_introduction: false });
     }
     onOpenChange(false);
-    router.push('/messages?openAriaKai=true');
+    navigate({ to: '/messages?openAriaKai=true' });
   };
 
   return (

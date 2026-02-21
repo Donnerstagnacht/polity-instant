@@ -1,4 +1,4 @@
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ALL_CONTENT_TYPES,
@@ -9,16 +9,16 @@ import {
 import { type ContentType } from '@/features/timeline/constants/content-type-config';
 
 export function useSearchURL() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const navigate = useNavigate();
+  const searchParams = useSearch({ strict: false }) as Record<string, string>;
 
   // Get URL parameters
-  const queryParam = searchParams.get('q') || '';
-  const typesParam = searchParams.get('types') || '';
-  const rangeParam = (searchParams.get('range') || 'all') as DateRangeFilter;
-  const topicsParam = searchParams.get('topics') || '';
-  const engagementParam = (searchParams.get('engagement') || 'all') as EngagementFilter;
-  const sortParam = (searchParams.get('sort') || 'recent') as TimelineSortOption;
+  const queryParam = searchParams.q || '';
+  const typesParam = searchParams.types || '';
+  const rangeParam = (searchParams.range || 'all') as DateRangeFilter;
+  const topicsParam = searchParams.topics || '';
+  const engagementParam = (searchParams.engagement || 'all') as EngagementFilter;
+  const sortParam = (searchParams.sort || 'recent') as TimelineSortOption;
 
   const parsedContentTypes = useMemo<ContentType[]>(() => {
     if (!typesParam) return [...ALL_CONTENT_TYPES];
@@ -64,7 +64,9 @@ export function useSearchURL() {
 
   // Update URL when search parameters change
   const updateURL = (updates: Record<string, string>) => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(
+      Object.entries(searchParams).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)])
+    );
     Object.entries(updates).forEach(([key, value]) => {
       if (value) {
         params.set(key, value);
@@ -72,7 +74,7 @@ export function useSearchURL() {
         params.delete(key);
       }
     });
-    router.push(`/search?${params.toString()}`);
+    navigate({ to: `/search?${params.toString()}` });
   };
 
   // Type-ahead search: Update URL as user types (with debouncing)

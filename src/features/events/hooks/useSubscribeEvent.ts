@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { db, tx, id } from '../../../../db/db';
-import { useAuthStore } from '@/features/auth/auth.ts';
+import { useCommonActions } from '@/zero/common/useCommonActions';
+import { useEventSubscribers } from '@/zero/events/useEventState';
+import { useAuth } from '@/providers/auth-provider';
 import { notifyEventNewSubscriber } from '@/utils/notification-helpers';
+import { sendNotificationFn } from '@/server/notifications';
 import { toast } from 'sonner';
 
 /**
@@ -9,7 +11,8 @@ import { toast } from 'sonner';
  * @param targetEventId - The ID of the event to subscribe/unsubscribe
  */
 export function useSubscribeEvent(targetEventId?: string) {
-  const { user: authUser } = useAuthStore();
+  const { user: authUser } = useAuth();
+  const { subscribe: doSubscribe, unsubscribe: doUnsubscribe } = useCommonActions();
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscriberCount, setSubscriberCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -17,51 +20,12 @@ export function useSubscribeEvent(targetEventId?: string) {
   const createdSubscriptionIdRef = useRef<string | null>(null);
 
   // Query current user's name for notifications
-  const { data: currentUserData } = db.useQuery(
-    authUser?.id
-      ? {
-          $users: {
-            $: {
-              where: { id: authUser.id },
-              limit: 1,
-            },
-          },
-        }
-      : null
-  );
-  const currentUserName = currentUserData?.$users?.[0]?.name || 'Someone';
+  const currentUserName = authUser?.email || 'Someone';
 
-  // Query event title for notifications
-  const { data: eventData } = db.useQuery(
-    targetEventId
-      ? {
-          events: {
-            $: {
-              where: { id: targetEventId },
-              limit: 1,
-            },
-          },
-        }
-      : null
-  );
-  const eventTitle = eventData?.events?.[0]?.title || 'Event';
-
-  // Query to get all subscribers for the target event
-  const { data: subscriptionData, isLoading: subscriptionLoading } = db.useQuery(
-    targetEventId
-      ? {
-          subscribers: {
-            $: {
-              where: {
-                'event.id': targetEventId,
-              },
-            },
-            subscriber: {},
-            event: {},
-          },
-        }
-      : null
-  );
+  // Query event title for notifications - use subscribers data
+  const { subscribers: subscribersData, isLoading: subscriptionLoading } = useEventSubscribers(targetEventId);
+  const eventTitle = subscribersData?.[0]?.event?.title || 'Event';
+  const subscriptionData = { subscribers: subscribersData || [] };
 
   // Update subscription state when data changes
   useEffect(() => {
@@ -69,7 +33,7 @@ export function useSubscribeEvent(targetEventId?: string) {
 
     // Check if the current user is subscribed
     const subscribed = authUser?.id
-      ? subscribers.some(sub => sub.subscriber?.id === authUser.id)
+      ? subscribers.some(sub => sub.subscriber_user?.id === authUser.id)
       : false;
 
     if (optimisticTargetRef.current !== null) {
@@ -94,7 +58,7 @@ export function useSubscribeEvent(targetEventId?: string) {
 
     // Prevent duplicate subscriptions
     const existing = (subscriptionData?.subscribers || []).find(
-      sub => sub.subscriber?.id === authUser.id
+      sub => sub.subscriber_user?.id === authUser.id
     );
     if (existing) return;
 
@@ -104,30 +68,20 @@ export function useSubscribeEvent(targetEventId?: string) {
     setSubscriberCount(prev => prev + 1);
     setIsLoading(true);
     try {
-      const subscriptionId = id();
+      const subscriptionId = crypto.randomUUID();
       createdSubscriptionIdRef.current = subscriptionId;
 
-      await db.transact([
-        tx.subscribers[subscriptionId]
-          .update({
-            createdAt: new Date(),
-          })
-          .link({
-            subscriber: authUser.id,
-            event: targetEventId,
-          }),
-      ]);
+      await doSubscribe({
+        id: subscriptionId,
+        user_id: '',
+        group_id: '',
+        amendment_id: '',
+        event_id: targetEventId,
+        blog_id: '',
+      });
 
-      // Send notification separately — notifications.create is server-only
-      try {
-        const notification = notifyEventNewSubscriber({
-          senderId: authUser.id,
-          senderName: currentUserName,
-          eventId: targetEventId,
-          eventTitle: eventTitle,
-        });
-        if (notification.length > 0) await db.transact(notification);
-      } catch { /* notification delivery is best-effort */ }
+      sendNotificationFn({ data: { helper: 'notifyEventNewSubscriber', params: { senderId: authUser.id, eventId: targetEventId, eventTitle } } }).catch(console.error)
+
       toast.success('Successfully subscribed to event');
     } catch (error) {
       // Revert optimistic update
@@ -149,7 +103,7 @@ export function useSubscribeEvent(targetEventId?: string) {
     }
 
     const subscribers = subscriptionData?.subscribers || [];
-    let subsToDelete = subscribers.filter(sub => sub.subscriber?.id === authUser.id);
+    let subsToDelete = subscribers.filter(sub => sub.subscriber_user?.id === authUser.id);
 
     // Fallback: if reactive query hasn't caught up, use stored subscription ID
     if (subsToDelete.length === 0 && createdSubscriptionIdRef.current) {
@@ -166,7 +120,7 @@ export function useSubscribeEvent(targetEventId?: string) {
     setSubscriberCount(prev => Math.max(0, prev - subsToDelete.length));
     setIsLoading(true);
     try {
-      await db.transact(subsToDelete.map(sub => tx.subscribers[sub.id].delete()));
+      await Promise.all(subsToDelete.map(sub => doUnsubscribe({ id: sub.id })));
       createdSubscriptionIdRef.current = null;
       toast.success('Successfully unsubscribed from event');
     } catch (error) {

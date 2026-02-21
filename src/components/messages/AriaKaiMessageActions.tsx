@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { db, tx, id } from '../../../db/db';
-import { ARIA_KAI_USER_ID, ENTITY_DESCRIPTIONS, EntityTopic } from 'e2e/aria-kai';
+import { useUserState } from '@/zero/users/useUserState';
+import { useUserActions } from '@/zero/users/useUserActions';
+import { useMessageActions } from '@/zero/messages/useMessageActions';
+import { ARIA_KAI_USER_ID, ENTITY_DESCRIPTIONS, type EntityTopic } from '@/features/auth/constants';
 import { Users, Calendar, FileEdit, BookOpen, Vote, Sparkles } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
 
@@ -20,6 +22,14 @@ const TOPIC_ICONS: Record<string, React.ReactNode> = {
   elections: <Vote className="h-4 w-4" />,
 };
 
+const TOPIC_STEP_MAP: Record<string, number> = {
+  groups: 2,
+  events: 3,
+  amendments: 4,
+  blogs: 5,
+  elections: 6,
+};
+
 const TOPIC_LABEL_KEYS: Record<string, string> = {
   groups: 'components.ariaKaiActions.groups',
   events: 'components.ariaKaiActions.events',
@@ -34,46 +44,31 @@ export function AriaKaiMessageActions({
 }: AriaKaiMessageActionsProps) {
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
+  const { sendMessage } = useMessageActions();
+  const { updateProfile } = useUserActions();
 
   // Query user's tutorial step
-  const { data: userData } = db.useQuery({
-    $users: {
-      $: {
-        where: {
-          id: currentUserId,
-        },
-      },
-    },
-  });
-
-  const currentUser = userData?.$users?.[0];
-  const tutorialStep = currentUser?.tutorialStep || 'welcome';
+  const { user: currentUser } = useUserState({ userId: currentUserId });
+  const tutorialStep = currentUser?.tutorial_step ?? 0;
 
   const handleShowMeClick = async () => {
     if (isLoading) return;
 
     setIsLoading(true);
     try {
-      const messageId = id();
+      const messageId = crypto.randomUUID();
       const description = ENTITY_DESCRIPTIONS.overview;
 
-      await db.transact([
-        tx.messages[messageId].update({
-          content: description.message,
-          isRead: false,
-          createdAt: new Date().toISOString(),
-        }),
-        tx.messages[messageId].link({
-          conversation: conversationId,
-          sender: ARIA_KAI_USER_ID,
-        }),
-        tx.conversations[conversationId].update({
-          lastMessageAt: new Date().toISOString(),
-        }),
-        tx.$users[currentUserId].update({
-          tutorialStep: 'overview',
-        }),
-      ]);
+      await sendMessage({
+        id: messageId,
+        conversation_id: conversationId,
+        content: description.message,
+        deleted_at: 0,
+      });
+      await updateProfile({
+        id: currentUserId,
+        tutorial_step: 1, // 'overview'
+      });
     } catch (error) {
       console.error('Failed to send Aria & Kai message:', error);
     } finally {
@@ -86,26 +81,20 @@ export function AriaKaiMessageActions({
 
     setIsLoading(true);
     try {
-      const messageId = id();
+      const messageId = crypto.randomUUID();
       const description = ENTITY_DESCRIPTIONS[topic];
 
-      await db.transact([
-        tx.messages[messageId].update({
-          content: `**${description.title}**\n\n${description.message}`,
-          isRead: false,
-          createdAt: new Date().toISOString(),
-        }),
-        tx.messages[messageId].link({
-          conversation: conversationId,
-          sender: ARIA_KAI_USER_ID,
-        }),
-        tx.conversations[conversationId].update({
-          lastMessageAt: new Date().toISOString(),
-        }),
-        tx.$users[currentUserId].update({
-          tutorialStep: topic,
-        }),
-      ]);
+      await sendMessage({
+        id: messageId,
+        conversation_id: conversationId,
+        content: `**${description.title}**\n\n${description.message}`,
+        deleted_at: 0,
+      });
+      // Map topic to the corresponding tutorial step
+      await updateProfile({
+        id: currentUserId,
+        tutorial_step: TOPIC_STEP_MAP[topic] ?? 2,
+      });
     } catch (error) {
       console.error('Failed to send Aria & Kai message:', error);
     } finally {
@@ -118,7 +107,7 @@ export function AriaKaiMessageActions({
   return (
     <div className="mt-3 space-y-2">
       {/* Show "Show me" button if tutorial hasn't started */}
-      {tutorialStep === 'welcome' && (
+      {tutorialStep === 0 && (
         <Button
           onClick={handleShowMeClick}
           disabled={isLoading}
@@ -132,7 +121,7 @@ export function AriaKaiMessageActions({
       )}
 
       {/* Show topic buttons if overview has been shown */}
-      {tutorialStep !== 'welcome' && tutorialStep !== 'completed' && (
+      {tutorialStep > 0 && (
         <div className="flex flex-wrap gap-2">
           {topics.map(topic => (
             <Button

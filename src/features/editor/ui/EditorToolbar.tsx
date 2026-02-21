@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ArrowLeft, Users } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@tanstack/react-router';
 import { ShareButton } from '@/components/shared/ShareButton';
 import { VersionControl } from './VersionControl';
 import { ModeSelector } from './ModeSelector';
@@ -94,7 +94,7 @@ export function EditorToolbar({
       {/* Left side - Back navigation */}
       <div>
         {backUrl && (
-          <Link href={backUrl}>
+          <Link to={backUrl}>
             <Button variant="ghost">
               <ArrowLeft className="mr-2 h-4 w-4" />
               {backLabel}

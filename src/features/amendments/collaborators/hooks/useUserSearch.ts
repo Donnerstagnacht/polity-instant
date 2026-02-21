@@ -3,7 +3,7 @@
  */
 
 import { useMemo } from 'react';
-import db from '../../../../../db/db';
+import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 
 export interface SearchableUser {
   id: string;
@@ -17,14 +17,13 @@ export function useUserSearch(
   existingCollaboratorIds: string[],
   searchQuery: string = ''
 ): { users: SearchableUser[]; isLoading: boolean } {
-  // Query all users for user search
-  const { data, isLoading } = db.useQuery({
-    $users: {},
+  const { allUsers: usersData, isLoading } = useAmendmentState({
+    includeAllUsers: true,
   });
 
   // Filter users for invite search
   const filteredUsers = useMemo(() => {
-    const allUsers = data?.$users || [];
+    const allUsers = usersData || [];
     
     return allUsers.filter(user => {
       if (!user?.id) return false;
@@ -34,12 +33,12 @@ export function useUserSearch(
       if (!query) return true;
 
       return (
-        user.name?.toLowerCase().includes(query) ||
+        [user.first_name, user.last_name].filter(Boolean).join(' ').toLowerCase().includes(query) ||
         user.handle?.toLowerCase().includes(query) ||
-        user.contactEmail?.toLowerCase().includes(query)
+        user.email?.toLowerCase().includes(query)
       );
     }) as SearchableUser[];
-  }, [data?.$users, existingCollaboratorIds, searchQuery]);
+  }, [usersData, existingCollaboratorIds, searchQuery]);
 
   return {
     users: filteredUsers,

@@ -2,7 +2,11 @@ import * as React from 'react';
 
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { db } from '../../db/db';
+import { createClient } from '@/lib/supabase/client';
+
+const supabase = createClient();
+
+const STORAGE_BUCKET = 'uploads';
 
 export interface UploadedFile {
   url: string;
@@ -39,7 +43,7 @@ export function useUploadFile({
       const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
       const path = `editor-uploads/${timestamp}-${sanitizedName}`;
 
-      // Simulate progress updates since InstantDB doesn't provide native progress tracking
+      // Supabase Storage doesn't provide native upload progress tracking; using simulated progress.
       const progressInterval = setInterval(() => {
         setProgress(prev => {
           const next = Math.min(prev + 10, 90);
@@ -48,37 +52,33 @@ export function useUploadFile({
         });
       }, 100);
 
-      // Upload to InstantDB storage
-      const uploadResult = await db.storage.uploadFile(path, file, {
-        contentType: file.type,
-      });
+      // Upload to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .upload(path, file, {
+          contentType: file.type,
+        });
 
       clearInterval(progressInterval);
+
+      if (uploadError) throw uploadError;
+
       setProgress(100);
       onUploadProgress?.(100);
 
-      // InstantDB returns { data: { id } }
-      const fileId = uploadResult.data.id;
+      // Get the public URL for the uploaded file
+      const { data: urlData } = supabase.storage
+        .from(STORAGE_BUCKET)
+        .getPublicUrl(path);
 
-      // Query the file to get its signed URL
-      const { data: fileData } = await db.queryOnce({
-        $files: {
-          $: {
-            where: {
-              id: fileId,
-            },
-          },
-        },
-      });
-
-      const fileUrl = fileData?.$files?.[0]?.url || '';
+      const fileUrl = urlData.publicUrl;
 
       const uploadedFileData: UploadedFile = {
         url: fileUrl,
         name: file.name,
         size: file.size,
         type: file.type,
-        key: fileId,
+        key: uploadData.path,
       };
 
       setUploadedFile(uploadedFileData);

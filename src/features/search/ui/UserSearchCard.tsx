@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Users } from 'lucide-react';
-import { GRADIENTS } from '@/features/user/state/gradientColors';
+import { GRADIENTS } from '@/features/users/state/gradientColors';
 
 interface UserSearchCardProps {
   user: any;

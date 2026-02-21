@@ -1,20 +1,13 @@
 import { useState } from 'react';
-import db, { tx, id } from '../../../../db/db';
 import { toast } from 'sonner';
-import {
-  notifyEventInvite,
-  notifyParticipationApproved,
-  notifyParticipationRejected,
-  notifyParticipationRemoved,
-  notifyOrganizerPromoted,
-  notifyScheduleChanged,
-} from '@/utils/notification-helpers';
-import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
+import { sendNotificationFn } from '@/server/notifications';
+import { useEventActions } from '@/zero/events/useEventActions';
 
 /**
  * Hook for event mutations
  */
 export function useEventMutations(eventId: string) {
+  const { inviteParticipant, updateParticipant, leaveEvent, updateEvent: doUpdateEvent } = useEventActions();
   const [isLoading, setIsLoading] = useState(false);
 
   /**
@@ -30,39 +23,23 @@ export function useEventMutations(eventId: string) {
 
     setIsLoading(true);
     try {
-      const transactions: any[] = [];
-
-      userIds.forEach(userId => {
-        const participantId = id();
-        const participantTx = tx.eventParticipants[participantId].update({
+      for (const userId of userIds) {
+        const participantId = crypto.randomUUID();
+        await inviteParticipant({
+          id: participantId,
           status: 'invited',
-          createdAt: new Date().toISOString(),
+          user_id: userId,
+          event_id: eventId,
+          group_id: '',
+          visibility: 'public',
+          role_id: roleId ?? '',
         });
 
-        participantTx.link({
-          user: userId,
-          event: eventId,
-        });
-
-        if (roleId) {
-          participantTx.link({ role: roleId });
-        }
-
-        transactions.push(participantTx);
-
-        // Send notification
         if (senderId && eventTitle) {
-          const notificationTxs = notifyEventInvite({
-            senderId,
-            recipientUserId: userId,
-            eventId,
-            eventTitle,
-          });
-          transactions.push(...notificationTxs);
+          sendNotificationFn({ data: { helper: 'notifyEventInvite', params: { senderId, recipientId: userId, eventId, eventTitle } } }).catch(console.error)
         }
-      });
+      }
 
-      await db.transact(transactions);
       toast.success(`Successfully invited ${userIds.length} participant(s)`);
       return { success: true };
     } catch (error) {
@@ -85,24 +62,15 @@ export function useEventMutations(eventId: string) {
   ) => {
     setIsLoading(true);
     try {
-      const transactions: any[] = [
-        tx.eventParticipants[participationId].update({
-          status: 'member',
-        }),
-      ];
+      await updateParticipant({
+        id: participationId,
+        status: 'member',
+      });
 
-      // Send notification
       if (userId && senderId && eventTitle) {
-        const notificationTxs = notifyParticipationApproved({
-          senderId,
-          recipientUserId: userId,
-          eventId,
-          eventTitle,
-        });
-        transactions.push(...notificationTxs);
+        sendNotificationFn({ data: { helper: 'notifyParticipationApproved', params: { senderId, recipientId: userId, eventId, eventTitle } } }).catch(console.error)
       }
 
-      await db.transact(transactions);
       toast.success('Participation approved');
       return { success: true };
     } catch (error) {
@@ -125,20 +93,14 @@ export function useEventMutations(eventId: string) {
   ) => {
     setIsLoading(true);
     try {
-      const transactions: any[] = [tx.eventParticipants[participationId].delete()];
+      await leaveEvent({
+        id: participationId,
+      });
 
-      // Send notification
       if (userId && senderId && eventTitle) {
-        const notificationTxs = notifyParticipationRejected({
-          senderId,
-          recipientUserId: userId,
-          eventId,
-          eventTitle,
-        });
-        transactions.push(...notificationTxs);
+        sendNotificationFn({ data: { helper: 'notifyParticipationRejected', params: { senderId, recipientId: userId, eventId, eventTitle } } }).catch(console.error)
       }
 
-      await db.transact(transactions);
       toast.success('Participation request rejected');
       return { success: true };
     } catch (error) {
@@ -161,20 +123,14 @@ export function useEventMutations(eventId: string) {
   ) => {
     setIsLoading(true);
     try {
-      const transactions: any[] = [tx.eventParticipants[participationId].delete()];
+      await leaveEvent({
+        id: participationId,
+      });
 
-      // Send notification
       if (userId && senderId && eventTitle) {
-        const notificationTxs = notifyParticipationRemoved({
-          senderId,
-          recipientUserId: userId,
-          eventId,
-          eventTitle,
-        });
-        transactions.push(...notificationTxs);
+        sendNotificationFn({ data: { helper: 'notifyParticipationRemoved', params: { senderId, recipientId: userId, eventId, eventTitle } } }).catch(console.error)
       }
 
-      await db.transact(transactions);
       toast.success('Participant removed successfully');
       return { success: true };
     } catch (error) {
@@ -199,20 +155,15 @@ export function useEventMutations(eventId: string) {
   ) => {
     setIsLoading(true);
     try {
-      const transactions: any[] = [tx.eventParticipants[participationId].link({ role: roleId })];
+      await updateParticipant({
+        id: participationId,
+        role_id: roleId,
+      });
 
-      // Send notification if it's an organizer promotion
       if (isPromotion && userId && senderId && eventTitle) {
-        const notificationTxs = notifyOrganizerPromoted({
-          senderId,
-          recipientUserId: userId,
-          eventId,
-          eventTitle,
-        });
-        transactions.push(...notificationTxs);
+        sendNotificationFn({ data: { helper: 'notifyOrganizerPromoted', params: { senderId, recipientId: userId, eventId, eventTitle } } }).catch(console.error)
       }
 
-      await db.transact(transactions);
       toast.success('Participant role updated');
       return { success: true };
     } catch (error) {
@@ -239,58 +190,15 @@ export function useEventMutations(eventId: string) {
   ) => {
     setIsLoading(true);
     try {
-      const transactions: any[] = [
-        tx.events[eventId].update({
-          ...updates,
-          updatedAt: new Date().toISOString(),
-        }),
-      ];
+      await doUpdateEvent({
+        id: eventId,
+        ...updates,
+      });
 
-      // Add timeline events for public events when media is uploaded
-      if (options?.visibility === 'public' && options?.actorId) {
-        // Check if image was uploaded/changed
-        if (updates.imageURL && updates.imageURL !== options.previousImageURL) {
-          transactions.push(
-            createTimelineEvent({
-              eventType: 'image_uploaded',
-              entityType: 'event',
-              entityId: eventId,
-              actorId: options.actorId,
-              title: `${options.eventTitle || 'Event'} image updated`,
-              description: 'A new image was uploaded to this event',
-              contentType: 'image',
-            })
-          );
-        }
-        // Check if video was uploaded/changed
-        if (updates.videoURL && updates.videoURL !== options.previousVideoURL) {
-          transactions.push(
-            createTimelineEvent({
-              eventType: 'video_uploaded',
-              entityType: 'event',
-              entityId: eventId,
-              actorId: options.actorId,
-              title: `${options.eventTitle || 'Event'} video updated`,
-              description: 'A new video was uploaded to this event',
-              contentType: 'video',
-            })
-          );
-        }
+      if (options?.actorId && options?.eventTitle) {
+        sendNotificationFn({ data: { helper: 'notifyScheduleChanged', params: { senderId: options.actorId, eventId, eventTitle: options.eventTitle } } }).catch(console.error)
       }
 
-      // Notify subscribers if schedule fields changed
-      const scheduleFields = ['startDate', 'endDate', 'date', 'startTime', 'endTime'];
-      const isScheduleChange = scheduleFields.some(field => field in updates);
-      if (isScheduleChange && options?.actorId && options?.eventTitle) {
-        const scheduleNotifTxs = notifyScheduleChanged({
-          senderId: options.actorId,
-          eventId,
-          eventTitle: options.eventTitle,
-        });
-        transactions.push(...scheduleNotifTxs);
-      }
-
-      await db.transact(transactions);
       toast.success('Event updated successfully');
       return { success: true };
     } catch (error) {

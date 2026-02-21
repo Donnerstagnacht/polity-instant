@@ -5,7 +5,9 @@
  * and for reassigning agenda items.
  */
 
-import { db, tx } from 'db/db';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
 interface ValidationResult {
   isValid: boolean;
@@ -33,19 +35,13 @@ export async function findValidReassignmentEvent(
   eventTitle: string | null;
   eventDate: Date | null;
 }> {
-  // @ts-ignore - Schema query
-  const result = (await db.queryOnce({
-    events: {
-      $: {
-        where: {
-          'group.id': groupId,
-        },
-        order: { date: 'asc' },
-      },
-    },
-  } as any)) as { data: any };
+  const result = await supabase
+    .from('event')
+    .select('*')
+    .eq('group_id', groupId)
+    .order('date', { ascending: true });
 
-  const events = (result.data?.events ?? []) as any[];
+  const events = result.data ?? [];
 
   // Find the cancelled event to get its date
   const cancelledEvent = events.find((e: any) => e.id === cancelledEventId);
@@ -88,20 +84,12 @@ export async function validateEventCancellation(
   const reasons: string[] = [];
 
   // Check if the event has agenda items that need reassignment
-  // @ts-ignore - Schema query
-  const result = (await db.queryOnce({
-    agendaItems: {
-      $: {
-        where: {
-          'event.id': eventId,
-        },
-      },
-      amendment: {},
-      election: {},
-    },
-  } as any)) as { data: any };
+  const { data: agendaItemsData } = await supabase
+    .from('agenda_item')
+    .select('*, amendment(*), election(*)')
+    .eq('event_id', eventId);
 
-  const agendaItems = (result.data?.agendaItems ?? []) as AgendaItem[];
+  const agendaItems = (agendaItemsData ?? []) as AgendaItem[];
 
   // Check for items that require reassignment
   const itemsNeedingReassignment = agendaItems.filter(item => {
@@ -154,37 +142,24 @@ export async function reassignAgendaItems(
   const errors: string[] = [];
 
   // Query agenda items from cancelled event
-  // @ts-ignore - Schema query
-  const result = (await db.queryOnce({
-    agendaItems: {
-      $: {
-        where: {
-          'event.id': cancelledEventId,
-        },
-        order: { order: 'asc' },
-      },
-      amendment: {},
-      election: {},
-    },
-  } as any)) as { data: any };
+  const { data: agendaItemsData } = await supabase
+    .from('agenda_item')
+    .select('*, amendment(*), election(*)')
+    .eq('event_id', cancelledEventId)
+    .order('order', { ascending: true });
 
-  const agendaItems = (result.data?.agendaItems ?? []) as AgendaItem[];
+  const agendaItems = (agendaItemsData ?? []) as AgendaItem[];
 
   // Get the current max order in target event
-  // @ts-ignore - Schema query
-  const targetResult = (await db.queryOnce({
-    agendaItems: {
-      $: {
-        where: {
-          'event.id': targetEventId,
-        },
-        order: { order: 'desc' },
-      },
-    },
-  } as any)) as { data: any };
+  const { data: targetItemsData } = await supabase
+    .from('agenda_item')
+    .select('*')
+    .eq('event_id', targetEventId)
+    .order('order', { ascending: false })
+    .limit(1);
 
-  const targetItems = (targetResult.data?.agendaItems ?? []) as any[];
-  let nextOrder = targetItems.length > 0 ? (targetItems[0].order || 0) + 1 : 1;
+  const targetItems = targetItemsData ?? [];
+  let nextOrder = targetItems.length > 0 ? ((targetItems[0] as any).order || 0) + 1 : 1;
 
   for (const item of agendaItems) {
     try {
@@ -196,26 +171,27 @@ export async function reassignAgendaItems(
 
       if (shouldReassign) {
         // Reassign to target event
-        await db.transact([
-          tx.agendaItems[item.id].unlink({ event: cancelledEventId }),
-          tx.agendaItems[item.id].link({ event: targetEventId }),
-          tx.agendaItems[item.id].update({
+        await supabase
+          .from('agenda_item')
+          .update({
+            event_id: targetEventId,
             order: nextOrder,
-            status: 'scheduled', // Reset status
-            activatedAt: null,
-            completedAt: null,
-          }),
-        ]);
+            status: 'scheduled',
+            activated_at: null,
+            completed_at: null,
+          })
+          .eq('id', item.id);
         reassigned.push(item.id);
         nextOrder++;
       } else {
-        // Archive or delete non-critical items
-        await db.transact([
-          tx.agendaItems[item.id].update({
+        // Archive non-critical items
+        await supabase
+          .from('agenda_item')
+          .update({
             status: 'archived',
-            archivedAt: Date.now(),
-          }),
-        ]);
+            archived_at: Date.now(),
+          })
+          .eq('id', item.id);
         deleted.push(item.id);
       }
     } catch (error) {
@@ -235,19 +211,12 @@ export async function getAffectedAgendaItems(eventId: string): Promise<{
   items: AgendaItem[];
 }> {
   // @ts-ignore - Schema query
-  const result = (await db.queryOnce({
-    agendaItems: {
-      $: {
-        where: {
-          'event.id': eventId,
-        },
-      },
-      amendment: {},
-      election: {},
-    },
-  } as any)) as { data: any };
+  const { data: agendaItemsData } = await supabase
+    .from('agenda_item')
+    .select('*, amendment(*), election(*)')
+    .eq('event_id', eventId);
 
-  const items = (result.data?.agendaItems ?? []) as AgendaItem[];
+  const items = (agendaItemsData ?? []) as AgendaItem[];
 
   // Count by type
   const byType: Record<string, number> = {};

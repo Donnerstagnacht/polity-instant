@@ -21,8 +21,8 @@ import {
 } from '@/components/ui/select';
 import { Link, Check } from 'lucide-react';
 import { cn } from '@/utils/utils';
-import db from '../../../db/db';
-import { id } from '@instantdb/react';
+import { useGroupState } from '@/zero/groups/useGroupState';
+import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useTranslation } from '@/hooks/use-translation';
 import { toast } from 'sonner';
 
@@ -84,6 +84,7 @@ export function LinkGroupDialog({
   allRelationships
 }: LinkGroupDialogProps) {
   const { t } = useTranslation();
+  const { createRelationship, deleteRelationship } = useGroupActions();
   const [open, setOpen] = useState(false);
   
   const isEditMode = !!initialTargetGroupId;
@@ -102,47 +103,28 @@ export function LinkGroupDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch all groups (needed for name info if not passed, and for selector)
-  const { data: groupsData } = db.useQuery({
-    groups: {
-      $: {
-        where: {
-          id: { $ne: currentGroupId },
-        },
-      },
-    },
-  });
-
-  const availableGroups = groupsData?.groups || [];
+  const { searchResults: availableGroupsRaw } = useGroupState({ includeSearch: true });
+  const availableGroups = (availableGroupsRaw || []).filter((g: any) => g.id !== currentGroupId);
 
   // Fetch existing relationships to Handle Syncing (avoid duplicates, handle removals)
   const shouldQuery = !allRelationships && !!selectedGroupId && open;
   
-  const queryResult = db.useQuery(
-      shouldQuery ? {
-        groupRelationships: {
-            parentGroup: {},
-            childGroup: {},
-            $: {
-                where: {
-                   or: [
-                       { 'parentGroup.id': currentGroupId, 'childGroup.id': selectedGroupId },
-                       { 'parentGroup.id': selectedGroupId, 'childGroup.id': currentGroupId }
-                   ]
-                }
-            }
-        }
-      } : null
+  // groups.hierarchy returns relationships for a group - filter for specific pair client-side
+  const { relationships: hierarchyRaw } = useGroupState(
+    { groupId: currentGroupId }
   );
 
-  const existingRelsData = queryResult?.data;
-  const isLoadingQuery = shouldQuery ? (queryResult?.isLoading ?? true) : false;
+  const isLoadingQuery = shouldQuery ? !hierarchyRaw : false;
 
   const relevantRelationships = allRelationships 
       ? allRelationships.filter(rel => 
           (rel.parentGroup?.id === currentGroupId && rel.childGroup?.id === selectedGroupId) ||
           (rel.parentGroup?.id === selectedGroupId && rel.childGroup?.id === currentGroupId)
         )
-      : (existingRelsData?.groupRelationships || []);
+      : ((hierarchyRaw || []) as any[]).filter((rel: any) =>
+          (rel.group_id === currentGroupId && rel.related_group_id === selectedGroupId) ||
+          (rel.group_id === selectedGroupId && rel.related_group_id === currentGroupId)
+        );
 
   // Reset state when opening/closing or props change
   useEffect(() => {
@@ -196,7 +178,7 @@ export function LinkGroupDialog({
       for (const right of selectedRights) {
           if (!existingRightsSet.has(right)) {
               // Create new
-              const relationshipId = id();
+              const relationshipId = crypto.randomUUID();
               const relationshipData: any = {
                 relationshipType, // This string is stored in DB? Or just used for structure? Seeder uses 'isParent'/'isChild' string? Let's check. 
                 // Seeder uses 'groupRelationships' entries, usually just link. 
@@ -214,17 +196,22 @@ export function LinkGroupDialog({
               };
 
               if (relationshipType === 'isParent') {
-                transactions.push(
-                  db.tx.groupRelationships[relationshipId]
-                    .update(relationshipData)
-                    .link({ parentGroup: selectedGroupId, childGroup: currentGroupId })
-                );
+                // Group relationship creation via raw zero.mutate (no dedicated mutator layer)
+                transactions.push({
+                  type: 'createRelationship' as const,
+                  id: relationshipId,
+                  data: relationshipData,
+                  parentGroupId: selectedGroupId,
+                  childGroupId: currentGroupId,
+                });
               } else {
-                transactions.push(
-                  db.tx.groupRelationships[relationshipId]
-                    .update(relationshipData)
-                    .link({ parentGroup: currentGroupId, childGroup: selectedGroupId })
-                );
+                transactions.push({
+                  type: 'createRelationship' as const,
+                  id: relationshipId,
+                  data: relationshipData,
+                  parentGroupId: currentGroupId,
+                  childGroupId: selectedGroupId,
+                });
               }
           }
       }
@@ -233,12 +220,30 @@ export function LinkGroupDialog({
       for (const rel of currentDirectionRels) {
           if (!selectedRights.has(rel.withRight as WithRight)) {
               // Remove this relationship
-              transactions.push(db.tx.groupRelationships[rel.id].delete());
+              // Group relationship deletion via raw zero.mutate
+              transactions.push({
+                type: 'deleteRelationship' as const,
+                id: rel.id,
+              });
           }
       }
 
       if (transactions.length > 0) {
-          await db.transact(transactions);
+          for (const tx of transactions) {
+            if (tx.type === 'createRelationship') {
+              await createRelationship({
+                id: tx.id,
+                group_id: tx.parentGroupId,
+                related_group_id: tx.childGroupId,
+                relationship_type: relationshipType,
+                with_right: tx.data.withRight,
+                status: tx.data.status,
+                initiator_group_id: tx.data.initiatorGroupId,
+              });
+            } else if (tx.type === 'deleteRelationship') {
+              await deleteRelationship({ id: tx.id });
+            }
+          }
           toast.success(isEditMode ? t('common.network.relationshipsUpdated') : t('common.network.relationshipsCreated'));
       } else {
           toast.info(t('common.network.noChanges'));

@@ -1,14 +1,17 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
-import db, { id } from '../../../../db/db';
+import { useBlogState } from '@/zero/blogs/useBlogState';
+import { useBlogActions } from '@/zero/blogs/useBlogActions';
+import { useDocumentActions } from '@/zero/documents/useDocumentActions';
+import { useUserState } from '@/zero/users/useUserState';
 import {
   BookOpen,
   Calendar,
@@ -22,7 +25,7 @@ import {
 import { StatsBar } from '@/components/ui/StatsBar';
 import { useSubscribeBlog } from '@/features/blogs/hooks/useSubscribeBlog';
 import { ActionBar } from '@/components/ui/ActionBar';
-import { useAuthStore } from '@/features/auth/auth';
+import { useAuth } from '@/providers/auth-provider';
 import { ShareButton } from '@/components/shared/ShareButton';
 import { SubscribeButton } from '@/components/shared/action-buttons';
 import { toast } from 'sonner';
@@ -30,7 +33,7 @@ import { useTranslation } from '@/hooks/use-translation';
 import { CommentSortSelect, CommentSortBy } from '@/components/shared/CommentSortSelect';
 import { useBlogPermissions } from '../hooks/useBlogPermissions';
 import { PlateEditor } from '@/components/kit-platejs/plate-editor';
-import Link from 'next/link';
+import { Link } from '@tanstack/react-router';
 import { notifyBlogCommentAdded, notifyBlogVoted, notifyBlogDeleted } from '@/utils/notification-helpers';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
@@ -63,7 +66,8 @@ interface BlogComment {
 type CommentCursor = [string, string, unknown, number];
 
 function CommentItem({ comment, blogId }: { comment: BlogComment; blogId: string }) {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
+  const { deleteCommentVote, updateCommentVote, voteComment } = useDocumentActions();
 
   const userVote = comment.votes?.find(v => v.user?.id === user?.id);
   const hasUpvoted = userVote?.vote === 1;
@@ -84,28 +88,23 @@ function CommentItem({ comment, blogId }: { comment: BlogComment; blogId: string
       if (userVote) {
         if (userVote.vote === voteValue) {
           // Remove vote
-          await db.transact([db.tx.commentVotes[userVote.id].delete()]);
+          await deleteCommentVote(userVote.id);
         } else {
           // Change vote
-          await db.transact([db.tx.commentVotes[userVote.id].update({ vote: voteValue })]);
+          await updateCommentVote({ id: userVote.id, vote: voteValue });
         }
       } else {
         // Create new vote
-        const voteId = id();
-        await db.transact([
-          db.tx.commentVotes[voteId].update({
-            vote: voteValue,
-            createdAt: Date.now(),
-          }),
-          db.tx.commentVotes[voteId].link({
-            comment: comment.id,
-            user: user.id,
-          }),
-        ]);
+        const voteId = crypto.randomUUID();
+        await voteComment({
+          id: voteId,
+          vote: voteValue,
+          comment_id: comment.id,
+          user_id: user.id,
+        });
       }
     } catch (error) {
       console.error('Error voting:', error);
-      toast.error('Failed to vote');
     }
   };
 
@@ -171,19 +170,20 @@ interface BlogDetailProps {
 }
 
 export function BlogDetail({ blogId }: BlogDetailProps) {
-  const router = useRouter();
-  const { user } = useAuthStore();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const { t } = useTranslation();
   const [isCommenting, setIsCommenting] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sortBy, setSortBy] = useState<CommentSortBy>('votes');
-  const [commentCursor, setCommentCursor] = useState<{ after?: any; first: number }>({
-    first: 10,
-  });
+  // Cursor pagination removed — Zero uses limit-based queries
 
   // Permissions
   const { canEdit, canDelete, canManageMembers } = useBlogPermissions(blogId);
+  const blogActions = useBlogActions();
+  const { addComment: addCommentAction } = useDocumentActions();
+  const { currentUser } = useUserState();
 
   // Subscribe hook
   const {
@@ -194,81 +194,28 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
   } = useSubscribeBlog(blogId);
 
   // Query current user's name for notifications
-  const { data: currentUserData } = db.useQuery(
-    user?.id
-      ? {
-          $users: {
-            $: {
-              where: { id: user.id },
-              limit: 1,
-            },
-          },
-        }
-      : null
-  );
-  const currentUserName = currentUserData?.$users?.[0]?.name || 'Someone';
+  const currentUserName = currentUser?.first_name || 'Someone';
 
-  // Fetch blog data from InstantDB with comments
-  const { data, isLoading } = db.useQuery({
-    blogs: {
-      $: { where: { id: blogId } },
-      blogRoleBloggers: {
-        user: {},
-        role: {},
-      },
-      hashtags: {},
-      subscribers: {},
-      votes: {
-        user: {},
-      },
-    },
-  });
+  // Fetch blog data with relations
+  const { blogWithDetails, comments: commentsRows } = useBlogState({ blogId, includeDetails: true, includeComments: true });
 
-  // Separate query for comments with cursor pagination
-  const { data: commentsData, pageInfo: commentsPageInfo } = db.useQuery({
-    comments: {
-      $: {
-        where: { blog: blogId },
-        order: { createdAt: 'desc' as const },
-        ...commentCursor,
-      },
-      creator: {},
-      votes: {
-        user: {},
-      },
-      parentComment: {},
-      replies: {
-        creator: {},
-        votes: {
-          user: {},
-        },
-      },
-    },
-  });
-
-  const blog = data?.blogs?.[0];
-  // Get comments from separate query and filter to only show top-level comments
-  const allComments = (commentsData?.comments || []) as BlogComment[];
+  const blog = blogWithDetails;
+  // Get comments - in Zero, filtering by blog needs schema support
+  const allComments = (commentsRows || []) as unknown as BlogComment[];
   const topLevelComments = allComments.filter(comment => !comment.parentComment);
 
-  const loadMoreComments = () => {
-    const endCursor = commentsPageInfo?.comments?.endCursor;
-    if (endCursor) {
-      setCommentCursor({ after: endCursor, first: 10 });
-    }
-  };
-
-  const hasMoreComments = commentsPageInfo?.comments?.hasNextPage ?? false;
+  // Zero does not support cursor pagination; load more is not available
+  const hasMoreComments = false;
 
   const loadMoreCommentsRef = useInfiniteScroll({
     hasMore: hasMoreComments,
     isLoading: false,
-    onLoadMore: loadMoreComments,
+    onLoadMore: () => {},
   });
 
   // Vote handling
   const score = (blog?.upvotes || 0) - (blog?.downvotes || 0);
-  const userVote = blog?.votes?.find((v: any) => v.user?.id === user?.id);
+  const userVote = blog?.support_votes?.find((v: any) => v.user?.id === user?.id);
   const hasUpvoted = userVote?.vote === 1;
   const hasDownvoted = userVote?.vote === -1;
 
@@ -288,49 +235,43 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
         // Update or remove existing vote
         if (userVote.vote === voteValue) {
           // Remove vote
-          await db.transact([
-            db.tx.blogSupportVotes[userVote.id].delete(),
-            db.tx.blogs[blogId].update({
-              upvotes: voteValue === 1 ? (blog.upvotes || 1) - 1 : blog.upvotes,
-              downvotes: voteValue === -1 ? (blog.downvotes || 1) - 1 : blog.downvotes,
-            }),
-          ]);
+          await blogActions.deleteSupportVote(userVote.id);
+          await blogActions.updateBlog({
+            id: blogId,
+            upvotes: voteValue === 1 ? (blog.upvotes || 1) - 1 : blog.upvotes,
+            downvotes: voteValue === -1 ? (blog.downvotes || 1) - 1 : blog.downvotes,
+          });
         } else {
           // Change vote
-          await db.transact([
-            db.tx.blogSupportVotes[userVote.id].update({ vote: voteValue }),
-            db.tx.blogs[blogId].update({
-              upvotes:
-                voteValue === 1 ? (blog.upvotes || 0) + 1 : Math.max(0, (blog.upvotes || 1) - 1),
-              downvotes:
-                voteValue === -1
-                  ? (blog.downvotes || 0) + 1
-                  : Math.max(0, (blog.downvotes || 1) - 1),
-            }),
-          ]);
+          await blogActions.updateSupportVote({ id: userVote.id, vote: voteValue });
+          await blogActions.updateBlog({
+            id: blogId,
+            upvotes:
+              voteValue === 1 ? (blog.upvotes || 0) + 1 : Math.max(0, (blog.upvotes || 1) - 1),
+            downvotes:
+              voteValue === -1
+                ? (blog.downvotes || 0) + 1
+                : Math.max(0, (blog.downvotes || 1) - 1),
+          });
         }
       } else {
         // Create new vote
-        const voteId = id();
-        const voteTxs: any[] = [
-          db.tx.blogSupportVotes[voteId].update({
-            vote: voteValue,
-            createdAt: Date.now(),
-          }),
-          db.tx.blogSupportVotes[voteId].link({
-            blog: blogId,
-            user: user.id,
-          }),
-          db.tx.blogs[blogId].update({
-            upvotes: voteValue === 1 ? (blog.upvotes || 0) + 1 : blog.upvotes,
-            downvotes: voteValue === -1 ? (blog.downvotes || 0) + 1 : blog.downvotes,
-          }),
-        ];
+        const voteId = crypto.randomUUID();
+        await blogActions.createSupportVote({
+          id: voteId,
+          vote: voteValue,
+          blog_id: blogId,
+        });
+        await blogActions.updateBlog({
+          id: blogId,
+          upvotes: voteValue === 1 ? (blog.upvotes || 0) + 1 : blog.upvotes,
+          downvotes: voteValue === -1 ? (blog.downvotes || 0) + 1 : blog.downvotes,
+        });
 
         // Notify blog owner about the vote
-        const blogAuthor = blog.blogRoleBloggers?.find((b: any) => b.status === 'owner')?.user || blog.blogRoleBloggers?.[0]?.user;
+        const blogAuthor = blog.bloggers?.find((b: any) => b.status === 'owner')?.user || blog.bloggers?.[0]?.user;
         if (blogAuthor?.id && blogAuthor.id !== user.id) {
-          const notifTxs = notifyBlogVoted({
+          await notifyBlogVoted({
             senderId: user.id,
             senderName: currentUserName,
             recipientUserId: blogAuthor.id,
@@ -338,10 +279,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
             blogTitle: blog.title || 'Blog',
             voteType: voteValue === 1 ? 'upvote' : 'downvote',
           });
-          voteTxs.push(...notifTxs);
         }
-
-        await db.transact(voteTxs);
       }
     } catch (error) {
       console.error('Error voting:', error);
@@ -369,30 +307,26 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
 
     setIsSubmitting(true);
     try {
-      const commentId = id();
-      const transactions: any[] = [
-        db.tx.comments[commentId].update({
-          text: commentText,
-          createdAt: Date.now(),
-        }),
-        db.tx.comments[commentId].link({
-          blog: blogId,
-          creator: user.id,
-        }),
-      ];
+      const commentId = crypto.randomUUID();
+      await addCommentAction({
+        id: commentId,
+        thread_id: '',
+        parent_id: '',
+        content: commentText,
+        upvotes: 0,
+        downvotes: 0,
+        user_id: user.id,
+      });
 
       // Add notification to the blog entity
       if (blog) {
-        const notificationTxs = notifyBlogCommentAdded({
+        await notifyBlogCommentAdded({
           senderId: user.id,
           senderName: currentUserName,
           blogId,
           blogTitle: blog.title || 'Blog',
         });
-        transactions.push(...notificationTxs);
       }
-
-      await db.transact(transactions);
 
       toast.success('Comment posted successfully');
       setCommentText('');
@@ -410,23 +344,22 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
     try {
       // Send deletion notifications before removing the blog entity
       if (user?.id && blog) {
-        const notifTxs = notifyBlogDeleted({
+        await notifyBlogDeleted({
           senderId: user.id,
           blogId,
           blogTitle: blog.title || 'Blog',
         });
-        await db.transact(notifTxs);
       }
-      await db.transact([db.tx.blogs[blogId].delete()]);
+      await blogActions.deleteBlog(blogId);
       toast.success(t('features.blogs.detail.blogDeleted'));
-      router.push('/');
+      navigate({ to: '/' });
     } catch (error) {
       console.error('Error deleting blog:', error);
       toast.error(t('features.blogs.detail.blogDeleteFailed'));
     }
   };
 
-  if (isLoading) {
+  if (!blogWithDetails) {
     return (
       <PageWrapper className="container mx-auto p-8">
         <div className="py-12 text-center">{t('features.blogs.detail.loading')}</div>
@@ -447,8 +380,8 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
 
   // Get the blog author - find the owner or first blogger
   const author =
-    blog.blogRoleBloggers?.find((blogger: any) => blogger.status === 'owner')?.user ||
-    blog.blogRoleBloggers?.[0]?.user;
+    blog.bloggers?.find((blogger: any) => blogger.status === 'owner')?.user ||
+    blog.bloggers?.[0]?.user;
 
   return (
     <PageWrapper className="container mx-auto max-w-6xl p-4">
@@ -463,12 +396,12 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
         {author && (
           <div className="mt-4 flex items-center justify-center gap-3">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={author.avatar || author.imageURL} />
-              <AvatarFallback>{author.name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+              <AvatarImage src={author.avatar ?? undefined} />
+              <AvatarFallback>{author.first_name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
             </Avatar>
             <div className="text-left">
               <p className="text-sm font-medium">
-                {t ? t('components.labels.createdBy') : 'Created by'} {author.name || 'Unknown'}
+                {t ? t('components.labels.createdBy') : 'Created by'} {[author.first_name, author.last_name].filter(Boolean).join(' ') || 'Unknown'}
               </p>
               {author.handle && <p className="text-xs text-muted-foreground">@{author.handle}</p>}
             </div>
@@ -523,7 +456,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
           <MessageSquare className="mr-2 h-4 w-4" />
           {t('features.blogs.detail.comment')}
         </Button>
-        <ShareButton url={`/blog/${blogId}`} title={blog.title} description="" />
+        <ShareButton url={`/blog/${blogId}`} title={blog.title ?? ''} description="" />
 
         {/* RBAC Actions */}
         {canDelete && (
@@ -537,7 +470,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
       {/* Hashtags */}
       {blog.hashtags && blog.hashtags.length > 0 && (
         <div className="mb-6">
-          <HashtagDisplay hashtags={blog.hashtags} centered />
+          <HashtagDisplay hashtags={blog.hashtags.map(h => ({ ...h, tag: h.tag ?? '' }))} centered />
         </div>
       )}
 
@@ -553,7 +486,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
             </CardDescription>
           </div>
           {canEdit && (
-            <Link href={`/blog/${blogId}/editor`}>
+            <Link to={`/blog/${blogId}/editor`}>
               <Button variant="outline" size="sm">
                 <Edit className="mr-2 h-4 w-4" />
                 {t('features.blogs.detail.editContent')}
@@ -563,12 +496,12 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
         </CardHeader>
         <CardContent className="prose prose-slate max-w-none dark:prose-invert">
           {blog.content && Array.isArray(blog.content) && blog.content.length > 0 ? (
-            <PlateEditor value={blog.content} currentMode="view" isOwnerOrCollaborator={false} />
+            <PlateEditor value={blog.content as any[]} currentMode="view" isOwnerOrCollaborator={false} />
           ) : (
             <div className="py-8 text-center text-muted-foreground">
               <p>{t('features.blogs.detail.noContentAvailable')}</p>
               {canEdit && (
-                <Link href={`/blog/${blogId}/editor`}>
+                <Link to={`/blog/${blogId}/editor`}>
                   <Button variant="outline" className="mt-4">
                     <Edit className="mr-2 h-4 w-4" />
                     {t('features.blogs.detail.startWriting')}

@@ -2,11 +2,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { CardHeader } from '@/components/ui/card';
 import { ArrowLeft, Pin, PinOff, Trash2 } from 'lucide-react';
-import { Conversation } from '../types';
-import { getConversationDisplay, getOtherParticipant } from '../utils';
-import { ARIA_KAI_USER_ID } from '../../../../e2e/aria-kai';
+import { Conversation } from '../types/message.types';
+import { getConversationDisplay, getOtherParticipant } from '../logic/messageUtils';
+import { ARIA_KAI_USER_ID } from '@/features/auth/constants';
 import { useTranslation } from '@/hooks/use-translation';
-import Link from 'next/link';
+import { Link } from '@tanstack/react-router';
 
 interface ConversationHeaderProps {
   conversation: Conversation;
@@ -59,7 +59,7 @@ export function ConversationHeader({
           <ArrowLeft className="h-4 w-4" />
         </Button>
         {userHref ? (
-          <Link href={userHref} className="flex items-center">
+          <Link to={userHref} className="flex items-center">
             {identityContent}
           </Link>
         ) : (

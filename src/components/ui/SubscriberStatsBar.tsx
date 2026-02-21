@@ -1,5 +1,5 @@
 import React from 'react';
-import { StatsBar } from '@/features/user/ui/StatsBar';
+import { StatsBar } from '@/features/users/ui/StatsBar';
 
 interface SubscriberStatsBarProps {
   subscriberCount: number;

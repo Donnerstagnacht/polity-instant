@@ -8,7 +8,9 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import { db, tx, id } from '@db/db';
+import { useDocumentActions } from '@/zero/documents/useDocumentActions';
+import { useDocumentState } from '@/zero/documents/useDocumentState';
+import { useBlogState } from '@/zero/blogs/useBlogState';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/use-translation';
 import type { EditorEntityType, EditorVersion, VersionCreationType } from '../types';
@@ -62,38 +64,35 @@ interface UseEditorVersionResult {
  */
 export function useEditorVersion(options: UseEditorVersionOptions): UseEditorVersionResult {
   const { entityType, entityId, userId } = options;
+  const { createVersion: doCreateVersion, updateVersion: doUpdateVersion, deleteVersion: doDeleteVersion } = useDocumentActions();
   const { t } = useTranslation();
   const [isCreating, setIsCreating] = useState(false);
 
-  // Build the where clause based on entity type
-  const whereClause = useMemo(() => {
-    if (entityType === 'blog') {
-      return { 'blog.id': entityId };
-    }
-    return { 'document.id': entityId };
-  }, [entityType, entityId]);
+  // Build version queries via facade hooks
+  const isBlog = entityType === 'blog';
 
-  // Query all versions for this entity
-  const { data: versionsData, isLoading } = db.useQuery({
-    documentVersions: {
-      $: {
-        where: whereClause as any,
-      },
-      creator: {},
-    },
+  const { versions: docVersions, isLoading: docVersionsLoading } = useDocumentState({
+    documentId: !isBlog ? entityId : '',
+    includeVersions: !isBlog,
   });
 
-  const versions = (versionsData?.documentVersions || []) as EditorVersion[];
+  const { versions: blogVersions, isLoading: blogVersionsLoading } = useBlogState({
+    blogId: isBlog ? entityId : undefined,
+    includeVersions: isBlog,
+  });
+
+  const versions = (isBlog ? blogVersions : docVersions) as unknown as EditorVersion[];
+  const isLoading = isBlog ? blogVersionsLoading : docVersionsLoading;
 
   // Sort versions by version number (newest first)
   const sortedVersions = useMemo(() => {
-    return [...versions].sort((a, b) => b.versionNumber - a.versionNumber);
+    return [...versions].sort((a: any, b: any) => b.version_number - a.version_number);
   }, [versions]);
 
   // Get the latest version number
   const latestVersionNumber = useMemo(() => {
     if (versions.length === 0) return 0;
-    return Math.max(...versions.map(v => v.versionNumber));
+    return Math.max(...versions.map((v: any) => v.version_number));
   }, [versions]);
 
   // Create a new version
@@ -111,33 +110,25 @@ export function useEditorVersion(options: UseEditorVersionOptions): UseEditorVer
 
       setIsCreating(true);
       try {
-        const versionId = id();
+        const versionId = crypto.randomUUID();
         const newVersionNumber = latestVersionNumber + 1;
 
         const txData: any = {
+          id: versionId,
           title: title.trim(),
           content: JSON.stringify(content),
-          versionNumber: newVersionNumber,
-          creationType,
-          createdAt: Date.now(),
+          version_number: newVersionNumber,
+          creation_type: creationType,
         };
 
         // Link to the appropriate entity
         if (entityType === 'blog') {
-          await db.transact([
-            tx.documentVersions[versionId].update(txData),
-            tx.documentVersions[versionId].link({ blog: entityId }),
-            tx.documentVersions[versionId].link({ creator: userId }),
-          ]);
+          txData.blog_id = entityId;
         } else {
-          await db.transact([
-            tx.documentVersions[versionId].update(txData),
-            tx.documentVersions[versionId].link({ document: entityId }),
-            tx.documentVersions[versionId].link({ creator: userId }),
-          ]);
+          txData.document_id = entityId;
         }
 
-        toast.success(t('features.editor.versionControl.versionCreated'));
+        await doCreateVersion(txData);
       } catch (error) {
         console.error('Failed to create version:', error);
         toast.error(t('features.editor.versionControl.createFailed'));
@@ -174,8 +165,7 @@ export function useEditorVersion(options: UseEditorVersionOptions): UseEditorVer
       }
 
       try {
-        await db.transact([tx.documentVersions[versionId].update({ title: newTitle.trim() })]);
-        toast.success(t('features.editor.versionControl.titleUpdated'));
+        await doUpdateVersion({ id: versionId, change_summary: newTitle.trim() });
       } catch (error) {
         console.error('Failed to update version title:', error);
         toast.error(t('features.editor.versionControl.updateFailed'));
@@ -188,8 +178,7 @@ export function useEditorVersion(options: UseEditorVersionOptions): UseEditorVer
   const deleteVersion = useCallback(
     async (versionId: string) => {
       try {
-        await db.transact([tx.documentVersions[versionId].delete()]);
-        toast.success(t('features.editor.versionControl.versionDeleted'));
+        await doDeleteVersion(versionId);
       } catch (error) {
         console.error('Failed to delete version:', error);
         toast.error(t('features.editor.versionControl.deleteFailed'));

@@ -1,10 +1,11 @@
-import { id, tx } from '@instantdb/admin';
+import { id } from '../helpers/id.helper';
+import { tx } from '../helpers/compat';
 import { faker } from '@faker-js/faker';
 import { EntitySeeder, SeedContext } from '../types/seeder.types';
 import { SEED_CONFIG, USER_HASHTAGS, ARIA_KAI_EMAIL } from '../config/seed.config';
 import { randomInt, randomItem, randomItems } from '../helpers/random.helpers';
-import { batchTransact } from '../helpers/transaction.helpers';
-import { createHashtagTransactions } from '../helpers/entity.helpers';
+import { batchTransact, InsertOp } from '../helpers/transaction.helpers';
+import { createHashtagRows } from '../helpers/entity.helpers';
 import { ARIA_KAI_USER_ID, ARIA_KAI_WELCOME_MESSAGE } from '../../e2e/aria-kai';
 
 export const usersSeeder: EntitySeeder = {
@@ -18,7 +19,7 @@ export const usersSeeder: EntitySeeder = {
     const statementIds: string[] = [];
     const conversationIds: string[] = [];
     const messageIds: string[] = [];
-    const transactions = [];
+    const transactions: InsertOp[] = [];
 
     // Time constants for consistent timestamps
     const now = Date.now();
@@ -38,9 +39,9 @@ export const usersSeeder: EntitySeeder = {
     const mainUserId = SEED_CONFIG.mainTestUserId;
     userIds.push(mainUserId);
 
-    // Create or update main user in $users table
+    // Create or update main user in profiles table
     transactions.push(
-      tx.$users[mainUserId].update({
+      tx.profiles[mainUserId].update({
         email: 'test@polity.app',
         imageURL: faker.image.avatar(),
         type: 'user',
@@ -92,7 +93,7 @@ export const usersSeeder: EntitySeeder = {
 
     // Add hashtags for main user
     const mainUserHashtags = randomItems(USER_HASHTAGS, 2);
-    transactions.push(...createHashtagTransactions(mainUserId, 'user', mainUserHashtags));
+    transactions.push(...createHashtagRows(mainUserId, 'user', mainUserHashtags));
     hashtagsToUsers += mainUserHashtags.length;
 
     // Create Aria & Kai welcome conversation for main user
@@ -147,7 +148,7 @@ export const usersSeeder: EntitySeeder = {
     userIds.push(tobiasUserId);
 
     transactions.push(
-      tx.$users[tobiasUserId].update({
+      tx.profiles[tobiasUserId].update({
         email: 'tobias.hassebrock@gmail.com',
         imageURL: faker.image.avatar(),
         type: 'user',
@@ -197,7 +198,7 @@ export const usersSeeder: EntitySeeder = {
     statementIds.push(tobiasStatementId);
 
     const tobiasHashtags = randomItems(USER_HASHTAGS, 2);
-    transactions.push(...createHashtagTransactions(tobiasUserId, 'user', tobiasHashtags));
+    transactions.push(...createHashtagRows(tobiasUserId, 'user', tobiasHashtags));
     hashtagsToUsers += tobiasHashtags.length;
 
     // Create Aria & Kai welcome conversation for Tobias
@@ -253,7 +254,7 @@ export const usersSeeder: EntitySeeder = {
     userIds.push(ariaKaiUserId);
 
     transactions.push(
-      tx.$users[ariaKaiUserId].update({
+      tx.profiles[ariaKaiUserId].update({
         email: ARIA_KAI_EMAIL,
         imageURL: faker.image.avatar(),
         type: 'user',
@@ -298,7 +299,7 @@ export const usersSeeder: EntitySeeder = {
       const handle = `${firstName.toLowerCase()}${lastName.toLowerCase()}${randomInt(1, 999)}`;
 
       transactions.push(
-        tx.$users[userId].update({
+        tx.profiles[userId].update({
           email: faker.internet.email({ firstName, lastName }),
           imageURL: faker.image.avatar(),
           type: 'user',
@@ -354,7 +355,7 @@ export const usersSeeder: EntitySeeder = {
       // Add hashtags
       const numHashtags = randomInt(1, 3);
       const userHashtags = randomItems(USER_HASHTAGS, numHashtags);
-      transactions.push(...createHashtagTransactions(userId, 'user', userHashtags));
+      transactions.push(...createHashtagRows(userId, 'user', userHashtags));
       hashtagsToUsers += userHashtags.length;
 
       // Create Aria & Kai welcome conversation for this user

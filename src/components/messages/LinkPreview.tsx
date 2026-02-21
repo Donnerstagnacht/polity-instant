@@ -12,8 +12,14 @@ import {
   CheckSquare,
   ExternalLink,
 } from 'lucide-react';
-import Link from 'next/link';
-import { db } from '../../../db/db';
+import { Link } from '@tanstack/react-router';
+import { useUserState } from '@/zero/users/useUserState';
+import { useGroupState } from '@/zero/groups/useGroupState';
+import { useEventState } from '@/zero/events/useEventState';
+import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
+import { useBlogState } from '@/zero/blogs/useBlogState';
+import { useStatementState } from '@/zero/statements/useStatementState';
+import { useTodoState } from '@/zero/todos/useTodoState';
 import { useTranslation } from '@/hooks/use-translation';
 
 interface LinkPreviewProps {
@@ -76,7 +82,7 @@ export function LinkPreview({ url, className = '' }: LinkPreviewProps) {
   if (!polityLink) {
     // Generic external link preview
     return (
-      <Link href={url} target="_blank" rel="noopener noreferrer">
+      <Link to={url} target="_blank" rel="noopener noreferrer">
         <Card className={`hover:bg-accent ${className}`}>
           <CardContent className="flex items-center gap-3 p-3">
             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-muted">
@@ -125,42 +131,28 @@ function PolityLinkPreview({ type, id, className }: PolityLinkPreviewProps) {
 
 function UserPreview({ userId, className }: { userId: string; className?: string }) {
   const { t } = useTranslation();
-  const { data, isLoading } = db.useQuery({
-    $users: {
-      $: {
-        where: {
-          id: userId,
-        },
-      },
-    },
-  });
+  const { user } = useUserState({ userId });
 
-  const user = data?.$users?.[0];
-
-  if (isLoading) {
+  if (!user) {
     return <PreviewSkeleton />;
   }
 
-  if (!user) {
-    return null;
-  }
-
   return (
-    <Link href={`/user/${userId}`}>
+    <Link to={`/user/${userId}`}>
       <Card className={`border-l-4 border-l-blue-500 hover:bg-accent ${className}`}>
         <CardContent className="flex items-center gap-3 p-3">
           <User className="h-5 w-5 flex-shrink-0 text-blue-500" />
           <Avatar className="h-10 w-10 flex-shrink-0">
-            <AvatarImage src={user.avatar || user.imageURL} />
-            <AvatarFallback>{user.name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+            <AvatarImage src={user.avatar ?? undefined} />
+            <AvatarFallback>{(user.first_name || user.handle)?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold">{user.name || t('components.linkPreview.unknownUser')}</p>
+            <p className="truncate font-semibold">{`${user.first_name || ''} ${user.last_name || ''}`.trim() || t('components.linkPreview.unknownUser')}</p>
             {user.handle && (
               <p className="truncate text-sm text-muted-foreground">@{user.handle}</p>
             )}
-            {user.subtitle && (
-              <p className="truncate text-xs text-muted-foreground">{user.subtitle}</p>
+            {user.bio && (
+              <p className="truncate text-xs text-muted-foreground">{user.bio}</p>
             )}
           </div>
           <Badge variant="outline" className="flex-shrink-0 text-xs">
@@ -174,33 +166,19 @@ function UserPreview({ userId, className }: { userId: string; className?: string
 
 function GroupPreview({ groupId, className }: { groupId: string; className?: string }) {
   const { t } = useTranslation();
-  const { data, isLoading } = db.useQuery({
-    groups: {
-      $: {
-        where: {
-          id: groupId,
-        },
-      },
-    },
-  });
+  const { group } = useGroupState({ groupId });
 
-  const group = data?.groups?.[0];
-
-  if (isLoading) {
+  if (!group) {
     return <PreviewSkeleton />;
   }
 
-  if (!group) {
-    return null;
-  }
-
   return (
-    <Link href={`/group/${groupId}`}>
+    <Link to={`/group/${groupId}`}>
       <Card className={`border-l-4 border-l-purple-500 hover:bg-accent ${className}`}>
         <CardContent className="flex items-center gap-3 p-3">
           <Users className="h-5 w-5 flex-shrink-0 text-purple-500" />
           <Avatar className="h-10 w-10 flex-shrink-0">
-            <AvatarImage src={group.imageURL} />
+            <AvatarImage src={undefined} />
             <AvatarFallback>{group.name?.[0]?.toUpperCase() || 'G'}</AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
@@ -208,7 +186,7 @@ function GroupPreview({ groupId, className }: { groupId: string; className?: str
             {group.description && (
               <p className="line-clamp-1 text-xs text-muted-foreground">{group.description}</p>
             )}
-            <p className="text-xs text-muted-foreground">{group.memberCount || 0} {t('components.linkPreview.members')}</p>
+            <p className="text-xs text-muted-foreground">{group.member_count || 0} {t('components.linkPreview.members')}</p>
           </div>
           <Badge variant="outline" className="flex-shrink-0 text-xs">
             {t('components.linkPreview.group')}
@@ -221,46 +199,26 @@ function GroupPreview({ groupId, className }: { groupId: string; className?: str
 
 function EventPreview({ eventId, className }: { eventId: string; className?: string }) {
   const { t } = useTranslation();
-  const { data, isLoading } = db.useQuery({
-    events: {
-      $: {
-        where: {
-          id: eventId,
-        },
-      },
-    },
-  });
+  const { event } = useEventState({ eventId });
 
-  const event = data?.events?.[0];
-
-  if (isLoading) {
+  if (!event) {
     return <PreviewSkeleton />;
   }
 
-  if (!event) {
-    return null;
-  }
-
   return (
-    <Link href={`/event/${eventId}`}>
+    <Link to={`/event/${eventId}`}>
       <Card className={`border-l-4 border-l-green-500 hover:bg-accent ${className}`}>
         <CardContent className="flex items-center gap-3 p-3">
           <Calendar className="h-5 w-5 flex-shrink-0 text-green-500" />
-          {event.imageURL && (
-            <Avatar className="h-10 w-10 flex-shrink-0">
-              <AvatarImage src={event.imageURL} />
-              <AvatarFallback>{event.title?.[0]?.toUpperCase() || 'E'}</AvatarFallback>
-            </Avatar>
-          )}
           <div className="min-w-0 flex-1">
             <p className="truncate font-semibold">{event.title}</p>
-            {event.startDate && (
+            {event.start_date && (
               <p className="text-xs text-muted-foreground">
-                {new Date(event.startDate).toLocaleDateString()}
+                {new Date(event.start_date).toLocaleDateString()}
               </p>
             )}
-            {event.location && (
-              <p className="truncate text-xs text-muted-foreground">{event.location}</p>
+            {event.location_name && (
+              <p className="truncate text-xs text-muted-foreground">{event.location_name}</p>
             )}
           </div>
           <Badge variant="outline" className="flex-shrink-0 text-xs">
@@ -274,41 +232,21 @@ function EventPreview({ eventId, className }: { eventId: string; className?: str
 
 function AmendmentPreview({ amendmentId, className }: { amendmentId: string; className?: string }) {
   const { t } = useTranslation();
-  const { data, isLoading } = db.useQuery({
-    amendments: {
-      $: {
-        where: {
-          id: amendmentId,
-        },
-      },
-    },
-  });
+  const { amendment } = useAmendmentState({ amendmentId });
 
-  const amendment = data?.amendments?.[0];
-
-  if (isLoading) {
+  if (!amendment) {
     return <PreviewSkeleton />;
   }
 
-  if (!amendment) {
-    return null;
-  }
-
   return (
-    <Link href={`/amendment/${amendmentId}`}>
+    <Link to={`/amendment/${amendmentId}`}>
       <Card className={`border-l-4 border-l-orange-500 hover:bg-accent ${className}`}>
         <CardContent className="flex items-center gap-3 p-3">
           <FileText className="h-5 w-5 flex-shrink-0 text-orange-500" />
-          {amendment.imageURL && (
-            <Avatar className="h-10 w-10 flex-shrink-0">
-              <AvatarImage src={amendment.imageURL} />
-              <AvatarFallback>{amendment.title?.[0]?.toUpperCase() || 'A'}</AvatarFallback>
-            </Avatar>
-          )}
           <div className="min-w-0 flex-1">
             <p className="truncate font-semibold">{amendment.title}</p>
-            {amendment.subtitle && (
-              <p className="truncate text-xs text-muted-foreground">{amendment.subtitle}</p>
+            {amendment.reason && (
+              <p className="truncate text-xs text-muted-foreground">{amendment.reason}</p>
             )}
             {amendment.status && (
               <Badge variant="secondary" className="mt-1 text-xs capitalize">
@@ -327,37 +265,23 @@ function AmendmentPreview({ amendmentId, className }: { amendmentId: string; cla
 
 function BlogPreview({ blogId, className }: { blogId: string; className?: string }) {
   const { t } = useTranslation();
-  const { data, isLoading } = db.useQuery({
-    blogs: {
-      $: {
-        where: {
-          id: blogId,
-        },
-      },
-    },
-  });
+  const { blog } = useBlogState({ blogId });
 
-  const blog = data?.blogs?.[0];
-
-  if (isLoading) {
+  if (!blog) {
     return <PreviewSkeleton />;
   }
 
-  if (!blog) {
-    return null;
-  }
-
   return (
-    <Link href={`/blog/${blogId}`}>
+    <Link to={`/blog/${blogId}`}>
       <Card className={`border-l-4 border-l-pink-500 hover:bg-accent ${className}`}>
         <CardContent className="flex items-center gap-3 p-3">
           <MessageSquare className="h-5 w-5 flex-shrink-0 text-pink-500" />
           <div className="min-w-0 flex-1">
             <p className="truncate font-semibold">{blog.title}</p>
             <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-              <span>{blog.likeCount || 0} {t('components.linkPreview.likes')}</span>
+              <span>{blog.like_count || 0} {t('components.linkPreview.likes')}</span>
               <span>•</span>
-              <span>{blog.commentCount || 0} {t('components.linkPreview.comments')}</span>
+              <span>{blog.comment_count || 0} {t('components.linkPreview.comments')}</span>
             </div>
           </div>
           <Badge variant="outline" className="flex-shrink-0 text-xs">
@@ -371,19 +295,9 @@ function BlogPreview({ blogId, className }: { blogId: string; className?: string
 
 function StatementPreview({ statementId, className }: { statementId: string; className?: string }) {
   const { t } = useTranslation();
-  const { data, isLoading } = db.useQuery({
-    statements: {
-      $: {
-        where: {
-          id: statementId,
-        },
-      },
-    },
-  });
+  const { statement } = useStatementState({ id: statementId });
 
-  const statement = data?.statements?.[0];
-
-  if (isLoading) {
+  if (!statement) {
     return <PreviewSkeleton />;
   }
 
@@ -392,7 +306,7 @@ function StatementPreview({ statementId, className }: { statementId: string; cla
   }
 
   return (
-    <Link href={`/statement/${statementId}`}>
+    <Link to={`/statement/${statementId}`}>
       <Card className={`border-l-4 border-l-cyan-500 hover:bg-accent ${className}`}>
         <CardContent className="flex items-center gap-3 p-3">
           <FileText className="h-5 w-5 flex-shrink-0 text-cyan-500" />
@@ -415,28 +329,14 @@ function StatementPreview({ statementId, className }: { statementId: string; cla
 
 function TodoPreview({ todoId, className }: { todoId: string; className?: string }) {
   const { t } = useTranslation();
-  const { data, isLoading } = db.useQuery({
-    todos: {
-      $: {
-        where: {
-          id: todoId,
-        },
-      },
-    },
-  });
+  const { todo } = useTodoState({ todoId });
 
-  const todo = data?.todos?.[0];
-
-  if (isLoading) {
+  if (!todo) {
     return <PreviewSkeleton />;
   }
 
-  if (!todo) {
-    return null;
-  }
-
   return (
-    <Link href={`/todos/${todoId}`}>
+    <Link to={`/todos/${todoId}`}>
       <Card className={`border-l-4 border-l-indigo-500 hover:bg-accent ${className}`}>
         <CardContent className="flex items-center gap-3 p-3">
           <CheckSquare className="h-5 w-5 flex-shrink-0 text-indigo-500" />

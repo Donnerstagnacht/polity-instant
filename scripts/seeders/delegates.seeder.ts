@@ -1,4 +1,6 @@
-import { id, tx } from '@instantdb/admin';
+import { id } from '../helpers/id.helper';
+import { tx } from '../helpers/compat';
+import type { InsertOp } from '../helpers/transaction.helpers';
 import { EntitySeeder, SeedContext } from '../types/seeder.types';
 import { randomInt, randomItem, randomItems } from '../helpers/random.helpers';
 import { batchTransact } from '../helpers/transaction.helpers';
@@ -10,44 +12,42 @@ export const delegatesSeeder: EntitySeeder = {
   async seed(context: SeedContext): Promise<SeedContext> {
     console.log('Seeding delegates for delegate conferences...');
     const { db, eventIds, groupIds, userIds } = context;
-    const transactions = [];
+    const transactions: InsertOp[] = [];
     let delegatesCreated = 0;
     let allocationsCreated = 0;
 
     // Query events to find delegate conferences
-    const eventsData = await db.query({
-      events: {
-        group: {},
-      },
-    });
+    const { data: eventRows } = await db.from('events').select('*');
 
-    const delegateConferences = eventsData.events.filter(
-      (e: any) => e.eventType === 'delegate_conference' && e.group?.[0]?.id
+    const delegateConferences = (eventRows || []).filter(
+      (e: any) => e.eventType === 'delegate_conference' && e.groupId
     );
 
     console.log(`Found ${delegateConferences.length} delegate conferences to seed`);
 
     for (const event of delegateConferences) {
-      const parentGroupId = event.group[0]?.id;
+      const parentGroupId = event.groupId;
 
       // Query group relationships to find subgroups
-      const relationshipsData = await db.query({
-        groupRelationships: {
-          $: {
-            where: {
-              'parentGroup.id': parentGroupId,
-            },
-          },
-          childGroup: {},
-          parentGroup: {},
-        },
-      });
+      const { data: relRows } = await db.from('groupRelationships')
+        .select('*')
+        .eq('parentGroupId', parentGroupId);
 
-      const subgroups = relationshipsData.groupRelationships.map((rel: any) => ({
-        id: rel.childGroup[0]?.id,
-        name: rel.childGroup[0]?.name,
-        memberCount: rel.childGroup[0]?.memberCount || 0,
-      })).filter((g: any) => g.id); // Filter out any with undefined id
+      // Look up child group data
+      const childGroupIds = (relRows || []).map((r: any) => r.childGroupId).filter(Boolean);
+      const { data: childGroupRows } = childGroupIds.length > 0
+        ? await db.from('groups').select('id, name, memberCount').in('id', childGroupIds)
+        : { data: [] as any[] };
+      const groupMap = new Map((childGroupRows || []).map((g: any) => [g.id, g]));
+
+      const subgroups = (relRows || []).map((rel: any) => {
+        const group = groupMap.get(rel.childGroupId);
+        return {
+          id: group?.id,
+          name: group?.name,
+          memberCount: group?.memberCount || 0,
+        };
+      }).filter((g: any) => g.id);
 
       if (subgroups.length === 0) {
         console.log(`  Skipping event ${event.id} - no subgroups found`);
@@ -93,22 +93,13 @@ export const delegatesSeeder: EntitySeeder = {
       // Create nominated delegates for each subgroup
       for (const allocation of allocations) {
         // Get members of this subgroup
-        const membersData = await db.query({
-          groupMemberships: {
-            $: {
-              where: {
-                and: [
-                  { 'group.id': allocation.id },
-                  { status: 'member' },
-                ],
-              },
-            },
-            user: {},
-          },
-        });
+        const { data: memberRows } = await db.from('groupMemberships')
+          .select('*')
+          .eq('groupId', allocation.id)
+          .eq('status', 'member');
 
-        const members = membersData.groupMemberships
-          .map((m: any) => m.user?.[0]?.id)
+        const members = (memberRows || [])
+          .map((m: any) => m.userId)
           .filter(Boolean);
 
         if (members.length === 0) {

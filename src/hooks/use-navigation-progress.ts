@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { useLocation, useSearch } from '@tanstack/react-router';
 
 export function useNavigationProgress() {
   const [isNavigating, setIsNavigating] = useState(false);
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const { pathname } = useLocation();
+  const search = useSearch({ strict: false });
 
   useEffect(() => {
     // Start loading immediately when pathname or search params change
@@ -22,7 +22,7 @@ export function useNavigationProgress() {
       clearTimeout(timer);
       setIsNavigating(false);
     };
-  }, [pathname, searchParams]);
+  }, [pathname, search]);
 
   return { isNavigating };
 }

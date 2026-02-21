@@ -31,7 +31,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useTranslation } from '@/hooks/use-translation';
 import { useCancelEvent } from '../hooks/useCancelEvent';
-import { db } from '../../../../db/db';
+import { useEventsByGroup } from '@/zero/events/useEventState';
 import { AlertTriangle, CalendarX, ArrowRight, FileText, Vote } from 'lucide-react';
 
 interface CancelEventDialogProps {
@@ -55,23 +55,7 @@ export function CancelEventDialog({
   const [targetEventId, setTargetEventId] = useState<string>('');
 
   // Query other events in the group for reassignment
-  const { data: eventsData } = db.useQuery(
-    groupId
-      ? {
-          events: {
-            $: {
-              where: {
-                'group.id': groupId,
-                status: { $ne: 'cancelled' },
-              },
-            },
-          },
-        }
-      : null
-  );
-
-  const availableEvents =
-    eventsData?.events?.filter((e: any) => e.id !== eventId && e.startDate > Date.now()) || [];
+  const { events: availableEvents } = useEventsByGroup(groupId, eventId);
 
   // Reset state when dialog opens
   useEffect(() => {

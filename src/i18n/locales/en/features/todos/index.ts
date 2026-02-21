@@ -25,6 +25,18 @@ export const todosTranslations = {
     noStatusTodos: 'You have no {{status}} todos',
     addTask: 'Add Task',
   },
+  // Toast messages for action hooks
+  toasts: {
+    created: 'Todo created',
+    updateFailed: 'Failed to update todo',
+    deleted: 'Todo deleted',
+    deleteFailed: 'Failed to delete todo',
+    toggleFailed: 'Failed to toggle todo completion',
+    userAssigned: 'User assigned',
+    assignFailed: 'Failed to assign user',
+    userUnassigned: 'User unassigned',
+    unassignFailed: 'Failed to unassign user',
+  },
   kanban: {
     toDo: 'To Do',
     inProgress: 'In Progress',

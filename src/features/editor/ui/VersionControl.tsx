@@ -33,7 +33,9 @@ import {
   X,
   Loader2,
 } from 'lucide-react';
-import { db, tx, id } from '@db/db';
+import { useDocumentActions } from '@/zero/documents/useDocumentActions';
+import { useDocumentState } from '@/zero/documents/useDocumentState';
+import { useBlogState } from '@/zero/blogs/useBlogState';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/use-translation';
 import type { EditorEntityType, EditorVersion, VersionCreationType } from '../types';
@@ -68,25 +70,21 @@ export function VersionControl({
   const [editingVersionId, setEditingVersionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
 
-  // Build the where clause based on entity type
-  const whereClause = useMemo(() => {
-    if (entityType === 'blog') {
-      return { 'blog.id': entityId };
-    }
-    return { 'document.id': entityId };
-  }, [entityType, entityId]);
+  const { createVersion: doCreateVersion, updateVersion: doUpdateVersion } = useDocumentActions();
 
-  // Query all versions for this entity
-  const { data: versionsData, isLoading } = db.useQuery({
-    documentVersions: {
-      $: {
-        where: whereClause,
-      },
-      creator: {},
-    },
+  // Query all versions for this entity via facade
+  const isBlog = entityType === 'blog';
+  const { versions: docVersions, isLoading: docVersionsLoading } = useDocumentState({
+    documentId: !isBlog ? entityId : '',
+    includeVersions: !isBlog,
   });
-
-  const versions = (versionsData?.documentVersions || []) as EditorVersion[];
+  const { versions: blogVersions, isLoading: blogVersionsLoading } = useBlogState({
+    blogId: isBlog ? entityId : undefined,
+    includeVersions: isBlog,
+  });
+  const versionsData = isBlog ? blogVersions : docVersions;
+  const isLoading = isBlog ? blogVersionsLoading : docVersionsLoading;
+  const versions = versionsData as unknown as EditorVersion[];
   const sortedVersions = [...versions].sort((a, b) => b.versionNumber - a.versionNumber);
 
   // Filter versions based on search query
@@ -114,20 +112,16 @@ export function VersionControl({
       const nextVersionNumber =
         versions.length > 0 ? Math.max(...versions.map(v => v.versionNumber)) + 1 : 1;
 
-      const versionId = id();
-      const linkData = entityType === 'blog' ? { blog: entityId } : { document: entityId };
-
-      await db.transact([
-        tx.documentVersions[versionId]
-          .update({
-            versionNumber: nextVersionNumber,
-            title: versionTitle,
-            content: currentContent,
-            createdAt: Date.now(),
-            creationType: 'manual' as VersionCreationType,
-          })
-          .link({ ...linkData, creator: currentUserId }),
-      ]);
+      const versionId = crypto.randomUUID();
+      await doCreateVersion({
+        id: versionId,
+        version_number: nextVersionNumber,
+        change_summary: versionTitle,
+        content: currentContent,
+        document_id: entityType === 'blog' ? '' : entityId,
+        amendment_id: '',
+        blog_id: entityType === 'blog' ? entityId : '',
+      });
 
       toast.success(
         t('features.editor.versionControl.versionCreated').replace(
@@ -177,11 +171,10 @@ export function VersionControl({
     }
 
     try {
-      await db.transact([
-        tx.documentVersions[versionId].update({
-          title: editingTitle,
-        }),
-      ]);
+      await doUpdateVersion({
+        id: versionId,
+        change_summary: editingTitle,
+      });
       toast.success(t('features.editor.versionControl.titleUpdated'));
       setEditingVersionId(null);
       setEditingTitle('');

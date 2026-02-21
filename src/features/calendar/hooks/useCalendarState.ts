@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CalendarView } from '../types';
+import { CalendarView } from '../types/calendar.types';
 
 export const useCalendarState = () => {
   const [view, setView] = useState<CalendarView>('day');

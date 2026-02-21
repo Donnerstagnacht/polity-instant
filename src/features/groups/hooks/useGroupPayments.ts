@@ -2,31 +2,18 @@
  * Hook for managing group payments and financial calculations
  */
 
-import { useState, useMemo } from 'react';
-import db, { tx, id } from '../../../../db/db';
-import { toast } from 'sonner';
-import type { GroupPayment, FinancialSummary, ChartData } from '../types/group.types';
-import { notifyPaymentCreated, notifyPaymentDeleted } from '@/utils/notification-helpers';
+import { useState } from 'react';
+import type { GroupPayment } from '../types/group.types';
+import { sendNotificationFn } from '@/server/notifications';
+import { useGroupPaymentsData } from '@/zero/groups/useGroupState';
+import { usePaymentActions } from '@/zero/payments/usePaymentActions';
 
 export function useGroupPayments(groupId: string) {
   const [isLoading, setIsLoading] = useState(false);
+  const { payments: rawPayments, isLoading: isQuerying } = useGroupPaymentsData(groupId);
+  const { createPayment, deletePayment: deletePaymentAction } = usePaymentActions();
 
-  // Query payments
-  const { data, isLoading: isQuerying } = db.useQuery({
-    payments: {
-      $: {
-        where: {
-          or: [{ 'receiverGroup.id': groupId }, { 'payerGroup.id': groupId }],
-        },
-      },
-      receiverGroup: {},
-      payerGroup: {},
-      receiverUser: {},
-      payerUser: {},
-    },
-  });
-
-  const payments = (data?.payments || []) as any as GroupPayment[];
+  const payments = rawPayments as any as GroupPayment[];
 
   const addPayment = async (paymentData: {
     label: string;
@@ -43,51 +30,23 @@ export function useGroupPayments(groupId: string) {
   }) => {
     setIsLoading(true);
     try {
-      const paymentId = id();
+      const paymentId = crypto.randomUUID();
 
-      let transaction = tx.payments[paymentId].update({
+      await createPayment({
+        id: paymentId,
         label: paymentData.label,
         type: paymentData.type,
         amount: paymentData.amount,
-        createdAt: Date.now(),
+        payer_user_id: paymentData.payerUserId ?? '',
+        payer_group_id: paymentData.payerGroupId ?? '',
+        receiver_user_id: paymentData.receiverUserId ?? '',
+        receiver_group_id: paymentData.receiverGroupId ?? '',
       });
 
-      const links: any = {};
-      if (paymentData.payerUserId) links.payerUser = paymentData.payerUserId;
-      if (paymentData.payerGroupId) links.payerGroup = paymentData.payerGroupId;
-      if (paymentData.receiverUserId) links.receiverUser = paymentData.receiverUserId;
-      if (paymentData.receiverGroupId) links.receiverGroup = paymentData.receiverGroupId;
-
-      if (Object.keys(links).length > 0) {
-        transaction = transaction.link(links);
-      } else {
-        toast.error('Payment must have a payer and receiver');
-        return { success: false };
-      }
-
-      const transactions: any[] = [transaction];
-
-      // Send notifications to admins
-      if (paymentData.senderId && paymentData.groupName && paymentData.adminUserIds) {
-        paymentData.adminUserIds.forEach(adminId => {
-          if (adminId !== paymentData.senderId) {
-            const notificationTxs = notifyPaymentCreated({
-              senderId: paymentData.senderId!,
-              groupId,
-              groupName: paymentData.groupName!,
-              paymentDescription: paymentData.label,
-            });
-            transactions.push(...notificationTxs);
-          }
-        });
-      }
-
-      await db.transact(transactions);
-      toast.success('Payment added successfully!');
+      sendNotificationFn({ data: { helper: 'notifyPaymentCreated', params: { senderId: paymentData.senderId, groupId, groupName: paymentData.groupName } } }).catch(console.error)
       return { success: true, paymentId };
     } catch (error) {
       console.error('Failed to add payment:', error);
-      toast.error('Failed to add payment');
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -103,29 +62,12 @@ export function useGroupPayments(groupId: string) {
   ) => {
     setIsLoading(true);
     try {
-      const transactions: any[] = [tx.payments[paymentId].delete()];
+      await deletePaymentAction({ id: paymentId });
 
-      // Send notifications to admins
-      if (senderId && paymentLabel && groupName && adminUserIds) {
-        adminUserIds.forEach(adminId => {
-          if (adminId !== senderId) {
-            const notificationTxs = notifyPaymentDeleted({
-              senderId,
-              groupId,
-              groupName,
-              paymentDescription: paymentLabel,
-            });
-            transactions.push(...notificationTxs);
-          }
-        });
-      }
-
-      await db.transact(transactions);
-      toast.success('Payment deleted successfully!');
+      sendNotificationFn({ data: { helper: 'notifyPaymentDeleted', params: { senderId, groupId, groupName } } }).catch(console.error)
       return { success: true };
     } catch (error) {
       console.error('Failed to delete payment:', error);
-      toast.error('Failed to delete payment');;
       return { success: false, error };
     } finally {
       setIsLoading(false);

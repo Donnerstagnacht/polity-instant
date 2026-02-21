@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, ReactNode, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { db } from '../../../db/db';
+import { useNavigate, useLocation } from '@tanstack/react-router';
+import { useAuth } from '@/providers/auth-provider';
 import { Loader2 } from 'lucide-react';
 
 interface AuthGuardProps {
@@ -16,9 +16,9 @@ interface AuthGuardProps {
  * AuthGuard component for protecting routes based on authentication status
  */
 export function AuthGuard({ children, requireAuth = true, redirectTo, fallback }: AuthGuardProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const { user, isLoading } = db.useAuth();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const { user, loading: isLoading } = useAuth();
   const isAuthenticated = !!user;
   const [isMounted, setIsMounted] = useState(false);
   const [authInitialized, setAuthInitialized] = useState(false);
@@ -31,8 +31,8 @@ export function AuthGuard({ children, requireAuth = true, redirectTo, fallback }
   }, []);
 
   // Track auth initialization to avoid acting on transient states.
-  // db.useAuth() can briefly return {isLoading: false, user: null} before
-  // the IndexedDB token read completes, especially during re-render cascades
+  // useAuth() can briefly return {isLoading: false, user: null} before
+  // the token read completes, especially during re-render cascades
   // triggered by other state updates (e.g., mobile screen detection).
   useEffect(() => {
     if (authInitialized) return;
@@ -63,13 +63,13 @@ export function AuthGuard({ children, requireAuth = true, redirectTo, fallback }
     if (requireAuth && !isAuthenticated) {
       // User needs to be authenticated but isn't
       const destination = redirectTo || `/auth?redirect=${encodeURIComponent(pathname)}`;
-      router.push(destination);
+      navigate({ to: destination });
     } else if (!requireAuth && isAuthenticated) {
       // User should not be authenticated but is (e.g., on login page while logged in)
       const destination = redirectTo || '/';
-      router.push(destination);
+      navigate({ to: destination });
     }
-  }, [isAuthenticated, authInitialized, requireAuth, router, pathname, redirectTo, isMounted]);
+  }, [isAuthenticated, authInitialized, requireAuth, navigate, pathname, redirectTo, isMounted]);
 
   // Show loading spinner while checking auth status or before mount
   if (!authInitialized || !isMounted) {

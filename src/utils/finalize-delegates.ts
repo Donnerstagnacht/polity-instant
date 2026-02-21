@@ -3,7 +3,8 @@
  * Note: These functions should be called from server-side contexts (API routes with Admin SDK)
  */
 
-import { tx } from 'db/db';
+import { createClient } from '@supabase/supabase-js';
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 import {
   getDirectSubgroups,
   calculateDelegateAllocations,
@@ -19,11 +20,11 @@ import { notifyDelegatesFinalized } from './notification-helpers';
  * @param senderId - The ID of the user triggering the finalization (for notifications)
  * @returns Transaction chunks to execute
  */
-export function buildFinalizeDelegatesTransactions(eventData: {
+export async function buildFinalizeDelegatesTransactions(eventData: {
   event: any;
   groupRelationships: any[];
   parentGroupId: string;
-}, senderId?: string): any[] {
+}, senderId?: string): Promise<void> {
   const { event, groupRelationships, parentGroupId } = eventData;
 
   if (event.eventType !== 'delegate_conference') {
@@ -65,57 +66,48 @@ export function buildFinalizeDelegatesTransactions(eventData: {
     allocations
   );
 
-  // Build transaction chunks
-  const chunks: any[] = [];
-
   // 1. Update event to mark delegates as finalized
-  chunks.push(
-    tx.events[event.id].update({
-      delegatesFinalized: true,
-      updatedAt: new Date(),
+  await supabase
+    .from('event')
+    .update({
+      delegates_finalized: true,
+      updated_at: new Date().toISOString(),
     })
-  );
+    .eq('id', event.id);
 
   // 2. Create groupDelegateAllocations for each subgroup
-  allocations.forEach(allocation => {
+  for (const allocation of allocations) {
     const allocationId = `${event.id}_${allocation.groupId}`;
-    chunks.push(
-      tx.groupDelegateAllocations[allocationId].update({
-        allocatedDelegates: allocation.allocatedDelegates,
-        memberCount: allocation.memberCount,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-    );
-    chunks.push(
-      tx.groupDelegateAllocations[allocationId].link({
-        event: event.id,
-        group: allocation.groupId,
-      })
-    );
-  });
+    await supabase.from('group_delegate_allocation').upsert({
+      id: allocationId,
+      allocated_delegates: allocation.allocatedDelegates,
+      member_count: allocation.memberCount,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      event_id: event.id,
+      group_id: allocation.groupId,
+    });
+  }
 
   // 3. Update eventDelegates status
-  finalizedDelegates.forEach(({ id, status }) => {
-    chunks.push(
-      tx.eventDelegates[id].update({
+  for (const { id, status } of finalizedDelegates) {
+    await supabase
+      .from('event_delegate')
+      .update({
         status,
-        updatedAt: new Date(),
+        updated_at: new Date().toISOString(),
       })
-    );
-  });
+      .eq('id', id);
+  }
 
   // 4. Send notification to event participants
   if (senderId) {
-    const notificationTxs = notifyDelegatesFinalized({
+    await notifyDelegatesFinalized({
       senderId,
       eventId: event.id,
       eventTitle: event.title || 'Event',
     });
-    chunks.push(...notificationTxs);
   }
-
-  return chunks;
 }
 
 /**

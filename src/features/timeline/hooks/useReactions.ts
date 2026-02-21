@@ -5,7 +5,6 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
-import { db, tx, id } from 'db/db';
 
 export type ReactionType = 'support' | 'oppose' | 'interested';
 
@@ -50,7 +49,7 @@ export interface UseReactionsReturn {
  * Hook for managing reactions on an entity
  *
  * Note: This uses mock state for now. When the reactions schema is added,
- * this will use InstantDB queries.
+ * this will use Zero queries.
  */
 export function useReactions(options: UseReactionsOptions): UseReactionsReturn {
   const { entityId, entityType, userId } = options;
@@ -97,16 +96,7 @@ export function useReactions(options: UseReactionsOptions): UseReactionsReturn {
           }));
         }
 
-        // In a real implementation, this would persist to the database:
-        // await db.transact(
-        //   tx.reactions[id()].update({
-        //     userId,
-        //     entityId,
-        //     entityType,
-        //     reactionType: type,
-        //     createdAt: new Date(),
-        //   })
-        // );
+        // Known limitation: Reactions table not in Zero schema. Persisted when schema is extended.
       } finally {
         setIsLoading(false);
       }
@@ -127,8 +117,7 @@ export function useReactions(options: UseReactionsOptions): UseReactionsReturn {
         total: Math.max(0, prev.total - 1),
       }));
 
-      // In a real implementation:
-      // await db.transact(tx.reactions[existingReactionId].delete());
+      // Known limitation: Reactions table not in Zero schema. Persisted when schema is extended.
     } finally {
       setIsLoading(false);
     }
@@ -146,28 +135,5 @@ export function useReactions(options: UseReactionsOptions): UseReactionsReturn {
   };
 }
 
-/**
- * Format reaction count for display
- */
-export function formatReactionCount(count: number): string {
-  if (count < 1000) return count.toString();
-  if (count < 10000) return `${(count / 1000).toFixed(1)}K`;
-  if (count < 1000000) return `${Math.floor(count / 1000)}K`;
-  return `${(count / 1000000).toFixed(1)}M`;
-}
-
-/**
- * Get reaction icon emoji
- */
-export function getReactionEmoji(type: ReactionType): string {
-  switch (type) {
-    case 'support':
-      return '👍';
-    case 'oppose':
-      return '👎';
-    case 'interested':
-      return '🤔';
-    default:
-      return '👍';
-  }
-}
+// Re-export pure helpers from logic layer
+export { formatReactionCount, getReactionEmoji } from '../logic/reaction-helpers';

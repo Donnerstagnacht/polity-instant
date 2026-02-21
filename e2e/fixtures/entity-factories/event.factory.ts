@@ -5,8 +5,8 @@
  */
 
 import { FactoryBase } from './factory-base';
-import { adminTransact, tx } from '../admin-db';
-import { DEFAULT_EVENT_ROLES } from '../../../db/rbac/constants';
+import { adminUpsert } from '../admin-db';
+import { DEFAULT_EVENT_ROLES } from '../../../src/zero/rbac/constants';
 
 export interface CreateEventOptions {
   id?: string;
@@ -40,106 +40,99 @@ export class EventFactory extends FactoryBase {
     this._counter++;
     const eventId = overrides.id ?? this.generateId();
     const title = overrides.title ?? `E2E Event ${this._counter}`;
-    const now = new Date();
+    const now = new Date().toISOString();
     const startDate = overrides.startDate ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
     const endDate = overrides.endDate ?? new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString();
 
     const organizerRoleId = this.generateId();
     const participantRoleId = this.generateId();
-    const txns: any[] = [];
 
     // Create event entity
-    const eventTx = tx.events[eventId].update({
+    await adminUpsert('event', {
+      id: eventId,
       title,
       description: overrides.description ?? `Test event ${this._counter}`,
-      startDate,
-      endDate,
-      isPublic: overrides.isPublic ?? true,
+      start_date: startDate,
+      end_date: endDate,
+      is_public: overrides.isPublic ?? true,
       visibility: overrides.visibility ?? 'public',
-      location: overrides.location ?? '',
       status: overrides.status ?? 'upcoming',
-      eventType: overrides.eventType ?? 'open_assembly',
-      createdAt: now,
-      updatedAt: now,
+      event_type: overrides.eventType ?? 'open_assembly',
+      group_id: overrides.groupId ?? null,
+      creator_id: organizerId,
+      created_at: now,
+      updated_at: now,
     });
-
-    if (overrides.groupId) {
-      txns.push(eventTx.link({ organizer: organizerId, group: overrides.groupId }));
-      this.trackLink('events', eventId, 'group', overrides.groupId);
-    } else {
-      txns.push(eventTx.link({ organizer: organizerId }));
-    }
-    this.trackEntity('events', eventId);
-    this.trackLink('events', eventId, 'organizer', organizerId);
+    this.trackEntity('event', eventId);
 
     // Create Organizer role
-    const orgTemplate = DEFAULT_EVENT_ROLES.find(r => r.name === 'Organizer');
-    txns.push(
-      tx.roles[organizerRoleId]
-        .update({
-          name: 'Organizer',
-          description: 'Event organizer with full permissions',
-          scope: 'event',
-          createdAt: now,
-          updatedAt: now,
-        })
-        .link({ event: eventId })
-    );
-    this.trackEntity('roles', organizerRoleId);
-    this.trackLink('roles', organizerRoleId, 'event', eventId);
+    await adminUpsert('role', {
+      id: organizerRoleId,
+      name: 'Organizer',
+      description: 'Event organizer with full permissions',
+      scope: 'event',
+      event_id: eventId,
+      created_at: now,
+    });
+    this.trackEntity('role', organizerRoleId);
 
     // Create Participant role
-    txns.push(
-      tx.roles[participantRoleId]
-        .update({
-          name: 'Participant',
-          description: 'Regular event participant',
-          scope: 'event',
-          createdAt: now,
-          updatedAt: now,
-        })
-        .link({ event: eventId })
-    );
-    this.trackEntity('roles', participantRoleId);
-    this.trackLink('roles', participantRoleId, 'event', eventId);
+    await adminUpsert('role', {
+      id: participantRoleId,
+      name: 'Participant',
+      description: 'Regular event participant',
+      scope: 'event',
+      event_id: eventId,
+      created_at: now,
+    });
+    this.trackEntity('role', participantRoleId);
 
     // Create action rights for Organizer role
+    const orgTemplate = DEFAULT_EVENT_ROLES.find(r => r.name === 'Organizer');
     if (orgTemplate) {
-      for (const perm of orgTemplate.permissions) {
+      const rights = orgTemplate.permissions.map(perm => {
         const rightId = this.generateId();
-        txns.push(
-          tx.actionRights[rightId]
-            .update({ resource: perm.resource, action: perm.action })
-            .link({ roles: organizerRoleId, event: eventId })
-        );
-        this.trackEntity('actionRights', rightId);
-      }
+        this.trackEntity('action_right', rightId);
+        return {
+          id: rightId,
+          resource: perm.resource,
+          action: perm.action,
+          role_id: organizerRoleId,
+          event_id: eventId,
+        };
+      });
+      await adminUpsert('action_right', rights);
     }
 
     // Create action rights for Participant role
     const partTemplate = DEFAULT_EVENT_ROLES.find(r => r.name === 'Participant');
     if (partTemplate) {
-      for (const perm of partTemplate.permissions) {
+      const rights = partTemplate.permissions.map(perm => {
         const rightId = this.generateId();
-        txns.push(
-          tx.actionRights[rightId]
-            .update({ resource: perm.resource, action: perm.action })
-            .link({ roles: participantRoleId, event: eventId })
-        );
-        this.trackEntity('actionRights', rightId);
-      }
+        this.trackEntity('action_right', rightId);
+        return {
+          id: rightId,
+          resource: perm.resource,
+          action: perm.action,
+          role_id: participantRoleId,
+          event_id: eventId,
+        };
+      });
+      await adminUpsert('action_right', rights);
     }
 
     // Add organizer as event participant
     const orgParticipantId = this.generateId();
-    txns.push(
-      tx.eventParticipants[orgParticipantId]
-        .update({ status: 'confirmed', createdAt: now, visibility: 'public' })
-        .link({ event: eventId, user: organizerId, role: organizerRoleId })
-    );
-    this.trackEntity('eventParticipants', orgParticipantId);
-
-    await adminTransact(txns);
+    await adminUpsert('event_participant', {
+      id: orgParticipantId,
+      event_id: eventId,
+      user_id: organizerId,
+      role_id: organizerRoleId,
+      status: 'confirmed',
+      visibility: 'public',
+      created_at: now,
+    });
+    this.trackEntity('event_participant', orgParticipantId);
 
     return { id: eventId, title, organizerRoleId, participantRoleId };
   }
@@ -154,12 +147,16 @@ export class EventFactory extends FactoryBase {
     status: string = 'confirmed'
   ): Promise<string> {
     const participantId = this.generateId();
-    await adminTransact([
-      tx.eventParticipants[participantId]
-        .update({ status, createdAt: new Date(), visibility: 'public' })
-        .link({ event: eventId, user: userId, role: roleId }),
-    ]);
-    this.trackEntity('eventParticipants', participantId);
+    await adminUpsert('event_participant', {
+      id: participantId,
+      event_id: eventId,
+      user_id: userId,
+      role_id: roleId,
+      status,
+      visibility: 'public',
+      created_at: new Date().toISOString(),
+    });
+    this.trackEntity('event_participant', participantId);
     return participantId;
   }
 
@@ -180,28 +177,22 @@ export class EventFactory extends FactoryBase {
     } = {}
   ): Promise<string> {
     const agendaItemId = overrides.id ?? this.generateId();
-    const now = new Date();
+    const now = new Date().toISOString();
 
-    const agendaTx = tx.agendaItems[agendaItemId]
-      .update({
-        title: overrides.title ?? 'Test Agenda Item',
-        description: overrides.description ?? '',
-        type: overrides.type ?? 'discussion',
-        status: overrides.status ?? 'pending',
-        order: overrides.order ?? 0,
-        createdAt: now,
-        updatedAt: now,
-      })
-      .link({ event: eventId, creator: creatorId });
-
-    const txns: any[] = [agendaTx];
-
-    if (overrides.amendmentId) {
-      txns.push(tx.agendaItems[agendaItemId].link({ amendment: overrides.amendmentId }));
-    }
-
-    await adminTransact(txns);
-    this.trackEntity('agendaItems', agendaItemId);
+    await adminUpsert('agenda_item', {
+      id: agendaItemId,
+      event_id: eventId,
+      creator_id: creatorId,
+      amendment_id: overrides.amendmentId ?? null,
+      title: overrides.title ?? 'Test Agenda Item',
+      description: overrides.description ?? '',
+      type: overrides.type ?? 'discussion',
+      status: overrides.status ?? 'pending',
+      order_index: overrides.order ?? 0,
+      created_at: now,
+      updated_at: now,
+    });
+    this.trackEntity('agenda_item', agendaItemId);
     return agendaItemId;
   }
 }

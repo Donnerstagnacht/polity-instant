@@ -1,13 +1,11 @@
 import type { NavigationItem } from '@/navigation/types/navigation.types';
 
-// Next.js router type interface
-interface NextRouter {
-  push: (url: string) => void;
-}
+// TanStack Router navigate function type
+type NavigateFn = (opts: { to: string }) => void;
 
 // This function factory creates unauthenticated navigation items with router integration
 export const createNavItemsUnauthenticated = (
-  router: NextRouter,
+  navigate: NavigateFn,
   t?: (key: string) => string // Optional translation function
 ): NavigationItem[] => {
   return [
@@ -16,42 +14,42 @@ export const createNavItemsUnauthenticated = (
       icon: 'Home',
       label: t ? t('navigation.primary.home') : 'Home',
       href: '/',
-      onClick: () => router.push('/'),
+      onClick: () => navigate({ to: '/' }),
     },
     {
       id: 'features',
       icon: 'Sparkles',
       label: t ? t('navigation.primary.features') : 'Features',
       href: '/features',
-      onClick: () => router.push('/features'),
+      onClick: () => navigate({ to: '/features' }),
     },
     {
       id: 'solutions',
       icon: 'Target',
       label: t ? t('navigation.primary.solutions') : 'Solutions',
       href: '/solutions',
-      onClick: () => router.push('/solutions'),
+      onClick: () => navigate({ to: '/solutions' }),
     },
     {
       id: 'pricing',
       icon: 'CreditCard',
       label: t ? t('navigation.primary.pricing') : 'Pricing',
       href: '/pricing',
-      onClick: () => router.push('/pricing'),
+      onClick: () => navigate({ to: '/pricing' }),
     },
     {
       id: 'support',
       icon: 'Heart',
       label: t ? t('navigation.primary.support') : 'Support',
       href: '/support',
-      onClick: () => router.push('/support'),
+      onClick: () => navigate({ to: '/support' }),
     },
     {
       id: 'auth',
       icon: 'User',
       label: 'Login',
       href: '/auth',
-      onClick: () => router.push('/auth'),
+      onClick: () => navigate({ to: '/auth' }),
     },
   ];
 };

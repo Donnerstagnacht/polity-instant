@@ -4,7 +4,10 @@
  * Supports the Pinterest-style timeline reaction system (support, oppose, interested, like, celebrate)
  */
 
-import { id, tx } from '@instantdb/admin';
+import { id } from '../helpers/id.helper';
+import { tx } from '../helpers/compat';
+import { batchTransact } from '../helpers/transaction.helpers';
+import type { InsertOp } from '../helpers/transaction.helpers';
 import type { EntitySeeder, SeedContext } from '../types/seeder.types';
 import { randomInt, randomItem } from '../helpers/random.helpers';
 
@@ -47,7 +50,7 @@ export const reactionsSeeder: EntitySeeder = {
     }
 
     console.log('Seeding reactions for timeline events...');
-    const transactions = [];
+    const transactions: InsertOp[] = [];
     const reactionIds: string[] = [];
 
     // Initialize link counters
@@ -124,7 +127,7 @@ export const reactionsSeeder: EntitySeeder = {
       const batchSize = 50;
       for (let i = 0; i < transactions.length; i += batchSize) {
         const batch = transactions.slice(i, i + batchSize);
-        await db.transact(batch);
+        await batchTransact(db, batch);
       }
     }
 

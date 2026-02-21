@@ -3,7 +3,10 @@
  * Seeds comprehensive subscriptions and memberships for Tobias test user
  */
 
-import { id, tx } from '@instantdb/admin';
+import { id } from '../helpers/id.helper';
+import { tx } from '../helpers/compat';
+import { batchTransact } from '../helpers/transaction.helpers';
+import type { InsertOp } from '../helpers/transaction.helpers';
 import { faker } from '@faker-js/faker';
 import type { EntitySeeder, SeedContext } from '../types/seeder.types';
 import { SEED_CONFIG } from '../config/seed.config';
@@ -21,7 +24,7 @@ export const tobiasSubscriptionsSeeder: EntitySeeder = {
     const blogIds = context.blogIds || [];
 
     console.log('Seeding comprehensive subscriptions and memberships for Tobias...');
-    const transactions = [];
+    const transactions: InsertOp[] = [];
     const tobiasUserId = SEED_CONFIG.tobiasUserId;
 
     // Initialize link counters
@@ -102,7 +105,7 @@ export const tobiasSubscriptionsSeeder: EntitySeeder = {
       const batchSize = 20;
       for (let i = 0; i < transactions.length; i += batchSize) {
         const batch = transactions.slice(i, i + batchSize);
-        await db.transact(batch);
+        await batchTransact(db, batch);
       }
     }
 

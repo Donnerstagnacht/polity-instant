@@ -1,16 +1,17 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useTranslation } from '@/hooks/use-translation';
-import { useOnboarding, type OnboardingStep } from './useOnboarding';
+import { useOnboarding, type OnboardingStep } from '../../hooks/useOnboarding';
 import { NameStep } from './NameStep';
 import { GroupSearchStep } from './GroupSearchStep';
 import { MembershipConfirmStep } from './MembershipConfirmStep';
 import { SummaryStep } from './SummaryStep';
 import { AriaKaiStep } from './AriaKaiStep';
-import { db, tx } from '../../../../../db/db';
+import { useUserActions } from '@/zero/users/useUserActions';
+import { useAuth } from '@/providers/auth-provider';
 
 interface OnboardingWizardProps {
   userId: string;
@@ -30,8 +31,9 @@ export function OnboardingWizard({ userId, userEmail, onComplete }: OnboardingWi
   console.log('🎯 OnboardingWizard RENDERING:', { userId, userEmail, onComplete: !!onComplete });
   
   const { t } = useTranslation();
-  const router = useRouter();
-  const { user } = db.useAuth();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { updateProfile } = useUserActions();
 
   const {
     step,
@@ -82,11 +84,9 @@ export function OnboardingWizard({ userId, userEmail, onComplete }: OnboardingWi
     if (data.dontShowAriaKaiAgain && user?.id) {
       console.log('💾 Saving assistantIntroduction preference');
       try {
-        await db.transact(
-          tx.$users[user.id].update({
-            assistantIntroduction: false,
-          })
-        );
+        await updateProfile({
+          assistant_introduction: false,
+        });
         console.log('✅ assistantIntroduction preference saved');
       } catch (error) {
         console.error('❌ Error saving preference:', error);
@@ -100,7 +100,7 @@ export function OnboardingWizard({ userId, userEmail, onComplete }: OnboardingWi
     console.log('🏠 handleGoToProfile called');
     try {
       console.log('✅ Redirecting to /user/' + userId);
-      router.push(`/user/${userId}`);
+      navigate({ to: `/user/${userId}` });
       onComplete();
       console.log('✅ onComplete called');
     } catch (error) {
@@ -117,7 +117,7 @@ export function OnboardingWizard({ userId, userEmail, onComplete }: OnboardingWi
 
     try {
       console.log('✅ Redirecting to group:', data.selectedGroup.id);
-      router.push(`/group/${data.selectedGroup.id}`);
+      navigate({ to: `/group/${data.selectedGroup.id}` });
       onComplete();
       console.log('✅ onComplete called');
     } catch (error) {
@@ -129,7 +129,7 @@ export function OnboardingWizard({ userId, userEmail, onComplete }: OnboardingWi
     console.log('💬 handleGoToAssistant called');
     try {
       console.log('✅ Redirecting to messages with AriaKai');
-      router.push('/messages?openAriaKai=true');
+      navigate({ to: '/messages?openAriaKai=true' });
       onComplete();
       console.log('✅ onComplete called');
     } catch (error) {

@@ -21,10 +21,10 @@ export { useTimelineMode, type TimelineMode } from './hooks/useTimelineMode';
 export { useIsMobile, useBreakpoint, useResponsiveValue, BREAKPOINTS } from './hooks/useIsMobile';
 export {
   useInfiniteTimeline,
-  InfiniteScrollSentinel,
   type UseInfiniteTimelineOptions,
   type UseInfiniteTimelineReturn,
 } from './hooks/useInfiniteTimeline';
+export { InfiniteScrollSentinel } from './ui/InfiniteScrollSentinel';
 export {
   useTimelineFilters,
   type TimelineFilters,
@@ -33,7 +33,7 @@ export {
   type EngagementFilter,
   ALL_CONTENT_TYPES,
 } from './hooks/useTimelineFilters';
-export { useDecisionTerminal, type UseDecisionTerminalReturn } from './hooks/useDecisionTerminal';
+export { useDecisionTerminal, type UseDecisionTerminalReturn } from '@/features/decision-terminal/hooks/useDecisionTerminal';
 export {
   useSubscribedTimeline,
   type TimelineItem,
@@ -45,12 +45,12 @@ export {
   getFlashClasses,
   type FlashState,
   type UseDecisionFlashReturn,
-} from './hooks/useDecisionFlash';
+} from '@/features/decision-terminal/hooks/useDecisionFlash';
 export {
   useTerminalSubscription,
   useSingleDecisionSubscription,
   type UseTerminalSubscriptionReturn,
-} from './hooks/useTerminalSubscription';
+} from '@/features/decision-terminal/hooks/useTerminalSubscription';
 export {
   useReactions,
   formatReactionCount,
@@ -63,20 +63,22 @@ export {
 // Card components
 export * from './ui/cards';
 
-// Terminal components
-export * from './ui/terminal';
+// Terminal components (re-exported from decision-terminal feature)
+export * from '@/features/decision-terminal/ui';
 
 // Constants
 export * from './constants/content-type-config';
 
-// Utils
-export * from './utils/gradient-assignment';
-export * from './utils/decision-status';
-export * from './utils/trend-calculation';
-export * from './utils/content-reasons';
-export * from './utils/content-scoring';
+// Logic (pure functions)
+export * from './logic/gradient-assignment';
+export * from '@/features/decision-terminal/logic/decision-status';
+export * from '@/features/decision-terminal/logic/trend-calculation';
+export * from './logic/content-reasons';
+export * from './logic/content-scoring';
 export * from './utils/public-content-query';
 export * from './utils/own-content-query';
-export * from './utils/video-thumbnail';
-export * from './utils/image-optimization';
-export * from './utils/accessibility';
+export * from './logic/video-thumbnail';
+export * from './logic/image-optimization';
+export * from './constants/accessibility';
+export { useScreenReaderAnnounce, useCardListKeyboardNav, usePrefersReducedMotion } from './hooks/useAccessibility';
+export { FocusRing, SkipToTimeline, TimelineRegion } from './ui/AccessibilityComponents';

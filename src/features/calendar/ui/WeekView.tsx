@@ -1,11 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { cn } from '@/utils/utils';
 import { useTranslation } from '@/hooks/use-translation';
-import { CalendarEvent } from '../types';
-import { getWeekDays, isSameDay, formatTime } from '../utils/dateUtils';
-import { getBaseEventId } from '../utils/eventIdUtils';
+import { CalendarEvent } from '../types/calendar.types';
+import { getWeekDays, isSameDay, formatTime } from '../logic/dateUtils';
+import { getBaseEventId } from '../logic/eventIdUtils';
 
 interface WeekViewProps {
   selectedDate: Date;
@@ -14,7 +14,7 @@ interface WeekViewProps {
 }
 
 export const WeekView = ({ selectedDate, events, allEvents }: WeekViewProps) => {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { t, language } = useTranslation();
   const weekDays = getWeekDays(selectedDate);
 
@@ -73,9 +73,9 @@ export const WeekView = ({ selectedDate, events, allEvents }: WeekViewProps) => 
                         onClick={() => {
                           const baseEventId = getBaseEventId(event.id);
                           if (event.isMeeting) {
-                            router.push(`/meet/${baseEventId}`);
+                            navigate({ to: `/meet/${baseEventId}` });
                           } else {
-                            router.push(`/event/${baseEventId}`);
+                            navigate({ to: `/event/${baseEventId}` });
                           }
                         }}
                       >

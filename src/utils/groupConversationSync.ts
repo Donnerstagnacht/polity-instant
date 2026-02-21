@@ -1,4 +1,5 @@
-import { db, tx, id } from '../../db/db';
+import { createClient } from '@supabase/supabase-js';
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
 /**
  * Add a user to a group's conversation
@@ -7,25 +8,13 @@ import { db, tx, id } from '../../db/db';
  */
 export async function addUserToGroupConversation(groupId: string, userId: string) {
   try {
-    const conversationQuery = await db.queryOnce({
-      conversations: {
-        $: {
-          where: {
-            'group.id': groupId,
-            type: 'group',
-          },
-        },
-        participants: {
-          $: {
-            where: {
-              'user.id': userId,
-            },
-          },
-        },
-      },
-    });
+    const { data: conversations } = await supabase
+      .from('conversation')
+      .select('*, conversation_participant(*)')
+      .eq('group_id', groupId)
+      .eq('type', 'group');
 
-    const groupConversation = conversationQuery?.data?.conversations?.[0];
+    const groupConversation = conversations?.[0];
 
     if (!groupConversation) {
       console.warn(`No conversation found for group ${groupId}. User ${userId} was not added.`);
@@ -33,23 +22,26 @@ export async function addUserToGroupConversation(groupId: string, userId: string
     }
 
     // Check if user is already a participant
-    const existingParticipant = groupConversation?.participants?.[0];
+    const existingParticipant = groupConversation.conversation_participant?.find(
+      (p: any) => p.user_id === userId
+    );
     if (existingParticipant) {
       console.log('User is already a participant in the conversation');
       return;
     }
 
-    const conversationParticipantId = id();
-    await db.transact([
-      tx.conversationParticipants[conversationParticipantId]
-        .update({
-          joinedAt: new Date().toISOString(),
-        })
-        .link({
-          conversation: groupConversation.id,
-          user: userId,
-        }),
-    ]);
+    const conversationParticipantId = crypto.randomUUID();
+    const { error } = await supabase.from('conversation_participant').insert({
+      id: conversationParticipantId,
+      joined_at: new Date().toISOString(),
+      conversation_id: groupConversation.id,
+      user_id: userId,
+    });
+
+    if (error) {
+      console.error('Failed to insert conversation participant:', error);
+      return;
+    }
 
     console.log(`Added user ${userId} to group conversation ${groupConversation.id}`);
   } catch (error) {
@@ -64,29 +56,19 @@ export async function addUserToGroupConversation(groupId: string, userId: string
  */
 export async function removeUserFromGroupConversation(groupId: string, userId: string) {
   try {
-    const conversationQuery = await db.queryOnce({
-      conversations: {
-        $: {
-          where: {
-            'group.id': groupId,
-            type: 'group',
-          },
-        },
-        participants: {
-          $: {
-            where: {
-              'user.id': userId,
-            },
-          },
-        },
-      },
-    });
+    const { data: conversations } = await supabase
+      .from('conversation')
+      .select('*, conversation_participant(*)')
+      .eq('group_id', groupId)
+      .eq('type', 'group');
 
-    const groupConversation = conversationQuery?.data?.conversations?.[0];
-    const participant = groupConversation?.participants?.[0];
+    const groupConversation = conversations?.[0];
+    const participant = groupConversation?.conversation_participant?.find(
+      (p: any) => p.user_id === userId
+    );
 
     if (participant) {
-      await db.transact([tx.conversationParticipants[participant.id].delete()]);
+      await supabase.from('conversation_participant').delete().eq('id', participant.id);
     }
   } catch (error) {
     console.error('Failed to remove user from group conversation:', error);
@@ -100,26 +82,22 @@ export async function removeUserFromGroupConversation(groupId: string, userId: s
  */
 export async function syncGroupNameToConversation(groupId: string, newName: string) {
   try {
-    const conversationQuery = await db.queryOnce({
-      conversations: {
-        $: {
-          where: {
-            'group.id': groupId,
-            type: 'group',
-          },
-        },
-      },
-    });
+    const { data: conversations } = await supabase
+      .from('conversation')
+      .select('*')
+      .eq('group_id', groupId)
+      .eq('type', 'group');
 
-    const groupConversation = conversationQuery?.data?.conversations?.[0];
+    const groupConversation = conversations?.[0];
 
     if (groupConversation) {
-      await db.transact([
-        tx.conversations[groupConversation.id].update({
+      await supabase
+        .from('conversation')
+        .update({
           name: newName,
-          lastMessageAt: new Date().toISOString(), // Bump to show in list
-        }),
-      ]);
+          last_message_at: new Date().toISOString(),
+        })
+        .eq('id', groupConversation.id);
     }
   } catch (error) {
     console.error('Failed to sync group name to conversation:', error);
@@ -132,35 +110,29 @@ export async function syncGroupNameToConversation(groupId: string, newName: stri
  */
 export async function deleteGroupConversation(groupId: string) {
   try {
-    const conversationQuery = await db.queryOnce({
-      conversations: {
-        $: {
-          where: {
-            'group.id': groupId,
-            type: 'group',
-          },
-        },
-        participants: {},
-        messages: {},
-      },
-    });
+    const { data: conversations } = await supabase
+      .from('conversation')
+      .select('*, conversation_participant(*), message(*)')
+      .eq('group_id', groupId)
+      .eq('type', 'group');
 
-    const groupConversation = conversationQuery?.data?.conversations?.[0];
+    const groupConversation = conversations?.[0];
 
     if (groupConversation) {
-      const messageTransactions =
-        groupConversation.messages?.map((msg: any) => tx.messages[msg.id].delete()) || [];
+      // Delete messages
+      if (groupConversation.message?.length) {
+        const messageIds = groupConversation.message.map((msg: any) => msg.id);
+        await supabase.from('message').delete().in('id', messageIds);
+      }
 
-      const participantTransactions =
-        groupConversation.participants?.map((p: any) =>
-          tx.conversationParticipants[p.id].delete()
-        ) || [];
+      // Delete participants
+      if (groupConversation.conversation_participant?.length) {
+        const participantIds = groupConversation.conversation_participant.map((p: any) => p.id);
+        await supabase.from('conversation_participant').delete().in('id', participantIds);
+      }
 
-      await db.transact([
-        ...messageTransactions,
-        ...participantTransactions,
-        tx.conversations[groupConversation.id].delete(),
-      ]);
+      // Delete conversation
+      await supabase.from('conversation').delete().eq('id', groupConversation.id);
     }
   } catch (error) {
     console.error('Failed to delete group conversation:', error);

@@ -17,7 +17,7 @@ import { VersionComparisonView } from './VersionComparisonView.tsx';
 import { CheckCircle, XCircle, GitCompare, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
-import { GRADIENTS } from '@/features/user/state/gradientColors';
+import { GRADIENTS } from '@/features/users/state/gradientColors';
 
 interface SupportConfirmationPanelProps {
   groupId: string;
@@ -96,7 +96,7 @@ export function SupportConfirmationPanel({ groupId }: SupportConfirmationPanelPr
                 <CardDescription className="mt-1 flex items-center gap-2">
                   <Clock className="h-4 w-4" />
                   {t('features.amendments.supportConfirmation.requestedAgo', {
-                    time: formatDistanceToNow(new Date(confirmation.createdAt), {
+                    time: formatDistanceToNow(new Date(confirmation.created_at), {
                       addSuffix: true,
                       locale: dateLocale,
                     }),
@@ -105,7 +105,7 @@ export function SupportConfirmationPanel({ groupId }: SupportConfirmationPanelPr
               </div>
               <Badge variant="outline">
                 {t('features.amendments.supportConfirmation.changeRequest')}:{' '}
-                {confirmation.changeRequest?.title || 'Change Request'}
+                {confirmation.amendment?.title || 'Change Request'}
               </Badge>
             </div>
           </CardHeader>
@@ -134,9 +134,9 @@ export function SupportConfirmationPanel({ groupId }: SupportConfirmationPanelPr
             {/* Version comparison */}
             {selectedConfirmation === confirmation.id && (
               <VersionComparisonView
-                originalVersion={confirmation.originalVersion}
-                currentVersion={confirmation.amendment?.document?.content}
-                changeRequest={confirmation.changeRequest}
+                originalVersion={undefined}
+                currentVersion={confirmation.amendment?.documents?.[0]?.content}
+                changeRequest={undefined}
               />
             )}
 

@@ -1,50 +1,50 @@
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { useCallback } from 'react';
 import { Notification } from '../types/notification.types';
-import { useNotificationMutations } from './useNotificationData';
+import { useNotificationActions as useZeroNotificationActions } from '@/zero/notifications/useNotificationActions';
 
 export function useNotificationActions() {
-  const router = useRouter();
-  const { markAsRead, deleteNotification: deleteNotificationMutation } = useNotificationMutations();
+  const navigate = useNavigate();
+  const { markRead, deleteNotification } = useZeroNotificationActions();
 
   const handleNotificationClick = useCallback(
     async (notification: Notification) => {
       // Mark as read if not already
       if (!notification.isRead) {
-        await markAsRead(notification.id);
+        await markRead({ id: notification.id });
       }
 
       // Navigate based on related entity
       if (notification.actionUrl) {
-        router.push(notification.actionUrl);
+        navigate({ to: notification.actionUrl });
       } else if (notification.relatedEntityType) {
         switch (notification.relatedEntityType) {
           case 'group':
             if (notification.relatedGroup?.id) {
-              router.push(`/group/${notification.relatedGroup.id}`);
+              navigate({ to: `/group/${notification.relatedGroup.id}` });
             }
             break;
           case 'event':
             if (notification.relatedEvent?.id) {
-              router.push(`/event/${notification.relatedEvent.id}`);
+              navigate({ to: `/event/${notification.relatedEvent.id}` });
             }
             break;
           case 'user':
             if (notification.relatedUser?.id) {
-              router.push(`/user/${notification.relatedUser.id}`);
+              navigate({ to: `/user/${notification.relatedUser.id}` });
             }
             break;
           case 'message':
-            router.push('/messages');
+            navigate({ to: '/messages' });
             break;
           case 'blog':
             if (notification.relatedBlog?.id) {
-              router.push(`/blog/${notification.relatedBlog.id}`);
+              navigate({ to: `/blog/${notification.relatedBlog.id}` });
             }
             break;
           case 'amendment':
             if (notification.relatedAmendment?.id) {
-              router.push(`/amendment/${notification.relatedAmendment.id}`);
+              navigate({ to: `/amendment/${notification.relatedAmendment.id}` });
             }
             break;
           default:
@@ -52,15 +52,15 @@ export function useNotificationActions() {
         }
       }
     },
-    [markAsRead, router]
+    [markRead, navigate]
   );
 
   const handleDeleteNotification = useCallback(
     async (notificationId: string, e: React.MouseEvent) => {
       e.stopPropagation();
-      await deleteNotificationMutation(notificationId);
+      await deleteNotification({ id: notificationId });
     },
-    [deleteNotificationMutation]
+    [deleteNotification]
   );
 
   return {

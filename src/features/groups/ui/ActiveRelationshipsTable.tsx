@@ -27,7 +27,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Network, Pencil, Trash2 } from 'lucide-react';
-import { formatRights } from '@/components/shared/RightFilters';
+import { formatRights } from '@/features/network/ui/RightFilters';
 import { LinkGroupDialog } from '@/components/groups/LinkGroupDialog';
 import { PermissionGuard } from '@/features/auth/PermissionGuard';
 import { useState } from 'react';

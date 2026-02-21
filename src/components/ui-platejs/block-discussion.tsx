@@ -378,7 +378,7 @@ const useResolvedDiscussion = (commentNodes: NodeEntry<TCommentText>[], blockPat
 
       return;
     }
-    // TODO: fix throw error
+    // Fallback: set path when previousPath is not a valid path
     setOption('uniquePathMap', new Map(map).set(id, blockPath));
   });
 

@@ -1,11 +1,13 @@
-import { id, tx } from '@instantdb/admin';
+import { id } from '../helpers/id.helper';
+import { tx } from '../helpers/compat';
+import type { InsertOp } from '../helpers/transaction.helpers';
 import { faker } from '@faker-js/faker';
 import { EntitySeeder, SeedContext } from '../types/seeder.types';
 import { SEED_CONFIG, GROUP_HASHTAGS } from '../config/seed.config';
 import { randomInt, randomItem, randomItems, randomVisibility } from '../helpers/random.helpers';
 import { batchTransact } from '../helpers/transaction.helpers';
-import { createHashtagTransactions } from '../helpers/entity.helpers';
-import { DEFAULT_GROUP_ROLES } from '../../db/rbac/constants';
+import { createHashtagRows } from '../helpers/entity.helpers';
+import { DEFAULT_GROUP_ROLES } from '../../src/zero/rbac/constants';
 
 export const groupsSeeder: EntitySeeder = {
   name: 'groups',
@@ -16,7 +18,7 @@ export const groupsSeeder: EntitySeeder = {
     const { db, userIds } = context;
     const groupIds: string[] = [];
     const conversationIds: string[] = [...(context.conversationIds || [])];
-    const transactions = [];
+    const transactions: InsertOp[] = [];
     const mainUserId = SEED_CONFIG.mainTestUserId;
     const tobiasUserId = SEED_CONFIG.tobiasUserId;
 
@@ -325,7 +327,7 @@ export const groupsSeeder: EntitySeeder = {
 
       // Add hashtags for this group
       const groupHashtags = randomItems(GROUP_HASHTAGS, randomInt(3, 5));
-      transactions.push(...createHashtagTransactions(groupId, 'group', groupHashtags));
+      transactions.push(...createHashtagRows(groupId, 'group', groupHashtags));
     }
 
     // Create random additional groups
@@ -492,7 +494,7 @@ export const groupsSeeder: EntitySeeder = {
 
       // Add hashtags
       const groupHashtags = randomItems(GROUP_HASHTAGS, randomInt(2, 4));
-      transactions.push(...createHashtagTransactions(groupId, 'group', groupHashtags));
+      transactions.push(...createHashtagRows(groupId, 'group', groupHashtags));
     }
 
     // Batch transact

@@ -3,11 +3,14 @@
  * Creates blog posts for users and groups
  */
 
-import { id, tx } from '@instantdb/admin';
+import { id } from '../helpers/id.helper';
+import { tx } from '../helpers/compat';
+import { batchTransact } from '../helpers/transaction.helpers';
+import type { InsertOp } from '../helpers/transaction.helpers';
 import { faker } from '@faker-js/faker';
 import type { EntitySeeder, SeedContext } from '../types/seeder.types';
 import { randomInt, randomItems, randomVisibility } from '../helpers/random.helpers';
-import { createHashtagTransactions } from '../helpers/entity.helpers';
+import { createHashtagRows } from '../helpers/entity.helpers';
 import { BLOG_HASHTAGS, SEED_CONFIG } from '../config/seed.config';
 
 export const blogsSeeder: EntitySeeder = {
@@ -20,7 +23,7 @@ export const blogsSeeder: EntitySeeder = {
     const userIds = context.userIds || [];
     const blogIds: string[] = [...(context.blogIds || [])];
     const blogRoleIds: string[] = [];
-    const transactions = [];
+    const transactions: InsertOp[] = [];
     let userLinks = 0;
     let groupLinks = 0;
     let rolesCreated = 0;
@@ -119,7 +122,7 @@ export const blogsSeeder: EntitySeeder = {
     userLinks++;
 
     const mainBlogHashtags = randomItems(BLOG_HASHTAGS, randomInt(1, 2));
-    transactions.push(...createHashtagTransactions(mainBlogId, 'blog', mainBlogHashtags));
+    transactions.push(...createHashtagRows(mainBlogId, 'blog', mainBlogHashtags));
 
     // Create blog posts for each group (1-3 blogs per group)
     for (const groupId of groupIds) {
@@ -176,7 +179,7 @@ export const blogsSeeder: EntitySeeder = {
         }
 
         const blogHashtags = randomItems(BLOG_HASHTAGS, randomInt(1, 4));
-        transactions.push(...createHashtagTransactions(blogId, 'blog', blogHashtags));
+        transactions.push(...createHashtagRows(blogId, 'blog', blogHashtags));
       }
     }
 
@@ -185,7 +188,7 @@ export const blogsSeeder: EntitySeeder = {
       const batchSize = 20;
       for (let i = 0; i < transactions.length; i += batchSize) {
         const batch = transactions.slice(i, i + batchSize);
-        await db.transact(batch);
+        await batchTransact(db, batch);
       }
     }
 

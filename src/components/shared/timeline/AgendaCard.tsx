@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
-import Link from 'next/link';
+import { Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -89,7 +89,7 @@ export function AgendaCard({
   const { t } = useTranslation();
 
   return (
-    <Link href={detailsLink} className="block">
+    <Link to={detailsLink} className="block">
       <Card
         className={cn(
           'cursor-pointer transition-all hover:shadow-md',

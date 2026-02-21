@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import db from '../../../../db/db';
+import { useUserState } from '@/zero/users/useUserState';
+import { useAllGroups } from '@/zero/groups/useGroupState';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -74,20 +75,13 @@ export function AddPaymentDialog({
     type: 'user' | 'group';
   } | null>(null);
 
-  // Query all users for user search
-  const { data: usersData } = db.useQuery({
-    $users: {},
-  });
-
-  // Query all groups for group search
-  const { data: groupsData } = db.useQuery({
-    groups: {},
-  });
+  const { allUsers } = useUserState({ includeAllUsers: true });
+  const { groups: allGroups } = useAllGroups();
 
   // Filter entities based on search query and selected entity type
   const filteredUsers =
     entityType === 'user'
-      ? usersData?.$users?.filter((user: any) => {
+      ? allUsers?.filter((user: any) => {
           if (!user?.id) return false;
           const query = searchQuery.toLowerCase();
           return (
@@ -100,7 +94,7 @@ export function AddPaymentDialog({
 
   const filteredGroups =
     entityType === 'group'
-      ? groupsData?.groups?.filter((group: any) => {
+      ? allGroups?.filter((group: any) => {
           const query = searchQuery.toLowerCase();
           return group.name?.toLowerCase().includes(query);
         })

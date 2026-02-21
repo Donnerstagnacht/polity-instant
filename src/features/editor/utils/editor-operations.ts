@@ -4,10 +4,12 @@
  * Common operations for the unified editor.
  */
 
-import { db, tx, id as generateId } from '@db/db';
+import { createClient } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import { createVersion } from './version-utils';
 import type { EditorEntityType, TDiscussion, EditorMode } from '../types';
+
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
 /**
  * Handle suggestion accepted - create a version and update discussions
@@ -57,24 +59,22 @@ export async function handleSuggestionAccepted(
       return d;
     });
 
-    // For amendments, create a changeRequest entity
+    // For amendments, create a change_request entity
     if (entityType === 'amendment' && discussion && amendmentId) {
-      const changeRequestId = generateId();
+      const changeRequestId = crypto.randomUUID();
 
-      await db.transact([
-        tx.changeRequests[changeRequestId]
-          .update({
-            title: discussion.crId || 'Change Request',
-            description: discussion.description || '',
-            proposedChange: discussion.proposedChange || '',
-            justification: discussion.justification || '',
-            status: 'accepted',
-            createdAt: discussion.createdAt || Date.now(),
-            updatedAt: Date.now(),
-          })
-          .link({ creator: userId })
-          .link({ amendment: amendmentId }),
-      ]);
+      await supabase.from('change_request').insert({
+        id: changeRequestId,
+        title: discussion.crId || 'Change Request',
+        description: discussion.description || '',
+        proposed_change: discussion.proposedChange || '',
+        justification: discussion.justification || '',
+        status: 'accepted',
+        created_at: discussion.createdAt || Date.now(),
+        updated_at: Date.now(),
+        creator_id: userId,
+        amendment_id: amendmentId,
+      });
     }
 
     return { updatedDiscussions };
@@ -128,29 +128,27 @@ export async function handleSuggestionDeclined(
       return d;
     });
 
-    // For amendments, create a changeRequest entity with rejected status
+    // For amendments, create a change_request entity with rejected status
     if (entityType === 'amendment' && amendmentId) {
       const discussion = discussions.find(
         (d: any) => d.id === suggestion.suggestionId || d.id === suggestion.id
       ) as any;
 
       if (discussion) {
-        const changeRequestId = generateId();
+        const changeRequestId = crypto.randomUUID();
 
-        await db.transact([
-          tx.changeRequests[changeRequestId]
-            .update({
-              title: discussion.crId || 'Change Request',
-              description: discussion.description || '',
-              proposedChange: discussion.proposedChange || '',
-              justification: discussion.justification || '',
-              status: 'rejected',
-              createdAt: discussion.createdAt || Date.now(),
-              updatedAt: Date.now(),
-            })
-            .link({ creator: userId })
-            .link({ amendment: amendmentId }),
-        ]);
+        await supabase.from('change_request').insert({
+          id: changeRequestId,
+          title: discussion.crId || 'Change Request',
+          description: discussion.description || '',
+          proposed_change: discussion.proposedChange || '',
+          justification: discussion.justification || '',
+          status: 'rejected',
+          created_at: discussion.createdAt || Date.now(),
+          updated_at: Date.now(),
+          creator_id: userId,
+          amendment_id: amendmentId,
+        });
       }
     }
 
@@ -186,67 +184,56 @@ export async function handleVoteOnSuggestion(
     }
 
     // Look up existing change request or create one
-    const { data: crData } = await db.queryOnce({
-      changeRequests: {
-        $: {
-          where: {
-            'amendment.id': amendmentId,
-            title: discussion.crId || '',
-          },
-        },
-        votes: {
-          voter: {},
-        },
-      },
-    });
+    const { data: crData } = await supabase
+      .from('change_request')
+      .select('*, votes:vote(*, voter:user(*))')
+      .eq('amendment_id', amendmentId)
+      .eq('title', discussion.crId || '');
 
-    let changeRequestId = crData?.changeRequests?.[0]?.id;
+    let changeRequestId = crData?.[0]?.id;
 
     if (!changeRequestId) {
       // Create a new change request
-      changeRequestId = generateId();
-      await db.transact([
-        tx.changeRequests[changeRequestId]
-          .update({
-            title: discussion.crId || 'Change Request',
-            description: discussion.description || '',
-            proposedChange: discussion.proposedChange || '',
-            justification: discussion.justification || '',
-            status: 'pending',
-            createdAt: discussion.createdAt || Date.now(),
-            updatedAt: Date.now(),
-          })
-          .link({ creator: discussion.userId || userId })
-          .link({ amendment: amendmentId }),
-      ]);
+      changeRequestId = crypto.randomUUID();
+      await supabase.from('change_request').insert({
+        id: changeRequestId,
+        title: discussion.crId || 'Change Request',
+        description: discussion.description || '',
+        proposed_change: discussion.proposedChange || '',
+        justification: discussion.justification || '',
+        status: 'pending',
+        created_at: discussion.createdAt || Date.now(),
+        updated_at: Date.now(),
+        creator_id: discussion.userId || userId,
+        amendment_id: amendmentId,
+      });
     }
 
     // Check for existing vote from this user
-    const existingVote = crData?.changeRequests?.[0]?.votes?.find(
+    const existingVote = crData?.[0]?.votes?.find(
       (v: any) => v.voter?.id === userId
     );
 
     if (existingVote) {
       // Update existing vote
-      await db.transact([
-        tx.votes[existingVote.id].update({
+      await supabase
+        .from('vote')
+        .update({
           vote: voteType,
-          updatedAt: Date.now(),
-        }),
-      ]);
+          updated_at: Date.now(),
+        })
+        .eq('id', existingVote.id);
       toast.success('Vote updated');
     } else {
       // Create new vote
-      const voteId = generateId();
-      await db.transact([
-        tx.votes[voteId]
-          .update({
-            vote: voteType,
-            createdAt: Date.now(),
-          })
-          .link({ voter: userId })
-          .link({ changeRequest: changeRequestId }),
-      ]);
+      const voteId = crypto.randomUUID();
+      await supabase.from('vote').insert({
+        id: voteId,
+        vote: voteType,
+        created_at: Date.now(),
+        voter_id: userId,
+        change_request_id: changeRequestId,
+      });
       toast.success('Vote recorded');
     }
   } catch (error) {
@@ -255,11 +242,3 @@ export async function handleVoteOnSuggestion(
   }
 }
 
-/**
- * Generate a consistent color for a user based on their ID
- */
-export function generateUserColor(userId: string): string {
-  const hash = parseInt(userId.substring(0, 8), 16);
-  const hue = hash % 360;
-  return `hsl(${hue}, 70%, 50%)`;
-}

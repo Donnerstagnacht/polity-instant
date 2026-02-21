@@ -3,7 +3,7 @@
  * Queries public groups, events, amendments that user hasn't subscribed to
  */
 
-import type { ContentItem } from './content-reasons';
+import type { ContentItem } from '../logic/content-reasons';
 
 export interface PublicContentQueryOptions {
   /** User ID to exclude from results (for subscriptions) */

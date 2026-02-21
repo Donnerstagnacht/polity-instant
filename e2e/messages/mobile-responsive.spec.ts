@@ -10,11 +10,10 @@ test.describe('Chat/Messages - Mobile Responsive Layout', () => {
     authenticatedPage: page,
     conversationFactory,
     userFactory,
-    adminDb,
+    mainUserId,
   }) => {
-    const authUser = await adminDb.auth.getUser({ email: 'polity.live@gmail.com' });
     const otherUser = await userFactory.createUser({ name: 'Mobile Test User' });
-    await conversationFactory.createConversation(authUser.id, [otherUser.id], {
+    await conversationFactory.createConversation(mainUserId, [otherUser.id], {
       name: 'Mobile Conv Test',
     });
 
@@ -55,11 +54,10 @@ test.describe('Chat/Messages - Mobile Responsive Layout', () => {
     authenticatedPage: page,
     conversationFactory,
     userFactory,
-    adminDb,
+    mainUserId,
   }) => {
-    const authUser = await adminDb.auth.getUser({ email: 'polity.live@gmail.com' });
     const otherUser = await userFactory.createUser({ name: 'Mobile Switch User' });
-    await conversationFactory.createConversation(authUser.id, [otherUser.id], {
+    await conversationFactory.createConversation(mainUserId, [otherUser.id], {
       name: 'Mobile Switch Conv',
     });
 

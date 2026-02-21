@@ -11,8 +11,8 @@ test.describe('Group Operations - Delete Link', () => {
     const group = await groupFactory.createGroup(mainUserId, { name: 'E2E Delete Link Group' });
     // Create a link for the group
     const linkId = crypto.randomUUID();
-    await adminDb.transact(
-      adminDb.tx.links[linkId]
+    await (adminDb as any).transact(
+      (adminDb as any).tx.links[linkId]
         .update({
           label: 'E2E Test Link',
           url: 'https://example.com',
@@ -36,8 +36,8 @@ test.describe('Group Operations - Delete Link', () => {
   }) => {
     const group = await groupFactory.createGroup(mainUserId, { name: 'E2E Delete Link Action Group' });
     const linkId = crypto.randomUUID();
-    await adminDb.transact(
-      adminDb.tx.links[linkId]
+    await (adminDb as any).transact(
+      (adminDb as any).tx.links[linkId]
         .update({
           label: 'E2E Link To Delete',
           url: 'https://example.com',

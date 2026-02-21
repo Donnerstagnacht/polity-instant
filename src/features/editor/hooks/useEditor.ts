@@ -34,14 +34,16 @@
  */
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import db, { tx } from '@db/db';
+import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
+import { useBlogState } from '@/zero/blogs/useBlogState';
+import { useDocumentState } from '@/zero/documents/useDocumentState';
 import { toast } from 'sonner';
 import {
   adaptAmendmentToEntity,
   adaptBlogToEntity,
   adaptDocumentToEntity,
   adaptGroupDocumentToEntity,
-} from '../utils/entity-adapter';
+} from '../logic/entity-adapter';
 import {
   updateEntityContent,
   updateEntityTitle,
@@ -86,6 +88,26 @@ interface UseEditorOptions {
 export function useEditor(options: UseEditorOptions): EditorState & EditorActions {
   const { entityType, entityId, userId, groupId } = options;
 
+  // Query data based on entity type via facade hooks
+  const amId = entityType === 'amendment' ? entityId : undefined;
+  const blId = entityType === 'blog' ? entityId : undefined;
+  const dcId = (entityType === 'document' || entityType === 'groupDocument') ? entityId : '';
+
+  const { amendmentDocsCollabs, isLoading: amendmentLoading } = useAmendmentState({
+    amendmentId: amId,
+    includeDocsAndCollabs: !!amId,
+  });
+
+  const { blogForEditor, isLoading: blogLoading } = useBlogState({
+    blogId: blId,
+    includeForEditor: !!blId,
+  });
+
+  const { document: documentData, isLoading: documentLoading } = useDocumentState({
+    documentId: dcId,
+    includeCollaborators: true,
+  });
+
   // State
   const [title, setTitleState] = useState('');
   const [content, setContentState] = useState<any[]>(DEFAULT_EDITOR_CONTENT);
@@ -103,110 +125,41 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
   const lastRemoteUpdate = useRef<number>(0);
   const lastDiscussionsSave = useRef<number>(0);
 
-  // Query data based on entity type
-  const { data: amendmentData, isLoading: amendmentLoading } = db.useQuery(
-    entityType === 'amendment'
-      ? {
-          amendments: {
-            $: { where: { id: entityId } },
-            document: {
-              owner: {},
-              collaborators: {
-                user: {},
-              },
-            },
-            amendmentRoleCollaborators: {
-              user: {},
-            },
-          },
-        }
-      : null
-  );
-
-  const { data: blogData, isLoading: blogLoading } = db.useQuery(
-    entityType === 'blog'
-      ? {
-          blogs: {
-            $: { where: { id: entityId } },
-            blogRoleBloggers: {
-              user: {},
-              role: {
-                actionRights: {},
-              },
-            },
-          },
-        }
-      : null
-  );
-
-  const { data: documentData, isLoading: documentLoading } = db.useQuery(
-    entityType === 'document'
-      ? {
-          documents: {
-            $: { where: { id: entityId } },
-            owner: {},
-            collaborators: {
-              user: {},
-            },
-          },
-        }
-      : null
-  );
-
-  const { data: groupDocData, isLoading: groupDocLoading } = db.useQuery(
-    entityType === 'groupDocument'
-      ? {
-          documents: {
-            $: { where: { id: entityId } },
-            owner: {},
-            group: {},
-            collaborators: {
-              user: {},
-            },
-          },
-        }
-      : null
-  );
-
   // Derive loading state
   const isLoading =
     (entityType === 'amendment' && amendmentLoading) ||
     (entityType === 'blog' && blogLoading) ||
     (entityType === 'document' && documentLoading) ||
-    (entityType === 'groupDocument' && groupDocLoading);
+    (entityType === 'groupDocument' && documentLoading);
 
   // Adapt raw data to EditorEntity
   const entity = useMemo<EditorEntity | null>(() => {
     switch (entityType) {
       case 'amendment': {
-        const amendment = amendmentData?.amendments?.[0];
-        const document = amendment?.document;
-        return adaptAmendmentToEntity(amendment, document);
+        const doc = (amendmentDocsCollabs as any)?.documents?.[0];
+        return adaptAmendmentToEntity(amendmentDocsCollabs, doc);
       }
       case 'blog': {
-        const blog = blogData?.blogs?.[0];
-        return adaptBlogToEntity(blog);
+        return adaptBlogToEntity(blogForEditor);
       }
       case 'document': {
-        const doc = documentData?.documents?.[0];
-        return adaptDocumentToEntity(doc);
+        return adaptDocumentToEntity(documentData);
       }
       case 'groupDocument': {
-        const doc = groupDocData?.documents?.find((d: any) => d.id === entityId);
-        return adaptGroupDocumentToEntity(doc, groupId || '', doc?.group?.name);
+        return adaptGroupDocumentToEntity(documentData, groupId || '', undefined);
       }
       default:
         return null;
     }
-  }, [entityType, entityId, amendmentData, blogData, documentData, groupDocData, groupId]);
+  }, [entityType, entityId, amendmentDocsCollabs, blogForEditor, documentData, groupId]);
 
   // Get the content entity ID (document ID for amendments, blog ID for blogs, etc.)
   const contentEntityId = useMemo(() => {
     if (entityType === 'amendment') {
-      return amendmentData?.amendments?.[0]?.document?.id || '';
+      return (amendmentDocsCollabs as any)?.documents?.[0]?.id || '';
     }
     return entityId;
-  }, [entityType, entityId, amendmentData]);
+  }, [entityType, entityId, amendmentDocsCollabs]);
 
   // Initialize entity data
   useEffect(() => {

@@ -69,7 +69,7 @@ Common replacements:
 | Fixture               | Type                  | Description                               |
 | --------------------- | --------------------- | ----------------------------------------- |
 | `authenticatedPage`   | `Page`                | Pre-logged-in page (main test user)       |
-| `adminDb`             | `InstantDB`           | Direct admin SDK access                   |
+| `adminDb`             | `SupabaseClient`      | Direct admin SDK access (service_role)    |
 | `userFactory`         | `UserFactory`         | Create users + auth tokens                |
 | `groupFactory`        | `GroupFactory`        | Create groups with roles/memberships      |
 | `eventFactory`        | `EventFactory`        | Create events with participants           |

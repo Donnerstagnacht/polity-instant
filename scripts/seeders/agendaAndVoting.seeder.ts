@@ -3,7 +3,10 @@
  * Seeds agenda items, elections, and voting systems for events
  */
 
-import { id, tx } from '@instantdb/admin';
+import { id } from '../helpers/id.helper';
+import { tx } from '../helpers/compat';
+import { batchTransact } from '../helpers/transaction.helpers';
+import type { InsertOp } from '../helpers/transaction.helpers';
 import { faker } from '@faker-js/faker';
 import type { EntitySeeder, SeedContext } from '../types/seeder.types';
 import { randomInt, randomItem, randomItems } from '../helpers/random.helpers';
@@ -20,7 +23,7 @@ export const agendaAndVotingSeeder: EntitySeeder = {
     const amendmentIds = context.amendmentIds || [];
 
     console.log('Seeding agenda items and voting system...');
-    const transactions = [];
+    const transactions: InsertOp[] = [];
     const electionIds: string[] = [];
     const amendmentVoteIds: string[] = [];
     const agendaItemIds: string[] = [];
@@ -54,17 +57,14 @@ export const agendaAndVotingSeeder: EntitySeeder = {
     const majorityTypes = ['relative', 'absolute'];
 
     // Query event positions that need elections created
-    const eventPositionsQuery = await db.query({
-      eventPositions: {},
-    });
-    const allEventPositions = eventPositionsQuery?.eventPositions || [];
+    const { data: allEventPositions } = await db.from('eventPositions').select('*');
 
     for (const eventId of eventIds) {
       let orderCounter = 1;
 
       // Create elections for event positions with createElectionOnAgenda=true
-      const eventPositionsForThisEvent = allEventPositions.filter(
-        (p: any) => p.event?.id === eventId && p.createElectionOnAgenda === true
+      const eventPositionsForThisEvent = (allEventPositions || []).filter(
+        (p: any) => p.eventId === eventId && p.createElectionOnAgenda === true
       );
 
       for (const eventPosition of eventPositionsForThisEvent) {
@@ -369,7 +369,7 @@ export const agendaAndVotingSeeder: EntitySeeder = {
       const batchSize = 20;
       for (let i = 0; i < transactions.length; i += batchSize) {
         const batch = transactions.slice(i, i + batchSize);
-        await db.transact(batch);
+        await batchTransact(db, batch);
       }
     }
 

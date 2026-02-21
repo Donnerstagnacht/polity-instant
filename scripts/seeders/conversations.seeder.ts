@@ -1,4 +1,6 @@
-import { id, tx } from '@instantdb/admin';
+import { id } from '../helpers/id.helper';
+import { tx } from '../helpers/compat';
+import type { InsertOp } from '../helpers/transaction.helpers';
 import { faker } from '@faker-js/faker';
 import { EntitySeeder, SeedContext } from '../types/seeder.types';
 import { SEED_CONFIG } from '../config/seed.config';
@@ -14,7 +16,7 @@ export const conversationsSeeder: EntitySeeder = {
     const { db, userIds } = context;
     const conversationIds: string[] = [...(context.conversationIds || [])];
     const messageIds: string[] = [];
-    const transactions = [];
+    const transactions: InsertOp[] = [];
     let directConversationsToRequestedBy = 0;
     let directParticipantsToConversations = 0;
     let directParticipantsToUsers = 0;

@@ -152,3 +152,6 @@ test-output.txt
 **/public/sw.js.map
 **/public/workbox-*.js.map
 **/public/worker-*.js.map
+
+# AI .text files
+*.txt

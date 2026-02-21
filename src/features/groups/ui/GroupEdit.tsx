@@ -5,12 +5,12 @@
  * Handles data fetching, form display, and navigation.
  */
 
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { useGroupData } from '../hooks/useGroupData';
 import { GroupEditForm } from './GroupEditForm';
-import { useAuthStore } from '@/features/auth/auth';
+import { useAuth } from '@/providers/auth-provider';
 import { useTranslation } from '@/hooks/use-translation';
 
 interface GroupEditProps {
@@ -18,10 +18,10 @@ interface GroupEditProps {
 }
 
 export function GroupEdit({ groupId }: GroupEditProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const { group, isLoading } = useGroupData(groupId);
-  const { user } = useAuthStore();
+  const { user } = useAuth();
 
   // Loading state
   if (isLoading) {
@@ -41,7 +41,7 @@ export function GroupEdit({ groupId }: GroupEditProps) {
           <p className="text-lg font-semibold">{t('features.groups.editPage.notFound')}</p>
           <p className="text-muted-foreground">{t('features.groups.editPage.notFoundDescription')}</p>
           <div className="mt-6">
-            <Button onClick={() => router.push(`/groups`)} variant="default">
+            <Button onClick={() => navigate({ to: '/groups' })} variant="default">
               {t('features.groups.backToGroups')}
             </Button>
           </div>
@@ -60,9 +60,13 @@ export function GroupEdit({ groupId }: GroupEditProps) {
 
       <GroupEditForm
         groupId={groupId}
-        initialData={group}
-        onCancel={() => router.push(`/group/${groupId}`)}
-        actorId={user?.id}
+        initialData={group ? {
+          name: group.name ?? '',
+          description: group.description ?? '',
+          location: group.location ?? '',
+        } : undefined}
+        onCancel={() => navigate({ to: `/group/${groupId}` })}
+        actorId={user?.id ?? undefined}
         visibility={group?.visibility as 'public' | 'private' | 'authenticated' | undefined}
       />
     </div>

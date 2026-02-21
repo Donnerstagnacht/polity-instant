@@ -1,1 +1,4 @@
+# Ensure node/npx is on PATH (nvm-windows doesn't always propagate to Git Bash)
+export PATH="/c/Users/tobia/AppData/Local/nvm/v22.16.0:$PATH"
+
 npx lint-staged && echo -e "\033[32m✓ All commit steps successful\033[0m"

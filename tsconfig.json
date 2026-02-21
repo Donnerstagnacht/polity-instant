@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "lib": ["dom", "dom.iterable", "es6", "webworker"],
+    "lib": ["dom", "dom.iterable", "es2022", "webworker"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -13,24 +13,13 @@
     "jsx": "react-jsx",
     "incremental": true,
     "allowImportingTsExtensions": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@db/*": ["./db/*"]
+      "@/zero/*": ["./src/zero/*"]
     },
-    "target": "ES2017"
+    "target": "ES2022"
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
-  ],
-  "exclude": ["node_modules"]
+  "include": ["**/*.ts", "**/*.tsx", "app.config.ts"],
+  "exclude": ["node_modules", ".output"]
 }

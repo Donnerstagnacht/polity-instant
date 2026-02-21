@@ -1,4 +1,4 @@
-import { init, tx } from '@instantdb/admin';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { EntitySeeder, SeedContext, SeedOptions } from './types/seeder.types';
 
 /**
@@ -6,14 +6,10 @@ import { EntitySeeder, SeedContext, SeedOptions } from './types/seeder.types';
  */
 export class SeedOrchestrator {
   private seeders = new Map<string, EntitySeeder>();
-  private db: any;
+  private db: SupabaseClient;
 
-  constructor(appId: string, adminToken: string) {
-    this.db = init({
-      appId,
-      adminToken,
-      schema: require('../db/instant.schema').default,
-    });
+  constructor(supabaseUrl: string, serviceRoleKey: string) {
+    this.db = createClient(supabaseUrl, serviceRoleKey);
   }
 
   /**
@@ -138,7 +134,6 @@ export class SeedOrchestrator {
     // Initialize context
     let context: SeedContext = {
       db: this.db,
-      tx,
       userIds: [],
       groupIds: [],
       eventIds: [],

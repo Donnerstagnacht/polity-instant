@@ -5,7 +5,7 @@
  * loading states, and form management.
  */
 
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +17,7 @@ import { ImageUpload } from '@/components/shared/ImageUpload';
 import { useEventUpdate } from '../hooks/useEventUpdate';
 import { useTranslation } from '@/hooks/use-translation';
 import { CancelEventDialog } from './CancelEventDialog';
-import { usePermissions } from '@db/rbac';
+import { usePermissions } from '@/zero/rbac';
 import { useState } from 'react';
 
 interface EventEditProps {
@@ -25,7 +25,7 @@ interface EventEditProps {
 }
 
 export function EventEdit({ eventId }: EventEditProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const { can } = usePermissions({ eventId });
@@ -64,7 +64,7 @@ export function EventEdit({ eventId }: EventEditProps) {
             {t('features.events.editPage.notFoundDescription')}
           </p>
           <div className="mt-6">
-            <Button onClick={() => router.push(`/calendar`)} variant="default">
+            <Button onClick={() => navigate({ to: `/calendar` })} variant="default">
               {t('features.events.backToCalendar')}
             </Button>
           </div>
@@ -247,7 +247,7 @@ export function EventEdit({ eventId }: EventEditProps) {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push(`/event/${eventId}`)}
+            onClick={() => navigate({ to: `/event/${eventId}` })}
             disabled={isSubmitting}
           >
             {t('features.events.cancelLabel')}

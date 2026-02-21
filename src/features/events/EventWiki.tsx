@@ -2,9 +2,7 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import db, { id, tx } from '../../../db/db';
-import { Trophy, UserCheck, Users, Calendar, Video, Building2, MapPin, Clock, FileText, Repeat } from 'lucide-react';
-import { useState } from 'react';
+import { Trophy, UserCheck, Users, Video, Building2, MapPin, Repeat } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -24,21 +22,16 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { GRADIENTS } from '@/features/user/state/gradientColors';
-import { toast } from 'sonner';
+import { GRADIENTS } from '@/features/users/state/gradientColors';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { StatsBar } from '@/components/ui/StatsBar';
-import { useSubscribeEvent } from '@/features/events/hooks/useSubscribeEvent';
-import { useEventParticipation } from '@/features/events/hooks/useEventParticipation';
 import { ActionBar } from '@/components/ui/ActionBar';
 import { SubscribeButton, MembershipButton } from '@/components/shared/action-buttons';
 import { InfoTabs } from '@/components/shared/InfoTabs';
-import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useTranslation } from '@/hooks/use-translation';
 import { ShareButton } from '@/components/shared/ShareButton';
-import { notifyCandidateAdded } from '@/utils/notification-helpers';
-import { DelegatesOverview } from './components/DelegatesOverview';
+import { DelegatesOverview } from '@/features/delegates/ui/DelegatesOverview';
 import {
   Carousel,
   CarouselContent,
@@ -46,104 +39,37 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
+import { useEventWikiPage } from './hooks/useEventWikiPage';
 
 interface EventWikiProps {
   eventId: string;
 }
 
 export function EventWiki({ eventId }: EventWikiProps) {
-  const router = useRouter();
   const { t } = useTranslation();
-  const [electionsDialogOpen, setElectionsDialogOpen] = useState(false);
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [selectedElection, setSelectedElection] = useState<any>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [participantsDialogOpen, setParticipantsDialogOpen] = useState(false);
-
-  // Subscribe hook
   const {
+    navigate,
+    user,
     isSubscribed,
     subscriberCount,
     toggleSubscribe,
     isLoading: subscribeLoading,
-  } = useSubscribeEvent(eventId);
-
-  // Participation hook
-  const {
-    status,
-    isParticipant,
-    hasRequested,
-    isInvited,
-    participantCount,
-    isLoading: participationLoading,
-    requestParticipation,
-    leaveEvent,
-    acceptInvitation,
-  } = useEventParticipation(eventId);
-
-  const { data, isLoading } = db.useQuery({
-    events: {
-      $: {
-        where: {
-          id: eventId,
-        },
-      },
-      organizer: {},
-      group: {},
-      hashtags: {},
-      eventPositions: {
-        holders: {
-          user: {},
-        },
-        election: {},
-      },
-      participants: {
-        user: {},
-      },
-    },
-    agendaItems: {
-      event: {},
-      election: {
-        candidates: {
-          user: {},
-        },
-        position: {},
-      },
-      amendmentVote: {
-        changeRequests: {},
-      },
-    },
-    $users: {},
-  });
-
-  const { user } = db.useAuth();
-
-  // Get current user's profile
-  const currentUserProfile = user ? (data?.$users || []).find((u: any) => u.id === user.id) : null;
-
-  const event = data?.events?.[0];
-
-  // Calculate agenda statistics
-  const agendaItems = (data?.agendaItems || []).filter((item: any) => item.event?.id === eventId);
-  const electionsCount = agendaItems.filter((item: any) => item.election).length;
-  const amendmentsCount = agendaItems.filter((item: any) => item.amendmentVote).length;
-  const openChangeRequestsCount = agendaItems.reduce(
-    (count: number, item: any) =>
-      count +
-      (item.amendmentVote?.changeRequests?.filter((cr: any) => cr.status === 'open' || !cr.status)
-        .length || 0),
-    0
-  );
-
-  if (isLoading) {
-    return (
-      <div className="container mx-auto max-w-6xl p-4">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-lg text-muted-foreground">Loading event...</div>
-        </div>
-      </div>
-    );
-  }
+    participation,
+    event,
+    agendaStats,
+    elections,
+    electionsDialogOpen,
+    setElectionsDialogOpen,
+    confirmDialogOpen,
+    setConfirmDialogOpen,
+    selectedElection,
+    isSubmitting,
+    participantsDialogOpen,
+    setParticipantsDialogOpen,
+    getUserCandidacy,
+    handleElectionClick,
+    handleConfirmCandidacy,
+  } = useEventWikiPage(eventId);
 
   if (!event) {
     return (
@@ -158,81 +84,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
     );
   }
 
-  // Get elections for this event
-  const elections = (agendaItems || [])
-    .filter((item: any) => item.election)
-    .map((item: any) => item.election);
-
-  // Check if user is already a candidate in any election
-  const getUserCandidacy = (election: any) => {
-    return election.candidates?.find((c: any) => c.user?.id === user?.id);
-  };
-
-  // Handle election selection
-  const handleElectionClick = (election: any) => {
-    setSelectedElection(election);
-    setElectionsDialogOpen(false);
-    setConfirmDialogOpen(true);
-  };
-
-  // Handle candidate submission
-  const handleConfirmCandidacy = async () => {
-    if (!user || !selectedElection) return;
-
-    setIsSubmitting(true);
-    try {
-      // Check if user is already a candidate
-      const existingCandidacy = getUserCandidacy(selectedElection);
-      if (existingCandidacy) {
-        toast.error('Sie sind bereits Kandidat für diese Wahl');
-        setConfirmDialogOpen(false);
-        setIsSubmitting(false);
-        return;
-      }
-
-      const candidateId = id();
-      const now = Date.now();
-
-      // Get the next order number
-      const maxOrder = Math.max(
-        0,
-        ...(selectedElection.candidates || []).map((c: any) => c.order || 0)
-      );
-
-      const candidateName = currentUserProfile?.name || user.email || 'Unbenannt';
-      const notifTxs = notifyCandidateAdded({
-        senderId: user.id,
-        eventId,
-        eventTitle: event.title || 'Event',
-        candidateName,
-      });
-
-      await db.transact([
-        tx.electionCandidates[candidateId]
-          .update({
-            name: candidateName,
-            description: '',
-            imageURL: currentUserProfile?.avatar || '',
-            order: maxOrder + 1,
-            createdAt: now,
-          })
-          .link({
-            election: selectedElection.id,
-            user: user.id,
-          }),
-        ...notifTxs,
-      ]);
-
-      toast.success('Sie wurden erfolgreich als Kandidat hinzugefügt!');
-      setConfirmDialogOpen(false);
-      setSelectedElection(null);
-    } catch (error) {
-      console.error('Failed to add candidate:', error);
-      toast.error('Fehler beim Hinzufügen des Kandidaten. Bitte versuchen Sie es erneut.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const { electionsCount, amendmentsCount, openChangeRequestsCount } = agendaStats;
 
   return (
     <div className="container mx-auto max-w-6xl p-4">
@@ -240,19 +92,19 @@ export function EventWiki({ eventId }: EventWikiProps) {
       <div className="mb-8 text-center">
         <div className="mb-2 flex items-center justify-center gap-3">
           <h1 className="text-4xl font-bold">{event.title}</h1>
-          {event.isPublic ? (
+          {event.is_public ? (
             <Badge variant="default">{t('components.badges.public')}</Badge>
           ) : (
             <Badge variant="secondary">{t('components.badges.private')}</Badge>
           )}
-          {event.recurringPattern && (
+          {event.recurrence_pattern && (
             <Badge variant="outline">
               <Repeat className="mr-1 h-3 w-3" />
-              {event.recurringPattern === 'daily' ? 'Täglich' :
-               event.recurringPattern === 'weekly' ? 'Wöchentlich' :
-               event.recurringPattern === 'monthly' ? 'Monatlich' :
-               event.recurringPattern === 'yearly' ? 'Jährlich' :
-               event.recurringPattern === 'four-yearly' ? '4 Jährig' : event.recurringPattern}
+              {event.recurrence_pattern === 'daily' ? 'Täglich' :
+               event.recurrence_pattern === 'weekly' ? 'Wöchentlich' :
+               event.recurrence_pattern === 'monthly' ? 'Monatlich' :
+               event.recurrence_pattern === 'yearly' ? 'Jährlich' :
+               event.recurrence_pattern === 'four-yearly' ? '4 Jährig' : event.recurrence_pattern}
             </Badge>
           )}
         </div>
@@ -260,12 +112,12 @@ export function EventWiki({ eventId }: EventWikiProps) {
         {/* Organizer Info */}
         <div className="mt-4 flex items-center justify-center gap-3">
           <Avatar className="h-10 w-10">
-            <AvatarImage src={event.organizer?.avatar} />
-            <AvatarFallback>{event.organizer?.name?.[0]?.toUpperCase() || 'O'}</AvatarFallback>
+            <AvatarImage src={event.creator?.avatar ?? undefined} />
+            <AvatarFallback>{event.creator?.first_name?.[0]?.toUpperCase() || 'O'}</AvatarFallback>
           </Avatar>
           <div className="text-left">
             <p className="text-sm font-medium">
-              {t('components.labels.organizedBy')} {event.organizer?.name || 'Unknown'}
+              {t('components.labels.organizedBy')} {event.creator?.first_name || 'Unknown'}
             </p>
             {event.group && (
               <p className="text-xs text-muted-foreground">
@@ -276,21 +128,10 @@ export function EventWiki({ eventId }: EventWikiProps) {
         </div>
       </div>
 
-      {/* Event Image */}
-      {event.imageURL && (
-        <div className="mb-8">
-          <img
-            src={event.imageURL}
-            alt={event.title}
-            className="mx-auto h-64 w-full max-w-4xl rounded-lg object-cover shadow-lg"
-          />
-        </div>
-      )}
-
       {/* Stats Bar */}
       <StatsBar
         stats={[
-          { value: participantCount, labelKey: 'components.labels.participants' },
+          { value: participation.participantCount, labelKey: 'components.labels.participants' },
           { value: subscriberCount, labelKey: 'components.labels.subscribers' },
           { value: electionsCount, labelKey: 'components.labels.elections' },
           { value: amendmentsCount, labelKey: 'components.labels.amendments' },
@@ -309,14 +150,14 @@ export function EventWiki({ eventId }: EventWikiProps) {
         />
         <MembershipButton
           actionType="participate"
-          status={status as any}
-          isMember={isParticipant}
-          hasRequested={hasRequested}
-          isInvited={isInvited}
-          onRequest={requestParticipation}
-          onLeave={leaveEvent}
-          onAcceptInvitation={acceptInvitation}
-          isLoading={participationLoading}
+          status={participation.status as any}
+          isMember={participation.isParticipant}
+          hasRequested={participation.hasRequested}
+          isInvited={participation.isInvited}
+          onRequest={participation.requestParticipation}
+          onLeave={participation.leaveEvent}
+          onAcceptInvitation={participation.acceptInvitation}
+          isLoading={participation.isLoading}
         />
         {elections.length > 0 && user && (
           <Button variant="outline" onClick={() => setElectionsDialogOpen(true)}>
@@ -326,7 +167,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
         )}
         <ShareButton
           url={`/event/${eventId}`}
-          title={event.title}
+          title={event.title ?? ''}
           description={event.description || ''}
         />
       </ActionBar>
@@ -334,7 +175,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
       {/* Hashtags */}
       {event.hashtags && event.hashtags.length > 0 && (
         <div className="mb-6">
-          <HashtagDisplay hashtags={event.hashtags} centered />
+          <HashtagDisplay hashtags={event.hashtags.map(h => ({ ...h, tag: h.tag ?? '' }))} centered />
         </div>
       )}
 
@@ -343,141 +184,67 @@ export function EventWiki({ eventId }: EventWikiProps) {
         <InfoTabs
           about={event.description}
           eventDetails={{
-            startDate: event.startDate,
-            endDate: event.endDate,
-            location: event.location,
-            tags: event.tags,
+            startDate: event.start_date ?? undefined,
+            endDate: event.end_date ?? undefined,
+            location: event.location_name ?? undefined,
           }}
           contact={{
-            location: event.location,
+            location: event.location_name ?? undefined,
           }}
           className="mb-12"
         />
       )}
 
-      {/* Cut off Dates Card */}
-      {(event.amendment_cutoff_date || event.delegateNominationDeadline || event.proposalSubmissionDeadline) && (
-        <Card className={`mb-6 overflow-hidden ${GRADIENTS[0]}`}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Fristen
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {event.delegateNominationDeadline && (
-              <div className="flex items-center justify-between rounded-lg border bg-background/80 p-4 shadow-sm backdrop-blur-sm">
-                <div className="flex items-center gap-2">
-                  <UserCheck className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Delegiertennominierung:</span>
-                </div>
-                <span className="text-lg font-semibold">
-                  {new Date(event.delegateNominationDeadline).toLocaleString('de-DE', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                  })}
-                </span>
-              </div>
-            )}
-            {event.proposalSubmissionDeadline && (
-              <div className="flex items-center justify-between rounded-lg border bg-background/80 p-4 shadow-sm backdrop-blur-sm">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Antragseingabe:</span>
-                </div>
-                <span className="text-lg font-semibold">
-                  {new Date(event.proposalSubmissionDeadline).toLocaleString('de-DE', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                  })}
-                </span>
-              </div>
-            )}
-            {event.amendment_cutoff_date && (
-              <div className="flex items-center justify-between rounded-lg border bg-background/80 p-4 shadow-sm backdrop-blur-sm">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Änderungsanträge:</span>
-                </div>
-                <span className="text-lg font-semibold">
-                  {new Date(event.amendment_cutoff_date).toLocaleString('de-DE', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                  })}
-                </span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+
 
       {/* Location Card */}
-      {(event.locationType || event.location) && (
+      {event.location_type && (
         <Card className={`mb-6 overflow-hidden ${GRADIENTS[2]}`}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              {event.locationType === 'online' ? (
+              {event.location_type === 'online' ? (
                 <Video className="h-5 w-5" />
-              ) : event.locationType === 'physical' ? (
+              ) : event.location_type === 'physical' ? (
                 <Building2 className="h-5 w-5" />
               ) : (
                 <MapPin className="h-5 w-5" />
               )}
-              {event.locationType === 'online' ? 'Online Meeting' : 'Veranstaltungsort'}
+              {event.location_type === 'online' ? 'Online Meeting' : 'Veranstaltungsort'}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {event.locationType === 'online' ? (
+            {event.location_type === 'online' ? (
               <>
-                {event.onlineMeetingLink && (
+                {event.location_url && (
                   <div className="flex items-center justify-between rounded-lg border bg-background/80 p-4 shadow-sm backdrop-blur-sm">
                     <span className="font-medium">Meeting Link:</span>
                     <a 
-                      href={event.onlineMeetingLink} 
+                      href={event.location_url} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="text-primary hover:underline truncate max-w-[60%]"
                     >
-                      {event.onlineMeetingLink}
+                      {event.location_url}
                     </a>
                   </div>
                 )}
-                {event.meetingCode && (
-                  <div className="flex items-center justify-between rounded-lg border bg-background/80 p-4 shadow-sm backdrop-blur-sm">
-                    <span className="font-medium">Zugangscode:</span>
-                    <span className="font-mono text-lg">{event.meetingCode}</span>
-                  </div>
-                )}
+
               </>
-            ) : event.locationType === 'physical' ? (
+            ) : event.location_type === 'physical' ? (
               <div className="rounded-lg border bg-background/80 p-4 shadow-sm backdrop-blur-sm space-y-2">
-                {event.locationName && (
-                  <p className="font-semibold text-lg">{event.locationName}</p>
+                {event.location_name && (
+                  <p className="font-semibold text-lg">{event.location_name}</p>
                 )}
-                {(event.street || event.houseNumber) && (
+                {event.location_address && (
                   <p className="text-muted-foreground">
-                    {[event.street, event.houseNumber].filter(Boolean).join(' ')}
-                  </p>
-                )}
-                {(event.postalCode || event.city) && (
-                  <p className="text-muted-foreground">
-                    {[event.postalCode, event.city].filter(Boolean).join(' ')}
+                    {event.location_address}
                   </p>
                 )}
               </div>
-            ) : event.location ? (
+            ) : event.location_name ? (
               <div className="flex items-center gap-2 rounded-lg border bg-background/80 p-4 shadow-sm backdrop-blur-sm">
                 <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span>{event.location}</span>
+                <span>{event.location_name}</span>
               </div>
             ) : null}
           </CardContent>
@@ -485,7 +252,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
       )}
 
       {/* Public Participants Card */}
-      {event.public_participants && (
+      {event.is_public && (
         <Card
           className={`mb-6 cursor-pointer overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${GRADIENTS[1]}`}
           onClick={() => setParticipantsDialogOpen(true)}
@@ -503,7 +270,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
       )}
 
       {/* Event Positions Carousel */}
-      {event.eventPositions && event.eventPositions.length > 0 && (
+      {event.event_positions && event.event_positions.length > 0 && (
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -521,7 +288,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
               className="w-full"
             >
               <CarouselContent className="-ml-2 md:-ml-4">
-                {event.eventPositions.map((position: any, index: number) => {
+                {event.event_positions.map((position: any, index: number) => {
                   const holders = position.holders || [];
                   const filledSlots = holders.length;
                   const totalSlots = position.capacity || 1;
@@ -561,7 +328,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
                                   <div
                                     key={holder.id}
                                     className="cursor-pointer rounded-lg border bg-background/80 p-3 shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
-                                    onClick={() => router.push(`/user/${holder.user?.id}`)}
+                                    onClick={() => navigate({ to: `/user/${holder.user?.id}` })}
                                   >
                                     <div className="flex items-center gap-3">
                                       <Avatar className="h-10 w-10 ring-2 ring-background">
@@ -751,7 +518,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
             </DialogDescription>
           </DialogHeader>
           
-          {event.eventType === 'delegate_conference' ? (
+          {event.event_type === 'delegate_conference' ? (
             <Tabs defaultValue="participants" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="participants">Participants</TabsTrigger>
@@ -765,7 +532,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
                       <Card
                         key={participant.id}
                         className="cursor-pointer transition-all duration-300 hover:shadow-lg"
-                        onClick={() => router.push(`/user/${participant.user?.id}`)}
+                        onClick={() => navigate({ to: `/user/${participant.user?.id}` })}
                       >
                         <CardContent className="flex items-center gap-4 p-4">
                           <Avatar className="h-12 w-12">
@@ -814,7 +581,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
                   <Card
                     key={participant.id}
                     className="cursor-pointer transition-all duration-300 hover:shadow-lg"
-                    onClick={() => router.push(`/user/${participant.user?.id}`)}
+                    onClick={() => navigate({ to: `/user/${participant.user?.id}` })}
                   >
                     <CardContent className="flex items-center gap-4 p-4">
                       <Avatar className="h-12 w-12">

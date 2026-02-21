@@ -4,8 +4,10 @@
  * Handles version creation and management for all entity types.
  */
 
-import { db, tx, id } from '@db/db';
+import { createClient } from '@supabase/supabase-js';
 import type { EditorEntityType, VersionCreationType } from '../types';
+
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
 interface CreateVersionParams {
   entityType: EditorEntityType;
@@ -28,66 +30,64 @@ export async function createVersion({
   creationType,
   title,
 }: CreateVersionParams): Promise<void> {
-  // Build the where clause based on entity type
-  const whereClause = getVersionWhereClause(entityType, entityId);
+  // Build the filter based on entity type
+  const filterColumn = getVersionFilterColumn(entityType);
 
-  const { data: versionsData } = await db.queryOnce({
-    documentVersions: {
-      $: {
-        where: whereClause,
-      },
-    },
-  });
+  const { data: versionsData } = await supabase
+    .from('document_version')
+    .select('version_number')
+    .eq(filterColumn, entityId);
 
-  const versions = versionsData?.documentVersions || [];
+  const versions = versionsData ?? [];
   const nextVersionNumber =
-    versions.length > 0 ? Math.max(...versions.map((v: any) => v.versionNumber)) + 1 : 1;
+    versions.length > 0
+      ? Math.max(...versions.map((v: any) => v.version_number)) + 1
+      : 1;
 
   const versionTitle = title || getDefaultVersionTitle(creationType);
 
-  const versionId = id();
-  const linkData = getVersionLink(entityType, entityId);
+  const versionId = crypto.randomUUID();
+  const linkColumn = getVersionLinkColumn(entityType);
 
-  await db.transact([
-    tx.documentVersions[versionId]
-      .update({
-        versionNumber: nextVersionNumber,
-        title: versionTitle,
-        content: content,
-        createdAt: Date.now(),
-        creationType,
-      })
-      .link({ ...linkData, creator: userId }),
-  ]);
+  await supabase.from('document_version').insert({
+    id: versionId,
+    version_number: nextVersionNumber,
+    title: versionTitle,
+    content,
+    created_at: Date.now(),
+    creation_type: creationType,
+    [linkColumn]: entityId,
+    creator_id: userId,
+  });
 }
 
 /**
- * Gets the appropriate where clause for querying versions
+ * Gets the appropriate filter column for querying versions
  */
-function getVersionWhereClause(entityType: EditorEntityType, entityId: string): any {
+function getVersionFilterColumn(entityType: EditorEntityType): string {
   switch (entityType) {
     case 'blog':
-      return { 'blog.id': entityId };
+      return 'blog_id';
     case 'amendment':
     case 'document':
     case 'groupDocument':
     default:
-      return { 'document.id': entityId };
+      return 'document_id';
   }
 }
 
 /**
- * Gets the appropriate link for creating a version
+ * Gets the appropriate link column for creating a version
  */
-function getVersionLink(entityType: EditorEntityType, entityId: string): Record<string, string> {
+function getVersionLinkColumn(entityType: EditorEntityType): string {
   switch (entityType) {
     case 'blog':
-      return { blog: entityId };
+      return 'blog_id';
     case 'amendment':
     case 'document':
     case 'groupDocument':
     default:
-      return { document: entityId };
+      return 'document_id';
   }
 }
 
@@ -125,20 +125,17 @@ export async function getLatestVersionNumber(
   entityId: string
 ): Promise<number> {
   try {
-    const whereClause = getVersionWhereClause(entityType, entityId);
+    const filterColumn = getVersionFilterColumn(entityType);
 
-    const { data: versionsData } = await db.queryOnce({
-      documentVersions: {
-        $: {
-          where: whereClause,
-        },
-      },
-    });
+    const { data: versionsData } = await supabase
+      .from('document_version')
+      .select('version_number')
+      .eq(filterColumn, entityId);
 
-    const versions = versionsData?.documentVersions || [];
+    const versions = versionsData ?? [];
     if (versions.length === 0) return 0;
 
-    return Math.max(...versions.map((v: any) => v.versionNumber));
+    return Math.max(...versions.map((v: any) => v.version_number));
   } catch (error) {
     console.error('Failed to get latest version number:', error);
     return 0;
@@ -154,28 +151,12 @@ export async function restoreVersion(
   content: any[]
 ): Promise<void> {
   const now = Date.now();
+  const table = entityType === 'blog' ? 'blog' : 'document';
 
-  switch (entityType) {
-    case 'blog':
-      await db.transact([
-        tx.blogs[entityId].merge({
-          content,
-          updatedAt: now,
-        }),
-      ]);
-      break;
-    case 'amendment':
-    case 'document':
-    case 'groupDocument':
-    default:
-      await db.transact([
-        tx.documents[entityId].merge({
-          content,
-          updatedAt: now,
-        }),
-      ]);
-      break;
-  }
+  await supabase
+    .from(table)
+    .update({ content, updated_at: now })
+    .eq('id', entityId);
 }
 
 /**
@@ -187,28 +168,12 @@ export async function updateEntityContent(
   content: any[]
 ): Promise<void> {
   const now = Date.now();
+  const table = entityType === 'blog' ? 'blog' : 'document';
 
-  switch (entityType) {
-    case 'blog':
-      await db.transact([
-        tx.blogs[entityId].merge({
-          content,
-          updatedAt: now,
-        }),
-      ]);
-      break;
-    case 'amendment':
-    case 'document':
-    case 'groupDocument':
-    default:
-      await db.transact([
-        tx.documents[entityId].merge({
-          content,
-          updatedAt: now,
-        }),
-      ]);
-      break;
-  }
+  await supabase
+    .from(table)
+    .update({ content, updated_at: now })
+    .eq('id', entityId);
 }
 
 /**
@@ -220,28 +185,12 @@ export async function updateEntityTitle(
   title: string
 ): Promise<void> {
   const now = Date.now();
+  const table = entityType === 'blog' ? 'blog' : 'document';
 
-  switch (entityType) {
-    case 'blog':
-      await db.transact([
-        tx.blogs[entityId].merge({
-          title,
-          updatedAt: now,
-        }),
-      ]);
-      break;
-    case 'amendment':
-    case 'document':
-    case 'groupDocument':
-    default:
-      await db.transact([
-        tx.documents[entityId].merge({
-          title,
-          updatedAt: now,
-        }),
-      ]);
-      break;
-  }
+  await supabase
+    .from(table)
+    .update({ title, updated_at: now })
+    .eq('id', entityId);
 }
 
 /**
@@ -253,28 +202,12 @@ export async function updateEntityDiscussions(
   discussions: any[]
 ): Promise<void> {
   const now = Date.now();
+  const table = entityType === 'blog' ? 'blog' : 'document';
 
-  switch (entityType) {
-    case 'blog':
-      await db.transact([
-        tx.blogs[entityId].merge({
-          discussions,
-          updatedAt: now,
-        }),
-      ]);
-      break;
-    case 'amendment':
-    case 'document':
-    case 'groupDocument':
-    default:
-      await db.transact([
-        tx.documents[entityId].merge({
-          discussions,
-          updatedAt: now,
-        }),
-      ]);
-      break;
-  }
+  await supabase
+    .from(table)
+    .update({ discussions, updated_at: now })
+    .eq('id', entityId);
 }
 
 /**
@@ -286,26 +219,10 @@ export async function updateEntityMode(
   mode: string
 ): Promise<void> {
   const now = Date.now();
+  const table = entityType === 'blog' ? 'blog' : 'document';
 
-  switch (entityType) {
-    case 'blog':
-      await db.transact([
-        tx.blogs[entityId].update({
-          editingMode: mode,
-          updatedAt: now,
-        }),
-      ]);
-      break;
-    case 'amendment':
-    case 'document':
-    case 'groupDocument':
-    default:
-      await db.transact([
-        tx.documents[entityId].update({
-          editingMode: mode,
-          updatedAt: now,
-        }),
-      ]);
-      break;
-  }
+  await supabase
+    .from(table)
+    .update({ editing_mode: mode, updated_at: now })
+    .eq('id', entityId);
 }

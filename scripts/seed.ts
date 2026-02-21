@@ -49,13 +49,13 @@ import { reactionsSeeder } from './seeders/reactions.seeder';
 config({ path: resolve(process.cwd(), '.env') });
 config({ path: resolve(process.cwd(), '.env.local'), override: true });
 
-const APP_ID = process.env.NEXT_PUBLIC_INSTANT_APP_ID;
-const ADMIN_TOKEN = process.env.INSTANT_ADMIN_TOKEN;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!APP_ID || !ADMIN_TOKEN) {
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   console.error('❌ Missing required environment variables:');
-  if (!APP_ID) console.error('   NEXT_PUBLIC_INSTANT_APP_ID');
-  if (!ADMIN_TOKEN) console.error('   INSTANT_ADMIN_TOKEN');
+  if (!SUPABASE_URL) console.error('   SUPABASE_URL');
+  if (!SUPABASE_SERVICE_ROLE_KEY) console.error('   SUPABASE_SERVICE_ROLE_KEY');
   process.exit(1);
 }
 
@@ -80,8 +80,11 @@ async function main() {
         .map(s => s.trim())
     : undefined;
 
-  // Create orchestrator (APP_ID and ADMIN_TOKEN are checked above)
-  const orchestrator = new SeedOrchestrator(APP_ID as string, ADMIN_TOKEN as string);
+  // Create orchestrator (SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are checked above)
+  const orchestrator = new SeedOrchestrator(
+    SUPABASE_URL as string,
+    SUPABASE_SERVICE_ROLE_KEY as string
+  );
 
   // Register all seeders
   orchestrator.registerAll([

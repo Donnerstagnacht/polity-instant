@@ -8,8 +8,8 @@ test.describe('Statement - Agree Interaction', () => {
   }) => {
     // Create a statement via adminDb
     const statementId = crypto.randomUUID();
-    await adminDb.transact(
-      adminDb.tx.statements[statementId]
+    await (adminDb as any).transact(
+      (adminDb as any).tx.statements[statementId]
         .update({
           text: 'E2E Agree Statement',
           tag: 'politics',
@@ -34,8 +34,8 @@ test.describe('Statement - Agree Interaction', () => {
     adminDb,
   }) => {
     const statementId = crypto.randomUUID();
-    await adminDb.transact(
-      adminDb.tx.statements[statementId]
+    await (adminDb as any).transact(
+      (adminDb as any).tx.statements[statementId]
         .update({
           text: 'E2E Comment Statement',
           tag: 'education',
@@ -60,8 +60,8 @@ test.describe('Statement - Agree Interaction', () => {
     adminDb,
   }) => {
     const statementId = crypto.randomUUID();
-    await adminDb.transact(
-      adminDb.tx.statements[statementId]
+    await (adminDb as any).transact(
+      (adminDb as any).tx.statements[statementId]
         .update({
           text: 'E2E Save Statement',
           tag: 'environment',

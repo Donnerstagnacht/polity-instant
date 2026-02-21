@@ -36,7 +36,7 @@ export {
   buildEditorUsersMap,
   checkEntityAccess,
   checkIsOwnerOrCollaborator,
-} from './utils/entity-adapter';
+} from './logic/entity-adapter';
 
 export {
   createVersion,
@@ -56,11 +56,12 @@ export {
   getMaxVersionNumber,
   sortVersionsDescending,
   filterVersions,
-} from './utils/version-queries';
+} from './logic/version-queries';
 
 export {
   handleSuggestionAccepted,
   handleSuggestionDeclined,
   handleVoteOnSuggestion,
-  generateUserColor,
 } from './utils/editor-operations';
+
+export { generateUserColor } from './logic/editor-helpers';

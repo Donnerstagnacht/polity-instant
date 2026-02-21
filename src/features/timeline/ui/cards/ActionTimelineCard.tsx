@@ -11,7 +11,7 @@ import {
   Calendar,
   ScrollText,
 } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@tanstack/react-router';
 import { formatDistanceToNow } from 'date-fns';
 import { useTranslation } from '@/hooks/use-translation';
 import { cn } from '@/utils/utils';
@@ -184,7 +184,7 @@ function EntityLink({ entity }: { entity: ActionEntity }) {
 
   return (
     <Link
-      href={entity.url}
+      to={entity.url}
       className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700"
       onClick={e => e.stopPropagation()}
     >

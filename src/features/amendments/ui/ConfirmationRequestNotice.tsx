@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { useTranslation } from '@/hooks/use-translation';
 import { Bell, Check, X, Eye } from 'lucide-react';
 import { useState } from 'react';
-import { db } from 'db/db';
+import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 
 interface PendingConfirmation {
   id: string;
@@ -41,21 +41,10 @@ export function ConfirmationRequestNotice({
   const [processingId, setProcessingId] = useState<string | null>(null);
 
   // Query pending confirmations for this user
-  // Note: supportConfirmations is a new entity - schema must be pushed first
-  const { data, isLoading } = db.useQuery({
-    supportConfirmations: {
-      $: {
-        where: {
-          'supporter.id': userId,
-          status: 'pending',
-        },
-      },
-      amendment: {},
-      changeRequest: {},
-    },
-  } as any) as { data: any; isLoading: boolean };
-
-  const pendingConfirmations = data?.supportConfirmations ?? [];
+  const { supportConfirmations: pendingConfirmations } = useAmendmentState({
+    userId,
+    includeSupportConfirmations: true,
+  });
 
   const handleConfirm = async (confirmationId: string) => {
     setProcessingId(confirmationId);
@@ -75,7 +64,7 @@ export function ConfirmationRequestNotice({
     }
   };
 
-  if (isLoading || pendingConfirmations.length === 0) {
+  if (pendingConfirmations.length === 0) {
     return null;
   }
 

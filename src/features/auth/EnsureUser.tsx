@@ -1,7 +1,8 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { db } from '../../../db/db';
+import { useAuth } from '@/providers/auth-provider';
+import { useUserState } from '@/zero/users/useUserState';
 import { Loader2 } from 'lucide-react';
 
 interface EnsureUserProps {
@@ -10,27 +11,14 @@ interface EnsureUserProps {
 
 /**
  * EnsureUser component ensures that every authenticated user has a user record.
- * User initialization (profile setup and Aria & Kai conversation) is handled
- * automatically during the authentication flow in auth.ts.
- *
- * This component simply verifies the user record exists and shows a loading
- * state while the data is being fetched.
+ * Queries Zero for the user record and shows a loading state until ready.
  */
 export function EnsureUser({ children }: EnsureUserProps) {
-  const { user } = db.useAuth();
+  const { user, loading } = useAuth();
+  const { currentUser, isLoading: userStateLoading } = useUserState();
 
-  // Query the user data directly — skip when user is not yet resolved
-  const { isLoading, error } = db.useQuery(
-    user?.id
-      ? {
-          $users: {
-            $: { where: { id: user.id } },
-          },
-        }
-      : null
-  );
+  const isLoading = loading || (user?.id ? userStateLoading : false);
 
-  // Show loading state while fetching user record
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -42,48 +30,35 @@ export function EnsureUser({ children }: EnsureUserProps) {
     );
   }
 
-  // Show error if user record query failed
-  if (error) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center dark:border-red-800 dark:bg-red-950">
-          <p className="font-semibold text-red-900 dark:text-red-100">User Record Error</p>
-          <p className="mt-2 text-sm text-red-700 dark:text-red-300">{error.message}</p>
-        </div>
-      </div>
-    );
+  if (!user) {
+    return null;
   }
 
-  // User record exists, render children
   return <>{children}</>;
 }
 
 /**
- * Hook to get the current user's user record
- * Must be used within EnsureUser component
+ * Hook to get the current authenticated user with Zero data
  */
 export function useUser() {
-  const { user } = db.useAuth();
-  const { data, isLoading, error } = db.useQuery(
-    user?.id
-      ? {
-          $users: {
-            $: { where: { id: user.id } },
-            avatarFile: {},
-          },
-        }
-      : null
-  );
+  const { user, loading } = useAuth();
+  const { currentUser, isLoading: userStateLoading } = useUserState();
 
-  return { user: data?.$users?.[0], isLoading, error };
+  const isLoading = loading || (user?.id ? userStateLoading : false);
+
+  return {
+    user: currentUser || user,
+    isLoading,
+    error: null,
+  };
 }
 
 /**
- * Hook to get the current user's user record (throws error if not found)
+ * Hook to get the current user (throws error if not found)
  * Must be used within EnsureUser component
  */
 export function useRequiredUser() {
-  const { user } = useUser();
+  const { user } = useAuth();
   if (!user) {
     throw new Error('useRequiredUser must be used inside EnsureUser');
   }

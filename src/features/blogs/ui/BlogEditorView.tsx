@@ -5,8 +5,8 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { PlateEditor } from '@/components/kit-platejs/plate-editor';
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,7 @@ import { ShareButton } from '@/components/shared/ShareButton';
 
 // Unified editor imports
 import { useEditor, useEditorUsers, VersionControl, type EditorUser } from '@/features/editor';
-import db from '@db/db';
+import { useBlogState } from '@/zero/blogs/useBlogState';
 
 interface BlogEditorViewProps {
   blogId: string;
@@ -28,7 +28,7 @@ interface BlogEditorViewProps {
 }
 
 export function BlogEditorView({ blogId, userId, userRecord, userColor }: BlogEditorViewProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const [isEditingTitle, setIsEditingTitle] = useState(false);
 
   // Unified editor hook
@@ -55,16 +55,10 @@ export function BlogEditorView({ blogId, userId, userRecord, userColor }: BlogEd
     userId,
   });
 
+  const { blogWithBloggers } = useBlogState({ blogId, includeBloggers: true });
+
   // Query blog data for additional metadata
-  const { data: blogData } = db.useQuery({
-    blogs: {
-      $: { where: { id: blogId } },
-      blogRoleBloggers: {
-        user: {},
-      },
-    },
-  });
-  const blog = blogData?.blogs?.[0];
+  const blog = blogWithBloggers;
 
   // Build current user for hooks
   const currentUser: EditorUser | undefined = userId
@@ -81,7 +75,7 @@ export function BlogEditorView({ blogId, userId, userRecord, userColor }: BlogEd
   // Additional check from queried data
   const isOwnerOrCollabFromData =
     blog &&
-    blog.blogRoleBloggers?.some(
+    blog.bloggers?.some(
       (b: any) => b.user?.id === userId && (b.status === 'owner' || b.status === 'admin')
     );
 
@@ -100,7 +94,7 @@ export function BlogEditorView({ blogId, userId, userRecord, userColor }: BlogEd
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-20 text-center">
           <p className="mb-4 text-lg text-muted-foreground">Blog not found.</p>
-          <Button onClick={() => router.push(`/blog`)}>
+          <Button onClick={() => navigate({ to: '/blog' })}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Blogs
           </Button>
@@ -114,7 +108,7 @@ export function BlogEditorView({ blogId, userId, userRecord, userColor }: BlogEd
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-20 text-center">
           <p className="mb-4 text-lg text-muted-foreground">You don't have access to this blog.</p>
-          <Button onClick={() => router.push(`/blog/${blogId}`)}>
+          <Button onClick={() => navigate({ to: `/blog/${blogId}` })}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Blog
           </Button>
@@ -126,7 +120,7 @@ export function BlogEditorView({ blogId, userId, userRecord, userColor }: BlogEd
   return (
     <div className="container mx-auto p-8">
       <div className="mb-6 flex items-center justify-between">
-        <Link href={`/blog/${blogId}`}>
+        <Link to={`/blog/${blogId}`}>
           <Button variant="ghost">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Blog
@@ -137,7 +131,7 @@ export function BlogEditorView({ blogId, userId, userRecord, userColor }: BlogEd
           {/* Share Button */}
           <ShareButton
             url={`/blog/${blogId}`}
-            title={blogTitle || blog.title}
+            title={blogTitle || blog.title || ''}
             description={blog.description || ''}
           />
 
@@ -152,9 +146,9 @@ export function BlogEditorView({ blogId, userId, userRecord, userColor }: BlogEd
             />
           )}
 
-          {blog.isPublic !== undefined && (
+          {blog.is_public !== undefined && (
             <Badge variant="outline" className="capitalize">
-              {blog.isPublic ? 'Public' : 'Private'}
+              {blog.is_public ? 'Public' : 'Private'}
             </Badge>
           )}
         </div>
@@ -228,10 +222,10 @@ export function BlogEditorView({ blogId, userId, userRecord, userColor }: BlogEd
           </div>
 
           {/* Bloggers list */}
-          {blog.blogRoleBloggers && blog.blogRoleBloggers.length > 0 && (
+          {blog.bloggers && blog.bloggers.length > 0 && (
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <span className="text-sm text-muted-foreground">Bloggers:</span>
-              {blog.blogRoleBloggers.map((blogger: any) => (
+              {blog.bloggers.map((blogger: any) => (
                 <div
                   key={blogger.id}
                   className="flex items-center gap-1 rounded-full bg-muted px-2 py-1"

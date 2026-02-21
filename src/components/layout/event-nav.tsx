@@ -1,7 +1,6 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
-import Link from 'next/link';
+import { useLocation, Link } from '@tanstack/react-router';
 import { cn } from '@/utils/utils';
 import { Calendar, FileText, Radio } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -13,7 +12,7 @@ interface EventNavProps {
 }
 
 export function EventNav({ eventId, className }: EventNavProps) {
-  const pathname = usePathname();
+  const { pathname } = useLocation();
   const [mounted, setMounted] = useState(false);
   const { t } = useTranslation();
 
@@ -78,7 +77,7 @@ export function EventNav({ eventId, className }: EventNavProps) {
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                to={item.href}
                 className={cn(
                   'flex items-center gap-2 border-b-2 px-1 py-4 text-sm font-medium transition-colors hover:text-foreground',
                   isActive

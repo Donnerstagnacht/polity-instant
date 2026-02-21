@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import {
   Card,
   CardContent,
@@ -18,15 +18,16 @@ import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/componen
 import { HashtagInput } from '@/components/ui/hashtag-input';
 import { VisibilitySelector } from '@/components/ui/visibility-selector';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { db, tx, id } from 'db/db';
-import { useAuthStore } from '@/features/auth/auth.ts';
+import { useBlogActions } from '@/zero/blogs/useBlogActions';
+import { useAuth } from '@/providers/auth-provider';
 import { toast } from 'sonner';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 
 export function CreateBlogForm() {
-  const router = useRouter();
-  const user = useAuthStore(state => state.user);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { createBlogFull } = useBlogActions();
 
   const [formData, setFormData] = useState({
     title: '',
@@ -58,111 +59,132 @@ export function CreateBlogForm() {
         return;
       }
 
-      const blogId = id();
+      const blogId = crypto.randomUUID();
 
       // Create roles for the blog
-      const ownerRoleId = id();
-      const writerRoleId = id();
+      const ownerRoleId = crypto.randomUUID();
+      const writerRoleId = crypto.randomUUID();
 
       // Create the blogger entry for the creator (as Owner)
-      const bloggerId = id();
+      const bloggerId = crypto.randomUUID();
 
       // Create action rights for Owner role
-      const ownerManageBlogsId = id();
-      const ownerManageBloggersId = id();
+      const ownerManageBlogsId = crypto.randomUUID();
+      const ownerManageBloggersId = crypto.randomUUID();
 
       // Create action right for Writer role
-      const writerUpdateRightId = id();
+      const writerUpdateRightId = crypto.randomUUID();
 
-      const transactions = [
-        // Create the blog
-        tx.blogs[blogId].update({
+      await createBlogFull({
+        blog: {
+          id: blogId,
           title: formData.title,
+          description: '',
+          content: null,
           date: formData.date,
-          likeCount: 0,
-          commentCount: 0,
+          image_url: '',
+          is_public: formData.visibility === 'public',
           visibility: formData.visibility,
-        }),
-
-        // Create Owner role
-        tx.roles[ownerRoleId].update({
-          name: 'Owner',
-          description: 'Blog owner with full permissions',
-          scope: 'blog',
-        }),
-        tx.roles[ownerRoleId].link({ blog: blogId }),
-
-        // Create Writer role
-        tx.roles[writerRoleId].update({
-          name: 'Writer',
-          description: 'Blog writer with edit access',
-          scope: 'blog',
-        }),
-        tx.roles[writerRoleId].link({ blog: blogId }),
-
-        // Create action rights for Owner role - 'manage' implies view, create, update, delete
-        tx.actionRights[ownerManageBlogsId].update({
-          resource: 'blogs',
-          action: 'manage',
-        }),
-        tx.actionRights[ownerManageBlogsId].link({ roles: [ownerRoleId], blog: blogId }),
-
-        tx.actionRights[ownerManageBloggersId].update({
-          resource: 'blogBloggers',
-          action: 'manage',
-        }),
-        tx.actionRights[ownerManageBloggersId].link({ roles: [ownerRoleId], blog: blogId }),
-
-        // Create action right for Writer role
-        tx.actionRights[writerUpdateRightId].update({
-          resource: 'blogs',
-          action: 'update',
-        }),
-        tx.actionRights[writerUpdateRightId].link({ roles: [writerRoleId], blog: blogId }),
-
-        // Assign creator as Owner
-        tx.blogBloggers[bloggerId].update({
+          like_count: 0,
+          comment_count: 0,
+          upvotes: 0,
+          downvotes: 0,
+          editing_mode: '',
+          discussions: null,
+          group_id: '',
+        },
+        roles: [
+          {
+            id: ownerRoleId,
+            name: 'Owner',
+            description: 'Blog owner with full permissions',
+            scope: 'blog',
+            group_id: '',
+            event_id: '',
+            amendment_id: '',
+            blog_id: blogId,
+          },
+          {
+            id: writerRoleId,
+            name: 'Writer',
+            description: 'Blog writer with edit access',
+            scope: 'blog',
+            group_id: '',
+            event_id: '',
+            amendment_id: '',
+            blog_id: blogId,
+          },
+        ],
+        actionRights: [
+          {
+            id: ownerManageBlogsId,
+            resource: 'blogs',
+            action: 'manage',
+            role_id: ownerRoleId,
+            group_id: '',
+            event_id: '',
+            amendment_id: '',
+            blog_id: blogId,
+          },
+          {
+            id: ownerManageBloggersId,
+            resource: 'blogBloggers',
+            action: 'manage',
+            role_id: ownerRoleId,
+            group_id: '',
+            event_id: '',
+            amendment_id: '',
+            blog_id: blogId,
+          },
+          {
+            id: writerUpdateRightId,
+            resource: 'blogs',
+            action: 'update',
+            role_id: writerRoleId,
+            group_id: '',
+            event_id: '',
+            amendment_id: '',
+            blog_id: blogId,
+          },
+        ],
+        entry: {
+          id: bloggerId,
+          blog_id: blogId,
+          user_id: user.id,
+          role_id: ownerRoleId,
           status: 'member',
-          createdAt: new Date(),
-        }),
-        tx.blogBloggers[bloggerId].link({
-          blog: blogId,
-          user: user.id,
-          role: ownerRoleId,
-        }),
-      ];
-
-      // Add hashtags
-      const hashtagTransactions = formData.hashtags.map(tag => {
-        const hashtagId = id();
-        return [
-          tx.hashtags[hashtagId].update({
-            tag,
-            createdAt: new Date(),
-          }),
-          tx.hashtags[hashtagId].link({ blog: blogId }),
-        ];
-      }).flat();
+          visibility: formData.visibility,
+        },
+        hashtags: formData.hashtags.map(tag => ({
+          id: crypto.randomUUID(),
+          tag,
+          category: '',
+          color: '',
+          bg_color: '',
+          icon: '',
+          description: '',
+          amendment_id: '',
+          event_id: '',
+          group_id: '',
+          user_id: user.id,
+          blog_id: blogId,
+        })),
+      });
 
       // Add timeline event for public blogs
-      const timelineTransactions = [];
       if (formData.visibility === 'public') {
-        timelineTransactions.push(
-          createTimelineEvent({
-            eventType: 'created',
-            entityType: 'blog',
-            entityId: blogId,
-            actorId: user.id,
-            title: `New blog post: ${formData.title}`,
-            description: 'A new blog post has been published',
-          })
-        );
+        await createTimelineEvent({
+          eventType: 'created',
+          entityType: 'blog',
+          entityId: blogId,
+          actorId: user.id,
+          title: `New blog post: ${formData.title}`,
+          description: 'A new blog post has been published',
+        });
       }
 
-      await db.transact([...transactions, ...hashtagTransactions, ...timelineTransactions]);
-
       toast.success('Blog post created successfully!');
-      router.push(`/blog/${blogId}`);
+      navigate({ to: `/blog/${blogId}` });
     } catch (error) {
       console.error('Failed to create blog post:', error);
       toast.error('Failed to create blog post. Please try again.');

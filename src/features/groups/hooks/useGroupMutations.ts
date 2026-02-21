@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import db, { tx, id } from '../../../../db/db';
+import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { toast } from 'sonner';
 import {
   notifyGroupInvite,
@@ -14,12 +14,21 @@ import {
 } from '@/utils/notification-helpers';
 import { addUserToGroupConversation } from '@/utils/groupConversationSync';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
+import { sendNotificationFn } from '@/server/notifications';
 
 /**
  * Hook for group membership mutations
  */
 export function useGroupMutations(groupId: string) {
   const [isLoading, setIsLoading] = useState(false);
+  const {
+    inviteMember,
+    updateMemberRole,
+    leaveGroup: leaveGroupAction,
+    createRole: createRoleAction,
+    deleteRole: deleteRoleAction,
+    assignActionRight,
+  } = useGroupActions();
 
   /**
    * Invite users to the group
@@ -35,46 +44,21 @@ export function useGroupMutations(groupId: string) {
 
     setIsLoading(true);
     try {
-      const transactions: any[] = [];
-
-      userIds.forEach(userId => {
-        const membershipId = id();
-        const membershipTx = tx.groupMemberships[membershipId].update({
+      for (const userId of userIds) {
+        const membershipId = crypto.randomUUID();
+        await inviteMember({
+          id: membershipId,
+          user_id: userId,
+          group_id: groupId,
+          role_id: roleId ?? '',
+          visibility: '',
           status: 'invited',
-          createdAt: new Date().toISOString(),
         });
+      }
 
-        // Link user and group
-        membershipTx.link({
-          user: userId,
-          group: groupId,
-        });
-
-        // Link role if provided
-        if (roleId) {
-          membershipTx.link({ role: roleId });
-        }
-
-        transactions.push(membershipTx);
-      });
-
-      await db.transact(transactions);
-
-      // Notifications are server-only — send separately
-      try {
-        if (senderId && groupName) {
-          const notifTxs: any[] = [];
-          userIds.forEach(userId => {
-            notifTxs.push(...notifyGroupInvite({
-              senderId,
-              recipientUserId: userId,
-              groupId,
-              groupName,
-            }));
-          });
-          if (notifTxs.length > 0) await db.transact(notifTxs);
-        }
-      } catch { /* notification delivery is best-effort */ }
+      userIds.forEach(uid => {
+        sendNotificationFn({ data: { helper: 'notifyGroupInvite', params: { senderId, recipientId: uid, groupId, groupName } } }).catch(console.error)
+      })
       toast.success(`Successfully invited ${userIds.length} user(s)`);
       return { success: true };
     } catch (error) {
@@ -99,43 +83,17 @@ export function useGroupMutations(groupId: string) {
   ) => {
     setIsLoading(true);
     try {
-      const transactions: any[] = [
-        tx.groupMemberships[membershipId].update({
-          status: 'member',
-        }),
-      ];
+      await updateMemberRole({
+        id: membershipId,
+        status: 'member',
+      });
 
       // Add user to group conversation if it exists
       if (conversationId) {
         await addUserToGroupConversation(conversationId, userId);
       }
 
-      await db.transact(transactions);
-
-      // Timeline and notifications are server-only — send separately
-      try {
-        const sideEffects: any[] = [
-          createTimelineEvent({
-            eventType: 'member_added',
-            entityType: 'group',
-            entityId: groupId,
-            actorId: userId,
-            title: `New member joined ${groupName || 'the group'}`,
-            description: 'A new member has joined the group',
-          }),
-        ];
-
-        if (senderId) {
-          sideEffects.push(...notifyMembershipApproved({
-            senderId,
-            recipientUserId: userId,
-            groupId,
-            groupName: groupName || '',
-          }));
-        }
-
-        await db.transact(sideEffects);
-      } catch { /* timeline/notification delivery is best-effort */ }
+      sendNotificationFn({ data: { helper: 'notifyMembershipApproved', params: { senderId, recipientId: userId, groupId, groupName } } }).catch(console.error)
       toast.success('Membership approved');
       return { success: true };
     } catch (error) {
@@ -158,23 +116,11 @@ export function useGroupMutations(groupId: string) {
   ) => {
     setIsLoading(true);
     try {
-      const transactions = [tx.groupMemberships[membershipId].delete()];
+      const transactions = [leaveGroupAction({ id: membershipId })];
 
-      await db.transact(transactions);
+      await Promise.all(transactions);
 
-      // Notification is server-only — send separately
-      try {
-        if (senderId) {
-          const notificationTxs = notifyMembershipRejected({
-            senderId,
-            recipientUserId: userId,
-            groupId,
-            groupName: '',
-          });
-          if (notificationTxs.length > 0) await db.transact(notificationTxs);
-        }
-      } catch { /* notification delivery is best-effort */ }
-
+      sendNotificationFn({ data: { helper: 'notifyMembershipRejected', params: { senderId, recipientId: userId, groupId } } }).catch(console.error)
       toast.success('Membership request rejected');
       return { success: true };
     } catch (error) {
@@ -198,41 +144,9 @@ export function useGroupMutations(groupId: string) {
   ) => {
     setIsLoading(true);
     try {
-      const transactions = [tx.groupMemberships[membershipId].delete()];
+      await leaveGroupAction({ id: membershipId });
 
-      // Remove from conversation if exists
-      if (conversationId) {
-        const participantQuery = await db.queryOnce({
-          conversationParticipants: {
-            $: {
-              where: {
-                'conversation.id': conversationId,
-                'user.id': userId,
-              },
-            },
-          },
-        });
-
-        const participant = participantQuery?.data?.conversationParticipants?.[0];
-        if (participant) {
-          transactions.push(tx.conversationParticipants[participant.id].delete());
-        }
-      }
-
-      await db.transact(transactions);
-
-      // Notification is server-only — send separately
-      try {
-        if (senderId) {
-          const notificationTxs = notifyMembershipRemoved({
-            senderId,
-            recipientUserId: userId,
-            groupId,
-            groupName: '',
-          });
-          if (notificationTxs.length > 0) await db.transact(notificationTxs);
-        }
-      } catch { /* notification delivery is best-effort */ }
+      sendNotificationFn({ data: { helper: 'notifyMembershipRemoved', params: { senderId, recipientId: userId, groupId } } }).catch(console.error)
       toast.success('Member removed successfully');
       return { success: true };
     } catch (error) {
@@ -256,23 +170,12 @@ export function useGroupMutations(groupId: string) {
   ) => {
     setIsLoading(true);
     try {
-      const transactions = [tx.groupMemberships[membershipId].link({ role: roleId })];
+      await updateMemberRole({
+        id: membershipId,
+        role_id: roleId,
+      });
 
-      await db.transact(transactions);
-
-      // Notification is server-only — send separately
-      try {
-        if (senderId) {
-          const notificationTxs = notifyMembershipRoleChanged({
-            senderId,
-            recipientUserId: userId,
-            groupId,
-            groupName: '',
-            newRole: '',
-          });
-          if (notificationTxs.length > 0) await db.transact(notificationTxs);
-        }
-      } catch { /* notification delivery is best-effort */ }
+      sendNotificationFn({ data: { helper: 'notifyMembershipRoleChanged', params: { senderId, recipientId: userId, groupId, roleId } } }).catch(console.error)
       toast.success('Member role updated');
       return { success: true };
     } catch (error) {
@@ -297,50 +200,34 @@ export function useGroupMutations(groupId: string) {
   ) => {
     setIsLoading(true);
     try {
-      const roleId = id();
-      const transactions: any[] = [
-        tx.roles[roleId].update({
-          name,
-          description,
-          scope: 'group',
-          createdAt: new Date().toISOString(),
-        }),
-        tx.roles[roleId].link({ group: groupId }),
-      ];
-
-      // Add action rights
-      actionRights.forEach(right => {
-        const actionRightId = id();
-        transactions.push(
-          tx.actionRights[actionRightId].update({
-            resource: right.resource,
-            action: right.action,
-            createdAt: new Date().toISOString(),
-          }),
-          tx.actionRights[actionRightId].link({ role: roleId })
-        );
+      const roleId = crypto.randomUUID();
+      await createRoleAction({
+        id: roleId,
+        name,
+        description,
+        scope: 'group',
+        group_id: groupId,
+        event_id: '',
+        amendment_id: '',
+        blog_id: '',
       });
 
-      await db.transact(transactions);
+      // Add action rights
+      for (const right of actionRights) {
+        const actionRightId = crypto.randomUUID();
+        await assignActionRight({
+          id: actionRightId,
+          resource: right.resource,
+          action: right.action,
+          role_id: roleId,
+          group_id: groupId,
+          event_id: '',
+          amendment_id: '',
+          blog_id: '',
+        });
+      }
 
-      // Notifications are server-only — send separately
-      try {
-        if (senderId && groupName && adminUserIds) {
-          const notifTxs: any[] = [];
-          adminUserIds.forEach(adminId => {
-            if (adminId !== senderId) {
-              notifTxs.push(...notifyRoleCreated({
-                senderId,
-                recipientUserId: adminId,
-                groupId,
-                groupName,
-                roleName: name,
-              }));
-            }
-          });
-          if (notifTxs.length > 0) await db.transact(notifTxs);
-        }
-      } catch { /* notification delivery is best-effort */ }
+      sendNotificationFn({ data: { helper: 'notifyRoleCreated', params: { senderId, groupId, groupName } } }).catch(console.error)
       toast.success('Role created successfully');
       return { success: true, roleId };
     } catch (error) {
@@ -364,28 +251,9 @@ export function useGroupMutations(groupId: string) {
   ) => {
     setIsLoading(true);
     try {
-      const transactions: any[] = [tx.roles[roleId].delete()];
+      await deleteRoleAction({ id: roleId });
 
-      await db.transact(transactions);
-
-      // Notifications are server-only — send separately
-      try {
-        if (senderId && roleName && groupName && adminUserIds) {
-          const notifTxs: any[] = [];
-          adminUserIds.forEach(adminId => {
-            if (adminId !== senderId) {
-              notifTxs.push(...notifyRoleDeleted({
-                senderId,
-                recipientUserId: adminId,
-                groupId,
-                groupName,
-                roleName,
-              }));
-            }
-          });
-          if (notifTxs.length > 0) await db.transact(notifTxs);
-        }
-      } catch { /* notification delivery is best-effort */ }
+      sendNotificationFn({ data: { helper: 'notifyRoleDeleted', params: { senderId, groupId, groupName } } }).catch(console.error)
       toast.success('Role deleted successfully');
       return { success: true };
     } catch (error) {
@@ -408,26 +276,12 @@ export function useGroupMutations(groupId: string) {
   ) => {
     setIsLoading(true);
     try {
-      const transactions: any[] = [
-        tx.groupMemberships[membershipId].update({
-          status: 'admin',
-        }),
-      ];
+      await updateMemberRole({
+        id: membershipId,
+        status: 'admin',
+      });
 
-      await db.transact(transactions);
-
-      // Notification is server-only — send separately
-      try {
-        if (senderId && groupName) {
-          const notificationTxs = notifyAdminPromoted({
-            senderId,
-            recipientUserId: userId,
-            groupId,
-            groupName,
-          });
-          if (notificationTxs.length > 0) await db.transact(notificationTxs);
-        }
-      } catch { /* notification delivery is best-effort */ }
+      sendNotificationFn({ data: { helper: 'notifyAdminPromoted', params: { senderId, recipientId: userId, groupId, groupName } } }).catch(console.error)
       toast.success('Member promoted to admin');
       return { success: true };
     } catch (error) {
@@ -450,26 +304,12 @@ export function useGroupMutations(groupId: string) {
   ) => {
     setIsLoading(true);
     try {
-      const transactions: any[] = [
-        tx.groupMemberships[membershipId].update({
-          status: 'member',
-        }),
-      ];
+      await updateMemberRole({
+        id: membershipId,
+        status: 'member',
+      });
 
-      await db.transact(transactions);
-
-      // Notification is server-only — send separately
-      try {
-        if (senderId && userId && groupName) {
-          const notificationTxs = notifyAdminDemoted({
-            senderId,
-            recipientUserId: userId,
-            groupId,
-            groupName,
-          });
-          if (notificationTxs.length > 0) await db.transact(notificationTxs);
-        }
-      } catch { /* notification delivery is best-effort */ }
+      sendNotificationFn({ data: { helper: 'notifyAdminDemoted', params: { senderId, recipientId: userId, groupId, groupName } } }).catch(console.error)
       toast.success('Admin demoted to member');
       return { success: true };
     } catch (error) {

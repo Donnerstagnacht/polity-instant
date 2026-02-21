@@ -1,4 +1,26 @@
 export const documentsTranslations = {
+  // Toast-Nachrichten für Action-Hooks
+  toasts: {
+    created: 'Dokument erstellt',
+    updateFailed: 'Dokument konnte nicht aktualisiert werden',
+    deleted: 'Dokument gelöscht',
+    deleteFailed: 'Dokument konnte nicht gelöscht werden',
+    versionCreated: 'Version erstellt',
+    versionCreateFailed: 'Version konnte nicht erstellt werden',
+    versionUpdateFailed: 'Version konnte nicht aktualisiert werden',
+    versionDeleted: 'Version gelöscht',
+    versionDeleteFailed: 'Version konnte nicht gelöscht werden',
+    threadCreated: 'Thread erstellt',
+    threadCreateFailed: 'Thread konnte nicht erstellt werden',
+    voteThreadFailed: 'Abstimmung über Thread fehlgeschlagen',
+    commentAdded: 'Kommentar hinzugefügt',
+    commentAddFailed: 'Kommentar konnte nicht hinzugefügt werden',
+    voteCommentFailed: 'Abstimmung über Kommentar fehlgeschlagen',
+    updateCommentVoteFailed: 'Kommentarabstimmung konnte nicht aktualisiert werden',
+    deleteCommentVoteFailed: 'Kommentarabstimmung konnte nicht gelöscht werden',
+    collaboratorAdded: 'Mitarbeiter hinzugefügt',
+    collaboratorAddFailed: 'Mitarbeiter konnte nicht hinzugefügt werden',
+  },
   inviteDialog: {
     invite: 'Einladen',
     title: 'Mitarbeiter einladen',

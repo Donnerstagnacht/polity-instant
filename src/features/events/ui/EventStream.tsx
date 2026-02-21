@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { Link } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,7 +26,7 @@ import {
 import { useEventStream } from '../hooks/useEventStream';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/hooks/use-translation';
-import { AgendaNavigationControls } from './AgendaNavigationControls';
+import { AgendaNavigationControls } from '@/features/agendas/ui/AgendaNavigationControls';
 
 // Helper function to extract YouTube video ID from URL
 function getYouTubeVideoId(url: string): string | null {
@@ -46,7 +46,7 @@ function getYouTubeVideoId(url: string): string | null {
 }
 
 export function EventStream({ eventId }: { eventId: string }) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const { toast } = useToast();
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -179,7 +179,7 @@ export function EventStream({ eventId }: { eventId: string }) {
     return (
       <div className="flex h-[400px] flex-col items-center justify-center gap-4">
         <p className="text-lg text-muted-foreground">{t('features.events.stream.noActiveItem')}</p>
-        <Button onClick={() => router.push(`/event/${eventId}`)}>
+        <Button onClick={() => navigate({ to: `/event/${eventId}` })}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           {t('features.events.backToEvent')}
         </Button>
@@ -244,7 +244,7 @@ export function EventStream({ eventId }: { eventId: string }) {
                 </div>
               </div>
               <Button asChild variant="outline">
-                <Link href={`/event/${eventId}/agenda/${currentAgendaItem.id}`}>
+                <Link to={`/event/${eventId}/agenda/${currentAgendaItem.id}`}>
                   {t('features.events.stream.viewDetails')}
                 </Link>
               </Button>
@@ -431,11 +431,11 @@ export function EventStream({ eventId }: { eventId: string }) {
                 (entry: any) => entry.amendmentVote?.id === amendmentVote.id
               );
 
-              // Count votes
+              // Count votes (1=yes, -1=no, 0=abstain)
               const voteCounts = {
-                yes: voteEntries.filter((e: any) => e.vote === 'yes').length,
-                no: voteEntries.filter((e: any) => e.vote === 'no').length,
-                abstain: voteEntries.filter((e: any) => e.vote === 'abstain').length,
+                yes: voteEntries.filter((e: any) => e.vote === 1).length,
+                no: voteEntries.filter((e: any) => e.vote === -1).length,
+                abstain: voteEntries.filter((e: any) => e.vote === 0).length,
               };
               const totalVotes = voteCounts.yes + voteCounts.no + voteCounts.abstain;
 
@@ -533,9 +533,9 @@ export function EventStream({ eventId }: { eventId: string }) {
                           <CheckCircle2 className="mr-1 h-3 w-3" />
                           Sie haben mit{' '}
                           <span className="ml-1 font-medium">
-                            {userVote.vote === 'yes'
+                            {userVote.vote === 1
                               ? 'Ja'
-                              : userVote.vote === 'no'
+                              : userVote.vote === -1
                                 ? 'Nein'
                                 : 'Enthalten'}
                           </span>{' '}
@@ -545,12 +545,12 @@ export function EventStream({ eventId }: { eventId: string }) {
                     </div>
                     <div className="grid gap-3 sm:grid-cols-3">
                       <Button
-                        variant={userVote?.vote === 'yes' ? 'default' : 'outline'}
+                        variant={userVote?.vote === 1 ? 'default' : 'outline'}
                         size="lg"
                         onClick={() => handleAmendmentVote(amendmentVote.id, 'yes')}
                         disabled={votingLoading === amendmentVote.id || !user}
                         className={
-                          userVote?.vote === 'yes'
+                          userVote?.vote === 1
                             ? 'bg-green-600 hover:bg-green-700'
                             : 'border-green-600 text-green-600 hover:bg-green-50 dark:hover:bg-green-950'
                         }
@@ -559,12 +559,12 @@ export function EventStream({ eventId }: { eventId: string }) {
                         Ja
                       </Button>
                       <Button
-                        variant={userVote?.vote === 'no' ? 'default' : 'outline'}
+                        variant={userVote?.vote === -1 ? 'default' : 'outline'}
                         size="lg"
                         onClick={() => handleAmendmentVote(amendmentVote.id, 'no')}
                         disabled={votingLoading === amendmentVote.id || !user}
                         className={
-                          userVote?.vote === 'no'
+                          userVote?.vote === -1
                             ? 'bg-red-600 hover:bg-red-700'
                             : 'border-red-600 text-red-600 hover:bg-red-50 dark:hover:bg-red-950'
                         }
@@ -573,12 +573,12 @@ export function EventStream({ eventId }: { eventId: string }) {
                         Nein
                       </Button>
                       <Button
-                        variant={userVote?.vote === 'abstain' ? 'default' : 'outline'}
+                        variant={userVote?.vote === 0 ? 'default' : 'outline'}
                         size="lg"
                         onClick={() => handleAmendmentVote(amendmentVote.id, 'abstain')}
                         disabled={votingLoading === amendmentVote.id || !user}
                         className={
-                          userVote?.vote === 'abstain'
+                          userVote?.vote === 0
                             ? 'bg-gray-600 hover:bg-gray-700'
                             : 'border-gray-600 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-900'
                         }

@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { db } from '../../db/db';
-import { tx, id } from '@instantdb/react';
+import { useNotificationState } from '@/zero/notifications/useNotificationState';
+import { useNotificationActions } from '@/zero/notifications/useNotificationActions';
+import { useAuth } from '@/providers/auth-provider';
 import { useTranslation } from '@/hooks/use-translation';
 
 interface UsePushSubscriptionReturn {
@@ -36,7 +37,11 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
   const [permission, setPermission] = useState<NotificationPermission>('default');
   const [error, setError] = useState<string | null>(null);
 
-  const { user } = db.useAuth();
+  const { registerPushSubscription, unregisterPushSubscription } = useNotificationActions();
+  const { user } = useAuth();
+
+  // Reactive query for push subscriptions (used in unsubscribe callback)
+  const { pushSubscriptions: pushSubscriptionsData } = useNotificationState();
 
   // Keep a stable ref for the translation function to avoid callback re-identity
   const tRef = useRef(t);
@@ -177,7 +182,7 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
         });
       }
 
-      // Store subscription in InstantDB
+      // Store subscription in Zero
       const subscriptionJson = subscription.toJSON();
       const keys = subscriptionJson.keys;
 
@@ -185,18 +190,13 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
         throw new Error(tRef.current('components.pushNotifications.errors.invalidKeys'));
       }
 
-      await db.transact([
-        tx.pushSubscriptions[id()]
-          .update({
-            endpoint: subscription.endpoint,
-            auth: keys.auth,
-            p256dh: keys.p256dh,
-            userAgent: navigator.userAgent,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          })
-          .link({ user: user.id }),
-      ]);
+      await registerPushSubscription({
+        id: crypto.randomUUID(),
+        endpoint: subscription.endpoint,
+        auth: keys.auth,
+        p256dh: keys.p256dh,
+        user_agent: navigator.userAgent,
+      });
 
       setIsSubscribed(true);
       setError(null);
@@ -235,22 +235,13 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
         // Unsubscribe from push at browser level
         await subscription.unsubscribe();
 
-        // Remove matching subscription record(s) from InstantDB
-        const { data } = await db.queryOnce({
-          pushSubscriptions: {
-            $: {
-              where: {
-                endpoint,
-                'user.id': user.id,
-              },
-            },
-          },
-        });
+        // Remove matching subscription record(s) from Zero
+        const matchingSubs = (pushSubscriptionsData || []).filter(
+          (sub: any) => sub.endpoint === endpoint
+        );
 
-        if (data?.pushSubscriptions?.length) {
-          await db.transact(
-            data.pushSubscriptions.map((sub: any) => tx.pushSubscriptions[sub.id].delete())
-          );
+        for (const sub of matchingSubs) {
+          await unregisterPushSubscription({ id: sub.id });
         }
       }
 
@@ -263,7 +254,7 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [isSupported, user]);
+  }, [isSupported, user, pushSubscriptionsData]);
 
   return {
     isSupported,

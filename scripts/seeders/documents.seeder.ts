@@ -1,4 +1,6 @@
-import { id, tx } from '@instantdb/admin';
+import { id } from '../helpers/id.helper';
+import { tx } from '../helpers/compat';
+import type { InsertOp } from '../helpers/transaction.helpers';
 import { faker } from '@faker-js/faker';
 import { EntitySeeder, SeedContext } from '../types/seeder.types';
 import { randomInt, randomItem } from '../helpers/random.helpers';
@@ -12,7 +14,7 @@ export const documentsSeeder: EntitySeeder = {
     console.log('Seeding documents...');
     const { db, userIds } = context;
     const documentIds: string[] = [];
-    const transactions = [];
+    const transactions: InsertOp[] = [];
     let documentsToOwners = 0;
 
     const numDocuments = randomInt(10, 20);

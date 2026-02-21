@@ -6,7 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Search, MessageSquare } from 'lucide-react';
-import { db, tx, id } from '../../../db/db';
+import { useAuth } from '@/providers/auth-provider';
+import { useMessageState } from '@/zero/messages/useMessageState';
+import { useMessageActions } from '@/zero/messages/useMessageActions';
 import { cn } from '@/utils/utils';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/use-translation';
@@ -45,22 +47,18 @@ export function ConversationSelectorDialog({
   shareTitle,
 }: ConversationSelectorDialogProps) {
   const { t } = useTranslation();
-  const { user } = db.useAuth();
+  const { user } = useAuth();
+  const { sendMessage } = useMessageActions();
   const [searchQuery, setSearchQuery] = useState('');
   const [sending, setSending] = useState<string | null>(null);
 
-  // Query all conversations where the user is a participant
-  const { data, isLoading } = db.useQuery({
-    conversations: {
-      group: {},
-      participants: {
-        user: {},
-      },
-      messages: {},
-    },
+  // Query all conversations where the user is a participant, with related conversation data
+  const { conversationsByUser: conversationsRaw, isLoading } = useMessageState({
+    includeConversationsByUser: !!user?.id,
+    userId: user?.id,
   });
 
-  const conversations = (data?.conversations || []) as Conversation[];
+  const conversations = (conversationsRaw || []) as unknown as Conversation[];
 
   // Filter conversations based on search query
   const filteredConversations = useMemo(() => {
@@ -123,25 +121,17 @@ export function ConversationSelectorDialog({
 
     setSending(conversationId);
 
-    const messageId = id();
+    const messageId = crypto.randomUUID();
     const fullUrl = typeof window !== 'undefined' ? window.location.origin + shareUrl : shareUrl;
     const messageContent = `${shareTitle}\n${fullUrl}`;
 
     try {
-      await db.transact([
-        tx.messages[messageId].update({
-          content: messageContent,
-          isRead: false,
-          createdAt: new Date().toISOString(),
-        }),
-        tx.messages[messageId].link({
-          conversation: conversationId,
-          sender: user.id,
-        }),
-        tx.conversations[conversationId].update({
-          lastMessageAt: new Date().toISOString(),
-        }),
-      ]);
+      await sendMessage({
+        id: messageId,
+        conversation_id: conversationId,
+        content: messageContent,
+        deleted_at: 0,
+      });
 
       toast.success(t('common.share.linkShared'));
       onOpenChange(false);

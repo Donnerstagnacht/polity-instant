@@ -1,0 +1,19 @@
+import { useCallback, useMemo } from 'react'
+import { createFileRoute } from '@tanstack/react-router'
+import { useGroupNetwork } from '@/features/network/hooks/useGroupNetwork'
+import { GroupRelationshipsManager } from '@/components/groups/GroupRelationshipsManager'
+
+export const Route = createFileRoute('/_authed/group/$id/relationships')({
+  component: GroupRelationshipsPage,
+})
+
+function GroupRelationshipsPage() {
+  const { id } = Route.useParams()
+
+  return (
+    <div className="container mx-auto max-w-4xl py-6">
+      <h1 className="mb-6 text-2xl font-bold">Relationships</h1>
+      <GroupRelationshipsManager groupId={id} />
+    </div>
+  )
+}

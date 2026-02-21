@@ -22,7 +22,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { GitBranch, Clock, User, Plus, History, Search, Pencil, Check, X } from 'lucide-react';
-import { db, tx, id } from '../../../../db/db';
+import { useDocumentActions } from '@/zero/documents/useDocumentActions';
+import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { toast } from 'sonner';
 import { notifyVersionCreated } from '@/utils/notification-helpers';
 import { useTranslation } from '@/hooks/use-translation';
@@ -67,17 +68,14 @@ export function VersionControl({
   const [searchQuery, setSearchQuery] = useState('');
   const [editingVersionId, setEditingVersionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
+  const { createVersion, updateVersion } = useDocumentActions();
 
-  const { data: versionsData, isLoading } = db.useQuery({
-    documentVersions: {
-      $: {
-        where: { 'document.id': documentId },
-      },
-      creator: {},
-    },
+  const { documentVersions: versionsResult } = useAmendmentState({
+    includeDocumentVersions: true,
+    documentId,
   });
 
-  const versions = (versionsData?.documentVersions || []) as Version[];
+  const versions = (versionsResult || []) as unknown as Version[];
   const sortedVersions = [...versions].sort((a, b) => b.versionNumber - a.versionNumber);
 
   const filteredVersions = useMemo(() => {
@@ -103,31 +101,27 @@ export function VersionControl({
       const nextVersionNumber =
         versions.length > 0 ? Math.max(...versions.map(v => v.versionNumber)) + 1 : 1;
 
-      const versionId = id();
-      const transactions: any[] = [
-        tx.documentVersions[versionId]
-          .update({
-            versionNumber: nextVersionNumber,
-            title: versionTitle,
-            content: currentContent,
-            createdAt: Date.now(),
-            creationType: 'manual',
-          })
-          .link({ document: documentId, creator: currentUserId }),
-      ];
+      const versionId = crypto.randomUUID();
+
+      await createVersion({
+        id: versionId,
+        document_id: documentId,
+        amendment_id: '',
+        blog_id: '',
+        version_number: nextVersionNumber,
+        change_summary: versionTitle,
+        content: currentContent,
+      });
 
       // Send notification to amendment subscribers if amendmentId is provided
       if (amendmentId) {
-        const notificationTxs = notifyVersionCreated({
+        await notifyVersionCreated({
           senderId: currentUserId,
           amendmentId,
           amendmentTitle: amendmentTitle || 'Untitled Amendment',
           version: `v.${nextVersionNumber}`,
         });
-        transactions.push(...notificationTxs);
       }
-
-      await db.transact(transactions);
 
       toast.success(
         `${t('features.amendments.versionControl.versionNumber')} ${nextVersionNumber} ${t('features.amendments.versionControl.createdSuccess')}`
@@ -176,11 +170,10 @@ export function VersionControl({
     }
 
     try {
-      await db.transact([
-        tx.documentVersions[versionId].update({
-          title: newTitle,
-        }),
-      ]);
+      await updateVersion({
+        id: versionId,
+        change_summary: newTitle,
+      });
 
       toast.success(t('features.amendments.versionControl.titleUpdated'));
 
@@ -298,7 +291,7 @@ export function VersionControl({
           </div>
 
           <ScrollArea className="h-[400px] pr-4">
-            {isLoading ? (
+            {!versionsResult ? (
               <div className="flex items-center justify-center py-8 text-muted-foreground">
                 {t('features.amendments.versionControl.loadingVersions')}
               </div>

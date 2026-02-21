@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,11 +10,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Mail, ArrowRight, CheckCircle } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
 import { useAuthStore } from '@/features/auth/auth.ts';
-import { useAuthLogin } from '@/features/auth/utils/useAuthLogin';
+import { useAuthLogin } from '@/features/auth/hooks/useAuthLogin';
 
 export function LoginForm() {
   const { t } = useTranslation();
-  const router = useRouter();
+  const navigate = useNavigate();
   const { error } = useAuthStore();
   const { isSending, sendMagicLink } = useAuthLogin();
 
@@ -39,7 +39,7 @@ export function LoginForm() {
       console.log('✅ Code sent successfully, redirecting to verify page');
       setIsCodeSent(true);
       // Redirect to verification page with email parameter
-      router.push(`/auth/verify?email=${encodeURIComponent(email)}`);
+      navigate({ to: `/auth/verify?email=${encodeURIComponent(email)}` });
     } else {
       console.log('❌ Failed to send code:', result.error);
     }

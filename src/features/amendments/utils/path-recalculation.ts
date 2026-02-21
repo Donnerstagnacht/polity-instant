@@ -5,13 +5,11 @@
  * or group structures change.
  */
 
-import { init, tx, id } from '@instantdb/admin';
+import { createClient } from '@supabase/supabase-js';
 
-// Initialize the admin client for server-side operations
+// Initialize the Supabase client for server-side operations
 const getAdminDb = () => {
-  const APP_ID = process.env.NEXT_PUBLIC_INSTANT_APP_ID || '';
-  const ADMIN_TOKEN = process.env.INSTANT_ADMIN_TOKEN || '';
-  return init({ appId: APP_ID, adminToken: ADMIN_TOKEN });
+  return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 };
 
 interface PathSegment {
@@ -45,56 +43,43 @@ export async function recalculateAmendmentPaths(
 
   try {
     // Find all amendments that have the cancelled event in their path
-    const data = await adminDb.query({
-      amendments: {
-        $: {
-          where: {},
-        },
-      },
-    });
+    const { data: amendments } = await adminDb
+      .from('amendment')
+      .select('id, title, path_segments');
 
-    const amendments = (data as any)?.amendments || [];
-
-    for (const amendment of amendments) {
-      // Parse path segments if stored as JSON
+    for (const amendment of amendments || []) {
       let pathSegments: PathSegment[] = [];
       try {
-        if (amendment.pathSegments) {
+        if (amendment.path_segments) {
           pathSegments =
-            typeof amendment.pathSegments === 'string'
-              ? JSON.parse(amendment.pathSegments)
-              : amendment.pathSegments;
+            typeof amendment.path_segments === 'string'
+              ? JSON.parse(amendment.path_segments)
+              : amendment.path_segments;
         }
       } catch {
         continue;
       }
 
-      // Check if cancelled event is in this amendment's path
       const cancelledEventIndex = pathSegments.findIndex(
         (seg: PathSegment) => seg.entityType === 'event' && seg.entityId === cancelledEventId
       );
 
       if (cancelledEventIndex === -1) {
-        continue; // This amendment is not affected
+        continue;
       }
 
-      // Amendment is affected - try to recalculate path
       try {
         if (targetEventId) {
-          // Replace the cancelled event with the target event
           const newPathSegments = [...pathSegments];
           newPathSegments[cancelledEventIndex] = {
             ...newPathSegments[cancelledEventIndex],
             entityId: targetEventId,
           };
 
-          // Update the amendment with new path
-          await adminDb.transact(
-            tx.amendments[amendment.id].update({
-              pathSegments: newPathSegments,
-              updatedAt: new Date(),
-            })
-          );
+          await adminDb.from('amendment').update({
+            path_segments: newPathSegments,
+            updated_at: new Date().toISOString(),
+          }).eq('id', amendment.id);
 
           results.push({
             amendmentId: amendment.id,
@@ -103,14 +88,11 @@ export async function recalculateAmendmentPaths(
             newPath: newPathSegments,
           });
         } else {
-          // No target event - mark path as invalid
-          await adminDb.transact(
-            tx.amendments[amendment.id].update({
-              pathStatus: 'invalid',
-              pathInvalidReason: 'Event cancelled with no valid reassignment target',
-              updatedAt: new Date(),
-            })
-          );
+          await adminDb.from('amendment').update({
+            path_status: 'invalid',
+            path_invalid_reason: 'Event cancelled with no valid reassignment target',
+            updated_at: new Date().toISOString(),
+          }).eq('id', amendment.id);
 
           results.push({
             amendmentId: amendment.id,
@@ -148,24 +130,18 @@ export async function findAffectedAmendments(
   const affected: { id: string; title: string }[] = [];
 
   try {
-    const data = await adminDb.query({
-      amendments: {
-        $: {
-          where: {},
-        },
-      },
-    });
+    const { data: amendments } = await adminDb
+      .from('amendment')
+      .select('id, title, path_segments');
 
-    const amendments = (data as any)?.amendments || [];
-
-    for (const amendment of amendments) {
+    for (const amendment of amendments || []) {
       let pathSegments: PathSegment[] = [];
       try {
-        if (amendment.pathSegments) {
+        if (amendment.path_segments) {
           pathSegments =
-            typeof amendment.pathSegments === 'string'
-              ? JSON.parse(amendment.pathSegments)
-              : amendment.pathSegments;
+            typeof amendment.path_segments === 'string'
+              ? JSON.parse(amendment.path_segments)
+              : amendment.path_segments;
         }
       } catch {
         continue;
@@ -203,14 +179,12 @@ export async function handleOrphanedAgendaItems(
 
   for (const itemId of agendaItemIds) {
     try {
-      await adminDb.transact(
-        tx.agendaItems[itemId].update({
-          status: 'orphaned',
-          orphanedReason: reason,
-          orphanedAt: new Date(),
-          updatedAt: new Date(),
-        })
-      );
+      await adminDb.from('agenda_item').update({
+        status: 'orphaned',
+        orphaned_reason: reason,
+        orphaned_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }).eq('id', itemId);
     } catch (err) {
       console.error(`Error marking agenda item ${itemId} as orphaned:`, err);
     }
@@ -237,15 +211,11 @@ export async function validateAmendmentPath(pathSegments: PathSegment[]): Promis
 
     try {
       if (segment.entityType === 'event') {
-        const data = await adminDb.query({
-          events: {
-            $: {
-              where: { id: segment.entityId },
-            },
-          },
-        });
-
-        const event = (data as any)?.events?.[0];
+        const { data: event } = await adminDb
+          .from('event')
+          .select('id, title, status')
+          .eq('id', segment.entityId)
+          .single();
 
         if (!event) {
           invalidSegments.push(i);
@@ -255,15 +225,11 @@ export async function validateAmendmentPath(pathSegments: PathSegment[]): Promis
           reasons.push(`Event "${event.title}" at position ${i + 1} has been cancelled`);
         }
       } else if (segment.entityType === 'group') {
-        const data = await adminDb.query({
-          groups: {
-            $: {
-              where: { id: segment.entityId },
-            },
-          },
-        });
-
-        const group = (data as any)?.groups?.[0];
+        const { data: group } = await adminDb
+          .from('group')
+          .select('id')
+          .eq('id', segment.entityId)
+          .single();
 
         if (!group) {
           invalidSegments.push(i);

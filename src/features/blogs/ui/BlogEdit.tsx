@@ -5,7 +5,7 @@
  * loading states, and form management.
  */
 
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,8 +14,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Loader2 } from 'lucide-react';
 import { ImageUpload } from '@/components/shared/ImageUpload';
-import { useBlogUpdate } from '../hooks/useBlogUpdate';
-import { useAuthStore } from '@/features/auth/auth';
+import { useBlogEditPage } from '../hooks/useBlogEditPage';
+import { useAuth } from '@/providers/auth-provider';
 import { useTranslation } from '@/hooks/use-translation';
 
 interface BlogEditProps {
@@ -23,8 +23,8 @@ interface BlogEditProps {
 }
 
 export function BlogEdit({ blogId }: BlogEditProps) {
-  const router = useRouter();
-  const { user } = useAuthStore();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const { t } = useTranslation();
   const {
     formData,
@@ -37,7 +37,7 @@ export function BlogEdit({ blogId }: BlogEditProps) {
     isSubmitting,
     blog,
     isLoading,
-  } = useBlogUpdate(blogId, user?.id);
+  } = useBlogEditPage(blogId, user?.id);
 
   // Loading state
   if (isLoading) {
@@ -57,7 +57,7 @@ export function BlogEdit({ blogId }: BlogEditProps) {
           <p className="text-lg font-semibold">{t('features.blogs.editPage.notFound')}</p>
           <p className="text-muted-foreground">{t('features.blogs.editPage.notFoundDescription')}</p>
           <div className="mt-6">
-            <Button onClick={() => router.push(`/blog`)} variant="default">
+            <Button onClick={() => navigate({ to: '/blog' })} variant="default">
               {t('features.blogs.editPage.backToBlogs')}
             </Button>
           </div>
@@ -171,7 +171,7 @@ export function BlogEdit({ blogId }: BlogEditProps) {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push(`/blog/${blogId}`)}
+            onClick={() => navigate({ to: `/blog/${blogId}` })}
             disabled={isSubmitting}
           >
             {t('features.blogs.editPage.cancel')}

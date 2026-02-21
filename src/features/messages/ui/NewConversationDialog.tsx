@@ -9,8 +9,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Search } from 'lucide-react';
-import db from '../../../../db/db';
-import { ARIA_KAI_USER_ID } from '../../../../e2e/aria-kai';
+import { useUserState } from '@/zero/users/useUserState';
+import { ARIA_KAI_USER_ID } from '@/features/auth/constants';
 import { useTranslation } from '@/hooks/use-translation';
 
 interface NewConversationDialogProps {
@@ -33,24 +33,13 @@ export function NewConversationDialog({
   const { t } = useTranslation();
   const [userSearchQuery, setUserSearchQuery] = useState('');
 
+  const { publicUsers: allUsers } = useUserState({ includePublicUsers: true });
+
   useEffect(() => {
     if (open) {
       setUserSearchQuery(initialSearchQuery ?? '');
     }
   }, [initialSearchQuery, open]);
-
-  // Query all users for search dialog
-  const { data: allUsersData } = db.useQuery({
-    $users: {
-      $: {
-        where: {
-          visibility: 'public',
-        },
-      },
-    },
-  });
-
-  const allUsers = allUsersData?.$users || [];
 
   // Filter users in search dialog
   const filteredUsers = useMemo(() => {

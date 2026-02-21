@@ -122,8 +122,23 @@ export function MediaPreviewDialog() {
                 <Plus className="size-4" />
               </button>
             </div>
-            {/* TODO: downLoad the image */}
-            <button className={cn(buttonVariants())} type="button">
+            <button
+              className={cn(buttonVariants())}
+              type="button"
+              onClick={() => {
+                const img = document.querySelector('[data-plate-preview] img, .plate-PreviewImage img') as HTMLImageElement;
+                const url = img?.src || img?.currentSrc;
+                if (!url) return;
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = '';
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+              }}
+            >
               <Download className="size-4" />
             </button>
             <button {...closeProps} className={cn(buttonVariants())} type="button">

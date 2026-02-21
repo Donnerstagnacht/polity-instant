@@ -1,8 +1,10 @@
 import { useState, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
-import { db } from '../../../../db/db';
-import { tx, id } from '@instantdb/react';
+import { useGroupActions } from '@/zero/groups/useGroupActions';
+import { useUserState } from '@/zero/users';
+import { useEventRoles } from '@/zero/events/useEventState';
+import { useAuth } from '@/providers/auth-provider';
 import { useEventData } from './useEventData';
 import { useEventMutations } from './useEventMutations';
 
@@ -30,7 +32,7 @@ export const ACTION_RIGHTS = [
 ];
 
 export function useEventParticipants(eventId: string) {
-  const router = useRouter();
+  const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [inviteSearchQuery, setInviteSearchQuery] = useState('');
@@ -45,23 +47,24 @@ export function useEventParticipants(eventId: string) {
   // Query event and participants using hook
   const { event, participants, isLoading, error } = useEventData(eventId);
 
+  const { createRole, deleteRole, assignActionRight, removeActionRight } = useGroupActions();
+
   // Query all users for user search
-  const { data: usersData, isLoading: isLoadingUsers } = db.useQuery({
-    $users: {},
-  });
+  const { allUsers: usersData, isLoading: isLoadingUsers } = useUserState({ includeAllUsers: true });
 
   // Check if current user is admin
-  const { user } = db.useAuth();
+  const { user } = useAuth();
   const currentUserId = user?.id;
 
-  // Use event-scoped roles, not group roles
-  const rolesData = { roles: event?.roles || [] };
+  // Query event-scoped roles separately (event has no 'roles' relationship)
+  const { roles: eventRoles } = useEventRoles(eventId);
+  const rolesData = { roles: eventRoles };
 
   // Get existing participant IDs to exclude from invite search
-  const existingParticipantIds = participants.map(p => p.user?.id).filter(Boolean) as string[];
+  const existingParticipantIds = participants.map((p: any) => p.user?.id).filter(Boolean) as string[];
 
   // Filter users for invite search
-  const filteredUsers = usersData?.$users?.filter(user => {
+  const filteredUsers = (usersData).filter((user: any) => {
     if (!user?.id) return false;
     if (existingParticipantIds.includes(user.id)) return false;
 
@@ -69,7 +72,7 @@ export function useEventParticipants(eventId: string) {
     return (
       user.name?.toLowerCase().includes(query) ||
       user.handle?.toLowerCase().includes(query) ||
-      user.contactEmail?.toLowerCase().includes(query)
+      user.contact_email?.toLowerCase().includes(query)
     );
   });
 
@@ -88,7 +91,7 @@ export function useEventParticipants(eventId: string) {
 
     setIsInviting(true);
     try {
-      await inviteParticipants(selectedUsers, undefined, currentUserId, event?.title);
+      await inviteParticipants(selectedUsers, undefined, currentUserId, event?.title ?? undefined);
 
       // Reset state
       setSelectedUsers([]);
@@ -104,7 +107,7 @@ export function useEventParticipants(eventId: string) {
   // Handle removing participant
   const handleRemoveParticipant = async (participantId: string, userId?: string) => {
     try {
-      await removeParticipant(participantId, userId, currentUserId, event?.title);
+      await removeParticipant(participantId, userId, currentUserId, event?.title ?? undefined);
     } catch (err) {
       console.error('Error removing participant:', err);
     }
@@ -122,7 +125,7 @@ export function useEventParticipants(eventId: string) {
   // Handle accepting request
   const handleAcceptRequest = async (participantId: string, userId?: string) => {
     try {
-      await approveParticipation(participantId, userId, currentUserId, event?.title);
+      await approveParticipation(participantId, userId, currentUserId, event?.title ?? undefined);
     } catch (err) {
       console.error('Error accepting request:', err);
     }
@@ -141,16 +144,17 @@ export function useEventParticipants(eventId: string) {
     }
 
     try {
-      const roleId = id();
-      await db.transact([
-        tx.roles[roleId]
-          .create({
-            name: newRoleName,
-            description: newRoleDescription,
-            scope: 'event',
-          })
-          .link({ event: eventId }),
-      ]);
+      const roleId = crypto.randomUUID();
+      await createRole({
+        id: roleId,
+        name: newRoleName,
+        description: newRoleDescription,
+        scope: 'event',
+        event_id: eventId,
+        group_id: '',
+        amendment_id: '',
+        blog_id: '',
+      });
 
       toast.success('Role created successfully');
 
@@ -165,7 +169,7 @@ export function useEventParticipants(eventId: string) {
 
   const handleRemoveRole = async (roleId: string) => {
     try {
-      await db.transact([tx.roles[roleId].delete()]);
+      await deleteRole({ id: roleId });
       toast.success('Role removed successfully');
     } catch (error) {
       console.error('Failed to remove role:', error);
@@ -181,23 +185,25 @@ export function useEventParticipants(eventId: string) {
   ) => {
     try {
       if (currentlyHasRight) {
-        const role = rolesData?.roles?.find(r => r.id === roleId);
-        const actionRightToRemove = role?.actionRights?.find(
+        const role = rolesData?.roles?.find((r: any) => r.id === roleId);
+        const actionRightToRemove = role?.action_rights?.find(
           (ar: any) => ar.resource === resource && ar.action === action
         );
         if (actionRightToRemove) {
-          await db.transact([tx.actionRights[actionRightToRemove.id].delete()]);
+          await removeActionRight({ id: actionRightToRemove.id });
         }
       } else {
-        const actionRightId = id();
-        await db.transact([
-          tx.actionRights[actionRightId]
-            .create({
-              resource,
-              action,
-            })
-            .link({ roles: roleId, event: eventId }),
-        ]);
+        const actionRightId = crypto.randomUUID();
+        await assignActionRight({
+          id: actionRightId,
+          resource,
+          action,
+          role_id: roleId,
+          event_id: eventId,
+          group_id: '',
+          amendment_id: '',
+          blog_id: '',
+        });
       }
     } catch (error) {
       console.error('Failed to toggle action right:', error);
@@ -212,7 +218,7 @@ export function useEventParticipants(eventId: string) {
     const query = searchQuery.toLowerCase();
     return participants.filter((participant: any) => {
       const userName = participant.user?.name?.toLowerCase() || '';
-      const userEmail = participant.user?.contactEmail?.toLowerCase() || '';
+      const userEmail = participant.user?.contact_email?.toLowerCase() || '';
       const userHandle = participant.user?.handle?.toLowerCase() || '';
       const status = participant.status?.toLowerCase() || '';
       return (
@@ -289,7 +295,7 @@ export function useEventParticipants(eventId: string) {
       addRole: handleAddRole,
       removeRole: handleRemoveRole,
       toggleActionRight: handleToggleActionRight,
-      goBack: () => router.back(),
+      goBack: () => navigate({ to: '..' }),
     },
   };
 }

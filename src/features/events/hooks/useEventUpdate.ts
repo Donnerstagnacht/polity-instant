@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useEventData } from './useEventData';
 import { useEventMutations } from './useEventMutations';
@@ -20,7 +20,7 @@ export interface EventFormData {
  * Hook for event update functionality
  */
 export function useEventUpdate(eventId: string) {
-  const router = useRouter();
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState<EventFormData>({
     title: '',
@@ -53,13 +53,13 @@ export function useEventUpdate(eventId: string) {
       setFormData({
         title: event.title || '',
         description: event.description || '',
-        location: event.location || '',
-        startDate: formatDateForInput(event.startDate),
-        endDate: formatDateForInput(event.endDate),
+        location: event.location_name || '',
+        startDate: formatDateForInput(event.start_date),
+        endDate: formatDateForInput(event.end_date),
         capacity: event.capacity?.toString() || '',
-        imageURL: event.imageURL || '',
-        isPublic: event.isPublic ?? true,
-        tags: Array.isArray(event.tags) ? event.tags : [],
+        imageURL: '',
+        isPublic: event.is_public ?? true,
+        tags: [],
       });
     }
   }, [event]);
@@ -95,15 +95,13 @@ export function useEventUpdate(eventId: string) {
       const updateData: any = {
         title: formData.title,
         description: formData.description,
-        location: formData.location,
-        startDate: new Date(formData.startDate),
-        imageURL: formData.imageURL,
-        isPublic: formData.isPublic,
-        tags: formData.tags,
+        location_name: formData.location,
+        start_date: new Date(formData.startDate).getTime(),
+        is_public: formData.isPublic,
       };
 
       if (formData.endDate) {
-        updateData.endDate = new Date(formData.endDate);
+        updateData.end_date = new Date(formData.endDate).getTime();
       }
 
       if (formData.capacity) {
@@ -113,7 +111,7 @@ export function useEventUpdate(eventId: string) {
       await updateEvent(updateData);
 
       setTimeout(() => {
-        router.push(`/event/${eventId}`);
+        navigate({ to: `/event/${eventId}` });
       }, 500);
     } catch (error) {
       console.error('Update error:', error);

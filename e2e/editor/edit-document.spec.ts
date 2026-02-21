@@ -9,8 +9,8 @@ test.describe('Editor - Edit Document', () => {
   }) => {
     // Create a document via admin SDK
     const docId = crypto.randomUUID();
-    await adminDb.transact(
-      adminDb.tx.documents[docId]
+    await (adminDb as any).transact(
+      (adminDb as any).tx.documents[docId]
         .update({
           title: 'E2E Editor Doc',
           content: [{ type: 'p', children: [{ text: '' }] }],
@@ -32,8 +32,8 @@ test.describe('Editor - Edit Document', () => {
     adminDb,
   }) => {
     const docId = crypto.randomUUID();
-    await adminDb.transact(
-      adminDb.tx.documents[docId]
+    await (adminDb as any).transact(
+      (adminDb as any).tx.documents[docId]
         .update({
           title: 'E2E Type Doc',
           content: [{ type: 'p', children: [{ text: '' }] }],

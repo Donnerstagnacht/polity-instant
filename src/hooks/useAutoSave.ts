@@ -72,7 +72,7 @@ export interface UseAutoSaveResult {
  * @example
  * const { save, isSaving } = useAutoSave({
  *   onSave: async (data) => {
- *     await db.transact([tx.documents[id].update(data)]);
+ *     await zero.mutate.document.update({ id, ...data });
  *   },
  *   debounceMs: 500,
  *   throttleMs: 1000,

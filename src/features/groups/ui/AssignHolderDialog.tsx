@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import db from '../../../../db/db';
+import { useGroupActiveMembers } from '@/zero/groups/useGroupState';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -57,20 +57,7 @@ export function AssignHolderDialog({
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [reason, setReason] = useState<'elected' | 'appointed'>('appointed');
 
-  // Query group members only
-  const { data } = db.useQuery({
-    groupMemberships: {
-      $: {
-        where: {
-          'group.id': groupId,
-          status: 'member',
-        },
-      },
-      user: {},
-    },
-  });
-
-  const members = data?.groupMemberships || [];
+  const { members } = useGroupActiveMembers(groupId);
 
   // Filter members based on search query
   const filteredMembers = members.filter((membership: any) => {
@@ -152,14 +139,14 @@ export function AssignHolderDialog({
                     {selectedMember?.user ? (
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
-                          <AvatarImage src={selectedMember.user.imageURL} />
+                          <AvatarImage src={selectedMember.user.avatar ?? undefined} />
                           <AvatarFallback>
-                            {selectedMember.user.name?.[0] || 
+                            {selectedMember.user.first_name?.[0] || 
                              selectedMember.user.handle?.[0] || 'U'}
                           </AvatarFallback>
                         </Avatar>
                         <span>
-                          {selectedMember.user.name || selectedMember.user.handle}
+                          {selectedMember.user.first_name || selectedMember.user.handle}
                         </span>
                       </div>
                     ) : (

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from '@/hooks/use-translation';
-import { CalendarEvent } from '../types';
-import { isDateInRange, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from '../utils/dateUtils';
+import { CalendarEvent } from '../types/calendar.types';
+import { isDateInRange, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from '../logic/dateUtils';
 
 interface CalendarStatsProps {
   events: CalendarEvent[];

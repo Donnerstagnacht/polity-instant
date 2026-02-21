@@ -1,4 +1,4 @@
-import { useRouter } from 'next/navigation';
+import { useNavigate } from '@tanstack/react-router';
 import { StatsBar } from '@/components/ui/StatsBar';
 import { InfoTabs } from '@/components/shared/InfoTabs';
 import { useTranslation } from '@/hooks/use-translation';
@@ -14,7 +14,7 @@ interface MeetingPageProps {
 }
 
 export function MeetingPage({ meetingId }: MeetingPageProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const { meetingSlot, isLoading, isOwner, hasBooked, bookingCount, isPast, isAvailable } =
     useMeetingData(meetingId);
@@ -44,7 +44,7 @@ export function MeetingPage({ meetingId }: MeetingPageProps) {
   };
 
   const handleCancelBooking = () => {
-    const userBooking = meetingSlot.bookings?.find((b: any) => b.booker?.id === meetingSlot.owner?.id);
+    const userBooking = meetingSlot.bookings?.find((b: any) => b.user?.id === meetingSlot.user?.id);
     if (userBooking) {
       cancelBooking(userBooking.id);
     }
@@ -54,9 +54,9 @@ export function MeetingPage({ meetingId }: MeetingPageProps) {
     <>
       <MeetingHeader
         title={(meetingSlot.title || 'Meeting') as string}
-        isPublic={meetingSlot.isPublic}
-        owner={(meetingSlot.owner || { id: 'unknown', name: 'Unknown' }) as any}
-        meetingType={meetingSlot.meetingType}
+        isPublic={meetingSlot.meeting_type === 'public-meeting'}
+        owner={(meetingSlot.user || { id: 'unknown', name: 'Unknown' }) as any}
+        meetingType={meetingSlot.meeting_type ?? ''}
       />
 
       <StatsBar stats={[{ value: bookingCount, labelKey: 'Participants' }]} />
@@ -71,19 +71,19 @@ export function MeetingPage({ meetingId }: MeetingPageProps) {
         isPast={isPast}
         onBook={handleBook}
         onCancelBooking={handleCancelBooking}
-        onNavigateCalendar={() => router.push('/calendar')}
-        onNavigateEdit={() => router.push(`/meet/${meetingSlot.id}/edit`)}
+      onNavigateCalendar={() => navigate({ to: '/calendar' })}
+      onNavigateEdit={() => navigate({ to: `/meet/${meetingSlot.id}/edit` })}
       />
 
       <MeetingDetails
-        startTime={meetingSlot.startTime}
-        endTime={meetingSlot.endTime}
-        meetingType={meetingSlot.meetingType}
+        startTime={meetingSlot.start_time ?? 0}
+        endTime={meetingSlot.end_time ?? 0}
+        meetingType={meetingSlot.meeting_type ?? ''}
         isAvailable={isAvailable}
         isPast={isPast}
       />
 
-      <MeetingParticipants bookings={meetingSlot.bookings || []} count={bookingCount} />
+      <MeetingParticipants bookings={[...(meetingSlot.bookings || [])].map(b => ({ ...b, id: b.id ?? '', status: b.status ?? '' }))} count={bookingCount} />
 
       {meetingSlot.description && (
         <InfoTabs about={meetingSlot.description} contact={{}} className="mb-12" />

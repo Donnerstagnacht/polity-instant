@@ -1,13 +1,13 @@
 import React from 'react';
 import { AmendmentTimelineCard } from '@/features/timeline/ui/cards/AmendmentTimelineCard';
-import db from '../../../../db/db';
+import { useAuth } from '@/providers/auth-provider';
 
 interface AmendmentSearchCardProps {
   amendment: any;
 }
 
 export function AmendmentSearchCard({ amendment }: AmendmentSearchCardProps) {
-  const { user } = db.useAuth();
+  const { user } = useAuth();
 
   // Calculate supporters from upvotes and downvotes
   const supporters = (amendment.upvotes || 0) - (amendment.downvotes || 0);

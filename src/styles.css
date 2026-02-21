@@ -1,7 +1,7 @@
 @import 'tailwindcss';
+@import 'tw-animate-css';
 
-@plugin "tailwindcss-animate";
-
+@plugin '@tailwindcss/typography';
 @plugin 'tailwind-scrollbar-hide';
 
 @custom-variant dark (&:is(.dark *));
@@ -133,6 +133,44 @@ code {
   --color-sidebar-ring: var(--sidebar-ring);
   --color-highlight: var(--highlight);
   --color-brand: var(--brand);
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-spin-slow: spin-slow 3s linear infinite;
+  --animate-flash-yellow: flash-yellow 0.5s ease-out;
+}
+
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes flash-yellow {
+  0%,
+  100% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: rgba(234, 179, 8, 0.3);
+  }
 }
 
 @layer base {

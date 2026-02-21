@@ -3,19 +3,20 @@
  */
 
 import { useMemo } from 'react';
-import db from '../../../../../db/db';
+import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 
 export interface Collaborator {
   id: string;
-  role?: Role;
+  role_id: string;
   status: string;
-  createdAt: number;
-  user: {
+  created_at: number;
+  user?: {
     id: string;
-    name?: string;
+    first_name?: string;
+    last_name?: string;
     avatar?: string;
     handle?: string;
-    contactEmail?: string;
+    email?: string;
   };
 }
 
@@ -24,7 +25,7 @@ export interface Role {
   name: string;
   description?: string;
   scope: string;
-  actionRights?: Array<{
+  action_rights?: Array<{
     id: string;
     resource: string;
     action: string;
@@ -48,35 +49,23 @@ export function useCollaborators(
   searchQuery: string = ''
 ): CollaboratorsData {
   // Query amendment with collaborators and roles
-  const { data, isLoading } = db.useQuery({
-    amendments: {
-      $: {
-        where: {
-          id: amendmentId,
-        },
-      },
-      amendmentRoleCollaborators: {
-        user: {},
-        role: {},
-      },
-      roles: {
-        $: {
-          where: {
-            scope: 'amendment',
-          },
-        },
-        actionRights: {},
-      },
-    },
+  const {
+    amendment: amendmentData,
+    collaborators: collabData,
+    roles: rolesData,
+    isLoading,
+  } = useAmendmentState({
+    amendmentId,
+    includeRoles: true,
   });
 
-  const amendmentData = data?.amendments?.[0];
-  const collaborators = (amendmentData?.amendmentRoleCollaborators || []) as Collaborator[];
-  const roles = (amendmentData?.roles || []) as Role[];
+  const collaborators = (collabData || []) as unknown as Collaborator[];
+  const roles = (rolesData || []) as unknown as Role[];
 
   // Check if current user is admin (has 'manage' action right for 'amendments')
   const currentUserCollaboration = collaborators.find(c => c.user?.id === currentUserId);
-  const isAdmin = currentUserCollaboration?.role?.actionRights?.some(
+  const currentUserRole = roles.find(r => r.id === currentUserCollaboration?.role_id);
+  const isAdmin = currentUserRole?.action_rights?.some(
     right => right.resource === 'amendments' && right.action === 'manage'
   ) || false;
 
@@ -86,18 +75,21 @@ export function useCollaborators(
 
     const query = searchQuery.toLowerCase();
     return collaborators.filter(collaboration => {
-      const userName = collaboration.user?.name?.toLowerCase() || '';
+      const firstName = collaboration.user?.first_name?.toLowerCase() || '';
+      const lastName = collaboration.user?.last_name?.toLowerCase() || '';
       const userHandle = collaboration.user?.handle?.toLowerCase() || '';
-      const roleName = collaboration.role?.name?.toLowerCase() || '';
+      const matchedRole = roles.find(r => r.id === collaboration.role_id);
+      const roleName = matchedRole?.name?.toLowerCase() || '';
       const status = collaboration.status?.toLowerCase() || '';
       return (
-        userName.includes(query) ||
+        firstName.includes(query) ||
+        lastName.includes(query) ||
         userHandle.includes(query) ||
         roleName.includes(query) ||
         status.includes(query)
       );
     });
-  }, [collaborators, searchQuery]);
+  }, [collaborators, roles, searchQuery]);
 
   // Separate by status
   const pendingRequests = useMemo(
@@ -106,12 +98,15 @@ export function useCollaborators(
   );
 
   const activeCollaborators = useMemo(
-    () => filteredCollaborators.filter(c => 
-      c.status === 'member' || 
-      c.status === 'admin' || 
-      c.role?.name === 'Author'
-    ),
-    [filteredCollaborators]
+    () => filteredCollaborators.filter(c => {
+      const matchedRole = roles.find(r => r.id === c.role_id);
+      return (
+        c.status === 'member' ||
+        c.status === 'admin' ||
+        matchedRole?.name === 'Author'
+      );
+    }),
+    [filteredCollaborators, roles]
   );
 
   const pendingInvitations = useMemo(
@@ -121,7 +116,7 @@ export function useCollaborators(
 
   return {
     collaborators: filteredCollaborators,
-    roles,
+    roles: roles as unknown as Role[],
     pendingRequests,
     activeCollaborators,
     pendingInvitations,

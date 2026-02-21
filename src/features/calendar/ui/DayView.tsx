@@ -1,15 +1,15 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CalendarIcon } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@tanstack/react-router';
 import { useTranslation } from '@/hooks/use-translation';
-import { CalendarEvent } from '../types';
-import { formatDate } from '../utils/dateUtils';
+import { CalendarEvent } from '../types/calendar.types';
+import { formatDate } from '../logic/dateUtils';
 import { EventCard } from './EventCard';
 import { MiniCalendar } from './MiniCalendar';
 import { CalendarStats } from './CalendarStats';
 import { TimelineItem, AgendaCard } from '@/components/shared/timeline';
-import { getBaseEventId } from '../utils/eventIdUtils';
+import { getBaseEventId } from '../logic/eventIdUtils';
 
 interface DayViewProps {
   selectedDate: Date;

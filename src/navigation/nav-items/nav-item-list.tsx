@@ -5,10 +5,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/pop
 import type { NavigationItem, NavigationView } from '@/navigation/types/navigation.types';
 import { iconMap } from '@/navigation/nav-items/icon-map';
 import React, { useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { useLocation, Link } from '@tanstack/react-router';
 import { isItemActive } from './nav-helpers';
 import { Loader2 } from 'lucide-react';
-import Link from 'next/link';
 
 export function NavItemList({
   navigationItems,
@@ -21,7 +20,7 @@ export function NavItemList({
   isPrimary: boolean;
   navigationView: NavigationView;
 }) {
-  const pathname = usePathname();
+  const { pathname } = useLocation();
   const currentRoute = pathname ?? '/';
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [loadingItem, setLoadingItem] = useState<string | null>(null);
@@ -44,7 +43,7 @@ export function NavItemList({
           {navigationItems.length <= 4 ? (
             <div className="col-span-full flex flex-wrap justify-center gap-8">
               {navigationItems.map(item => (
-                <Link key={item.id} href={item.href || '#'} className="inline-block">
+                <Link key={item.id} to={item.href || '#'} className="inline-block">
                   <Button
                     variant="ghost"
                     disabled={loadingItem === item.id}
@@ -88,7 +87,7 @@ export function NavItemList({
           ) : (
             // Original layout for 5+ items
             navigationItems.map(item => (
-              <Link key={item.id} href={item.href || '#'} className="inline-block">
+              <Link key={item.id} to={item.href || '#'} className="inline-block">
                 <Button
                   variant="ghost"
                   disabled={loadingItem === item.id}
@@ -140,7 +139,7 @@ export function NavItemList({
           {navigationItems.map(item => (
             <Popover key={item.id} open={hoveredItem === item.id}>
               <PopoverTrigger asChild>
-                <Link href={item.href || '#'} className="inline-block">
+                <Link to={item.href || '#'} className="inline-block">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -197,7 +196,7 @@ export function NavItemList({
         {navigationItems.map(item => (
           <Popover key={item.id} open={hoveredItem === item.id}>
             <PopoverTrigger asChild>
-              <Link href={item.href || '#'} className="inline-block">
+              <Link to={item.href || '#'} className="inline-block">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -252,7 +251,7 @@ export function NavItemList({
       <div className="scrollbar-hide flex-1 overflow-x-auto">
         <div className="flex min-w-max items-center justify-center gap-1 px-2">
           {navigationItems.map(item => (
-            <Link key={item.id} href={item.href || '#'} className="inline-block">
+            <Link key={item.id} to={item.href || '#'} className="inline-block">
               <Button
                 variant="ghost"
                 className={cn(
@@ -302,7 +301,7 @@ export function NavItemList({
     return (
       <div className="flex flex-col gap-2">
         {navigationItems.map(item => (
-          <Link key={item.id} href={item.href || '#'} className="inline-block">
+          <Link key={item.id} to={item.href || '#'} className="inline-block">
             <Button
               variant="ghost"
               className={cn(

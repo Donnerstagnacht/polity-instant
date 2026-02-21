@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useGroupNetwork } from '@/features/groups/hooks/useGroupNetwork';
+import { useGroupNetwork } from '@/features/network/hooks/useGroupNetwork';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Pencil, Trash2 } from 'lucide-react';
@@ -25,7 +25,7 @@ import {
     SelectTrigger,
     SelectValue,
   } from '@/components/ui/select';
-import { formatRights, RIGHT_TYPES } from '@/components/shared/RightFilters';
+import { formatRights, RIGHT_TYPES } from '@/features/network/ui/RightFilters';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,7 +37,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import db from '../../../db/db';
+import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useState as useStateForDelete } from 'react';
 import { useTranslation } from '@/hooks/use-translation';
 
@@ -49,6 +49,7 @@ interface GroupRelationshipsManagerProps {
 export function GroupRelationshipsManager({ groupId }: GroupRelationshipsManagerProps) {
   const { t } = useTranslation();
   const { group } = useGroupData(groupId);
+  const { updateRelationship, deleteRelationship } = useGroupActions();
   const [searchQuery, setSearchQuery] = useState('');
   const [directionFilter, setDirectionFilter] = useState<'all' | 'parent' | 'child'>('all');
   const [isDeleting, setIsDeleting] = useStateForDelete(false);
@@ -66,17 +67,18 @@ export function GroupRelationshipsManager({ groupId }: GroupRelationshipsManager
   } = useGroupNetwork(groupId);
 
   const handleAcceptRequest = async (relationships: any[]) => {
-      const transactions = relationships.map(rel => 
-          db.tx.groupRelationships[rel.id].update({ status: 'active' })
-      );
-      await db.transact(transactions);
+      for (const rel of relationships) {
+        await updateRelationship({
+          id: rel.id,
+          status: 'active',
+        });
+      }
   };
 
   const handleRejectRequest = async (relationships: any[]) => {
-       const transactions = relationships.map(rel => 
-          db.tx.groupRelationships[rel.id].delete()
-      );
-      await db.transact(transactions);
+      for (const rel of relationships) {
+        await deleteRelationship({ id: rel.id });
+      }
   };
 
   const groupedIncoming = useMemo(() => {
@@ -147,11 +149,9 @@ export function GroupRelationshipsManager({ groupId }: GroupRelationshipsManager
       );
 
       // Delete all relationships
-      const transactions = relationshipsToDelete.map((rel) =>
-        db.tx.groupRelationships[rel.id].delete()
-      );
-
-      await db.transact(transactions);
+      for (const rel of relationshipsToDelete) {
+        await deleteRelationship({ id: rel.id });
+      }
     } catch (error) {
       console.error('Error deleting relationship:', error);
     } finally {

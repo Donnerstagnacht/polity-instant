@@ -2,7 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Globe, Lock } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
-import { formatMeetingType } from '../utils/meetingFormatters';
+import { formatMeetingType } from '../logic/meetingFormatters';
 
 interface MeetingHeaderProps {
   title: string;

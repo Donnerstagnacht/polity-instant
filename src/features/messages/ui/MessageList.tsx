@@ -3,10 +3,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Check, X } from 'lucide-react';
 import { MessageBubble } from './MessageBubble';
-import { Conversation, Message } from '../types';
-import { getOtherParticipant } from '../utils';
+import { Conversation, Message } from '../types/message.types';
+import { getOtherParticipant } from '../logic/messageUtils';
 import { AriaKaiMessageActions } from '@/components/messages/AriaKaiMessageActions';
-import { ARIA_KAI_USER_ID } from '../../../../e2e/aria-kai';
+import { ARIA_KAI_USER_ID } from '@/features/auth/constants';
 import { useTranslation } from '@/hooks/use-translation';
 
 interface MessageListProps {

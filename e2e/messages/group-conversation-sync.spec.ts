@@ -103,11 +103,10 @@ test.describe('Group Conversations - Member Synchronization', () => {
     }
   });
 
-  test('Group creator is automatically added to conversation', async ({ authenticatedPage: page, groupFactory, adminDb }) => {
-    const authUser = await adminDb.auth.getUser({ email: 'polity.live@gmail.com' });
+  test('Group creator is automatically added to conversation', async ({ authenticatedPage: page, groupFactory, mainUserId }) => {
     const uniqueName = `Member Sync Test ${Date.now()}`;
-    const group = await groupFactory.createGroup(authUser.id, { name: uniqueName });
-    await groupFactory.createGroupConversation(group.id, uniqueName, [authUser.id], authUser.id);
+    const group = await groupFactory.createGroup(mainUserId, { name: uniqueName });
+    await groupFactory.createGroupConversation(group.id, uniqueName, [mainUserId], mainUserId);
 
     // Navigate to messages (retry with reload for sync delay)
     await page.goto('/messages');

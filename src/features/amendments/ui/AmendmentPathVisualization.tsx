@@ -2,11 +2,11 @@
 
 import { useEffect } from 'react';
 import { Node, Edge, useNodesState, useEdgesState, MarkerType } from '@xyflow/react';
-import { NetworkFlowBase, Panel } from '@/components/shared/NetworkFlowBase';
+import { NetworkFlowBase, Panel } from '@/features/network/ui/NetworkFlowBase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, ArrowRight, Target } from 'lucide-react';
-import db from '../../../../db/db';
+import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useTranslation } from '@/hooks/use-translation';
 
 interface AmendmentPathVisualizationProps {
@@ -19,31 +19,20 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
   const [edges, setEdges] = useEdgesState<Edge>([]);
 
   // Fetch amendment data with target, event, and path segments
-  const { data: amendmentData, isLoading } = db.useQuery({
-    amendments: {
-      $: { where: { id: amendmentId } },
-      targetGroup: {},
-      targetEvent: {},
-      path: {
-        segments: {
-          group: {},
-          event: {},
-        },
-      },
-    },
-  } as any);
-
-  const amendment = (amendmentData as any)?.amendments?.[0];
-  const hasTarget = amendment?.targetGroup && amendment?.targetEvent;
+  const { amendmentPathViz: amendment } = useAmendmentState({
+    amendmentId,
+    includePathViz: true,
+  });
+  const hasTarget = amendment?.group && amendment?.event;
 
   // Derive pathSegments for use in JSX
-  const pathSegments = (amendment?.path?.segments || []).sort(
-    (a: any, b: any) => a.order - b.order
+  const pathSegments = [...(amendment?.paths?.[0]?.segments || [])].sort(
+    (a: any, b: any) => a.order_index - b.order_index
   );
 
   // Generate visualization nodes and edges
   useEffect(() => {
-    const segments = (amendment?.path?.segments || []).sort((a: any, b: any) => a.order - b.order);
+    const segments = [...(amendment?.paths?.[0]?.segments || [])].sort((a: any, b: any) => a.order_index - b.order_index);
 
     if (!segments || segments.length === 0) {
       setNodes([]);
@@ -116,9 +105,9 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
 
     setNodes(newNodes);
     setEdges(newEdges);
-  }, [amendment?.path?.segments, setNodes, setEdges]);
+  }, [amendment?.paths, setNodes, setEdges]);
 
-  if (isLoading) {
+  if (!amendment) {
     return (
       <Card>
         <CardHeader>
@@ -168,10 +157,10 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
             <p className="font-semibold">{t('features.amendments.process.target')}:</p>
             <div className="ml-4">
               <p>
-                <span className="text-muted-foreground">{t('features.amendments.process.targetGroup')}:</span> {amendment.targetGroup.name}
+                <span className="text-muted-foreground">{t('features.amendments.process.targetGroup')}:</span> {amendment.group?.name}
               </p>
               <p>
-                <span className="text-muted-foreground">{t('features.amendments.process.event')}:</span> {amendment.targetEvent.title}
+                <span className="text-muted-foreground">{t('features.amendments.process.event')}:</span> {amendment.event?.title}
               </p>
             </div>
           </div>
@@ -198,23 +187,23 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
             <div className="grid gap-3 text-sm md:grid-cols-2">
               <div>
                 <div className="font-semibold text-muted-foreground">{t('features.amendments.process.targetGroup')}</div>
-                <div className="mt-1">{amendment.targetGroup.name}</div>
+                <div className="mt-1">{amendment.group?.name}</div>
               </div>
               <div>
                 <div className="font-semibold text-muted-foreground">{t('features.amendments.process.targetEvent')}</div>
                 <div className="mt-1 flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
-                  {amendment.targetEvent.title}
+                  {amendment.event?.title}
                 </div>
-                {amendment.targetEvent.startDate && (
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    {new Date(amendment.targetEvent.startDate).toLocaleDateString('en-US', {
+                {amendment.event?.start_date && (
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(amendment.event?.start_date).toLocaleDateString('en-US', {
                       weekday: 'long',
                       month: 'long',
                       day: 'numeric',
                       year: 'numeric',
                     })}
-                  </div>
+                  </p>
                 )}
               </div>
             </div>

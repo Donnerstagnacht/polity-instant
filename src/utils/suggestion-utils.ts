@@ -1,7 +1,8 @@
 // suggestion-utils.ts
 // Utilities for handling suggestion IDs and counters
 
-import { db, tx } from '../../db/db';
+import { createClient } from '@supabase/supabase-js';
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
 /**
  * Generates the next suggestion ID (CR-x format) for a document
@@ -9,27 +10,25 @@ import { db, tx } from '../../db/db';
  */
 export async function getNextSuggestionId(documentId: string): Promise<string> {
   // Get current document data
-  const { data } = await db.queryOnce({
-    documents: {
-      $: { where: { id: documentId } },
-    },
-  });
+  const { data: document } = await supabase
+    .from('document')
+    .select('*')
+    .eq('id', documentId)
+    .single();
 
-  const document = data?.documents?.[0];
   if (!document) {
     throw new Error(`Document with ID ${documentId} not found`);
   }
 
   // Get current counter value, defaulting to 0 if not set
-  const currentCounter = document.suggestionCounter ?? 0;
+  const currentCounter = document.suggestion_counter ?? 0;
   const nextCounter = currentCounter + 1;
 
   // Update the counter in the database
-  await db.transact([
-    tx.documents[documentId].update({
-      suggestionCounter: nextCounter,
-    }),
-  ]);
+  await supabase
+    .from('document')
+    .update({ suggestion_counter: nextCounter })
+    .eq('id', documentId);
 
   // Return the formatted suggestion ID
   return `CR-${nextCounter}`;
@@ -62,16 +61,15 @@ export function isValidSuggestionId(suggestionId: string): boolean {
  * Gets the current suggestion counter for a document without incrementing it
  */
 export async function getCurrentSuggestionCounter(documentId: string): Promise<number> {
-  const { data } = await db.queryOnce({
-    documents: {
-      $: { where: { id: documentId } },
-    },
-  });
+  const { data: document } = await supabase
+    .from('document')
+    .select('*')
+    .eq('id', documentId)
+    .single();
 
-  const document = data?.documents?.[0];
   if (!document) {
     throw new Error(`Document with ID ${documentId} not found`);
   }
 
-  return document.suggestionCounter ?? 0;
+  return document.suggestion_counter ?? 0;
 }
