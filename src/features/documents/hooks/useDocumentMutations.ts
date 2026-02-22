@@ -73,9 +73,7 @@ export function useDocumentMutations(groupId: string): UseDocumentMutationsResul
       toast.success('Document created successfully');
 
       // Navigate to the new document
-      setTimeout(() => {
-        navigate({ to: `/group/${groupId}/editor/${docId}` });
-      }, 100);
+      navigate({ to: `/group/${groupId}/editor/${docId}` });
 
       return docId;
     } catch (error) {

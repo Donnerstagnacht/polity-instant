@@ -106,8 +106,6 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
 
   fetchGroups: async () => {
     set({ loading: true });
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500));
     set({ groups: MOCK_GROUPS, loading: false });
   },
 

@@ -130,10 +130,7 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
       }
 
       toast.success('Blog updated successfully');
-
-      setTimeout(() => {
-        navigate({ to: `/blog/${blogId}` });
-      }, 500);
+      navigate({ to: `/blog/${blogId}` });
     } catch (error) {
       console.error('Update error:', error);
       toast.error('Failed to update blog');

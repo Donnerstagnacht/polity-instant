@@ -157,9 +157,7 @@ export function AmendmentEditContent({
         amendmentTitle: formData.title,
       });
       toast.success(t('features.amendments.editContent.updateSuccess'));
-      setTimeout(() => {
-        navigate({ to: `/amendment/${amendmentId}` });
-      }, 500);
+      navigate({ to: `/amendment/${amendmentId}` });
     } catch (error) {
       toast.error(t('features.amendments.editContent.updateFailed'));
       console.error('Update error:', error);

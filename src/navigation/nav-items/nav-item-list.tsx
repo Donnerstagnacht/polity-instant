@@ -5,7 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/pop
 import type { NavigationItem, NavigationView } from '@/navigation/types/navigation.types';
 import { iconMap } from '@/navigation/nav-items/icon-map';
 import React, { useState } from 'react';
-import { useLocation, Link } from '@tanstack/react-router';
+import { useLocation, useRouterState, Link } from '@tanstack/react-router';
 import { isItemActive } from './nav-helpers';
 import { Loader2 } from 'lucide-react';
 
@@ -21,9 +21,17 @@ export function NavItemList({
   navigationView: NavigationView;
 }) {
   const { pathname } = useLocation();
+  const isRouterPending = useRouterState({ select: (s) => s.status === 'pending' });
   const currentRoute = pathname ?? '/';
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [loadingItem, setLoadingItem] = useState<string | null>(null);
+
+  // Clear loading state when router finishes navigating
+  React.useEffect(() => {
+    if (!isRouterPending && loadingItem) {
+      setLoadingItem(null);
+    }
+  }, [isRouterPending, loadingItem]);
 
   const handleItemClick = (item: NavigationItem) => {
     setLoadingItem(item.id);
@@ -31,8 +39,6 @@ export function NavItemList({
       item.onClick();
     }
     setHoveredItem(null);
-    // Reset loading state after navigation
-    setTimeout(() => setLoadingItem(null), 1000);
   };
 
   if (navigationView === 'asButton') {

@@ -1,60 +1,63 @@
-import { type ReactNode, useState, useEffect, useMemo } from 'react'
-import { useNavigate, useRouterState } from '@tanstack/react-router'
-import { Toaster } from '@/components/ui/sonner'
-import { DynamicNavigation } from '@/navigation/dynamic-navigation'
-import { NavigationCommandDialog } from '@/navigation/command-dialog'
-import { useScreenResponsiveDetector, useScreenStore } from '@/global-state/screen.store'
-import { useNavigationStore } from '@/navigation/state/navigation.store'
-import { useThemeInitializer } from '@/global-state/theme.store'
-import { I18nSyncProvider } from '@/i18n/i18n-sync-provider'
-import { PWAInstallPrompt } from '@/components/pwa/pwa-install-prompt'
-import type { NavigationItem, NavigationType, NavigationView } from '@/navigation/types/navigation.types'
-import { useNavigation } from '@/navigation/state/useNavigation'
-import { useAuth } from '@/providers/auth-provider'
-import { useZeroReady } from '@/providers/zero-provider'
-import { useTranslation } from '@/hooks/use-translation'
-import { createNavItemsUnauthenticated } from '@/navigation/nav-items/nav-items-unauthenticated'
+import { type ReactNode, useState, useEffect, useMemo } from 'react';
+import { useNavigate, useRouterState } from '@tanstack/react-router';
+import { Toaster } from '@/components/ui/sonner';
+import { DynamicNavigation } from '@/navigation/dynamic-navigation';
+import { NavigationCommandDialog } from '@/navigation/command-dialog';
+import { useScreenResponsiveDetector, useScreenStore } from '@/global-state/screen.store';
+import { useNavigationStore } from '@/navigation/state/navigation.store';
+import { useThemeInitializer } from '@/global-state/theme.store';
+import { I18nSyncProvider } from '@/i18n/i18n-sync-provider';
+import { PWAInstallPrompt } from '@/components/pwa/pwa-install-prompt';
+import type {
+  NavigationItem,
+  NavigationType,
+  NavigationView,
+} from '@/navigation/types/navigation.types';
+import { useNavigation } from '@/navigation/state/useNavigation';
+import { useAuth } from '@/providers/auth-provider';
+import { useZeroReady } from '@/providers/zero-provider';
+import { useTranslation } from '@/hooks/use-translation';
+import { createNavItemsUnauthenticated } from '@/navigation/nav-items/nav-items-unauthenticated';
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const [isClient, setIsClient] = useState(false)
-  useEffect(() => { setIsClient(true) }, [])
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   if (!isClient) {
-    return <div className="min-h-screen bg-background">{children}</div>
+    return <div className="bg-background min-h-screen">{children}</div>;
   }
 
-  return <AppShellInner>{children}</AppShellInner>
+  return <AppShellInner>{children}</AppShellInner>;
 }
 
 function AppShellInner({ children }: { children: ReactNode }) {
-  useThemeInitializer({ defaultTheme: 'system', storageKey: 'theme' })
-  useScreenResponsiveDetector()
+  useThemeInitializer({ defaultTheme: 'system', storageKey: 'theme' });
+  useScreenResponsiveDetector();
 
-  const { user } = useAuth()
-  const zeroReady = useZeroReady()
+  const { user } = useAuth();
+  const zeroReady = useZeroReady();
 
   if (user && zeroReady) {
-    return <AuthenticatedShell>{children}</AuthenticatedShell>
+    return <AuthenticatedShell>{children}</AuthenticatedShell>;
   }
 
-  return <UnauthenticatedShell>{children}</UnauthenticatedShell>
+  return <UnauthenticatedShell>{children}</UnauthenticatedShell>;
 }
 
 function UnauthenticatedShell({ children }: { children: ReactNode }) {
-  const { screenType, isMobileScreen } = useScreenStore()
-  const { navigationType, navigationView } = useNavigationStore()
-  const navigate = useNavigate()
-  const { t } = useTranslation()
+  const { screenType, isMobileScreen } = useScreenStore();
+  const { navigationType, navigationView } = useNavigationStore();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
 
-  const navigationItems = useMemo(
-    () => createNavItemsUnauthenticated(navigate, t),
-    [navigate, t]
-  )
-  const isMobile = screenType === 'mobile' || (screenType === 'automatic' && isMobileScreen)
+  const navigationItems = useMemo(() => createNavItemsUnauthenticated(navigate, t), [navigate, t]);
+  const isMobile = screenType === 'mobile' || (screenType === 'automatic' && isMobileScreen);
 
   return (
     <I18nSyncProvider>
-      <div className="min-h-screen bg-background">
+      <div className="bg-background min-h-screen">
         {['primary', 'combined'].includes(navigationType) && (
           <DynamicNavigation
             navigationType="primary"
@@ -74,30 +77,27 @@ function UnauthenticatedShell({ children }: { children: ReactNode }) {
           {children}
         </main>
 
-        <NavigationCommandDialog
-          primaryNavItems={navigationItems}
-          secondaryNavItems={null}
-        />
+        <NavigationCommandDialog primaryNavItems={navigationItems} secondaryNavItems={null} />
 
         <Toaster richColors position="top-right" />
         <PWAInstallPrompt />
       </div>
     </I18nSyncProvider>
-  )
+  );
 }
 
 function AuthenticatedShell({ children }: { children: ReactNode }) {
-  const { screenType, isMobileScreen } = useScreenStore()
-  const { navigationType, navigationView } = useNavigationStore()
-  const { primaryNavItems, secondaryNavItems } = useNavigation()
-  const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const { screenType, isMobileScreen } = useScreenStore();
+  const { navigationType, navigationView } = useNavigationStore();
+  const { primaryNavItems, secondaryNavItems } = useNavigation();
+  const pathname = useRouterState({ select: s => s.location.pathname });
 
-  const isMobile = screenType === 'mobile' || (screenType === 'automatic' && isMobileScreen)
-  const isFullWidth = pathname === '/home' || pathname === '/search'
+  const isMobile = screenType === 'mobile' || (screenType === 'automatic' && isMobileScreen);
+  const isFullWidth = pathname === '/home' || pathname === '/search';
 
   return (
     <I18nSyncProvider>
-      <div className="min-h-screen bg-background">
+      <div className="bg-background min-h-screen">
         {['primary', 'combined'].includes(navigationType) && (
           <DynamicNavigation
             navigationType="primary"
@@ -106,15 +106,14 @@ function AuthenticatedShell({ children }: { children: ReactNode }) {
             screenType={screenType}
           />
         )}
-        {secondaryNavItems &&
-          ['secondary', 'combined'].includes(navigationType) && (
-            <DynamicNavigation
-              navigationType="secondary"
-              navigationView={navigationView}
-              navigationItems={secondaryNavItems}
-              screenType={screenType}
-            />
-          )}
+        {secondaryNavItems && ['secondary', 'combined'].includes(navigationType) && (
+          <DynamicNavigation
+            navigationType="secondary"
+            navigationView={navigationView}
+            navigationItems={secondaryNavItems}
+            screenType={screenType}
+          />
+        )}
         <main
           className={`transition-all duration-300 ${getMarginClasses({
             isMobile,
@@ -123,9 +122,7 @@ function AuthenticatedShell({ children }: { children: ReactNode }) {
             secondaryNavItems,
           })}`}
         >
-          <div className={`mx-auto px-4 py-6 ${isFullWidth ? '' : 'max-w-5xl'}`}>
-            {children}
-          </div>
+          <div className={`mx-auto px-4 py-6 ${isFullWidth ? '' : 'max-w-7xl'}`}>{children}</div>
         </main>
 
         <NavigationCommandDialog
@@ -137,7 +134,7 @@ function AuthenticatedShell({ children }: { children: ReactNode }) {
         <PWAInstallPrompt />
       </div>
     </I18nSyncProvider>
-  )
+  );
 }
 
 function getMarginClasses({
@@ -146,44 +143,44 @@ function getMarginClasses({
   navigationType,
   secondaryNavItems,
 }: {
-  isMobile: boolean
-  navigationView: NavigationView
-  navigationType: NavigationType
-  secondaryNavItems: NavigationItem[] | null
+  isMobile: boolean;
+  navigationView: NavigationView;
+  navigationType: NavigationType;
+  secondaryNavItems: NavigationItem[] | null;
 }) {
   const isSecondaryNavVisible =
     secondaryNavItems &&
     secondaryNavItems.length > 0 &&
-    ['secondary', 'combined'].includes(navigationType)
+    ['secondary', 'combined'].includes(navigationType);
 
-  const marginLeft = getMarginLeftForPrimaryDesktop({ isMobile, navigationView })
+  const marginLeft = getMarginLeftForPrimaryDesktop({ isMobile, navigationView });
   const marginRight = getMarginRightForSecondaryDesktop({
     isMobile,
     state: navigationView,
     isSecondaryNavVisible,
-  })
+  });
   const marginTop = getMarginTopForSecondaryMobile({
     isMobile,
     navigationView,
     isSecondaryNavVisible,
-  })
-  const marginBottom = getMarginBottomForPrimaryMobile({ isMobile, navigationView })
+  });
+  const marginBottom = getMarginBottomForPrimaryMobile({ isMobile, navigationView });
 
-  return [marginLeft, marginRight, marginTop, marginBottom].filter(Boolean).join(' ')
+  return [marginLeft, marginRight, marginTop, marginBottom].filter(Boolean).join(' ');
 }
 
 function getMarginLeftForPrimaryDesktop({
   isMobile,
   navigationView,
 }: {
-  isMobile: boolean
-  navigationView: NavigationView
+  isMobile: boolean;
+  navigationView: NavigationView;
 }): string {
-  if (isMobile) return ''
-  if (navigationView === 'asButton') return ''
-  if (navigationView === 'asButtonList') return 'ml-16'
-  if (navigationView === 'asLabeledButtonList') return 'ml-64'
-  return ''
+  if (isMobile) return '';
+  if (navigationView === 'asButton') return '';
+  if (navigationView === 'asButtonList') return 'ml-16';
+  if (navigationView === 'asLabeledButtonList') return 'ml-64';
+  return '';
 }
 
 function getMarginRightForSecondaryDesktop({
@@ -191,15 +188,15 @@ function getMarginRightForSecondaryDesktop({
   state,
   isSecondaryNavVisible,
 }: {
-  isMobile: boolean
-  state: NavigationView
-  isSecondaryNavVisible: boolean | null
+  isMobile: boolean;
+  state: NavigationView;
+  isSecondaryNavVisible: boolean | null;
 }): string {
-  if (isMobile) return ''
-  if (state === 'asButton') return ''
-  if (state === 'asButtonList' && isSecondaryNavVisible) return 'mr-16'
-  if (state === 'asLabeledButtonList' && isSecondaryNavVisible) return 'mr-64'
-  return ''
+  if (isMobile) return '';
+  if (state === 'asButton') return '';
+  if (state === 'asButtonList' && isSecondaryNavVisible) return 'mr-16';
+  if (state === 'asLabeledButtonList' && isSecondaryNavVisible) return 'mr-64';
+  return '';
 }
 
 function getMarginTopForSecondaryMobile({
@@ -207,25 +204,25 @@ function getMarginTopForSecondaryMobile({
   navigationView,
   isSecondaryNavVisible,
 }: {
-  isMobile: boolean
-  navigationView: NavigationView
-  isSecondaryNavVisible: boolean | null
+  isMobile: boolean;
+  navigationView: NavigationView;
+  isSecondaryNavVisible: boolean | null;
 }): string {
-  if (!isMobile || !isSecondaryNavVisible) return ''
-  if (navigationView === 'asButtonList') return 'mt-16'
-  if (navigationView === 'asLabeledButtonList') return 'mt-20'
-  return ''
+  if (!isMobile || !isSecondaryNavVisible) return '';
+  if (navigationView === 'asButtonList') return 'mt-16';
+  if (navigationView === 'asLabeledButtonList') return 'mt-20';
+  return '';
 }
 
 function getMarginBottomForPrimaryMobile({
   isMobile,
   navigationView,
 }: {
-  isMobile: boolean
-  navigationView: NavigationView
+  isMobile: boolean;
+  navigationView: NavigationView;
 }): string {
-  if (!isMobile) return ''
-  if (navigationView === 'asButtonList') return 'mb-16'
-  if (navigationView === 'asLabeledButtonList') return 'mb-20'
-  return ''
+  if (!isMobile) return '';
+  if (navigationView === 'asButtonList') return 'mb-16';
+  if (navigationView === 'asLabeledButtonList') return 'mb-20';
+  return '';
 }

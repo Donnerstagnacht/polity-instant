@@ -162,11 +162,7 @@ export function useGroupUpdate(
 
       sendNotificationFn({ data: { helper: 'notifyGroupProfileUpdated', params: { senderId: options?.actorId, groupId, groupName: formData.name } } }).catch(console.error)
       toast.success('Group updated successfully');
-
-      // Wait a moment for the DB to update, then navigate
-      setTimeout(() => {
-        navigate({ to: `/group/${groupId}` });
-      }, 500);
+      navigate({ to: `/group/${groupId}` });
     } catch (error) {
       toast.error('Failed to update group');
       console.error('Update error:', error);

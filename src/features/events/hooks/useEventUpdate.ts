@@ -114,9 +114,7 @@ export function useEventUpdate(eventId: string) {
 
       await updateEvent(updateData);
 
-      setTimeout(() => {
-        navigate({ to: `/event/${eventId}` });
-      }, 500);
+      navigate({ to: `/event/${eventId}` });
     } catch (error) {
       console.error('Update error:', error);
     } finally {
