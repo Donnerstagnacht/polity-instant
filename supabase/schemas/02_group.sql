@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS public."group" (
   name TEXT,
   description TEXT,
   location TEXT,
+  image_url TEXT,
   is_public BOOLEAN NOT NULL DEFAULT true,
   member_count INTEGER NOT NULL DEFAULT 0,
   x TEXT,

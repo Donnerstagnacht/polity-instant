@@ -79,6 +79,8 @@ export function BlogEdit({ blogId }: BlogEditProps) {
         <ImageUpload
           currentImage={formData.imageURL}
           onImageChange={(url: string) => updateField('imageURL', url)}
+          entityType="blogs"
+          entityId={blogId}
           label={t('features.blogs.editPage.blogImage')}
           description={t('features.blogs.editPage.blogImageDescription')}
         />

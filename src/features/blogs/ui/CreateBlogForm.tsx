@@ -23,17 +23,20 @@ import { useAuth } from '@/providers/auth-provider';
 import { toast } from 'sonner';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
+import { ImageUpload } from '@/components/shared/ImageUpload';
 
 export function CreateBlogForm() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { createBlogFull } = useBlogActions();
 
+  const [blogId] = useState(() => crypto.randomUUID());
   const [formData, setFormData] = useState({
     title: '',
     date: new Date().toISOString().split('T')[0],
     visibility: 'public' as 'public' | 'authenticated' | 'private',
     hashtags: [] as string[],
+    imageURL: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
@@ -59,7 +62,7 @@ export function CreateBlogForm() {
         return;
       }
 
-      const blogId = crypto.randomUUID();
+      // blogId already generated upfront for ImageUpload path
 
       // Create roles for the blog
       const ownerRoleId = crypto.randomUUID();
@@ -82,7 +85,7 @@ export function CreateBlogForm() {
           description: '',
           content: null,
           date: formData.date,
-          image_url: '',
+          image_url: formData.imageURL,
           is_public: formData.visibility === 'public',
           visibility: formData.visibility,
           like_count: 0,
@@ -224,6 +227,14 @@ export function CreateBlogForm() {
                         required
                       />
                     </div>
+                    <ImageUpload
+                      currentImage={formData.imageURL}
+                      onImageChange={(url: string) => setFormData({ ...formData, imageURL: url })}
+                      entityType="blogs"
+                      entityId={blogId}
+                      label="Cover Image"
+                      description="Upload a cover image for your blog post"
+                    />
                   </div>
                 </CarouselItem>
 

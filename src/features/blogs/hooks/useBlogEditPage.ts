@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useBlogState } from '@/zero/blogs/useBlogState';
@@ -39,9 +39,12 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
 
   const blog = blogWithHashtags;
 
-  // Initialize form data when blog loads
+  const initializedRef = useRef(false);
+
+  // Initialize form data only once when blog first loads
   useEffect(() => {
-    if (blog) {
+    if (blog && !initializedRef.current) {
+      initializedRef.current = true;
       setFormData({
         title: blog.title || '',
         description: blog.description || '',

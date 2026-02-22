@@ -64,6 +64,7 @@ export function GroupEdit({ groupId }: GroupEditProps) {
           name: group.name ?? '',
           description: group.description ?? '',
           location: group.location ?? '',
+          imageURL: group.image_url ?? '',
         } : undefined}
         onCancel={() => navigate({ to: `/group/${groupId}` })}
         actorId={user?.id ?? undefined}

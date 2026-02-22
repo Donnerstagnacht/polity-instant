@@ -33,6 +33,7 @@ export const event = table('event')
     linkedin: string().optional(),
     website: string().optional(),
     stream_url: string().optional(),
+    image_url: string().optional(),
     has_delegates: boolean(),
     delegate_count: number(),
     delegate_distribution_method: string().optional(),

@@ -44,7 +44,16 @@ On Linux/macOS:
 for f in supabase/schemas/*.sql; do docker exec -i supabase_db_polity psql -U postgres -d postgres < "$f"; done
 ```
 
-This creates all 69 tables, indexes, RLS policies, and functions from `supabase/schemas/`.
+This creates all tables, indexes, RLS policies, storage policies, and functions from `supabase/schemas/`.
+
+### 3b. Create storage buckets
+
+```bash
+npx supabase seed buckets
+```
+
+This provisions the `avatars` and `uploads` storage buckets defined in `supabase/config.toml`.
+Buckets are **not** auto-created by `supabase start` — this step is required for image uploads to work.
 
 ### 4. Start the dev server
 

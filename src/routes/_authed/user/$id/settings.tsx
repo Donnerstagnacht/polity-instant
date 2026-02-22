@@ -18,7 +18,10 @@ function UserSettingsPage() {
     userId: id,
     user,
   })
-  const { isUploading, handleAvatarUpload } = useAvatarUpload({ userId: id })
+  const { isUploading, handleAvatarUpload } = useAvatarUpload({
+    userId: id,
+    onSuccess: (avatarUrl) => updateField('avatar', avatarUrl),
+  })
   const { activeSubscription, getActivePlanAmount, isPlanActive, hasCustomPlan } =
     useSubscriptionManagement({ userId: id })
   const { isCheckoutLoading, handleSubscribe, handleCustomAmount, handleCancelSubscription } =

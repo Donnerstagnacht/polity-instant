@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useEventData } from './useEventData';
@@ -40,9 +40,12 @@ export function useEventUpdate(eventId: string) {
   const { event, isLoading } = useEventData(eventId);
   const { updateEvent } = useEventMutations(eventId);
 
-  // Initialize form data when event loads
+  const initializedRef = useRef(false);
+
+  // Initialize form data only once when event first loads
   useEffect(() => {
-    if (event) {
+    if (event && !initializedRef.current) {
+      initializedRef.current = true;
       // Format dates for datetime-local input
       const formatDateForInput = (date: any) => {
         if (!date) return '';
@@ -57,7 +60,7 @@ export function useEventUpdate(eventId: string) {
         startDate: formatDateForInput(event.start_date),
         endDate: formatDateForInput(event.end_date),
         capacity: event.capacity?.toString() || '',
-        imageURL: '',
+        imageURL: event.image_url || '',
         isPublic: event.is_public ?? true,
         tags: [],
       });
@@ -98,6 +101,7 @@ export function useEventUpdate(eventId: string) {
         location_name: formData.location,
         start_date: new Date(formData.startDate).getTime(),
         is_public: formData.isPublic,
+        image_url: formData.imageURL || null,
       };
 
       if (formData.endDate) {

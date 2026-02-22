@@ -6,6 +6,7 @@ export const group = table('group')
     name: string().optional(),
     description: string().optional(),
     location: string().optional(),
+    image_url: string().optional(),
     is_public: boolean(),
     member_count: number(),
     x: string().optional(),

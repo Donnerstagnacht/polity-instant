@@ -35,6 +35,8 @@ export function GroupEditForm({ groupId, initialData, onCancel, actorId, visibil
       <ImageUpload
         currentImage={formData.imageURL}
         onImageChange={(url: string) => updateField('imageURL', url)}
+        entityType="groups"
+        entityId={groupId}
         label="Group Image"
         description="Upload a group image or provide a URL"
       />

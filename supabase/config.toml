@@ -23,5 +23,19 @@ enable_signup = true
 double_confirm_changes = false
 enable_confirmations = false
 
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[storage.buckets.avatars]
+public = true
+file_size_limit = "5MB"
+allowed_mime_types = ["image/png", "image/jpeg", "image/gif", "image/webp", "image/svg+xml"]
+
+[storage.buckets.uploads]
+public = true
+file_size_limit = "50MB"
+allowed_mime_types = ["image/png", "image/jpeg", "image/gif", "image/webp", "image/svg+xml", "video/mp4", "video/webm", "video/quicktime", "application/pdf"]
+
 [analytics]
 enabled = false

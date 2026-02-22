@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS public.amendment (
   is_public BOOLEAN NOT NULL DEFAULT true,
   editing_mode TEXT,
   discussions JSONB,
+  image_url TEXT,
   x TEXT,
   youtube TEXT,
   linkedin TEXT,

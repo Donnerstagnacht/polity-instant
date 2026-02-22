@@ -155,3 +155,9 @@ test-output.txt
 
 # AI .text files
 *.txt
+
+# zero SQLite WAL-Mode Files
+*.db
+*.db-shm
+*.db-wal
+*.db-wal2

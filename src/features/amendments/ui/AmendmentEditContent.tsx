@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -66,14 +66,16 @@ export function AmendmentEditContent({
 
   const [tagInput, setTagInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
-    if (amendment) {
+    if (amendment && !initializedRef.current) {
+      initializedRef.current = true;
       setFormData({
         title: amendment.title || '',
         subtitle: amendment.subtitle || '',
         code: amendment.code || '',
-        imageURL: amendment.imageURL || '',
+        imageURL: amendment.image_url || '',
         videoURL: amendment.videoURL || '',
         videoThumbnailURL: amendment.videoThumbnailURL || '',
         status: amendment.status || 'Drafting',
@@ -115,6 +117,7 @@ export function AmendmentEditContent({
         workflow_status: formData.workflowStatus,
         supporters: formData.supporters,
         tags: formData.tags,
+        image_url: formData.imageURL || null,
       });
       // Only create timeline events for public amendments
       if (amendment.visibility === 'public') {
@@ -205,6 +208,8 @@ export function AmendmentEditContent({
         <ImageUpload
           currentImage={formData.imageURL}
           onImageChange={(url: string) => setFormData({ ...formData, imageURL: url })}
+          entityType="amendments"
+          entityId={amendmentId}
           label={t('features.amendments.editContent.amendmentImage')}
           description={t('features.amendments.editContent.amendmentImageDescription')}
         />
@@ -221,6 +226,8 @@ export function AmendmentEditContent({
           <ImageUpload
             currentImage={formData.videoThumbnailURL}
             onImageChange={(url: string) => setFormData({ ...formData, videoThumbnailURL: url })}
+            entityType="amendments"
+            entityId={amendmentId}
             label={t('features.amendments.editContent.videoThumbnail')}
             description={t('features.amendments.editContent.videoThumbnailDescription')}
           />

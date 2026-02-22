@@ -24,6 +24,7 @@ export const amendment = table('amendment')
     is_public: boolean(),
     editing_mode: string().optional(),
     discussions: json().optional(),
+    image_url: string().optional(),
     x: string().optional(),
     youtube: string().optional(),
     linkedin: string().optional(),

@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS public.event (
   linkedin TEXT,
   website TEXT,
   stream_url TEXT,
+  image_url TEXT,
   has_delegates BOOLEAN NOT NULL DEFAULT false,
   delegate_count INTEGER NOT NULL DEFAULT 0,
   delegate_distribution_method TEXT,

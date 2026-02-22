@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useUserMutations } from './useUserMutations';
@@ -57,10 +57,12 @@ export function useUserProfileForm({
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const initializedRef = useRef(false);
 
-  // Initialize form data when user data loads
+  // Initialize form data only once when user data first loads
   useEffect(() => {
-    if (user) {
+    if (user && !initializedRef.current) {
+      initializedRef.current = true;
       setFormData({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
@@ -110,10 +112,7 @@ export function useUserProfileForm({
         if (onSuccess) {
           onSuccess();
         } else {
-          // Wait a moment for the DB to update, then navigate
-          setTimeout(() => {
-            navigate({ to: `/user/${userId}` });
-          }, 500);
+          navigate({ to: `/user/${userId}` });
         }
       }
     } catch (error) {

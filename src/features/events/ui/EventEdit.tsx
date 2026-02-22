@@ -86,6 +86,8 @@ export function EventEdit({ eventId }: EventEditProps) {
         <ImageUpload
           currentImage={formData.imageURL}
           onImageChange={(url: string) => updateField('imageURL', url)}
+          entityType="events"
+          entityId={eventId}
           label={t('features.events.editPage.image.label')}
           description={t('features.events.editPage.image.description')}
         />

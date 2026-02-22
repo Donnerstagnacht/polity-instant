@@ -34,6 +34,7 @@ const eventBaseSchema = z.object({
   linkedin: z.string().nullable(),
   website: z.string().nullable(),
   stream_url: z.string().nullable(),
+  image_url: z.string().nullable(),
   has_delegates: z.boolean(),
   delegate_count: z.number(),
   delegate_distribution_method: z.string().nullable(),
@@ -92,6 +93,7 @@ export const eventUpdateSchema = eventBaseSchema
     agenda_management: true,
     meeting_type: true,
     stream_url: true,
+    image_url: true,
   })
   .partial()
   .extend({ id: z.string() })

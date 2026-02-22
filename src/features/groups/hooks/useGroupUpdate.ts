@@ -5,7 +5,7 @@
  * Handles group profile updates including basic info, location, and social media.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
@@ -72,9 +72,12 @@ export function useGroupUpdate(
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [originalName, setOriginalName] = useState('');
 
-  // Initialize form data when initial data is provided
+  const initializedRef = useRef(false);
+
+  // Initialize form data only once when initial data first becomes available
   useEffect(() => {
-    if (initialData) {
+    if (initialData && !initializedRef.current) {
+      initializedRef.current = true;
       const newFormData = {
         name: initialData.name || '',
         description: initialData.description || '',
@@ -148,6 +151,7 @@ export function useGroupUpdate(
         name: formData.name,
         description: formData.description,
         location: formData.location,
+        image_url: formData.imageURL || null,
         x: formData.twitter,
       });
 

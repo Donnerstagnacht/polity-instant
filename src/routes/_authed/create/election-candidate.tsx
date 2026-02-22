@@ -4,6 +4,7 @@ import { useAgendaState } from '@/zero/agendas/useAgendaState'
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions'
 import { useAuth } from '@/providers/auth-provider'
 import { toast } from 'sonner'
+import { ImageUpload } from '@/components/shared/ImageUpload'
 
 export const Route = createFileRoute('/_authed/create/election-candidate')({
   component: CreateElectionCandidatePage,
@@ -14,8 +15,10 @@ function CreateElectionCandidatePage() {
   const { user } = useAuth()
   const navigate = useNavigate()
 
+  const [candidateId] = useState(() => crypto.randomUUID())
   const [electionId, setElectionId] = useState('')
   const [statement, setStatement] = useState('')
+  const [imageURL, setImageURL] = useState('')
 
   // Query pending elections the user can join
   const { pendingElections: elections } = useAgendaState({ includePendingElections: true })
@@ -31,8 +34,6 @@ function CreateElectionCandidatePage() {
     }
 
     try {
-      const candidateId = crypto.randomUUID()
-
       await addCandidate({
         id: candidateId,
         name: '',
@@ -41,7 +42,7 @@ function CreateElectionCandidatePage() {
         user_id: user.id,
         status: 'pending',
         order_index: 0,
-        image_url: '',
+        image_url: imageURL,
       })
 
       navigate({ to: '/create' })
@@ -89,6 +90,15 @@ function CreateElectionCandidatePage() {
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           />
         </div>
+
+        <ImageUpload
+          currentImage={imageURL}
+          onImageChange={setImageURL}
+          entityType="election-candidates"
+          entityId={candidateId}
+          label="Candidate Photo"
+          description="Upload a photo for your candidate profile"
+        />
 
         <div className="flex gap-3 pt-4">
           <button
