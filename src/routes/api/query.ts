@@ -1,4 +1,4 @@
-import { createAPIFileRoute } from '@tanstack/start/api'
+import { createAPIFileRoute } from '@tanstack/react-start/api'
 import { handleQueryRequest } from '@rocicorp/zero/server'
 import { mustGetQuery } from '@rocicorp/zero'
 import { queries } from '@/zero/queries'

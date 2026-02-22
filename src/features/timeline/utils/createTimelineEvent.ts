@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { createServerFn } from '@tanstack/start';
+import { createServerFn } from '@tanstack/react-start';
 
 let _supabase: SupabaseClient | null = null;
 function getSupabase(): SupabaseClient {

@@ -1,4 +1,4 @@
-import { createAPIFileRoute } from '@tanstack/start/api'
+import { createAPIFileRoute } from '@tanstack/react-start/api'
 import { PushProcessor } from '@rocicorp/zero/server'
 import { mutators } from '@/zero/mutators'
 import { dbProvider } from '@/zero/db-provider'
