@@ -23,7 +23,9 @@ test.describe('Search - Hashtag Search', () => {
 
     if (hasTopics) {
       // 7. Click on first available topic badge (Badge renders as div with rounded-full class)
-      const firstTopic = dialog.locator('div[class*="rounded-full"][class*="cursor-pointer"]').first();
+      const firstTopic = dialog
+        .locator('div[class*="rounded-full"][class*="cursor-pointer"]')
+        .first();
       await firstTopic.click();
 
       // 8. Close filter panel
@@ -146,9 +148,13 @@ test.describe('Search - Hashtag Search', () => {
     await expect(page).toHaveURL(/topics=politics/, { timeout: 5000 });
   });
 
-  test('User navigates to search via encoded ?hashtag= URL param', async ({ authenticatedPage: page }) => {
+  test('User navigates to search via encoded ?hashtag= URL param', async ({
+    authenticatedPage: page,
+  }) => {
     // Hashtags with special characters should be properly decoded
-    await page.goto('/search?hashtag=' + encodeURIComponent('climate action'), { waitUntil: 'domcontentloaded' });
+    await page.goto('/search?hashtag=' + encodeURIComponent('climate action'), {
+      waitUntil: 'domcontentloaded',
+    });
     await page.waitForLoadState('domcontentloaded');
 
     // The hashtag should appear in the URL topics after debounce

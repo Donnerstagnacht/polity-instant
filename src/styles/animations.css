@@ -67,7 +67,8 @@
 }
 
 @keyframes loading-cup {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0) rotate(0deg);
   }
   25% {
@@ -88,7 +89,8 @@
 }
 
 @keyframes loading-blink-caret {
-  from, to {
+  from,
+  to {
     border-color: transparent;
   }
   50% {

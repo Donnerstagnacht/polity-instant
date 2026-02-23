@@ -11,6 +11,7 @@ in turn unblocks Phases 3–6.
 ---
 
 **Progress Overview:**
+
 - Total Tasks: 51
 - Completed: 0
 - Remaining: 51
@@ -29,7 +30,7 @@ junction tables.
 ### 1.1 Restructure hashtag table to canonical tag dictionary
 
 - [ ] In `supabase/schemas/21_common.sql`, replace the current `hashtag` table definition with a
-  slim canonical version:
+      slim canonical version:
   ```sql
   CREATE TABLE IF NOT EXISTS public.hashtag (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -46,6 +47,7 @@ junction tables.
 ### 1.2 Add per-entity junction tables
 
 - [ ] Add `user_hashtag` junction table (after `hashtag` table):
+
   ```sql
   CREATE TABLE IF NOT EXISTS public.user_hashtag (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -61,6 +63,7 @@ junction tables.
   ```
 
 - [ ] Add `group_hashtag` junction table:
+
   ```sql
   CREATE TABLE IF NOT EXISTS public.group_hashtag (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -76,6 +79,7 @@ junction tables.
   ```
 
 - [ ] Add `amendment_hashtag` junction table:
+
   ```sql
   CREATE TABLE IF NOT EXISTS public.amendment_hashtag (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -91,6 +95,7 @@ junction tables.
   ```
 
 - [ ] Add `event_hashtag` junction table:
+
   ```sql
   CREATE TABLE IF NOT EXISTS public.event_hashtag (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -130,6 +135,7 @@ sync with the new Supabase schema.
 ### 2.1 Update Zero table definitions (`src/zero/common/table.ts`)
 
 - [ ] Replace the existing `hashtag` table definition with the slim canonical version:
+
   ```ts
   export const hashtag = table('hashtag')
     .columns({
@@ -137,39 +143,40 @@ sync with the new Supabase schema.
       tag: string(),
       created_at: number(),
     })
-    .primaryKey('id')
+    .primaryKey('id');
   ```
 
 - [ ] Add junction table definitions for each entity:
+
   ```ts
   export const userHashtag = table('user_hashtag')
     .columns({ id: string(), user_id: string(), hashtag_id: string(), created_at: number() })
-    .primaryKey('id')
+    .primaryKey('id');
 
   export const groupHashtag = table('group_hashtag')
     .columns({ id: string(), group_id: string(), hashtag_id: string(), created_at: number() })
-    .primaryKey('id')
+    .primaryKey('id');
 
   export const amendmentHashtag = table('amendment_hashtag')
     .columns({ id: string(), amendment_id: string(), hashtag_id: string(), created_at: number() })
-    .primaryKey('id')
+    .primaryKey('id');
 
   export const eventHashtag = table('event_hashtag')
     .columns({ id: string(), event_id: string(), hashtag_id: string(), created_at: number() })
-    .primaryKey('id')
+    .primaryKey('id');
 
   export const blogHashtag = table('blog_hashtag')
     .columns({ id: string(), blog_id: string(), hashtag_id: string(), created_at: number() })
-    .primaryKey('id')
+    .primaryKey('id');
   ```
 
 ### 2.2 Register new tables in the main schema (`src/zero/schema.ts`)
 
 - [ ] Import `userHashtag`, `groupHashtag`, `amendmentHashtag`, `eventHashtag`, `blogHashtag`
-  from `./common/table` in `src/zero/schema.ts`.
+      from `./common/table` in `src/zero/schema.ts`.
 - [ ] Add all five junction tables to the `createSchema({ tables: [...] })` array.
 - [ ] Export row types for all five junction tables:
-  `UserHashtag`, `GroupHashtag`, `AmendmentHashtag`, `EventHashtag`, `BlogHashtag`.
+      `UserHashtag`, `GroupHashtag`, `AmendmentHashtag`, `EventHashtag`, `BlogHashtag`.
 
 ### 2.3 Update relationships (`src/zero/relationships.ts`)
 
@@ -185,47 +192,69 @@ sync with the new Supabase schema.
   }))
   ```
 - [ ] Add junction → parent entity relationships (e.g., `userHashtagRelationships`):
-  Each junction table needs `one` relationships back to both the entity and the hashtag:
+      Each junction table needs `one` relationships back to both the entity and the hashtag:
   ```ts
   export const userHashtagRelationships = relationships(userHashtag, ({ one }) => ({
     user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
     hashtag: one({ sourceField: ['hashtag_id'], destSchema: hashtag, destField: ['id'] }),
-  }))
+  }));
   // ... repeat for group, amendment, event, blog
   ```
 - [ ] Update entity relationships to go **through** junction tables instead of directly to
-  `hashtag`. Replace each existing `hashtags: many({ ... destSchema: hashtag, destField: ['user_id'] })`
-  with the junction-based pattern:
+      `hashtag`. Replace each existing `hashtags: many({ ... destSchema: hashtag, destField: ['user_id'] })`
+      with the junction-based pattern:
   - `userRelationships`: replace `hashtags` → `user_hashtags` pointing to `userHashtag`
   - `groupRelationships`: replace `hashtags` → `group_hashtags` pointing to `groupHashtag`
   - `amendmentRelationships`: replace `hashtags` → `amendment_hashtags` pointing to `amendmentHashtag`
   - `eventRelationships`: replace `hashtags` → `event_hashtags` pointing to `eventHashtag`
   - `blogRelationships`: replace `hashtags` → `blog_hashtags` pointing to `blogHashtag`
 - [ ] Register all new relationship objects in the `allRelationships` export at the bottom of
-  `relationships.ts`.
+      `relationships.ts`.
 
 ### 2.4 Update Zod schemas (`src/zero/common/schema.ts`)
 
 - [ ] Replace the `baseHashtagSchema` with the slim canonical definition:
+
   ```ts
   const baseHashtagSchema = z.object({
     id: z.string(),
     tag: z.string(),
     created_at: timestampSchema,
-  })
+  });
   ```
+
   Remove fields: `category`, `color`, `bg_color`, `icon`, `description`, `post_count`,
   `amendment_id`, `event_id`, `group_id`, `user_id`, `blog_id`.
 
 - [ ] Add junction Zod schemas for `createHashtagSchema` (still keeps `id` + `tag`), and
-  add five new junction schemas:
+      add five new junction schemas:
   ```ts
-  export const createUserHashtagSchema = z.object({ id: z.string(), user_id: z.string(), hashtag_id: z.string() })
-  export const createGroupHashtagSchema = z.object({ id: z.string(), group_id: z.string(), hashtag_id: z.string() })
-  export const createAmendmentHashtagSchema = z.object({ id: z.string(), amendment_id: z.string(), hashtag_id: z.string() })
-  export const createEventHashtagSchema = z.object({ id: z.string(), event_id: z.string(), hashtag_id: z.string() })
-  export const createBlogHashtagSchema = z.object({ id: z.string(), blog_id: z.string(), hashtag_id: z.string() })
-  export const deleteJunctionHashtagSchema = z.object({ id: z.string() })
+  export const createUserHashtagSchema = z.object({
+    id: z.string(),
+    user_id: z.string(),
+    hashtag_id: z.string(),
+  });
+  export const createGroupHashtagSchema = z.object({
+    id: z.string(),
+    group_id: z.string(),
+    hashtag_id: z.string(),
+  });
+  export const createAmendmentHashtagSchema = z.object({
+    id: z.string(),
+    amendment_id: z.string(),
+    hashtag_id: z.string(),
+  });
+  export const createEventHashtagSchema = z.object({
+    id: z.string(),
+    event_id: z.string(),
+    hashtag_id: z.string(),
+  });
+  export const createBlogHashtagSchema = z.object({
+    id: z.string(),
+    blog_id: z.string(),
+    hashtag_id: z.string(),
+  });
+  export const deleteJunctionHashtagSchema = z.object({ id: z.string() });
   ```
 - [ ] Export inferred types for all new junction records.
 
@@ -251,14 +280,14 @@ sync with the new Supabase schema.
 ### 2.6 Update queries (`src/zero/common/queries.ts`)
 
 - [ ] Add a new `allHashtags` query for typeahead autocomplete — returns all hashtag rows
-  ordered by tag text:
+      ordered by tag text:
   ```ts
   allHashtags: defineQuery(z.object({}), () =>
     zql.hashtag.orderBy('tag', 'asc')
   ),
   ```
 - [ ] Add per-entity hashtag queries that go through junction tables and eager-load the canonical
-  `hashtag` (for display). For example:
+      `hashtag` (for display). For example:
   ```ts
   hashtagsForUser: defineQuery(
     z.object({ user_id: z.string() }),
@@ -271,17 +300,17 @@ sync with the new Supabase schema.
   // ... repeat for group, amendment, event, blog
   ```
 - [ ] Update the legacy `hashtags` query to use the new structure or deprecate it in favour of
-  the five focused queries above.
+      the five focused queries above.
 - [ ] Update all queries in `src/zero/shared/queries.ts` that use `.related('hashtags')` on
-  entities (users, groups, amendments, events, blogs) to instead use the junction-based
-  navigation (`.related('user_hashtags', q => q.related('hashtag'))`).
+      entities (users, groups, amendments, events, blogs) to instead use the junction-based
+      navigation (`.related('user_hashtags', q => q.related('hashtag'))`).
 
 ### 2.7 Update `useCommonState.ts`
 
 - [ ] Add `allHashtags` query support (passed-through via a new `includeAll` option or always
-  loaded as a singleton query for typeahead):
+      loaded as a singleton query for typeahead):
   ```ts
-  const [allHashtags] = useQuery(queries.common.allHashtags({}))
+  const [allHashtags] = useQuery(queries.common.allHashtags({}));
   ```
 - [ ] Add per-entity focused queries using the new junction-based query definitions.
 - [ ] Return `allHashtags` from the hook for use in typeahead components.
@@ -289,9 +318,9 @@ sync with the new Supabase schema.
 ### 2.8 Update `useCommonActions.ts`
 
 - [ ] Add action methods for the five `link{Entity}Hashtag` and `unlink{Entity}Hashtag`
-  mutators, each wrapping a try/catch with toast feedback.
+      mutators, each wrapping a try/catch with toast feedback.
 - [ ] Add a reusable `syncEntityHashtags(entityType, entityId, existingJunctionRows, desiredTags)`
-  helper method that:
+      helper method that:
   1. Inserts canonical `hashtag` rows for any new tags (idempotent — skip if text already exists).
   2. Resolves `hashtag_id` for each desired tag.
   3. Removes junction rows for tags no longer desired.
@@ -310,12 +339,12 @@ sync with the new Supabase schema.
 File: `src/components/ui/hashtag-input.tsx`
 
 - [ ] Add a `suggestions` prop (type: `Array<{ id: string; tag: string }>`).
-  When the input has ≥1 character, filter suggestions by prefix and show a popover dropdown.
+      When the input has ≥1 character, filter suggestions by prefix and show a popover dropdown.
 - [ ] Show the dropdown using a `Popover`+`Command` (shadcn) or a simple
-  `position: absolute` list styled like `type-ahead-select.tsx`. Keyboard-accessible
-  (arrow keys navigate, Enter selects, Escape closes).
-- [ ] Enforce `#` prefix:  
-  - If the user types without a leading `#`, prepend it automatically on display.  
+      `position: absolute` list styled like `type-ahead-select.tsx`. Keyboard-accessible
+      (arrow keys navigate, Enter selects, Escape closes).
+- [ ] Enforce `#` prefix:
+  - If the user types without a leading `#`, prepend it automatically on display.
   - Strip `#` before storing in the `value` array (consistent with current behaviour).
 - [ ] When a suggestion is clicked, add the tag immediately (same as pressing Enter).
 - [ ] Do not suggest tags already in `value`.
@@ -324,9 +353,10 @@ File: `src/components/ui/hashtag-input.tsx`
 
 ### 3.2 Create a connected `HashtagEditor` component
 
-File: `src/components/ui/hashtag-editor.tsx` *(new file)*
+File: `src/components/ui/hashtag-editor.tsx` _(new file)_
 
 A thin wrapper that:
+
 - Fetches `allHashtags` from `useCommonState` and passes them as `suggestions` to `HashtagInput`.
 - Keeps the `value` prop as `string[]` (tag texts without `#`).
 - Exposes the same `onChange: (tags: string[]) => void` interface.
@@ -348,16 +378,16 @@ File: `src/features/users/ui/HashtagsSection.tsx`
 Currently `hashtags: []` is hardcoded; existing user hashtags are never loaded into the form.
 
 - [ ] Accept `existingHashtags: Array<{ id: string; tag: string }>` as a parameter (or derive
-  it inside the hook using `useCommonState({ user_id: userId })`).
+      it inside the hook using `useCommonState({ user_id: userId })`).
 - [ ] Initialize `formData.hashtags` from `existingHashtags.map(h => h.tag)` when the user data
-  first loads.
+      first loads.
 - [ ] Track a `pendingHashtagOps` ref of `{ toAdd: string[], toRemove: string[] }` so the diff
-  can be applied on submit.
+      can be applied on submit.
 
 ### 4.2 Fix hashtag save logic (`src/features/users/hooks/useUserMutations.ts`)
 
 - [ ] In `updateCompleteProfile`, replace the current "add all new tags" loop with a proper diff
-  call to `useCommonActions.syncEntityHashtags('user', userId, existingHashtags, newTags)`.
+      call to `useCommonActions.syncEntityHashtags('user', userId, existingHashtags, newTags)`.
 - [ ] Remove the stale `addHashtags` helper (it didn't delete removed tags).
 
 ### 4.3 Update `UserProfileEditForm` to pass existing hashtags
@@ -365,7 +395,7 @@ Currently `hashtags: []` is hardcoded; existing user hashtags are never loaded i
 File: `src/features/users/ui/UserProfileEditForm.tsx`
 
 - [ ] Pass `existingHashtags` down from the page hook through `UserProfileEditForm` to
-  `HashtagsSection` if the editor needs to know the pre-existing DB records for the diff.
+      `HashtagsSection` if the editor needs to know the pre-existing DB records for the diff.
 
 ---
 
@@ -386,7 +416,7 @@ File: `src/features/groups/ui/GroupEditForm.tsx`
 - [ ] Import `HashtagsSection` from `src/features/users/ui/HashtagsSection`.
 - [ ] Add it to the form after the `SocialMediaSection` block.
 - [ ] Pass `formData.hashtags` as `hashtags` and `value => updateField('hashtags', value)` as
-  `onHashtagsChange`.
+      `onHashtagsChange`.
 
 ### 5.3 Pass existing group hashtags into `GroupEdit`
 
@@ -401,24 +431,24 @@ File: `src/features/groups/ui/GroupEdit.tsx`
 
 ### 6.1 Add hashtag diff logic
 
-File: `src/features/amendments/logic/amendmentHashtagDiff.ts` *(new file)*
+File: `src/features/amendments/logic/amendmentHashtagDiff.ts` _(new file)_
 
 - [ ] Create `computeAmendmentHashtagDiff(existingHashtags, desiredTags, amendmentId)` —
-  same pattern as `blogHashtagDiff.ts`. Returns `{ hashtagsToRemove, hashtagsToAdd }`.
+      same pattern as `blogHashtagDiff.ts`. Returns `{ hashtagsToRemove, hashtagsToAdd }`.
 
 ### 6.2 Add `syncAmendmentHashtags` to `useAmendmentActions`
 
 File: `src/zero/amendments/useAmendmentActions.ts`
 
 - [ ] Add a `syncAmendmentHashtags` callback that calls
-  `useCommonActions.syncEntityHashtags('amendment', ...)`.
+      `useCommonActions.syncEntityHashtags('amendment', ...)`.
 
 ### 6.3 Add `HashtagsSection` to `AmendmentEditContent`
 
 File: `src/features/amendments/ui/AmendmentEditContent.tsx`
 
 - [ ] Add `hashtags: string[]` to the local `formData` state, initialized from
-  `amendment.hashtags?.map(h => h.tag)` when the amendment loads.
+      `amendment.hashtags?.map(h => h.tag)` when the amendment loads.
 - [ ] Add `<HashtagsSection>` card below the existing form fields.
 - [ ] On submit, call `syncAmendmentHashtags` with the diff.
 
@@ -436,7 +466,7 @@ File: `src/features/blogs/ui/BlogEdit.tsx`
 - [ ] Remove the manual Tag card (the `<Input value={tagInput}…>` + `<Button>Add</Button>` block).
 - [ ] Import and render `<HashtagsSection hashtags={formData.tags} onHashtagsChange={value => updateField('tags', value)} />`.
 - [ ] Remove `tagInput`, `setTagInput`, `handleAddTag`, `handleRemoveTag` from the destructured
-  hook return in `BlogEdit` (they are no longer needed in the view).
+      hook return in `BlogEdit` (they are no longer needed in the view).
 
 ### 7.2 Update `useBlogEditPage` tags initialization
 
@@ -444,7 +474,7 @@ File: `src/features/blogs/hooks/useBlogEditPage.ts`
 
 - [ ] Verify that `formData.tags` is initialized from `blog.hashtags?.map(ht => ht.tag)`. (Done)
 - [ ] Verify that `syncBlogHashtags` uses the M2M-aware `computeHashtagDiff`. Update the helper
-  once the schema migration (Phase 1–2) is done to reference `blog_hashtag` junction rows.
+      once the schema migration (Phase 1–2) is done to reference `blog_hashtag` junction rows.
 
 ---
 
@@ -458,7 +488,7 @@ stored in local form state which is then discarded.
 File: `src/features/events/hooks/useEventMutations.ts`
 
 - [ ] Add a `syncEventHashtags` callback that delegates to
-  `useCommonActions.syncEntityHashtags('event', eventId, ...)`.
+      `useCommonActions.syncEntityHashtags('event', eventId, ...)`.
 
 ### 8.2 Update `useEventUpdate` to load and persist hashtags
 
@@ -468,7 +498,7 @@ File: `src/features/events/hooks/useEventUpdate.ts`
 - [ ] Initialize `formData.tags` from `hashtags?.map(h => h.tag)` (once on load).
 - [ ] On `handleSubmit`, call `syncEventHashtags` with the diff between initial and current tags.
 - [ ] Remove the orphaned `tagInput`/`handleAddTag`/`handleRemoveTag` helpers from the return
-  value once replaced.
+      value once replaced.
 
 ### 8.3 Replace plain tag input in `EventEdit` with `HashtagsSection`
 
@@ -487,27 +517,27 @@ File: `src/features/search/hooks/useSearchURL.ts`
 
 - [ ] Read `searchParams.hashtag` (single tag string, e.g. `politics`) from the URL.
 - [ ] When `hashtag` param is present, pre-populate `topics` state with `['#' + hashtagParam]` or
-  just `[hashtagParam]` (matching the format used by `matchesHashtag`).
+      just `[hashtagParam]` (matching the format used by `matchesHashtag`).
 - [ ] When `topics` changes and contains hashtag entries, write them back to `topics=` param
-  (preserve existing implementation) so round-trip navigation works.
+      (preserve existing implementation) so round-trip navigation works.
 
 ### 9.2 Update `SearchHeader` to show hashtag chip
 
 File: `src/features/search/ui/SearchHeader.tsx`
 
 - [ ] When the `hashtag` URL param is active and not reflected in `activeTopics`, display a
-  dedicated `#hashtag` chip in the active filters area so the user can clear it.
+      dedicated `#hashtag` chip in the active filters area so the user can clear it.
 - [ ] Alternatively, ensure the existing `activeTopics` chip rendering already covers it once
-  Step 9.1 maps `hashtag → topics`.
+      Step 9.1 maps `hashtag → topics`.
 
 ### 9.3 Verify hashtag filtering in `useSearchFilters`
 
 File: `src/features/search/hooks/useSearchFilters.ts`
 
 - [ ] Confirm that `matchesHashtag` (`src/features/search/utils/searchUtils.ts`) works with the
-  M2M junction data shape. After the Phase 2 migration, each entity's `.hashtags` relationship
-  navigates through junction rows to the canonical `hashtag` with a `.tag` field.
-  Adjust `matchesHashtag` to handle the new data shape:
+      M2M junction data shape. After the Phase 2 migration, each entity's `.hashtags` relationship
+      navigates through junction rows to the canonical `hashtag` with a `.tag` field.
+      Adjust `matchesHashtag` to handle the new data shape:
   ```ts
   // New junction shape: item.user_hashtags = [{ hashtag: { tag: 'politics' } }]
   // Old shape: item.hashtags = [{ tag: 'politics' }]
@@ -519,7 +549,7 @@ File: `src/features/search/hooks/useSearchFilters.ts`
 File: `src/zero/shared/useSearchState.ts`
 
 - [ ] Add a call to `queries.common.allHashtags({})` so the full hashtag list is synced locally
-  on the search page (used by `HashtagEditor` typeahead suggestions).
+      on the search page (used by `HashtagEditor` typeahead suggestions).
 
 ---
 
@@ -532,50 +562,50 @@ These tasks are clean-up / migration tasks triggered by the M2M schema change (P
 File: `src/features/blogs/logic/blogHashtagDiff.ts`
 
 - [ ] Update the `Hashtag` interface to `{ id: string; hashtag: { tag: string } }` (junction row
-  shape) and update `computeHashtagDiff` accordingly.
+      shape) and update `computeHashtagDiff` accordingly.
 - [ ] Update `hashtagsToAdd` to generate junction rows (`blog_hashtag`) + ensure the canonical
-  `hashtag` row exists first.
+      `hashtag` row exists first.
 
 ### 10.2 Remove M2M pre-migration nullable fields from Zod schemas
 
 File: `src/zero/common/schema.ts`
 
 - [ ] Confirm all nullable FK fields (`user_id`, `group_id`, etc.) have been removed from
-  `createHashtagSchema` / `selectHashtagSchema` after the new `hashtag` table is deployed.
+      `createHashtagSchema` / `selectHashtagSchema` after the new `hashtag` table is deployed.
 
 ### 10.3 Update `HashtagDisplay` for new data shape
 
 File: `src/components/ui/hashtag-display.tsx`
 
 - [ ] Update the prop type from `hashtags: { id: string; tag: string }[]` to accept the junction
-  row shape OR keep it flat by extracting tag texts before passing to the component. Choose the
-  simpler option that avoids prop drilling complexity.
+      row shape OR keep it flat by extracting tag texts before passing to the component. Choose the
+      simpler option that avoids prop drilling complexity.
 - [ ] Verify that all existing callers of `HashtagDisplay` still pass data in the expected shape
-  after the data layer changes (especially on user profiles, group pages, search cards).
+      after the data layer changes (especially on user profiles, group pages, search cards).
 
 ---
 
 ## Summary
 
-| Phase | Area | Tasks | Notes |
-|-------|------|-------|-------|
-| 1 | Supabase Schema | 6 | M2M migration; prerequisite for all |
-| 2 | Zero Data Layer | 9 | Sync with DB; prerequisite for edit pages |
-| 3 | Reusable UI Component | 3 | `HashtagEditor` + typeahead `HashtagInput` |
-| 4 | User Edit Page | 3 | Fix existing (partial) implementation |
-| 5 | Group Edit Page | 3 | New feature |
-| 6 | Amendment Edit Page | 3 | New feature |
-| 7 | Blog Edit Page | 2 | Upgrade existing plain-input to new component |
-| 8 | Event Edit Page | 3 | Persist tags + upgrade UI |
-| 9 | Search Page | 4 | Fix hashtag URL param + search filter data shape |
-| 10 | Cross-Cutting Cleanup | 3 | Post-migration fixes |
+| Phase | Area                  | Tasks | Notes                                            |
+| ----- | --------------------- | ----- | ------------------------------------------------ |
+| 1     | Supabase Schema       | 6     | M2M migration; prerequisite for all              |
+| 2     | Zero Data Layer       | 9     | Sync with DB; prerequisite for edit pages        |
+| 3     | Reusable UI Component | 3     | `HashtagEditor` + typeahead `HashtagInput`       |
+| 4     | User Edit Page        | 3     | Fix existing (partial) implementation            |
+| 5     | Group Edit Page       | 3     | New feature                                      |
+| 6     | Amendment Edit Page   | 3     | New feature                                      |
+| 7     | Blog Edit Page        | 2     | Upgrade existing plain-input to new component    |
+| 8     | Event Edit Page       | 3     | Persist tags + upgrade UI                        |
+| 9     | Search Page           | 4     | Fix hashtag URL param + search filter data shape |
+| 10    | Cross-Cutting Cleanup | 3     | Post-migration fixes                             |
 
 ---
 
 ## Architecture Notes
 
 - **Existing denormalized schema**: The current `hashtag` table in `21_common.sql` stores one row
-  per entity-tag pair. It works and is in production. The M2M migration (Phase 1) is ne  but should be done as a single atomic DB migration.
+  per entity-tag pair. It works and is in production. The M2M migration (Phase 1) is ne but should be done as a single atomic DB migration.
 - **Typeahead data source**: `queries.common.allHashtags({})` queries the slim canonical
   `hashtag` table. At runtime Zero syncs this table locally so all autocomplete suggestions are
   instant (no network round trip).
