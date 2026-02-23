@@ -48,3 +48,93 @@
 .animate-flash-red {
   animation: flash-red 1.2s ease-out forwards;
 }
+
+/* Global loading animation keyframes */
+
+@keyframes loading-steam {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scaleX(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translateY(-12px) scaleX(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-24px) scaleX(0.8);
+  }
+}
+
+@keyframes loading-cup {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-3px) rotate(-2deg);
+  }
+  75% {
+    transform: translateY(-3px) rotate(2deg);
+  }
+}
+
+@keyframes loading-typewriter {
+  from {
+    max-width: 0;
+  }
+  to {
+    max-width: 100%;
+  }
+}
+
+@keyframes loading-blink-caret {
+  from, to {
+    border-color: transparent;
+  }
+  50% {
+    border-color: currentColor;
+  }
+}
+
+@keyframes loading-fade-in {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes loading-progress {
+  0% {
+    transform: translateX(-100%);
+    width: 40%;
+  }
+  50% {
+    transform: translateX(60%);
+    width: 60%;
+  }
+  100% {
+    transform: translateX(200%);
+    width: 40%;
+  }
+}
+
+.animate-loading-steam {
+  animation: loading-steam 2s ease-in-out infinite;
+}
+
+.animate-loading-cup {
+  animation: loading-cup 3s ease-in-out infinite;
+}
+
+.animate-loading-typewriter {
+  animation:
+    loading-typewriter 2.2s steps(40, end) forwards,
+    loading-blink-caret 0.75s step-end infinite;
+}
+
+.animate-loading-fade-in {
+  animation: loading-fade-in 0.8s ease-out forwards;
+}
+
+.animate-loading-progress {
+  animation: loading-progress 2s ease-in-out infinite;
+}

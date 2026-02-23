@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { HashtagInput } from '@/components/ui/hashtag-input';
+import { HashtagEditor } from '@/components/ui/hashtag-editor';
 
 interface HashtagsSectionProps {
   hashtags: string[];
@@ -14,7 +14,7 @@ export function HashtagsSection({ hashtags, onHashtagsChange }: HashtagsSectionP
         <CardDescription>Add hashtags to help others find you</CardDescription>
       </CardHeader>
       <CardContent>
-        <HashtagInput
+        <HashtagEditor
           value={hashtags}
           onChange={onHashtagsChange}
           placeholder="Add hashtags (e.g., developer, activist)"

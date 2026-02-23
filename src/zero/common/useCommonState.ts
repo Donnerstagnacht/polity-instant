@@ -24,6 +24,8 @@ export function useCommonState(args: {
   timelineEntityIds?: string[]
   timelineContentTypes?: string[]
   timelineContentLimit?: number
+  // Hashtag queries
+  loadAllHashtags?: boolean
 } = {}) {
   // ── Entity-based queries ───────────────────────────────────────────
   const hasEntityFilter = !!(args.user_id || args.group_id || args.amendment_id || args.event_id || args.blog_id)
@@ -40,16 +42,30 @@ export function useCommonState(args: {
       : undefined
   )
 
-  const [hashtags, hashtagsResult] = useQuery(
-    hasEntityFilter
-      ? queries.common.hashtags({
-          group_id: args.group_id,
-          user_id: args.user_id,
-          blog_id: args.blog_id,
-          amendment_id: args.amendment_id,
-          event_id: args.event_id,
-        })
-      : undefined
+  // ── Per-entity junction hashtag queries ────────────────────────────
+  const [userHashtags, userHashtagsResult] = useQuery(
+    args.user_id ? queries.common.userHashtags({ user_id: args.user_id }) : undefined
+  )
+
+  const [groupHashtags, groupHashtagsResult] = useQuery(
+    args.group_id ? queries.common.groupHashtags({ group_id: args.group_id }) : undefined
+  )
+
+  const [amendmentHashtags, amendmentHashtagsResult] = useQuery(
+    args.amendment_id ? queries.common.amendmentHashtags({ amendment_id: args.amendment_id }) : undefined
+  )
+
+  const [eventHashtags, eventHashtagsResult] = useQuery(
+    args.event_id ? queries.common.eventHashtags({ event_id: args.event_id }) : undefined
+  )
+
+  const [blogHashtags, blogHashtagsResult] = useQuery(
+    args.blog_id ? queries.common.blogHashtags({ blog_id: args.blog_id }) : undefined
+  )
+
+  // ── All canonical hashtags (for typeahead) ─────────────────────────
+  const [allHashtags, allHashtagsResult] = useQuery(
+    args.loadAllHashtags ? queries.common.allHashtags({}) : undefined
   )
 
   const hasLinkFilter = !!(args.group_id || args.user_id)
@@ -120,7 +136,12 @@ export function useCommonState(args: {
 
   const isLoading =
     (hasEntityFilter && subscribersResult.type === 'unknown') ||
-    (hasEntityFilter && hashtagsResult.type === 'unknown') ||
+    (!!args.user_id && userHashtagsResult.type === 'unknown') ||
+    (!!args.group_id && groupHashtagsResult.type === 'unknown') ||
+    (!!args.amendment_id && amendmentHashtagsResult.type === 'unknown') ||
+    (!!args.event_id && eventHashtagsResult.type === 'unknown') ||
+    (!!args.blog_id && blogHashtagsResult.type === 'unknown') ||
+    (!!args.loadAllHashtags && allHashtagsResult.type === 'unknown') ||
     (hasLinkFilter && linksResult.type === 'unknown') ||
     (hasTimelineEntityFilter && timelineResult.type === 'unknown') ||
     (hasTimelineEntityFilter && reactionsResult.type === 'unknown') ||
@@ -132,7 +153,12 @@ export function useCommonState(args: {
 
   return {
     subscribers,
-    hashtags,
+    userHashtags,
+    groupHashtags,
+    amendmentHashtags,
+    eventHashtags,
+    blogHashtags,
+    allHashtags,
     links,
     timeline,
     reactions,

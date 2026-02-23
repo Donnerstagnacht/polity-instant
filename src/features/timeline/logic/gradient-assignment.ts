@@ -123,3 +123,40 @@ export const CARD_ASPECT_RATIOS = {
   image: 'aspect-auto', // Flexible based on image
   default: 'aspect-auto', // Flexible with minimum heights
 } as const;
+
+/**
+ * Badge-sized gradients — more vibrant than card backgrounds, with
+ * white text in light mode and light text in dark mode.
+ */
+export const BADGE_GRADIENTS = [
+  'bg-gradient-to-r from-pink-500 to-rose-400 dark:from-pink-700 dark:to-rose-600',
+  'bg-gradient-to-r from-violet-500 to-purple-400 dark:from-violet-700 dark:to-purple-600',
+  'bg-gradient-to-r from-blue-500 to-cyan-400 dark:from-blue-700 dark:to-cyan-600',
+  'bg-gradient-to-r from-teal-500 to-emerald-400 dark:from-teal-700 dark:to-emerald-600',
+  'bg-gradient-to-r from-green-500 to-lime-400 dark:from-green-700 dark:to-lime-600',
+  'bg-gradient-to-r from-amber-500 to-yellow-400 dark:from-amber-700 dark:to-yellow-600',
+  'bg-gradient-to-r from-orange-500 to-red-400 dark:from-orange-700 dark:to-red-600',
+  'bg-gradient-to-r from-fuchsia-500 to-pink-400 dark:from-fuchsia-700 dark:to-pink-600',
+  'bg-gradient-to-r from-indigo-500 to-blue-400 dark:from-indigo-700 dark:to-blue-600',
+  'bg-gradient-to-r from-cyan-500 to-teal-400 dark:from-cyan-700 dark:to-teal-600',
+  'bg-gradient-to-r from-emerald-500 to-green-400 dark:from-emerald-700 dark:to-green-600',
+  'bg-gradient-to-r from-rose-500 to-orange-400 dark:from-rose-700 dark:to-orange-600',
+  'bg-gradient-to-r from-sky-500 to-indigo-400 dark:from-sky-700 dark:to-indigo-600',
+  'bg-gradient-to-r from-lime-500 to-emerald-400 dark:from-lime-700 dark:to-emerald-600',
+  'bg-gradient-to-r from-red-500 to-pink-400 dark:from-red-700 dark:to-pink-600',
+] as const;
+
+/**
+ * Get a deterministic badge gradient for a hashtag string.
+ * Same tag always returns the same gradient.
+ */
+export function getHashtagGradient(tag: string): string {
+  let hash = 0;
+  for (let i = 0; i < tag.length; i++) {
+    const char = tag.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash;
+  }
+  const index = Math.abs(hash) % BADGE_GRADIENTS.length;
+  return BADGE_GRADIENTS[index];
+}

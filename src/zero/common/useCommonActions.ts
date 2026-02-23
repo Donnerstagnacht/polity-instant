@@ -4,6 +4,8 @@ import { toast } from 'sonner'
 import { useTranslation } from '@/hooks/use-translation'
 import { mutators } from '../mutators'
 
+type EntityType = 'user' | 'group' | 'amendment' | 'event' | 'blog'
+
 /**
  * Action hook for common cross-domain mutations.
  * Every function wraps a custom mutator + sonner toast.
@@ -46,10 +48,8 @@ export function useCommonActions() {
     async (args: Parameters<typeof mutators.common.addHashtag>[0]) => {
       try {
         await zero.mutate(mutators.common.addHashtag(args))
-        toast.success(t('common.toasts.hashtagAdded'))
       } catch (error) {
         console.error('Failed to add hashtag:', error)
-        toast.error(t('common.toasts.hashtagAddFailed'))
         throw error
       }
     },
@@ -60,14 +60,117 @@ export function useCommonActions() {
     async (args: Parameters<typeof mutators.common.deleteHashtag>[0]) => {
       try {
         await zero.mutate(mutators.common.deleteHashtag(args))
-        toast.success(t('common.toasts.hashtagRemoved'))
       } catch (error) {
         console.error('Failed to delete hashtag:', error)
-        toast.error(t('common.toasts.hashtagRemoveFailed'))
         throw error
       }
     },
     [zero]
+  )
+
+  // ── Junction link/unlink helpers ───────────────────────────────────
+  const linkHashtag = useCallback(
+    async (entityType: EntityType, args: { id: string; hashtag_id: string } & Record<string, string>) => {
+      const mutatorMap = {
+        user: mutators.common.linkUserHashtag,
+        group: mutators.common.linkGroupHashtag,
+        amendment: mutators.common.linkAmendmentHashtag,
+        event: mutators.common.linkEventHashtag,
+        blog: mutators.common.linkBlogHashtag,
+      } as const
+      try {
+        await zero.mutate(mutatorMap[entityType](args as any))
+      } catch (error) {
+        console.error(`Failed to link ${entityType} hashtag:`, error)
+        throw error
+      }
+    },
+    [zero]
+  )
+
+  const unlinkHashtag = useCallback(
+    async (entityType: EntityType, args: { id: string }) => {
+      const mutatorMap = {
+        user: mutators.common.unlinkUserHashtag,
+        group: mutators.common.unlinkGroupHashtag,
+        amendment: mutators.common.unlinkAmendmentHashtag,
+        event: mutators.common.unlinkEventHashtag,
+        blog: mutators.common.unlinkBlogHashtag,
+      } as const
+      try {
+        await zero.mutate(mutatorMap[entityType](args))
+      } catch (error) {
+        console.error(`Failed to unlink ${entityType} hashtag:`, error)
+        throw error
+      }
+    },
+    [zero]
+  )
+
+  /**
+   * Sync entity hashtags: computes diff between existing junction rows and desired tags,
+   * then creates/removes canonical hashtags + junction rows as needed.
+   *
+   * @param entityType - 'user' | 'group' | 'amendment' | 'event' | 'blog'
+   * @param entityId - The entity's ID
+   * @param desiredTags - Array of tag strings the entity should have after sync
+   * @param existingJunctions - Current junction rows (with nested hashtag) from the query
+   * @param allHashtags - All canonical hashtags (for reuse lookup)
+   */
+  const syncEntityHashtags = useCallback(
+    async (
+      entityType: EntityType,
+      entityId: string,
+      desiredTags: string[],
+      existingJunctions: Array<{ id: string; hashtag_id: string; hashtag?: { id: string; tag: string } | undefined }>,
+      allHashtags: Array<{ id: string; tag: string }>
+    ) => {
+      try {
+        // Build lookup of current tags from junctions
+        const currentTagMap = new Map<string, string>() // tag → junction_id
+        for (const j of existingJunctions) {
+          const tag = j.hashtag?.tag
+          if (tag) currentTagMap.set(tag, j.id)
+        }
+
+        const desiredSet = new Set(desiredTags)
+        const existingTagLookup = new Map(allHashtags.map(h => [h.tag, h.id]))
+        const entityField = `${entityType}_id`
+
+        // Remove junctions for tags no longer desired
+        for (const [tag, junctionId] of currentTagMap) {
+          if (!desiredSet.has(tag)) {
+            await unlinkHashtag(entityType, { id: junctionId })
+          }
+        }
+
+        // Add junctions for new tags
+        for (const tag of desiredTags) {
+          if (currentTagMap.has(tag)) continue // already linked
+
+          // Ensure canonical hashtag exists
+          let hashtagId = existingTagLookup.get(tag)
+          if (!hashtagId) {
+            hashtagId = crypto.randomUUID()
+            await addHashtag({ id: hashtagId, tag })
+          }
+
+          // Create junction
+          await linkHashtag(entityType, {
+            id: crypto.randomUUID(),
+            hashtag_id: hashtagId,
+            [entityField]: entityId,
+          })
+        }
+
+        toast.success(t('common.toasts.hashtagsSynced'))
+      } catch (error) {
+        console.error('Failed to sync hashtags:', error)
+        toast.error(t('common.toasts.hashtagSyncFailed'))
+        throw error
+      }
+    },
+    [addHashtag, unlinkHashtag, linkHashtag, t]
   )
 
   // ── Links ──────────────────────────────────────────────────────────
@@ -153,6 +256,9 @@ export function useCommonActions() {
     // Hashtags
     addHashtag,
     deleteHashtag,
+    linkHashtag,
+    unlinkHashtag,
+    syncEntityHashtags,
 
     // Links
     createLink,

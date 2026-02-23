@@ -77,8 +77,8 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
     if (!subscriptionTimeline.events.length) return [] as TimelineItem[];
 
     const getString = (value: unknown) => (typeof value === 'string' ? value : undefined);
-    const getTags = (hashtags?: Array<{ tag?: string | null }>) =>
-      hashtags?.map(tag => tag?.tag).filter((tag): tag is string => Boolean(tag)) ?? [];
+    const getTags = (junctions?: Array<{ hashtag?: { tag?: string | null } | null }>) =>
+      junctions?.map(j => j.hashtag?.tag).filter((tag): tag is string => Boolean(tag)) ?? [];
     const supportedTypes = new Set<TimelineItem['type']>([
       'group',
       'event',
@@ -107,10 +107,10 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
 
       const createdAt = eventRecord.createdAt ? new Date(eventRecord.createdAt) : new Date();
       const stats = (eventRecord.stats as TimelineItem['stats']) || undefined;
-      const amendmentTags = getTags(eventRecord.amendment?.hashtags);
-      const blogTags = getTags(eventRecord.blog?.hashtags);
-      const userTags = getTags(eventRecord.user?.hashtags);
-      const eventTags = getTags(eventRecord.event?.hashtags);
+      const amendmentTags = getTags(eventRecord.amendment?.amendment_hashtags);
+      const blogTags = getTags(eventRecord.blog?.blog_hashtags);
+      const userTags = getTags(eventRecord.user?.user_hashtags);
+      const eventTags = getTags(eventRecord.event?.event_hashtags);
       const fallbackTags =
         amendmentTags.length > 0
           ? amendmentTags

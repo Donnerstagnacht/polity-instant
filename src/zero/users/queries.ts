@@ -56,16 +56,16 @@ export const userQueries = {
         .related('statements')
         .related('group_memberships', q =>
           q.related('group', q =>
-            q.related('events').related('amendments').related('hashtags')
+            q.related('events').related('amendments').related('group_hashtags', q => q.related('hashtag'))
           ).related('role')
         )
         .related('blogger_relations', q =>
-          q.related('blog', q => q.related('hashtags'))
+          q.related('blog', q => q.related('blog_hashtags', q => q.related('hashtag')))
             .related('role', q => q.related('action_rights'))
         )
-        .related('hashtags')
+        .related('user_hashtags', q => q.related('hashtag'))
         .related('amendment_collaborations', q =>
-          q.related('amendment', q => q.related('group').related('hashtags'))
+          q.related('amendment', q => q.related('group').related('amendment_hashtags', q => q.related('hashtag')))
         )
   ),
 
@@ -92,7 +92,7 @@ export const userQueries = {
     () =>
       zql.user
         .where('visibility', 'IN', ['public', 'authenticated'])
-        .related('hashtags')
+        .related('user_hashtags', q => q.related('hashtag'))
         .related('group_memberships')
         .related('amendment_collaborations')
   ),

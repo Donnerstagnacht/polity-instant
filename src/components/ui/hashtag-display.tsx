@@ -4,6 +4,7 @@ import { Hash } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/utils/utils';
+import { getHashtagGradient } from '@/features/timeline/logic/gradient-assignment';
 
 interface HashtagDisplayProps {
   hashtags: { id: string; tag: string }[];
@@ -43,7 +44,12 @@ export function HashtagDisplay({
           <Badge
             key={id}
             variant="secondary"
-            className={cn(clickable ? 'cursor-pointer hover:bg-primary/20' : '', badgeClassName)}
+            className={cn(
+              'text-white border-0',
+              getHashtagGradient(tag),
+              clickable ? 'cursor-pointer hover:opacity-80' : '',
+              badgeClassName
+            )}
             onClick={() => handleHashtagClick(tag)}
           >
             <Hash className="mr-1 h-3 w-3" />

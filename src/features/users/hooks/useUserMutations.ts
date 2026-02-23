@@ -84,66 +84,7 @@ export function useUserMutations() {
   };
 
   /**
-   * Add hashtags to user
-   */
-  const addHashtags = async (userId: string, hashtags: string[]) => {
-    if (hashtags.length === 0) return { success: true };
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      for (const tag of hashtags) {
-        const hashtagId = crypto.randomUUID();
-        await commonActions.addHashtag({
-          id: hashtagId,
-          tag,
-          category: '',
-          color: '',
-          bg_color: '',
-          icon: '',
-          description: '',
-          amendment_id: '',
-          event_id: '',
-          group_id: '',
-          blog_id: '',
-          user_id: userId,
-        });
-      }
-
-      return { success: true };
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to add hashtags';
-      setError(errorMessage);
-      console.error('Failed to add hashtags:', err);
-      return { success: false, error: errorMessage };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  /**
-   * Remove hashtag from user
-   */
-  const removeHashtag = async (hashtagId: string) => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      await commonActions.deleteHashtag({ id: hashtagId });
-      return { success: true };
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to remove hashtag';
-      setError(errorMessage);
-      console.error('Failed to remove hashtag:', err);
-      return { success: false, error: errorMessage };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  /**
-   * Update user with complete profile data including hashtags
+   * Update user with complete profile data including hashtags (junction-based)
    */
   const updateCompleteProfile = async (
     userId: string,
@@ -159,6 +100,8 @@ export function useUserMutations() {
       website?: string;
       location?: string;
       hashtags?: string[];
+      existingJunctions?: Array<{ id: string; hashtag_id: string; hashtag?: { id: string; tag: string } | undefined }>;
+      allHashtags?: Array<{ id: string; tag: string }>;
     }
   ) => {
     setIsLoading(true);
@@ -178,25 +121,15 @@ export function useUserMutations() {
         location: profileData.location,
       });
 
-      // Add hashtags if provided
-      if (profileData.hashtags && profileData.hashtags.length > 0) {
-        for (const tag of profileData.hashtags) {
-          const hashtagId = crypto.randomUUID();
-          await commonActions.addHashtag({
-            id: hashtagId,
-            tag,
-            category: '',
-            color: '',
-            bg_color: '',
-            icon: '',
-            description: '',
-            amendment_id: '',
-            event_id: '',
-            group_id: '',
-            blog_id: '',
-            user_id: userId,
-          });
-        }
+      // Sync hashtags via junction tables
+      if (profileData.hashtags && profileData.existingJunctions && profileData.allHashtags) {
+        await commonActions.syncEntityHashtags(
+          'user',
+          userId,
+          profileData.hashtags,
+          profileData.existingJunctions,
+          profileData.allHashtags
+        );
       }
 
       // Add timeline event for profile update
@@ -223,8 +156,6 @@ export function useUserMutations() {
   return {
     updateUserProfile,
     linkAvatarFile,
-    addHashtags,
-    removeHashtag,
     updateCompleteProfile,
     isLoading,
     error,

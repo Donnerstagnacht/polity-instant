@@ -148,14 +148,13 @@ export function useBlogActions() {
     [zero]
   )
 
-  /** Full blog creation orchestration (blog + roles + action rights + entry + hashtags) */
+  /** Full blog creation orchestration (blog + roles + action rights + entry) */
   const createBlogFull = useCallback(
     async (args: {
       blog: Parameters<typeof mutators.blogs.create>[0]
       roles: Array<Parameters<typeof mutators.groups.createRole>[0]>
       actionRights: Array<Parameters<typeof mutators.groups.assignActionRight>[0]>
       entry: Parameters<typeof mutators.blogs.createEntry>[0]
-      hashtags?: Array<Parameters<typeof mutators.common.addHashtag>[0]>
     }) => {
       await zero.mutate(mutators.blogs.create(args.blog))
       for (const role of args.roles) {
@@ -165,27 +164,6 @@ export function useBlogActions() {
         await zero.mutate(mutators.groups.assignActionRight(right))
       }
       await zero.mutate(mutators.blogs.createEntry(args.entry))
-      if (args.hashtags) {
-        for (const hashtag of args.hashtags) {
-          await zero.mutate(mutators.common.addHashtag(hashtag))
-        }
-      }
-    },
-    [zero]
-  )
-
-  /** Batch sync hashtags (remove old, add new) without individual toasts */
-  const syncBlogHashtags = useCallback(
-    async (args: {
-      hashtagsToRemove: Array<{ id: string }>
-      hashtagsToAdd: Array<Parameters<typeof mutators.common.addHashtag>[0]>
-    }) => {
-      for (const ht of args.hashtagsToRemove) {
-        await zero.mutate(mutators.common.deleteHashtag({ id: ht.id }))
-      }
-      for (const ht of args.hashtagsToAdd) {
-        await zero.mutate(mutators.common.addHashtag(ht))
-      }
     },
     [zero]
   )
@@ -237,7 +215,6 @@ export function useBlogActions() {
     // Silent Operations
     updateBlogSilent,
     createBlogFull,
-    syncBlogHashtags,
     subscribeToBlog,
     unsubscribeFromBlog,
     sendNotifications,

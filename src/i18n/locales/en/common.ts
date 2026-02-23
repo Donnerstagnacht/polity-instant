@@ -5,6 +5,14 @@ export const commonTranslations = {
     general: 'Loading...',
     compiling: 'Compiling page...',
     conversations: 'Loading conversations...',
+    sync: {
+      headline: 'Loading data locally...',
+      coffeeMessage: 'Grab a coffee — after this we\'ll be blazingly fast, no time for coffee breaks!',
+      connecting: 'Connecting...',
+      connected: 'Connected',
+      disconnected: 'Offline — retrying...',
+      syncing: 'Syncing data locally...',
+    },
   },
   errors: {
     pageNotFound: {

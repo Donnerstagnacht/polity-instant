@@ -5,10 +5,11 @@
  * Handles group profile updates including basic info, location, and social media.
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
+import { useCommonState, useCommonActions } from '@/zero/common';
 import { syncGroupNameToConversation } from '@/utils/groupConversationSync';
 import { notifyGroupProfileUpdated } from '@/utils/notification-helpers';
 import { sendNotificationFn } from '@/server/notifications';
@@ -25,6 +26,7 @@ export interface GroupFormData {
   twitter: string;
   facebook: string;
   snapchat: string;
+  hashtags: string[];
 }
 
 interface UseGroupUpdateResult {
@@ -48,6 +50,7 @@ const initialFormState: GroupFormData = {
   twitter: '',
   facebook: '',
   snapchat: '',
+  hashtags: [],
 };
 
 /**
@@ -68,9 +71,31 @@ export function useGroupUpdate(
 ): UseGroupUpdateResult {
   const navigate = useNavigate();
   const { updateGroup } = useGroupActions();
+  const commonActions = useCommonActions();
+  const { groupHashtags, allHashtags } = useCommonState({
+    group_id: groupId,
+    loadAllHashtags: true,
+  });
   const [formData, setFormData] = useState<GroupFormData>(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [originalName, setOriginalName] = useState('');
+
+  const initializedRef = useRef(false);
+  const hashtagsInitializedRef = useRef(false);
+
+  // Derive existing tags from junction data
+  const existingTags = useMemo(
+    () => (groupHashtags ?? []).map(j => j.hashtag?.tag).filter((t): t is string => !!t),
+    [groupHashtags]
+  );
+
+  // Initialize hashtags from junction data once available
+  useEffect(() => {
+    if (existingTags.length > 0 && !hashtagsInitializedRef.current) {
+      hashtagsInitializedRef.current = true;
+      setFormData(prev => ({ ...prev, hashtags: existingTags }));
+    }
+  }, [existingTags]);
 
   const initializedRef = useRef(false);
 
@@ -90,6 +115,7 @@ export function useGroupUpdate(
         twitter: initialData.twitter || '',
         facebook: initialData.facebook || '',
         snapchat: initialData.snapchat || '',
+        hashtags: initialData.hashtags || existingTags,
       };
       setFormData(newFormData);
       setOriginalName(initialData.name || '');
@@ -120,6 +146,7 @@ export function useGroupUpdate(
         twitter: initialData.twitter || '',
         facebook: initialData.facebook || '',
         snapchat: initialData.snapchat || '',
+        hashtags: existingTags,
       };
       setFormData(resetData);
     } else {
@@ -159,6 +186,15 @@ export function useGroupUpdate(
       if (nameChanged) {
         await syncGroupNameToConversation(groupId, formData.name);
       }
+
+      // Sync hashtags
+      await commonActions.syncEntityHashtags(
+        'group',
+        groupId,
+        formData.hashtags,
+        groupHashtags ?? [],
+        allHashtags ?? []
+      );
 
       sendNotificationFn({ data: { helper: 'notifyGroupProfileUpdated', params: { senderId: options?.actorId, groupId, groupName: formData.name } } }).catch(console.error)
       toast.success('Group updated successfully');

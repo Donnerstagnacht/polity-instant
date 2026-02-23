@@ -5,28 +5,92 @@
 -- the referenced tables may be in other files. FKs can be added later.
 -- =============================================================================
 
--- Hashtag table
+-- Hashtag table (canonical tag dictionary)
 CREATE TABLE IF NOT EXISTS public.hashtag (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tag TEXT,
-  category TEXT,
-  color TEXT,
-  bg_color TEXT,
-  icon TEXT,
-  description TEXT,
-  post_count INTEGER NOT NULL DEFAULT 0,
-  amendment_id UUID,
-  event_id UUID,
-  group_id UUID,
-  user_id UUID,
-  blog_id UUID,
+  tag TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_hashtag_tag ON public.hashtag (tag);
+CREATE UNIQUE INDEX idx_hashtag_tag ON public.hashtag (tag);
 
 ALTER TABLE public.hashtag ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.hashtag FOR ALL TO service_role USING (true);
+
+-- User ↔ Hashtag junction table
+CREATE TABLE IF NOT EXISTS public.user_hashtag (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
+  hashtag_id UUID NOT NULL REFERENCES public.hashtag (id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (user_id, hashtag_id)
+);
+
+CREATE INDEX idx_user_hashtag_user ON public.user_hashtag (user_id);
+CREATE INDEX idx_user_hashtag_hashtag ON public.user_hashtag (hashtag_id);
+
+ALTER TABLE public.user_hashtag ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.user_hashtag FOR ALL TO service_role USING (true);
+
+-- Group ↔ Hashtag junction table
+CREATE TABLE IF NOT EXISTS public.group_hashtag (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
+  hashtag_id UUID NOT NULL REFERENCES public.hashtag (id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (group_id, hashtag_id)
+);
+
+CREATE INDEX idx_group_hashtag_group ON public.group_hashtag (group_id);
+CREATE INDEX idx_group_hashtag_hashtag ON public.group_hashtag (hashtag_id);
+
+ALTER TABLE public.group_hashtag ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.group_hashtag FOR ALL TO service_role USING (true);
+
+-- Amendment ↔ Hashtag junction table
+CREATE TABLE IF NOT EXISTS public.amendment_hashtag (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
+  hashtag_id UUID NOT NULL REFERENCES public.hashtag (id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (amendment_id, hashtag_id)
+);
+
+CREATE INDEX idx_amendment_hashtag_amendment ON public.amendment_hashtag (amendment_id);
+CREATE INDEX idx_amendment_hashtag_hashtag ON public.amendment_hashtag (hashtag_id);
+
+ALTER TABLE public.amendment_hashtag ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.amendment_hashtag FOR ALL TO service_role USING (true);
+
+-- Event ↔ Hashtag junction table
+CREATE TABLE IF NOT EXISTS public.event_hashtag (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id UUID NOT NULL REFERENCES public.event (id) ON DELETE CASCADE,
+  hashtag_id UUID NOT NULL REFERENCES public.hashtag (id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (event_id, hashtag_id)
+);
+
+CREATE INDEX idx_event_hashtag_event ON public.event_hashtag (event_id);
+CREATE INDEX idx_event_hashtag_hashtag ON public.event_hashtag (hashtag_id);
+
+ALTER TABLE public.event_hashtag ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.event_hashtag FOR ALL TO service_role USING (true);
+
+-- Blog ↔ Hashtag junction table
+CREATE TABLE IF NOT EXISTS public.blog_hashtag (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  blog_id UUID NOT NULL REFERENCES public.blog (id) ON DELETE CASCADE,
+  hashtag_id UUID NOT NULL REFERENCES public.hashtag (id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (blog_id, hashtag_id)
+);
+
+CREATE INDEX idx_blog_hashtag_blog ON public.blog_hashtag (blog_id);
+CREATE INDEX idx_blog_hashtag_hashtag ON public.blog_hashtag (hashtag_id);
+
+ALTER TABLE public.blog_hashtag ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.blog_hashtag FOR ALL TO service_role USING (true);
 
 -- Link table
 CREATE TABLE IF NOT EXISTS public.link (

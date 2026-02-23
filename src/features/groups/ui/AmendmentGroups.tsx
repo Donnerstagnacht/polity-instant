@@ -6,6 +6,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
 import { AmendmentTimelineCard } from '@/features/timeline/ui/cards/AmendmentTimelineCard';
+import { extractHashtags } from '@/zero/common/hashtagHelpers';
 
 interface AmendmentGroupsProps {
   groupedAmendments: {
@@ -105,7 +106,7 @@ export function AmendmentGroups({ groupedAmendments, groupName, groupId }: Amend
                       status: normalizeStatus(amendment.status),
                       groupName,
                       groupId,
-                      hashtags: amendment.hashtags,
+                      hashtags: extractHashtags(amendment.amendment_hashtags),
                     }}
                   />
                 ))}
@@ -148,7 +149,7 @@ export function AmendmentGroups({ groupedAmendments, groupName, groupId }: Amend
                       status: normalizeStatus(amendment.status),
                       groupName,
                       groupId,
-                      hashtags: amendment.hashtags,
+                      hashtags: extractHashtags(amendment.amendment_hashtags),
                     }}
                   />
                 ))}
@@ -188,7 +189,7 @@ export function AmendmentGroups({ groupedAmendments, groupName, groupId }: Amend
                       status: normalizeStatus(amendment.status),
                       groupName,
                       groupId,
-                      hashtags: amendment.hashtags,
+                      hashtags: extractHashtags(amendment.amendment_hashtags),
                     }}
                   />
                 ))}
@@ -228,7 +229,7 @@ export function AmendmentGroups({ groupedAmendments, groupName, groupId }: Amend
                       status: normalizeStatus(amendment.status),
                       groupName,
                       groupId,
-                      hashtags: amendment.hashtags,
+                      hashtags: extractHashtags(amendment.amendment_hashtags),
                     }}
                   />
                 ))}

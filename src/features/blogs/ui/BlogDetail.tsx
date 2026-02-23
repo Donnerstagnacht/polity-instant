@@ -6,6 +6,7 @@ import { PageWrapper } from '@/components/layout/page-wrapper';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
+import { extractHashtags } from '@/zero/common/hashtagHelpers';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { useBlogState } from '@/zero/blogs/useBlogState';
@@ -468,9 +469,9 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
       </ActionBar>
 
       {/* Hashtags */}
-      {blog.hashtags && blog.hashtags.length > 0 && (
+      {blog.blog_hashtags && blog.blog_hashtags.length > 0 && (
         <div className="mb-6">
-          <HashtagDisplay hashtags={blog.hashtags.map(h => ({ ...h, tag: h.tag ?? '' }))} centered />
+          <HashtagDisplay hashtags={extractHashtags(blog.blog_hashtags)} centered />
         </div>
       )}
 

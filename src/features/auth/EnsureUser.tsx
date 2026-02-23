@@ -3,7 +3,8 @@
 import { ReactNode, useState, useEffect } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { useUserState } from '@/zero/users/useUserState';
-import { Loader2 } from 'lucide-react';
+import { GlobalLoadingAnimation } from '@/components/ui/global-loading-animation';
+import { useConnectionState } from '@rocicorp/zero/react';
 
 interface EnsureUserProps {
   children: ReactNode;
@@ -19,6 +20,7 @@ const ZERO_SYNC_TIMEOUT_MS = 8000;
 export function EnsureUser({ children }: EnsureUserProps) {
   const { user, loading } = useAuth();
   const { currentUser, isLoading: userStateLoading } = useUserState();
+  const connectionState = useConnectionState();
   const [timedOut, setTimedOut] = useState(false);
 
   useEffect(() => {
@@ -33,14 +35,14 @@ export function EnsureUser({ children }: EnsureUserProps) {
   const isLoading = loading || (user?.id ? userStateLoading && !timedOut : false);
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
+    const status =
+      connectionState.name === 'connected'
+        ? 'syncing' as const
+        : connectionState.name === 'disconnected'
+          ? 'disconnected' as const
+          : 'connecting' as const;
+
+    return <GlobalLoadingAnimation connectionStatus={status} />;
   }
 
   if (!user) {

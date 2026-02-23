@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { ImageUpload } from '@/components/shared/ImageUpload';
 import { VideoUpload } from '@/components/shared/VideoUpload';
+import { HashtagEditor } from '@/components/ui/hashtag-editor';
 import {
   Select,
   SelectContent,
@@ -20,6 +21,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
+import { useCommonState, useCommonActions } from '@/zero/common';
 import type { WorkflowStatus } from '@/zero/rbac/workflow-constants';
 import {
   WORKFLOW_STATUS_METADATA,
@@ -48,6 +50,11 @@ export function AmendmentEditContent({
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { updateAmendment } = useAmendmentActions();
+  const commonActions = useCommonActions();
+  const { amendmentHashtags, allHashtags } = useCommonState({
+    amendment_id: amendmentId,
+    loadAllHashtags: true,
+  });
 
   const [formData, setFormData] = useState({
     title: '',
@@ -61,12 +68,21 @@ export function AmendmentEditContent({
     autoCloseVoting: false,
     date: '',
     supporters: 0,
-    tags: [] as string[],
+    hashtags: [] as string[],
   });
 
-  const [tagInput, setTagInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const initializedRef = useRef(false);
+  const hashtagsInitializedRef = useRef(false);
+
+  // Initialize hashtags from junction data once available
+  useEffect(() => {
+    if (amendmentHashtags && amendmentHashtags.length > 0 && !hashtagsInitializedRef.current) {
+      hashtagsInitializedRef.current = true;
+      const tags = amendmentHashtags.map(j => j.hashtag?.tag).filter((t): t is string => !!t);
+      setFormData(prev => ({ ...prev, hashtags: tags }));
+    }
+  }, [amendmentHashtags]);
 
   useEffect(() => {
     if (amendment && !initializedRef.current) {
@@ -84,20 +100,12 @@ export function AmendmentEditContent({
         date: amendment.date || new Date().toLocaleDateString(),
         supporters: amendment.supporters || 0,
         tags: Array.isArray(amendment.tags) ? amendment.tags : [],
+        hashtags: amendmentHashtags
+          ? amendmentHashtags.map(j => j.hashtag?.tag).filter((t): t is string => !!t)
+          : Array.isArray(amendment.tags) ? amendment.tags : [],
       });
     }
   }, [amendment]);
-
-  const handleAddTag = () => {
-    if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
-      setFormData({ ...formData, tags: [...formData.tags, tagInput.trim()] });
-      setTagInput('');
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    setFormData({ ...formData, tags: formData.tags.filter(tag => tag !== tagToRemove) });
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,9 +124,19 @@ export function AmendmentEditContent({
         status: formData.status,
         workflow_status: formData.workflowStatus,
         supporters: formData.supporters,
-        tags: formData.tags,
+        tags: formData.hashtags,
         image_url: formData.imageURL || null,
       });
+
+      // Sync hashtags via junction tables
+      await commonActions.syncEntityHashtags(
+        'amendment',
+        amendmentId,
+        formData.hashtags,
+        amendmentHashtags ?? [],
+        allHashtags ?? []
+      );
+
       // Only create timeline events for public amendments
       if (amendment.visibility === 'public') {
         if (formData.imageURL && formData.imageURL !== amendment.imageURL) {
@@ -425,42 +443,12 @@ export function AmendmentEditContent({
               {t('features.amendments.editContent.tagsDescription')}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-2">
-              <Input
-                value={tagInput}
-                onChange={e => setTagInput(e.target.value)}
-                onKeyPress={e => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddTag();
-                  }
-                }}
-                placeholder={t('features.amendments.editContent.addTagPlaceholder')}
-              />
-              <Button type="button" onClick={handleAddTag} variant="outline">
-                {t('features.amendments.editContent.addButton')}
-              </Button>
-            </div>
-            {formData.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {formData.tags.map((tag, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-1 rounded-md bg-secondary px-3 py-1 text-sm"
-                  >
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveTag(tag)}
-                      className="ml-1 text-muted-foreground hover:text-foreground"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+          <CardContent>
+            <HashtagEditor
+              value={formData.hashtags}
+              onChange={(tags) => setFormData({ ...formData, hashtags: tags })}
+              placeholder={t('features.amendments.editContent.addTagPlaceholder')}
+            />
           </CardContent>
         </Card>
 

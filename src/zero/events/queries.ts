@@ -326,7 +326,7 @@ export const eventQueries = {
         .where('id', id)
         .related('creator')
         .related('group')
-        .related('hashtags')
+        .related('event_hashtags', q => q.related('hashtag'))
         .related('event_positions', q => q.related('holders', q => q.related('user')))
         .related('participants', q => q.related('user'))
   ),
@@ -471,7 +471,7 @@ export const eventQueries = {
       zql.event_participant
         .where('user_id', userId)
         .related('event', q =>
-          q.related('hashtags')
+          q.related('event_hashtags', q => q.related('hashtag'))
             .related('participants')
             .related('voting_sessions')
             .related('event_positions')

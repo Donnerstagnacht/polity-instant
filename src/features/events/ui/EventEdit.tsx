@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Loader2, XCircle } from 'lucide-react';
 import { ImageUpload } from '@/components/shared/ImageUpload';
+import { HashtagEditor } from '@/components/ui/hashtag-editor';
 import { useEventUpdate } from '../hooks/useEventUpdate';
 import { useTranslation } from '@/hooks/use-translation';
 import { CancelEventDialog } from './CancelEventDialog';
@@ -33,11 +34,8 @@ export function EventEdit({ eventId }: EventEditProps) {
 
   const {
     formData,
-    tagInput,
-    setTagInput,
+    setFormData,
     updateField,
-    handleAddTag,
-    handleRemoveTag,
     handleSubmit,
     isSubmitting,
     event,
@@ -205,42 +203,12 @@ export function EventEdit({ eventId }: EventEditProps) {
             <CardTitle>{t('features.events.editPage.tags.title')}</CardTitle>
             <CardDescription>{t('features.events.editPage.tags.description')}</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-2">
-              <Input
-                value={tagInput}
-                onChange={e => setTagInput(e.target.value)}
-                onKeyPress={e => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddTag();
-                  }
-                }}
-                placeholder={t('features.events.editPage.tags.placeholder')}
-              />
-              <Button type="button" onClick={handleAddTag} variant="outline">
-                {t('features.events.add')}
-              </Button>
-            </div>
-            {formData.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {formData.tags.map((tag, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-1 rounded-md bg-secondary px-3 py-1 text-sm"
-                  >
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveTag(tag)}
-                      className="ml-1 text-muted-foreground hover:text-foreground"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+          <CardContent>
+            <HashtagEditor
+              value={formData.tags}
+              onChange={(tags) => setFormData({ ...formData, tags })}
+              placeholder={t('features.events.editPage.tags.placeholder')}
+            />
           </CardContent>
         </Card>
 

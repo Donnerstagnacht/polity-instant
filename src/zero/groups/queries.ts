@@ -71,9 +71,9 @@ export const groupQueries = {
           q.related('memberships').related('events').related('amendments')
         )
       )
-      .related('hashtags')
+      .related('group_hashtags', q => q.related('hashtag'))
       .related('positions', q => q.related('holder_history', q => q.related('user')))
-      .related('blogs', q => q.related('hashtags'))
+      .related('blogs', q => q.related('blog_hashtags', q => q.related('hashtag')))
   ),
 
   /** User's membership rows in a specific group, with role */
@@ -136,7 +136,7 @@ export const groupQueries = {
 
   /** Amendments for a group with hashtags and creator */
   amendmentsByGroup: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.amendment.where('group_id', groupId).related('hashtags').related('created_by')
+    zql.amendment.where('group_id', groupId).related('amendment_hashtags', q => q.related('hashtag')).related('created_by')
   ),
 
   /** Amendments for a group with nested documents→collaborators→user (for group document lists) */
@@ -210,7 +210,7 @@ export const groupQueries = {
     ({ args: { userId } }) =>
       zql.group_membership
         .where('user_id', userId)
-        .related('group', q => q.related('hashtags').related('events').related('amendments'))
+        .related('group', q => q.related('group_hashtags', q => q.related('hashtag')).related('events').related('amendments'))
   ),
 
   /** Single group by ID (no relations, for subscriber name lookups) */

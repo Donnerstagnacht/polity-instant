@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useUserMutations } from './useUserMutations';
+import { useCommonState } from '@/zero/common/useCommonState';
 import type { User } from '../types/user.types';
 
 // Co-located types
@@ -42,6 +43,16 @@ export function useUserProfileForm({
 }: UseUserProfileFormOptions): UseUserProfileFormReturn {
   const navigate = useNavigate();
   const { updateCompleteProfile } = useUserMutations();
+  const { userHashtags, allHashtags } = useCommonState({
+    user_id: userId,
+    loadAllHashtags: true,
+  });
+
+  // Derive tag strings from junction data
+  const existingTags = useMemo(
+    () => (userHashtags ?? []).map(j => j.hashtag?.tag).filter(Boolean) as string[],
+    [userHashtags]
+  );
 
   const [formData, setFormData] = useState<UserProfileFormData>({
     firstName: '',
@@ -58,6 +69,7 @@ export function useUserProfileForm({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const initializedRef = useRef(false);
+  const hashtagsInitializedRef = useRef(false);
 
   // Initialize form data only once when user data first loads
   useEffect(() => {
@@ -73,10 +85,18 @@ export function useUserProfileForm({
         website: user.contact?.website || '',
         location: user.contact?.location || '',
         avatar: user.avatar || '',
-        hashtags: [], // Will be populated separately from linked hashtags
+        hashtags: [],
       });
     }
   }, [user]);
+
+  // Initialize hashtags once junction data loads
+  useEffect(() => {
+    if (existingTags.length > 0 && !hashtagsInitializedRef.current) {
+      hashtagsInitializedRef.current = true;
+      setFormData(prev => ({ ...prev, hashtags: existingTags }));
+    }
+  }, [existingTags]);
 
   const updateField = <K extends keyof UserProfileFormData>(
     field: K,
@@ -106,6 +126,8 @@ export function useUserProfileForm({
         website: formData.website,
         location: formData.location,
         hashtags: formData.hashtags,
+        existingJunctions: userHashtags ?? [],
+        allHashtags: allHashtags ?? [],
       });
 
       if (result.success) {

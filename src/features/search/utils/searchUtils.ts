@@ -1,8 +1,25 @@
 import { SearchType } from '../types/search.types';
+import { extractHashtags } from '@/zero/common/hashtagHelpers';
 
+/**
+ * Match against hashtags on an item.
+ * Accepts either extracted { id, tag }[] or junction rows with nested .hashtag.
+ */
 export const matchesHashtag = (item: any, hashtagFilter: string) => {
   if (!hashtagFilter) return true;
-  if (!item.hashtags || item.hashtags.length === 0) return false;
+
+  // Support both extracted { id, tag }[] and junction rows
+  const tags: { id: string; tag: string }[] = item.hashtags
+    ? item.hashtags
+    : extractHashtags(
+        item.user_hashtags ||
+          item.group_hashtags ||
+          item.amendment_hashtags ||
+          item.event_hashtags ||
+          item.blog_hashtags
+      );
+
+  if (!tags || tags.length === 0) return false;
 
   // Remove # symbol if present at the start
   const cleanFilter = hashtagFilter.startsWith('#')
@@ -10,7 +27,7 @@ export const matchesHashtag = (item: any, hashtagFilter: string) => {
     : hashtagFilter.toLowerCase();
 
   // Check if any hashtag matches
-  return item.hashtags.some((h: any) => {
+  return tags.some((h: any) => {
     if (!h || !h.tag) return false;
     return h.tag.toLowerCase() === cleanFilter || h.tag.toLowerCase().includes(cleanFilter);
   });

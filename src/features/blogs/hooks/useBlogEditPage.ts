@@ -3,9 +3,9 @@ import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
+import { useCommonState, useCommonActions } from '@/zero/common';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { notifyBlogPublished } from '@/utils/notification-helpers';
-import { computeHashtagDiff } from '../logic/blogHashtagDiff';
 
 export interface BlogFormData {
   title: string;
@@ -20,7 +20,8 @@ export interface BlogFormData {
  */
 export function useBlogEditPage(blogId: string, actorId?: string) {
   const navigate = useNavigate();
-  const { updateBlog, syncBlogHashtags } = useBlogActions();
+  const { updateBlog } = useBlogActions();
+  const commonActions = useCommonActions();
 
   const [formData, setFormData] = useState<BlogFormData>({
     title: '',
@@ -30,46 +31,50 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
     tags: [],
   });
 
-  const [tagInput, setTagInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch blog data
   const { blogWithHashtags } = useBlogState({ blogId, includeHashtags: true });
+  const { blogHashtags, allHashtags } = useCommonState({
+    blog_id: blogId,
+    loadAllHashtags: true,
+  });
   const isLoading = false;
 
   const blog = blogWithHashtags;
 
   const initializedRef = useRef(false);
+  const hashtagsInitializedRef = useRef(false);
 
   // Initialize form data only once when blog first loads
   useEffect(() => {
     if (blog && !initializedRef.current) {
       initializedRef.current = true;
+      const existingTags = (blogHashtags ?? [])
+        .map(j => j.hashtag?.tag)
+        .filter((t): t is string => !!t);
       setFormData({
         title: blog.title || '',
         description: blog.description || '',
         imageURL: blog.image_url || '',
         isPublic: blog.is_public ?? true,
-        tags: blog.hashtags?.map((ht: any) => ht.tag) || [],
+        tags: existingTags.length > 0 ? existingTags : [],
       });
     }
   }, [blog]);
 
+  // Initialize hashtags from junction data once available (may load after blog)
+  useEffect(() => {
+    if (blogHashtags && blogHashtags.length > 0 && !hashtagsInitializedRef.current) {
+      hashtagsInitializedRef.current = true;
+      const tags = blogHashtags.map(j => j.hashtag?.tag).filter((t): t is string => !!t);
+      setFormData(prev => ({ ...prev, tags }));
+    }
+  }, [blogHashtags]);
+
   // Update a single field
   const updateField = <K extends keyof BlogFormData>(field: K, value: BlogFormData[K]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  // Tag management
-  const handleAddTag = () => {
-    if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
-      setFormData(prev => ({ ...prev, tags: [...prev.tags, tagInput.trim()] }));
-      setTagInput('');
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    setFormData(prev => ({ ...prev, tags: prev.tags.filter(tag => tag !== tagToRemove) }));
   };
 
   // Submit handler
@@ -118,16 +123,14 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
         }
       } catch { /* timeline/notification delivery is best-effort */ }
 
-      // Handle hashtags - remove old and add new
-      if (blog.hashtags) {
-        const { hashtagsToRemove, hashtagsToAdd } = computeHashtagDiff(
-          blog.hashtags as any[],
-          formData.tags,
-          blogId
-        );
-
-        await syncBlogHashtags({ hashtagsToRemove, hashtagsToAdd });
-      }
+      // Sync hashtags via junction tables
+      await commonActions.syncEntityHashtags(
+        'blog',
+        blogId,
+        formData.tags,
+        blogHashtags ?? [],
+        allHashtags ?? []
+      );
 
       toast.success('Blog updated successfully');
       navigate({ to: `/blog/${blogId}` });
@@ -141,11 +144,8 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
 
   return {
     formData,
-    tagInput,
-    setTagInput,
+    setFormData,
     updateField,
-    handleAddTag,
-    handleRemoveTag,
     handleSubmit,
     isSubmitting,
     blog,

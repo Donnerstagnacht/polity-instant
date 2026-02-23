@@ -135,4 +135,23 @@ test.describe('Search - Hashtag Search', () => {
       }
     }
   });
+
+  test('User navigates to search via ?hashtag= URL param', async ({ authenticatedPage: page }) => {
+    // Simulate clicking a hashtag badge which navigates to /search?hashtag=<tag>
+    await page.goto('/search?hashtag=politics', { waitUntil: 'domcontentloaded' });
+    await page.waitForLoadState('domcontentloaded');
+
+    // The hashtag param should be mapped into the topics filter
+    // After the debounce (300ms), URL should reflect topics=politics
+    await expect(page).toHaveURL(/topics=politics/, { timeout: 5000 });
+  });
+
+  test('User navigates to search via encoded ?hashtag= URL param', async ({ authenticatedPage: page }) => {
+    // Hashtags with special characters should be properly decoded
+    await page.goto('/search?hashtag=' + encodeURIComponent('climate action'), { waitUntil: 'domcontentloaded' });
+    await page.waitForLoadState('domcontentloaded');
+
+    // The hashtag should appear in the URL topics after debounce
+    await expect(page).toHaveURL(/topics=/, { timeout: 5000 });
+  });
 });

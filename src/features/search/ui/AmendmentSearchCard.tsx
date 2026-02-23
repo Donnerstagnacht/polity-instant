@@ -1,6 +1,6 @@
 import React from 'react';
 import { AmendmentTimelineCard } from '@/features/timeline/ui/cards/AmendmentTimelineCard';
-import { useAuth } from '@/providers/auth-provider';
+import { useAuth } from '@/providers/auth-provider';\nimport { extractHashtags } from '@/zero/common/hashtagHelpers';
 
 interface AmendmentSearchCardProps {
   amendment: any;
@@ -97,7 +97,7 @@ export function AmendmentSearchCard({ amendment }: AmendmentSearchCardProps) {
         collaboratorCount: collaboratorsCount,
         supportingGroupsCount: supportingGroupsCount,
         changeRequestCount: amendment.changeRequests?.length,
-        hashtags: amendment.hashtags,
+        hashtags: extractHashtags(amendment.amendment_hashtags),
         collaborationStatus,
       }}
     />

@@ -73,9 +73,10 @@ export function useSearchState(options: SearchOptions = {}) {
   )
 
   // ── Timeline events (via common facade) ─────────────────────────────
-  const { timelineByContentTypes: timelineEvents } = useCommonState({
+  const { timelineByContentTypes: timelineEvents, allHashtags } = useCommonState({
     timelineContentTypes: ['vote', 'election', 'video', 'image'],
     timelineContentLimit: 50,
+    loadAllHashtags: true,
   })
 
   // ── Event-derived queries ───────────────────────────────────────────
@@ -110,6 +111,7 @@ export function useSearchState(options: SearchOptions = {}) {
     agendaItems: eventIds.length > 0 ? (agendaItems ?? []) : [],
     elections: elections ?? [],
     eventVotingSessions: eventVotingSessions ?? [],
+    allHashtags: allHashtags ?? [],
     isLoading: false,
   }
 }

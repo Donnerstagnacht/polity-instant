@@ -30,7 +30,7 @@ export const amendmentQueries = {
       zql.amendment
         .where('id', id)
         .related('collaborators', q => q.related('user'))
-        .related('hashtags')
+        .related('amendment_hashtags', q => q.related('hashtag'))
         .related('vote_entries', q => q.related('user'))
         .related('change_requests')
         .related('support_confirmations')

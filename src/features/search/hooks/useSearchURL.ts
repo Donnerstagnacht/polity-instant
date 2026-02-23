@@ -17,6 +17,7 @@ export function useSearchURL() {
   const typesParam = searchParams.types || '';
   const rangeParam = (searchParams.range || 'all') as DateRangeFilter;
   const topicsParam = searchParams.topics || '';
+  const hashtagParam = searchParams.hashtag || '';
   const engagementParam = (searchParams.engagement || 'all') as EngagementFilter;
   const sortParam = (searchParams.sort || 'recent') as TimelineSortOption;
 
@@ -31,12 +32,15 @@ export function useSearchURL() {
   }, [typesParam]);
 
   const parsedTopics = useMemo(() => {
-    if (!topicsParam) return [] as string[];
-    return topicsParam
-      .split(',')
-      .map(topic => topic.trim())
-      .filter(Boolean);
-  }, [topicsParam]);
+    const fromTopics = topicsParam
+      ? topicsParam.split(',').map(topic => topic.trim()).filter(Boolean)
+      : [];
+    // When ?hashtag=politics arrives, inject it into topics if not already present
+    if (hashtagParam && !fromTopics.includes(hashtagParam)) {
+      fromTopics.push(hashtagParam);
+    }
+    return fromTopics;
+  }, [topicsParam, hashtagParam]);
 
   const parsedDateRange: DateRangeFilter =
     rangeParam === 'today' ||

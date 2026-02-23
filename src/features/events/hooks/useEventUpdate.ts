@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useEventData } from './useEventData';
 import { useEventMutations } from './useEventMutations';
+import { useCommonState, useCommonActions } from '@/zero/common';
 
 export interface EventFormData {
   title: string;
@@ -34,13 +35,27 @@ export function useEventUpdate(eventId: string) {
     tags: [],
   });
 
-  const [tagInput, setTagInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { event, isLoading } = useEventData(eventId);
   const { updateEvent } = useEventMutations(eventId);
+  const commonActions = useCommonActions();
+  const { eventHashtags, allHashtags } = useCommonState({
+    event_id: eventId,
+    loadAllHashtags: true,
+  });
 
   const initializedRef = useRef(false);
+  const hashtagsInitializedRef = useRef(false);
+
+  // Initialize hashtags from junction data once available
+  useEffect(() => {
+    if (eventHashtags && eventHashtags.length > 0 && !hashtagsInitializedRef.current) {
+      hashtagsInitializedRef.current = true;
+      const tags = eventHashtags.map(j => j.hashtag?.tag).filter((t): t is string => !!t);
+      setFormData(prev => ({ ...prev, tags }));
+    }
+  }, [eventHashtags]);
 
   // Initialize form data only once when event first loads
   useEffect(() => {
@@ -70,18 +85,6 @@ export function useEventUpdate(eventId: string) {
   // Update a single field
   const updateField = <K extends keyof EventFormData>(field: K, value: EventFormData[K]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  // Tag management
-  const handleAddTag = () => {
-    if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
-      setFormData(prev => ({ ...prev, tags: [...prev.tags, tagInput.trim()] }));
-      setTagInput('');
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    setFormData(prev => ({ ...prev, tags: prev.tags.filter(tag => tag !== tagToRemove) }));
   };
 
   // Submit handler
@@ -114,6 +117,15 @@ export function useEventUpdate(eventId: string) {
 
       await updateEvent(updateData);
 
+      // Sync hashtags via junction tables
+      await commonActions.syncEntityHashtags(
+        'event',
+        eventId,
+        formData.tags,
+        eventHashtags ?? [],
+        allHashtags ?? []
+      );
+
       navigate({ to: `/event/${eventId}` });
     } catch (error) {
       console.error('Update error:', error);
@@ -124,11 +136,8 @@ export function useEventUpdate(eventId: string) {
 
   return {
     formData,
-    tagInput,
-    setTagInput,
+    setFormData,
     updateField,
-    handleAddTag,
-    handleRemoveTag,
     handleSubmit,
     isSubmitting,
     event,

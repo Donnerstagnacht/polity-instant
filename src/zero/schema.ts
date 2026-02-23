@@ -13,7 +13,7 @@ import { notification, pushSubscription, notificationSetting } from './notificat
 import { blog, blogBlogger } from './blogs/table'
 import { payment, stripeCustomer, stripeSubscription, stripePayment } from './payments/table'
 import { statement } from './statements/table'
-import { hashtag, link, timelineEvent, reaction } from './common/table'
+import { hashtag, userHashtag, groupHashtag, amendmentHashtag, eventHashtag, blogHashtag, link, timelineEvent, reaction } from './common/table'
 // New domain imports
 import { election, electionCandidate, scheduledElection } from './elections/table'
 import { amendmentVoteEntry, amendmentSupportVote, amendmentVote, amendmentVotingSession, amendmentVotingSessionVote, changeRequestVote, eventVotingSession, eventVote, electionVote, blogSupportVote, threadVote, commentVote } from './votes/table'
@@ -75,7 +75,7 @@ export const schema = createSchema({
     // Statements
     statement,
     // Common
-    hashtag, link, timelineEvent, reaction,
+    hashtag, userHashtag, groupHashtag, amendmentHashtag, eventHashtag, blogHashtag, link, timelineEvent, reaction,
   ],
   relationships: allRelationships,
 })
@@ -178,6 +178,11 @@ export type Statement = Row<Schema['tables']['statement']>
 // Common
 export type Subscriber = Row<Schema['tables']['subscriber']>
 export type Hashtag = Row<Schema['tables']['hashtag']>
+export type UserHashtag = Row<Schema['tables']['user_hashtag']>
+export type GroupHashtag = Row<Schema['tables']['group_hashtag']>
+export type AmendmentHashtag = Row<Schema['tables']['amendment_hashtag']>
+export type EventHashtag = Row<Schema['tables']['event_hashtag']>
+export type BlogHashtag = Row<Schema['tables']['blog_hashtag']>
 export type Link = Row<Schema['tables']['link']>
 export type TimelineEvent = Row<Schema['tables']['timeline_event']>
 export type Reaction = Row<Schema['tables']['reaction']>

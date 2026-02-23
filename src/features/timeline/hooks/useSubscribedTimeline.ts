@@ -161,8 +161,8 @@ export function useSubscribedTimeline(
           ((m.group as Record<string, unknown>).createdAt as string) || Date.now()
         ),
         status: (m.group as Record<string, unknown>).status as string | undefined,
-        tags: ((m.group as Record<string, unknown>).hashtags as Array<{ tag?: string | null }>)
-          ?.map(tag => tag?.tag)
+        tags: ((m.group as Record<string, unknown>).group_hashtags as Array<{ hashtag?: { tag?: string | null } | null }> | undefined)
+          ?.map(j => j.hashtag?.tag)
           .filter((tag): tag is string => Boolean(tag)),
       }));
   }, [membershipData]);
@@ -220,8 +220,8 @@ export function useSubscribedTimeline(
           ((p.event as Record<string, unknown>).createdAt as string) || Date.now()
         ),
         status: (p.event as Record<string, unknown>).status as string | undefined,
-        tags: ((p.event as Record<string, unknown>).hashtags as Array<{ tag?: string | null }>)
-          ?.map(tag => tag?.tag)
+        tags: ((p.event as Record<string, unknown>).event_hashtags as Array<{ hashtag?: { tag?: string | null } | null }> | undefined)
+          ?.map(j => j.hashtag?.tag)
           .filter((tag): tag is string => Boolean(tag)),
       }));
   }, [participationData]);

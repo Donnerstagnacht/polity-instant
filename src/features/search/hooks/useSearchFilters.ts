@@ -14,7 +14,7 @@ export function useSearchFilters(data: any, filters: SearchFilters) {
     () =>
       data?.$users?.filter((user: any) => {
         if (!filterByQuery(user.name || '', query)) return false;
-        if (!matchesTopics({ hashtags: user.hashtags })) return false;
+        if (!matchesTopics(user)) return false;
         return true;
       }) || [],
     [data?.$users, query, topics]

@@ -57,7 +57,7 @@ export const blogQueries = {
       zql.blog
         .where('id', id)
         .related('bloggers', q => q.related('user'))
-        .related('hashtags')
+        .related('blog_hashtags', q => q.related('hashtag'))
         .related('subscribers')
         .related('support_votes', q => q.related('user'))
         .one()
@@ -69,7 +69,7 @@ export const blogQueries = {
     ({ args: { id } }) =>
       zql.blog
         .where('id', id)
-        .related('hashtags')
+        .related('blog_hashtags', q => q.related('hashtag'))
         .one()
   ),
 
@@ -138,7 +138,7 @@ export const blogQueries = {
     ({ args: { user_id } }) =>
       zql.blog_blogger
         .where('user_id', user_id)
-        .related('blog', q => q.related('hashtags'))
+        .related('blog', q => q.related('blog_hashtags', q => q.related('hashtag')))
         .related('role')
   ),
 
@@ -147,6 +147,6 @@ export const blogQueries = {
     ({ args: { group_id } }) =>
       zql.blog
         .where('group_id', group_id)
-        .related('hashtags')
+        .related('blog_hashtags', q => q.related('hashtag'))
   ),
 }

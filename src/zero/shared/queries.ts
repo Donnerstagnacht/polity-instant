@@ -8,7 +8,7 @@ export const searchQueries = {
     ({ args: { limit } }) =>
       zql.user
         .where('visibility', 'IN', ['public', 'authenticated'])
-        .related('hashtags')
+        .related('user_hashtags', q => q.related('hashtag'))
         .related('group_memberships')
         .related('amendment_collaborations')
         .limit(limit)
@@ -19,7 +19,7 @@ export const searchQueries = {
     ({ args: { limit } }) =>
       zql.group
         .related('owner')
-        .related('hashtags')
+        .related('group_hashtags', q => q.related('hashtag'))
         .related('memberships', q => q.related('user').related('role'))
         .related('events')
         .related('amendments')
@@ -38,7 +38,7 @@ export const searchQueries = {
     z.object({ limit: z.number() }),
     ({ args: { limit } }) =>
       zql.blog
-        .related('hashtags')
+        .related('blog_hashtags', q => q.related('hashtag'))
         .related('bloggers', q => q.related('user').related('role'))
         .related('support_votes', q => q.related('user'))
         .limit(limit)
@@ -48,7 +48,7 @@ export const searchQueries = {
     z.object({ limit: z.number() }),
     ({ args: { limit } }) =>
       zql.amendment
-        .related('hashtags')
+        .related('amendment_hashtags', q => q.related('hashtag'))
         .related('collaborators', q => q.related('user'))
         .related('votes', q => q.related('user'))
         .related('support_votes', q => q.related('user'))
@@ -64,7 +64,7 @@ export const searchQueries = {
         .related('creator')
         .related('group')
         .related('participants', q => q.related('user'))
-        .related('hashtags')
+        .related('event_hashtags', q => q.related('hashtag'))
         .related('voting_sessions', q => q.related('agenda_item').related('votes'))
         .related('event_positions', q => q.related('holders'))
         .related('scheduled_elections')

@@ -24,6 +24,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { GRADIENTS } from '@/features/users/state/gradientColors';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
+import { extractHashtags } from '@/zero/common/hashtagHelpers';
 import { StatsBar } from '@/components/ui/StatsBar';
 import { ActionBar } from '@/components/ui/ActionBar';
 import { SubscribeButton, MembershipButton } from '@/components/shared/action-buttons';
@@ -173,9 +174,9 @@ export function EventWiki({ eventId }: EventWikiProps) {
       </ActionBar>
 
       {/* Hashtags */}
-      {event.hashtags && event.hashtags.length > 0 && (
+      {event.event_hashtags && event.event_hashtags.length > 0 && (
         <div className="mb-6">
-          <HashtagDisplay hashtags={event.hashtags.map(h => ({ ...h, tag: h.tag ?? '' }))} centered />
+          <HashtagDisplay hashtags={extractHashtags(event.event_hashtags)} centered />
         </div>
       )}
 

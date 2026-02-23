@@ -3,18 +3,52 @@ import { table, string, number, json } from '@rocicorp/zero'
 export const hashtag = table('hashtag')
   .columns({
     id: string(),
-    tag: string().optional(),
-    category: string().optional(),
-    color: string().optional(),
-    bg_color: string().optional(),
-    icon: string().optional(),
-    description: string().optional(),
-    post_count: number(),
-    amendment_id: string().optional(),
-    event_id: string().optional(),
-    group_id: string().optional(),
-    user_id: string().optional(),
-    blog_id: string().optional(),
+    tag: string(),
+    created_at: number(),
+  })
+  .primaryKey('id')
+
+export const userHashtag = table('user_hashtag')
+  .columns({
+    id: string(),
+    user_id: string(),
+    hashtag_id: string(),
+    created_at: number(),
+  })
+  .primaryKey('id')
+
+export const groupHashtag = table('group_hashtag')
+  .columns({
+    id: string(),
+    group_id: string(),
+    hashtag_id: string(),
+    created_at: number(),
+  })
+  .primaryKey('id')
+
+export const amendmentHashtag = table('amendment_hashtag')
+  .columns({
+    id: string(),
+    amendment_id: string(),
+    hashtag_id: string(),
+    created_at: number(),
+  })
+  .primaryKey('id')
+
+export const eventHashtag = table('event_hashtag')
+  .columns({
+    id: string(),
+    event_id: string(),
+    hashtag_id: string(),
+    created_at: number(),
+  })
+  .primaryKey('id')
+
+export const blogHashtag = table('blog_hashtag')
+  .columns({
+    id: string(),
+    blog_id: string(),
+    hashtag_id: string(),
     created_at: number(),
   })
   .primaryKey('id')

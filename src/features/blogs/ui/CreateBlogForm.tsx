@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel';
-import { HashtagInput } from '@/components/ui/hashtag-input';
+import { HashtagEditor } from '@/components/ui/hashtag-editor';
 import { VisibilitySelector } from '@/components/ui/visibility-selector';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
@@ -24,11 +24,14 @@ import { toast } from 'sonner';
 import { PageWrapper } from '@/components/layout/page-wrapper';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { ImageUpload } from '@/components/shared/ImageUpload';
+import { useCommonState, useCommonActions } from '@/zero/common';
 
 export function CreateBlogForm() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { createBlogFull } = useBlogActions();
+  const commonActions = useCommonActions();
+  const { allHashtags } = useCommonState({ loadAllHashtags: true });
 
   const [blogId] = useState(() => crypto.randomUUID());
   const [formData, setFormData] = useState({
@@ -158,21 +161,19 @@ export function CreateBlogForm() {
           status: 'member',
           visibility: formData.visibility,
         },
-        hashtags: formData.hashtags.map(tag => ({
-          id: crypto.randomUUID(),
-          tag,
-          category: '',
-          color: '',
-          bg_color: '',
-          icon: '',
-          description: '',
-          amendment_id: '',
-          event_id: '',
-          group_id: '',
-          user_id: user.id,
-          blog_id: blogId,
-        })),
+        hashtags: [],
       });
+
+      // Sync hashtags via junction tables
+      if (formData.hashtags.length > 0) {
+        await commonActions.syncEntityHashtags(
+          'blog',
+          blogId,
+          formData.hashtags,
+          [],
+          allHashtags ?? []
+        );
+      }
 
       // Add timeline event for public blogs
       if (formData.visibility === 'public') {
@@ -249,7 +250,7 @@ export function CreateBlogForm() {
 
                       {/* Hashtags */}
                       <div className="space-y-2 mt-4">
-                        <HashtagInput
+                        <HashtagEditor
                           value={formData.hashtags}
                           onChange={hashtags => setFormData({ ...formData, hashtags })}
                           placeholder="Add hashtags (e.g., politics, community)"

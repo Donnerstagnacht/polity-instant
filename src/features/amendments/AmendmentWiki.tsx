@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/carousel';
 import { Settings, ArrowUp, ArrowDown, Users, Copy } from 'lucide-react';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
+import { extractHashtags } from '@/zero/common/hashtagHelpers';
 import { StatsBar } from '@/components/ui/StatsBar';
 import { ActionBar } from '@/components/ui/ActionBar';
 import { SubscribeButton, MembershipButton } from '@/components/shared/action-buttons';
@@ -247,9 +248,9 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
       </ActionBar>
 
       {/* Hashtags */}
-      {amendment.hashtags && amendment.hashtags.length > 0 && (
+      {amendment.amendment_hashtags && amendment.amendment_hashtags.length > 0 && (
         <div className="mb-6">
-          <HashtagDisplay hashtags={amendment.hashtags} centered />
+          <HashtagDisplay hashtags={extractHashtags(amendment.amendment_hashtags)} centered />
         </div>
       )}
 
@@ -362,7 +363,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
                             name: group.name || t('common.unknown'),
                             description: group.description,
                             memberCount: group.memberships?.length || 0,
-                            hashtags: group.hashtags,
+                            hashtags: extractHashtags(group.group_hashtags),
                           }}
                         />
                       </Link>

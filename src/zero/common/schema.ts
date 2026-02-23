@@ -7,28 +7,54 @@ import { timestampSchema, nullableTimestampSchema, jsonSchema } from '../shared/
 
 const baseHashtagSchema = z.object({
   id: z.string(),
-  tag: z.string().nullable(),
-  category: z.string().nullable(),
-  color: z.string().nullable(),
-  bg_color: z.string().nullable(),
-  icon: z.string().nullable(),
-  description: z.string().nullable(),
-  post_count: z.number(),
-  amendment_id: z.string().nullable(),
-  event_id: z.string().nullable(),
-  group_id: z.string().nullable(),
-  user_id: z.string().nullable(),
-  blog_id: z.string().nullable(),
+  tag: z.string(),
   created_at: timestampSchema,
 })
 
 export const selectHashtagSchema = baseHashtagSchema
 
-export const createHashtagSchema = baseHashtagSchema
-  .omit({ id: true, created_at: true, post_count: true })
-  .extend({ id: z.string() })
+export const createHashtagSchema = z.object({
+  id: z.string(),
+  tag: z.string(),
+})
 
 export const deleteHashtagSchema = z.object({ id: z.string() })
+
+// ============================================
+// Junction Table Zod Schemas
+// ============================================
+
+export const createUserHashtagSchema = z.object({
+  id: z.string(),
+  user_id: z.string(),
+  hashtag_id: z.string(),
+})
+
+export const createGroupHashtagSchema = z.object({
+  id: z.string(),
+  group_id: z.string(),
+  hashtag_id: z.string(),
+})
+
+export const createAmendmentHashtagSchema = z.object({
+  id: z.string(),
+  amendment_id: z.string(),
+  hashtag_id: z.string(),
+})
+
+export const createEventHashtagSchema = z.object({
+  id: z.string(),
+  event_id: z.string(),
+  hashtag_id: z.string(),
+})
+
+export const createBlogHashtagSchema = z.object({
+  id: z.string(),
+  blog_id: z.string(),
+  hashtag_id: z.string(),
+})
+
+export const deleteJunctionHashtagSchema = z.object({ id: z.string() })
 
 // ============================================
 // Link Zod Schemas
@@ -119,6 +145,11 @@ export const deleteReactionSchema = z.object({ id: z.string() })
 // ============================================
 
 export type Hashtag = z.infer<typeof selectHashtagSchema>
+export type UserHashtag = z.infer<typeof createUserHashtagSchema>
+export type GroupHashtag = z.infer<typeof createGroupHashtagSchema>
+export type AmendmentHashtag = z.infer<typeof createAmendmentHashtagSchema>
+export type EventHashtag = z.infer<typeof createEventHashtagSchema>
+export type BlogHashtag = z.infer<typeof createBlogHashtagSchema>
 export type Link = z.infer<typeof selectLinkSchema>
 export type TimelineEvent = z.infer<typeof selectTimelineEventSchema>
 export type Reaction = z.infer<typeof selectReactionSchema>

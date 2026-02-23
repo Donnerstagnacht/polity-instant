@@ -8,6 +8,7 @@
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { ImageUpload } from '@/components/shared/ImageUpload';
+import { HashtagEditor } from '@/components/ui/hashtag-editor';
 import { BasicInfoSection } from './BasicInfoSection';
 import { LocationInfoSection } from './LocationInfoSection';
 import { SocialMediaSection } from './SocialMediaSection';
@@ -23,7 +24,7 @@ interface GroupEditFormProps {
 }
 
 export function GroupEditForm({ groupId, initialData, onCancel, actorId, visibility }: GroupEditFormProps) {
-  const { formData, updateField, handleSubmit, isSubmitting } = useGroupUpdate(
+  const { formData, setFormData, updateField, handleSubmit, isSubmitting } = useGroupUpdate(
     groupId,
     initialData,
     { actorId, visibility }
@@ -49,6 +50,16 @@ export function GroupEditForm({ groupId, initialData, onCancel, actorId, visibil
 
       {/* Social Media Links */}
       <SocialMediaSection formData={formData} onChange={updateField} />
+
+      {/* Hashtags */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Hashtags</label>
+        <HashtagEditor
+          value={formData.hashtags}
+          onChange={(tags) => setFormData({ ...formData, hashtags: tags })}
+          placeholder="Add hashtags..."
+        />
+      </div>
 
       {/* Action Buttons */}
       <div className="flex gap-4">

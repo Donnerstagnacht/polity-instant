@@ -3,6 +3,12 @@ import { zql } from '../schema'
 import {
   createHashtagSchema,
   deleteHashtagSchema,
+  createUserHashtagSchema,
+  createGroupHashtagSchema,
+  createAmendmentHashtagSchema,
+  createEventHashtagSchema,
+  createBlogHashtagSchema,
+  deleteJunctionHashtagSchema,
   createLinkSchema,
   deleteLinkSchema,
   createReactionSchema,
@@ -36,16 +42,100 @@ export const commonMutators = {
     }
   ),
 
-  // Add a hashtag
+  // Add a canonical hashtag
   addHashtag: defineMutator(
     createHashtagSchema,
     async ({ tx, args }) => {
       const now = Date.now()
       await tx.mutate.hashtag.insert({
         ...args,
-        post_count: 0,
         created_at: now,
       })
+    }
+  ),
+
+  // Delete a canonical hashtag
+  deleteHashtag: defineMutator(
+    deleteHashtagSchema,
+    async ({ tx, args }) => {
+      await tx.mutate.hashtag.delete({ id: args.id })
+    }
+  ),
+
+  // ── Junction table mutators ────────────────────────────────────────
+
+  linkUserHashtag: defineMutator(
+    createUserHashtagSchema,
+    async ({ tx, args }) => {
+      const now = Date.now()
+      await tx.mutate.user_hashtag.insert({ ...args, created_at: now })
+    }
+  ),
+
+  unlinkUserHashtag: defineMutator(
+    deleteJunctionHashtagSchema,
+    async ({ tx, args }) => {
+      await tx.mutate.user_hashtag.delete({ id: args.id })
+    }
+  ),
+
+  linkGroupHashtag: defineMutator(
+    createGroupHashtagSchema,
+    async ({ tx, args }) => {
+      const now = Date.now()
+      await tx.mutate.group_hashtag.insert({ ...args, created_at: now })
+    }
+  ),
+
+  unlinkGroupHashtag: defineMutator(
+    deleteJunctionHashtagSchema,
+    async ({ tx, args }) => {
+      await tx.mutate.group_hashtag.delete({ id: args.id })
+    }
+  ),
+
+  linkAmendmentHashtag: defineMutator(
+    createAmendmentHashtagSchema,
+    async ({ tx, args }) => {
+      const now = Date.now()
+      await tx.mutate.amendment_hashtag.insert({ ...args, created_at: now })
+    }
+  ),
+
+  unlinkAmendmentHashtag: defineMutator(
+    deleteJunctionHashtagSchema,
+    async ({ tx, args }) => {
+      await tx.mutate.amendment_hashtag.delete({ id: args.id })
+    }
+  ),
+
+  linkEventHashtag: defineMutator(
+    createEventHashtagSchema,
+    async ({ tx, args }) => {
+      const now = Date.now()
+      await tx.mutate.event_hashtag.insert({ ...args, created_at: now })
+    }
+  ),
+
+  unlinkEventHashtag: defineMutator(
+    deleteJunctionHashtagSchema,
+    async ({ tx, args }) => {
+      await tx.mutate.event_hashtag.delete({ id: args.id })
+    }
+  ),
+
+  linkBlogHashtag: defineMutator(
+    createBlogHashtagSchema,
+    async ({ tx, args }) => {
+      const now = Date.now()
+      await tx.mutate.blog_hashtag.insert({ ...args, created_at: now })
+    }
+  ),
+
+  unlinkBlogHashtag: defineMutator(
+    deleteJunctionHashtagSchema,
+    async ({ tx, args }) => {
+      await tx.mutate.blog_hashtag.delete({ id: args.id })
     }
   ),
 
@@ -83,14 +173,6 @@ export const commonMutators = {
         ...args,
         created_at: now,
       })
-    }
-  ),
-
-  // Delete a hashtag
-  deleteHashtag: defineMutator(
-    deleteHashtagSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.hashtag.delete({ id: args.id })
     }
   ),
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
+import { extractHashtags } from '@/zero/common/hashtagHelpers';
 import { useAuth } from '@/providers/auth-provider';
 
 interface GroupSearchCardProps {
@@ -27,7 +28,7 @@ export function GroupSearchCard({ group }: GroupSearchCardProps) {
         eventCount: group.events?.length || 0,
         amendmentCount: group.amendments?.length || 0,
         topics: group.tags,
-        hashtags: group.hashtags,
+        hashtags: extractHashtags(group.group_hashtags),
         membershipStatus: userMembership?.status || (role === 'Visitor' ? null : 'member'),
       }}
     />

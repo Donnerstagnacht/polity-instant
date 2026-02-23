@@ -61,7 +61,7 @@ export function transformUserData(userData: any): User {
               description: relation.blog.description,
               imageURL: relation.blog.image_url,
               commentCount: relation.blog.comment_count || 0,
-              hashtags: relation.blog.hashtags,
+              hashtags: (relation.blog.blog_hashtags ?? []).map((j: any) => j.hashtag).filter(Boolean),
               authorName: fullName,
               authorAvatar: userData.avatar || '',
             });
@@ -107,7 +107,7 @@ export function transformUserData(userData: any): User {
             date: collab.amendment.date,
             code: collab.amendment.code,
             tags:
-              collab.amendment?.hashtags?.map((tag: any) => tag.tag) || collab.amendment?.tags,
+              (collab.amendment?.amendment_hashtags ?? []).map((j: any) => j.hashtag?.tag).filter(Boolean) || collab.amendment?.tags,
             groupId: collab.amendment?.group?.id,
             groupName: collab.amendment?.group?.name,
           });
@@ -116,13 +116,10 @@ export function transformUserData(userData: any): User {
       }, []) || [],
 
     hashtags:
-      userData?.hashtags?.reduce((acc: any[], hashtag: any) => {
-        const existingIndex = acc.findIndex(h => h.id === hashtag.id);
-        if (existingIndex === -1) {
-          acc.push({
-            id: hashtag.id,
-            tag: hashtag.tag,
-          });
+      (userData?.user_hashtags ?? []).reduce((acc: any[], junction: any) => {
+        const h = junction.hashtag;
+        if (h && !acc.some((x: any) => x.id === h.id)) {
+          acc.push({ id: h.id, tag: h.tag });
         }
         return acc;
       }, []) || [],

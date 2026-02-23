@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { extractHashtags } from '@/zero/common/hashtagHelpers';
 
 export interface AmendmentFilters {
   searchQuery: string;
@@ -47,13 +48,14 @@ export function useAmendmentFilters() {
  */
 function matchesHashtag(amendment: any, hashtagFilter: string) {
   if (!hashtagFilter) return true;
-  if (!amendment.hashtags || amendment.hashtags.length === 0) return false;
+  const tags = extractHashtags(amendment.amendment_hashtags);
+  if (tags.length === 0) return false;
 
   const cleanFilter = hashtagFilter.startsWith('#')
     ? hashtagFilter.substring(1).toLowerCase()
     : hashtagFilter.toLowerCase();
 
-  return amendment.hashtags.some((h: any) => {
+  return tags.some(h => {
     if (!h || !h.tag) return false;
     return h.tag.toLowerCase() === cleanFilter || h.tag.toLowerCase().includes(cleanFilter);
   });
@@ -76,8 +78,9 @@ function matchesSearchQuery(amendment: any, searchQuery: string) {
   }
 
   // Check if query matches any hashtag
-  if (amendment.hashtags && amendment.hashtags.length > 0) {
-    return amendment.hashtags.some((h: any) => {
+  const tags = extractHashtags(amendment.amendment_hashtags);
+  if (tags.length > 0) {
+    return tags.some(h => {
       if (!h || !h.tag) return false;
       return h.tag.toLowerCase().includes(query);
     });

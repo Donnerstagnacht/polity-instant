@@ -12,6 +12,7 @@ import {
 import { LinkGroupDialog } from '@/components/groups/LinkGroupDialog';
 import { UserCheck, BookOpen, Network } from 'lucide-react';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
+import { extractHashtags } from '@/zero/common/hashtagHelpers';
 import { BlogTimelineCard } from '@/features/timeline/ui/cards/BlogTimelineCard';
 import { GRADIENTS } from '@/features/users/state/gradientColors';
 import { StatsBar } from '@/components/ui/StatsBar';
@@ -119,9 +120,9 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
       </ActionBar>
 
       {/* Hashtags */}
-      {group.hashtags && group.hashtags.length > 0 && (
+      {group.group_hashtags && group.group_hashtags.length > 0 && (
         <div className="mb-6">
-          <HashtagDisplay hashtags={group.hashtags.map(h => ({ ...h, tag: h.tag ?? '' }))} centered />
+          <HashtagDisplay hashtags={extractHashtags(group.group_hashtags)} centered />
         </div>
       )}
 

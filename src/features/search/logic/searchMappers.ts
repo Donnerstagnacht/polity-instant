@@ -1,4 +1,5 @@
 import type { SearchContentItem } from '../types/search.types';
+import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 
 export function toTags(hashtags?: Array<{ tag?: string | null }>): string[] {
   if (!hashtags) return [];
@@ -29,8 +30,7 @@ export function mapMosaicToContentItems(
           title: item.name,
           description: item.description,
           createdAt: toDate(item.createdAt),
-          tags: toTags(item.hashtags),
-          groupId: item.id,
+          tags: extractHashtagTags(item.group_hashtags),
           groupName: item.name,
           memberCount: item.memberCount ?? item.memberships?.length,
           eventCount: item.events?.length,
@@ -61,8 +61,7 @@ export function mapMosaicToContentItems(
               ?.filter((agendaItem: any) => Boolean(agendaItem?.election)).length ??
             item.votingSessions?.filter((session: any) => Boolean(session?.election)).length,
           amendmentsCount: item.targetedAmendments?.length,
-          tags: toTags(item.hashtags),
-          groupId: item.group?.id,
+          tags: extractHashtagTags(item.event_hashtags),
           groupName: item.group?.name,
           stats: {
             members: item.participants?.length,
@@ -76,8 +75,7 @@ export function mapMosaicToContentItems(
           title: item.title,
           description: item.subtitle || item.description,
           createdAt: toDate(item.createdAt),
-          tags: toTags(item.hashtags),
-          status: item.workflowStatus || item.status,
+          tags: extractHashtagTags(item.amendment_hashtags),
           groupId: item.groups?.[0]?.id,
           groupName: item.groups?.[0]?.name,
           collaboratorCount: item.amendmentRoleCollaborators?.length,
@@ -100,7 +98,7 @@ export function mapMosaicToContentItems(
           description: item.description,
           imageUrl: item.imageURL || item.imageUrl,
           createdAt: toDate(item.createdAt),
-          tags: toTags(item.hashtags),
+          tags: extractHashtagTags(item.blog_hashtags),
           authorId: blogAuthor?.id,
           authorName: blogAuthor?.name,
           authorAvatar: blogAuthor?.avatarUrl,
@@ -119,7 +117,7 @@ export function mapMosaicToContentItems(
           title: item.text,
           description: item.text,
           createdAt: toDate(item.createdAt),
-          tags: toTags(item.hashtags),
+          tags: extractHashtagTags(item.statement_hashtags),
           authorId: item.user?.id,
           authorName: item.user?.name,
           authorAvatar: item.user?.avatarUrl,
@@ -156,7 +154,7 @@ export function mapMosaicToContentItems(
           title: item.name || '',
           description: item.bio,
           createdAt: toDate(item.createdAt || item.joinedAt),
-          tags: toTags(item.hashtags),
+          tags: extractHashtagTags(item.user_hashtags),
           authorId: item.id,
           authorName: item.name,
           authorAvatar: item.imageURL || item.avatarUrl,

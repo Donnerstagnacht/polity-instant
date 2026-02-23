@@ -41,7 +41,7 @@ import { payment, stripeCustomer, stripeSubscription, stripePayment } from './pa
 // Statements
 import { statement } from './statements/table'
 // Common
-import { hashtag, link, timelineEvent, reaction } from './common/table'
+import { hashtag, userHashtag, groupHashtag, amendmentHashtag, eventHashtag, blogHashtag, link, timelineEvent, reaction } from './common/table'
 
 // ============================================
 // User relationships
@@ -83,7 +83,7 @@ export const userRelationships = relationships(user, ({ many }) => ({
   statements: many({ sourceField: ['id'], destSchema: statement, destField: ['user_id'] }),
   subscriptions: many({ sourceField: ['id'], destSchema: subscriber, destField: ['subscriber_id'] }),
   subscribers: many({ sourceField: ['id'], destSchema: subscriber, destField: ['user_id'] }),
-  hashtags: many({ sourceField: ['id'], destSchema: hashtag, destField: ['user_id'] }),
+  user_hashtags: many({ sourceField: ['id'], destSchema: userHashtag, destField: ['user_id'] }),
   links: many({ sourceField: ['id'], destSchema: link, destField: ['user_id'] }),
   timeline_events: many({ sourceField: ['id'], destSchema: timelineEvent, destField: ['user_id'] }),
   performed_timeline_events: many({ sourceField: ['id'], destSchema: timelineEvent, destField: ['actor_id'] }),
@@ -133,7 +133,7 @@ export const groupRelationships = relationships(group, ({ one, many }) => ({
   todos: many({ sourceField: ['id'], destSchema: todo, destField: ['group_id'] }),
   blogs: many({ sourceField: ['id'], destSchema: blog, destField: ['group_id'] }),
   subscribers: many({ sourceField: ['id'], destSchema: subscriber, destField: ['group_id'] }),
-  hashtags: many({ sourceField: ['id'], destSchema: hashtag, destField: ['group_id'] }),
+  group_hashtags: many({ sourceField: ['id'], destSchema: groupHashtag, destField: ['group_id'] }),
   links: many({ sourceField: ['id'], destSchema: link, destField: ['group_id'] }),
   timeline_events: many({ sourceField: ['id'], destSchema: timelineEvent, destField: ['group_id'] }),
   payments_made: many({ sourceField: ['id'], destSchema: payment, destField: ['payer_group_id'] }),
@@ -189,7 +189,7 @@ export const eventRelationships = relationships(event, ({ one, many }) => ({
   agenda_items: many({ sourceField: ['id'], destSchema: agendaItem, destField: ['event_id'] }),
   todos: many({ sourceField: ['id'], destSchema: todo, destField: ['event_id'] }),
   subscribers: many({ sourceField: ['id'], destSchema: subscriber, destField: ['event_id'] }),
-  hashtags: many({ sourceField: ['id'], destSchema: hashtag, destField: ['event_id'] }),
+  event_hashtags: many({ sourceField: ['id'], destSchema: eventHashtag, destField: ['event_id'] }),
   timeline_events: many({ sourceField: ['id'], destSchema: timelineEvent, destField: ['event_id'] }),
 }))
 
@@ -271,7 +271,7 @@ export const amendmentRelationships = relationships(amendment, ({ one, many }) =
   elections: many({ sourceField: ['id'], destSchema: election, destField: ['amendment_id'] }),
   todos: many({ sourceField: ['id'], destSchema: todo, destField: ['amendment_id'] }),
   subscribers: many({ sourceField: ['id'], destSchema: subscriber, destField: ['amendment_id'] }),
-  hashtags: many({ sourceField: ['id'], destSchema: hashtag, destField: ['amendment_id'] }),
+  amendment_hashtags: many({ sourceField: ['id'], destSchema: amendmentHashtag, destField: ['amendment_id'] }),
   timeline_events: many({ sourceField: ['id'], destSchema: timelineEvent, destField: ['amendment_id'] }),
   threads: many({ sourceField: ['id'], destSchema: thread, destField: ['amendment_id'] }),
 }))
@@ -496,7 +496,7 @@ export const blogRelationships = relationships(blog, ({ one, many }) => ({
   support_votes: many({ sourceField: ['id'], destSchema: blogSupportVote, destField: ['blog_id'] }),
   roles: many({ sourceField: ['id'], destSchema: role, destField: ['blog_id'] }),
   subscribers: many({ sourceField: ['id'], destSchema: subscriber, destField: ['blog_id'] }),
-  hashtags: many({ sourceField: ['id'], destSchema: hashtag, destField: ['blog_id'] }),
+  blog_hashtags: many({ sourceField: ['id'], destSchema: blogHashtag, destField: ['blog_id'] }),
   timeline_events: many({ sourceField: ['id'], destSchema: timelineEvent, destField: ['blog_id'] }),
   document_versions: many({ sourceField: ['id'], destSchema: documentVersion, destField: ['blog_id'] }),
 }))
@@ -557,12 +557,37 @@ export const subscriberRelationships = relationships(subscriber, ({ one }) => ({
   blog: one({ sourceField: ['blog_id'], destSchema: blog, destField: ['id'] }),
 }))
 
-export const hashtagRelationships = relationships(hashtag, ({ one }) => ({
-  amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
-  event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
-  group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
+export const hashtagRelationships = relationships(hashtag, ({ many }) => ({
+  user_hashtags: many({ sourceField: ['id'], destSchema: userHashtag, destField: ['hashtag_id'] }),
+  group_hashtags: many({ sourceField: ['id'], destSchema: groupHashtag, destField: ['hashtag_id'] }),
+  amendment_hashtags: many({ sourceField: ['id'], destSchema: amendmentHashtag, destField: ['hashtag_id'] }),
+  event_hashtags: many({ sourceField: ['id'], destSchema: eventHashtag, destField: ['hashtag_id'] }),
+  blog_hashtags: many({ sourceField: ['id'], destSchema: blogHashtag, destField: ['hashtag_id'] }),
+}))
+
+export const userHashtagRelationships = relationships(userHashtag, ({ one }) => ({
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
+  hashtag: one({ sourceField: ['hashtag_id'], destSchema: hashtag, destField: ['id'] }),
+}))
+
+export const groupHashtagRelationships = relationships(groupHashtag, ({ one }) => ({
+  group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
+  hashtag: one({ sourceField: ['hashtag_id'], destSchema: hashtag, destField: ['id'] }),
+}))
+
+export const amendmentHashtagRelationships = relationships(amendmentHashtag, ({ one }) => ({
+  amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
+  hashtag: one({ sourceField: ['hashtag_id'], destSchema: hashtag, destField: ['id'] }),
+}))
+
+export const eventHashtagRelationships = relationships(eventHashtag, ({ one }) => ({
+  event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
+  hashtag: one({ sourceField: ['hashtag_id'], destSchema: hashtag, destField: ['id'] }),
+}))
+
+export const blogHashtagRelationships = relationships(blogHashtag, ({ one }) => ({
   blog: one({ sourceField: ['blog_id'], destSchema: blog, destField: ['id'] }),
+  hashtag: one({ sourceField: ['hashtag_id'], destSchema: hashtag, destField: ['id'] }),
 }))
 
 export const linkRelationships = relationships(link, ({ one }) => ({
@@ -673,6 +698,11 @@ export const allRelationships = [
   // Common
   subscriberRelationships,
   hashtagRelationships,
+  userHashtagRelationships,
+  groupHashtagRelationships,
+  amendmentHashtagRelationships,
+  eventHashtagRelationships,
+  blogHashtagRelationships,
   linkRelationships,
   timelineEventRelationships,
   reactionRelationships,
