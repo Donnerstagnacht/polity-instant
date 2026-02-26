@@ -72,10 +72,10 @@ export function useSubscribeBlog(targetBlogId?: string) {
 
       await subscribeToBlog({
         id: subscriptionId,
-        user_id: '',
-        group_id: '',
-        amendment_id: '',
-        event_id: '',
+        user_id: null,
+        group_id: null,
+        amendment_id: null,
+        event_id: null,
         blog_id: targetBlogId,
       });
 
@@ -90,7 +90,9 @@ export function useSubscribeBlog(targetBlogId?: string) {
         if (Array.isArray(notifications) && notifications.length > 0) {
           await sendNotifications(notifications);
         }
-      } catch { /* notification delivery is best-effort */ }
+      } catch {
+        /* notification delivery is best-effort */
+      }
       toast.success('Successfully subscribed to blog');
     } catch (error) {
       // Revert optimistic update

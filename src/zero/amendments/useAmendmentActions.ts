@@ -334,10 +334,10 @@ export function useAmendmentActions() {
           mutators.common.subscribe({
             id: args.id,
             amendment_id: args.amendment_id,
-            user_id: '',
-            group_id: '',
-            event_id: '',
-            blog_id: '',
+            user_id: null,
+            group_id: null,
+            event_id: null,
+            blog_id: null,
           })
         )
         toast.success(t('features.amendments.toasts.subscribed'))

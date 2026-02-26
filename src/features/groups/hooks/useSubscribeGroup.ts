@@ -75,11 +75,11 @@ export function useSubscribeGroup(targetGroupId?: string) {
 
       await subscribeAction({
         id: subscriptionId,
-        user_id: '',
+        user_id: null,
         group_id: targetGroupId,
-        amendment_id: '',
-        event_id: '',
-        blog_id: '',
+        amendment_id: null,
+        event_id: null,
+        blog_id: null,
       });
 
       sendNotificationFn({ data: { helper: 'notifyGroupNewSubscriber', params: { senderId: authUser.id, groupId: targetGroupId, groupName } } }).catch(console.error)
