@@ -10,6 +10,10 @@ major_version = 15
 [db.pooler]
 enabled = false
 
+[db.settings]
+max_connections = 200
+
+
 [studio]
 enabled = true
 port = 54323
@@ -38,4 +42,7 @@ file_size_limit = "50MB"
 allowed_mime_types = ["image/png", "image/jpeg", "image/gif", "image/webp", "image/svg+xml", "video/mp4", "video/webm", "video/quicktime", "application/pdf"]
 
 [analytics]
-enabled = false
+enabled = true
+port = 54327
+vector_port = 54328
+backend = "postgres"
