@@ -2,8 +2,7 @@
  * Operations for managing collaborators, roles, and permissions
  */
 
-import { createClient } from '@supabase/supabase-js';
-import { toast } from 'sonner';
+import { createClient } from '@/lib/supabase/client';
 import {
   notifyCollaborationInvite,
   notifyCollaborationApproved,
@@ -12,7 +11,7 @@ import {
   notifyCollaborationRoleChanged,
 } from '@/utils/notification-helpers';
 
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+const supabase = createClient();
 
 /**
  * Invite users as collaborators
@@ -53,9 +52,12 @@ export async function changeCollaboratorRole(
   collaboratorId: string,
   newRoleId: string
 ): Promise<void> {
-  await supabase.from('amendment_collaborator').update({
-    role_id: newRoleId,
-  }).eq('id', collaboratorId);
+  await supabase
+    .from('amendment_collaborator')
+    .update({
+      role_id: newRoleId,
+    })
+    .eq('id', collaboratorId);
 }
 
 /**
@@ -65,9 +67,12 @@ export async function changeCollaboratorStatus(
   collaboratorId: string,
   newStatus: string
 ): Promise<void> {
-  await supabase.from('amendment_collaborator').update({
-    status: newStatus,
-  }).eq('id', collaboratorId);
+  await supabase
+    .from('amendment_collaborator')
+    .update({
+      status: newStatus,
+    })
+    .eq('id', collaboratorId);
 }
 
 /**
@@ -102,9 +107,12 @@ export async function approveRequest(
   amendmentId?: string,
   amendmentTitle?: string
 ): Promise<void> {
-  await supabase.from('amendment_collaborator').update({
-    status: 'member',
-  }).eq('id', collaboratorId);
+  await supabase
+    .from('amendment_collaborator')
+    .update({
+      status: 'member',
+    })
+    .eq('id', collaboratorId);
 
   if (userId && senderId && amendmentId && amendmentTitle) {
     await notifyCollaborationApproved({
@@ -151,9 +159,12 @@ export async function promoteToAdmin(
 ): Promise<void> {
   const authorRole = roles.find(r => r.name === 'Author');
   if (authorRole) {
-    await supabase.from('amendment_collaborator').update({
-      role_id: authorRole.id,
-    }).eq('id', collaboratorId);
+    await supabase
+      .from('amendment_collaborator')
+      .update({
+        role_id: authorRole.id,
+      })
+      .eq('id', collaboratorId);
 
     if (userId && senderId && amendmentId && amendmentTitle) {
       await notifyCollaborationRoleChanged({
@@ -180,9 +191,12 @@ export async function demoteToMember(
 ): Promise<void> {
   const collaboratorRole = roles.find(r => r.name === 'Collaborator');
   if (collaboratorRole) {
-    await supabase.from('amendment_collaborator').update({
-      role_id: collaboratorRole.id,
-    }).eq('id', collaboratorId);
+    await supabase
+      .from('amendment_collaborator')
+      .update({
+        role_id: collaboratorRole.id,
+      })
+      .eq('id', collaboratorId);
 
     if (userId && senderId && amendmentId && amendmentTitle) {
       await notifyCollaborationRoleChanged({

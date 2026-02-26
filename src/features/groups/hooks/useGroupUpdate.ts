@@ -70,7 +70,8 @@ export function useGroupUpdate(
   options?: { actorId?: string; visibility?: 'public' | 'private' | 'authenticated' }
 ): UseGroupUpdateResult {
   const navigate = useNavigate();
-  const { updateGroup } = useGroupActions();
+  const { createGroup, updateGroup } = useGroupActions();
+  const isCreating = !initialData;
   const commonActions = useCommonActions();
   const { groupHashtags, allHashtags } = useCommonState({
     group_id: groupId,
@@ -96,8 +97,6 @@ export function useGroupUpdate(
       setFormData(prev => ({ ...prev, hashtags: existingTags }));
     }
   }, [existingTags]);
-
-  const initializedRef = useRef(false);
 
   // Initialize form data only once when initial data first becomes available
   useEffect(() => {
@@ -173,18 +172,35 @@ export function useGroupUpdate(
       // Check if name changed
       const nameChanged = formData.name !== originalName;
 
-      await updateGroup({
-        id: groupId,
-        name: formData.name,
-        description: formData.description,
-        location: formData.location,
-        image_url: formData.imageURL || null,
-        x: formData.twitter,
-      });
+      if (isCreating) {
+        await createGroup({
+          id: groupId,
+          name: formData.name,
+          description: formData.description || null,
+          location: formData.location || null,
+          image_url: formData.imageURL || null,
+          x: formData.twitter || null,
+          youtube: null,
+          linkedin: null,
+          website: null,
+          is_public: true,
+          visibility: options?.visibility ?? 'public',
+          owner_id: null,
+        });
+      } else {
+        await updateGroup({
+          id: groupId,
+          name: formData.name,
+          description: formData.description,
+          location: formData.location,
+          image_url: formData.imageURL || null,
+          x: formData.twitter,
+        });
 
-      // Sync name to group conversation if it changed
-      if (nameChanged) {
-        await syncGroupNameToConversation(groupId, formData.name);
+        // Sync name to group conversation if it changed
+        if (nameChanged) {
+          await syncGroupNameToConversation(groupId, formData.name);
+        }
       }
 
       // Sync hashtags

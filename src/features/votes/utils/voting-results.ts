@@ -5,10 +5,10 @@
  * including forwarding and status updates.
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/client';
 import { notifyAmendmentForwarded, notifyAmendmentRejected } from '@/utils/notification-helpers';
 
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+const supabase = createClient();
 
 interface VoteResultContext {
   amendmentId: string;

@@ -5,11 +5,11 @@
  * at future events based on position terms.
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/client';
 import { addMonths, addYears, startOfMonth } from 'date-fns';
 import { notifyRevoteScheduled } from '@/utils/notification-helpers';
 
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+const supabase = createClient();
 
 type TermDuration = 'monthly' | 'quarterly' | 'yearly' | 'biannual';
 

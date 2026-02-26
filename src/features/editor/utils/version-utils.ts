@@ -4,10 +4,10 @@
  * Handles version creation and management for all entity types.
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/client';
 import type { EditorEntityType, VersionCreationType } from '../types';
 
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+const supabase = createClient();
 
 interface CreateVersionParams {
   entityType: EditorEntityType;

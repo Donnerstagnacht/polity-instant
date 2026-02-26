@@ -2,11 +2,11 @@
  * Thread and comment operations
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { notifyAmendmentCommentAdded } from '@/utils/notification-helpers';
 
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+const supabase = createClient();
 
 /**
  * Create a new discussion thread

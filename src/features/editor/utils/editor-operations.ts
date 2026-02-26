@@ -4,12 +4,12 @@
  * Common operations for the unified editor.
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { createVersion } from './version-utils';
 import type { EditorEntityType, TDiscussion, EditorMode } from '../types';
 
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+const supabase = createClient();
 
 /**
  * Handle suggestion accepted - create a version and update discussions

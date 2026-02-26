@@ -3,10 +3,10 @@
  * Handles vote operations for threads, comments, and change requests
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+const supabase = createClient();
 
 export interface VoteResult {
   upvotes: number;

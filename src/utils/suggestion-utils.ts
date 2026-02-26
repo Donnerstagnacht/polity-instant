@@ -1,8 +1,8 @@
 // suggestion-utils.ts
 // Utilities for handling suggestion IDs and counters
 
-import { createClient } from '@supabase/supabase-js';
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+import { createClient } from '@/lib/supabase/client';
+const supabase = createClient();
 
 /**
  * Generates the next suggestion ID (CR-x format) for a document
