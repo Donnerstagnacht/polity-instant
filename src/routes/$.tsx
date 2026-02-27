@@ -1,9 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, notFound } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/$')({
-  component: RouteComponent,
+  loader: () => { throw notFound() },
 })
-
-function RouteComponent() {
-  return <div>Hello "/$"!</div>
-}
