@@ -137,8 +137,6 @@ export function useCreatePositionForm(): CreateFormConfig {
               { label: t('pages.create.position.termLength'), value: t('pages.create.position.termMonths', { months: term }) },
               { label: t('pages.create.position.firstTermStarts'), value: firstTermStart },
             ]}
-            onSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
           />
         ),
       },

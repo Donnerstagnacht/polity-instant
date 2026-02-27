@@ -83,8 +83,6 @@ export function useCreateStatementForm(): CreateFormConfig {
               { label: t('pages.create.statement.tagLabel'), value: `#${tag}` },
               { label: t('pages.create.common.visibility'), value: visibility },
             ]}
-            onSubmit={handleSubmit}
-            isSubmitting={isLoading}
           />
         ),
       },

@@ -220,8 +220,6 @@ export function useCreateBlogForm(): CreateFormConfig {
                   value: visibility,
                 },
               ]}
-              onSubmit={handleSubmit}
-              isSubmitting={isSubmitting}
             />
           ),
         },

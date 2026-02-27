@@ -1,60 +1,60 @@
-import { useState, useMemo } from 'react'
-import { useNavigate, useSearch } from '@tanstack/react-router'
-import { useAuth } from '@/providers/auth-provider'
-import { useAgendaActions } from '@/zero/agendas/useAgendaActions'
+import { useState, useMemo } from 'react';
+import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useAuth } from '@/providers/auth-provider';
+import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import {
   useAllEvents,
   useAllAmendments,
   usePositionsWithGroups,
-} from '@/zero/events/useEventState'
-import { useTranslation } from '@/hooks/use-translation'
-import { toast } from 'sonner'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
-import { TypeAheadSelect } from '@/components/ui/type-ahead-select'
-import { TypeSelector } from '@/components/ui/type-selector'
-import { TooltipProvider } from '@/components/ui/tooltip'
+} from '@/zero/events/useEventState';
+import { useTranslation } from '@/hooks/use-translation';
+import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { TypeAheadSelect } from '@/components/ui/type-ahead-select';
+import { TypeSelector } from '@/components/ui/type-selector';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import {
   EventSelectCard,
   AmendmentSelectCard,
   PositionSelectCard,
-} from '@/components/ui/entity-select-cards'
-import { CreateSummaryStep } from '../ui/CreateSummaryStep'
-import { notifyAgendaItemCreated } from '@/utils/notification-helpers'
-import type { CreateFormConfig } from '../types/create-form.types'
+} from '@/components/ui/entity-select-cards';
+import { CreateSummaryStep } from '../ui/CreateSummaryStep';
+import { notifyAgendaItemCreated } from '@/utils/notification-helpers';
+import type { CreateFormConfig } from '../types/create-form.types';
 
 export function useCreateAgendaItemForm(): CreateFormConfig {
-  const { t } = useTranslation()
-  const navigate = useNavigate()
-  const searchParams = useSearch({ strict: false })
-  const { user } = useAuth()
-  const { createAgendaItem, createElection } = useAgendaActions()
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const searchParams = useSearch({ strict: false });
+  const { user } = useAuth();
+  const { createAgendaItem, createElection } = useAgendaActions();
 
-  const eventIdParam = (searchParams as Record<string, unknown>).eventId as string | undefined
+  const eventIdParam = (searchParams as Record<string, unknown>).eventId as string | undefined;
 
-  const { events: userEvents } = useAllEvents()
-  const { amendments: userAmendments } = useAllAmendments()
-  const { positions: userPositions } = usePositionsWithGroups()
+  const { events: userEvents } = useAllEvents();
+  const { amendments: userAmendments } = useAllAmendments();
+  const { positions: userPositions } = usePositionsWithGroups();
 
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [type, setType] = useState<'election' | 'vote' | 'speech' | 'discussion'>('discussion')
-  const [order, setOrder] = useState(1)
-  const [duration, setDuration] = useState('')
-  const [eventId, setEventId] = useState(eventIdParam || '')
-  const [amendmentId, setAmendmentId] = useState('')
-  const [positionId, setPositionId] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [type, setType] = useState<'election' | 'vote' | 'speech' | 'discussion'>('discussion');
+  const [order, setOrder] = useState(1);
+  const [duration, setDuration] = useState('');
+  const [eventId, setEventId] = useState(eventIdParam || '');
+  const [amendmentId, setAmendmentId] = useState('');
+  const [positionId, setPositionId] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const selectedEvent = userEvents.find((e: any) => e.id === eventId)
+  const selectedEvent = userEvents.find((e: any) => e.id === eventId);
 
   const handleSubmit = async () => {
-    if (!user?.id || !eventId || !title.trim()) return
-    setIsSubmitting(true)
+    if (!user?.id || !eventId || !title.trim()) return;
+    setIsSubmitting(true);
 
     try {
-      const agendaItemId = crypto.randomUUID()
+      const agendaItemId = crypto.randomUUID();
 
       await createAgendaItem({
         id: agendaItemId,
@@ -72,10 +72,10 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
         completed_at: 0,
         event_id: eventId,
         amendment_id: amendmentId || '',
-      })
+      });
 
       if (type === 'election') {
-        const electionId = crypto.randomUUID()
+        const electionId = crypto.randomUUID();
         await createElection({
           id: electionId,
           title: title.trim(),
@@ -89,7 +89,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
           agenda_item_id: agendaItemId,
           position_id: positionId || '',
           amendment_id: null,
-        })
+        });
       }
 
       await notifyAgendaItemCreated({
@@ -97,15 +97,15 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
         eventId,
         eventTitle: selectedEvent?.title || 'Event',
         agendaItemTitle: title.trim(),
-      })
+      });
 
-      toast.success(t('pages.create.success.created'))
-      navigate({ to: `/event/${eventId}/agenda` })
+      toast.success(t('pages.create.success.created'));
+      navigate({ to: `/event/${eventId}/agenda` });
     } catch {
-      toast.error(t('pages.create.error.createFailed'))
-      setIsSubmitting(false)
+      toast.error(t('pages.create.error.createFailed'));
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const config = useMemo(
     (): CreateFormConfig => ({
@@ -130,8 +130,8 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                   onChange={setEventId}
                   placeholder={t('pages.create.agendaItem.eventPlaceholder')}
                   searchKeys={['title', 'description', 'location_name']}
-                  renderItem={(event) => <EventSelectCard event={event} />}
-                  getItemId={(event) => event.id}
+                  renderItem={event => <EventSelectCard event={event} />}
+                  getItemId={event => event.id}
                 />
               </div>
               <div className="space-y-2">
@@ -141,7 +141,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                 </Label>
                 <Input
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={e => setTitle(e.target.value)}
                   placeholder={t('pages.create.agendaItem.titlePlaceholder')}
                 />
               </div>
@@ -149,7 +149,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                 <Label>{t('pages.create.agendaItem.descriptionLabel')}</Label>
                 <Textarea
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={e => setDescription(e.target.value)}
                   placeholder={t('pages.create.agendaItem.descriptionPlaceholder')}
                   rows={3}
                 />
@@ -172,7 +172,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                     type="number"
                     min="1"
                     value={order}
-                    onChange={(e) => setOrder(parseInt(e.target.value) || 1)}
+                    onChange={e => setOrder(parseInt(e.target.value) || 1)}
                   />
                 </div>
                 <div className="space-y-2">
@@ -182,7 +182,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                     min="1"
                     placeholder={t('pages.create.agendaItem.durationPlaceholder')}
                     value={duration}
-                    onChange={(e) => setDuration(e.target.value)}
+                    onChange={e => setDuration(e.target.value)}
                   />
                 </div>
               </div>
@@ -204,8 +204,8 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                     onChange={setAmendmentId}
                     placeholder={t('pages.create.agendaItem.amendmentPlaceholder')}
                     searchKeys={['title', 'reason']}
-                    renderItem={(amendment) => <AmendmentSelectCard amendment={amendment} />}
-                    getItemId={(amendment) => amendment.id}
+                    renderItem={amendment => <AmendmentSelectCard amendment={amendment} />}
+                    getItemId={amendment => amendment.id}
                   />
                 </div>
               )}
@@ -218,13 +218,13 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                     onChange={setPositionId}
                     placeholder={t('pages.create.agendaItem.positionPlaceholder')}
                     searchKeys={['title', 'description']}
-                    renderItem={(position) => <PositionSelectCard position={position} />}
-                    getItemId={(position) => position.id}
+                    renderItem={position => <PositionSelectCard position={position} />}
+                    getItemId={position => position.id}
                   />
                 </div>
               )}
               {type !== 'vote' && type !== 'election' && (
-                <div className="py-8 text-center text-muted-foreground">
+                <div className="text-muted-foreground py-8 text-center">
                   {t('pages.create.agendaItem.noAdditionalConfig')}
                 </div>
               )}
@@ -260,7 +260,8 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                       {
                         label: t('pages.create.agendaItem.amendmentLabel'),
                         value:
-                          userAmendments.find((a: any) => a.id === amendmentId)?.title || amendmentId,
+                          userAmendments.find((a: any) => a.id === amendmentId)?.title ||
+                          amendmentId,
                       },
                     ]
                   : []),
@@ -274,8 +275,6 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                     ]
                   : []),
               ]}
-              onSubmit={handleSubmit}
-              isSubmitting={isSubmitting}
             />
           ),
         },
@@ -295,8 +294,8 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       userAmendments,
       userPositions,
       t,
-    ],
-  )
+    ]
+  );
 
-  return config
+  return config;
 }

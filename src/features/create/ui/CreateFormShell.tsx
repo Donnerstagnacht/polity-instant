@@ -43,6 +43,8 @@ export function CreateFormShell({ config }: CreateFormShellProps) {
             steps={config.steps}
             currentStep={currentStep}
             onStepChange={handleStepChange}
+            onSubmit={config.onSubmit}
+            isSubmitting={config.isSubmitting}
           />
         </CardContent>
       </Card>

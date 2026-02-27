@@ -144,8 +144,6 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                   value: visibility,
                 },
               ]}
-              onSubmit={handleSubmit}
-              isSubmitting={isSubmitting}
             />
           ),
         },

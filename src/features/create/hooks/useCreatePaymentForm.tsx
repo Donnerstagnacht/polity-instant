@@ -181,8 +181,6 @@ export function useCreatePaymentForm(): CreateFormConfig {
               { label: t('pages.create.payment.typeField'), value: t(`pages.create.payment.types.${type}`) },
               { label: t('pages.create.payment.amount'), value: `${parseFloat(amount || '0').toFixed(2)} €` },
             ]}
-            onSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
           />
         ),
       },

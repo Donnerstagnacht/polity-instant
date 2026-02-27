@@ -168,8 +168,6 @@ export function useCreateGroupForm(): CreateFormConfig {
                 ...(country ? [{ label: t('pages.create.group.countryLabel'), value: country }] : []),
                 { label: t('pages.create.common.visibility'), value: visibility },
               ]}
-              onSubmit={handleSubmit}
-              isSubmitting={isSubmitting}
             />
           ),
         },

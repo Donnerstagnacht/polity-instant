@@ -103,8 +103,6 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
               ...(statement ? [{ label: t('pages.create.electionCandidate.descriptionLabel'), value: statement }] : []),
               ...(imageURL ? [{ label: t('pages.create.electionCandidate.image'), value: 'Attached' }] : []),
             ]}
-            onSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
           />
         ),
       },

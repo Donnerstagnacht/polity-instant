@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import useEmblaCarousel from 'embla-carousel-react'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
 import { useTranslation } from '@/hooks/use-translation'
 import { CreateProgressIndicator } from './CreateProgressIndicator'
 import type { CreateFormStep } from '../types/create-form.types'
@@ -10,9 +10,11 @@ interface CarouselFormLayoutProps {
   steps: CreateFormStep[]
   currentStep: number
   onStepChange: (step: number) => void
+  onSubmit: () => Promise<void>
+  isSubmitting: boolean
 }
 
-export function CarouselFormLayout({ steps, currentStep, onStepChange }: CarouselFormLayoutProps) {
+export function CarouselFormLayout({ steps, currentStep, onStepChange, onSubmit, isSubmitting }: CarouselFormLayoutProps) {
   const { t } = useTranslation()
   const [emblaRef, emblaApi] = useEmblaCarousel({ watchDrag: true })
   const [canScrollPrev, setCanScrollPrev] = useState(false)
@@ -68,6 +70,7 @@ export function CarouselFormLayout({ steps, currentStep, onStepChange }: Carouse
     [emblaApi, steps]
   )
 
+  const isLastStep = currentStep === steps.length - 1
   const stepLabels = steps.map((s) => s.label)
   const validSteps = steps.map((_, i) => steps.slice(0, i).every((s) => s.isValid()))
 
@@ -104,15 +107,33 @@ export function CarouselFormLayout({ steps, currentStep, onStepChange }: Carouse
           {t('pages.create.previous')}
         </Button>
 
-        <Button
-          type="button"
-          size="sm"
-          onClick={scrollNext}
-          disabled={!canScrollNext || !currentStepValid}
-        >
-          {t('pages.create.next')}
-          <ArrowRight className="ml-1 h-4 w-4" />
-        </Button>
+        {isLastStep ? (
+          <Button
+            type="button"
+            size="sm"
+            onClick={onSubmit}
+            disabled={isSubmitting || !currentStepValid}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                {t('pages.create.creating')}
+              </>
+            ) : (
+              t('pages.create.summary.createButton')
+            )}
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            size="sm"
+            onClick={scrollNext}
+            disabled={!canScrollNext || !currentStepValid}
+          >
+            {t('pages.create.next')}
+            <ArrowRight className="ml-1 h-4 w-4" />
+          </Button>
+        )}
       </div>
     </div>
   )

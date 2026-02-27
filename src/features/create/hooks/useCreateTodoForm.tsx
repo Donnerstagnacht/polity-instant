@@ -127,8 +127,6 @@ export function useCreateTodoForm(): CreateFormConfig {
               { label: t('pages.create.common.visibility'), value: visibility },
               ...(tags.length > 0 ? [{ label: t('pages.create.todo.tagsLabel'), value: tags.join(', ') }] : []),
             ]}
-            onSubmit={handleSubmit}
-            isSubmitting={isLoading}
           />
         ),
       },

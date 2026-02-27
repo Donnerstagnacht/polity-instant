@@ -200,8 +200,6 @@ export function useCreateEventForm(): CreateFormConfig {
                   value: isPublic ? t('pages.create.common.public') : t('pages.create.common.private'),
                 },
               ]}
-              onSubmit={handleSubmit}
-              isSubmitting={isSubmitting}
             />
           ),
         },
