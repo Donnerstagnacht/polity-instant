@@ -1,14 +1,12 @@
-import { useState } from 'react';
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { GroupEditForm } from '@/features/groups/ui/GroupEditForm';
+import { createFileRoute } from '@tanstack/react-router';
+import { CreateFormShell } from '@/features/create/ui/CreateFormShell';
+import { useCreateGroupForm } from '@/features/create/hooks/useCreateGroupForm';
 
 export const Route = createFileRoute('/_authed/create/group')({
   component: CreateGroupPage,
 });
 
 function CreateGroupPage() {
-  const navigate = useNavigate();
-  const [groupId] = useState(() => crypto.randomUUID());
-
-  return <GroupEditForm groupId={groupId} onCancel={() => navigate({ to: '/create' })} />;
+  const config = useCreateGroupForm();
+  return <CreateFormShell config={config} />;
 }
