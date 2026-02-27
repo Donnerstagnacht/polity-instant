@@ -2,7 +2,12 @@
  * RBAC Module
  *
  * Role-Based Access Control system for the Polity application.
- * Ported from db/rbac/ — all InstantDB dependencies removed.
+ *
+ * Architecture:
+ *   check.ts        — shared pure permission logic (single source of truth)
+ *   can.ts          — server-side check for mutators (queries DB, throws PermissionError)
+ *   usePermissions  — React hook for UI (uses Zero queries + check.ts)
+ *   errors.ts       — typed PermissionError, surfaced as toast in UI
  */
 
 // Types
@@ -20,6 +25,30 @@ export type {
   PermissionContext,
 } from './types';
 
+// Core permission checker (shared between client & server)
+export {
+  checkPermission,
+  isSelf,
+  isGroupMember,
+  isEventParticipant,
+  isBlogger,
+  isAmendmentCollaborator,
+  isAmendmentAuthor,
+  hasActiveVotingRight,
+  hasPassiveVotingRight,
+} from './check';
+export type { PermissionData, PermissionScope } from './check';
+
+// Server-side permission check for mutators
+export { can } from './can';
+export type { PermissionCheck } from './can';
+
+// Typed permission error
+export { PermissionError, isPermissionError } from './errors';
+
+// Mutation error handler (for useXxxActions hooks)
+export { handleMutationError } from './handleMutationError';
+
 // Constants
 export {
   PERMISSION_IMPLIES,
@@ -29,22 +58,6 @@ export {
   DEFAULT_EVENT_ROLES,
   ACTION_RIGHTS,
 } from './constants';
-
-// Helper functions
-export {
-  isSelf,
-  hasGroupPermission,
-  hasEventPermission,
-  hasBlogPermission,
-  hasAmendmentPermission,
-  hasActiveVotingRight,
-  hasPassiveVotingRight,
-  isGroupMember,
-  isEventParticipant,
-  isBlogger,
-  isAmendmentCollaborator,
-  isAmendmentAuthor,
-} from './helpers';
 
 // Workflow constants
 export type {

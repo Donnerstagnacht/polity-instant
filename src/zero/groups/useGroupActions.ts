@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { useTranslation } from '@/hooks/use-translation'
 import { mutators } from '../mutators'
 import { DEFAULT_GROUP_ROLES } from '../rbac/constants'
+import { handleMutationError } from '../rbac/handleMutationError'
 
 /**
  * Action hook for group mutations.
@@ -21,7 +22,7 @@ export function useGroupActions() {
         toast.success(t('features.groups.toasts.created'))
       } catch (error) {
         console.error('Failed to create group:', error)
-        toast.error(t('features.groups.toasts.createFailed'))
+        handleMutationError(error, t('features.groups.toasts.createFailed'), t)
         throw error
       }
     },
@@ -35,7 +36,7 @@ export function useGroupActions() {
         toast.success(t('features.groups.toasts.updated'))
       } catch (error) {
         console.error('Failed to update group:', error)
-        toast.error(t('features.groups.toasts.updateFailed'))
+        handleMutationError(error, t('features.groups.toasts.updateFailed'), t)
         throw error
       }
     },
@@ -49,7 +50,7 @@ export function useGroupActions() {
         toast.success(t('features.groups.toasts.deleted'))
       } catch (error) {
         console.error('Failed to delete group:', error)
-        toast.error(t('features.groups.toasts.deleteFailed'))
+        handleMutationError(error, t('features.groups.toasts.deleteFailed'), t)
         throw error
       }
     },
@@ -64,7 +65,7 @@ export function useGroupActions() {
         toast.success(t('features.groups.toasts.joined'))
       } catch (error) {
         console.error('Failed to join group:', error)
-        toast.error(t('features.groups.toasts.joinFailed'))
+        handleMutationError(error, t('features.groups.toasts.joinFailed'), t)
         throw error
       }
     },
@@ -78,7 +79,7 @@ export function useGroupActions() {
         toast.success(t('features.groups.toasts.left'))
       } catch (error) {
         console.error('Failed to leave group:', error)
-        toast.error(t('features.groups.toasts.leaveFailed'))
+        handleMutationError(error, t('features.groups.toasts.leaveFailed'), t)
         throw error
       }
     },
@@ -92,7 +93,7 @@ export function useGroupActions() {
         toast.success(t('features.groups.toasts.invitationSent'))
       } catch (error) {
         console.error('Failed to invite member:', error)
-        toast.error(t('features.groups.toasts.inviteFailed'))
+        handleMutationError(error, t('features.groups.toasts.inviteFailed'), t)
         throw error
       }
     },
@@ -106,7 +107,7 @@ export function useGroupActions() {
         toast.success(t('features.groups.toasts.invitationAccepted'))
       } catch (error) {
         console.error('Failed to accept invitation:', error)
-        toast.error(t('features.groups.toasts.acceptInvitationFailed'))
+        handleMutationError(error, t('features.groups.toasts.acceptInvitationFailed'), t)
         throw error
       }
     },
@@ -120,7 +121,7 @@ export function useGroupActions() {
         toast.success(t('features.groups.toasts.memberRoleUpdated'))
       } catch (error) {
         console.error('Failed to update member role:', error)
-        toast.error(t('features.groups.toasts.memberRoleUpdateFailed'))
+        handleMutationError(error, t('features.groups.toasts.memberRoleUpdateFailed'), t)
         throw error
       }
     },
@@ -135,7 +136,7 @@ export function useGroupActions() {
         toast.success(t('features.groups.toasts.roleCreated'))
       } catch (error) {
         console.error('Failed to create role:', error)
-        toast.error(t('features.groups.toasts.roleCreateFailed'))
+        handleMutationError(error, t('features.groups.toasts.roleCreateFailed'), t)
         throw error
       }
     },
@@ -149,7 +150,7 @@ export function useGroupActions() {
         toast.success(t('features.groups.toasts.roleDeleted'))
       } catch (error) {
         console.error('Failed to delete role:', error)
-        toast.error(t('features.groups.toasts.roleDeleteFailed'))
+        handleMutationError(error, t('features.groups.toasts.roleDeleteFailed'), t)
         throw error
       }
     },
@@ -163,7 +164,7 @@ export function useGroupActions() {
         toast.success(t('features.groups.toasts.actionRightAssigned'))
       } catch (error) {
         console.error('Failed to assign action right:', error)
-        toast.error(t('features.groups.toasts.actionRightAssignFailed'))
+        handleMutationError(error, t('features.groups.toasts.actionRightAssignFailed'), t)
         throw error
       }
     },
@@ -177,7 +178,7 @@ export function useGroupActions() {
         toast.success(t('features.groups.toasts.actionRightRemoved'))
       } catch (error) {
         console.error('Failed to remove action right:', error)
-        toast.error(t('features.groups.toasts.actionRightRemoveFailed'))
+        handleMutationError(error, t('features.groups.toasts.actionRightRemoveFailed'), t)
         throw error
       }
     },
@@ -240,7 +241,7 @@ export function useGroupActions() {
         toast.success(t('features.groups.toasts.relationshipCreated'))
       } catch (error) {
         console.error('Failed to create relationship:', error)
-        toast.error(t('features.groups.toasts.relationshipCreateFailed'))
+        handleMutationError(error, t('features.groups.toasts.relationshipCreateFailed'), t)
         throw error
       }
     },
@@ -254,7 +255,7 @@ export function useGroupActions() {
         toast.success(t('features.groups.toasts.relationshipUpdated'))
       } catch (error) {
         console.error('Failed to update relationship:', error)
-        toast.error(t('features.groups.toasts.relationshipUpdateFailed'))
+        handleMutationError(error, t('features.groups.toasts.relationshipUpdateFailed'), t)
         throw error
       }
     },
@@ -268,7 +269,7 @@ export function useGroupActions() {
         toast.success(t('features.groups.toasts.relationshipDeleted'))
       } catch (error) {
         console.error('Failed to delete relationship:', error)
-        toast.error(t('features.groups.toasts.relationshipDeleteFailed'))
+        handleMutationError(error, t('features.groups.toasts.relationshipDeleteFailed'), t)
         throw error
       }
     },
@@ -283,7 +284,7 @@ export function useGroupActions() {
         toast.success(t('features.groups.toasts.positionCreated'))
       } catch (error) {
         console.error('Failed to create position:', error)
-        toast.error(t('features.groups.toasts.positionCreateFailed'))
+        handleMutationError(error, t('features.groups.toasts.positionCreateFailed'), t)
         throw error
       }
     },
@@ -297,7 +298,7 @@ export function useGroupActions() {
         toast.success(t('features.groups.toasts.positionUpdated'))
       } catch (error) {
         console.error('Failed to update position:', error)
-        toast.error(t('features.groups.toasts.positionUpdateFailed'))
+        handleMutationError(error, t('features.groups.toasts.positionUpdateFailed'), t)
         throw error
       }
     },
@@ -311,7 +312,7 @@ export function useGroupActions() {
         toast.success(t('features.groups.toasts.positionDeleted'))
       } catch (error) {
         console.error('Failed to delete position:', error)
-        toast.error(t('features.groups.toasts.positionDeleteFailed'))
+        handleMutationError(error, t('features.groups.toasts.positionDeleteFailed'), t)
         throw error
       }
     },
@@ -325,7 +326,7 @@ export function useGroupActions() {
         toast.success(t('features.groups.toasts.positionHolderHistoryCreated'))
       } catch (error) {
         console.error('Failed to create position holder history:', error)
-        toast.error(t('features.groups.toasts.positionHolderHistoryCreateFailed'))
+        handleMutationError(error, t('features.groups.toasts.positionHolderHistoryCreateFailed'), t)
         throw error
       }
     },
@@ -339,7 +340,7 @@ export function useGroupActions() {
         toast.success(t('features.groups.toasts.positionHolderHistoryUpdated'))
       } catch (error) {
         console.error('Failed to update position holder history:', error)
-        toast.error(t('features.groups.toasts.positionHolderHistoryUpdateFailed'))
+        handleMutationError(error, t('features.groups.toasts.positionHolderHistoryUpdateFailed'), t)
         throw error
       }
     },
