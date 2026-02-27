@@ -19,6 +19,7 @@ function CreateAmendmentPage() {
       collaborators={[]}
       currentUserId={user?.id || ''}
       isLoading={false}
+      mode="create"
     />
   )
 }

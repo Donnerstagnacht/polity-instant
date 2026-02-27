@@ -18,6 +18,7 @@ import { useAuth } from '@/providers/auth-provider';
 import { useZeroReady } from '@/providers/zero-provider';
 import { useTranslation } from '@/hooks/use-translation';
 import { createNavItemsUnauthenticated } from '@/navigation/nav-items/nav-items-unauthenticated';
+import { usePreferenceSync } from '@/zero/preferences/usePreferenceSync';
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [isClient, setIsClient] = useState(false);
@@ -87,6 +88,7 @@ function UnauthenticatedShell({ children }: { children: ReactNode }) {
 }
 
 function AuthenticatedShell({ children }: { children: ReactNode }) {
+  usePreferenceSync();
   const { screenType, isMobileScreen } = useScreenStore();
   const { navigationType, navigationView } = useNavigationStore();
   const { primaryNavItems, secondaryNavItems } = useNavigation();

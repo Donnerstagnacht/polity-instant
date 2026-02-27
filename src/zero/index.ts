@@ -17,6 +17,7 @@ export { todoSharedMutators } from './todos/shared-mutators'
 export { userSharedMutators } from './users/shared-mutators'
 export { statementSharedMutators } from './statements/shared-mutators'
 export { paymentSharedMutators } from './payments/shared-mutators'
+export { preferenceSharedMutators } from './preferences/shared-mutators'
 
 // Re-export all Row types
 export type {
@@ -47,6 +48,8 @@ export type {
   Payment, StripeCustomer, StripeSubscription, StripePayment,
   // Statements
   Statement,
+  // Preferences
+  UserPreference,
   // Common
   Subscriber, Hashtag, Link, TimelineEvent, Reaction,
 } from './schema'

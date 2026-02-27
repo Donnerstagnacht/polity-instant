@@ -5,7 +5,7 @@ target: vscode
 disable-model-invocation: true
 tools: ['search', 'read',  'edit/createFile', 'edit/editFiles', 'todo', 'agent']
 handoffs:
-  - label: Start Implementation
+  - label: Start Implementation and tick tasks
     agent: agent
     prompt: 'Start implementation and tick tasks as you complete them'
     send: true

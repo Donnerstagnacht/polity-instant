@@ -71,7 +71,7 @@ export const eventCreateSchema = eventBaseSchema
   .extend({
     id: z.string(),
     title: z.string(),
-    group_id: z.string(),
+    group_id: z.string().nullable(),
   })
 export const eventUpdateSchema = eventBaseSchema
   .pick({

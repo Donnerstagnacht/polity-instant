@@ -35,6 +35,7 @@ import { Route as AuthedEventIdImport } from './routes/_authed/event/$id'
 import { Route as AuthedCreateTodoImport } from './routes/_authed/create/todo'
 import { Route as AuthedCreateStatementImport } from './routes/_authed/create/statement'
 import { Route as AuthedCreatePositionImport } from './routes/_authed/create/position'
+import { Route as AuthedCreatePaymentImport } from './routes/_authed/create/payment'
 import { Route as AuthedCreateGroupImport } from './routes/_authed/create/group'
 import { Route as AuthedCreateEventImport } from './routes/_authed/create/event'
 import { Route as AuthedCreateElectionCandidateImport } from './routes/_authed/create/election-candidate'
@@ -228,6 +229,12 @@ const AuthedCreateStatementRoute = AuthedCreateStatementImport.update({
 const AuthedCreatePositionRoute = AuthedCreatePositionImport.update({
   id: '/create/position',
   path: '/create/position',
+  getParentRoute: () => AuthedRoute,
+} as any)
+
+const AuthedCreatePaymentRoute = AuthedCreatePaymentImport.update({
+  id: '/create/payment',
+  path: '/create/payment',
   getParentRoute: () => AuthedRoute,
 } as any)
 
@@ -700,6 +707,13 @@ declare module '@tanstack/react-router' {
       path: '/create/group'
       fullPath: '/create/group'
       preLoaderRoute: typeof AuthedCreateGroupImport
+      parentRoute: typeof AuthedImport
+    }
+    '/_authed/create/payment': {
+      id: '/_authed/create/payment'
+      path: '/create/payment'
+      fullPath: '/create/payment'
+      preLoaderRoute: typeof AuthedCreatePaymentImport
       parentRoute: typeof AuthedImport
     }
     '/_authed/create/position': {
@@ -1267,6 +1281,7 @@ interface AuthedRouteChildren {
   AuthedCreateElectionCandidateRoute: typeof AuthedCreateElectionCandidateRoute
   AuthedCreateEventRoute: typeof AuthedCreateEventRoute
   AuthedCreateGroupRoute: typeof AuthedCreateGroupRoute
+  AuthedCreatePaymentRoute: typeof AuthedCreatePaymentRoute
   AuthedCreatePositionRoute: typeof AuthedCreatePositionRoute
   AuthedCreateStatementRoute: typeof AuthedCreateStatementRoute
   AuthedCreateTodoRoute: typeof AuthedCreateTodoRoute
@@ -1291,6 +1306,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedCreateElectionCandidateRoute: AuthedCreateElectionCandidateRoute,
   AuthedCreateEventRoute: AuthedCreateEventRoute,
   AuthedCreateGroupRoute: AuthedCreateGroupRoute,
+  AuthedCreatePaymentRoute: AuthedCreatePaymentRoute,
   AuthedCreatePositionRoute: AuthedCreatePositionRoute,
   AuthedCreateStatementRoute: AuthedCreateStatementRoute,
   AuthedCreateTodoRoute: AuthedCreateTodoRoute,
@@ -1337,6 +1353,7 @@ export interface FileRoutesByFullPath {
   '/create/election-candidate': typeof AuthedCreateElectionCandidateRoute
   '/create/event': typeof AuthedCreateEventRoute
   '/create/group': typeof AuthedCreateGroupRoute
+  '/create/payment': typeof AuthedCreatePaymentRoute
   '/create/position': typeof AuthedCreatePositionRoute
   '/create/statement': typeof AuthedCreateStatementRoute
   '/create/todo': typeof AuthedCreateTodoRoute
@@ -1413,6 +1430,7 @@ export interface FileRoutesByTo {
   '/create/election-candidate': typeof AuthedCreateElectionCandidateRoute
   '/create/event': typeof AuthedCreateEventRoute
   '/create/group': typeof AuthedCreateGroupRoute
+  '/create/payment': typeof AuthedCreatePaymentRoute
   '/create/position': typeof AuthedCreatePositionRoute
   '/create/statement': typeof AuthedCreateStatementRoute
   '/create/todo': typeof AuthedCreateTodoRoute
@@ -1487,6 +1505,7 @@ export interface FileRoutesById {
   '/_authed/create/election-candidate': typeof AuthedCreateElectionCandidateRoute
   '/_authed/create/event': typeof AuthedCreateEventRoute
   '/_authed/create/group': typeof AuthedCreateGroupRoute
+  '/_authed/create/payment': typeof AuthedCreatePaymentRoute
   '/_authed/create/position': typeof AuthedCreatePositionRoute
   '/_authed/create/statement': typeof AuthedCreateStatementRoute
   '/_authed/create/todo': typeof AuthedCreateTodoRoute
@@ -1566,6 +1585,7 @@ export interface FileRouteTypes {
     | '/create/election-candidate'
     | '/create/event'
     | '/create/group'
+    | '/create/payment'
     | '/create/position'
     | '/create/statement'
     | '/create/todo'
@@ -1641,6 +1661,7 @@ export interface FileRouteTypes {
     | '/create/election-candidate'
     | '/create/event'
     | '/create/group'
+    | '/create/payment'
     | '/create/position'
     | '/create/statement'
     | '/create/todo'
@@ -1713,6 +1734,7 @@ export interface FileRouteTypes {
     | '/_authed/create/election-candidate'
     | '/_authed/create/event'
     | '/_authed/create/group'
+    | '/_authed/create/payment'
     | '/_authed/create/position'
     | '/_authed/create/statement'
     | '/_authed/create/todo'
@@ -1832,6 +1854,7 @@ export const routeTree = rootRoute
         "/_authed/create/election-candidate",
         "/_authed/create/event",
         "/_authed/create/group",
+        "/_authed/create/payment",
         "/_authed/create/position",
         "/_authed/create/statement",
         "/_authed/create/todo",
@@ -1927,6 +1950,10 @@ export const routeTree = rootRoute
     },
     "/_authed/create/group": {
       "filePath": "_authed/create/group.tsx",
+      "parent": "/_authed"
+    },
+    "/_authed/create/payment": {
+      "filePath": "_authed/create/payment.tsx",
       "parent": "/_authed"
     },
     "/_authed/create/position": {

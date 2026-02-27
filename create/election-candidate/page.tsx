@@ -1,0 +1,315 @@
+'use client';
+
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel';
+import { TypeAheadSelect } from '@/components/ui/type-ahead-select';
+import { ElectionSelectCard } from '@/components/ui/entity-select-cards';
+import { db, tx, id } from 'db/db';
+import { useAuthStore } from '@/features/auth/auth.ts';
+import { toast } from 'sonner';
+import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
+import { PageWrapper } from '@/components/layout/page-wrapper';
+import { notifyCandidateAdded } from '@/utils/notification-helpers';
+import { useTranslation } from '@/hooks/use-translation';
+
+function CreateElectionCandidateForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const user = useAuthStore(state => state.user);
+  const { t } = useTranslation();
+
+  const electionIdParam = searchParams.get('electionId');
+
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    imageURL: '',
+    order: 1,
+    electionId: electionIdParam || '',
+    userId: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  const [currentStep, setCurrentStep] = useState(0);
+
+  useEffect(() => {
+    if (!carouselApi) {
+      return;
+    }
+
+    carouselApi.on('select', () => {
+      setCurrentStep(carouselApi.selectedScrollSnap());
+    });
+  }, [carouselApi]);
+
+  // Query available elections for the dropdown
+  const { data: electionsData } = db.useQuery({
+    elections: {
+      agendaItem: {
+        event: {},
+      },
+    },
+  });
+
+  const userElections = electionsData?.elections || [];
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+
+    try {
+      if (!user?.id) {
+        toast.error(t('pages.create.validation.loginRequired'));
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.electionId) {
+        toast.error(t('pages.create.electionCandidate.validation.electionRequired'));
+        setIsSubmitting(false);
+        return;
+      }
+
+      const candidateId = id();
+      const now = new Date();
+
+      const transactions = [
+        tx.electionCandidates[candidateId].update({
+          name: formData.name,
+          description: formData.description || '',
+          imageURL: formData.imageURL || '',
+          order: formData.order,
+          createdAt: now,
+        }),
+        tx.electionCandidates[candidateId].link({
+          election: formData.electionId,
+        }),
+      ];
+
+      // Optionally link to a user if userId is provided
+      if (formData.userId) {
+        transactions.push(
+          tx.electionCandidates[candidateId].link({
+            user: formData.userId,
+          })
+        );
+      }
+
+      // Notify event participants about the new candidate
+      const selectedElection = userElections.find(el => el.id === formData.electionId);
+      const electionEvent = (selectedElection as any)?.agendaItem?.event;
+      if (electionEvent?.id) {
+        const notifTxs = notifyCandidateAdded({
+          senderId: user.id,
+          eventId: electionEvent.id,
+          eventTitle: electionEvent.title || '',
+          candidateName: formData.name,
+        });
+        transactions.push(...notifTxs);
+      }
+
+      await db.transact(transactions);
+
+      toast.success(`Election Candidate ${t('pages.create.success.created')}`);
+      router.push('/');
+    } catch (error) {
+      console.error('Failed to create election candidate:', error);
+      toast.error(t('pages.create.error.createFailed'));
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <AuthGuard requireAuth={true}>
+      <PageWrapper className="flex min-h-screen items-center justify-center p-8">
+        <Card className="w-full max-w-2xl">
+          <CardHeader>
+            <CardTitle>{t('pages.create.electionCandidate.title')}</CardTitle>
+          </CardHeader>
+            <CardContent>
+              <Carousel setApi={setCarouselApi} opts={{ watchDrag: false }}>
+                <CarouselContent>
+                  {/* Step 1: Election Selection */}
+                  <CarouselItem>
+                    <div className="space-y-4 p-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="election-candidate-election">{t('pages.create.electionCandidate.electionLabel')}</Label>
+                        <TypeAheadSelect
+                          items={userElections}
+                          value={formData.electionId}
+                          onChange={value => setFormData({ ...formData, electionId: value })}
+                          placeholder={t('pages.create.electionCandidate.electionPlaceholder')}
+                          searchKeys={['title', 'description']}
+                          renderItem={election => <ElectionSelectCard election={election} />}
+                          getItemId={election => election.id}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="election-candidate-order">{t('pages.create.electionCandidate.orderLabel')}</Label>
+                        <Input
+                          id="election-candidate-order"
+                          type="number"
+                          min="1"
+                          placeholder="1"
+                          value={formData.order}
+                          onChange={e =>
+                            setFormData({ ...formData, order: parseInt(e.target.value) || 1 })
+                          }
+                          required
+                        />
+                      </div>
+                    </div>
+                  </CarouselItem>
+
+                  {/* Step 2: Candidate Information */}
+                  <CarouselItem>
+                    <div className="space-y-4 p-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="election-candidate-name">{t('pages.create.electionCandidate.nameLabel')}</Label>
+                        <Input
+                          id="election-candidate-name"
+                          placeholder={t('pages.create.electionCandidate.namePlaceholder')}
+                          value={formData.name}
+                          onChange={e => setFormData({ ...formData, name: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="election-candidate-description">{t('pages.create.electionCandidate.descriptionLabel')}</Label>
+                        <Textarea
+                          id="election-candidate-description"
+                          placeholder={t('pages.create.electionCandidate.descriptionPlaceholder')}
+                          value={formData.description}
+                          onChange={e => setFormData({ ...formData, description: e.target.value })}
+                          rows={4}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="election-candidate-imageURL">{t('pages.create.electionCandidate.imageUrlOptional')}</Label>
+                        <Input
+                          id="election-candidate-imageURL"
+                          placeholder={t('pages.create.electionCandidate.imageUrlPlaceholder')}
+                          value={formData.imageURL}
+                          onChange={e => setFormData({ ...formData, imageURL: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </CarouselItem>
+
+                  {/* Step 3: Review */}
+                  <CarouselItem>
+                    <div className="p-4">
+                      <Card className="overflow-hidden border-2 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/50">
+                        <CardHeader>
+                          <div className="mb-2 flex items-center justify-between">
+                            <Badge variant="default" className="text-xs">
+                              {t('pages.create.electionCandidate.reviewBadge')}
+                            </Badge>
+                            <Badge variant="secondary" className="text-xs">
+                              {t('pages.create.electionCandidate.order', { order: formData.order })}
+                            </Badge>
+                          </div>
+                          <CardTitle className="text-lg">
+                            {formData.name || 'Unnamed Candidate'}
+                          </CardTitle>
+                          {formData.description && (
+                            <CardDescription>{formData.description}</CardDescription>
+                          )}
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <div className="flex items-center gap-2 text-sm">
+                            <strong>{t('pages.create.electionCandidate.election')}</strong>
+                            <span className="text-muted-foreground">
+                              {userElections.find(e => e.id === formData.electionId)?.title ||
+                                t('pages.create.common.notSelected')}
+                            </span>
+                          </div>
+                          {formData.imageURL && (
+                            <div className="space-y-1">
+                              <strong className="text-sm">{t('pages.create.electionCandidate.image')}</strong>
+                              <p className="break-all text-xs text-muted-foreground">
+                                {formData.imageURL}
+                              </p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </CarouselItem>
+                </CarouselContent>
+              </Carousel>
+              <div className="mt-4 flex justify-center gap-2">
+                {[0, 1, 2].map(index => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => carouselApi?.scrollTo(index)}
+                    className={`h-2 w-2 rounded-full transition-colors ${
+                      currentStep === index ? 'bg-primary' : 'bg-muted-foreground/30'
+                    }`}
+                    aria-label={t('pages.create.goToStep', { step: index + 1 })}
+                  />
+                ))}
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => carouselApi?.scrollPrev()}
+                disabled={currentStep === 0}
+              >
+                {t('pages.create.previous')}
+              </Button>
+              {currentStep < 2 ? (
+                <Button
+                  type="button"
+                  onClick={() => carouselApi?.scrollNext()}
+                  disabled={(currentStep === 0 && !formData.electionId) || (currentStep === 1 && !formData.name)}
+                >
+                  {t('pages.create.next')}
+                </Button>
+              ) : (
+                <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
+                  {isSubmitting ? t('pages.create.creating') : t('pages.create.electionCandidate.createButton')}
+                </Button>
+              )}
+            </CardFooter>
+        </Card>
+      </PageWrapper>
+    </AuthGuard>
+  );
+}
+
+export default function CreateElectionCandidatePage() {
+  const { t } = useTranslation();
+  
+  return (
+    <Suspense
+      fallback={
+        <PageWrapper className="flex min-h-screen items-center justify-center p-8">
+          <Card className="w-full max-w-2xl">
+            <CardHeader>
+              <CardTitle>{t('pages.create.loading')}</CardTitle>
+            </CardHeader>
+          </Card>
+        </PageWrapper>
+      }
+    >
+      <CreateElectionCandidateForm />
+    </Suspense>
+  );
+}

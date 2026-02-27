@@ -40,6 +40,8 @@ import { blog, blogBlogger } from './blogs/table'
 import { payment, stripeCustomer, stripeSubscription, stripePayment } from './payments/table'
 // Statements
 import { statement } from './statements/table'
+// Preferences
+import { userPreference } from './preferences/table'
 // Common
 import { hashtag, userHashtag, groupHashtag, amendmentHashtag, eventHashtag, blogHashtag, link, timelineEvent, reaction } from './common/table'
 
@@ -102,9 +104,17 @@ export const userRelationships = relationships(user, ({ many }) => ({
   amendment_voting_session_votes: many({ sourceField: ['id'], destSchema: amendmentVotingSessionVote, destField: ['user_id'] }),
   requested_conversations: many({ sourceField: ['id'], destSchema: conversation, destField: ['requested_by_id'] }),
   participants: many({ sourceField: ['id'], destSchema: participant, destField: ['user_id'] }),
+  preferences: many({ sourceField: ['id'], destSchema: userPreference, destField: ['user_id'] }),
 }))
 
 export const fileRelationships = relationships(file, () => ({}))
+
+// ============================================
+// User Preference relationships
+// ============================================
+export const userPreferenceRelationships = relationships(userPreference, ({ one }) => ({
+  user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
+}))
 
 // ============================================
 // Follow relationships
@@ -627,6 +637,7 @@ export const allRelationships = [
   // Users
   userRelationships,
   fileRelationships,
+  userPreferenceRelationships,
   followRelationships,
   userStatsRelationships,
   // Groups

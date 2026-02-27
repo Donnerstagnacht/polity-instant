@@ -11,6 +11,7 @@ import {
   Calendar,
   UserCheck,
   Briefcase,
+  DollarSign,
 } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
 
@@ -37,7 +38,7 @@ export function CreateDashboard() {
       description: t('pages.create.amendment.description'),
     },
     {
-      href: '/create/blog',
+      href: '/create/blog-entry',
       icon: BookOpen,
       title: t('pages.create.blog.pageTitle'),
       description: t('pages.create.blog.description'),
@@ -56,6 +57,12 @@ export function CreateDashboard() {
       icon: FileText,
       title: t('pages.create.statement.pageTitle'),
       description: t('pages.create.statement.description'),
+    },
+    {
+      href: '/create/payment',
+      icon: DollarSign,
+      title: t('pages.create.payment.pageTitle'),
+      description: t('pages.create.payment.description'),
     },
   ];
 

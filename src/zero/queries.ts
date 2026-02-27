@@ -15,6 +15,7 @@ import { statementQueries } from './statements/queries'
 import { commonQueries } from './common/queries'
 import { searchQueries } from './shared/queries'
 import { rbacQueries } from './rbac/queries'
+import { preferenceQueries } from './preferences/queries'
 
 export const queries = defineQueries({
   users: userQueries,
@@ -32,4 +33,5 @@ export const queries = defineQueries({
   common: commonQueries,
   search: searchQueries,
   rbac: rbacQueries,
+  preferences: preferenceQueries,
 })

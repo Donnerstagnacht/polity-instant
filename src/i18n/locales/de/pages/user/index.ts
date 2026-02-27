@@ -1,5 +1,21 @@
 export const userPageTranslations = {
-  settings: 'Profil bearbeiten',
+  settings: 'Einstellungen',
+  settingsDescription: 'Verwalte dein Profil, Einstellungen und Abonnement',
+  settingsTabs: {
+    basicInfo: 'Grundlegende Informationen',
+    preferences: 'Einstellungen',
+    subscriptions: 'Abonnements',
+    saving: 'Speichern...',
+    saveProfile: 'Profil speichern',
+  },
+  preferences: {
+    theme: 'Design',
+    themeDescription: 'Hell, Dunkel oder System-Design wählen',
+    language: 'Sprache',
+    languageDescription: 'Bevorzugte Sprache wählen',
+    navigationStyle: 'Navigationsstil',
+    navigationStyleDescription: 'Wähle, wie die Navigation angezeigt wird',
+  },
   groups: {
     title: 'Gruppen',
     description: 'Gruppen, in denen dieser Benutzer Mitglied ist',

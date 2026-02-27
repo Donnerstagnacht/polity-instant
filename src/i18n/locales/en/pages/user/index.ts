@@ -1,5 +1,21 @@
 export const userPageTranslations = {
-  settings: 'Edit Profile',
+  settings: 'Settings',
+  settingsDescription: 'Manage your profile, preferences, and subscription',
+  settingsTabs: {
+    basicInfo: 'Basic Information',
+    preferences: 'Preferences',
+    subscriptions: 'Subscriptions',
+    saving: 'Saving...',
+    saveProfile: 'Save Profile',
+  },
+  preferences: {
+    theme: 'Theme',
+    themeDescription: 'Choose light, dark, or system theme',
+    language: 'Language',
+    languageDescription: 'Choose your preferred language',
+    navigationStyle: 'Navigation Style',
+    navigationStyleDescription: 'Choose how the navigation is displayed',
+  },
   groups: {
     title: 'Groups',
     description: 'Groups this user is a member of',

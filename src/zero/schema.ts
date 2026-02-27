@@ -23,6 +23,7 @@ import { position, positionHolderHistory, eventPosition, eventPositionHolder } f
 import { eventDelegate, groupDelegateAllocation } from './delegates/table'
 import { meetingSlot, meetingBooking } from './meet/table'
 import { follow, groupRelationship, subscriber } from './network/table'
+import { userPreference } from './preferences/table'
 
 // Relationship imports
 import { allRelationships } from './relationships'
@@ -74,6 +75,8 @@ export const schema = createSchema({
     payment, stripeCustomer, stripeSubscription, stripePayment,
     // Statements
     statement,
+    // Preferences
+    userPreference,
     // Common
     hashtag, userHashtag, groupHashtag, amendmentHashtag, eventHashtag, blogHashtag, link, timelineEvent, reaction,
   ],
@@ -174,6 +177,9 @@ export type StripePayment = Row<Schema['tables']['stripe_payment']>
 
 // Statements
 export type Statement = Row<Schema['tables']['statement']>
+
+// Preferences
+export type UserPreference = Row<Schema['tables']['user_preference']>
 
 // Common
 export type Subscriber = Row<Schema['tables']['subscriber']>

@@ -31,6 +31,7 @@ import {
 import { useTranslation } from '@/hooks/use-translation';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { notifyAmendmentProfileUpdated } from '@/utils/notification-helpers';
+import { CreateReviewCard, SummaryField } from '@/components/ui/create-review-card';
 
 interface AmendmentEditContentProps {
   amendmentId: string;
@@ -38,6 +39,7 @@ interface AmendmentEditContentProps {
   collaborators: any[];
   currentUserId: string;
   isLoading: boolean;
+  mode?: 'create' | 'edit';
 }
 
 export function AmendmentEditContent({
@@ -46,10 +48,12 @@ export function AmendmentEditContent({
   collaborators,
   currentUserId,
   isLoading,
+  mode,
 }: AmendmentEditContentProps) {
+  const isCreating = mode === 'create' || !amendment;
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { updateAmendment } = useAmendmentActions();
+  const { updateAmendment, createAmendment } = useAmendmentActions();
   const commonActions = useCommonActions();
   const { amendmentHashtags, allHashtags } = useCommonState({
     amendment_id: amendmentId,
@@ -72,6 +76,8 @@ export function AmendmentEditContent({
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showReview, setShowReview] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
   const initializedRef = useRef(false);
   const hashtagsInitializedRef = useRef(false);
 
@@ -111,22 +117,46 @@ export function AmendmentEditContent({
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      if (!amendment) {
-        toast.error(t('features.amendments.editContent.updateFailed'));
-        return;
+      if (isCreating) {
+        await createAmendment({
+          id: amendmentId,
+          title: formData.title || null,
+          code: formData.code || null,
+          status: formData.status || null,
+          workflow_status: formData.workflowStatus || null,
+          reason: null,
+          category: null,
+          preamble: null,
+          group_id: null,
+          event_id: null,
+          clone_source_id: null,
+          tags: formData.hashtags.length > 0 ? formData.hashtags : null,
+          visibility: 'public',
+          is_public: true,
+          editing_mode: null,
+          discussions: null,
+          image_url: formData.imageURL || null,
+          x: null,
+          youtube: null,
+          linkedin: null,
+          website: null,
+        });
+      } else {
+        if (!amendment) {
+          toast.error(t('features.amendments.editContent.updateFailed'));
+          return;
+        }
+        await updateAmendment({
+          id: amendmentId,
+          title: formData.title,
+          code: formData.code,
+          status: formData.status,
+          workflow_status: formData.workflowStatus,
+          supporters: formData.supporters,
+          tags: formData.hashtags,
+          image_url: formData.imageURL || null,
+        });
       }
-      const transactions: any[] = [];
-      // Only push update if something changed
-      await updateAmendment({
-        id: amendmentId,
-        title: formData.title,
-        code: formData.code,
-        status: formData.status,
-        workflow_status: formData.workflowStatus,
-        supporters: formData.supporters,
-        tags: formData.hashtags,
-        image_url: formData.imageURL || null,
-      });
 
       // Sync hashtags via junction tables
       await commonActions.syncEntityHashtags(
@@ -137,8 +167,8 @@ export function AmendmentEditContent({
         allHashtags ?? []
       );
 
-      // Only create timeline events for public amendments
-      if (amendment.visibility === 'public') {
+      // Only create timeline events for public amendments in edit mode
+      if (!isCreating && amendment?.visibility === 'public') {
         if (formData.imageURL && formData.imageURL !== amendment.imageURL) {
           await createTimelineEvent({ data: {
             eventType: 'image_uploaded',
@@ -168,13 +198,19 @@ export function AmendmentEditContent({
           } });
         }
       }
-      // Notify about profile update
-      await notifyAmendmentProfileUpdated({
-        senderId: currentUserId,
-        amendmentId,
-        amendmentTitle: formData.title,
-      });
-      toast.success(t('features.amendments.editContent.updateSuccess'));
+      // Notify about profile update (edit mode only)
+      if (!isCreating) {
+        await notifyAmendmentProfileUpdated({
+          senderId: currentUserId,
+          amendmentId,
+          amendmentTitle: formData.title,
+        });
+      }
+      toast.success(
+        isCreating
+          ? t('pages.create.success.created')
+          : t('features.amendments.editContent.updateSuccess')
+      );
       navigate({ to: `/amendment/${amendmentId}` });
     } catch (error) {
       toast.error(t('features.amendments.editContent.updateFailed'));
@@ -193,7 +229,7 @@ export function AmendmentEditContent({
     );
   }
 
-  if (!amendment) {
+  if (!isCreating && !amendment) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
@@ -211,16 +247,73 @@ export function AmendmentEditContent({
     );
   }
 
+  const onFormSubmit = (e: React.FormEvent) => {
+    if (isCreating && !showReview) {
+      e.preventDefault();
+      setShowReview(true);
+      return;
+    }
+    handleSubmit(e);
+  };
+
+  const confirmCreate = () => {
+    if (formRef.current) {
+      formRef.current.requestSubmit();
+    }
+  };
+
+  if (isCreating && showReview) {
+    return (
+      <div>
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold">{t('pages.create.common.review')}</h1>
+        </div>
+        <div className="max-w-2xl">
+          <CreateReviewCard
+            badge={t('pages.create.amendment.reviewBadge')}
+            secondaryBadge={formData.status}
+            title={formData.title || 'Untitled Amendment'}
+            subtitle={formData.subtitle || undefined}
+            hashtags={formData.hashtags}
+            gradient="from-violet-100 to-purple-100 dark:from-violet-900/40 dark:to-purple-900/50"
+          >
+            {formData.code && <SummaryField label={t('features.amendments.editContent.codeLabel')} value={formData.code.length > 200 ? formData.code.slice(0, 200) + '…' : formData.code} />}
+            <SummaryField label={t('features.amendments.editContent.workflowStatusLabel')} value={WORKFLOW_STATUS_METADATA[formData.workflowStatus]?.label || formData.workflowStatus} />
+          </CreateReviewCard>
+          <div className="mt-6 flex gap-3">
+            <Button variant="outline" onClick={() => setShowReview(false)}>
+              {t('pages.create.previous')}
+            </Button>
+            <Button onClick={confirmCreate} disabled={isSubmitting} className="flex-1">
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {t('pages.create.common.creating')}
+                </>
+              ) : (
+                t('pages.create.amendment.createButton')
+              )}
+            </Button>
+          </div>
+        </div>
+        {/* Hidden form to allow real submission */}
+        <form ref={formRef} onSubmit={handleSubmit} className="hidden" />
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">{t('features.amendments.editContent.pageTitle')}</h1>
+        <h1 className="text-3xl font-bold">
+          {isCreating ? t('pages.create.amendment.title') : t('features.amendments.editContent.pageTitle')}
+        </h1>
         <p className="text-muted-foreground">
-          {t('features.amendments.editContent.pageDescription')}
+          {isCreating ? t('pages.create.amendment.description') : t('features.amendments.editContent.pageDescription')}
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form ref={formRef} onSubmit={onFormSubmit} className="space-y-6">
         <ImageUpload
           currentImage={formData.imageURL}
           onImageChange={(url: string) => setFormData({ ...formData, imageURL: url })}
@@ -456,7 +549,7 @@ export function AmendmentEditContent({
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate({ to: `/amendment/${amendmentId}` })}
+            onClick={() => navigate({ to: isCreating ? '/create' : `/amendment/${amendmentId}` })}
             disabled={isSubmitting}
           >
             {t('features.amendments.editContent.cancel')}
@@ -465,10 +558,10 @@ export function AmendmentEditContent({
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {t('features.amendments.editContent.saving')}
+                {isCreating ? t('pages.create.common.creating') : t('features.amendments.editContent.saving')}
               </>
             ) : (
-              t('features.amendments.editContent.saveChanges')
+              isCreating ? t('pages.create.next') : t('features.amendments.editContent.saveChanges')
             )}
           </Button>
         </div>

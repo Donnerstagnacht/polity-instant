@@ -3,7 +3,9 @@ import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useEventData } from './useEventData';
 import { useEventMutations } from './useEventMutations';
+import { useEventActions } from '@/zero/events/useEventActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
+import { useAuth } from '@/providers/auth-provider';
 
 export interface EventFormData {
   title: string;
@@ -18,10 +20,12 @@ export interface EventFormData {
 }
 
 /**
- * Hook for event update functionality
+ * Hook for event create/update functionality
  */
-export function useEventUpdate(eventId: string) {
+export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit') {
   const navigate = useNavigate();
+  const isCreating = mode === 'create';
+  const { user } = useAuth();
 
   const [formData, setFormData] = useState<EventFormData>({
     title: '',
@@ -37,8 +41,11 @@ export function useEventUpdate(eventId: string) {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { event, isLoading } = useEventData(eventId);
+  // Always call the hook but pass undefined in create mode so no query fires
+  const { event, isLoading: editLoading } = useEventData(isCreating ? undefined : eventId);
+  const isLoading = isCreating ? false : editLoading;
   const { updateEvent } = useEventMutations(eventId);
+  const { createEvent } = useEventActions();
   const commonActions = useCommonActions();
   const { eventHashtags, allHashtags } = useCommonState({
     event_id: eventId,
@@ -93,29 +100,53 @@ export function useEventUpdate(eventId: string) {
     setIsSubmitting(true);
 
     try {
-      if (!event) {
-        toast.error('No event data to update');
-        return;
+      if (isCreating) {
+        if (!user?.id) {
+          toast.error('You must be logged in to create an event');
+          return;
+        }
+
+        const createData: any = {
+          id: eventId,
+          title: formData.title,
+          description: formData.description || null,
+          location_name: formData.location || null,
+          start_date: formData.startDate ? new Date(formData.startDate).getTime() : null,
+          end_date: formData.endDate ? new Date(formData.endDate).getTime() : null,
+          is_public: formData.isPublic,
+          visibility: formData.isPublic ? 'public' : 'private',
+          image_url: formData.imageURL || null,
+          capacity: formData.capacity ? parseInt(formData.capacity, 10) : null,
+          group_id: null,
+          creator_id: user.id,
+        };
+
+        await createEvent(createData);
+      } else {
+        if (!event) {
+          toast.error('No event data to update');
+          return;
+        }
+
+        const updateData: any = {
+          title: formData.title,
+          description: formData.description,
+          location_name: formData.location,
+          start_date: new Date(formData.startDate).getTime(),
+          is_public: formData.isPublic,
+          image_url: formData.imageURL || null,
+        };
+
+        if (formData.endDate) {
+          updateData.end_date = new Date(formData.endDate).getTime();
+        }
+
+        if (formData.capacity) {
+          updateData.capacity = parseInt(formData.capacity, 10);
+        }
+
+        await updateEvent(updateData);
       }
-
-      const updateData: any = {
-        title: formData.title,
-        description: formData.description,
-        location_name: formData.location,
-        start_date: new Date(formData.startDate).getTime(),
-        is_public: formData.isPublic,
-        image_url: formData.imageURL || null,
-      };
-
-      if (formData.endDate) {
-        updateData.end_date = new Date(formData.endDate).getTime();
-      }
-
-      if (formData.capacity) {
-        updateData.capacity = parseInt(formData.capacity, 10);
-      }
-
-      await updateEvent(updateData);
 
       // Sync hashtags via junction tables
       await commonActions.syncEntityHashtags(
@@ -128,7 +159,7 @@ export function useEventUpdate(eventId: string) {
 
       navigate({ to: `/event/${eventId}` });
     } catch (error) {
-      console.error('Update error:', error);
+      console.error(isCreating ? 'Create error:' : 'Update error:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -142,5 +173,6 @@ export function useEventUpdate(eventId: string) {
     isSubmitting,
     event,
     isLoading,
+    isCreating,
   };
 }

@@ -93,7 +93,7 @@ export function UserMenu({
 
   const handleSettingsClick = () => {
     if (authUser?.id) {
-      navigate({ to: `/user/${authUser.id}/edit` });
+      navigate({ to: `/user/${authUser.id}/settings` });
     }
   };
 

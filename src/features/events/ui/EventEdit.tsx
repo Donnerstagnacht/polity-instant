@@ -19,18 +19,22 @@ import { useEventUpdate } from '../hooks/useEventUpdate';
 import { useTranslation } from '@/hooks/use-translation';
 import { CancelEventDialog } from './CancelEventDialog';
 import { usePermissions } from '@/zero/rbac';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { CreateReviewCard, SummaryField } from '@/components/ui/create-review-card';
 
 interface EventEditProps {
   eventId: string;
+  mode?: 'create' | 'edit';
 }
 
-export function EventEdit({ eventId }: EventEditProps) {
+export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [showReview, setShowReview] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
   const { can } = usePermissions({ eventId });
-  const canDeleteEvent = can('delete', 'events');
+  const canDeleteEvent = mode === 'edit' && can('delete', 'events');
 
   const {
     formData,
@@ -40,7 +44,8 @@ export function EventEdit({ eventId }: EventEditProps) {
     isSubmitting,
     event,
     isLoading,
-  } = useEventUpdate(eventId);
+    isCreating,
+  } = useEventUpdate(eventId, mode);
 
   // Loading state
   if (isLoading) {
@@ -52,8 +57,8 @@ export function EventEdit({ eventId }: EventEditProps) {
     );
   }
 
-  // Not found state
-  if (!event) {
+  // Not found state (only in edit mode)
+  if (!isCreating && !event) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
@@ -72,14 +77,76 @@ export function EventEdit({ eventId }: EventEditProps) {
   }
 
   // Main edit form
+  const onFormSubmit = (e: React.FormEvent) => {
+    if (isCreating && !showReview) {
+      e.preventDefault();
+      setShowReview(true);
+      return;
+    }
+    handleSubmit(e);
+  };
+
+  const confirmCreate = () => {
+    // Trigger the real submit by dispatching a submit event on the form
+    if (formRef.current) {
+      formRef.current.requestSubmit();
+    }
+  };
+
+  if (isCreating && showReview) {
+    return (
+      <div>
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold">{t('pages.create.common.review')}</h1>
+        </div>
+        <div className="max-w-2xl">
+          <CreateReviewCard
+            badge={t('pages.create.event.reviewBadge')}
+            secondaryBadge={formData.isPublic ? t('pages.create.common.public') : t('pages.create.common.private')}
+            title={formData.title || 'Untitled Event'}
+            subtitle={formData.description || undefined}
+            hashtags={formData.tags}
+            gradient="from-blue-100 to-cyan-100 dark:from-blue-900/40 dark:to-cyan-900/50"
+          >
+            {formData.startDate && <SummaryField label={t('features.events.editPage.dateTime.startDate')} value={formData.startDate} />}
+            {formData.endDate && <SummaryField label={t('features.events.editPage.dateTime.endDate')} value={formData.endDate} />}
+            {formData.location && <SummaryField label={t('features.events.editPage.locationCapacity.location')} value={formData.location} />}
+            {formData.capacity && <SummaryField label={t('features.events.editPage.locationCapacity.capacity')} value={formData.capacity} />}
+          </CreateReviewCard>
+          <div className="mt-6 flex gap-3">
+            <Button variant="outline" onClick={() => setShowReview(false)}>
+              {t('pages.create.previous')}
+            </Button>
+            <Button onClick={confirmCreate} disabled={isSubmitting} className="flex-1">
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {t('pages.create.common.creating')}
+                </>
+              ) : (
+                t('pages.create.event.createButton')
+              )}
+            </Button>
+          </div>
+        </div>
+        {/* Hidden form to allow real submission */}
+        <form ref={formRef} onSubmit={handleSubmit} className="hidden" />
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">{t('features.events.editPage.title')}</h1>
-        <p className="text-muted-foreground">{t('features.events.editPage.subtitle')}</p>
+        <h1 className="text-3xl font-bold">
+          {isCreating ? t('pages.create.event.title') : t('features.events.editPage.title')}
+        </h1>
+        <p className="text-muted-foreground">
+          {isCreating ? t('pages.create.event.description') : t('features.events.editPage.subtitle')}
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form ref={formRef} onSubmit={onFormSubmit} className="space-y-6">
         {/* Event Image Section */}
         <ImageUpload
           currentImage={formData.imageURL}
@@ -217,14 +284,14 @@ export function EventEdit({ eventId }: EventEditProps) {
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate({ to: `/event/${eventId}` })}
+            onClick={() => navigate({ to: isCreating ? '/create' : `/event/${eventId}` })}
             disabled={isSubmitting}
           >
             {t('features.events.cancelLabel')}
           </Button>
 
-          {/* Cancel Event Button - only for users with delete permission */}
-          {canDeleteEvent && (
+          {/* Cancel Event Button - only for users with delete permission in edit mode */}
+          {!isCreating && canDeleteEvent && (
             <Button
               type="button"
               variant="destructive"
@@ -240,10 +307,10 @@ export function EventEdit({ eventId }: EventEditProps) {
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {t('features.events.editPage.saving')}
+                {isCreating ? t('pages.create.common.creating') : t('features.events.editPage.saving')}
               </>
             ) : (
-              t('features.events.editPage.saveChanges')
+              isCreating ? t('pages.create.next') : t('features.events.editPage.saveChanges')
             )}
           </Button>
         </div>

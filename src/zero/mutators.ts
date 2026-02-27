@@ -13,6 +13,7 @@ import { blogSharedMutators } from './blogs/shared-mutators'
 import { paymentSharedMutators } from './payments/shared-mutators'
 import { statementSharedMutators } from './statements/shared-mutators'
 import { commonSharedMutators } from './common/shared-mutators'
+import { preferenceSharedMutators } from './preferences/shared-mutators'
 
 export const mutators = defineMutators({
   users: userSharedMutators,
@@ -28,4 +29,5 @@ export const mutators = defineMutators({
   payments: paymentSharedMutators,
   statements: statementSharedMutators,
   common: commonSharedMutators,
+  preferences: preferenceSharedMutators,
 })

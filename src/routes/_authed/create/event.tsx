@@ -9,5 +9,5 @@ export const Route = createFileRoute('/_authed/create/event')({
 function CreateEventPage() {
   const [eventId] = useState(() => crypto.randomUUID())
 
-  return <EventEdit eventId={eventId} />
+  return <EventEdit eventId={eventId} mode="create" />
 }

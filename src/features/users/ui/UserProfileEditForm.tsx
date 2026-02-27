@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AvatarUploadSection } from './AvatarUploadSection';
 import { BasicInformationSection } from './BasicInformationSection';
 import { AboutSection } from './AboutSection';
@@ -7,6 +8,12 @@ import { ContactInformationSection } from './ContactInformationSection';
 import { HashtagsSection } from './HashtagsSection';
 import { SubscriptionPlansGrid } from '@/features/payments/ui/SubscriptionPlansGrid';
 import { SubscriptionStatus } from '@/features/payments/ui/SubscriptionStatus';
+import { FormStyleSelector } from '@/features/create/ui/FormStyleSelector';
+import { ThemeToggle } from '@/navigation/toggles/theme-toggle';
+import { LanguageToggle } from '@/navigation/toggles/language-toggle';
+import { StateToggle } from '@/navigation/toggles/state-toggle';
+import { useNavigationStore } from '@/navigation/state/navigation.store';
+import { useTranslation } from '@/hooks/use-translation';
 import type { UserProfileFormData } from '../hooks/useUserProfileForm';
 
 interface UserProfileEditFormProps {
@@ -47,92 +54,146 @@ export function UserProfileEditForm({
   onCustomAmount,
   onCancelSubscription,
 }: UserProfileEditFormProps) {
+  const { t } = useTranslation();
+  const { navigationView, setNavigationView } = useNavigationStore();
+
   return (
-    <div className="space-y-10">
-      {/* Profile Section */}
-      <div>
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">Edit Profile</h1>
-          <p className="text-muted-foreground">Update your personal information</p>
-        </div>
+    <div>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">{t('pages.user.settings')}</h1>
+        <p className="text-muted-foreground">{t('pages.user.settingsDescription')}</p>
+      </div>
 
-        <form onSubmit={onSubmit} className="space-y-6">
-          <AvatarUploadSection
-            avatar={formData.avatar}
-            userName={[formData.firstName, formData.lastName].filter(Boolean).join(' ')}
-            isUploading={isUploading}
-            onUpload={onAvatarUpload}
-          />
+      <Tabs defaultValue="basic-info">
+        <TabsList className="mb-6">
+          <TabsTrigger value="basic-info">
+            {t('pages.user.settingsTabs.basicInfo')}
+          </TabsTrigger>
+          <TabsTrigger value="preferences">
+            {t('pages.user.settingsTabs.preferences')}
+          </TabsTrigger>
+          <TabsTrigger value="subscriptions">
+            {t('pages.user.settingsTabs.subscriptions')}
+          </TabsTrigger>
+        </TabsList>
 
-          <BasicInformationSection
-            firstName={formData.firstName}
-            lastName={formData.lastName}
-            subtitle={formData.subtitle}
-            onFirstNameChange={value => onFieldChange('firstName', value)}
-            onLastNameChange={value => onFieldChange('lastName', value)}
-            onSubtitleChange={value => onFieldChange('subtitle', value)}
-          />
+        {/* Basic Information Tab */}
+        <TabsContent value="basic-info">
+          <form onSubmit={onSubmit} className="space-y-6">
+            <AvatarUploadSection
+              avatar={formData.avatar}
+              userName={[formData.firstName, formData.lastName].filter(Boolean).join(' ')}
+              isUploading={isUploading}
+              onUpload={onAvatarUpload}
+            />
 
-          <AboutSection
-            about={formData.about}
-            onAboutChange={value => onFieldChange('about', value)}
-          />
+            <BasicInformationSection
+              firstName={formData.firstName}
+              lastName={formData.lastName}
+              subtitle={formData.subtitle}
+              onFirstNameChange={value => onFieldChange('firstName', value)}
+              onLastNameChange={value => onFieldChange('lastName', value)}
+              onSubtitleChange={value => onFieldChange('subtitle', value)}
+            />
 
-          <ContactInformationSection
-            email={formData.email}
-            twitter={formData.twitter}
-            website={formData.website}
-            location={formData.location}
-            onEmailChange={value => onFieldChange('email', value)}
-            onTwitterChange={value => onFieldChange('twitter', value)}
-            onWebsiteChange={value => onFieldChange('website', value)}
-            onLocationChange={value => onFieldChange('location', value)}
-          />
+            <AboutSection
+              about={formData.about}
+              onAboutChange={value => onFieldChange('about', value)}
+            />
 
-          <HashtagsSection
-            hashtags={formData.hashtags}
-            onHashtagsChange={value => onFieldChange('hashtags', value)}
-          />
+            <ContactInformationSection
+              email={formData.email}
+              twitter={formData.twitter}
+              website={formData.website}
+              location={formData.location}
+              onEmailChange={value => onFieldChange('email', value)}
+              onTwitterChange={value => onFieldChange('twitter', value)}
+              onWebsiteChange={value => onFieldChange('website', value)}
+              onLocationChange={value => onFieldChange('location', value)}
+            />
 
-          <div className="flex gap-4">
-            <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting} className="flex-1">
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                'Save Profile'
-              )}
-            </Button>
+            <HashtagsSection
+              hashtags={formData.hashtags}
+              onHashtagsChange={value => onFieldChange('hashtags', value)}
+            />
+
+            <div className="flex gap-4">
+              <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+                {t('common.actions.cancel')}
+              </Button>
+              <Button type="submit" disabled={isSubmitting} className="flex-1">
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {t('pages.user.settingsTabs.saving')}
+                  </>
+                ) : (
+                  t('pages.user.settingsTabs.saveProfile')
+                )}
+              </Button>
+            </div>
+          </form>
+        </TabsContent>
+
+        {/* Preferences Tab */}
+        <TabsContent value="preferences">
+          <div className="space-y-6">
+            <div className="rounded-lg border p-4">
+              <h3 className="mb-1 text-sm font-medium">
+                {t('pages.user.preferences.theme')}
+              </h3>
+              <p className="mb-3 text-sm text-muted-foreground">
+                {t('pages.user.preferences.themeDescription')}
+              </p>
+              <ThemeToggle />
+            </div>
+            <div className="rounded-lg border p-4">
+              <h3 className="mb-1 text-sm font-medium">
+                {t('pages.user.preferences.language')}
+              </h3>
+              <p className="mb-3 text-sm text-muted-foreground">
+                {t('pages.user.preferences.languageDescription')}
+              </p>
+              <LanguageToggle side="bottom" />
+            </div>
+            <div className="rounded-lg border p-4">
+              <h3 className="mb-1 text-sm font-medium">
+                {t('pages.user.preferences.navigationStyle')}
+              </h3>
+              <p className="mb-3 text-sm text-muted-foreground">
+                {t('pages.user.preferences.navigationStyleDescription')}
+              </p>
+              <StateToggle currentState={navigationView} onStateChange={setNavigationView} />
+            </div>
+            <div className="rounded-lg border p-4">
+              <h3 className="mb-1 text-sm font-medium">
+                {t('pages.create.preferences.formStyle')}
+              </h3>
+              <p className="mb-3 text-sm text-muted-foreground">
+                {t('pages.create.preferences.formStyleDescription')}
+              </p>
+              <FormStyleSelector />
+            </div>
           </div>
-        </form>
-      </div>
+        </TabsContent>
 
-      {/* Subscription Section */}
-      <div>
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold">Subscription</h2>
-          <p className="text-muted-foreground">Manage your subscription and billing</p>
-        </div>
+        {/* Subscriptions Tab */}
+        <TabsContent value="subscriptions">
+          <div className="space-y-6">
+            <SubscriptionStatus userId={userId} />
 
-        <div className="space-y-6">
-          <SubscriptionStatus userId={userId} />
-
-          <SubscriptionPlansGrid
-            activeAmount={activeSubscriptionAmount}
-            isLoading={isCheckoutLoading}
-            onSubscribe={onSubscribe}
-            onCustomAmount={onCustomAmount}
-            onCancel={onCancelSubscription}
-            isPlanActive={isPlanActive}
-            hasCustomPlan={hasCustomPlan}
-          />
-        </div>
-      </div>
+            <SubscriptionPlansGrid
+              activeAmount={activeSubscriptionAmount}
+              isLoading={isCheckoutLoading}
+              onSubscribe={onSubscribe}
+              onCustomAmount={onCustomAmount}
+              onCancel={onCancelSubscription}
+              isPlanActive={isPlanActive}
+              hasCustomPlan={hasCustomPlan}
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
