@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from 'sonner';
-import { notifyParticipationRequest } from '@/utils/notification-helpers';
 import { sendNotificationFn } from '@/server/notifications';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { useEventById, useEventParticipantsQuery } from '@/zero/events/useEventState';
@@ -85,7 +84,7 @@ export function useEventParticipation(eventId: string) {
         visibility: '',
       });
 
-      sendNotificationFn({ data: { helper: 'notifyParticipationRequest', params: { senderId: user.id, eventId, eventTitle: event?.title || 'Event' } } }).catch(console.error)
+      sendNotificationFn({ data: { helper: 'notifyParticipationRequest', params: { senderId: user.id, senderName: user.email?.split('@')[0] || 'A user', eventId, eventTitle: event?.title || 'Event' } } }).catch(console.error)
 
       toast.success('Participation request sent successfully');
     } catch (error) {
@@ -105,6 +104,11 @@ export function useEventParticipation(eventId: string) {
     setIsLoading(true);
     try {
       await doLeaveEvent({ id: participation.id });
+      if (status === 'requested') {
+        sendNotificationFn({ data: { helper: 'notifyEventRequestWithdrawn', params: { senderId: user?.id, senderName: user?.email?.split('@')[0] || 'A user', eventId, eventTitle: event?.title || 'Event' } } }).catch(console.error)
+      } else {
+        sendNotificationFn({ data: { helper: 'notifyParticipationWithdrawn', params: { senderId: user?.id, senderName: user?.email?.split('@')[0] || 'A user', eventId, eventTitle: event?.title || 'Event' } } }).catch(console.error)
+      }
       toast.success('Successfully left the event');
     } catch (error) {
       console.error('Failed to leave event:', error);
@@ -124,6 +128,7 @@ export function useEventParticipation(eventId: string) {
         id: participation.id,
         status: 'member',
       });
+      sendNotificationFn({ data: { helper: 'notifyEventInvitationAccepted', params: { senderId: user?.id, senderName: user?.email?.split('@')[0] || 'A user', eventId, eventTitle: event?.title || 'Event' } } }).catch(console.error)
       toast.success('Successfully joined the event');
     } catch (error) {
       console.error('Failed to accept invitation:', error);

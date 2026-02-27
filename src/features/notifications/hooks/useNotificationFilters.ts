@@ -33,7 +33,8 @@ export function useNotificationFilters({
   const entityNotifications = useMemo(() => {
     return accessibleNotifications.filter(
       (n: any) =>
-        n.recipientGroup || n.recipientEvent || n.recipientAmendment || n.recipientBlog
+        n.recipientGroup || n.recipientEvent || n.recipientAmendment || n.recipientBlog ||
+        n.onBehalfOfGroup || n.onBehalfOfEvent || n.onBehalfOfAmendment || n.onBehalfOfBlog
     );
   }, [accessibleNotifications]);
 

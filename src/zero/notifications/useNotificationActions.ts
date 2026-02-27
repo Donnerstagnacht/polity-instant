@@ -131,6 +131,29 @@ export function useNotificationActions() {
     [zero]
   )
 
+  // ── Entity Notification Reads ──────────────────────────────────────
+  const markEntityNotificationRead = useCallback(
+    async (args: Parameters<typeof mutators.notifications.markEntityNotificationRead>[0]) => {
+      try {
+        await zero.mutate(mutators.notifications.markEntityNotificationRead(args))
+      } catch (error) {
+        console.error('Failed to mark entity notification as read:', error)
+      }
+    },
+    [zero]
+  )
+
+  const markAllEntityNotificationsRead = useCallback(
+    async (args: Parameters<typeof mutators.notifications.markAllEntityNotificationsRead>[0]) => {
+      try {
+        await zero.mutate(mutators.notifications.markAllEntityNotificationsRead(args))
+      } catch (error) {
+        console.error('Failed to mark all entity notifications as read:', error)
+      }
+    },
+    [zero]
+  )
+
   return {
     // Read Status
     markRead,
@@ -149,5 +172,9 @@ export function useNotificationActions() {
 
     // Create
     createNotification,
+
+    // Entity Notification Reads
+    markEntityNotificationRead,
+    markAllEntityNotificationsRead,
   }
 }

@@ -259,6 +259,7 @@ When adding new code, ask:
 | `useXxxActions.ts`   | `useTodoActions.ts`   | Data layer write hook |
 
 ---
+Addionally, zero and postgres use snake_case for files and identifiers, while the feature logic and UI layers use camelCase (non database related variables).
 
 ## Folder Structure per Feature
 

@@ -28,6 +28,7 @@ export const notification = table('notification')
     recipient_event_id: string().optional(),
     recipient_amendment_id: string().optional(),
     recipient_blog_id: string().optional(),
+    category: string().optional(),
     created_at: number(),
   })
   .primaryKey('id')
@@ -59,5 +60,16 @@ export const notificationSetting = table('notification_setting')
     timeline_settings: json().optional(),
     created_at: number(),
     updated_at: number(),
+  })
+  .primaryKey('id')
+
+export const notificationRead = table('notification_read')
+  .columns({
+    id: string(),
+    notification_id: string(),
+    entity_type: string(),
+    entity_id: string(),
+    read_by_user_id: string().optional(),
+    read_at: number(),
   })
   .primaryKey('id')

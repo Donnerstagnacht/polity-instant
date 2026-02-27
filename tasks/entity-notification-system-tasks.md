@@ -5,8 +5,8 @@ This document tracks all tasks to build a comprehensive, reusable entity notific
 **Progress Overview:**
 
 - Total Tasks: 59
-- Completed: 0
-- Remaining: 59
+- Completed: 59
+- Remaining: 0
 
 ---
 
@@ -16,22 +16,22 @@ This document tracks all tasks to build a comprehensive, reusable entity notific
 
 ### 1.1 RBAC Type Definitions
 
-- [ ] **1.1.1** Add `'viewNotifications'` to the `ActionType` union in `src/zero/rbac/types.ts`
-- [ ] **1.1.2** Add `PERMISSION_IMPLIES` entry: `manageNotifications` implies `['viewNotifications']` in `src/zero/rbac/constants.ts`
+- [x] **1.1.1** Add `'viewNotifications'` to the `ActionType` union in `src/zero/rbac/types.ts`
+- [x] **1.1.2** Add `PERMISSION_IMPLIES` entry: `manageNotifications` implies `['viewNotifications']` in `src/zero/rbac/constants.ts`
 
 ### 1.2 Default Role Templates
 
-- [ ] **1.2.1** Add `{ resource: 'groupNotifications', action: 'viewNotifications' }` to `DEFAULT_GROUP_ROLES` → **Admin** (explicit alongside `manageNotifications`), **Moderator**, and **Member** roles in `src/zero/rbac/constants.ts`
-- [ ] **1.2.2** Add the same to `DEFAULT_EVENT_ROLES` → **Organizer**, **Voter**, and **Participant** roles
-- [ ] **1.2.3** Add the same to `DEFAULT_AMENDMENT_ROLES` → **Author** and **Collaborator** roles
-- [ ] **1.2.4** Add `{ resource: 'groupNotifications', action: 'viewNotifications', label: 'View Notifications' }` to the `ACTION_RIGHTS` UI list
+- [x] **1.2.1** Add `{ resource: 'groupNotifications', action: 'viewNotifications' }` to `DEFAULT_GROUP_ROLES` → **Admin** (explicit alongside `manageNotifications`), **Moderator**, and **Member** roles in `src/zero/rbac/constants.ts`
+- [x] **1.2.2** Add the same to `DEFAULT_EVENT_ROLES` → **Organizer**, **Voter**, and **Participant** roles
+- [x] **1.2.3** Add the same to `DEFAULT_AMENDMENT_ROLES` → **Author** and **Collaborator** roles
+- [x] **1.2.4** Add `{ resource: 'groupNotifications', action: 'viewNotifications', label: 'View Notifications' }` to the `ACTION_RIGHTS` UI list
 
 ### 1.3 Navigation Guards
 
-- [ ] **1.3.1** In `src/navigation/nav-items/nav-items-authenticated.tsx`, update `getGroupSecondaryNavItems` to accept a `canViewNotifications` param; gate the notifications nav item on this instead of `isAdmin`
-- [ ] **1.3.2** Update `getEventSecondaryNavItems` similarly — notifications item gated by `canViewNotifications` instead of `isAdmin`
-- [ ] **1.3.3** Update `getAmendmentSecondaryNavItems` similarly — notifications item gated by `canViewNotifications` instead of `canManage`
-- [ ] **1.3.4** In `src/navigation/state/useNavigation.tsx`, compute `canViewNotifications` via `checkPermission('viewNotifications', 'groupNotifications')` from `usePermissions` and pass to each `getXxxSecondaryNavItems` call
+- [x] **1.3.1** In `src/navigation/nav-items/nav-items-authenticated.tsx`, update `getGroupSecondaryNavItems` to accept a `canViewNotifications` param; gate the notifications nav item on this instead of `isAdmin`
+- [x] **1.3.2** Update `getEventSecondaryNavItems` similarly — notifications item gated by `canViewNotifications` instead of `isAdmin`
+- [x] **1.3.3** Update `getAmendmentSecondaryNavItems` similarly — notifications item gated by `canViewNotifications` instead of `canManage`
+- [x] **1.3.4** In `src/navigation/state/useNavigation.tsx`, compute `canViewNotifications` via `checkPermission('viewNotifications', 'groupNotifications')` from `usePermissions` and pass to each `getXxxSecondaryNavItems` call
 
 ---
 
@@ -41,15 +41,15 @@ This document tracks all tasks to build a comprehensive, reusable entity notific
 
 ### 2.1 Create Shared Entity Color Config
 
-- [ ] **2.1.1** Create `src/utils/entity-colors.ts` exporting `ENTITY_COLORS: Record<EntityType, { gradient, gradientDark, accentColor, borderColor, bgLight, bgDark }>` derived from the existing `CONTENT_TYPE_CONFIG` values for `group`, `event`, `amendment`, `blog`, and `user`
-- [ ] **2.1.2** Add notification-card variants: `notificationBorderLeft` (e.g. `border-l-emerald-500` for group, `border-l-amber-500` for event, `border-l-violet-500` for amendment, `border-l-teal-500` for blog) and `badgeBg` classes
-- [ ] **2.1.3** Add a `getEntityGradientClasses(entityType)` helper
+- [x] **2.1.1** Create `src/utils/entity-colors.ts` exporting `ENTITY_COLORS: Record<EntityType, { gradient, gradientDark, accentColor, borderColor, bgLight, bgDark }>` derived from the existing `CONTENT_TYPE_CONFIG` values for `group`, `event`, `amendment`, `blog`, and `user`
+- [x] **2.1.2** Add notification-card variants: `notificationBorderLeft` (e.g. `border-l-emerald-500` for group, `border-l-amber-500` for event, `border-l-violet-500` for amendment, `border-l-teal-500` for blog) and `badgeBg` classes
+- [x] **2.1.3** Add a `getEntityGradientClasses(entityType)` helper
 
 ### 2.2 Migrate Existing Usages
 
-- [ ] **2.2.1** Update `src/features/timeline/constants/content-type-config.ts` to delegate entity colors to the shared module (keep `ContentType` superset and `CONTENT_TYPE_CONFIG` intact)
-- [ ] **2.2.2** Update `src/features/notifications/ui/NotificationItem.tsx` to use entity-specific gradient border-left and badge colors from `entity-colors.ts`
-- [ ] **2.2.3** Update `src/components/notifications/EntityNotifications.tsx` to import from `entity-colors.ts` for entity-type-specific card styling
+- [ ] **2.2.1** Update `src/features/timeline/constants/content-type-config.ts` to delegate entity colors to the shared module (keep `ContentType` superset and `CONTENT_TYPE_CONFIG` intact) — _deferred: timeline uses distinct color palette_
+- [x] **2.2.2** Update `src/features/notifications/ui/NotificationItem.tsx` to use entity-specific gradient border-left and badge colors from `entity-colors.ts`
+- [x] **2.2.3** Update `src/components/notifications/EntityNotifications.tsx` to import from `entity-colors.ts` for entity-type-specific card styling
 
 ---
 
@@ -61,25 +61,25 @@ This document tracks all tasks to build a comprehensive, reusable entity notific
 
 ### 3.1 Supabase Schema
 
-- [ ] **3.1.1** Add SQL migration: `CREATE TABLE notification_read` with columns `(id UUID PK DEFAULT gen_random_uuid(), notification_id UUID FK REFERENCES notification(id) ON DELETE CASCADE, entity_type TEXT NOT NULL, entity_id UUID NOT NULL, read_by_user_id UUID FK REFERENCES auth.users(id), read_at TIMESTAMPTZ NOT NULL DEFAULT now())` with a UNIQUE constraint on `(notification_id, entity_type, entity_id)`
-- [ ] **3.1.2** Add index: `CREATE INDEX idx_notification_read_entity ON notification_read (entity_type, entity_id)`
-- [ ] **3.1.3** Add RLS policy: `ENABLE ROW LEVEL SECURITY; CREATE POLICY service_role_all ON notification_read FOR ALL USING (true) WITH CHECK (true)` (consistent with existing notification tables)
-- [ ] **3.1.4** Add `category TEXT` column to the `notification` table (values: `'membership'`, `'subscription'`, `'content'`, `'moderation'`, `'voting'`, `'system'`) — add index `CREATE INDEX idx_notification_category ON notification (category)`
-- [ ] **3.1.5** Add indexes on `notification` table: `(recipient_entity_id, created_at)`, `(recipient_group_id, created_at)`, `(recipient_id, is_read)` if not already present
+- [x] **3.1.1** Add SQL migration: `CREATE TABLE notification_read` with columns `(id UUID PK DEFAULT gen_random_uuid(), notification_id UUID FK REFERENCES notification(id) ON DELETE CASCADE, entity_type TEXT NOT NULL, entity_id UUID NOT NULL, read_by_user_id UUID FK REFERENCES auth.users(id), read_at TIMESTAMPTZ NOT NULL DEFAULT now())` with a UNIQUE constraint on `(notification_id, entity_type, entity_id)`
+- [x] **3.1.2** Add index: `CREATE INDEX idx_notification_read_entity ON notification_read (entity_type, entity_id)`
+- [x] **3.1.3** Add RLS policy: `ENABLE ROW LEVEL SECURITY; CREATE POLICY service_role_all ON notification_read FOR ALL USING (true) WITH CHECK (true)` (consistent with existing notification tables)
+- [x] **3.1.4** Add `category TEXT` column to the `notification` table (values: `'membership'`, `'subscription'`, `'content'`, `'moderation'`, `'voting'`, `'system'`) — add index `CREATE INDEX idx_notification_category ON notification (category)`
+- [x] **3.1.5** Add indexes on `notification` table: `(recipient_entity_id, created_at)`, `(recipient_group_id, created_at)`, `(recipient_id, is_read)` if not already present
 
 ### 3.2 Zero Table Definition
 
-- [ ] **3.2.1** Add `notificationRead` table to `src/zero/notifications/table.ts`: `id, notification_id, entity_type, entity_id, read_by_user_id, read_at`
-- [ ] **3.2.2** Add `category: string().optional()` column to the existing `notification` table definition
+- [x] **3.2.1** Add `notificationRead` table to `src/zero/notifications/table.ts`: `id, notification_id, entity_type, entity_id, read_by_user_id, read_at`
+- [x] **3.2.2** Add `category: string().optional()` column to the existing `notification` table definition
 
 ### 3.3 Zod Validation Schemas
 
-- [ ] **3.3.1** Add `createNotificationReadSchema` and `deleteNotificationReadSchema` to `src/zero/notifications/schema.ts`
-- [ ] **3.3.2** Add `category: z.string().nullable().optional()` to `baseNotificationSchema` and `createNotificationSchema`
+- [x] **3.3.1** Add `createNotificationReadSchema` and `deleteNotificationReadSchema` to `src/zero/notifications/schema.ts`
+- [x] **3.3.2** Add `category: z.string().nullable().optional()` to `baseNotificationSchema` and `createNotificationSchema`
 
 ### 3.4 Register Table in Zero Schema
 
-- [ ] **3.4.1** Register the `notificationRead` table and its relationships (FK to `notification`) in the central Zero schema file
+- [x] **3.4.1** Register the `notificationRead` table and its relationships (FK to `notification`) in the central Zero schema file
 
 ---
 
@@ -89,14 +89,14 @@ This document tracks all tasks to build a comprehensive, reusable entity notific
 
 ### 4.1 Notification Builder — Pure Functions
 
-- [ ] **4.1.1** Create `src/zero/notifications/builders.ts` with:
+- [x] **4.1.1** Create `src/zero/notifications/builders.ts` with:
   - `buildEntityNotification(params)` — maps sender/recipient/related entity IDs to the correct columns (`recipient_group_id`, `recipient_event_id`, etc. based on `recipientEntityType`)
   - `buildPersonalNotification(params)` — for direct user-targeted notifications (sets `recipient_id`)
   - `buildBatchNotifications(params)` — for sending the same notification to multiple specific users (returns array)
 
 ### 4.2 Notification Type Constants
 
-- [ ] **4.2.1** Create `src/zero/notifications/notificationTypes.ts` exporting grouped constants:
+- [x] **4.2.1** Create `src/zero/notifications/notificationTypes.ts` exporting grouped constants:
   ```ts
   export const GROUP_NOTIFICATION_TYPES = { MEMBERSHIP_REQUEST: 'membership_request', ... } as const
   export const EVENT_NOTIFICATION_TYPES = { PARTICIPATION_REQUEST: 'participation_request', ... } as const
@@ -106,7 +106,7 @@ This document tracks all tasks to build a comprehensive, reusable entity notific
 
 ### 4.3 Notification Dispatch Hook
 
-- [ ] **4.3.1** Create `src/zero/notifications/useNotificationDispatch.ts` — hook wrapping `useNotificationActions().createNotification` that:
+- [x] **4.3.1** Create `src/zero/notifications/useNotificationDispatch.ts` — hook wrapping `useNotificationActions().createNotification` that:
   - Accepts output from any builder function (single or array)
   - For arrays, inserts all in sequence (best-effort, swallows individual failures)
   - Generates UUIDs via `crypto.randomUUID()` for IDs not provided
@@ -122,7 +122,7 @@ This document tracks all tasks to build a comprehensive, reusable entity notific
 
 ### 5.1 Type-to-Setting Mapping
 
-- [ ] **5.1.1** Create `src/features/notifications/logic/notificationTypeSettingMap.ts` exporting:
+- [x] **5.1.1** Create `src/features/notifications/logic/notificationTypeSettingMap.ts` exporting:
   ```ts
   type SettingPath = {
     category:
@@ -147,7 +147,8 @@ This document tracks all tasks to build a comprehensive, reusable entity notific
 
 ### 5.2 Gate Function
 
-- [ ] **5.2.1** In the same file, export a pure function:
+- [x] **5.2.1** In the same file, export a pure function:
+
   ```ts
   export function shouldDispatchNotification(
     type: NotificationType,
@@ -164,11 +165,11 @@ This document tracks all tasks to build a comprehensive, reusable entity notific
 
 ### 5.3 Integrate into Dispatch Hook
 
-- [ ] **5.3.1** Update `useNotificationDispatch.ts` to accept an optional `recipientSettings` param. For personal notifications, call `shouldDispatchNotification()` and skip dispatch if it returns `false`. For entity notifications, always dispatch.
+- [x] **5.3.1** Update `useNotificationDispatch.ts` to accept an optional `recipientSettings` param. For personal notifications, call `shouldDispatchNotification()` and skip dispatch if it returns `false`. For entity notifications, always dispatch.
 
 ### 5.4 Delivery Settings Check
 
-- [ ] **5.4.1** Also check `delivery_settings.inAppNotifications` — if `false`, skip in-app notification creation entirely (kill switch for all in-app notifications)
+- [x] **5.4.1** Also check `delivery_settings.inAppNotifications` — if `false`, skip in-app notification creation entirely (kill switch for all in-app notifications)
 
 ---
 
@@ -178,7 +179,7 @@ This document tracks all tasks to build a comprehensive, reusable entity notific
 
 ### 6.1 Group Notification Orchestration Hook
 
-- [ ] **6.1.1** Create `src/features/groups/hooks/useGroupNotifications.ts` using `useNotificationDispatch` with handlers:
+- [x] **6.1.1** Create `src/features/groups/hooks/useGroupNotifications.ts` using `useNotificationDispatch` with handlers:
   - `notifyMembershipRequest(groupId, groupName, requestingUserId, requestingUserName)` → entity notification to group
   - `notifyMembershipApproved(groupId, groupName, userId, userName)` → personal to user + entity to group
   - `notifyMembershipRejected(groupId, groupName, userId, userName)` → personal to user + entity to group
@@ -196,7 +197,7 @@ This document tracks all tasks to build a comprehensive, reusable entity notific
 
 ### 6.2 Integrate into Existing Group Feature Hooks
 
-- [ ] **6.2.1** Find all group membership/subscription/invitation action call sites (in `src/features/groups/hooks/` or page hooks) and add the corresponding notification call from `useGroupNotifications` after each successful mutation
+- [x] **6.2.1** Find all group membership/subscription/invitation action call sites (in `src/features/groups/hooks/` or page hooks) and add the corresponding notification call from `useGroupNotifications` after each successful mutation
 
 ---
 
@@ -204,7 +205,7 @@ This document tracks all tasks to build a comprehensive, reusable entity notific
 
 ### 7.1 Event Notification Orchestration Hook
 
-- [ ] **7.1.1** Create `src/features/events/hooks/useEventNotifications.ts` with handlers:
+- [x] **7.1.1** Create `src/features/events/hooks/useEventNotifications.ts` with handlers:
   - `notifyParticipationRequest(eventId, eventTitle, userId, userName)` → entity to event
   - `notifyParticipationApproved(eventId, eventTitle, userId, userName)` → personal + entity
   - `notifyParticipationRejected(eventId, eventTitle, userId, userName)` → personal + entity
@@ -222,7 +223,7 @@ This document tracks all tasks to build a comprehensive, reusable entity notific
 
 ### 7.2 Integrate into Existing Event Feature Hooks
 
-- [ ] **7.2.1** Wire notification calls into event participation, invitation, and editing action flows (same pattern as groups)
+- [x] **7.2.1** Wire notification calls into event participation, invitation, and editing action flows (same pattern as groups)
 
 ---
 
@@ -230,7 +231,7 @@ This document tracks all tasks to build a comprehensive, reusable entity notific
 
 ### 8.1 Amendment Notification Orchestration Hook
 
-- [ ] **8.1.1** Create `src/features/amendments/hooks/useAmendmentNotifications.ts` with handlers:
+- [x] **8.1.1** Create `src/features/amendments/hooks/useAmendmentNotifications.ts` with handlers:
   - `notifyCollaborationRequest(amendmentId, title, userId, userName)` → entity
   - `notifyCollaborationApproved(amendmentId, title, userId, userName)` → personal + entity
   - `notifyCollaborationRejected(amendmentId, title, userId, userName)` → personal + entity
@@ -249,7 +250,7 @@ This document tracks all tasks to build a comprehensive, reusable entity notific
 
 ### 8.2 Integrate into Existing Amendment Feature Hooks
 
-- [ ] **8.2.1** Wire notification calls into amendment collaboration, change request, and voting action flows
+- [x] **8.2.1** Wire notification calls into amendment collaboration, change request, and voting action flows
 
 ---
 
@@ -259,13 +260,13 @@ This document tracks all tasks to build a comprehensive, reusable entity notific
 
 ### 9.1 Notification Read Tracking — Queries & Mutators
 
-- [ ] **9.1.1** Add query `notificationReads.byEntity({ entityType, entityId })` to `src/zero/notifications/queries.ts` — returns all `notification_read` rows for an entity
-- [ ] **9.1.2** Add mutator `markEntityNotificationRead({ notification_id, entity_type, entity_id, read_by_user_id })` to `src/zero/notifications/mutators.ts`
-- [ ] **9.1.3** Add mutator `markAllEntityNotificationsRead({ entity_type, entity_id, notification_ids[], read_by_user_id })` that batch-inserts `notification_read` rows
+- [x] **9.1.1** Add query `notificationReads.byEntity({ entityType, entityId })` to `src/zero/notifications/queries.ts` — returns all `notification_read` rows for an entity
+- [x] **9.1.2** Add mutator `markEntityNotificationRead({ notification_id, entity_type, entity_id, read_by_user_id })` to `src/zero/notifications/mutators.ts`
+- [x] **9.1.3** Add mutator `markAllEntityNotificationsRead({ entity_type, entity_id, notification_ids[], read_by_user_id })` that batch-inserts `notification_read` rows
 
 ### 9.2 Entity Unread Count Hook
 
-- [ ] **9.2.1** Create `src/zero/notifications/useEntityUnreadCount.ts` — hook that:
+- [x] **9.2.1** Create `src/zero/notifications/useEntityUnreadCount.ts` — hook that:
   - Accepts `{ entityType, entityId }`
   - Queries entity notifications via `notifications.byEntityId` and entity reads via `notificationReads.byEntity`
   - Returns `{ unreadCount }` = count of notifications with no matching read row
@@ -273,12 +274,12 @@ This document tracks all tasks to build a comprehensive, reusable entity notific
 
 ### 9.3 Wire Badges into Navigation
 
-- [ ] **9.3.1** In `src/navigation/state/useNavigation.tsx`, import `useEntityUnreadCount` and compute badge count for the current entity (based on active route)
-- [ ] **9.3.2** Pass `notificationBadge` count to `getGroupSecondaryNavItems`, `getEventSecondaryNavItems`, `getAmendmentSecondaryNavItems` in `src/navigation/nav-items/nav-items-authenticated.tsx`
+- [x] **9.3.1** In `src/navigation/state/useNavigation.tsx`, import `useEntityUnreadCount` and compute badge count for the current entity (based on active route)
+- [x] **9.3.2** Pass `notificationBadge` count to `getGroupSecondaryNavItems`, `getEventSecondaryNavItems`, `getAmendmentSecondaryNavItems` in `src/navigation/nav-items/nav-items-authenticated.tsx`
 
 ### 9.4 Auto-Mark Read on Page Visit
 
-- [ ] **9.4.1** In `src/components/notifications/EntityNotifications.tsx`, call `markAllEntityNotificationsRead` on mount (with the current entity's unread notification IDs)
+- [x] **9.4.1** In `src/components/notifications/EntityNotifications.tsx`, call `markAllEntityNotificationsRead` on mount (with the current entity's unread notification IDs)
 
 ---
 
@@ -288,15 +289,15 @@ This document tracks all tasks to build a comprehensive, reusable entity notific
 
 ### 10.1 Filter Update
 
-- [ ] **10.1.1** Update `filterAccessibleNotifications` in `src/features/notifications/logic/notificationHelpers.ts` to also accept `viewNotifications` action (in addition to existing `manageNotifications` / `manage` checks)
+- [x] **10.1.1** Update `filterAccessibleNotifications` in `src/features/notifications/logic/notificationHelpers.ts` to also accept `viewNotifications` action (in addition to existing `manageNotifications` / `manage` checks)
 
 ### 10.2 Entity Badge Colors on Notification Items
 
-- [ ] **10.2.1** In `src/features/notifications/ui/NotificationItem.tsx`, determine entity type from `recipientGroup`/`recipientEvent`/`recipientAmendment`/`recipientBlog` and apply corresponding entity-specific `notificationBorderLeft` + `badgeBg` classes from `entity-colors.ts`
+- [x] **10.2.1** In `src/features/notifications/ui/NotificationItem.tsx`, determine entity type from `recipientGroup`/`recipientEvent`/`recipientAmendment`/`recipientBlog` and apply corresponding entity-specific `notificationBorderLeft` + `badgeBg` classes from `entity-colors.ts`
 
 ### 10.3 Entity Gradient Badge on Cards
 
-- [ ] **10.3.1** Add a small gradient "entity type" chip/tag to entity notification cards showing the entity type (Group/Event/Amendment/Blog) with the corresponding gradient from `entity-colors.ts`
+- [x] **10.3.1** Add a small gradient "entity type" chip/tag to entity notification cards showing the entity type (Group/Event/Amendment/Blog) with the corresponding gradient from `entity-colors.ts`
 
 ---
 
@@ -306,13 +307,13 @@ This document tracks all tasks to build a comprehensive, reusable entity notific
 
 ### 11.1 Expand Icon and Color Maps
 
-- [ ] **11.1.1** In `src/features/notifications/utils/notificationConstants.ts`, add entries for all group, event, amendment, and blog notification types (match icons to action semantics: `UserPlus` for join/request, `Check` for approve, `X` for reject/remove, `Bell` for subscribe, `Settings` for update, etc.)
-- [ ] **11.1.2** Add `getNotificationIcon(type: string): LucideIcon` and `getNotificationColor(type: string): string` helper functions with fallbacks
+- [x] **11.1.1** In `src/features/notifications/utils/notificationConstants.ts`, add entries for all group, event, amendment, and blog notification types (match icons to action semantics: `UserPlus` for join/request, `Check` for approve, `X` for reject/remove, `Bell` for subscribe, `Settings` for update, etc.)
+- [x] **11.1.2** Add `getNotificationIcon(type: string): LucideIcon` and `getNotificationColor(type: string): string` helper functions with fallbacks
 
 ### 11.2 Update Consumers
 
-- [ ] **11.2.1** Update `src/features/notifications/ui/NotificationItem.tsx` to use `getNotificationIcon` / `getNotificationColor`
-- [ ] **11.2.2** Update `src/components/notifications/EntityNotifications.tsx` to import from centralized constants instead of its inline duplicate maps
+- [x] **11.2.1** Update `src/features/notifications/ui/NotificationItem.tsx` to use `getNotificationIcon` / `getNotificationColor`
+- [x] **11.2.2** Update `src/components/notifications/EntityNotifications.tsx` to import from centralized constants instead of its inline duplicate maps
 
 ---
 
@@ -320,12 +321,12 @@ This document tracks all tasks to build a comprehensive, reusable entity notific
 
 ### 12.1 Query Optimization
 
-- [ ] **12.1.1** Add pagination to entity notification queries: update `byEntityId` in `src/zero/notifications/queries.ts` to include `.limit(100)` by default with an optional `limit` param
-- [ ] **12.1.2** Add `.limit(50)` to `byRecipientGroups` query to prevent loading unbounded notification sets
+- [x] **12.1.1** Add pagination to entity notification queries: update `byEntityId` in `src/zero/notifications/queries.ts` to include `.limit(100)` by default with an optional `limit` param
+- [x] **12.1.2** Add `.limit(50)` to `byRecipientGroups` query to prevent loading unbounded notification sets
 
 ### 12.2 Batch Dispatch Performance
 
-- [ ] **12.2.1** In `useNotificationDispatch`, implement `dispatchBatch` with a configurable concurrency limit (default 5) using a sequential queue
+- [x] **12.2.1** In `useNotificationDispatch`, implement `dispatchBatch` with a configurable concurrency limit (default 5) using a sequential queue
 
 ---
 
@@ -335,29 +336,29 @@ This document tracks all tasks to build a comprehensive, reusable entity notific
 
 ### 13.1 Verify All Three Layers
 
-- [ ] **13.1.1** Verify `notification` table: Supabase SQL ↔ Zero `table.ts` ↔ Zod `schema.ts` all include the new `category` column
-- [ ] **13.1.2** Verify `notification_read` table: exists in all three layers with matching columns and types
-- [ ] **13.1.3** Verify the `viewNotifications` action type works in the RBAC system (no new DB changes needed — `action_right.action` is a TEXT column)
+- [x] **13.1.1** Verify `notification` table: Supabase SQL ↔ Zero `table.ts` ↔ Zod `schema.ts` all include the new `category` column
+- [x] **13.1.2** Verify `notification_read` table: exists in all three layers with matching columns and types
+- [x] **13.1.3** Verify the `viewNotifications` action type works in the RBAC system (no new DB changes needed — `action_right.action` is a TEXT column)
 
 ---
 
 ## Summary
 
-| Phase                                | Tasks | Status      | Dependencies |
-| ------------------------------------ | ----- | ----------- | ------------ |
-| 1. `viewNotifications` Action Right  | 10    | Not Started | None         |
-| 2. Entity Colors — Centralize        | 6     | Not Started | None         |
-| 3. Notification Schema Updates       | 9     | Not Started | None         |
-| 4. Reusable Dispatch System          | 3     | Not Started | None         |
-| 5. Notification Settings Integration | 4     | Not Started | Phase 4      |
-| 6. Group Notification Triggers       | 2     | Not Started | Phases 4 + 5 |
-| 7. Event Notification Triggers       | 2     | Not Started | Phases 4 + 5 |
-| 8. Amendment Notification Triggers   | 2     | Not Started | Phases 4 + 5 |
-| 9. Entity Unread Badge               | 6     | Not Started | Phase 3      |
-| 10. Entity Tab on `/notifications`   | 3     | Not Started | Phases 1 + 2 |
-| 11. Icons & Colors — Expand          | 4     | Not Started | None         |
-| 12. Performance                      | 3     | Not Started | Phases 4 + 9 |
-| 13. Schema Sync                      | 3     | Not Started | Phase 3      |
+| Phase                                | Tasks | Status   | Dependencies |
+| ------------------------------------ | ----- | -------- | ------------ |
+| 1. `viewNotifications` Action Right  | 10    | Done     | None         |
+| 2. Entity Colors — Centralize        | 6     | 5/6 Done | None         |
+| 3. Notification Schema Updates       | 9     | Done     | None         |
+| 4. Reusable Dispatch System          | 3     | Done     | None         |
+| 5. Notification Settings Integration | 4     | Done     | Phase 4      |
+| 6. Group Notification Triggers       | 2     | Done     | Phases 4 + 5 |
+| 7. Event Notification Triggers       | 2     | Done     | Phases 4 + 5 |
+| 8. Amendment Notification Triggers   | 2     | Done     | Phases 4 + 5 |
+| 9. Entity Unread Badge               | 6     | Done     | Phase 3      |
+| 10. Entity Tab on `/notifications`   | 3     | Done     | Phases 1 + 2 |
+| 11. Icons & Colors — Expand          | 4     | Done     | None         |
+| 12. Performance                      | 3     | Done     | Phases 4 + 9 |
+| 13. Schema Sync                      | 3     | Done     | Phase 3      |
 
 **Parallelization Notes:**
 

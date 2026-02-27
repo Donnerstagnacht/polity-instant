@@ -10,6 +10,7 @@ export const notificationQueries = {
       zql.notification
         .where('recipient_id', userID)
         .orderBy('created_at', 'desc')
+        .limit(500)
   ),
 
   // Unread notifications for the current user
@@ -41,12 +42,14 @@ export const notificationQueries = {
   // Notifications for a specific entity
   byEntity: defineQuery(
     z.object({ entityId: z.string(), entityType: z.string() }),
-    ({ ctx: { userID }, args: { entityId, entityType } }) =>
+    ({ args: { entityId, entityType } }) =>
       zql.notification
-        .where('recipient_id', userID)
         .where('recipient_entity_id', entityId)
         .where('recipient_entity_type', entityType)
+        .related('sender')
+        .related('related_user')
         .orderBy('created_at', 'desc')
+        .limit(200)
   ),
 
   // Personal notifications with all relations and nested RBAC data
@@ -103,6 +106,7 @@ export const notificationQueries = {
         .related('related_amendment')
         .related('related_blog')
         .orderBy('created_at', 'desc')
+        .limit(50)
   ),
 
   // Push subscription by endpoint
@@ -157,5 +161,18 @@ export const notificationQueries = {
         .where('recipient_entity_id', entity_id)
         .related('sender')
         .orderBy('created_at', 'desc')
+        .limit(200)
+  ),
+
+  // ── Notification Read queries ──────────────────────────────────────
+
+  // Reads for a specific entity (to compute unread count)
+  readsByEntity: defineQuery(
+    z.object({ entityId: z.string(), entityType: z.string() }),
+    ({ ctx: { userID }, args: { entityId, entityType } }) =>
+      zql.notification_read
+        .where('entity_id', entityId)
+        .where('entity_type', entityType)
+        .where('read_by_user_id', userID)
   ),
 }

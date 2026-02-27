@@ -31,6 +31,7 @@ const baseNotificationSchema = z.object({
   recipient_event_id: z.string().nullable(),
   recipient_amendment_id: z.string().nullable(),
   recipient_blog_id: z.string().nullable(),
+  category: z.string().nullable(),
   created_at: timestampSchema,
 })
 
@@ -103,3 +104,22 @@ export const updateNotificationSettingSchema = baseNotificationSettingSchema
 export type Notification = z.infer<typeof selectNotificationSchema>
 export type PushSubscription = z.infer<typeof selectPushSubscriptionSchema>
 export type NotificationSetting = z.infer<typeof selectNotificationSettingSchema>
+
+// ============================================
+// Notification Read (entity-level shared read tracking)
+// ============================================
+const baseNotificationReadSchema = z.object({
+  id: z.string(),
+  notification_id: z.string(),
+  entity_type: z.string(),
+  entity_id: z.string(),
+  read_by_user_id: z.string().nullable(),
+  read_at: timestampSchema,
+})
+
+export const selectNotificationReadSchema = baseNotificationReadSchema
+export const createNotificationReadSchema = baseNotificationReadSchema
+  .omit({ id: true, read_at: true })
+  .extend({ id: z.string() })
+export const deleteNotificationReadSchema = z.object({ id: z.string() })
+export type NotificationRead = z.infer<typeof selectNotificationReadSchema>

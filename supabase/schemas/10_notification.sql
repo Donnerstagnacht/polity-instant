@@ -5,7 +5,7 @@
 -- Notification table
 CREATE TABLE IF NOT EXISTS public.notification (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  recipient_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
+  recipient_id UUID REFERENCES public."user" (id) ON DELETE CASCADE,
   sender_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
   title TEXT,
   message TEXT,
@@ -30,12 +30,17 @@ CREATE TABLE IF NOT EXISTS public.notification (
   recipient_event_id UUID,
   recipient_amendment_id UUID,
   recipient_blog_id UUID,
+  category TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_notification_recipient ON public.notification (recipient_id);
 CREATE INDEX idx_notification_sender ON public.notification (sender_id);
 CREATE INDEX idx_notification_is_read ON public.notification (is_read);
+CREATE INDEX idx_notification_recipient_entity ON public.notification (recipient_entity_id, created_at);
+CREATE INDEX idx_notification_recipient_group ON public.notification (recipient_group_id, created_at);
+CREATE INDEX idx_notification_recipient_read ON public.notification (recipient_id, is_read);
+CREATE INDEX idx_notification_category ON public.notification (category);
 
 ALTER TABLE public.notification ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.notification FOR ALL TO service_role USING (true);
@@ -75,3 +80,19 @@ CREATE TABLE IF NOT EXISTS public.notification_setting (
 
 ALTER TABLE public.notification_setting ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.notification_setting FOR ALL TO service_role USING (true);
+
+-- Notification read table (entity-level shared read tracking)
+CREATE TABLE IF NOT EXISTS public.notification_read (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  notification_id UUID NOT NULL REFERENCES public.notification (id) ON DELETE CASCADE,
+  entity_type TEXT NOT NULL,
+  entity_id UUID NOT NULL,
+  read_by_user_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
+  read_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (notification_id, entity_type, entity_id)
+);
+
+CREATE INDEX idx_notification_read_entity ON public.notification_read (entity_type, entity_id);
+
+ALTER TABLE public.notification_read ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.notification_read FOR ALL TO service_role USING (true);

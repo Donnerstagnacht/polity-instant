@@ -3,7 +3,6 @@ import { useUserMembershipInGroup } from '@/zero/groups/useGroupState';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from 'sonner';
-import { notifyMembershipRequest } from '@/utils/notification-helpers';
 import { sendNotificationFn } from '@/server/notifications';
 
 export type MembershipStatus = 'invited' | 'requested' | 'member' | 'admin';
@@ -72,7 +71,7 @@ export function useGroupMembership(groupId: string) {
         role_id: null,
       });
 
-      sendNotificationFn({ data: { helper: 'notifyMembershipRequest', params: { senderId: user.id, groupId } } }).catch(console.error)
+      sendNotificationFn({ data: { helper: 'notifyMembershipRequest', params: { senderId: user.id, senderName: user.email?.split('@')[0] || 'A user', groupId, groupName } } }).catch(console.error)
       toast.success('Membership request sent successfully');
     } catch (error) {
       console.error('Failed to request membership:', error);
@@ -94,8 +93,10 @@ export function useGroupMembership(groupId: string) {
       
       // Show different message based on membership status
       if (status === 'requested') {
+        sendNotificationFn({ data: { helper: 'notifyGroupRequestWithdrawn', params: { senderId: user?.id, senderName: user?.email?.split('@')[0] || 'A user', groupId, groupName: 'Group' } } }).catch(console.error)
         toast.success('Request successfully withdrawn.');
       } else {
+        sendNotificationFn({ data: { helper: 'notifyMembershipWithdrawn', params: { senderId: user?.id, senderName: user?.email?.split('@')[0] || 'A user', groupId, groupName: 'Group' } } }).catch(console.error)
         toast.success('Successfully left the group');
       }
     } catch (error) {
@@ -118,6 +119,7 @@ export function useGroupMembership(groupId: string) {
         status: 'member',
       });
       // Conversation membership: Requires conversation_participant record creation. Deferred until conversation-group linking is implemented.
+      sendNotificationFn({ data: { helper: 'notifyGroupInvitationAccepted', params: { senderId: user.id, senderName: user.email?.split('@')[0] || 'A user', groupId, groupName: 'Group' } } }).catch(console.error)
       toast.success('Successfully joined the group');
     } catch (error) {
       console.error('Failed to accept invitation:', error);

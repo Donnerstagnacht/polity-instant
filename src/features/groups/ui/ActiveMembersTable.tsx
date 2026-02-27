@@ -28,10 +28,10 @@ import type { GroupMembershipWithUser, GroupRole } from '../types/group.types';
 interface ActiveMembersTableProps {
   members: GroupMembershipWithUser[];
   roles: GroupRole[];
-  onChangeRole: (membershipId: string, roleId: string) => void;
-  onPromote: (membershipId: string) => void;
-  onDemote: (membershipId: string) => void;
-  onRemove: (membershipId: string) => void;
+  onChangeRole: (membershipId: string, roleId: string, userId: string) => void;
+  onPromote: (membershipId: string, userId: string) => void;
+  onDemote: (membershipId: string, userId: string) => void;
+  onRemove: (membershipId: string, userId: string) => void;
   onNavigateToUser: (userId: string) => void;
 }
 
@@ -112,7 +112,7 @@ export function ActiveMembersTable({
                       <Select
                         value={roleId}
                         onValueChange={(newRoleId) =>
-                          onChangeRole(membership.id, newRoleId)
+                          user?.id && onChangeRole(membership.id, newRoleId, user.id)
                         }
                       >
                         <SelectTrigger className="w-40">
@@ -134,7 +134,7 @@ export function ActiveMembersTable({
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => onPromote(membership.id)}
+                            onClick={() => user?.id && onPromote(membership.id, user.id)}
                           >
                             <Shield className="mr-1 h-4 w-4" />
                             Promote to Board Member
@@ -144,7 +144,7 @@ export function ActiveMembersTable({
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => onDemote(membership.id)}
+                            onClick={() => user?.id && onDemote(membership.id, user.id)}
                           >
                             Demote to Member
                           </Button>
@@ -152,7 +152,7 @@ export function ActiveMembersTable({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => onRemove(membership.id)}
+                          onClick={() => user?.id && onRemove(membership.id, user.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                           <span className="ml-2">Remove</span>

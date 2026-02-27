@@ -6,9 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Users, X, Bell } from 'lucide-react';
 import { cn } from '@/utils/utils';
 import { Notification, NotificationType } from '../types/notification.types';
-import { notificationIcons, notificationColors } from '../utils/notificationConstants';
+import { getNotificationIcon, getNotificationColor } from '../utils/notificationConstants';
 import { formatTime } from '../logic/notificationHelpers';
 import { useTranslation } from '@/hooks/use-translation';
+import { ENTITY_COLORS, type EntityType as EntityColorType } from '@/utils/entity-colors';
 
 interface NotificationItemProps {
   notification: Notification;
@@ -23,8 +24,8 @@ export function NotificationItem({
 }: NotificationItemProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const Icon = notificationIcons[notification.type as NotificationType] || Bell;
-  const iconColor = notificationColors[notification.type as NotificationType] || 'text-gray-500';
+  const Icon = getNotificationIcon(notification.type as NotificationType);
+  const iconColor = getNotificationColor(notification.type as NotificationType);
 
   // Determine if this is a personal or entity notification
   const isEntityNotification = !!(
@@ -33,6 +34,19 @@ export function NotificationItem({
     notification.recipientAmendment ||
     notification.recipientBlog
   );
+
+  // Determine entity type for color coding
+  const entityType: EntityColorType | null = notification.recipientGroup
+    ? 'group'
+    : notification.recipientEvent
+      ? 'event'
+      : notification.recipientAmendment
+        ? 'amendment'
+        : notification.recipientBlog
+          ? 'blog'
+          : null;
+
+  const entityColors = entityType ? ENTITY_COLORS[entityType] : null;
 
   // Get entity sent on behalf of
   const onBehalfEntity =
@@ -53,67 +67,86 @@ export function NotificationItem({
       className={cn(
         'cursor-pointer transition-all hover:shadow-md',
         !notification.isRead && 'border-l-4 border-l-primary bg-accent/50',
-        isEntityNotification && 'border-l-blue-500'
+        isEntityNotification && entityColors && `border-l-4 ${entityColors.notificationBorderLeft}`
       )}
       onClick={() => onNotificationClick(notification)}
     >
-      <CardContent className="flex items-start gap-4 p-4">
+      <CardContent className="flex items-start gap-3 p-3">
         {/* Notification Icon */}
-        <div className={cn('rounded-full bg-muted p-2', !notification.isRead && 'bg-primary/10')}>
-          <Icon className={cn('h-5 w-5', iconColor)} />
+        <div className={cn('rounded-full bg-muted p-1.5 mt-0.5', !notification.isRead && 'bg-primary/10')}>
+          <Icon className={cn('h-3.5 w-3.5', iconColor)} />
         </div>
 
-        {/* Sender Avatar (if available) */}
-        {notification.sender && (
-          <div className="flex flex-col items-center gap-1">
-            <Avatar
-              className="h-10 w-10 cursor-pointer hover:ring-2 hover:ring-primary"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate({ to: `/user/${notification.sender!.id}` });
-              }}
-            >
-              <AvatarImage src={notification.sender.avatar} />
-              <AvatarFallback>
-                {notification.sender.name?.[0]?.toUpperCase() || 'U'}
-              </AvatarFallback>
-            </Avatar>
-            {onBehalfEntity && (
-              <>
-                <span className="text-xs text-muted-foreground">{t('features.notifications.item.for')}</span>
-                <Avatar
-                  className="h-8 w-8 cursor-pointer hover:ring-2 hover:ring-blue-500"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const entityType = notification.onBehalfOfGroup
-                      ? 'group'
-                      : notification.onBehalfOfEvent
-                        ? 'event'
-                        : notification.onBehalfOfAmendment
-                          ? 'amendment'
-                          : 'blog';
-                    navigate({ to: `/${entityType}/${onBehalfEntity.id}` });
-                  }}
-                >
-                  <AvatarImage src={onBehalfEntity.imageURL} />
-                  <AvatarFallback className="bg-blue-500 text-xs text-white">
-                    {((onBehalfEntity as any).name?.[0] || (onBehalfEntity as any).title?.[0])?.toUpperCase() || 'E'}
-                  </AvatarFallback>
-                </Avatar>
-              </>
-            )}
-          </div>
-        )}
-
         {/* Content */}
-        <div className="flex-1 space-y-1">
+        <div className="flex-1 min-w-0 space-y-0.5">
+          {/* Sender + On-behalf-of entity line */}
+          {(notification.sender || onBehalfEntity) && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              {notification.sender && (
+                <>
+                  <Avatar
+                    className="h-5 w-5 shrink-0 cursor-pointer hover:ring-1 hover:ring-primary"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate({ to: `/user/${notification.sender!.id}` });
+                    }}
+                  >
+                    <AvatarImage src={notification.sender.avatar} />
+                    <AvatarFallback className="text-[10px]">
+                      {notification.sender.name?.[0]?.toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span
+                    className="font-medium hover:text-primary hover:underline cursor-pointer truncate"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate({ to: `/user/${notification.sender!.id}` });
+                    }}
+                  >
+                    {notification.sender.name}
+                  </span>
+                </>
+              )}
+              {notification.sender && onBehalfEntity && (
+                <span className="shrink-0">{t('features.notifications.item.for')}</span>
+              )}
+              {onBehalfEntity && (
+                <>
+                  <Avatar
+                    className="h-5 w-5 shrink-0 cursor-pointer hover:ring-1 hover:ring-blue-500"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const eType = notification.onBehalfOfGroup
+                        ? 'group'
+                        : notification.onBehalfOfEvent
+                          ? 'event'
+                          : notification.onBehalfOfAmendment
+                            ? 'amendment'
+                            : 'blog';
+                      navigate({ to: `/${eType}/${onBehalfEntity.id}` });
+                    }}
+                  >
+                    <AvatarImage src={onBehalfEntity.imageURL} />
+                    <AvatarFallback className="bg-blue-500 text-[10px] text-white">
+                      {((onBehalfEntity as any).name?.[0] || (onBehalfEntity as any).title?.[0])?.toUpperCase() || 'E'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span
+                    className="font-medium truncate"
+                  >
+                    {(onBehalfEntity as any).name || (onBehalfEntity as any).title || 'Entity'}
+                  </span>
+                </>
+              )}
+            </div>
+          )}
           <div className="flex items-start justify-between gap-2">
             <div className="flex flex-col gap-1">
-              <p className={cn('font-medium', !notification.isRead && 'font-semibold')}>
+              <p className={cn('text-sm font-medium', !notification.isRead && 'font-semibold')}>
                 {notification.title}
               </p>
               {isEntityNotification && recipientEntity && (
-                <Badge variant="outline" className="w-fit">
+                <Badge variant="outline" className={cn('w-fit', entityColors?.badgeBg)}>
                   <Users className="mr-1 h-3 w-3" />
                   {(recipientEntity as any).name || (recipientEntity as any).title || 'Entity'} {t('features.notifications.item.notification')}
                 </Badge>

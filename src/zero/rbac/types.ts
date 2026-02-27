@@ -62,7 +62,8 @@ export type ActionType =
   | 'manage_roles'
   | 'manage_speakers'
   | 'manage_votes'
-  | 'manageNotifications';
+  | 'manageNotifications'
+  | 'viewNotifications';
 
 export interface ActionRight {
   id: string;

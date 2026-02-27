@@ -1,5 +1,5 @@
 // Table
-export { notification, pushSubscription, notificationSetting } from './table'
+export { notification, pushSubscription, notificationSetting, notificationRead } from './table'
 
 // Zod Schemas
 export {
@@ -11,9 +11,13 @@ export {
   deletePushSubscriptionSchema,
   selectNotificationSettingSchema,
   updateNotificationSettingSchema,
+  selectNotificationReadSchema,
+  createNotificationReadSchema,
+  deleteNotificationReadSchema,
   type Notification,
   type PushSubscription,
   type NotificationSetting,
+  type NotificationRead,
 } from './schema'
 
 // Queries & Mutators
@@ -23,3 +27,4 @@ export { notificationMutators } from './mutators'
 // Hooks
 export { useNotificationState } from './useNotificationState'
 export { useNotificationActions } from './useNotificationActions'
+export { useEntityUnreadCount } from './useEntityUnreadCount'

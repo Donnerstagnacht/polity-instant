@@ -33,7 +33,7 @@ import { todo, todoAssignment } from './todos/table'
 // Messages
 import { conversation, conversationParticipant, message } from './messages/table'
 // Notifications
-import { notification, pushSubscription, notificationSetting } from './notifications/table'
+import { notification, pushSubscription, notificationSetting, notificationRead } from './notifications/table'
 // Blogs
 import { blog, blogBlogger } from './blogs/table'
 // Payments
@@ -487,6 +487,11 @@ export const notificationSettingRelationships = relationships(notificationSettin
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
 }))
 
+export const notificationReadRelationships = relationships(notificationRead, ({ one }) => ({
+  notification: one({ sourceField: ['notification_id'], destSchema: notification, destField: ['id'] }),
+  read_by_user: one({ sourceField: ['read_by_user_id'], destSchema: user, destField: ['id'] }),
+}))
+
 // ============================================
 // Blog relationships
 // ============================================
@@ -684,6 +689,7 @@ export const allRelationships = [
   notificationRelationships,
   pushSubscriptionRelationships,
   notificationSettingRelationships,
+  notificationReadRelationships,
   // Blogs
   blogRelationships,
   blogBloggerRelationships,

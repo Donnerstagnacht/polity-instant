@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from 'sonner';
-import { notifyCollaborationRequest } from '@/utils/notification-helpers';
+import { sendNotificationFn } from '@/server/notifications';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 
@@ -50,12 +50,7 @@ export function useAmendmentCollaboration(amendmentId: string) {
       });
 
       // Send notification to amendment admins
-      await notifyCollaborationRequest({
-        senderId: user.id,
-        senderName: user.email?.split('@')[0] || 'A user',
-        amendmentId,
-        amendmentTitle: 'Amendment',
-      });
+      sendNotificationFn({ data: { helper: 'notifyCollaborationRequest', params: { senderId: user.id, senderName: user.email?.split('@')[0] || 'A user', amendmentId, amendmentTitle: 'Amendment' } } }).catch(console.error)
     } catch (error) {
       console.error('Failed to request collaboration:', error);
       console.error('Amendment ID:', amendmentId);
@@ -73,6 +68,11 @@ export function useAmendmentCollaboration(amendmentId: string) {
     setIsLoading(true);
     try {
       await removeCollaboratorAction(collaboration.id);
+      if (status === 'requested') {
+        sendNotificationFn({ data: { helper: 'notifyCollaborationRequestWithdrawn', params: { senderId: user?.id, senderName: user?.email?.split('@')[0] || 'A user', amendmentId, amendmentTitle: 'Amendment' } } }).catch(console.error)
+      } else {
+        sendNotificationFn({ data: { helper: 'notifyCollaborationWithdrawn', params: { senderId: user?.id, senderName: user?.email?.split('@')[0] || 'A user', amendmentId, amendmentTitle: 'Amendment' } } }).catch(console.error)
+      }
     } catch (error) {
       console.error('Failed to leave collaboration:', error);
       toast.error('Failed to leave collaboration. Please try again.');
@@ -88,6 +88,7 @@ export function useAmendmentCollaboration(amendmentId: string) {
     setIsLoading(true);
     try {
       await acceptInvitationAction(collaboration.id);
+      sendNotificationFn({ data: { helper: 'notifyCollaborationInvitationAccepted', params: { senderId: user?.id, senderName: user?.email?.split('@')[0] || 'A user', amendmentId, amendmentTitle: 'Amendment' } } }).catch(console.error)
     } catch (error) {
       console.error('Failed to accept invitation:', error);
       toast.error('Failed to accept invitation. Please try again.');

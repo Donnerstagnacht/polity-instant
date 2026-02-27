@@ -10,6 +10,7 @@ import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import type { NavigationItem } from '@/navigation/types/navigation.types';
 import { usePermissions } from '@/zero/rbac/usePermissions';
 import type { Amendment } from '@/zero/rbac/types';
+import { useEntityUnreadCount } from '@/zero/notifications/useEntityUnreadCount';
 
 /**
  * Custom hook that manages navigation items for primary and secondary navigation
@@ -77,6 +78,12 @@ export function useNavigation() {
   const amendmentId = pathname.match(/^\/amendment\/([^/]+)/)?.[1];
   const blogId = pathname.match(/^\/blog\/([^/]+)/)?.[1];
 
+  // Entity unread notification counts for secondary nav badges
+  const groupUnread = useEntityUnreadCount(groupId ?? '', 'group');
+  const eventUnread = useEntityUnreadCount(eventId ?? '', 'event');
+  const amendmentUnread = useEntityUnreadCount(amendmentId ?? '', 'amendment');
+  const blogUnread = useEntityUnreadCount(blogId ?? '', 'blog');
+
   // Fetch amendment data via facade for permission context
   const { amendment: amendmentData } = useAmendmentState({ amendmentId: amendmentId || undefined });
   
@@ -87,6 +94,7 @@ export function useNavigation() {
   const { 
     canManage,
     canView,
+    can,
     isMe, 
     isABlogger,
     isAuthor: isAmendmentAuthor,
@@ -118,6 +126,9 @@ export function useNavigation() {
     // Check if user can manage group memberships (for Members nav item)
     const canManageMembers = canManage('groupMemberships');
 
+    // Check if user can view entity notifications
+    const canViewNotifications = can('viewNotifications', 'groupNotifications');
+
     const baseSecondaryItems = baseGetSecondaryNavItems(
       currentPrimaryRoute,
       eventId,
@@ -132,9 +143,17 @@ export function useNavigation() {
       blogId,
       isBlogOwner,
       isGroupMember,
-      canManageMembers
+      canManageMembers,
+      canViewNotifications
     );
     if (!baseSecondaryItems) return null;
+
+    // Determine entity unread count based on current route
+    const entityUnreadCount =
+      currentPrimaryRoute === 'group' ? groupUnread :
+      currentPrimaryRoute === 'event' ? eventUnread :
+      currentPrimaryRoute === 'amendment' ? amendmentUnread :
+      currentPrimaryRoute === 'blog' ? blogUnread : 0;
 
     // Override labels with translations for secondary items
     return baseSecondaryItems.map(item => ({
@@ -155,6 +174,9 @@ export function useNavigation() {
                       : currentPrimaryRoute === 'blog'
                         ? t(`navigation.secondary.blog.${item.id}`)
                         : item.label,
+      ...(item.id === 'notifications' && entityUnreadCount > 0
+        ? { badge: entityUnreadCount }
+        : {}),
     }));
   };
 

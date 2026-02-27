@@ -12,12 +12,13 @@ import { AddPositionDialog } from '@/features/positions/ui/AddPositionDialog'
 import { EditPositionDialog } from '@/features/positions/ui/EditPositionDialog'
 import { AssignHolderDialog } from '@/features/groups/ui/AssignHolderDialog'
 import { PositionHolderHistoryDialog } from '@/features/positions/ui/PositionHolderHistoryDialog'
-import { useGroupMemberships, useGroupRoles } from '@/features/groups/hooks/useGroupData'
+import { useGroupMemberships, useGroupRoles, useGroupData } from '@/features/groups/hooks/useGroupData'
 import { useGroupMutations } from '@/features/groups/hooks/useGroupMutations'
 import { useMembershipSearch } from '@/features/groups/hooks/useMembershipSearch'
 import { useRoleManagement } from '@/features/groups/hooks/useRoleManagement'
 import { useGroupPositions } from '@/features/positions/hooks/useGroupPositions'
 import { useUserSearch } from '@/zero/groups/useGroupState'
+import { useAuth } from '@/providers/auth-provider'
 import type { MembershipTab } from '@/features/groups/types/group.types'
 
 export const Route = createFileRoute('/_authed/group/$id/memberships')({
@@ -27,6 +28,9 @@ export const Route = createFileRoute('/_authed/group/$id/memberships')({
 function GroupMembershipsPage() {
   const { id: groupId } = Route.useParams()
   const navigate = useNavigate()
+  const { user: authUser } = useAuth()
+  const { group } = useGroupData(groupId)
+  const groupName = (group as any)?.name || 'Group'
 
   // ── Tab state ──────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<MembershipTab>('memberships')
@@ -126,24 +130,24 @@ function GroupMembershipsPage() {
             </div>
             <PendingRequestsTable
               requests={pendingRequests as any[]}
-              onApprove={(membershipId) => approveMembership(membershipId, '')}
-              onReject={(membershipId) => rejectMembership(membershipId, '')}
+              onApprove={(membershipId, userId) => approveMembership(membershipId, userId, undefined, authUser?.id, undefined, groupName)}
+              onReject={(membershipId, userId) => rejectMembership(membershipId, userId, authUser?.id, undefined, groupName)}
               onNavigateToUser={(userId) => navigate({ to: '/user/$id', params: { id: userId } })}
             />
             <PendingInvitationsTable
               invitations={pendingInvitations as any[]}
-              onWithdraw={(membershipId) => rejectMembership(membershipId, '')}
+              onWithdraw={(membershipId, userId) => rejectMembership(membershipId, userId, authUser?.id, undefined, groupName)}
               onNavigateToUser={(userId) => navigate({ to: '/user/$id', params: { id: userId } })}
             />
             <ActiveMembersTable
               members={activeMembers as any[]}
               roles={roles as any[]}
-              onChangeRole={(membershipId, roleId) => changeMemberRole(membershipId, roleId, '')}
-              onPromote={(membershipId) =>
-                approveMembership(membershipId, '', undefined)
+              onChangeRole={(membershipId, roleId, userId) => changeMemberRole(membershipId, roleId, userId, authUser?.id, undefined, groupName)}
+              onPromote={(membershipId, userId) =>
+                approveMembership(membershipId, userId, undefined, authUser?.id, undefined, groupName)
               }
-              onDemote={(membershipId) => rejectMembership(membershipId, '')}
-              onRemove={(membershipId) => removeMember(membershipId, '')}
+              onDemote={(membershipId, userId) => rejectMembership(membershipId, userId, authUser?.id, undefined, groupName)}
+              onRemove={(membershipId, userId) => removeMember(membershipId, userId, undefined, authUser?.id, undefined, groupName)}
               onNavigateToUser={(userId) => navigate({ to: '/user/$id', params: { id: userId } })}
             />
           </div>

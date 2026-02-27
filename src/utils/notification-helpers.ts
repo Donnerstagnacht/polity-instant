@@ -213,7 +213,58 @@ export interface NotificationConfig {
 }
 
 /**
- * Creates a notification via Supabase insert and triggers push notification
+ * Queries for all user IDs who have viewNotifications (or manageNotifications)
+ * rights for a given entity. Returns user IDs excluding the sender.
+ */
+async function getEntityMembersWithViewRight(
+  entityType: EntityType,
+  entityId: string,
+  excludeUserId?: string,
+): Promise<string[]> {
+  const membershipTable: Record<string, { table: string; fk: string }> = {
+    group: { table: 'group_membership', fk: 'group_id' },
+    event: { table: 'event_participant', fk: 'event_id' },
+    amendment: { table: 'amendment_collaborator', fk: 'amendment_id' },
+    blog: { table: 'blog_blogger', fk: 'blog_id' },
+  };
+
+  const config = membershipTable[entityType];
+  if (!config) return [];
+
+  const supabase = getSupabase();
+
+  // Join membership → role → action_right to find users with viewNotifications
+  const { data: members, error } = await supabase
+    .from(config.table)
+    .select('user_id, role:role_id(action_rights:action_right(resource, action))')
+    .eq(config.fk, entityId)
+    .in('status', ['member', 'admin', 'owner', 'organizer', 'writer']);
+
+  if (error || !members) {
+    console.error('[Notification] Failed to query entity members:', error);
+    return [];
+  }
+
+  const userIds: string[] = [];
+  for (const member of members as any[]) {
+    const rights = member.role?.action_rights ?? [];
+    const hasViewRight = rights.some(
+      (r: any) =>
+        (r.resource === 'groupNotifications' && r.action === 'viewNotifications') ||
+        (r.resource === 'groupNotifications' && r.action === 'manageNotifications')
+    );
+    if (hasViewRight && member.user_id && member.user_id !== excludeUserId) {
+      userIds.push(member.user_id);
+    }
+  }
+
+  return [...new Set(userIds)];
+}
+
+/**
+ * Creates a notification via Supabase insert and triggers push notification.
+ * For entity notifications, also creates personal copies for all members
+ * with viewNotifications rights.
  */
 export async function createNotification(config: NotificationConfig): Promise<string> {
   const notificationId = crypto.randomUUID();
@@ -226,7 +277,7 @@ export async function createNotification(config: NotificationConfig): Promise<st
     action_url: config.actionUrl ?? null,
     related_entity_type: config.relatedEntityType ?? null,
     is_read: false,
-    created_at: Date.now(),
+    created_at: new Date().toISOString(),
     sender_id: config.senderId,
     recipient_id: config.recipientUserId ?? null,
     on_behalf_of_entity_type: config.onBehalfOfEntityType ?? null,
@@ -271,6 +322,53 @@ export async function createNotification(config: NotificationConfig): Promise<st
         console.error('[Notification] Failed to send push notification:', error);
       });
     }, 0);
+  }
+
+  // For entity notifications, also create personal copies for members with viewNotifications right
+  if (config.recipientEntityType && config.recipientEntityId) {
+    getEntityMembersWithViewRight(
+      config.recipientEntityType,
+      config.recipientEntityId,
+      config.senderId,
+    )
+      .then(async (userIds) => {
+        if (userIds.length === 0) return;
+
+        const now = new Date().toISOString();
+        const personalCopies = userIds.map((uid) => ({
+          id: crypto.randomUUID(),
+          type: config.type,
+          title: config.title,
+          message: config.message,
+          action_url: config.actionUrl ?? null,
+          related_entity_type: config.relatedEntityType ?? null,
+          is_read: false,
+          created_at: now,
+          sender_id: config.senderId,
+          recipient_id: uid,
+          // Keep entity context so it appears in the entity tab on /notifications
+          on_behalf_of_entity_type: config.recipientEntityType ?? null,
+          on_behalf_of_entity_id: config.recipientEntityId ?? null,
+          [`on_behalf_of_${config.recipientEntityType}_id`]: config.recipientEntityId,
+          recipient_entity_type: null,
+          recipient_entity_id: null,
+          related_user_id: config.relatedUserId ?? null,
+          related_group_id: config.relatedGroupId ?? null,
+          related_amendment_id: config.relatedAmendmentId ?? null,
+          related_event_id: config.relatedEventId ?? null,
+          related_blog_id: config.relatedBlogId ?? null,
+        }));
+
+        const { error: copyError } = await getSupabase()
+          .from('notification')
+          .insert(personalCopies);
+        if (copyError) {
+          console.error('[Notification] Failed to create personal copies:', copyError);
+        }
+      })
+      .catch((err) => {
+        console.error('[Notification] Error creating personal copies:', err);
+      });
   }
 
   return notificationId;
@@ -348,7 +446,8 @@ export async function notifyMembershipApproved(params: {
   groupId: string;
   groupName: string;
 }) {
-  return createNotification({
+  // Personal notification to the approved user
+  await createNotification({
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'group',
@@ -359,6 +458,20 @@ export async function notifyMembershipApproved(params: {
     actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
+  });
+
+  // Entity notification (action log) to the group
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'group',
+    recipientEntityId: params.groupId,
+    type: 'membership_approved',
+    title: 'Membership Approved',
+    message: `A membership request in ${params.groupName} has been approved`,
+    actionUrl: `/group/${params.groupId}/memberships`,
+    relatedEntityType: 'group',
+    relatedGroupId: params.groupId,
+    relatedUserId: params.recipientUserId,
   });
 }
 
@@ -371,7 +484,8 @@ export async function notifyMembershipRejected(params: {
   groupId: string;
   groupName: string;
 }) {
-  return createNotification({
+  // Personal notification to the rejected user
+  await createNotification({
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'group',
@@ -381,6 +495,20 @@ export async function notifyMembershipRejected(params: {
     message: `Your request to join ${params.groupName} has been rejected`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
+  });
+
+  // Entity notification (action log) to the group
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'group',
+    recipientEntityId: params.groupId,
+    type: 'membership_rejected',
+    title: 'Membership Request Rejected',
+    message: `A membership request in ${params.groupName} has been rejected`,
+    actionUrl: `/group/${params.groupId}/memberships`,
+    relatedEntityType: 'group',
+    relatedGroupId: params.groupId,
+    relatedUserId: params.recipientUserId,
   });
 }
 
@@ -394,7 +522,8 @@ export async function notifyMembershipRoleChanged(params: {
   groupName: string;
   newRole: string;
 }) {
-  return createNotification({
+  // Personal notification to the affected user
+  await createNotification({
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'group',
@@ -405,6 +534,20 @@ export async function notifyMembershipRoleChanged(params: {
     actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
+  });
+
+  // Entity notification (action log) to the group
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'group',
+    recipientEntityId: params.groupId,
+    type: 'membership_role_changed',
+    title: 'Role Changed',
+    message: `A member's role in ${params.groupName} has been changed`,
+    actionUrl: `/group/${params.groupId}/memberships`,
+    relatedEntityType: 'group',
+    relatedGroupId: params.groupId,
+    relatedUserId: params.recipientUserId,
   });
 }
 
@@ -417,7 +560,8 @@ export async function notifyMembershipRemoved(params: {
   groupId: string;
   groupName: string;
 }) {
-  return createNotification({
+  // Personal notification to the removed user
+  await createNotification({
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'group',
@@ -427,6 +571,20 @@ export async function notifyMembershipRemoved(params: {
     message: `You have been removed from ${params.groupName}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
+  });
+
+  // Entity notification (action log) to the group
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'group',
+    recipientEntityId: params.groupId,
+    type: 'membership_removed',
+    title: 'Member Removed',
+    message: `A member has been removed from ${params.groupName}`,
+    actionUrl: `/group/${params.groupId}/memberships`,
+    relatedEntityType: 'group',
+    relatedGroupId: params.groupId,
+    relatedUserId: params.recipientUserId,
   });
 }
 

@@ -20,7 +20,7 @@ import type { GroupMembershipWithUser } from '../types/group.types';
 
 interface PendingInvitationsTableProps {
   invitations: GroupMembershipWithUser[];
-  onWithdraw: (membershipId: string) => void;
+  onWithdraw: (membershipId: string, userId: string) => void;
   onNavigateToUser: (userId: string) => void;
 }
 
@@ -98,7 +98,7 @@ export function PendingInvitationsTable({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => onWithdraw(membership.id)}
+                      onClick={() => user?.id && onWithdraw(membership.id, user.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                       <span className="ml-2">Withdraw Invitation</span>

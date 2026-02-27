@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useNotificationState } from '@/zero/notifications/useNotificationState';
 import { useNotificationActions } from '@/zero/notifications/useNotificationActions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -8,94 +9,16 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollableTabsList } from '@/components/ui/scrollable-tabs';
-import { Bell, Check, CheckCheck, Users, Calendar, MessageSquare, UserPlus, X } from 'lucide-react';
+import { Bell, Check, CheckCheck } from 'lucide-react';
 import { cn } from '@/utils/utils';
 import { useNavigate } from '@tanstack/react-router';
 import { EntityType } from '@/utils/notification-helpers';
 import { useTranslation } from '@/hooks/use-translation';
-
-type NotificationType =
-  | 'group_invite'
-  | 'event_invite'
-  | 'message'
-  | 'follow'
-  | 'mention'
-  | 'event_update'
-  | 'group_update'
-  | 'membership_approved'
-  | 'membership_rejected'
-  | 'membership_role_changed'
-  | 'membership_removed'
-  | 'membership_withdrawn'
-  | 'membership_request'
-  | 'collaboration_approved'
-  | 'collaboration_rejected'
-  | 'collaboration_role_changed'
-  | 'collaboration_removed'
-  | 'collaboration_withdrawn'
-  | 'collaboration_request'
-  | 'participation_approved'
-  | 'participation_rejected'
-  | 'participation_role_changed'
-  | 'participation_removed'
-  | 'participation_withdrawn'
-  | 'participation_request';
-
-const notificationIcons: Record<string, any> = {
-  group_invite: Users,
-  event_invite: Calendar,
-  message: MessageSquare,
-  follow: UserPlus,
-  mention: Bell,
-  event_update: Calendar,
-  group_update: Users,
-  membership_approved: Check,
-  membership_rejected: X,
-  membership_role_changed: Users,
-  membership_removed: X,
-  membership_withdrawn: UserPlus,
-  membership_request: UserPlus,
-  collaboration_approved: Check,
-  collaboration_rejected: X,
-  collaboration_role_changed: Users,
-  collaboration_removed: X,
-  collaboration_withdrawn: UserPlus,
-  collaboration_request: UserPlus,
-  participation_approved: Check,
-  participation_rejected: X,
-  participation_role_changed: Users,
-  participation_removed: X,
-  participation_withdrawn: UserPlus,
-  participation_request: UserPlus,
-};
-
-const notificationColors: Record<string, string> = {
-  group_invite: 'text-blue-500',
-  event_invite: 'text-purple-500',
-  message: 'text-green-500',
-  follow: 'text-pink-500',
-  mention: 'text-orange-500',
-  event_update: 'text-indigo-500',
-  group_update: 'text-cyan-500',
-  membership_approved: 'text-green-500',
-  membership_rejected: 'text-red-500',
-  membership_role_changed: 'text-blue-500',
-  membership_removed: 'text-red-500',
-  membership_withdrawn: 'text-orange-500',
-  membership_request: 'text-blue-500',
-  collaboration_approved: 'text-green-500',
-  collaboration_rejected: 'text-red-500',
-  collaboration_role_changed: 'text-blue-500',
-  collaboration_removed: 'text-red-500',
-  collaboration_withdrawn: 'text-orange-500',
-  collaboration_request: 'text-blue-500',
-  participation_approved: 'text-green-500',
-  participation_rejected: 'text-red-500',
-  participation_role_changed: 'text-blue-500',
-  participation_removed: 'text-red-500',
-  participation_withdrawn: 'text-orange-500',
-  participation_request: 'text-blue-500',
-};
+import { NotificationType } from '@/features/notifications/types/notification.types';
+import {
+  getNotificationIcon,
+  getNotificationColor,
+} from '@/features/notifications/utils/notificationConstants';
 
 interface EntityNotificationsProps {
   entityId: string;
@@ -110,28 +33,33 @@ export function EntityNotifications({
 }: EntityNotificationsProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { markRead, deleteNotification: deleteNotif } = useNotificationActions();
-
-  // Build the recipient key for the query
-  const recipientKey = `recipient${entityType.charAt(0).toUpperCase() + entityType.slice(1)}` as
-    | 'recipientGroup'
-    | 'recipientEvent'
-    | 'recipientAmendment'
-    | 'recipientBlog';
+  const { markRead } = useNotificationActions();
 
   const { entityNotifications: notifications, isLoading: isLoadingState } = useNotificationState({
     entityFilter: { entityId, entityType },
   });
+
+  // Auto-mark all entity notifications as read when the component mounts
+  const { markAllEntityNotificationsRead } = useNotificationActions();
+  useEffect(() => {
+    if (entityId && entityType && notifications.length > 0) {
+      markAllEntityNotificationsRead({ entity_id: entityId, entity_type: entityType });
+    }
+  }, [entityId, entityType, notifications.length, markAllEntityNotificationsRead]);
   const isLoading = isLoadingState;
   const unreadNotifications = notifications.filter((n: any) => !n.is_read);
   const readNotifications = notifications.filter((n: any) => n.is_read);
 
   const handleNotificationClick = async (notification: any) => {
+    // Mark as read on click
+    if (!notification.is_read) {
+      markRead({ id: notification.id });
+    }
     // Navigate based on action URL or related entity
-    if (notification.actionUrl) {
-      navigate({ to: notification.actionUrl });
-    } else if (notification.relatedUser?.id) {
-      navigate({ to: `/user/${notification.relatedUser.id}` });
+    if (notification.action_url) {
+      navigate({ to: notification.action_url });
+    } else if (notification.related_user_id) {
+      navigate({ to: `/user/${notification.related_user_id}` });
     }
   };
 
@@ -142,11 +70,6 @@ export function EntityNotifications({
         await markRead({ id: notifId });
       }
     }
-  };
-
-  const deleteNotification = async (notificationId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    await deleteNotif({ id: notificationId });
   };
 
   const formatTime = (date: string | number) => {
@@ -170,60 +93,106 @@ export function EntityNotifications({
     }
   };
 
+  const getUserName = (user: any) => {
+    if (!user) return null;
+    return [user.first_name, user.last_name].filter(Boolean).join(' ') || user.email || null;
+  };
+
   const NotificationItem = ({ notification }: { notification: any }) => {
-    const Icon = notificationIcons[notification.type as NotificationType] || Bell;
-    const iconColor = notificationColors[notification.type as NotificationType] || 'text-gray-500';
+    const Icon = getNotificationIcon(notification.type as NotificationType);
+    const iconColor = getNotificationColor(notification.type as NotificationType);
+    const senderName = getUserName(notification.sender);
+    const receiverName = getUserName(notification.related_user);
 
     return (
       <Card
         className={cn(
           'cursor-pointer transition-all hover:shadow-md',
-          !notification.isRead && 'border-l-4 border-l-primary bg-accent/50'
+          !notification.is_read && 'border-l-primary bg-accent/50 border-l-4'
         )}
         onClick={() => handleNotificationClick(notification)}
       >
-        <CardContent className="flex items-start gap-4 p-4">
+        <CardContent className="flex items-start gap-3 p-3">
           {/* Notification Icon */}
-          <div className={cn('rounded-full bg-muted p-2', !notification.isRead && 'bg-primary/10')}>
-            <Icon className={cn('h-5 w-5', iconColor)} />
+          <div
+            className={cn(
+              'bg-muted mt-0.5 rounded-full p-1.5',
+              !notification.is_read && 'bg-primary/10'
+            )}
+          >
+            <Icon className={cn('h-3.5 w-3.5', iconColor)} />
           </div>
 
-          {/* Sender Avatar */}
-          {notification.sender && (
-            <Avatar
-              className="h-10 w-10 cursor-pointer hover:ring-2 hover:ring-primary"
-              onClick={e => {
-                e.stopPropagation();
-                navigate({ to: `/user/${notification.sender.id}` });
-              }}
-            >
-              <AvatarImage src={notification.sender.avatar} />
-              <AvatarFallback>{notification.sender.name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
-            </Avatar>
-          )}
-
           {/* Content */}
-          <div className="flex-1 space-y-1">
+          <div className="min-w-0 flex-1 space-y-0.5">
+            {/* Sender → Receiver line */}
+            {(notification.sender || notification.related_user) && (
+              <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
+                {notification.sender && (
+                  <>
+                    <Avatar
+                      className="hover:ring-primary h-5 w-5 shrink-0 cursor-pointer hover:ring-1"
+                      onClick={e => {
+                        e.stopPropagation();
+                        navigate({ to: `/user/${notification.sender.id}` });
+                      }}
+                    >
+                      <AvatarImage src={notification.sender.avatar} />
+                      <AvatarFallback className="text-[10px]">
+                        {senderName?.[0]?.toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span
+                      className="hover:text-primary cursor-pointer truncate font-medium hover:underline"
+                      onClick={e => {
+                        e.stopPropagation();
+                        navigate({ to: `/user/${notification.sender.id}` });
+                      }}
+                    >
+                      {senderName}
+                    </span>
+                  </>
+                )}
+                {notification.sender && notification.related_user && (
+                  <span className="shrink-0">→</span>
+                )}
+                {notification.related_user && (
+                  <>
+                    <span
+                      className="hover:text-primary cursor-pointer truncate font-medium hover:underline"
+                      onClick={e => {
+                        e.stopPropagation();
+                        navigate({ to: `/user/${notification.related_user.id}` });
+                      }}
+                    >
+                      {receiverName}
+                    </span>
+                    <Avatar
+                      className="hover:ring-primary h-5 w-5 shrink-0 cursor-pointer hover:ring-1"
+                      onClick={e => {
+                        e.stopPropagation();
+                        navigate({ to: `/user/${notification.related_user.id}` });
+                      }}
+                    >
+                      <AvatarImage src={notification.related_user.avatar} />
+                      <AvatarFallback className="text-[10px]">
+                        {receiverName?.[0]?.toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                  </>
+                )}
+              </div>
+            )}
             <div className="flex items-start justify-between gap-2">
-              <p className={cn('font-medium', !notification.isRead && 'font-semibold')}>
+              <p className={cn('text-sm font-medium', !notification.is_read && 'font-semibold')}>
                 {notification.title}
               </p>
-              {!notification.isRead && (
+              {!notification.is_read && (
                 <Badge variant="default" className="h-2 w-2 rounded-full p-0" />
               )}
             </div>
-            <p className="text-sm text-muted-foreground">{notification.message}</p>
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">{formatTime(notification.createdAt)}</p>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6"
-                onClick={e => deleteNotification(notification.id, e)}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
+            <p className="text-muted-foreground text-sm">{notification.message}</p>
+            <p className="text-muted-foreground text-xs">{formatTime(notification.created_at)}</p>
           </div>
         </CardContent>
       </Card>
@@ -233,7 +202,9 @@ export function EntityNotifications({
   if (isLoading) {
     return (
       <div className="flex h-[400px] items-center justify-center">
-        <p className="text-muted-foreground">{t('pages.notifications.entity.loadingNotifications')}</p>
+        <p className="text-muted-foreground">
+          {t('pages.notifications.entity.loadingNotifications')}
+        </p>
       </div>
     );
   }
@@ -244,12 +215,18 @@ export function EntityNotifications({
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold">{t('pages.notifications.entity.title', { entityName })}</h2>
+            <h2 className="text-2xl font-bold">
+              {t('pages.notifications.entity.title', { entityName })}
+            </h2>
             <p className="text-muted-foreground">
               {unreadNotifications.length > 0
                 ? unreadNotifications.length === 1
-                  ? t('pages.notifications.entity.unreadCount', { count: unreadNotifications.length })
-                  : t('pages.notifications.entity.unreadCountPlural', { count: unreadNotifications.length })
+                  ? t('pages.notifications.entity.unreadCount', {
+                      count: unreadNotifications.length,
+                    })
+                  : t('pages.notifications.entity.unreadCountPlural', {
+                      count: unreadNotifications.length,
+                    })
                 : t('pages.notifications.entity.allCaughtUp')}
             </p>
           </div>
@@ -283,9 +260,11 @@ export function EntityNotifications({
           {notifications.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <Bell className="mb-4 h-12 w-12 text-muted-foreground" />
-                <p className="text-lg font-semibold">{t('pages.notifications.entity.noNotificationsYet')}</p>
-                <p className="text-sm text-muted-foreground">
+                <Bell className="text-muted-foreground mb-4 h-12 w-12" />
+                <p className="text-lg font-semibold">
+                  {t('pages.notifications.entity.noNotificationsYet')}
+                </p>
+                <p className="text-muted-foreground text-sm">
                   {t('pages.notifications.entity.notificationsWillShowHere', { entityType })}
                 </p>
               </CardContent>
@@ -304,8 +283,12 @@ export function EntityNotifications({
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Check className="mb-4 h-12 w-12 text-green-500" />
-                <p className="text-lg font-semibold">{t('pages.notifications.entity.allCaughtUp')}</p>
-                <p className="text-sm text-muted-foreground">{t('pages.notifications.entity.allRead')}</p>
+                <p className="text-lg font-semibold">
+                  {t('pages.notifications.entity.allCaughtUp')}
+                </p>
+                <p className="text-muted-foreground text-sm">
+                  {t('pages.notifications.entity.allRead')}
+                </p>
               </CardContent>
             </Card>
           ) : (
@@ -321,9 +304,13 @@ export function EntityNotifications({
           {readNotifications.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <Bell className="mb-4 h-12 w-12 text-muted-foreground" />
-                <p className="text-lg font-semibold">{t('pages.notifications.entity.noReadNotifications')}</p>
-                <p className="text-sm text-muted-foreground">{t('pages.notifications.entity.readNotificationsAppearHere')}</p>
+                <Bell className="text-muted-foreground mb-4 h-12 w-12" />
+                <p className="text-lg font-semibold">
+                  {t('pages.notifications.entity.noReadNotifications')}
+                </p>
+                <p className="text-muted-foreground text-sm">
+                  {t('pages.notifications.entity.readNotificationsAppearHere')}
+                </p>
               </CardContent>
             </Card>
           ) : (

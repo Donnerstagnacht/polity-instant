@@ -20,8 +20,8 @@ import type { GroupMembershipWithUser } from '../types/group.types';
 
 interface PendingRequestsTableProps {
   requests: GroupMembershipWithUser[];
-  onApprove: (membershipId: string) => void;
-  onReject: (membershipId: string) => void;
+  onApprove: (membershipId: string, userId: string) => void;
+  onReject: (membershipId: string, userId: string) => void;
   onNavigateToUser: (userId: string) => void;
 }
 
@@ -99,7 +99,7 @@ export function PendingRequestsTable({
                       <Button
                         variant="default"
                         size="sm"
-                        onClick={() => onApprove(membership.id)}
+                        onClick={() => user?.id && onApprove(membership.id, user.id)}
                       >
                         <Check className="mr-1 h-4 w-4" />
                         Accept
@@ -107,7 +107,7 @@ export function PendingRequestsTable({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => onReject(membership.id)}
+                        onClick={() => user?.id && onReject(membership.id, user.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                         <span className="ml-2">Remove</span>

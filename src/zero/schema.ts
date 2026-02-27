@@ -9,7 +9,7 @@ import { document, documentVersion, documentCollaborator, documentCursor } from 
 import { agendaItem, speakerList } from './agendas/table'
 import { todo, todoAssignment } from './todos/table'
 import { conversation, conversationParticipant, message } from './messages/table'
-import { notification, pushSubscription, notificationSetting } from './notifications/table'
+import { notification, pushSubscription, notificationSetting, notificationRead } from './notifications/table'
 import { blog, blogBlogger } from './blogs/table'
 import { payment, stripeCustomer, stripeSubscription, stripePayment } from './payments/table'
 import { statement } from './statements/table'
@@ -67,7 +67,7 @@ export const schema = createSchema({
     // Messages
     conversation, conversationParticipant, message,
     // Notifications
-    notification, pushSubscription, notificationSetting,
+    notification, pushSubscription, notificationSetting, notificationRead,
     // Blogs
     blog, blogBlogger,
     // Payments

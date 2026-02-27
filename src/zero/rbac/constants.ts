@@ -19,6 +19,7 @@ export const PERMISSION_IMPLIES: Partial<Record<ActionType, ActionType[]>> = {
   manage_participants: ['view'],
   manage_speakers: ['view'],
   manage_votes: ['view'],
+  manageNotifications: ['viewNotifications'],
 };
 
 /**
@@ -39,6 +40,10 @@ export const DEFAULT_GROUP_ROLES = [
         resource: 'groupNotifications' as ResourceType,
         action: 'manageNotifications' as ActionType,
       },
+      {
+        resource: 'groupNotifications' as ResourceType,
+        action: 'viewNotifications' as ActionType,
+      },
       { resource: 'groupPayments' as ResourceType, action: 'manage' as ActionType },
       { resource: 'groupPositions' as ResourceType, action: 'manage' as ActionType },
       { resource: 'groupRelationships' as ResourceType, action: 'manage' as ActionType },
@@ -55,6 +60,10 @@ export const DEFAULT_GROUP_ROLES = [
       { resource: 'amendments' as ResourceType, action: 'moderate' as ActionType },
       { resource: 'comments' as ResourceType, action: 'moderate' as ActionType },
       { resource: 'events' as ResourceType, action: 'manage' as ActionType },
+      {
+        resource: 'groupNotifications' as ResourceType,
+        action: 'viewNotifications' as ActionType,
+      },
     ],
   },
   {
@@ -65,6 +74,10 @@ export const DEFAULT_GROUP_ROLES = [
       { resource: 'amendments' as ResourceType, action: 'view' as ActionType },
       { resource: 'amendments' as ResourceType, action: 'vote' as ActionType },
       { resource: 'events' as ResourceType, action: 'view' as ActionType },
+      {
+        resource: 'groupNotifications' as ResourceType,
+        action: 'viewNotifications' as ActionType,
+      },
       { resource: 'messages' as ResourceType, action: 'manage' as ActionType },
     ],
   },
@@ -99,7 +112,13 @@ export const DEFAULT_AMENDMENT_ROLES = [
   {
     name: 'Author',
     description: 'Full amendment control',
-    permissions: [{ resource: 'amendments' as ResourceType, action: 'manage' as ActionType }],
+    permissions: [
+      { resource: 'amendments' as ResourceType, action: 'manage' as ActionType },
+      {
+        resource: 'groupNotifications' as ResourceType,
+        action: 'viewNotifications' as ActionType,
+      },
+    ],
   },
   {
     name: 'Collaborator',
@@ -107,6 +126,10 @@ export const DEFAULT_AMENDMENT_ROLES = [
     permissions: [
       { resource: 'amendments' as ResourceType, action: 'view' as ActionType },
       { resource: 'amendments' as ResourceType, action: 'update' as ActionType },
+      {
+        resource: 'groupNotifications' as ResourceType,
+        action: 'viewNotifications' as ActionType,
+      },
     ],
   },
 ];
@@ -126,6 +149,10 @@ export const DEFAULT_EVENT_ROLES = [
         resource: 'groupNotifications' as ResourceType,
         action: 'manageNotifications' as ActionType,
       },
+      {
+        resource: 'groupNotifications' as ResourceType,
+        action: 'viewNotifications' as ActionType,
+      },
       { resource: 'events' as ResourceType, action: 'active_voting' as ActionType },
     ],
   },
@@ -135,6 +162,10 @@ export const DEFAULT_EVENT_ROLES = [
     permissions: [
       { resource: 'events' as ResourceType, action: 'view' as ActionType },
       { resource: 'events' as ResourceType, action: 'active_voting' as ActionType },
+      {
+        resource: 'groupNotifications' as ResourceType,
+        action: 'viewNotifications' as ActionType,
+      },
     ],
   },
   {
@@ -144,6 +175,10 @@ export const DEFAULT_EVENT_ROLES = [
       { resource: 'events' as ResourceType, action: 'view' as ActionType },
       { resource: 'events' as ResourceType, action: 'active_voting' as ActionType },
       { resource: 'events' as ResourceType, action: 'passive_voting' as ActionType },
+      {
+        resource: 'groupNotifications' as ResourceType,
+        action: 'viewNotifications' as ActionType,
+      },
     ],
   },
 ];
@@ -190,6 +225,7 @@ export const ACTION_RIGHTS = [
   { resource: 'groupMemberships', action: 'view', label: 'View Members' },
   // groupNotifications
   { resource: 'groupNotifications', action: 'manageNotifications', label: 'Manage Notifications' },
+  { resource: 'groupNotifications', action: 'viewNotifications', label: 'View Notifications' },
   // groupPayments
   { resource: 'groupPayments', action: 'manage', label: 'Manage Payments' },
   { resource: 'groupPayments', action: 'view', label: 'View Payments' },
