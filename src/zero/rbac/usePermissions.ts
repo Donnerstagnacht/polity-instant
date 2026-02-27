@@ -47,21 +47,15 @@ interface UsePermissionsData {
 
 function usePermissionsData(userId: string | undefined): UsePermissionsData {
   const [membershipsRaw, membershipsResult] = useQuery(
-    userId
-      ? queries.rbac.membershipPermissions({ userId })
-      : undefined
+    userId ? queries.rbac.membershipPermissions({ userId }) : undefined
   );
 
   const [participationsRaw, participationsResult] = useQuery(
-    userId
-      ? queries.rbac.participantPermissions({ userId })
-      : undefined
+    userId ? queries.rbac.participantPermissions({ userId }) : undefined
   );
 
   const [bloggerRelationsRaw, bloggerResult] = useQuery(
-    userId
-      ? queries.rbac.bloggerPermissions({ userId })
-      : undefined
+    userId ? queries.rbac.bloggerPermissions({ userId }) : undefined
   );
 
   const isLoading =
@@ -84,6 +78,10 @@ function usePermissionsData(userId: string | undefined): UsePermissionsData {
               id: ar.id,
               resource: ar.resource,
               action: ar.action,
+              group: ar.group_id ? { id: ar.group_id } : undefined,
+              event: ar.event_id ? { id: ar.event_id } : undefined,
+              amendment: ar.amendment_id ? { id: ar.amendment_id } : undefined,
+              blog: ar.blog_id ? { id: ar.blog_id } : undefined,
             })),
           }
         : undefined,
@@ -105,6 +103,10 @@ function usePermissionsData(userId: string | undefined): UsePermissionsData {
               id: ar.id,
               resource: ar.resource,
               action: ar.action,
+              group: ar.group_id ? { id: ar.group_id } : undefined,
+              event: ar.event_id ? { id: ar.event_id } : undefined,
+              amendment: ar.amendment_id ? { id: ar.amendment_id } : undefined,
+              blog: ar.blog_id ? { id: ar.blog_id } : undefined,
             })),
           }
         : undefined,
@@ -126,6 +128,10 @@ function usePermissionsData(userId: string | undefined): UsePermissionsData {
               id: ar.id,
               resource: ar.resource,
               action: ar.action,
+              group: ar.group_id ? { id: ar.group_id } : undefined,
+              event: ar.event_id ? { id: ar.event_id } : undefined,
+              amendment: ar.amendment_id ? { id: ar.amendment_id } : undefined,
+              blog: ar.blog_id ? { id: ar.blog_id } : undefined,
             })),
           }
         : undefined,
@@ -155,8 +161,7 @@ function usePermissionsData(userId: string | undefined): UsePermissionsData {
  */
 export function usePermissions(context: PermissionContext) {
   const userId = useAuthUserId();
-  const { memberships, participations, bloggerRelations, isLoading } =
-    usePermissionsData(userId);
+  const { memberships, participations, bloggerRelations, isLoading } = usePermissionsData(userId);
 
   return useMemo(() => {
     /**
