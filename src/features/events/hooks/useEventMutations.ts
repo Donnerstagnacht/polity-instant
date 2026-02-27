@@ -30,7 +30,7 @@ export function useEventMutations(eventId: string) {
           status: 'invited',
           user_id: userId,
           event_id: eventId,
-          group_id: '',
+          group_id: null,
           visibility: 'public',
           role_id: roleId ?? '',
         });

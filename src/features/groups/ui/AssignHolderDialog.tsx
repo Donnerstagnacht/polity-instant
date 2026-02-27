@@ -58,6 +58,7 @@ export function AssignHolderDialog({
   const [reason, setReason] = useState<'elected' | 'appointed'>('appointed');
 
   const { members } = useGroupActiveMembers(groupId);
+  const currentHolder = position?.holder_history?.find((h: any) => !h.end_date)?.user;
 
   // Filter members based on search query
   const filteredMembers = members.filter((membership: any) => {
@@ -65,9 +66,9 @@ export function AssignHolderDialog({
     if (!user?.id) return false;
     const query = searchQuery.toLowerCase();
     return (
-      user.fullName?.toLowerCase().includes(query) ||
+      user.first_name?.toLowerCase().includes(query) ||
       user.handle?.toLowerCase().includes(query) ||
-      user.contactEmail?.toLowerCase().includes(query)
+      user.email?.toLowerCase().includes(query)
     );
   });
 
@@ -95,25 +96,25 @@ export function AssignHolderDialog({
           <DialogHeader>
             <DialogTitle>Assign Holder to Position</DialogTitle>
             <DialogDescription>
-              {position?.currentHolder
+              {currentHolder
                 ? `Replace the current holder of "${position?.title}" with a new member.`
                 : `Assign a member to the "${position?.title}" position.`}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            {position?.currentHolder && (
+            {currentHolder && (
               <div className="rounded-lg border border-orange-200 bg-orange-50 p-3">
                 <div className="flex items-center gap-2">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={position.currentHolder.imageURL} />
+                    <AvatarImage src={currentHolder.avatar} />
                     <AvatarFallback>
-                      {position.currentHolder.fullName?.[0] || 
-                       position.currentHolder.handle?.[0] || 'U'}
+                      {currentHolder.first_name?.[0] || 
+                       currentHolder.handle?.[0] || 'U'}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <div className="text-sm font-medium">
-                      Current: {position.currentHolder.fullName || position.currentHolder.handle}
+                      Current: {currentHolder.first_name || currentHolder.handle}
                     </div>
                     <div className="text-xs text-muted-foreground">
                       Will be replaced
@@ -183,14 +184,14 @@ export function AssignHolderDialog({
                                 )}
                               />
                               <Avatar className="mr-2 h-8 w-8">
-                                <AvatarImage src={user.imageURL} />
+                                <AvatarImage src={user.avatar} />
                                 <AvatarFallback>
-                                  {user.name?.[0] || user.handle?.[0] || 'U'}
+                                  {user.first_name?.[0] || user.handle?.[0] || 'U'}
                                 </AvatarFallback>
                               </Avatar>
                               <div className="flex flex-col">
                                 <span className="font-medium">
-                                  {user.name || user.handle}
+                                  {user.first_name || user.handle}
                                 </span>
                                 {user.handle && (
                                   <span className="text-xs text-muted-foreground">
@@ -229,7 +230,7 @@ export function AssignHolderDialog({
               Cancel
             </Button>
             <Button type="submit">
-              {position?.currentHolder ? 'Replace Holder' : 'Assign Holder'}
+              {currentHolder ? 'Replace Holder' : 'Assign Holder'}
             </Button>
           </DialogFooter>
         </form>

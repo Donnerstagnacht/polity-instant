@@ -6,19 +6,19 @@
 
 export interface GroupMembershipWithUser {
   id: string;
-  userId?: string;
-  groupId?: string;
-  roleId?: string;
+  user_id?: string;
+  group_id?: string;
+  role_id?: string;
   status?: string;
-  createdAt?: number | string;
+  created_at?: number | string;
   visibility?: string;
   user?: {
     id: string;
-    name?: string;
+    first_name?: string;
+    last_name?: string;
     email?: string;
     avatar?: string;
-    username?: string;
-    imageURL?: string;
+    handle?: string;
     [key: string]: any;
   };
   role?: {
@@ -32,11 +32,11 @@ export interface GroupRole {
   id: string;
   name: any;
   description?: string;
-  groupId?: string;
+  group_id?: string;
   scope?: string;
-  createdAt?: number | string;
-  updatedAt?: number | string;
-  actionRights?: GroupActionRight[];
+  created_at?: number | string;
+  updated_at?: number | string;
+  action_rights?: GroupActionRight[];
 }
 
 export interface GroupActionRight {

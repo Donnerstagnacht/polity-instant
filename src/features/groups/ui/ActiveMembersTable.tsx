@@ -69,13 +69,13 @@ export function ActiveMembersTable({
             <TableBody>
               {members.map((membership) => {
                 const user = membership.user;
-                const userName = user?.name || 'Unknown User';
+                const userName = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Unknown User';
                 const userAvatar = user?.avatar || '';
-                const userHandle = user?.username || '';
+                const userHandle = user?.handle || '';
                 const role = membership.role?.name || 'Member';
                 const roleId = membership.role?.id || '';
-                const createdAt = membership.createdAt
-                  ? new Date(membership.createdAt).toLocaleDateString()
+                const createdAt = membership.created_at
+                  ? new Date(membership.created_at).toLocaleDateString()
                   : 'N/A';
 
                 return (

@@ -347,7 +347,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
             vote: 'pending',
             weight: 1,
             is_delegate_vote: false,
-            group_id: '',
+            group_id: null,
           });
         }
 
@@ -520,7 +520,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
         vote: 'pending',
         weight: 1,
         is_delegate_vote: false,
-        group_id: '',
+        group_id: null,
       });
 
       // Note: Segment is updated through the entity system, no need to update pathData

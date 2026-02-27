@@ -339,13 +339,13 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                         <Avatar className="h-8 w-8">
                           <AvatarImage src={participant.user?.avatar} />
                           <AvatarFallback>
-                            {participant.user?.name?.[0]?.toUpperCase() || 'U'}
+                            {participant.user?.first_name?.[0]?.toUpperCase() || 'U'}
                           </AvatarFallback>
                         </Avatar>
-                        {participant.user?.name || 'Unknown'}
+                        {participant.user?.first_name || 'Unknown'}
                       </div>
                     </TableCell>
-                    <TableCell>{participant.user?.contactEmail || '-'}</TableCell>
+                    <TableCell>{participant.user?.email || '-'}</TableCell>
                     <TableCell>
                       <Select
                         value={participant.role?.name || 'Participant'}
@@ -363,7 +363,7 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                         </SelectContent>
                       </Select>
                     </TableCell>
-                    <TableCell>{new Date(participant.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(participant.created_at).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         {participant.role?.name !== 'Organizer' && (
@@ -428,14 +428,14 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                           <Avatar className="h-8 w-8">
                             <AvatarImage src={participant.user?.avatar} />
                             <AvatarFallback>
-                              {participant.user?.name?.[0]?.toUpperCase() || 'U'}
+                              {participant.user?.first_name?.[0]?.toUpperCase() || 'U'}
                             </AvatarFallback>
                           </Avatar>
-                          {participant.user?.name || 'Unknown'}
+                          {participant.user?.first_name || 'Unknown'}
                         </div>
                       </TableCell>
-                      <TableCell>{participant.user?.contactEmail || '-'}</TableCell>
-                      <TableCell>{new Date(participant.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell>{participant.user?.email || '-'}</TableCell>
+                      <TableCell>{new Date(participant.created_at).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <Button
                           size="sm"
@@ -563,7 +563,7 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                           <TableRow key={rightKey}>
                             <TableCell className="font-medium">{label}</TableCell>
                             {rolesData.roles.map((role: any) => {
-                              const hasRight = role.actionRights?.some(
+                              const hasRight = role.action_rights?.some(
                                 (ar: any) => ar.resource === resource && ar.action === action
                               );
                               return (

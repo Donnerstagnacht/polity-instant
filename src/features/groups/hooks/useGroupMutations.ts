@@ -49,7 +49,7 @@ export function useGroupMutations(groupId: string) {
           id: membershipId,
           user_id: userId,
           group_id: groupId,
-          role_id: roleId ?? '',
+          role_id: roleId ?? null,
           visibility: '',
           status: 'invited',
         });
@@ -206,9 +206,9 @@ export function useGroupMutations(groupId: string) {
         description,
         scope: 'group',
         group_id: groupId,
-        event_id: '',
-        amendment_id: '',
-        blog_id: '',
+        event_id: null,
+        amendment_id: null,
+        blog_id: null,
       });
 
       // Add action rights
@@ -220,9 +220,9 @@ export function useGroupMutations(groupId: string) {
           action: right.action,
           role_id: roleId,
           group_id: groupId,
-          event_id: '',
-          amendment_id: '',
-          blog_id: '',
+          event_id: null,
+          amendment_id: null,
+          blog_id: null,
         });
       }
 

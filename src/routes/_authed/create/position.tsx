@@ -57,7 +57,7 @@ function CreatePositionPage() {
         first_term_start: new Date(firstTermStart).getTime(),
         scheduled_revote_date: null,
         group_id: groupId,
-        event_id: '',
+        event_id: null,
       })
 
       navigate({ to: '/group/$id', params: { id: groupId } })

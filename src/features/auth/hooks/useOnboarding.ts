@@ -143,7 +143,7 @@ export function useOnboarding(): UseOnboardingReturn {
         group_id: data.selectedGroup.id,
         status: 'requested',
         visibility: '',
-        role_id: '',
+        role_id: null,
       });
 
       // Notify group admins/members with manage rights
@@ -179,9 +179,7 @@ export function useOnboarding(): UseOnboardingReturn {
       setError(null);
 
       try {
-        const now = Date.now();
-
-await updateProfile({
+        await updateProfile({
         first_name: data.firstName.trim(),
         last_name: data.lastName.trim(),
       });

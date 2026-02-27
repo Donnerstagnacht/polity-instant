@@ -48,14 +48,14 @@ export function useStatementMutations() {
           election_status: '',
           ends_at: 0,
           user_id: userId,
-          group_id: '',
-          amendment_id: '',
-          event_id: '',
-          todo_id: '',
-          blog_id: '',
+          group_id: null,
+          amendment_id: null,
+          event_id: null,
+          todo_id: null,
+          blog_id: null,
           statement_id: statementId,
-          election_id: '',
-          amendment_vote_id: '',
+          election_id: null,
+          amendment_vote_id: null,
         });
       }
 
@@ -103,14 +103,14 @@ export function useStatementMutations() {
           election_status: '',
           ends_at: 0,
           user_id: userId,
-          group_id: '',
-          amendment_id: '',
-          event_id: '',
-          todo_id: '',
-          blog_id: '',
+          group_id: null,
+          amendment_id: null,
+          event_id: null,
+          todo_id: null,
+          blog_id: null,
           statement_id: statementId,
-          election_id: '',
-          amendment_vote_id: '',
+          election_id: null,
+          amendment_vote_id: null,
         });
       }
 

@@ -105,8 +105,8 @@ export function VersionControl({
       const versionId = crypto.randomUUID();
       await createVersion({
         id: versionId,
-        document_id: '',
-        amendment_id: '',
+        document_id: null,
+        amendment_id: null,
         blog_id: blogId,
         version_number: nextVersionNumber,
         change_summary: versionTitle,

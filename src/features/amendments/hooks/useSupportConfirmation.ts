@@ -183,8 +183,8 @@ export async function triggerSupporterConfirmation(
       status: 'pending',
       amendment_id: amendmentId,
       group_id: group.id,
-      event_id: '',
-      confirmed_by_id: '',
+      event_id: null,
+      confirmed_by_id: null,
       confirmed_at: 0,
     }));
 
@@ -196,7 +196,7 @@ export async function triggerSupporterConfirmation(
       type: 'support_confirmation',
       status: 'scheduled',
       amendment_id: amendmentId,
-      event_id: '',
+      event_id: null,
       description: '',
       forwarding_status: '',
       order_index: 0,
@@ -237,7 +237,7 @@ export async function createConfirmationAgendaItem(
     description:
       'Vote to confirm or decline continued support for this amendment after recent changes.',
     event_id: eventId,
-    amendment_id: '',
+    amendment_id: null,
     forwarding_status: '',
     order_index: 0,
     duration: 0,

@@ -73,11 +73,11 @@ export function useSubscribeEvent(targetEventId?: string) {
 
       await doSubscribe({
         id: subscriptionId,
-        user_id: '',
-        group_id: '',
-        amendment_id: '',
+        user_id: null,
+        group_id: null,
+        amendment_id: null,
         event_id: targetEventId,
-        blog_id: '',
+        blog_id: null,
       });
 
       sendNotificationFn({ data: { helper: 'notifyEventNewSubscriber', params: { senderId: authUser.id, eventId: targetEventId, eventTitle } } }).catch(console.error)

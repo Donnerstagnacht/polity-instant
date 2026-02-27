@@ -45,7 +45,7 @@ export function useAmendmentCollaboration(amendmentId: string) {
         status: 'requested',
         user_id: user.id,
         amendment_id: amendmentId,
-        role_id: '',
+        role_id: null,
         visibility: '',
       });
 

@@ -81,7 +81,7 @@ export function useEventParticipation(eventId: string) {
         status: 'requested',
         event_id: eventId,
         group_id: event?.group?.id || '',
-        role_id: '',
+        role_id: null,
         visibility: '',
       });
 

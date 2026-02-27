@@ -107,7 +107,7 @@ export function VoteControls({
           amendment_id: amendmentId,
           reason: '',
           source_type: '',
-          source_id: '',
+          source_id: null,
           source_title: '',
           voting_status: '',
           voting_deadline: 0,

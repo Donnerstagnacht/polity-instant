@@ -93,7 +93,7 @@ export function useGroupPositions(groupId: string) {
         first_term_start: new Date(firstTermStart).getTime(),
         scheduled_revote_date: null,
         group_id: groupId,
-        event_id: '',
+        event_id: null,
       });
 
       // If createElection is true, create election + agenda item
@@ -111,7 +111,7 @@ export function useGroupPositions(groupId: string) {
           max_selections: 1,
           position_id: positionId,
           agenda_item_id: agendaItemId,
-          amendment_id: '',
+          amendment_id: null,
           voting_start_time: 0,
           voting_end_time: 0,
         });
@@ -130,8 +130,8 @@ export function useGroupPositions(groupId: string) {
           end_time: 0,
           activated_at: 0,
           completed_at: 0,
-          event_id: '',
-          amendment_id: '',
+          event_id: null,
+          amendment_id: null,
         });
       }
 
@@ -230,16 +230,15 @@ export function useGroupPositions(groupId: string) {
       const position: any = positions.find((p) => p.id === positionId);
 
       // If there's a current holder, end their history entry
-      if (position?.current_holder?.id) {
-        const currentHistoryEntry = position.holder_history?.find(
-          (h: any) => h.holder?.id === position.current_holder?.id && !h.endDate
-        );
-        if (currentHistoryEntry) {
-          await updateHistoryAction({
-            id: currentHistoryEntry.id,
-            end_date: now,
-          });
-        }
+      // End the current active history entry (if any)
+      const currentHistoryEntry = position?.holder_history?.find(
+        (h: any) => !h.end_date
+      );
+      if (currentHistoryEntry) {
+        await updateHistoryAction({
+          id: currentHistoryEntry.id,
+          end_date: now,
+        });
       }
 
       // Create new history entry for the new holder
@@ -254,10 +253,7 @@ export function useGroupPositions(groupId: string) {
       });
 
       // Update position current holder
-      await updatePositionAction({
-        id: positionId,
-        current_holder_id: userId,
-      });
+      // Note: current_holder_id is tracked via holder_history (active entry = no end_date)
 
       sendNotificationFn({ data: { helper: 'notifyPositionAssigned', params: { senderId, recipientId: userId, groupId, groupName, positionTitle } } }).catch(console.error)
       return { success: true };
@@ -285,24 +281,17 @@ export function useGroupPositions(groupId: string) {
       const position: any = positions.find((p) => p.id === positionId);
 
       // End the current holder's history entry
-      if (position?.current_holder?.id) {
-        const currentHistoryEntry = position.holder_history?.find(
-          (h: any) => h.holder?.id === position.current_holder?.id && !h.endDate
-        );
-        if (currentHistoryEntry) {
-          await updateHistoryAction({
-            id: currentHistoryEntry.id,
-            end_date: now,
-            reason: reason,
-          });
-        }
+      // End the current active history entry
+      const currentHistoryEntry = position?.holder_history?.find(
+        (h: any) => !h.end_date
+      );
+      if (currentHistoryEntry) {
+        await updateHistoryAction({
+          id: currentHistoryEntry.id,
+          end_date: now,
+          reason: reason,
+        });
       }
-
-      // Clear current holder
-      await updatePositionAction({
-        id: positionId,
-        current_holder_id: null as any,
-      });
 
       sendNotificationFn({ data: { helper: 'notifyPositionVacated', params: { senderId, groupId, groupName, positionTitle } } }).catch(console.error)
       return { success: true };
@@ -346,7 +335,7 @@ export function useGroupPositions(groupId: string) {
         max_selections: 1,
         position_id: positionId,
         agenda_item_id: agendaItemId,
-        amendment_id: '',
+        amendment_id: null,
         voting_start_time: 0,
         voting_end_time: 0,
       });
@@ -365,8 +354,8 @@ export function useGroupPositions(groupId: string) {
         end_time: 0,
         activated_at: 0,
         completed_at: 0,
-        event_id: eventId || '',
-        amendment_id: '',
+        event_id: eventId || null,
+        amendment_id: null,
       });
 
       sendNotificationFn({ data: { helper: 'notifyElectionCreated', params: { senderId: params?.senderId, groupId, groupName: params?.groupName } } }).catch(console.error)
@@ -388,7 +377,7 @@ export function useGroupPositions(groupId: string) {
     setDescription(position.description || '');
     setTerm(String(position.term || 4));
     setFirstTermStart(
-      position.firstTermStart ? new Date(position.firstTermStart).toISOString().split('T')[0] : ''
+      position.first_term_start ? new Date(position.first_term_start).toISOString().split('T')[0] : ''
     );
     setEditDialogOpen(true);
   };

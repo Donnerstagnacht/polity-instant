@@ -266,9 +266,9 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
           action,
           role_id: roleId,
           blog_id: blogId,
-          group_id: '',
-          event_id: '',
-          amendment_id: '',
+          group_id: null,
+          event_id: null,
+          amendment_id: null,
         });
       }
       toast.success('Permission updated successfully');
@@ -293,9 +293,9 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
         description: newRoleDescription,
         scope: 'blog',
         blog_id: blogId,
-        group_id: '',
-        event_id: '',
-        amendment_id: '',
+        group_id: null,
+        event_id: null,
+        amendment_id: null,
       });
 
       // Send notification about new role

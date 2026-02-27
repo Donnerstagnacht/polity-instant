@@ -402,7 +402,7 @@ export function useUserSearch(searchQuery: string, existingMemberIds: string[] =
     const filtered = trimmedQuery
       ? allUsers.filter(
           (user: any) =>
-            user.name?.toLowerCase().includes(trimmedQuery.toLowerCase()) ||
+            `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase().includes(trimmedQuery.toLowerCase()) ||
             user.handle?.toLowerCase().includes(trimmedQuery.toLowerCase())
         )
       : allUsers;

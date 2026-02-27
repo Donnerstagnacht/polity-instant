@@ -119,7 +119,7 @@ export function VersionControl({
         change_summary: versionTitle,
         content: currentContent,
         document_id: entityType === 'blog' ? '' : entityId,
-        amendment_id: '',
+        amendment_id: null,
         blog_id: entityType === 'blog' ? entityId : '',
       });
 

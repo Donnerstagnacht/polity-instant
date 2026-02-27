@@ -151,9 +151,9 @@ export function useEventParticipants(eventId: string) {
         description: newRoleDescription,
         scope: 'event',
         event_id: eventId,
-        group_id: '',
-        amendment_id: '',
-        blog_id: '',
+        group_id: null,
+        amendment_id: null,
+        blog_id: null,
       });
 
       toast.success('Role created successfully');
@@ -200,9 +200,9 @@ export function useEventParticipants(eventId: string) {
           action,
           role_id: roleId,
           event_id: eventId,
-          group_id: '',
-          amendment_id: '',
-          blog_id: '',
+          group_id: null,
+          amendment_id: null,
+          blog_id: null,
         });
       }
     } catch (error) {

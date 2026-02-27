@@ -84,8 +84,8 @@ export function RolesPermissionsTable({
                     <TableRow key={rightKey}>
                       <TableCell className="font-medium">{label}</TableCell>
                       {roles.map((role) => {
-                        const hasRight = role.actionRights?.some(
-                          (ar) => ar.resource === resource && ar.action === action
+                        const hasRight = (role as any).action_rights?.some(
+                          (ar: any) => ar.resource === resource && ar.action === action
                         );
                         return (
                           <TableCell key={role.id} className="text-center">

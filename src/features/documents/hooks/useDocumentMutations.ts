@@ -55,7 +55,7 @@ export function useDocumentMutations(groupId: string): UseDocumentMutationsResul
       const docId = crypto.randomUUID();
       await createDocAction({
         id: docId,
-        amendment_id: '',
+        amendment_id: null,
         content: [
           {
             type: 'h1',

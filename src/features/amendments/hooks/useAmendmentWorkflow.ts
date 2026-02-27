@@ -114,7 +114,7 @@ export function useAmendmentWorkflow({
         await createVotingSessionAction({
           id: sessionId,
           amendment_id: amendmentId,
-          event_id: '',
+          event_id: null,
           title: '',
           description: '',
           voting_type: 'internal',

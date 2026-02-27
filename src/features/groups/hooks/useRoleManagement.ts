@@ -33,9 +33,9 @@ export function useRoleManagement(groupId: string) {
         description,
         scope: 'group',
         group_id: groupId,
-        event_id: '',
-        amendment_id: '',
-        blog_id: '',
+        event_id: null,
+        amendment_id: null,
+        blog_id: null,
       });
 
       toast.success('Role created successfully');
@@ -94,9 +94,9 @@ export function useRoleManagement(groupId: string) {
           resource,
           action,
           group_id: groupId,
-          event_id: '',
-          amendment_id: '',
-          blog_id: '',
+          event_id: null,
+          amendment_id: null,
+          blog_id: null,
           role_id: roleId,
         });
       }

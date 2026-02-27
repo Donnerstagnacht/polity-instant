@@ -37,7 +37,7 @@ export const eventMutators = {
       delegate_count: 0,
       cancel_reason: '',
       cancelled_at: 0,
-      cancelled_by_id: '',
+      cancelled_by_id: null,
       created_at: now,
       updated_at: now,
     } as Parameters<typeof tx.mutate.event.insert>[0])

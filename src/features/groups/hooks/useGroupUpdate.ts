@@ -70,7 +70,7 @@ export function useGroupUpdate(
   options?: { actorId?: string; visibility?: 'public' | 'private' | 'authenticated' }
 ): UseGroupUpdateResult {
   const navigate = useNavigate();
-  const { createGroup, updateGroup } = useGroupActions();
+  const { createGroup, updateGroup, setupGroupAdminRoles } = useGroupActions();
   const isCreating = !initialData;
   const commonActions = useCommonActions();
   const { groupHashtags, allHashtags } = useCommonState({
@@ -187,6 +187,7 @@ export function useGroupUpdate(
           visibility: options?.visibility ?? 'public',
           owner_id: null,
         });
+        await setupGroupAdminRoles(groupId);
       } else {
         await updateGroup({
           id: groupId,

@@ -84,8 +84,8 @@ export function PositionsTable({
   };
 
   const getTermEndDate = (position: any) => {
-    if (!position.firstTermStart || !position.term) return null;
-    const start = new Date(position.firstTermStart);
+    if (!position.first_term_start || !position.term) return null;
+    const start = new Date(position.first_term_start);
     const end = new Date(start);
     end.setFullYear(end.getFullYear() + position.term);
     return end;

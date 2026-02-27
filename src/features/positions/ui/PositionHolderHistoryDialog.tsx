@@ -75,12 +75,14 @@ export function PositionHolderHistoryDialog({
   onOpenChange,
   position,
 }: PositionHolderHistoryDialogProps) {
-  // Sort history by startDate (most recent first)
-  const sortedHistory = [...(position?.holderHistory || [])].sort(
-    (a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+  // Sort history by start_date (most recent first)
+  const sortedHistory = [...(position?.holder_history || [])].sort(
+    (a: any, b: any) => (b.start_date ?? 0) - (a.start_date ?? 0)
   );
 
-  const currentHolder = position?.currentHolder;
+  // Derive current holder: the most recent entry with no end_date
+  const currentHolderEntry = sortedHistory.find((e: any) => !e.end_date);
+  const currentHolder = currentHolderEntry?.user;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -102,9 +104,9 @@ export function PositionHolderHistoryDialog({
               <CardContent className="pt-6">
                 <div className="flex items-start gap-4">
                   <Avatar className="h-12 w-12 ring-2 ring-primary">
-                    <AvatarImage src={currentHolder.imageURL} />
+                    <AvatarImage src={currentHolder.avatar} />
                     <AvatarFallback>
-                      {currentHolder.fullName?.[0] || currentHolder.handle?.[0] || 'U'}
+                      {currentHolder.first_name?.[0] || currentHolder.handle?.[0] || 'U'}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
@@ -112,7 +114,7 @@ export function PositionHolderHistoryDialog({
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-semibold">
-                            {currentHolder.fullName || currentHolder.handle}
+                            {[currentHolder.first_name, currentHolder.last_name].filter(Boolean).join(' ') || currentHolder.handle}
                           </span>
                           <Badge className="bg-primary">Current Holder</Badge>
                         </div>
@@ -123,24 +125,24 @@ export function PositionHolderHistoryDialog({
                         )}
                       </div>
                     </div>
-                    {sortedHistory.length > 0 && sortedHistory[0]?.holder?.id === currentHolder.id && (
+                    {currentHolderEntry && (
                       <div className="mt-3 flex flex-wrap gap-4 text-sm">
                         <div className="flex items-center gap-1.5">
-                          {getReasonIcon(sortedHistory[0].reason)}
+                          {getReasonIcon(currentHolderEntry.reason)}
                           <span className="text-muted-foreground">
-                            {getReasonLabel(sortedHistory[0].reason)}
+                            {getReasonLabel(currentHolderEntry.reason)}
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <Calendar className="h-4 w-4" />
                           <span className="text-muted-foreground">
-                            Since {format(new Date(sortedHistory[0].startDate), 'MMM d, yyyy')}
+                            Since {currentHolderEntry.start_date ? format(new Date(currentHolderEntry.start_date), 'MMM d, yyyy') : 'N/A'}
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <TrendingUp className="h-4 w-4" />
                           <span className="text-muted-foreground">
-                            {formatDistanceToNow(new Date(sortedHistory[0].startDate), { addSuffix: false })}
+                            {currentHolderEntry.start_date ? formatDistanceToNow(new Date(currentHolderEntry.start_date), { addSuffix: false }) : ''}
                           </span>
                         </div>
                       </div>
@@ -159,14 +161,14 @@ export function PositionHolderHistoryDialog({
               </h4>
               <div className="relative space-y-4 before:absolute before:left-6 before:top-4 before:bottom-4 before:w-0.5 before:bg-border">
                 {sortedHistory.map((entry: any, index: number) => {
-                  const isActive = !entry.endDate;
-                  const duration = entry.endDate
-                    ? formatDistanceToNow(new Date(entry.startDate), {
+                  const isActive = !entry.end_date;
+                  const duration = entry.end_date
+                    ? formatDistanceToNow(new Date(entry.start_date), {
                         addSuffix: false,
-                      }) + ' - ' + formatDistanceToNow(new Date(entry.endDate), {
+                      }) + ' - ' + formatDistanceToNow(new Date(entry.end_date), {
                         addSuffix: false,
                       })
-                    : formatDistanceToNow(new Date(entry.startDate), { addSuffix: false });
+                    : entry.start_date ? formatDistanceToNow(new Date(entry.start_date), { addSuffix: false }) : '—';
 
                   return (
                     <div key={entry.id} className="relative flex gap-4 pl-0">
@@ -178,11 +180,11 @@ export function PositionHolderHistoryDialog({
                             : 'border-border bg-background'
                         }`}
                       >
-                        {entry.holder ? (
+                        {entry.user ? (
                           <Avatar className="h-10 w-10">
-                            <AvatarImage src={entry.holder.imageURL} />
+                            <AvatarImage src={entry.user.avatar} />
                             <AvatarFallback>
-                              {entry.holder.fullName?.[0] || entry.holder.handle?.[0] || 'U'}
+                              {entry.user.first_name?.[0] || entry.user.handle?.[0] || 'U'}
                             </AvatarFallback>
                           </Avatar>
                         ) : (
@@ -197,11 +199,11 @@ export function PositionHolderHistoryDialog({
                             <div className="flex items-start justify-between">
                               <div>
                                 <div className="font-semibold">
-                                  {entry.holder?.fullName || entry.holder?.handle || 'Unknown'}
+                                  {[entry.user?.first_name, entry.user?.last_name].filter(Boolean).join(' ') || entry.user?.handle || 'Unknown'}
                                 </div>
-                                {entry.holder?.handle && (
+                                {entry.user?.handle && (
                                   <div className="text-sm text-muted-foreground">
-                                    @{entry.holder.handle}
+                                    @{entry.user.handle}
                                   </div>
                                 )}
                               </div>
@@ -218,9 +220,9 @@ export function PositionHolderHistoryDialog({
                               <div className="flex items-center gap-1.5">
                                 <Calendar className="h-3.5 w-3.5" />
                                 <span>
-                                  {format(new Date(entry.startDate), 'MMM d, yyyy')}
-                                  {entry.endDate && (
-                                    <> → {format(new Date(entry.endDate), 'MMM d, yyyy')}</>
+                                  {entry.start_date ? format(new Date(entry.start_date), 'MMM d, yyyy') : 'N/A'}
+                                  {entry.end_date && (
+                                    <> → {format(new Date(entry.end_date), 'MMM d, yyyy')}</>
                                   )}
                                 </span>
                               </div>

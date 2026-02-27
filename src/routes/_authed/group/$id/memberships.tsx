@@ -1,7 +1,23 @@
 import { useState } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { MembershipTabs } from '@/features/groups/ui/MembershipTabs'
-import { useGroupMemberships } from '@/features/groups/hooks/useGroupData'
+import { ActiveMembersTable } from '@/features/groups/ui/ActiveMembersTable'
+import { PendingRequestsTable } from '@/features/groups/ui/PendingRequestsTable'
+import { PendingInvitationsTable } from '@/features/groups/ui/PendingInvitationsTable'
+import { InviteMembersDialog } from '@/features/groups/ui/InviteMembersDialog'
+import { RolesPermissionsTable } from '@/features/groups/ui/RolesPermissionsTable'
+import { AddRoleDialog } from '@/features/groups/ui/AddRoleDialog'
+import { PositionsTable } from '@/features/positions/ui/PositionsTable'
+import { AddPositionDialog } from '@/features/positions/ui/AddPositionDialog'
+import { EditPositionDialog } from '@/features/positions/ui/EditPositionDialog'
+import { AssignHolderDialog } from '@/features/groups/ui/AssignHolderDialog'
+import { PositionHolderHistoryDialog } from '@/features/positions/ui/PositionHolderHistoryDialog'
+import { useGroupMemberships, useGroupRoles } from '@/features/groups/hooks/useGroupData'
+import { useGroupMutations } from '@/features/groups/hooks/useGroupMutations'
+import { useMembershipSearch } from '@/features/groups/hooks/useMembershipSearch'
+import { useRoleManagement } from '@/features/groups/hooks/useRoleManagement'
+import { useGroupPositions } from '@/features/positions/hooks/useGroupPositions'
+import { useUserSearch } from '@/zero/groups/useGroupState'
 import type { MembershipTab } from '@/features/groups/types/group.types'
 
 export const Route = createFileRoute('/_authed/group/$id/memberships')({
@@ -9,10 +25,82 @@ export const Route = createFileRoute('/_authed/group/$id/memberships')({
 })
 
 function GroupMembershipsPage() {
-  const { id } = Route.useParams()
+  const { id: groupId } = Route.useParams()
+  const navigate = useNavigate()
+
+  // ── Tab state ──────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<MembershipTab>('memberships')
+
+  // ── Memberships data & search ──────────────────────────────────────
   const { activeMemberships, invitedMemberships, requestedMemberships } =
-    useGroupMemberships(id)
+    useGroupMemberships(groupId)
+  const [memberSearchQuery, setMemberSearchQuery] = useState('')
+  const { activeMembers, pendingRequests, pendingInvitations } = useMembershipSearch(
+    [...activeMemberships, ...requestedMemberships, ...invitedMemberships],
+    memberSearchQuery
+  )
+
+  // ── Invite dialog state ────────────────────────────────────────────
+  const [inviteOpen, setInviteOpen] = useState(false)
+  const [userSearchQuery, setUserSearchQuery] = useState('')
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
+  const [isInviting, setIsInviting] = useState(false)
+  const existingMemberIds = activeMemberships.map((m: any) => m.user?.id).filter(Boolean)
+  const { users: searchedUsers, isLoading: usersLoading } = useUserSearch(
+    userSearchQuery,
+    existingMemberIds
+  )
+
+  // ── Membership mutations ───────────────────────────────────────────
+  const { inviteUsers, approveMembership, rejectMembership, removeMember, changeMemberRole } =
+    useGroupMutations(groupId)
+
+  const handleInvite = async () => {
+    if (selectedUserIds.length === 0) return
+    setIsInviting(true)
+    try {
+      await inviteUsers(selectedUserIds)
+      setSelectedUserIds([])
+      setInviteOpen(false)
+    } finally {
+      setIsInviting(false)
+    }
+  }
+
+  const handleToggleUser = (userId: string) => {
+    setSelectedUserIds((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
+    )
+  }
+
+  // ── Roles data & management ────────────────────────────────────────
+  const { roles } = useGroupRoles(groupId)
+  const { addRole, removeRole, toggleActionRight } = useRoleManagement(groupId)
+  const [addRoleOpen, setAddRoleOpen] = useState(false)
+  const [newRoleName, setNewRoleName] = useState('')
+  const [newRoleDescription, setNewRoleDescription] = useState('')
+
+  const handleAddRole = async () => {
+    const result = await addRole(newRoleName, newRoleDescription)
+    if (result.success) {
+      setNewRoleName('')
+      setNewRoleDescription('')
+      setAddRoleOpen(false)
+    }
+  }
+
+  const handleTogglePermission = async (
+    roleId: string,
+    resource: string,
+    action: string,
+    currentlyHas: boolean
+  ) => {
+    const role = (roles as any[]).find((r) => r.id === roleId)
+    await toggleActionRight(roleId, resource, action, currentlyHas, role?.action_rights || [])
+  }
+
+  // ── Positions data & management ────────────────────────────────────
+  const positionHook = useGroupPositions(groupId)
 
   return (
     <div>
@@ -22,20 +110,111 @@ function GroupMembershipsPage() {
         onTabChange={setActiveTab}
         membershipsContent={
           <div className="space-y-4">
-            <p className="text-muted-foreground">
-              {activeMemberships.length} active, {invitedMemberships.length} invited,{' '}
-              {requestedMemberships.length} requested
-            </p>
-            {activeMemberships.map((m: any) => (
-              <div key={m.id} className="flex items-center gap-3 rounded-lg border p-3">
-                <span className="font-medium">{m.user?.name || m.user?.email || 'Unknown'}</span>
-                <span className="text-sm text-muted-foreground">{m.role?.name || m.status}</span>
-              </div>
-            ))}
+            <div className="flex items-center justify-between">
+              <InviteMembersDialog
+                isOpen={inviteOpen}
+                onOpenChange={setInviteOpen}
+                searchQuery={userSearchQuery}
+                onSearchQueryChange={setUserSearchQuery}
+                users={searchedUsers as any[]}
+                selectedUsers={selectedUserIds}
+                onToggleUser={handleToggleUser}
+                onInvite={handleInvite}
+                isLoading={usersLoading}
+                isInviting={isInviting}
+              />
+            </div>
+            <PendingRequestsTable
+              requests={pendingRequests as any[]}
+              onApprove={(membershipId) => approveMembership(membershipId, '')}
+              onReject={(membershipId) => rejectMembership(membershipId, '')}
+              onNavigateToUser={(userId) => navigate({ to: '/user/$id', params: { id: userId } })}
+            />
+            <PendingInvitationsTable
+              invitations={pendingInvitations as any[]}
+              onWithdraw={(membershipId) => rejectMembership(membershipId, '')}
+              onNavigateToUser={(userId) => navigate({ to: '/user/$id', params: { id: userId } })}
+            />
+            <ActiveMembersTable
+              members={activeMembers as any[]}
+              roles={roles as any[]}
+              onChangeRole={(membershipId, roleId) => changeMemberRole(membershipId, roleId, '')}
+              onPromote={(membershipId) =>
+                approveMembership(membershipId, '', undefined)
+              }
+              onDemote={(membershipId) => rejectMembership(membershipId, '')}
+              onRemove={(membershipId) => removeMember(membershipId, '')}
+              onNavigateToUser={(userId) => navigate({ to: '/user/$id', params: { id: userId } })}
+            />
           </div>
         }
-        rolesContent={<div className="text-muted-foreground">Roles management</div>}
-        positionsContent={<div className="text-muted-foreground">Positions management</div>}
+        rolesContent={
+          <RolesPermissionsTable
+            roles={roles as any[]}
+            onTogglePermission={handleTogglePermission}
+            onRemoveRole={removeRole}
+            addRoleButton={
+              <AddRoleDialog
+                isOpen={addRoleOpen}
+                onOpenChange={setAddRoleOpen}
+                roleName={newRoleName}
+                onRoleNameChange={setNewRoleName}
+                roleDescription={newRoleDescription}
+                onRoleDescriptionChange={setNewRoleDescription}
+                onAdd={handleAddRole}
+              />
+            }
+          />
+        }
+        positionsContent={
+          <>
+            <PositionsTable
+              positions={positionHook.positions}
+              canManage={true}
+              onEdit={positionHook.actions.openEdit}
+              onDelete={(positionId) => positionHook.actions.delete(positionId)}
+              onAssignHolder={positionHook.actions.openAssignHolder}
+              onRemoveHolder={(positionId) => positionHook.actions.removeHolder(positionId)}
+              onViewHistory={positionHook.actions.openHistory}
+              onCreateElection={(positionId) =>
+                positionHook.actions.createElection(positionId)
+              }
+              addPositionButton={
+                <AddPositionDialog
+                  open={positionHook.dialogs.add.open}
+                  onOpenChange={positionHook.dialogs.add.setOpen}
+                  onSubmit={() => positionHook.actions.create()}
+                  form={positionHook.form}
+                />
+              }
+            />
+            <EditPositionDialog
+              open={positionHook.dialogs.edit.open}
+              onOpenChange={positionHook.dialogs.edit.setOpen}
+              onSubmit={positionHook.actions.update}
+              form={positionHook.form}
+            />
+            <AssignHolderDialog
+              open={positionHook.dialogs.assignHolder.open}
+              onOpenChange={positionHook.dialogs.assignHolder.setOpen}
+              position={positionHook.selectedPosition}
+              groupId={groupId}
+              onAssign={(userId, reason) =>
+                positionHook.selectedPosition &&
+                positionHook.actions.assignHolder(
+                  positionHook.selectedPosition.id,
+                  userId,
+                  reason
+                )
+              }
+            />
+            <PositionHolderHistoryDialog
+              open={positionHook.dialogs.history.open}
+              onOpenChange={positionHook.dialogs.history.setOpen}
+              position={positionHook.selectedPosition}
+            />
+          </>
+        }
       />
     </div>
   )

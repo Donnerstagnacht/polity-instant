@@ -32,8 +32,8 @@ export function useGroupLinks(groupId: string) {
         label,
         url,
         group_id: groupId,
-        user_id: senderId || '',
-        meeting_slot_id: '',
+        user_id: senderId || null,
+        meeting_slot_id: null,
       });
 
       sendNotificationFn({ data: { helper: 'notifyLinkAdded', params: { senderId, groupId, groupName } } }).catch(console.error)

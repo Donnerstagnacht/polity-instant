@@ -46,8 +46,8 @@ export function useGroupTodos(groupId: string, userId?: string) {
         tags: '[]',
         visibility: 'group',
         group_id: groupId,
-        event_id: '',
-        amendment_id: '',
+        event_id: null,
+        amendment_id: null,
       });
 
       // Create assignment for creator

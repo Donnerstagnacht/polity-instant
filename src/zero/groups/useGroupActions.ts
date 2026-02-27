@@ -3,6 +3,7 @@ import { useZero } from '@rocicorp/zero/react'
 import { toast } from 'sonner'
 import { useTranslation } from '@/hooks/use-translation'
 import { mutators } from '../mutators'
+import { DEFAULT_GROUP_ROLES } from '../rbac/constants'
 
 /**
  * Action hook for group mutations.
@@ -183,6 +184,54 @@ export function useGroupActions() {
     [zero]
   )
 
+  // ── Admin setup (silent batch — no individual toasts) ────────────
+  const setupGroupAdminRoles = useCallback(
+    async (groupId: string) => {
+      try {
+        let adminRoleId: string | null = null
+        for (const roleDef of DEFAULT_GROUP_ROLES) {
+          const roleId = crypto.randomUUID()
+          if (roleDef.name === 'Admin') adminRoleId = roleId
+          await zero.mutate(mutators.groups.createRole({
+            id: roleId,
+            name: roleDef.name,
+            description: roleDef.description,
+            scope: 'group',
+            group_id: groupId,
+            event_id: null,
+            amendment_id: null,
+            blog_id: null,
+          }))
+          for (const perm of roleDef.permissions) {
+            await zero.mutate(mutators.groups.assignActionRight({
+              id: crypto.randomUUID(),
+              resource: perm.resource,
+              action: perm.action,
+              role_id: roleId,
+              group_id: groupId,
+              event_id: null,
+              amendment_id: null,
+              blog_id: null,
+            }))
+          }
+        }
+        if (adminRoleId) {
+          await zero.mutate(mutators.groups.joinGroup({
+            id: crypto.randomUUID(),
+            group_id: groupId,
+            status: 'member',
+            visibility: 'public',
+            role_id: adminRoleId,
+          }))
+        }
+      } catch (error) {
+        console.error('Failed to setup group admin roles:', error)
+        throw error
+      }
+    },
+    [zero]
+  )
+
   // ── Relationships ──────────────────────────────────────────────────
   const createRelationship = useCallback(
     async (args: Parameters<typeof mutators.groups.createRelationship>[0]) => {
@@ -315,6 +364,7 @@ export function useGroupActions() {
     deleteRole,
     assignActionRight,
     removeActionRight,
+    setupGroupAdminRoles,
 
     // Relationships
     createRelationship,

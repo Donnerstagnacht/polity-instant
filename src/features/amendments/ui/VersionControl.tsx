@@ -106,8 +106,8 @@ export function VersionControl({
       await createVersion({
         id: versionId,
         document_id: documentId,
-        amendment_id: '',
-        blog_id: '',
+        amendment_id: null,
+        blog_id: null,
         version_number: nextVersionNumber,
         change_summary: versionTitle,
         content: currentContent,

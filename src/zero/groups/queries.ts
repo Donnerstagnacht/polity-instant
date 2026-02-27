@@ -156,7 +156,7 @@ export const groupQueries = {
           .related('agenda_item', (a: any) => a.related('event'))
           .related('candidates', (c: any) => c.related('user'))
       )
-      .related('holder_history', (q: any) => q.related('holder'))
+      .related('holder_history', (q: any) => q.related('user'))
   ),
 
   /** Todos for a group with creator, assignments→user, and group */

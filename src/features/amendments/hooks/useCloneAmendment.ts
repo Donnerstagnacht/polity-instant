@@ -185,7 +185,7 @@ export function useCloneAmendment(
             vote: 'pending',
             weight: 1,
             is_delegate_vote: false,
-            group_id: '',
+            group_id: null,
           });
         }
 
@@ -236,7 +236,7 @@ export function useCloneAmendment(
         visibility: 'public',
         amendment_id: cloneId,
         user_id: userId,
-        role_id: '',
+        role_id: null,
       });
 
       // Create path record

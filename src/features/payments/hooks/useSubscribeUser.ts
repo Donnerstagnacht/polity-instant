@@ -75,10 +75,10 @@ export function useSubscribeUser(targetUserId?: string) {
       await commonActions.subscribe({
         id: subscriptionId,
         user_id: targetUserId,
-        group_id: '',
-        amendment_id: '',
-        event_id: '',
-        blog_id: '',
+        group_id: null,
+        amendment_id: null,
+        event_id: null,
+        blog_id: null,
       });
 
       // Notification is server-only — send separately

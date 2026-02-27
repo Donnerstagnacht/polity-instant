@@ -225,15 +225,15 @@ export function useElectionVoting({
         election_status: 'completed',
         ends_at: 0,
         user_id: userId,
-        group_id: groupId || '',
-        amendment_id: '',
+        group_id: groupId || null,
+        amendment_id: null,
         event_id: eventId,
-        todo_id: '',
-        blog_id: '',
-        statement_id: '',
+        todo_id: null,
+        blog_id: null,
+        statement_id: null,
         actor_id: userId,
         election_id: electionId,
-        amendment_vote_id: '',
+        amendment_vote_id: null,
       });
 
       return {

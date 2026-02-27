@@ -61,8 +61,8 @@ export function OutgoingRelationshipRequestsTable({
           </TableHeader>
           <TableBody>
             {requests.map((req) => {
-              const createdAt = req.rels[0]?.createdAt
-                ? new Date(req.rels[0].createdAt).toLocaleDateString()
+              const createdAt = req.rels[0]?.created_at
+                ? new Date(req.rels[0].created_at).toLocaleDateString()
                 : 'N/A';
 
               return (

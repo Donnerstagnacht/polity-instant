@@ -216,7 +216,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
         for (const slotData of slots) {
           await eventActions.createMeetingSlot({
             id: crypto.randomUUID(),
-            event_id: '',
+            event_id: null,
             start_time: slotData.startTime.getTime(),
             end_time: slotData.endTime.getTime(),
             duration: 0,
@@ -239,7 +239,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
 
         await eventActions.createMeetingSlot({
           id: crypto.randomUUID(),
-          event_id: '',
+          event_id: null,
           start_time: startTime.getTime(),
           end_time: endTime.getTime(),
           duration: parseInt(newSlotDuration),

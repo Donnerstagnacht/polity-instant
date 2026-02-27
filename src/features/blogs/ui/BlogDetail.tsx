@@ -311,8 +311,8 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
       const commentId = crypto.randomUUID();
       await addCommentAction({
         id: commentId,
-        thread_id: '',
-        parent_id: '',
+        thread_id: null,
+        parent_id: null,
         content: commentText,
         upvotes: 0,
         downvotes: 0,

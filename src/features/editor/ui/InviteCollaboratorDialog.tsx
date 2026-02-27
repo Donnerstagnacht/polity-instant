@@ -96,7 +96,7 @@ export function InviteCollaboratorDialog({
             id: bloggerId,
             blog_id: entityId,
             user_id: userId,
-            role_id: '',
+            role_id: null,
             status: 'collaborator',
             visibility: '',
           });
@@ -106,7 +106,7 @@ export function InviteCollaboratorDialog({
             id: collaboratorId,
             document_id: entityId,
             user_id: userId,
-            role_id: '',
+            role_id: null,
             status: 'collaborator',
             visibility: '',
           });

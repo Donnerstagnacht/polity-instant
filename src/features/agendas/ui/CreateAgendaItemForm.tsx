@@ -25,7 +25,11 @@ import {
   PositionSelectCard,
 } from '@/components/ui/entity-select-cards';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
-import { useAllEvents, useAllAmendments, usePositionsWithGroups } from '@/zero/events/useEventState';
+import {
+  useAllEvents,
+  useAllAmendments,
+  usePositionsWithGroups,
+} from '@/zero/events/useEventState';
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from 'sonner';
 import { PageWrapper } from '@/components/layout/page-wrapper';
@@ -89,7 +93,6 @@ export function CreateAgendaItemForm() {
       }
 
       const agendaItemId = crypto.randomUUID();
-      const now = new Date();
 
       // Create the agenda item
       await createAgendaItem({
@@ -125,7 +128,7 @@ export function CreateAgendaItemForm() {
           voting_end_time: 0,
           agenda_item_id: agendaItemId,
           position_id: formData.positionId || '',
-          amendment_id: '',
+          amendment_id: null,
         });
       }
 
@@ -155,224 +158,221 @@ export function CreateAgendaItemForm() {
         <CardHeader>
           <CardTitle>Create a New Agenda Item</CardTitle>
         </CardHeader>
-          <CardContent>
-            <Carousel setApi={setCarouselApi} opts={{ watchDrag: false }}>
-              <CarouselContent>
-                {/* Step 1: Basic Information */}
-                <CarouselItem>
-                  <div className="space-y-4 p-4">
+        <CardContent>
+          <Carousel setApi={setCarouselApi} opts={{ watchDrag: false }}>
+            <CarouselContent>
+              {/* Step 1: Basic Information */}
+              <CarouselItem>
+                <div className="space-y-4 p-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="agenda-event">Event</Label>
+                    <TypeAheadSelect
+                      items={userEvents}
+                      value={formData.eventId}
+                      onChange={value => setFormData({ ...formData, eventId: value })}
+                      placeholder="Search for an event..."
+                      searchKeys={['title', 'description', 'location_name']}
+                      renderItem={event => <EventSelectCard event={event} />}
+                      getItemId={event => event.id}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="agenda-title">Title</Label>
+                    <Input
+                      id="agenda-title"
+                      placeholder="Enter agenda item title"
+                      value={formData.title}
+                      onChange={e => setFormData({ ...formData, title: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="agenda-description">Description</Label>
+                    <Textarea
+                      id="agenda-description"
+                      placeholder="Describe this agenda item (optional)"
+                      value={formData.description}
+                      onChange={e => setFormData({ ...formData, description: e.target.value })}
+                      rows={3}
+                    />
+                  </div>
+                </div>
+              </CarouselItem>
+
+              {/* Step 2: Type & Settings */}
+              <CarouselItem>
+                <div className="space-y-4 p-4">
+                  <TooltipProvider>
+                    <TypeSelector
+                      value={formData.type}
+                      onChange={type => setFormData({ ...formData, type })}
+                    />
+                  </TooltipProvider>
+                  <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="agenda-event">Event</Label>
-                      <TypeAheadSelect
-                        items={userEvents}
-                        value={formData.eventId}
-                        onChange={value => setFormData({ ...formData, eventId: value })}
-                        placeholder="Search for an event..."
-                        searchKeys={['title', 'description', 'location_name']}
-                        renderItem={event => <EventSelectCard event={event} />}
-                        getItemId={event => event.id}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="agenda-title">Title</Label>
+                      <Label htmlFor="agenda-order">Order</Label>
                       <Input
-                        id="agenda-title"
-                        placeholder="Enter agenda item title"
-                        value={formData.title}
-                        onChange={e => setFormData({ ...formData, title: e.target.value })}
+                        id="agenda-order"
+                        type="number"
+                        min="1"
+                        placeholder="1"
+                        value={formData.order}
+                        onChange={e =>
+                          setFormData({ ...formData, order: parseInt(e.target.value) || 1 })
+                        }
                         required
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="agenda-description">Description</Label>
-                      <Textarea
-                        id="agenda-description"
-                        placeholder="Describe this agenda item (optional)"
-                        value={formData.description}
-                        onChange={e => setFormData({ ...formData, description: e.target.value })}
-                        rows={3}
+                      <Label htmlFor="agenda-duration">Duration (minutes)</Label>
+                      <Input
+                        id="agenda-duration"
+                        type="number"
+                        min="1"
+                        placeholder="Optional"
+                        value={formData.duration}
+                        onChange={e => setFormData({ ...formData, duration: e.target.value })}
                       />
                     </div>
                   </div>
-                </CarouselItem>
+                </div>
+              </CarouselItem>
 
-                {/* Step 2: Type & Settings */}
-                <CarouselItem>
-                  <div className="space-y-4 p-4">
-                    <TooltipProvider>
-                      <TypeSelector
-                        value={formData.type}
-                        onChange={type => setFormData({ ...formData, type })}
+              {/* Step 3: Additional Links */}
+              <CarouselItem>
+                <div className="space-y-4 p-4">
+                  {formData.type === 'vote' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="agenda-amendment">Amendment (optional)</Label>
+                      <TypeAheadSelect
+                        items={userAmendments}
+                        value={formData.amendmentId}
+                        onChange={value => setFormData({ ...formData, amendmentId: value })}
+                        placeholder="Search for an amendment..."
+                        searchKeys={['title', 'reason']}
+                        renderItem={amendment => <AmendmentSelectCard amendment={amendment} />}
+                        getItemId={amendment => amendment.id}
                       />
-                    </TooltipProvider>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="agenda-order">Order</Label>
-                        <Input
-                          id="agenda-order"
-                          type="number"
-                          min="1"
-                          placeholder="1"
-                          value={formData.order}
-                          onChange={e =>
-                            setFormData({ ...formData, order: parseInt(e.target.value) || 1 })
-                          }
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="agenda-duration">Duration (minutes)</Label>
-                        <Input
-                          id="agenda-duration"
-                          type="number"
-                          min="1"
-                          placeholder="Optional"
-                          value={formData.duration}
-                          onChange={e => setFormData({ ...formData, duration: e.target.value })}
-                        />
-                      </div>
                     </div>
-                  </div>
-                </CarouselItem>
+                  )}
+                  {formData.type === 'election' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="agenda-position">Position (optional)</Label>
+                      <TypeAheadSelect
+                        items={userPositions}
+                        value={formData.positionId}
+                        onChange={value => setFormData({ ...formData, positionId: value })}
+                        placeholder="Search for a position..."
+                        searchKeys={['title', 'description']}
+                        renderItem={position => <PositionSelectCard position={position} />}
+                        getItemId={position => position.id}
+                      />
+                    </div>
+                  )}
+                  {formData.type !== 'vote' && formData.type !== 'election' && (
+                    <div className="text-muted-foreground py-8 text-center">
+                      No additional configuration needed for this agenda item type.
+                    </div>
+                  )}
+                </div>
+              </CarouselItem>
 
-                {/* Step 3: Additional Links */}
-                <CarouselItem>
-                  <div className="space-y-4 p-4">
-                    {formData.type === 'vote' && (
-                      <div className="space-y-2">
-                        <Label htmlFor="agenda-amendment">Amendment (optional)</Label>
-                        <TypeAheadSelect
-                          items={userAmendments}
-                          value={formData.amendmentId}
-                          onChange={value => setFormData({ ...formData, amendmentId: value })}
-                          placeholder="Search for an amendment..."
-                          searchKeys={['title', 'reason']}
-                          renderItem={amendment => <AmendmentSelectCard amendment={amendment} />}
-                          getItemId={amendment => amendment.id}
-                        />
+              {/* Step 4: Review */}
+              <CarouselItem>
+                <div className="p-4">
+                  <Card className="overflow-hidden border-2 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/50">
+                    <CardHeader>
+                      <div className="mb-2 flex items-center justify-between">
+                        <Badge variant="default" className="text-xs">
+                          Agenda Item
+                        </Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          {formData.type}
+                        </Badge>
                       </div>
-                    )}
-                    {formData.type === 'election' && (
-                      <div className="space-y-2">
-                        <Label htmlFor="agenda-position">Position (optional)</Label>
-                        <TypeAheadSelect
-                          items={userPositions}
-                          value={formData.positionId}
-                          onChange={value => setFormData({ ...formData, positionId: value })}
-                          placeholder="Search for a position..."
-                          searchKeys={['title', 'description']}
-                          renderItem={position => <PositionSelectCard position={position} />}
-                          getItemId={position => position.id}
-                        />
+                      <CardTitle className="text-lg">
+                        {formData.title || 'Untitled Agenda Item'}
+                      </CardTitle>
+                      {formData.description && (
+                        <CardDescription>{formData.description}</CardDescription>
+                      )}
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex items-center gap-2 text-sm">
+                        <strong>Event:</strong>
+                        <span className="text-muted-foreground">
+                          {userEvents.find(e => e.id === formData.eventId)?.title || 'Not selected'}
+                        </span>
                       </div>
-                    )}
-                    {formData.type !== 'vote' && formData.type !== 'election' && (
-                      <div className="py-8 text-center text-muted-foreground">
-                        No additional configuration needed for this agenda item type.
+                      <div className="flex items-center gap-2 text-sm">
+                        <strong>Order:</strong>
+                        <span className="text-muted-foreground">#{formData.order}</span>
                       </div>
-                    )}
-                  </div>
-                </CarouselItem>
-
-                {/* Step 4: Review */}
-                <CarouselItem>
-                  <div className="p-4">
-                    <Card className="overflow-hidden border-2 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/50">
-                      <CardHeader>
-                        <div className="mb-2 flex items-center justify-between">
-                          <Badge variant="default" className="text-xs">
-                            Agenda Item
-                          </Badge>
-                          <Badge variant="secondary" className="text-xs">
-                            {formData.type}
-                          </Badge>
-                        </div>
-                        <CardTitle className="text-lg">
-                          {formData.title || 'Untitled Agenda Item'}
-                        </CardTitle>
-                        {formData.description && (
-                          <CardDescription>{formData.description}</CardDescription>
-                        )}
-                      </CardHeader>
-                      <CardContent className="space-y-3">
+                      {formData.duration && (
                         <div className="flex items-center gap-2 text-sm">
-                          <strong>Event:</strong>
+                          <strong>Duration:</strong>
+                          <span className="text-muted-foreground">{formData.duration} minutes</span>
+                        </div>
+                      )}
+                      {formData.amendmentId && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <strong>Amendment:</strong>
                           <span className="text-muted-foreground">
-                            {userEvents.find(e => e.id === formData.eventId)?.title ||
-                              'Not selected'}
+                            {userAmendments.find(a => a.id === formData.amendmentId)?.title}
                           </span>
                         </div>
+                      )}
+                      {formData.positionId && (
                         <div className="flex items-center gap-2 text-sm">
-                          <strong>Order:</strong>
-                          <span className="text-muted-foreground">#{formData.order}</span>
+                          <strong>Position:</strong>
+                          <span className="text-muted-foreground">
+                            {userPositions.find(p => p.id === formData.positionId)?.title}
+                          </span>
                         </div>
-                        {formData.duration && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <strong>Duration:</strong>
-                            <span className="text-muted-foreground">
-                              {formData.duration} minutes
-                            </span>
-                          </div>
-                        )}
-                        {formData.amendmentId && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <strong>Amendment:</strong>
-                            <span className="text-muted-foreground">
-                              {userAmendments.find(a => a.id === formData.amendmentId)?.title}
-                            </span>
-                          </div>
-                        )}
-                        {formData.positionId && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <strong>Position:</strong>
-                            <span className="text-muted-foreground">
-                              {userPositions.find(p => p.id === formData.positionId)?.title}
-                            </span>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </div>
-                </CarouselItem>
-              </CarouselContent>
-            </Carousel>
-            <div className="mt-4 flex justify-center gap-2">
-              {[0, 1, 2, 3].map(index => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => carouselApi?.scrollTo(index)}
-                  className={`h-2 w-2 rounded-full transition-colors ${
-                    currentStep === index ? 'bg-primary' : 'bg-muted-foreground/30'
-                  }`}
-                  aria-label={`Go to step ${index + 1}`}
-                />
-              ))}
-            </div>
-          </CardContent>
-          <CardFooter className="flex justify-between">
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              </CarouselItem>
+            </CarouselContent>
+          </Carousel>
+          <div className="mt-4 flex justify-center gap-2">
+            {[0, 1, 2, 3].map(index => (
+              <button
+                key={index}
+                type="button"
+                onClick={() => carouselApi?.scrollTo(index)}
+                className={`h-2 w-2 rounded-full transition-colors ${
+                  currentStep === index ? 'bg-primary' : 'bg-muted-foreground/30'
+                }`}
+                aria-label={`Go to step ${index + 1}`}
+              />
+            ))}
+          </div>
+        </CardContent>
+        <CardFooter className="flex justify-between">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => carouselApi?.scrollPrev()}
+            disabled={currentStep === 0}
+          >
+            Previous
+          </Button>
+          {currentStep < 3 ? (
             <Button
               type="button"
-              variant="outline"
-              onClick={() => carouselApi?.scrollPrev()}
-              disabled={currentStep === 0}
+              onClick={() => carouselApi?.scrollNext()}
+              disabled={currentStep === 0 && !formData.title}
             >
-              Previous
+              Next
             </Button>
-            {currentStep < 3 ? (
-              <Button
-                type="button"
-                onClick={() => carouselApi?.scrollNext()}
-                disabled={currentStep === 0 && !formData.title}
-              >
-                Next
-              </Button>
-            ) : (
-              <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
-                {isSubmitting ? 'Creating...' : 'Create Agenda Item'}
-              </Button>
-            )}
-          </CardFooter>
+          ) : (
+            <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting ? 'Creating...' : 'Create Agenda Item'}
+            </Button>
+          )}
+        </CardFooter>
       </Card>
     </PageWrapper>
   );

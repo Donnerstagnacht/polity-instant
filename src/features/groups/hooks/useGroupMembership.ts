@@ -69,7 +69,7 @@ export function useGroupMembership(groupId: string) {
         user_id: user.id,
         group_id: groupId,
         visibility: '',
-        role_id: '',
+        role_id: null,
       });
 
       sendNotificationFn({ data: { helper: 'notifyMembershipRequest', params: { senderId: user.id, groupId } } }).catch(console.error)
