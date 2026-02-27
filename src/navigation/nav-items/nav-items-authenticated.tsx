@@ -226,11 +226,11 @@ export const navItemsAuthenticated = (
     if (isOwnUser) {
       items.push(
         {
-          id: 'notifications',
-          label: t ? t('navigation.secondary.user.notifications') : 'Notifications',
+          id: 'notification-settings',
+          label: t ? t('navigation.secondary.user.notificationSettings') : 'Notification Settings',
           icon: 'Bell',
-          href: `/user/${userId}/notifications`,
-          onClick: () => navigate({ to: `/user/${userId}/notifications` }),
+          href: `/user/${userId}/notification-settings`,
+          onClick: () => navigate({ to: `/user/${userId}/notification-settings` }),
         },
         {
           id: 'edit',

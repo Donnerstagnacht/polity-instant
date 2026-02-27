@@ -50,6 +50,7 @@ export const navigationTranslations = {
       network: 'Network',
       meet: 'Meet',
       notifications: 'Notifications',
+      notificationSettings: 'Notification Settings',
       edit: 'Edit Profile',
     },
     group: {

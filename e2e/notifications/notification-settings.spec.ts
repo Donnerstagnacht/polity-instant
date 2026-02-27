@@ -2,7 +2,7 @@ import { test, expect } from '../fixtures/test-base';
 
 test.describe('Notification Settings', () => {
   test.beforeEach(async ({ authenticatedPage: page, mainUserId }) => {
-    await page.goto(`/user/${mainUserId}/notifications`);
+    await page.goto(`/user/${mainUserId}/notification-settings`);
     await page.waitForLoadState('domcontentloaded');
   });
 

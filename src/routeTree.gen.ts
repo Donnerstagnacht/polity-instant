@@ -47,8 +47,8 @@ import { Route as AuthedGroupIdIndexImport } from './routes/_authed/group/$id/in
 import { Route as AuthedEventIdIndexImport } from './routes/_authed/event/$id/index'
 import { Route as AuthedAmendmentIdIndexImport } from './routes/_authed/amendment/$id/index'
 import { Route as AuthedUserIdSubscriptionsImport } from './routes/_authed/user/$id/subscriptions'
-import { Route as AuthedUserIdSettingsImport } from './routes/_authed/user/$id/settings'
 import { Route as AuthedUserIdNotificationsImport } from './routes/_authed/user/$id/notifications'
+import { Route as AuthedUserIdNotificationSettingsImport } from './routes/_authed/user/$id/notification-settings'
 import { Route as AuthedUserIdNetworkImport } from './routes/_authed/user/$id/network'
 import { Route as AuthedUserIdMembershipsImport } from './routes/_authed/user/$id/memberships'
 import { Route as AuthedUserIdMeetImport } from './routes/_authed/user/$id/meet'
@@ -302,17 +302,18 @@ const AuthedUserIdSubscriptionsRoute = AuthedUserIdSubscriptionsImport.update({
   getParentRoute: () => AuthedUserIdRoute,
 } as any)
 
-const AuthedUserIdSettingsRoute = AuthedUserIdSettingsImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AuthedUserIdRoute,
-} as any)
-
 const AuthedUserIdNotificationsRoute = AuthedUserIdNotificationsImport.update({
   id: '/notifications',
   path: '/notifications',
   getParentRoute: () => AuthedUserIdRoute,
 } as any)
+
+const AuthedUserIdNotificationSettingsRoute =
+  AuthedUserIdNotificationSettingsImport.update({
+    id: '/notification-settings',
+    path: '/notification-settings',
+    getParentRoute: () => AuthedUserIdRoute,
+  } as any)
 
 const AuthedUserIdNetworkRoute = AuthedUserIdNetworkImport.update({
   id: '/network',
@@ -953,18 +954,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedUserIdNetworkImport
       parentRoute: typeof AuthedUserIdImport
     }
+    '/_authed/user/$id/notification-settings': {
+      id: '/_authed/user/$id/notification-settings'
+      path: '/notification-settings'
+      fullPath: '/user/$id/notification-settings'
+      preLoaderRoute: typeof AuthedUserIdNotificationSettingsImport
+      parentRoute: typeof AuthedUserIdImport
+    }
     '/_authed/user/$id/notifications': {
       id: '/_authed/user/$id/notifications'
       path: '/notifications'
       fullPath: '/user/$id/notifications'
       preLoaderRoute: typeof AuthedUserIdNotificationsImport
-      parentRoute: typeof AuthedUserIdImport
-    }
-    '/_authed/user/$id/settings': {
-      id: '/_authed/user/$id/settings'
-      path: '/settings'
-      fullPath: '/user/$id/settings'
-      preLoaderRoute: typeof AuthedUserIdSettingsImport
       parentRoute: typeof AuthedUserIdImport
     }
     '/_authed/user/$id/subscriptions': {
@@ -1198,8 +1199,8 @@ interface AuthedUserIdRouteChildren {
   AuthedUserIdMeetRoute: typeof AuthedUserIdMeetRoute
   AuthedUserIdMembershipsRoute: typeof AuthedUserIdMembershipsRoute
   AuthedUserIdNetworkRoute: typeof AuthedUserIdNetworkRoute
+  AuthedUserIdNotificationSettingsRoute: typeof AuthedUserIdNotificationSettingsRoute
   AuthedUserIdNotificationsRoute: typeof AuthedUserIdNotificationsRoute
-  AuthedUserIdSettingsRoute: typeof AuthedUserIdSettingsRoute
   AuthedUserIdSubscriptionsRoute: typeof AuthedUserIdSubscriptionsRoute
   AuthedUserIdIndexRoute: typeof AuthedUserIdIndexRoute
 }
@@ -1210,8 +1211,8 @@ const AuthedUserIdRouteChildren: AuthedUserIdRouteChildren = {
   AuthedUserIdMeetRoute: AuthedUserIdMeetRoute,
   AuthedUserIdMembershipsRoute: AuthedUserIdMembershipsRoute,
   AuthedUserIdNetworkRoute: AuthedUserIdNetworkRoute,
+  AuthedUserIdNotificationSettingsRoute: AuthedUserIdNotificationSettingsRoute,
   AuthedUserIdNotificationsRoute: AuthedUserIdNotificationsRoute,
-  AuthedUserIdSettingsRoute: AuthedUserIdSettingsRoute,
   AuthedUserIdSubscriptionsRoute: AuthedUserIdSubscriptionsRoute,
   AuthedUserIdIndexRoute: AuthedUserIdIndexRoute,
 }
@@ -1342,8 +1343,8 @@ export interface FileRoutesByFullPath {
   '/user/$id/meet': typeof AuthedUserIdMeetRoute
   '/user/$id/memberships': typeof AuthedUserIdMembershipsRoute
   '/user/$id/network': typeof AuthedUserIdNetworkRoute
+  '/user/$id/notification-settings': typeof AuthedUserIdNotificationSettingsRoute
   '/user/$id/notifications': typeof AuthedUserIdNotificationsRoute
-  '/user/$id/settings': typeof AuthedUserIdSettingsRoute
   '/user/$id/subscriptions': typeof AuthedUserIdSubscriptionsRoute
   '/amendment/$id/': typeof AuthedAmendmentIdIndexRoute
   '/event/$id/': typeof AuthedEventIdIndexRoute
@@ -1413,8 +1414,8 @@ export interface FileRoutesByTo {
   '/user/$id/meet': typeof AuthedUserIdMeetRoute
   '/user/$id/memberships': typeof AuthedUserIdMembershipsRoute
   '/user/$id/network': typeof AuthedUserIdNetworkRoute
+  '/user/$id/notification-settings': typeof AuthedUserIdNotificationSettingsRoute
   '/user/$id/notifications': typeof AuthedUserIdNotificationsRoute
-  '/user/$id/settings': typeof AuthedUserIdSettingsRoute
   '/user/$id/subscriptions': typeof AuthedUserIdSubscriptionsRoute
   '/amendment/$id': typeof AuthedAmendmentIdIndexRoute
   '/event/$id': typeof AuthedEventIdIndexRoute
@@ -1489,8 +1490,8 @@ export interface FileRoutesById {
   '/_authed/user/$id/meet': typeof AuthedUserIdMeetRoute
   '/_authed/user/$id/memberships': typeof AuthedUserIdMembershipsRoute
   '/_authed/user/$id/network': typeof AuthedUserIdNetworkRoute
+  '/_authed/user/$id/notification-settings': typeof AuthedUserIdNotificationSettingsRoute
   '/_authed/user/$id/notifications': typeof AuthedUserIdNotificationsRoute
-  '/_authed/user/$id/settings': typeof AuthedUserIdSettingsRoute
   '/_authed/user/$id/subscriptions': typeof AuthedUserIdSubscriptionsRoute
   '/_authed/amendment/$id/': typeof AuthedAmendmentIdIndexRoute
   '/_authed/event/$id/': typeof AuthedEventIdIndexRoute
@@ -1566,8 +1567,8 @@ export interface FileRouteTypes {
     | '/user/$id/meet'
     | '/user/$id/memberships'
     | '/user/$id/network'
+    | '/user/$id/notification-settings'
     | '/user/$id/notifications'
-    | '/user/$id/settings'
     | '/user/$id/subscriptions'
     | '/amendment/$id/'
     | '/event/$id/'
@@ -1636,8 +1637,8 @@ export interface FileRouteTypes {
     | '/user/$id/meet'
     | '/user/$id/memberships'
     | '/user/$id/network'
+    | '/user/$id/notification-settings'
     | '/user/$id/notifications'
-    | '/user/$id/settings'
     | '/user/$id/subscriptions'
     | '/amendment/$id'
     | '/event/$id'
@@ -1710,8 +1711,8 @@ export interface FileRouteTypes {
     | '/_authed/user/$id/meet'
     | '/_authed/user/$id/memberships'
     | '/_authed/user/$id/network'
+    | '/_authed/user/$id/notification-settings'
     | '/_authed/user/$id/notifications'
-    | '/_authed/user/$id/settings'
     | '/_authed/user/$id/subscriptions'
     | '/_authed/amendment/$id/'
     | '/_authed/event/$id/'
@@ -1946,8 +1947,8 @@ export const routeTree = rootRoute
         "/_authed/user/$id/meet",
         "/_authed/user/$id/memberships",
         "/_authed/user/$id/network",
+        "/_authed/user/$id/notification-settings",
         "/_authed/user/$id/notifications",
-        "/_authed/user/$id/settings",
         "/_authed/user/$id/subscriptions",
         "/_authed/user/$id/"
       ]
@@ -2087,12 +2088,12 @@ export const routeTree = rootRoute
       "filePath": "_authed/user/$id/network.tsx",
       "parent": "/_authed/user/$id"
     },
-    "/_authed/user/$id/notifications": {
-      "filePath": "_authed/user/$id/notifications.tsx",
+    "/_authed/user/$id/notification-settings": {
+      "filePath": "_authed/user/$id/notification-settings.tsx",
       "parent": "/_authed/user/$id"
     },
-    "/_authed/user/$id/settings": {
-      "filePath": "_authed/user/$id/settings.tsx",
+    "/_authed/user/$id/notifications": {
+      "filePath": "_authed/user/$id/notifications.tsx",
       "parent": "/_authed/user/$id"
     },
     "/_authed/user/$id/subscriptions": {
