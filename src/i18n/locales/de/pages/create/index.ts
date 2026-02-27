@@ -75,7 +75,7 @@ export const createPageTranslations = {
     countryLabel: 'Land',
     countryPlaceholder: 'Land',
     imageLabel: 'Gruppenbild',
-    imageDescription: 'Групpenbild hochladen oder URL angeben',
+    imageDescription: 'Gruppenbild hochladen oder URL angeben',
     imageAndTags: 'Bild & Tags',
     inviteMembers: 'Mitglieder einladen',
     inviteMembersOptional: 'Mitglieder einladen (Optional)',
@@ -113,7 +113,8 @@ export const createPageTranslations = {
     eventStartDate: 'Startdatum',
     eventStartTime: 'Startzeit',
     eventTypeGeneralAssembly: 'Event-Typ: Mitgliederversammlung',
-    eventTypeDescription: 'Alle eingeladenen Mitglieder werden zu diesem Event eingeladen. Du wirst der Event-Organisator sein.',
+    eventTypeDescription:
+      'Alle eingeladenen Mitglieder werden zu diesem Event eingeladen. Du wirst der Event-Organisator sein.',
     untitledGroup: 'Unbenannte Gruppe',
     visibilityLabel: 'Sichtbarkeit',
     hashtagsLabel: 'Hashtags',
@@ -177,7 +178,8 @@ export const createPageTranslations = {
     eventType: 'Event-Typ',
     eventTypes: {
       delegateConference: 'Delegiertenkonferenz',
-      delegateConferenceDesc: 'Untergruppen senden proportionale Delegierte basierend auf Mitgliederzahlen',
+      delegateConferenceDesc:
+        'Untergruppen senden proportionale Delegierte basierend auf Mitgliederzahlen',
       generalAssembly: 'Mitgliederversammlung',
       generalAssemblyDesc: 'Alle Mitglieder der zugehörigen Gruppe können teilnehmen',
       openAssembly: 'Offene Versammlung',
@@ -200,7 +202,8 @@ export const createPageTranslations = {
     delegates: 'Delegierte',
     members: 'Mitglieder',
     noSubgroups: 'Keine Untergruppen gefunden',
-    noSubgroupsDesc: 'Die ausgewählte Gruppe hat keine Untergruppen. Delegiertenkonferenzen benötigen Untergruppen zur Zuweisung von Delegierten.',
+    noSubgroupsDesc:
+      'Die ausgewählte Gruppe hat keine Untergruppen. Delegiertenkonferenzen benötigen Untergruppen zur Zuweisung von Delegierten.',
     location: 'Veranstaltungsort',
     locationTypes: {
       online: 'Online',
@@ -227,7 +230,8 @@ export const createPageTranslations = {
     proposalSubmissionDeadline: 'Frist für Antragseingabe',
     proposalSubmissionDeadlineDesc: 'Bis wann können Anträge eingereicht werden?',
     amendmentCutoffDeadline: 'Änderungsantrags-Frist',
-    amendmentCutoffDeadlineDesc: 'Bis wann können Änderungsanträge zu bestehenden Anträgen eingereicht werden?',
+    amendmentCutoffDeadlineDesc:
+      'Bis wann können Änderungsanträge zu bestehenden Anträgen eingereicht werden?',
     settings: 'Einstellungen',
     eventVisibility: 'Event Sichtbarkeit',
     participantListVisibility: 'Teilnehmerliste Sichtbarkeit',
@@ -378,6 +382,15 @@ export const createPageTranslations = {
     title: 'Blog erstellen',
     pageTitle: 'Blog erstellen',
     description: 'Einen neuen Blogbeitrag erstellen',
+    basicInfo: 'Grundlegende Informationen',
+    titleLabel: 'Titel',
+    titlePlaceholder: 'Gib einen Titel ein',
+    dateLabel: 'Datum',
+    coverImage: 'Titelbild',
+    coverImageDescription: 'Titelbild hochladen oder URL angeben',
+    visibilityAndTags: 'Sichtbarkeit & Tags',
+    hashtagPlaceholder: 'Hashtags hinzufügen',
+    reviewBadge: 'Blog',
   },
   payment: {
     title: 'Zahlung erstellen',
@@ -414,5 +427,12 @@ export const createPageTranslations = {
   document: {
     title: 'Dokument erstellen',
     description: 'Ein neues Dokument erstellen',
+  },
+  progress: {
+    stepOf: 'Schritt {{current}} von {{total}}',
+  },
+  summary: {
+    title: 'Überprüfen & Bestätigen',
+    createButton: 'Erstellen',
   },
 } as const;
