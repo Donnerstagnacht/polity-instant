@@ -34,6 +34,7 @@ export interface GroupRole {
   description?: string;
   group_id?: string;
   scope?: string;
+  sort_order?: number;
   created_at?: number | string;
   updated_at?: number | string;
   action_rights?: GroupActionRight[];

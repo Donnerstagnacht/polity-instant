@@ -12,12 +12,13 @@ export function useRoleManagement(groupId: string) {
   const [isLoading, setIsLoading] = useState(false);
   const {
     createRole: createRoleAction,
+    updateRole: updateRoleAction,
     deleteRole: deleteRoleAction,
     assignActionRight,
     removeActionRight,
   } = useGroupActions();
 
-  const addRole = async (name: string, description: string) => {
+  const addRole = async (name: string, description: string, nextSortOrder: number = 0) => {
     if (!name.trim()) {
       toast.error('Role name is required');
       return { success: false };
@@ -36,6 +37,7 @@ export function useRoleManagement(groupId: string) {
         event_id: null,
         amendment_id: null,
         blog_id: null,
+        sort_order: nextSortOrder,
       });
 
       toast.success('Role created successfully');
@@ -44,6 +46,23 @@ export function useRoleManagement(groupId: string) {
     } catch (error) {
       console.error('Failed to create role:', error);
       toast.error('Failed to create role. Please try again.');
+      return { success: false, error };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const reorderRoles = async (orderedRoleIds: string[]) => {
+    setIsLoading(true);
+    try {
+      for (let i = 0; i < orderedRoleIds.length; i++) {
+        await updateRoleAction({ id: orderedRoleIds[i], sort_order: i });
+      }
+      toast.success('Role order updated');
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to reorder roles:', error);
+      toast.error('Failed to update role order.');
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -115,6 +134,7 @@ export function useRoleManagement(groupId: string) {
   return {
     addRole,
     removeRole,
+    reorderRoles,
     toggleActionRight,
     isLoading,
   };

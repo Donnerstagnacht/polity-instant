@@ -8,6 +8,7 @@ import {
   groupMembershipUpdateSchema,
   groupMembershipDeleteSchema,
   roleCreateSchema,
+  roleUpdateSchema,
   roleDeleteSchema,
   actionRightCreateSchema,
   actionRightDeleteSchema,
@@ -85,6 +86,10 @@ export const groupMutators = {
     await can(tx, ctx, { action: 'manage', resource: 'groupRoles', groupId: args.group_id });
     const now = Date.now();
     await tx.mutate.role.insert({ ...args, created_at: now });
+  }),
+
+  updateRole: defineMutator(roleUpdateSchema, async ({ tx, args }) => {
+    await tx.mutate.role.update(args);
   }),
 
   deleteRole: defineMutator(roleDeleteSchema, async ({ tx, args }) => {

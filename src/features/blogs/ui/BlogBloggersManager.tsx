@@ -296,6 +296,7 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
         group_id: null,
         event_id: null,
         amendment_id: null,
+        sort_order: 0,
       });
 
       // Send notification about new role

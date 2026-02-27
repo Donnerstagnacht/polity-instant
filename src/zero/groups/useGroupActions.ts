@@ -157,6 +157,19 @@ export function useGroupActions() {
     [zero]
   )
 
+  const updateRole = useCallback(
+    async (args: Parameters<typeof mutators.groups.updateRole>[0]) => {
+      try {
+        await zero.mutate(mutators.groups.updateRole(args))
+      } catch (error) {
+        console.error('Failed to update role:', error)
+        handleMutationError(error, t('features.groups.toasts.roleUpdateFailed'), t)
+        throw error
+      }
+    },
+    [zero]
+  )
+
   const assignActionRight = useCallback(
     async (args: Parameters<typeof mutators.groups.assignActionRight>[0]) => {
       try {
@@ -190,9 +203,14 @@ export function useGroupActions() {
     async (groupId: string) => {
       try {
         let adminRoleId: string | null = null
-        for (const roleDef of DEFAULT_GROUP_ROLES) {
+        const totalRoles = DEFAULT_GROUP_ROLES.length
+        for (let i = 0; i < totalRoles; i++) {
+          const roleDef = DEFAULT_GROUP_ROLES[i]
           const roleId = crypto.randomUUID()
           if (roleDef.name === 'Admin') adminRoleId = roleId
+          // Reverse the index so the last default role (Member) gets sort_order 0 (least rights)
+          // and first (Admin) gets the highest sort_order (most rights)
+          const sortOrder = totalRoles - 1 - i
           await zero.mutate(mutators.groups.createRole({
             id: roleId,
             name: roleDef.name,
@@ -202,6 +220,7 @@ export function useGroupActions() {
             event_id: null,
             amendment_id: null,
             blog_id: null,
+            sort_order: sortOrder,
           }))
           for (const perm of roleDef.permissions) {
             await zero.mutate(mutators.groups.assignActionRight({
@@ -362,6 +381,7 @@ export function useGroupActions() {
 
     // Roles
     createRole,
+    updateRole,
     deleteRole,
     assignActionRight,
     removeActionRight,

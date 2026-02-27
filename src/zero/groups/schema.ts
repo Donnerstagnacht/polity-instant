@@ -74,12 +74,17 @@ const roleBaseSchema = z.object({
   event_id: z.string().nullable(),
   amendment_id: z.string().nullable(),
   blog_id: z.string().nullable(),
+  sort_order: z.number(),
   created_at: timestampSchema,
 })
 
 export const roleSelectSchema = roleBaseSchema
 export const roleCreateSchema = roleBaseSchema
   .omit({ id: true, created_at: true })
+  .extend({ id: z.string() })
+export const roleUpdateSchema = roleBaseSchema
+  .pick({ sort_order: true })
+  .partial()
   .extend({ id: z.string() })
 export const roleDeleteSchema = z.object({ id: z.string() })
 export type Role = z.infer<typeof roleSelectSchema>

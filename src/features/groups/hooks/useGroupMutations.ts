@@ -157,7 +157,8 @@ export function useGroupMutations(groupId: string) {
     userId: string,
     senderId?: string,
     senderName?: string,
-    groupName?: string
+    groupName?: string,
+    roleName?: string
   ) => {
     setIsLoading(true);
     try {
@@ -166,7 +167,7 @@ export function useGroupMutations(groupId: string) {
         role_id: roleId,
       });
 
-      sendNotificationFn({ data: { helper: 'notifyMembershipRoleChanged', params: { senderId, recipientUserId: userId, groupId, groupName: groupName || 'Group', newRole: roleId } } }).catch(console.error)
+      sendNotificationFn({ data: { helper: 'notifyMembershipRoleChanged', params: { senderId, recipientUserId: userId, groupId, groupName: groupName || 'Group', newRole: roleName || roleId } } }).catch(console.error)
       toast.success('Member role updated');
       return { success: true };
     } catch (error) {
@@ -187,7 +188,8 @@ export function useGroupMutations(groupId: string) {
     actionRights: any[],
     senderId?: string,
     groupName?: string,
-    adminUserIds?: string[]
+    adminUserIds?: string[],
+    sortOrder: number = 0
   ) => {
     setIsLoading(true);
     try {
@@ -201,6 +203,7 @@ export function useGroupMutations(groupId: string) {
         event_id: null,
         amendment_id: null,
         blog_id: null,
+        sort_order: sortOrder,
       });
 
       // Add action rights

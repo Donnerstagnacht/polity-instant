@@ -1,9 +1,11 @@
 /**
  * Roles Permissions Table Component
  *
- * Matrix table for managing role permissions.
+ * Matrix table for managing role permissions with draggable columns.
+ * Column order represents role hierarchy: left = least rights, right = most rights.
  */
 
+import { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -15,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Shield, Trash2 } from 'lucide-react';
+import { GripVertical, Shield, Trash2 } from 'lucide-react';
 import { ACTION_RIGHTS } from '@/zero/rbac/constants';
 import type { GroupRole } from '../types/group.types';
 
@@ -23,6 +25,7 @@ interface RolesPermissionsTableProps {
   roles: GroupRole[];
   onTogglePermission: (roleId: string, resource: string, action: string, currentlyHas: boolean) => void;
   onRemoveRole: (roleId: string) => void;
+  onReorderRoles: (orderedRoleIds: string[]) => void;
   addRoleButton: React.ReactNode;
 }
 
@@ -30,8 +33,57 @@ export function RolesPermissionsTable({
   roles,
   onTogglePermission,
   onRemoveRole,
+  onReorderRoles,
   addRoleButton,
 }: RolesPermissionsTableProps) {
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const dragCounter = useRef(0);
+
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragEnter = (index: number) => {
+    dragCounter.current++;
+    setDragOverIndex(index);
+  };
+
+  const handleDragLeave = () => {
+    dragCounter.current--;
+    if (dragCounter.current === 0) {
+      setDragOverIndex(null);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (dropIndex: number) => {
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      dragCounter.current = 0;
+      return;
+    }
+
+    const reordered = [...roles];
+    const [moved] = reordered.splice(draggedIndex, 1);
+    reordered.splice(dropIndex, 0, moved);
+    onReorderRoles(reordered.map((r) => r.id));
+
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+    dragCounter.current = 0;
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+    dragCounter.current = 0;
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -42,7 +94,7 @@ export function RolesPermissionsTable({
               Role Permissions
             </CardTitle>
             <CardDescription>
-              Manage roles and their action rights for this group
+              Manage roles and their action rights. Drag columns to reorder — left is least privileged, right is most privileged.
             </CardDescription>
           </div>
           {addRoleButton}
@@ -55,10 +107,25 @@ export function RolesPermissionsTable({
               <TableHeader>
                 <TableRow>
                   <TableHead className="min-w-[200px]">Action Right</TableHead>
-                  {roles.map((role) => (
-                    <TableHead key={role.id} className="min-w-[120px] text-center">
+                  {roles.map((role, index) => (
+                    <TableHead
+                      key={role.id}
+                      className={`min-w-[120px] text-center transition-colors ${
+                        draggedIndex === index ? 'opacity-50' : ''
+                      } ${dragOverIndex === index && draggedIndex !== index ? 'bg-accent' : ''}`}
+                      draggable
+                      onDragStart={() => handleDragStart(index)}
+                      onDragEnter={() => handleDragEnter(index)}
+                      onDragLeave={handleDragLeave}
+                      onDragOver={handleDragOver}
+                      onDrop={() => handleDrop(index)}
+                      onDragEnd={handleDragEnd}
+                    >
                       <div className="flex flex-col items-center gap-1">
-                        <span className="font-semibold">{role.name}</span>
+                        <div className="flex cursor-grab items-center gap-1">
+                          <GripVertical className="h-3 w-3 text-muted-foreground" />
+                          <span className="font-semibold">{role.name}</span>
+                        </div>
                         {role.description && (
                           <span className="text-xs font-normal text-muted-foreground">
                             {role.description}

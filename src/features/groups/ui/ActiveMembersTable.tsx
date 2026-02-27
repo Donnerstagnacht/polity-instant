@@ -15,22 +15,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Shield, Trash2, Users } from 'lucide-react';
+import { ArrowUpDown, Trash2, Users } from 'lucide-react';
 import type { GroupMembershipWithUser, GroupRole } from '../types/group.types';
 
 interface ActiveMembersTableProps {
   members: GroupMembershipWithUser[];
   roles: GroupRole[];
   onChangeRole: (membershipId: string, roleId: string, userId: string) => void;
-  onPromote: (membershipId: string, userId: string) => void;
-  onDemote: (membershipId: string, userId: string) => void;
+  onOpenChangeRoleDialog: (membership: GroupMembershipWithUser) => void;
   onRemove: (membershipId: string, userId: string) => void;
   onNavigateToUser: (userId: string) => void;
 }
@@ -39,8 +31,7 @@ export function ActiveMembersTable({
   members,
   roles,
   onChangeRole,
-  onPromote,
-  onDemote,
+  onOpenChangeRoleDialog,
   onRemove,
   onNavigateToUser,
 }: ActiveMembersTableProps) {
@@ -73,7 +64,6 @@ export function ActiveMembersTable({
                 const userAvatar = user?.avatar || '';
                 const userHandle = user?.handle || '';
                 const role = membership.role?.name || 'Member';
-                const roleId = membership.role?.id || '';
                 const createdAt = membership.created_at
                   ? new Date(membership.created_at).toLocaleDateString()
                   : 'N/A';
@@ -109,46 +99,19 @@ export function ActiveMembersTable({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Select
-                        value={roleId}
-                        onValueChange={(newRoleId) =>
-                          user?.id && onChangeRole(membership.id, newRoleId, user.id)
-                        }
-                      >
-                        <SelectTrigger className="w-40">
-                          <SelectValue placeholder={role} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {roles.map((roleOption) => (
-                            <SelectItem key={roleOption.id} value={roleOption.id}>
-                              {roleOption.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <span className="text-sm font-medium">{role}</span>
                     </TableCell>
                     <TableCell className="text-muted-foreground">{createdAt}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        {role !== 'Board Member' && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => user?.id && onPromote(membership.id, user.id)}
-                          >
-                            <Shield className="mr-1 h-4 w-4" />
-                            Promote to Board Member
-                          </Button>
-                        )}
-                        {role === 'Board Member' && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => user?.id && onDemote(membership.id, user.id)}
-                          >
-                            Demote to Member
-                          </Button>
-                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onOpenChangeRoleDialog(membership)}
+                        >
+                          <ArrowUpDown className="mr-1 h-4 w-4" />
+                          Promote / Demote
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"

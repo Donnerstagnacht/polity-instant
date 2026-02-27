@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS public.role (
   event_id UUID,
   amendment_id UUID,
   blog_id UUID,
+  sort_order INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

@@ -34,7 +34,7 @@ export const groupQueries = {
   ),
 
   roles: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.role.where('group_id', groupId).orderBy('name', 'asc')
+    zql.role.where('group_id', groupId).orderBy('sort_order', 'asc')
   ),
 
   positions: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
@@ -126,7 +126,7 @@ export const groupQueries = {
 
   /** Roles scoped to a group with action_rights */
   rolesWithRights: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.role.where('group_id', groupId).where('scope', 'group').related('action_rights')
+    zql.role.where('group_id', groupId).where('scope', 'group').related('action_rights').orderBy('sort_order', 'asc')
   ),
 
   /** All group_relationship rows with both group and related_group (for network views) */

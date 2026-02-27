@@ -42,6 +42,7 @@ export const role = table('role')
     event_id: string().optional(),
     amendment_id: string().optional(),
     blog_id: string().optional(),
+    sort_order: number(),
     created_at: number(),
   })
   .primaryKey('id')

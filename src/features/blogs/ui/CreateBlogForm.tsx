@@ -109,6 +109,7 @@ export function CreateBlogForm() {
             event_id: null,
             amendment_id: null,
             blog_id: blogId,
+            sort_order: 1,
           },
           {
             id: writerRoleId,
@@ -119,6 +120,7 @@ export function CreateBlogForm() {
             event_id: null,
             amendment_id: null,
             blog_id: blogId,
+            sort_order: 0,
           },
         ],
         actionRights: [
