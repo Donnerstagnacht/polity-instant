@@ -5,7 +5,7 @@
 -- Payment table
 CREATE TABLE IF NOT EXISTS public.payment (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  amount INTEGER,
+  amount NUMERIC(12,2),
   label TEXT,
   type TEXT,
   payer_user_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,

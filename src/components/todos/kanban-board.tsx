@@ -38,10 +38,26 @@ export function KanbanBoard({ todos }: KanbanBoardProps) {
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
 
   const COLUMNS: { id: TodoStatus; titleKey: string; color: string }[] = [
-    { id: 'pending', titleKey: 'features.todos.kanban.toDo', color: 'bg-slate-100 dark:bg-slate-800' },
-    { id: 'in_progress', titleKey: 'features.todos.kanban.inProgress', color: 'bg-blue-50 dark:bg-blue-950' },
-    { id: 'completed', titleKey: 'features.todos.kanban.completed', color: 'bg-green-50 dark:bg-green-950' },
-    { id: 'cancelled', titleKey: 'features.todos.kanban.cancelled', color: 'bg-red-50 dark:bg-red-950' },
+    {
+      id: 'pending',
+      titleKey: 'features.todos.kanban.toDo',
+      color: 'bg-slate-100 dark:bg-slate-800',
+    },
+    {
+      id: 'in_progress',
+      titleKey: 'features.todos.kanban.inProgress',
+      color: 'bg-blue-50 dark:bg-blue-950',
+    },
+    {
+      id: 'completed',
+      titleKey: 'features.todos.kanban.completed',
+      color: 'bg-green-50 dark:bg-green-950',
+    },
+    {
+      id: 'cancelled',
+      titleKey: 'features.todos.kanban.cancelled',
+      color: 'bg-red-50 dark:bg-red-950',
+    },
   ];
 
   const handleDragStart = (todoId: string) => {
@@ -101,7 +117,9 @@ export function KanbanBoard({ todos }: KanbanBoardProps) {
             >
               <div className="mb-4">
                 <h3 className="text-lg font-semibold">{t(column.titleKey)}</h3>
-                <p className="text-sm text-muted-foreground">{columnTodos.length} {t('features.todos.kanban.tasks')}</p>
+                <p className="text-muted-foreground text-sm">
+                  {columnTodos.length} {t('features.todos.kanban.tasks')}
+                </p>
               </div>
 
               <div className="space-y-3">
@@ -144,6 +162,18 @@ function TodoKanbanCard({ todo, onDragStart, onClick, isDragging, t }: TodoKanba
   const isOverdue = todo.dueDate && todo.status !== 'completed' && todo.dueDate < Date.now();
   const [isDraggingCard, setIsDraggingCard] = useState(false);
 
+  const parsedTags: string[] = Array.isArray(todo.tags)
+    ? todo.tags
+    : typeof todo.tags === 'string'
+      ? (() => {
+          try {
+            return JSON.parse(todo.tags);
+          } catch {
+            return [];
+          }
+        })()
+      : [];
+
   const handleMouseDown = () => {
     setIsDraggingCard(false);
   };
@@ -174,7 +204,7 @@ function TodoKanbanCard({ todo, onDragStart, onClick, isDragging, t }: TodoKanba
         <div className="mb-2">
           <h4 className="line-clamp-2 text-sm font-medium">{todo.title}</h4>
           {todo.description && (
-            <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{todo.description}</p>
+            <p className="text-muted-foreground mt-1 line-clamp-2 text-xs">{todo.description}</p>
           )}
         </div>
 
@@ -191,7 +221,7 @@ function TodoKanbanCard({ todo, onDragStart, onClick, isDragging, t }: TodoKanba
 
           {/* Due date */}
           {todo.dueDate && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <div className="text-muted-foreground flex items-center gap-1 text-xs">
               <Calendar className="h-3 w-3" />
               <span>{formatDate(todo.dueDate)}</span>
             </div>
@@ -202,7 +232,7 @@ function TodoKanbanCard({ todo, onDragStart, onClick, isDragging, t }: TodoKanba
             <div className="flex items-center gap-1">
               <div className="flex -space-x-2">
                 {todo.assignments.slice(0, 3).map((assignment: any, idx: number) => (
-                  <Avatar key={idx} className="h-5 w-5 border-2 border-background">
+                  <Avatar key={idx} className="border-background h-5 w-5 border-2">
                     <AvatarImage src={assignment.user?.avatar} />
                     <AvatarFallback className="text-xs">
                       {assignment.user?.email?.[0]?.toUpperCase() || '?'}
@@ -211,7 +241,7 @@ function TodoKanbanCard({ todo, onDragStart, onClick, isDragging, t }: TodoKanba
                 ))}
               </div>
               {todo.assignments.length > 3 && (
-                <span className="text-xs text-muted-foreground">
+                <span className="text-muted-foreground text-xs">
                   +{todo.assignments.length - 3}
                 </span>
               )}
@@ -219,16 +249,16 @@ function TodoKanbanCard({ todo, onDragStart, onClick, isDragging, t }: TodoKanba
           )}
 
           {/* Tags */}
-          {todo.tags && todo.tags.length > 0 && (
+          {parsedTags.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              {todo.tags.slice(0, 2).map((tag: string, idx: number) => (
+              {parsedTags.slice(0, 2).map((tag: string, idx: number) => (
                 <Badge key={idx} variant="outline" className="text-xs">
                   {tag}
                 </Badge>
               ))}
-              {todo.tags.length > 2 && (
+              {parsedTags.length > 2 && (
                 <Badge variant="outline" className="text-xs">
-                  +{todo.tags.length - 2}
+                  +{parsedTags.length - 2}
                 </Badge>
               )}
             </div>

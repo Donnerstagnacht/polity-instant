@@ -315,7 +315,10 @@ export function useGroupDocuments(groupId: string) {
   );
 
   const documents = useMemo(
-    () => (amendmentsData || []).flatMap((a: any) => a.documents || []),
+    () =>
+      (amendmentsData || []).flatMap((a: any) =>
+        (a.documents || []).map((doc: any) => ({ ...doc, title: a.title }))
+      ),
     [amendmentsData]
   );
 

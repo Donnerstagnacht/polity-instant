@@ -15,7 +15,7 @@ export function useFinancialData(payments: GroupPayment[], groupId: string) {
     let totalExpenditure = 0;
 
     payments.forEach((payment: any) => {
-      const isIncome = payment.receiverGroup?.id === groupId;
+      const isIncome = payment.receiver_group_id === groupId;
 
       if (isIncome) {
         totalIncome += payment.amount;

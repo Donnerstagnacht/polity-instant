@@ -37,10 +37,10 @@ export function useGroupPayments(groupId: string) {
         label: paymentData.label,
         type: paymentData.type,
         amount: paymentData.amount,
-        payer_user_id: paymentData.payerUserId ?? '',
-        payer_group_id: paymentData.payerGroupId ?? '',
-        receiver_user_id: paymentData.receiverUserId ?? '',
-        receiver_group_id: paymentData.receiverGroupId ?? '',
+        payer_user_id: paymentData.payerUserId ?? null,
+        payer_group_id: paymentData.payerGroupId ?? null,
+        receiver_user_id: paymentData.receiverUserId ?? null,
+        receiver_group_id: paymentData.receiverGroupId ?? null,
       });
 
       sendNotificationFn({ data: { helper: 'notifyPaymentCreated', params: { senderId: paymentData.senderId, groupId, groupName: paymentData.groupName } } }).catch(console.error)

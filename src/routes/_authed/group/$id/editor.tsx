@@ -1,13 +1,9 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { GroupDocumentsList } from '@/features/documents/ui/GroupDocumentsList'
-import { useAuth } from '@/providers/auth-provider'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_authed/group/$id/editor')({
-  component: GroupEditorPage,
+  component: GroupEditorLayout,
 })
 
-function GroupEditorPage() {
-  const { id } = Route.useParams()
-  const { user } = useAuth()
-  return <GroupDocumentsList groupId={id} userId={user?.id} />
+function GroupEditorLayout() {
+  return <Outlet />
 }

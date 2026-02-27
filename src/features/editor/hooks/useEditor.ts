@@ -58,10 +58,9 @@ import type {
   EditorState,
   EditorActions,
   EditorCapabilities,
-  DEFAULT_CAPABILITIES,
   TDiscussion,
 } from '../types';
-import { DEFAULT_EDITOR_CONTENT } from '../types';
+import { DEFAULT_CAPABILITIES, DEFAULT_EDITOR_CONTENT } from '../types';
 
 /**
  * Options for the useEditor hook
@@ -350,7 +349,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
 
   // Merge capabilities
   const capabilities = useMemo(() => {
-    const defaults = require('../types').DEFAULT_CAPABILITIES[entityType];
+    const defaults = DEFAULT_CAPABILITIES[entityType];
     return { ...defaults, ...options.capabilities };
   }, [entityType, options.capabilities]);
 

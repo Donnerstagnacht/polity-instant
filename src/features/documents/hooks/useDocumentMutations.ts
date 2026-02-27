@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
+import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { notifyDocumentCreated, notifyDocumentDeleted } from '@/utils/notification-helpers';
 import { sendNotificationFn } from '@/server/notifications';
 
@@ -30,7 +31,8 @@ interface UseDocumentMutationsResult {
  */
 export function useDocumentMutations(groupId: string): UseDocumentMutationsResult {
   const navigate = useNavigate();
-  const { createDocument: createDocAction, deleteDocument: deleteDocAction } = useDocumentActions();
+  const { createDocument: createDocAction, deleteDocument: deleteDocAction, addCollaborator } = useDocumentActions();
+  const { createAmendment } = useAmendmentActions();
   const [isCreating, setIsCreating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -52,10 +54,38 @@ export function useDocumentMutations(groupId: string): UseDocumentMutationsResul
     setIsCreating(true);
 
     try {
+      // Create an amendment as the group-linking container for this document.
+      // Documents are associated with groups through amendment.group_id, so we
+      // must create a minimal amendment first, then attach the document to it.
+      const amendmentId = crypto.randomUUID();
+      await createAmendment({
+        id: amendmentId,
+        title,
+        group_id: groupId,
+        status: 'draft',
+        workflow_status: null,
+        visibility: 'group',
+        is_public: false,
+        editing_mode: 'single',
+        code: null,
+        reason: null,
+        category: null,
+        preamble: null,
+        event_id: null,
+        clone_source_id: null,
+        tags: null,
+        discussions: null,
+        image_url: null,
+        x: null,
+        youtube: null,
+        linkedin: null,
+        website: null,
+      });
+
       const docId = crypto.randomUUID();
       await createDocAction({
         id: docId,
-        amendment_id: null,
+        amendment_id: amendmentId,
         content: [
           {
             type: 'h1',
@@ -67,6 +97,16 @@ export function useDocumentMutations(groupId: string): UseDocumentMutationsResul
           },
         ],
         editing_mode: 'single',
+      });
+
+      // Add creator as collaborator so the document is user-attributed.
+      await addCollaborator({
+        id: crypto.randomUUID(),
+        document_id: docId,
+        user_id: userId,
+        role_id: null,
+        status: 'active',
+        visibility: 'group',
       });
 
       sendNotificationFn({ data: { helper: 'notifyDocumentCreated', params: { senderId: userId, groupId, groupName } } }).catch(console.error)

@@ -78,16 +78,20 @@ export function AddPaymentDialog({
   const { allUsers } = useUserState({ includeAllUsers: true });
   const { groups: allGroups } = useAllGroups();
 
+  const getUserDisplayName = (user: any): string =>
+    [user.first_name, user.last_name].filter(Boolean).join(' ') || user.handle || 'Unnamed User';
+
   // Filter entities based on search query and selected entity type
   const filteredUsers =
     entityType === 'user'
       ? allUsers?.filter((user: any) => {
           if (!user?.id) return false;
           const query = searchQuery.toLowerCase();
+          const fullName = getUserDisplayName(user).toLowerCase();
           return (
-            user.name?.toLowerCase().includes(query) ||
+            fullName.includes(query) ||
             user.handle?.toLowerCase().includes(query) ||
-            user.contactEmail?.toLowerCase().includes(query)
+            user.email?.toLowerCase().includes(query)
           );
         })
       : [];
@@ -285,11 +289,11 @@ export function AddPaymentDialog({
                             return (
                               <CommandItem
                                 key={userId}
-                                value={`user-${userId}`}
+                                value={`user-${userId}-${getUserDisplayName(user)}`}
                                 onSelect={() => {
                                   setSelectedEntity({
                                     id: userId,
-                                    name: user.name || 'Unnamed User',
+                                    name: getUserDisplayName(user),
                                     type: 'user',
                                   });
                                   setPopoverOpen(false);
@@ -299,18 +303,18 @@ export function AddPaymentDialog({
                                 <div className="flex flex-1 items-center gap-2">
                                   <Avatar className="h-6 w-6">
                                     {user.avatar ? (
-                                      <AvatarImage src={user.avatar} alt={user.name || ''} />
+                                      <AvatarImage src={user.avatar} alt={getUserDisplayName(user)} />
                                     ) : null}
                                     <AvatarFallback className="text-xs">
-                                      {user.name?.[0]?.toUpperCase() || '?'}
+                                      {getUserDisplayName(user)[0]?.toUpperCase() || '?'}
                                     </AvatarFallback>
                                   </Avatar>
                                   <div className="flex-1">
                                     <div className="text-sm font-medium">
-                                      {user.name || 'Unnamed User'}
+                                      {getUserDisplayName(user)}
                                     </div>
                                     <div className="text-xs text-muted-foreground">
-                                      {user.handle ? `@${user.handle}` : user.contactEmail}
+                                      {user.handle ? `@${user.handle}` : user.email}
                                     </div>
                                   </div>
                                 </div>
@@ -329,7 +333,7 @@ export function AddPaymentDialog({
                             return (
                               <CommandItem
                                 key={group.id}
-                                value={`group-${group.id}`}
+                                value={`group-${group.id}-${group.name}`}
                                 onSelect={() => {
                                   setSelectedEntity({
                                     id: group.id,
