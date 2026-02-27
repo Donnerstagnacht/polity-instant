@@ -17,7 +17,7 @@ export {
 
 // Queries & Mutators
 export { todoQueries } from './queries'
-export { todoMutators } from './mutators'
+export { todoSharedMutators } from './shared-mutators'
 
 // Hooks
 export { useTodoState } from './useTodoState'

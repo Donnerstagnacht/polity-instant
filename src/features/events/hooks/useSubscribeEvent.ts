@@ -3,7 +3,6 @@ import { useCommonActions } from '@/zero/common/useCommonActions';
 import { useEventSubscribers } from '@/zero/events/useEventState';
 import { useAuth } from '@/providers/auth-provider';
 import { notifyEventNewSubscriber } from '@/utils/notification-helpers';
-import { sendNotificationFn } from '@/server/notifications';
 import { toast } from 'sonner';
 
 /**
@@ -80,7 +79,6 @@ export function useSubscribeEvent(targetEventId?: string) {
         blog_id: null,
       });
 
-      sendNotificationFn({ data: { helper: 'notifyEventNewSubscriber', params: { senderId: authUser.id, eventId: targetEventId, eventTitle } } }).catch(console.error)
 
       toast.success('Successfully subscribed to event');
     } catch (error) {

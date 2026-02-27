@@ -12,7 +12,6 @@ import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import { syncGroupNameToConversation } from '@/utils/groupConversationSync';
 import { notifyGroupProfileUpdated } from '@/utils/notification-helpers';
-import { sendNotificationFn } from '@/server/notifications';
 
 export interface GroupFormData {
   name: string;
@@ -213,7 +212,6 @@ export function useGroupUpdate(
         allHashtags ?? []
       );
 
-      sendNotificationFn({ data: { helper: 'notifyGroupProfileUpdated', params: { senderId: options?.actorId, groupId, groupName: formData.name } } }).catch(console.error)
       toast.success('Group updated successfully');
       navigate({ to: `/group/${groupId}` });
     } catch (error) {

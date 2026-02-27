@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { notifySpeakerListJoined } from '@/utils/notification-helpers';
-import { sendNotificationFn } from '@/server/notifications';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 
 export function useSpeakerList(agendaItemId?: string, eventContext?: { eventId: string; eventTitle: string }) {
@@ -30,7 +29,6 @@ export function useSpeakerList(agendaItemId?: string, eventContext?: { eventId: 
       });
 
       if (eventContext) {
-        sendNotificationFn({ data: { helper: 'notifySpeakerListJoined', params: { senderId: user.id, eventId: eventContext.eventId, eventTitle: eventContext.eventTitle, agendaItemId } } }).catch(console.error)
       }
     } catch (error) {
       console.error('Error adding to speaker list:', error);

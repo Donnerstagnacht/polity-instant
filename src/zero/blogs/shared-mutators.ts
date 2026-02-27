@@ -14,7 +14,8 @@ import {
   deleteBlogSupportVoteSchema,
 } from '../votes/schema'
 
-export const blogMutators = {
+/** Shared mutators — run on both client and server. Server mutators may override these. */
+export const blogSharedMutators = {
   // Create a blog
   create: defineMutator(
     createBlogSchema,

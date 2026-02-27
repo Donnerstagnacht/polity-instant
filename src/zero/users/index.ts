@@ -1,5 +1,5 @@
 export { userQueries } from './queries'
-export { userMutators } from './mutators'
+export { userSharedMutators } from './shared-mutators'
 export { useUserState } from './useUserState'
 export { useUserActions } from './useUserActions'
 export type { User, File, UserStats } from './schema'

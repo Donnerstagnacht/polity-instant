@@ -9,7 +9,8 @@ import {
   followDeleteSchema,
 } from '../network/schema'
 
-export const userMutators = {
+/** Shared mutators — run on both client and server. Server mutators may override these. */
+export const userSharedMutators = {
   updateProfile: defineMutator(userUpdateSchema, async ({ tx, ctx: { userID }, args }) => {
     if (userID === 'anon') {
       throw new Error('Authentication required to update profile')

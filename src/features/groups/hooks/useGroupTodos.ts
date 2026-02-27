@@ -8,7 +8,6 @@ import { useTodoActions } from '@/zero/todos/useTodoActions';
 import { toast } from 'sonner';
 import type { GroupTodo } from '../types/group.types';
 import { notifyTodoAssigned, notifyTodoUpdated, notifyTodoCompleted } from '@/utils/notification-helpers';
-import { sendNotificationFn } from '@/server/notifications';
 
 export function useGroupTodos(groupId: string, userId?: string) {
   const [isLoading, setIsLoading] = useState(false);
@@ -59,7 +58,6 @@ export function useGroupTodos(groupId: string, userId?: string) {
         user_id: userId,
       });
 
-      sendNotificationFn({ data: { helper: 'notifyTodoAssigned', params: { senderId: userId, groupId, groupName: todoData.groupName } } }).catch(console.error)
       toast.success('Todo added successfully!');
       return { success: true, todoId };
     } catch (error) {
@@ -86,7 +84,6 @@ export function useGroupTodos(groupId: string, userId?: string) {
         completed_at: newStatus === 'completed' ? Date.now() : undefined,
       });
 
-      sendNotificationFn({ data: { helper: 'notifyTodoUpdated', params: { senderId, groupId, groupName } } }).catch(console.error)
       toast.success('Status updated!');
       return { success: true };
     } catch (error) {
@@ -114,7 +111,6 @@ export function useGroupTodos(groupId: string, userId?: string) {
     try {
       await deleteTodoAction(todoId);
 
-      sendNotificationFn({ data: { helper: 'notifyTodoDeleted', params: { senderId, groupId, groupName } } }).catch(console.error)
       toast.success('Todo deleted successfully!');
       return { success: true };
     } catch (error) {

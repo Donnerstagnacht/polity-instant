@@ -10,7 +10,6 @@ import { toast } from 'sonner';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { notifyDocumentCreated, notifyDocumentDeleted } from '@/utils/notification-helpers';
-import { sendNotificationFn } from '@/server/notifications';
 
 interface UseDocumentMutationsResult {
   createDocument: (title: string, groupId: string, userId: string) => Promise<string | null>;
@@ -109,7 +108,6 @@ export function useDocumentMutations(groupId: string): UseDocumentMutationsResul
         visibility: 'group',
       });
 
-      sendNotificationFn({ data: { helper: 'notifyDocumentCreated', params: { senderId: userId, groupId, groupName } } }).catch(console.error)
       toast.success('Document created successfully');
 
       // Navigate to the new document
@@ -140,7 +138,6 @@ export function useDocumentMutations(groupId: string): UseDocumentMutationsResul
     try {
       await deleteDocAction(documentId);
 
-      sendNotificationFn({ data: { helper: 'notifyDocumentDeleted', params: { senderId, groupId, groupName } } }).catch(console.error)
       toast.success('Document deleted successfully');
       return true;
     } catch (error) {

@@ -20,7 +20,8 @@ import {
   deleteCommentVoteSchema,
 } from '../votes/schema'
 
-export const documentMutators = {
+/** Shared mutators — run on both client and server. Server mutators may override these. */
+export const documentSharedMutators = {
   // Create a document
   create: defineMutator(
     createDocumentSchema,

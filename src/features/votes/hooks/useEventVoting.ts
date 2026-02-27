@@ -16,7 +16,6 @@ import {
   notifyAmendmentForwarded,
   notifyElectionResult,
 } from '@/utils/notification-helpers';
-import { sendNotificationFn } from '@/server/notifications';
 import { toast } from 'sonner';
 import { handleAmendmentVoteResult } from '../utils/voting-results';
 import { computeVoteResult, type MajorityType, type VoteResult } from '../logic/computeVoteResult';
@@ -230,7 +229,6 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
           status: 'voting',
         });
 
-        sendNotificationFn({ data: { helper: 'notifyVotingPhaseStarted', params: { senderId: user.id, eventId, eventTitle: event?.title || 'Event', sessionId } } }).catch(console.error)
 
         toast.success('Voting has begun');
       } catch (error) {
@@ -265,7 +263,6 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
           end_time: Date.now(),
         });
 
-        sendNotificationFn({ data: { helper: 'notifyVotingCompleted', params: { senderId: user.id, eventId, eventTitle: event?.title || 'Event', sessionId, result, agendaItemTitle } } }).catch(console.error)
 
         // Handle voting type-specific result processing
         if (currentSession?.votingType === 'amendment' && agendaItem?.amendment) {

@@ -34,7 +34,7 @@ export {
 
 // Queries & Mutators
 export { documentQueries } from './queries'
-export { documentMutators } from './mutators'
+export { documentSharedMutators } from './shared-mutators'
 
 // Facade Hooks
 export { useDocumentState } from './useDocumentState'

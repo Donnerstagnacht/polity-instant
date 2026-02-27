@@ -40,7 +40,7 @@ export {
 
 // Queries & Mutators
 export { commonQueries } from './queries'
-export { commonMutators } from './mutators'
+export { commonSharedMutators } from './shared-mutators'
 
 // Facade Hooks
 export { useCommonState } from './useCommonState'

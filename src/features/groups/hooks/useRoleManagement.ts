@@ -6,7 +6,6 @@ import { useState } from 'react';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { toast } from 'sonner';
 import { notifyActionRightsChanged } from '@/utils/notification-helpers';
-import { sendNotificationFn } from '@/server/notifications';
 
 export function useRoleManagement(groupId: string) {
   const [isLoading, setIsLoading] = useState(false);
@@ -120,7 +119,6 @@ export function useRoleManagement(groupId: string) {
         });
       }
 
-      sendNotificationFn({ data: { helper: 'notifyActionRightsChanged', params: { senderId, groupId, groupName, roleName } } }).catch(console.error)
       return { success: true };
     } catch (error) {
       console.error('Failed to toggle action right:', error);

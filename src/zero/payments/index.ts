@@ -21,7 +21,7 @@ export {
 
 // Queries & Mutators
 export { paymentQueries } from './queries'
-export { paymentMutators } from './mutators'
+export { paymentSharedMutators } from './shared-mutators'
 
 // Facade Hooks
 export { usePaymentState } from './usePaymentState'

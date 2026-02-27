@@ -20,7 +20,8 @@ import {
   deleteSubscriberSchema,
 } from '../network/schema'
 
-export const commonMutators = {
+/** Shared mutators — run on both client and server. Server mutators may override these. */
+export const commonSharedMutators = {
   // Subscribe to an entity
   subscribe: defineMutator(
     createSubscriberSchema,

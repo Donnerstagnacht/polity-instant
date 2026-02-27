@@ -12,7 +12,6 @@ import {
   notifyAgendaItemsReassigned,
   notifyRevoteScheduled,
 } from '@/utils/notification-helpers';
-import { sendNotificationFn } from '@/server/notifications';
 import { toast } from 'sonner';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
@@ -93,7 +92,6 @@ export function useCancelEvent(eventId: string): UseCancelEventResult {
           cancel_reason: params.reason,
         });
 
-        sendNotificationFn({ data: { helper: 'notifyEventCancelled', params: { senderId: user.id, eventId: params.eventId, eventTitle: event?.title || 'Event', reason: params.reason } } }).catch(console.error)
 
         // Reassign agenda items if specified
         if (params.reassignToEventId && params.itemsToReassign?.length) {
@@ -107,7 +105,6 @@ export function useCancelEvent(eventId: string): UseCancelEventResult {
             });
           }
 
-          sendNotificationFn({ data: { helper: 'notifyAgendaItemsReassigned', params: { senderId: user.id, sourceEventId: params.eventId, targetEventId: params.reassignToEventId, itemCount: params.itemsToReassign.length } } }).catch(console.error)
         }
 
         toast.success('Event cancelled successfully');
@@ -142,7 +139,6 @@ export function useCancelEvent(eventId: string): UseCancelEventResult {
           scheduled_revote_date: revoteDate.getTime(),
         });
 
-        sendNotificationFn({ data: { helper: 'notifyRevoteScheduled', params: { senderId: user.id, positionId, groupId, groupName, positionTitle, revoteDate: revoteDate.toISOString() } } }).catch(console.error)
 
         toast.success('Revote scheduled');
       } catch (error) {

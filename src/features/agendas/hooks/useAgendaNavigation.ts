@@ -12,7 +12,6 @@ import { useEventWithAgendaAndParticipants } from '@/zero/events/useEventState';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac';
 import { notifyAgendaItemActivated } from '@/utils/notification-helpers';
-import { sendNotificationFn } from '@/server/notifications';
 import { toast } from 'sonner';
 
 interface AgendaItem {
@@ -118,7 +117,6 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
         });
 
         if (event?.title) {
-          sendNotificationFn({ data: { helper: 'notifyAgendaItemActivated', params: { senderId: user.id, eventId, eventTitle: event.title, agendaItemId: itemId, agendaItemTitle: item.title, agendaItemType: item.type } } }).catch(console.error)
         }
 
         toast.success(`Activated: ${item.title}`);

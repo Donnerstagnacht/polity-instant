@@ -22,7 +22,8 @@ import {
 } from '../votes/schema'
 import { z } from 'zod'
 
-export const agendaMutators = {
+/** Shared mutators — run on both client and server. Server mutators may override these. */
+export const agendaSharedMutators = {
   // Create an agenda item
   createAgendaItem: defineMutator(
     createAgendaItemSchema,

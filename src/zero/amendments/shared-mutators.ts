@@ -31,7 +31,8 @@ import {
 } from '../votes/schema'
 import { z } from 'zod'
 
-export const amendmentMutators = {
+/** Shared mutators — run on both client and server. Server mutators may override these. */
+export const amendmentSharedMutators = {
   create: defineMutator(
     createAmendmentSchema,
     async ({ tx, ctx: { userID }, args }) => {

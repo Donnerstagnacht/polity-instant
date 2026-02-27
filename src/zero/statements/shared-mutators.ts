@@ -6,7 +6,8 @@ import {
   deleteStatementSchema,
 } from './schema'
 
-export const statementMutators = {
+/** Shared mutators — run on both client and server. Server mutators may override these. */
+export const statementSharedMutators = {
   // Create a statement
   create: defineMutator(
     createStatementSchema,

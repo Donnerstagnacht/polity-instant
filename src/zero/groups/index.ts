@@ -1,5 +1,5 @@
 export { groupQueries } from './queries'
-export { groupMutators } from './mutators'
+export { groupSharedMutators } from './shared-mutators'
 export type {
   Group,
   GroupMembership,

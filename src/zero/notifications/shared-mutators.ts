@@ -12,7 +12,8 @@ import {
   deleteNotificationReadSchema,
 } from './schema'
 
-export const notificationMutators = {
+/** Shared mutators — run on both client and server. Server mutators may override these. */
+export const notificationSharedMutators = {
   // Mark a single notification as read
   markRead: defineMutator(
     markReadNotificationSchema,

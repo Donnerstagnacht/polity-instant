@@ -8,7 +8,8 @@ import {
   deletePaymentSchema,
 } from './schema'
 
-export const paymentMutators = {
+/** Shared mutators — run on both client and server. Server mutators may override these. */
+export const paymentSharedMutators = {
   // Create a stripe customer record
   createCustomer: defineMutator(
     createStripeCustomerSchema,

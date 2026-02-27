@@ -27,7 +27,8 @@ import {
 } from '../positions/schema';
 import { z } from 'zod';
 
-export const groupMutators = {
+/** Shared mutators — run on both client and server. Server mutators may override these. */
+export const groupSharedMutators = {
   create: defineMutator(groupCreateSchema, async ({ tx, ctx: { userID }, args }) => {
     const now = Date.now();
     await tx.mutate.group.insert({

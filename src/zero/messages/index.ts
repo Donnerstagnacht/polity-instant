@@ -19,7 +19,7 @@ export {
 
 // Queries & Mutators
 export { messageQueries } from './queries'
-export { messageMutators } from './mutators'
+export { messageSharedMutators } from './shared-mutators'
 
 // Hooks
 export { useMessageState } from './useMessageState'

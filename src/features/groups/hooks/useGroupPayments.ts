@@ -4,7 +4,6 @@
 
 import { useState } from 'react';
 import type { GroupPayment } from '../types/group.types';
-import { sendNotificationFn } from '@/server/notifications';
 import { useGroupPaymentsData } from '@/zero/groups/useGroupState';
 import { usePaymentActions } from '@/zero/payments/usePaymentActions';
 
@@ -43,7 +42,6 @@ export function useGroupPayments(groupId: string) {
         receiver_group_id: paymentData.receiverGroupId ?? null,
       });
 
-      sendNotificationFn({ data: { helper: 'notifyPaymentCreated', params: { senderId: paymentData.senderId, groupId, groupName: paymentData.groupName } } }).catch(console.error)
       return { success: true, paymentId };
     } catch (error) {
       console.error('Failed to add payment:', error);
@@ -64,7 +62,6 @@ export function useGroupPayments(groupId: string) {
     try {
       await deletePaymentAction({ id: paymentId });
 
-      sendNotificationFn({ data: { helper: 'notifyPaymentDeleted', params: { senderId, groupId, groupName } } }).catch(console.error)
       return { success: true };
     } catch (error) {
       console.error('Failed to delete payment:', error);

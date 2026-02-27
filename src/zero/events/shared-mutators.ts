@@ -27,7 +27,8 @@ import {
   deleteMeetingBookingSchema,
 } from '../meet/schema'
 
-export const eventMutators = {
+/** Shared mutators — run on both client and server. Server mutators may override these. */
+export const eventSharedMutators = {
   create: defineMutator(eventCreateSchema, async ({ tx, ctx: { userID }, args }) => {
     const now = Date.now()
     await tx.mutate.event.insert({

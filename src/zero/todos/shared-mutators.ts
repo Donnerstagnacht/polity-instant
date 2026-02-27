@@ -9,7 +9,8 @@ import {
   deleteTodoAssignmentSchema,
 } from './schema'
 
-export const todoMutators = {
+/** Shared mutators — run on both client and server. Server mutators may override these. */
+export const todoSharedMutators = {
   // Create a todo
   create: defineMutator(
     createTodoSchema,

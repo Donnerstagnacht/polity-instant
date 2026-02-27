@@ -1,5 +1,5 @@
 export { eventQueries } from './queries'
-export { eventMutators } from './mutators'
+export { eventSharedMutators } from './shared-mutators'
 export { useEventState } from './useEventState'
 export { useEventActions } from './useEventActions'
 export {

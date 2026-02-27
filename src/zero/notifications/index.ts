@@ -22,7 +22,7 @@ export {
 
 // Queries & Mutators
 export { notificationQueries } from './queries'
-export { notificationMutators } from './mutators'
+export { notificationSharedMutators } from './shared-mutators'
 
 // Hooks
 export { useNotificationState } from './useNotificationState'

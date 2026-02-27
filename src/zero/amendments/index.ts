@@ -40,7 +40,7 @@ export type { ChangeRequest } from '../change-requests/schema'
 
 // Queries & Mutators
 export { amendmentQueries } from './queries'
-export { amendmentMutators } from './mutators'
+export { amendmentSharedMutators } from './shared-mutators'
 
 // Facade Hooks
 export { useAmendmentState } from './useAmendmentState'

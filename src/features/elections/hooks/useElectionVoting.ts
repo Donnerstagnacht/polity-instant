@@ -13,7 +13,6 @@ import { useElectionWithVotes } from '@/zero/events/useEventState';
 import { usePermissions } from '@/zero/rbac';
 import { calculateElectionWinner, type MajorityType } from '@/utils/voting-utils';
 import { notifyPositionAssigned } from '@/utils/notification-helpers';
-import { sendNotificationFn } from '@/server/notifications';
 import { schedulePositionRevote } from '@/features/votes/utils/revote-scheduling';
 
 interface UseElectionVotingOptions {
@@ -205,7 +204,6 @@ export function useElectionVoting({
         description: `winner:${result.winner.id}`,
       });
 
-      sendNotificationFn({ data: { helper: 'notifyElectionResult', params: { senderId: userId, eventId, electionId, winnerId: result.winner.id, winnerName: result.winner.name } } }).catch(console.error)
 
       await createTimelineEvent({
         id: crypto.randomUUID(),
@@ -279,7 +277,6 @@ export function useElectionVoting({
         user_id: winningCandidate.user_id,
       });
 
-      sendNotificationFn({ data: { helper: 'notifyPositionAssigned', params: { senderId: userId, recipientId: winningCandidate.user_id, eventId, positionId: position.id, positionTitle, electionId } } }).catch(console.error)
 
       // Schedule revote for position term end if term duration is specified
       if (options?.termDuration) {

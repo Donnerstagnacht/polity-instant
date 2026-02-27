@@ -31,7 +31,7 @@ export {
 
 // Queries & Mutators
 export { agendaQueries } from './queries'
-export { agendaMutators } from './mutators'
+export { agendaSharedMutators } from './shared-mutators'
 
 // Facade Hooks
 export { useAgendaState } from './useAgendaState'

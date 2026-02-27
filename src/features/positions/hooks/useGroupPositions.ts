@@ -15,7 +15,6 @@ import {
   notifyPositionDeleted,
   notifyElectionCreated,
 } from '@/utils/notification-helpers';
-import { sendNotificationFn } from '@/server/notifications';
 
 export function useGroupPositions(groupId: string) {
   const { positions: positionsData, isLoading } = useFacadeGroupPositions(groupId);
@@ -135,7 +134,6 @@ export function useGroupPositions(groupId: string) {
         });
       }
 
-      sendNotificationFn({ data: { helper: 'notifyPositionCreated', params: { senderId: params?.senderId, groupId, groupName: params?.groupName } } }).catch(console.error)
       return { success: true, positionId };
     } catch (error) {
       console.error('Failed to create position:', error);
@@ -202,7 +200,6 @@ export function useGroupPositions(groupId: string) {
     try {
       await deletePositionAction({ id: positionId });
 
-      sendNotificationFn({ data: { helper: 'notifyPositionDeleted', params: { senderId: params?.senderId, groupId, groupName: params?.groupName, positionTitle: params?.positionTitle } } }).catch(console.error)
       return { success: true };
     } catch (error) {
       console.error('Failed to delete position:', error);
@@ -255,7 +252,6 @@ export function useGroupPositions(groupId: string) {
       // Update position current holder
       // Note: current_holder_id is tracked via holder_history (active entry = no end_date)
 
-      sendNotificationFn({ data: { helper: 'notifyPositionAssigned', params: { senderId, recipientId: userId, groupId, groupName, positionTitle } } }).catch(console.error)
       return { success: true };
     } catch (error) {
       console.error('Failed to assign holder:', error);
@@ -293,7 +289,6 @@ export function useGroupPositions(groupId: string) {
         });
       }
 
-      sendNotificationFn({ data: { helper: 'notifyPositionVacated', params: { senderId, groupId, groupName, positionTitle } } }).catch(console.error)
       return { success: true };
     } catch (error) {
       console.error('Failed to remove holder:', error);
@@ -358,7 +353,6 @@ export function useGroupPositions(groupId: string) {
         amendment_id: null,
       });
 
-      sendNotificationFn({ data: { helper: 'notifyElectionCreated', params: { senderId: params?.senderId, groupId, groupName: params?.groupName } } }).catch(console.error)
       toast.success('Election created successfully');
       return { success: true, electionId };
     } catch (error) {

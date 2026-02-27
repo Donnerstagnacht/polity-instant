@@ -7,7 +7,6 @@ import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
-import { sendNotificationFn } from '@/server/notifications';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 
 const LOG_PREFIX = '[UserMemberships]';
@@ -55,17 +54,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
       await groupActions.leaveGroup({ id: membershipId });
 
       // Use groupId param as primary source, snapshot as fallback for name
-      const resolvedGroupId = groupId || groupSnapshot?.id;
-      const resolvedGroupName = groupSnapshot?.name || 'Group';
 
-      if (resolvedGroupId && userId) {
-        console.log(LOG_PREFIX, 'leaveGroup — sending notifyMembershipWithdrawn', { resolvedGroupId, resolvedGroupName });
-        sendNotificationFn({ data: { helper: 'notifyMembershipWithdrawn', params: { senderId: userId, senderName: safeSenderName, groupId: resolvedGroupId, groupName: resolvedGroupName } } })
-          .then(result => console.log(LOG_PREFIX, 'leaveGroup — notification result:', result))
-          .catch(err => console.error(LOG_PREFIX, 'leaveGroup — notification failed:', err));
-      } else {
-        console.warn(LOG_PREFIX, 'leaveGroup — skipped notification:', { resolvedGroupId, userId });
-      }
 
       return { success: true };
     } catch (error) {
@@ -86,17 +75,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
 
       await eventActions.leaveEvent({ id: participationId });
 
-      const resolvedEventId = eventId || eventSnapshot?.id;
-      const resolvedEventTitle = eventSnapshot?.title || 'Event';
 
-      if (resolvedEventId && userId) {
-        console.log(LOG_PREFIX, 'withdrawFromEvent — sending notifyParticipationWithdrawn');
-        sendNotificationFn({ data: { helper: 'notifyParticipationWithdrawn', params: { senderId: userId, senderName: safeSenderName, eventId: resolvedEventId, eventTitle: resolvedEventTitle } } })
-          .then(result => console.log(LOG_PREFIX, 'withdrawFromEvent — notification result:', result))
-          .catch(err => console.error(LOG_PREFIX, 'withdrawFromEvent — notification failed:', err));
-      } else {
-        console.warn(LOG_PREFIX, 'withdrawFromEvent — skipped notification:', { resolvedEventId, userId });
-      }
 
       return { success: true };
     } catch (error) {
@@ -117,17 +96,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
 
       await amendmentActions.leaveCollaboration(collaborationId);
 
-      const resolvedAmendmentId = amendmentId || amendmentSnapshot?.id;
-      const resolvedAmendmentTitle = amendmentSnapshot?.title || 'Amendment';
 
-      if (resolvedAmendmentId && userId) {
-        console.log(LOG_PREFIX, 'leaveCollaboration — sending notifyCollaborationWithdrawn');
-        sendNotificationFn({ data: { helper: 'notifyCollaborationWithdrawn', params: { senderId: userId, senderName: safeSenderName, amendmentId: resolvedAmendmentId, amendmentTitle: resolvedAmendmentTitle } } })
-          .then(result => console.log(LOG_PREFIX, 'leaveCollaboration — notification result:', result))
-          .catch(err => console.error(LOG_PREFIX, 'leaveCollaboration — notification failed:', err));
-      } else {
-        console.warn(LOG_PREFIX, 'leaveCollaboration — skipped notification:', { resolvedAmendmentId, userId });
-      }
 
       return { success: true };
     } catch (error) {
@@ -148,14 +117,6 @@ export function useUserMemberships(userId?: string, userName?: string) {
 
       await blogActions.deleteEntry(relationId);
 
-      if (blogSnapshot && userId) {
-        console.log(LOG_PREFIX, 'leaveBlog — sending notifyBlogWriterLeft');
-        sendNotificationFn({ data: { helper: 'notifyBlogWriterLeft', params: { senderId: userId, senderName: safeSenderName, blogId: blogSnapshot.id, blogTitle: blogSnapshot.title || 'Blog' } } })
-          .then(result => console.log(LOG_PREFIX, 'leaveBlog — notification result:', result))
-          .catch(err => console.error(LOG_PREFIX, 'leaveBlog — notification failed:', err));
-      } else {
-        console.warn(LOG_PREFIX, 'leaveBlog — skipped notification:', { blogSnapshot, userId });
-      }
 
       return { success: true };
     } catch (error) {
@@ -189,14 +150,6 @@ export function useUserMemberships(userId?: string, userName?: string) {
           } });
       }
 
-      if (groupSnapshot && userId) {
-        console.log(LOG_PREFIX, 'acceptGroupInvitation — sending notifyGroupInvitationAccepted');
-        sendNotificationFn({ data: { helper: 'notifyGroupInvitationAccepted', params: { senderId: userId, senderName: safeSenderName, groupId: groupSnapshot.id, groupName: groupSnapshot.name || 'Group' } } })
-          .then(result => console.log(LOG_PREFIX, 'acceptGroupInvitation — notification result:', result))
-          .catch(err => console.error(LOG_PREFIX, 'acceptGroupInvitation — notification failed:', err));
-      } else {
-        console.warn(LOG_PREFIX, 'acceptGroupInvitation — skipped notification:', { groupSnapshot, userId });
-      }
 
       return { success: true };
     } catch (error) {
@@ -217,14 +170,6 @@ export function useUserMemberships(userId?: string, userName?: string) {
 
       await groupActions.leaveGroup({ id: membershipId });
 
-      if (groupSnapshot && userId) {
-        console.log(LOG_PREFIX, 'declineGroupInvitation — sending notifyGroupInvitationDeclined');
-        sendNotificationFn({ data: { helper: 'notifyGroupInvitationDeclined', params: { senderId: userId, senderName: safeSenderName, groupId: groupSnapshot.id, groupName: groupSnapshot.name || 'Group' } } })
-          .then(result => console.log(LOG_PREFIX, 'declineGroupInvitation — notification result:', result))
-          .catch(err => console.error(LOG_PREFIX, 'declineGroupInvitation — notification failed:', err));
-      } else {
-        console.warn(LOG_PREFIX, 'declineGroupInvitation — skipped notification:', { groupSnapshot, userId });
-      }
 
       return { success: true };
     } catch (error) {
@@ -245,14 +190,6 @@ export function useUserMemberships(userId?: string, userName?: string) {
 
       await groupActions.leaveGroup({ id: membershipId });
 
-      if (groupSnapshot && userId) {
-        console.log(LOG_PREFIX, 'withdrawGroupRequest — sending notifyGroupRequestWithdrawn');
-        sendNotificationFn({ data: { helper: 'notifyGroupRequestWithdrawn', params: { senderId: userId, senderName: safeSenderName, groupId: groupSnapshot.id, groupName: groupSnapshot.name || 'Group' } } })
-          .then(result => console.log(LOG_PREFIX, 'withdrawGroupRequest — notification result:', result))
-          .catch(err => console.error(LOG_PREFIX, 'withdrawGroupRequest — notification failed:', err));
-      } else {
-        console.warn(LOG_PREFIX, 'withdrawGroupRequest — skipped notification:', { groupSnapshot, userId });
-      }
 
       return { success: true };
     } catch (error) {
@@ -274,14 +211,6 @@ export function useUserMemberships(userId?: string, userName?: string) {
         status: 'member',
       });
 
-      if (eventSnapshot && userId) {
-        console.log(LOG_PREFIX, 'acceptEventInvitation — sending notifyEventInvitationAccepted');
-        sendNotificationFn({ data: { helper: 'notifyEventInvitationAccepted', params: { senderId: userId, senderName: safeSenderName, eventId: eventSnapshot.id, eventTitle: eventSnapshot.title || 'Event' } } })
-          .then(result => console.log(LOG_PREFIX, 'acceptEventInvitation — notification result:', result))
-          .catch(err => console.error(LOG_PREFIX, 'acceptEventInvitation — notification failed:', err));
-      } else {
-        console.warn(LOG_PREFIX, 'acceptEventInvitation — skipped notification:', { eventSnapshot, userId });
-      }
 
       return { success: true };
     } catch (error) {
@@ -302,14 +231,6 @@ export function useUserMemberships(userId?: string, userName?: string) {
 
       await eventActions.leaveEvent({ id: participationId });
 
-      if (eventSnapshot && userId) {
-        console.log(LOG_PREFIX, 'declineEventInvitation — sending notifyEventInvitationDeclined');
-        sendNotificationFn({ data: { helper: 'notifyEventInvitationDeclined', params: { senderId: userId, senderName: safeSenderName, eventId: eventSnapshot.id, eventTitle: eventSnapshot.title || 'Event' } } })
-          .then(result => console.log(LOG_PREFIX, 'declineEventInvitation — notification result:', result))
-          .catch(err => console.error(LOG_PREFIX, 'declineEventInvitation — notification failed:', err));
-      } else {
-        console.warn(LOG_PREFIX, 'declineEventInvitation — skipped notification:', { eventSnapshot, userId });
-      }
 
       return { success: true };
     } catch (error) {
@@ -330,14 +251,6 @@ export function useUserMemberships(userId?: string, userName?: string) {
 
       await eventActions.leaveEvent({ id: participationId });
 
-      if (eventSnapshot && userId) {
-        console.log(LOG_PREFIX, 'withdrawEventRequest — sending notifyEventRequestWithdrawn');
-        sendNotificationFn({ data: { helper: 'notifyEventRequestWithdrawn', params: { senderId: userId, senderName: safeSenderName, eventId: eventSnapshot.id, eventTitle: eventSnapshot.title || 'Event' } } })
-          .then(result => console.log(LOG_PREFIX, 'withdrawEventRequest — notification result:', result))
-          .catch(err => console.error(LOG_PREFIX, 'withdrawEventRequest — notification failed:', err));
-      } else {
-        console.warn(LOG_PREFIX, 'withdrawEventRequest — skipped notification:', { eventSnapshot, userId });
-      }
 
       return { success: true };
     } catch (error) {
@@ -372,14 +285,6 @@ export function useUserMemberships(userId?: string, userName?: string) {
           } });
       }
 
-      if (amendmentSnapshot && userId) {
-        console.log(LOG_PREFIX, 'acceptCollaborationInvitation — sending notifyCollaborationInvitationAccepted');
-        sendNotificationFn({ data: { helper: 'notifyCollaborationInvitationAccepted', params: { senderId: userId, senderName: safeSenderName, amendmentId: amendmentSnapshot.id, amendmentTitle: amendmentSnapshot.title || 'Amendment' } } })
-          .then(result => console.log(LOG_PREFIX, 'acceptCollaborationInvitation — notification result:', result))
-          .catch(err => console.error(LOG_PREFIX, 'acceptCollaborationInvitation — notification failed:', err));
-      } else {
-        console.warn(LOG_PREFIX, 'acceptCollaborationInvitation — skipped notification:', { amendmentSnapshot, userId });
-      }
 
       return { success: true };
     } catch (error) {
@@ -400,14 +305,6 @@ export function useUserMemberships(userId?: string, userName?: string) {
 
       await amendmentActions.leaveCollaboration(collaborationId);
 
-      if (amendmentSnapshot && userId) {
-        console.log(LOG_PREFIX, 'declineCollaborationInvitation — sending notifyCollaborationInvitationDeclined');
-        sendNotificationFn({ data: { helper: 'notifyCollaborationInvitationDeclined', params: { senderId: userId, senderName: safeSenderName, amendmentId: amendmentSnapshot.id, amendmentTitle: amendmentSnapshot.title || 'Amendment' } } })
-          .then(result => console.log(LOG_PREFIX, 'declineCollaborationInvitation — notification result:', result))
-          .catch(err => console.error(LOG_PREFIX, 'declineCollaborationInvitation — notification failed:', err));
-      } else {
-        console.warn(LOG_PREFIX, 'declineCollaborationInvitation — skipped notification:', { amendmentSnapshot, userId });
-      }
 
       return { success: true };
     } catch (error) {
@@ -428,14 +325,6 @@ export function useUserMemberships(userId?: string, userName?: string) {
 
       await amendmentActions.leaveCollaboration(collaborationId);
 
-      if (amendmentSnapshot && userId) {
-        console.log(LOG_PREFIX, 'withdrawCollaborationRequest — sending notifyCollaborationRequestWithdrawn');
-        sendNotificationFn({ data: { helper: 'notifyCollaborationRequestWithdrawn', params: { senderId: userId, senderName: safeSenderName, amendmentId: amendmentSnapshot.id, amendmentTitle: amendmentSnapshot.title || 'Amendment' } } })
-          .then(result => console.log(LOG_PREFIX, 'withdrawCollaborationRequest — notification result:', result))
-          .catch(err => console.error(LOG_PREFIX, 'withdrawCollaborationRequest — notification failed:', err));
-      } else {
-        console.warn(LOG_PREFIX, 'withdrawCollaborationRequest — skipped notification:', { amendmentSnapshot, userId });
-      }
 
       return { success: true };
     } catch (error) {
@@ -457,14 +346,6 @@ export function useUserMemberships(userId?: string, userName?: string) {
         status: 'writer',
       });
 
-      if (blogSnapshot && userId) {
-        console.log(LOG_PREFIX, 'acceptBlogInvitation — sending notifyBlogInvitationAccepted');
-        sendNotificationFn({ data: { helper: 'notifyBlogInvitationAccepted', params: { senderId: userId, senderName: safeSenderName, blogId: blogSnapshot.id, blogTitle: blogSnapshot.title || 'Blog' } } })
-          .then(result => console.log(LOG_PREFIX, 'acceptBlogInvitation — notification result:', result))
-          .catch(err => console.error(LOG_PREFIX, 'acceptBlogInvitation — notification failed:', err));
-      } else {
-        console.warn(LOG_PREFIX, 'acceptBlogInvitation — skipped notification:', { blogSnapshot, userId });
-      }
 
       return { success: true };
     } catch (error) {
@@ -485,14 +366,6 @@ export function useUserMemberships(userId?: string, userName?: string) {
 
       await blogActions.deleteEntry(blogRelationId);
 
-      if (blogSnapshot && userId) {
-        console.log(LOG_PREFIX, 'declineBlogInvitation — sending notifyBlogInvitationDeclined');
-        sendNotificationFn({ data: { helper: 'notifyBlogInvitationDeclined', params: { senderId: userId, senderName: safeSenderName, blogId: blogSnapshot.id, blogTitle: blogSnapshot.title || 'Blog' } } })
-          .then(result => console.log(LOG_PREFIX, 'declineBlogInvitation — notification result:', result))
-          .catch(err => console.error(LOG_PREFIX, 'declineBlogInvitation — notification failed:', err));
-      } else {
-        console.warn(LOG_PREFIX, 'declineBlogInvitation — skipped notification:', { blogSnapshot, userId });
-      }
 
       return { success: true };
     } catch (error) {
@@ -513,14 +386,6 @@ export function useUserMemberships(userId?: string, userName?: string) {
 
       await blogActions.deleteEntry(blogRelationId);
 
-      if (blogSnapshot && userId) {
-        console.log(LOG_PREFIX, 'withdrawBlogRequest — sending notifyBlogRequestWithdrawn');
-        sendNotificationFn({ data: { helper: 'notifyBlogRequestWithdrawn', params: { senderId: userId, senderName: safeSenderName, blogId: blogSnapshot.id, blogTitle: blogSnapshot.title || 'Blog' } } })
-          .then(result => console.log(LOG_PREFIX, 'withdrawBlogRequest — notification result:', result))
-          .catch(err => console.error(LOG_PREFIX, 'withdrawBlogRequest — notification failed:', err));
-      } else {
-        console.warn(LOG_PREFIX, 'withdrawBlogRequest — skipped notification:', { blogSnapshot, userId });
-      }
 
       return { success: true };
     } catch (error) {

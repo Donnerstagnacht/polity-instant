@@ -1,31 +1,31 @@
 import { defineMutators } from '@rocicorp/zero'
 
-import { userMutators } from './users/mutators'
-import { groupMutators } from './groups/mutators'
-import { eventMutators } from './events/mutators'
-import { amendmentMutators } from './amendments/mutators'
-import { documentMutators } from './documents/mutators'
-import { agendaMutators } from './agendas/mutators'
-import { todoMutators } from './todos/mutators'
-import { messageMutators } from './messages/mutators'
-import { notificationMutators } from './notifications/mutators'
-import { blogMutators } from './blogs/mutators'
-import { paymentMutators } from './payments/mutators'
-import { statementMutators } from './statements/mutators'
-import { commonMutators } from './common/mutators'
+import { userSharedMutators } from './users/shared-mutators'
+import { groupSharedMutators } from './groups/shared-mutators'
+import { eventSharedMutators } from './events/shared-mutators'
+import { amendmentSharedMutators } from './amendments/shared-mutators'
+import { documentSharedMutators } from './documents/shared-mutators'
+import { agendaSharedMutators } from './agendas/shared-mutators'
+import { todoSharedMutators } from './todos/shared-mutators'
+import { messageSharedMutators } from './messages/shared-mutators'
+import { notificationSharedMutators } from './notifications/shared-mutators'
+import { blogSharedMutators } from './blogs/shared-mutators'
+import { paymentSharedMutators } from './payments/shared-mutators'
+import { statementSharedMutators } from './statements/shared-mutators'
+import { commonSharedMutators } from './common/shared-mutators'
 
 export const mutators = defineMutators({
-  users: userMutators,
-  groups: groupMutators,
-  events: eventMutators,
-  amendments: amendmentMutators,
-  documents: documentMutators,
-  agendas: agendaMutators,
-  todos: todoMutators,
-  messages: messageMutators,
-  notifications: notificationMutators,
-  blogs: blogMutators,
-  payments: paymentMutators,
-  statements: statementMutators,
-  common: commonMutators,
+  users: userSharedMutators,
+  groups: groupSharedMutators,
+  events: eventSharedMutators,
+  amendments: amendmentSharedMutators,
+  documents: documentSharedMutators,
+  agendas: agendaSharedMutators,
+  todos: todoSharedMutators,
+  messages: messageSharedMutators,
+  notifications: notificationSharedMutators,
+  blogs: blogSharedMutators,
+  payments: paymentSharedMutators,
+  statements: statementSharedMutators,
+  common: commonSharedMutators,
 })

@@ -12,7 +12,7 @@ export {
 
 // Queries & Mutators
 export { statementQueries } from './queries'
-export { statementMutators } from './mutators'
+export { statementSharedMutators } from './shared-mutators'
 
 // Facade hooks
 export { useStatementState } from './useStatementState'

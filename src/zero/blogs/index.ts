@@ -24,7 +24,7 @@ export {
 
 // Queries & Mutators
 export { blogQueries } from './queries'
-export { blogMutators } from './mutators'
+export { blogSharedMutators } from './shared-mutators'
 
 // Facade hooks
 export { useBlogState } from './useBlogState'

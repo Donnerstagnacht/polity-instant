@@ -4,7 +4,6 @@ import { useCommonActions } from '@/zero/common/useCommonActions';
 import { useUserState } from '@/zero/users/useUserState';
 import { useAuth } from '@/providers/auth-provider';
 import { notifyGroupNewSubscriber } from '@/utils/notification-helpers';
-import { sendNotificationFn } from '@/server/notifications';
 import { toast } from 'sonner';
 
 /**
@@ -82,7 +81,6 @@ export function useSubscribeGroup(targetGroupId?: string) {
         blog_id: null,
       });
 
-      sendNotificationFn({ data: { helper: 'notifyGroupNewSubscriber', params: { senderId: authUser.id, groupId: targetGroupId, groupName } } }).catch(console.error)
       toast.success('Successfully subscribed to group');
     } catch (error) {
       // Revert optimistic update

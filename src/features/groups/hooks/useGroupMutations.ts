@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { toast } from 'sonner';
 import { addUserToGroupConversation } from '@/utils/groupConversationSync';
-import { sendNotificationFn } from '@/server/notifications';
 
 /**
  * Hook for group membership mutations
@@ -45,7 +44,6 @@ export function useGroupMutations(groupId: string) {
       }
 
       userIds.forEach(uid => {
-        sendNotificationFn({ data: { helper: 'notifyGroupInvite', params: { senderId, recipientUserId: uid, groupId, groupName: groupName || 'Group' } } }).catch(console.error)
       })
       toast.success(`Successfully invited ${userIds.length} user(s)`);
       return { success: true };
@@ -81,7 +79,6 @@ export function useGroupMutations(groupId: string) {
         await addUserToGroupConversation(conversationId, userId);
       }
 
-      sendNotificationFn({ data: { helper: 'notifyMembershipApproved', params: { senderId, recipientUserId: userId, groupId, groupName: groupName || 'Group' } } }).catch(console.error)
       toast.success('Membership approved');
       return { success: true };
     } catch (error) {
@@ -109,7 +106,6 @@ export function useGroupMutations(groupId: string) {
 
       await Promise.all(transactions);
 
-      sendNotificationFn({ data: { helper: 'notifyMembershipRejected', params: { senderId, recipientUserId: userId, groupId, groupName: groupName || 'Group' } } }).catch(console.error)
       toast.success('Membership request rejected');
       return { success: true };
     } catch (error) {
@@ -136,7 +132,6 @@ export function useGroupMutations(groupId: string) {
     try {
       await leaveGroupAction({ id: membershipId });
 
-      sendNotificationFn({ data: { helper: 'notifyMembershipRemoved', params: { senderId, recipientUserId: userId, groupId, groupName: groupName || 'Group' } } }).catch(console.error)
       toast.success('Member removed successfully');
       return { success: true };
     } catch (error) {
@@ -167,7 +162,6 @@ export function useGroupMutations(groupId: string) {
         role_id: roleId,
       });
 
-      sendNotificationFn({ data: { helper: 'notifyMembershipRoleChanged', params: { senderId, recipientUserId: userId, groupId, groupName: groupName || 'Group', newRole: roleName || roleId } } }).catch(console.error)
       toast.success('Member role updated');
       return { success: true };
     } catch (error) {
@@ -221,7 +215,6 @@ export function useGroupMutations(groupId: string) {
         });
       }
 
-      sendNotificationFn({ data: { helper: 'notifyRoleCreated', params: { senderId, groupId, groupName } } }).catch(console.error)
       toast.success('Role created successfully');
       return { success: true, roleId };
     } catch (error) {
@@ -247,7 +240,6 @@ export function useGroupMutations(groupId: string) {
     try {
       await deleteRoleAction({ id: roleId });
 
-      sendNotificationFn({ data: { helper: 'notifyRoleDeleted', params: { senderId, groupId, groupName } } }).catch(console.error)
       toast.success('Role deleted successfully');
       return { success: true };
     } catch (error) {
@@ -275,7 +267,6 @@ export function useGroupMutations(groupId: string) {
         status: 'admin',
       });
 
-      sendNotificationFn({ data: { helper: 'notifyAdminPromoted', params: { senderId, recipientUserId: userId, groupId, groupName: groupName || 'Group' } } }).catch(console.error)
       toast.success('Member promoted to admin');
       return { success: true };
     } catch (error) {
@@ -303,7 +294,6 @@ export function useGroupMutations(groupId: string) {
         status: 'member',
       });
 
-      sendNotificationFn({ data: { helper: 'notifyAdminDemoted', params: { senderId, recipientUserId: userId, groupId, groupName: groupName || 'Group' } } }).catch(console.error)
       toast.success('Admin demoted to member');
       return { success: true };
     } catch (error) {

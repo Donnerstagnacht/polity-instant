@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '@/providers/auth-provider';
 import { notifyEventPositionCreated, notifyEventPositionDeleted } from '@/utils/notification-helpers';
-import { sendNotificationFn } from '@/server/notifications';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { useEventPositionsData } from '@/zero/events/useEventState';
 
@@ -58,7 +57,6 @@ export function useEventPositions(eventId: string) {
         event_id: eventId,
       });
 
-      sendNotificationFn({ data: { helper: 'notifyEventPositionCreated', params: { senderId: authUser?.id, eventId, positionId, positionTitle } } }).catch(console.error)
     } catch (error) {
       console.error('Failed to create position:', error);
       toast.error('Failed to create position. Please try again.');
@@ -102,7 +100,6 @@ export function useEventPositions(eventId: string) {
     try {
       await deletePosition({ id: positionId });
 
-      sendNotificationFn({ data: { helper: 'notifyEventPositionDeleted', params: { senderId: authUser?.id, eventId, positionId, positionTitle } } }).catch(console.error)
     } catch (error) {
       console.error('Failed to delete position:', error);
       toast.error('Failed to delete position. Please try again.');

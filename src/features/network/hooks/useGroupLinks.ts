@@ -7,7 +7,6 @@ import { useGroupLinks as useFacadeGroupLinks } from '@/zero/groups/useGroupStat
 import { toast } from 'sonner';
 import type { GroupLink } from '@/features/groups/types/group.types';
 import { notifyLinkAdded, notifyLinkRemoved } from '@/utils/notification-helpers';
-import { sendNotificationFn } from '@/server/notifications';
 import { useCommonActions } from '@/zero/common/useCommonActions';
 
 export function useGroupLinks(groupId: string) {
@@ -36,7 +35,6 @@ export function useGroupLinks(groupId: string) {
         meeting_slot_id: null,
       });
 
-      sendNotificationFn({ data: { helper: 'notifyLinkAdded', params: { senderId, groupId, groupName } } }).catch(console.error)
       toast.success('Link added successfully!');
       return { success: true, linkId };
     } catch (error) {
@@ -59,7 +57,6 @@ export function useGroupLinks(groupId: string) {
     try {
       await deleteLinkAction({ id: linkId });
 
-      sendNotificationFn({ data: { helper: 'notifyLinkRemoved', params: { senderId, groupId, groupName } } }).catch(console.error)
       toast.success('Link deleted successfully!');
       return { success: true };
     } catch (error) {

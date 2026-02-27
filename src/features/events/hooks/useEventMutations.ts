@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { sendNotificationFn } from '@/server/notifications';
 import { useEventActions } from '@/zero/events/useEventActions';
 
 /**
@@ -36,7 +35,6 @@ export function useEventMutations(eventId: string) {
         });
 
         if (senderId && eventTitle) {
-          sendNotificationFn({ data: { helper: 'notifyEventInvite', params: { senderId, recipientId: userId, eventId, eventTitle } } }).catch(console.error)
         }
       }
 
@@ -68,7 +66,6 @@ export function useEventMutations(eventId: string) {
       });
 
       if (userId && senderId && eventTitle) {
-        sendNotificationFn({ data: { helper: 'notifyParticipationApproved', params: { senderId, recipientId: userId, eventId, eventTitle } } }).catch(console.error)
       }
 
       toast.success('Participation approved');
@@ -98,7 +95,6 @@ export function useEventMutations(eventId: string) {
       });
 
       if (userId && senderId && eventTitle) {
-        sendNotificationFn({ data: { helper: 'notifyParticipationRejected', params: { senderId, recipientId: userId, eventId, eventTitle } } }).catch(console.error)
       }
 
       toast.success('Participation request rejected');
@@ -128,7 +124,6 @@ export function useEventMutations(eventId: string) {
       });
 
       if (userId && senderId && eventTitle) {
-        sendNotificationFn({ data: { helper: 'notifyParticipationRemoved', params: { senderId, recipientId: userId, eventId, eventTitle } } }).catch(console.error)
       }
 
       toast.success('Participant removed successfully');
@@ -161,7 +156,6 @@ export function useEventMutations(eventId: string) {
       });
 
       if (isPromotion && userId && senderId && eventTitle) {
-        sendNotificationFn({ data: { helper: 'notifyOrganizerPromoted', params: { senderId, recipientId: userId, eventId, eventTitle } } }).catch(console.error)
       }
 
       toast.success('Participant role updated');
@@ -196,7 +190,6 @@ export function useEventMutations(eventId: string) {
       });
 
       if (options?.actorId && options?.eventTitle) {
-        sendNotificationFn({ data: { helper: 'notifyScheduleChanged', params: { senderId: options.actorId, eventId, eventTitle: options.eventTitle } } }).catch(console.error)
       }
 
       toast.success('Event updated successfully');

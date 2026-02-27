@@ -12,7 +12,8 @@ import {
   deleteConversationSchema,
 } from './schema'
 
-export const messageMutators = {
+/** Shared mutators — run on both client and server. Server mutators may override these. */
+export const messageSharedMutators = {
   // Create a new conversation
   createConversation: defineMutator(
     createConversationSchema,
