@@ -89,14 +89,14 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
           <Badge className={statusColors[amendment.status] || ''}>{amendment.status}</Badge>
         </div>
         {amendment.subtitle && (
-          <p className="text-xl text-muted-foreground">{amendment.subtitle}</p>
+          <p className="text-muted-foreground text-xl">{amendment.subtitle}</p>
         )}
 
         {/* Target Collaborator, Target Group and Cloned From Section */}
         <div className="mt-4 flex flex-wrap items-center justify-center gap-6">
           {targetCollaborator && (
             <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10 border-2 border-background">
+              <Avatar className="border-background h-10 w-10 border-2">
                 <AvatarImage src={targetCollaborator.imageURL} />
                 <AvatarFallback>
                   {targetCollaborator.name?.[0]?.toUpperCase() || 'U'}
@@ -104,19 +104,19 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
               </Avatar>
               <div className="text-left">
                 <p className="text-sm font-medium">{targetCollaborator.name}</p>
-                <p className="text-xs text-muted-foreground">Target Collaborator</p>
+                <p className="text-muted-foreground text-xs">Target Collaborator</p>
               </div>
             </div>
           )}
           {targetGroup && (
             <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10 border-2 border-background">
+              <Avatar className="border-background h-10 w-10 border-2">
                 <AvatarImage src={targetGroup.imageURL} />
                 <AvatarFallback>{targetGroup.name?.[0]?.toUpperCase() || 'G'}</AvatarFallback>
               </Avatar>
               <div className="text-left">
                 <p className="text-sm font-medium">{targetGroup.name}</p>
-                <p className="text-xs text-muted-foreground">Targets</p>
+                <p className="text-muted-foreground text-xs">Targets</p>
               </div>
             </div>
           )}
@@ -125,7 +125,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
               to={`/amendment/${clonedFrom.id}`}
               className="flex items-center gap-3 transition-opacity hover:opacity-80"
             >
-              <Avatar className="h-10 w-10 border-2 border-primary">
+              <Avatar className="border-primary h-10 w-10 border-2">
                 <AvatarImage src={clonedFrom.imageURL || clonedFrom.videoThumbnailURL} />
                 <AvatarFallback>
                   <Copy className="h-5 w-5" />
@@ -133,7 +133,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
               </Avatar>
               <div className="text-left">
                 <p className="text-sm font-medium">{clonedFrom.title}</p>
-                <p className="text-xs text-muted-foreground">Cloned from</p>
+                <p className="text-muted-foreground text-xs">Cloned from</p>
               </div>
             </Link>
           )}
@@ -209,7 +209,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
           onAcceptInvitation={collaboration.acceptInvitation}
           isLoading={collaboration.isLoading}
         />
-        <div className="flex h-10 items-center gap-1 rounded-lg border bg-card px-2">
+        <div className="bg-card flex h-10 items-center gap-1 rounded-lg border px-2">
           <Button
             variant="ghost"
             size="sm"
@@ -291,7 +291,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
                       >
                         <CardHeader className="space-y-3 pb-4">
                           <div className="flex items-center gap-3">
-                            <Avatar className="h-12 w-12 border-2 border-background">
+                            <Avatar className="border-background h-12 w-12 border-2">
                               <AvatarImage src={collab.user?.avatar || collab.user?.imageURL} />
                               <AvatarFallback>
                                 {collab.user?.name?.[0]?.toUpperCase() || 'U'}
@@ -316,7 +316,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
                         </CardHeader>
                         {collab.user?.bio && (
                           <CardContent className="pt-0">
-                            <p className="line-clamp-2 text-sm text-muted-foreground">
+                            <p className="text-muted-foreground line-clamp-2 text-sm">
                               {collab.user.bio}
                             </p>
                           </CardContent>
@@ -349,25 +349,20 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
             <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
               {supportingGroups
                 .filter((group: any) => getSupportStatus(group.id) !== 'declined')
-                .map((group: any, index: number) => {
+                .map((group: any) => {
                   const supportStatus = getSupportStatus(group.id);
                   return (
                     <div key={group.id} className="relative">
-                      <Link
-                        to={`/group/${group.id}`}
-                        className="block transition-opacity hover:opacity-90"
-                      >
-                        <GroupTimelineCard
-                          group={{
-                            id: String(group.id),
-                            name: group.name || t('common.unknown'),
-                            description: group.description,
-                            memberCount: group.memberships?.length || 0,
-                            hashtags: extractHashtags(group.group_hashtags),
-                          }}
-                        />
-                      </Link>
-                      <div className="absolute right-2 top-2">
+                      <GroupTimelineCard
+                        group={{
+                          id: String(group.id),
+                          name: group.name || t('common.unknown'),
+                          description: group.description,
+                          memberCount: group.memberships?.length || 0,
+                          hashtags: extractHashtags(group.group_hashtags),
+                        }}
+                      />
+                      <div className="absolute top-2 right-2">
                         <SupporterStatusBadge status={supportStatus} size="sm" />
                       </div>
                     </div>
@@ -429,7 +424,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
                     </CardHeader>
                     {clone.date && (
                       <CardContent className="pt-0">
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-muted-foreground text-xs">
                           Created: {new Date(clone.date).toLocaleDateString()}
                         </p>
                       </CardContent>

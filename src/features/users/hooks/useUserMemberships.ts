@@ -7,25 +7,10 @@ import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
-import {
-  notifyMembershipWithdrawn,
-  notifyParticipationWithdrawn,
-  notifyCollaborationWithdrawn,
-  notifyGroupInvitationAccepted,
-  notifyGroupInvitationDeclined,
-  notifyGroupRequestWithdrawn,
-  notifyEventInvitationAccepted,
-  notifyEventInvitationDeclined,
-  notifyEventRequestWithdrawn,
-  notifyCollaborationInvitationAccepted,
-  notifyCollaborationInvitationDeclined,
-  notifyCollaborationRequestWithdrawn,
-  notifyBlogInvitationAccepted,
-  notifyBlogInvitationDeclined,
-  notifyBlogRequestWithdrawn,
-  notifyBlogWriterLeft,
-} from '@/utils/notification-helpers';
+import { sendNotificationFn } from '@/server/notifications';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
+
+const LOG_PREFIX = '[UserMemberships]';
 
 /**
  * Hook to query and manage user memberships, participations, and collaborations
@@ -53,22 +38,33 @@ export function useUserMemberships(userId?: string, userName?: string) {
   const collaborations = useMemo(() => collaboratorRows || [], [collaboratorRows]);
   const blogRelations = useMemo(() => bloggerRows || [], [bloggerRows]);
 
+  // Resolve a safe sender name — mirrors the group page pattern (useGroupMembership.ts)
+  const safeSenderName = userName || 'A user';
+
   /**
    * Leave a group (remove membership)
    */
   const leaveGroup = async (membershipId: string, groupId: string) => {
     try {
+      // Snapshot group data before mutation (Zero reactivity may invalidate after delete)
+      const membership = memberships.find((m: any) => m.id === membershipId);
+      const groupSnapshot = membership?.group ? { id: membership.group.id, name: membership.group.name } : null;
+
+      console.log(LOG_PREFIX, 'leaveGroup — snapshot:', { membershipId, groupId, groupSnapshot, userId, safeSenderName });
+
       await groupActions.leaveGroup({ id: membershipId });
 
-      // Notify the group (entity notification)
-      const membership = memberships.find((m: any) => m.id === membershipId);
-      if (membership?.group && userId && userName) {
-        await notifyMembershipWithdrawn({
-          senderId: userId,
-          senderName: userName,
-          groupId: membership.group.id,
-          groupName: membership.group.name ?? '',
-        });
+      // Use groupId param as primary source, snapshot as fallback for name
+      const resolvedGroupId = groupId || groupSnapshot?.id;
+      const resolvedGroupName = groupSnapshot?.name || 'Group';
+
+      if (resolvedGroupId && userId) {
+        console.log(LOG_PREFIX, 'leaveGroup — sending notifyMembershipWithdrawn', { resolvedGroupId, resolvedGroupName });
+        sendNotificationFn({ data: { helper: 'notifyMembershipWithdrawn', params: { senderId: userId, senderName: safeSenderName, groupId: resolvedGroupId, groupName: resolvedGroupName } } })
+          .then(result => console.log(LOG_PREFIX, 'leaveGroup — notification result:', result))
+          .catch(err => console.error(LOG_PREFIX, 'leaveGroup — notification failed:', err));
+      } else {
+        console.warn(LOG_PREFIX, 'leaveGroup — skipped notification:', { resolvedGroupId, userId });
       }
 
       return { success: true };
@@ -83,17 +79,23 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawFromEvent = async (participationId: string, eventId: string) => {
     try {
+      const participation = participations.find((p: any) => p.id === participationId);
+      const eventSnapshot = participation?.event ? { id: participation.event.id, title: participation.event.title } : null;
+
+      console.log(LOG_PREFIX, 'withdrawFromEvent — snapshot:', { participationId, eventId, eventSnapshot, userId, safeSenderName });
+
       await eventActions.leaveEvent({ id: participationId });
 
-      // Notify the event (entity notification)
-      const participation = participations.find((p: any) => p.id === participationId);
-      if (participation?.event && userId && userName) {
-        await notifyParticipationWithdrawn({
-          senderId: userId,
-          senderName: userName,
-          eventId: participation.event.id,
-          eventTitle: participation.event.title ?? '',
-        });
+      const resolvedEventId = eventId || eventSnapshot?.id;
+      const resolvedEventTitle = eventSnapshot?.title || 'Event';
+
+      if (resolvedEventId && userId) {
+        console.log(LOG_PREFIX, 'withdrawFromEvent — sending notifyParticipationWithdrawn');
+        sendNotificationFn({ data: { helper: 'notifyParticipationWithdrawn', params: { senderId: userId, senderName: safeSenderName, eventId: resolvedEventId, eventTitle: resolvedEventTitle } } })
+          .then(result => console.log(LOG_PREFIX, 'withdrawFromEvent — notification result:', result))
+          .catch(err => console.error(LOG_PREFIX, 'withdrawFromEvent — notification failed:', err));
+      } else {
+        console.warn(LOG_PREFIX, 'withdrawFromEvent — skipped notification:', { resolvedEventId, userId });
       }
 
       return { success: true };
@@ -108,17 +110,23 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const leaveCollaboration = async (collaborationId: string, amendmentId: string) => {
     try {
+      const collaboration = collaborations.find((c: any) => c.id === collaborationId);
+      const amendmentSnapshot = collaboration?.amendment ? { id: collaboration.amendment.id, title: collaboration.amendment.title } : null;
+
+      console.log(LOG_PREFIX, 'leaveCollaboration — snapshot:', { collaborationId, amendmentId, amendmentSnapshot, userId, safeSenderName });
+
       await amendmentActions.leaveCollaboration(collaborationId);
 
-      // Notify the amendment (entity notification)
-      const collaboration = collaborations.find((c: any) => c.id === collaborationId);
-      if (collaboration?.amendment && userId && userName) {
-        await notifyCollaborationWithdrawn({
-          senderId: userId,
-          senderName: userName,
-          amendmentId: collaboration.amendment.id,
-          amendmentTitle: collaboration.amendment.title ?? '',
-        });
+      const resolvedAmendmentId = amendmentId || amendmentSnapshot?.id;
+      const resolvedAmendmentTitle = amendmentSnapshot?.title || 'Amendment';
+
+      if (resolvedAmendmentId && userId) {
+        console.log(LOG_PREFIX, 'leaveCollaboration — sending notifyCollaborationWithdrawn');
+        sendNotificationFn({ data: { helper: 'notifyCollaborationWithdrawn', params: { senderId: userId, senderName: safeSenderName, amendmentId: resolvedAmendmentId, amendmentTitle: resolvedAmendmentTitle } } })
+          .then(result => console.log(LOG_PREFIX, 'leaveCollaboration — notification result:', result))
+          .catch(err => console.error(LOG_PREFIX, 'leaveCollaboration — notification failed:', err));
+      } else {
+        console.warn(LOG_PREFIX, 'leaveCollaboration — skipped notification:', { resolvedAmendmentId, userId });
       }
 
       return { success: true };
@@ -133,17 +141,20 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const leaveBlog = async (relationId: string) => {
     try {
+      const blogRelation = blogRelations.find((r: any) => r.id === relationId);
+      const blogSnapshot = blogRelation?.blog ? { id: blogRelation.blog.id, title: blogRelation.blog.title } : null;
+
+      console.log(LOG_PREFIX, 'leaveBlog — snapshot:', { relationId, blogSnapshot, userId, safeSenderName });
+
       await blogActions.deleteEntry(relationId);
 
-      // Notify the blog (entity notification)
-      const blogRelation = blogRelations.find((r: any) => r.id === relationId);
-      if (blogRelation?.blog && userId && userName) {
-        await notifyBlogWriterLeft({
-          senderId: userId,
-          senderName: userName,
-          blogId: blogRelation.blog.id,
-          blogTitle: blogRelation.blog.title || 'Blog',
-        });
+      if (blogSnapshot && userId) {
+        console.log(LOG_PREFIX, 'leaveBlog — sending notifyBlogWriterLeft');
+        sendNotificationFn({ data: { helper: 'notifyBlogWriterLeft', params: { senderId: userId, senderName: safeSenderName, blogId: blogSnapshot.id, blogTitle: blogSnapshot.title || 'Blog' } } })
+          .then(result => console.log(LOG_PREFIX, 'leaveBlog — notification result:', result))
+          .catch(err => console.error(LOG_PREFIX, 'leaveBlog — notification failed:', err));
+      } else {
+        console.warn(LOG_PREFIX, 'leaveBlog — skipped notification:', { blogSnapshot, userId });
       }
 
       return { success: true };
@@ -159,6 +170,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
   const acceptGroupInvitation = async (membershipId: string) => {
     try {
       const membership = memberships.find((m: any) => m.id === membershipId);
+      const groupSnapshot = membership?.group ? { id: membership.group.id, name: membership.group.name } : null;
 
       await groupActions.updateMemberRole({
         id: membershipId,
@@ -166,25 +178,24 @@ export function useUserMemberships(userId?: string, userName?: string) {
       });
 
       // Add timeline event for member joining (if group is public)
-      if (membership?.group && userId) {
+      if (groupSnapshot && userId) {
         await createTimelineEvent({ data: {
             eventType: 'member_added',
             entityType: 'group',
-            entityId: membership.group.id,
+            entityId: groupSnapshot.id,
             actorId: userId,
-            title: `${userName || 'New member'} joined ${membership.group.name || 'the group'}`,
+            title: `${safeSenderName} joined ${groupSnapshot.name || 'the group'}`,
             description: 'A new member has joined the group',
           } });
       }
 
-      // Notify the group (entity notification)
-      if (membership?.group && userId && userName) {
-        await notifyGroupInvitationAccepted({
-          senderId: userId,
-          senderName: userName,
-          groupId: membership.group.id,
-          groupName: membership.group.name || 'Group',
-        });
+      if (groupSnapshot && userId) {
+        console.log(LOG_PREFIX, 'acceptGroupInvitation — sending notifyGroupInvitationAccepted');
+        sendNotificationFn({ data: { helper: 'notifyGroupInvitationAccepted', params: { senderId: userId, senderName: safeSenderName, groupId: groupSnapshot.id, groupName: groupSnapshot.name || 'Group' } } })
+          .then(result => console.log(LOG_PREFIX, 'acceptGroupInvitation — notification result:', result))
+          .catch(err => console.error(LOG_PREFIX, 'acceptGroupInvitation — notification failed:', err));
+      } else {
+        console.warn(LOG_PREFIX, 'acceptGroupInvitation — skipped notification:', { groupSnapshot, userId });
       }
 
       return { success: true };
@@ -199,19 +210,20 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const declineGroupInvitation = async (membershipId: string) => {
     try {
-      // Get membership info before deleting
       const membership = memberships.find((m: any) => m.id === membershipId);
+      const groupSnapshot = membership?.group ? { id: membership.group.id, name: membership.group.name } : null;
+
+      console.log(LOG_PREFIX, 'declineGroupInvitation — snapshot:', { membershipId, groupSnapshot, userId, safeSenderName });
 
       await groupActions.leaveGroup({ id: membershipId });
 
-      // Notify the group (entity notification)
-      if (membership?.group && userId && userName) {
-        await notifyGroupInvitationDeclined({
-          senderId: userId,
-          senderName: userName,
-          groupId: membership.group.id,
-          groupName: membership.group.name || 'Group',
-        });
+      if (groupSnapshot && userId) {
+        console.log(LOG_PREFIX, 'declineGroupInvitation — sending notifyGroupInvitationDeclined');
+        sendNotificationFn({ data: { helper: 'notifyGroupInvitationDeclined', params: { senderId: userId, senderName: safeSenderName, groupId: groupSnapshot.id, groupName: groupSnapshot.name || 'Group' } } })
+          .then(result => console.log(LOG_PREFIX, 'declineGroupInvitation — notification result:', result))
+          .catch(err => console.error(LOG_PREFIX, 'declineGroupInvitation — notification failed:', err));
+      } else {
+        console.warn(LOG_PREFIX, 'declineGroupInvitation — skipped notification:', { groupSnapshot, userId });
       }
 
       return { success: true };
@@ -226,19 +238,20 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawGroupRequest = async (membershipId: string) => {
     try {
-      // Get membership info before deleting
       const membership = memberships.find((m: any) => m.id === membershipId);
+      const groupSnapshot = membership?.group ? { id: membership.group.id, name: membership.group.name } : null;
+
+      console.log(LOG_PREFIX, 'withdrawGroupRequest — snapshot:', { membershipId, groupSnapshot, userId, safeSenderName });
 
       await groupActions.leaveGroup({ id: membershipId });
 
-      // Notify the group (entity notification)
-      if (membership?.group && userId && userName) {
-        await notifyGroupRequestWithdrawn({
-          senderId: userId,
-          senderName: userName,
-          groupId: membership.group.id,
-          groupName: membership.group.name || 'Group',
-        });
+      if (groupSnapshot && userId) {
+        console.log(LOG_PREFIX, 'withdrawGroupRequest — sending notifyGroupRequestWithdrawn');
+        sendNotificationFn({ data: { helper: 'notifyGroupRequestWithdrawn', params: { senderId: userId, senderName: safeSenderName, groupId: groupSnapshot.id, groupName: groupSnapshot.name || 'Group' } } })
+          .then(result => console.log(LOG_PREFIX, 'withdrawGroupRequest — notification result:', result))
+          .catch(err => console.error(LOG_PREFIX, 'withdrawGroupRequest — notification failed:', err));
+      } else {
+        console.warn(LOG_PREFIX, 'withdrawGroupRequest — skipped notification:', { groupSnapshot, userId });
       }
 
       return { success: true };
@@ -253,20 +266,21 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const acceptEventInvitation = async (participationId: string) => {
     try {
+      const participation = participations.find((p: any) => p.id === participationId);
+      const eventSnapshot = participation?.event ? { id: participation.event.id, title: participation.event.title } : null;
+
       await eventActions.updateParticipant({
         id: participationId,
         status: 'member',
       });
 
-      // Notify the event (entity notification)
-      const participation = participations.find((p: any) => p.id === participationId);
-      if (participation?.event && userId && userName) {
-        await notifyEventInvitationAccepted({
-          senderId: userId,
-          senderName: userName,
-          eventId: participation.event.id,
-          eventTitle: participation.event.title || 'Event',
-        });
+      if (eventSnapshot && userId) {
+        console.log(LOG_PREFIX, 'acceptEventInvitation — sending notifyEventInvitationAccepted');
+        sendNotificationFn({ data: { helper: 'notifyEventInvitationAccepted', params: { senderId: userId, senderName: safeSenderName, eventId: eventSnapshot.id, eventTitle: eventSnapshot.title || 'Event' } } })
+          .then(result => console.log(LOG_PREFIX, 'acceptEventInvitation — notification result:', result))
+          .catch(err => console.error(LOG_PREFIX, 'acceptEventInvitation — notification failed:', err));
+      } else {
+        console.warn(LOG_PREFIX, 'acceptEventInvitation — skipped notification:', { eventSnapshot, userId });
       }
 
       return { success: true };
@@ -281,19 +295,20 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const declineEventInvitation = async (participationId: string) => {
     try {
-      // Get participation info before deleting
       const participation = participations.find((p: any) => p.id === participationId);
+      const eventSnapshot = participation?.event ? { id: participation.event.id, title: participation.event.title } : null;
+
+      console.log(LOG_PREFIX, 'declineEventInvitation — snapshot:', { participationId, eventSnapshot, userId, safeSenderName });
 
       await eventActions.leaveEvent({ id: participationId });
 
-      // Notify the event (entity notification)
-      if (participation?.event && userId && userName) {
-        await notifyEventInvitationDeclined({
-          senderId: userId,
-          senderName: userName,
-          eventId: participation.event.id,
-          eventTitle: participation.event.title || 'Event',
-        });
+      if (eventSnapshot && userId) {
+        console.log(LOG_PREFIX, 'declineEventInvitation — sending notifyEventInvitationDeclined');
+        sendNotificationFn({ data: { helper: 'notifyEventInvitationDeclined', params: { senderId: userId, senderName: safeSenderName, eventId: eventSnapshot.id, eventTitle: eventSnapshot.title || 'Event' } } })
+          .then(result => console.log(LOG_PREFIX, 'declineEventInvitation — notification result:', result))
+          .catch(err => console.error(LOG_PREFIX, 'declineEventInvitation — notification failed:', err));
+      } else {
+        console.warn(LOG_PREFIX, 'declineEventInvitation — skipped notification:', { eventSnapshot, userId });
       }
 
       return { success: true };
@@ -308,19 +323,20 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawEventRequest = async (participationId: string) => {
     try {
-      // Get participation info before deleting
       const participation = participations.find((p: any) => p.id === participationId);
+      const eventSnapshot = participation?.event ? { id: participation.event.id, title: participation.event.title } : null;
+
+      console.log(LOG_PREFIX, 'withdrawEventRequest — snapshot:', { participationId, eventSnapshot, userId, safeSenderName });
 
       await eventActions.leaveEvent({ id: participationId });
 
-      // Notify the event (entity notification)
-      if (participation?.event && userId && userName) {
-        await notifyEventRequestWithdrawn({
-          senderId: userId,
-          senderName: userName,
-          eventId: participation.event.id,
-          eventTitle: participation.event.title || 'Event',
-        });
+      if (eventSnapshot && userId) {
+        console.log(LOG_PREFIX, 'withdrawEventRequest — sending notifyEventRequestWithdrawn');
+        sendNotificationFn({ data: { helper: 'notifyEventRequestWithdrawn', params: { senderId: userId, senderName: safeSenderName, eventId: eventSnapshot.id, eventTitle: eventSnapshot.title || 'Event' } } })
+          .then(result => console.log(LOG_PREFIX, 'withdrawEventRequest — notification result:', result))
+          .catch(err => console.error(LOG_PREFIX, 'withdrawEventRequest — notification failed:', err));
+      } else {
+        console.warn(LOG_PREFIX, 'withdrawEventRequest — skipped notification:', { eventSnapshot, userId });
       }
 
       return { success: true };
@@ -336,6 +352,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
   const acceptCollaborationInvitation = async (collaborationId: string) => {
     try {
       const collaboration = collaborations.find((c: any) => c.id === collaborationId);
+      const amendmentSnapshot = collaboration?.amendment ? { id: collaboration.amendment.id, title: collaboration.amendment.title, visibility: collaboration.amendment.visibility } : null;
 
       await amendmentActions.updateCollaborator({
         id: collaborationId,
@@ -343,26 +360,25 @@ export function useUserMemberships(userId?: string, userName?: string) {
       });
 
       // Add timeline event for public amendments
-      if (collaboration?.amendment && collaboration.amendment.visibility === 'public' && userId) {
+      if (amendmentSnapshot && amendmentSnapshot.visibility === 'public' && userId) {
         await createTimelineEvent({ data: {
             eventType: 'member_added',
             entityType: 'amendment',
-            entityId: collaboration.amendment.id,
+            entityId: amendmentSnapshot.id,
             actorId: userId,
-            title: userName || 'User',
-            description: collaboration.amendment.title || 'Amendment',
+            title: safeSenderName,
+            description: amendmentSnapshot.title || 'Amendment',
             contentType: 'amendment',
           } });
       }
 
-      // Notify the amendment (entity notification)
-      if (collaboration?.amendment && userId && userName) {
-        await notifyCollaborationInvitationAccepted({
-          senderId: userId,
-          senderName: userName,
-          amendmentId: collaboration.amendment.id,
-          amendmentTitle: collaboration.amendment.title || 'Amendment',
-        });
+      if (amendmentSnapshot && userId) {
+        console.log(LOG_PREFIX, 'acceptCollaborationInvitation — sending notifyCollaborationInvitationAccepted');
+        sendNotificationFn({ data: { helper: 'notifyCollaborationInvitationAccepted', params: { senderId: userId, senderName: safeSenderName, amendmentId: amendmentSnapshot.id, amendmentTitle: amendmentSnapshot.title || 'Amendment' } } })
+          .then(result => console.log(LOG_PREFIX, 'acceptCollaborationInvitation — notification result:', result))
+          .catch(err => console.error(LOG_PREFIX, 'acceptCollaborationInvitation — notification failed:', err));
+      } else {
+        console.warn(LOG_PREFIX, 'acceptCollaborationInvitation — skipped notification:', { amendmentSnapshot, userId });
       }
 
       return { success: true };
@@ -377,19 +393,20 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const declineCollaborationInvitation = async (collaborationId: string) => {
     try {
-      // Get collaboration info before deleting
       const collaboration = collaborations.find((c: any) => c.id === collaborationId);
+      const amendmentSnapshot = collaboration?.amendment ? { id: collaboration.amendment.id, title: collaboration.amendment.title } : null;
+
+      console.log(LOG_PREFIX, 'declineCollaborationInvitation — snapshot:', { collaborationId, amendmentSnapshot, userId, safeSenderName });
 
       await amendmentActions.leaveCollaboration(collaborationId);
 
-      // Notify the amendment (entity notification)
-      if (collaboration?.amendment && userId && userName) {
-        await notifyCollaborationInvitationDeclined({
-          senderId: userId,
-          senderName: userName,
-          amendmentId: collaboration.amendment.id,
-          amendmentTitle: collaboration.amendment.title || 'Amendment',
-        });
+      if (amendmentSnapshot && userId) {
+        console.log(LOG_PREFIX, 'declineCollaborationInvitation — sending notifyCollaborationInvitationDeclined');
+        sendNotificationFn({ data: { helper: 'notifyCollaborationInvitationDeclined', params: { senderId: userId, senderName: safeSenderName, amendmentId: amendmentSnapshot.id, amendmentTitle: amendmentSnapshot.title || 'Amendment' } } })
+          .then(result => console.log(LOG_PREFIX, 'declineCollaborationInvitation — notification result:', result))
+          .catch(err => console.error(LOG_PREFIX, 'declineCollaborationInvitation — notification failed:', err));
+      } else {
+        console.warn(LOG_PREFIX, 'declineCollaborationInvitation — skipped notification:', { amendmentSnapshot, userId });
       }
 
       return { success: true };
@@ -404,19 +421,20 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawCollaborationRequest = async (collaborationId: string) => {
     try {
-      // Get collaboration info before deleting
       const collaboration = collaborations.find((c: any) => c.id === collaborationId);
+      const amendmentSnapshot = collaboration?.amendment ? { id: collaboration.amendment.id, title: collaboration.amendment.title } : null;
+
+      console.log(LOG_PREFIX, 'withdrawCollaborationRequest — snapshot:', { collaborationId, amendmentSnapshot, userId, safeSenderName });
 
       await amendmentActions.leaveCollaboration(collaborationId);
 
-      // Notify the amendment (entity notification)
-      if (collaboration?.amendment && userId && userName) {
-        await notifyCollaborationRequestWithdrawn({
-          senderId: userId,
-          senderName: userName,
-          amendmentId: collaboration.amendment.id,
-          amendmentTitle: collaboration.amendment.title || 'Amendment',
-        });
+      if (amendmentSnapshot && userId) {
+        console.log(LOG_PREFIX, 'withdrawCollaborationRequest — sending notifyCollaborationRequestWithdrawn');
+        sendNotificationFn({ data: { helper: 'notifyCollaborationRequestWithdrawn', params: { senderId: userId, senderName: safeSenderName, amendmentId: amendmentSnapshot.id, amendmentTitle: amendmentSnapshot.title || 'Amendment' } } })
+          .then(result => console.log(LOG_PREFIX, 'withdrawCollaborationRequest — notification result:', result))
+          .catch(err => console.error(LOG_PREFIX, 'withdrawCollaborationRequest — notification failed:', err));
+      } else {
+        console.warn(LOG_PREFIX, 'withdrawCollaborationRequest — skipped notification:', { amendmentSnapshot, userId });
       }
 
       return { success: true };
@@ -431,20 +449,21 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const acceptBlogInvitation = async (blogRelationId: string) => {
     try {
+      const blogRelation = blogRelations.find((r: any) => r.id === blogRelationId);
+      const blogSnapshot = blogRelation?.blog ? { id: blogRelation.blog.id, title: blogRelation.blog.title } : null;
+
       await blogActions.updateEntry({
         id: blogRelationId,
         status: 'writer',
       });
 
-      // Notify the blog (entity notification)
-      const blogRelation = blogRelations.find((r: any) => r.id === blogRelationId);
-      if (blogRelation?.blog && userId && userName) {
-        await notifyBlogInvitationAccepted({
-          senderId: userId,
-          senderName: userName,
-          blogId: blogRelation.blog.id,
-          blogTitle: blogRelation.blog.title || 'Blog',
-        });
+      if (blogSnapshot && userId) {
+        console.log(LOG_PREFIX, 'acceptBlogInvitation — sending notifyBlogInvitationAccepted');
+        sendNotificationFn({ data: { helper: 'notifyBlogInvitationAccepted', params: { senderId: userId, senderName: safeSenderName, blogId: blogSnapshot.id, blogTitle: blogSnapshot.title || 'Blog' } } })
+          .then(result => console.log(LOG_PREFIX, 'acceptBlogInvitation — notification result:', result))
+          .catch(err => console.error(LOG_PREFIX, 'acceptBlogInvitation — notification failed:', err));
+      } else {
+        console.warn(LOG_PREFIX, 'acceptBlogInvitation — skipped notification:', { blogSnapshot, userId });
       }
 
       return { success: true };
@@ -459,19 +478,20 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const declineBlogInvitation = async (blogRelationId: string) => {
     try {
-      // Get blog relation info before deleting
       const blogRelation = blogRelations.find((r: any) => r.id === blogRelationId);
+      const blogSnapshot = blogRelation?.blog ? { id: blogRelation.blog.id, title: blogRelation.blog.title } : null;
+
+      console.log(LOG_PREFIX, 'declineBlogInvitation — snapshot:', { blogRelationId, blogSnapshot, userId, safeSenderName });
 
       await blogActions.deleteEntry(blogRelationId);
 
-      // Notify the blog (entity notification)
-      if (blogRelation?.blog && userId && userName) {
-        await notifyBlogInvitationDeclined({
-          senderId: userId,
-          senderName: userName,
-          blogId: blogRelation.blog.id,
-          blogTitle: blogRelation.blog.title || 'Blog',
-        });
+      if (blogSnapshot && userId) {
+        console.log(LOG_PREFIX, 'declineBlogInvitation — sending notifyBlogInvitationDeclined');
+        sendNotificationFn({ data: { helper: 'notifyBlogInvitationDeclined', params: { senderId: userId, senderName: safeSenderName, blogId: blogSnapshot.id, blogTitle: blogSnapshot.title || 'Blog' } } })
+          .then(result => console.log(LOG_PREFIX, 'declineBlogInvitation — notification result:', result))
+          .catch(err => console.error(LOG_PREFIX, 'declineBlogInvitation — notification failed:', err));
+      } else {
+        console.warn(LOG_PREFIX, 'declineBlogInvitation — skipped notification:', { blogSnapshot, userId });
       }
 
       return { success: true };
@@ -486,19 +506,20 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawBlogRequest = async (blogRelationId: string) => {
     try {
-      // Get blog relation info before deleting
       const blogRelation = blogRelations.find((r: any) => r.id === blogRelationId);
+      const blogSnapshot = blogRelation?.blog ? { id: blogRelation.blog.id, title: blogRelation.blog.title } : null;
+
+      console.log(LOG_PREFIX, 'withdrawBlogRequest — snapshot:', { blogRelationId, blogSnapshot, userId, safeSenderName });
 
       await blogActions.deleteEntry(blogRelationId);
 
-      // Notify the blog (entity notification)
-      if (blogRelation?.blog && userId && userName) {
-        await notifyBlogRequestWithdrawn({
-          senderId: userId,
-          senderName: userName,
-          blogId: blogRelation.blog.id,
-          blogTitle: blogRelation.blog.title || 'Blog',
-        });
+      if (blogSnapshot && userId) {
+        console.log(LOG_PREFIX, 'withdrawBlogRequest — sending notifyBlogRequestWithdrawn');
+        sendNotificationFn({ data: { helper: 'notifyBlogRequestWithdrawn', params: { senderId: userId, senderName: safeSenderName, blogId: blogSnapshot.id, blogTitle: blogSnapshot.title || 'Blog' } } })
+          .then(result => console.log(LOG_PREFIX, 'withdrawBlogRequest — notification result:', result))
+          .catch(err => console.error(LOG_PREFIX, 'withdrawBlogRequest — notification failed:', err));
+      } else {
+        console.warn(LOG_PREFIX, 'withdrawBlogRequest — skipped notification:', { blogSnapshot, userId });
       }
 
       return { success: true };

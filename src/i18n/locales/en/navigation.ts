@@ -51,6 +51,7 @@ export const navigationTranslations = {
       meet: 'Meet',
       notifications: 'Notifications',
       notificationSettings: 'Notification Settings',
+      'notification-settings': 'Notification Settings',
       edit: 'Edit Profile',
     },
     group: {

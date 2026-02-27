@@ -21,7 +21,6 @@ import { SubscribeButton, MembershipButton } from '@/components/shared/action-bu
 import { SocialBar } from '@/features/users/ui/SocialBar';
 import { InfoTabs } from '@/components/shared/InfoTabs';
 import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
-import { Link } from '@tanstack/react-router';
 import { useTranslation } from '@/hooks/use-translation';
 import { ShareButton } from '@/components/shared/ShareButton';
 import { useGroupWikiPage } from '@/features/groups/hooks/useGroupWikiPage';
@@ -267,23 +266,18 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
             <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
               {groupRelationshipsByGroup([...group.relationships_as_source], 'child').map(
                 ({ group: relatedGroup }) => (
-                  <Link
+                  <GroupTimelineCard
                     key={`child-${relatedGroup.id}`}
-                    to={`/group/${relatedGroup.id}`}
-                    className="block transition-opacity hover:opacity-90"
-                  >
-                    <GroupTimelineCard
-                      group={{
-                        id: String(relatedGroup.id),
-                        name: relatedGroup.name || t('common.unknown'),
-                        description: relatedGroup.description,
-                        memberCount:
-                          relatedGroup.memberships?.length || relatedGroup.member_count || 0,
-                        amendmentCount: relatedGroup.amendments?.length || 0,
-                        eventCount: relatedGroup.events?.length || 0,
-                      }}
-                    />
-                  </Link>
+                    group={{
+                      id: String(relatedGroup.id),
+                      name: relatedGroup.name || t('common.unknown'),
+                      description: relatedGroup.description,
+                      memberCount:
+                        relatedGroup.memberships?.length || relatedGroup.member_count || 0,
+                      amendmentCount: relatedGroup.amendments?.length || 0,
+                      eventCount: relatedGroup.events?.length || 0,
+                    }}
+                  />
                 )
               )}
             </div>
