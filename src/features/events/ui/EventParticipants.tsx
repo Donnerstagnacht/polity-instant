@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   ArrowLeft,
   UserPlus,
@@ -9,9 +8,9 @@ import {
   Check,
   X,
   Loader2,
-  Search,
   Plus,
 } from 'lucide-react';
+import { EntitySearchBar } from '@/components/ui/entity-search-bar';
 import {
   Table,
   TableBody,
@@ -96,16 +95,12 @@ export function EventParticipants({ eventId }: { eventId: string }) {
       </div>
 
       {/* Search Bar */}
-      <div className="mb-6 flex gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder={t('features.events.participants.searchPlaceholder')}
-            value={state.searchQuery}
-            onChange={e => state.setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
+      <div className="mb-6">
+        <EntitySearchBar
+          searchQuery={state.searchQuery}
+          onSearchQueryChange={state.setSearchQuery}
+          placeholder={t('features.events.participants.searchPlaceholder')}
+        />
       </div>
 
       {/* Tabs for Participants and Roles */}

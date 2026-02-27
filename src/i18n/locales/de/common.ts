@@ -114,7 +114,9 @@ export const commonTranslations = {
     groupRelationshipsDescription:
       'Verwalten Sie die Verbindungen dieser Gruppe zu anderen Gruppen.',
     incomingRequests: 'Eingehende Anfragen',
+    incomingRequestsDescription: 'Andere Gruppen, die sich mit Ihrer Gruppe verbinden möchten.',
     outgoingRequests: 'Ausstehende Anfragen',
+    outgoingRequestsDescription: 'Anfragen, die Ihre Gruppe an andere Gruppen gesendet hat.',
     wantsToBeParent: 'Möchte übergeordnete Gruppe sein mit Rechten:',
     wantsToBeChild: 'Möchte untergeordnete Gruppe sein mit Rechten:',
     requestAsParent: 'Anfrage als übergeordnete Gruppe:',

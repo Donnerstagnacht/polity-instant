@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { cn } from '@/utils/utils';
 import { useTranslation } from '@/hooks/use-translation';
 
 export const RIGHT_TYPES = [
@@ -43,6 +44,20 @@ export function isEdgeVisible(edgeRights: string[], selectedRights: Set<string>)
   return edgeRights.some(right => selectedRights.has(right));
 }
 
+/** Deterministic gradient classes for each right type — shared with RightBadge */
+export const RIGHT_GRADIENTS: Record<RightType, string> = {
+  informationRight:
+    'bg-gradient-to-r from-blue-500 to-cyan-400 dark:from-blue-700 dark:to-cyan-600',
+  amendmentRight:
+    'bg-gradient-to-r from-violet-500 to-purple-400 dark:from-violet-700 dark:to-purple-600',
+  rightToSpeak:
+    'bg-gradient-to-r from-teal-500 to-emerald-400 dark:from-teal-700 dark:to-emerald-600',
+  activeVotingRight:
+    'bg-gradient-to-r from-orange-500 to-red-400 dark:from-orange-700 dark:to-red-600',
+  passiveVotingRight:
+    'bg-gradient-to-r from-pink-500 to-rose-400 dark:from-pink-700 dark:to-rose-600',
+};
+
 interface RightFiltersProps {
   selectedRights: Set<string>;
   onToggleRight: (right: string) => void;
@@ -59,17 +74,24 @@ export function RightFilters({ selectedRights, onToggleRight }: RightFiltersProp
     <div className="mt-4">
       <h3 className="mb-2 text-sm font-semibold">{t('common.labels.filterByRights')}:</h3>
       <div className="flex flex-wrap gap-2">
-        {RIGHT_TYPES.map(right => (
-          <Button
-            key={right}
-            size="sm"
-            variant={selectedRights.has(right) ? 'default' : 'outline'}
-            onClick={() => onToggleRight(right)}
-            className="text-xs"
-          >
-            {getTranslatedRightLabel(right)}
-          </Button>
-        ))}
+        {RIGHT_TYPES.map(right => {
+          const isActive = selectedRights.has(right);
+          return (
+            <Button
+              key={right}
+              size="sm"
+              variant="outline"
+              onClick={() => onToggleRight(right)}
+              className={cn(
+                'text-xs',
+                isActive && RIGHT_GRADIENTS[right],
+                isActive && 'border-0 text-white hover:text-white'
+              )}
+            >
+              {getTranslatedRightLabel(right)}
+            </Button>
+          );
+        })}
       </div>
     </div>
   );

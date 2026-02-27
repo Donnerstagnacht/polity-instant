@@ -4,9 +4,8 @@
 
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search } from 'lucide-react';
+import { EntitySearchBar } from '@/components/ui/entity-search-bar';
 import { useCollaborators } from '../hooks/useCollaborators';
 import { InviteDialog } from './InviteDialog.tsx';
 import { PendingRequestsCard } from './PendingRequestsCard.tsx';
@@ -50,16 +49,12 @@ export function CollaboratorsView({
       </div>
 
       {/* Search Bar */}
-      <div className="mb-6 flex gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search collaborators by name, role, or status..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
+      <div className="mb-6">
+        <EntitySearchBar
+          searchQuery={searchQuery}
+          onSearchQueryChange={setSearchQuery}
+          placeholder="Search collaborators by name, role, or status..."
+        />
       </div>
 
       {/* Tabs for Collaborators and Roles */}

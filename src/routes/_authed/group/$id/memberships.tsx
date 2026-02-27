@@ -20,6 +20,7 @@ import { useRoleManagement } from '@/features/groups/hooks/useRoleManagement'
 import { useGroupPositions } from '@/features/positions/hooks/useGroupPositions'
 import { useUserSearch } from '@/zero/groups/useGroupState'
 import { useAuth } from '@/providers/auth-provider'
+import { EntitySearchBar } from '@/components/ui/entity-search-bar'
 import type { MembershipTab, GroupMembershipWithUser } from '@/features/groups/types/group.types'
 
 export const Route = createFileRoute('/_authed/group/$id/memberships')({
@@ -129,6 +130,12 @@ function GroupMembershipsPage() {
   return (
     <div>
       <h1 className="mb-6 text-3xl font-bold">Group Memberships</h1>
+      <EntitySearchBar
+        searchQuery={memberSearchQuery}
+        onSearchQueryChange={setMemberSearchQuery}
+        placeholder="Search members..."
+        className="mb-4"
+      />
       <MembershipTabs
         activeTab={activeTab}
         onTabChange={setActiveTab}

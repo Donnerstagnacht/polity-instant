@@ -1,10 +1,10 @@
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Bell, Check, Users, Search } from 'lucide-react';
+import { Bell, Check, Users } from 'lucide-react';
 import { useNotificationsPage } from './hooks/useNotificationsPage';
 import { NotificationHeader } from './ui/NotificationHeader';
 import { NotificationTabs } from './ui/NotificationTabs';
 import { NotificationsList } from './ui/NotificationsList';
+import { EntitySearchBar } from '@/components/ui/entity-search-bar';
 
 export function NotificationsPage() {
   const np = useNotificationsPage();
@@ -19,13 +19,11 @@ export function NotificationsPage() {
             onMarkAllAsRead={np.handleMarkAllAsRead}
           />
 
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
+          <div className="mb-4">
+            <EntitySearchBar
+              searchQuery={np.searchQuery}
+              onSearchQueryChange={np.setSearchQuery}
               placeholder={np.t('features.notifications.searchPlaceholder')}
-              value={np.searchQuery}
-              onChange={e => np.setSearchQuery(e.target.value)}
-              className="pl-10"
             />
           </div>
 

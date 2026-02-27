@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useGroupNetwork } from '@/features/network/hooks/useGroupNetwork'
-import { GroupRelationshipsManager } from '@/components/groups/GroupRelationshipsManager'
+import { GroupRelationshipsManager } from '@/features/network/ui/GroupRelationshipsManager'
 
 export const Route = createFileRoute('/_authed/group/$id/relationships')({
   component: GroupRelationshipsPage,

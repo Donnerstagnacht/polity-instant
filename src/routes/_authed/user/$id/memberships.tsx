@@ -7,6 +7,7 @@ import { EventParticipationsTab } from '@/features/users/ui/EventParticipationsT
 import { AmendmentCollaborationsTab } from '@/features/users/ui/AmendmentCollaborationsTab'
 import { BlogRelationsTab } from '@/features/users/ui/BlogRelationsTab'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { EntitySearchBar } from '@/components/ui/entity-search-bar'
 import { Users, Calendar, FileEdit, BookOpen } from 'lucide-react'
 
 export const Route = createFileRoute('/_authed/user/$id/memberships')({
@@ -43,6 +44,8 @@ function UserMembershipsPage() {
   } = useUserMemberships(id, userName)
 
   const {
+    searchQuery,
+    setSearchQuery,
     membershipsByStatus,
     participationsByStatus,
     collaborationsByStatus,
@@ -56,6 +59,11 @@ function UserMembershipsPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Memberships</h1>
+      <EntitySearchBar
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
+        placeholder="Search memberships..."
+      />
       <Tabs defaultValue="groups">
         <TabsList>
           <TabsTrigger value="groups" className="flex items-center gap-2">

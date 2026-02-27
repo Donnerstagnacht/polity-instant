@@ -9,7 +9,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
-import { LinkGroupDialog } from '@/components/groups/LinkGroupDialog';
+import { LinkGroupDialog } from '@/features/network/ui/LinkGroupDialog';
 import { UserCheck, BookOpen, Network } from 'lucide-react';
 import { HashtagDisplay } from '@/components/ui/hashtag-display';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';

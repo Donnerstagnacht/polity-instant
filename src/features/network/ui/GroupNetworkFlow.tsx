@@ -5,6 +5,7 @@ import { Node, Edge, useNodesState, useEdgesState, MarkerType } from '@xyflow/re
 import { Button } from '@/components/ui/button';
 import { NetworkFlowBase, Panel } from '@/features/network/ui/NetworkFlowBase';
 import { RightFilters, formatRights, RIGHT_TYPES } from '@/features/network/ui/RightFilters';
+import { RightBadge } from '@/features/network/ui/RightBadge';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { NetworkEntityDialog } from '@/features/network/ui/NetworkEntityDialog';
 import { useGroupState } from '@/zero/groups/useGroupState';
@@ -317,19 +318,20 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         target: edgeTarget,
         type: 'smoothstep',
         animated: true,
-        label: formatRights(parent.rights),
+        label: (
+          <div className="flex flex-wrap gap-0.5">
+            {parent.rights.map((r: string) => (
+              <RightBadge key={r} right={r} className="px-1 py-0 text-[10px] leading-tight" />
+            ))}
+          </div>
+        ),
         style: { stroke: '#66bb6a', strokeWidth: 2, strokeDasharray: '5 5' },
-        labelStyle: {
-          fill: '#2e7d32',
-          fontWeight: 600,
-          fontSize: '11px',
-        },
         labelBgStyle: {
           fill: 'white',
           fillOpacity: 0.9,
         },
-        labelBgPadding: [8, 4] as [number, number],
-        labelBgBorderRadius: 4,
+        labelBgPadding: [6, 3] as [number, number],
+        labelBgBorderRadius: 6,
         markerEnd: {
           type: MarkerType.ArrowClosed,
           color: '#66bb6a',
@@ -379,19 +381,20 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         target: childNodeId,
         type: 'smoothstep',
         animated: true,
-        label: formatRights(child.rights),
+        label: (
+          <div className="flex flex-wrap gap-0.5">
+            {child.rights.map((r: string) => (
+              <RightBadge key={r} right={r} className="px-1 py-0 text-[10px] leading-tight" />
+            ))}
+          </div>
+        ),
         style: { stroke: '#ffb74d', strokeWidth: 2, strokeDasharray: '5 5' },
-        labelStyle: {
-          fill: '#f57c00',
-          fontWeight: 600,
-          fontSize: '11px',
-        },
         labelBgStyle: {
           fill: 'white',
           fillOpacity: 0.9,
         },
-        labelBgPadding: [8, 4] as [number, number],
-        labelBgBorderRadius: 4,
+        labelBgPadding: [6, 3] as [number, number],
+        labelBgBorderRadius: 6,
         markerEnd: {
           type: MarkerType.ArrowClosed,
           color: '#ffb74d',
@@ -421,7 +424,13 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         // Return edge with filtered label
         return {
           ...edge,
-          label: formatRights(visibleRights),
+          label: (
+            <div className="flex flex-wrap gap-0.5">
+              {visibleRights.map((r: string) => (
+                <RightBadge key={r} right={r} className="px-1 py-0 text-[10px] leading-tight" />
+              ))}
+            </div>
+          ),
           data: { ...edge.data, visibleRights },
         };
       })

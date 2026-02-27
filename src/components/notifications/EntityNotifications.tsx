@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNotificationState } from '@/zero/notifications/useNotificationState';
 import { useNotificationActions } from '@/zero/notifications/useNotificationActions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -19,6 +19,7 @@ import {
   getNotificationIcon,
   getNotificationColor,
 } from '@/features/notifications/utils/notificationConstants';
+import { EntitySearchBar } from '@/components/ui/entity-search-bar';
 
 interface EntityNotificationsProps {
   entityId: string;
@@ -47,8 +48,22 @@ export function EntityNotifications({
     }
   }, [entityId, entityType, notifications.length, markAllEntityNotificationsRead]);
   const isLoading = isLoadingState;
-  const unreadNotifications = notifications.filter((n: any) => !n.is_read);
-  const readNotifications = notifications.filter((n: any) => n.is_read);
+
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredNotifications = useMemo(() => {
+    if (!searchQuery.trim()) return notifications;
+    const q = searchQuery.toLowerCase();
+    return notifications.filter((n: any) => {
+      const senderName = [n.sender?.first_name, n.sender?.last_name].filter(Boolean).join(' ').toLowerCase();
+      const title = (n.title || '').toLowerCase();
+      const message = (n.message || '').toLowerCase();
+      return senderName.includes(q) || title.includes(q) || message.includes(q);
+    });
+  }, [notifications, searchQuery]);
+
+  const unreadNotifications = filteredNotifications.filter((n: any) => !n.is_read);
+  const readNotifications = filteredNotifications.filter((n: any) => n.is_read);
 
   const handleNotificationClick = async (notification: any) => {
     // Mark as read on click
@@ -238,6 +253,14 @@ export function EntityNotifications({
           )}
         </div>
 
+        <div className="mb-4">
+          <EntitySearchBar
+            searchQuery={searchQuery}
+            onSearchQueryChange={setSearchQuery}
+            placeholder={t('features.notifications.searchPlaceholder')}
+          />
+        </div>
+
         <ScrollableTabsList>
           <TabsTrigger value="all">
             {t('pages.notifications.filters.all')}
@@ -257,7 +280,7 @@ export function EntityNotifications({
         </ScrollableTabsList>
 
         <TabsContent value="all" className="mt-6">
-          {notifications.length === 0 ? (
+          {filteredNotifications.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Bell className="text-muted-foreground mb-4 h-12 w-12" />
@@ -271,7 +294,7 @@ export function EntityNotifications({
             </Card>
           ) : (
             <div className="space-y-3">
-              {notifications.map((notification: any) => (
+              {filteredNotifications.map((notification: any) => (
                 <NotificationItem key={notification.id} notification={notification} />
               ))}
             </div>
