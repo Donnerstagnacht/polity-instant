@@ -54,6 +54,12 @@ export const createBlogHashtagSchema = z.object({
   hashtag_id: z.string(),
 })
 
+export const createStatementHashtagSchema = z.object({
+  id: z.string(),
+  statement_id: z.string(),
+  hashtag_id: z.string(),
+})
+
 export const deleteJunctionHashtagSchema = z.object({ id: z.string() })
 
 // ============================================
@@ -150,6 +156,7 @@ export type GroupHashtag = z.infer<typeof createGroupHashtagSchema>
 export type AmendmentHashtag = z.infer<typeof createAmendmentHashtagSchema>
 export type EventHashtag = z.infer<typeof createEventHashtagSchema>
 export type BlogHashtag = z.infer<typeof createBlogHashtagSchema>
+export type StatementHashtag = z.infer<typeof createStatementHashtagSchema>
 export type Link = z.infer<typeof selectLinkSchema>
 export type TimelineEvent = z.infer<typeof selectTimelineEventSchema>
 export type Reaction = z.infer<typeof selectReactionSchema>

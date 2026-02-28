@@ -265,14 +265,20 @@ function AmendmentPreview({ amendmentId, className }: { amendmentId: string; cla
 
 function BlogPreview({ blogId, className }: { blogId: string; className?: string }) {
   const { t } = useTranslation();
-  const { blog } = useBlogState({ blogId });
+  const { blogWithBloggers } = useBlogState({ blogId, includeBloggers: true });
+  const blog = blogWithBloggers;
 
   if (!blog) {
     return <PreviewSkeleton />;
   }
 
+  const blogOwner = blog.bloggers?.find((b: any) => b.status === 'owner')?.user;
+  const blogViewUrl = blog.group_id
+    ? `/group/${blog.group_id}/blog/${blogId}`
+    : `/user/${blogOwner?.id || ''}/blog/${blogId}`;
+
   return (
-    <Link to={`/blog/${blogId}`}>
+    <Link to={blogViewUrl}>
       <Card className={`border-l-4 border-l-pink-500 hover:bg-accent ${className}`}>
         <CardContent className="flex items-center gap-3 p-3">
           <MessageSquare className="h-5 w-5 flex-shrink-0 text-pink-500" />
@@ -312,11 +318,6 @@ function StatementPreview({ statementId, className }: { statementId: string; cla
           <FileText className="h-5 w-5 flex-shrink-0 text-cyan-500" />
           <div className="min-w-0 flex-1">
             <p className="line-clamp-2 text-sm">{statement.text}</p>
-            {statement.tag && (
-              <Badge variant="secondary" className="mt-1 text-xs">
-                {statement.tag}
-              </Badge>
-            )}
           </div>
           <Badge variant="outline" className="flex-shrink-0 text-xs">
             {t('components.linkPreview.statement')}

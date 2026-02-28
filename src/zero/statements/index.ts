@@ -1,5 +1,10 @@
 // Table
-export { statement } from './table'
+export {
+  statement,
+  statementSurvey,
+  statementSurveyOption,
+  statementSurveyVote,
+} from './table'
 
 // Zod Schemas
 export {
@@ -7,7 +12,19 @@ export {
   createStatementSchema,
   updateStatementSchema,
   deleteStatementSchema,
+  selectStatementSurveySchema,
+  createStatementSurveySchema,
+  deleteStatementSurveySchema,
+  selectStatementSurveyOptionSchema,
+  createStatementSurveyOptionSchema,
+  deleteStatementSurveyOptionSchema,
+  selectStatementSurveyVoteSchema,
+  createStatementSurveyVoteSchema,
+  deleteStatementSurveyVoteSchema,
   type Statement,
+  type StatementSurvey,
+  type StatementSurveyOption,
+  type StatementSurveyVote,
 } from './schema'
 
 // Queries & Mutators

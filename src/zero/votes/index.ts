@@ -10,6 +10,7 @@ export {
   eventVote,
   electionVote,
   blogSupportVote,
+  statementSupportVote,
   threadVote,
   commentVote,
 } from './table'
@@ -44,6 +45,10 @@ export {
   createBlogSupportVoteSchema,
   updateBlogSupportVoteSchema,
   deleteBlogSupportVoteSchema,
+  selectStatementSupportVoteSchema,
+  createStatementSupportVoteSchema,
+  updateStatementSupportVoteSchema,
+  deleteStatementSupportVoteSchema,
   selectThreadVoteSchema,
   createThreadVoteSchema,
   selectCommentVoteSchema,
@@ -60,6 +65,7 @@ export {
   type EventVote,
   type ElectionVote,
   type BlogSupportVote,
+  type StatementSupportVote,
   type ThreadVote,
   type CommentVote,
 } from './schema'

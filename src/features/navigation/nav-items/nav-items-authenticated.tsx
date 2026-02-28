@@ -290,6 +290,13 @@ export const navItemsAuthenticated = (
         onClick: () => navigate({ to: `/group/${groupId}/amendments` }),
       },
       {
+        id: 'blogs-and-statements',
+        label: t ? t('navigation.secondary.group.blogsAndStatements') : 'Blogs & Statements',
+        icon: 'BookOpen',
+        href: `/group/${groupId}/blogs-and-statements`,
+        onClick: () => navigate({ to: `/group/${groupId}/blogs-and-statements` }),
+      },
+      {
         id: 'network',
         label: t ? t('navigation.secondary.group.network') : 'Network',
         icon: 'Network',
@@ -430,14 +437,20 @@ export const navItemsAuthenticated = (
     return items;
   };
 
-  const getBlogSecondaryNavItems = (blogId: string, isOwner = false): NavigationItem[] => {
+  const getBlogSecondaryNavItems = (blogId: string, isOwner = false, groupId?: string, userId?: string): NavigationItem[] => {
+    const blogBase = groupId
+      ? `/group/${groupId}/blog/${blogId}`
+      : userId
+        ? `/user/${userId}/blog/${blogId}`
+        : `/blog/${blogId}`;
+
     const items: NavigationItem[] = [
       {
         id: 'overview',
         label: t ? t('navigation.secondary.blog.overview') : 'Overview',
         icon: 'FileText',
-        href: `/blog/${blogId}`,
-        onClick: () => navigate({ to: `/blog/${blogId}` }),
+        href: blogBase,
+        onClick: () => navigate({ to: blogBase }),
       },
     ];
 
@@ -448,29 +461,29 @@ export const navItemsAuthenticated = (
           id: 'bloggers',
           label: t ? t('navigation.secondary.blog.bloggers') : 'Bloggers',
           icon: 'Users',
-          href: `/blog/${blogId}/bloggers`,
-          onClick: () => navigate({ to: `/blog/${blogId}/bloggers` }),
+          href: `${blogBase}/bloggers`,
+          onClick: () => navigate({ to: `${blogBase}/bloggers` }),
         },
         {
           id: 'editor',
           label: t ? t('navigation.secondary.blog.editor') : 'Editor',
           icon: 'Edit',
-          href: `/blog/${blogId}/editor`,
-          onClick: () => navigate({ to: `/blog/${blogId}/editor` }),
+          href: `${blogBase}/editor`,
+          onClick: () => navigate({ to: `${blogBase}/editor` }),
         },
         {
           id: 'notifications',
           label: t ? t('navigation.secondary.blog.notifications') : 'Notifications',
           icon: 'Bell',
-          href: `/blog/${blogId}/notifications`,
-          onClick: () => navigate({ to: `/blog/${blogId}/notifications` }),
+          href: `${blogBase}/notifications`,
+          onClick: () => navigate({ to: `${blogBase}/notifications` }),
         },
         {
           id: 'edit',
           label: t ? t('navigation.secondary.blog.edit') : 'Edit Blog',
           icon: 'Settings',
-          href: `/blog/${blogId}/settings`,
-          onClick: () => navigate({ to: `/blog/${blogId}/settings` }),
+          href: `${blogBase}/settings`,
+          onClick: () => navigate({ to: `${blogBase}/settings` }),
         }
       );
     }
@@ -519,7 +532,7 @@ export const navItemsAuthenticated = (
             ? getAmendmentSecondaryNavItems(amendmentId, canViewAmendment ?? false, canManageAmendment ?? false, canViewNotifications ?? false)
             : null;
         case 'blog':
-          return blogId ? getBlogSecondaryNavItems(blogId, isBlogOwner ?? false) : null;
+          return blogId ? getBlogSecondaryNavItems(blogId, isBlogOwner ?? false, groupId, userId) : null;
         default:
           return null;
       }

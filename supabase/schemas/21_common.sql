@@ -92,6 +92,21 @@ CREATE INDEX idx_blog_hashtag_hashtag ON public.blog_hashtag (hashtag_id);
 ALTER TABLE public.blog_hashtag ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.blog_hashtag FOR ALL TO service_role USING (true);
 
+-- Statement ↔ Hashtag junction table
+CREATE TABLE IF NOT EXISTS public.statement_hashtag (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  statement_id UUID NOT NULL REFERENCES public.statement (id) ON DELETE CASCADE,
+  hashtag_id UUID NOT NULL REFERENCES public.hashtag (id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (statement_id, hashtag_id)
+);
+
+CREATE INDEX idx_statement_hashtag_statement ON public.statement_hashtag (statement_id);
+CREATE INDEX idx_statement_hashtag_hashtag ON public.statement_hashtag (hashtag_id);
+
+ALTER TABLE public.statement_hashtag ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.statement_hashtag FOR ALL TO service_role USING (true);
+
 -- Link table
 CREATE TABLE IF NOT EXISTS public.link (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

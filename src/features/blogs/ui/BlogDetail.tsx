@@ -1,170 +1,42 @@
 'use client';
 
-import { useState, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { PageWrapper } from '@/layout/page-wrapper';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useUserState } from '@/zero/users/useUserState';
-import {
-  BookOpen,
-  Calendar,
-  MessageSquare,
-  Clock,
-  ArrowUp,
-  ArrowDown,
-  Trash2,
-  Edit,
-} from 'lucide-react';
+import { BookOpen, Calendar, Trash2, Edit } from 'lucide-react';
 import { StatsBar } from '@/features/shared/ui/ui/StatsBar';
 import { useSubscribeBlog } from '@/features/blogs/hooks/useSubscribeBlog';
 import { ActionBar } from '@/features/shared/ui/ui/ActionBar';
 import { useAuth } from '@/providers/auth-provider';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { SubscribeButton } from 'src/features/shared/ui/action-buttons';
+import { VoteButtons, type VoteValue } from '@/features/shared/ui/voting';
+import { CommentThread } from '@/features/shared/ui/comments';
+import type { CommentData } from '@/features/shared/ui/comments';
 import { toast } from 'sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { CommentSortSelect, CommentSortBy } from '@/features/shared/ui/action-buttons/CommentSortSelect.tsx';
 import { useBlogPermissions } from '../hooks/useBlogPermissions';
 import { PlateEditor } from '@/features/shared/ui/kit-platejs/plate-editor';
 import { Link } from '@tanstack/react-router';
-import { notifyBlogCommentAdded, notifyBlogVoted, notifyBlogDeleted } from '@/features/shared/utils/notification-helpers';
-import { useInfiniteScroll } from '@/features/shared/hooks/useInfiniteScroll';
-
-// Comment component for blog comments
-interface BlogComment {
-  id: string;
-  text: string;
-  createdAt: number;
-  updatedAt?: number;
-  upvotes?: number;
-  downvotes?: number;
-  parentComment?: any;
-  creator?: {
-    id?: string;
-    name?: string;
-    handle?: string;
-    avatar?: string;
-    imageURL?: string;
-  };
-  votes?: {
-    id: string;
-    vote: number;
-    user?: {
-      id: string;
-    };
-  }[];
-  replies?: BlogComment[];
-}
-
-type CommentCursor = [string, string, unknown, number];
-
-function CommentItem({ comment, blogId }: { comment: BlogComment; blogId: string }) {
-  const { user } = useAuth();
-  const { deleteCommentVote, updateCommentVote, voteComment } = useDocumentActions();
-
-  const userVote = comment.votes?.find(v => v.user?.id === user?.id);
-  const hasUpvoted = userVote?.vote === 1;
-  const hasDownvoted = userVote?.vote === -1;
-
-  // Calculate score from votes relation
-  const upvotesFromRelation = comment.votes?.filter(v => v.vote === 1).length || 0;
-  const downvotesFromRelation = comment.votes?.filter(v => v.vote === -1).length || 0;
-  const score = upvotesFromRelation - downvotesFromRelation;
-
-  const handleVote = async (voteValue: number) => {
-    if (!user?.id) {
-      toast.error('You must be logged in to vote');
-      return;
-    }
-
-    try {
-      if (userVote) {
-        if (userVote.vote === voteValue) {
-          // Remove vote
-          await deleteCommentVote(userVote.id);
-        } else {
-          // Change vote
-          await updateCommentVote({ id: userVote.id, vote: voteValue });
-        }
-      } else {
-        // Create new vote
-        const voteId = crypto.randomUUID();
-        await voteComment({
-          id: voteId,
-          vote: voteValue,
-          comment_id: comment.id,
-          user_id: user.id,
-        });
-      }
-    } catch (error) {
-      console.error('Error voting:', error);
-    }
-  };
-
-  return (
-    <div className="flex gap-4 rounded-lg border p-4">
-      {/* Vote buttons */}
-      <div className="flex flex-col items-center gap-1">
-        <Button
-          variant="ghost"
-          size="sm"
-          className={`h-8 w-8 p-0 ${hasUpvoted ? 'text-orange-500' : ''}`}
-          onClick={() => handleVote(1)}
-        >
-          <ArrowUp className="h-4 w-4" />
-        </Button>
-        <span
-          className={`text-sm font-semibold ${score > 0 ? 'text-orange-500' : score < 0 ? 'text-blue-500' : ''}`}
-        >
-          {score}
-        </span>
-        <Button
-          variant="ghost"
-          size="sm"
-          className={`h-8 w-8 p-0 ${hasDownvoted ? 'text-blue-500' : ''}`}
-          onClick={() => handleVote(-1)}
-        >
-          <ArrowDown className="h-4 w-4" />
-        </Button>
-      </div>
-
-      {/* Comment content */}
-      <div className="flex-1">
-        <div className="mb-3 flex items-start justify-between">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Avatar className="h-6 w-6">
-              <AvatarImage src={comment.creator?.avatar || comment.creator?.imageURL} />
-              <AvatarFallback>{comment.creator?.name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
-            </Avatar>
-            <span className="font-medium">{comment.creator?.name || 'Anonymous'}</span>
-            {comment.creator?.handle && <span className="text-xs">@{comment.creator.handle}</span>}
-            <span>•</span>
-            <Clock className="h-4 w-4" />
-            <span>{new Date(comment.createdAt).toLocaleDateString()}</span>
-          </div>
-        </div>
-        <p className="mb-3 whitespace-pre-wrap">{comment.text}</p>
-
-        {/* Replies */}
-        {comment.replies && comment.replies.length > 0 && (
-          <div className="mt-4 space-y-3 border-l-2 pl-4">
-            {comment.replies.map(reply => (
-              <CommentItem key={reply.id} comment={reply} blogId={blogId} />
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+import {
+  notifyBlogCommentAdded,
+  notifyBlogVoted,
+  notifyBlogDeleted,
+} from '@/features/shared/utils/notification-helpers';
 
 interface BlogDetailProps {
   blogId: string;
@@ -174,16 +46,11 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useTranslation();
-  const [isCommenting, setIsCommenting] = useState(false);
-  const [commentText, setCommentText] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [sortBy, setSortBy] = useState<CommentSortBy>('votes');
-  // Cursor pagination removed — Zero uses limit-based queries
 
   // Permissions
-  const { canEdit, canDelete, canManageMembers } = useBlogPermissions(blogId);
+  const { canEdit, canDelete } = useBlogPermissions(blogId);
   const blogActions = useBlogActions();
-  const { addComment: addCommentAction } = useDocumentActions();
+  const { addComment: addCommentAction, voteComment } = useDocumentActions();
   const { currentUser } = useUserState();
 
   // Subscribe hook
@@ -198,44 +65,30 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
   const currentUserName = currentUser?.first_name || 'Someone';
 
   // Fetch blog data with relations
-  const { blogWithDetails, comments: commentsRows } = useBlogState({ blogId, includeDetails: true, includeComments: true });
+  const { blogWithDetails, comments: commentsRows } = useBlogState({
+    blogId,
+    includeDetails: true,
+    includeComments: true,
+  });
 
   const blog = blogWithDetails;
-  // Get comments - in Zero, filtering by blog needs schema support
-  const allComments = (commentsRows || []) as unknown as BlogComment[];
-  const topLevelComments = allComments.filter(comment => !comment.parentComment);
-
-  // Zero does not support cursor pagination; load more is not available
-  const hasMoreComments = false;
-
-  const loadMoreCommentsRef = useInfiniteScroll({
-    hasMore: hasMoreComments,
-    isLoading: false,
-    onLoadMore: () => {},
-  });
+  const allComments = (commentsRows || []) as unknown as CommentData[];
 
   // Vote handling
   const score = (blog?.upvotes || 0) - (blog?.downvotes || 0);
   const userVote = blog?.support_votes?.find((v: any) => v.user?.id === user?.id);
-  const hasUpvoted = userVote?.vote === 1;
-  const hasDownvoted = userVote?.vote === -1;
+  const currentVoteValue: VoteValue = userVote ? (userVote.vote === 1 ? 1 : -1) : 0;
 
-  const handleVote = async (voteValue: number) => {
+  const handleVote = async (voteValue: VoteValue) => {
     if (!user?.id) {
       toast.error('Please log in to vote');
       return;
     }
-
-    if (!blog) {
-      toast.error('Blog data not loaded');
-      return;
-    }
+    if (!blog) return;
 
     try {
       if (userVote) {
-        // Update or remove existing vote
         if (userVote.vote === voteValue) {
-          // Remove vote
           await blogActions.deleteSupportVote(userVote.id);
           await blogActions.updateBlog({
             id: blogId,
@@ -243,34 +96,26 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
             downvotes: voteValue === -1 ? (blog.downvotes || 1) - 1 : blog.downvotes,
           });
         } else {
-          // Change vote
           await blogActions.updateSupportVote({ id: userVote.id, vote: voteValue });
           await blogActions.updateBlog({
             id: blogId,
             upvotes:
               voteValue === 1 ? (blog.upvotes || 0) + 1 : Math.max(0, (blog.upvotes || 1) - 1),
             downvotes:
-              voteValue === -1
-                ? (blog.downvotes || 0) + 1
-                : Math.max(0, (blog.downvotes || 1) - 1),
+              voteValue === -1 ? (blog.downvotes || 0) + 1 : Math.max(0, (blog.downvotes || 1) - 1),
           });
         }
       } else {
-        // Create new vote
         const voteId = crypto.randomUUID();
-        await blogActions.createSupportVote({
-          id: voteId,
-          vote: voteValue,
-          blog_id: blogId,
-        });
+        await blogActions.createSupportVote({ id: voteId, vote: voteValue, blog_id: blogId });
         await blogActions.updateBlog({
           id: blogId,
           upvotes: voteValue === 1 ? (blog.upvotes || 0) + 1 : blog.upvotes,
           downvotes: voteValue === -1 ? (blog.downvotes || 0) + 1 : blog.downvotes,
         });
 
-        // Notify blog owner about the vote
-        const blogAuthor = blog.bloggers?.find((b: any) => b.status === 'owner')?.user || blog.bloggers?.[0]?.user;
+        const blogAuthor =
+          blog.bloggers?.find((b: any) => b.status === 'owner')?.user || blog.bloggers?.[0]?.user;
         if (blogAuthor?.id && blogAuthor.id !== user.id) {
           await notifyBlogVoted({
             senderId: user.id,
@@ -288,38 +133,19 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
     }
   };
 
-  const comments = useMemo(() => {
-    if (sortBy === 'time') {
-      return [...topLevelComments].sort((a, b) => b.createdAt - a.createdAt);
-    }
-
-    return [...topLevelComments].sort((a, b) => {
-      const aUp = a.votes?.filter(v => v.vote === 1).length || 0;
-      const aDown = a.votes?.filter(v => v.vote === -1).length || 0;
-      const bUp = b.votes?.filter(v => v.vote === 1).length || 0;
-      const bDown = b.votes?.filter(v => v.vote === -1).length || 0;
-      return bUp - bDown - (aUp - aDown);
-    });
-  }, [sortBy, topLevelComments]);
-
-  // Handle adding a comment
-  const handleAddComment = async () => {
-    if (!commentText.trim() || !user?.id) return;
-
-    setIsSubmitting(true);
+  const handleAddComment = async (text: string, parentId?: string) => {
+    if (!text.trim() || !user?.id) return;
     try {
       const commentId = crypto.randomUUID();
       await addCommentAction({
         id: commentId,
-        thread_id: null,
-        parent_id: null,
-        content: commentText,
+        thread_id: blogId,
+        parent_id: parentId || null,
+        content: text,
         upvotes: 0,
         downvotes: 0,
         user_id: user.id,
       });
-
-      // Add notification to the blog entity
       if (blog) {
         await notifyBlogCommentAdded({
           senderId: user.id,
@@ -328,15 +154,24 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
           blogTitle: blog.title || 'Blog',
         });
       }
-
       toast.success('Comment posted successfully');
-      setCommentText('');
-      setIsCommenting(false);
     } catch (error) {
       console.error('Error posting comment:', error);
       toast.error('Failed to post comment');
-    } finally {
-      setIsSubmitting(false);
+    }
+  };
+
+  const handleCommentVote = async (commentId: string, voteValue: number) => {
+    if (!user?.id) return;
+    try {
+      await voteComment({
+        id: crypto.randomUUID(),
+        comment_id: commentId,
+        user_id: user.id,
+        vote: voteValue,
+      });
+    } catch (error) {
+      console.error('Error voting on comment:', error);
     }
   };
 
@@ -353,7 +188,12 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
       }
       await blogActions.deleteBlog(blogId);
       toast.success(t('features.blogs.detail.blogDeleted'));
-      navigate({ to: '/' });
+      const groupId = blog?.group_id;
+      if (groupId) {
+        navigate({ to: '/group/$id/blogs-and-statements', params: { id: groupId } });
+      } else {
+        navigate({ to: '/' });
+      }
     } catch (error) {
       console.error('Error deleting blog:', error);
       toast.error(t('features.blogs.detail.blogDeleteFailed'));
@@ -384,6 +224,16 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
     blog.bloggers?.find((blogger: any) => blogger.status === 'owner')?.user ||
     blog.bloggers?.[0]?.user;
 
+  // Compute context-aware editor URL
+  const editorUrl = blog.group_id
+    ? `/group/${blog.group_id}/blog/${blogId}/editor`
+    : `/user/${author?.id || user?.id}/blog/${blogId}/editor`;
+
+  // Compute context-aware blog view URL (for share, back links)
+  const blogViewUrl = blog.group_id
+    ? `/group/${blog.group_id}/blog/${blogId}`
+    : `/user/${author?.id || user?.id}/blog/${blogId}`;
+
   return (
     <PageWrapper>
       {/* Header with centered title */}
@@ -402,15 +252,16 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
             </Avatar>
             <div className="text-left">
               <p className="text-sm font-medium">
-                {t ? t('components.labels.createdBy') : 'Created by'} {[author.first_name, author.last_name].filter(Boolean).join(' ') || 'Unknown'}
+                {t ? t('components.labels.createdBy') : 'Created by'}{' '}
+                {[author.first_name, author.last_name].filter(Boolean).join(' ') || 'Unknown'}
               </p>
-              {author.handle && <p className="text-xs text-muted-foreground">@{author.handle}</p>}
+              {author.handle && <p className="text-muted-foreground text-xs">@{author.handle}</p>}
             </div>
           </div>
         )}
 
         {blog.date && (
-          <div className="mt-2 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+          <div className="text-muted-foreground mt-2 flex items-center justify-center gap-2 text-sm">
             <Calendar className="h-4 w-4" />
             <span>{blog.date}</span>
           </div>
@@ -422,7 +273,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
         stats={[
           { value: subscriberCount, labelKey: 'components.labels.subscribers' },
           { value: score, labelKey: 'components.labels.supporters' },
-          { value: comments.length, labelKey: 'components.labels.comments' },
+          { value: allComments.length, labelKey: 'components.labels.comments' },
         ]}
       />
 
@@ -435,29 +286,14 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
           onToggleSubscribe={toggleSubscribe}
           isLoading={subscribeLoading}
         />
-        <div className="flex h-10 items-center gap-1 rounded-lg border bg-card px-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`h-8 w-8 p-0 ${hasUpvoted ? 'text-orange-500' : ''}`}
-            onClick={() => handleVote(1)}
-          >
-            <ArrowUp className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`h-8 w-8 p-0 ${hasDownvoted ? 'text-blue-500' : ''}`}
-            onClick={() => handleVote(-1)}
-          >
-            <ArrowDown className="h-4 w-4" />
-          </Button>
-        </div>
-        <Button variant="outline" onClick={() => setIsCommenting(true)}>
-          <MessageSquare className="mr-2 h-4 w-4" />
-          {t('features.blogs.detail.comment')}
-        </Button>
-        <ShareButton url={`/blog/${blogId}`} title={blog.title ?? ''} description="" />
+        <VoteButtons
+          upvotes={blog.upvotes ?? 0}
+          downvotes={blog.downvotes ?? 0}
+          userVote={currentVoteValue}
+          onVote={handleVote}
+          orientation="horizontal"
+        />
+        <ShareButton url={blogViewUrl} title={blog.title ?? ''} description="" />
 
         {/* RBAC Actions */}
         {canDelete && (
@@ -471,7 +307,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
       {/* Hashtags */}
       {blog.blog_hashtags && blog.blog_hashtags.length > 0 && (
         <div className="mb-6">
-          <HashtagDisplay hashtags={extractHashtags(blog.blog_hashtags)} centered />
+          <HashtagDisplay hashtags={extractHashtags([...blog.blog_hashtags])} centered />
         </div>
       )}
 
@@ -487,7 +323,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
             </CardDescription>
           </div>
           {canEdit && (
-            <Link to={`/blog/${blogId}/editor`}>
+            <Link to={editorUrl}>
               <Button variant="outline" size="sm">
                 <Edit className="mr-2 h-4 w-4" />
                 {t('features.blogs.detail.editContent')}
@@ -495,14 +331,18 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
             </Link>
           )}
         </CardHeader>
-        <CardContent className="prose prose-slate max-w-none dark:prose-invert">
+        <CardContent className="prose prose-slate dark:prose-invert max-w-none">
           {blog.content && Array.isArray(blog.content) && blog.content.length > 0 ? (
-            <PlateEditor value={blog.content as any[]} currentMode="view" isOwnerOrCollaborator={false} />
+            <PlateEditor
+              value={blog.content as any[]}
+              currentMode="view"
+              isOwnerOrCollaborator={false}
+            />
           ) : (
-            <div className="py-8 text-center text-muted-foreground">
+            <div className="text-muted-foreground py-8 text-center">
               <p>{t('features.blogs.detail.noContentAvailable')}</p>
               {canEdit && (
-                <Link to={`/blog/${blogId}/editor`}>
+                <Link to={editorUrl}>
                   <Button variant="outline" className="mt-4">
                     <Edit className="mr-2 h-4 w-4" />
                     {t('features.blogs.detail.startWriting')}
@@ -515,63 +355,13 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
       </Card>
 
       {/* Comments Section */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>
-                {t('features.blogs.detail.discussion')} ({comments.length})
-              </CardTitle>
-              <CardDescription>{t('features.blogs.detail.discussionDescription')}</CardDescription>
-            </div>
-            <CommentSortSelect sortBy={sortBy} onSortChange={setSortBy} />
-          </div>
-        </CardHeader>
-        <CardContent>
-          {/* Add Comment Form */}
-          {!isCommenting && (
-            <Button variant="outline" onClick={() => setIsCommenting(true)} className="mb-6 w-full">
-              <MessageSquare className="mr-2 h-4 w-4" />
-              {t('features.blogs.detail.addComment')}
-            </Button>
-          )}
-
-          {isCommenting && (
-            <div className="mb-6 space-y-2 rounded-lg border p-4">
-              <Textarea
-                placeholder={t('features.blogs.detail.writeComment')}
-                value={commentText}
-                onChange={e => setCommentText(e.target.value)}
-                rows={3}
-              />
-              <div className="flex gap-2">
-                <Button onClick={handleAddComment} disabled={isSubmitting || !commentText.trim()}>
-                  {t('features.blogs.detail.postComment')}
-                </Button>
-                <Button variant="outline" onClick={() => setIsCommenting(false)}>
-                  {t('common.cancel')}
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Comments List */}
-          <div className="space-y-4">
-            {comments.length === 0 ? (
-              <p className="text-center text-sm text-muted-foreground">
-                {t('features.blogs.detail.noCommentsYet')}
-              </p>
-            ) : (
-              <>
-                {comments.map(comment => (
-                  <CommentItem key={comment.id} comment={comment} blogId={blogId} />
-                ))}
-                {hasMoreComments && <div ref={loadMoreCommentsRef} className="h-px" />}
-              </>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      <CommentThread
+        comments={allComments}
+        currentUserId={user?.id}
+        onAddComment={handleAddComment}
+        onVote={handleCommentVote}
+        className="mt-6"
+      />
     </PageWrapper>
   );
 }

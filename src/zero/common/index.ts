@@ -1,5 +1,5 @@
 // Table
-export { hashtag, userHashtag, groupHashtag, amendmentHashtag, eventHashtag, blogHashtag, link, timelineEvent, reaction } from './table'
+export { hashtag, userHashtag, groupHashtag, amendmentHashtag, eventHashtag, blogHashtag, statementHashtag, link, timelineEvent, reaction } from './table'
 export { subscriber } from '../network/table'
 
 // Zod Schemas
@@ -12,6 +12,7 @@ export {
   createAmendmentHashtagSchema,
   createEventHashtagSchema,
   createBlogHashtagSchema,
+  createStatementHashtagSchema,
   deleteJunctionHashtagSchema,
   selectLinkSchema,
   createLinkSchema,
@@ -27,6 +28,7 @@ export {
   type AmendmentHashtag,
   type EventHashtag,
   type BlogHashtag,
+  type StatementHashtag,
   type Link,
   type TimelineEvent,
   type Reaction,

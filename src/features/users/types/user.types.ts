@@ -20,9 +20,19 @@ export interface UserSocialMedia {
 }
 
 export interface UserStatement {
-  id: number;
+  id: string;
   text: string;
-  tag: string;
+  imageUrl?: string;
+  videoUrl?: string;
+  groupName?: string;
+  groupAvatar?: string;
+  groupId?: string;
+  supportCount: number;
+  opposeCount: number;
+  commentCount: number;
+  surveyQuestion?: string;
+  surveyOptions?: { label: string; voteCount: number }[];
+  hashtags: { id: string; tag: string }[];
 }
 
 export interface UserBlog {

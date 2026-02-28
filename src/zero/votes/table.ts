@@ -132,6 +132,18 @@ export const blogSupportVote = table('blog_support_vote')
   })
   .primaryKey('id')
 
+// ── Statement votes ───────────────────────────────────────────────────
+
+export const statementSupportVote = table('statement_support_vote')
+  .columns({
+    id: string(),
+    statement_id: string(),
+    user_id: string(),
+    vote: number().optional(),
+    created_at: number(),
+  })
+  .primaryKey('id')
+
 // ── Discussion votes ──────────────────────────────────────────────────
 
 export const threadVote = table('thread_vote')

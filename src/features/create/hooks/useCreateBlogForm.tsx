@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useAuth } from '@/providers/auth-provider'
 import { useBlogActions } from '@/zero/blogs/useBlogActions'
 import { useCommonState, useCommonActions } from '@/zero/common'
+import { useGroupState } from '@/zero/groups/useGroupState'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { toast } from 'sonner'
 import { Input } from '@/features/shared/ui/ui/input'
@@ -12,6 +13,8 @@ import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor'
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx'
 import { CreateSummaryStep } from '../ui/CreateSummaryStep'
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent'
+import { TypeaheadSearch } from '@/features/shared/ui/typeahead'
+import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers'
 import type { CreateFormConfig } from '../types/create-form.types'
 
 export function useCreateBlogForm(): CreateFormConfig {
@@ -21,6 +24,14 @@ export function useCreateBlogForm(): CreateFormConfig {
   const { createBlogFull } = useBlogActions()
   const commonActions = useCommonActions()
   const { allHashtags } = useCommonState({ loadAllHashtags: true })
+  const { currentUserMembershipsWithGroups } = useGroupState({
+    includeCurrentUserMembershipsWithGroups: true,
+  })
+
+  const memberGroupIds = useMemo(
+    () => new Set(currentUserMembershipsWithGroups.map((m) => m.group_id)),
+    [currentUserMembershipsWithGroups],
+  )
 
   const [blogId] = useState(() => crypto.randomUUID())
   const [title, setTitle] = useState('')
@@ -28,6 +39,8 @@ export function useCreateBlogForm(): CreateFormConfig {
   const [visibility, setVisibility] = useState<'public' | 'authenticated' | 'private'>('public')
   const [hashtags, setHashtags] = useState<string[]>([])
   const [imageURL, setImageURL] = useState('')
+  const [groupId, setGroupId] = useState<string | null>(null)
+  const [groupName, setGroupName] = useState<string>('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async () => {
@@ -58,7 +71,7 @@ export function useCreateBlogForm(): CreateFormConfig {
           downvotes: 0,
           editing_mode: '',
           discussions: null,
-          group_id: null,
+          group_id: groupId,
         },
         roles: [
           {
@@ -144,7 +157,11 @@ export function useCreateBlogForm(): CreateFormConfig {
       }
 
       toast.success(t('pages.create.success.created'))
-      navigate({ to: `/blog/${blogId}` })
+      if (groupId) {
+        navigate({ to: '/group/$id/blog/$entryId', params: { id: groupId, entryId: blogId } })
+      } else {
+        navigate({ to: '/user/$id/blog/$entryId', params: { id: user.id, entryId: blogId } })
+      }
     } catch {
       toast.error(t('pages.create.error.createFailed'))
       setIsSubmitting(false)
@@ -186,6 +203,19 @@ export function useCreateBlogForm(): CreateFormConfig {
                 label={t('pages.create.blog.coverImage')}
                 description={t('pages.create.blog.coverImageDescription')}
               />
+              <div className="space-y-2">
+                <Label>{t('pages.create.blog.attachTo', 'Attach to group (optional)')}</Label>
+                <TypeaheadSearch
+                  entityTypes={['group']}
+                  value={groupId ?? undefined}
+                  onChange={(item: TypeaheadItem | null) => {
+                    setGroupId(item?.id ?? null)
+                    setGroupName(item?.label ?? '')
+                  }}
+                  placeholder={t('pages.create.blog.groupPlaceholder', 'Search groups...')}
+                  filterFn={(item) => memberGroupIds.has(item.id)}
+                />
+              </div>
             </div>
           ),
         },
@@ -219,13 +249,14 @@ export function useCreateBlogForm(): CreateFormConfig {
                   label: t('pages.create.common.visibility'),
                   value: visibility,
                 },
+                ...(groupName ? [{ label: t('pages.create.blog.attachTo', 'Attach to group'), value: groupName }] : []),
               ]}
             />
           ),
         },
       ],
     }),
-    [title, date, visibility, hashtags, imageURL, isSubmitting, blogId, t],
+    [title, date, visibility, hashtags, imageURL, isSubmitting, blogId, groupId, groupName, t],
   )
 
   return config

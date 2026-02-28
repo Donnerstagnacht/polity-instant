@@ -7,8 +7,9 @@ import { timestampSchema, nullableTimestampSchema, jsonSchema } from '../shared/
 
 const baseThreadSchema = z.object({
   id: z.string(),
-  document_id: z.string(),
+  document_id: z.string().nullable(),
   amendment_id: z.string().nullable(),
+  statement_id: z.string().nullable(),
   user_id: z.string(),
   content: z.string().nullable(),
   status: z.string(),

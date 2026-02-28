@@ -9,14 +9,75 @@ export const statementQueries = {
     ({ ctx: { userID } }) =>
       zql.statement
         .where('user_id', userID)
+        .related('user')
+        .related('statement_hashtags', q => q.related('hashtag'))
+        .related('support_votes')
+        .related('surveys', q => q.related('options'))
         .orderBy('created_at', 'desc')
   ),
 
-  // Single statement by ID with author
+  // Statements belonging to a group
+  byGroup: defineQuery(
+    z.object({ group_id: z.string() }),
+    ({ args: { group_id } }) =>
+      zql.statement
+        .where('group_id', group_id)
+        .related('user')
+        .related('statement_hashtags', q => q.related('hashtag'))
+        .related('support_votes')
+        .orderBy('created_at', 'desc')
+  ),
+
+  // Single statement by ID
   byId: defineQuery(
     z.object({ id: z.string() }),
     ({ args: { id } }) =>
       zql.statement.where('id', id).related('user').one()
+  ),
+
+  // Statement with full detail relations
+  byIdWithDetails: defineQuery(
+    z.object({ id: z.string() }),
+    ({ args: { id } }) =>
+      zql.statement
+        .where('id', id)
+        .related('user')
+        .related('group')
+        .related('statement_hashtags', q => q.related('hashtag'))
+        .related('support_votes', q => q.related('user'))
+        .related('surveys', q => q.related('options', q2 => q2.related('votes')))
+        .related('threads', q =>
+          q
+            .related('user')
+            .related('comments', q2 =>
+              q2
+                .related('user')
+                .related('votes', q3 => q3.related('user'))
+                .related('replies', q3 =>
+                  q3
+                    .related('user')
+                    .related('votes', q4 => q4.related('user'))
+                    .related('replies', q4 =>
+                      q4
+                        .related('user')
+                        .related('votes', q5 => q5.related('user'))
+                    )
+                )
+            )
+            .related('votes', q2 => q2.related('user'))
+        )
+        .related('timeline_events')
+        .one()
+  ),
+
+  // Statement with hashtags
+  byIdWithHashtags: defineQuery(
+    z.object({ id: z.string() }),
+    ({ args: { id } }) =>
+      zql.statement
+        .where('id', id)
+        .related('statement_hashtags', q => q.related('hashtag'))
+        .one()
   ),
 
   // Statements filtered by visibility
@@ -25,15 +86,9 @@ export const statementQueries = {
     ({ args: { visibility } }) =>
       zql.statement
         .where('visibility', visibility)
-        .orderBy('created_at', 'desc')
-  ),
-
-  // Search statements by tag
-  search: defineQuery(
-    z.object({ tag: z.string() }),
-    ({ args: { tag } }) =>
-      zql.statement
-        .where('tag', tag)
+        .related('user')
+        .related('statement_hashtags', q => q.related('hashtag'))
+        .related('support_votes')
         .orderBy('created_at', 'desc')
   ),
 }

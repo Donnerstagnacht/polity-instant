@@ -8,6 +8,7 @@ import {
   createAmendmentHashtagSchema,
   createEventHashtagSchema,
   createBlogHashtagSchema,
+  createStatementHashtagSchema,
   deleteJunctionHashtagSchema,
   createLinkSchema,
   deleteLinkSchema,
@@ -137,6 +138,21 @@ export const commonSharedMutators = {
     deleteJunctionHashtagSchema,
     async ({ tx, args }) => {
       await tx.mutate.blog_hashtag.delete({ id: args.id })
+    }
+  ),
+
+  linkStatementHashtag: defineMutator(
+    createStatementHashtagSchema,
+    async ({ tx, args }) => {
+      const now = Date.now()
+      await tx.mutate.statement_hashtag.insert({ ...args, created_at: now })
+    }
+  ),
+
+  unlinkStatementHashtag: defineMutator(
+    deleteJunctionHashtagSchema,
+    async ({ tx, args }) => {
+      await tx.mutate.statement_hashtag.delete({ id: args.id })
     }
   ),
 

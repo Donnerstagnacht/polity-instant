@@ -64,6 +64,7 @@ export const navigationTranslations = {
       memberships: 'Mitglieder',
       notifications: 'Benachrichtigungen',
       edit: 'Gruppe bearbeiten',
+      blogsAndStatements: 'Blogs & Stellungnahmen',
     },
     amendment: {
       overview: 'Übersicht',

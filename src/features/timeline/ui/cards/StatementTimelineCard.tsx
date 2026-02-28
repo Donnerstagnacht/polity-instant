@@ -1,19 +1,23 @@
 'use client';
 
-import { Quote, ThumbsUp, ThumbsDown, HelpCircle, MessageSquare, User } from 'lucide-react';
-import { Link } from '@tanstack/react-router';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { Quote, ThumbsUp, ThumbsDown, MessageSquare, Video, BarChart3 } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
-import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
-import { getContentTypeGradient } from '../../constants/content-type-config';
+import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
+import { CONTENT_TYPE_CONFIG } from '../../constants/content-type-config';
 import {
   TimelineCardBase,
+  TimelineCardHeader,
   TimelineCardContent,
   TimelineCardActions,
-  TimelineCardActionButton,
+  TimelineCardBadge,
 } from './TimelineCardBase';
+
+interface SurveyOptionPreview {
+  label: string;
+  voteCount: number;
+}
 
 export interface StatementTimelineCardProps {
   statement: {
@@ -28,6 +32,14 @@ export interface StatementTimelineCardProps {
     commentCount?: number;
     userReaction?: 'support' | 'oppose' | 'interested' | null;
     createdAt?: string | Date;
+    imageUrl?: string;
+    videoUrl?: string;
+    groupName?: string;
+    groupAvatar?: string;
+    groupId?: string;
+    surveyQuestion?: string;
+    surveyOptions?: string[] | SurveyOptionPreview[];
+    hashtags?: { id: string; tag: string }[];
   };
   onReact?: (reaction: 'support' | 'oppose' | 'interested') => void;
   onComment?: () => void;
@@ -35,29 +47,49 @@ export interface StatementTimelineCardProps {
   className?: string;
 }
 
-/**
- * StatementTimelineCard - The Voice card
- *
- * Displays a statement/quote with:
- * - Indigo gradient background with large quote marks
- * - Statement text prominently displayed
- * - Author info with avatar
- * - Three civic reactions: Support, Oppose, Interested
- * - Actions: React, Comment, Share
- */
 export function StatementTimelineCard({
   statement,
-  onReact,
-  onComment,
-  onShare,
   className,
 }: StatementTimelineCardProps) {
-  const { t } = useTranslation();
-  const gradient = getContentTypeGradient('statement');
+  const hasMedia = !!(statement.imageUrl || statement.videoUrl);
+  const rawOptions = statement.surveyOptions ?? [];
+  // Normalize: options can be strings or { label, voteCount } objects
+  const surveyOptions: SurveyOptionPreview[] = rawOptions.map((opt) =>
+    typeof opt === 'string' ? { label: opt, voteCount: 0 } : opt,
+  );
+  const hasSurvey = !!(statement.surveyQuestion && surveyOptions.length > 0);
+  const surveyTotalVotes = hasSurvey ? surveyOptions.reduce((s, o) => s + o.voteCount, 0) : 0;
+  const score = (statement.supportCount ?? 0) - (statement.opposeCount ?? 0);
 
-  const handleReact = (reaction: 'support' | 'oppose' | 'interested') => {
-    onReact?.(reaction);
-  };
+  const statementStyle = CONTENT_TYPE_CONFIG.statement;
+
+  // Title: survey question or first 100 chars of content
+  const displayTitle = hasSurvey
+    ? statement.surveyQuestion!
+    : statement.content?.substring(0, 100) + ((statement.content?.length ?? 0) > 100 ? '…' : '');
+
+  // Stats
+  const stats = [
+    {
+      icon: score >= 0 ? ThumbsUp : ThumbsDown,
+      value: score >= 0 ? `+${score}` : `${score}`,
+      label: 'Score',
+    },
+    {
+      icon: MessageSquare,
+      value: statement.commentCount ?? 0,
+      label: 'Comments',
+    },
+    ...(hasSurvey
+      ? [
+          {
+            icon: BarChart3,
+            value: surveyTotalVotes,
+            label: 'Votes',
+          },
+        ]
+      : []),
+  ];
 
   return (
     <TimelineCardBase
@@ -65,181 +97,114 @@ export function StatementTimelineCard({
       className={className}
       href={`/statement/${statement.id}`}
     >
-      {/* Quote Header */}
-      <div className={cn('relative p-6', gradient)}>
-        {/* Large Quote Mark */}
-        <Quote className="absolute left-4 top-4 h-8 w-8 text-indigo-300 opacity-50 dark:text-indigo-700" />
+      <TimelineCardHeader
+        contentType="statement"
+        title={displayTitle}
+        href={`/statement/${statement.id}`}
+        subtitle={statement.groupName ?? statement.authorName}
+        subtitleHref={
+          statement.groupId
+            ? `/group/${statement.groupId}`
+            : undefined
+        }
+        badge={
+          <TimelineCardBadge label="Statement" icon={Quote} />
+        }
+      >
+        {/* Central media display */}
+        {hasMedia && (
+          <div className="mt-3 flex justify-center">
+            <div className="h-32 w-full overflow-hidden rounded-xl bg-black/10">
+              {statement.imageUrl ? (
+                <img
+                  src={statement.imageUrl}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center">
+                  <Video className="h-8 w-8 text-indigo-200" />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
-        {/* Statement Text */}
-        <blockquote className="relative z-10 px-4 py-2 text-center">
-          <p className="line-clamp-6 text-base font-medium italic leading-relaxed">
-            <Link to={`/statement/${statement.id}`} onClick={e => e.stopPropagation()} className="hover:underline">
-              &ldquo;{statement.content}&rdquo;
-            </Link>
-          </p>
-        </blockquote>
-
-        {/* Closing Quote Mark */}
-        <Quote className="absolute bottom-4 right-4 h-8 w-8 rotate-180 text-indigo-300 opacity-50 dark:text-indigo-700" />
-      </div>
-
-      <TimelineCardContent>
-        {/* Author Info */}
-        <div className="mb-3 flex items-center gap-3">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={statement.authorAvatar} alt={statement.authorName} />
-            <AvatarFallback>
-              <User className="h-5 w-5" />
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium">{statement.authorName}</p>
-            {statement.authorTitle && (
-              <p className="truncate text-xs text-muted-foreground">{statement.authorTitle}</p>
+        {/* Survey poll preview */}
+        {hasSurvey && (
+          <div className="mt-3 space-y-1.5 px-1">
+            {surveyOptions.slice(0, 4).map((opt, i) => {
+              const percent = surveyTotalVotes > 0 ? Math.round((opt.voteCount / surveyTotalVotes) * 100) : 0;
+              return (
+                <div key={i} className="space-y-0.5">
+                  <div className="flex items-center justify-between text-xs text-white/90">
+                    <span className="truncate">{opt.label}</span>
+                    {surveyTotalVotes > 0 && <span className="ml-1 shrink-0">{percent}%</span>}
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-white/15">
+                    <div
+                      className="h-full rounded-full bg-white/50 transition-all"
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+            {surveyOptions.length > 4 && (
+              <p className="text-center text-xs text-white/60">
+                +{surveyOptions.length - 4} more
+              </p>
             )}
           </div>
-        </div>
+        )}
+      </TimelineCardHeader>
 
-        {/* Reaction Buttons */}
-        <div className="mb-2 flex items-center justify-center gap-2">
-          <button
-            onClick={e => {
-              e.stopPropagation();
-              handleReact('support');
-            }}
-            className={cn(
-              'flex flex-col items-center gap-1 rounded-lg px-4 py-2 transition-colors',
-              'hover:bg-green-100 dark:hover:bg-green-900/40',
-              statement.userReaction === 'support' && 'bg-green-100 dark:bg-green-900/40'
-            )}
-          >
-            <ThumbsUp
-              className={cn(
-                'h-5 w-5',
-                statement.userReaction === 'support'
-                  ? 'fill-green-600 text-green-600'
-                  : 'text-muted-foreground'
+      <TimelineCardContent>
+        {/* Description excerpt (only for text-only statements, title already shows the content) */}
+        {!hasMedia && !hasSurvey && statement.content && statement.content.length > 100 && (
+          <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">
+            {statement.content.substring(100, 250)}
+          </p>
+        )}
+
+        {/* Hashtags */}
+        {statement.hashtags && statement.hashtags.length > 0 && (
+          <div className="mb-3" onClick={e => e.preventDefault()}>
+            <HashtagDisplay
+              hashtags={statement.hashtags.slice(0, 3)}
+              centered={false}
+              badgeClassName={cn(
+                'border bg-white/70 dark:bg-gray-900/60',
+                statementStyle.borderColor,
+                statementStyle.accentColor
               )}
             />
-            <span className="text-xs font-medium">{statement.supportCount ?? 0}</span>
-          </button>
-
-          <button
-            onClick={e => {
-              e.stopPropagation();
-              handleReact('oppose');
-            }}
-            className={cn(
-              'flex flex-col items-center gap-1 rounded-lg px-4 py-2 transition-colors',
-              'hover:bg-red-100 dark:hover:bg-red-900/40',
-              statement.userReaction === 'oppose' && 'bg-red-100 dark:bg-red-900/40'
-            )}
-          >
-            <ThumbsDown
-              className={cn(
-                'h-5 w-5',
-                statement.userReaction === 'oppose'
-                  ? 'fill-red-600 text-red-600'
-                  : 'text-muted-foreground'
-              )}
-            />
-            <span className="text-xs font-medium">{statement.opposeCount ?? 0}</span>
-          </button>
-
-          <button
-            onClick={e => {
-              e.stopPropagation();
-              handleReact('interested');
-            }}
-            className={cn(
-              'flex flex-col items-center gap-1 rounded-lg px-4 py-2 transition-colors',
-              'hover:bg-amber-100 dark:hover:bg-amber-900/40',
-              statement.userReaction === 'interested' && 'bg-amber-100 dark:bg-amber-900/40'
-            )}
-          >
-            <HelpCircle
-              className={cn(
-                'h-5 w-5',
-                statement.userReaction === 'interested' ? 'text-amber-600' : 'text-muted-foreground'
-              )}
-            />
-            <span className="text-xs font-medium">{statement.interestedCount ?? 0}</span>
-          </button>
-        </div>
+          </div>
+        )}
 
         {/* Stats Bar with Tooltips */}
-        <div className="mt-3 flex items-center justify-center gap-4 text-xs text-muted-foreground">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex cursor-help items-center gap-1">
-                <ThumbsUp className="h-3.5 w-3.5" />
-                <span className="font-medium">{statement.supportCount ?? 0}</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                {statement.supportCount ?? 0} {t('features.timeline.cards.support')}
-              </p>
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex cursor-help items-center gap-1">
-                <ThumbsDown className="h-3.5 w-3.5" />
-                <span className="font-medium">{statement.opposeCount ?? 0}</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                {statement.opposeCount ?? 0} {t('features.timeline.cards.oppose')}
-              </p>
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex cursor-help items-center gap-1">
-                <HelpCircle className="h-3.5 w-3.5" />
-                <span className="font-medium">{statement.interestedCount ?? 0}</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                {statement.interestedCount ?? 0} {t('features.timeline.cards.interested')}
-              </p>
-            </TooltipContent>
-          </Tooltip>
-          {statement.commentCount !== undefined && (
-            <Tooltip>
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          {stats.map((stat, index) => (
+            <Tooltip key={index}>
               <TooltipTrigger asChild>
                 <div className="flex cursor-help items-center gap-1">
-                  <MessageSquare className="h-3.5 w-3.5" />
-                  <span className="font-medium">{statement.commentCount}</span>
+                  <stat.icon className="h-3.5 w-3.5" />
+                  <span className="font-medium">{stat.value}</span>
                 </div>
               </TooltipTrigger>
               <TooltipContent>
                 <p>
-                  {statement.commentCount} {t('features.timeline.cards.comments')}
+                  {stat.value} {stat.label}
                 </p>
               </TooltipContent>
             </Tooltip>
-          )}
+          ))}
         </div>
       </TimelineCardContent>
 
       <TimelineCardActions>
-        <TimelineCardActionButton
-          icon={MessageSquare}
-          label={
-            statement.commentCount !== undefined
-              ? `${statement.commentCount}`
-              : t('features.timeline.cards.comment')
-          }
-          onClick={e => {
-            e?.preventDefault();
-            onComment?.();
-          }}
-        />
-        <div onClick={e => e.preventDefault()}>
+        {/* Share Button */}
+        <div className="ml-auto" onClick={e => e.preventDefault()}>
           <ShareButton
             url={`/statement/${statement.id}`}
             title={statement.authorName}

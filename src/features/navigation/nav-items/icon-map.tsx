@@ -1,6 +1,7 @@
 import {
   AreaChart,
   Bell,
+  BookOpen,
   Bookmark,
   Calendar,
   CheckSquare,
@@ -44,6 +45,7 @@ export const iconMap = {
   Mail,
   Search,
   Bell,
+  BookOpen,
   Heart,
   Bookmark,
   LayoutDashboard,

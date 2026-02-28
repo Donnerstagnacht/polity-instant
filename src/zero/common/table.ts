@@ -53,6 +53,15 @@ export const blogHashtag = table('blog_hashtag')
   })
   .primaryKey('id')
 
+export const statementHashtag = table('statement_hashtag')
+  .columns({
+    id: string(),
+    statement_id: string(),
+    hashtag_id: string(),
+    created_at: number(),
+  })
+  .primaryKey('id')
+
 export const link = table('link')
   .columns({
     id: string(),

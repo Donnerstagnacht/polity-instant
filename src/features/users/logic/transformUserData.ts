@@ -37,11 +37,31 @@ export function transformUserData(userData: any): User {
     about: userData.about || '',
 
     statements:
-      userData?.statements?.map((statement: any) => ({
-        id: statement.id,
-        text: statement.text,
-        tag: statement.tag,
-      })) || [],
+      userData?.statements?.map((statement: any) => {
+        const supportVotes = statement.support_votes ?? [];
+        const survey = statement.surveys?.[0];
+        return {
+          id: statement.id,
+          text: statement.text,
+          imageUrl: statement.image_url,
+          videoUrl: statement.video_url,
+          groupName: statement.group?.name,
+          groupAvatar: statement.group?.avatar,
+          groupId: statement.group_id,
+          supportCount: supportVotes.filter((v: any) => v.vote === 1).length,
+          opposeCount: supportVotes.filter((v: any) => v.vote === -1).length,
+          commentCount: statement.comment_count ?? 0,
+          surveyQuestion: survey?.question,
+          surveyOptions: survey?.options?.map((o: any) => ({
+            label: o.label,
+            voteCount: o.votes?.length ?? 0,
+          })),
+          hashtags: statement.statement_hashtags?.map((jn: any) => ({
+            id: jn.hashtag?.id ?? jn.id,
+            tag: jn.hashtag?.tag,
+          })).filter((h: any) => h.tag) || [],
+        };
+      }) || [],
 
     blogs:
       userData?.blogger_relations

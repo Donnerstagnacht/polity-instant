@@ -8,15 +8,10 @@ import {
 } from '@/features/shared/ui/ui/carousel';
 import { StatementTimelineCard } from '@/features/timeline/ui/cards/StatementTimelineCard';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-
-interface Statement {
-  id: number;
-  tag: string;
-  text: string;
-}
+import type { UserStatement } from '../types/user.types';
 
 interface StatementCarouselProps {
-  statements: Statement[];
+  statements: UserStatement[];
   authorName: string;
   authorTitle?: string;
   authorAvatar?: string;
@@ -47,6 +42,17 @@ export const StatementCarousel: React.FC<StatementCarouselProps> = ({
                   authorName,
                   authorTitle,
                   authorAvatar,
+                  imageUrl: statement.imageUrl,
+                  videoUrl: statement.videoUrl,
+                  groupName: statement.groupName,
+                  groupAvatar: statement.groupAvatar,
+                  groupId: statement.groupId,
+                  supportCount: statement.supportCount,
+                  opposeCount: statement.opposeCount,
+                  commentCount: statement.commentCount,
+                  surveyQuestion: statement.surveyQuestion,
+                  surveyOptions: statement.surveyOptions,
+                  hashtags: statement.hashtags,
                 }}
               />
             </CarouselItem>

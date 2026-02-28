@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { mutators } from '../mutators'
 
-type EntityType = 'user' | 'group' | 'amendment' | 'event' | 'blog'
+type EntityType = 'user' | 'group' | 'amendment' | 'event' | 'blog' | 'statement'
 
 /**
  * Action hook for common cross-domain mutations.
@@ -77,6 +77,7 @@ export function useCommonActions() {
         amendment: mutators.common.linkAmendmentHashtag,
         event: mutators.common.linkEventHashtag,
         blog: mutators.common.linkBlogHashtag,
+        statement: mutators.common.linkStatementHashtag,
       } as const
       try {
         await zero.mutate(mutatorMap[entityType](args as any))
@@ -96,6 +97,7 @@ export function useCommonActions() {
         amendment: mutators.common.unlinkAmendmentHashtag,
         event: mutators.common.unlinkEventHashtag,
         blog: mutators.common.unlinkBlogHashtag,
+        statement: mutators.common.unlinkStatementHashtag,
       } as const
       try {
         await zero.mutate(mutatorMap[entityType](args))

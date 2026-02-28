@@ -33,15 +33,17 @@ export function useSearchFilters(data: any, filters: SearchFilters) {
   const filteredStatements = useMemo(
     () =>
       data?.statements?.filter((statement: any) => {
-        // Search in text, tag (type), and user name
+        // Search in text, hashtags, and user name
         const matchesText = filterByQuery(statement.text || '', query);
-        const matchesTag = statement.tag && filterByQuery(statement.tag, query);
+        const matchesHashtag = statement.statement_hashtags?.some(
+          (jn: any) => jn.hashtag?.tag && filterByQuery(jn.hashtag.tag, query)
+        );
         const matchesType = statement.type && filterByQuery(statement.type, query);
         const matchesUser = statement.user?.name && filterByQuery(statement.user.name, query);
 
         if (!matchesTopics(statement)) return false;
         if (!query) return true;
-        return matchesText || matchesTag || matchesType || matchesUser;
+        return matchesText || matchesHashtag || matchesType || matchesUser;
       }) || [],
     [data?.statements, query, topics]
   );

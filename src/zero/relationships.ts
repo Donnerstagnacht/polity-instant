@@ -15,7 +15,7 @@ import { agendaItem, speakerList } from './agendas/table'
 // Elections
 import { election, electionCandidate, scheduledElection } from './elections/table'
 // Votes
-import { amendmentVoteEntry, amendmentSupportVote, amendmentVote, amendmentVotingSession, amendmentVotingSessionVote, changeRequestVote, eventVotingSession, eventVote, electionVote, blogSupportVote, threadVote, commentVote } from './votes/table'
+import { amendmentVoteEntry, amendmentSupportVote, amendmentVote, amendmentVotingSession, amendmentVotingSessionVote, changeRequestVote, eventVotingSession, eventVote, electionVote, blogSupportVote, statementSupportVote, threadVote, commentVote } from './votes/table'
 // Change Requests
 import { changeRequest } from './change-requests/table'
 // Discussions
@@ -39,11 +39,11 @@ import { blog, blogBlogger } from './blogs/table'
 // Payments
 import { payment, stripeCustomer, stripeSubscription, stripePayment } from './payments/table'
 // Statements
-import { statement } from './statements/table'
+import { statement, statementSurvey, statementSurveyOption, statementSurveyVote } from './statements/table'
 // Preferences
 import { userPreference } from './preferences/table'
 // Common
-import { hashtag, userHashtag, groupHashtag, amendmentHashtag, eventHashtag, blogHashtag, link, timelineEvent, reaction } from './common/table'
+import { hashtag, userHashtag, groupHashtag, amendmentHashtag, eventHashtag, blogHashtag, statementHashtag, link, timelineEvent, reaction } from './common/table'
 
 // ============================================
 // User relationships
@@ -83,6 +83,8 @@ export const userRelationships = relationships(user, ({ many }) => ({
   payments_made: many({ sourceField: ['id'], destSchema: payment, destField: ['payer_user_id'] }),
   payments_received: many({ sourceField: ['id'], destSchema: payment, destField: ['receiver_user_id'] }),
   statements: many({ sourceField: ['id'], destSchema: statement, destField: ['user_id'] }),
+  statement_support_votes: many({ sourceField: ['id'], destSchema: statementSupportVote, destField: ['user_id'] }),
+  statement_survey_votes: many({ sourceField: ['id'], destSchema: statementSurveyVote, destField: ['user_id'] }),
   subscriptions: many({ sourceField: ['id'], destSchema: subscriber, destField: ['subscriber_id'] }),
   subscribers: many({ sourceField: ['id'], destSchema: subscriber, destField: ['user_id'] }),
   user_hashtags: many({ sourceField: ['id'], destSchema: userHashtag, destField: ['user_id'] }),
@@ -142,6 +144,7 @@ export const groupRelationships = relationships(group, ({ one, many }) => ({
   amendments: many({ sourceField: ['id'], destSchema: amendment, destField: ['group_id'] }),
   todos: many({ sourceField: ['id'], destSchema: todo, destField: ['group_id'] }),
   blogs: many({ sourceField: ['id'], destSchema: blog, destField: ['group_id'] }),
+  statements: many({ sourceField: ['id'], destSchema: statement, destField: ['group_id'] }),
   subscribers: many({ sourceField: ['id'], destSchema: subscriber, destField: ['group_id'] }),
   group_hashtags: many({ sourceField: ['id'], destSchema: groupHashtag, destField: ['group_id'] }),
   links: many({ sourceField: ['id'], destSchema: link, destField: ['group_id'] }),
@@ -371,6 +374,7 @@ export const documentCursorRelationships = relationships(documentCursor, ({ one 
 
 export const threadRelationships = relationships(thread, ({ one, many }) => ({
   document: one({ sourceField: ['document_id'], destSchema: document, destField: ['id'] }),
+  statement: one({ sourceField: ['statement_id'], destSchema: statement, destField: ['id'] }),
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
   comments: many({ sourceField: ['id'], destSchema: comment, destField: ['thread_id'] }),
   votes: many({ sourceField: ['id'], destSchema: threadVote, destField: ['thread_id'] }),
@@ -557,7 +561,37 @@ export const stripePaymentRelationships = relationships(stripePayment, ({ one })
 // ============================================
 export const statementRelationships = relationships(statement, ({ one, many }) => ({
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
+  group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
+  support_votes: many({ sourceField: ['id'], destSchema: statementSupportVote, destField: ['statement_id'] }),
+  statement_hashtags: many({ sourceField: ['id'], destSchema: statementHashtag, destField: ['statement_id'] }),
+  surveys: many({ sourceField: ['id'], destSchema: statementSurvey, destField: ['statement_id'] }),
+  threads: many({ sourceField: ['id'], destSchema: thread, destField: ['statement_id'] }),
   timeline_events: many({ sourceField: ['id'], destSchema: timelineEvent, destField: ['statement_id'] }),
+}))
+
+export const statementSupportVoteRelationships = relationships(statementSupportVote, ({ one }) => ({
+  statement: one({ sourceField: ['statement_id'], destSchema: statement, destField: ['id'] }),
+  user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
+}))
+
+export const statementSurveyRelationships = relationships(statementSurvey, ({ one, many }) => ({
+  statement: one({ sourceField: ['statement_id'], destSchema: statement, destField: ['id'] }),
+  options: many({ sourceField: ['id'], destSchema: statementSurveyOption, destField: ['survey_id'] }),
+}))
+
+export const statementSurveyOptionRelationships = relationships(statementSurveyOption, ({ one, many }) => ({
+  survey: one({ sourceField: ['survey_id'], destSchema: statementSurvey, destField: ['id'] }),
+  votes: many({ sourceField: ['id'], destSchema: statementSurveyVote, destField: ['option_id'] }),
+}))
+
+export const statementSurveyVoteRelationships = relationships(statementSurveyVote, ({ one }) => ({
+  option: one({ sourceField: ['option_id'], destSchema: statementSurveyOption, destField: ['id'] }),
+  user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
+}))
+
+export const statementHashtagRelationships = relationships(statementHashtag, ({ one }) => ({
+  statement: one({ sourceField: ['statement_id'], destSchema: statement, destField: ['id'] }),
+  hashtag: one({ sourceField: ['hashtag_id'], destSchema: hashtag, destField: ['id'] }),
 }))
 
 // ============================================
@@ -578,6 +612,7 @@ export const hashtagRelationships = relationships(hashtag, ({ many }) => ({
   amendment_hashtags: many({ sourceField: ['id'], destSchema: amendmentHashtag, destField: ['hashtag_id'] }),
   event_hashtags: many({ sourceField: ['id'], destSchema: eventHashtag, destField: ['hashtag_id'] }),
   blog_hashtags: many({ sourceField: ['id'], destSchema: blogHashtag, destField: ['hashtag_id'] }),
+  statement_hashtags: many({ sourceField: ['id'], destSchema: statementHashtag, destField: ['hashtag_id'] }),
 }))
 
 export const userHashtagRelationships = relationships(userHashtag, ({ one }) => ({
@@ -712,6 +747,11 @@ export const allRelationships = [
   stripePaymentRelationships,
   // Statements
   statementRelationships,
+  statementSupportVoteRelationships,
+  statementSurveyRelationships,
+  statementSurveyOptionRelationships,
+  statementSurveyVoteRelationships,
+  statementHashtagRelationships,
   // Common
   subscriberRelationships,
   hashtagRelationships,

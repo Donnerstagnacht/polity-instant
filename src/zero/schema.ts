@@ -12,11 +12,11 @@ import { conversation, conversationParticipant, message } from './messages/table
 import { notification, pushSubscription, notificationSetting, notificationRead } from './notifications/table'
 import { blog, blogBlogger } from './blogs/table'
 import { payment, stripeCustomer, stripeSubscription, stripePayment } from './payments/table'
-import { statement } from './statements/table'
-import { hashtag, userHashtag, groupHashtag, amendmentHashtag, eventHashtag, blogHashtag, link, timelineEvent, reaction } from './common/table'
+import { statement, statementSurvey, statementSurveyOption, statementSurveyVote } from './statements/table'
+import { hashtag, userHashtag, groupHashtag, amendmentHashtag, eventHashtag, blogHashtag, statementHashtag, link, timelineEvent, reaction } from './common/table'
 // New domain imports
 import { election, electionCandidate, scheduledElection } from './elections/table'
-import { amendmentVoteEntry, amendmentSupportVote, amendmentVote, amendmentVotingSession, amendmentVotingSessionVote, changeRequestVote, eventVotingSession, eventVote, electionVote, blogSupportVote, threadVote, commentVote } from './votes/table'
+import { amendmentVoteEntry, amendmentSupportVote, amendmentVote, amendmentVotingSession, amendmentVotingSessionVote, changeRequestVote, eventVotingSession, eventVote, electionVote, blogSupportVote, statementSupportVote, threadVote, commentVote } from './votes/table'
 import { changeRequest } from './change-requests/table'
 import { thread, comment } from './discussions/table'
 import { position, positionHolderHistory, eventPosition, eventPositionHolder } from './positions/table'
@@ -50,7 +50,7 @@ export const schema = createSchema({
     // Votes
     amendmentVoteEntry, amendmentSupportVote, amendmentVote, amendmentVotingSession,
     amendmentVotingSessionVote, changeRequestVote, eventVotingSession, eventVote,
-    electionVote, blogSupportVote, threadVote, commentVote,
+    electionVote, blogSupportVote, statementSupportVote, threadVote, commentVote,
     // Change Requests
     changeRequest,
     // Discussions
@@ -74,11 +74,11 @@ export const schema = createSchema({
     // Payments
     payment, stripeCustomer, stripeSubscription, stripePayment,
     // Statements
-    statement,
+    statement, statementSurvey, statementSurveyOption, statementSurveyVote,
     // Preferences
     userPreference,
     // Common
-    hashtag, userHashtag, groupHashtag, amendmentHashtag, eventHashtag, blogHashtag, link, timelineEvent, reaction,
+    hashtag, userHashtag, groupHashtag, amendmentHashtag, eventHashtag, blogHashtag, statementHashtag, link, timelineEvent, reaction,
   ],
   relationships: allRelationships,
 })
@@ -177,6 +177,11 @@ export type StripePayment = Row<Schema['tables']['stripe_payment']>
 
 // Statements
 export type Statement = Row<Schema['tables']['statement']>
+export type StatementSupportVote = Row<Schema['tables']['statement_support_vote']>
+export type StatementSurvey = Row<Schema['tables']['statement_survey']>
+export type StatementSurveyOption = Row<Schema['tables']['statement_survey_option']>
+export type StatementSurveyVote = Row<Schema['tables']['statement_survey_vote']>
+export type StatementHashtag = Row<Schema['tables']['statement_hashtag']>
 
 // Preferences
 export type UserPreference = Row<Schema['tables']['user_preference']>
@@ -189,6 +194,7 @@ export type GroupHashtag = Row<Schema['tables']['group_hashtag']>
 export type AmendmentHashtag = Row<Schema['tables']['amendment_hashtag']>
 export type EventHashtag = Row<Schema['tables']['event_hashtag']>
 export type BlogHashtag = Row<Schema['tables']['blog_hashtag']>
+export type StatementHashtagJunction = Row<Schema['tables']['statement_hashtag']>
 export type Link = Row<Schema['tables']['link']>
 export type TimelineEvent = Row<Schema['tables']['timeline_event']>
 export type Reaction = Row<Schema['tables']['reaction']>

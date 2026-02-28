@@ -90,6 +90,16 @@ export const commonQueries = {
         .orderBy('created_at', 'desc')
   ),
 
+  // Hashtags for a statement (via junction)
+  statementHashtags: defineQuery(
+    z.object({ statement_id: z.string() }),
+    ({ args: { statement_id } }) =>
+      zql.statement_hashtag
+        .where('statement_id', statement_id)
+        .related('hashtag')
+        .orderBy('created_at', 'desc')
+  ),
+
   // Links for a group or user
   links: defineQuery(
     z.object({

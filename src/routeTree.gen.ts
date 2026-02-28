@@ -64,6 +64,7 @@ import { Route as AuthedGroupIdNetworkImport } from './routes/_authed/group/$id/
 import { Route as AuthedGroupIdMembershipsImport } from './routes/_authed/group/$id/memberships'
 import { Route as AuthedGroupIdEventsImport } from './routes/_authed/group/$id/events'
 import { Route as AuthedGroupIdEditorImport } from './routes/_authed/group/$id/editor'
+import { Route as AuthedGroupIdBlogsAndStatementsImport } from './routes/_authed/group/$id/blogs-and-statements'
 import { Route as AuthedGroupIdBlogImport } from './routes/_authed/group/$id/blog'
 import { Route as AuthedGroupIdAmendmentsImport } from './routes/_authed/group/$id/amendments'
 import { Route as AuthedEventIdStreamImport } from './routes/_authed/event/$id/stream'
@@ -81,11 +82,16 @@ import { Route as AuthedAmendmentIdDiscussionsImport } from './routes/_authed/am
 import { Route as AuthedAmendmentIdCollaboratorsImport } from './routes/_authed/amendment/$id/collaborators'
 import { Route as AuthedAmendmentIdChangeRequestsImport } from './routes/_authed/amendment/$id/change-requests'
 import { Route as AuthedGroupIdEditorIndexImport } from './routes/_authed/group/$id/editor/index'
+import { Route as AuthedGroupIdBlogIndexImport } from './routes/_authed/group/$id/blog/index'
 import { Route as AuthedUserIdEditorDocIdImport } from './routes/_authed/user/$id/editor/$docId'
 import { Route as AuthedUserIdBlogEntryIdImport } from './routes/_authed/user/$id/blog/$entryId'
 import { Route as AuthedGroupIdEditorDocIdImport } from './routes/_authed/group/$id/editor/$docId'
 import { Route as AuthedGroupIdBlogEntryIdImport } from './routes/_authed/group/$id/blog/$entryId'
 import { Route as AuthedEventIdAgendaAgendaItemIdImport } from './routes/_authed/event/$id/agenda/$agendaItemId'
+import { Route as AuthedUserIdBlogEntryIdIndexImport } from './routes/_authed/user/$id/blog/$entryId/index'
+import { Route as AuthedGroupIdBlogEntryIdIndexImport } from './routes/_authed/group/$id/blog/$entryId/index'
+import { Route as AuthedUserIdBlogEntryIdEditorImport } from './routes/_authed/user/$id/blog/$entryId/editor'
+import { Route as AuthedGroupIdBlogEntryIdEditorImport } from './routes/_authed/group/$id/blog/$entryId/editor'
 
 // Create/Update Routes
 
@@ -412,6 +418,13 @@ const AuthedGroupIdEditorRoute = AuthedGroupIdEditorImport.update({
   getParentRoute: () => AuthedGroupIdRoute,
 } as any)
 
+const AuthedGroupIdBlogsAndStatementsRoute =
+  AuthedGroupIdBlogsAndStatementsImport.update({
+    id: '/blogs-and-statements',
+    path: '/blogs-and-statements',
+    getParentRoute: () => AuthedGroupIdRoute,
+  } as any)
+
 const AuthedGroupIdBlogRoute = AuthedGroupIdBlogImport.update({
   id: '/blog',
   path: '/blog',
@@ -520,6 +533,12 @@ const AuthedGroupIdEditorIndexRoute = AuthedGroupIdEditorIndexImport.update({
   getParentRoute: () => AuthedGroupIdEditorRoute,
 } as any)
 
+const AuthedGroupIdBlogIndexRoute = AuthedGroupIdBlogIndexImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedGroupIdBlogRoute,
+} as any)
+
 const AuthedUserIdEditorDocIdRoute = AuthedUserIdEditorDocIdImport.update({
   id: '/$docId',
   path: '/$docId',
@@ -549,6 +568,34 @@ const AuthedEventIdAgendaAgendaItemIdRoute =
     id: '/$agendaItemId',
     path: '/$agendaItemId',
     getParentRoute: () => AuthedEventIdAgendaRoute,
+  } as any)
+
+const AuthedUserIdBlogEntryIdIndexRoute =
+  AuthedUserIdBlogEntryIdIndexImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthedUserIdBlogEntryIdRoute,
+  } as any)
+
+const AuthedGroupIdBlogEntryIdIndexRoute =
+  AuthedGroupIdBlogEntryIdIndexImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthedGroupIdBlogEntryIdRoute,
+  } as any)
+
+const AuthedUserIdBlogEntryIdEditorRoute =
+  AuthedUserIdBlogEntryIdEditorImport.update({
+    id: '/editor',
+    path: '/editor',
+    getParentRoute: () => AuthedUserIdBlogEntryIdRoute,
+  } as any)
+
+const AuthedGroupIdBlogEntryIdEditorRoute =
+  AuthedGroupIdBlogEntryIdEditorImport.update({
+    id: '/editor',
+    path: '/editor',
+    getParentRoute: () => AuthedGroupIdBlogEntryIdRoute,
   } as any)
 
 // Populate the FileRoutesByPath interface
@@ -891,6 +938,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedGroupIdBlogImport
       parentRoute: typeof AuthedGroupIdImport
     }
+    '/_authed/group/$id/blogs-and-statements': {
+      id: '/_authed/group/$id/blogs-and-statements'
+      path: '/blogs-and-statements'
+      fullPath: '/group/$id/blogs-and-statements'
+      preLoaderRoute: typeof AuthedGroupIdBlogsAndStatementsImport
+      parentRoute: typeof AuthedGroupIdImport
+    }
     '/_authed/group/$id/editor': {
       id: '/_authed/group/$id/editor'
       path: '/editor'
@@ -1073,12 +1127,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedUserIdEditorDocIdImport
       parentRoute: typeof AuthedUserIdEditorImport
     }
+    '/_authed/group/$id/blog/': {
+      id: '/_authed/group/$id/blog/'
+      path: '/'
+      fullPath: '/group/$id/blog/'
+      preLoaderRoute: typeof AuthedGroupIdBlogIndexImport
+      parentRoute: typeof AuthedGroupIdBlogImport
+    }
     '/_authed/group/$id/editor/': {
       id: '/_authed/group/$id/editor/'
       path: '/'
       fullPath: '/group/$id/editor/'
       preLoaderRoute: typeof AuthedGroupIdEditorIndexImport
       parentRoute: typeof AuthedGroupIdEditorImport
+    }
+    '/_authed/group/$id/blog/$entryId/editor': {
+      id: '/_authed/group/$id/blog/$entryId/editor'
+      path: '/editor'
+      fullPath: '/group/$id/blog/$entryId/editor'
+      preLoaderRoute: typeof AuthedGroupIdBlogEntryIdEditorImport
+      parentRoute: typeof AuthedGroupIdBlogEntryIdImport
+    }
+    '/_authed/user/$id/blog/$entryId/editor': {
+      id: '/_authed/user/$id/blog/$entryId/editor'
+      path: '/editor'
+      fullPath: '/user/$id/blog/$entryId/editor'
+      preLoaderRoute: typeof AuthedUserIdBlogEntryIdEditorImport
+      parentRoute: typeof AuthedUserIdBlogEntryIdImport
+    }
+    '/_authed/group/$id/blog/$entryId/': {
+      id: '/_authed/group/$id/blog/$entryId/'
+      path: '/'
+      fullPath: '/group/$id/blog/$entryId/'
+      preLoaderRoute: typeof AuthedGroupIdBlogEntryIdIndexImport
+      parentRoute: typeof AuthedGroupIdBlogEntryIdImport
+    }
+    '/_authed/user/$id/blog/$entryId/': {
+      id: '/_authed/user/$id/blog/$entryId/'
+      path: '/'
+      fullPath: '/user/$id/blog/$entryId/'
+      preLoaderRoute: typeof AuthedUserIdBlogEntryIdIndexImport
+      parentRoute: typeof AuthedUserIdBlogEntryIdImport
     }
   }
 }
@@ -1159,12 +1248,30 @@ const AuthedEventIdRouteWithChildren = AuthedEventIdRoute._addFileChildren(
   AuthedEventIdRouteChildren,
 )
 
+interface AuthedGroupIdBlogEntryIdRouteChildren {
+  AuthedGroupIdBlogEntryIdEditorRoute: typeof AuthedGroupIdBlogEntryIdEditorRoute
+  AuthedGroupIdBlogEntryIdIndexRoute: typeof AuthedGroupIdBlogEntryIdIndexRoute
+}
+
+const AuthedGroupIdBlogEntryIdRouteChildren: AuthedGroupIdBlogEntryIdRouteChildren =
+  {
+    AuthedGroupIdBlogEntryIdEditorRoute: AuthedGroupIdBlogEntryIdEditorRoute,
+    AuthedGroupIdBlogEntryIdIndexRoute: AuthedGroupIdBlogEntryIdIndexRoute,
+  }
+
+const AuthedGroupIdBlogEntryIdRouteWithChildren =
+  AuthedGroupIdBlogEntryIdRoute._addFileChildren(
+    AuthedGroupIdBlogEntryIdRouteChildren,
+  )
+
 interface AuthedGroupIdBlogRouteChildren {
-  AuthedGroupIdBlogEntryIdRoute: typeof AuthedGroupIdBlogEntryIdRoute
+  AuthedGroupIdBlogEntryIdRoute: typeof AuthedGroupIdBlogEntryIdRouteWithChildren
+  AuthedGroupIdBlogIndexRoute: typeof AuthedGroupIdBlogIndexRoute
 }
 
 const AuthedGroupIdBlogRouteChildren: AuthedGroupIdBlogRouteChildren = {
-  AuthedGroupIdBlogEntryIdRoute: AuthedGroupIdBlogEntryIdRoute,
+  AuthedGroupIdBlogEntryIdRoute: AuthedGroupIdBlogEntryIdRouteWithChildren,
+  AuthedGroupIdBlogIndexRoute: AuthedGroupIdBlogIndexRoute,
 }
 
 const AuthedGroupIdBlogRouteWithChildren =
@@ -1186,6 +1293,7 @@ const AuthedGroupIdEditorRouteWithChildren =
 interface AuthedGroupIdRouteChildren {
   AuthedGroupIdAmendmentsRoute: typeof AuthedGroupIdAmendmentsRoute
   AuthedGroupIdBlogRoute: typeof AuthedGroupIdBlogRouteWithChildren
+  AuthedGroupIdBlogsAndStatementsRoute: typeof AuthedGroupIdBlogsAndStatementsRoute
   AuthedGroupIdEditorRoute: typeof AuthedGroupIdEditorRouteWithChildren
   AuthedGroupIdEventsRoute: typeof AuthedGroupIdEventsRoute
   AuthedGroupIdMembershipsRoute: typeof AuthedGroupIdMembershipsRoute
@@ -1200,6 +1308,7 @@ interface AuthedGroupIdRouteChildren {
 const AuthedGroupIdRouteChildren: AuthedGroupIdRouteChildren = {
   AuthedGroupIdAmendmentsRoute: AuthedGroupIdAmendmentsRoute,
   AuthedGroupIdBlogRoute: AuthedGroupIdBlogRouteWithChildren,
+  AuthedGroupIdBlogsAndStatementsRoute: AuthedGroupIdBlogsAndStatementsRoute,
   AuthedGroupIdEditorRoute: AuthedGroupIdEditorRouteWithChildren,
   AuthedGroupIdEventsRoute: AuthedGroupIdEventsRoute,
   AuthedGroupIdMembershipsRoute: AuthedGroupIdMembershipsRoute,
@@ -1215,12 +1324,28 @@ const AuthedGroupIdRouteWithChildren = AuthedGroupIdRoute._addFileChildren(
   AuthedGroupIdRouteChildren,
 )
 
+interface AuthedUserIdBlogEntryIdRouteChildren {
+  AuthedUserIdBlogEntryIdEditorRoute: typeof AuthedUserIdBlogEntryIdEditorRoute
+  AuthedUserIdBlogEntryIdIndexRoute: typeof AuthedUserIdBlogEntryIdIndexRoute
+}
+
+const AuthedUserIdBlogEntryIdRouteChildren: AuthedUserIdBlogEntryIdRouteChildren =
+  {
+    AuthedUserIdBlogEntryIdEditorRoute: AuthedUserIdBlogEntryIdEditorRoute,
+    AuthedUserIdBlogEntryIdIndexRoute: AuthedUserIdBlogEntryIdIndexRoute,
+  }
+
+const AuthedUserIdBlogEntryIdRouteWithChildren =
+  AuthedUserIdBlogEntryIdRoute._addFileChildren(
+    AuthedUserIdBlogEntryIdRouteChildren,
+  )
+
 interface AuthedUserIdBlogRouteChildren {
-  AuthedUserIdBlogEntryIdRoute: typeof AuthedUserIdBlogEntryIdRoute
+  AuthedUserIdBlogEntryIdRoute: typeof AuthedUserIdBlogEntryIdRouteWithChildren
 }
 
 const AuthedUserIdBlogRouteChildren: AuthedUserIdBlogRouteChildren = {
-  AuthedUserIdBlogEntryIdRoute: AuthedUserIdBlogEntryIdRoute,
+  AuthedUserIdBlogEntryIdRoute: AuthedUserIdBlogEntryIdRouteWithChildren,
 }
 
 const AuthedUserIdBlogRouteWithChildren =
@@ -1379,6 +1504,7 @@ export interface FileRoutesByFullPath {
   '/event/$id/stream': typeof AuthedEventIdStreamRoute
   '/group/$id/amendments': typeof AuthedGroupIdAmendmentsRoute
   '/group/$id/blog': typeof AuthedGroupIdBlogRouteWithChildren
+  '/group/$id/blogs-and-statements': typeof AuthedGroupIdBlogsAndStatementsRoute
   '/group/$id/editor': typeof AuthedGroupIdEditorRouteWithChildren
   '/group/$id/events': typeof AuthedGroupIdEventsRoute
   '/group/$id/memberships': typeof AuthedGroupIdMembershipsRoute
@@ -1401,11 +1527,16 @@ export interface FileRoutesByFullPath {
   '/group/$id/': typeof AuthedGroupIdIndexRoute
   '/user/$id/': typeof AuthedUserIdIndexRoute
   '/event/$id/agenda/$agendaItemId': typeof AuthedEventIdAgendaAgendaItemIdRoute
-  '/group/$id/blog/$entryId': typeof AuthedGroupIdBlogEntryIdRoute
+  '/group/$id/blog/$entryId': typeof AuthedGroupIdBlogEntryIdRouteWithChildren
   '/group/$id/editor/$docId': typeof AuthedGroupIdEditorDocIdRoute
-  '/user/$id/blog/$entryId': typeof AuthedUserIdBlogEntryIdRoute
+  '/user/$id/blog/$entryId': typeof AuthedUserIdBlogEntryIdRouteWithChildren
   '/user/$id/editor/$docId': typeof AuthedUserIdEditorDocIdRoute
+  '/group/$id/blog/': typeof AuthedGroupIdBlogIndexRoute
   '/group/$id/editor/': typeof AuthedGroupIdEditorIndexRoute
+  '/group/$id/blog/$entryId/editor': typeof AuthedGroupIdBlogEntryIdEditorRoute
+  '/user/$id/blog/$entryId/editor': typeof AuthedUserIdBlogEntryIdEditorRoute
+  '/group/$id/blog/$entryId/': typeof AuthedGroupIdBlogEntryIdIndexRoute
+  '/user/$id/blog/$entryId/': typeof AuthedUserIdBlogEntryIdIndexRoute
 }
 
 export interface FileRoutesByTo {
@@ -1452,7 +1583,7 @@ export interface FileRoutesByTo {
   '/event/$id/settings': typeof AuthedEventIdSettingsRoute
   '/event/$id/stream': typeof AuthedEventIdStreamRoute
   '/group/$id/amendments': typeof AuthedGroupIdAmendmentsRoute
-  '/group/$id/blog': typeof AuthedGroupIdBlogRouteWithChildren
+  '/group/$id/blogs-and-statements': typeof AuthedGroupIdBlogsAndStatementsRoute
   '/group/$id/events': typeof AuthedGroupIdEventsRoute
   '/group/$id/memberships': typeof AuthedGroupIdMembershipsRoute
   '/group/$id/network': typeof AuthedGroupIdNetworkRoute
@@ -1474,11 +1605,14 @@ export interface FileRoutesByTo {
   '/group/$id': typeof AuthedGroupIdIndexRoute
   '/user/$id': typeof AuthedUserIdIndexRoute
   '/event/$id/agenda/$agendaItemId': typeof AuthedEventIdAgendaAgendaItemIdRoute
-  '/group/$id/blog/$entryId': typeof AuthedGroupIdBlogEntryIdRoute
   '/group/$id/editor/$docId': typeof AuthedGroupIdEditorDocIdRoute
-  '/user/$id/blog/$entryId': typeof AuthedUserIdBlogEntryIdRoute
   '/user/$id/editor/$docId': typeof AuthedUserIdEditorDocIdRoute
+  '/group/$id/blog': typeof AuthedGroupIdBlogIndexRoute
   '/group/$id/editor': typeof AuthedGroupIdEditorIndexRoute
+  '/group/$id/blog/$entryId/editor': typeof AuthedGroupIdBlogEntryIdEditorRoute
+  '/user/$id/blog/$entryId/editor': typeof AuthedUserIdBlogEntryIdEditorRoute
+  '/group/$id/blog/$entryId': typeof AuthedGroupIdBlogEntryIdIndexRoute
+  '/user/$id/blog/$entryId': typeof AuthedUserIdBlogEntryIdIndexRoute
 }
 
 export interface FileRoutesById {
@@ -1531,6 +1665,7 @@ export interface FileRoutesById {
   '/_authed/event/$id/stream': typeof AuthedEventIdStreamRoute
   '/_authed/group/$id/amendments': typeof AuthedGroupIdAmendmentsRoute
   '/_authed/group/$id/blog': typeof AuthedGroupIdBlogRouteWithChildren
+  '/_authed/group/$id/blogs-and-statements': typeof AuthedGroupIdBlogsAndStatementsRoute
   '/_authed/group/$id/editor': typeof AuthedGroupIdEditorRouteWithChildren
   '/_authed/group/$id/events': typeof AuthedGroupIdEventsRoute
   '/_authed/group/$id/memberships': typeof AuthedGroupIdMembershipsRoute
@@ -1553,11 +1688,16 @@ export interface FileRoutesById {
   '/_authed/group/$id/': typeof AuthedGroupIdIndexRoute
   '/_authed/user/$id/': typeof AuthedUserIdIndexRoute
   '/_authed/event/$id/agenda/$agendaItemId': typeof AuthedEventIdAgendaAgendaItemIdRoute
-  '/_authed/group/$id/blog/$entryId': typeof AuthedGroupIdBlogEntryIdRoute
+  '/_authed/group/$id/blog/$entryId': typeof AuthedGroupIdBlogEntryIdRouteWithChildren
   '/_authed/group/$id/editor/$docId': typeof AuthedGroupIdEditorDocIdRoute
-  '/_authed/user/$id/blog/$entryId': typeof AuthedUserIdBlogEntryIdRoute
+  '/_authed/user/$id/blog/$entryId': typeof AuthedUserIdBlogEntryIdRouteWithChildren
   '/_authed/user/$id/editor/$docId': typeof AuthedUserIdEditorDocIdRoute
+  '/_authed/group/$id/blog/': typeof AuthedGroupIdBlogIndexRoute
   '/_authed/group/$id/editor/': typeof AuthedGroupIdEditorIndexRoute
+  '/_authed/group/$id/blog/$entryId/editor': typeof AuthedGroupIdBlogEntryIdEditorRoute
+  '/_authed/user/$id/blog/$entryId/editor': typeof AuthedUserIdBlogEntryIdEditorRoute
+  '/_authed/group/$id/blog/$entryId/': typeof AuthedGroupIdBlogEntryIdIndexRoute
+  '/_authed/user/$id/blog/$entryId/': typeof AuthedUserIdBlogEntryIdIndexRoute
 }
 
 export interface FileRouteTypes {
@@ -1611,6 +1751,7 @@ export interface FileRouteTypes {
     | '/event/$id/stream'
     | '/group/$id/amendments'
     | '/group/$id/blog'
+    | '/group/$id/blogs-and-statements'
     | '/group/$id/editor'
     | '/group/$id/events'
     | '/group/$id/memberships'
@@ -1637,7 +1778,12 @@ export interface FileRouteTypes {
     | '/group/$id/editor/$docId'
     | '/user/$id/blog/$entryId'
     | '/user/$id/editor/$docId'
+    | '/group/$id/blog/'
     | '/group/$id/editor/'
+    | '/group/$id/blog/$entryId/editor'
+    | '/user/$id/blog/$entryId/editor'
+    | '/group/$id/blog/$entryId/'
+    | '/user/$id/blog/$entryId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1683,7 +1829,7 @@ export interface FileRouteTypes {
     | '/event/$id/settings'
     | '/event/$id/stream'
     | '/group/$id/amendments'
-    | '/group/$id/blog'
+    | '/group/$id/blogs-and-statements'
     | '/group/$id/events'
     | '/group/$id/memberships'
     | '/group/$id/network'
@@ -1705,11 +1851,14 @@ export interface FileRouteTypes {
     | '/group/$id'
     | '/user/$id'
     | '/event/$id/agenda/$agendaItemId'
-    | '/group/$id/blog/$entryId'
     | '/group/$id/editor/$docId'
-    | '/user/$id/blog/$entryId'
     | '/user/$id/editor/$docId'
+    | '/group/$id/blog'
     | '/group/$id/editor'
+    | '/group/$id/blog/$entryId/editor'
+    | '/user/$id/blog/$entryId/editor'
+    | '/group/$id/blog/$entryId'
+    | '/user/$id/blog/$entryId'
   id:
     | '__root__'
     | '/'
@@ -1760,6 +1909,7 @@ export interface FileRouteTypes {
     | '/_authed/event/$id/stream'
     | '/_authed/group/$id/amendments'
     | '/_authed/group/$id/blog'
+    | '/_authed/group/$id/blogs-and-statements'
     | '/_authed/group/$id/editor'
     | '/_authed/group/$id/events'
     | '/_authed/group/$id/memberships'
@@ -1786,7 +1936,12 @@ export interface FileRouteTypes {
     | '/_authed/group/$id/editor/$docId'
     | '/_authed/user/$id/blog/$entryId'
     | '/_authed/user/$id/editor/$docId'
+    | '/_authed/group/$id/blog/'
     | '/_authed/group/$id/editor/'
+    | '/_authed/group/$id/blog/$entryId/editor'
+    | '/_authed/user/$id/blog/$entryId/editor'
+    | '/_authed/group/$id/blog/$entryId/'
+    | '/_authed/user/$id/blog/$entryId/'
   fileRoutesById: FileRoutesById
 }
 
@@ -1988,6 +2143,7 @@ export const routeTree = rootRoute
       "children": [
         "/_authed/group/$id/amendments",
         "/_authed/group/$id/blog",
+        "/_authed/group/$id/blogs-and-statements",
         "/_authed/group/$id/editor",
         "/_authed/group/$id/events",
         "/_authed/group/$id/memberships",
@@ -2094,8 +2250,13 @@ export const routeTree = rootRoute
       "filePath": "_authed/group/$id/blog.tsx",
       "parent": "/_authed/group/$id",
       "children": [
-        "/_authed/group/$id/blog/$entryId"
+        "/_authed/group/$id/blog/$entryId",
+        "/_authed/group/$id/blog/"
       ]
+    },
+    "/_authed/group/$id/blogs-and-statements": {
+      "filePath": "_authed/group/$id/blogs-and-statements.tsx",
+      "parent": "/_authed/group/$id"
     },
     "/_authed/group/$id/editor": {
       "filePath": "_authed/group/$id/editor.tsx",
@@ -2197,7 +2358,11 @@ export const routeTree = rootRoute
     },
     "/_authed/group/$id/blog/$entryId": {
       "filePath": "_authed/group/$id/blog/$entryId.tsx",
-      "parent": "/_authed/group/$id/blog"
+      "parent": "/_authed/group/$id/blog",
+      "children": [
+        "/_authed/group/$id/blog/$entryId/editor",
+        "/_authed/group/$id/blog/$entryId/"
+      ]
     },
     "/_authed/group/$id/editor/$docId": {
       "filePath": "_authed/group/$id/editor/$docId.tsx",
@@ -2205,15 +2370,39 @@ export const routeTree = rootRoute
     },
     "/_authed/user/$id/blog/$entryId": {
       "filePath": "_authed/user/$id/blog/$entryId.tsx",
-      "parent": "/_authed/user/$id/blog"
+      "parent": "/_authed/user/$id/blog",
+      "children": [
+        "/_authed/user/$id/blog/$entryId/editor",
+        "/_authed/user/$id/blog/$entryId/"
+      ]
     },
     "/_authed/user/$id/editor/$docId": {
       "filePath": "_authed/user/$id/editor/$docId.tsx",
       "parent": "/_authed/user/$id/editor"
     },
+    "/_authed/group/$id/blog/": {
+      "filePath": "_authed/group/$id/blog/index.tsx",
+      "parent": "/_authed/group/$id/blog"
+    },
     "/_authed/group/$id/editor/": {
       "filePath": "_authed/group/$id/editor/index.tsx",
       "parent": "/_authed/group/$id/editor"
+    },
+    "/_authed/group/$id/blog/$entryId/editor": {
+      "filePath": "_authed/group/$id/blog/$entryId/editor.tsx",
+      "parent": "/_authed/group/$id/blog/$entryId"
+    },
+    "/_authed/user/$id/blog/$entryId/editor": {
+      "filePath": "_authed/user/$id/blog/$entryId/editor.tsx",
+      "parent": "/_authed/user/$id/blog/$entryId"
+    },
+    "/_authed/group/$id/blog/$entryId/": {
+      "filePath": "_authed/group/$id/blog/$entryId/index.tsx",
+      "parent": "/_authed/group/$id/blog/$entryId"
+    },
+    "/_authed/user/$id/blog/$entryId/": {
+      "filePath": "_authed/user/$id/blog/$entryId/index.tsx",
+      "parent": "/_authed/user/$id/blog/$entryId"
     }
   }
 }

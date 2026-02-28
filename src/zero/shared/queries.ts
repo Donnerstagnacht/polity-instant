@@ -31,6 +31,10 @@ export const searchQueries = {
     ({ args: { limit } }) =>
       zql.statement
         .related('user')
+        .related('group')
+        .related('statement_hashtags', q => q.related('hashtag'))
+        .related('support_votes')
+        .related('surveys', q => q.related('options', q2 => q2.related('votes')))
         .limit(limit)
   ),
 

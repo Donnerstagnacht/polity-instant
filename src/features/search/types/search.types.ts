@@ -83,6 +83,11 @@ export type SearchContentItem = {
   totalCandidates?: number;
   agendaEventId?: string;
   agendaItemId?: string;
+  upvotes?: number;
+  downvotes?: number;
+  groupImageUrl?: string;
+  surveyQuestion?: string;
+  surveyOptions?: string[];
   stats?: {
     reactions?: number;
     comments?: number;

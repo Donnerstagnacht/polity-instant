@@ -227,6 +227,30 @@ export const updateBlogSupportVoteSchema = baseBlogSupportVoteSchema
 export const deleteBlogSupportVoteSchema = z.object({ id: z.string() })
 
 // ============================================
+// Statement Support Vote Schemas
+// ============================================
+
+const baseStatementSupportVoteSchema = z.object({
+  id: z.string(),
+  statement_id: z.string(),
+  user_id: z.string(),
+  vote: z.number().nullable(),
+  created_at: timestampSchema,
+})
+
+export const selectStatementSupportVoteSchema = baseStatementSupportVoteSchema
+
+export const createStatementSupportVoteSchema = baseStatementSupportVoteSchema
+  .omit({ id: true, created_at: true, user_id: true })
+  .extend({ id: z.string() })
+
+export const updateStatementSupportVoteSchema = baseStatementSupportVoteSchema
+  .pick({ vote: true })
+  .extend({ id: z.string() })
+
+export const deleteStatementSupportVoteSchema = z.object({ id: z.string() })
+
+// ============================================
 // Thread Vote Schemas
 // ============================================
 
@@ -282,5 +306,6 @@ export type EventVotingSession = z.infer<typeof eventVotingSessionSelectSchema>
 export type EventVote = z.infer<typeof eventVoteSelectSchema>
 export type ElectionVote = z.infer<typeof selectElectionVoteSchema>
 export type BlogSupportVote = z.infer<typeof selectBlogSupportVoteSchema>
+export type StatementSupportVote = z.infer<typeof selectStatementSupportVoteSchema>
 export type ThreadVote = z.infer<typeof selectThreadVoteSchema>
 export type CommentVote = z.infer<typeof selectCommentVoteSchema>

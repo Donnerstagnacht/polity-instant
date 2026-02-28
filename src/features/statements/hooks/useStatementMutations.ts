@@ -7,16 +7,34 @@ import { useCommonActions } from '@/zero/common/useCommonActions';
  * Composes useStatementActions + useCommonActions.
  */
 export function useStatementMutations() {
-  const { createStatement: create, updateStatement: update, deleteStatement: remove } = useStatementActions();
+  const {
+    createStatement: create,
+    updateStatement: update,
+    deleteStatement: remove,
+    createSupportVote,
+    updateSupportVote,
+    deleteSupportVote,
+    createSurvey,
+    deleteSurvey,
+    createSurveyOption,
+    deleteSurveyOption,
+    createSurveyVote,
+    deleteSurveyVote,
+  } = useStatementActions();
   const { createTimelineEvent } = useCommonActions();
   const [isLoading, setIsLoading] = useState(false);
 
   const createStatement = async (
     userId: string,
     text: string,
-    tag: string,
-    visibility: 'public' | 'authenticated' | 'private' = 'public'
+    options: {
+      groupId?: string | null;
+      imageUrl?: string | null;
+      videoUrl?: string | null;
+      visibility?: 'public' | 'authenticated' | 'private';
+    } = {}
   ) => {
+    const { groupId, imageUrl, videoUrl, visibility = 'public' } = options;
     setIsLoading(true);
     try {
       const statementId = crypto.randomUUID();
@@ -24,7 +42,9 @@ export function useStatementMutations() {
       await create({
         id: statementId,
         text,
-        tag,
+        group_id: groupId ?? null,
+        image_url: imageUrl ?? null,
+        video_url: videoUrl ?? null,
         visibility,
       });
 
@@ -36,11 +56,11 @@ export function useStatementMutations() {
           entity_id: statementId,
           actor_id: userId,
           title: 'New statement posted',
-          description: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
+          description: text ? text.substring(0, 100) + (text.length > 100 ? '...' : '') : '',
           content_type: 'statement',
           metadata: {},
-          image_url: '',
-          video_url: '',
+          image_url: imageUrl ?? '',
+          video_url: videoUrl ?? '',
           video_thumbnail_url: '',
           tags: [],
           stats: {},
@@ -48,7 +68,7 @@ export function useStatementMutations() {
           election_status: '',
           ends_at: 0,
           user_id: userId,
-          group_id: null,
+          group_id: groupId ?? null,
           amendment_id: null,
           event_id: null,
           todo_id: null,
@@ -71,16 +91,22 @@ export function useStatementMutations() {
   const updateStatement = async (
     statementId: string,
     text: string,
-    tag: string,
-    userId?: string,
-    visibility?: 'public' | 'authenticated' | 'private'
+    options: {
+      imageUrl?: string | null;
+      videoUrl?: string | null;
+      visibility?: 'public' | 'authenticated' | 'private';
+      userId?: string;
+    } = {}
   ) => {
+    const { imageUrl, videoUrl, visibility, userId } = options;
     setIsLoading(true);
     try {
       await update({
         id: statementId,
         text,
-        tag,
+        ...(imageUrl !== undefined && { image_url: imageUrl }),
+        ...(videoUrl !== undefined && { video_url: videoUrl }),
+        ...(visibility !== undefined && { visibility }),
       });
 
       if (visibility === 'public' && userId) {
@@ -91,11 +117,11 @@ export function useStatementMutations() {
           entity_id: statementId,
           actor_id: userId,
           title: 'Statement updated',
-          description: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
+          description: text ? text.substring(0, 100) + (text.length > 100 ? '...' : '') : '',
           content_type: 'statement',
           metadata: {},
-          image_url: '',
-          video_url: '',
+          image_url: imageUrl ?? '',
+          video_url: videoUrl ?? '',
           video_thumbnail_url: '',
           tags: [],
           stats: {},
@@ -140,6 +166,15 @@ export function useStatementMutations() {
     createStatement,
     updateStatement,
     deleteStatement,
+    createSupportVote,
+    updateSupportVote,
+    deleteSupportVote,
+    createSurvey,
+    deleteSurvey,
+    createSurveyOption,
+    deleteSurveyOption,
+    createSurveyVote,
+    deleteSurveyVote,
     isLoading,
   };
 }

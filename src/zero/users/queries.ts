@@ -53,7 +53,12 @@ export const userQueries = {
       zql.user
         .where('id', id)
         .related('stats')
-        .related('statements')
+        .related('statements', q =>
+          q.related('group')
+            .related('statement_hashtags', q2 => q2.related('hashtag'))
+            .related('support_votes')
+            .related('surveys', q2 => q2.related('options', q3 => q3.related('votes')))
+        )
         .related('group_memberships', q =>
           q.related('group', q =>
             q.related('events').related('amendments').related('group_hashtags', q => q.related('hashtag'))

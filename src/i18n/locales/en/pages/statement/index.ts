@@ -21,6 +21,17 @@ export const statementPageTranslations = {
     reply: 'Reply',
     delete: 'Delete',
   },
+  survey: {
+    title: 'Survey',
+    votes: 'votes',
+    expired: 'Expired',
+    endsIn: 'Ends in',
+    retract: 'Retract vote',
+  },
+  voting: {
+    upvote: 'Upvote',
+    downvote: 'Downvote',
+  },
   related: {
     title: 'Related Statements',
     noRelated: 'No related statements',
