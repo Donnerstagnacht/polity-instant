@@ -84,9 +84,13 @@ export function useBlogState(options: BlogStateOptions = {}) {
       : undefined
   )
 
-  const [comments, commentsResult] = useQuery(
-    includeComments ? queries.blogs.allComments({}) : undefined
+  const [blogThread, blogThreadResult] = useQuery(
+    includeComments && blogId
+      ? queries.blogs.blogThread({ blog_id: blogId })
+      : undefined
   )
+
+  const comments = blogThread?.comments ?? []
 
   // ── Group blogs with hashtags (opt-in) ─────────────────────────────
   const [blogsByGroup, blogsByGroupResult] = useQuery(
@@ -112,7 +116,7 @@ export function useBlogState(options: BlogStateOptions = {}) {
     (includeForEditor === true && blogId !== undefined && blogForEditorResult.type === 'unknown') ||
     (includeVersions === true && blogId !== undefined && versionsResult.type === 'unknown') ||
     (includeSubscribers === true && blogId !== undefined && subscribersResult.type === 'unknown') ||
-    (includeComments === true && commentsResult.type === 'unknown') ||
+    (includeComments === true && blogId !== undefined && blogThreadResult.type === 'unknown') ||
     (groupId !== undefined && blogsByGroupResult.type === 'unknown') ||
     (userId !== undefined && bloggersByUserResult.type === 'unknown')
 
@@ -127,6 +131,7 @@ export function useBlogState(options: BlogStateOptions = {}) {
     versions: versions ?? [],
     subscribers: subscribers ?? [],
     comments: comments ?? [],
+    blogThread: blogThread ?? null,
     blogsByGroup: blogsByGroup ?? [],
     bloggersByUser: bloggersByUser ?? [],
     isLoading,

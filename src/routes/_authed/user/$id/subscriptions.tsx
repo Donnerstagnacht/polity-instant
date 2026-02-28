@@ -21,7 +21,13 @@ function UserSubscriptionsPage() {
         onNavigateToGroup={(gid: string) => navigate({ to: '/group/$id', params: { id: gid } })}
         onNavigateToAmendment={(aid: string) => navigate({ to: '/amendment/$id', params: { id: aid } })}
         onNavigateToEvent={(eid: string) => navigate({ to: '/event/$id', params: { id: eid } })}
-        onNavigateToBlog={(bid: string) => navigate({ to: '/blog/$id', params: { id: bid } })}
+        onNavigateToBlog={(bid: string, groupId?: string | null) => {
+          if (groupId) {
+            navigate({ to: '/group/$id/blog/$entryId', params: { id: groupId, entryId: bid } })
+          } else {
+            navigate({ to: '/user/$id/blog/$entryId', params: { id, entryId: bid } })
+          }
+        }}
       />
     </div>
   )

@@ -36,18 +36,16 @@ export interface UserStatement {
 }
 
 export interface UserBlog {
-  id: number;
+  id: string;
   title: string;
   date: string;
   description?: string;
   imageURL?: string;
   commentCount?: number;
-  comments?: number; // Legacy support
-  supporters?: number; // Legacy support
-  likes?: number; // Legacy support
   hashtags?: { id: string; tag: string }[];
   authorName?: string;
   authorAvatar?: string;
+  groupId?: string | null;
 }
 
 export interface UserGroup {

@@ -1,6 +1,8 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { useZero } from '@rocicorp/zero/react';
 import { PageWrapper } from '@/layout/page-wrapper';
 import {
   Card,
@@ -30,13 +32,21 @@ import type { CommentData } from '@/features/shared/ui/comments';
 import { toast } from 'sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useBlogPermissions } from '../hooks/useBlogPermissions';
+import { usePermissions } from '@/zero/rbac/usePermissions';
 import { PlateEditor } from '@/features/shared/ui/kit-platejs/plate-editor';
 import { Link } from '@tanstack/react-router';
+import { mutators } from '@/zero/mutators';
+import { useNotificationDispatch } from '@/zero/notifications/useNotificationDispatch';
 import {
-  notifyBlogCommentAdded,
-  notifyBlogVoted,
-  notifyBlogDeleted,
-} from '@/features/shared/utils/notification-helpers';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/features/shared/ui/ui/alert-dialog';
 
 interface BlogDetailProps {
   blogId: string;
@@ -44,14 +54,17 @@ interface BlogDetailProps {
 
 export function BlogDetail({ blogId }: BlogDetailProps) {
   const navigate = useNavigate();
+  const zero = useZero();
   const { user } = useAuth();
   const { t } = useTranslation();
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
-  // Permissions
-  const { canEdit, canDelete } = useBlogPermissions(blogId);
+  // Permissions — blog-level + group-level
+  const { canEdit: blogCanEdit, canDelete: blogCanDelete } = useBlogPermissions(blogId);
   const blogActions = useBlogActions();
   const { addComment: addCommentAction, voteComment } = useDocumentActions();
   const { currentUser } = useUserState();
+  const { dispatchEntity: dispatchNotification } = useNotificationDispatch();
 
   // Subscribe hook
   const {
@@ -65,14 +78,61 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
   const currentUserName = currentUser?.first_name || 'Someone';
 
   // Fetch blog data with relations
-  const { blogWithDetails, comments: commentsRows } = useBlogState({
+  const { blogWithDetails, comments: commentsRows, blogThread } = useBlogState({
     blogId,
     includeDetails: true,
     includeComments: true,
   });
 
   const blog = blogWithDetails;
-  const allComments = (commentsRows || []) as unknown as CommentData[];
+
+  // Map Zero comment rows → CommentData shape expected by CommentThread
+  const allComments: CommentData[] = useMemo(() => {
+    return (commentsRows || []).map((c: any) => ({
+      id: c.id,
+      text: c.content ?? '',
+      createdAt: c.created_at ?? 0,
+      creator: c.user
+        ? {
+            id: c.user.id,
+            name: [c.user.first_name, c.user.last_name].filter(Boolean).join(' ') || undefined,
+            handle: c.user.handle ?? undefined,
+            avatar: c.user.avatar ?? undefined,
+          }
+        : undefined,
+      votes: (c.votes ?? []).map((v: any) => ({
+        id: v.id,
+        vote: v.vote,
+        user: v.user ? { id: v.user.id } : undefined,
+      })),
+      replies: (c.replies ?? []).map((r: any) => ({
+        id: r.id,
+        text: r.content ?? '',
+        createdAt: r.created_at ?? 0,
+        creator: r.user
+          ? {
+              id: r.user.id,
+              name: [r.user.first_name, r.user.last_name].filter(Boolean).join(' ') || undefined,
+              handle: r.user.handle ?? undefined,
+              avatar: r.user.avatar ?? undefined,
+            }
+          : undefined,
+        votes: (r.votes ?? []).map((v: any) => ({
+          id: v.id,
+          vote: v.vote,
+          user: v.user ? { id: v.user.id } : undefined,
+        })),
+      })),
+    }));
+  }, [commentsRows]);
+
+  // Group-level permission check for "Manage Group" rights
+  const { can: canGroup } = usePermissions({ groupId: blog?.group_id ?? undefined });
+  const groupCanManage = blog?.group_id ? canGroup('manage', 'groups') : false;
+
+  // Combined permissions: blog RBAC OR group "Manage Group"
+  const canEdit = blogCanEdit || groupCanManage;
+  const canDelete = blogCanDelete || groupCanManage;
 
   // Vote handling
   const score = (blog?.upvotes || 0) - (blog?.downvotes || 0);
@@ -117,13 +177,15 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
         const blogAuthor =
           blog.bloggers?.find((b: any) => b.status === 'owner')?.user || blog.bloggers?.[0]?.user;
         if (blogAuthor?.id && blogAuthor.id !== user.id) {
-          await notifyBlogVoted({
+          await dispatchNotification({
+            type: 'blog_vote_cast',
+            title: voteValue === 1 ? 'Blog Upvoted' : 'Blog Downvoted',
+            message: `${currentUserName} has ${voteValue === 1 ? 'upvote' : 'downvote'}d ${blog.title || 'Blog'}`,
             senderId: user.id,
-            senderName: currentUserName,
-            recipientUserId: blogAuthor.id,
-            blogId,
-            blogTitle: blog.title || 'Blog',
-            voteType: voteValue === 1 ? 'upvote' : 'downvote',
+            recipientEntityType: 'blog',
+            recipientEntityId: blogId,
+            relatedEntityType: 'blog',
+            relatedEntityId: blogId,
           });
         }
       }
@@ -136,6 +198,24 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
   const handleAddComment = async (text: string, parentId?: string) => {
     if (!text.trim() || !user?.id) return;
     try {
+      // Create a thread for this blog if one doesn't exist yet
+      if (!blogThread) {
+        await zero.mutate(mutators.documents.createThread({
+          id: blogId,
+          document_id: null,
+          amendment_id: null,
+          statement_id: null,
+          blog_id: blogId,
+          content: null,
+          status: 'open',
+          resolved_at: null,
+          position: null,
+          user_id: user.id,
+          upvotes: 0,
+          downvotes: 0,
+        }));
+      }
+
       const commentId = crypto.randomUUID();
       await addCommentAction({
         id: commentId,
@@ -147,11 +227,15 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
         user_id: user.id,
       });
       if (blog) {
-        await notifyBlogCommentAdded({
+        await dispatchNotification({
+          type: 'blog_comment_added',
+          title: 'New Comment',
+          message: `${currentUserName} commented on ${blog.title || 'Blog'}`,
           senderId: user.id,
-          senderName: currentUserName,
-          blogId,
-          blogTitle: blog.title || 'Blog',
+          recipientEntityType: 'blog',
+          recipientEntityId: blogId,
+          relatedEntityType: 'blog',
+          relatedEntityId: blogId,
         });
       }
       toast.success('Comment posted successfully');
@@ -176,14 +260,18 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
   };
 
   const handleDeleteBlog = async () => {
-    if (!confirm(t('features.blogs.detail.confirmDelete'))) return;
     try {
       // Send deletion notifications before removing the blog entity
       if (user?.id && blog) {
-        await notifyBlogDeleted({
+        await dispatchNotification({
+          type: 'blog_deleted',
+          title: 'Blog Deleted',
+          message: `${blog.title || 'Blog'} has been deleted`,
           senderId: user.id,
-          blogId,
-          blogTitle: blog.title || 'Blog',
+          recipientEntityType: 'blog',
+          recipientEntityId: blogId,
+          relatedEntityType: 'blog',
+          relatedEntityId: blogId,
         });
       }
       await blogActions.deleteBlog(blogId);
@@ -296,8 +384,16 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
         <ShareButton url={blogViewUrl} title={blog.title ?? ''} description="" />
 
         {/* RBAC Actions */}
+        {canEdit && (
+          <Link to={editorUrl}>
+            <Button variant="outline">
+              <Edit className="mr-2 h-4 w-4" />
+              {t('features.blogs.detail.editBlog')}
+            </Button>
+          </Link>
+        )}
         {canDelete && (
-          <Button variant="destructive" onClick={handleDeleteBlog}>
+          <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
             <Trash2 className="mr-2 h-4 w-4" />
             {t('features.blogs.delete')}
           </Button>
@@ -362,6 +458,30 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
         onVote={handleCommentVote}
         className="mt-6"
       />
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('features.blogs.detail.confirmDeleteTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('features.blogs.detail.confirmDelete')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.actions.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-white hover:bg-destructive/90"
+              onClick={async () => {
+                setDeleteOpen(false);
+                await handleDeleteBlog();
+              }}
+            >
+              {t('common.actions.delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageWrapper>
   );
 }

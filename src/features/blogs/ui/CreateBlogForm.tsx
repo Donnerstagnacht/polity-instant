@@ -190,7 +190,7 @@ export function CreateBlogForm() {
       }
 
       toast.success('Blog post created successfully!');
-      navigate({ to: `/blog/${blogId}` });
+      navigate({ to: '/user/$id/blog/$entryId', params: { id: user.id, entryId: blogId } });
     } catch (error) {
       console.error('Failed to create blog post:', error);
       toast.error('Failed to create blog post. Please try again.');

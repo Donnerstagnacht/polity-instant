@@ -32,6 +32,7 @@ export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
         <TabsContent value="blogs" className="mt-4">
           <BlogListTab
             blogs={user.blogs}
+            userId={user.id}
             searchValue={searchTerms.blogs}
             onSearchChange={(value: string) => handleSearchChange('blogs', value)}
           />

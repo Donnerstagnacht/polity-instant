@@ -10,6 +10,7 @@ const baseThreadSchema = z.object({
   document_id: z.string().nullable(),
   amendment_id: z.string().nullable(),
   statement_id: z.string().nullable(),
+  blog_id: z.string().nullable(),
   user_id: z.string(),
   content: z.string().nullable(),
   status: z.string(),

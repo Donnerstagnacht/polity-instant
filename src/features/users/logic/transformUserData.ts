@@ -65,12 +65,7 @@ export function transformUserData(userData: any): User {
 
     blogs:
       userData?.blogger_relations
-        ?.filter((relation: any) => {
-          const hasUpdateRight = relation.role?.action_rights?.some(
-            (right: any) => right.resource === 'blogs' && right.action === 'update'
-          );
-          return hasUpdateRight && relation.blog;
-        })
+        ?.filter((relation: any) => relation.blog)
         ?.reduce((acc: any[], relation: any) => {
           const existingIndex = acc.findIndex(b => b.id === relation.blog.id);
           if (existingIndex === -1) {
@@ -81,6 +76,7 @@ export function transformUserData(userData: any): User {
               description: relation.blog.description,
               imageURL: relation.blog.image_url,
               commentCount: relation.blog.comment_count || 0,
+              groupId: relation.blog.group_id || null,
               hashtags: (relation.blog.blog_hashtags ?? []).map((j: any) => j.hashtag).filter(Boolean),
               authorName: fullName,
               authorAvatar: userData.avatar || '',

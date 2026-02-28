@@ -19,7 +19,7 @@ interface SubscriptionsTableProps {
   onNavigateToGroup: (id: string) => void;
   onNavigateToAmendment: (id: string) => void;
   onNavigateToEvent: (id: string) => void;
-  onNavigateToBlog: (id: string) => void;
+  onNavigateToBlog: (id: string, groupId?: string | null) => void;
 }
 
 export function SubscriptionsTable({
@@ -70,7 +70,7 @@ export function SubscriptionsTable({
         type: 'Blog',
         icon: BookOpen,
         avatar: subscription.blog.imageURL || subscription.blog.thumbnailURL,
-        onNavigate: () => onNavigateToBlog(subscription.blog.id),
+        onNavigate: () => onNavigateToBlog(subscription.blog.id, subscription.blog.group_id),
       };
     }
     return null;

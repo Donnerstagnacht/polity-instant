@@ -34,9 +34,11 @@
  */
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useZero } from '@rocicorp/zero/react';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useDocumentState } from '@/zero/documents/useDocumentState';
+import { mutators } from '@/zero/mutators';
 import { toast } from 'sonner';
 import {
   adaptAmendmentToEntity,
@@ -44,13 +46,6 @@ import {
   adaptDocumentToEntity,
   adaptGroupDocumentToEntity,
 } from '../logic/entity-adapter';
-import {
-  updateEntityContent,
-  updateEntityTitle,
-  updateEntityDiscussions,
-  updateEntityMode,
-  restoreVersion,
-} from '../utils/version-utils';
 import type {
   EditorEntityType,
   EditorEntity,
@@ -86,6 +81,7 @@ interface UseEditorOptions {
  */
 export function useEditor(options: UseEditorOptions): EditorState & EditorActions {
   const { entityType, entityId, userId, groupId } = options;
+  const zero = useZero();
 
   // Query data based on entity type via facade hooks
   const amId = entityType === 'amendment' ? entityId : undefined;
@@ -119,6 +115,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
   // Refs to prevent re-renders and update loops
   const isInitialized = useRef(false);
   const titleSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const contentSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastSaveTime = useRef<number>(0);
   const isLocalChange = useRef(false);
   const lastRemoteUpdate = useRef<number>(0);
@@ -217,9 +214,31 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
     }
   }, [entity?.content]);
 
-  // Content change handler - throttled saves
-  const setContent = useCallback(
+  // Persist content via Zero
+  const saveContent = useCallback(
     async (newContent: any[]) => {
+      setSaveStatus('saving');
+      try {
+        if (entityType === 'blog') {
+          await zero.mutate(mutators.blogs.update({ id: contentEntityId, content: newContent }));
+        } else {
+          await zero.mutate(mutators.documents.updateContent({ id: contentEntityId, content: newContent }));
+        }
+        lastSaveTime.current = Date.now();
+        lastRemoteUpdate.current = Date.now();
+        setSaveStatus('saved');
+        setHasUnsavedChanges(false);
+      } catch (error) {
+        console.error('Content save failed:', error);
+        setSaveStatus('error');
+      }
+    },
+    [entityType, contentEntityId, zero]
+  );
+
+  // Content change handler - throttled with trailing edge
+  const setContent = useCallback(
+    (newContent: any[]) => {
       if (!contentEntityId || !userId) {
         console.warn('⚠️ Cannot save: missing entityId or userId', { contentEntityId, userId });
         return;
@@ -229,25 +248,23 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       setContentState(newContent);
       setHasUnsavedChanges(true);
 
-      const now = Date.now();
-      if (now - lastSaveTime.current < 1000) {
-        return;
+      // Clear any pending trailing save
+      if (contentSaveTimeoutRef.current) {
+        clearTimeout(contentSaveTimeoutRef.current);
       }
 
-      lastSaveTime.current = now;
-      setSaveStatus('saving');
-
-      try {
-        await updateEntityContent(entityType, contentEntityId, newContent);
-        lastRemoteUpdate.current = now;
-        setSaveStatus('saved');
-        setHasUnsavedChanges(false);
-      } catch (error) {
-        console.error('Content save failed:', error);
-        setSaveStatus('error');
+      const now = Date.now();
+      if (now - lastSaveTime.current >= 1000) {
+        // Leading edge: save immediately
+        saveContent(newContent);
+      } else {
+        // Trailing edge: schedule save after throttle window
+        contentSaveTimeoutRef.current = setTimeout(() => {
+          saveContent(newContent);
+        }, 1000);
       }
     },
-    [entityType, contentEntityId, userId]
+    [contentEntityId, userId, saveContent]
   );
 
   // Title change handler - debounced
@@ -264,7 +281,11 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
 
         setIsSavingTitle(true);
         try {
-          await updateEntityTitle(entityType, contentEntityId, newTitle);
+          if (entityType === 'blog') {
+            await zero.mutate(mutators.blogs.update({ id: contentEntityId, title: newTitle }));
+          } else {
+            // Documents don't have a title field — title lives on the parent entity
+          }
         } catch (error) {
           console.error('Failed to save title:', error);
           toast.error('Failed to save title');
@@ -273,7 +294,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         }
       }, 500);
     },
-    [entityType, contentEntityId, userId]
+    [entityType, contentEntityId, userId, zero]
   );
 
   // Discussions change handler
@@ -285,12 +306,16 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       if (!contentEntityId || !userId) return;
 
       try {
-        await updateEntityDiscussions(entityType, contentEntityId, newDiscussions);
+        if (entityType === 'blog') {
+          await zero.mutate(mutators.blogs.update({ id: contentEntityId, discussions: newDiscussions }));
+        } else {
+          await zero.mutate(mutators.documents.updateContent({ id: contentEntityId, content: newDiscussions as any }));
+        }
       } catch (error) {
         console.error('Failed to save discussions:', error);
       }
     },
-    [entityType, contentEntityId, userId]
+    [entityType, contentEntityId, userId, zero]
   );
 
   // Mode change handler
@@ -299,7 +324,11 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       if (!contentEntityId) return;
 
       try {
-        await updateEntityMode(entityType, contentEntityId, newMode);
+        if (entityType === 'blog') {
+          await zero.mutate(mutators.blogs.update({ id: contentEntityId, editing_mode: newMode }));
+        } else {
+          await zero.mutate(mutators.documents.updateContent({ id: contentEntityId, editing_mode: newMode }));
+        }
         setModeState(newMode);
         toast.success(`Mode changed to ${newMode}`);
       } catch (error) {
@@ -307,7 +336,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         toast.error('Failed to change mode');
       }
     },
-    [entityType, contentEntityId]
+    [entityType, contentEntityId, zero]
   );
 
   // Restore version handler
@@ -316,7 +345,11 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       if (!contentEntityId || !userId) return;
 
       try {
-        await restoreVersion(entityType, contentEntityId, versionContent);
+        if (entityType === 'blog') {
+          await zero.mutate(mutators.blogs.update({ id: contentEntityId, content: versionContent }));
+        } else {
+          await zero.mutate(mutators.documents.updateContent({ id: contentEntityId, content: versionContent }));
+        }
         isLocalChange.current = true;
         setContentState(versionContent);
         lastSaveTime.current = Date.now();
@@ -327,7 +360,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         toast.error('Failed to restore version');
       }
     },
-    [entityType, contentEntityId, userId]
+    [entityType, contentEntityId, userId, zero]
   );
 
   // Access checks

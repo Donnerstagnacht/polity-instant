@@ -1,6 +1,6 @@
 import { useGroupBlogsAndStatementsPage } from '@/features/groups/hooks/useGroupBlogsAndStatementsPage';
-import { StatementCard } from '@/features/statements/ui/StatementCard';
-import { GroupBlogCard } from './GroupBlogCard';
+import { BlogTimelineCard } from '@/features/timeline/ui/cards/BlogTimelineCard';
+import { StatementTimelineCard } from '@/features/timeline/ui/cards/StatementTimelineCard';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Button } from '@/features/shared/ui/ui/button';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -104,18 +104,29 @@ export function GroupBlogsAndStatementsPage({ groupId }: GroupBlogsAndStatements
           <div className="grid gap-4 sm:grid-cols-2">
             {blogs.map((blog: any) => (
               <div key={blog.id} className="relative">
-                <GroupBlogCard blog={blog} groupId={groupId} />
+                <BlogTimelineCard
+                  blog={{
+                    id: blog.id,
+                    title: blog.title ?? '',
+                    excerpt: blog.description,
+                    coverImageUrl: blog.image_url,
+                    commentCount: blog.comment_count,
+                    groupId: blog.group_id,
+                    publishedAt: blog.date,
+                    hashtags: (blog.blog_hashtags ?? []).map((bh: any) => bh.hashtag).filter(Boolean),
+                  }}
+                />
                 {canManageBlogs && (
                   <div className="absolute right-2 top-2 flex gap-1">
                     <Link to={`/group/${groupId}/blog/${blog.id}/editor`}>
-                      <Button variant="ghost" size="icon" className="h-7 w-7">
+                      <Button variant="ghost" size="icon" className="h-7 w-7 bg-background/80 backdrop-blur-sm">
                         <Edit className="h-3.5 w-3.5" />
                       </Button>
                     </Link>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      className="h-7 w-7 bg-background/80 backdrop-blur-sm text-destructive hover:text-destructive"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -140,9 +151,26 @@ export function GroupBlogsAndStatementsPage({ groupId }: GroupBlogsAndStatements
               <MessageSquareText className="h-5 w-5" /> {t('features.statements.title')}
             </h2>
           )}
-          <div className="space-y-2">
+          <div className="grid gap-4 sm:grid-cols-2">
             {statements.map((s: any) => (
-              <StatementCard key={s.id} statement={s} />
+              <StatementTimelineCard
+                key={s.id}
+                statement={{
+                  id: s.id,
+                  content: s.text ?? '',
+                  authorName: s.user
+                    ? [s.user.first_name, s.user.last_name].filter(Boolean).join(' ') || s.user.handle || ''
+                    : '',
+                  authorAvatar: s.user?.avatar,
+                  supportCount: s.upvotes,
+                  opposeCount: s.downvotes,
+                  commentCount: s.comment_count,
+                  imageUrl: s.image_url,
+                  videoUrl: s.video_url,
+                  groupId: s.group_id,
+                  hashtags: (s.statement_hashtags ?? []).map((sh: any) => sh.hashtag).filter(Boolean),
+                }}
+              />
             ))}
           </div>
         </div>

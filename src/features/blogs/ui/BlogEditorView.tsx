@@ -79,6 +79,12 @@ export function BlogEditorView({ blogId, userId, userRecord, userColor }: BlogEd
       (b: any) => b.user?.id === userId && (b.status === 'owner' || b.status === 'admin')
     );
 
+  // Compute context-aware URLs based on blog ownership
+  const blogOwner = blog?.bloggers?.find((b: any) => b.status === 'owner')?.user;
+  const blogViewUrl = blog?.group_id
+    ? `/group/${blog.group_id}/blog/${blogId}`
+    : `/user/${blogOwner?.id || userId}/blog/${blogId}`;
+
   if (blogLoading) {
     return (
       <Card>
@@ -94,7 +100,7 @@ export function BlogEditorView({ blogId, userId, userRecord, userColor }: BlogEd
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-20 text-center">
           <p className="mb-4 text-lg text-muted-foreground">Blog not found.</p>
-          <Button onClick={() => navigate({ to: '/blog' })}>
+          <Button onClick={() => navigate({ to: '/' })}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Blogs
           </Button>
@@ -108,7 +114,7 @@ export function BlogEditorView({ blogId, userId, userRecord, userColor }: BlogEd
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-20 text-center">
           <p className="mb-4 text-lg text-muted-foreground">You don't have access to this blog.</p>
-          <Button onClick={() => navigate({ to: `/blog/${blogId}` })}>
+          <Button onClick={() => navigate({ to: blogViewUrl })}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Blog
           </Button>
@@ -120,7 +126,7 @@ export function BlogEditorView({ blogId, userId, userRecord, userColor }: BlogEd
   return (
     <div className="container mx-auto p-8">
       <div className="mb-6 flex items-center justify-between">
-        <Link to={`/blog/${blogId}`}>
+        <Link to={blogViewUrl}>
           <Button variant="ghost">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Blog
@@ -130,7 +136,7 @@ export function BlogEditorView({ blogId, userId, userRecord, userColor }: BlogEd
         <div className="flex items-center gap-4">
           {/* Share Button */}
           <ShareButton
-            url={`/blog/${blogId}`}
+            url={blogViewUrl}
             title={blogTitle || blog.title || ''}
             description={blog.description || ''}
           />

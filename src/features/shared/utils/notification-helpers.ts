@@ -2662,6 +2662,12 @@ export async function notifyAmendmentNewSubscriber(params: {
 // BLOG NOTIFICATIONS
 // ============================================================================
 
+function buildBlogUrl(blogId: string, groupId?: string, ownerId?: string, suffix = ''): string {
+  if (groupId) return `/group/${groupId}/blog/${blogId}${suffix}`;
+  if (ownerId) return `/user/${ownerId}/blog/${blogId}${suffix}`;
+  return `/blog/${blogId}${suffix}`;
+}
+
 /**
  * Send notification when a new subscriber joins the blog
  */
@@ -2670,6 +2676,8 @@ export async function notifyBlogNewSubscriber(params: {
   senderName: string;
   blogId: string;
   blogTitle: string;
+  groupId?: string;
+  ownerId?: string;
 }) {
   return createNotification({
     senderId: params.senderId,
@@ -2678,7 +2686,7 @@ export async function notifyBlogNewSubscriber(params: {
     type: 'blog_new_subscriber',
     title: 'New Subscriber',
     message: `${params.senderName} has subscribed to ${params.blogTitle}`,
-    actionUrl: `/blog/${params.blogId}`,
+    actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
     relatedUserId: params.senderId,
@@ -2695,6 +2703,8 @@ export async function notifyBlogVoted(params: {
   blogId: string;
   blogTitle: string;
   voteType: 'upvote' | 'downvote';
+  groupId?: string;
+  ownerId?: string;
 }) {
   return createNotification({
     senderId: params.senderId,
@@ -2704,7 +2714,7 @@ export async function notifyBlogVoted(params: {
     type: 'blog_vote_cast',
     title: params.voteType === 'upvote' ? 'Blog Upvoted' : 'Blog Downvoted',
     message: `${params.senderName} has ${params.voteType}d ${params.blogTitle}`,
-    actionUrl: `/blog/${params.blogId}`,
+    actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
   });
@@ -2718,6 +2728,8 @@ export async function notifyBloggerJoined(params: {
   senderName: string;
   blogId: string;
   blogTitle: string;
+  groupId?: string;
+  ownerId?: string;
 }) {
   return createNotification({
     senderId: params.senderId,
@@ -2726,7 +2738,7 @@ export async function notifyBloggerJoined(params: {
     type: 'blog_writer_joined',
     title: 'Writer Joined',
     message: `${params.senderName} has joined ${params.blogTitle} as a writer`,
-    actionUrl: `/blog/${params.blogId}`,
+    actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
     relatedUserId: params.senderId,
@@ -2742,6 +2754,8 @@ export async function notifyBloggerRoleChanged(params: {
   blogId: string;
   blogTitle: string;
   newRole: string;
+  groupId?: string;
+  ownerId?: string;
 }) {
   return createNotification({
     senderId: params.senderId,
@@ -2751,7 +2765,7 @@ export async function notifyBloggerRoleChanged(params: {
     type: 'blog_role_changed',
     title: 'Role Changed',
     message: `Your role in ${params.blogTitle} has been changed to ${params.newRole}`,
-    actionUrl: `/blog/${params.blogId}`,
+    actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
   });
@@ -2765,6 +2779,8 @@ export async function notifyBlogCommentAdded(params: {
   senderName: string;
   blogId: string;
   blogTitle: string;
+  groupId?: string;
+  ownerId?: string;
 }) {
   return createNotification({
     senderId: params.senderId,
@@ -2773,7 +2789,7 @@ export async function notifyBlogCommentAdded(params: {
     type: 'blog_comment_added',
     title: 'New Comment',
     message: `${params.senderName} commented on ${params.blogTitle}`,
-    actionUrl: `/blog/${params.blogId}`,
+    actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
     relatedUserId: params.senderId,
@@ -2788,6 +2804,8 @@ export async function notifyBlogWriterRequest(params: {
   senderName: string;
   blogId: string;
   blogTitle: string;
+  groupId?: string;
+  ownerId?: string;
 }) {
   return createNotification({
     senderId: params.senderId,
@@ -2796,7 +2814,7 @@ export async function notifyBlogWriterRequest(params: {
     type: 'blog_writer_request',
     title: 'Writer Request',
     message: `${params.senderName} has requested to write for ${params.blogTitle}`,
-    actionUrl: `/blog/${params.blogId}`,
+    actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
     relatedUserId: params.senderId,
@@ -2811,6 +2829,8 @@ export async function notifyBloggerInvited(params: {
   recipientUserId: string;
   blogId: string;
   blogTitle: string;
+  groupId?: string;
+  ownerId?: string;
 }) {
   return createNotification({
     senderId: params.senderId,
@@ -2820,7 +2840,7 @@ export async function notifyBloggerInvited(params: {
     type: 'blog_writer_invite',
     title: 'Writer Invitation',
     message: `You've been invited to write for ${params.blogTitle}`,
-    actionUrl: `/blog/${params.blogId}`,
+    actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
   });
@@ -2834,6 +2854,8 @@ export async function notifyBloggerRemoved(params: {
   recipientUserId: string;
   blogId: string;
   blogTitle: string;
+  groupId?: string;
+  ownerId?: string;
 }) {
   return createNotification({
     senderId: params.senderId,
@@ -2843,7 +2865,7 @@ export async function notifyBloggerRemoved(params: {
     type: 'blog_writer_removed',
     title: 'Removed from Blog',
     message: `You have been removed from ${params.blogTitle}`,
-    actionUrl: `/blog/${params.blogId}`,
+    actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
   });
@@ -2857,6 +2879,8 @@ export async function notifyBlogRoleCreated(params: {
   blogId: string;
   blogTitle: string;
   roleName: string;
+  groupId?: string;
+  ownerId?: string;
 }) {
   return createNotification({
     senderId: params.senderId,
@@ -2865,7 +2889,7 @@ export async function notifyBlogRoleCreated(params: {
     type: 'blog_role_created',
     title: 'New Role Created',
     message: `A new role "${params.roleName}" has been created in ${params.blogTitle}`,
-    actionUrl: `/blog/${params.blogId}/bloggers`,
+    actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId, '/bloggers'),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
   });
@@ -2879,6 +2903,8 @@ export async function notifyBlogRoleDeleted(params: {
   blogId: string;
   blogTitle: string;
   roleName: string;
+  groupId?: string;
+  ownerId?: string;
 }) {
   return createNotification({
     senderId: params.senderId,
@@ -2887,7 +2913,7 @@ export async function notifyBlogRoleDeleted(params: {
     type: 'blog_role_deleted',
     title: 'Role Deleted',
     message: `The role "${params.roleName}" has been deleted from ${params.blogTitle}`,
-    actionUrl: `/blog/${params.blogId}/bloggers`,
+    actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId, '/bloggers'),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
   });
@@ -3301,6 +3327,8 @@ export async function notifyBlogInvitationAccepted(params: {
   senderName: string;
   blogId: string;
   blogTitle: string;
+  groupId?: string;
+  ownerId?: string;
 }) {
   return createNotification({
     senderId: params.senderId,
@@ -3309,7 +3337,7 @@ export async function notifyBlogInvitationAccepted(params: {
     type: 'blog_invitation_accepted',
     title: 'Invitation Accepted',
     message: `${params.senderName} has accepted the invitation to write for ${params.blogTitle}`,
-    actionUrl: `/blog/${params.blogId}/bloggers`,
+    actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId, '/bloggers'),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
     relatedUserId: params.senderId,
@@ -3324,6 +3352,8 @@ export async function notifyBlogInvitationDeclined(params: {
   senderName: string;
   blogId: string;
   blogTitle: string;
+  groupId?: string;
+  ownerId?: string;
 }) {
   return createNotification({
     senderId: params.senderId,
@@ -3332,7 +3362,7 @@ export async function notifyBlogInvitationDeclined(params: {
     type: 'blog_invitation_declined',
     title: 'Invitation Declined',
     message: `${params.senderName} has declined the invitation to write for ${params.blogTitle}`,
-    actionUrl: `/blog/${params.blogId}/bloggers`,
+    actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId, '/bloggers'),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
     relatedUserId: params.senderId,
@@ -3347,6 +3377,8 @@ export async function notifyBlogRequestWithdrawn(params: {
   senderName: string;
   blogId: string;
   blogTitle: string;
+  groupId?: string;
+  ownerId?: string;
 }) {
   return createNotification({
     senderId: params.senderId,
@@ -3355,7 +3387,7 @@ export async function notifyBlogRequestWithdrawn(params: {
     type: 'blog_request_withdrawn',
     title: 'Request Withdrawn',
     message: `${params.senderName} has withdrawn their request to write for ${params.blogTitle}`,
-    actionUrl: `/blog/${params.blogId}/bloggers`,
+    actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId, '/bloggers'),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
     relatedUserId: params.senderId,
@@ -3370,6 +3402,8 @@ export async function notifyBlogWriterLeft(params: {
   senderName: string;
   blogId: string;
   blogTitle: string;
+  groupId?: string;
+  ownerId?: string;
 }) {
   return createNotification({
     senderId: params.senderId,
@@ -3378,7 +3412,7 @@ export async function notifyBlogWriterLeft(params: {
     type: 'blog_writer_left',
     title: 'Writer Left',
     message: `${params.senderName} has left ${params.blogTitle}`,
-    actionUrl: `/blog/${params.blogId}/bloggers`,
+    actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId, '/bloggers'),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
     relatedUserId: params.senderId,
@@ -3489,6 +3523,8 @@ export async function notifyBlogPublished(params: {
   senderId: string;
   blogId: string;
   blogTitle: string;
+  groupId?: string;
+  ownerId?: string;
 }) {
   return createNotification({
     senderId: params.senderId,
@@ -3497,7 +3533,7 @@ export async function notifyBlogPublished(params: {
     type: 'blog_published',
     title: 'Blog Published',
     message: `${params.blogTitle} has been published`,
-    actionUrl: `/blog/${params.blogId}`,
+    actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
   });

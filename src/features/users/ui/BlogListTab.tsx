@@ -6,7 +6,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface BlogListTabProps {
   blogs: {
-    id: number;
+    id: string;
     title: string;
     date: string;
     description?: string;
@@ -15,12 +15,14 @@ interface BlogListTabProps {
     hashtags?: { id: string; tag: string }[];
     authorName?: string;
     authorAvatar?: string;
+    groupId?: string | null;
   }[];
+  userId?: string;
   searchValue: string;
   onSearchChange: (value: string) => void;
 }
 
-export const BlogListTab: React.FC<BlogListTabProps> = ({ blogs, searchValue, onSearchChange }) => {
+export const BlogListTab: React.FC<BlogListTabProps> = ({ blogs, userId, searchValue, onSearchChange }) => {
   const { t } = useTranslation();
   const filteredBlogs = useMemo(() => {
     const term = (searchValue ?? '').toLowerCase();
@@ -58,6 +60,8 @@ export const BlogListTab: React.FC<BlogListTabProps> = ({ blogs, searchValue, on
                   hashtags: blog.hashtags,
                   authorName: blog.authorName ?? t('common.unknownUser'),
                   authorAvatar: blog.authorAvatar,
+                  authorId: userId,
+                  groupId: blog.groupId,
                   publishedAt: blog.date,
                 }}
               />

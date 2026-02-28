@@ -102,15 +102,17 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
       try {
         if (formData.isPublic && actorId) {
           if (formData.imageURL && formData.imageURL !== blog.image_url) {
-            await createTimelineEvent({ data: {
-              eventType: 'image_uploaded',
-              entityType: 'blog',
-              entityId: blogId,
-              actorId,
-              title: `${formData.title} image updated`,
-              description: 'A new image was uploaded to this blog post',
-              contentType: 'image',
-            } });
+            await createTimelineEvent({
+              data: {
+                eventType: 'image_uploaded',
+                entityType: 'blog',
+                entityId: blogId,
+                actorId,
+                title: `${formData.title} image updated`,
+                description: 'A new image was uploaded to this blog post',
+                contentType: 'image',
+              },
+            });
           }
         }
 
@@ -121,7 +123,9 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
             blogTitle: formData.title,
           });
         }
-      } catch { /* timeline/notification delivery is best-effort */ }
+      } catch {
+        /* timeline/notification delivery is best-effort */
+      }
 
       // Sync hashtags via junction tables
       await commonActions.syncEntityHashtags(
@@ -133,7 +137,14 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
       );
 
       toast.success('Blog updated successfully');
-      navigate({ to: `/blog/${blogId}` });
+      if (blog?.group_id) {
+        navigate({
+          to: '/group/$id/blog/$entryId',
+          params: { id: blog.group_id, entryId: blogId },
+        });
+      } else {
+        navigate({ to: '/user/$id/blog/$entryId', params: { id: actorId || '', entryId: blogId } });
+      }
     } catch (error) {
       console.error('Update error:', error);
       toast.error('Failed to update blog');

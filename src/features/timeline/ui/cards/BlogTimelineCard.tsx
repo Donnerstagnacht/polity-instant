@@ -28,6 +28,8 @@ export interface BlogTimelineCardProps {
     readingTimeMinutes?: number;
     authorName?: string;
     authorAvatar?: string;
+    authorId?: string;
+    groupId?: string | null;
     publishedAt?: string | Date;
     readProgress?: number; // 0-100, how much user has read
     commentCount?: number;
@@ -65,6 +67,12 @@ export function BlogTimelineCard({ blog, className }: BlogTimelineCardProps) {
   const subscription = useSubscribeBlog(blog.id);
   const blogStyle = CONTENT_TYPE_CONFIG.blog;
 
+  const blogUrl = blog.groupId
+    ? `/group/${blog.groupId}/blog/${blog.id}`
+    : blog.authorId
+      ? `/user/${blog.authorId}/blog/${blog.id}`
+      : `/blog/${blog.id}`;
+
   const stats = [
     {
       icon: Users,
@@ -83,7 +91,7 @@ export function BlogTimelineCard({ blog, className }: BlogTimelineCardProps) {
   ];
 
   return (
-    <TimelineCardBase contentType="blog" className={className} href={`/blog/${blog.id}`}>
+    <TimelineCardBase contentType="blog" className={className} href={blogUrl}>
       {/* Cover Image or Gradient Header */}
       {blog.coverImageUrl ? (
         <div className="relative aspect-video">
@@ -98,7 +106,7 @@ export function BlogTimelineCard({ blog, className }: BlogTimelineCardProps) {
           {/* Title Overlay */}
           <div className="absolute bottom-0 left-0 right-0 p-4">
             <h3 className="line-clamp-2 text-lg font-bold leading-tight text-white">
-              <Link to={`/blog/${blog.id}`} onClick={e => e.stopPropagation()} className="hover:underline">
+              <Link to={blogUrl} onClick={e => e.stopPropagation()} className="hover:underline">
                 {blog.title}
               </Link>
             </h3>
@@ -111,7 +119,7 @@ export function BlogTimelineCard({ blog, className }: BlogTimelineCardProps) {
             <TimelineCardBadge label={t('features.timeline.contentTypes.blog')} icon={BookOpen} />
           </div>
           <h3 className="line-clamp-2 text-lg font-bold leading-tight">
-            <Link to={`/blog/${blog.id}`} onClick={e => e.stopPropagation()} className="hover:underline">
+            <Link to={blogUrl} onClick={e => e.stopPropagation()} className="hover:underline">
               {blog.title}
             </Link>
           </h3>
@@ -122,7 +130,7 @@ export function BlogTimelineCard({ blog, className }: BlogTimelineCardProps) {
         {/* Title (if there's a cover image, it's in the overlay) */}
         {blog.coverImageUrl && (
           <h3 className="mb-2 line-clamp-2 text-base font-bold leading-tight">
-            <Link to={`/blog/${blog.id}`} onClick={e => e.stopPropagation()} className="hover:underline">
+            <Link to={blogUrl} onClick={e => e.stopPropagation()} className="hover:underline">
               {blog.title}
             </Link>
           </h3>
@@ -216,7 +224,7 @@ export function BlogTimelineCard({ blog, className }: BlogTimelineCardProps) {
         {/* Share Button */}
         <div onClick={e => e.preventDefault()}>
           <ShareButton
-            url={`/blog/${blog.id}`}
+            url={blogUrl}
             title={blog.title}
             description={blog.excerpt || ''}
             variant="outline"

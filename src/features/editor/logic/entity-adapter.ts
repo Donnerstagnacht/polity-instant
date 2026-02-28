@@ -102,9 +102,9 @@ export function adaptBlogToEntity(blog: any): EditorEntity | null {
 
   const collaborators: EditorCollaborator[] = [];
 
-  // Add bloggers as collaborators
-  if (blog.blogRoleBloggers) {
-    blog.blogRoleBloggers.forEach((blogger: any) => {
+  // Add bloggers as collaborators (Zero relation name is 'bloggers')
+  if (blog.bloggers) {
+    blog.bloggers.forEach((blogger: any) => {
       if (blogger.user?.id) {
         collaborators.push({
           id: blogger.id,
@@ -128,7 +128,7 @@ export function adaptBlogToEntity(blog: any): EditorEntity | null {
   }
 
   // Find owner from bloggers
-  const ownerBlogger = blog.blogRoleBloggers?.find((b: any) => b.status === 'owner');
+  const ownerBlogger = blog.bloggers?.find((b: any) => b.status === 'owner');
   const owner: EditorUser | undefined = ownerBlogger?.user
     ? {
         id: ownerBlogger.user.id,
@@ -143,6 +143,7 @@ export function adaptBlogToEntity(blog: any): EditorEntity | null {
     blogId: blog.id,
     blogDate: blog.date,
     blogUpvotes: blog.upvotes,
+    groupId: blog.group_id,
   };
 
   return {
@@ -150,9 +151,9 @@ export function adaptBlogToEntity(blog: any): EditorEntity | null {
     title: blog.title || '',
     content: blog.content || [],
     discussions: (blog.discussions || []) as TDiscussion[],
-    editingMode: (blog.editingMode as EditorMode) || 'edit',
-    isPublic: blog.isPublic ?? true,
-    updatedAt: blog.updatedAt || Date.now(),
+    editingMode: (blog.editing_mode as EditorMode) || 'edit',
+    isPublic: blog.is_public ?? true,
+    updatedAt: blog.updated_at || Date.now(),
     owner,
     collaborators,
     metadata,

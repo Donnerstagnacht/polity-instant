@@ -6,6 +6,7 @@ export const thread = table('thread')
     document_id: string().optional(),
     amendment_id: string().optional(),
     statement_id: string().optional(),
+    blog_id: string().optional(),
     user_id: string(),
     content: string().optional(),
     status: string(),

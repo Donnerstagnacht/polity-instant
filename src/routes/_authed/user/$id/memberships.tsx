@@ -133,7 +133,7 @@ function UserMembershipsPage() {
             onDeclineInvitation={declineBlogInvitation}
             onLeave={leaveBlog}
             onWithdrawRequest={withdrawBlogRequest}
-            onNavigate={(blogId) => navigate({ to: `/blog/${blogId}` })}
+            onNavigate={(blogId) => navigate({ to: '/user/$id/blog/$entryId', params: { id, entryId: blogId } })}
           />
         </TabsContent>
       </Tabs>

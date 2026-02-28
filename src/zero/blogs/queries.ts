@@ -120,17 +120,21 @@ export const blogQueries = {
         .related('blog')
   ),
 
-  // All comments with nested relations (no blog FK in schema)
-  allComments: defineQuery(
-    z.object({}),
-    () =>
-      zql.comment
-        .related('user')
-        .related('votes', q => q.related('user'))
-        .related('parent')
-        .related('replies', q =>
-          q.related('user').related('votes', q2 => q2.related('user'))
+  // Blog thread with comments (one thread per blog via blog_id FK)
+  blogThread: defineQuery(
+    z.object({ blog_id: z.string() }),
+    ({ args: { blog_id } }) =>
+      zql.thread
+        .where('blog_id', blog_id)
+        .related('comments', q =>
+          q.related('user')
+            .related('votes', q2 => q2.related('user'))
+            .related('parent')
+            .related('replies', q2 =>
+              q2.related('user').related('votes', q3 => q3.related('user'))
+            )
         )
+        .one()
   ),
 
   bloggersByUser: defineQuery(
@@ -139,6 +143,7 @@ export const blogQueries = {
       zql.blog_blogger
         .where('user_id', user_id)
         .related('blog', q => q.related('blog_hashtags', q => q.related('hashtag')))
+        .related('user')
         .related('role')
   ),
 

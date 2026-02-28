@@ -141,7 +141,13 @@ export function BlogEdit({ blogId }: BlogEditProps) {
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate({ to: `/blog/${blogId}` })}
+            onClick={() => {
+              if (blog?.group_id) {
+                navigate({ to: '/group/$id/blog/$entryId', params: { id: blog.group_id, entryId: blogId } });
+              } else {
+                navigate({ to: '/user/$id/blog/$entryId', params: { id: user?.id || '', entryId: blogId } });
+              }
+            }}
             disabled={isSubmitting}
           >
             {t('features.blogs.editPage.cancel')}

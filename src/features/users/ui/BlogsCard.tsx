@@ -10,6 +10,8 @@ export interface BlogsCardProps {
     supporters?: number;
     likes?: number; // Legacy support
     comments?: number;
+    group_id?: string | null;
+    user_id?: string | null;
   };
   gradientClass: string;
 }
@@ -18,7 +20,11 @@ export const BlogsCard: React.FC<BlogsCardProps> = ({ blog, gradientClass }) => 
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate({ to: `/blog/${blog.id}` });
+    if (blog.group_id) {
+      navigate({ to: `/group/${blog.group_id}/blog/${blog.id}` });
+    } else if (blog.user_id) {
+      navigate({ to: `/user/${blog.user_id}/blog/${blog.id}` });
+    }
   };
 
   return (

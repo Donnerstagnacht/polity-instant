@@ -1,11 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { BlogDetail } from '@/features/blogs/ui/BlogDetail'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_authed/user/$id/blog/$entryId')({
-  component: UserBlogEntryPage,
+  component: () => <Outlet />,
 })
-
-function UserBlogEntryPage() {
-  const { entryId } = Route.useParams()
-  return <BlogDetail blogId={entryId} />
-}

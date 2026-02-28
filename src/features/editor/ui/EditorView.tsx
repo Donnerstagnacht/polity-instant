@@ -263,8 +263,13 @@ export function EditorView({
     switch (entityType) {
       case 'amendment':
         return `/amendment/${entityId}`;
-      case 'blog':
+      case 'blog': {
+        const groupId = entity?.metadata?.groupId;
+        const ownerId = entity?.owner?.id;
+        if (groupId) return `/group/${groupId}/blog/${entityId}`;
+        if (ownerId) return `/user/${ownerId}/blog/${entityId}`;
         return `/blog/${entityId}`;
+      }
       case 'document':
         return '/editor';
       case 'groupDocument':
@@ -272,7 +277,7 @@ export function EditorView({
       default:
         return '/';
     }
-  }, [entityType, entityId, entity?.metadata?.groupId]);
+  }, [entityType, entityId, entity?.metadata?.groupId, entity?.owner?.id]);
 
   const defaultBackLabel = useMemo(() => {
     switch (entityType) {

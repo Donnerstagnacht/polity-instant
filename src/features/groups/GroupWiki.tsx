@@ -308,6 +308,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
                     commentCount: blog.commentCount,
                     hashtags: blog.hashtags,
                     authorName: blog.authorName || group.name,
+                    groupId: group.id,
                     publishedAt: blog.date,
                   }}
                   className={GRADIENTS[index % GRADIENTS.length]}

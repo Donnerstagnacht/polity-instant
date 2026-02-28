@@ -375,6 +375,7 @@ export const documentCursorRelationships = relationships(documentCursor, ({ one 
 export const threadRelationships = relationships(thread, ({ one, many }) => ({
   document: one({ sourceField: ['document_id'], destSchema: document, destField: ['id'] }),
   statement: one({ sourceField: ['statement_id'], destSchema: statement, destField: ['id'] }),
+  blog: one({ sourceField: ['blog_id'], destSchema: blog, destField: ['id'] }),
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
   comments: many({ sourceField: ['id'], destSchema: comment, destField: ['thread_id'] }),
   votes: many({ sourceField: ['id'], destSchema: threadVote, destField: ['thread_id'] }),
@@ -518,6 +519,7 @@ export const blogRelationships = relationships(blog, ({ one, many }) => ({
   blog_hashtags: many({ sourceField: ['id'], destSchema: blogHashtag, destField: ['blog_id'] }),
   timeline_events: many({ sourceField: ['id'], destSchema: timelineEvent, destField: ['blog_id'] }),
   document_versions: many({ sourceField: ['id'], destSchema: documentVersion, destField: ['blog_id'] }),
+  threads: many({ sourceField: ['id'], destSchema: thread, destField: ['blog_id'] }),
 }))
 
 export const blogBloggerRelationships = relationships(blogBlogger, ({ one }) => ({

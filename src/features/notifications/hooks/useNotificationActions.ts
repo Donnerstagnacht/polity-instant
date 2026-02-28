@@ -39,7 +39,14 @@ export function useNotificationActions() {
             break;
           case 'blog':
             if (notification.relatedBlog?.id) {
-              navigate({ to: `/blog/${notification.relatedBlog.id}` });
+              const blogId = notification.relatedBlog.id;
+              if (notification.onBehalfOfGroup?.id) {
+                navigate({ to: `/group/${notification.onBehalfOfGroup.id}/blog/${blogId}` });
+              } else if (notification.relatedUser?.id) {
+                navigate({ to: `/user/${notification.relatedUser.id}/blog/${blogId}` });
+              } else if (notification.sender?.id) {
+                navigate({ to: `/user/${notification.sender.id}/blog/${blogId}` });
+              }
             }
             break;
           case 'amendment':
