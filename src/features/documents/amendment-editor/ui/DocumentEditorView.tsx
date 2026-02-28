@@ -18,7 +18,7 @@ import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx
 import { useNavigationStore } from '@/features/navigation/state/navigation.store';
 import { useScreenStore } from '@/features/shared/global-state/screen.store';
 import { useNavigation } from '@/features/navigation/state/useNavigation';
-import { useSuggestionIdAssignment } from '@/features/shared/hooks/use-suggestion-id-assignment';
+import { useSuggestionIdAssignment } from '@/features/documents/hooks/use-suggestion-id-assignment.ts';
 
 // Unified editor imports
 import {

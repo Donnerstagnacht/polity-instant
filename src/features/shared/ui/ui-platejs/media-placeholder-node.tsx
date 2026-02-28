@@ -10,7 +10,7 @@ import { PlateElement, useEditorPlugin, withHOC } from 'platejs/react';
 import { useFilePicker } from 'use-file-picker';
 
 import { cn } from '@/features/shared/utils/utils.ts';
-import { useUploadFile } from '@/features/shared/hooks/use-upload-file.ts';
+import { useUploadFile } from '@/features/file-upload/hooks/use-upload-file.ts';
 
 const CONTENT: Record<
   string,

@@ -7,7 +7,7 @@ import { useScreenResponsiveDetector, useScreenStore } from '@/features/shared/g
 import { useNavigationStore } from '@/features/navigation/state/navigation.store.tsx';
 import { useThemeInitializer } from '@/features/shared/global-state/theme.store.tsx';
 import { I18nSyncProvider } from '@/i18n/i18n-sync-provider.tsx';
-import { PWAInstallPrompt } from '@/features/pwa/pwa-install-prompt.tsx';
+import { PWAInstallPrompt } from '@/features/pwa/ui/pwa-install-prompt.tsx';
 import type {
   NavigationItem,
   NavigationType,

@@ -5,7 +5,7 @@ import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { Card, CardContent } from '@/features/shared/ui/ui/card.tsx';
 import { X, Video, Loader2 } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils.ts';
-import { useUploadFile } from '@/features/shared/hooks/use-upload-file.ts';
+import { useUploadFile } from '@/features/file-upload/hooks/use-upload-file.ts';
 import { toast } from 'sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 

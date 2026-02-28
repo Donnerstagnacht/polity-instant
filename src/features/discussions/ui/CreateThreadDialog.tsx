@@ -13,7 +13,7 @@ import {
 } from '@/features/shared/ui/ui/dialog';
 import { File, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { useUploadFile } from '@/features/shared/hooks/use-upload-file';
+import { useUploadFile } from '@/features/file-upload/hooks/use-upload-file.ts';
 import { createThread, uploadThreadFile } from '../utils/thread-operations';
 
 interface CreateThreadDialogProps {
@@ -119,7 +119,7 @@ export function CreateThreadDialog({
                   </Button>
                 </div>
               ) : (
-                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 hover:bg-muted">
+                <label className="hover:bg-muted flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4">
                   <Upload className="h-5 w-5" />
                   <span>Choose file to attach</span>
                   <input

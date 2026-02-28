@@ -4,7 +4,7 @@ import { createNavItemsUnauthenticated } from '@/features/navigation/nav-items/n
 import { useInitialRoute } from '@/features/navigation/state/useInitialRoute.tsx';
 import { useNavigate, useLocation } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
-import { useUnreadNotificationsCount, useUnreadMessagesCount } from '@/features/shared/hooks/use-unread-counts.ts';
+import { useUnreadNotificationsCount, useUnreadMessagesCount } from '@/features/navigation/state/use-unread-counts.ts';
 import { useAuth } from '@/providers/auth-provider.tsx';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState.ts';
 import type { NavigationItem } from '@/features/navigation/types/navigation.types.tsx';

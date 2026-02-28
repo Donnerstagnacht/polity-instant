@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/ava
 import { Loader2, ArrowLeft, FileText } from 'lucide-react';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { useSuggestionIdAssignment } from '@/features/shared/hooks/use-suggestion-id-assignment';
+import { useSuggestionIdAssignment } from '@/features/documents/hooks/use-suggestion-id-assignment.ts';
 import { useEditor } from '../hooks/useEditor';
 import { useEditorPresence } from '../hooks/useEditorPresence';
 import { useEditorUsers } from '../hooks/useEditorUsers';

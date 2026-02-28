@@ -1,7 +1,7 @@
 'use client';
 
 import { Bell, BellOff, Loader2 } from 'lucide-react';
-import { usePushSubscription } from '@/features/shared/hooks/usePushSubscription.ts';
+import { usePushSubscription } from '@/features/pwa/hooks/usePushSubscription.ts';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card.tsx';
