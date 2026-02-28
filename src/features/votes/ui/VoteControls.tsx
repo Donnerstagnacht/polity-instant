@@ -1,15 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Card, CardContent } from '@/features/shared/ui/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Check, X, Minus } from 'lucide-react';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { toast } from 'sonner';
-import { useTranslation } from '@/hooks/use-translation';
-import { notifyChangeRequestVoteCast } from '@/utils/notification-helpers';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { notifyChangeRequestVoteCast } from '@/features/shared/utils/notification-helpers';
 
 interface VoteControlsProps {
   changeRequestId: string;

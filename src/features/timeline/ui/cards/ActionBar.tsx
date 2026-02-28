@@ -14,17 +14,17 @@ import {
   ThumbsDown,
   HelpCircle,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { cn } from '@/utils/utils';
-import { useTranslation } from '@/hooks/use-translation';
+} from '@/features/shared/ui/ui/dropdown-menu';
+import { cn } from '@/features/shared/utils/utils';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export interface ActionBarProps {
   /** Entity ID for actions */

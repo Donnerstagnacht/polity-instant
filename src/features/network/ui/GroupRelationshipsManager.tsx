@@ -1,10 +1,10 @@
 'use client';
 
 import { useGroupData } from '@/features/groups/hooks/useGroupData';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { PermissionGuard } from '@/features/auth/PermissionGuard';
 import { LinkGroupDialog } from './LinkGroupDialog';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   Table,
   TableBody,
@@ -12,10 +12,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from '@/features/shared/ui/ui/table';
 import { useGroupNetwork } from '@/features/network/hooks/useGroupNetwork';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Input } from '@/features/shared/ui/ui/input';
+import { Button } from '@/features/shared/ui/ui/button';
 import { Search, Pencil, Trash2 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import {
@@ -24,7 +24,7 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-  } from '@/components/ui/select';
+  } from '@/features/shared/ui/ui/select';
 import { formatRights, RIGHT_TYPES } from '@/features/network/ui/RightFilters';
 import { RightBadge } from '@/features/network/ui/RightBadge';
 import {
@@ -37,10 +37,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+} from '@/features/shared/ui/ui/alert-dialog';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useState as useStateForDelete } from 'react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 
 interface GroupRelationshipsManagerProps {

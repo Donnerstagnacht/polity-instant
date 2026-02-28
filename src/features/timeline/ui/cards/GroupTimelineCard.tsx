@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import { Users, ScrollText, Calendar, UserPlus, UserMinus, Clock, Check, Bell } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
-import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ShareButton } from '@/components/shared/ShareButton';
-import { HashtagDisplay } from '@/components/ui/hashtag-display';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
+import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
+import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
 import { useGroupMembership } from '@/features/groups/hooks/useGroupMembership';
 import { useSubscribeGroup } from '@/features/groups/hooks/useSubscribeGroup';
 import { CONTENT_TYPE_CONFIG } from '../../constants/content-type-config';

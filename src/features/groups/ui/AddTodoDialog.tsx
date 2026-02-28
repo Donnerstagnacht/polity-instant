@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/features/shared/ui/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -10,17 +10,17 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+} from '@/features/shared/ui/ui/dialog';
+import { Input } from '@/features/shared/ui/ui/input';
+import { Label } from '@/features/shared/ui/ui/label';
+import { Textarea } from '@/features/shared/ui/ui/textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/features/shared/ui/ui/select';
 import { Plus } from 'lucide-react';
 
 interface AddTodoDialogProps {

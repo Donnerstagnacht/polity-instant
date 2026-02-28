@@ -7,9 +7,9 @@
  * and collaborators list.
  */
 
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useTranslation } from '@/hooks/use-translation';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface Collaborator {
   id: string;

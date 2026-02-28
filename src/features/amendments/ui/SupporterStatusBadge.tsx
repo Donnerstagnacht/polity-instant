@@ -7,10 +7,10 @@
 
 'use client';
 
-import { Badge } from '@/components/ui/badge';
-import { useTranslation } from '@/hooks/use-translation';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { CheckCircle, Clock, XCircle } from 'lucide-react';
-import { cn } from '@/utils/utils';
+import { cn } from '@/features/shared/utils/utils';
 
 type SupportStatus = 'active' | 'pending' | 'declined';
 

@@ -12,7 +12,7 @@ import {
   getSupportStatus,
   AMENDMENT_STATUS_COLORS,
 } from '../logic/amendmentHelpers';
-import { notifyAmendmentVoted } from '@/utils/notification-helpers';
+import { notifyAmendmentVoted } from '@/features/shared/utils/notification-helpers';
 
 export function useAmendmentWikiPage(amendmentId: string) {
   const navigate = useNavigate();

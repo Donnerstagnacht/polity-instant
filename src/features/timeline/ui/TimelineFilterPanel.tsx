@@ -1,20 +1,20 @@
 'use client';
 
 import { X, RotateCcw } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
-import { cn } from '@/utils/utils';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { cn } from '@/features/shared/utils/utils';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Checkbox } from '@/features/shared/ui/ui/checkbox';
+import { Label } from '@/features/shared/ui/ui/label';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Separator } from '@/features/shared/ui/ui/separator';
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet';
+} from '@/features/shared/ui/ui/sheet';
 import { ContentType, CONTENT_TYPE_CONFIG } from '../constants/content-type-config';
 import { DateRangeFilter, EngagementFilter, ALL_CONTENT_TYPES } from '../hooks/useTimelineFilters';
 

@@ -1,16 +1,16 @@
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/features/shared/ui/ui/card';
+import { Input } from '@/features/shared/ui/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/features/shared/ui/ui/select';
 import { Search } from 'lucide-react';
 import { TodoPriority } from '../types/todo.types';
 import { SortBy } from '../hooks/useTodoFilters';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface TodosFiltersProps {
   searchQuery: string;

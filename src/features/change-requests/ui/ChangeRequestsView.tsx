@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PageWrapper } from '@/components/layout/page-wrapper';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
+import { PageWrapper } from '@/layout/page-wrapper';
 import { ArrowLeft, FileEdit, Clock, User, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { VoteControls } from '@/features/votes/ui/VoteControls';
 import { useChangeRequests, type ChangeRequest } from '../hooks/useChangeRequests';

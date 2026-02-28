@@ -1,7 +1,7 @@
 'use client';
 
-import { cn } from '@/utils/utils';
-import { useTranslation } from '@/hooks/use-translation';
+import { cn } from '@/features/shared/utils/utils';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export interface VoteData {
   support: number;

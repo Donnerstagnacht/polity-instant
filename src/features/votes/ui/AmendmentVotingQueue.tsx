@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Progress } from '@/features/shared/ui/ui/progress';
 import {
   ArrowUp,
   ArrowDown,
@@ -21,7 +21,7 @@ import { toast } from 'sonner';
 import { useChangeRequestVoting } from '../hooks/useChangeRequestVoting';
 import { VoteButtons } from './VoteButtons';
 import { VotingPhaseIndicator } from './VotingPhaseIndicator';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface ChangeRequest {
   id: string;

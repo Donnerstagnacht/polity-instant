@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button';
+import { Button } from '@/features/shared/ui/ui/button';
 import { UserPlus, UserMinus, Clock, Check } from 'lucide-react';
 import { ParticipationStatus } from '../hooks/useEventParticipation';
 

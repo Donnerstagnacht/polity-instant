@@ -7,9 +7,9 @@
 
 'use client';
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { useTranslation } from '@/hooks/use-translation';
+import { Alert, AlertDescription, AlertTitle } from '@/features/shared/ui/ui/alert';
+import { Button } from '@/features/shared/ui/ui/button';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { CalendarX, ArrowRight, User, Clock } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { formatDistanceToNow } from 'date-fns';

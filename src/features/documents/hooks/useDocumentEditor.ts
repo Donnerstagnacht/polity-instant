@@ -13,7 +13,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import { useAllDocuments } from '@/zero/groups/useGroupState';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
-import { useAutoSave } from '@/hooks/useAutoSave';
+import { useAutoSave } from '@/features/shared/hooks/useAutoSave';
 import type { DocumentWithMetadata } from './useGroupDocuments';
 
 const DEFAULT_CONTENT = [

@@ -1,6 +1,6 @@
-import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
-import { useTranslation } from '@/hooks/use-translation'
+import { Label } from '@/features/shared/ui/ui/label'
+import { Button } from '@/features/shared/ui/ui/button'
+import { useTranslation } from '@/features/shared/hooks/use-translation'
 
 type TodoStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled'
 

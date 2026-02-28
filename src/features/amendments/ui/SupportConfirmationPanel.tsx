@@ -8,10 +8,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useTranslation } from '@/hooks/use-translation';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useSupportConfirmation } from '../hooks/useSupportConfirmation';
 import { VersionComparisonView } from './VersionComparisonView.tsx';
 import { CheckCircle, XCircle, GitCompare, Clock } from 'lucide-react';

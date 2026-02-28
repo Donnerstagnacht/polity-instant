@@ -1,11 +1,11 @@
 'use client';
 
-import { cn } from '@/utils/utils';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
+import { cn } from '@/features/shared/utils/utils';
+import { Button } from '@/features/shared/ui/ui/button';
+import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
+import { Separator } from '@/features/shared/ui/ui/separator';
 import { X, ThumbsUp, ThumbsDown, MessageSquare, ExternalLink, Vote, Award } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { StatusBadge, type DecisionStatus } from './StatusBadge';
 import { CountdownTimer } from './CountdownTimer';
 import { VoteProgressBar } from './VoteProgressBar';

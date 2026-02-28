@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { Video, Play, Eye, User } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ShareButton } from '@/components/shared/ShareButton';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/features/shared/ui/ui/dialog';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
+import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import {
   TimelineCardBase,
   TimelineCardContent,

@@ -13,10 +13,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+} from '@/features/shared/ui/ui/dialog';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Label } from '@/features/shared/ui/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/features/shared/ui/ui/radio-group';
 import { ArrowUp, ArrowDown } from 'lucide-react';
 import type { GroupRole } from '../types/group.types';
 

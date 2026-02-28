@@ -9,21 +9,21 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel';
-import { TypeAheadSelect } from '@/components/ui/type-ahead-select';
-import { TypeSelector } from '@/components/ui/type-selector';
-import { TooltipProvider } from '@/components/ui/tooltip';
+} from '@/features/shared/ui/ui/card';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Input } from '@/features/shared/ui/ui/input';
+import { Label } from '@/features/shared/ui/ui/label';
+import { Textarea } from '@/features/shared/ui/ui/textarea';
+import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/features/shared/ui/ui/carousel';
+import { TypeAheadSelect } from '@/features/shared/ui/ui/type-ahead-select';
+import { TypeSelector } from '@/features/shared/ui/ui/type-selector';
+import { TooltipProvider } from '@/features/shared/ui/ui/tooltip';
 import {
   EventSelectCard,
   AmendmentSelectCard,
   PositionSelectCard,
-} from '@/components/ui/entity-select-cards';
+} from '@/features/shared/ui/ui/entity-select-cards';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import {
   useAllEvents,
@@ -32,8 +32,8 @@ import {
 } from '@/zero/events/useEventState';
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from 'sonner';
-import { PageWrapper } from '@/components/layout/page-wrapper';
-import { notifyAgendaItemCreated } from '@/utils/notification-helpers';
+import { PageWrapper } from '@/layout/page-wrapper';
+import { notifyAgendaItemCreated } from '@/features/shared/utils/notification-helpers';
 
 export function CreateAgendaItemForm() {
   const navigate = useNavigate();

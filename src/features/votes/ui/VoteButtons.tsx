@@ -1,10 +1,10 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Badge } from '@/features/shared/ui/ui/badge';
 import { Check, X, Minus, Loader2 } from 'lucide-react';
 import { useEventVoting, type VoteValue } from '../hooks/useEventVoting';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface VoteButtonsProps {
   eventId: string;

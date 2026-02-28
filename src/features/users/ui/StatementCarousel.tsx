@@ -5,9 +5,9 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from '@/components/ui/carousel';
+} from '@/features/shared/ui/ui/carousel';
 import { StatementTimelineCard } from '@/features/timeline/ui/cards/StatementTimelineCard';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface Statement {
   id: number;

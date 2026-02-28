@@ -7,7 +7,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { useAuth } from '@/providers/auth-provider';
-import { notifySupportConfirmed, notifySupportDeclined } from '@/utils/notification-helpers';
+import { notifySupportConfirmed, notifySupportDeclined } from '@/features/shared/utils/notification-helpers';
 import { toast } from 'sonner';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';

@@ -2,11 +2,11 @@
 
 import { Vote, ThumbsUp, ThumbsDown, Clock, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
-import { useTranslation } from '@/hooks/use-translation';
-import { cn } from '@/utils/utils';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { ShareButton } from '@/components/shared/ShareButton';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { cn } from '@/features/shared/utils/utils';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Progress } from '@/features/shared/ui/ui/progress';
+import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import {
   TimelineCardBase,
   TimelineCardHeader,

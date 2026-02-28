@@ -1,28 +1,28 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from '@/components/ui/carousel';
+} from '@/features/shared/ui/ui/carousel';
 import { LinkGroupDialog } from '@/features/network/ui/LinkGroupDialog';
 import { UserCheck, BookOpen, Network } from 'lucide-react';
-import { HashtagDisplay } from '@/components/ui/hashtag-display';
+import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
 import { BlogTimelineCard } from '@/features/timeline/ui/cards/BlogTimelineCard';
 import { GRADIENTS } from '@/features/users/state/gradientColors';
-import { StatsBar } from '@/components/ui/StatsBar';
-import { ActionBar } from '@/components/ui/ActionBar';
-import { SubscribeButton, MembershipButton } from '@/components/shared/action-buttons';
+import { StatsBar } from '@/features/shared/ui/ui/StatsBar';
+import { ActionBar } from '@/features/shared/ui/ui/ActionBar';
+import { SubscribeButton, MembershipButton } from 'src/features/shared/ui/action-buttons';
 import { SocialBar } from '@/features/users/ui/SocialBar';
-import { InfoTabs } from '@/components/shared/InfoTabs';
+import { InfoTabs } from '@/features/shared/ui/wiki/InfoTabs.tsx';
 import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
-import { useTranslation } from '@/hooks/use-translation';
-import { ShareButton } from '@/components/shared/ShareButton';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { useGroupWikiPage } from '@/features/groups/hooks/useGroupWikiPage';
 import { groupRelationshipsByGroup } from '@/features/groups/logic/groupWikiHelpers';
 

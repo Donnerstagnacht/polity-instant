@@ -1,15 +1,15 @@
 import { useNavigate } from '@tanstack/react-router';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Card, CardContent } from '@/features/shared/ui/ui/card';
+import { Badge } from '@/features/shared/ui/ui/badge';
 import { Users, X, Bell } from 'lucide-react';
-import { cn } from '@/utils/utils';
+import { cn } from '@/features/shared/utils/utils';
 import { Notification, NotificationType } from '../types/notification.types';
 import { getNotificationIcon, getNotificationColor } from '../utils/notificationConstants';
 import { formatTime } from '../logic/notificationHelpers';
-import { useTranslation } from '@/hooks/use-translation';
-import { ENTITY_COLORS, type EntityType as EntityColorType } from '@/utils/entity-colors';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { ENTITY_COLORS, type EntityType as EntityColorType } from '@/features/shared/utils/entity-colors';
 
 interface NotificationItemProps {
   notification: Notification;

@@ -1,21 +1,21 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/features/shared/ui/ui/card';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { PageWrapper } from '@/components/layout/page-wrapper';
+} from '@/features/shared/ui/ui/select';
+import { PageWrapper } from '@/layout/page-wrapper';
 import { ArrowLeft, MessageSquare, Plus, TrendingUp, Calendar as CalendarIcon } from 'lucide-react';
 import { useDiscussions } from '../hooks/useDiscussions';
 import { ThreadCard } from './ThreadCard';
 import { CreateThreadDialog } from './CreateThreadDialog';
-import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { useInfiniteScroll } from '@/features/shared/hooks/useInfiniteScroll';
 import { useAuth } from '@/providers/auth-provider';
 
 interface DiscussionsViewProps {

@@ -1,7 +1,7 @@
-import { Button } from '@/components/ui/button';
+import { Button } from '@/features/shared/ui/ui/button';
 import { CheckCheck } from 'lucide-react';
-import { PushNotificationToggle } from '@/components/push-notification-toggle';
-import { useTranslation } from '@/hooks/use-translation';
+import { PushNotificationToggle } from '@/features/notifications/ui/push-notification-toggle.tsx';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface NotificationHeaderProps {
   unreadCount: number;

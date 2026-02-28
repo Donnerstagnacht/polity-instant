@@ -11,12 +11,12 @@
  * - Online users indicator
  */
 
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { ArrowLeft, Users } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
-import { ShareButton } from '@/components/shared/ShareButton';
+import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { VersionControl } from './VersionControl';
 import { ModeSelector } from './ModeSelector';
 import type {

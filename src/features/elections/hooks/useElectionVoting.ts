@@ -11,8 +11,8 @@ import { useCommonActions } from '@/zero/common/useCommonActions';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useElectionWithVotes } from '@/zero/events/useEventState';
 import { usePermissions } from '@/zero/rbac';
-import { calculateElectionWinner, type MajorityType } from '@/utils/voting-utils';
-import { notifyPositionAssigned } from '@/utils/notification-helpers';
+import { calculateElectionWinner, type MajorityType } from '@/features/shared/utils/voting-utils';
+import { notifyPositionAssigned } from '@/features/shared/utils/notification-helpers';
 import { schedulePositionRevote } from '@/features/votes/utils/revote-scheduling';
 
 interface UseElectionVotingOptions {

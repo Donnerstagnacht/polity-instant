@@ -1,5 +1,5 @@
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/utils/utils';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { cn } from '@/features/shared/utils/utils';
 import { getRightLabel, RIGHT_GRADIENTS, type RightType } from '@/features/network/ui/RightFilters';
 
 interface RightBadgeProps {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { TooltipProvider } from '@/features/shared/ui/ui/tooltip';
 import { MessageSquare, Instagram, Facebook, Ghost, Twitter } from 'lucide-react';
 import { SocialItem } from './SocialItem';
 

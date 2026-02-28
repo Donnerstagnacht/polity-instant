@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/features/shared/ui/ui/input';
 import { Search } from 'lucide-react';
 import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 import type { UserGroup } from '../types/user.types';
 

@@ -1,10 +1,10 @@
 import { useState, useMemo, useCallback } from 'react';
-import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { useInfiniteScroll } from '@/features/shared/hooks/useInfiniteScroll';
 import { useNotificationFilters } from './useNotificationFilters';
 import { useNotificationActions } from './useNotificationActions';
 import { useUserNotifications } from './useUserNotifications';
 import { useNotificationActions as useZeroNotificationActions } from '@/zero/notifications/useNotificationActions';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 const EMPTY_NOTIFICATIONS: any[] = [];
 const PAGE_SIZE = 30;

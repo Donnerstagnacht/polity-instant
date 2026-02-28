@@ -5,13 +5,13 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+} from '@/features/shared/ui/ui/dialog';
+import { Input } from '@/features/shared/ui/ui/input';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Search } from 'lucide-react';
 import { useUserState } from '@/zero/users/useUserState';
 import { ARIA_KAI_USER_ID } from '@/features/auth/constants';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface NewConversationDialogProps {
   open: boolean;

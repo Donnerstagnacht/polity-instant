@@ -2,13 +2,19 @@
 
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Input } from '@/features/shared/ui/ui/input';
+import { Label } from '@/features/shared/ui/ui/label';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
+import { Alert, AlertDescription } from '@/features/shared/ui/ui/alert';
 import { Loader2, Mail, ArrowRight, CheckCircle } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { useAuthLogin } from '@/features/auth/hooks/useAuthLogin';
 
@@ -61,12 +67,10 @@ export function LoginForm() {
             <CardTitle className="text-2xl font-bold text-green-700 dark:text-green-400">
               {t('auth.codeSent.title')}
             </CardTitle>
-            <CardDescription>
-              {t('auth.codeSent.description', { email })}
-            </CardDescription>
+            <CardDescription>{t('auth.codeSent.description', { email })}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-center text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-center text-sm">
               {t('auth.codeSent.instructions')}
             </p>
             <Button variant="outline" className="w-full" onClick={handleBackToEmail}>
@@ -124,7 +128,7 @@ export function LoginForm() {
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-muted-foreground">
+          <div className="text-muted-foreground mt-6 text-center text-sm">
             <p>{t('auth.login.footer.noPassword')}</p>
             <p>{t('auth.login.footer.checkEmail')}</p>
           </div>

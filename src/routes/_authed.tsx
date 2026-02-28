@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { EnsureUser } from '@/features/auth/EnsureUser'
 import { useZeroReady } from '@/providers/zero-provider'
-import { GlobalLoadingAnimation } from '@/components/ui/global-loading-animation'
+import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation'
 
 export const Route = createFileRoute('/_authed')({
   component: AuthedLayout,

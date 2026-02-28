@@ -1,23 +1,23 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Progress } from '@/features/shared/ui/ui/progress';
+import { Input } from '@/features/shared/ui/ui/input';
+import { Label } from '@/features/shared/ui/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/features/shared/ui/ui/select';
 import { Clock, Users, Play, Square, CheckCircle2, Loader2, Timer } from 'lucide-react';
 import { useEventVoting, type MajorityType, type VotingType } from '../hooks/useEventVoting';
-import { formatTimeRemaining, getMajorityTypeText } from '@/utils/voting-utils';
-import { useTranslation } from '@/hooks/use-translation';
+import { formatTimeRemaining, getMajorityTypeText } from '@/features/shared/utils/voting-utils';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface VotingSessionManagerProps {
   eventId: string;

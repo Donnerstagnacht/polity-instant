@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Navigate } from '@tanstack/react-router'
-import { Button } from '@/components/ui/button'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
-import { useTranslation } from '@/hooks/use-translation'
+import { Button } from '@/features/shared/ui/ui/button'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/features/shared/ui/ui/card'
+import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { useAuth } from '@/providers/auth-provider'
 import { useZeroReady } from '@/providers/zero-provider'
 

@@ -1,8 +1,8 @@
-import { Button } from '@/components/ui/button';
-import { ActionBar } from '@/components/ui/ActionBar';
-import { ShareButton } from '@/components/shared/ShareButton';
+import { Button } from '@/features/shared/ui/ui/button';
+import { ActionBar } from '@/features/shared/ui/ui/ActionBar';
+import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { Calendar, Settings, UserPlus, UserMinus } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface MeetingActionsProps {
   meetingId: string;

@@ -1,5 +1,5 @@
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Calendar, Tag, Users, Building2, AlertTriangle } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { Todo } from '../types/todo.types';

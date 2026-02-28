@@ -4,7 +4,7 @@
  * Displays group links with add functionality.
  */
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { ExternalLink } from 'lucide-react';
 import type { GroupLink } from '@/features/groups/types/group.types';
 

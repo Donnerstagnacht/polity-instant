@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { formatTimeRemaining } from '@/utils/voting-utils';
+import { formatTimeRemaining } from '@/features/shared/utils/voting-utils';
 
 interface UseVotingTimerResult {
   timeRemaining: number;

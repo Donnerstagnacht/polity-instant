@@ -9,7 +9,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
-import { notifyDocumentCreated, notifyDocumentDeleted } from '@/utils/notification-helpers';
+import { notifyDocumentCreated, notifyDocumentDeleted } from '@/features/shared/utils/notification-helpers';
 
 interface UseDocumentMutationsResult {
   createDocument: (title: string, groupId: string, userId: string) => Promise<string | null>;

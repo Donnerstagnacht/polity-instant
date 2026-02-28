@@ -2,12 +2,12 @@ import { useCallback, useEffect, useRef } from 'react'
 import { useZero } from '@rocicorp/zero/react'
 import { usePreferenceState } from './usePreferenceState'
 import { mutators } from '../mutators'
-import { useThemeStore } from '@/global-state/theme.store'
-import { useLanguageStore } from '@/global-state/language.store'
-import { useNavigationStore } from '@/navigation/state/navigation.store'
-import type { ThemeType } from '@/global-state/theme.store'
-import type { Language } from '@/global-state/language.store'
-import type { NavigationView } from '@/navigation/types/navigation.types'
+import { useThemeStore } from '@/features/shared/global-state/theme.store'
+import { useLanguageStore } from '@/features/shared/global-state/language.store'
+import { useNavigationStore } from '@/features/navigation/state/navigation.store'
+import type { ThemeType } from '@/features/shared/global-state/theme.store'
+import type { Language } from '@/features/shared/global-state/language.store'
+import type { NavigationView } from '@/features/navigation/types/navigation.types'
 
 /**
  * Bidirectional sync between persisted DB preferences and Zustand stores.

@@ -7,7 +7,7 @@ import { useGroupTodos as useFacadeGroupTodos } from '@/zero/groups/useGroupStat
 import { useTodoActions } from '@/zero/todos/useTodoActions';
 import { toast } from 'sonner';
 import type { GroupTodo } from '../types/group.types';
-import { notifyTodoAssigned, notifyTodoUpdated, notifyTodoCompleted } from '@/utils/notification-helpers';
+import { notifyTodoAssigned, notifyTodoUpdated, notifyTodoCompleted } from '@/features/shared/utils/notification-helpers';
 
 export function useGroupTodos(groupId: string, userId?: string) {
   const [isLoading, setIsLoading] = useState(false);

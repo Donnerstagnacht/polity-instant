@@ -4,7 +4,7 @@
  * Tabs for navigating between memberships and roles management.
  */
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import type { MembershipTab } from '../types/group.types';
 
 interface MembershipTabsProps {

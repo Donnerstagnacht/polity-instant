@@ -6,9 +6,9 @@
  */
 
 import { useState, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/features/shared/ui/ui/card';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Checkbox } from '@/features/shared/ui/ui/checkbox';
 import {
   Table,
   TableBody,
@@ -16,7 +16,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from '@/features/shared/ui/ui/table';
 import { GripVertical, Shield, Trash2 } from 'lucide-react';
 import { ACTION_RIGHTS } from '@/zero/rbac/constants';
 import type { GroupRole } from '../types/group.types';

@@ -4,8 +4,8 @@
  * Displays and manages group positions with holders, elections, and history.
  */
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/features/shared/ui/ui/card';
+import { Button } from '@/features/shared/ui/ui/button';
 import {
   Table,
   TableBody,
@@ -13,9 +13,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
+} from '@/features/shared/ui/ui/table';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,7 +25,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from '@/features/shared/ui/ui/alert-dialog';
 import { Briefcase, Edit, Trash2, UserPlus, History, Vote, Calendar, User } from 'lucide-react';
 import { useState } from 'react';
 import { formatDistanceToNow, format } from 'date-fns';

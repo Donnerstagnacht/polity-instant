@@ -1,8 +1,8 @@
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { useTranslation } from '@/hooks/use-translation'
+import { Label } from '@/features/shared/ui/ui/label'
+import { Input } from '@/features/shared/ui/ui/input'
+import { Button } from '@/features/shared/ui/ui/button'
+import { RadioGroup, RadioGroupItem } from '@/features/shared/ui/ui/radio-group'
+import { useTranslation } from '@/features/shared/hooks/use-translation'
 
 type AllocationMode = 'ratio' | 'total'
 

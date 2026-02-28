@@ -1,7 +1,7 @@
-import { Button } from '@/components/ui/button';
+import { Button } from '@/features/shared/ui/ui/button';
 import { UserPlus, UserMinus, Clock, Check } from 'lucide-react';
 import { MembershipStatus } from '../hooks/useGroupMembership';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface GroupMembershipButtonProps {
   status: MembershipStatus | null;

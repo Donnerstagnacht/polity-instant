@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useLanguageStore } from '@/global-state/language.store.tsx';
+import { useLanguageStore } from '@/features/shared/global-state/language.store.tsx';
 import i18n from '@/i18n/i18n.ts';
 
 /**

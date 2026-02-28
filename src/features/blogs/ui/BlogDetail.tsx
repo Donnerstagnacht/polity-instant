@@ -2,13 +2,13 @@
 
 import { useState, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { PageWrapper } from '@/components/layout/page-wrapper';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { HashtagDisplay } from '@/components/ui/hashtag-display';
+import { PageWrapper } from '@/layout/page-wrapper';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Button } from '@/features/shared/ui/ui/button';
+import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Textarea } from '@/components/ui/textarea';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
@@ -23,20 +23,20 @@ import {
   Trash2,
   Edit,
 } from 'lucide-react';
-import { StatsBar } from '@/components/ui/StatsBar';
+import { StatsBar } from '@/features/shared/ui/ui/StatsBar';
 import { useSubscribeBlog } from '@/features/blogs/hooks/useSubscribeBlog';
-import { ActionBar } from '@/components/ui/ActionBar';
+import { ActionBar } from '@/features/shared/ui/ui/ActionBar';
 import { useAuth } from '@/providers/auth-provider';
-import { ShareButton } from '@/components/shared/ShareButton';
-import { SubscribeButton } from '@/components/shared/action-buttons';
+import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
+import { SubscribeButton } from 'src/features/shared/ui/action-buttons';
 import { toast } from 'sonner';
-import { useTranslation } from '@/hooks/use-translation';
-import { CommentSortSelect, CommentSortBy } from '@/components/shared/CommentSortSelect';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { CommentSortSelect, CommentSortBy } from '@/features/shared/ui/action-buttons/CommentSortSelect.tsx';
 import { useBlogPermissions } from '../hooks/useBlogPermissions';
-import { PlateEditor } from '@/components/kit-platejs/plate-editor';
+import { PlateEditor } from '@/features/shared/ui/kit-platejs/plate-editor';
 import { Link } from '@tanstack/react-router';
-import { notifyBlogCommentAdded, notifyBlogVoted, notifyBlogDeleted } from '@/utils/notification-helpers';
-import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { notifyBlogCommentAdded, notifyBlogVoted, notifyBlogDeleted } from '@/features/shared/utils/notification-helpers';
+import { useInfiniteScroll } from '@/features/shared/hooks/useInfiniteScroll';
 
 // Comment component for blog comments
 interface BlogComment {

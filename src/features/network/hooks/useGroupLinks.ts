@@ -6,7 +6,6 @@ import { useState } from 'react';
 import { useGroupLinks as useFacadeGroupLinks } from '@/zero/groups/useGroupState';
 import { toast } from 'sonner';
 import type { GroupLink } from '@/features/groups/types/group.types';
-import { notifyLinkAdded, notifyLinkRemoved } from '@/utils/notification-helpers';
 import { useCommonActions } from '@/zero/common/useCommonActions';
 
 export function useGroupLinks(groupId: string) {
@@ -16,13 +15,7 @@ export function useGroupLinks(groupId: string) {
 
   const links = linksData as any as GroupLink[];
 
-  const addLink = async (
-    label: string,
-    url: string,
-    senderId?: string,
-    groupName?: string,
-    adminUserIds?: string[]
-  ) => {
+  const addLink = async (label: string, url: string, senderId?: string) => {
     setIsLoading(true);
     try {
       const linkId = crypto.randomUUID();
@@ -46,13 +39,7 @@ export function useGroupLinks(groupId: string) {
     }
   };
 
-  const deleteLink = async (
-    linkId: string,
-    linkLabel?: string,
-    senderId?: string,
-    groupName?: string,
-    adminUserIds?: string[]
-  ) => {
+  const deleteLink = async (linkId: string) => {
     setIsLoading(true);
     try {
       await deleteLinkAction({ id: linkId });

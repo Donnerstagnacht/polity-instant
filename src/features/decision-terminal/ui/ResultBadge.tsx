@@ -1,9 +1,9 @@
 'use client';
 
-import { cn } from '@/utils/utils';
-import { Badge } from '@/components/ui/badge';
+import { cn } from '@/features/shared/utils/utils';
+import { Badge } from '@/features/shared/ui/ui/badge';
 import { Check, X, Minus, Trophy } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export type ResultType = 'passed' | 'failed' | 'tied' | 'elected';
 

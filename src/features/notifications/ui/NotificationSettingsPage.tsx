@@ -1,20 +1,20 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollableTabsList } from '@/components/ui/scrollable-tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Label } from '@/features/shared/ui/ui/label';
+import { Switch } from '@/features/shared/ui/ui/switch';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Tabs, TabsContent, TabsTrigger } from '@/features/shared/ui/ui/tabs';
+import { ScrollableTabsList } from '@/features/shared/ui/ui/scrollable-tabs';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
+} from '@/features/shared/ui/ui/select';
+import { Separator } from '@/features/shared/ui/ui/separator';
 import {
   Bell,
   Users,
@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { useNotificationSettings } from '../hooks/useNotificationSettings';
 import { TimelineRefreshFrequency } from '../types/notification-settings.types';
-import { PushNotificationToggle } from '@/components/push-notification-toggle';
+import { PushNotificationToggle } from '@/features/notifications/ui/push-notification-toggle.tsx';
 
 interface NotificationSettingsPageProps {
   userId: string;

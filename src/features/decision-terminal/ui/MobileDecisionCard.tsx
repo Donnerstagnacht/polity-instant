@@ -1,10 +1,10 @@
 'use client';
 
-import { cn } from '@/utils/utils';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/features/shared/utils/utils';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Vote, Award, ChevronRight } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { StatusBadge, type DecisionStatus } from './StatusBadge';
 import { CountdownTimer, EndedAgo } from './CountdownTimer';
 import { VoteBarCompact } from './VoteProgressBar';

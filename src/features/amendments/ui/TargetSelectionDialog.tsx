@@ -8,14 +8,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { TypeAheadSelect } from '@/components/ui/type-ahead-select';
+} from '@/features/shared/ui/ui/dialog';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
+import { TypeAheadSelect } from '@/features/shared/ui/ui/type-ahead-select';
 import { CalendarIcon, User } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface TargetSelectionDialogProps {
   open: boolean;

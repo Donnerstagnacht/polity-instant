@@ -1,6 +1,6 @@
 'use client';
 
-import { PageWrapper } from '@/components/layout/page-wrapper';
+import { PageWrapper } from '@/layout/page-wrapper';
 import { AuthGuard } from '@/features/auth/AuthGuard';
 import { useMessagesPage } from './hooks/useMessagesPage';
 import { ConversationList } from './ui/ConversationList';

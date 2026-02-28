@@ -3,22 +3,22 @@
 import { useState } from 'react';
 import { CheckSquare, Square, Users, Clock, UserPlus, Activity, UserCheck } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
-import { useTranslation } from '@/hooks/use-translation';
-import { cn } from '@/utils/utils';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { cn } from '@/features/shared/utils/utils';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Progress } from '@/features/shared/ui/ui/progress';
+import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
 import { differenceInDays, format, isPast, isToday } from 'date-fns';
-import { ShareButton } from '@/components/shared/ShareButton';
+import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { useTodoMutations } from '@/features/todos/hooks/useTodoMutations';
 import type { TodoStatus } from '@/features/todos/types/todo.types';
 import { useAuth } from '@/providers/auth-provider';
 import { useTodoActions } from '@/zero/todos/useTodoActions';
 import { useTodoState } from '@/zero/todos/useTodoState';
 import { toast } from 'sonner';
-import { notifyStandaloneTodoAssigned } from '@/utils/notification-helpers';
+import { notifyStandaloneTodoAssigned } from '@/features/shared/utils/notification-helpers';
 import {
   TimelineCardBase,
   TimelineCardContent,

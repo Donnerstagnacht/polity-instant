@@ -1,6 +1,6 @@
-import { cn } from '@/utils/utils'
-import { Progress } from '@/components/ui/progress'
-import { useTranslation } from '@/hooks/use-translation'
+import { cn } from '@/features/shared/utils/utils'
+import { Progress } from '@/features/shared/ui/ui/progress'
+import { useTranslation } from '@/features/shared/hooks/use-translation'
 
 interface CreateProgressIndicatorProps {
   currentStep: number

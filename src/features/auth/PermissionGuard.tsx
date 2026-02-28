@@ -3,7 +3,7 @@
 import { ReactNode } from 'react';
 import { usePermissions } from '@/zero/rbac/usePermissions';
 import { ActionType, ResourceType, PermissionContext } from '@/zero/rbac/types';
-import { AccessDenied } from '@/components/shared/AccessDenied';
+import { AccessDenied } from '@/features/auth/ui/AccessDenied.tsx';
 import { Loader2 } from 'lucide-react';
 
 interface PermissionGuardProps {

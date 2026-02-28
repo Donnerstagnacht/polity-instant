@@ -7,18 +7,18 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Link } from '@tanstack/react-router';
-import { PlateEditor } from '@/components/kit-platejs/plate-editor';
-import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { PlateEditor } from '@/features/shared/ui/kit-platejs/plate-editor';
+import { Card, CardContent, CardDescription, CardHeader } from '@/features/shared/ui/ui/card';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Input } from '@/features/shared/ui/ui/input';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Loader2, Users, Eye, ArrowLeft, FileText, Pencil } from 'lucide-react';
-import { ShareButton } from '@/components/shared/ShareButton';
-import { useNavigationStore } from '@/navigation/state/navigation.store';
-import { useScreenStore } from '@/global-state/screen.store';
-import { useNavigation } from '@/navigation/state/useNavigation';
-import { useSuggestionIdAssignment } from '@/hooks/use-suggestion-id-assignment';
+import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
+import { useNavigationStore } from '@/features/navigation/state/navigation.store';
+import { useScreenStore } from '@/features/shared/global-state/screen.store';
+import { useNavigation } from '@/features/navigation/state/useNavigation';
+import { useSuggestionIdAssignment } from '@/features/shared/hooks/use-suggestion-id-assignment';
 
 // Unified editor imports
 import {

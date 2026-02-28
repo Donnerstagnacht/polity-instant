@@ -1,25 +1,25 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Input } from '@/features/shared/ui/ui/input';
+import { Label } from '@/features/shared/ui/ui/label';
+import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
-import { ImageUpload } from '@/components/shared/ImageUpload';
-import { VideoUpload } from '@/components/shared/VideoUpload';
-import { HashtagEditor } from '@/components/ui/hashtag-editor';
+import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
+import { VideoUpload } from '@/features/file-upload/ui/VideoUpload.tsx';
+import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
+} from '@/features/shared/ui/ui/select';
+import { Switch } from '@/features/shared/ui/ui/switch';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import type { WorkflowStatus } from '@/zero/rbac/workflow-constants';
@@ -28,10 +28,10 @@ import {
   COLLABORATOR_SELECTABLE_STATUSES,
   isEventPhase,
 } from '@/zero/rbac/workflow-constants';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
-import { notifyAmendmentProfileUpdated } from '@/utils/notification-helpers';
-import { CreateReviewCard, SummaryField } from '@/components/ui/create-review-card';
+import { notifyAmendmentProfileUpdated } from '@/features/shared/utils/notification-helpers';
+import { CreateReviewCard, SummaryField } from '@/features/shared/ui/ui/create-review-card';
 
 interface AmendmentEditContentProps {
   amendmentId: string;

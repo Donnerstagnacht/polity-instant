@@ -1,7 +1,7 @@
 'use client';
 
-import { cn } from '@/utils/utils';
-import { Badge } from '@/components/ui/badge';
+import { cn } from '@/features/shared/utils/utils';
+import { Badge } from '@/features/shared/ui/ui/badge';
 
 export type DecisionStatus =
   | 'open'

@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { cn } from '@/utils/utils';
+import { cn } from '@/features/shared/utils/utils';
 import { Info, TrendingUp, Users, Star, User } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useTranslation } from '@/hooks/use-translation';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export type ReasonCategory = 'trending' | 'popular_topic' | 'similar_groups' | 'your_content';
 

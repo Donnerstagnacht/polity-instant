@@ -1,7 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { useTranslation } from '@/hooks/use-translation';
+import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface Booking {
   id: string;

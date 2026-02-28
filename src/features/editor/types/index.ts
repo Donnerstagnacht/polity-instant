@@ -6,8 +6,8 @@
  */
 
 // Import TDiscussion for internal use and re-export for external use
-import type { TDiscussion as TDiscussionType } from '@/components/kit-platejs/discussion-kit';
-export type { TDiscussion } from '@/components/kit-platejs/discussion-kit';
+import type { TDiscussion as TDiscussionType } from '@/features/shared/ui/kit-platejs/discussion-kit';
+export type { TDiscussion } from '@/features/shared/ui/kit-platejs/discussion-kit';
 
 /**
  * The type of entity being edited

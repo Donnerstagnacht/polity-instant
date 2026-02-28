@@ -10,8 +10,8 @@ import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
-import { syncGroupNameToConversation } from '@/utils/groupConversationSync';
-import { notifyGroupProfileUpdated } from '@/utils/notification-helpers';
+import { syncGroupNameToConversation } from '@/features/shared/utils/groupConversationSync';
+import { notifyGroupProfileUpdated } from '@/features/shared/utils/notification-helpers';
 
 export interface GroupFormData {
   name: string;

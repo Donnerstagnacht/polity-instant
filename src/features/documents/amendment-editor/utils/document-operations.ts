@@ -5,7 +5,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import { createDocumentVersion } from '@/features/amendments/utils/version-utils';
-import { notifyChangeRequestAccepted, notifyChangeRequestRejected } from '@/utils/notification-helpers';
+import { notifyChangeRequestAccepted, notifyChangeRequestRejected } from '@/features/shared/utils/notification-helpers';
 
 function getSupabase() {
   return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);

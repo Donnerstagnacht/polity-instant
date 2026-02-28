@@ -5,14 +5,14 @@ import { useTodosPage } from '@/features/todos/hooks/useTodosPage';
 import { TodosHeader } from '@/features/todos/ui/TodosHeader';
 import { TodosFilters } from '@/features/todos/ui/TodosFilters';
 import { TodosTabs } from '@/features/todos/ui/TodosTabs';
-import { KanbanBoard } from '@/components/todos/kanban-board';
-import { TodoList } from '@/components/todos/todo-list';
-import { TodoDetailDialog } from '@/components/todos/todo-detail-dialog';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { KanbanBoard } from '@/features/todos/ui/kanban-board.tsx';
+import { TodoList } from '@/features/todos/ui/todo-list.tsx';
+import { TodoDetailDialog } from '@/features/todos/ui/todo-detail-dialog.tsx';
+import { Card, CardContent } from '@/features/shared/ui/ui/card';
+import { Button } from '@/features/shared/ui/ui/button';
+import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
 import { CheckSquare, Plus } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export function TodosPage() {
   const { t } = useTranslation();

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useUserState } from '@/zero/users/useUserState';
 import { useAllGroups } from '@/zero/groups/useGroupState';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/features/shared/ui/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -12,21 +12,21 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from '@/features/shared/ui/ui/dialog';
+import { Input } from '@/features/shared/ui/ui/input';
+import { Label } from '@/features/shared/ui/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/features/shared/ui/ui/select';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
+} from '@/features/shared/ui/ui/popover';
 import {
   Command,
   CommandEmpty,
@@ -34,8 +34,8 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from '@/components/ui/command';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+} from '@/features/shared/ui/ui/command';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Check, ChevronsUpDown, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 

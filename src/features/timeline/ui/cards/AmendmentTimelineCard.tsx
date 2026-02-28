@@ -16,15 +16,15 @@ import {
   Check,
   Bell,
 } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
-import { cn } from '@/utils/utils';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ShareButton } from '@/components/shared/ShareButton';
-import { HashtagDisplay } from '@/components/ui/hashtag-display';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { cn } from '@/features/shared/utils/utils';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Progress } from '@/features/shared/ui/ui/progress';
+import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
+import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
+import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
 import { useAmendmentCollaboration } from '@/features/amendments/hooks/useAmendmentCollaboration';
 import { useSubscribeAmendment } from '@/features/amendments/hooks/useSubscribeAmendment';
 import { CONTENT_TYPE_CONFIG } from '../../constants/content-type-config';

@@ -7,7 +7,7 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { addMonths, addYears, startOfMonth } from 'date-fns';
-import { notifyRevoteScheduled } from '@/utils/notification-helpers';
+import { notifyRevoteScheduled } from '@/features/shared/utils/notification-helpers';
 
 const supabase = createClient();
 

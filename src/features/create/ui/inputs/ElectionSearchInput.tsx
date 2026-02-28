@@ -1,7 +1,7 @@
-import { TypeAheadSelect } from '@/components/ui/type-ahead-select'
-import { ElectionSelectCard } from '@/components/ui/entity-select-cards'
+import { TypeAheadSelect } from '@/features/shared/ui/ui/type-ahead-select'
+import { ElectionSelectCard } from '@/features/shared/ui/ui/entity-select-cards'
 import { useAgendaState } from '@/zero/agendas/useAgendaState'
-import { Label } from '@/components/ui/label'
+import { Label } from '@/features/shared/ui/ui/label'
 
 interface ElectionSearchInputProps {
   value: string

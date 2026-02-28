@@ -1,9 +1,9 @@
-import { Button } from '@/components/ui/button'
-import { useTranslation } from '@/hooks/use-translation'
+import { Button } from '@/features/shared/ui/ui/button'
+import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { usePreferenceState } from '@/zero/preferences/usePreferenceState'
 import { usePreferenceActions } from '@/zero/preferences/usePreferenceActions'
 import { Columns2, LayoutList, Smartphone } from 'lucide-react'
-import { cn } from '@/utils/utils'
+import { cn } from '@/features/shared/utils/utils'
 import type { CreateFormStyle } from '@/zero/preferences/schema'
 
 const STYLE_OPTIONS: { value: CreateFormStyle; icon: typeof Columns2; labelKey: string }[] = [

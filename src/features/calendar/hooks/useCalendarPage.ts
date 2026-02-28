@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useCalendarData } from './useCalendarData';
 import { useCalendarState } from './useCalendarState';
 import { useCalendarNavigation } from './useCalendarNavigation';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import {
   startOfWeek,
   endOfWeek,

@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/features/shared/ui/ui/button';
 import { LayoutList, LayoutGrid, Plus } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export type ViewMode = 'list' | 'kanban';
 

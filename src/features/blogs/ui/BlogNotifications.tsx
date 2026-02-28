@@ -1,7 +1,7 @@
 'use client';
 
-import { PageWrapper } from '@/components/layout/page-wrapper';
-import { EntityNotifications } from '@/components/notifications/EntityNotifications';
+import { PageWrapper } from '@/layout/page-wrapper';
+import { EntityNotifications } from '@/features/notifications/ui/EntityNotifications.tsx';
 import { useBlogState } from '@/zero/blogs/useBlogState';
 
 interface BlogNotificationsProps {

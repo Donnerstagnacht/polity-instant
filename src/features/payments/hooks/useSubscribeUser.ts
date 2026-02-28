@@ -3,7 +3,7 @@ import { useUserState } from '@/zero/users/useUserState';
 import { useCommonActions } from '@/zero/common/useCommonActions';
 import { useCommonState } from '@/zero/common/useCommonState';
 import { useAuth } from '@/providers/auth-provider';
-import { notifyNewFollower } from '@/utils/notification-helpers';
+import { notifyNewFollower } from '@/features/shared/utils/notification-helpers';
 
 /**
  * Hook to handle user subscription functionality

@@ -4,8 +4,8 @@
 
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { EntitySearchBar } from '@/components/ui/entity-search-bar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
+import { EntitySearchBar } from '@/features/shared/ui/ui/entity-search-bar';
 import { useCollaborators } from '../hooks/useCollaborators';
 import { InviteDialog } from './InviteDialog.tsx';
 import { PendingRequestsCard } from './PendingRequestsCard.tsx';

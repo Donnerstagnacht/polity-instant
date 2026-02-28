@@ -1,5 +1,5 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   Table,
   TableBody,
@@ -7,15 +7,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
+} from '@/features/shared/ui/ui/table';
+import { Button } from '@/features/shared/ui/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/features/shared/ui/ui/select';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,14 +26,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { EntitySearchBar, type FilterOption } from '@/components/ui/entity-search-bar';
+} from '@/features/shared/ui/ui/alert-dialog';
+import { EntitySearchBar, type FilterOption } from '@/features/shared/ui/ui/entity-search-bar';
 import { RightBadge } from './RightBadge';
 import { RIGHT_TYPES, RIGHT_GRADIENTS } from './RightFilters';
 import { LinkGroupDialog } from './LinkGroupDialog';
 import { PermissionGuard } from '@/features/auth/PermissionGuard';
 import { Pencil, Trash2 } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface GroupedRequest {
   group: { id: string; name: string; description?: string };

@@ -4,9 +4,9 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { useTranslation } from '@/hooks/use-translation';
+} from '@/features/shared/ui/ui/dialog';
+import { Button } from '@/features/shared/ui/ui/button';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface DeleteConversationDialogProps {
   open: boolean;

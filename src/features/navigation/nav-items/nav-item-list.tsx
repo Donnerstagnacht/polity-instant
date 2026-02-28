@@ -1,0 +1,347 @@
+import { Badge } from '@/features/shared/ui/ui/badge.tsx';
+import { Button } from '@/features/shared/ui/ui/button.tsx';
+import { cn } from '@/features/shared/utils/utils.ts';
+import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover.tsx';
+import type { NavigationItem, NavigationView } from '@/features/navigation/types/navigation.types.tsx';
+import { iconMap } from '@/features/navigation/nav-items/icon-map.tsx';
+import React, { useState } from 'react';
+import { useLocation, useRouterState, Link } from '@tanstack/react-router';
+import { isItemActive } from './nav-helpers.ts';
+import { Loader2 } from 'lucide-react';
+
+export function NavItemList({
+  navigationItems,
+  isMobile,
+  isPrimary,
+  navigationView,
+}: {
+  navigationItems: NavigationItem[];
+  isMobile: boolean;
+  isPrimary: boolean;
+  navigationView: NavigationView;
+}) {
+  const { pathname } = useLocation();
+  const isRouterPending = useRouterState({ select: (s) => s.status === 'pending' });
+  const currentRoute = pathname ?? '/';
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const [loadingItem, setLoadingItem] = useState<string | null>(null);
+
+  // Clear loading state when router finishes navigating
+  React.useEffect(() => {
+    if (!isRouterPending && loadingItem) {
+      setLoadingItem(null);
+    }
+  }, [isRouterPending, loadingItem]);
+
+  const handleItemClick = (item: NavigationItem) => {
+    setLoadingItem(item.id);
+    if (item.onClick) {
+      item.onClick();
+    }
+    setHoveredItem(null);
+  };
+
+  if (navigationView === 'asButton') {
+    return (
+      <div className="scrollbar-hide max-h-[70vh] overflow-y-auto">
+        <div className="grid w-full auto-rows-max grid-cols-2 gap-8 p-4 sm:grid-cols-3 md:grid-cols-4">
+          {/* Use different layout for fewer items */}
+          {navigationItems.length <= 4 ? (
+            <div className="col-span-full flex flex-wrap justify-center gap-8">
+              {navigationItems.map(item => (
+                <Link key={item.id} to={item.href || '#'} className="inline-block">
+                  <Button
+                    variant="ghost"
+                    disabled={loadingItem === item.id}
+                    className={cn(
+                      'relative h-24 w-24 flex-shrink-0 flex-col gap-2 hover:bg-accent',
+                      isItemActive(item, currentRoute, isPrimary) &&
+                        'bg-accent text-accent-foreground'
+                    )}
+                    onClick={e => {
+                      if (item.onClick) {
+                        e.preventDefault();
+                        handleItemClick(item);
+                      }
+                    }}
+                  >
+                    {loadingItem === item.id ? (
+                      <Loader2 className="h-8 w-8 animate-spin" />
+                    ) : (
+                      React.createElement(iconMap[item.icon], {
+                        className: cn(
+                          'h-8 w-8',
+                          isItemActive(item, currentRoute, isPrimary) && 'text-primary'
+                        ),
+                      })
+                    )}
+                    <span className="text-sm">{item.label}</span>
+                    {item.badge && (
+                      <Badge
+                        className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center p-0"
+                        variant="default"
+                      >
+                        {(() => {
+                          return item.badge;
+                        })()}
+                      </Badge>
+                    )}
+                  </Button>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            // Original layout for 5+ items
+            navigationItems.map(item => (
+              <Link key={item.id} to={item.href || '#'} className="inline-block">
+                <Button
+                  variant="ghost"
+                  disabled={loadingItem === item.id}
+                  className={cn(
+                    'relative h-24 w-24 flex-shrink-0 flex-col gap-2 hover:bg-accent',
+                    isItemActive(item, currentRoute, isPrimary) &&
+                      'bg-accent text-accent-foreground'
+                  )}
+                  onClick={e => {
+                    if (item.onClick) {
+                      e.preventDefault();
+                      handleItemClick(item);
+                    }
+                  }}
+                >
+                  {loadingItem === item.id ? (
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  ) : (
+                    React.createElement(iconMap[item.icon], {
+                      className: cn(
+                        'h-8 w-8',
+                        isItemActive(item, currentRoute, isPrimary) && 'text-primary'
+                      ),
+                    })
+                  )}
+                  <span className="text-sm">{item.label}</span>
+                  {item.badge && (
+                    <Badge
+                      className="absolute right-4 top-2 flex h-5 w-5 items-center justify-center p-0"
+                      variant="default"
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
+                </Button>
+              </Link>
+            ))
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // asButtonList variant - Mobile: Horizontal scrolling buttons with popovers
+  if (navigationView === 'asButtonList' && isMobile) {
+    return (
+      <div className="scrollbar-hide flex-1 overflow-x-auto">
+        <div className="flex min-w-max items-center justify-center gap-1 px-2">
+          {navigationItems.map(item => (
+            <Popover key={item.id} open={hoveredItem === item.id}>
+              <PopoverTrigger asChild>
+                <Link to={item.href || '#'} className="inline-block">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      'relative h-12 w-12 flex-shrink-0 hover:bg-accent',
+                      isItemActive(item, currentRoute, isPrimary) &&
+                        'bg-accent text-accent-foreground'
+                    )}
+                    onClick={e => {
+                      if (item.onClick) {
+                        e.preventDefault();
+                        item.onClick();
+                      }
+                      setHoveredItem(null); // Reset hover state after click
+                    }}
+                    onMouseEnter={() => setHoveredItem(item.id)}
+                    onMouseLeave={() => setHoveredItem(null)}
+                    onTouchStart={() => setHoveredItem(item.id)}
+                    onTouchEnd={() => setHoveredItem(null)}
+                  >
+                    {React.createElement(iconMap[item.icon], {
+                      className: cn(
+                        'h-5 w-5',
+                        isItemActive(item, currentRoute, isPrimary) && 'text-primary'
+                      ),
+                    })}
+                    {item.badge && (
+                      <Badge
+                        className="absolute right-4 top-2 flex h-5 w-5 items-center justify-center p-0"
+                        variant="default"
+                      >
+                        {(() => {
+                          return item.badge;
+                        })()}
+                      </Badge>
+                    )}
+                  </Button>
+                </Link>
+              </PopoverTrigger>
+              <PopoverContent side="top" className="w-auto p-2" sideOffset={8}>
+                <span className="text-sm font-medium">{item.label}</span>
+              </PopoverContent>
+            </Popover>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // asButtonList variant - Desktop: Vertical sidebar with icon buttons and popovers
+  if (navigationView === 'asButtonList' && !isMobile) {
+    return (
+      <div className={cn('flex flex-col items-center gap-2')}>
+        {navigationItems.map(item => (
+          <Popover key={item.id} open={hoveredItem === item.id}>
+            <PopoverTrigger asChild>
+              <Link to={item.href || '#'} className="inline-block">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    'relative h-12 w-12 flex-shrink-0 hover:bg-accent',
+                    isItemActive(item, currentRoute, isPrimary) &&
+                      'bg-accent text-accent-foreground'
+                  )}
+                  onClick={e => {
+                    if (item.onClick) {
+                      e.preventDefault();
+                      item.onClick();
+                    }
+                    setHoveredItem(null); // Reset hover state after click
+                  }}
+                  onMouseEnter={() => setHoveredItem(item.id)}
+                  onMouseLeave={() => setHoveredItem(null)}
+                >
+                  {React.createElement(iconMap[item.icon], {
+                    className: cn(
+                      'h-5 w-5',
+                      isItemActive(item, currentRoute, isPrimary) && 'text-primary'
+                    ),
+                  })}
+                  {item.badge && (
+                    <Badge
+                      className="absolute -right-1 -top-0 flex h-5 w-5 items-center justify-center p-0"
+                      variant="default"
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
+                </Button>
+              </Link>
+            </PopoverTrigger>
+            <PopoverContent
+              side={isPrimary ? 'right' : 'left'}
+              className="w-auto p-2"
+              sideOffset={8}
+            >
+              <span className="text-sm font-medium">{item.label}</span>
+            </PopoverContent>
+          </Popover>
+        ))}
+      </div>
+    );
+  }
+
+  // asLabeledButtonList variant - Mobile: Horizontal scrolling buttons with labels
+  if (navigationView === 'asLabeledButtonList' && isMobile) {
+    return (
+      <div className="scrollbar-hide flex-1 overflow-x-auto">
+        <div className="flex min-w-max items-center justify-center gap-1 px-2">
+          {navigationItems.map(item => (
+            <Link key={item.id} to={item.href || '#'} className="inline-block">
+              <Button
+                variant="ghost"
+                className={cn(
+                  'flex h-16 min-w-16 flex-shrink-0 flex-col gap-1 px-2 hover:bg-accent',
+                  isItemActive(item, currentRoute, isPrimary) && 'bg-accent text-accent-foreground'
+                )}
+                onClick={e => {
+                  if (item.onClick) {
+                    e.preventDefault();
+                    item.onClick();
+                  }
+                  setHoveredItem(null); // Reset hover state after click
+                }}
+                onMouseEnter={() => setHoveredItem(item.id)}
+                onMouseLeave={() => setHoveredItem(null)}
+              >
+                <div className="relative">
+                  {' '}
+                  {React.createElement(iconMap[item.icon], {
+                    className: cn(
+                      'h-5 w-5 flex-shrink-0',
+                      isItemActive(item, currentRoute, isPrimary) && 'text-primary'
+                    ),
+                  })}
+                  {item.badge && (
+                    <Badge
+                      className="absolute -right-5 -top-3 flex h-5 w-5 items-center justify-center p-0"
+                      variant="default"
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
+                </div>
+                <span className="whitespace-nowrap text-center text-xs leading-tight">
+                  {item.label}
+                </span>
+              </Button>
+            </Link>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // asLabeledButtonList variant - Desktop: Full sidebar with icons and labels
+  if (navigationView === 'asLabeledButtonList' && !isMobile) {
+    return (
+      <div className="flex flex-col gap-2">
+        {navigationItems.map(item => (
+          <Link key={item.id} to={item.href || '#'} className="inline-block">
+            <Button
+              variant="ghost"
+              className={cn(
+                'h-12 w-full flex-shrink-0 justify-start gap-3 px-3',
+                isItemActive(item, currentRoute, isPrimary) && 'bg-accent text-accent-foreground'
+              )}
+              onClick={e => {
+                if (item.onClick) {
+                  e.preventDefault();
+                  item.onClick();
+                }
+                setHoveredItem(null); // Reset hover state after click
+              }}
+              onMouseEnter={() => setHoveredItem(item.id)}
+              onMouseLeave={() => setHoveredItem(null)}
+            >
+              {React.createElement(iconMap[item.icon], {
+                className: cn(
+                  'h-5 w-5',
+                  isItemActive(item, currentRoute, isPrimary) && 'text-primary'
+                ),
+              })}
+              <span>{item.label}</span>
+              {item.badge && (
+                <Badge className="ml-auto" variant="default">
+                  {item.badge}
+                </Badge>
+              )}
+            </Button>
+          </Link>
+        ))}
+      </div>
+    );
+  }
+
+  return null;
+}

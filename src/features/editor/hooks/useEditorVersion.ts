@@ -12,7 +12,7 @@ import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useDocumentState } from '@/zero/documents/useDocumentState';
 import { useBlogState } from '@/zero/blogs/useBlogState';
 import { toast } from 'sonner';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { EditorEntityType, EditorVersion, VersionCreationType } from '../types';
 
 interface UseEditorVersionOptions {

@@ -3,7 +3,7 @@ import { useGroupSubscribers } from '@/zero/groups/useGroupState';
 import { useCommonActions } from '@/zero/common/useCommonActions';
 import { useUserState } from '@/zero/users/useUserState';
 import { useAuth } from '@/providers/auth-provider';
-import { notifyGroupNewSubscriber } from '@/utils/notification-helpers';
+import { notifyGroupNewSubscriber } from '@/features/shared/utils/notification-helpers';
 import { toast } from 'sonner';
 
 /**

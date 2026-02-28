@@ -1,30 +1,30 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Button } from '@/features/shared/ui/ui/button';
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from '@/components/ui/carousel';
+} from '@/features/shared/ui/ui/carousel';
 import { Settings, ArrowUp, ArrowDown, Users, Copy } from 'lucide-react';
-import { HashtagDisplay } from '@/components/ui/hashtag-display';
+import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
-import { StatsBar } from '@/components/ui/StatsBar';
-import { ActionBar } from '@/components/ui/ActionBar';
-import { SubscribeButton, MembershipButton } from '@/components/shared/action-buttons';
-import { InfoTabs } from '@/components/shared/InfoTabs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ShareButton } from '@/components/shared/ShareButton';
+import { StatsBar } from '@/features/shared/ui/ui/StatsBar';
+import { ActionBar } from '@/features/shared/ui/ui/ActionBar';
+import { SubscribeButton, MembershipButton } from 'src/features/shared/ui/action-buttons';
+import { InfoTabs } from '@/features/shared/ui/wiki/InfoTabs.tsx';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
 import { SupporterStatusBadge } from '@/features/amendments/ui/SupporterStatusBadge';
 import { GRADIENTS } from '@/features/users/state/gradientColors';
 import { TargetSelectionDialog } from '@/features/amendments/ui/TargetSelectionDialog';
 import { Link } from '@tanstack/react-router';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAmendmentWikiPage } from './hooks/useAmendmentWikiPage';
 
 interface AmendmentWikiProps {

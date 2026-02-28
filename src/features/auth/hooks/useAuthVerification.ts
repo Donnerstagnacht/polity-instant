@@ -7,7 +7,7 @@ import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { useAuthStore } from '../auth';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useUserActions } from '@/zero/users/useUserActions';
 import { generateRandomHandle } from '../logic/user-initialization-helpers';
 

@@ -1,12 +1,12 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Card, CardContent } from '@/features/shared/ui/ui/card';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Progress } from '@/features/shared/ui/ui/progress';
 import { ChevronLeft, ChevronRight, CheckCircle2, Play, Loader2 } from 'lucide-react';
 import { useAgendaNavigation } from '../hooks/useAgendaNavigation';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface AgendaNavigationControlsProps {
   eventId: string;

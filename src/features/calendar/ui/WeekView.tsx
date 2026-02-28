@@ -1,8 +1,8 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
 import { useNavigate } from '@tanstack/react-router';
-import { cn } from '@/utils/utils';
-import { useTranslation } from '@/hooks/use-translation';
+import { cn } from '@/features/shared/utils/utils';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { CalendarEvent } from '../types/calendar.types';
 import { getWeekDays, isSameDay, formatTime } from '../logic/dateUtils';
 import { getBaseEventId } from '../logic/eventIdUtils';

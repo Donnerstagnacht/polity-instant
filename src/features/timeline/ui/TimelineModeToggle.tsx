@@ -1,9 +1,9 @@
 'use client';
 
 import { Pin, Telescope, Monitor } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
-import { cn } from '@/utils/utils';
-import { Badge } from '@/components/ui/badge';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { cn } from '@/features/shared/utils/utils';
+import { Badge } from '@/features/shared/ui/ui/badge';
 import { TimelineMode } from '../hooks/useTimelineMode';
 
 export interface TimelineModeToggleProps {

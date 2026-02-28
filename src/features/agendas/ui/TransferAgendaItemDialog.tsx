@@ -5,7 +5,7 @@ import { usePermissions } from '@/zero/rbac';
 import { useAuth } from '@/providers/auth-provider';
 import { useUserEventParticipations } from '@/zero/events/useEventState';
 import { useAgendaItemMutations } from '../hooks/useAgendaItemMutations';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/features/shared/ui/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -14,13 +14,13 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { TypeAheadSelect } from '@/components/ui/type-ahead-select';
-import { EventSelectCard } from '@/components/ui/entity-select-cards';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+} from '@/features/shared/ui/ui/dialog';
+import { TypeAheadSelect } from '@/features/shared/ui/ui/type-ahead-select';
+import { EventSelectCard } from '@/features/shared/ui/ui/entity-select-cards';
+import { Card, CardContent } from '@/features/shared/ui/ui/card';
+import { Badge } from '@/features/shared/ui/ui/badge';
 import { ArrowRight, Calendar, AlertTriangle, Loader2 } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { toast } from 'sonner';
 
 interface TransferAgendaItemDialogProps {

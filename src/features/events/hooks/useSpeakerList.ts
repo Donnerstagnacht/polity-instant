@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { useAuth } from '@/providers/auth-provider';
-import { notifySpeakerListJoined } from '@/utils/notification-helpers';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 
-export function useSpeakerList(agendaItemId?: string, eventContext?: { eventId: string; eventTitle: string }) {
+export function useSpeakerList(agendaItemId?: string) {
   const { user } = useAuth();
   const { addSpeaker, removeSpeaker } = useAgendaActions();
   const [addingSpeaker, setAddingSpeaker] = useState(false);
@@ -27,9 +26,6 @@ export function useSpeakerList(agendaItemId?: string, eventContext?: { eventId: 
         user_id: user.id,
         agenda_item_id: agendaItemId,
       });
-
-      if (eventContext) {
-      }
     } catch (error) {
       console.error('Error adding to speaker list:', error);
       throw error;

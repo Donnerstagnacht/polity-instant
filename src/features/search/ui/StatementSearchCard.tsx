@@ -1,6 +1,6 @@
 import React from 'react';
 import { StatementTimelineCard } from '@/features/timeline/ui/cards/StatementTimelineCard';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface StatementSearchCardProps {
   statement: any;

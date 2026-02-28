@@ -17,11 +17,11 @@ import {
   calculateMajority,
   isQuorumReached,
   type VoteValue,
-} from '@/utils/voting-utils';
+} from '@/features/shared/utils/voting-utils';
 import {
   notifyChangeRequestAccepted,
   notifyChangeRequestRejected,
-} from '@/utils/notification-helpers';
+} from '@/features/shared/utils/notification-helpers';
 import { triggerSupporterConfirmation } from '@/features/amendments/hooks/useSupportConfirmation';
 
 interface UseChangeRequestVotingOptions {

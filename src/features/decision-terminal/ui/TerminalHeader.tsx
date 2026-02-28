@@ -1,17 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { cn } from '@/utils/utils';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { cn } from '@/features/shared/utils/utils';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Input } from '@/features/shared/ui/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@/features/shared/ui/ui/dropdown-menu';
 import { Search, Settings, SlidersHorizontal } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export type TerminalFilter = 'live' | 'closing_soon' | 'recently_closed' | 'all';
 

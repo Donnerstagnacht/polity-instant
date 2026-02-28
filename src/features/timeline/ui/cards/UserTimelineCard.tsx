@@ -2,12 +2,12 @@
 
 import { User, Users, MapPin, Mail, Bell, Star } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
-import { useTranslation } from '@/hooks/use-translation';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ShareButton } from '@/components/shared/ShareButton';
-import { HashtagDisplay } from '@/components/ui/hashtag-display';
-import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
+import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
+import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
+import { Button } from '@/features/shared/ui/ui/button';
 import { useSubscribeUser } from '@/features/payments/hooks/useSubscribeUser';
 import { CONTENT_TYPE_CONFIG } from '../../constants/content-type-config';
 import {

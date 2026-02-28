@@ -1,9 +1,9 @@
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { ShareButton } from '@/components/shared/ShareButton';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Card, CardContent, CardHeader } from '@/features/shared/ui/ui/card';
+import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { AlertCircle, ArrowLeft } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useTodoDetailPage } from './hooks/useTodoDetailPage';
 import { TodoDetailHeader } from './ui/TodoDetailHeader';
 import { TodoDetailView } from './ui/TodoDetailView';

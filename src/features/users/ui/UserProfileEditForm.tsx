@@ -1,6 +1,6 @@
-import { Button } from '@/components/ui/button';
+import { Button } from '@/features/shared/ui/ui/button';
 import { Loader2 } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { AvatarUploadSection } from './AvatarUploadSection';
 import { BasicInformationSection } from './BasicInformationSection';
 import { AboutSection } from './AboutSection';
@@ -9,11 +9,11 @@ import { HashtagsSection } from './HashtagsSection';
 import { SubscriptionPlansGrid } from '@/features/payments/ui/SubscriptionPlansGrid';
 import { SubscriptionStatus } from '@/features/payments/ui/SubscriptionStatus';
 import { FormStyleSelector } from '@/features/create/ui/FormStyleSelector';
-import { ThemeToggle } from '@/navigation/toggles/theme-toggle';
-import { LanguageToggle } from '@/navigation/toggles/language-toggle';
-import { StateToggle } from '@/navigation/toggles/state-toggle';
-import { useNavigationStore } from '@/navigation/state/navigation.store';
-import { useTranslation } from '@/hooks/use-translation';
+import { ThemeToggle } from '@/features/navigation/toggles/theme-toggle';
+import { LanguageToggle } from '@/features/navigation/toggles/language-toggle';
+import { StateToggle } from '@/features/navigation/toggles/state-toggle';
+import { useNavigationStore } from '@/features/navigation/state/navigation.store';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { UserProfileFormData } from '../hooks/useUserProfileForm';
 
 interface UserProfileEditFormProps {

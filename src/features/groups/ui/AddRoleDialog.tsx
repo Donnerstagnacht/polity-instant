@@ -4,8 +4,8 @@
  * Dialog for creating a new role in the group.
  */
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Input } from '@/features/shared/ui/ui/input';
 import {
   Dialog,
   DialogContent,
@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from '@/features/shared/ui/ui/dialog';
 import { Plus } from 'lucide-react';
 
 interface AddRoleDialogProps {

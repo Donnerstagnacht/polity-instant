@@ -4,7 +4,7 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
-import { notifyAmendmentCommentAdded } from '@/utils/notification-helpers';
+import { notifyAmendmentCommentAdded } from '@/features/shared/utils/notification-helpers';
 
 const supabase = createClient();
 

@@ -8,7 +8,7 @@ import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useSubscribeEvent } from './useSubscribeEvent';
 import { useEventParticipation } from './useEventParticipation';
 import { computeAgendaStats } from '@/features/agendas/logic/computeAgendaStats';
-import { notifyCandidateAdded } from '@/utils/notification-helpers';
+import { notifyCandidateAdded } from '@/features/shared/utils/notification-helpers';
 
 export function useEventWikiPage(eventId: string) {
   const navigate = useNavigate();

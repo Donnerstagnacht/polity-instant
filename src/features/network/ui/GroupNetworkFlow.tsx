@@ -2,14 +2,14 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Node, Edge, useNodesState, useEdgesState, MarkerType } from '@xyflow/react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/features/shared/ui/ui/button';
 import { NetworkFlowBase, Panel } from '@/features/network/ui/NetworkFlowBase';
 import { RightFilters, formatRights, RIGHT_TYPES } from '@/features/network/ui/RightFilters';
 import { RightBadge } from '@/features/network/ui/RightBadge';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { NetworkEntityDialog } from '@/features/network/ui/NetworkEntityDialog';
 import { useGroupState } from '@/zero/groups/useGroupState';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface GroupNode extends Node {
   data: {

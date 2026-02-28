@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '@/utils/utils';
+import { cn } from '@/features/shared/utils/utils';
 import { TrendingUp, TrendingDown, Minus, Activity } from 'lucide-react';
 
 export type TrendDirection = 'up' | 'down' | 'stable' | 'volatile';

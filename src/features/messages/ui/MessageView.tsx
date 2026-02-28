@@ -1,10 +1,10 @@
-import { Card } from '@/components/ui/card';
-import { cn } from '@/utils/utils';
+import { Card } from '@/features/shared/ui/ui/card';
+import { cn } from '@/features/shared/utils/utils';
 import { Conversation } from '../types/message.types';
 import { ConversationHeader } from './ConversationHeader';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface MessageViewProps {
   conversation?: Conversation;

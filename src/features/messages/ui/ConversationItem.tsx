@@ -1,6 +1,6 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/utils/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { cn } from '@/features/shared/utils/utils';
 import { Pin } from 'lucide-react';
 import { Conversation } from '../types/message.types';
 import { getConversationDisplay, getUnreadCount, formatTime } from '../logic/messageUtils';

@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Textarea } from '@/features/shared/ui/ui/textarea';
+import { Card, CardContent } from '@/features/shared/ui/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Reply, ArrowUp, ArrowDown, User, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { createComment } from '../utils/thread-operations';

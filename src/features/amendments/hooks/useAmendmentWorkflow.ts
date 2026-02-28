@@ -14,7 +14,7 @@ import {
   isTerminalStatus,
   WORKFLOW_TRANSITIONS,
 } from '@/zero/rbac/workflow-constants';
-import { notifyWorkflowChanged } from '@/utils/notification-helpers';
+import { notifyWorkflowChanged } from '@/features/shared/utils/notification-helpers';
 
 interface UseAmendmentWorkflowProps {
   amendmentId: string;

@@ -1,11 +1,11 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { CardHeader } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { Button } from '@/features/shared/ui/ui/button';
+import { CardHeader } from '@/features/shared/ui/ui/card';
 import { ArrowLeft, Pin, PinOff, Trash2 } from 'lucide-react';
 import { Conversation } from '../types/message.types';
 import { getConversationDisplay, getOtherParticipant } from '../logic/messageUtils';
 import { ARIA_KAI_USER_ID } from '@/features/auth/constants';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Link } from '@tanstack/react-router';
 
 interface ConversationHeaderProps {

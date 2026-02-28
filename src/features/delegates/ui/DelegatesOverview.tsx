@@ -1,9 +1,9 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Users, CheckCircle2, Clock } from 'lucide-react';
 import { useEventDelegates } from '@/zero/events/useEventState';
-import { getDirectSubgroups } from '@/utils/delegate-calculations';
+import { getDirectSubgroups } from '@/features/shared/utils/delegate-calculations';
 
 interface DelegatesOverviewProps {
   eventId: string;

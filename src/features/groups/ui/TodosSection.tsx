@@ -1,8 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Button } from '@/features/shared/ui/ui/button';
 import { LayoutGrid, List } from 'lucide-react';
-import { KanbanBoard } from '@/components/todos/kanban-board';
-import { TodoList } from '@/components/todos/todo-list';
+import { KanbanBoard } from '@/features/todos/ui/kanban-board.tsx';
+import { TodoList } from '@/features/todos/ui/todo-list.tsx';
 import { AddTodoDialog } from './AddTodoDialog';
 import type { TodoViewMode } from '../types/group.types';
 

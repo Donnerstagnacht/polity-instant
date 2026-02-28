@@ -6,8 +6,8 @@ import { useEventWithGroup, useGroupRelationships } from '@/zero/events/useEvent
 import { NetworkFlowBase } from '@/features/network/ui/NetworkFlowBase';
 import { NetworkEntityDialog } from '@/features/network/ui/NetworkEntityDialog';
 import { RIGHT_TYPES, formatRights } from '@/features/network/ui/RightFilters';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import { Switch } from '@/features/shared/ui/ui/switch';
+import { Label } from '@/features/shared/ui/ui/label';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface EventNode extends Node {

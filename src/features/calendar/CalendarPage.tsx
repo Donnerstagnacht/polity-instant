@@ -1,6 +1,6 @@
 'use client';
 
-import { PageWrapper } from '@/components/layout/page-wrapper';
+import { PageWrapper } from '@/layout/page-wrapper';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { useCalendarPage } from './hooks/useCalendarPage';
 import { CalendarHeader } from './ui/CalendarHeader';

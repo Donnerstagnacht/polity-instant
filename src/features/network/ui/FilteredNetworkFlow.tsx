@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Node, Edge, useNodesState, useEdgesState, MarkerType } from '@xyflow/react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/features/shared/ui/ui/button';
 import { NetworkFlowBase, Panel } from '@/features/network/ui/NetworkFlowBase';
 import {
   RightFilters,
@@ -13,7 +13,7 @@ import {
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useUserState } from '@/zero/users/useUserState';
 import { useGroupState } from '@/zero/groups/useGroupState';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface NetworkNode extends Node {
   data: {

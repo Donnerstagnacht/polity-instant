@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { cn } from '@/utils/utils';
-import { useTranslation } from '@/hooks/use-translation';
+import { cn } from '@/features/shared/utils/utils';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { TerminalHeader, type TerminalFilter } from './TerminalHeader';
 import { DecisionTable } from './DecisionTable';
 import { DecisionSidePanel } from './DecisionSidePanel';

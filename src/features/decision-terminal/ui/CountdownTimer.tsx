@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { cn } from '@/utils/utils';
+import { cn } from '@/features/shared/utils/utils';
 import { Clock } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export interface CountdownTimerProps {
   endsAt: Date | string;

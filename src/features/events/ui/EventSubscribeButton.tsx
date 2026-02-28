@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@/features/shared/ui/ui/button';
 import { Bell, BellOff } from 'lucide-react';
 import { useSubscribeEvent } from '../hooks/useSubscribeEvent';
 

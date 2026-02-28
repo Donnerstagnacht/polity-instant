@@ -1,10 +1,10 @@
 import React from 'react';
-import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollableTabsList } from '@/components/ui/scrollable-tabs';
+import { Tabs, TabsContent, TabsTrigger } from '@/features/shared/ui/ui/tabs';
+import { ScrollableTabsList } from '@/features/shared/ui/ui/scrollable-tabs';
 import { BlogListTab } from './BlogListTab';
 import { GroupsListTab } from './GroupListTab';
 import { AmendmentListTab } from './AmendmentListTab';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { User, TabSearchState } from '../types/user.types';
 
 interface UserWikiContentTabsProps {

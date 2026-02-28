@@ -1,9 +1,9 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/utils/utils';
-import { isSameDay } from '@/utils/date-helpers';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
+import { cn } from '@/features/shared/utils/utils';
+import { isSameDay } from '@/features/shared/utils/date-helpers';
 // ...existing code...
 
 interface WeekViewProps {

@@ -7,10 +7,10 @@
 
 'use client';
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useTranslation } from '@/hooks/use-translation';
+import { Alert, AlertDescription, AlertTitle } from '@/features/shared/ui/ui/alert';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Bell, Check, X, Eye } from 'lucide-react';
 import { useState } from 'react';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';

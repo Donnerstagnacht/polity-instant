@@ -1,9 +1,9 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/features/shared/ui/ui/badge';
 import { Calendar, MapPin, Users, Clock } from 'lucide-react';
 import { useEventState } from '@/zero/events/useEventState';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface GroupEventsListProps {
   groupId: string;

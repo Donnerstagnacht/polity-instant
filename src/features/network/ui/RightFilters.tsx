@@ -1,8 +1,8 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { cn } from '@/utils/utils';
-import { useTranslation } from '@/hooks/use-translation';
+import { Button } from '@/features/shared/ui/ui/button';
+import { cn } from '@/features/shared/utils/utils';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export const RIGHT_TYPES = [
   'informationRight',

@@ -3,9 +3,9 @@
 import { ReactNode, MouseEvent } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Link } from '@tanstack/react-router';
-import { cn } from '@/utils/utils';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { cn } from '@/features/shared/utils/utils';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Button } from '@/features/shared/ui/ui/button';
 import { CARD_RADIUS, getCardShadowClasses } from '../../logic/gradient-assignment';
 import {
   ContentType,

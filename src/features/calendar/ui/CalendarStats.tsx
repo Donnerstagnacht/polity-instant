@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useTranslation } from '@/hooks/use-translation';
+import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { CalendarEvent } from '../types/calendar.types';
 import { isDateInRange, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from '../logic/dateUtils';
 

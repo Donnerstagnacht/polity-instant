@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useSearchPage } from './hooks/useSearchPage';
 import { SearchHeader } from './ui/SearchHeader';
 import { MasonryGrid } from '@/features/timeline/ui/MasonryGrid';

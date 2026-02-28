@@ -1,6 +1,6 @@
 import React from 'react';
-import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollableTabsList } from '@/components/ui/scrollable-tabs';
+import { Tabs, TabsContent, TabsTrigger } from '@/features/shared/ui/ui/tabs';
+import { ScrollableTabsList } from '@/features/shared/ui/ui/scrollable-tabs';
 import { UserAbout } from './UserAbout';
 import { UserContact } from './UserContact';
 

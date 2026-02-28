@@ -1,8 +1,8 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-router'
 import { AuthProvider } from '@/providers/auth-provider'
 import { ZeroAppProvider } from '@/providers/zero-provider'
-import { AppShell } from '@/components/layout/app-shell'
-import { NotFound } from '@/components/ui/not-found'
+import { AppShell } from '@/layout/app-shell'
+import { NotFound } from '@/features/shared/ui/ui/not-found'
 import appCss from '../styles.css?url'
 
 export const Route = createRootRoute({

@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react'
-import { TypeAheadSelect } from '@/components/ui/type-ahead-select'
+import { TypeAheadSelect } from '@/features/shared/ui/ui/type-ahead-select'
 import { useUserState } from '@/zero/users/useUserState'
-import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Label } from '@/features/shared/ui/ui/label'
+import { Badge } from '@/features/shared/ui/ui/badge'
+import { Button } from '@/features/shared/ui/ui/button'
 import { X, Users } from 'lucide-react'
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardHeader, CardTitle, CardDescription } from '@/features/shared/ui/ui/card'
 
 interface UserSearchInputProps {
   value: string[]

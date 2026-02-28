@@ -1,4 +1,4 @@
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Loader2 } from 'lucide-react';
 import { Notification } from '../types/notification.types';
 import { NotificationItem } from './NotificationItem';

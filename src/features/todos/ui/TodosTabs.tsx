@@ -1,5 +1,5 @@
-import { ScrollableTabsList } from '@/components/ui/scrollable-tabs';
-import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollableTabsList } from '@/features/shared/ui/ui/scrollable-tabs';
+import { Tabs, TabsContent, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import {
   CheckSquare,
   Circle,
@@ -8,7 +8,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { TodoStatus } from '../types/todo.types';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface TodosTabsProps {
   selectedTab: 'all' | TodoStatus;

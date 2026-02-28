@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { useTranslation } from '@/hooks/use-translation';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { ImageUpload } from '@/components/shared/ImageUpload';
-import { HashtagEditor } from '@/components/ui/hashtag-editor';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { Input } from '@/features/shared/ui/ui/input';
+import { Label } from '@/features/shared/ui/ui/label';
+import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
+import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';

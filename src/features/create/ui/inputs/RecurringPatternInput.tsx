@@ -1,7 +1,7 @@
-import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Input } from '@/components/ui/input'
-import { useTranslation } from '@/hooks/use-translation'
+import { Label } from '@/features/shared/ui/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/features/shared/ui/ui/radio-group'
+import { Input } from '@/features/shared/ui/ui/input'
+import { useTranslation } from '@/features/shared/hooks/use-translation'
 
 type RecurringPattern = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'four-yearly'
 

@@ -1,33 +1,33 @@
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Video, Building2 } from 'lucide-react'
-import { useTranslation } from '@/hooks/use-translation'
+import { Label } from '@/features/shared/ui/ui/label';
+import { Input } from '@/features/shared/ui/ui/input';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Video, Building2 } from 'lucide-react';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
-type LocationType = '' | 'online' | 'physical'
+type LocationType = '' | 'online' | 'physical';
 
 interface LocationData {
-  locationType: LocationType
+  locationType: LocationType;
   // Online fields
-  onlineMeetingLink: string
-  meetingCode: string
+  onlineMeetingLink: string;
+  meetingCode: string;
   // Physical fields
-  locationName: string
-  street: string
-  houseNumber: string
-  postalCode: string
-  city: string
+  locationName: string;
+  street: string;
+  houseNumber: string;
+  postalCode: string;
+  city: string;
 }
 
 interface LocationTypeInputProps {
-  value: LocationData
-  onChange: (data: LocationData) => void
+  value: LocationData;
+  onChange: (data: LocationData) => void;
 }
 
 export function LocationTypeInput({ value, onChange }: LocationTypeInputProps) {
-  const { t } = useTranslation()
+  const { t } = useTranslation();
 
-  const update = (patch: Partial<LocationData>) => onChange({ ...value, ...patch })
+  const update = (patch: Partial<LocationData>) => onChange({ ...value, ...patch });
 
   return (
     <div className="space-y-4">
@@ -64,7 +64,7 @@ export function LocationTypeInput({ value, onChange }: LocationTypeInputProps) {
               type="url"
               placeholder={t('pages.create.event.meetingLinkPlaceholder')}
               value={value.onlineMeetingLink}
-              onChange={(e) => update({ onlineMeetingLink: e.target.value })}
+              onChange={e => update({ onlineMeetingLink: e.target.value })}
             />
           </div>
           <div>
@@ -72,7 +72,7 @@ export function LocationTypeInput({ value, onChange }: LocationTypeInputProps) {
             <Input
               placeholder="123-456-789"
               value={value.meetingCode}
-              onChange={(e) => update({ meetingCode: e.target.value })}
+              onChange={e => update({ meetingCode: e.target.value })}
             />
           </div>
         </div>
@@ -86,22 +86,19 @@ export function LocationTypeInput({ value, onChange }: LocationTypeInputProps) {
             <Input
               placeholder={t('pages.create.event.venueNamePlaceholder')}
               value={value.locationName}
-              onChange={(e) => update({ locationName: e.target.value })}
+              onChange={e => update({ locationName: e.target.value })}
             />
           </div>
           <div className="grid grid-cols-3 gap-2">
             <div className="col-span-2">
               <Label>{t('pages.create.event.street')}</Label>
-              <Input
-                value={value.street}
-                onChange={(e) => update({ street: e.target.value })}
-              />
+              <Input value={value.street} onChange={e => update({ street: e.target.value })} />
             </div>
             <div>
               <Label>{t('pages.create.event.houseNumber')}</Label>
               <Input
                 value={value.houseNumber}
-                onChange={(e) => update({ houseNumber: e.target.value })}
+                onChange={e => update({ houseNumber: e.target.value })}
               />
             </div>
           </div>
@@ -110,19 +107,16 @@ export function LocationTypeInput({ value, onChange }: LocationTypeInputProps) {
               <Label>{t('pages.create.event.postalCode')}</Label>
               <Input
                 value={value.postalCode}
-                onChange={(e) => update({ postalCode: e.target.value })}
+                onChange={e => update({ postalCode: e.target.value })}
               />
             </div>
             <div>
               <Label>{t('pages.create.event.city')}</Label>
-              <Input
-                value={value.city}
-                onChange={(e) => update({ city: e.target.value })}
-              />
+              <Input value={value.city} onChange={e => update({ city: e.target.value })} />
             </div>
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }

@@ -1,4 +1,4 @@
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/features/shared/ui/ui/badge';
 import { Flag, AlertCircle } from 'lucide-react';
 import { TodoPriority } from '../types/todo.types';
 

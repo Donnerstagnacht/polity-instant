@@ -5,8 +5,8 @@ import {
   getDirectSubgroups,
   calculateDelegateAllocations,
   finalizeDelegateSelection,
-} from '../utils/delegate-calculations'
-import { notifyDelegatesFinalized } from '../utils/notification-helpers'
+} from '@/features/shared/utils/delegate-calculations'
+import { notifyDelegatesFinalized } from '@/features/shared/utils/notification-helpers'
 
 function getSupabase() {
   return createClient(

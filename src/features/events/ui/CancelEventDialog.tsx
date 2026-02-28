@@ -15,21 +15,21 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
+} from '@/features/shared/ui/ui/dialog';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Label } from '@/features/shared/ui/ui/label';
+import { Textarea } from '@/features/shared/ui/ui/textarea';
+import { Checkbox } from '@/features/shared/ui/ui/checkbox';
+import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { useTranslation } from '@/hooks/use-translation';
+} from '@/features/shared/ui/ui/select';
+import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useCancelEvent } from '../hooks/useCancelEvent';
 import { useEventsByGroup } from '@/zero/events/useEventState';
 import { AlertTriangle, CalendarX, ArrowRight, FileText, Vote } from 'lucide-react';

@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { EntityNotifications } from '@/components/notifications/EntityNotifications'
+import { EntityNotifications } from '@/features/notifications/ui/EntityNotifications.tsx'
 import { useEventById } from '@/zero/events/useEventState'
 
 export const Route = createFileRoute('/_authed/event/$id/notifications')({

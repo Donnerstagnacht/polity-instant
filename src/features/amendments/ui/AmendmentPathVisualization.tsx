@@ -3,11 +3,11 @@
 import { useEffect } from 'react';
 import { Node, Edge, useNodesState, useEdgesState, MarkerType } from '@xyflow/react';
 import { NetworkFlowBase, Panel } from '@/features/network/ui/NetworkFlowBase';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Badge } from '@/features/shared/ui/ui/badge';
 import { Calendar, ArrowRight, Target } from 'lucide-react';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface AmendmentPathVisualizationProps {
   amendmentId: string;

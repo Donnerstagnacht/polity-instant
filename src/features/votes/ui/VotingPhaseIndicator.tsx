@@ -7,12 +7,12 @@
 
 'use client';
 
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { useTranslation } from '@/hooks/use-translation';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Progress } from '@/features/shared/ui/ui/progress';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useSyncedVotingTimer } from '../hooks/useVotingTimer';
 import { Clock, CheckCircle, XCircle, PlayCircle, PauseCircle, Timer } from 'lucide-react';
-import { cn } from '@/utils/utils';
+import { cn } from '@/features/shared/utils/utils';
 
 type VotingPhase = 'setup' | 'introduction' | 'voting' | 'closed';
 type VotingResult = 'passed' | 'rejected' | 'tie' | null;

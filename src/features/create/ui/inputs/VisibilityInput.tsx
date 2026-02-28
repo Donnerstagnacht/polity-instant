@@ -1,4 +1,4 @@
-import { VisibilitySelector } from '@/components/ui/visibility-selector'
+import { VisibilitySelector } from '@/features/shared/ui/ui/visibility-selector'
 
 type Visibility = 'public' | 'authenticated' | 'private'
 

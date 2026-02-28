@@ -2,15 +2,15 @@
 
 import { BookOpen, Clock, User, Bell, Users, MessageSquare } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
-import { useTranslation } from '@/hooks/use-translation';
-import { cn } from '@/utils/utils';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { HashtagDisplay } from '@/components/ui/hashtag-display';
-import { ShareButton } from '@/components/shared/ShareButton';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { cn } from '@/features/shared/utils/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { Progress } from '@/features/shared/ui/ui/progress';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
+import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
+import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { useSubscribeBlog } from '@/features/blogs/hooks/useSubscribeBlog';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/features/shared/ui/ui/button';
 import { CONTENT_TYPE_CONFIG, getContentTypeGradient } from '../../constants/content-type-config';
 import {
   TimelineCardBase,

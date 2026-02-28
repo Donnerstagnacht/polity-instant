@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '@/providers/auth-provider';
-import { notifyEventPositionCreated, notifyEventPositionDeleted } from '@/utils/notification-helpers';
+import { notifyEventPositionCreated, notifyEventPositionDeleted } from '@/features/shared/utils/notification-helpers';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { useEventPositionsData } from '@/zero/events/useEventState';
 

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { toast } from 'sonner';
-import { addUserToGroupConversation } from '@/utils/groupConversationSync';
+import { addUserToGroupConversation } from '@/features/shared/utils/groupConversationSync';
 
 /**
  * Hook for group membership mutations

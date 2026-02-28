@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { useTranslation } from '@/hooks/use-translation'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card'
+import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { useFormStyle } from '../hooks/useFormStyle'
 import { CarouselFormLayout } from './CarouselFormLayout'
 import { OnePageFormLayout } from './OnePageFormLayout'

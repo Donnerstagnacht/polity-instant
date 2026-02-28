@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from 'react'
 import useEmblaCarousel from 'embla-carousel-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/features/shared/ui/ui/button'
 import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
-import { useTranslation } from '@/hooks/use-translation'
+import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { CreateProgressIndicator } from './CreateProgressIndicator'
 import type { CreateFormStep } from '../types/create-form.types'
 

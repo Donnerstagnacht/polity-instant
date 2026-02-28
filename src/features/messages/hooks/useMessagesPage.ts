@@ -6,7 +6,7 @@ import { useConversationData } from './useConversationData';
 import { useMessageMutations } from './useMessageMutations';
 import { useConversationFilters } from './useConversationFilters';
 import { useConversationSelection } from './useConversationSelection';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Conversation } from '../types/message.types';
 
 export function useMessagesPage() {

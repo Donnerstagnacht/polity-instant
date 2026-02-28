@@ -5,7 +5,7 @@ import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
-import { notifyBlogPublished } from '@/utils/notification-helpers';
+import { notifyBlogPublished } from '@/features/shared/utils/notification-helpers';
 
 export interface BlogFormData {
   title: string;

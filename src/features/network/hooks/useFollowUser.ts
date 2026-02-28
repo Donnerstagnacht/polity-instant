@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useUserState } from '@/zero/users/useUserState';
 import { useUserActions } from '@/zero/users/useUserActions';
 import { useAuth } from '@/providers/auth-provider';
-import { notifyNewFollower } from '@/utils/notification-helpers';
+import { notifyNewFollower } from '@/features/shared/utils/notification-helpers';
 
 /**
  * Hook to handle user following functionality

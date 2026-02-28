@@ -1,6 +1,6 @@
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { useTranslation } from '@/hooks/use-translation'
+import { Label } from '@/features/shared/ui/ui/label'
+import { Input } from '@/features/shared/ui/ui/input'
+import { useTranslation } from '@/features/shared/hooks/use-translation'
 
 interface DateTimeRangeInputProps {
   startDate: string

@@ -1,5 +1,5 @@
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { AddPaymentDialog } from './AddPaymentDialog';
 import type { ChartData, FinancialSummary } from '../types/group.types';
 

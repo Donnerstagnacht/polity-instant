@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useZero } from '@rocicorp/zero/react'
 import { toast } from 'sonner'
-import { useTranslation } from '@/hooks/use-translation'
+import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { mutators } from '../mutators'
 
 /**

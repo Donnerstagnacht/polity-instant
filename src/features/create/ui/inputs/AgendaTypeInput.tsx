@@ -1,5 +1,5 @@
-import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Label } from '@/features/shared/ui/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/features/shared/ui/ui/radio-group'
 import { Mic, Vote, Speech, MessageSquare } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 

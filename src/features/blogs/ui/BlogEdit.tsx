@@ -6,18 +6,18 @@
  */
 
 import { useNavigate } from '@tanstack/react-router';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Input } from '@/features/shared/ui/ui/input';
+import { Label } from '@/features/shared/ui/ui/label';
+import { Textarea } from '@/features/shared/ui/ui/textarea';
+import { Switch } from '@/features/shared/ui/ui/switch';
 import { Loader2 } from 'lucide-react';
-import { ImageUpload } from '@/components/shared/ImageUpload';
-import { HashtagEditor } from '@/components/ui/hashtag-editor';
+import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
+import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
 import { useBlogEditPage } from '../hooks/useBlogEditPage';
 import { useAuth } from '@/providers/auth-provider';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface BlogEditProps {
   blogId: string;

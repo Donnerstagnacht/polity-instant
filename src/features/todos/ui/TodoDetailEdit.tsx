@@ -1,12 +1,12 @@
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/features/shared/ui/ui/input';
+import { Textarea } from '@/features/shared/ui/ui/textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/features/shared/ui/ui/select';
 import { Circle, Clock, CheckCircle2, XCircle, Flag, AlertCircle } from 'lucide-react';
 import { TodoFormData, TodoStatus, TodoPriority } from '../types/todo.types';
 

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useGroupState } from '@/zero/groups/useGroupState';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface GroupDisplay {
   id: string;

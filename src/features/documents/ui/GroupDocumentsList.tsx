@@ -5,8 +5,8 @@
  */
 
 import { useNavigate } from '@tanstack/react-router';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/features/shared/ui/ui/card';
+import { Button } from '@/features/shared/ui/ui/button';
 import { Loader2, FileText, Plus } from 'lucide-react';
 import { useGroupDocuments } from '../hooks/useGroupDocuments';
 import { useDocumentMutations } from '../hooks/useDocumentMutations';

@@ -1,10 +1,10 @@
-import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/features/shared/ui/ui/tabs';
 import { Bell, Check, Users } from 'lucide-react';
 import { useNotificationsPage } from './hooks/useNotificationsPage';
 import { NotificationHeader } from './ui/NotificationHeader';
 import { NotificationTabs } from './ui/NotificationTabs';
 import { NotificationsList } from './ui/NotificationsList';
-import { EntitySearchBar } from '@/components/ui/entity-search-bar';
+import { EntitySearchBar } from '@/features/shared/ui/ui/entity-search-bar';
 
 export function NotificationsPage() {
   const np = useNotificationsPage();

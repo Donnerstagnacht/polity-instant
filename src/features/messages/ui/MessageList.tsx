@@ -1,13 +1,13 @@
 import { useEffect, useRef } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/features/shared/ui/ui/card';
+import { Button } from '@/features/shared/ui/ui/button';
 import { Check, X } from 'lucide-react';
 import { MessageBubble } from './MessageBubble';
 import { Conversation, Message } from '../types/message.types';
 import { getOtherParticipant } from '../logic/messageUtils';
-import { AriaKaiMessageActions } from '@/components/messages/AriaKaiMessageActions';
+import { AriaKaiMessageActions } from '@/features/messages/ui/AriaKaiMessageActions.tsx';
 import { ARIA_KAI_USER_ID } from '@/features/auth/constants';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface MessageListProps {
   conversation: Conversation;

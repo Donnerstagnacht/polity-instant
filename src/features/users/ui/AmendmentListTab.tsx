@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/features/shared/ui/ui/input';
 import { Search } from 'lucide-react';
 import { AmendmentTimelineCard } from '@/features/timeline/ui/cards/AmendmentTimelineCard';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { UserAmendment } from '../types/user.types';
 
 interface AmendmentListTabProps {

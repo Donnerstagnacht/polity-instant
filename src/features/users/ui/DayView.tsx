@@ -1,9 +1,9 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Calendar } from '@/features/shared/ui/ui/calendar';
+import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
 import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { MeetingSlotCard } from './MeetingSlotCard';
 

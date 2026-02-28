@@ -1,7 +1,7 @@
 'use client';
 
-import { PageWrapper } from '@/components/layout/page-wrapper';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageWrapper } from '@/layout/page-wrapper';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import {
   Users,
   FileText,
@@ -13,7 +13,7 @@ import {
   Briefcase,
   DollarSign,
 } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export function CreateDashboard() {
   const { t } = useTranslation();

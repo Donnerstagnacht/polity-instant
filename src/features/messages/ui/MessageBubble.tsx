@@ -1,6 +1,6 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MessageContent } from '@/components/messages/MessageContent';
-import { cn } from '@/utils/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { MessageContent } from '@/features/messages/ui/MessageContent.tsx';
+import { cn } from '@/features/shared/utils/utils';
 import { Message } from '../types/message.types';
 import { formatTime } from '../logic/messageUtils';
 

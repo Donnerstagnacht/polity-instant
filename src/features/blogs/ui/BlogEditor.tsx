@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Textarea } from '@/features/shared/ui/ui/textarea';
+import { Label } from '@/features/shared/ui/ui/label';
 import { Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { useBlogState } from '@/zero/blogs/useBlogState';

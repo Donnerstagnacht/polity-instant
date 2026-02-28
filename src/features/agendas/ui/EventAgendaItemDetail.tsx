@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/features/shared/ui/ui/card';
+import { Button } from '@/features/shared/ui/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,7 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+} from '@/features/shared/ui/ui/alert-dialog';
 import { ArrowLeft, ArrowRight, Edit, Trash2, AlertCircle } from 'lucide-react';
 import { useEventAgendaItem } from '../hooks/useEventAgendaItem';
 import { AmendmentVotingQueue } from '@/features/votes/ui/AmendmentVotingQueue';
@@ -36,9 +36,9 @@ import {
   notifyVotingSessionStarted,
   notifyVotingSessionCompleted,
   notifyCandidateAdded,
-} from '@/utils/notification-helpers';
+} from '@/features/shared/utils/notification-helpers';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export function EventAgendaItemDetail({
   eventId,

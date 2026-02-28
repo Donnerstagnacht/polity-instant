@@ -1,12 +1,18 @@
 'use client';
 
-import { PageWrapper } from '@/components/layout/page-wrapper';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { PageWrapper } from '@/layout/page-wrapper';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Button } from '@/features/shared/ui/ui/button';
 import { useStatementState } from '@/zero/statements/useStatementState';
 import { FileText, User, MessageSquare, Share2, ThumbsUp } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface StatementDetailProps {
   statementId: string;
@@ -43,7 +49,7 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
         </div>
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <blockquote className="border-l-4 border-primary pl-6 text-2xl font-medium leading-relaxed">
+            <blockquote className="border-primary border-l-4 pl-6 text-2xl leading-relaxed font-medium">
               "{statement.text}"
             </blockquote>
           </div>
@@ -76,10 +82,12 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
           <Card>
             <CardHeader>
               <CardTitle>{t('features.statements.detail.discussion')}</CardTitle>
-              <CardDescription>{t('features.statements.detail.discussionDescription')}</CardDescription>
+              <CardDescription>
+                {t('features.statements.detail.discussionDescription')}
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 {t('features.statements.detail.noComments')}
               </p>
             </CardContent>
@@ -89,10 +97,14 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
           <Card>
             <CardHeader>
               <CardTitle>{t('features.statements.detail.relatedStatements')}</CardTitle>
-              <CardDescription>{t('features.statements.detail.relatedStatementsDescription')}</CardDescription>
+              <CardDescription>
+                {t('features.statements.detail.relatedStatementsDescription')}
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">{t('features.statements.detail.noRelatedStatements')}</p>
+              <p className="text-muted-foreground text-sm">
+                {t('features.statements.detail.noRelatedStatements')}
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -110,12 +122,14 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <p className="font-medium">{`${author.first_name} ${author.last_name}`.trim() || 'Unknown'}</p>
+                  <p className="font-medium">
+                    {`${author.first_name} ${author.last_name}`.trim() || 'Unknown'}
+                  </p>
                   {author.handle && (
-                    <p className="text-sm text-muted-foreground">@{author.handle}</p>
+                    <p className="text-muted-foreground text-sm">@{author.handle}</p>
                   )}
                   {author.bio && (
-                    <p className="line-clamp-3 text-sm text-muted-foreground">{author.bio}</p>
+                    <p className="text-muted-foreground line-clamp-3 text-sm">{author.bio}</p>
                   )}
                 </div>
               </CardContent>
@@ -131,7 +145,7 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
               <Badge variant="secondary" className="text-sm">
                 {statement.tag}
               </Badge>
-              <p className="mt-3 text-sm text-muted-foreground">
+              <p className="text-muted-foreground mt-3 text-sm">
                 {t('features.statements.detail.exploreMore')}
               </p>
             </CardContent>

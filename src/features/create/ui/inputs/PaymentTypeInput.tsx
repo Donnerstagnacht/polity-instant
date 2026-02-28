@@ -1,12 +1,12 @@
-import { Label } from '@/components/ui/label'
+import { Label } from '@/features/shared/ui/ui/label'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { useTranslation } from '@/hooks/use-translation'
+} from '@/features/shared/ui/ui/select'
+import { useTranslation } from '@/features/shared/hooks/use-translation'
 
 const PAYMENT_TYPES = [
   'membership_fee',

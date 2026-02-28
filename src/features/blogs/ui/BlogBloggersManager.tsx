@@ -5,8 +5,8 @@ import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useUserState } from '@/zero/users/useUserState';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Input } from '@/features/shared/ui/ui/input';
 import {
   ArrowLeft,
   UserPlus,
@@ -26,20 +26,20 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollableTabsList } from '@/components/ui/scrollable-tabs';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+} from '@/features/shared/ui/ui/table';
+import { Tabs, TabsContent, TabsTrigger } from '@/features/shared/ui/ui/tabs';
+import { ScrollableTabsList } from '@/features/shared/ui/ui/scrollable-tabs';
+import { Checkbox } from '@/features/shared/ui/ui/checkbox';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/features/shared/ui/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -48,7 +48,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from '@/features/shared/ui/ui/dialog';
 import {
   Command,
   CommandEmpty,
@@ -56,7 +56,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from '@/components/ui/command';
+} from '@/features/shared/ui/ui/command';
 import { toast } from 'sonner';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac/usePermissions';
@@ -67,7 +67,7 @@ import {
   notifyBloggerRemoved,
   notifyBlogRoleCreated,
   notifyBlogRoleDeleted,
-} from '@/utils/notification-helpers';
+} from '@/features/shared/utils/notification-helpers';
 
 // Define available action rights for blogs
 const ACTION_RIGHTS = [

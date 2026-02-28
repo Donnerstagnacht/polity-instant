@@ -11,7 +11,7 @@ import { useEventActions } from '@/zero/events/useEventActions';
 import { useEventWithAgendaAndParticipants } from '@/zero/events/useEventState';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac';
-import { notifyAgendaItemActivated } from '@/utils/notification-helpers';
+import { notifyAgendaItemActivated } from '@/features/shared/utils/notification-helpers';
 import { toast } from 'sonner';
 
 interface AgendaItem {

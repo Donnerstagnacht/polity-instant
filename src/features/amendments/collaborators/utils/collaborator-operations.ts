@@ -9,7 +9,7 @@ import {
   notifyCollaborationRejected,
   notifyCollaborationRemoved,
   notifyCollaborationRoleChanged,
-} from '@/utils/notification-helpers';
+} from '@/features/shared/utils/notification-helpers';
 
 const supabase = createClient();
 

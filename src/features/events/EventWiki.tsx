@@ -1,7 +1,7 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Button } from '@/features/shared/ui/ui/button';
 import { Trophy, UserCheck, Users, Video, Building2, MapPin, Repeat } from 'lucide-react';
 import {
   Dialog,
@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from '@/components/ui/dialog';
+} from '@/features/shared/ui/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,19 +19,19 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+} from '@/features/shared/ui/ui/alert-dialog';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { GRADIENTS } from '@/features/users/state/gradientColors';
-import { HashtagDisplay } from '@/components/ui/hashtag-display';
+import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
-import { StatsBar } from '@/components/ui/StatsBar';
-import { ActionBar } from '@/components/ui/ActionBar';
-import { SubscribeButton, MembershipButton } from '@/components/shared/action-buttons';
-import { InfoTabs } from '@/components/shared/InfoTabs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useTranslation } from '@/hooks/use-translation';
-import { ShareButton } from '@/components/shared/ShareButton';
+import { StatsBar } from '@/features/shared/ui/ui/StatsBar';
+import { ActionBar } from '@/features/shared/ui/ui/ActionBar';
+import { SubscribeButton, MembershipButton } from 'src/features/shared/ui/action-buttons';
+import { InfoTabs } from '@/features/shared/ui/wiki/InfoTabs.tsx';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { DelegatesOverview } from '@/features/delegates/ui/DelegatesOverview';
 import {
   Carousel,
@@ -39,7 +39,7 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from '@/components/ui/carousel';
+} from '@/features/shared/ui/ui/carousel';
 import { useEventWikiPage } from './hooks/useEventWikiPage';
 
 interface EventWikiProps {

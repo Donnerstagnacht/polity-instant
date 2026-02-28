@@ -9,21 +9,21 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel';
-import { HashtagEditor } from '@/components/ui/hashtag-editor';
-import { VisibilitySelector } from '@/components/ui/visibility-selector';
-import { TooltipProvider } from '@/components/ui/tooltip';
+} from '@/features/shared/ui/ui/card';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Input } from '@/features/shared/ui/ui/input';
+import { Label } from '@/features/shared/ui/ui/label';
+import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/features/shared/ui/ui/carousel';
+import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
+import { VisibilitySelector } from '@/features/shared/ui/ui/visibility-selector';
+import { TooltipProvider } from '@/features/shared/ui/ui/tooltip';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from 'sonner';
-import { PageWrapper } from '@/components/layout/page-wrapper';
+import { PageWrapper } from '@/layout/page-wrapper';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
-import { ImageUpload } from '@/components/shared/ImageUpload';
+import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { useCommonState, useCommonActions } from '@/zero/common';
 
 export function CreateBlogForm() {

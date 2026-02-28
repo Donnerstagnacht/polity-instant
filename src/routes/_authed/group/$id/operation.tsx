@@ -5,7 +5,7 @@ import { AddLinkDialog } from '@/features/network/ui/AddLinkDialog'
 import { PaymentsSection } from '@/features/groups/ui/PaymentsSection'
 import { TodosSection } from '@/features/groups/ui/TodosSection'
 import { GroupDocumentsList } from '@/features/documents/ui/GroupDocumentsList'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card'
 
 export const Route = createFileRoute('/_authed/group/$id/operation')({
   component: GroupOperationPage,

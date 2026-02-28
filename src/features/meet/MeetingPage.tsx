@@ -1,7 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
-import { StatsBar } from '@/components/ui/StatsBar';
-import { InfoTabs } from '@/components/shared/InfoTabs';
-import { useTranslation } from '@/hooks/use-translation';
+import { StatsBar } from '@/features/shared/ui/ui/StatsBar';
+import { InfoTabs } from '@/features/shared/ui/wiki/InfoTabs.tsx';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useMeetingData } from './hooks/useMeetingData';
 import { useMeetingBooking } from './hooks/useMeetingBooking';
 import { MeetingHeader } from './ui/MeetingHeader';

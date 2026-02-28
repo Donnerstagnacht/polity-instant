@@ -1,4 +1,4 @@
-import { useNavigationStore } from '../src/navigation/state/navigation.store';
+import { useNavigationStore } from '@/features/navigation/state/navigation.store';
 import i18n from '../src/i18n/i18n';
 import React, { useEffect } from 'react';
 import { useAuthStore } from '@/features/auth/auth.ts';

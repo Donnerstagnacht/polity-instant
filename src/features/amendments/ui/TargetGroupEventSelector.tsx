@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { TypeAheadSelect } from '@/components/ui/type-ahead-select';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { Label } from '@/features/shared/ui/ui/label';
+import { Input } from '@/features/shared/ui/ui/input';
+import { TypeAheadSelect } from '@/features/shared/ui/ui/type-ahead-select';
+import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
 import {
   Dialog,
   DialogContent,
@@ -16,9 +16,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '@/features/shared/ui/ui/dialog';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
-import { findShortestPath } from '@/utils/path-finding';
+import { findShortestPath } from '@/features/shared/utils/path-finding';
 import { CalendarIcon, Target, User, MapPin, Clock, Users, ChevronRight, Search } from 'lucide-react';
 
 interface TargetGroupEventSelectorProps {

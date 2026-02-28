@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useAuth } from '@/providers/auth-provider';
-import { notifyAmendmentNewSubscriber } from '@/utils/notification-helpers';
+import { notifyAmendmentNewSubscriber } from '@/features/shared/utils/notification-helpers';
 import { toast } from 'sonner';
 
 /**

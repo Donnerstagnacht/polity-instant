@@ -5,18 +5,18 @@
  * location, social media, and image upload.
  */
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@/features/shared/ui/ui/button';
 import { Loader2 } from 'lucide-react';
-import { ImageUpload } from '@/components/shared/ImageUpload';
-import { HashtagEditor } from '@/components/ui/hashtag-editor';
+import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
+import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
 import { BasicInfoSection } from './BasicInfoSection';
 import { LocationInfoSection } from './LocationInfoSection';
 import { SocialMediaSection } from './SocialMediaSection';
 import { useGroupUpdate } from '../hooks/useGroupUpdate';
 import type { GroupFormData } from '../hooks/useGroupUpdate';
 import { useState, useRef } from 'react';
-import { useTranslation } from '@/hooks/use-translation';
-import { CreateReviewCard, SummaryField } from '@/components/ui/create-review-card';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { CreateReviewCard, SummaryField } from '@/features/shared/ui/ui/create-review-card';
 
 interface GroupEditFormProps {
   groupId: string;

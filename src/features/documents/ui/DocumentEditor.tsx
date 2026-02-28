@@ -6,10 +6,10 @@
  */
 
 import { useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
-import { PlateEditor } from '@/components/kit-platejs/plate-editor';
+import { Card, CardContent, CardDescription, CardHeader } from '@/features/shared/ui/ui/card';
+import { PlateEditor } from '@/features/shared/ui/kit-platejs/plate-editor';
 import { DocumentHeader } from './DocumentHeader';
-import { useSuggestionIdAssignment } from '@/hooks/use-suggestion-id-assignment';
+import { useSuggestionIdAssignment } from '@/features/shared/hooks/use-suggestion-id-assignment';
 
 // Unified editor imports
 import { useEditor, useEditorPresence, useEditorUsers, type EditorUser } from '@/features/editor';

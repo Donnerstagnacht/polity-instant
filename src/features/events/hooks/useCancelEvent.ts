@@ -11,7 +11,7 @@ import {
   notifyEventCancelled,
   notifyAgendaItemsReassigned,
   notifyRevoteScheduled,
-} from '@/utils/notification-helpers';
+} from '@/features/shared/utils/notification-helpers';
 import { toast } from 'sonner';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';

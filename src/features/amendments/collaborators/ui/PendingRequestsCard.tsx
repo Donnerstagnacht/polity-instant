@@ -2,9 +2,9 @@
  * Card displaying pending collaboration requests
  */
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import {
   Table,
   TableBody,
@@ -12,7 +12,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from '@/features/shared/ui/ui/table';
 import { Users, Check, Trash2 } from 'lucide-react';
 import { approveRequest, rejectRequest } from '../utils/collaborator-operations';
 import type { Collaborator } from '../hooks/useCollaborators';

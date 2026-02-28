@@ -1,12 +1,12 @@
 'use client';
 
 import { ReactNode, useMemo, useRef, useEffect } from 'react';
-import { cn } from '@/utils/utils';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
+import { cn } from '@/features/shared/utils/utils';
+import { Skeleton } from '@/features/shared/ui/ui/skeleton';
+import { Button } from '@/features/shared/ui/ui/button';
 import { Rss, Search } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export interface MasonryGridProps<T> {
   items: T[];

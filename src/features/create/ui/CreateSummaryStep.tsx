@@ -1,4 +1,4 @@
-import { CreateReviewCard, SummaryField } from '@/components/ui/create-review-card'
+import { CreateReviewCard, SummaryField } from '@/features/shared/ui/ui/create-review-card'
 import {
   getContentTypeGradient,
   type ContentType,

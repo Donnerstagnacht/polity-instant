@@ -6,12 +6,12 @@
  */
 
 import { useNavigate } from '@tanstack/react-router';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/features/shared/ui/ui/button';
 import { Loader2 } from 'lucide-react';
 import { useGroupData } from '../hooks/useGroupData';
 import { GroupEditForm } from './GroupEditForm';
 import { useAuth } from '@/providers/auth-provider';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface GroupEditProps {
   groupId: string;

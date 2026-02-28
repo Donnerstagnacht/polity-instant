@@ -6,8 +6,8 @@
  * Usage: `<ModeSelector entityType="amendment" entityId={documentId} ... />`
  */
 
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,11 +15,11 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@/features/shared/ui/ui/dropdown-menu';
 import { Edit, Eye, MessageSquare, Vote, ChevronDown } from 'lucide-react';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { toast } from 'sonner';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 type EditingMode = 'edit' | 'view' | 'suggest' | 'vote';
 

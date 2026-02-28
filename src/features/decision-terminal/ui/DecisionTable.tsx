@@ -1,7 +1,7 @@
 'use client';
 
-import { cn } from '@/utils/utils';
-import { useTranslation } from '@/hooks/use-translation';
+import { cn } from '@/features/shared/utils/utils';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { DecisionRow } from './DecisionRow';
 import type { DecisionItem } from './types';
 

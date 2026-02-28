@@ -3,7 +3,7 @@
 import { ReactNode, useState, useEffect } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { useUserState } from '@/zero/users/useUserState';
-import { GlobalLoadingAnimation } from '@/components/ui/global-loading-animation';
+import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation';
 import { useConnectionState } from '@rocicorp/zero/react';
 
 interface EnsureUserProps {

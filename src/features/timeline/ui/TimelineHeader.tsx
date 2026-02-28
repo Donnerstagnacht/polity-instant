@@ -1,16 +1,16 @@
 'use client';
 
 import { SlidersHorizontal, ArrowUpDown, Settings } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
-import { cn } from '@/utils/utils';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { cn } from '@/features/shared/utils/utils';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@/features/shared/ui/ui/dropdown-menu';
 import { TimelineModeToggle } from './TimelineModeToggle';
 import { TimelineMode } from '../hooks/useTimelineMode';
 import { TimelineSortOption } from '../hooks/useTimelineFilters';

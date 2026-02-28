@@ -6,8 +6,8 @@ import { GroupMembershipsTab } from '@/features/users/ui/GroupMembershipsTab'
 import { EventParticipationsTab } from '@/features/users/ui/EventParticipationsTab'
 import { AmendmentCollaborationsTab } from '@/features/users/ui/AmendmentCollaborationsTab'
 import { BlogRelationsTab } from '@/features/users/ui/BlogRelationsTab'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { EntitySearchBar } from '@/components/ui/entity-search-bar'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs'
+import { EntitySearchBar } from '@/features/shared/ui/ui/entity-search-bar'
 import { Users, Calendar, FileEdit, BookOpen } from 'lucide-react'
 
 export const Route = createFileRoute('/_authed/user/$id/memberships')({

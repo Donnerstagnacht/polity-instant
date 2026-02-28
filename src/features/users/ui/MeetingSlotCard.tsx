@@ -1,12 +1,12 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Clock, Users, Trash2 } from 'lucide-react';
-import { cn } from '@/utils/utils';
+import { cn } from '@/features/shared/utils/utils';
 import { isPast } from 'date-fns';
-import { formatTime } from '@/utils/date-helpers';
+import { formatTime } from '@/features/shared/utils/date-helpers';
 
 interface MeetingSlotCardProps {
   slot: any;

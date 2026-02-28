@@ -1,10 +1,10 @@
 'use client';
 
 import { Image as ImageIcon, MapPin, User, Heart, MessageSquare } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
-import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ShareButton } from '@/components/shared/ShareButton';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
+import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { TimelineCardBase, TimelineCardContent, TimelineCardActions } from './TimelineCardBase';
 
 export interface ImageTimelineCardProps {

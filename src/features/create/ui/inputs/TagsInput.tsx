@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { Label } from '@/features/shared/ui/ui/label'
+import { Input } from '@/features/shared/ui/ui/input'
+import { Button } from '@/features/shared/ui/ui/button'
+import { Badge } from '@/features/shared/ui/ui/badge'
 import { X, Plus } from 'lucide-react'
 
 interface TagsInputProps {

@@ -2,20 +2,20 @@ import '@/styles/animations.css';
 import { SocialBar } from '@/features/users/ui/SocialBar';
 import { useNavigate } from '@tanstack/react-router';
 import { Mail } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/features/shared/ui/ui/button';
 import { useUserWikiContentSearch } from './state/useUserWikiContentSearch';
-import { InfoTabs } from '@/components/shared/InfoTabs';
+import { InfoTabs } from '@/features/shared/ui/wiki/InfoTabs.tsx';
 import { StatementCarousel } from '@/features/users/ui/StatementCarousel';
 import { UserWikiContentTabs } from '@/features/users/ui/UserWikiContentTabs';
 import { useUserData } from './hooks/useUserData';
 import { useSubscribeUser } from '@/features/payments/hooks/useSubscribeUser';
 import { useAuth } from '@/providers/auth-provider';
-import { HashtagDisplay } from '@/components/ui/hashtag-display';
-import { StatsBar } from '@/components/ui/StatsBar';
-import { ActionBar } from '@/components/ui/ActionBar';
-import { SubscribeButton } from '@/components/shared/action-buttons';
-import { ShareButton } from '@/components/shared/ShareButton';
-import { useTranslation } from '@/hooks/use-translation';
+import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
+import { StatsBar } from '@/features/shared/ui/ui/StatsBar';
+import { ActionBar } from '@/features/shared/ui/ui/ActionBar';
+import { SubscribeButton } from 'src/features/shared/ui/action-buttons';
+import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface UserWikiProps {
   userId?: string;

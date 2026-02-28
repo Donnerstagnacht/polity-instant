@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
 import { useEventData } from '@/features/events/hooks/useEventData';
@@ -8,42 +8,34 @@ import { useAgendaItems } from '../hooks/useAgendaItems';
 import { useVoting } from '@/features/votes/hooks/useVoting';
 import { usePermissions } from '@/zero/rbac';
 import { TransferAgendaItemDialog } from './TransferAgendaItemDialog';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Input } from '@/features/shared/ui/ui/input';
+import { Label } from '@/features/shared/ui/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/features/shared/ui/ui/select';
 import {
   Calendar,
-  Clock,
   Users,
   Vote,
-  User,
   Gavel,
   Plus,
   FileText,
   UserCheck,
-  ThumbsUp,
-  ThumbsDown,
-  Minus,
-  CheckCircle2,
   Search as SearchIcon,
   Filter,
-  ArrowRight,
   Play,
   Check,
 } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
-import { ActionBar } from '@/components/ui/ActionBar';
-import { TimelineItem, AgendaCard } from '@/components/shared/timeline';
-import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { ActionBar } from '@/features/shared/ui/ui/ActionBar';
+import { TimelineItem, AgendaCard} from '@/features/agendas/ui/TimelineItem.tsx';
+import { useToast } from '@/features/shared/hooks/use-toast';
 import { AgendaNavigationControls } from './AgendaNavigationControls';
 
 interface EventAgendaProps {
@@ -51,7 +43,6 @@ interface EventAgendaProps {
 }
 
 export function EventAgenda({ eventId }: EventAgendaProps) {
-  const navigate = useNavigate();
   const { t } = useTranslation();
   const { toast } = useToast();
   const { user } = useAuth();

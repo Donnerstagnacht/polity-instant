@@ -1,5 +1,5 @@
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import {
   Calendar as CalendarIcon,
   List,
@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { CalendarView } from '../types/calendar.types';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface CalendarHeaderProps {
   view: CalendarView;

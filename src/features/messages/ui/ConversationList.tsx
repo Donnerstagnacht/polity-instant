@@ -1,20 +1,20 @@
-import { Card, CardHeader } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Card, CardHeader } from '@/features/shared/ui/ui/card';
+import { Separator } from '@/features/shared/ui/ui/separator';
+import { Input } from '@/features/shared/ui/ui/input';
+import { Button } from '@/features/shared/ui/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/features/shared/ui/ui/select';
 import { Search, Plus, Filter } from 'lucide-react';
-import { cn } from '@/utils/utils';
+import { cn } from '@/features/shared/utils/utils';
 import { Conversation } from '../types/message.types';
 import { ConversationItem } from './ConversationItem';
-import { Dialog, DialogTrigger } from '@/components/ui/dialog';
-import { useTranslation } from '@/hooks/use-translation';
+import { Dialog, DialogTrigger } from '@/features/shared/ui/ui/dialog';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useState } from 'react';
 
 interface ConversationListProps {

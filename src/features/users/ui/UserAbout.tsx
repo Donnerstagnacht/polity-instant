@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/features/shared/ui/ui/card';
 
 interface UserAboutProps {
   about: string;

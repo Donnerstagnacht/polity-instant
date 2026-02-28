@@ -1,6 +1,6 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Textarea } from '@/features/shared/ui/ui/textarea';
+import { Label } from '@/features/shared/ui/ui/label';
 
 interface AboutSectionProps {
   about: string;

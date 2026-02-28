@@ -1,9 +1,9 @@
 import React from 'react';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Input } from '@/features/shared/ui/ui/input';
+import { Badge } from '@/features/shared/ui/ui/badge';
 import { Search, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useTranslation } from '@/hooks/use-translation';
+import { Button } from '@/features/shared/ui/ui/button';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface GroupsFiltersProps {
   searchTerm: string;

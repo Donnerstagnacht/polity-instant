@@ -11,24 +11,24 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+} from '@/features/shared/ui/ui/dialog';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/features/shared/ui/ui/card';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useAuthStore } from '@/features/auth';
 import { toast } from 'sonner';
-import { findShortestPath } from '@/utils/path-finding';
+import { findShortestPath } from '@/features/shared/utils/path-finding';
 import { NetworkFlowBase } from '@/features/network/ui/NetworkFlowBase';
 import { CalendarIcon, Target, X, RefreshCw, User } from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { TypeAheadSelect } from '@/components/ui/type-ahead-select';
-import { useTranslation } from '@/hooks/use-translation';
-import { notifyAmendmentTargetSet } from '@/utils/notification-helpers';
+import { Tabs, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
+import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
+import { TypeAheadSelect } from '@/features/shared/ui/ui/type-ahead-select';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { notifyAmendmentTargetSet } from '@/features/shared/utils/notification-helpers';
 
 interface AmendmentProcessFlowProps {
   amendmentId: string;

@@ -1,11 +1,11 @@
 'use client';
 
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { GroupSearchCard } from '@/features/search/ui/GroupSearchCard';
 import { GroupEventsList } from './GroupEventsList';
 import { X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useTranslation } from '@/hooks/use-translation';
+import { Button } from '@/features/shared/ui/ui/button';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface GroupDetailsWithEventsProps {
   groupId: string;

@@ -4,8 +4,8 @@ import { toast } from 'sonner';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
-import { findShortestPath } from '@/utils/path-finding';
-import { notifyAmendmentCloned } from '@/utils/notification-helpers';
+import { findShortestPath } from '@/features/shared/utils/path-finding';
+import { notifyAmendmentCloned } from '@/features/shared/utils/notification-helpers';
 
 interface CloneSelection {
   groupId: string;

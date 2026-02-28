@@ -1,9 +1,9 @@
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Switch } from '@/components/ui/switch'
-import { Card } from '@/components/ui/card'
+import { Label } from '@/features/shared/ui/ui/label'
+import { Input } from '@/features/shared/ui/ui/input'
+import { Switch } from '@/features/shared/ui/ui/switch'
+import { Card } from '@/features/shared/ui/ui/card'
 import { Calendar } from 'lucide-react'
-import { useTranslation } from '@/hooks/use-translation'
+import { useTranslation } from '@/features/shared/hooks/use-translation'
 
 export interface ConstitutionalEventData {
   enabled: boolean

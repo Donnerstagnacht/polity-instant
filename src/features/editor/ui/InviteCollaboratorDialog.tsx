@@ -7,7 +7,7 @@
  */
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/features/shared/ui/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from '@/features/shared/ui/ui/dialog';
 import {
   Command,
   CommandEmpty,
@@ -24,16 +24,16 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from '@/components/ui/command';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
+} from '@/features/shared/ui/ui/command';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { Badge } from '@/features/shared/ui/ui/badge';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useUserState } from '@/zero/users/useUserState';
 import { UserPlus, X, Loader2, Check } from 'lucide-react';
 import { toast } from 'sonner';
-import { useTranslation } from '@/hooks/use-translation';
-import { notifyDocumentCollaboratorInvited, notifyBloggerInvited } from '@/utils/notification-helpers';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { notifyDocumentCollaboratorInvited, notifyBloggerInvited } from '@/features/shared/utils/notification-helpers';
 import type { EditorEntityType } from '../types';
 
 interface InviteCollaboratorDialogProps {

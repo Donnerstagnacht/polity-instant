@@ -1,5 +1,5 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { HashtagEditor } from '@/components/ui/hashtag-editor';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
 
 interface HashtagsSectionProps {
   hashtags: string[];

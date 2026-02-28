@@ -6,7 +6,7 @@
  */
 
 import { createClient } from '@/lib/supabase/client';
-import { notifyAmendmentForwarded, notifyAmendmentRejected } from '@/utils/notification-helpers';
+import { notifyAmendmentForwarded, notifyAmendmentRejected } from '@/features/shared/utils/notification-helpers';
 
 const supabase = createClient();
 

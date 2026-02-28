@@ -1,7 +1,7 @@
-import { Badge } from '@/components/ui/badge';
-import { TabsTrigger } from '@/components/ui/tabs';
-import { ScrollableTabsList } from '@/components/ui/scrollable-tabs';
-import { useTranslation } from '@/hooks/use-translation';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { TabsTrigger } from '@/features/shared/ui/ui/tabs';
+import { ScrollableTabsList } from '@/features/shared/ui/ui/scrollable-tabs';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface NotificationTabsProps {
   allCount: number;

@@ -3,7 +3,7 @@ import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useUserState } from '@/zero/users/useUserState';
 import { useAuth } from '@/providers/auth-provider';
-import { notifyBlogNewSubscriber } from '@/utils/notification-helpers';
+import { notifyBlogNewSubscriber } from '@/features/shared/utils/notification-helpers';
 import { toast } from 'sonner';
 
 /**

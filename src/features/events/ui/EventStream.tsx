@@ -1,10 +1,10 @@
 import { useRef, useState, useEffect } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useNavigate } from '@tanstack/react-router';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import {
   Clock,
   User,
@@ -24,8 +24,8 @@ import {
   Play,
 } from 'lucide-react';
 import { useEventStream } from '../hooks/useEventStream';
-import { useToast } from '@/hooks/use-toast';
-import { useTranslation } from '@/hooks/use-translation';
+import { useToast } from '@/features/shared/hooks/use-toast';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { AgendaNavigationControls } from '@/features/agendas/ui/AgendaNavigationControls';
 
 // Helper function to extract YouTube video ID from URL

@@ -1,5 +1,5 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useTranslation } from '@/hooks/use-translation';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { NetworkTab } from '../types/network.types';
 
 interface NetworkTabsProps {

@@ -7,7 +7,7 @@
  */
 
 import { useState, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/features/shared/ui/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -16,11 +16,11 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+} from '@/features/shared/ui/ui/dialog';
+import { Input } from '@/features/shared/ui/ui/input';
+import { Label } from '@/features/shared/ui/ui/label';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
 import {
   GitBranch,
   Clock,
@@ -37,7 +37,7 @@ import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useDocumentState } from '@/zero/documents/useDocumentState';
 import { useBlogState } from '@/zero/blogs/useBlogState';
 import { toast } from 'sonner';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { EditorEntityType, EditorVersion, VersionCreationType } from '../types';
 
 interface VersionControlProps {

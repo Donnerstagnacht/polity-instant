@@ -4,8 +4,8 @@
  * Displays a single document card with metadata.
  */
 
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/features/shared/ui/ui/card';
+import { Badge } from '@/features/shared/ui/ui/badge';
 import { FileText, Calendar, User } from 'lucide-react';
 import type { DocumentWithMetadata } from '../hooks/useGroupDocuments';
 

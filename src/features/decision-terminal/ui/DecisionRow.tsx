@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { cn } from '@/utils/utils';
+import { cn } from '@/features/shared/utils/utils';
 import { Vote, Award } from 'lucide-react';
 import { StatusBadge, type DecisionStatus } from './StatusBadge';
 import { TrendIndicator } from './TrendIndicator';
 import { CountdownTimer, EndedAgo } from './CountdownTimer';
 import { VoteBarCompact } from './VoteProgressBar';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { ResultCompact } from './ResultBadge';
 import type { DecisionItem } from './types';
 

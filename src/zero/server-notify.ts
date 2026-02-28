@@ -5,7 +5,7 @@
  * from server mutator overrides.  Runs outside the DB transaction so the
  * mutation stays fast. Errors are logged but never bubble up to the caller.
  */
-import * as helpers from '@/utils/notification-helpers'
+import * as helpers from '@/features/shared/utils/notification-helpers'
 
 const LOG = '[ServerNotify]'
 

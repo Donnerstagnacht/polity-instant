@@ -15,7 +15,7 @@ import {
   notifyVotingCompleted,
   notifyAmendmentForwarded,
   notifyElectionResult,
-} from '@/utils/notification-helpers';
+} from '@/features/shared/utils/notification-helpers';
 import { toast } from 'sonner';
 import { handleAmendmentVoteResult } from '../utils/voting-results';
 import { computeVoteResult, type MajorityType, type VoteResult } from '../logic/computeVoteResult';

@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Input } from '@/features/shared/ui/ui/input';
+import { Label } from '@/features/shared/ui/ui/label';
+import { Textarea } from '@/features/shared/ui/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -10,10 +10,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '@/features/shared/ui/ui/dialog';
 import { File, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { useUploadFile } from '@/hooks/use-upload-file';
+import { useUploadFile } from '@/features/shared/hooks/use-upload-file';
 import { createThread, uploadThreadFile } from '../utils/thread-operations';
 
 interface CreateThreadDialogProps {

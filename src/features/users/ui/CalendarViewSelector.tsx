@@ -1,7 +1,7 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { Calendar as CalendarIcon, List, Grid3x3, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export type CalendarView = 'day' | 'week' | 'month';

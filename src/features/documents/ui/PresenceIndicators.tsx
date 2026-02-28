@@ -4,7 +4,7 @@
  * Displays online users/peers with avatars.
  */
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Users } from 'lucide-react';
 import type { EditorPresencePeer } from '@/features/editor';
 

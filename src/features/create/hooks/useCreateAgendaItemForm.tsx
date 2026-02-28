@@ -7,21 +7,21 @@ import {
   useAllAmendments,
   usePositionsWithGroups,
 } from '@/zero/events/useEventState';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { toast } from 'sonner';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { TypeAheadSelect } from '@/components/ui/type-ahead-select';
-import { TypeSelector } from '@/components/ui/type-selector';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { Input } from '@/features/shared/ui/ui/input';
+import { Textarea } from '@/features/shared/ui/ui/textarea';
+import { Label } from '@/features/shared/ui/ui/label';
+import { TypeAheadSelect } from '@/features/shared/ui/ui/type-ahead-select';
+import { TypeSelector } from '@/features/shared/ui/ui/type-selector';
+import { TooltipProvider } from '@/features/shared/ui/ui/tooltip';
 import {
   EventSelectCard,
   AmendmentSelectCard,
   PositionSelectCard,
-} from '@/components/ui/entity-select-cards';
+} from '@/features/shared/ui/ui/entity-select-cards';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
-import { notifyAgendaItemCreated } from '@/utils/notification-helpers';
+import { notifyAgendaItemCreated } from '@/features/shared/utils/notification-helpers';
 import type { CreateFormConfig } from '../types/create-form.types';
 
 export function useCreateAgendaItemForm(): CreateFormConfig {

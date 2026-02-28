@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useCommonActions } from '@/zero/common/useCommonActions';
 import { useEventSubscribers } from '@/zero/events/useEventState';
 import { useAuth } from '@/providers/auth-provider';
-import { notifyEventNewSubscriber } from '@/utils/notification-helpers';
+import { notifyEventNewSubscriber } from '@/features/shared/utils/notification-helpers';
 import { toast } from 'sonner';
 
 /**

@@ -1,7 +1,7 @@
-import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
+import { Label } from '@/features/shared/ui/ui/label'
+import { Button } from '@/features/shared/ui/ui/button'
 import { ArrowDownLeft, ArrowUpRight } from 'lucide-react'
-import { useTranslation } from '@/hooks/use-translation'
+import { useTranslation } from '@/features/shared/hooks/use-translation'
 
 type PaymentDirection = 'income' | 'expense'
 

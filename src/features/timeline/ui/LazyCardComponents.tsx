@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Suspense, lazy, type ComponentType } from 'react';
-import { cn } from '@/utils/utils';
+import { cn } from '@/features/shared/utils/utils';
 
 /**
  * Lazy-loaded card components for code splitting

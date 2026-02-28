@@ -5,7 +5,7 @@
  */
 
 import * as React from 'react';
-import { cn } from '@/utils/utils';
+import { cn } from '@/features/shared/utils/utils';
 import { type FlashState, getFlashClasses } from '../hooks/useDecisionFlash';
 
 export interface FlashRowProps {
