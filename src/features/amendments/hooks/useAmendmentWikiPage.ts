@@ -1,13 +1,17 @@
 import { useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
-import { useAuthStore } from '@/features/auth';
+import { useAuthStore } from '@/features/auth/auth';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useSubscribeAmendment } from './useSubscribeAmendment';
 import { useAmendmentCollaboration } from './useAmendmentCollaboration';
 import { useCloneAmendment } from './useCloneAmendment';
-import { deriveVoteState, getSupportStatus, AMENDMENT_STATUS_COLORS } from '../logic/amendmentHelpers';
+import {
+  deriveVoteState,
+  getSupportStatus,
+  AMENDMENT_STATUS_COLORS,
+} from '../logic/amendmentHelpers';
 import { notifyAmendmentVoted } from '@/utils/notification-helpers';
 
 export function useAmendmentWikiPage(amendmentId: string) {
@@ -20,12 +24,8 @@ export function useAmendmentWikiPage(amendmentId: string) {
   // Collaboration hook
   const collaborationData = useAmendmentCollaboration(amendmentId);
 
-  const {
-    updateAmendment,
-    deleteVoteEntry,
-    updateVoteEntry,
-    createVoteEntry,
-  } = useAmendmentActions();
+  const { updateAmendment, deleteVoteEntry, updateVoteEntry, createVoteEntry } =
+    useAmendmentActions();
 
   // All data via facade
   const facadeResult = useAmendmentState({
@@ -42,30 +42,27 @@ export function useAmendmentWikiPage(amendmentId: string) {
 
   const amendment = (facadeResult.amendmentFull as any)?.[0] as any;
 
-  const networkData = useMemo(() => ({
-    groupMemberships: [
-      ...(facadeResult.userMemberships ?? []),
-      ...(facadeResult.allGroupMemberships ?? []),
-    ],
-    groups: facadeResult.allGroups ?? [],
-    groupRelationships: facadeResult.allGroupRelationships ?? [],
-    events: facadeResult.allEvents ?? [],
-  }), [
-    facadeResult.userMemberships,
-    facadeResult.allGroupMemberships,
-    facadeResult.allGroups,
-    facadeResult.allGroupRelationships,
-    facadeResult.allEvents,
-  ]);
+  const networkData = useMemo(
+    () => ({
+      groupMemberships: [
+        ...(facadeResult.userMemberships ?? []),
+        ...(facadeResult.allGroupMemberships ?? []),
+      ],
+      groups: facadeResult.allGroups ?? [],
+      groupRelationships: facadeResult.allGroupRelationships ?? [],
+      events: facadeResult.allEvents ?? [],
+    }),
+    [
+      facadeResult.userMemberships,
+      facadeResult.allGroupMemberships,
+      facadeResult.allGroups,
+      facadeResult.allGroupRelationships,
+      facadeResult.allEvents,
+    ]
+  );
 
   // Clone hook (needs networkData + selectedTargetGroupId for event queries)
-  const cloneData = useCloneAmendment(
-    amendmentId,
-    amendment,
-    networkData,
-    user?.id,
-    user?.email,
-  );
+  const cloneData = useCloneAmendment(amendmentId, amendment, networkData, user?.id, user?.email);
 
   // Re-query events for the selected target group
   const { eventsByGroup: targetGroupEventsResult } = useAmendmentState({
@@ -76,14 +73,14 @@ export function useAmendmentWikiPage(amendmentId: string) {
 
   const targetGroupEventsData = useMemo(
     () => ({ events: targetGroupEventsResult ?? [] }),
-    [targetGroupEventsResult],
+    [targetGroupEventsResult]
   );
 
   const usersData = useMemo(
     () => ({
       $users: (facadeResult as any).allUsers ?? [],
     }),
-    [(facadeResult as any).allUsers],
+    [(facadeResult as any).allUsers]
   );
 
   // Derived data
@@ -94,7 +91,7 @@ export function useAmendmentWikiPage(amendmentId: string) {
   const clonedFrom = amendment?.clone_source;
   const totalSupportingMembers = supportingGroups.reduce(
     (sum: number, group: any) => sum + (group.memberships?.length || 0),
-    0,
+    0
   );
   const path = amendment?.paths?.[0];
   const targetCollaborator = path?.user;
@@ -103,8 +100,11 @@ export function useAmendmentWikiPage(amendmentId: string) {
   const isAdmin = collaborationData.status === 'admin';
 
   const voteState = useMemo(
-    () => (amendment ? deriveVoteState(amendment, user?.id) : { score: 0, userVote: null, hasUpvoted: false, hasDownvoted: false }),
-    [amendment, user?.id],
+    () =>
+      amendment
+        ? deriveVoteState(amendment, user?.id)
+        : { score: 0, userVote: null, hasUpvoted: false, hasDownvoted: false },
+    [amendment, user?.id]
   );
 
   const handleVote = async (voteValue: number) => {

@@ -7,7 +7,9 @@ import { toast } from 'sonner';
 import { createDocumentVersion } from '@/features/amendments/utils/version-utils';
 import { notifyChangeRequestAccepted, notifyChangeRequestRejected } from '@/utils/notification-helpers';
 
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+function getSupabase() {
+  return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+}
 
 /**
  * Restore a document version
@@ -18,7 +20,7 @@ export async function restoreVersion(
   onSuccess?: () => void
 ): Promise<void> {
   try {
-    await supabase.from('document').update({
+    await getSupabase().from('document').update({
       content,
       updated_at: new Date().toISOString(),
     }).eq('id', documentId);
@@ -69,7 +71,7 @@ export async function acceptSuggestion(
     if (discussion) {
       const changeRequestId = crypto.randomUUID();
 
-      await supabase.from('change_request').insert({
+      await getSupabase().from('change_request').insert({
         id: changeRequestId,
         title: discussion.crId || 'Change Request',
         description: discussion.description || '',
@@ -98,7 +100,7 @@ export async function acceptSuggestion(
       (d: any) => d.id !== suggestion.suggestionId && d.id !== suggestion.id
     );
 
-    await supabase.from('document').update({
+    await getSupabase().from('document').update({
       discussions: updatedDiscussions,
       updated_at: new Date().toISOString(),
     }).eq('id', documentId);
@@ -148,7 +150,7 @@ export async function declineSuggestion(
     if (discussion) {
       const changeRequestId = crypto.randomUUID();
 
-      await supabase.from('change_request').insert({
+      await getSupabase().from('change_request').insert({
         id: changeRequestId,
         title: discussion.crId || 'Change Request',
         description: discussion.description || '',
@@ -177,7 +179,7 @@ export async function declineSuggestion(
       (d: any) => d.id !== suggestion.suggestionId && d.id !== suggestion.id
     );
 
-    await supabase.from('document').update({
+    await getSupabase().from('document').update({
       discussions: updatedDiscussions,
       updated_at: new Date().toISOString(),
     }).eq('id', documentId);
@@ -197,7 +199,7 @@ export async function changeEditingMode(
   newMode: 'edit' | 'view' | 'suggest' | 'vote'
 ): Promise<void> {
   try {
-    await supabase.from('document').update({
+    await getSupabase().from('document').update({
       editing_mode: newMode,
       updated_at: new Date().toISOString(),
     }).eq('id', documentId);
@@ -243,7 +245,7 @@ export async function voteOnSuggestion(
     } else {
       changeRequestId = crypto.randomUUID();
 
-      await supabase.from('change_request').insert({
+      await getSupabase().from('change_request').insert({
         id: changeRequestId,
         title: discussion.crId || 'Change Request',
         description: discussion.description || '',
@@ -261,7 +263,7 @@ export async function voteOnSuggestion(
     }
 
     const voteId = crypto.randomUUID();
-    await supabase.from('change_request_vote').insert({
+    await getSupabase().from('change_request_vote').insert({
       id: voteId,
       vote: voteType,
       created_at: new Date().toISOString(),
@@ -276,3 +278,4 @@ export async function voteOnSuggestion(
     toast.error('Failed to record your vote. Please try again.');
   }
 }
+

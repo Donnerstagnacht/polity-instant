@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+function getSupabase() {
+  return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+}
 
 export type VersionCreationType =
   | 'manual'
@@ -27,7 +29,7 @@ export async function createDocumentVersion({
   creationType,
   title,
 }: CreateVersionParams): Promise<void> {
-  const { data: versions } = await supabase
+  const { data: versions } = await getSupabase()
     .from('document_version')
     .select('version_number')
     .eq('document_id', documentId);
@@ -41,7 +43,7 @@ export async function createDocumentVersion({
   const versionTitle = title || getDefaultVersionTitle(creationType);
 
   const versionId = crypto.randomUUID();
-  await supabase.from('document_version').insert({
+  await getSupabase().from('document_version').insert({
     id: versionId,
     version_number: nextVersionNumber,
     title: versionTitle,
@@ -84,7 +86,7 @@ function getDefaultVersionTitle(creationType: VersionCreationType): string {
  */
 export async function getLatestVersionNumber(documentId: string): Promise<number> {
   try {
-    const { data: versions } = await supabase
+    const { data: versions } = await getSupabase()
       .from('document_version')
       .select('version_number')
       .eq('document_id', documentId);

@@ -6,7 +6,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { ARIA_KAI_USER_ID, ARIA_KAI_WELCOME_MESSAGE } from '../constants';
 
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+function getSupabase() {
+  return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+}
 
 // Error message keys for i18n
 export const ARIA_KAI_ERRORS = {
@@ -23,7 +25,7 @@ export async function checkAriaKaiExists(): Promise<void> {
   console.log('🔍 Checking if Aria & Kai user exists...');
   
   try {
-    const { data: ariaKaiUser } = await supabase
+    const { data: ariaKaiUser } = await getSupabase()
       .from('user')
       .select('*')
       .eq('id', ARIA_KAI_USER_ID)
@@ -58,7 +60,7 @@ export async function hasAriaKaiConversation(userId: string): Promise<boolean> {
   console.log('🔍 Checking for existing Aria & Kai conversation for user:', userId);
   
   try {
-    const { data: participants } = await supabase
+    const { data: participants } = await getSupabase()
       .from('conversation_participant')
       .select('*, conversation:conversation(*, requested_by:user!conversation_requested_by_fkey(*))')
       .eq('user_id', userId);
@@ -88,6 +90,7 @@ export async function createAriaKaiConversation(userId: string): Promise<void> {
   const conversationId = crypto.randomUUID();
   const messageId = crypto.randomUUID();
 
+  const supabase = getSupabase();
   // Create the conversation
   await supabase.from('conversation').insert({
     id: conversationId,
