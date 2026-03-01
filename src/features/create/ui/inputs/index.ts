@@ -1,5 +1,4 @@
 // Entity search inputs
-export { GroupSearchInput } from './GroupSearchInput'
 export { EventSearchInput } from './EventSearchInput'
 export { UserSearchInput } from './UserSearchInput'
 export { ElectionSearchInput } from './ElectionSearchInput'

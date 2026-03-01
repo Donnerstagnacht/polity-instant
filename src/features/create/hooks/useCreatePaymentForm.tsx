@@ -7,11 +7,12 @@ import { toast } from 'sonner'
 import { Input } from '@/features/shared/ui/ui/input'
 import { Label } from '@/features/shared/ui/ui/label'
 import { Button } from '@/features/shared/ui/ui/button'
-import { GroupSearchInput } from '../ui/inputs/GroupSearchInput'
 import { UserSearchInput } from '../ui/inputs/UserSearchInput'
 import { DirectionInput } from '../ui/inputs/DirectionInput'
 import { PaymentTypeInput } from '../ui/inputs/PaymentTypeInput'
 import { CreateSummaryStep } from '../ui/CreateSummaryStep'
+import { TypeaheadSearch } from '@/features/shared/ui/typeahead'
+import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers'
 import type { CreateFormConfig } from '../types/create-form.types'
 
 export function useCreatePaymentForm(): CreateFormConfig {
@@ -21,6 +22,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
   const { createPayment } = usePaymentActions()
 
   const [groupId, setGroupId] = useState('')
+  const [groupName, setGroupName] = useState('')
   const [direction, setDirection] = useState<'income' | 'expense'>('income')
   const [label, setLabel] = useState('')
   const [type, setType] = useState<string>('donation')
@@ -28,6 +30,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
   const [entityType, setEntityType] = useState<'user' | 'group'>('user')
   const [entityId, setEntityId] = useState('')
   const [entityGroupId, setEntityGroupId] = useState('')
+  const [entityGroupName, setEntityGroupName] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async () => {
@@ -83,12 +86,18 @@ export function useCreatePaymentForm(): CreateFormConfig {
         label: t('pages.create.common.group'),
         isValid: () => !!groupId,
         content: (
-          <GroupSearchInput
-            value={groupId}
-            onChange={setGroupId}
-            label={t('pages.create.common.group')}
-            placeholder={t('pages.create.common.searchGroup')}
-          />
+          <div className="space-y-2">
+            <Label>{t('pages.create.common.group')}</Label>
+            <TypeaheadSearch
+              entityTypes={['group']}
+              value={groupId || undefined}
+              onChange={(item: TypeaheadItem | null) => {
+                setGroupId(item?.id ?? '')
+                setGroupName(item?.label ?? '')
+              }}
+              placeholder={t('pages.create.common.searchGroup')}
+            />
+          </div>
         ),
       },
       {
@@ -158,9 +167,13 @@ export function useCreatePaymentForm(): CreateFormConfig {
                 multi={false}
               />
             ) : (
-              <GroupSearchInput
-                value={entityGroupId}
-                onChange={setEntityGroupId}
+              <TypeaheadSearch
+                entityTypes={['group']}
+                value={entityGroupId || undefined}
+                onChange={(item: TypeaheadItem | null) => {
+                  setEntityGroupId(item?.id ?? '')
+                  setEntityGroupName(item?.label ?? '')
+                }}
                 placeholder={t('pages.create.payment.searchGroups')}
               />
             )}

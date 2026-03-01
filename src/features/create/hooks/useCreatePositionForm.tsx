@@ -7,8 +7,9 @@ import { toast } from 'sonner'
 import { Input } from '@/features/shared/ui/ui/input'
 import { Textarea } from '@/features/shared/ui/ui/textarea'
 import { Label } from '@/features/shared/ui/ui/label'
-import { GroupSearchInput } from '../ui/inputs/GroupSearchInput'
 import { CreateSummaryStep } from '../ui/CreateSummaryStep'
+import { TypeaheadSearch } from '@/features/shared/ui/typeahead'
+import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers'
 import type { CreateFormConfig } from '../types/create-form.types'
 
 export function useCreatePositionForm(): CreateFormConfig {
@@ -22,6 +23,7 @@ export function useCreatePositionForm(): CreateFormConfig {
   const [term, setTerm] = useState('4')
   const [firstTermStart, setFirstTermStart] = useState('')
   const [groupId, setGroupId] = useState('')
+  const [groupName, setGroupName] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async () => {
@@ -58,12 +60,18 @@ export function useCreatePositionForm(): CreateFormConfig {
         label: t('pages.create.position.groupLabel'),
         isValid: () => !!groupId,
         content: (
-          <GroupSearchInput
-            value={groupId}
-            onChange={setGroupId}
-            label={t('pages.create.position.groupLabel')}
-            placeholder={t('pages.create.common.searchGroup')}
-          />
+          <div className="space-y-2">
+            <Label>{t('pages.create.position.groupLabel')}</Label>
+            <TypeaheadSearch
+              entityTypes={['group']}
+              value={groupId || undefined}
+              onChange={(item: TypeaheadItem | null) => {
+                setGroupId(item?.id ?? '')
+                setGroupName(item?.label ?? '')
+              }}
+              placeholder={t('pages.create.common.searchGroup')}
+            />
+          </div>
         ),
       },
       {
