@@ -115,6 +115,13 @@ export const createPageTranslations = {
     createGroup: 'Create Group',
     createButton: 'Create Group',
     reviewBadge: 'Group',
+    groupType: 'Group Type',
+    groupTypes: {
+      base: 'Base Group',
+      baseDesc: 'Members join directly. Standard group with direct membership.',
+      hierarchical: 'Hierarchical Group',
+      hierarchicalDesc: 'Composed of subgroups. Members join through linked base groups.',
+    },
     userAlreadyInvited: 'User already invited',
     groupAlreadyLinked: 'Group already linked. Updating rights...',
     selectGroupAndRights: 'Please select a group and at least one right',
@@ -160,6 +167,9 @@ export const createPageTranslations = {
     groupLabel: 'Group',
     groupDescription: 'Select the group organizing this event',
     eventType: 'Event Type',
+    associatedGroup: 'Associated Group',
+    associatedGroupLabel: 'Select the group for this event',
+    associatedGroupPlaceholder: 'Search for a group...',
     eventTypes: {
       delegateConference: 'Delegate Conference',
       delegateConferenceDesc: 'Subgroups send proportional delegates based on member counts',

@@ -18,6 +18,7 @@ import { Input } from '@/features/shared/ui/ui/input';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Search, Pencil, Trash2 } from 'lucide-react';
 import { useState, useMemo } from 'react';
+import { PropagationProgress } from '@/features/shared/ui/PropagationProgress';
 import {
     Select,
     SelectContent,
@@ -67,12 +68,20 @@ export function GroupRelationshipsManager({ groupId }: GroupRelationshipsManager
       allRelationships
   } = useGroupNetwork(groupId);
 
+  const [isPropagating, setIsPropagating] = useState(false);
+
   const handleAcceptRequest = async (relationships: any[]) => {
-      for (const rel of relationships) {
-        await updateRelationship({
-          id: rel.id,
-          status: 'active',
-        });
+      const hasPvr = relationships.some((r: any) => r.with_right === 'passiveVotingRight' || r.withRight === 'passiveVotingRight');
+      if (hasPvr) setIsPropagating(true);
+      try {
+        for (const rel of relationships) {
+          await updateRelationship({
+            id: rel.id,
+            status: 'active',
+          });
+        }
+      } finally {
+        setIsPropagating(false);
       }
   };
 
@@ -162,7 +171,10 @@ export function GroupRelationshipsManager({ groupId }: GroupRelationshipsManager
 
   return (
     <div className="space-y-6">
-    <Card>
+    <Card className="relative">
+      {isPropagating && (
+        <PropagationProgress message={t('common.network.propagatingMemberships')} />
+      )}
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>

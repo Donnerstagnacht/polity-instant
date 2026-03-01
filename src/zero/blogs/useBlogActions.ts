@@ -152,16 +152,16 @@ export function useBlogActions() {
   const createBlogFull = useCallback(
     async (args: {
       blog: Parameters<typeof mutators.blogs.create>[0]
-      roles: Array<Parameters<typeof mutators.groups.createRole>[0]>
-      actionRights: Array<Parameters<typeof mutators.groups.assignActionRight>[0]>
+      roles: Array<Parameters<typeof mutators.blogs.createRole>[0]>
+      actionRights: Array<Parameters<typeof mutators.blogs.assignActionRight>[0]>
       entry: Parameters<typeof mutators.blogs.createEntry>[0]
     }) => {
       await zero.mutate(mutators.blogs.create(args.blog))
       for (const role of args.roles) {
-        await zero.mutate(mutators.groups.createRole(role))
+        await zero.mutate(mutators.blogs.createRole(role))
       }
       for (const right of args.actionRights) {
-        await zero.mutate(mutators.groups.assignActionRight(right))
+        await zero.mutate(mutators.blogs.assignActionRight(right))
       }
       await zero.mutate(mutators.blogs.createEntry(args.entry))
     },

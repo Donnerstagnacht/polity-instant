@@ -98,6 +98,11 @@ export function EventWiki({ eventId }: EventWikiProps) {
           ) : (
             <Badge variant="secondary">{t('components.badges.private')}</Badge>
           )}
+          {event.event_type && event.event_type !== 'other' && (
+            <Badge variant="outline">
+              {t(`pages.create.event.eventTypes.${event.event_type === 'delegate_conference' ? 'delegateConference' : event.event_type === 'general_assembly' ? 'generalAssembly' : 'openAssembly'}`)}
+            </Badge>
+          )}
           {event.recurrence_pattern && (
             <Badge variant="outline">
               <Repeat className="mr-1 h-3 w-3" />

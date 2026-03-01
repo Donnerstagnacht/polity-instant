@@ -26,6 +26,8 @@ export const componentsTranslations = {
   badges: {
     public: 'Public',
     private: 'Private',
+    hierarchicalGroup: 'Hierarchical Group',
+    baseGroup: 'Base Group',
   },
   labels: {
     organizedBy: 'Organized by',

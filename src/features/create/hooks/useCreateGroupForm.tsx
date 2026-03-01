@@ -4,6 +4,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { Input } from '@/features/shared/ui/ui/input'
 import { Label } from '@/features/shared/ui/ui/label'
 import { Textarea } from '@/features/shared/ui/ui/textarea'
+import { RadioGroup, RadioGroupItem } from '@/features/shared/ui/ui/radio-group'
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx'
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor'
 import { VisibilityInput } from '../ui/inputs/VisibilityInput'
@@ -12,6 +13,8 @@ import { useGroupActions } from '@/zero/groups/useGroupActions'
 import { useCommonState, useCommonActions } from '@/zero/common'
 import type { CreateFormConfig } from '../types/create-form.types'
 
+type GroupType = 'base' | 'hierarchical'
+
 export function useCreateGroupForm(): CreateFormConfig {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -19,6 +22,7 @@ export function useCreateGroupForm(): CreateFormConfig {
   const commonActions = useCommonActions()
 
   const [groupId] = useState(() => crypto.randomUUID())
+  const [groupType, setGroupType] = useState<GroupType>('base')
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [location, setLocation] = useState('')
@@ -47,6 +51,7 @@ export function useCreateGroupForm(): CreateFormConfig {
         website: null,
         is_public: visibility === 'public',
         visibility,
+        group_type: groupType,
         owner_id: null,
       })
       await setupGroupAdminRoles(groupId)
@@ -92,6 +97,37 @@ export function useCreateGroupForm(): CreateFormConfig {
                   placeholder={t('pages.create.group.descriptionPlaceholder')}
                   rows={4}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>{t('pages.create.group.groupType')}</Label>
+                <RadioGroup value={groupType} onValueChange={(v) => setGroupType(v as GroupType)}>
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="group-type-base"
+                      className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
+                        groupType === 'base' ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
+                      }`}
+                    >
+                      <RadioGroupItem value="base" id="group-type-base" className="mt-0.5" />
+                      <div>
+                        <div className="text-sm font-medium">{t('pages.create.group.groupTypes.base')}</div>
+                        <div className="text-muted-foreground text-xs">{t('pages.create.group.groupTypes.baseDesc')}</div>
+                      </div>
+                    </Label>
+                    <Label
+                      htmlFor="group-type-hierarchical"
+                      className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
+                        groupType === 'hierarchical' ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
+                      }`}
+                    >
+                      <RadioGroupItem value="hierarchical" id="group-type-hierarchical" className="mt-0.5" />
+                      <div>
+                        <div className="text-sm font-medium">{t('pages.create.group.groupTypes.hierarchical')}</div>
+                        <div className="text-muted-foreground text-xs">{t('pages.create.group.groupTypes.hierarchicalDesc')}</div>
+                      </div>
+                    </Label>
+                  </div>
+                </RadioGroup>
               </div>
             </div>
           ),
@@ -163,6 +199,7 @@ export function useCreateGroupForm(): CreateFormConfig {
               subtitle={description || undefined}
               hashtags={hashtags.length > 0 ? hashtags : undefined}
               fields={[
+                { label: t('pages.create.group.groupType'), value: groupType === 'base' ? t('pages.create.group.groupTypes.base') : t('pages.create.group.groupTypes.hierarchical') },
                 ...(location ? [{ label: t('pages.create.group.locationLabel'), value: location }] : []),
                 ...(region ? [{ label: t('pages.create.group.regionLabel'), value: region }] : []),
                 ...(country ? [{ label: t('pages.create.group.countryLabel'), value: country }] : []),
@@ -173,7 +210,7 @@ export function useCreateGroupForm(): CreateFormConfig {
         },
       ],
     }),
-    [name, description, location, region, country, imageURL, hashtags, visibility, isSubmitting, groupId, t],
+    [name, description, location, region, country, imageURL, hashtags, visibility, groupType, isSubmitting, groupId, t],
   )
 
   return config

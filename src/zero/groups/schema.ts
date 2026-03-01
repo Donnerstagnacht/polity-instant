@@ -15,6 +15,7 @@ const groupBaseSchema = z.object({
   linkedin: z.string().nullable(),
   website: z.string().nullable(),
   visibility: z.string(),
+  group_type: z.string(),
   owner_id: z.string().nullable(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
@@ -22,8 +23,8 @@ const groupBaseSchema = z.object({
 
 export const groupSelectSchema = groupBaseSchema
 export const groupCreateSchema = groupBaseSchema
-  .omit({ id: true, created_at: true, updated_at: true, member_count: true })
-  .extend({ id: z.string() })
+  .omit({ id: true, created_at: true, updated_at: true, member_count: true, group_type: true })
+  .extend({ id: z.string(), group_type: z.string().optional() })
 export const groupUpdateSchema = groupBaseSchema
   .pick({
     name: true,
@@ -36,6 +37,7 @@ export const groupUpdateSchema = groupBaseSchema
     linkedin: true,
     website: true,
     visibility: true,
+    group_type: true,
   })
   .partial()
   .extend({ id: z.string() })
@@ -50,15 +52,17 @@ const groupMembershipBaseSchema = z.object({
   status: z.string().nullable(),
   visibility: z.string(),
   role_id: z.string().nullable(),
+  source: z.string(),
+  source_group_id: z.string().nullable(),
   created_at: timestampSchema,
 })
 
 export const groupMembershipSelectSchema = groupMembershipBaseSchema
 export const groupMembershipCreateSchema = groupMembershipBaseSchema
-  .omit({ id: true, created_at: true, user_id: true })
-  .extend({ id: z.string(), user_id: z.string().optional() })
+  .omit({ id: true, created_at: true, user_id: true, source: true, source_group_id: true })
+  .extend({ id: z.string(), user_id: z.string().optional(), source: z.string().optional(), source_group_id: z.string().nullable().optional() })
 export const groupMembershipUpdateSchema = groupMembershipBaseSchema
-  .pick({ status: true, visibility: true, role_id: true })
+  .pick({ status: true, visibility: true, role_id: true, source: true, source_group_id: true })
   .partial()
   .extend({ id: z.string() })
 export const groupMembershipDeleteSchema = z.object({ id: z.string() })

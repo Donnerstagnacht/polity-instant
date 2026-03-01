@@ -46,6 +46,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
     isMember,
     hasRequested,
     isInvited,
+    isHierarchical,
     membershipLoading,
     requestJoin,
     leaveGroup,
@@ -76,6 +77,9 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
               {t('components.badges.public')}
             </Badge>
           )}
+          <Badge variant="outline" className="text-sm">
+            {isHierarchical ? t('components.badges.hierarchicalGroup') : t('components.badges.baseGroup')}
+          </Badge>
         </div>
         {group.location && <p className="text-muted-foreground">{group.location}</p>}
       </div>
@@ -110,6 +114,8 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
           onLeave={leaveGroup}
           onAcceptInvitation={acceptInvitation}
           isLoading={membershipLoading}
+          disabled={isHierarchical && !isMember}
+          disabledReason={isHierarchical ? t('features.groups.hierarchicalMembershipDisabled') : undefined}
         />
         <ShareButton
           url={`/group/${groupId}`}

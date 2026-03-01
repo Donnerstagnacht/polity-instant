@@ -26,6 +26,7 @@ import {
   CommandList,
 } from '@/features/shared/ui/ui/command';
 import { Check, Loader2, UserPlus, X } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
 
 interface User {
   id: string;
@@ -46,6 +47,8 @@ interface InviteMembersDialogProps {
   onInvite: () => void;
   isLoading: boolean;
   isInviting: boolean;
+  disabled?: boolean;
+  disabledReason?: string;
 }
 
 export function InviteMembersDialog({
@@ -59,14 +62,27 @@ export function InviteMembersDialog({
   onInvite,
   isLoading,
   isInviting,
+  disabled,
+  disabledReason,
 }: InviteMembersDialogProps) {
+  const triggerButton = (
+    <Button disabled={disabled}>
+      <UserPlus className="mr-2 h-4 w-4" />
+      Invite Member
+    </Button>
+  );
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Invite Member
-        </Button>
+        {disabled && disabledReason ? (
+          <Tooltip>
+            <TooltipTrigger asChild>{triggerButton}</TooltipTrigger>
+            <TooltipContent>{disabledReason}</TooltipContent>
+          </Tooltip>
+        ) : (
+          triggerButton
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>

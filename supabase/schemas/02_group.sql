@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS public."group" (
   linkedin TEXT,
   website TEXT,
   visibility TEXT NOT NULL DEFAULT 'public',
+  group_type TEXT NOT NULL DEFAULT 'base',
   owner_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -55,11 +56,15 @@ CREATE TABLE IF NOT EXISTS public.group_membership (
   status TEXT,
   visibility TEXT NOT NULL DEFAULT 'public',
   role_id UUID REFERENCES public.role (id) ON DELETE SET NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  source TEXT NOT NULL DEFAULT 'direct',
+  source_group_id UUID REFERENCES public."group" (id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (user_id, group_id)
 );
 
 CREATE INDEX idx_group_membership_group ON public.group_membership (group_id);
 CREATE INDEX idx_group_membership_user ON public.group_membership (user_id);
+CREATE INDEX idx_group_membership_source_group ON public.group_membership (source_group_id);
 
 ALTER TABLE public.group_membership ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.group_membership FOR ALL TO service_role USING (true);

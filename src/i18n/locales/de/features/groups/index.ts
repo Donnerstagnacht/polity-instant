@@ -2,6 +2,7 @@ export const groupsTranslations = {
   title: 'Gruppen',
   description: 'Gruppen verwalten und teilnehmen',
   headerDescription: 'Entdecke und tritt Gemeinschaften bei, die an wichtigen Anliegen arbeiten',
+  hierarchicalMembershipDisabled: 'Mitglieder treten hierarchischen Gruppen über Untergruppen bei',
   create: 'Gruppe erstellen',
   edit: 'Gruppe bearbeiten',
   delete: 'Gruppe löschen',

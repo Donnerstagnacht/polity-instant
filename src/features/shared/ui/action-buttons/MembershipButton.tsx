@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/features/shared/ui/ui/button.tsx';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
 import { UserPlus, UserMinus, Clock, Check } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 
@@ -42,6 +43,12 @@ interface MembershipButtonProps {
 
   /** Optional className */
   className?: string;
+
+  /** Whether the button is disabled */
+  disabled?: boolean;
+
+  /** Reason shown in tooltip when disabled */
+  disabledReason?: string;
 }
 
 /**
@@ -58,6 +65,8 @@ export function MembershipButton({
   onAcceptInvitation,
   isLoading,
   className,
+  disabled,
+  disabledReason,
 }: MembershipButtonProps) {
   const { t } = useTranslation();
 
@@ -89,6 +98,24 @@ export function MembershipButton({
   };
 
   const labels = getLabels();
+
+  if (disabled) {
+    const btn = (
+      <Button disabled variant="outline" className={className}>
+        <UserPlus className="mr-2 h-4 w-4" />
+        {labels.request}
+      </Button>
+    );
+    if (disabledReason) {
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>{btn}</TooltipTrigger>
+          <TooltipContent>{disabledReason}</TooltipContent>
+        </Tooltip>
+      );
+    }
+    return btn;
+  }
 
   if (isInvited) {
     return (

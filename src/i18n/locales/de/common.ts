@@ -164,6 +164,7 @@ export const commonTranslations = {
     rightActiveVotingDesc: 'Recht, an Abstimmungen teilzunehmen',
     rightPassiveVoting: 'Passives Stimmrecht',
     rightPassiveVotingDesc: 'Recht, gewählt zu werden',
+    propagatingMemberships: 'Mitgliedschaften werden weitergeleitet...',
   },
   share: {
     title: 'In Konversation teilen',

@@ -15,6 +15,7 @@ import { Switch } from '@/features/shared/ui/ui/switch';
 import { Loader2, XCircle } from 'lucide-react';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
+import { Badge } from '@/features/shared/ui/ui/badge';
 import { useEventUpdate } from '../hooks/useEventUpdate';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { CancelEventDialog } from './CancelEventDialog';
@@ -192,6 +193,16 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
               />
               <Label htmlFor="isPublic">{t('features.events.editPage.publicEvent')}</Label>
             </div>
+            {!isCreating && event?.event_type && event.event_type !== 'other' && (
+              <div className="space-y-2">
+                <Label>{t('pages.create.event.eventType')}</Label>
+                <div>
+                  <Badge variant="outline">
+                    {t(`pages.create.event.eventTypes.${event.event_type === 'delegate_conference' ? 'delegateConference' : event.event_type === 'general_assembly' ? 'generalAssembly' : 'openAssembly'}`)}
+                  </Badge>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

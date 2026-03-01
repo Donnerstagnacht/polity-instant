@@ -13,6 +13,10 @@ import {
   updateBlogSupportVoteSchema,
   deleteBlogSupportVoteSchema,
 } from '../votes/schema'
+import {
+  roleCreateSchema,
+  actionRightCreateSchema,
+} from '../groups/schema'
 
 /** Shared mutators — run on both client and server. Server mutators may override these. */
 export const blogSharedMutators = {
@@ -104,6 +108,24 @@ export const blogSharedMutators = {
     deleteBlogSupportVoteSchema,
     async ({ tx, args }) => {
       await tx.mutate.blog_support_vote.delete({ id: args.id })
+    }
+  ),
+
+  // Blog-scoped role creation (no group permission check needed)
+  createRole: defineMutator(
+    roleCreateSchema,
+    async ({ tx, args }) => {
+      const now = Date.now()
+      await tx.mutate.role.insert({ ...args, created_at: now })
+    }
+  ),
+
+  // Blog-scoped action right assignment (no group permission check needed)
+  assignActionRight: defineMutator(
+    actionRightCreateSchema,
+    async ({ tx, args }) => {
+      const now = Date.now()
+      await tx.mutate.action_right.insert({ ...args, created_at: now })
     }
   ),
 }

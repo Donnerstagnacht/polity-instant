@@ -2,6 +2,7 @@ export const groupsTranslations = {
   title: 'Groups',
   description: 'Manage and participate in groups',
   headerDescription: 'Discover and join communities working on important causes',
+  hierarchicalMembershipDisabled: 'Members join hierarchical groups through subgroups',
   create: 'Create Group',
   edit: 'Edit Group',
   delete: 'Delete Group',

@@ -80,6 +80,18 @@ export const statementQueries = {
         .one()
   ),
 
+  // Statements by an arbitrary user ID
+  byUserId: defineQuery(
+    z.object({ user_id: z.string() }),
+    ({ args: { user_id } }) =>
+      zql.statement
+        .where('user_id', user_id)
+        .related('user')
+        .related('statement_hashtags', q => q.related('hashtag'))
+        .related('support_votes')
+        .orderBy('created_at', 'desc')
+  ),
+
   // Statements filtered by visibility
   byVisibility: defineQuery(
     z.object({ visibility: z.string() }),

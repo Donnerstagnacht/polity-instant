@@ -188,3 +188,36 @@ export function isEligibleForDelegateConference(
 ): boolean {
   return groupRelationships.some(rel => rel.parentGroup.id === groupId);
 }
+
+/**
+ * Get all leaf subgroups (base groups) by recursively traversing the hierarchy.
+ * For a hierarchical group with nested subgroups, returns only the leaf-level
+ * groups that contain actual members.
+ *
+ * If a child has no children of its own, it's a leaf.
+ * If a child has children, recurse deeper (skip the intermediate node).
+ */
+export function getLeafSubgroups(
+  parentGroupId: string,
+  groupRelationships: Array<{
+    id: string;
+    childGroup: { id: string; name: string; memberCount: number };
+    parentGroup: { id: string };
+  }>
+): SubgroupInfo[] {
+  const directChildren = getDirectSubgroups(parentGroupId, groupRelationships);
+  const leaves: SubgroupInfo[] = [];
+
+  for (const child of directChildren) {
+    const grandchildren = getDirectSubgroups(child.id, groupRelationships);
+    if (grandchildren.length === 0) {
+      // Leaf node — include it
+      leaves.push(child);
+    } else {
+      // Intermediate node — recurse to find leaves below
+      leaves.push(...getLeafSubgroups(child.id, groupRelationships));
+    }
+  }
+
+  return leaves;
+}

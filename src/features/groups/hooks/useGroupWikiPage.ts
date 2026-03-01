@@ -47,6 +47,9 @@ export function useGroupWikiPage(groupId: string) {
     subscribeLoading,
     toggleSubscribe,
 
+    // Group type
+    isHierarchical: group?.group_type === 'hierarchical',
+
     // Membership
     status,
     isMember,

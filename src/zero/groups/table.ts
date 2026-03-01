@@ -14,6 +14,7 @@ export const group = table('group')
     linkedin: string().optional(),
     website: string().optional(),
     visibility: string(),
+    group_type: string(),
     owner_id: string().optional(),
     created_at: number(),
     updated_at: number(),
@@ -28,6 +29,8 @@ export const groupMembership = table('group_membership')
     status: string().optional(),
     visibility: string(),
     role_id: string().optional(),
+    source: string(),
+    source_group_id: string().optional(),
     created_at: number(),
   })
   .primaryKey('id')

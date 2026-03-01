@@ -8,9 +8,14 @@ import { Switch } from '@/features/shared/ui/ui/switch'
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx'
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor'
 import { CreateSummaryStep } from '../ui/CreateSummaryStep'
+import { EventTypeInput } from '../ui/inputs/EventTypeInput'
+import { GroupSearchInput } from '../ui/inputs/GroupSearchInput'
+import { DelegateAllocationInput, type DelegateConfig } from '../ui/inputs/DelegateAllocationInput'
 import { useEventActions } from '@/zero/events/useEventActions'
 import { useCommonState, useCommonActions } from '@/zero/common'
 import type { CreateFormConfig } from '../types/create-form.types'
+
+type EventType = 'delegate_conference' | 'general_assembly' | 'open_assembly' | 'other'
 
 export function useCreateEventForm(): CreateFormConfig {
   const { t } = useTranslation()
@@ -19,6 +24,13 @@ export function useCreateEventForm(): CreateFormConfig {
   const commonActions = useCommonActions()
 
   const [eventId] = useState(() => crypto.randomUUID())
+  const [eventType, setEventType] = useState<EventType>('open_assembly')
+  const [groupId, setGroupId] = useState('')
+  const [delegateConfig, setDelegateConfig] = useState<DelegateConfig>({
+    allocationMode: 'ratio',
+    totalDelegates: 10,
+    delegateRatio: 10,
+  })
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [startDate, setStartDate] = useState('')
@@ -47,10 +59,15 @@ export function useCreateEventForm(): CreateFormConfig {
         visibility: isPublic ? 'public' : 'private',
         image_url: imageURL || null,
         capacity: capacity ? parseInt(capacity, 10) : null,
-        group_id: null,
+        event_type: eventType,
+        group_id: groupId || null,
         creator_id: '',
         is_recurring: false,
-        has_delegates: false,
+        has_delegates: eventType === 'delegate_conference',
+        ...(eventType === 'delegate_conference' ? {
+          total_delegate_seats: delegateConfig.allocationMode === 'total' ? delegateConfig.totalDelegates : null,
+          delegate_ratio: delegateConfig.allocationMode === 'ratio' ? delegateConfig.delegateRatio : null,
+        } : {}),
       } as any)
 
       if (hashtags.length > 0) {
@@ -70,6 +87,32 @@ export function useCreateEventForm(): CreateFormConfig {
       isSubmitting,
       onSubmit: handleSubmit,
       steps: [
+        {
+          label: t('pages.create.event.eventType'),
+          isValid: () => true,
+          content: (
+            <EventTypeInput value={eventType} onChange={setEventType} />
+          ),
+        },
+        ...((eventType === 'general_assembly' || eventType === 'delegate_conference') ? [{
+          label: t('pages.create.event.associatedGroup'),
+          isValid: () => !!groupId,
+          content: (
+            <GroupSearchInput
+              value={groupId}
+              onChange={setGroupId}
+              label={t('pages.create.event.associatedGroupLabel')}
+              placeholder={t('pages.create.event.associatedGroupPlaceholder')}
+            />
+          ),
+        }] : []),
+        ...(eventType === 'delegate_conference' ? [{
+          label: t('pages.create.event.delegateAllocation'),
+          isValid: () => true,
+          content: (
+            <DelegateAllocationInput value={delegateConfig} onChange={setDelegateConfig} />
+          ),
+        }] : []),
         {
           label: t('pages.create.event.basicInfo'),
           isValid: () => !!title.trim(),
@@ -191,6 +234,11 @@ export function useCreateEventForm(): CreateFormConfig {
               subtitle={description || undefined}
               hashtags={hashtags.length > 0 ? hashtags : undefined}
               fields={[
+                { label: t('pages.create.event.eventType'), value: eventType.replace('_', ' ') },
+                ...(groupId ? [{ label: t('pages.create.event.associatedGroup'), value: groupId }] : []),
+                ...(eventType === 'delegate_conference' ? [
+                  { label: t('pages.create.event.delegateAllocation'), value: delegateConfig.allocationMode === 'ratio' ? `1:${delegateConfig.delegateRatio}` : `${delegateConfig.totalDelegates} total` },
+                ] : []),
                 ...(startDate ? [{ label: t('pages.create.event.startDate'), value: startDate }] : []),
                 ...(endDate ? [{ label: t('pages.create.event.endDate'), value: endDate }] : []),
                 ...(location ? [{ label: t('pages.create.event.locationLabel'), value: location }] : []),
@@ -205,7 +253,7 @@ export function useCreateEventForm(): CreateFormConfig {
         },
       ],
     }),
-    [title, description, startDate, endDate, location, capacity, imageURL, isPublic, hashtags, isSubmitting, eventId, t],
+    [title, description, startDate, endDate, location, capacity, imageURL, isPublic, hashtags, eventType, groupId, delegateConfig, isSubmitting, eventId, t],
   )
 
   return config

@@ -78,7 +78,11 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
   const currentUserName = currentUser?.first_name || 'Someone';
 
   // Fetch blog data with relations
-  const { blogWithDetails, comments: commentsRows, blogThread } = useBlogState({
+  const {
+    blogWithDetails,
+    comments: commentsRows,
+    blogThread,
+  } = useBlogState({
     blogId,
     includeDetails: true,
     includeComments: true,
@@ -200,20 +204,22 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
     try {
       // Create a thread for this blog if one doesn't exist yet
       if (!blogThread) {
-        await zero.mutate(mutators.documents.createThread({
-          id: blogId,
-          document_id: null,
-          amendment_id: null,
-          statement_id: null,
-          blog_id: blogId,
-          content: null,
-          status: 'open',
-          resolved_at: null,
-          position: null,
-          user_id: user.id,
-          upvotes: 0,
-          downvotes: 0,
-        }));
+        await zero.mutate(
+          mutators.documents.createThread({
+            id: blogId,
+            document_id: null,
+            amendment_id: null,
+            statement_id: null,
+            blog_id: blogId,
+            content: null,
+            status: 'open',
+            resolved_at: null,
+            position: null,
+            user_id: user.id,
+            upvotes: 0,
+            downvotes: 0,
+          })
+        );
       }
 
       const commentId = crypto.randomUUID();
@@ -382,22 +388,6 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
           orientation="horizontal"
         />
         <ShareButton url={blogViewUrl} title={blog.title ?? ''} description="" />
-
-        {/* RBAC Actions */}
-        {canEdit && (
-          <Link to={editorUrl}>
-            <Button variant="outline">
-              <Edit className="mr-2 h-4 w-4" />
-              {t('features.blogs.detail.editBlog')}
-            </Button>
-          </Link>
-        )}
-        {canDelete && (
-          <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
-            <Trash2 className="mr-2 h-4 w-4" />
-            {t('features.blogs.delete')}
-          </Button>
-        )}
       </ActionBar>
 
       {/* Hashtags */}
@@ -418,14 +408,22 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
                 : t('features.blogs.detail.noContentYet')}
             </CardDescription>
           </div>
-          {canEdit && (
-            <Link to={editorUrl}>
-              <Button variant="outline" size="sm">
-                <Edit className="mr-2 h-4 w-4" />
-                {t('features.blogs.detail.editContent')}
+          <div className="flex gap-2">
+            {canEdit && (
+              <Link to={editorUrl}>
+                <Button variant="outline" size="sm">
+                  <Edit className="mr-2 h-4 w-4" />
+                  {t('features.blogs.detail.editContent')}
+                </Button>
+              </Link>
+            )}
+            {canDelete && (
+              <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                {t('features.blogs.delete')}
               </Button>
-            </Link>
-          )}
+            )}
+          </div>
         </CardHeader>
         <CardContent className="prose prose-slate dark:prose-invert max-w-none">
           {blog.content && Array.isArray(blog.content) && blog.content.length > 0 ? (
@@ -471,7 +469,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
           <AlertDialogFooter>
             <AlertDialogCancel>{t('common.actions.cancel')}</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-white hover:bg-destructive/90"
+              className="bg-destructive hover:bg-destructive/90 text-white"
               onClick={async () => {
                 setDeleteOpen(false);
                 await handleDeleteBlog();

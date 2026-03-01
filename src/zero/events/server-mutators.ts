@@ -5,6 +5,7 @@ import { zql } from '../schema'
 import { fireNotification } from '../server-notify'
 import { eventTitle, userName } from '../server-helpers'
 import {
+  eventCreateSchema,
   eventParticipantCreateSchema,
   eventParticipantDeleteSchema,
   eventParticipantUpdateSchema,
@@ -18,6 +19,36 @@ import {
 
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 export const eventServerMutators = {
+  create: defineMutator(eventCreateSchema, async ({ tx, ctx, args }) => {
+    await mutators.events.create.fn({ tx, ctx, args })
+
+    // Auto-invite group members for General Assembly events
+    if (args.event_type === 'general_assembly' && args.group_id) {
+      const members = await tx.run(
+        zql.group_membership.where('group_id', args.group_id).where('status', 'active')
+      )
+      const now = Date.now()
+      for (const member of members) {
+        if (member.user_id === ctx.userID) continue // skip creator
+        await tx.mutate.event_participant.insert({
+          id: crypto.randomUUID(),
+          event_id: args.id,
+          user_id: member.user_id,
+          group_id: args.group_id,
+          status: 'invited',
+          role_id: null,
+          visibility: args.visibility ?? 'public',
+          created_at: now,
+        })
+      }
+      // Update participant count
+      await tx.mutate.event.update({
+        id: args.id,
+        participant_count: members.filter(m => m.user_id !== ctx.userID).length,
+      })
+    }
+  }),
+
   joinEvent: defineMutator(eventParticipantCreateSchema, async ({ tx, ctx, args }) => {
     await mutators.events.joinEvent.fn({ tx, ctx, args })
 

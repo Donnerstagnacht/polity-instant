@@ -1,15 +1,15 @@
-import { useGroupBlogsAndStatementsPage } from '@/features/groups/hooks/useGroupBlogsAndStatementsPage';
+import { useUserBlogsAndStatementsPage } from '@/features/users/hooks/useUserBlogsAndStatementsPage';
 import { BlogsAndStatementsView } from '@/features/content/ui/BlogsAndStatementsView';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { usePermissions } from '@/zero/rbac';
+import { useAuth } from '@/providers/auth-provider';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { toast } from 'sonner';
 
-interface GroupBlogsAndStatementsPageProps {
-  groupId: string;
+interface UserBlogsAndStatementsPageProps {
+  userId: string;
 }
 
-export function GroupBlogsAndStatementsPage({ groupId }: GroupBlogsAndStatementsPageProps) {
+export function UserBlogsAndStatementsPage({ userId }: UserBlogsAndStatementsPageProps) {
   const { t } = useTranslation();
   const {
     blogs,
@@ -18,10 +18,10 @@ export function GroupBlogsAndStatementsPage({ groupId }: GroupBlogsAndStatements
     setFilter,
     searchQuery,
     setSearchQuery,
-  } = useGroupBlogsAndStatementsPage({ groupId });
+  } = useUserBlogsAndStatementsPage({ userId });
 
-  const { can } = usePermissions({ groupId });
-  const canManageBlogs = can('manage', 'blogs');
+  const { user } = useAuth();
+  const isOwnProfile = user?.id === userId;
   const { deleteBlog } = useBlogActions();
 
   const handleDeleteBlog = async (blogId: string, blogTitle: string) => {
@@ -34,7 +34,7 @@ export function GroupBlogsAndStatementsPage({ groupId }: GroupBlogsAndStatements
     }
   };
 
-  const getEditorUrl = (blogId: string) => `/group/${groupId}/blog/${blogId}/editor`;
+  const getEditorUrl = (blogId: string) => `/user/${userId}/blog/${blogId}/editor`;
 
   return (
     <BlogsAndStatementsView
@@ -44,7 +44,7 @@ export function GroupBlogsAndStatementsPage({ groupId }: GroupBlogsAndStatements
       setFilter={setFilter}
       searchQuery={searchQuery}
       setSearchQuery={setSearchQuery}
-      canManage={canManageBlogs}
+      canManage={isOwnProfile}
       getEditorUrl={getEditorUrl}
       onDeleteBlog={handleDeleteBlog}
     />

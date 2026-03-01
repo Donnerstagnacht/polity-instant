@@ -4,6 +4,7 @@ import { queries } from '../queries'
 interface StatementStateOptions {
   id?: string
   groupId?: string
+  userId?: string
   visibility?: string
   includeDetails?: boolean
   includeHashtags?: boolean
@@ -14,7 +15,7 @@ interface StatementStateOptions {
  * Returns query-derived state — no mutations.
  */
 export function useStatementState(options: StatementStateOptions = {}) {
-  const { id, groupId, visibility, includeDetails, includeHashtags } = options
+  const { id, groupId, userId, visibility, includeDetails, includeHashtags } = options
 
   const [statements, statementsResult] = useQuery(
     queries.statements.byUser({})
@@ -22,6 +23,10 @@ export function useStatementState(options: StatementStateOptions = {}) {
 
   const [statementsByGroup, statementsByGroupResult] = useQuery(
     groupId ? queries.statements.byGroup({ group_id: groupId }) : undefined
+  )
+
+  const [statementsByUser, statementsByUserResult] = useQuery(
+    userId ? queries.statements.byUserId({ user_id: userId }) : undefined
   )
 
   const [statement, statementResult] = useQuery(
@@ -50,6 +55,7 @@ export function useStatementState(options: StatementStateOptions = {}) {
     statementsResult.type === 'unknown' ||
     (id != null && statementResult.type === 'unknown') ||
     (groupId != null && statementsByGroupResult.type === 'unknown') ||
+    (userId != null && statementsByUserResult.type === 'unknown') ||
     (includeDetails && id != null && statementWithDetailsResult.type === 'unknown') ||
     (includeHashtags && id != null && statementWithHashtagsResult.type === 'unknown') ||
     (visibility != null && byVisibilityResult.type === 'unknown')
@@ -57,6 +63,7 @@ export function useStatementState(options: StatementStateOptions = {}) {
   return {
     statements,
     statementsByGroup,
+    statementsByUser,
     statement,
     statementWithDetails,
     statementWithHashtags,

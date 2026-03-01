@@ -163,6 +163,7 @@ export const commonTranslations = {
     rightActiveVotingDesc: 'Right to participate in votes',
     rightPassiveVoting: 'Passive Voting Right',
     rightPassiveVotingDesc: 'Right to be elected',
+    propagatingMemberships: 'Propagating memberships...',
   },
   share: {
     title: 'Share to Conversation',

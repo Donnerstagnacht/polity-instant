@@ -229,6 +229,14 @@ export const navItemsAuthenticated = (
       }
     );
 
+    items.push({
+      id: 'blogs-and-statements',
+      label: t ? t('navigation.secondary.user.blogsAndStatements') : 'Blogs & Statements',
+      icon: 'BookOpen',
+      href: `/user/${userId}/blogs-and-statements`,
+      onClick: () => navigate({ to: `/user/${userId}/blogs-and-statements` }),
+    });
+
     if (isOwnUser) {
       items.push(
         {

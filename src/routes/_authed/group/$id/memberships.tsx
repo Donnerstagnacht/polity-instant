@@ -153,6 +153,8 @@ function GroupMembershipsPage() {
                 onInvite={handleInvite}
                 isLoading={usersLoading}
                 isInviting={isInviting}
+                disabled={(group as any)?.group_type === 'hierarchical'}
+                disabledReason="Members join through subgroups"
               />
             </div>
             <PendingRequestsTable

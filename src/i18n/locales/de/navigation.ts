@@ -53,6 +53,7 @@ export const navigationTranslations = {
       notificationSettings: 'Benachrichtigungseinstellungen',
       'notification-settings': 'Benachrichtigungseinstellungen',
       edit: 'Profil bearbeiten',
+      blogsAndStatements: 'Blogs & Stellungnahmen',
     },
     group: {
       overview: 'Übersicht',

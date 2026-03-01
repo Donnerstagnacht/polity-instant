@@ -55,6 +55,7 @@ import { Route as AuthedUserIdNetworkImport } from './routes/_authed/user/$id/ne
 import { Route as AuthedUserIdMembershipsImport } from './routes/_authed/user/$id/memberships'
 import { Route as AuthedUserIdMeetImport } from './routes/_authed/user/$id/meet'
 import { Route as AuthedUserIdEditorImport } from './routes/_authed/user/$id/editor'
+import { Route as AuthedUserIdBlogsAndStatementsImport } from './routes/_authed/user/$id/blogs-and-statements'
 import { Route as AuthedUserIdBlogImport } from './routes/_authed/user/$id/blog'
 import { Route as AuthedGroupIdSettingsImport } from './routes/_authed/group/$id/settings'
 import { Route as AuthedGroupIdRelationshipsImport } from './routes/_authed/group/$id/relationships'
@@ -359,6 +360,13 @@ const AuthedUserIdEditorRoute = AuthedUserIdEditorImport.update({
   path: '/editor',
   getParentRoute: () => AuthedUserIdRoute,
 } as any)
+
+const AuthedUserIdBlogsAndStatementsRoute =
+  AuthedUserIdBlogsAndStatementsImport.update({
+    id: '/blogs-and-statements',
+    path: '/blogs-and-statements',
+    getParentRoute: () => AuthedUserIdRoute,
+  } as any)
 
 const AuthedUserIdBlogRoute = AuthedUserIdBlogImport.update({
   id: '/blog',
@@ -1008,6 +1016,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedUserIdBlogImport
       parentRoute: typeof AuthedUserIdImport
     }
+    '/_authed/user/$id/blogs-and-statements': {
+      id: '/_authed/user/$id/blogs-and-statements'
+      path: '/blogs-and-statements'
+      fullPath: '/user/$id/blogs-and-statements'
+      preLoaderRoute: typeof AuthedUserIdBlogsAndStatementsImport
+      parentRoute: typeof AuthedUserIdImport
+    }
     '/_authed/user/$id/editor': {
       id: '/_authed/user/$id/editor'
       path: '/editor'
@@ -1364,6 +1379,7 @@ const AuthedUserIdEditorRouteWithChildren =
 
 interface AuthedUserIdRouteChildren {
   AuthedUserIdBlogRoute: typeof AuthedUserIdBlogRouteWithChildren
+  AuthedUserIdBlogsAndStatementsRoute: typeof AuthedUserIdBlogsAndStatementsRoute
   AuthedUserIdEditorRoute: typeof AuthedUserIdEditorRouteWithChildren
   AuthedUserIdMeetRoute: typeof AuthedUserIdMeetRoute
   AuthedUserIdMembershipsRoute: typeof AuthedUserIdMembershipsRoute
@@ -1377,6 +1393,7 @@ interface AuthedUserIdRouteChildren {
 
 const AuthedUserIdRouteChildren: AuthedUserIdRouteChildren = {
   AuthedUserIdBlogRoute: AuthedUserIdBlogRouteWithChildren,
+  AuthedUserIdBlogsAndStatementsRoute: AuthedUserIdBlogsAndStatementsRoute,
   AuthedUserIdEditorRoute: AuthedUserIdEditorRouteWithChildren,
   AuthedUserIdMeetRoute: AuthedUserIdMeetRoute,
   AuthedUserIdMembershipsRoute: AuthedUserIdMembershipsRoute,
@@ -1514,6 +1531,7 @@ export interface FileRoutesByFullPath {
   '/group/$id/relationships': typeof AuthedGroupIdRelationshipsRoute
   '/group/$id/settings': typeof AuthedGroupIdSettingsRoute
   '/user/$id/blog': typeof AuthedUserIdBlogRouteWithChildren
+  '/user/$id/blogs-and-statements': typeof AuthedUserIdBlogsAndStatementsRoute
   '/user/$id/editor': typeof AuthedUserIdEditorRouteWithChildren
   '/user/$id/meet': typeof AuthedUserIdMeetRoute
   '/user/$id/memberships': typeof AuthedUserIdMembershipsRoute
@@ -1592,6 +1610,7 @@ export interface FileRoutesByTo {
   '/group/$id/relationships': typeof AuthedGroupIdRelationshipsRoute
   '/group/$id/settings': typeof AuthedGroupIdSettingsRoute
   '/user/$id/blog': typeof AuthedUserIdBlogRouteWithChildren
+  '/user/$id/blogs-and-statements': typeof AuthedUserIdBlogsAndStatementsRoute
   '/user/$id/editor': typeof AuthedUserIdEditorRouteWithChildren
   '/user/$id/meet': typeof AuthedUserIdMeetRoute
   '/user/$id/memberships': typeof AuthedUserIdMembershipsRoute
@@ -1675,6 +1694,7 @@ export interface FileRoutesById {
   '/_authed/group/$id/relationships': typeof AuthedGroupIdRelationshipsRoute
   '/_authed/group/$id/settings': typeof AuthedGroupIdSettingsRoute
   '/_authed/user/$id/blog': typeof AuthedUserIdBlogRouteWithChildren
+  '/_authed/user/$id/blogs-and-statements': typeof AuthedUserIdBlogsAndStatementsRoute
   '/_authed/user/$id/editor': typeof AuthedUserIdEditorRouteWithChildren
   '/_authed/user/$id/meet': typeof AuthedUserIdMeetRoute
   '/_authed/user/$id/memberships': typeof AuthedUserIdMembershipsRoute
@@ -1761,6 +1781,7 @@ export interface FileRouteTypes {
     | '/group/$id/relationships'
     | '/group/$id/settings'
     | '/user/$id/blog'
+    | '/user/$id/blogs-and-statements'
     | '/user/$id/editor'
     | '/user/$id/meet'
     | '/user/$id/memberships'
@@ -1838,6 +1859,7 @@ export interface FileRouteTypes {
     | '/group/$id/relationships'
     | '/group/$id/settings'
     | '/user/$id/blog'
+    | '/user/$id/blogs-and-statements'
     | '/user/$id/editor'
     | '/user/$id/meet'
     | '/user/$id/memberships'
@@ -1919,6 +1941,7 @@ export interface FileRouteTypes {
     | '/_authed/group/$id/relationships'
     | '/_authed/group/$id/settings'
     | '/_authed/user/$id/blog'
+    | '/_authed/user/$id/blogs-and-statements'
     | '/_authed/user/$id/editor'
     | '/_authed/user/$id/meet'
     | '/_authed/user/$id/memberships'
@@ -2168,6 +2191,7 @@ export const routeTree = rootRoute
       "parent": "/_authed",
       "children": [
         "/_authed/user/$id/blog",
+        "/_authed/user/$id/blogs-and-statements",
         "/_authed/user/$id/editor",
         "/_authed/user/$id/meet",
         "/_authed/user/$id/memberships",
@@ -2300,6 +2324,10 @@ export const routeTree = rootRoute
       "children": [
         "/_authed/user/$id/blog/$entryId"
       ]
+    },
+    "/_authed/user/$id/blogs-and-statements": {
+      "filePath": "_authed/user/$id/blogs-and-statements.tsx",
+      "parent": "/_authed/user/$id"
     },
     "/_authed/user/$id/editor": {
       "filePath": "_authed/user/$id/editor.tsx",

@@ -112,14 +112,16 @@ export function ActiveMembersTable({
                           <ArrowUpDown className="mr-1 h-4 w-4" />
                           Promote / Demote
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => user?.id && onRemove(membership.id, user.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          <span className="ml-2">Remove</span>
-                        </Button>
+                        {membership.source !== 'derived' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => user?.id && onRemove(membership.id, user.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span className="ml-2">Remove</span>
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
