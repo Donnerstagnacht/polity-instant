@@ -9,7 +9,11 @@ export const Route = createFileRoute('/support')({
 
 const areaKeys = ['financial', 'design', 'development'] as const
 const areaIcons = ['💰', '🎨', '💻'] as const
-const areaCtaLinks = ['/pricing', '/features', '/features'] as const
+const areaCtaLinks: Record<number, { href: string; external?: boolean }> = {
+  0: { href: '/pricing' },
+  1: { href: 'https://www.figma.com/proto/cAT8Aonu8P7ojwgnKcVlkz/Polity?node-id=51357-32189&starting-point-node-id=51098%3A4683', external: true },
+  2: { href: 'https://github.com/Donnerstagnacht/polity-instant', external: true },
+}
 
 function SupportPage() {
   const { t } = useTranslation()
@@ -46,9 +50,17 @@ function SupportPage() {
                       </li>
                     ))}
                   </ul>
-                  <Button asChild variant="outline" className="w-full">
-                    <Link to={areaCtaLinks[i]}>{t(`pages.support.areas.${key}.cta`)}</Link>
-                  </Button>
+                  {areaCtaLinks[i]?.external ? (
+                    <Button asChild variant="outline" className="w-full">
+                      <a href={areaCtaLinks[i].href} target="_blank" rel="noopener noreferrer">
+                        {t(`pages.support.areas.${key}.cta`)}
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button asChild variant="outline" className="w-full">
+                      <Link to={areaCtaLinks[i]?.href ?? '/'}>{t(`pages.support.areas.${key}.cta`)}</Link>
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             )

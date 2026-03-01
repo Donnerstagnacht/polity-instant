@@ -1,16 +1,20 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { useState } from 'react'
 import { Button } from '@/features/shared/ui/ui/button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/features/shared/ui/ui/card'
+import { Input } from '@/features/shared/ui/ui/input'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
+import { ContactDialog } from '@/features/shared/ui/ui/contact-dialog'
 
 export const Route = createFileRoute('/pricing')({
   component: PricingPage,
 })
 
-const tierKeys = ['free', 'runningCosts', 'development'] as const
+const tierKeys = ['free', 'runningCosts', 'development', 'yourChoice'] as const
 
 function PricingPage() {
   const { t } = useTranslation()
+  const [customAmount, setCustomAmount] = useState('')
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -24,9 +28,10 @@ function PricingPage() {
 
       {/* Tiers */}
       <section className="max-w-6xl mx-auto w-full px-4 pb-16">
-        <div className="grid gap-8 md:grid-cols-3">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {tierKeys.map((key) => {
             const highlighted = key === 'runningCosts'
+            const isYourChoice = key === 'yourChoice'
             const features = t(`pages.pricing.tiers.${key}.features`) as unknown as string[]
             const period = t(`pages.pricing.tiers.${key}.period`)
             return (
@@ -34,9 +39,28 @@ function PricingPage() {
                 <CardHeader>
                   <CardTitle className="text-2xl">{t(`pages.pricing.tiers.${key}.name`)}</CardTitle>
                   <div className="mt-2">
-                    <span className="text-4xl font-bold">{t(`pages.pricing.tiers.${key}.price`)}</span>
-                    {period && period !== `pages.pricing.tiers.${key}.period` && (
-                      <span className="text-muted-foreground">{period}</span>
+                    {isYourChoice ? (
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-4xl font-bold">€</span>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={customAmount}
+                          onChange={(e) => setCustomAmount(e.target.value)}
+                          className="w-20 text-3xl font-bold h-auto py-0 px-1 border-0 border-b-2 rounded-none focus-visible:ring-0"
+                        />
+                        {period && period !== `pages.pricing.tiers.${key}.period` && (
+                          <span className="text-muted-foreground">{period}</span>
+                        )}
+                      </div>
+                    ) : (
+                      <>
+                        <span className="text-4xl font-bold">{t(`pages.pricing.tiers.${key}.price`)}</span>
+                        {period && period !== `pages.pricing.tiers.${key}.period` && (
+                          <span className="text-muted-foreground">{period}</span>
+                        )}
+                      </>
                     )}
                   </div>
                   <CardDescription className="mt-2">{t(`pages.pricing.tiers.${key}.description`)}</CardDescription>
@@ -80,9 +104,11 @@ function PricingPage() {
         <p className="max-w-xl text-muted-foreground">
           {t('pages.pricing.enterprise.description')}
         </p>
-        <Button asChild variant="outline" size="lg">
-          <Link to="/support">{t('pages.pricing.enterprise.cta')}</Link>
-        </Button>
+        <ContactDialog>
+          <Button variant="outline" size="lg">
+            {t('pages.pricing.enterprise.cta')}
+          </Button>
+        </ContactDialog>
       </section>
     </div>
   )

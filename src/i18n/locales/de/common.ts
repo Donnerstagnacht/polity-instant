@@ -20,6 +20,20 @@ export const commonTranslations = {
       description: 'Die gesuchte Seite existiert nicht oder wurde verschoben.',
       helpText: 'Benötigen Sie Hilfe beim Finden?',
     },
+    accessDenied: {
+      title: 'Zugriff verweigert',
+      description: 'Sie haben keine Berechtigung, diese Seite anzuzeigen oder diese Aktion auszuführen.',
+      helpText: 'Glauben Sie, das ist ein Fehler?',
+    },
+    contactHint: 'Wenn Sie glauben, dass dies nicht korrekt ist, können Sie eine E-Mail senden an',
+    contactHintOr: 'oder',
+    contactHintFileIssue: 'ein Issue auf GitHub erstellen',
+  },
+  contactDialog: {
+    title: 'Kontakt',
+    description: 'Wählen Sie, wie Sie uns erreichen möchten:',
+    email: 'Senden Sie uns eine E-Mail',
+    github: 'Feature-Anfrage auf GitHub stellen',
   },
   actions: {
     cancel: 'Abbrechen',

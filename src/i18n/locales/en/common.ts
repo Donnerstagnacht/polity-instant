@@ -20,6 +20,20 @@ export const commonTranslations = {
       description: 'The page you are looking for does not exist or has been moved.',
       helpText: 'Need help finding something?',
     },
+    accessDenied: {
+      title: 'Access Denied',
+      description: 'You do not have permission to view this page or perform this action.',
+      helpText: 'Believe this is a mistake?',
+    },
+    contactHint: 'If you believe this is incorrect, you can send an email to',
+    contactHintOr: 'or',
+    contactHintFileIssue: 'file an issue on GitHub',
+  },
+  contactDialog: {
+    title: 'Contact Us',
+    description: 'Choose how you would like to reach us:',
+    email: 'Send us an email',
+    github: 'File a feature request on GitHub',
   },
   actions: {
     cancel: 'Cancel',

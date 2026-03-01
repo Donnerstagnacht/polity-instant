@@ -1,14 +1,21 @@
 'use client';
 
 import { Button } from '@/features/shared/ui/ui/button.tsx';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card.tsx';
-import { Home, ArrowLeft, Search, ShieldAlert } from 'lucide-react';
-import { useNavigate } from '@tanstack/react-router';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card.tsx';
+import { Home, ArrowLeft, ShieldAlert } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 
+const GITHUB_ISSUES_URL = 'https://github.com/Donnerstagnacht/polity-instant/issues';
+const CONTACT_EMAIL = 'polity.live@gmail.com';
+
 export function AccessDenied() {
-  const navigate = useNavigate();
   const { t } = useTranslation();
 
   return (
@@ -18,14 +25,9 @@ export function AccessDenied() {
           <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
             <ShieldAlert className="h-10 w-10 text-red-600 dark:text-red-400" />
           </div>
-          <CardTitle className="text-2xl">
-            {t('errors.accessDenied.title', 'Access Denied')}
-          </CardTitle>
+          <CardTitle className="text-2xl">{t('errors.accessDenied.title')}</CardTitle>
           <CardDescription className="text-base">
-            {t(
-              'errors.accessDenied.description',
-              'You do not have permission to view this page or perform this action.'
-            )}
+            {t('errors.accessDenied.description')}
           </CardDescription>
         </CardHeader>
 
@@ -33,25 +35,34 @@ export function AccessDenied() {
           <div className="space-y-3">
             <Button onClick={() => window.history.back()} variant="outline" className="w-full">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              {t('common.goBack', 'Go Back')}
+              {t('common.goBack')}
             </Button>
 
             <Link to="/" className="block">
               <Button className="w-full">
                 <Home className="mr-2 h-4 w-4" />
-                {t('common.goHome', 'Go Home')}
+                {t('common.goHome')}
               </Button>
             </Link>
           </div>
 
           <div className="border-t pt-4">
-            <p className="mb-3 text-sm text-muted-foreground">
-              {t('errors.accessDenied.helpText', 'Believe this is a mistake?')}
+            <p className="text-muted-foreground mb-3 text-sm">
+              {t('errors.contactHint')}{' '}
+              <a href={`mailto:${CONTACT_EMAIL}`} className="hover:text-foreground underline">
+                {CONTACT_EMAIL}
+              </a>{' '}
+              {t('errors.contactHintOr')}{' '}
+              <a
+                href={GITHUB_ISSUES_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-foreground underline"
+              >
+                {t('errors.contactHintFileIssue')}
+              </a>
+              .
             </p>
-            <Button variant="ghost" size="sm" className="text-xs">
-              <Search className="mr-2 h-3 w-3" />
-              {t('common.contactSupport', 'Contact Support')}
-            </Button>
           </div>
         </CardContent>
       </Card>
