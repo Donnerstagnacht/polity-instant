@@ -149,7 +149,7 @@ export const eventsSeeder: EntitySeeder = {
         capacity: randomInt(10, 100),
         createdAt: faker.date.past({ years: 0.5 }),
         updatedAt: faker.date.recent({ days: 7 }),
-        eventType: randomItem(['general_assembly', 'open_assembly', 'other']),
+        eventType: randomItem(['general_assembly', 'open', 'on_invite']),
         status: 'active', // Event status field
 
         // Recurring fields
@@ -218,7 +218,7 @@ export const eventsSeeder: EntitySeeder = {
           capacity: randomInt(10, 100),
           createdAt: faker.date.past({ years: 0.5 }),
           updatedAt: faker.date.recent({ days: 7 }),
-          eventType: randomItem(['general_assembly', 'open_assembly', 'other']),
+          eventType: randomItem(['general_assembly', 'open', 'on_invite']),
           status: 'active', // Event status field
 
           // Mark as recurring instance
@@ -296,7 +296,7 @@ export const eventsSeeder: EntitySeeder = {
       let delegateRatio: number | undefined;
 
       if (i < 2) {
-        eventType = 'delegate_conference';
+        eventType = 'delegate_assembly';
         if (i === 0) {
           delegateAllocationMode = 'ratio';
           delegateRatio = 50;
@@ -307,15 +307,15 @@ export const eventsSeeder: EntitySeeder = {
       } else if (i < 4) {
         eventType = 'general_assembly';
       } else if (i < 6) {
-        eventType = 'open_assembly';
+        eventType = 'open';
       } else {
         eventType = randomItem([
-          'delegate_conference',
+          'delegate_assembly',
           'general_assembly',
-          'open_assembly',
-          'other',
+          'open',
+          'on_invite',
         ]);
-        if (eventType === 'delegate_conference') {
+        if (eventType === 'delegate_assembly') {
           delegateAllocationMode = randomItem(['ratio', 'total']);
           if (delegateAllocationMode === 'ratio') {
             delegateRatio = randomItem([25, 50, 75, 100]);
@@ -387,7 +387,7 @@ export const eventsSeeder: EntitySeeder = {
             }),
 
         // Deadlines for delegate conferences
-        ...(eventType === 'delegate_conference'
+        ...(eventType === 'delegate_assembly'
           ? {
               delegateNominationDeadline: new Date(startDate.getTime() - 21 * 24 * 60 * 60 * 1000),
               proposalSubmissionDeadline: new Date(startDate.getTime() - 14 * 24 * 60 * 60 * 1000),

@@ -428,7 +428,7 @@ export function AmendmentTimelineCard({
 
         {/* Discuss Button (links to discussion page) */}
         <Button variant="outline" size="sm" asChild className="flex items-center gap-1.5">
-          <Link to={`/amendment/${amendment.id}/discussions`} onClick={e => e.stopPropagation()}>
+          <Link to="/amendment/$id/discussions" params={{ id: amendment.id }} onClick={e => e.stopPropagation()}>
             <MessageSquare className="h-3.5 w-3.5" />
             <span className="text-xs">{t('features.timeline.cards.discuss')}</span>
           </Link>

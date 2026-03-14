@@ -13,7 +13,7 @@ import type { CreateFormStyle, Theme, PreferenceLanguage, PreferenceNavigationVi
 export function usePreferenceActions() {
   const zero = useZero()
   const { t } = useTranslation()
-  const { preference } = usePreferenceState()
+  const { preference, isLoading } = usePreferenceState()
 
   const upsertPreference = useCallback(
     async (fields: {
@@ -22,6 +22,11 @@ export function usePreferenceActions() {
       language?: PreferenceLanguage
       navigation_view?: PreferenceNavigationView
     }) => {
+      // Don't attempt mutations while preference data is still loading —
+      // preference may appear null even though a row exists on the server,
+      // which would cause a duplicate key error on INSERT.
+      if (isLoading) return
+
       if (preference) {
         await zero.mutate(
           mutators.preferences.update({
@@ -41,7 +46,7 @@ export function usePreferenceActions() {
         )
       }
     },
-    [zero, preference]
+    [zero, preference, isLoading]
   )
 
   const updateFormStyle = useCallback(

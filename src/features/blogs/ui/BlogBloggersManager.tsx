@@ -67,7 +67,7 @@ import {
   notifyBloggerRemoved,
   notifyBlogRoleCreated,
   notifyBlogRoleDeleted,
-} from '@/features/shared/utils/notification-helpers';
+} from '@/features/notifications/utils/notification-helpers.ts';
 
 // Define available action rights for blogs
 const ACTION_RIGHTS = [

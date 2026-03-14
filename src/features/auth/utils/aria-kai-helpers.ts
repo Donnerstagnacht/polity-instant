@@ -38,7 +38,7 @@ export async function checkAriaKaiExists(): Promise<void> {
       throw error;
     }
 
-    console.log('✅ Aria & Kai user exists:', (ariaKaiUser as any).name);
+    console.log('✅ Aria & Kai user exists:', ariaKaiUser.first_name);
   } catch (error) {
     if (error instanceof Error && error.message.includes('System assistant')) {
       throw error;

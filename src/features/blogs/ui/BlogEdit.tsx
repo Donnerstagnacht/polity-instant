@@ -55,7 +55,7 @@ export function BlogEdit({ blogId }: BlogEditProps) {
           <p className="text-lg font-semibold">{t('features.blogs.editPage.notFound')}</p>
           <p className="text-muted-foreground">{t('features.blogs.editPage.notFoundDescription')}</p>
           <div className="mt-6">
-            <Button onClick={() => navigate({ to: '/blog' })} variant="default">
+            <Button onClick={() => navigate({ to: '/home' })} variant="default">
               {t('features.blogs.editPage.backToBlogs')}
             </Button>
           </div>

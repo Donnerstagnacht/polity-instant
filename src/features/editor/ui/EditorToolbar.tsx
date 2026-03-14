@@ -42,9 +42,9 @@ interface EditorToolbarProps {
   /** Description for sharing */
   shareDescription?: string;
   /** Current content for version control */
-  currentContent?: any[];
+  currentContent?: unknown[];
   /** Handler for restoring a version */
-  onRestoreVersion?: (content: any[]) => void;
+  onRestoreVersion?: (content: unknown[]) => void;
   /** Amendment ID (for amendment-specific notifications) */
   amendmentId?: string;
   /** Amendment title (for amendment-specific notifications) */

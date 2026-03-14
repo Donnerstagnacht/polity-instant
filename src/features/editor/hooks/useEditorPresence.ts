@@ -29,7 +29,7 @@ interface UseEditorPresenceResult {
   /** The current user's color */
   userColor: string;
   /** Function to publish presence updates */
-  publishPresence: ((data: any) => void) | null;
+  publishPresence: ((data: Record<string, unknown>) => void) | null;
 }
 
 /**
@@ -67,7 +67,7 @@ export function useEditorPresence(options: UseEditorPresenceOptions): UseEditorP
 
   const publishPresence = useMemo(() => {
     if (!enabled) return null;
-    return (data: any) => wsPublish(data);
+    return (data: Record<string, unknown>) => wsPublish(data);
   }, [enabled, wsPublish]);
 
   return {

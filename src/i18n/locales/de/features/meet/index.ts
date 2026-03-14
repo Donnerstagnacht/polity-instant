@@ -65,4 +65,10 @@ export const meetTranslations = {
     cancelBooking: 'Buchung stornieren',
     viewInCalendar: 'Im Kalender anzeigen',
   },
+  toasts: {
+    booked: 'Besprechung erfolgreich gebucht',
+    bookFailed: 'Buchung fehlgeschlagen',
+    bookingCancelled: 'Buchung storniert',
+    cancelFailed: 'Stornierung fehlgeschlagen',
+  },
 } as const;

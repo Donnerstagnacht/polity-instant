@@ -26,7 +26,7 @@ export function useEventData(eventId?: string) {
       requested: 0,
     };
 
-    participants.forEach((participant: any) => {
+    participants.forEach((participant) => {
       if (participant.status === 'member') stats.members++;
       if (participant.status === 'admin') stats.admins++;
       if (participant.status === 'invited') stats.invited++;
@@ -57,11 +57,11 @@ export function useEventParticipants(eventId?: string) {
   const participants = useMemo(() => eventParticipants || [], [eventParticipants]);
 
   const { activeParticipants, invitedParticipants, requestedParticipants } = useMemo(() => {
-    const active: any[] = [];
-    const invited: any[] = [];
-    const requested: any[] = [];
+    const active: typeof participants = [];
+    const invited: typeof participants = [];
+    const requested: typeof participants = [];
 
-    participants.forEach((participant: any) => {
+    participants.forEach((participant) => {
       if (participant.status === 'member' || participant.status === 'admin') {
         active.push(participant);
       } else if (participant.status === 'invited') {

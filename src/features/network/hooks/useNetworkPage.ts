@@ -4,7 +4,13 @@ import { useGroupData } from '@/features/groups/hooks/useGroupData';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useAuth } from '@/providers/auth-provider';
 import { RIGHT_TYPES } from '@/features/network/ui/RightFilters';
-import type { NetworkTab } from '../types/network.types';
+import type { NetworkTab, NormalizedGroupRelationship } from '../types/network.types';
+
+interface GroupedRelationshipRequests {
+  group: any;
+  rels: NormalizedGroupRelationship[];
+  type: 'parent' | 'child';
+}
 
 export function useNetworkPage(groupId: string) {
   const { user: authUser } = useAuth();
@@ -48,10 +54,7 @@ export function useNetworkPage(groupId: string) {
 
   // Group incoming requests by source group
   const groupedIncoming = useMemo(() => {
-    const groups = new Map<
-      string,
-      { group: any; rights: string[]; rels: any[]; type: 'parent' | 'child' }
-    >();
+    const groups = new Map<string, GroupedRelationshipRequests>();
     incomingRequests.forEach(rel => {
       const isParent = rel.childGroup?.id === groupId;
       const otherGroup = isParent ? rel.parentGroup : rel.childGroup;
@@ -60,13 +63,11 @@ export function useNetworkPage(groupId: string) {
       if (!groups.has(otherGroup.id)) {
         groups.set(otherGroup.id, {
           group: otherGroup,
-          rights: [],
           rels: [],
           type: isParent ? 'parent' : 'child',
         });
       }
       const entry = groups.get(otherGroup.id)!;
-      entry.rights.push(rel.withRight);
       entry.rels.push(rel);
     });
     return Array.from(groups.values());
@@ -74,10 +75,7 @@ export function useNetworkPage(groupId: string) {
 
   // Group outgoing requests by target group
   const groupedOutgoing = useMemo(() => {
-    const groups = new Map<
-      string,
-      { group: any; rights: string[]; rels: any[]; type: 'parent' | 'child' }
-    >();
+    const groups = new Map<string, GroupedRelationshipRequests>();
     outgoingRequests.forEach(rel => {
       const isParent = rel.childGroup?.id === groupId;
       const otherGroup = isParent ? rel.parentGroup : rel.childGroup;
@@ -86,13 +84,11 @@ export function useNetworkPage(groupId: string) {
       if (!groups.has(otherGroup.id)) {
         groups.set(otherGroup.id, {
           group: otherGroup,
-          rights: [],
           rels: [],
           type: isParent ? 'parent' : 'child',
         });
       }
       const entry = groups.get(otherGroup.id)!;
-      entry.rights.push(rel.withRight);
       entry.rels.push(rel);
     });
     return Array.from(groups.values());
@@ -143,11 +139,11 @@ export function useNetworkPage(groupId: string) {
     return groupedIncoming
       .map(entry => ({
         ...entry,
-        rights: entry.rights.filter(r => manageRightFilter.has(r)),
+        rels: entry.rels.filter(rel => manageRightFilter.has(rel.withRight)),
       }))
       .filter(
         entry =>
-          entry.rights.length > 0 &&
+          entry.rels.length > 0 &&
           (!query || entry.group.name?.toLowerCase().includes(query))
       );
   }, [groupedIncoming, searchQuery, manageRightFilter]);
@@ -160,11 +156,11 @@ export function useNetworkPage(groupId: string) {
     return groupedOutgoing
       .map(entry => ({
         ...entry,
-        rights: entry.rights.filter(r => manageRightFilter.has(r)),
+        rels: entry.rels.filter(rel => manageRightFilter.has(rel.withRight)),
       }))
       .filter(
         entry =>
-          entry.rights.length > 0 &&
+          entry.rels.length > 0 &&
           (!query || entry.group.name?.toLowerCase().includes(query))
       );
   }, [groupedOutgoing, searchQuery, manageRightFilter]);
@@ -208,7 +204,7 @@ export function useNetworkPage(groupId: string) {
     // Group
     group,
     groupId,
-    groupName: (group as any)?.name || 'Group',
+    groupName: group?.name || 'Group',
     isLoading,
 
     // Tab

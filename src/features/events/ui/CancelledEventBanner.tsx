@@ -67,7 +67,7 @@ export function CancelledEventBanner({
           <div className="pt-2">
             <p className="mb-2 text-sm">{t('features.events.cancel.reassign.itemCount')}:</p>
             <Button asChild variant="outline" size="sm">
-              <Link to={`/event/${reassignmentEventId}`}>
+              <Link to="/event/$id" params={{ id: reassignmentEventId }}>
                 {reassignmentEventTitle}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>

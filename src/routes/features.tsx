@@ -48,7 +48,7 @@ function FeaturesPage() {
         </p>
         <div className="flex gap-4 mt-2">
           <Button asChild size="lg">
-            <Link to="/auth/login">{t('pages.features.cta.getStarted')}</Link>
+            <Link to="/auth">{t('pages.features.cta.getStarted')}</Link>
           </Button>
           <Button asChild variant="outline" size="lg">
             <Link to="/pricing">{t('pages.features.cta.viewPricing')}</Link>

@@ -27,6 +27,8 @@ export const blogSharedMutators = {
       const now = Date.now()
       await tx.mutate.blog.insert({
         ...args,
+        subscriber_count: 0,
+        supporter_count: 0,
         like_count: 0,
         comment_count: 0,
         upvotes: 0,

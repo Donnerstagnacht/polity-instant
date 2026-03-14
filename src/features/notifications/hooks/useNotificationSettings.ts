@@ -81,7 +81,16 @@ export function useNotificationSettings(_userId?: string) {
   const updateSettings = useCallback(
     async (updates: Partial<Omit<NotificationSettings, 'id' | 'createdAt' | 'updatedAt'>>) => {
       // Convert camelCase local keys to snake_case DB column names
-      const dbUpdates: Record<string, unknown> = {};
+      const dbUpdates: {
+        group_notifications?: GroupNotificationSettings;
+        event_notifications?: EventNotificationSettings;
+        amendment_notifications?: AmendmentNotificationSettings;
+        blog_notifications?: BlogNotificationSettings;
+        todo_notifications?: TodoNotificationSettings;
+        social_notifications?: SocialNotificationSettings;
+        delivery_settings?: DeliverySettings;
+        timeline_settings?: TimelineSettings;
+      } = {};
       if (updates.groupNotifications !== undefined) dbUpdates.group_notifications = updates.groupNotifications;
       if (updates.eventNotifications !== undefined) dbUpdates.event_notifications = updates.eventNotifications;
       if (updates.amendmentNotifications !== undefined) dbUpdates.amendment_notifications = updates.amendmentNotifications;
@@ -100,7 +109,7 @@ export function useNotificationSettings(_userId?: string) {
           await facadeUpdateSettings({
             id: existingId,
             ...dbUpdates,
-          } as any);
+          });
         } else {
           // Create new settings — facade shows toast
           const newId = crypto.randomUUID();
@@ -115,7 +124,7 @@ export function useNotificationSettings(_userId?: string) {
             delivery_settings: DEFAULT_NOTIFICATION_SETTINGS.deliverySettings,
             timeline_settings: DEFAULT_NOTIFICATION_SETTINGS.timelineSettings,
             ...dbUpdates,
-          } as any);
+          });
         }
 
         return { success: true };
@@ -138,7 +147,7 @@ export function useNotificationSettings(_userId?: string) {
         groupNotifications: {
           ...settings.groupNotifications,
           ...updates,
-        },
+        } as GroupNotificationSettings,
       });
     },
     [updateSettings, settings.groupNotifications]
@@ -150,7 +159,7 @@ export function useNotificationSettings(_userId?: string) {
         eventNotifications: {
           ...settings.eventNotifications,
           ...updates,
-        },
+        } as EventNotificationSettings,
       });
     },
     [updateSettings, settings.eventNotifications]
@@ -162,7 +171,7 @@ export function useNotificationSettings(_userId?: string) {
         amendmentNotifications: {
           ...settings.amendmentNotifications,
           ...updates,
-        },
+        } as AmendmentNotificationSettings,
       });
     },
     [updateSettings, settings.amendmentNotifications]
@@ -174,7 +183,7 @@ export function useNotificationSettings(_userId?: string) {
         blogNotifications: {
           ...settings.blogNotifications,
           ...updates,
-        },
+        } as BlogNotificationSettings,
       });
     },
     [updateSettings, settings.blogNotifications]
@@ -186,7 +195,7 @@ export function useNotificationSettings(_userId?: string) {
         todoNotifications: {
           ...settings.todoNotifications,
           ...updates,
-        },
+        } as TodoNotificationSettings,
       });
     },
     [updateSettings, settings.todoNotifications]
@@ -198,7 +207,7 @@ export function useNotificationSettings(_userId?: string) {
         socialNotifications: {
           ...settings.socialNotifications,
           ...updates,
-        },
+        } as SocialNotificationSettings,
       });
     },
     [updateSettings, settings.socialNotifications]
@@ -210,7 +219,7 @@ export function useNotificationSettings(_userId?: string) {
         deliverySettings: {
           ...settings.deliverySettings,
           ...updates,
-        },
+        } as DeliverySettings,
       });
     },
     [updateSettings, settings.deliverySettings]
@@ -222,7 +231,7 @@ export function useNotificationSettings(_userId?: string) {
         timelineSettings: {
           ...settings.timelineSettings,
           ...updates,
-        },
+        } as TimelineSettings,
       });
     },
     [updateSettings, settings.timelineSettings]

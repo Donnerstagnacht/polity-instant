@@ -14,15 +14,16 @@ import {
   TableRow,
 } from '@/features/shared/ui/ui/table';
 import { Users, Check, Trash2 } from 'lucide-react';
-import { approveRequest, rejectRequest } from '../utils/collaborator-operations';
 import type { Collaborator } from '../hooks/useCollaborators';
 
 interface PendingRequestsCardProps {
   requests: Collaborator[];
   onNavigateToUser: (userId: string) => void;
+  onApproveRequest: (collaboratorId: string) => Promise<void>;
+  onRejectRequest: (collaboratorId: string) => Promise<void>;
 }
 
-export function PendingRequestsCard({ requests, onNavigateToUser }: PendingRequestsCardProps) {
+export function PendingRequestsCard({ requests, onNavigateToUser, onApproveRequest, onRejectRequest }: PendingRequestsCardProps) {
   return (
     <Card className="mb-6">
       <CardHeader>
@@ -87,7 +88,7 @@ export function PendingRequestsCard({ requests, onNavigateToUser }: PendingReque
                       <Button
                         variant="default"
                         size="sm"
-                        onClick={() => approveRequest(collaboration.id)}
+                        onClick={() => onApproveRequest(collaboration.id)}
                       >
                         <Check className="mr-1 h-4 w-4" />
                         Accept
@@ -95,7 +96,7 @@ export function PendingRequestsCard({ requests, onNavigateToUser }: PendingReque
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => rejectRequest(collaboration.id)}
+                        onClick={() => onRejectRequest(collaboration.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                         <span className="ml-2">Decline</span>

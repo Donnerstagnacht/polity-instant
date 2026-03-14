@@ -72,8 +72,8 @@ export function useSubscriptionTimeline() {
   const timelineEventIds = useMemo(() => {
     if (!timelineData?.timelineEvents) return [] as string[];
     const ids = timelineData.timelineEvents
-      .map((event: any) => event?.event?.id)
-      .filter((id: string | undefined): id is string => Boolean(id));
+      .map(te => te?.event?.id)
+      .filter((id): id is string => Boolean(id));
     return Array.from(new Set(ids));
   }, [timelineData?.timelineEvents]);
 
@@ -89,12 +89,13 @@ export function useSubscriptionTimeline() {
   const agendaItemsData = { agendaItems: agendaItemRows };
 
   const agendaItemsByEventId = useMemo(() => {
-    const map = new Map<string, Array<{ election?: unknown; amendmentVote?: unknown }>>();
-    for (const item of agendaItemsData?.agendaItems ?? []) {
-      const eventId = (item as any).event?.id as string | undefined;
+    const items = agendaItemsData?.agendaItems ?? [];
+    const map = new Map<string, Array<(typeof items)[number]>>();
+    for (const item of items) {
+      const eventId = item.event_id;
       if (!eventId) continue;
       const list = map.get(eventId) ?? [];
-      list.push(item as any);
+      list.push(item);
       map.set(eventId, list);
     }
     return map;

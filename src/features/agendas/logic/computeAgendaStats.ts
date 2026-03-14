@@ -8,13 +8,13 @@ export interface AgendaStats {
   openChangeRequestsCount: number;
 }
 
-export function computeAgendaStats(agendaItems: any[]): AgendaStats {
-  const electionsCount = agendaItems.filter((item: any) => item.election).length;
-  const amendmentsCount = agendaItems.filter((item: any) => item.amendmentVote).length;
+export function computeAgendaStats(agendaItems: { election?: unknown; amendmentVote?: { changeRequests?: { status?: string }[] } }[]): AgendaStats {
+  const electionsCount = agendaItems.filter((item) => item.election).length;
+  const amendmentsCount = agendaItems.filter((item) => item.amendmentVote).length;
   const openChangeRequestsCount = agendaItems.reduce(
-    (count: number, item: any) =>
+    (count: number, item) =>
       count +
-      (item.amendmentVote?.changeRequests?.filter((cr: any) => cr.status === 'open' || !cr.status)
+      (item.amendmentVote?.changeRequests?.filter((cr) => cr.status === 'open' || !cr.status)
         .length || 0),
     0
   );

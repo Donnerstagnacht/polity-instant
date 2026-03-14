@@ -26,18 +26,17 @@ import {
   useEditorPresence,
   useEditorUsers,
   VersionControl,
-  handleSuggestionAccepted,
-  handleSuggestionDeclined,
-  handleVoteOnSuggestion,
   type EditorUser,
   type EditorMode,
 } from '@/features/editor';
+import type { ResolvedSuggestion } from '@/features/shared/ui/ui-platejs/block-suggestion.tsx';
+import { useEditorOperations } from '@/features/editor/hooks/useEditorOperations';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 
 interface DocumentEditorViewProps {
   amendmentId: string;
   userId: string | undefined;
-  userRecord: any;
+  userRecord: { id: string; name?: string; email?: string; avatar?: string } | undefined;
   userColor: string;
 }
 
@@ -84,12 +83,12 @@ export function DocumentEditorView({
     amendmentId,
     includeDocsAndCollabs: true,
   });
-  const amendment = (amendmentResults as any)?.[0];
+  const amendment = amendmentResults;
   const document = amendment?.documents?.[0];
 
   // Build discussions with votes for UI
   const discussionsWithVotes = useMemo(() => {
-    return discussions.map((d: any) => ({
+    return discussions.map((d) => ({
       ...d,
       votes: d.votes || [],
     }));
@@ -101,6 +100,9 @@ export function DocumentEditorView({
     discussions,
     onDiscussionsUpdate: setDiscussions,
   });
+
+  // Editor operations (suggestion accept/decline/vote via Zero)
+  const editorOps = useEditorOperations('amendment', document?.id || '');
 
   // Presence
   const { onlinePeers } = useEditorPresence({
@@ -141,72 +143,64 @@ export function DocumentEditorView({
 
   // Handlers
   const onSuggestionAccepted = useCallback(
-    async (suggestion: any) => {
+    async (suggestion: ResolvedSuggestion) => {
       if (!document?.id || !userId || !editorValue || !amendment?.id) return;
 
-      const { updatedDiscussions } = await handleSuggestionAccepted(
-        'amendment',
-        document.id,
+      const { updatedDiscussions } = await editorOps.handleSuggestionAccepted(
         userId,
         editorValue,
         discussions,
         suggestion,
-        document.editingMode as EditorMode,
+        document.editing_mode as EditorMode,
         amendment.id,
-        amendment.title
       );
 
       setDiscussions(updatedDiscussions);
     },
     [
       document?.id,
-      document?.editingMode,
+      document?.editing_mode,
       userId,
       editorValue,
       discussions,
       amendment?.id,
-      amendment?.title,
       setDiscussions,
+      editorOps,
     ]
   );
 
   const onSuggestionDeclined = useCallback(
-    async (suggestion: any) => {
+    async (suggestion: ResolvedSuggestion) => {
       if (!document?.id || !userId || !editorValue || !amendment?.id) return;
 
-      const { updatedDiscussions } = await handleSuggestionDeclined(
-        'amendment',
-        document.id,
+      const { updatedDiscussions } = await editorOps.handleSuggestionDeclined(
         userId,
         editorValue,
         discussions,
         suggestion,
-        document.editingMode as EditorMode,
+        document.editing_mode as EditorMode,
         amendment.id,
-        amendment.title
       );
 
       setDiscussions(updatedDiscussions);
     },
     [
       document?.id,
-      document?.editingMode,
+      document?.editing_mode,
       userId,
       editorValue,
       discussions,
       amendment?.id,
-      amendment?.title,
       setDiscussions,
+      editorOps,
     ]
   );
 
   const handleVote = useCallback(
-    async (suggestion: any, voteType: 'accept' | 'reject' | 'abstain') => {
+    async (suggestion: ResolvedSuggestion, voteType: 'accept' | 'reject' | 'abstain') => {
       if (!document?.id || !userId || !amendment?.id) return;
 
-      await handleVoteOnSuggestion(
-        'amendment',
-        document.id,
+      await editorOps.handleVoteOnSuggestion(
         amendment.id,
         userId,
         discussions,
@@ -214,19 +208,19 @@ export function DocumentEditorView({
         voteType
       );
     },
-    [document?.id, userId, amendment?.id, discussions]
+    [document?.id, userId, amendment?.id, discussions, editorOps]
   );
 
   const handleVoteAccept = useCallback(
-    (suggestion: any) => handleVote(suggestion, 'accept'),
+    (suggestion: ResolvedSuggestion) => handleVote(suggestion, 'accept'),
     [handleVote]
   );
   const handleVoteReject = useCallback(
-    (suggestion: any) => handleVote(suggestion, 'reject'),
+    (suggestion: ResolvedSuggestion) => handleVote(suggestion, 'reject'),
     [handleVote]
   );
   const handleVoteAbstain = useCallback(
-    (suggestion: any) => handleVote(suggestion, 'abstain'),
+    (suggestion: ResolvedSuggestion) => handleVote(suggestion, 'abstain'),
     [handleVote]
   );
 
@@ -234,10 +228,9 @@ export function DocumentEditorView({
   // Note: This check is currently unused and may be removed in the future
   const isOwnerOrCollabFromData =
     (document &&
-      ((document as any).owner?.id === userId ||
-        document.collaborators?.some((c: any) => c.user?.id === userId))) ||
-    amendment?.amendmentRoleCollaborators?.some(
-      (c: any) => c.user?.id === userId && c.status === 'admin'
+      document.collaborators?.some((c: { user?: { id: string } }) => c.user?.id === userId)) ||
+    amendment?.collaborators?.some(
+      (c: { user?: { id: string }; status?: string | null }) => c.user?.id === userId && c.status === 'admin'
     );
 
   if (amendmentLoading) {
@@ -285,7 +278,7 @@ export function DocumentEditorView({
   return (
     <div className="container mx-auto p-8">
       <div className={`mb-6 flex items-center justify-between ${getTopMargin}`}>
-        <Link to={`/amendment/${amendmentId}`}>
+        <Link to="/amendment/$id" params={{ id: amendmentId }}>
           <Button variant="ghost">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Amendment
@@ -296,8 +289,8 @@ export function DocumentEditorView({
           {/* Share Button */}
           <ShareButton
             url={`/amendment/${amendmentId}/text`}
-            title={documentTitle || amendment.title}
-            description={amendment.subtitle || amendment.code || ''}
+            title={documentTitle || amendment.title || ''}
+            description={amendment.code || ''}
           />
 
           {/* Unified Version Control */}
@@ -309,7 +302,7 @@ export function DocumentEditorView({
               currentUserId={userId}
               onRestoreVersion={handleRestoreVersion}
               amendmentId={amendmentId}
-              amendmentTitle={amendment?.title}
+              amendmentTitle={amendment?.title ?? undefined}
             />
           )}
 
@@ -321,7 +314,7 @@ export function DocumentEditorView({
                 {onlinePeers.length} {onlinePeers.length === 1 ? 'user' : 'users'} online
               </span>
               <div className="flex -space-x-2">
-                {onlinePeers.map((peer: any) => (
+                {onlinePeers.map((peer) => (
                   <Avatar
                     key={peer.peerId}
                     className="h-6 w-6 border-2 border-background"
@@ -414,8 +407,8 @@ export function DocumentEditorView({
                 {amendment.code}
               </Badge>
             )}
-            {amendment.date && (
-              <span className="text-muted-foreground">Date: {amendment.date}</span>
+            {amendment.created_at && (
+              <span className="text-muted-foreground">Date: {new Date(amendment.created_at).toLocaleDateString()}</span>
             )}
             {amendment.supporters !== undefined && (
               <span className="text-muted-foreground">{amendment.supporters} supporters</span>
@@ -426,20 +419,20 @@ export function DocumentEditorView({
           {document.collaborators && document.collaborators.length > 0 && (
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <span className="text-sm text-muted-foreground">Collaborators:</span>
-              {document.collaborators.map((collab: any) => (
+              {document.collaborators.map((collab: { id: string; user?: { first_name?: string | null; last_name?: string | null; avatar?: string | null } }) => (
                 <div
                   key={collab.id}
                   className="flex items-center gap-1 rounded-full bg-muted px-2 py-1"
                 >
                   <Avatar className="h-5 w-5">
                     {collab.user?.avatar ? (
-                      <AvatarImage src={collab.user.avatar} alt={collab.user.name || ''} />
+                      <AvatarImage src={collab.user.avatar} alt={[collab.user.first_name, collab.user.last_name].filter(Boolean).join(' ') || ''} />
                     ) : null}
                     <AvatarFallback className="text-xs">
-                      {collab.user?.name?.[0]?.toUpperCase() || '?'}
+                      {collab.user?.first_name?.[0]?.toUpperCase() || '?'}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-xs">{collab.user?.name || 'Unknown'}</span>
+                  <span className="text-xs">{[collab.user?.first_name, collab.user?.last_name].filter(Boolean).join(' ') || 'Unknown'}</span>
                 </div>
               ))}
             </div>

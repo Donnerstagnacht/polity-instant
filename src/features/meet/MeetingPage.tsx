@@ -3,7 +3,7 @@ import { StatsBar } from '@/features/shared/ui/ui/StatsBar';
 import { InfoTabs } from '@/features/shared/ui/wiki/InfoTabs.tsx';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useMeetingData } from './hooks/useMeetingData';
-import { useMeetingBooking } from './hooks/useMeetingBooking';
+import { useMeetingActions } from '@/zero/events/useMeetingActions';
 import { MeetingHeader } from './ui/MeetingHeader';
 import { MeetingDetails } from './ui/MeetingDetails';
 import { MeetingParticipants } from './ui/MeetingParticipants';
@@ -16,9 +16,9 @@ interface MeetingPageProps {
 export function MeetingPage({ meetingId }: MeetingPageProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { meetingSlot, isLoading, isOwner, hasBooked, bookingCount, isPast, isAvailable } =
+  const { event, isLoading, isOwner, hasBooked, bookingCount, isPast, isAvailable } =
     useMeetingData(meetingId);
-  const { bookMeeting, cancelBooking } = useMeetingBooking();
+  const { bookMeeting, cancelMeetingBooking } = useMeetingActions();
 
   if (isLoading) {
     return (
@@ -28,7 +28,7 @@ export function MeetingPage({ meetingId }: MeetingPageProps) {
     );
   }
 
-  if (!meetingSlot) {
+  if (!event) {
     return (
       <div className="py-12 text-center">
         <h1 className="mb-4 text-2xl font-bold">{t('features.meet.page.notFound')}</h1>
@@ -40,53 +40,66 @@ export function MeetingPage({ meetingId }: MeetingPageProps) {
   }
 
   const handleBook = () => {
-    bookMeeting(meetingSlot.id);
+    bookMeeting(event.id);
   };
 
   const handleCancelBooking = () => {
-    const userBooking = meetingSlot.bookings?.find((b: any) => b.user?.id === meetingSlot.user?.id);
-    if (userBooking) {
-      cancelBooking(userBooking.id);
-    }
+    cancelMeetingBooking(event.id);
   };
+
+  const creator = event.creator as { id: string; first_name?: string | null; avatar?: string | null } | undefined;
+  const participants = (event.participants ?? []).map((p: any) => ({
+    id: p.id ?? '',
+    status: p.status ?? '',
+    booker: p.user ? {
+      id: p.user.id,
+      name: p.user.first_name ?? undefined,
+      handle: p.user.handle ?? undefined,
+      avatar: p.user.avatar ?? undefined,
+    } : undefined,
+  })).filter((p: any) => p.booker?.id !== event.creator_id);
 
   return (
     <>
       <MeetingHeader
-        title={(meetingSlot.title || 'Meeting') as string}
-        isPublic={meetingSlot.meeting_type === 'public-meeting'}
-        owner={(meetingSlot.user || { id: 'unknown', name: 'Unknown' }) as any}
-        meetingType={meetingSlot.meeting_type ?? ''}
+        title={(event.title || 'Meeting') as string}
+        isPublic={event.meeting_type === 'public-meeting'}
+        owner={{
+          id: creator?.id ?? 'unknown',
+          name: creator?.first_name ?? 'Unknown',
+          avatar: creator?.avatar ?? undefined,
+        }}
+        meetingType={event.meeting_type ?? ''}
       />
 
       <StatsBar stats={[{ value: bookingCount, labelKey: 'Participants' }]} />
 
       <MeetingActions
-        meetingId={meetingSlot.id}
-        title={meetingSlot.title || 'Meeting'}
-        description={meetingSlot.description || ''}
+        meetingId={event.id}
+        title={event.title || 'Meeting'}
+        description={event.description || ''}
         isOwner={isOwner}
         hasBooked={hasBooked}
         isAvailable={isAvailable}
         isPast={isPast}
         onBook={handleBook}
         onCancelBooking={handleCancelBooking}
-      onNavigateCalendar={() => navigate({ to: '/calendar' })}
-      onNavigateEdit={() => navigate({ to: `/meet/${meetingSlot.id}/edit` })}
+        onNavigateCalendar={() => navigate({ to: '/calendar' })}
+        onNavigateEdit={() => navigate({ to: `/event/${event.id}` })}
       />
 
       <MeetingDetails
-        startTime={meetingSlot.start_time ?? 0}
-        endTime={meetingSlot.end_time ?? 0}
-        meetingType={meetingSlot.meeting_type ?? ''}
+        startTime={event.start_date ?? 0}
+        endTime={event.end_date ?? 0}
+        meetingType={event.meeting_type ?? ''}
         isAvailable={isAvailable}
         isPast={isPast}
       />
 
-      <MeetingParticipants bookings={[...(meetingSlot.bookings || [])].map(b => ({ ...b, id: b.id ?? '', status: b.status ?? '' }))} count={bookingCount} />
+      <MeetingParticipants bookings={participants} count={bookingCount} />
 
-      {meetingSlot.description && (
-        <InfoTabs about={meetingSlot.description} contact={{}} className="mb-12" />
+      {event.description && (
+        <InfoTabs about={event.description} contact={{}} className="mb-12" />
       )}
     </>
   );

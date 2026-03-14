@@ -32,10 +32,11 @@ import {
   Play,
   Check,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { ActionBar } from '@/features/shared/ui/ui/ActionBar';
-import { TimelineItem, AgendaCard} from '@/features/agendas/ui/TimelineItem.tsx';
-import { useToast } from '@/features/shared/hooks/use-toast';
+import { TimelineItem } from '@/features/agendas/ui/TimelineItem.tsx';
+import { AgendaCard, type AgendaItemType, type AgendaItemStatus } from '@/features/agendas/ui/AgendaCard.tsx';
 import { AgendaNavigationControls } from './AgendaNavigationControls';
 
 interface EventAgendaProps {
@@ -44,7 +45,6 @@ interface EventAgendaProps {
 
 export function EventAgenda({ eventId }: EventAgendaProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
   const { user } = useAuth();
   const { event, isLoading: eventLoading } = useEventData(eventId);
   const { agendaItems, electionVotes, amendmentVoteEntries, isLoading } = useAgendaItems(eventId);
@@ -55,8 +55,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   const previousAgendaItemIdRef = useRef<string | null>(null);
   const activeItemRef = useRef<HTMLDivElement>(null);
 
-  // Get the current active agenda item from event
-  const currentAgendaItemId = (event as any)?.current_agenda_item_id as string | undefined;
+  const currentAgendaItemId = event?.current_agenda_item_id ?? undefined;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -70,7 +69,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   // Show toast and auto-scroll when current agenda item changes
   useEffect(() => {
     if (currentAgendaItemId && currentAgendaItemId !== previousAgendaItemIdRef.current) {
-      const currentItem = agendaItems.find((item: any) => item.id === currentAgendaItemId);
+      const currentItem = agendaItems.find((item) => item.id === currentAgendaItemId);
       if (currentItem && previousAgendaItemIdRef.current !== null) {
         // Only show toast if this is not the initial load
         toast(t('features.events.agenda.itemActivated'), {
@@ -90,7 +89,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   const canManageAgenda = can('manage', 'agendaItems');
 
   // Calculate start and end times for each agenda item
-  const agendaItemsWithTimes = agendaItems.map((item: any, index: number) => {
+  const agendaItemsWithTimes = agendaItems.map((item, index: number) => {
     const eventStartTime = event?.start_date ? new Date(event.start_date).getTime() : Date.now();
 
     let cumulativeMinutes = 0;
@@ -111,7 +110,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   });
 
   // Apply filters
-  const filteredAgendaItems = agendaItemsWithTimes.filter((item: any) => {
+  const filteredAgendaItems = agendaItemsWithTimes.filter((item) => {
     const matchesSearch =
       !searchQuery ||
       item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -124,9 +123,9 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   });
 
   // Get user votes
-  const userElectionVotes = electionVotes.filter((vote: any) => vote.voter?.id === user?.id);
+  const userElectionVotes = electionVotes.filter((vote) => vote.voter?.id === user?.id);
   const userAmendmentVotes = amendmentVoteEntries.filter(
-    (entry: any) => entry.voter?.id === user?.id
+    (entry) => entry.user?.id === user?.id
   );
 
   const getAgendaItemIcon = (type: string) => {
@@ -224,10 +223,10 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
               </div>
               <div className="min-w-0">
                 <p className="text-lg font-bold md:text-2xl">
-                  {agendaItems.filter((item: any) => item.election).length}
+                  {agendaItems.filter((item) => item.election).length}
                 </p>
                 <p className="truncate text-xs text-muted-foreground md:text-sm">
-                  {agendaItems.filter((item: any) => item.election).length === 1
+                  {agendaItems.filter((item) => item.election).length === 1
                     ? t('features.events.agenda.election')
                     : t('features.events.agenda.elections')}
                 </p>
@@ -240,10 +239,10 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
               </div>
               <div className="min-w-0">
                 <p className="text-lg font-bold md:text-2xl">
-                  {agendaItems.filter((item: any) => item.amendmentVote).length}
+                  {agendaItems.filter((item) => item.amendment).length}
                 </p>
                 <p className="truncate text-xs text-muted-foreground md:text-sm">
-                  {agendaItems.filter((item: any) => item.amendmentVote).length === 1
+                  {agendaItems.filter((item) => item.amendment).length === 1
                     ? t('features.events.agenda.amendment')
                     : t('features.events.agenda.amendments')}
                 </p>
@@ -257,10 +256,10 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
               <div className="min-w-0">
                 <p className="text-lg font-bold md:text-2xl">
                   {agendaItems.reduce(
-                    (count: number, item: any) =>
+                    (count: number, item) =>
                       count +
-                      (item.amendmentVote?.changeRequests?.filter(
-                        (cr: any) => cr.status === 'open' || !cr.status
+                      (item.amendment?.change_requests?.filter(
+                        (cr) => cr.status === 'open' || !cr.status
                       ).length || 0),
                     0
                   )}
@@ -280,19 +279,19 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       {/* Action Bar */}
       <ActionBar>
         <Button asChild variant="outline">
-          <Link to="/create?type=agenda-item">
+          <Link to="/create/agenda-item">
             <Plus className="mr-2 h-4 w-4" />
             {t('features.events.agenda.quickActions.addItem')}
           </Link>
         </Button>
         <Button asChild variant="outline">
-          <Link to="/create?type=election">
+          <Link to="/create/agenda-item">
             <Vote className="mr-2 h-4 w-4" />
             {t('features.events.agenda.quickActions.createElection')}
           </Link>
         </Button>
         <Button asChild variant="outline">
-          <Link to="/create?type=amendment-vote">
+          <Link to="/create/agenda-item">
             <Gavel className="mr-2 h-4 w-4" />
             {t('features.events.agenda.quickActions.createVote')}
           </Link>
@@ -391,7 +390,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
               {t('features.events.agenda.noItemsDescription')}
             </p>
             <Button asChild>
-              <Link to="/create?type=agenda-item">
+              <Link to="/create/agenda-item">
                 <Plus className="mr-2 h-4 w-4" />
                 {t('features.events.agenda.createFirstItem')}
               </Link>
@@ -400,12 +399,12 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
         </Card>
       ) : (
         <div className="space-y-6">
-          {filteredAgendaItems.map((item: any, index: number) => {
+          {filteredAgendaItems.map((item, index: number) => {
             const userElectionVote = userElectionVotes.find(
-              (vote: any) => vote.election?.id === item.election?.id
+              (vote) => vote.election?.id === item.election?.[0]?.id
             );
             const userAmendmentVote = userAmendmentVotes.find(
-              (entry: any) => entry.amendmentVote?.id === item.amendmentVote?.id
+              (entry) => entry.amendment?.id === item.amendment?.id
             );
 
             const isActive = item.status === 'in-progress';
@@ -420,7 +419,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                     {t('features.events.agenda.vote')}
                   </Button>
                 );
-              } else if (item.amendmentVote) {
+              } else if (item.amendment) {
                 actionButton = (
                   <Button size="sm" variant="default">
                     <Gavel className="mr-2 h-4 w-4" />
@@ -432,7 +431,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
 
             // Check if this is the currently active item from event
             const isCurrentItem = currentAgendaItemId === item.id;
-            const isCompleted = item.status === 'completed' || !!item.completedAt;
+            const isCompleted = item.status === 'completed' || !!item.completed_at;
 
             return (
               <div
@@ -449,7 +448,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                   </div>
                 )}
                 <TimelineItem
-                  order={item.order}
+                  order={item.order_index ?? 0}
                   startTime={formatTime(item.calculatedStartTime)}
                   endTime={formatTime(item.calculatedEndTime)}
                   duration={item.calculatedDuration}
@@ -467,16 +466,16 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                     )}
                     <AgendaCard
                       id={item.id}
-                      title={item.title}
-                      description={item.description}
-                      type={item.type}
-                      status={item.status}
-                      creatorName={item.creator?.name || item.creator?.email}
+                      title={item.title ?? ''}
+                      description={item.description ?? undefined}
+                      type={(item.type ?? 'discussion') as AgendaItemType}
+                      status={(item.status ?? 'pending') as AgendaItemStatus}
+                      creatorName={[item.creator?.first_name, item.creator?.last_name].filter(Boolean).join(' ') || (item.creator?.email ?? undefined)}
                       detailsLink={`/event/${eventId}/agenda/${item.id}`}
                       isActive={isActive}
                       actionButton={actionButton}
                       showMoveButton={canManageAgenda}
-                      onMoveClick={() => setTransferDialogItem({ id: item.id, title: item.title })}
+                      onMoveClick={() => setTransferDialogItem({ id: item.id, title: item.title ?? '' })}
                     />
                   </div>
                 </TimelineItem>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { Node, Edge, useNodesState, useEdgesState, MarkerType } from '@xyflow/react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { NetworkFlowBase, Panel } from '@/features/network/ui/NetworkFlowBase';
@@ -14,6 +14,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useUserState } from '@/zero/users/useUserState';
 import { useGroupState } from '@/zero/groups/useGroupState';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { normalizeGroupRelationship, type NormalizedGroupRelationship, type NetworkGroupEntity } from '../types/network.types';
 
 interface NetworkNode extends Node {
   data: {
@@ -21,16 +22,24 @@ interface NetworkNode extends Node {
     description?: string;
     level: number;
     type: 'user' | 'group';
-    groupData?: any;
+    groupData?: NetworkGroupEntity;
   };
 }
 
 interface FilteredNetworkFlowProps {
   userId: string;
   filterRight?: string; // Filter by specific right type (e.g., 'amendmentRight')
-  onGroupClick?: (groupId: string, groupData: any) => void;
+  onGroupClick?: (groupId: string, groupData: NetworkGroupEntity) => void;
   title?: string;
   description?: string;
+}
+
+interface RelationshipEntry {
+  group: NetworkGroupEntity;
+  rights: string[];
+  level?: number;
+  childId?: string;
+  parentId?: string;
 }
 
 export function FilteredNetworkFlow({
@@ -54,45 +63,47 @@ export function FilteredNetworkFlow({
   const { user } = useUserState({ userId });
 
   // Fetch user's group memberships (current user)
-  const { userGroupMemberships: membershipsRaw, allRelationships: relationshipsRaw } = useGroupState({
-    includeByUser: true,
-    includeAllRelationships: true,
+  const { currentUserMembershipsWithGroups: membershipsRaw, allRelationshipsWithGroups: relationshipsRaw } = useGroupState({
+    includeCurrentUserMembershipsWithGroups: true,
+    includeAllRelationshipsWithGroups: true,
   });
 
   const memberships = membershipsRaw || [];
-  const relationships = relationshipsRaw || [];
+  const relationships = useMemo(
+    () => (relationshipsRaw || []).map(rel => normalizeGroupRelationship(rel)),
+    [relationshipsRaw]
+  ) as NormalizedGroupRelationship[];
 
   // Get all groups the user is a member of
   const userGroups = useMemo(() => {
-    if (!memberships.length) return [];
+    if (!memberships.length) return [] as NetworkGroupEntity[];
     return memberships
       .filter(
-        (m: any) => m.group && (m.status === 'member' || m.status === 'admin' || m.role === 'admin')
+        (m) => m.group && (m.status === 'member' || m.status === 'admin')
       )
-      .map((m: any) => m.group);
-  }, [memberships.length, memberships.map((m: any) => `${m.id}-${m.status}-${m.role}`).join(',')]);
-
+      .map((m) => m.group)
+      .filter((g): g is NonNullable<typeof g> => g != null);
+  }, [memberships.length, memberships.map((m) => `${m.id}-${m.status}`).join(',')]);
   // Memoize relationships to prevent infinite loops
   const stableRelationships = useMemo(() => {
     if (!relationships.length) return [];
     return relationships;
-  }, [relationships.length, relationships.map((r: any) => r.id).join(',')]);
+}, [relationships.length, relationships.map((r) => r.id).join(',')]);
 
   // Build direct relationships for a group
   const getDirectGroupRelationships = useCallback(
     (groupId: string) => {
-      const parentsMap = new Map<string, { group: any; rights: string[] }>();
-      const childrenMap = new Map<string, { group: any; rights: string[] }>();
+      const parentsMap = new Map<string, RelationshipEntry>();
+      const childrenMap = new Map<string, RelationshipEntry>();
 
-      stableRelationships.forEach((rel: any) => {
+      stableRelationships.forEach((rel) => {
         // Skip if filtering by right and this relationship doesn't have it
         if (filterRight && rel.withRight !== filterRight) {
           return;
         }
 
-        if (rel.childGroup?.id === groupId) {
-          const parentId = rel.parentGroup?.id;
-          if (!parentId) return;
+        if (rel.childGroup?.id === groupId && rel.parentGroup) {
+          const parentId = rel.parentGroup.id;
 
           if (!parentsMap.has(parentId)) {
             parentsMap.set(parentId, { group: rel.parentGroup, rights: [] });
@@ -102,9 +113,8 @@ export function FilteredNetworkFlow({
             parentEntry.rights.push(rel.withRight);
           }
         }
-        if (rel.parentGroup?.id === groupId) {
-          const childId = rel.childGroup?.id;
-          if (!childId) return;
+        if (rel.parentGroup?.id === groupId && rel.childGroup) {
+          const childId = rel.childGroup.id;
 
           if (!childrenMap.has(childId)) {
             childrenMap.set(childId, { group: rel.childGroup, rights: [] });
@@ -130,26 +140,25 @@ export function FilteredNetworkFlow({
       const visited = new Set<string>();
       const parentsMap = new Map<
         string,
-        { group: any; rights: string[]; level: number; childId?: string }
+        RelationshipEntry
       >();
       const childrenMap = new Map<
         string,
-        { group: any; rights: string[]; level: number; parentId?: string }
+        RelationshipEntry
       >();
 
       const findParents = (id: string, level = 1) => {
         if (visited.has(id)) return;
         visited.add(id);
 
-        stableRelationships.forEach((rel: any) => {
+        stableRelationships.forEach((rel) => {
           // Skip if filtering by right and this relationship doesn't have it
           if (filterRight && rel.withRight !== filterRight) {
             return;
           }
 
-          if (rel.childGroup?.id === id && !visited.has(rel.parentGroup?.id)) {
-            const parentId = rel.parentGroup?.id;
-            if (!parentId) return;
+          if (rel.childGroup?.id === id && rel.parentGroup && !visited.has(rel.parentGroup.id)) {
+            const parentId = rel.parentGroup.id;
 
             if (!parentsMap.has(parentId)) {
               parentsMap.set(parentId, {
@@ -169,15 +178,14 @@ export function FilteredNetworkFlow({
       };
 
       const findChildren = (id: string, level = 1, currentParentId?: string) => {
-        stableRelationships.forEach((rel: any) => {
+        stableRelationships.forEach((rel) => {
           // Skip if filtering by right and this relationship doesn't have it
           if (filterRight && rel.withRight !== filterRight) {
             return;
           }
 
-          if (rel.parentGroup?.id === id && !visited.has(rel.childGroup?.id)) {
-            const childId = rel.childGroup?.id;
-            if (!childId) return;
+          if (rel.parentGroup?.id === id && rel.childGroup && !visited.has(rel.childGroup.id)) {
+            const childId = rel.childGroup.id;
 
             visited.add(childId);
             if (!childrenMap.has(childId)) {
@@ -272,7 +280,7 @@ export function FilteredNetworkFlow({
 
     // Add user's groups as first level
     const groupsPerRow = Math.ceil(Math.sqrt(userGroups.length));
-    userGroups.forEach((group: any, index: number) => {
+    userGroups.forEach((group, index: number) => {
       const row = Math.floor(index / groupsPerRow);
       const col = index % groupsPerRow;
       const totalInRow = Math.min(groupsPerRow, userGroups.length - row * groupsPerRow);
@@ -284,8 +292,8 @@ export function FilteredNetworkFlow({
         type: 'default',
         position: { x: 400 + xOffset, y: 300 + yOffset },
         data: {
-          label: group.name,
-          description: group.description,
+          label: group.name ?? '',
+          description: group.description ?? '',
           level: 1,
           type: 'group',
           groupData: group,
@@ -336,21 +344,24 @@ export function FilteredNetworkFlow({
     });
 
     // Add parent and child groups for each user group
-    const allRelatedGroups = new Map<string, any>();
+    const allRelatedGroups = new Map<string, RelationshipEntry & { isParent: boolean; connectedTo: string }>();
 
-    userGroups.forEach((group: any) => {
+    userGroups.forEach((group) => {
       const { parents, children } = showIndirect
         ? getIndirectGroupRelationships(group.id)
         : getDirectGroupRelationships(group.id);
 
       // Process parent groups
-      parents.forEach((parent: any) => {
+      parents.forEach((parent) => {
         if (
           !allRelatedGroups.has(parent.group.id) &&
-          !userGroups.some((g: any) => g.id === parent.group.id)
+          !userGroups.some((g) => g.id === parent.group.id)
         ) {
           allRelatedGroups.set(parent.group.id, {
-            ...parent,
+            group: parent.group,
+            rights: parent.rights,
+            level: parent.level,
+            childId: parent.childId,
             isParent: true,
             connectedTo: group.id,
           });
@@ -389,13 +400,16 @@ export function FilteredNetworkFlow({
       });
 
       // Process child groups
-      children.forEach((child: any) => {
+      children.forEach((child) => {
         if (
           !allRelatedGroups.has(child.group.id) &&
-          !userGroups.some((g: any) => g.id === child.group.id)
+          !userGroups.some((g) => g.id === child.group.id)
         ) {
           allRelatedGroups.set(child.group.id, {
-            ...child,
+            group: child.group,
+            rights: child.rights,
+            level: child.level,
+            parentId: child.parentId,
             isParent: false,
             connectedTo: group.id,
           });
@@ -440,7 +454,7 @@ export function FilteredNetworkFlow({
     const childGroups = relatedGroupsArray.filter(g => !g.isParent);
 
     // Position parent groups above user groups
-    parentGroups.forEach((parent: any, index: number) => {
+    parentGroups.forEach((parent, index: number) => {
       const level = parent.level || 1;
       const yOffset = -150 * level - 50;
       const xOffset = (index - parentGroups.length / 2) * 220;
@@ -450,8 +464,8 @@ export function FilteredNetworkFlow({
         type: 'default',
         position: { x: 400 + xOffset, y: 300 + yOffset },
         data: {
-          label: parent.group.name,
-          description: parent.group.description,
+          label: parent.group.name ?? '',
+          description: parent.group.description ?? '',
           level,
           type: 'group',
           groupData: parent.group,
@@ -472,7 +486,7 @@ export function FilteredNetworkFlow({
     });
 
     // Position child groups below user groups
-    childGroups.forEach((child: any, index: number) => {
+    childGroups.forEach((child, index: number) => {
       const level = child.level || 1;
       const baseYOffset = 200 + Math.ceil(userGroups.length / groupsPerRow) * 180;
       const yOffset = baseYOffset + 100 * level;
@@ -483,8 +497,8 @@ export function FilteredNetworkFlow({
         type: 'default',
         position: { x: 400 + xOffset, y: 300 + yOffset },
         data: {
-          label: child.group.name,
-          description: child.group.description,
+          label: child.group.name ?? '',
+          description: child.group.description ?? '',
           level,
           type: 'group',
           groupData: child.group,
@@ -532,12 +546,12 @@ export function FilteredNetworkFlow({
 
   // Handle node selection
   const onNodeClick = useCallback(
-    (_event: any, node: Node) => {
+    (_event: React.MouseEvent, node: Node) => {
       if (!isInteractive) return;
 
       // If this is a group and onGroupClick is provided, call it
       if (node.data.type === 'group' && onGroupClick) {
-        onGroupClick(node.id, node.data.groupData);
+        onGroupClick(node.id, node.data.groupData as NetworkGroupEntity);
       }
 
       setSelectedNodes(prev => {

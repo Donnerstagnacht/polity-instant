@@ -1,29 +1,23 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useGroupNetwork as useFacadeGroupNetwork } from '@/zero/groups/useGroupState';
 import { RIGHT_TYPES, formatRights } from '@/features/network/ui/RightFilters';
-
-interface GroupRelationship {
-  id: string;
-  parentGroup?: { id: string; name: string; description?: string };
-  childGroup?: { id: string; name: string; description?: string };
-  withRight: string;
-  relationshipType: string;
-  status?: string; // 'active' | 'requested' | 'rejected'
-  initiatorGroupId?: string;
-}
+import { normalizeGroupRelationship, type NormalizedGroupRelationship } from '../types/network.types';
 
 export function useGroupNetwork(groupId: string) {
   const { group, relationships: rawRelationships, isLoading } = useFacadeGroupNetwork(groupId);
   const [showIndirect, setShowIndirect] = useState(false);
   const [selectedRights, setSelectedRights] = useState<Set<string>>(new Set(RIGHT_TYPES));
 
-  const relationships = (rawRelationships || []) as unknown as GroupRelationship[];
+  const relationships = useMemo(
+    () => (rawRelationships || []).map(rel => normalizeGroupRelationship(rel)),
+    [rawRelationships],
+  ) as NormalizedGroupRelationship[];
 
   // Categorize relationships
   const { activeRelationships, incomingRequests, outgoingRequests } = useMemo(() => {
-    const active: GroupRelationship[] = [];
-    const incoming: GroupRelationship[] = [];
-    const outgoing: GroupRelationship[] = [];
+    const active: NormalizedGroupRelationship[] = [];
+    const incoming: NormalizedGroupRelationship[] = [];
+    const outgoing: NormalizedGroupRelationship[] = [];
 
     relationships.forEach(rel => {
         // Treat undefined status as 'active' for backward compatibility
@@ -48,7 +42,7 @@ export function useGroupNetwork(groupId: string) {
     return activeRelationships;
   }, [
     activeRelationships.length,
-    activeRelationships.map(r => `${r.id}-${r.parentGroup?.id}-${r.childGroup?.id}`).join(','),
+    activeRelationships.map(r => `${r.id}-${r.group_id}-${r.related_group_id}`).join(','),
   ]);
 
   // Build direct relationships

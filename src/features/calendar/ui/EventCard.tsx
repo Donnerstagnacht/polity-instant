@@ -111,7 +111,7 @@ export const EventCard = ({ event }: EventCardProps) => {
             )}
             {isMeeting && userIsOrganizer && (
               <Badge variant="default" className="text-xs">
-                {t('features.calendar.eventCard.yourMeetingSlot')}
+                {t('features.calendar.eventCard.yourMeeting')}
               </Badge>
             )}
             {isMeeting && !userIsOrganizer && (

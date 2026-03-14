@@ -9,7 +9,7 @@ export function useVoting() {
   const { createVoteEntry, updateVoteEntry } = useAmendmentActions();
   const [votingLoading, setVotingLoading] = useState<string | null>(null);
 
-  const handleElectionVote = async (electionId: string, candidateId: string, existingVote?: any) => {
+  const handleElectionVote = async (electionId: string, candidateId: string, existingVote?: { id: string; candidate?: { id: string } }) => {
     if (!user) return;
 
     setVotingLoading(electionId);
@@ -49,7 +49,7 @@ export function useVoting() {
   const handleAmendmentVote = async (
     amendmentVoteId: string,
     voteValue: 'yes' | 'no' | 'abstain',
-    existingVote?: any
+    existingVote?: { id: string; vote?: number }
   ) => {
     if (!user) return;
 

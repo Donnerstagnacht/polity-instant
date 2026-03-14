@@ -43,9 +43,9 @@ function parsePolityUrl(url: string): PolityLink | null {
     // Match patterns like /user/123, /group/456, etc.
     const match = pathname.match(/^\/(user|group|event|amendment|blog|statement|todos?)\/([^/]+)/);
     if (match) {
-      let type = match[1] as EntityType;
+      const rawType = match[1];
       // Normalize "todos" to "todo"
-      if (type === ('todos' as any)) type = 'todo';
+      const type: EntityType = rawType === 'todos' ? 'todo' : (rawType as EntityType);
       const id = match[2];
       return { type, id };
     }
@@ -85,12 +85,14 @@ export function LinkPreview({ url, className = '' }: LinkPreviewProps) {
       <Link to={url} target="_blank" rel="noopener noreferrer">
         <Card className={`hover:bg-accent ${className}`}>
           <CardContent className="flex items-center gap-3 p-3">
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-muted">
-              <ExternalLink className="h-5 w-5 text-muted-foreground" />
+            <div className="bg-muted flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg">
+              <ExternalLink className="text-muted-foreground h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{url}</p>
-              <p className="text-xs text-muted-foreground">{t('components.linkPreview.externalLink')}</p>
+              <p className="text-muted-foreground text-xs">
+                {t('components.linkPreview.externalLink')}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -138,22 +140,25 @@ function UserPreview({ userId, className }: { userId: string; className?: string
   }
 
   return (
-    <Link to={`/user/${userId}`}>
-      <Card className={`border-l-4 border-l-blue-500 hover:bg-accent ${className}`}>
+    <Link to="/user/$id" params={{ id: userId }}>
+      <Card className={`hover:bg-accent border-l-4 border-l-blue-500 ${className}`}>
         <CardContent className="flex items-center gap-3 p-3">
           <User className="h-5 w-5 flex-shrink-0 text-blue-500" />
           <Avatar className="h-10 w-10 flex-shrink-0">
             <AvatarImage src={user.avatar ?? undefined} />
-            <AvatarFallback>{(user.first_name || user.handle)?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+            <AvatarFallback>
+              {(user.first_name || user.handle)?.[0]?.toUpperCase() || 'U'}
+            </AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold">{`${user.first_name || ''} ${user.last_name || ''}`.trim() || t('components.linkPreview.unknownUser')}</p>
+            <p className="truncate font-semibold">
+              {`${user.first_name || ''} ${user.last_name || ''}`.trim() ||
+                t('components.linkPreview.unknownUser')}
+            </p>
             {user.handle && (
-              <p className="truncate text-sm text-muted-foreground">@{user.handle}</p>
+              <p className="text-muted-foreground truncate text-sm">@{user.handle}</p>
             )}
-            {user.bio && (
-              <p className="truncate text-xs text-muted-foreground">{user.bio}</p>
-            )}
+            {user.bio && <p className="text-muted-foreground truncate text-xs">{user.bio}</p>}
           </div>
           <Badge variant="outline" className="flex-shrink-0 text-xs">
             {t('components.linkPreview.user')}
@@ -173,8 +178,8 @@ function GroupPreview({ groupId, className }: { groupId: string; className?: str
   }
 
   return (
-    <Link to={`/group/${groupId}`}>
-      <Card className={`border-l-4 border-l-purple-500 hover:bg-accent ${className}`}>
+    <Link to="/group/$id" params={{ id: groupId }}>
+      <Card className={`hover:bg-accent border-l-4 border-l-purple-500 ${className}`}>
         <CardContent className="flex items-center gap-3 p-3">
           <Users className="h-5 w-5 flex-shrink-0 text-purple-500" />
           <Avatar className="h-10 w-10 flex-shrink-0">
@@ -184,9 +189,11 @@ function GroupPreview({ groupId, className }: { groupId: string; className?: str
           <div className="min-w-0 flex-1">
             <p className="truncate font-semibold">{group.name}</p>
             {group.description && (
-              <p className="line-clamp-1 text-xs text-muted-foreground">{group.description}</p>
+              <p className="text-muted-foreground line-clamp-1 text-xs">{group.description}</p>
             )}
-            <p className="text-xs text-muted-foreground">{group.member_count || 0} {t('components.linkPreview.members')}</p>
+            <p className="text-muted-foreground text-xs">
+              {group.member_count || 0} {t('components.linkPreview.members')}
+            </p>
           </div>
           <Badge variant="outline" className="flex-shrink-0 text-xs">
             {t('components.linkPreview.group')}
@@ -206,19 +213,19 @@ function EventPreview({ eventId, className }: { eventId: string; className?: str
   }
 
   return (
-    <Link to={`/event/${eventId}`}>
-      <Card className={`border-l-4 border-l-green-500 hover:bg-accent ${className}`}>
+    <Link to="/event/$id" params={{ id: eventId }}>
+      <Card className={`hover:bg-accent border-l-4 border-l-green-500 ${className}`}>
         <CardContent className="flex items-center gap-3 p-3">
           <Calendar className="h-5 w-5 flex-shrink-0 text-green-500" />
           <div className="min-w-0 flex-1">
             <p className="truncate font-semibold">{event.title}</p>
             {event.start_date && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 {new Date(event.start_date).toLocaleDateString()}
               </p>
             )}
             {event.location_name && (
-              <p className="truncate text-xs text-muted-foreground">{event.location_name}</p>
+              <p className="text-muted-foreground truncate text-xs">{event.location_name}</p>
             )}
           </div>
           <Badge variant="outline" className="flex-shrink-0 text-xs">
@@ -239,14 +246,14 @@ function AmendmentPreview({ amendmentId, className }: { amendmentId: string; cla
   }
 
   return (
-    <Link to={`/amendment/${amendmentId}`}>
-      <Card className={`border-l-4 border-l-orange-500 hover:bg-accent ${className}`}>
+    <Link to="/amendment/$id" params={{ id: amendmentId }}>
+      <Card className={`hover:bg-accent border-l-4 border-l-orange-500 ${className}`}>
         <CardContent className="flex items-center gap-3 p-3">
           <FileText className="h-5 w-5 flex-shrink-0 text-orange-500" />
           <div className="min-w-0 flex-1">
             <p className="truncate font-semibold">{amendment.title}</p>
             {amendment.reason && (
-              <p className="truncate text-xs text-muted-foreground">{amendment.reason}</p>
+              <p className="text-muted-foreground truncate text-xs">{amendment.reason}</p>
             )}
             {amendment.status && (
               <Badge variant="secondary" className="mt-1 text-xs capitalize">
@@ -279,15 +286,19 @@ function BlogPreview({ blogId, className }: { blogId: string; className?: string
 
   return (
     <Link to={blogViewUrl}>
-      <Card className={`border-l-4 border-l-pink-500 hover:bg-accent ${className}`}>
+      <Card className={`hover:bg-accent border-l-4 border-l-pink-500 ${className}`}>
         <CardContent className="flex items-center gap-3 p-3">
           <MessageSquare className="h-5 w-5 flex-shrink-0 text-pink-500" />
           <div className="min-w-0 flex-1">
             <p className="truncate font-semibold">{blog.title}</p>
-            <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-              <span>{blog.like_count || 0} {t('components.linkPreview.likes')}</span>
+            <div className="text-muted-foreground mt-1 flex items-center gap-2 text-xs">
+              <span>
+                {blog.like_count || 0} {t('components.linkPreview.likes')}
+              </span>
               <span>•</span>
-              <span>{blog.comment_count || 0} {t('components.linkPreview.comments')}</span>
+              <span>
+                {blog.comment_count || 0} {t('components.linkPreview.comments')}
+              </span>
             </div>
           </div>
           <Badge variant="outline" className="flex-shrink-0 text-xs">
@@ -312,8 +323,8 @@ function StatementPreview({ statementId, className }: { statementId: string; cla
   }
 
   return (
-    <Link to={`/statement/${statementId}`}>
-      <Card className={`border-l-4 border-l-cyan-500 hover:bg-accent ${className}`}>
+    <Link to="/statement/$id" params={{ id: statementId }}>
+      <Card className={`hover:bg-accent border-l-4 border-l-cyan-500 ${className}`}>
         <CardContent className="flex items-center gap-3 p-3">
           <FileText className="h-5 w-5 flex-shrink-0 text-cyan-500" />
           <div className="min-w-0 flex-1">
@@ -337,14 +348,14 @@ function TodoPreview({ todoId, className }: { todoId: string; className?: string
   }
 
   return (
-    <Link to={`/todos/${todoId}`}>
-      <Card className={`border-l-4 border-l-indigo-500 hover:bg-accent ${className}`}>
+    <Link to="/todos/$id" params={{ id: todoId }}>
+      <Card className={`hover:bg-accent border-l-4 border-l-indigo-500 ${className}`}>
         <CardContent className="flex items-center gap-3 p-3">
           <CheckSquare className="h-5 w-5 flex-shrink-0 text-indigo-500" />
           <div className="min-w-0 flex-1">
             <p className="truncate font-semibold">{todo.title}</p>
             {todo.description && (
-              <p className="line-clamp-1 text-xs text-muted-foreground">{todo.description}</p>
+              <p className="text-muted-foreground line-clamp-1 text-xs">{todo.description}</p>
             )}
             <div className="mt-1 flex items-center gap-2">
               <Badge variant="secondary" className="text-xs capitalize">
@@ -368,10 +379,10 @@ function PreviewSkeleton() {
   return (
     <Card className="animate-pulse">
       <CardContent className="flex items-center gap-3 p-3">
-        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-muted"></div>
+        <div className="bg-muted h-10 w-10 flex-shrink-0 rounded-full"></div>
         <div className="min-w-0 flex-1 space-y-2">
-          <div className="h-4 w-3/4 rounded bg-muted"></div>
-          <div className="h-3 w-1/2 rounded bg-muted"></div>
+          <div className="bg-muted h-4 w-3/4 rounded"></div>
+          <div className="bg-muted h-3 w-1/2 rounded"></div>
         </div>
       </CardContent>
     </Card>

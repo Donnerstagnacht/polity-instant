@@ -60,7 +60,7 @@ export function UserMenu({
     const memberships = membershipsData?.groupMemberships || [];
     return memberships
       .filter(
-        (m: any) => m.group && (m.status === 'member' || m.status === 'admin' || m.role === 'admin')
+        (m: any) => m.group && (m.status === 'active' || m.status === 'admin' || m.role === 'admin')
       )
       .map((m: any) => m.group)
       .slice(0, 5); // Limit to 5 groups to keep menu manageable

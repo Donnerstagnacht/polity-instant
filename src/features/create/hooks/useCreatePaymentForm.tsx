@@ -25,7 +25,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
   const [groupName, setGroupName] = useState('')
   const [direction, setDirection] = useState<'income' | 'expense'>('income')
   const [label, setLabel] = useState('')
-  const [type, setType] = useState<string>('donation')
+  const [type, setType] = useState<'membership_fee' | 'donation' | 'subsidies' | 'campaign' | 'material' | 'events' | 'others'>('donation')
   const [amount, setAmount] = useState('')
   const [entityType, setEntityType] = useState<'user' | 'group'>('user')
   const [entityId, setEntityId] = useState('')
@@ -110,17 +110,19 @@ export function useCreatePaymentForm(): CreateFormConfig {
               <Label>
                 {t('pages.create.payment.labelField')} <span className="text-destructive">*</span>
               </Label>
+              <p className="text-muted-foreground text-xs">{t('pages.create.payment.tips.label')}</p>
               <Input
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
                 placeholder={t('pages.create.payment.labelPlaceholder')}
               />
             </div>
-            <PaymentTypeInput value={type as any} onChange={setType} />
+            <PaymentTypeInput value={type} onChange={setType} />
             <div className="space-y-2">
               <Label>
                 {t('pages.create.payment.amount')} <span className="text-destructive">*</span>
               </Label>
+              <p className="text-muted-foreground text-xs">{t('pages.create.payment.tips.amount')}</p>
               <Input
                 type="number"
                 step="0.01"

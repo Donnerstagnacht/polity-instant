@@ -17,13 +17,13 @@ export function useEventParticipation(eventId: string) {
   const eventType = event?.event_type;
 
   // Check if user is a member of the event's group
-  const isGroupMember = (event as any)?.group?.memberships?.some(
-    (m: any) => m.user?.id === user?.id && (m.status === 'member' || m.status === 'admin')
+  const isGroupMember = event?.group?.memberships?.some(
+    (m) => m.user?.id === user?.id && (m.status === 'active' || m.status === 'admin')
   );
 
   // Check if user is a confirmed delegate
-  const isConfirmedDelegate = (event as any)?.delegates?.some(
-    (d: any) => d.user?.id === user?.id && d.status === 'confirmed'
+  const isConfirmedDelegate = event?.delegates?.some(
+    (d) => d.user?.id === user?.id && d.status === 'confirmed'
   );
 
   // Query participants
@@ -31,12 +31,12 @@ export function useEventParticipation(eventId: string) {
 
   const queryLoading = eventLoading || participantsLoading;
 
-  const participation = allParticipantsData?.find((p: any) => p.user_id === user?.id);
+  const participation = allParticipantsData?.find((p) => p.user_id === user?.id);
 
   // Filter to count only active participants (excluding invited and requested)
   const allParticipants = allParticipantsData || [];
   const filteredParticipants = allParticipants.filter(
-    (p: any) => p.status === 'member' || p.status === 'admin' || p.status === 'confirmed'
+    (p) => p.status === 'member' || p.status === 'admin' || p.status === 'confirmed'
   );
   const participantCount = filteredParticipants.length;
 
@@ -57,9 +57,9 @@ export function useEventParticipation(eventId: string) {
     }
 
     // Check participation eligibility based on event type
-    if (eventType === 'delegate_conference') {
+    if (eventType === 'delegate_assembly') {
       if (!isConfirmedDelegate) {
-        toast.error('Only confirmed delegates can participate in this delegate conference');
+        toast.error('Only confirmed delegates can participate in this delegate assembly');
         return;
       }
     } else if (eventType === 'general_assembly') {
@@ -67,8 +67,11 @@ export function useEventParticipation(eventId: string) {
         toast.error('Only members of the associated group can participate in this general assembly');
         return;
       }
+    } else if (eventType === 'on_invite') {
+      toast.error('This event is by invitation only');
+      return;
     }
-    // For 'open_assembly' and 'other', anyone can request participation
+    // For 'open', anyone can request participation
 
     setIsLoading(true);
     try {
@@ -149,9 +152,8 @@ export function useEventParticipation(eventId: string) {
     isGroupMember,
     isConfirmedDelegate,
     canParticipate:
-      eventType === 'open_assembly' ||
-      eventType === 'other' ||
-      (eventType === 'delegate_conference' && isConfirmedDelegate) ||
+      eventType === 'open' ||
+      (eventType === 'delegate_assembly' && isConfirmedDelegate) ||
       (eventType === 'general_assembly' && isGroupMember),
   };
 }

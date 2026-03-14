@@ -49,6 +49,10 @@ export function useGroupState(options: GroupStateOptions = {}) {
     groupId ? queries.groups.hierarchy({ groupId }) : undefined
   )
 
+  const [relationshipsAsTarget, relationshipsAsTargetResult] = useQuery(
+    groupId ? queries.groups.hierarchyAsTarget({ groupId }) : undefined
+  )
+
   // ── User memberships (opt-in) ──────────────────────────────────────
   const [userMemberships, userMembershipsResult] = useQuery(
     userId
@@ -96,6 +100,7 @@ export function useGroupState(options: GroupStateOptions = {}) {
     (groupId !== undefined && rolesResult.type === 'unknown') ||
     (groupId !== undefined && positionsResult.type === 'unknown') ||
     (groupId !== undefined && relationshipsResult.type === 'unknown') ||
+    (groupId !== undefined && relationshipsAsTargetResult.type === 'unknown') ||
     (userId !== undefined && userMembershipsResult.type === 'unknown') ||
     (includeSearch === true && searchResult.type === 'unknown') ||
     (includeAllRelationships === true && allRelationshipsResult.type === 'unknown') ||
@@ -110,6 +115,7 @@ export function useGroupState(options: GroupStateOptions = {}) {
     roles,
     positions,
     relationships,
+    relationshipsAsTarget,
     userMemberships: userMemberships ?? [],
     searchResults: searchResults ?? [],
     allRelationships: allRelationships ?? [],
@@ -166,6 +172,7 @@ export function useGroupSubscribers(groupId: string | undefined) {
 
   return {
     groupName: groupsData?.[0]?.name || 'Group',
+    subscriberCount: groupsData?.[0]?.subscriber_count ?? subscribersData?.length ?? 0,
     subscribers: subscribersData || [],
     isLoading: groupsResult.type === 'unknown' || subscribersResult.type === 'unknown',
   };
@@ -210,8 +217,8 @@ export function useGroupById(groupId?: string) {
 
   const memberStats = useMemo(() => {
     const stats = { total: memberships.length, members: 0, admins: 0, invited: 0, requested: 0 };
-    memberships.forEach((membership: any) => {
-      if (membership.status === 'member') stats.members++;
+    memberships.forEach((membership) => {
+      if (membership.status === 'active') stats.members++;
       if (membership.status === 'admin' || membership.role?.name === 'Board Member') stats.admins++;
       if (membership.status === 'invited') stats.invited++;
       if (membership.status === 'requested') stats.requested++;
@@ -234,12 +241,12 @@ export function useGroupMemberships(groupId?: string) {
 
   const { activeMemberships, invitedMemberships, requestedMemberships, pendingMemberships } =
     useMemo(() => {
-      const active: any[] = [];
-      const invited: any[] = [];
-      const requested: any[] = [];
-      const pending: any[] = [];
-      memberships.forEach((m: any) => {
-        if (m.status === 'member' || m.status === 'admin' || m.role?.name === 'Board Member') {
+      const active: (typeof memberships)[number][] = [];
+      const invited: (typeof memberships)[number][] = [];
+      const requested: (typeof memberships)[number][] = [];
+      const pending: (typeof memberships)[number][] = [];
+      memberships.forEach((m) => {
+        if (m.status === 'active' || m.status === 'admin' || m.role?.name === 'Board Member') {
           active.push(m);
         } else if (m.status === 'invited') {
           invited.push(m);
@@ -404,12 +411,12 @@ export function useUserSearch(searchQuery: string, existingMemberIds: string[] =
     const allUsers = usersData || [];
     const filtered = trimmedQuery
       ? allUsers.filter(
-          (user: any) =>
+          (user) =>
             `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase().includes(trimmedQuery.toLowerCase()) ||
             user.handle?.toLowerCase().includes(trimmedQuery.toLowerCase())
         )
       : allUsers;
-    return filtered.filter((user: any) => !existingMemberIds.includes(user.id));
+    return filtered.filter((user) => !existingMemberIds.includes(user.id));
   }, [usersData, existingMemberIds, trimmedQuery]);
 
   return { users, isLoading: usersResult.type === 'unknown' };
@@ -437,4 +444,37 @@ export function useUserGroupSubscriptions(userId?: string) {
     memberships: memberships ?? [],
     isLoading: result.type === 'unknown',
   };
+}
+
+// ── Groups where current user can manage events ─────────────────────
+
+export function useUserGroupsWithManageEvents() {
+  const [memberships, result] = useQuery(
+    queries.groups.currentUserMembershipsWithRights({})
+  );
+
+  const manageEventGroupIds = useMemo(() => {
+    if (!memberships) return new Set<string>()
+    const ids = new Set<string>()
+    for (const m of memberships) {
+      // Only consider active memberships (member/admin)
+      const status = m.status
+      if (status !== 'active' && status !== 'admin') continue
+
+      const role = m.role
+      if (!role?.action_rights) continue
+      const canManage = role.action_rights.some(
+        (ar) => ar.resource === 'events' && (ar.action === 'manage' || ar.action === 'create')
+      )
+      if (canManage && m.group_id) {
+        ids.add(m.group_id)
+      }
+    }
+    return ids
+  }, [memberships])
+
+  return {
+    manageEventGroupIds,
+    isLoading: result.type === 'unknown',
+  }
 }

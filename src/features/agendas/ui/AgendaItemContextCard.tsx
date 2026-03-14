@@ -193,7 +193,8 @@ export function AgendaItemContextCard({
                 <h3 className="font-semibold">{position.title}</h3>
                 {position.group && (
                   <Link
-                    to={`/group/${position.group.id}`}
+                    to="/group/$id"
+                    params={{ id: position.group.id }}
                     className="text-sm text-muted-foreground hover:underline"
                   >
                     {position.group.name}
@@ -210,7 +211,8 @@ export function AgendaItemContextCard({
         {/* Vote Context: Amendment Information */}
         {isVote && amendment && (
           <Link
-            to={`/amendment/${amendment.id}`}
+            to="/amendment/$id"
+            params={{ id: amendment.id }}
             className="block rounded-lg border bg-orange-50/50 p-4 transition-colors hover:bg-orange-100/50 dark:bg-orange-950/20 dark:hover:bg-orange-900/30"
           >
             <div className="mb-2 text-sm font-medium text-muted-foreground">

@@ -2,7 +2,7 @@ import { Label } from '@/features/shared/ui/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/features/shared/ui/ui/radio-group'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 
-type EventType = 'delegate_conference' | 'general_assembly' | 'open_assembly' | 'other'
+type EventType = 'delegate_assembly' | 'general_assembly' | 'open' | 'on_invite'
 
 interface EventTypeInputProps {
   value: EventType
@@ -13,10 +13,10 @@ export function EventTypeInput({ value, onChange }: EventTypeInputProps) {
   const { t } = useTranslation()
 
   const options: { value: EventType; label: string; description: string }[] = [
-    { value: 'delegate_conference', label: t('pages.create.event.eventTypes.delegateConference'), description: t('pages.create.event.eventTypes.delegateConferenceDesc') },
+    { value: 'delegate_assembly', label: t('pages.create.event.eventTypes.delegateAssembly'), description: t('pages.create.event.eventTypes.delegateAssemblyDesc') },
     { value: 'general_assembly', label: t('pages.create.event.eventTypes.generalAssembly'), description: t('pages.create.event.eventTypes.generalAssemblyDesc') },
-    { value: 'open_assembly', label: t('pages.create.event.eventTypes.openAssembly'), description: t('pages.create.event.eventTypes.openAssemblyDesc') },
-    { value: 'other', label: t('pages.create.event.eventTypes.other'), description: t('pages.create.event.eventTypes.otherDesc') },
+    { value: 'open', label: t('pages.create.event.eventTypes.open'), description: t('pages.create.event.eventTypes.openDesc') },
+    { value: 'on_invite', label: t('pages.create.event.eventTypes.onInvite'), description: t('pages.create.event.eventTypes.onInviteDesc') },
   ]
 
   return (

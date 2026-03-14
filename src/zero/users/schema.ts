@@ -18,6 +18,9 @@ const userBaseSchema = z.object({
   location: z.string().nullable(),
   is_public: z.boolean(),
   visibility: z.string(),
+  subscriber_count: z.number(),
+  amendment_count: z.number(),
+  group_count: z.number(),
   tutorial_step: z.number().nullable(),
   assistant_introduction: z.boolean().nullable(),
   created_at: timestampSchema,
@@ -26,7 +29,7 @@ const userBaseSchema = z.object({
 
 export const userSelectSchema = userBaseSchema
 export const userCreateSchema = userBaseSchema
-  .omit({ id: true, created_at: true, updated_at: true })
+  .omit({ id: true, created_at: true, updated_at: true, subscriber_count: true, amendment_count: true, group_count: true })
   .extend({ id: z.string() })
 export const userUpdateSchema = userBaseSchema
   .pick({
@@ -61,24 +64,3 @@ const fileBaseSchema = z.object({
 
 export const fileSelectSchema = fileBaseSchema
 export type File = z.infer<typeof fileSelectSchema>
-
-// ── user_stats ────────────────────────────────────────────────────────
-const userStatsBaseSchema = z.object({
-  id: z.string(),
-  user_id: z.string(),
-  label: z.string().nullable(),
-  unit: z.string().nullable(),
-  value: z.number().nullable(),
-  created_at: timestampSchema,
-})
-
-export const userStatsSelectSchema = userStatsBaseSchema
-export const userStatsCreateSchema = userStatsBaseSchema
-  .omit({ id: true })
-  .extend({ id: z.string() })
-export const userStatsUpdateSchema = userStatsBaseSchema
-  .pick({ label: true, unit: true, value: true })
-  .partial()
-  .extend({ id: z.string() })
-export const userStatsDeleteSchema = z.object({ id: z.string() })
-export type UserStats = z.infer<typeof userStatsSelectSchema>

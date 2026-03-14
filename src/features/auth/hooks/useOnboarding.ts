@@ -5,7 +5,7 @@ import { useUserActions } from '@/zero/users/useUserActions';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from 'sonner';
-import { notifyMembershipRequest } from '@/features/shared/utils/notification-helpers';
+import { notifyMembershipRequest } from '@/features/notifications/utils/notification-helpers.ts';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export type OnboardingStep = 'name' | 'groupSearch' | 'confirm' | 'ariaKai' | 'summary';

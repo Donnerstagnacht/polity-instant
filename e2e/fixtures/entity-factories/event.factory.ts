@@ -36,13 +36,18 @@ export class EventFactory extends FactoryBase {
    * Create an event with Organizer + Participant roles,
    * action rights, and the organizer as a participant.
    */
-  async createEvent(organizerId: string, overrides: CreateEventOptions = {}): Promise<CreatedEvent> {
+  async createEvent(
+    organizerId: string,
+    overrides: CreateEventOptions = {}
+  ): Promise<CreatedEvent> {
     this._counter++;
     const eventId = overrides.id ?? this.generateId();
     const title = overrides.title ?? `E2E Event ${this._counter}`;
     const now = new Date().toISOString();
-    const startDate = overrides.startDate ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-    const endDate = overrides.endDate ?? new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString();
+    const startDate =
+      overrides.startDate ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const endDate =
+      overrides.endDate ?? new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString();
 
     const organizerRoleId = this.generateId();
     const participantRoleId = this.generateId();
@@ -57,7 +62,7 @@ export class EventFactory extends FactoryBase {
       is_public: overrides.isPublic ?? true,
       visibility: overrides.visibility ?? 'public',
       status: overrides.status ?? 'upcoming',
-      event_type: overrides.eventType ?? 'open_assembly',
+      event_type: overrides.eventType ?? 'open',
       group_id: overrides.groupId ?? null,
       creator_id: organizerId,
       created_at: now,
@@ -144,7 +149,7 @@ export class EventFactory extends FactoryBase {
     eventId: string,
     userId: string,
     roleId: string,
-    status: string = 'confirmed'
+    status = 'confirmed'
   ): Promise<string> {
     const participantId = this.generateId();
     await adminUpsert('event_participant', {

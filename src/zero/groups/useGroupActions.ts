@@ -239,7 +239,7 @@ export function useGroupActions() {
           await zero.mutate(mutators.groups.joinGroup({
             id: crypto.randomUUID(),
             group_id: groupId,
-            status: 'member',
+            status: 'active',
             visibility: 'public',
             role_id: adminRoleId,
           }))

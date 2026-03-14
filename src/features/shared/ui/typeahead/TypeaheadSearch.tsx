@@ -14,46 +14,70 @@ import { ENTITY_COLORS } from '@/features/shared/utils/entity-colors';
 import type { TypeaheadItem, EntityType } from '@/features/shared/logic/typeaheadHelpers';
 
 interface TypeaheadSearchProps {
-  entityTypes: EntityType[];
+  entityTypes?: EntityType[];
   value?: string;
   onChange: (item: TypeaheadItem | null) => void;
   placeholder?: string;
   multiple?: boolean;
   renderItem?: (item: TypeaheadItem) => React.ReactNode;
   filterFn?: (item: TypeaheadItem) => boolean;
+  /** When provided, these items are used instead of the internal search hook results. */
+  items?: TypeaheadItem[];
   className?: string;
   label?: string;
+  /** Render dropdown inline instead of via portal. Use inside dialogs where portals escape the focus trap. */
+  disablePortal?: boolean;
 }
 
 export function TypeaheadSearch({
-  entityTypes,
+  entityTypes = [],
   value,
   onChange,
   placeholder = 'Search...',
   filterFn,
+  items: externalItems,
   className,
   label,
+  disablePortal = false,
 }: TypeaheadSearchProps) {
-  const { query, setQuery, results } = useTypeaheadSearch({ entityTypes });
+  const { query, setQuery, results: hookResults } = useTypeaheadSearch({ entityTypes });
+  const baseResults = externalItems ?? hookResults;
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputWrapperRef = useRef<HTMLDivElement>(null);
+  const dropdownPortalRef = useRef<HTMLDivElement>(null);
   const [dropdownStyle, setDropdownStyle] = useState<{ top: number; left: number; width: number }>({
     top: 0,
     left: 0,
     width: 0,
   });
 
-  const filteredResults = filterFn ? results.filter(filterFn) : results;
+  // When using external items, filter locally by query
+  const queryFilteredResults = externalItems
+    ? baseResults.filter(item => {
+        if (!query.trim()) return true;
+        const q = query.toLowerCase();
+        return (
+          item.label.toLowerCase().includes(q) ||
+          (item.secondaryLabel?.toLowerCase().includes(q) ?? false)
+        );
+      })
+    : baseResults;
+
+  const filteredResults = filterFn ? queryFilteredResults.filter(filterFn) : queryFilteredResults;
 
   // Find selected item for display
-  const selectedItem = value ? results.find(r => r.id === value) : null;
+  const selectedItem = value ? baseResults.find(r => r.id === value) : null;
 
   // Close on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const clickedInsideContainer = containerRef.current?.contains(target);
+      const clickedInsideDropdown = dropdownPortalRef.current?.contains(target);
+
+      if (!clickedInsideContainer && !clickedInsideDropdown) {
         setIsOpen(false);
       }
     };
@@ -63,7 +87,7 @@ export function TypeaheadSearch({
 
   // Recompute portal position whenever the dropdown opens or the window scrolls/resizes
   useLayoutEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || disablePortal) return;
     const update = () => {
       const el = inputWrapperRef.current ?? containerRef.current;
       if (!el) return;
@@ -172,18 +196,12 @@ export function TypeaheadSearch({
         </div>
       )}
 
-      {/* Dropdown rendered via portal to escape overflow-hidden ancestors */}
-      {isOpen && query.trim().length > 0 &&
-        createPortal(
+      {/* Dropdown — inline when disablePortal is set (e.g. inside dialogs), otherwise via portal */}
+      {isOpen && (externalItems ? true : query.trim().length > 0) && (
+        disablePortal ? (
           <div
-            style={{
-              position: 'absolute',
-              top: dropdownStyle.top,
-              left: dropdownStyle.left,
-              width: dropdownStyle.width,
-              zIndex: 9999,
-            }}
-            onMouseDown={(e) => e.stopPropagation()}
+            ref={dropdownPortalRef}
+            className="absolute left-0 right-0 top-full z-[9999] mt-1"
           >
             <TypeaheadDropdown
               results={filteredResults.slice(0, 20)}
@@ -192,9 +210,34 @@ export function TypeaheadSearch({
               onSelect={handleSelect}
               onHoverIndex={setSelectedIndex}
             />
-          </div>,
-          document.body,
-        )}
+          </div>
+        ) : (
+          createPortal(
+            <div
+              ref={dropdownPortalRef}
+              data-typeahead-portal
+              style={{
+                position: 'absolute',
+                top: dropdownStyle.top,
+                left: dropdownStyle.left,
+                width: dropdownStyle.width,
+                zIndex: 9999,
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <TypeaheadDropdown
+                results={filteredResults.slice(0, 20)}
+                query={query}
+                selectedIndex={selectedIndex}
+                onSelect={handleSelect}
+                onHoverIndex={setSelectedIndex}
+              />
+            </div>,
+            document.body,
+          )
+        )
+      )}
     </div>
   );
 }

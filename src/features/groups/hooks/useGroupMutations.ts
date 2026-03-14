@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { toast } from 'sonner';
-import { addUserToGroupConversation } from '@/features/shared/utils/groupConversationSync';
 
 /**
  * Hook for group membership mutations
@@ -73,11 +72,6 @@ export function useGroupMutations(groupId: string) {
         id: membershipId,
         status: 'member',
       });
-
-      // Add user to group conversation if it exists
-      if (conversationId) {
-        await addUserToGroupConversation(conversationId, userId);
-      }
 
       toast.success('Membership approved');
       return { success: true };

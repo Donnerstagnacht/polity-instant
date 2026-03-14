@@ -12,7 +12,7 @@ import { ScrollableTabsList } from '@/features/shared/ui/ui/scrollable-tabs.tsx'
 import { Bell, Check, CheckCheck } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils.ts';
 import { useNavigate } from '@tanstack/react-router';
-import { EntityType } from '@/features/shared/utils/notification-helpers.ts';
+import { EntityType } from '@/features/notifications/utils/notification-helpers.ts';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { NotificationType } from '@/features/notifications/types/notification.types.ts';
 import {

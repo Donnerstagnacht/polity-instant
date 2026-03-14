@@ -13,11 +13,19 @@ function AmendmentTextPage() {
   const { user } = useAuth()
   const { user: userRecord } = useUserState({ userId: user?.id })
   const userColor = user?.id ? generateUserColor(user.id) : '#888888'
+  const mappedUserRecord = userRecord
+    ? {
+        id: userRecord.id,
+        name: `${userRecord.first_name ?? ''} ${userRecord.last_name ?? ''}`.trim() || undefined,
+        email: userRecord.email ?? undefined,
+        avatar: userRecord.avatar ?? undefined,
+      }
+    : undefined
   return (
     <DocumentEditorView
       amendmentId={id}
       userId={user?.id}
-      userRecord={userRecord}
+      userRecord={mappedUserRecord}
       userColor={userColor}
     />
   )

@@ -200,7 +200,7 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
         electionsCount:
           eventPositions?.filter(position => Boolean(position?.election)).length ??
           scheduledElections?.length ??
-          agendaItems?.filter(item => Boolean(item?.election)).length ??
+          agendaItems?.length ??
           eventVotingSessions?.filter(session => Boolean(session?.election)).length ??
           undefined,
         amendmentsCount:
@@ -540,7 +540,7 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
               description: item.description,
               groupId: item.groupId,
               groupName: item.groupName,
-              status: item.status as any,
+              status: item.status,
             },
           };
           break;
@@ -654,13 +654,13 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
             user: {
               id: item.authorId || item.id,
               name: item.authorName || item.title,
-              handle: 'handle' in item ? (item as any).handle : undefined,
+              handle: item.handle,
               bio: item.description,
-              subtitle: 'subtitle' in item ? (item as any).subtitle : undefined,
+              subtitle: item.subtitle,
               avatarUrl: item.authorAvatar,
               location: item.location,
               groupCount:
-                item.groupCount ?? ('groupCount' in item ? (item as any).groupCount : undefined),
+                item.groupCount,
               amendmentCount: item.amendmentCount,
               hashtags: (item.tags ?? []).map(tag => ({ id: tag, tag })),
             },

@@ -268,6 +268,12 @@ export const createThreadVoteSchema = baseThreadVoteSchema
   .omit({ id: true, created_at: true })
   .extend({ id: z.string() })
 
+export const updateThreadVoteSchema = baseThreadVoteSchema
+  .pick({ vote: true })
+  .extend({ id: z.string() })
+
+export const deleteThreadVoteSchema = z.object({ id: z.string() })
+
 // ============================================
 // Comment Vote Schemas
 // ============================================

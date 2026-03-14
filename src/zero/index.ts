@@ -22,11 +22,11 @@ export { preferenceSharedMutators } from './preferences/shared-mutators'
 // Re-export all Row types
 export type {
   // Users
-  User, File, Follow, UserStats,
+  User, File, Follow,
   // Groups
   Group, GroupMembership, GroupRelationship, Role, ActionRight, Position, PositionHolderHistory,
   // Events
-  Event, EventParticipant, EventDelegate, GroupDelegateAllocation, MeetingSlot, MeetingBooking,
+  Event, EventParticipant, EventDelegate, GroupDelegateAllocation,
   Participant, EventPosition, EventPositionHolder, EventVotingSession, EventVote, ScheduledElection,
   // Amendments
   Amendment, AmendmentVoteEntry, AmendmentSupportVote, AmendmentVote, ChangeRequest, ChangeRequestVote,

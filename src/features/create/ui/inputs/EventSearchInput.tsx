@@ -1,8 +1,9 @@
-import { TypeAheadSelect } from '@/features/shared/ui/ui/type-ahead-select'
-import { EventSelectCard } from '@/features/shared/ui/ui/entity-select-cards'
+import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch'
+import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems'
 import { useAllEvents } from '@/zero/events/useEventState'
 import { Label } from '@/features/shared/ui/ui/label'
 import { useMemo } from 'react'
+import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers'
 
 interface EventSearchInputProps {
   value: string
@@ -22,22 +23,30 @@ export function EventSearchInput({
 }: EventSearchInputProps) {
   const { events } = useAllEvents()
 
-  const filteredEvents = useMemo(() => {
-    if (!filterByGroupId) return events
-    return events.filter((e: any) => e.group_id === filterByGroupId)
+  const items = useMemo(() => {
+    const filtered = filterByGroupId
+      ? events.filter((e: any) => e.group_id === filterByGroupId)
+      : events
+    return toTypeaheadItems(
+      filtered,
+      'event',
+      (e: any) => e.title || 'Event',
+      (e: any) => e.description?.substring(0, 60),
+    )
   }, [events, filterByGroupId])
+
+  const handleChange = (item: TypeaheadItem | null) => {
+    onChange(item?.id ?? '')
+  }
 
   return (
     <div>
       {label && <Label className="mb-2 block">{label}</Label>}
-      <TypeAheadSelect
-        items={filteredEvents}
+      <TypeaheadSearch
+        items={items}
         value={value}
-        onChange={onChange}
+        onChange={handleChange}
         placeholder={placeholder}
-        searchKeys={['title', 'description']}
-        renderItem={(event) => <EventSelectCard event={event} />}
-        getItemId={(event) => event.id}
       />
     </div>
   )

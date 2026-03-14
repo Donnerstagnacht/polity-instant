@@ -13,7 +13,7 @@ import { BasicInfoSection } from './BasicInfoSection';
 import { LocationInfoSection } from './LocationInfoSection';
 import { SocialMediaSection } from './SocialMediaSection';
 import { useGroupUpdate } from '../hooks/useGroupUpdate';
-import type { GroupFormData } from '../hooks/useGroupUpdate';
+import type { GroupFormData, GroupType } from '../hooks/useGroupUpdate';
 import { useState, useRef } from 'react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { CreateReviewCard, SummaryField } from '@/features/shared/ui/ui/create-review-card';
@@ -24,9 +24,10 @@ interface GroupEditFormProps {
   onCancel?: () => void;
   actorId?: string;
   visibility?: 'public' | 'private' | 'authenticated';
+  groupType?: GroupType;
 }
 
-export function GroupEditForm({ groupId, initialData, onCancel, actorId, visibility }: GroupEditFormProps) {
+export function GroupEditForm({ groupId, initialData, onCancel, actorId, visibility, groupType }: GroupEditFormProps) {
   const { t } = useTranslation();
   const isCreating = !initialData;
   const [showReview, setShowReview] = useState(false);
@@ -34,7 +35,7 @@ export function GroupEditForm({ groupId, initialData, onCancel, actorId, visibil
   const { formData, setFormData, updateField, handleSubmit, isSubmitting } = useGroupUpdate(
     groupId,
     initialData,
-    { actorId, visibility }
+    { actorId, visibility, groupType }
   );
 
   const onFormSubmit = (e: React.FormEvent) => {

@@ -26,17 +26,25 @@ import {
   DialogTrigger,
 } from '@/features/shared/ui/ui/dialog';
 import { Shield, Plus, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { createRole, removeRole, toggleActionRight } from '../utils/collaborator-operations';
 import { ACTION_RIGHTS } from '../utils/action-rights';
 import type { Role } from '../hooks/useCollaborators';
 
 interface RolesManagementCardProps {
   amendmentId: string;
   roles: Role[];
+  onCreateRole: (name: string, description: string, amendmentId: string) => Promise<void>;
+  onDeleteRole: (roleId: string) => Promise<void>;
+  onToggleActionRight: (
+    roleId: string,
+    resource: string,
+    action: string,
+    currentlyHas: boolean,
+    roles: Role[],
+    amendmentId: string
+  ) => Promise<void>;
 }
 
-export function RolesManagementCard({ amendmentId, roles }: RolesManagementCardProps) {
+export function RolesManagementCard({ amendmentId, roles, onCreateRole, onDeleteRole, onToggleActionRight }: RolesManagementCardProps) {
   const [newRoleName, setNewRoleName] = useState('');
   const [newRoleDescription, setNewRoleDescription] = useState('');
   const [addRoleDialogOpen, setAddRoleDialogOpen] = useState(false);
@@ -45,26 +53,21 @@ export function RolesManagementCard({ amendmentId, roles }: RolesManagementCardP
     if (!newRoleName.trim()) return;
 
     try {
-      await createRole(newRoleName, newRoleDescription, amendmentId);
+      await onCreateRole(newRoleName, newRoleDescription, amendmentId);
 
       setNewRoleName('');
       setNewRoleDescription('');
       setAddRoleDialogOpen(false);
-
-      toast.success('Role created successfully');
     } catch (error) {
       console.error('Error adding role:', error);
-      toast.error('Failed to create role. Please try again.');
     }
   };
 
   const handleRemoveRole = async (roleId: string) => {
     try {
-      await removeRole(roleId);
-      toast.success('Role removed successfully');
+      await onDeleteRole(roleId);
     } catch (error) {
       console.error('Error removing role:', error);
-      toast.error('Failed to remove role. Please try again.');
     }
   };
 
@@ -75,10 +78,9 @@ export function RolesManagementCard({ amendmentId, roles }: RolesManagementCardP
     currentlyHas: boolean
   ) => {
     try {
-      await toggleActionRight(roleId, resource, action, currentlyHas, roles, amendmentId);
+      await onToggleActionRight(roleId, resource, action, currentlyHas, roles, amendmentId);
     } catch (error) {
       console.error('Error toggling action right:', error);
-      toast.error('Failed to update permission. Please try again.');
     }
   };
 

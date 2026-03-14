@@ -20,7 +20,7 @@ export const delegatesSeeder: EntitySeeder = {
     const { data: eventRows } = await db.from('events').select('*');
 
     const delegateConferences = (eventRows || []).filter(
-      (e: any) => e.eventType === 'delegate_conference' && e.groupId
+      (e: any) => e.eventType === 'delegate_assembly' && e.groupId
     );
 
     console.log(`Found ${delegateConferences.length} delegate conferences to seed`);
@@ -96,7 +96,7 @@ export const delegatesSeeder: EntitySeeder = {
         const { data: memberRows } = await db.from('groupMemberships')
           .select('*')
           .eq('groupId', allocation.id)
-          .eq('status', 'member');
+          .eq('status', 'active');
 
         const members = (memberRows || [])
           .map((m: any) => m.userId)

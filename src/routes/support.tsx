@@ -75,7 +75,7 @@ function SupportPage() {
           {t('pages.support.community.description')}
         </p>
         <Button asChild size="lg">
-          <Link to="/auth/login">{t('pages.home.hero.getStarted')}</Link>
+          <Link to="/auth">{t('pages.home.hero.getStarted')}</Link>
         </Button>
       </section>
     </div>

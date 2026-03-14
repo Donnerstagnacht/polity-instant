@@ -315,7 +315,7 @@ export function useAmendmentActions() {
     async (args: Parameters<typeof mutators.amendments.updateSupportConfirmation>[0]) => {
       try {
         await zero.mutate(mutators.amendments.updateSupportConfirmation(args))
-        const status = (args as any).status
+        const status = args.status
         toast.success(status === 'confirmed' ? t('features.amendments.toasts.supportConfirmed') : t('features.amendments.toasts.supportDeclined'))
       } catch (error) {
         console.error('Failed to update support confirmation:', error)

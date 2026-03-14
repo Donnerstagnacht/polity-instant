@@ -86,3 +86,6 @@ export function useUserState(options: UserStateOptions = {}) {
     isLoading,
   }
 }
+
+/** Type of a single element in the fullProfile query result */
+export type FullProfileRow = ReturnType<typeof useUserState>['fullProfile'][number]

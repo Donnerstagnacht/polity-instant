@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useCommonActions } from '@/zero/common/useCommonActions';
 import { useEventSubscribers } from '@/zero/events/useEventState';
 import { useAuth } from '@/providers/auth-provider';
-import { notifyEventNewSubscriber } from '@/features/shared/utils/notification-helpers';
+import { notifyEventNewSubscriber } from '@/features/notifications/utils/notification-helpers.ts';
 import { toast } from 'sonner';
 
 /**
@@ -22,7 +22,7 @@ export function useSubscribeEvent(targetEventId?: string) {
   const currentUserName = authUser?.email || 'Someone';
 
   // Query event title for notifications - use subscribers data
-  const { subscribers: subscribersData, isLoading: subscriptionLoading } = useEventSubscribers(targetEventId);
+  const { subscribers: subscribersData, subscriberCount: persistedSubscriberCount, isLoading: subscriptionLoading } = useEventSubscribers(targetEventId);
   const eventTitle = subscribersData?.[0]?.event?.title || 'Event';
   const subscriptionData = { subscribers: subscribersData || [] };
 
@@ -40,14 +40,14 @@ export function useSubscribeEvent(targetEventId?: string) {
       if (subscribed === optimisticTargetRef.current) {
         optimisticTargetRef.current = null;
         createdSubscriptionIdRef.current = null;
-        setSubscriberCount(subscribers.length);
+        setSubscriberCount(persistedSubscriberCount ?? subscribers.length);
       }
       return;
     }
 
     setIsSubscribed(subscribed);
-    setSubscriberCount(subscribers.length);
-  }, [subscriptionData, authUser?.id, targetEventId, subscriptionLoading]);
+    setSubscriberCount(persistedSubscriberCount ?? subscribers.length);
+  }, [subscriptionData, authUser?.id, targetEventId, subscriptionLoading, persistedSubscriberCount]);
 
   // Subscribe to an event
   const subscribe = async () => {

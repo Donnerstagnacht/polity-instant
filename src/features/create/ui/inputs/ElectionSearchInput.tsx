@@ -1,7 +1,9 @@
-import { TypeAheadSelect } from '@/features/shared/ui/ui/type-ahead-select'
-import { ElectionSelectCard } from '@/features/shared/ui/ui/entity-select-cards'
+import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch'
+import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems'
 import { useAgendaState } from '@/zero/agendas/useAgendaState'
 import { Label } from '@/features/shared/ui/ui/label'
+import { useMemo } from 'react'
+import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers'
 
 interface ElectionSearchInputProps {
   value: string
@@ -18,17 +20,29 @@ export function ElectionSearchInput({
 }: ElectionSearchInputProps) {
   const { pendingElections } = useAgendaState({ includeElectionsForSearch: true })
 
+  const items = useMemo(
+    () =>
+      toTypeaheadItems(
+        pendingElections ?? [],
+        'election',
+        (e: any) => e.title || 'Election',
+        (e: any) => e.description?.substring(0, 60),
+      ),
+    [pendingElections],
+  )
+
+  const handleChange = (item: TypeaheadItem | null) => {
+    onChange(item?.id ?? '')
+  }
+
   return (
     <div>
       {label && <Label className="mb-2 block">{label}</Label>}
-      <TypeAheadSelect
-        items={pendingElections ?? []}
+      <TypeaheadSearch
+        items={items}
         value={value}
-        onChange={onChange}
+        onChange={handleChange}
         placeholder={placeholder}
-        searchKeys={['title', 'description']}
-        renderItem={(election: any) => <ElectionSelectCard election={election} />}
-        getItemId={(election: any) => election.id}
       />
     </div>
   )

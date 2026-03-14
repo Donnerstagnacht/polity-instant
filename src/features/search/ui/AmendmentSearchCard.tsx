@@ -1,6 +1,7 @@
 import React from 'react';
 import { AmendmentTimelineCard } from '@/features/timeline/ui/cards/AmendmentTimelineCard';
-import { useAuth } from '@/providers/auth-provider';\nimport { extractHashtags } from '@/zero/common/hashtagHelpers';
+import { useAuth } from '@/providers/auth-provider';
+import { extractHashtags } from '@/zero/common/hashtagHelpers';
 
 interface AmendmentSearchCardProps {
   amendment: any;

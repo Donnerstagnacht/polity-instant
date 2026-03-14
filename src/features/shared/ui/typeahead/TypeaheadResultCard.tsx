@@ -50,6 +50,11 @@ export function TypeaheadResultCard({
 }: TypeaheadResultCardProps) {
   const Icon = getEntityIcon(item.entityType);
   const colors = ENTITY_COLORS[item.entityType as keyof typeof ENTITY_COLORS];
+  const handleMouseDown = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    onClick?.();
+  };
 
   return (
     <button
@@ -58,7 +63,7 @@ export function TypeaheadResultCard({
         'flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors',
         isSelected ? 'bg-accent' : 'hover:bg-accent/50',
       )}
-      onClick={onClick}
+      onMouseDown={handleMouseDown}
       onMouseEnter={onMouseEnter}
     >
       {/* Avatar */}

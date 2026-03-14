@@ -8,14 +8,13 @@ import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useSubscribeEvent } from './useSubscribeEvent';
 import { useEventParticipation } from './useEventParticipation';
 import { computeAgendaStats } from '@/features/agendas/logic/computeAgendaStats';
-import { notifyCandidateAdded } from '@/features/shared/utils/notification-helpers';
+import { notifyCandidateAdded } from '@/features/notifications/utils/notification-helpers.ts';
 
 export function useEventWikiPage(eventId: string) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [electionsDialogOpen, setElectionsDialogOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [selectedElection, setSelectedElection] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [participantsDialogOpen, setParticipantsDialogOpen] = useState(false);
 
@@ -28,30 +27,34 @@ export function useEventWikiPage(eventId: string) {
   const { allUsers } = useUserState({ includeAllUsers: true });
 
   const currentUserProfile = user
-    ? (allUsers || []).find((u: any) => u.id === user.id)
+    ? (allUsers || []).find((u) => u.id === user.id)
     : null;
 
   // Calculate agenda statistics
   const agendaItems = useMemo(
-    () => (agendaItemRows || []).filter((item: any) => item.event?.id === eventId),
+    () => (agendaItemRows || []).filter((item) => item.event?.id === eventId),
     [agendaItemRows, eventId],
   );
 
   const agendaStats = useMemo(() => computeAgendaStats(agendaItems), [agendaItems]);
 
-  // Get elections for this event
+  // Get elections for this event (flatten the one-to-many relation)
   const elections = useMemo(
-    () => agendaItems.filter((item: any) => item.election).map((item: any) => item.election),
+    () => agendaItems.flatMap((item) => item.election ?? []),
     [agendaItems],
   );
 
+  type ElectionItem = (typeof elections)[number];
+
+  const [selectedElection, setSelectedElection] = useState<ElectionItem | null>(null);
+
   const getUserCandidacy = useCallback(
-    (election: any) => election.candidates?.find((c: any) => c.user?.id === user?.id),
+    (election: ElectionItem) => election.candidates?.find((c) => c.user?.id === user?.id),
     [user?.id],
   );
 
   const handleElectionClick = useCallback(
-    (election: any) => {
+    (election: ElectionItem) => {
       setSelectedElection(election);
       setElectionsDialogOpen(false);
       setConfirmDialogOpen(true);
@@ -75,7 +78,7 @@ export function useEventWikiPage(eventId: string) {
       const candidateId = crypto.randomUUID();
       const maxOrder = Math.max(
         0,
-        ...(selectedElection.candidates || []).map((c: any) => c.order || 0),
+        ...(selectedElection.candidates || []).map((c) => c.order_index || 0),
       );
 
       const candidateName = currentUserProfile?.first_name || user.email || 'Unbenannt';
@@ -86,7 +89,7 @@ export function useEventWikiPage(eventId: string) {
         description: '',
         image_url: currentUserProfile?.avatar || '',
         order_index: maxOrder + 1,
-        election_id: selectedElection.id,
+        election_id: selectedElection.id as string,
         user_id: user.id,
         status: 'nominated',
       });

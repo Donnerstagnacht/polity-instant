@@ -28,6 +28,11 @@ export const createThreadSchema = baseThreadSchema
   .omit({ id: true, created_at: true, updated_at: true })
   .extend({ id: z.string() })
 
+export const updateThreadSchema = baseThreadSchema
+  .pick({ content: true, status: true, upvotes: true, downvotes: true })
+  .partial()
+  .extend({ id: z.string() })
+
 // ============================================
 // Comment Schemas
 // ============================================
@@ -48,6 +53,11 @@ export const selectCommentSchema = baseCommentSchema
 
 export const createCommentSchema = baseCommentSchema
   .omit({ id: true, created_at: true, updated_at: true })
+  .extend({ id: z.string() })
+
+export const updateCommentSchema = baseCommentSchema
+  .pick({ content: true, upvotes: true, downvotes: true })
+  .partial()
   .extend({ id: z.string() })
 
 // ============================================

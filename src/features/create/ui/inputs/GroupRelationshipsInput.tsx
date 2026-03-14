@@ -3,8 +3,9 @@ import { Label } from '@/features/shared/ui/ui/label'
 import { Badge } from '@/features/shared/ui/ui/badge'
 import { Button } from '@/features/shared/ui/ui/button'
 import { Card } from '@/features/shared/ui/ui/card'
-import { TypeAheadSelect } from '@/features/shared/ui/ui/type-ahead-select'
-import { GroupSelectCard } from '@/features/shared/ui/ui/entity-select-cards'
+import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch'
+import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems'
+import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers'
 import { useAllGroups } from '@/zero/groups/useGroupState'
 import { X, Check, Link as LinkIcon } from 'lucide-react'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
@@ -47,7 +48,7 @@ export function GroupRelationshipsInput({ value, onChange }: GroupRelationshipsI
   const [selectedRights, setSelectedRights] = useState<Set<WithRight>>(new Set())
 
   const availableGroups = useMemo(
-    () => groups.filter((g: any) => !value.some((link) => link.groupId === g.id)),
+    () => groups.filter(g => !value.some((link) => link.groupId === g.id)),
     [groups, value],
   )
 
@@ -63,7 +64,7 @@ export function GroupRelationshipsInput({ value, onChange }: GroupRelationshipsI
       toast.error(t('pages.create.group.selectGroupAndRights'))
       return
     }
-    const group = groups.find((g: any) => g.id === selectedGroupId)
+    const group = groups.find(g => g.id === selectedGroupId)
     if (!group) return
 
     const existing = value.find((link) => link.groupId === selectedGroupId)
@@ -81,7 +82,7 @@ export function GroupRelationshipsInput({ value, onChange }: GroupRelationshipsI
         ...value,
         {
           groupId: selectedGroupId,
-          groupName: (group as any).name,
+          groupName: group.name || '',
           relationshipType,
           rights: Array.from(selectedRights),
         },
@@ -109,14 +110,16 @@ export function GroupRelationshipsInput({ value, onChange }: GroupRelationshipsI
       {/* Group search */}
       <div className="space-y-2">
         <Label>{t('pages.create.group.selectGroup')}</Label>
-        <TypeAheadSelect
-          items={availableGroups}
+        <TypeaheadSearch
+          items={toTypeaheadItems(
+            availableGroups,
+            'group',
+            (g: any) => g.name || 'Group',
+            (g: any) => g.description?.substring(0, 60),
+          )}
           value={selectedGroupId}
-          onChange={setSelectedGroupId}
+          onChange={(item: TypeaheadItem | null) => setSelectedGroupId(item?.id ?? '')}
           placeholder={t('pages.create.group.searchGroups')}
-          searchKeys={['name', 'description']}
-          renderItem={(group: any) => <GroupSelectCard group={group} />}
-          getItemId={(group: any) => group.id}
         />
       </div>
 

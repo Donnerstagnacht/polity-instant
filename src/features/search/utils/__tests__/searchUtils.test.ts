@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { matchesHashtag, filterByQuery, sortResults } from '../searchUtils';
+import {
+  matchesHashtag,
+  filterByQuery,
+  getUserAvatar,
+  getUserDisplayName,
+  matchesUserQuery,
+  sortResults,
+} from '../searchUtils';
 
 describe('searchUtils', () => {
   describe('matchesHashtag', () => {
@@ -131,6 +138,40 @@ describe('searchUtils', () => {
 
     it('should return false when text does not match', () => {
       expect(filterByQuery('Hello World', 'xyz')).toBe(false);
+    });
+  });
+
+  describe('user helpers', () => {
+    it('should build a display name from first and last name', () => {
+      expect(getUserDisplayName({ first_name: 'Ada', last_name: 'Lovelace' })).toBe('Ada Lovelace');
+    });
+
+    it('should fall back to handle when no name exists', () => {
+      expect(getUserDisplayName({ handle: 'ada' })).toBe('ada');
+    });
+
+    it('should pick the canonical avatar field first', () => {
+      expect(
+        getUserAvatar({
+          avatar: 'https://example.com/avatar.png',
+          imageURL: 'https://example.com/fallback.png',
+        }),
+      ).toBe('https://example.com/avatar.png');
+    });
+
+    it('should match users by handle, bio, and location', () => {
+      const user = {
+        first_name: 'Ada',
+        last_name: 'Lovelace',
+        handle: 'analytical-engine',
+        bio: 'Computing pioneer',
+        location: 'London',
+      };
+
+      expect(matchesUserQuery(user, 'analytical')).toBe(true);
+      expect(matchesUserQuery(user, 'pioneer')).toBe(true);
+      expect(matchesUserQuery(user, 'london')).toBe(true);
+      expect(matchesUserQuery(user, 'nonexistent')).toBe(false);
     });
   });
 

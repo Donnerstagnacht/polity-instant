@@ -293,6 +293,49 @@ export function useEventActions() {
     [zero]
   )
 
+  // ── Event Exceptions ───────────────────────────────────────────────
+  const createException = useCallback(
+    async (args: Parameters<typeof mutators.events.createException>[0]) => {
+      try {
+        await zero.mutate(mutators.events.createException(args))
+        toast.success(t('features.events.toasts.exceptionCreated'))
+      } catch (error) {
+        console.error('Failed to create event exception:', error)
+        toast.error(t('features.events.toasts.exceptionCreateFailed'))
+        throw error
+      }
+    },
+    [zero],
+  )
+
+  const updateException = useCallback(
+    async (args: Parameters<typeof mutators.events.updateException>[0]) => {
+      try {
+        await zero.mutate(mutators.events.updateException(args))
+        toast.success(t('features.events.toasts.exceptionUpdated'))
+      } catch (error) {
+        console.error('Failed to update event exception:', error)
+        toast.error(t('features.events.toasts.exceptionUpdateFailed'))
+        throw error
+      }
+    },
+    [zero],
+  )
+
+  const deleteException = useCallback(
+    async (args: Parameters<typeof mutators.events.deleteException>[0]) => {
+      try {
+        await zero.mutate(mutators.events.deleteException(args))
+        toast.success(t('features.events.toasts.exceptionDeleted'))
+      } catch (error) {
+        console.error('Failed to delete event exception:', error)
+        toast.error(t('features.events.toasts.exceptionDeleteFailed'))
+        throw error
+      }
+    },
+    [zero],
+  )
+
   return {
     // CRUD
     createEvent,
@@ -325,5 +368,10 @@ export function useEventActions() {
     deleteMeetingSlot,
     createMeetingBooking,
     deleteMeetingBooking,
+
+    // Exceptions
+    createException,
+    updateException,
+    deleteException,
   }
 }

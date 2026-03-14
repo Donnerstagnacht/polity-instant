@@ -9,7 +9,7 @@ interface VoteData {
 }
 
 interface ElectionCandidateStats {
-  candidate: any;
+  candidate: Record<string, unknown>;
   totalVotes: number;
   indicationCount: number;
   actualCount: number;
@@ -48,8 +48,8 @@ export function getVotingPhase(status?: string): VotingPhase {
  * Utility function to calculate election statistics with indication support
  */
 export function calculateElectionStats(
-  candidates: any[],
-  votes: any[]
+  candidates: Record<string, unknown>[],
+  votes: Record<string, unknown>[]
 ): { candidates: ElectionCandidateStats[]; totalVotes: number } {
   if (!candidates?.length) {
     return { candidates: [], totalVotes: 0 };
@@ -57,10 +57,10 @@ export function calculateElectionStats(
 
   const totalVotes = votes.length;
 
-  const candidateStats = candidates.map((candidate: any) => {
-    const candidateVotes = votes.filter((v: any) => v.candidate?.id === candidate.id);
-    const indicationVotesArr = candidateVotes.filter((v: any) => v.isIndication);
-    const actualVotesArr = candidateVotes.filter((v: any) => !v.isIndication);
+  const candidateStats = candidates.map((candidate) => {
+    const candidateVotes = votes.filter((v) => (v as { candidate?: { id: string } }).candidate?.id === (candidate as { id: string }).id);
+    const indicationVotesArr = candidateVotes.filter((v) => (v as { isIndication?: boolean }).isIndication);
+    const actualVotesArr = candidateVotes.filter((v) => !(v as { isIndication?: boolean }).isIndication);
 
     return {
       candidate,
@@ -78,7 +78,7 @@ export function calculateElectionStats(
 /**
  * Utility function to calculate amendment vote statistics with indication support
  */
-export function calculateAmendmentStats(entries: any[]): AmendmentVoteStats {
+export function calculateAmendmentStats(entries: Record<string, unknown>[]): AmendmentVoteStats {
   if (!entries?.length) {
     return {
       yes: 0,
@@ -95,11 +95,11 @@ export function calculateAmendmentStats(entries: any[]): AmendmentVoteStats {
     };
   }
 
-  const indicationEntries = entries.filter((e: any) => e.isIndication);
-  const actualEntries = entries.filter((e: any) => !e.isIndication);
+  const indicationEntries = entries.filter((e) => (e as { isIndication?: boolean }).isIndication);
+  const actualEntries = entries.filter((e) => !(e as { isIndication?: boolean }).isIndication);
 
-  const countVotes = (votes: any[], type: string) =>
-    votes.filter((v: any) => v.vote === type).length;
+  const countVotes = (votes: Record<string, unknown>[], type: string) =>
+    votes.filter((v) => (v as { vote?: string }).vote === type).length;
 
   const total = entries.length;
   const yes = countVotes(actualEntries, 'yes');

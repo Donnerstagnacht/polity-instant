@@ -16,14 +16,11 @@ import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
 import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/features/shared/ui/ui/carousel';
-import { TypeAheadSelect } from '@/features/shared/ui/ui/type-ahead-select';
+import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
+import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
+import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { TypeSelector } from '@/features/shared/ui/ui/type-selector';
 import { TooltipProvider } from '@/features/shared/ui/ui/tooltip';
-import {
-  EventSelectCard,
-  AmendmentSelectCard,
-  PositionSelectCard,
-} from '@/features/shared/ui/ui/entity-select-cards';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import {
   useAllEvents,
@@ -33,7 +30,7 @@ import {
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from 'sonner';
 import { PageWrapper } from '@/layout/page-wrapper';
-import { notifyAgendaItemCreated } from '@/features/shared/utils/notification-helpers';
+import { notifyAgendaItemCreated } from '@/features/notifications/utils/notification-helpers.ts';
 
 export function CreateAgendaItemForm() {
   const navigate = useNavigate();
@@ -41,7 +38,7 @@ export function CreateAgendaItemForm() {
   const { user } = useAuth();
   const { createAgendaItem, createElection } = useAgendaActions();
 
-  const eventIdParam = searchParams.eventId as string | undefined;
+  const eventIdParam = (searchParams as Record<string, string | undefined>).eventId;
 
   const [formData, setFormData] = useState({
     title: '',
@@ -133,7 +130,7 @@ export function CreateAgendaItemForm() {
       }
 
       // Send notification to event participants
-      const selectedEvent = userEvents.find((e: any) => e.id === formData.eventId);
+      const selectedEvent = userEvents.find((e) => e.id === formData.eventId);
       await notifyAgendaItemCreated({
         senderId: user.id,
         eventId: formData.eventId,
@@ -166,14 +163,16 @@ export function CreateAgendaItemForm() {
                 <div className="space-y-4 p-4">
                   <div className="space-y-2">
                     <Label htmlFor="agenda-event">Event</Label>
-                    <TypeAheadSelect
-                      items={userEvents}
+                    <TypeaheadSearch
+                      items={toTypeaheadItems(
+                        userEvents,
+                        'event',
+                        (e) => e.title || 'Event',
+                        (e) => e.description?.substring(0, 60),
+                      )}
                       value={formData.eventId}
-                      onChange={value => setFormData({ ...formData, eventId: value })}
+                      onChange={(item: TypeaheadItem | null) => setFormData({ ...formData, eventId: item?.id ?? '' })}
                       placeholder="Search for an event..."
-                      searchKeys={['title', 'description', 'location_name']}
-                      renderItem={event => <EventSelectCard event={event} />}
-                      getItemId={event => event.id}
                     />
                   </div>
                   <div className="space-y-2">
@@ -244,28 +243,31 @@ export function CreateAgendaItemForm() {
                   {formData.type === 'vote' && (
                     <div className="space-y-2">
                       <Label htmlFor="agenda-amendment">Amendment (optional)</Label>
-                      <TypeAheadSelect
-                        items={userAmendments}
+                      <TypeaheadSearch
+                        items={toTypeaheadItems(
+                          userAmendments,
+                          'amendment',
+                          (a) => a.title || 'Amendment',
+                        )}
                         value={formData.amendmentId}
-                        onChange={value => setFormData({ ...formData, amendmentId: value })}
+                        onChange={(item: TypeaheadItem | null) => setFormData({ ...formData, amendmentId: item?.id ?? '' })}
                         placeholder="Search for an amendment..."
-                        searchKeys={['title', 'reason']}
-                        renderItem={amendment => <AmendmentSelectCard amendment={amendment} />}
-                        getItemId={amendment => amendment.id}
                       />
                     </div>
                   )}
                   {formData.type === 'election' && (
                     <div className="space-y-2">
                       <Label htmlFor="agenda-position">Position (optional)</Label>
-                      <TypeAheadSelect
-                        items={userPositions}
+                      <TypeaheadSearch
+                        items={toTypeaheadItems(
+                          userPositions,
+                          'position',
+                          (p) => p.title || 'Position',
+                          (p) => p.description?.substring(0, 60),
+                        )}
                         value={formData.positionId}
-                        onChange={value => setFormData({ ...formData, positionId: value })}
+                        onChange={(item: TypeaheadItem | null) => setFormData({ ...formData, positionId: item?.id ?? '' })}
                         placeholder="Search for a position..."
-                        searchKeys={['title', 'description']}
-                        renderItem={position => <PositionSelectCard position={position} />}
-                        getItemId={position => position.id}
                       />
                     </div>
                   )}

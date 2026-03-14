@@ -11,8 +11,8 @@ export interface ChangeRequest {
   type: string;
   text: string;
   newText: string;
-  properties: Record<string, any>;
-  newProperties: Record<string, any>;
+  properties: Record<string, unknown>;
+  newProperties: Record<string, unknown>;
   proposedChange: string;
   justification: string;
   isResolved: boolean;
@@ -22,8 +22,14 @@ export interface ChangeRequest {
   resolvedBy: string | null;
   createdAt: number;
   userId: string;
-  comments: any[];
-  votes: any[];
+  comments: readonly { text?: string; value?: string; userId?: string }[];
+  votes: readonly {
+    id: string;
+    vote?: string | null;
+    user_id?: string;
+    created_at?: number;
+    user?: { id: string; first_name?: string | null; last_name?: string | null; avatar?: string | null } | null;
+  }[];
   changeRequestEntityId?: string;
 }
 
@@ -55,40 +61,40 @@ export function useChangeRequests(amendmentId: string) {
     // Process open change requests from amendment.discussions
     if (amendment?.discussions && Array.isArray(amendment.discussions)) {
       openRequests.push(
-        ...((amendment.discussions as any[])
-          .filter((discussion: any) => !!discussion.crId)
-          .map((suggestion: any) => {
+        ...((amendment.discussions as readonly Record<string, unknown>[])
+          .filter((discussion) => !!(discussion as { crId?: string }).crId)
+          .map((suggestion) => {
             const suggestionContent = extractSuggestionContent(
-              suggestion.id,
-              document?.content as any[] ?? []
+              suggestion.id as string,
+              document?.content as Record<string, unknown>[] ?? []
             );
 
             const matchingChangeRequest = savedChangeRequests.find(
-              (cr: any) => cr.title === suggestion.crId
+              (cr) => cr.title === (suggestion as { crId?: string }).crId
             );
 
             return {
-              id: suggestion.id,
-              crId: suggestion.crId,
-              crNumber: parseInt(suggestion.crId?.replace('CR-', '') || '0'),
-              title: suggestion.title || suggestion.crId,
-              description: suggestion.description || '',
+              id: suggestion.id as string,
+              crId: (suggestion as { crId?: string }).crId ?? '',
+              crNumber: parseInt((suggestion as { crId?: string }).crId?.replace('CR-', '') || '0'),
+              title: (suggestion as { title?: string }).title || (suggestion as { crId?: string }).crId || '',
+              description: (suggestion as { description?: string }).description || '',
               type: suggestionContent.type,
               text: suggestionContent.text,
               newText: suggestionContent.newText,
               properties: suggestionContent.properties,
               newProperties: suggestionContent.newProperties,
               proposedChange: suggestionContent.newText || suggestionContent.text,
-              justification: suggestion.justification || '',
+              justification: (suggestion as { justification?: string }).justification || '',
               isResolved: false,
               status: matchingChangeRequest?.status || 'open',
               resolution: null,
               resolvedAt: null,
               resolvedBy: null,
-              createdAt: suggestion.createdAt,
-              userId: suggestion.userId,
-              comments: suggestion.comments || [],
-              votes: (matchingChangeRequest?.votes || []) as any[],
+              createdAt: (suggestion as { createdAt?: number }).createdAt ?? 0,
+              userId: (suggestion as { userId?: string }).userId ?? '',
+              comments: (suggestion as { comments?: readonly unknown[] }).comments || [],
+              votes: matchingChangeRequest?.votes || [],
               changeRequestEntityId: matchingChangeRequest?.id,
             } as ChangeRequest;
           })
@@ -102,13 +108,13 @@ export function useChangeRequests(amendmentId: string) {
 
       closedRequests.push(
         ...savedChangeRequests
-          .filter((cr: any) => {
+          .filter((cr) => {
             if (openRequestCrIds.has(cr.title)) {
               return false;
             }
             return cr.status === 'accepted' || cr.status === 'rejected';
           })
-          .map((cr: any) => ({
+          .map((cr) => ({
             id: cr.id,
             crId: cr.title,
             crNumber: parseInt(cr.title?.replace('CR-', '') || '0'),
@@ -151,7 +157,7 @@ export function useChangeRequests(amendmentId: string) {
 
   // Get unique user IDs from change requests
   const userIds = useMemo(
-    () => Array.from(new Set(changeRequests.map((cr: any) => cr.userId).filter(Boolean))),
+    () => Array.from(new Set(changeRequests.map((cr) => cr.userId).filter(Boolean))),
     [changeRequests]
   );
 
@@ -162,11 +168,13 @@ export function useChangeRequests(amendmentId: string) {
 
   // Create a map of userId to user
   const users = useMemo(() => {
-    const map: Record<string, any> = {};
+    const map: Record<string, { name: string }> = {};
     if (usersResults) {
-      usersResults.forEach((user: any) => {
+      usersResults.forEach((user) => {
         if (user?.id) {
-          map[user.id] = user;
+          map[user.id] = {
+            name: `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || user.handle || 'Unknown',
+          };
         }
       });
     }

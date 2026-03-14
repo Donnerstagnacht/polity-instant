@@ -18,11 +18,18 @@ export function BlogSearchCard({
   const hashtags = extractHashtags(blog.blog_hashtags);
 
   // Compute context-aware blog URL
-  const blogOwnerUserId = blog.bloggers?.find((b: any) => b.status === 'owner')?.user_id
-    || blog.bloggers?.[0]?.user_id;
-  const blogUrl = blog.group_id
-    ? `/group/${blog.group_id}/blog/${blog.id}`
-    : `/user/${blogOwnerUserId || blog.id}/blog/${blog.id}`;
+  const blogOwnerUserId = blog.user_id
+    || blog.authorId
+    || blog.blogRoleBloggers?.find((relation: any) => relation?.status === 'owner')?.user_id
+    || blog.blogRoleBloggers?.find((relation: any) => Boolean(relation?.user_id))?.user_id
+    || blog.bloggers?.find((relation: any) => relation?.status === 'owner')?.user_id
+    || blog.bloggers?.find((relation: any) => Boolean(relation?.user_id))?.user_id;
+  const blogGroupId = blog.group_id || blog.groupId || blog.group?.id;
+  const blogUrl = blogGroupId
+    ? `/group/${blogGroupId}/blog/${blog.id}`
+    : blogOwnerUserId
+      ? `/user/${blogOwnerUserId}/blog/${blog.id}`
+      : `/blog/${blog.id}`;
 
   return (
     <a href={blogUrl} className="block cursor-pointer">
@@ -33,6 +40,8 @@ export function BlogSearchCard({
           date: blog.date || new Date(blog.createdAt).toLocaleDateString(),
           supporters: supporters,
           comments: comments,
+          group_id: blogGroupId,
+          user_id: blogOwnerUserId,
         }}
         gradientClass={gradientClass}
       />

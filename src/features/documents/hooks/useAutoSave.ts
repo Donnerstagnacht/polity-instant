@@ -7,7 +7,7 @@
 
 import { useRef, useCallback, useEffect } from 'react';
 
-export interface UseAutoSaveOptions {
+export interface UseAutoSaveOptions<T = unknown> {
   /**
    * Delay in milliseconds before saving after the last change (debounce)
    * @default 500
@@ -23,7 +23,7 @@ export interface UseAutoSaveOptions {
   /**
    * Callback to execute when data should be saved
    */
-  onSave: (data: any) => Promise<void> | void;
+  onSave: (data: T) => Promise<void> | void;
 
   /**
    * Optional callback when save starts
@@ -41,16 +41,16 @@ export interface UseAutoSaveOptions {
   onError?: (error: Error) => void;
 }
 
-export interface UseAutoSaveResult {
+export interface UseAutoSaveResult<T = unknown> {
   /**
    * Trigger a save with debouncing and throttling
    */
-  save: (data: any) => void;
+  save: (data: T) => void;
 
   /**
    * Force immediate save, bypassing throttle and debounce
    */
-  forceSave: (data: any) => Promise<void>;
+  forceSave: (data: T) => Promise<void>;
 
   /**
    * Cancel pending saves
@@ -81,7 +81,7 @@ export interface UseAutoSaveResult {
  * // In your onChange handler:
  * save({ content: newContent });
  */
-export function useAutoSave(options: UseAutoSaveOptions): UseAutoSaveResult {
+export function useAutoSave<T = unknown>(options: UseAutoSaveOptions<T>): UseAutoSaveResult<T> {
   const {
     debounceMs = 500,
     throttleMs = 1000,
@@ -94,14 +94,14 @@ export function useAutoSave(options: UseAutoSaveOptions): UseAutoSaveResult {
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastSaveTimeRef = useRef<number>(0);
   const isSavingRef = useRef<boolean>(false);
-  const pendingDataRef = useRef<any>(null);
+  const pendingDataRef = useRef<T | null>(null);
   const throttleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   /**
    * Execute the save operation
    */
   const executeSave = useCallback(
-    async (data: any) => {
+    async (data: T) => {
       if (isSavingRef.current) {
         // If already saving, queue this data for later
         pendingDataRef.current = data;
@@ -143,7 +143,7 @@ export function useAutoSave(options: UseAutoSaveOptions): UseAutoSaveResult {
    * Save with debouncing and throttling
    */
   const save = useCallback(
-    (data: any) => {
+    (data: T) => {
       // Clear existing debounce timeout
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
@@ -178,7 +178,7 @@ export function useAutoSave(options: UseAutoSaveOptions): UseAutoSaveResult {
    * Force immediate save
    */
   const forceSave = useCallback(
-    async (data: any) => {
+    async (data: T) => {
       // Cancel pending timeouts
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);

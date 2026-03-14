@@ -97,7 +97,7 @@ export function useSearchPage() {
   );
 
   const buildCardProps = useCallback(
-    (item: SearchContentItem, t: (key: string, opts?: any) => string): { cardType: CardType | null; cardProps: Record<string, unknown> | null } => {
+    (item: SearchContentItem, t: (key: string, paramsOrFallback?: string | Record<string, string | number | undefined | null>, fallback?: string) => string): { cardType: CardType | null; cardProps: Record<string, unknown> | null } => {
       let cardType: CardType | null = item.type;
       let cardProps: Record<string, unknown> | null = null;
 
@@ -160,6 +160,8 @@ export function useSearchPage() {
               coverImageUrl: item.imageUrl,
               authorName: item.authorName,
               authorAvatar: item.authorAvatar,
+              authorId: item.authorId,
+              groupId: item.groupId,
               publishedAt: item.createdAt,
               hashtags: (item.tags ?? []).map(tag => ({ id: tag, tag })),
               commentCount: item.commentCount ?? item.stats?.comments,

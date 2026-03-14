@@ -257,8 +257,8 @@ export function useAgendaItemsByEvent(eventId: string) {
   )
 
   const agendaItems = (agendaItemsData || [])
-    .filter((item: any) => item.event?.id === eventId)
-    .sort((a: any, b: any) => a.order - b.order)
+    .filter((item) => item.event?.id === eventId)
+    .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
 
   return {
     agendaItems,
@@ -321,13 +321,19 @@ export function useEventDelegates(eventId: string, groupId?: string) {
 // ── Additional hooks ────────────────────────────────────────────────
 
 export function useEventSubscribers(eventId?: string) {
+  const [eventRows, eventResult] = useQuery(
+    eventId ? queries.events.byId({ id: eventId }) : undefined
+  )
+
   const [subscribersData, subscribersResult] = useQuery(
     eventId ? queries.events.subscribersByEvent({ eventId }) : undefined
   )
 
   return {
+    event: eventRows || null,
+    subscriberCount: eventRows?.subscriber_count ?? subscribersData?.length ?? 0,
     subscribers: subscribersData || [],
-    isLoading: subscribersResult.type === 'unknown',
+    isLoading: eventResult.type === 'unknown' || subscribersResult.type === 'unknown',
   }
 }
 
@@ -446,6 +452,30 @@ export function useEventsForCalendar() {
   )
 
   return { events: events || [] }
+}
+
+export function useEventsForCalendarWithExceptions() {
+  const [events] = useQuery(
+    queries.events.forCalendarWithExceptions({})
+  )
+
+  return { events: events || [] }
+}
+
+export function useGroupEventsForCalendar(groupId?: string) {
+  const [events] = useQuery(
+    groupId ? queries.events.byGroupForCalendar({ groupId }) : undefined
+  )
+
+  return { events: events || [] }
+}
+
+export function useEventExceptions(eventId?: string) {
+  const [exceptions] = useQuery(
+    eventId ? queries.events.exceptionsByEvent({ eventId }) : undefined
+  )
+
+  return { exceptions: exceptions ?? [] }
 }
 
 export function useMeetingSlotsWithBookings() {

@@ -128,8 +128,7 @@ export function DynamicTimelineCard({
 
   return (
     <Suspense fallback={fallback || <CardSkeleton className={className} />}>
-      { }
-      <CardComponent {...(cardProps as any)} />
+      {React.createElement(CardComponent as React.ElementType, cardProps)}
     </Suspense>
   );
 }

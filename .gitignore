@@ -161,3 +161,6 @@ test-output.txt
 *.db-shm
 *.db-wal
 *.db-wal2
+
+#backup files
+*.bak

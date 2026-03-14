@@ -30,6 +30,7 @@ export const componentsTranslations = {
     baseGroup: 'Basisgruppe',
   },
   labels: {
+    createdBy: 'Erstellt von',
     organizedBy: 'Organisiert von',
     proposedBy: 'Vorgeschlagen von',
     partOf: 'Teil von',

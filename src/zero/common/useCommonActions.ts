@@ -80,7 +80,11 @@ export function useCommonActions() {
         statement: mutators.common.linkStatementHashtag,
       } as const
       try {
-        await zero.mutate(mutatorMap[entityType](args as any))
+        // Each mutator expects a specific FK field (user_id, group_id, etc.)
+        // which is included in args via Record<string, string>.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const mutator: (a: Record<string, string>) => ReturnType<(typeof mutatorMap)[typeof entityType]> = mutatorMap[entityType] as any
+        await zero.mutate(mutator(args))
       } catch (error) {
         console.error(`Failed to link ${entityType} hashtag:`, error)
         throw error

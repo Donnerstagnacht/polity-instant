@@ -7,6 +7,7 @@
  */
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
@@ -32,8 +33,8 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
   const [documentTitle, setDocumentTitle] = useState('');
   const [isSavingTitle, setIsSavingTitle] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [editorValue, setEditorValue] = useState<any[] | null>(null);
-  const [discussions, setDiscussions] = useState<any[]>([]);
+  const [editorValue, setEditorValue] = useState<unknown[] | null>(null);
+  const [discussions, setDiscussions] = useState<unknown[]>([]);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
@@ -57,7 +58,7 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
   });
   const amendmentLoading = facadeLoading;
 
-  const amendment = (amendmentResults as any)?.[0];
+  const amendment = amendmentResults;
   const document = amendment?.documents?.[0];
 
   // Use the queried document ID as the source of truth (fixes empty documentId parameter bug)
@@ -69,8 +70,8 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
   useEffect(() => {
     if (amendment && !isInitialized.current) {
       setDocumentTitle(amendment.title || '');
-      setEditorValue((document?.content as any[] | null) || DEFAULT_CONTENT);
-      setDiscussions((amendment.discussions as any[]) || []);
+      setEditorValue((document?.content as unknown[] | null) || DEFAULT_CONTENT);
+      setDiscussions((amendment.discussions as unknown[]) || []);
       isInitialized.current = true;
     }
   }, [amendment, document]);
@@ -79,7 +80,7 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
   useEffect(() => {
     if (!amendment || !isInitialized.current) return;
 
-    const remoteDiscussions = (amendment.discussions as any[]) || [];
+    const remoteDiscussions = (amendment.discussions as unknown[]) || [];
     const localDiscussionsStr = JSON.stringify(discussions);
     const remoteDiscussionsStr = JSON.stringify(remoteDiscussions);
 
@@ -95,13 +96,14 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
   const discussionsWithVotes = useMemo(() => {
     if (!discussions || discussions.length === 0) return discussions;
 
-    return discussions.map((discussion: any) => {
-      const matchingChangeRequest = changeRequests.find((cr: any) => cr.title === discussion.crId);
+    return discussions.map((discussion) => {
+      const discObj = (typeof discussion === 'object' && discussion !== null) ? discussion as { crId?: string } : { crId: undefined };
+      const matchingChangeRequest = changeRequests.find((cr) => cr.title === discObj.crId);
 
-      if (matchingChangeRequest && matchingChangeRequest.votes) {
+      if (matchingChangeRequest && matchingChangeRequest.votes.length > 0) {
         return {
-          ...discussion,
-          votes: matchingChangeRequest.votes.map((vote: any) => ({
+          ...(discussion as object),
+          votes: matchingChangeRequest.votes.map((vote) => ({
             id: vote.id,
             vote: vote.vote,
             voterId: vote.user?.id,
@@ -123,7 +125,7 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
         : new Date(document.updated_at).getTime()
       : 0;
 
-    const remoteContent = (document.content as any[] | null) || DEFAULT_CONTENT;
+    const remoteContent = (document.content as unknown[] | null) || DEFAULT_CONTENT;
     const hasRemoteChanges = JSON.stringify(remoteContent) !== JSON.stringify(editorValue);
 
     if (
@@ -155,7 +157,7 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
 
   // Content change handler - throttled saves
   const handleContentChange = useCallback(
-    async (newContent: any[]) => {
+    async (newContent: unknown[]) => {
       if (!actualDocumentId || !userId) {
         console.warn('⚠️ Cannot save: missing documentId or userId', { actualDocumentId, userId });
         return;
@@ -176,7 +178,7 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
       try {
         await updateDocument({
           id: actualDocumentId,
-          content: newContent,
+          content: newContent as ReadonlyJSONValue,
         });
         lastRemoteUpdate.current = now;
         setSaveStatus('saved');
@@ -232,7 +234,7 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
 
   // Save discussions (debounced and deduped)
   const handleDiscussionsChange = useCallback(
-    async (newDiscussions: any[]) => {
+    async (newDiscussions: unknown[]) => {
       if (!amendmentId || !userId) {
         console.warn('⚠️ Cannot save discussions: missing amendmentId or userId', {
           amendmentId,
@@ -267,7 +269,7 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
       try {
         await updateAmendment({
           id: amendmentId,
-          discussions: newDiscussions,
+          discussions: newDiscussions as ReadonlyJSONValue,
         });
         setSaveStatus('saved');
         setHasUnsavedChanges(false);

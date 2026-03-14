@@ -12,16 +12,13 @@ import { toast } from 'sonner';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { Label } from '@/features/shared/ui/ui/label';
-import { TypeAheadSelect } from '@/features/shared/ui/ui/type-ahead-select';
+import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
+import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
+import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { TypeSelector } from '@/features/shared/ui/ui/type-selector';
 import { TooltipProvider } from '@/features/shared/ui/ui/tooltip';
-import {
-  EventSelectCard,
-  AmendmentSelectCard,
-  PositionSelectCard,
-} from '@/features/shared/ui/ui/entity-select-cards';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
-import { notifyAgendaItemCreated } from '@/features/shared/utils/notification-helpers';
+import { notifyAgendaItemCreated } from '@/features/notifications/utils/notification-helpers.ts';
 import type { CreateFormConfig } from '../types/create-form.types';
 
 export function useCreateAgendaItemForm(): CreateFormConfig {
@@ -124,14 +121,16 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                   {t('pages.create.agendaItem.eventLabel')}{' '}
                   <span className="text-destructive">*</span>
                 </Label>
-                <TypeAheadSelect
-                  items={userEvents}
+                <TypeaheadSearch
+                  items={toTypeaheadItems(
+                    userEvents,
+                    'event',
+                    (e: any) => e.title || 'Event',
+                    (e: any) => e.description?.substring(0, 60),
+                  )}
                   value={eventId}
-                  onChange={setEventId}
+                  onChange={(item: TypeaheadItem | null) => setEventId(item?.id ?? '')}
                   placeholder={t('pages.create.agendaItem.eventPlaceholder')}
-                  searchKeys={['title', 'description', 'location_name']}
-                  renderItem={event => <EventSelectCard event={event} />}
-                  getItemId={event => event.id}
                 />
               </div>
               <div className="space-y-2">
@@ -198,28 +197,31 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
               {type === 'vote' && (
                 <div className="space-y-2">
                   <Label>{t('pages.create.agendaItem.amendmentOptional')}</Label>
-                  <TypeAheadSelect
-                    items={userAmendments}
+                  <TypeaheadSearch
+                    items={toTypeaheadItems(
+                      userAmendments,
+                      'amendment',
+                      (a: any) => a.title || 'Amendment',
+                    )}
                     value={amendmentId}
-                    onChange={setAmendmentId}
+                    onChange={(item: TypeaheadItem | null) => setAmendmentId(item?.id ?? '')}
                     placeholder={t('pages.create.agendaItem.amendmentPlaceholder')}
-                    searchKeys={['title', 'reason']}
-                    renderItem={amendment => <AmendmentSelectCard amendment={amendment} />}
-                    getItemId={amendment => amendment.id}
                   />
                 </div>
               )}
               {type === 'election' && (
                 <div className="space-y-2">
                   <Label>{t('pages.create.agendaItem.positionOptional')}</Label>
-                  <TypeAheadSelect
-                    items={userPositions}
+                  <TypeaheadSearch
+                    items={toTypeaheadItems(
+                      userPositions,
+                      'position',
+                      (p: any) => p.title || 'Position',
+                      (p: any) => p.description?.substring(0, 60),
+                    )}
                     value={positionId}
-                    onChange={setPositionId}
+                    onChange={(item: TypeaheadItem | null) => setPositionId(item?.id ?? '')}
                     placeholder={t('pages.create.agendaItem.positionPlaceholder')}
-                    searchKeys={['title', 'description']}
-                    renderItem={position => <PositionSelectCard position={position} />}
-                    getItemId={position => position.id}
                   />
                 </div>
               )}

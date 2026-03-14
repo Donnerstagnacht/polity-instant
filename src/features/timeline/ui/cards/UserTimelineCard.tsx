@@ -70,16 +70,15 @@ export function UserTimelineCard({ user, onFollow, onMessage, className }: UserT
       />
 
       <TimelineCardContent>
-        {/* Avatar and handle */}
-        <div className="mb-3 flex items-center gap-3">
-          <Avatar className="h-12 w-12 border-2 border-background shadow-md">
+        {/* Centered avatar and handle */}
+        <div className="mb-3 flex flex-col items-center gap-2 text-center">
+          <Avatar className="h-16 w-16 border-2 border-background shadow-md">
             <AvatarImage src={user.avatarUrl} alt={user.name} />
             <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white">
               {initials}
             </AvatarFallback>
           </Avatar>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium">{user.name}</p>
+          <div className="min-w-0">
             {user.handle && (
               <p className="truncate text-xs text-muted-foreground">@{user.handle}</p>
             )}
@@ -185,7 +184,8 @@ export function UserTimelineCard({ user, onFollow, onMessage, className }: UserT
         </Button>
         <Button variant="outline" size="sm" asChild className="flex items-center gap-1.5">
           <Link
-            to={`/messages?userId=${encodeURIComponent(user.id)}&name=${encodeURIComponent(user.name)}`}
+            to="/messages"
+            search={{ userId: user.id, name: user.name }}
             onClick={e => {
               e.stopPropagation();
               onMessage?.();

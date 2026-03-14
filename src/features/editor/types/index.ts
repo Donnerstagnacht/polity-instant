@@ -140,7 +140,7 @@ export interface EditorDiscussion {
  */
 export interface EditorComment {
   id: string;
-  contentRich: any[];
+  contentRich: unknown[];
   createdAt: Date;
   isEdited?: boolean;
   userId: string;
@@ -153,7 +153,7 @@ export interface EditorVersion {
   id: string;
   versionNumber: number;
   title: string;
-  content: any[];
+  content: unknown[];
   createdAt: number | Date;
   creationType: VersionCreationType;
   creator?: EditorUser;
@@ -174,7 +174,7 @@ export type VersionCreationType =
 export interface EditorEntity {
   id: string;
   title: string;
-  content: any[];
+  content: unknown[];
   discussions: TDiscussionType[];
   editingMode: EditorMode;
   isPublic: boolean;
@@ -237,7 +237,7 @@ export interface EditorState {
 
   // Editor state
   title: string;
-  content: any[];
+  content: unknown[];
   discussions: TDiscussionType[];
   mode: EditorMode;
 
@@ -259,10 +259,10 @@ export interface EditorState {
  */
 export interface EditorActions {
   setTitle: (title: string) => void;
-  setContent: (content: any[]) => void;
+  setContent: (content: unknown[]) => void;
   setDiscussions: (discussions: TDiscussionType[]) => void;
   setMode: (mode: EditorMode) => Promise<void>;
-  restoreVersion: (content: any[]) => Promise<void>;
+  restoreVersion: (content: unknown[]) => Promise<void>;
 }
 
 /**
@@ -294,9 +294,9 @@ export interface VersionControlProps {
   entityId: string;
   /** Document ID for amendments/documents, blog ID for blogs */
   versionEntityId: string;
-  currentContent: any[];
+  currentContent: unknown[];
   currentUserId: string;
-  onRestoreVersion: (content: any[]) => void;
+  onRestoreVersion: (content: unknown[]) => void;
   /** Amendment-specific props */
   amendmentId?: string;
   amendmentTitle?: string;

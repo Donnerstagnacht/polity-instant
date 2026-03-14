@@ -14,17 +14,18 @@ import {
   TableRow,
 } from '@/features/shared/ui/ui/table';
 import { UserPlus, Trash2 } from 'lucide-react';
-import { withdrawInvitation } from '../utils/collaborator-operations';
 import type { Collaborator } from '../hooks/useCollaborators';
 
 interface PendingInvitationsCardProps {
   invitations: Collaborator[];
   onNavigateToUser: (userId: string) => void;
+  onWithdrawInvitation: (collaboratorId: string) => Promise<void>;
 }
 
 export function PendingInvitationsCard({
   invitations,
   onNavigateToUser,
+  onWithdrawInvitation,
 }: PendingInvitationsCardProps) {
   return (
     <Card>
@@ -89,7 +90,7 @@ export function PendingInvitationsCard({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => withdrawInvitation(collaboration.id)}
+                      onClick={() => onWithdrawInvitation(collaboration.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                       <span className="ml-2">Withdraw Invitation</span>

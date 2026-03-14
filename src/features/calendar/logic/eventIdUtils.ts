@@ -8,6 +8,11 @@
  * @returns The base event UUID
  */
 export function getBaseEventId(instanceId: string): string {
+  // RRule-backed recurring instances append an index marker to the base event ID.
+  if (instanceId.includes('_rrule_')) {
+    return instanceId.split('_rrule_')[0];
+  }
+
   // If the ID contains '_instance_', extract the base UUID
   if (instanceId.includes('_instance_')) {
     return instanceId.split('_instance_')[0];

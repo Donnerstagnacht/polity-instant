@@ -2,14 +2,18 @@
 
 import { PageWrapper } from '@/layout/page-wrapper';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Plus } from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
 import { useCalendarPage } from './hooks/useCalendarPage';
-import { CalendarHeader } from './ui/CalendarHeader';
-import { DayView } from './ui/DayView';
-import { WeekView } from './ui/WeekView';
-import { MonthView } from './ui/MonthView';
+import { SharedCalendarHeader } from '@/features/events/ui/calendar/SharedCalendarHeader';
+import { CalendarViewContainer } from '@/features/events/ui/calendar/CalendarViewContainer';
+import { CalendarExportButton } from '@/features/events/ui/calendar/CalendarExportButton';
+import { CalendarSearchFilter } from '@/features/events/ui/calendar/CalendarSearchFilter';
 
 export default function CalendarPage() {
   const cp = useCalendarPage();
+  const navigate = useNavigate();
 
   if (cp.isLoading) {
     return (
@@ -26,40 +30,39 @@ export default function CalendarPage() {
   return (
     <AuthGuard requireAuth={true}>
       <PageWrapper>
-        <CalendarHeader
-          view={cp.view}
-          setView={cp.setView}
+        <SharedCalendarHeader
+          viewMode={cp.viewMode}
+          setViewMode={cp.setViewMode}
           currentViewTitle={cp.currentViewTitle}
           onPrevious={cp.goToPrevious}
           onNext={cp.goToNext}
           onToday={cp.goToToday}
+          title={cp.t('features.calendar.title')}
+          actions={
+            <>
+              <CalendarExportButton events={cp.events} />
+              <Button onClick={() => navigate({ to: '/create/event' })}>
+                <Plus className="mr-2 h-4 w-4" />
+                {cp.t('features.calendar.actions.createEvent')}
+              </Button>
+            </>
+          }
         />
 
-        {cp.view === 'day' && (
-          <DayView
-            selectedDate={cp.selectedDate}
-            events={cp.filteredEvents}
-            allEvents={cp.events}
-            onDateSelect={cp.setSelectedDate}
-          />
-        )}
+        <CalendarSearchFilter
+          searchQuery={cp.searchQuery}
+          onSearchChange={cp.setSearchQuery}
+          dateFilter={cp.dateFilter}
+          onDateFilterChange={cp.setDateFilter}
+        />
 
-        {cp.view === 'week' && (
-          <WeekView
-            selectedDate={cp.selectedDate}
-            events={cp.filteredEvents}
-            allEvents={cp.events}
-          />
-        )}
-
-        {cp.view === 'month' && (
-          <MonthView
-            selectedDate={cp.selectedDate}
-            onDateSelect={cp.setSelectedDate}
-            events={cp.filteredEvents}
-            allEvents={cp.events}
-          />
-        )}
+        <CalendarViewContainer
+          viewMode={cp.viewMode}
+          selectedDate={cp.selectedDate}
+          events={cp.filteredEvents}
+          allEvents={cp.events}
+          onDateSelect={cp.setSelectedDate}
+        />
       </PageWrapper>
     </AuthGuard>
   );

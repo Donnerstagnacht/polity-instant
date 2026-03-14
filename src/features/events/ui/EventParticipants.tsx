@@ -24,6 +24,7 @@ import { Checkbox } from '@/features/shared/ui/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { Input } from '@/features/shared/ui/ui/input';
 import {
   Select,
   SelectContent,
@@ -59,6 +60,8 @@ export function EventParticipants({ eventId }: { eventId: string }) {
     error,
     currentUserId,
     rolesData,
+    organizerRole,
+    participantRole,
     filteredUsers,
     isLoadingUsers,
     state,
@@ -273,21 +276,21 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {derived.pendingRequests.map((participant: any) => (
+                  {derived.pendingRequests.map((participant) => (
                     <TableRow key={participant.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="h-8 w-8">
-                            <AvatarImage src={participant.user?.avatar} />
+                            <AvatarImage src={participant.user?.avatar ?? undefined} />
                             <AvatarFallback>
-                              {participant.user?.name?.[0]?.toUpperCase() || 'U'}
+                              {participant.user?.first_name?.[0]?.toUpperCase() || 'U'}
                             </AvatarFallback>
                           </Avatar>
-                          {participant.user?.name || 'Unknown'}
+                          {`${participant.user?.first_name ?? ''} ${participant.user?.last_name ?? ''}`.trim() || 'Unknown'}
                         </div>
                       </TableCell>
-                      <TableCell>{participant.user?.contactEmail || '-'}</TableCell>
-                      <TableCell>{new Date(participant.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell>{participant.user?.email || '-'}</TableCell>
+                      <TableCell>{new Date(participant.created_at).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
                           <Button size="sm" onClick={() => actions.acceptRequest(participant.id, participant.user?.id)}>
@@ -327,12 +330,12 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {derived.activeParticipants.map((participant: any) => (
+                {derived.activeParticipants.map((participant) => (
                   <TableRow key={participant.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={participant.user?.avatar} />
+                          <AvatarImage src={participant.user?.avatar ?? undefined} />
                           <AvatarFallback>
                             {participant.user?.first_name?.[0]?.toUpperCase() || 'U'}
                           </AvatarFallback>
@@ -342,40 +345,46 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                     </TableCell>
                     <TableCell>{participant.user?.email || '-'}</TableCell>
                     <TableCell>
+                      {(() => {
+                        const selectedRoleId = participant.role?.id || participantRole?.id;
+
+                        return (
                       <Select
-                        value={participant.role?.name || 'Participant'}
-                        onValueChange={newRole => actions.changeRole(participant.id, newRole)}
+                        value={selectedRoleId}
+                        onValueChange={roleId => actions.changeRole(participant.id, roleId)}
                       >
                         <SelectTrigger className="w-40">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {rolesData?.roles?.map((roleOption: any) => (
-                            <SelectItem key={roleOption.id} value={roleOption.name}>
+                          {rolesData?.roles?.map((roleOption) => (
+                            <SelectItem key={roleOption.id} value={roleOption.id}>
                               {roleOption.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell>{new Date(participant.created_at).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        {participant.role?.name !== 'Organizer' && (
+                        {participant.role?.id !== organizerRole?.id && organizerRole && (
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => actions.changeRole(participant.id, 'Organizer')}
+                            onClick={() => actions.changeRole(participant.id, organizerRole.id)}
                           >
                             <Shield className="mr-1 h-4 w-4" />
                             {t('features.events.participants.actions.makeOrganizer')}
                           </Button>
                         )}
-                        {participant.role?.name === 'Organizer' && (
+                        {participant.role?.id === organizerRole?.id && participantRole && (
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => actions.changeRole(participant.id, 'Participant')}
+                            onClick={() => actions.changeRole(participant.id, participantRole.id)}
                           >
                             {t('features.events.participants.actions.removeOrganizer')}
                           </Button>
@@ -416,12 +425,12 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {derived.invitedUsers.map((participant: any) => (
+                  {derived.invitedUsers.map((participant) => (
                     <TableRow key={participant.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="h-8 w-8">
-                            <AvatarImage src={participant.user?.avatar} />
+                            <AvatarImage src={participant.user?.avatar ?? undefined} />
                             <AvatarFallback>
                               {participant.user?.first_name?.[0]?.toUpperCase() || 'U'}
                             </AvatarFallback>
@@ -529,7 +538,7 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                         <TableHead className="min-w-[200px]">
                           {t('features.events.participants.roles.actionRight')}
                         </TableHead>
-                        {rolesData.roles.map((role: any) => (
+                        {rolesData.roles.map((role) => (
                           <TableHead key={role.id} className="min-w-[120px] text-center">
                             <div className="flex flex-col items-center gap-1">
                               <span className="font-semibold">{role.name}</span>
@@ -557,9 +566,9 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                         return (
                           <TableRow key={rightKey}>
                             <TableCell className="font-medium">{label}</TableCell>
-                            {rolesData.roles.map((role: any) => {
+                            {rolesData.roles.map((role) => {
                               const hasRight = role.action_rights?.some(
-                                (ar: any) => ar.resource === resource && ar.action === action
+                                (ar) => ar.resource === resource && ar.action === action
                               );
                               return (
                                 <TableCell key={role.id} className="text-center">

@@ -368,7 +368,8 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
             <div>
               <label className="mb-2 block text-sm font-medium">{t('features.todos.detail.createdBy')}</label>
               <Link
-                to={`/user/${todo.creator.id}`}
+                to="/user/$id"
+                params={{ id: todo.creator.id }}
                 className="flex items-center gap-2 text-sm hover:underline"
               >
                 <Avatar className="h-6 w-6">
@@ -496,7 +497,8 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                 {todo.assignments.map((assignment: any, idx: number) => (
                   <Link
                     key={idx}
-                    to={`/user/${assignment.user?.id}`}
+                    to="/user/$id"
+                    params={{ id: assignment.user?.id ?? '' }}
                     className="flex items-center gap-2 text-sm hover:underline"
                   >
                     <Avatar className="h-6 w-6">
@@ -522,7 +524,8 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                 {t('features.todos.group.title')}
               </label>
               <Link
-                to={`/group/${todo.group.id}`}
+                to="/group/$id"
+                params={{ id: todo.group.id }}
                 className="flex items-center gap-2 text-sm hover:underline"
               >
                 <Avatar className="h-6 w-6">

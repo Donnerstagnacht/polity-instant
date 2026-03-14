@@ -23,8 +23,8 @@ import {
   CheckCircle2,
   Play,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useEventStream } from '../hooks/useEventStream';
-import { useToast } from '@/features/shared/hooks/use-toast';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { AgendaNavigationControls } from '@/features/agendas/ui/AgendaNavigationControls';
 
@@ -48,7 +48,6 @@ function getYouTubeVideoId(url: string): string | null {
 export function EventStream({ eventId }: { eventId: string }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { toast } = useToast();
   const carouselRef = useRef<HTMLDivElement>(null);
   const activeContentRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -190,9 +189,9 @@ export function EventStream({ eventId }: { eventId: string }) {
   return (
     <div className="space-y-6">
       {/* Live Stream Video */}
-      {event.streamURL &&
+      {event.stream_url &&
         (() => {
-          const videoId = getYouTubeVideoId(event.streamURL);
+          const videoId = getYouTubeVideoId(event.stream_url);
           return videoId ? (
             <div className="relative w-full overflow-hidden rounded-lg bg-black shadow-xl">
               <div className="aspect-video">
@@ -215,7 +214,7 @@ export function EventStream({ eventId }: { eventId: string }) {
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-4">
                 <div className="relative flex h-14 w-14 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-md">
-                  {getAgendaItemIcon(currentAgendaItem.type)}
+                  {getAgendaItemIcon(currentAgendaItem.type ?? 'discussion')}
                   <div className="absolute -right-1 -top-1 flex h-5 w-5 animate-pulse items-center justify-center rounded-full bg-green-500 text-white">
                     <Play className="h-3 w-3 fill-white" />
                   </div>
@@ -228,10 +227,10 @@ export function EventStream({ eventId }: { eventId: string }) {
                     <CardTitle className="text-2xl">{currentAgendaItem.title}</CardTitle>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge className={getTypeColor(currentAgendaItem.type)}>
+                    <Badge className={getTypeColor(currentAgendaItem.type ?? 'discussion')}>
                       <span className="capitalize">{currentAgendaItem.type}</span>
                     </Badge>
-                    <Badge className={getStatusColor(currentAgendaItem.status)}>
+                    <Badge className={getStatusColor(currentAgendaItem.status ?? 'pending')}>
                       {currentAgendaItem.status}
                     </Badge>
                     {currentAgendaItem.duration && (
@@ -244,7 +243,7 @@ export function EventStream({ eventId }: { eventId: string }) {
                 </div>
               </div>
               <Button asChild variant="outline">
-                <Link to={`/event/${eventId}/agenda/${currentAgendaItem.id}`}>
+                <Link to="/event/$id/agenda/$agendaItemId" params={{ id: eventId, agendaItemId: currentAgendaItem.id }}>
                   {t('features.events.stream.viewDetails')}
                 </Link>
               </Button>
@@ -266,7 +265,9 @@ export function EventStream({ eventId }: { eventId: string }) {
       </div>
 
       {/* Election Section */}
-      {currentAgendaItem.election && (
+      {currentAgendaItem.election.length > 0 && (() => {
+        const election = currentAgendaItem.election[0];
+        return (
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -277,29 +278,28 @@ export function EventStream({ eventId }: { eventId: string }) {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            {currentAgendaItem.election.description && (
+            {election.description && (
               <div className="rounded-lg bg-muted/50 p-4">
                 <p className="text-sm text-muted-foreground">
-                  {currentAgendaItem.election.description}
+                  {election.description}
                 </p>
               </div>
             )}
 
             {(() => {
-              const election = currentAgendaItem.election;
               const userVote = userElectionVotes.find(
-                (vote: any) => vote.election?.id === election.id
+                (vote) => vote.election?.id === election.id
               );
-              const candidates = election.candidates || [];
+              const candidates = [...(election.candidates ?? [])];
 
               // Get all votes for this election
               const electionVotes = (data?.electionVotes || []).filter(
-                (vote: any) => vote.election?.id === election.id
+                (vote) => vote.election?.id === election.id
               );
 
               // Count votes for each candidate
               const voteCounts: Record<string, number> = {};
-              electionVotes.forEach((vote: any) => {
+              electionVotes.forEach((vote) => {
                 const candId = vote.candidate?.id;
                 if (candId) {
                   voteCounts[candId] = (voteCounts[candId] || 0) + 1;
@@ -324,8 +324,8 @@ export function EventStream({ eventId }: { eventId: string }) {
                       </div>
                       <div className="space-y-3">
                         {candidates
-                          .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
-                          .map((candidate: any) => {
+                          .sort((a: { order_index?: number | null }, b: { order_index?: number | null }) => (a.order_index || 0) - (b.order_index || 0))
+                          .map((candidate: { id: string; name: string | null; description: string | null; order_index?: number | null }) => {
                             const voteCount = voteCounts[candidate.id] || 0;
                             const isVoted = userVote?.candidate?.id === candidate.id;
                             const percentage = totalVotes > 0 ? (voteCount / totalVotes) * 100 : 0;
@@ -400,10 +400,11 @@ export function EventStream({ eventId }: { eventId: string }) {
             })()}
           </CardContent>
         </Card>
-      )}
+        );
+      })()}
 
       {/* Amendment Vote Section */}
-      {currentAgendaItem.amendmentVote && (
+      {currentAgendaItem.amendment && (
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
@@ -412,30 +413,30 @@ export function EventStream({ eventId }: { eventId: string }) {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            {currentAgendaItem.amendmentVote.description && (
+            {currentAgendaItem.amendment.reason && (
               <div className="rounded-lg bg-muted/50 p-4">
                 <p className="text-sm text-muted-foreground">
-                  {currentAgendaItem.amendmentVote.description}
+                  {currentAgendaItem.amendment.reason}
                 </p>
               </div>
             )}
 
             {(() => {
-              const amendmentVote = currentAgendaItem.amendmentVote;
+              const amendmentVote = currentAgendaItem.amendment;
               const userVote = userAmendmentVotes.find(
-                (entry: any) => entry.amendmentVote?.id === amendmentVote.id
+                (entry) => entry.amendment?.id === amendmentVote.id
               );
 
               // Get all vote entries for this amendment vote
               const voteEntries = (data?.amendmentVoteEntries || []).filter(
-                (entry: any) => entry.amendmentVote?.id === amendmentVote.id
+                (entry) => entry.amendment?.id === amendmentVote.id
               );
 
               // Count votes (1=yes, -1=no, 0=abstain)
               const voteCounts = {
-                yes: voteEntries.filter((e: any) => e.vote === 1).length,
-                no: voteEntries.filter((e: any) => e.vote === -1).length,
-                abstain: voteEntries.filter((e: any) => e.vote === 0).length,
+                yes: voteEntries.filter((e) => e.vote === 1).length,
+                no: voteEntries.filter((e) => e.vote === -1).length,
+                abstain: voteEntries.filter((e) => e.vote === 0).length,
               };
               const totalVotes = voteCounts.yes + voteCounts.no + voteCounts.abstain;
 
@@ -657,10 +658,10 @@ export function EventStream({ eventId }: { eventId: string }) {
                 className="flex gap-4 overflow-x-auto scroll-smooth px-12 pb-4"
                 style={{ scrollbarWidth: 'thin' }}
               >
-                {speakerList.map((speaker: any, index: number) => {
+                {speakerList.map((speaker, index) => {
                   const speakerTime = calculateSpeakerTime(index);
-                  const speakerName = speaker.user?.name || speaker.user?.email || 'Unknown';
-                  const speakerAvatar = speaker.user?.avatar;
+                  const speakerName = `${speaker.user?.first_name ?? ''} ${speaker.user?.last_name ?? ''}`.trim() || speaker.user?.email || 'Unknown';
+                  const speakerAvatar = speaker.user?.avatar ?? undefined;
                   const isCurrentUser = speaker.user?.id === user?.id;
 
                   return (
@@ -712,7 +713,7 @@ export function EventStream({ eventId }: { eventId: string }) {
                         <div className="text-center">
                           <p
                             className="truncate text-sm text-muted-foreground"
-                            title={speaker.title}
+                            title={speaker.title ?? undefined}
                           >
                             {speaker.title}
                           </p>

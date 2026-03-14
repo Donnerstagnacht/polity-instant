@@ -72,6 +72,7 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>{t('pages.create.electionCandidate.descriptionLabel')}</Label>
+              <p className="text-muted-foreground text-xs">{t('pages.create.electionCandidate.tips.description')}</p>
               <Textarea
                 value={statement}
                 onChange={(e) => setStatement(e.target.value)}

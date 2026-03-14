@@ -2,7 +2,6 @@ import { defineMutator } from '@rocicorp/zero'
 import { zql } from '../schema'
 import {
   userUpdateSchema,
-  userStatsUpdateSchema,
 } from './schema'
 import {
   followCreateSchema,
@@ -29,9 +28,5 @@ export const userSharedMutators = {
 
   unfollow: defineMutator(followDeleteSchema, async ({ tx, args }) => {
     await tx.mutate.follow.delete({ id: args.id })
-  }),
-
-  updateStats: defineMutator(userStatsUpdateSchema, async ({ tx, args }) => {
-    await tx.mutate.user_stats.update(args)
   }),
 }

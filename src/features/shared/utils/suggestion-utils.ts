@@ -1,37 +1,23 @@
 // suggestion-utils.ts
 // Utilities for handling suggestion IDs and counters
 
-import { createClient } from '@/lib/supabase/client.ts';
-const supabase = createClient();
-
 /**
- * Generates the next suggestion ID (CR-x format) for a document
- * and updates the document's suggestion counter
+ * Computes the next suggestion ID (CR-x format) from existing discussions.
+ * Finds the max existing CR-x number and increments by 1.
  */
-export async function getNextSuggestionId(documentId: string): Promise<string> {
-  // Get current document data
-  const { data: document } = await supabase
-    .from('document')
-    .select('*')
-    .eq('id', documentId)
-    .single();
-
-  if (!document) {
-    throw new Error(`Document with ID ${documentId} not found`);
+export function getNextSuggestionIdFromDiscussions(
+  discussions: Array<{ crId?: string }>
+): string {
+  let maxCounter = 0;
+  for (const d of discussions) {
+    if (d.crId) {
+      const num = parseSuggestionId(d.crId);
+      if (num !== null && num > maxCounter) {
+        maxCounter = num;
+      }
+    }
   }
-
-  // Get current counter value, defaulting to 0 if not set
-  const currentCounter = document.suggestion_counter ?? 0;
-  const nextCounter = currentCounter + 1;
-
-  // Update the counter in the database
-  await supabase
-    .from('document')
-    .update({ suggestion_counter: nextCounter })
-    .eq('id', documentId);
-
-  // Return the formatted suggestion ID
-  return `CR-${nextCounter}`;
+  return `CR-${maxCounter + 1}`;
 }
 
 /**
@@ -58,18 +44,19 @@ export function isValidSuggestionId(suggestionId: string): boolean {
 }
 
 /**
- * Gets the current suggestion counter for a document without incrementing it
+ * Gets the current max suggestion counter from existing discussions
  */
-export async function getCurrentSuggestionCounter(documentId: string): Promise<number> {
-  const { data: document } = await supabase
-    .from('document')
-    .select('*')
-    .eq('id', documentId)
-    .single();
-
-  if (!document) {
-    throw new Error(`Document with ID ${documentId} not found`);
+export function getCurrentSuggestionCounter(
+  discussions: Array<{ crId?: string }>
+): number {
+  let maxCounter = 0;
+  for (const d of discussions) {
+    if (d.crId) {
+      const num = parseSuggestionId(d.crId);
+      if (num !== null && num > maxCounter) {
+        maxCounter = num;
+      }
+    }
   }
-
-  return document.suggestion_counter ?? 0;
+  return maxCounter;
 }

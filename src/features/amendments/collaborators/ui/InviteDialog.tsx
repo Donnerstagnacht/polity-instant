@@ -26,16 +26,16 @@ import {
 } from '@/features/shared/ui/ui/command';
 import { toast } from 'sonner';
 import { useUserSearch } from '../hooks/useUserSearch';
-import { inviteUsers } from '../utils/collaborator-operations';
 import type { Collaborator, Role } from '../hooks/useCollaborators';
 
 interface InviteDialogProps {
   amendmentId: string;
   existingCollaborators: Collaborator[];
   roles: Role[];
+  onInviteUsers: (userIds: string[], amendmentId: string, roleId: string) => Promise<void>;
 }
 
-export function InviteDialog({ amendmentId, existingCollaborators, roles }: InviteDialogProps) {
+export function InviteDialog({ amendmentId, existingCollaborators, roles, onInviteUsers }: InviteDialogProps) {
   const [inviteSearchQuery, setInviteSearchQuery] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
@@ -66,11 +66,7 @@ export function InviteDialog({ amendmentId, existingCollaborators, roles }: Invi
 
     setIsInviting(true);
     try {
-      await inviteUsers(selectedUsers, amendmentId, collaboratorRole.id);
-
-      toast.success(
-        `Invited ${selectedUsers.length} ${selectedUsers.length === 1 ? 'collaborator' : 'collaborators'}`
-      );
+      await onInviteUsers(selectedUsers, amendmentId, collaboratorRole.id);
 
       // Reset state
       setSelectedUsers([]);
@@ -78,7 +74,6 @@ export function InviteDialog({ amendmentId, existingCollaborators, roles }: Invi
       setInviteDialogOpen(false);
     } catch (error) {
       console.error('Failed to invite collaborators:', error);
-      toast.error('Failed to invite collaborators. Please try again.');
     } finally {
       setIsInviting(false);
     }

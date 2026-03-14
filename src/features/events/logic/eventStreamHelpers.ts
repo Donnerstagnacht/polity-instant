@@ -4,7 +4,7 @@
 
 export function calculateSpeakerTime(
   index: number,
-  speakerList: Array<{ time?: number }>,
+  speakerList: Array<{ time?: number | null }>,
   startTime: Date,
 ): Date {
   let accumulatedMinutes = 0;

@@ -12,7 +12,7 @@ import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useElectionWithVotes } from '@/zero/events/useEventState';
 import { usePermissions } from '@/zero/rbac';
 import { calculateElectionWinner, type MajorityType } from '@/features/shared/utils/voting-utils';
-import { notifyPositionAssigned } from '@/features/shared/utils/notification-helpers';
+import { notifyPositionAssigned } from '@/features/notifications/utils/notification-helpers.ts';
 import { schedulePositionRevote } from '@/features/votes/utils/revote-scheduling';
 
 interface UseElectionVotingOptions {
@@ -23,25 +23,11 @@ interface UseElectionVotingOptions {
   groupName?: string;
 }
 
-interface ElectionCandidate {
-  id: string;
-  user_id?: string;
-  name?: string;
-  user?: {
-    id: string;
-    first_name?: string;
-    last_name?: string;
-    avatar?: string;
-  };
-  status?: string;
-  created_at?: number;
-}
-
-interface ElectionVote {
-  id: string;
-  created_at?: number;
-  voter?: { id: string };
-  candidate?: { id: string; name?: string };
+/** Extract winner ID from the election description field (format: "winner:<id>") */
+function getWinnerId(election: { description?: string | null } | null | undefined): string | undefined {
+  if (!election?.description) return undefined;
+  const match = election.description.match(/^winner:(.+)$/);
+  return match?.[1];
 }
 
 export function useElectionVoting({
@@ -60,9 +46,9 @@ export function useElectionVoting({
   const { election: electionRaw, isLoading } = useElectionWithVotes(electionId);
   const error = undefined;
 
-  const election = electionRaw as any;
-  const candidates = (election?.candidates ?? []) as ElectionCandidate[];
-  const votes = (election?.votes ?? []) as ElectionVote[];
+  const election = electionRaw;
+  const candidates = election?.candidates ?? [];
+  const votes = election?.votes ?? [];
   const position = election?.position;
 
   // Candidates who accepted their nomination
@@ -95,7 +81,7 @@ export function useElectionVoting({
   const currentLeader = useMemo(() => {
     if (eligibleCandidates.length === 0) return null;
 
-    let leader: ElectionCandidate | null = null;
+    let leader: (typeof candidates)[number] | null = null;
     let maxVotes = 0;
 
     for (const candidate of eligibleCandidates) {
@@ -158,11 +144,11 @@ export function useElectionVoting({
 
       // Transform data for calculateElectionWinner
       const electionVotes = votes.map(v => ({
-        candidate: v.candidate || { id: '', name: '' },
+        candidate: { id: v.candidate?.id ?? '', name: v.candidate?.name ?? '' },
       }));
       const candidateList = eligibleCandidates.map(c => ({
         id: c.id,
-        name: c.name || c.user?.first_name,
+        name: c.name ?? c.user?.first_name ?? undefined,
       }));
 
       const result = calculateElectionWinner(electionVotes, candidateList, majorityType);
@@ -250,7 +236,7 @@ export function useElectionVoting({
       positionTitle: string,
       options?: { termDuration?: 'monthly' | 'quarterly' | 'yearly' | 'biannual' }
     ) => {
-      if (!election?.winner_id || !position?.id || !groupId) {
+      if (!getWinnerId(election) || !position?.id || !groupId) {
         throw new Error('No winner or position to assign');
       }
 
@@ -258,7 +244,7 @@ export function useElectionVoting({
         throw new Error('Permission denied');
       }
 
-      const winningCandidate = candidates.find(c => c.id === election.winner_id);
+      const winningCandidate = candidates.find(c => c.id === getWinnerId(election));
 
       if (!winningCandidate || !winningCandidate.user_id) {
         throw new Error('Winner not found');
@@ -382,7 +368,7 @@ export function useElectionVoting({
     // Computed
     isCompleted: election?.status === 'completed',
     requiresRunoff: election?.status === 'runoff_required',
-    winnerId: election?.winner_id,
+    winnerId: getWinnerId(election),
 
     // Actions
     castVote,

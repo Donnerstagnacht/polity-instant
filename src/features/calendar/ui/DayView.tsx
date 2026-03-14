@@ -8,7 +8,8 @@ import { formatDate } from '../logic/dateUtils';
 import { EventCard } from './EventCard';
 import { MiniCalendar } from './MiniCalendar';
 import { CalendarStats } from './CalendarStats';
-import { TimelineItem, AgendaCard } from '@/components/shared/timeline';
+import { TimelineItem } from '@/features/agendas/ui/TimelineItem';
+import { AgendaCard } from '@/features/agendas/ui/AgendaCard';
 import { getBaseEventId } from '../logic/eventIdUtils';
 
 interface DayViewProps {

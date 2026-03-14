@@ -3,9 +3,21 @@ import { useState, useMemo } from 'react';
 // Co-located types
 export type FilterType = 'all' | 'users' | 'groups' | 'amendments' | 'events' | 'blogs';
 
+interface SubscriptionItem {
+  user?: { name?: string; handle?: string };
+  group?: { name?: string; description?: string };
+  amendment?: { title?: string; subtitle?: string };
+  event?: { title?: string; description?: string };
+  blog?: { title?: string };
+}
+
+interface SubscriberItem {
+  subscriber?: { name?: string; handle?: string };
+}
+
 export interface UseSubscriptionsFiltersOptions {
-  subscriptions: any[];
-  subscribers: any[];
+  subscriptions: SubscriptionItem[];
+  subscribers: SubscriberItem[];
 }
 
 export interface SubscriptionCounts {
@@ -22,8 +34,8 @@ export interface UseSubscriptionsFiltersReturn {
   setSearchQuery: (query: string) => void;
   filterType: FilterType;
   setFilterType: (type: FilterType) => void;
-  filteredSubscriptions: any[];
-  filteredSubscribers: any[];
+  filteredSubscriptions: SubscriptionItem[];
+  filteredSubscribers: SubscriberItem[];
   subscriptionCounts: SubscriptionCounts;
 }
 
@@ -36,11 +48,11 @@ export function useSubscriptionsFilters({
 
   // Filter subscriptions based on type and search query
   const filteredSubscriptions = useMemo(() => {
-    let filtered: any[] = subscriptions;
+    let filtered = subscriptions;
 
     // Filter by type
     if (filterType !== 'all') {
-      filtered = filtered.filter((sub: any) => {
+      filtered = filtered.filter(sub => {
         switch (filterType) {
           case 'users':
             return !!sub.user;
@@ -62,7 +74,7 @@ export function useSubscriptionsFilters({
     if (!searchQuery.trim()) return filtered;
 
     const query = searchQuery.toLowerCase();
-    return filtered.filter((sub: any) => {
+    return filtered.filter(sub => {
       if (sub.user) {
         const name = sub.user.name?.toLowerCase() || '';
         const handle = sub.user.handle?.toLowerCase() || '';
@@ -92,7 +104,7 @@ export function useSubscriptionsFilters({
     if (!searchQuery.trim()) return subscribers;
 
     const query = searchQuery.toLowerCase();
-    return subscribers.filter((sub: any) => {
+    return subscribers.filter(sub => {
       const name = sub.subscriber?.name?.toLowerCase() || '';
       const handle = sub.subscriber?.handle?.toLowerCase() || '';
       return name.includes(query) || handle.includes(query);
@@ -103,11 +115,11 @@ export function useSubscriptionsFilters({
   const subscriptionCounts: SubscriptionCounts = useMemo(() => {
     return {
       all: subscriptions.length,
-      users: subscriptions.filter((sub: any) => !!sub.user).length,
-      groups: subscriptions.filter((sub: any) => !!sub.group).length,
-      amendments: subscriptions.filter((sub: any) => !!sub.amendment).length,
-      events: subscriptions.filter((sub: any) => !!sub.event).length,
-      blogs: subscriptions.filter((sub: any) => !!sub.blog).length,
+      users: subscriptions.filter(sub => !!sub.user).length,
+      groups: subscriptions.filter(sub => !!sub.group).length,
+      amendments: subscriptions.filter(sub => !!sub.amendment).length,
+      events: subscriptions.filter(sub => !!sub.event).length,
+      blogs: subscriptions.filter(sub => !!sub.blog).length,
     };
   }, [subscriptions]);
 

@@ -11,15 +11,15 @@ export const Route = createFileRoute('/_authed/group/$id/amendments')({
 function GroupAmendmentsPage() {
   const { id } = Route.useParams()
   const { amendments } = useGroupAmendments(id)
-  const { group } = useGroupData(id) as any
+  const { group } = useGroupData(id)
 
   const groupedAmendments = useMemo(() => {
-    const passed: any[] = []
-    const underReview: any[] = []
-    const drafting: any[] = []
-    const rejected: any[] = []
+    const passed: typeof amendments = []
+    const underReview: typeof amendments = []
+    const drafting: typeof amendments = []
+    const rejected: typeof amendments = []
 
-    amendments.forEach((a: any) => {
+    amendments.forEach((a) => {
       const status = (a.status || '').toLowerCase()
       if (status === 'passed') passed.push(a)
       else if (status === 'rejected') rejected.push(a)
@@ -42,7 +42,7 @@ function GroupAmendmentsPage() {
       <h1 className="mb-6 text-3xl font-bold">Amendments</h1>
       <AmendmentGroups
         groupedAmendments={groupedAmendments}
-        groupName={group?.name}
+        groupName={group?.name ?? undefined}
         groupId={id}
       />
     </div>

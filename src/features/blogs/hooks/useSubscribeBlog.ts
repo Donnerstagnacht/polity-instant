@@ -3,7 +3,7 @@ import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useUserState } from '@/zero/users/useUserState';
 import { useAuth } from '@/providers/auth-provider';
-import { notifyBlogNewSubscriber } from '@/features/shared/utils/notification-helpers';
+import { notifyBlogNewSubscriber } from '@/features/notifications/utils/notification-helpers.ts';
 import { toast } from 'sonner';
 
 /**
@@ -40,14 +40,14 @@ export function useSubscribeBlog(targetBlogId?: string) {
       if (subscribed === optimisticTargetRef.current) {
         optimisticTargetRef.current = null;
         createdSubscriptionIdRef.current = null;
-        setSubscriberCount(subs.length);
+        setSubscriberCount(blog?.subscriber_count ?? subs.length);
       }
       return;
     }
 
     setIsSubscribed(subscribed);
-    setSubscriberCount(subs.length);
-  }, [subscriptionData, authUser?.id, targetBlogId, subscriptionLoading]);
+    setSubscriberCount(blog?.subscriber_count ?? subs.length);
+  }, [subscriptionData, authUser?.id, targetBlogId, subscriptionLoading, blog?.subscriber_count]);
 
   // Subscribe to a blog
   const subscribe = async () => {

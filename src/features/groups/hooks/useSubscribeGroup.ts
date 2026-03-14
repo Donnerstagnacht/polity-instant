@@ -3,7 +3,7 @@ import { useGroupSubscribers } from '@/zero/groups/useGroupState';
 import { useCommonActions } from '@/zero/common/useCommonActions';
 import { useUserState } from '@/zero/users/useUserState';
 import { useAuth } from '@/providers/auth-provider';
-import { notifyGroupNewSubscriber } from '@/features/shared/utils/notification-helpers';
+import { notifyGroupNewSubscriber } from '@/features/notifications/utils/notification-helpers.ts';
 import { toast } from 'sonner';
 
 /**
@@ -21,10 +21,10 @@ export function useSubscribeGroup(targetGroupId?: string) {
 
   // Get current user name for notifications
   const { currentUser: currentUserRows } = useUserState({ userId: authUser?.id });
-  const currentUserName = (currentUserRows as any)?.[0]?.name || authUser?.email || 'Someone';
+  const currentUserName = [currentUserRows?.first_name, currentUserRows?.last_name].filter(Boolean).join(' ') || authUser?.email || 'Someone';
 
   // Get group + subscribers from facade
-  const { groupName, subscribers: subscribersData, isLoading: subscriptionLoading } = useGroupSubscribers(targetGroupId);
+  const { groupName, subscriberCount: persistedSubscriberCount, subscribers: subscribersData, isLoading: subscriptionLoading } = useGroupSubscribers(targetGroupId);
 
   const subscriptionData = { subscribers: subscribersData || [] };
 
@@ -42,14 +42,14 @@ export function useSubscribeGroup(targetGroupId?: string) {
       if (subscribed === optimisticTargetRef.current) {
         optimisticTargetRef.current = null;
         createdSubscriptionIdRef.current = null;
-        setSubscriberCount(subscribers.length);
+        setSubscriberCount(persistedSubscriberCount ?? subscribers.length);
       }
       return;
     }
 
     setIsSubscribed(subscribed);
-    setSubscriberCount(subscribers.length);
-  }, [subscriptionData, authUser?.id, targetGroupId, subscriptionLoading]);
+    setSubscriberCount(persistedSubscriberCount ?? subscribers.length);
+  }, [subscriptionData, authUser?.id, targetGroupId, subscriptionLoading, persistedSubscriberCount]);
 
   // Subscribe to a group
   const subscribe = async () => {

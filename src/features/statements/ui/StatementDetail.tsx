@@ -108,16 +108,16 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
     );
   }
 
-  const author = (statement as any).user;
-  const group = (statement as any).group;
-  const hashtags = extractHashtagTags((statement as any).statement_hashtags);
+  const author = statement.user;
+  const group = statement.group;
+  const hashtags = extractHashtagTags(statement.statement_hashtags);
   const authorName =
     author
       ? `${author.first_name ?? ''} ${author.last_name ?? ''}`.trim() || author.handle || 'Unknown'
       : 'Unknown';
 
   const locale = t('locale') === 'de' ? de : enUS;
-  const createdAt = (statement as any).created_at ? new Date((statement as any).created_at) : null;
+  const createdAt = statement.created_at ? new Date(statement.created_at) : null;
   const timeDisplay = (() => {
     if (!createdAt) return null;
     const minutesAgo = differenceInMinutes(new Date(), createdAt);
@@ -152,7 +152,7 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
                     className="font-semibold text-foreground hover:underline flex items-center gap-1"
                   >
                     <Avatar className="h-4 w-4 shrink-0">
-                      <AvatarImage src={group.image_url} />
+                      <AvatarImage src={group.image_url ?? undefined} />
                       <AvatarFallback className="text-[8px]">
                         <Users className="h-2.5 w-2.5" />
                       </AvatarFallback>
@@ -163,7 +163,7 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
                 {group && <span>·</span>}
                 <span className="flex items-center gap-1">
                   <Avatar className="h-4 w-4 shrink-0">
-                    <AvatarImage src={author?.avatar} />
+                    <AvatarImage src={author?.avatar ?? undefined} />
                     <AvatarFallback className="text-[8px]">
                       <User className="h-2.5 w-2.5" />
                     </AvatarFallback>
@@ -180,7 +180,7 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
 
               {/* Statement text */}
               <div className="mb-3 text-lg leading-relaxed">
-                <StatementTextRenderer text={statement.text} />
+                <StatementTextRenderer text={statement.text ?? ''} />
               </div>
 
               {/* Media */}
@@ -193,7 +193,18 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
               {/* Survey */}
               {survey && (
                 <StatementSurvey
-                  survey={survey}
+                  survey={{
+                    id: survey.id,
+                    question: survey.question,
+                    ends_at: survey.ends_at,
+                    options: survey.options?.map(o => ({
+                      id: o.id,
+                      label: o.label,
+                      vote_count: o.vote_count,
+                      position: o.position,
+                      votes: o.votes ? [...o.votes] : undefined,
+                    })),
+                  }}
                   userId={userId}
                   onVote={handleSurveyVote}
                   onRetract={handleSurveyRetract}
@@ -224,7 +235,7 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
 
                   <ShareButton
                     url={`${typeof window !== 'undefined' ? window.location.origin : ''}/statement/${statementId}`}
-                    title={statement.text.substring(0, 60)}
+                    title={(statement.text ?? '').substring(0, 60)}
                     variant="ghost"
                     size="sm"
                   />
@@ -239,11 +250,11 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
                           setEditText(statement.text ?? '');
                           setEditImageUrl(statement.image_url ?? '');
                           setEditVideoUrl(statement.video_url ?? '');
-                          setEditVisibility((statement as any).visibility ?? 'public');
+                          setEditVisibility((statement.visibility ?? 'public') as 'public' | 'authenticated' | 'private');
                           setEditSurveyQuestion(survey?.question ?? '');
                           setEditSurveyOptions(
                             survey?.options?.length
-                              ? survey.options.map((o: any) => o.label)
+                              ? survey.options.map((o) => o.label)
                               : ['', '']
                           );
                           setEditSurveyDuration(24);

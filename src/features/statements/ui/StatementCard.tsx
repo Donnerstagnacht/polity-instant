@@ -23,8 +23,8 @@ interface StatementCardProps {
     created_at?: number;
     user?: { id?: string; first_name?: string; last_name?: string; handle?: string; avatar_url?: string } | null;
     group?: { id?: string; name?: string } | null;
-    statement_hashtags?: any[];
-    statement_survey?: any[];
+    statement_hashtags?: { hashtag?: { tag?: string | null } | null }[];
+    statement_survey?: { id?: string }[];
   };
   className?: string;
 }

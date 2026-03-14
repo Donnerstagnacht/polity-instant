@@ -19,10 +19,19 @@ export const event = table('event')
     timezone: string().optional(),
     capacity: number().optional(),
     participant_count: number(),
+    subscriber_count: number(),
+    election_count: number(),
+    amendment_count: number(),
+    open_change_request_count: number(),
     agenda_management: string().optional(),
     meeting_type: string().optional(),
+    is_bookable: boolean(),
+    max_bookings: number().optional(),
     is_recurring: boolean(),
     recurrence_pattern: string().optional(),
+    recurrence_rule: string().optional(),
+    recurrence_interval: number().optional(),
+    recurrence_days: json().optional(),
     recurrence_end_date: number().optional(),
     original_event_id: string().optional(),
     cancel_reason: string().optional(),
@@ -48,8 +57,28 @@ export const event = table('event')
     delegate_approval_type: string().optional(),
     delegate_check_mode: string().optional(),
     main_group_delegate_allocation_mode: string().optional(),
+    current_agenda_item_id: string().optional(),
+    amendment_deadline: number().optional(),
+    delegates_nomination_deadline: number().optional(),
     group_id: string().optional(),
     creator_id: string(),
+    created_at: number(),
+    updated_at: number(),
+  })
+  .primaryKey('id');
+
+export const eventException = table('event_exception')
+  .columns({
+    id: string(),
+    parent_event_id: string(),
+    original_date: number(),
+    action: string(),
+    new_title: string().optional(),
+    new_description: string().optional(),
+    new_start_date: number().optional(),
+    new_end_date: number().optional(),
+    new_location_name: string().optional(),
+    new_location_address: string().optional(),
     created_at: number(),
     updated_at: number(),
   })
@@ -64,6 +93,7 @@ export const eventParticipant = table('event_participant')
     status: string().optional(),
     role_id: string().optional(),
     visibility: string().optional(),
+    instance_date: number().optional(),
     created_at: number(),
   })
   .primaryKey('id');

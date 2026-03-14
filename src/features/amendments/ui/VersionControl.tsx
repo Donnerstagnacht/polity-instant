@@ -25,7 +25,7 @@ import { GitBranch, Clock, User, Plus, History, Search, Pencil, Check, X } from 
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { toast } from 'sonner';
-import { notifyVersionCreated } from '@/features/shared/utils/notification-helpers';
+import { notifyVersionCreated } from '@/features/notifications/utils/notification-helpers.ts';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface Version {

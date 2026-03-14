@@ -28,6 +28,30 @@ import {
 } from '../positions/schema';
 import { z } from 'zod';
 
+async function authorizeScopedRoleMutation(
+  tx: Parameters<typeof can>[0],
+  ctx: Parameters<typeof can>[1],
+  scope: {
+    group_id?: string | null;
+    event_id?: string | null;
+    blog_id?: string | null;
+  }
+) {
+  if (scope.group_id) {
+    await can(tx, ctx, { action: 'manage', resource: 'groupRoles', groupId: scope.group_id });
+    return;
+  }
+
+  if (scope.event_id) {
+    await can(tx, ctx, { action: 'manage', resource: 'events', eventId: scope.event_id });
+    return;
+  }
+
+  if (scope.blog_id) {
+    await can(tx, ctx, { action: 'manage', resource: 'blogs', blogId: scope.blog_id });
+  }
+}
+
 /** Shared mutators — run on both client and server. Server mutators may override these. */
 export const groupSharedMutators = {
   create: defineMutator(groupCreateSchema, async ({ tx, ctx: { userID }, args }) => {
@@ -36,6 +60,10 @@ export const groupSharedMutators = {
       ...args,
       owner_id: userID,
       member_count: 1,
+      subscriber_count: 0,
+      event_count: 0,
+      amendment_count: 0,
+      document_count: 0,
       created_at: now,
       updated_at: now,
     });
@@ -107,26 +135,38 @@ export const groupSharedMutators = {
   }),
 
   createRole: defineMutator(roleCreateSchema, async ({ tx, ctx, args }) => {
-    await can(tx, ctx, { action: 'manage', resource: 'groupRoles', groupId: args.group_id });
+    await authorizeScopedRoleMutation(tx, ctx, args);
     const now = Date.now();
     await tx.mutate.role.insert({ ...args, created_at: now });
   }),
 
-  updateRole: defineMutator(roleUpdateSchema, async ({ tx, args }) => {
+  updateRole: defineMutator(roleUpdateSchema, async ({ tx, ctx, args }) => {
+    const role = await tx.run(zql.role.where('id', args.id).one());
+    if (role) {
+      await authorizeScopedRoleMutation(tx, ctx, role);
+    }
     await tx.mutate.role.update(args);
   }),
 
-  deleteRole: defineMutator(roleDeleteSchema, async ({ tx, args }) => {
+  deleteRole: defineMutator(roleDeleteSchema, async ({ tx, ctx, args }) => {
+    const role = await tx.run(zql.role.where('id', args.id).one());
+    if (role) {
+      await authorizeScopedRoleMutation(tx, ctx, role);
+    }
     await tx.mutate.role.delete({ id: args.id });
   }),
 
   assignActionRight: defineMutator(actionRightCreateSchema, async ({ tx, ctx, args }) => {
-    await can(tx, ctx, { action: 'manage', resource: 'groupRoles', groupId: args.group_id });
+    await authorizeScopedRoleMutation(tx, ctx, args);
     const now = Date.now();
     await tx.mutate.action_right.insert({ ...args, created_at: now });
   }),
 
-  removeActionRight: defineMutator(actionRightDeleteSchema, async ({ tx, args }) => {
+  removeActionRight: defineMutator(actionRightDeleteSchema, async ({ tx, ctx, args }) => {
+    const actionRight = await tx.run(zql.action_right.where('id', args.id).one());
+    if (actionRight) {
+      await authorizeScopedRoleMutation(tx, ctx, actionRight);
+    }
     await tx.mutate.action_right.delete({ id: args.id });
   }),
 

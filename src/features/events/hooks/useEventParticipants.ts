@@ -59,20 +59,23 @@ export function useEventParticipants(eventId: string) {
   // Query event-scoped roles separately (event has no 'roles' relationship)
   const { roles: eventRoles } = useEventRoles(eventId);
   const rolesData = { roles: eventRoles };
+  const organizerRole = eventRoles.find((role) => role.name === 'Organizer');
+  const participantRole = eventRoles.find((role) => role.name === 'Participant');
 
   // Get existing participant IDs to exclude from invite search
-  const existingParticipantIds = participants.map((p: any) => p.user?.id).filter(Boolean) as string[];
+  const existingParticipantIds = participants.map((p) => p.user?.id).filter(Boolean) as string[];
 
   // Filter users for invite search
-  const filteredUsers = (usersData).filter((user: any) => {
+  const filteredUsers = (usersData).filter((user) => {
     if (!user?.id) return false;
     if (existingParticipantIds.includes(user.id)) return false;
 
     const query = inviteSearchQuery.toLowerCase();
+    const fullName = `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim();
     return (
-      user.name?.toLowerCase().includes(query) ||
+      fullName.toLowerCase().includes(query) ||
       user.handle?.toLowerCase().includes(query) ||
-      user.contact_email?.toLowerCase().includes(query)
+      user.email?.toLowerCase().includes(query)
     );
   });
 
@@ -114,9 +117,11 @@ export function useEventParticipants(eventId: string) {
   };
 
   // Handle changing participant role
-  const handleChangeRole = async (participantId: string, newRole: string) => {
+  const handleChangeRole = async (participantId: string, newRoleId: string) => {
+    if (!newRoleId) return;
+
     try {
-      await changeParticipantRole(participantId, newRole);
+      await changeParticipantRole(participantId, newRoleId);
     } catch (err) {
       console.error('Error changing role:', err);
     }
@@ -138,11 +143,6 @@ export function useEventParticipants(eventId: string) {
       return;
     }
 
-    if (!event?.group?.id) {
-      toast.error('Event group not found');
-      return;
-    }
-
     try {
       const roleId = crypto.randomUUID();
       await createRole({
@@ -150,6 +150,7 @@ export function useEventParticipants(eventId: string) {
         name: newRoleName,
         description: newRoleDescription,
         scope: 'event',
+        sort_order: 0,
         event_id: eventId,
         group_id: null,
         amendment_id: null,
@@ -185,9 +186,9 @@ export function useEventParticipants(eventId: string) {
   ) => {
     try {
       if (currentlyHasRight) {
-        const role = rolesData?.roles?.find((r: any) => r.id === roleId);
+        const role = rolesData?.roles?.find((r) => r.id === roleId);
         const actionRightToRemove = role?.action_rights?.find(
-          (ar: any) => ar.resource === resource && ar.action === action
+          (ar) => ar.resource === resource && ar.action === action
         );
         if (actionRightToRemove) {
           await removeActionRight({ id: actionRightToRemove.id });
@@ -216,9 +217,9 @@ export function useEventParticipants(eventId: string) {
     if (!searchQuery.trim()) return participants;
 
     const query = searchQuery.toLowerCase();
-    return participants.filter((participant: any) => {
-      const userName = participant.user?.name?.toLowerCase() || '';
-      const userEmail = participant.user?.contact_email?.toLowerCase() || '';
+    return participants.filter((participant) => {
+      const userName = `${participant.user?.first_name ?? ''} ${participant.user?.last_name ?? ''}`.trim().toLowerCase();
+      const userEmail = participant.user?.email?.toLowerCase() || '';
       const userHandle = participant.user?.handle?.toLowerCase() || '';
       const status = participant.status?.toLowerCase() || '';
       return (
@@ -231,13 +232,13 @@ export function useEventParticipants(eventId: string) {
   }, [participants, searchQuery]);
 
   const pendingRequests = useMemo(
-    () => filteredParticipants.filter((p: any) => p.status === 'requested'),
+    () => filteredParticipants.filter((p) => p.status === 'requested'),
     [filteredParticipants]
   );
   const activeParticipants = useMemo(
     () =>
       filteredParticipants.filter(
-        (p: any) =>
+        (p) =>
           p.status === 'member' ||
           p.status === 'confirmed' ||
           p.status === 'admin' ||
@@ -246,7 +247,7 @@ export function useEventParticipants(eventId: string) {
     [filteredParticipants]
   );
   const invitedUsers = useMemo(
-    () => filteredParticipants.filter((p: any) => p.status === 'invited'),
+    () => filteredParticipants.filter((p) => p.status === 'invited'),
     [filteredParticipants]
   );
 
@@ -257,6 +258,8 @@ export function useEventParticipants(eventId: string) {
     error,
     currentUserId,
     rolesData,
+    organizerRole,
+    participantRole,
     filteredUsers,
     isLoadingUsers,
 

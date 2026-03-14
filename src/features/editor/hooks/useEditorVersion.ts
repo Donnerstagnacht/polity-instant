@@ -8,6 +8,7 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
+import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useDocumentState } from '@/zero/documents/useDocumentState';
 import { useBlogState } from '@/zero/blogs/useBlogState';
@@ -36,11 +37,11 @@ interface UseEditorVersionResult {
   /** Create a new version */
   createVersion: (
     title: string,
-    content: any[],
+    content: unknown[],
     creationType?: VersionCreationType
   ) => Promise<void>;
   /** Restore a specific version */
-  restoreVersion: (version: EditorVersion, onRestore: (content: any[]) => void) => Promise<void>;
+  restoreVersion: (version: EditorVersion, onRestore: (content: unknown[]) => void) => Promise<void>;
   /** Update a version's title */
   updateVersionTitle: (versionId: string, newTitle: string) => Promise<void>;
   /** Delete a version */
@@ -86,18 +87,18 @@ export function useEditorVersion(options: UseEditorVersionOptions): UseEditorVer
 
   // Sort versions by version number (newest first)
   const sortedVersions = useMemo(() => {
-    return [...versions].sort((a: any, b: any) => b.version_number - a.version_number);
+    return [...versions].sort((a, b) => ((b as unknown as Record<string, number>).version_number ?? 0) - ((a as unknown as Record<string, number>).version_number ?? 0));
   }, [versions]);
 
   // Get the latest version number
   const latestVersionNumber = useMemo(() => {
     if (versions.length === 0) return 0;
-    return Math.max(...versions.map((v: any) => v.version_number));
+    return Math.max(...versions.map((v) => ((v as unknown as Record<string, number>).version_number ?? 0)));
   }, [versions]);
 
   // Create a new version
   const createVersion = useCallback(
-    async (title: string, content: any[], creationType: VersionCreationType = 'manual') => {
+    async (title: string, content: unknown[], creationType: VersionCreationType = 'manual') => {
       if (!userId) {
         toast.error(t('features.editor.versionControl.notLoggedIn'));
         return;
@@ -113,22 +114,15 @@ export function useEditorVersion(options: UseEditorVersionOptions): UseEditorVer
         const versionId = crypto.randomUUID();
         const newVersionNumber = latestVersionNumber + 1;
 
-        const txData: any = {
+        await doCreateVersion({
           id: versionId,
-          title: title.trim(),
-          content: JSON.stringify(content),
+          change_summary: title.trim(),
+          content: JSON.stringify(content) as unknown as ReadonlyJSONValue,
           version_number: newVersionNumber,
-          creation_type: creationType,
-        };
-
-        // Link to the appropriate entity
-        if (entityType === 'blog') {
-          txData.blog_id = entityId;
-        } else {
-          txData.document_id = entityId;
-        }
-
-        await doCreateVersion(txData);
+          document_id: entityType === 'blog' ? '' : entityId,
+          amendment_id: null,
+          blog_id: entityType === 'blog' ? entityId : null,
+        });
       } catch (error) {
         console.error('Failed to create version:', error);
         toast.error(t('features.editor.versionControl.createFailed'));
@@ -141,7 +135,7 @@ export function useEditorVersion(options: UseEditorVersionOptions): UseEditorVer
 
   // Restore a version
   const restoreVersion = useCallback(
-    async (version: EditorVersion, onRestore: (content: any[]) => void) => {
+    async (version: EditorVersion, onRestore: (content: unknown[]) => void) => {
       try {
         const content =
           typeof version.content === 'string' ? JSON.parse(version.content) : version.content;

@@ -107,22 +107,6 @@ export function isQuorumReached(
 }
 
 /**
- * Get human-readable result text
- */
-export function getResultText(result: VoteResult): string {
-  switch (result) {
-    case 'passed':
-      return 'Accepted';
-    case 'rejected':
-      return 'Rejected';
-    case 'tie':
-      return 'Tie';
-    default:
-      return 'Unknown';
-  }
-}
-
-/**
  * Get human-readable majority type text
  */
 export function getMajorityTypeText(majorityType: MajorityType): string {
@@ -135,22 +119,6 @@ export function getMajorityTypeText(majorityType: MajorityType): string {
       return 'Two-Thirds Majority';
     default:
       return 'Unknown';
-  }
-}
-
-/**
- * Calculate the threshold needed to pass based on majority type
- */
-export function getPassThreshold(majorityType: MajorityType, eligibleVoters: number): number {
-  switch (majorityType) {
-    case 'simple':
-      return Math.floor(eligibleVoters / 2) + 1;
-    case 'absolute':
-      return Math.floor(eligibleVoters / 2) + 1;
-    case 'two_thirds':
-      return Math.ceil((eligibleVoters * 2) / 3);
-    default:
-      return Math.floor(eligibleVoters / 2) + 1;
   }
 }
 

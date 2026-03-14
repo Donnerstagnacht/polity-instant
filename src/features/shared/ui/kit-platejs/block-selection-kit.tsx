@@ -1,5 +1,6 @@
 import { BlockSelectionPlugin } from '@platejs/selection/react';
 import { getPluginTypes, KEYS } from 'platejs';
+import type { PlateElementProps } from 'platejs/react';
 
 import { BlockSelection } from '@/features/shared/ui/ui-platejs/block-selection.tsx';
 
@@ -17,7 +18,7 @@ export const BlockSelectionKit = [
       belowRootNodes: props => {
         if (!props.attributes.className?.includes('slate-selectable')) return null;
 
-        return <BlockSelection {...(props as any)} />;
+        return <BlockSelection {...(props as unknown as PlateElementProps)} />;
       },
     },
   })),

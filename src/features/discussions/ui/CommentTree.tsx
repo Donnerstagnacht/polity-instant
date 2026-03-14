@@ -5,8 +5,7 @@ import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Reply, ArrowUp, ArrowDown, User, Clock } from 'lucide-react';
 import { toast } from 'sonner';
-import { createComment } from '../utils/thread-operations';
-import { voteOnComment, calculateScore } from '@/features/votes/utils/voting-utils';
+import { calculateScore } from '@/features/votes/utils/voting-utils';
 import type { CommentWithReplies } from '../utils/comment-tree';
 
 interface CommentTreeProps {
@@ -16,9 +15,23 @@ interface CommentTreeProps {
   amendmentId?: string;
   amendmentTitle?: string;
   senderName?: string;
+  onCreateComment: (
+    threadId: string,
+    text: string,
+    userId: string,
+    parentCommentId?: string,
+  ) => Promise<string>;
+  onVoteComment: (
+    commentId: string,
+    voteValue: number,
+    currentVote: { id: string; vote: number } | undefined,
+    currentUpvotes: number,
+    currentDownvotes: number,
+    userId?: string,
+  ) => Promise<void>;
 }
 
-export function CommentTree({ comment, threadId, userId, amendmentId, amendmentTitle, senderName }: CommentTreeProps) {
+export function CommentTree({ comment, threadId, userId, amendmentId, amendmentTitle, senderName, onCreateComment, onVoteComment }: CommentTreeProps) {
   const [isReplying, setIsReplying] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,7 +48,7 @@ export function CommentTree({ comment, threadId, userId, amendmentId, amendmentT
     }
 
     try {
-      await voteOnComment(
+      await onVoteComment(
         comment.id,
         voteValue,
         userVote,
@@ -54,19 +67,16 @@ export function CommentTree({ comment, threadId, userId, amendmentId, amendmentT
 
     setIsSubmitting(true);
     try {
-      await createComment(
+      await onCreateComment(
         threadId,
         replyText,
         userId,
         comment.id,
-        senderName && amendmentId && amendmentTitle ? { senderName, amendmentId, amendmentTitle } : undefined
       );
-      toast.success('Reply posted successfully');
       setReplyText('');
       setIsReplying(false);
     } catch (error) {
       console.error('Error posting reply:', error);
-      toast.error('Failed to post reply');
     } finally {
       setIsSubmitting(false);
     }
@@ -160,6 +170,8 @@ export function CommentTree({ comment, threadId, userId, amendmentId, amendmentT
               amendmentId={amendmentId}
               amendmentTitle={amendmentTitle}
               senderName={senderName}
+              onCreateComment={onCreateComment}
+              onVoteComment={onVoteComment}
             />
           ))}
         </div>

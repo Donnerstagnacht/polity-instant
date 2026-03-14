@@ -17,22 +17,22 @@ export function useNotificationFilters({
   );
 
   const unreadNotifications = useMemo(() => {
-    return accessibleNotifications.filter((n: any) => !n.isRead);
+    return accessibleNotifications.filter(n => !n.isRead);
   }, [accessibleNotifications]);
 
   const readNotifications = useMemo(() => {
-    return accessibleNotifications.filter((n: any) => n.isRead);
+    return accessibleNotifications.filter(n => n.isRead);
   }, [accessibleNotifications]);
 
   const personalNotifications = useMemo(() => {
     return accessibleNotifications.filter(
-      (n: any) => n.recipient?.id === userId
+      n => n.recipient?.id === userId
     );
   }, [accessibleNotifications, userId]);
 
   const entityNotifications = useMemo(() => {
     return accessibleNotifications.filter(
-      (n: any) =>
+      n =>
         n.recipientGroup || n.recipientEvent || n.recipientAmendment || n.recipientBlog ||
         n.onBehalfOfGroup || n.onBehalfOfEvent || n.onBehalfOfAmendment || n.onBehalfOfBlog
     );

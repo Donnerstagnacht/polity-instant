@@ -193,12 +193,12 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
               />
               <Label htmlFor="isPublic">{t('features.events.editPage.publicEvent')}</Label>
             </div>
-            {!isCreating && event?.event_type && event.event_type !== 'other' && (
+            {!isCreating && event?.event_type && (
               <div className="space-y-2">
                 <Label>{t('pages.create.event.eventType')}</Label>
                 <div>
                   <Badge variant="outline">
-                    {t(`pages.create.event.eventTypes.${event.event_type === 'delegate_conference' ? 'delegateConference' : event.event_type === 'general_assembly' ? 'generalAssembly' : 'openAssembly'}`)}
+                    {t(`pages.create.event.eventTypes.${event.event_type === 'delegate_assembly' ? 'delegateAssembly' : event.event_type === 'general_assembly' ? 'generalAssembly' : event.event_type === 'on_invite' ? 'onInvite' : 'open'}`)}
                   </Badge>
                 </div>
               </div>

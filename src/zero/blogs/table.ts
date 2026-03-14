@@ -10,6 +10,8 @@ export const blog = table('blog')
     image_url: string().optional(),
     is_public: boolean().optional(),
     visibility: string(),
+    subscriber_count: number(),
+    supporter_count: number(),
     like_count: number(),
     comment_count: number(),
     upvotes: number(),

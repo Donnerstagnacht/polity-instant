@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
-import { useAuthStore } from '@/features/auth/auth';
+import { useAuth } from '@/providers/auth-provider';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useSubscribeAmendment } from './useSubscribeAmendment';
@@ -12,11 +12,11 @@ import {
   getSupportStatus,
   AMENDMENT_STATUS_COLORS,
 } from '../logic/amendmentHelpers';
-import { notifyAmendmentVoted } from '@/features/shared/utils/notification-helpers';
+import { notifyAmendmentVoted } from '@/features/notifications/utils/notification-helpers.ts';
 
 export function useAmendmentWikiPage(amendmentId: string) {
   const navigate = useNavigate();
-  const user = useAuthStore((state: any) => state.user);
+  const { user } = useAuth();
 
   // Subscribe hook
   const subscribeData = useSubscribeAmendment(amendmentId);
@@ -40,7 +40,7 @@ export function useAmendmentWikiPage(amendmentId: string) {
     eventGroupId: '',
   });
 
-  const amendment = (facadeResult.amendmentFull as any)?.[0] as any;
+  const amendment = facadeResult.amendmentFull;
 
   const networkData = useMemo(
     () => ({
@@ -78,9 +78,9 @@ export function useAmendmentWikiPage(amendmentId: string) {
 
   const usersData = useMemo(
     () => ({
-      $users: (facadeResult as any).allUsers ?? [],
+      $users: facadeResult.allUsers ?? [],
     }),
-    [(facadeResult as any).allUsers]
+    [facadeResult.allUsers]
   );
 
   // Derived data
@@ -90,11 +90,11 @@ export function useAmendmentWikiPage(amendmentId: string) {
   const clones = facadeResult.clones ?? [];
   const clonedFrom = amendment?.clone_source;
   const totalSupportingMembers = supportingGroups.reduce(
-    (sum: number, group: any) => sum + (group.memberships?.length || 0),
+    (sum: number, _group) => sum + 0,
     0
   );
   const path = amendment?.paths?.[0];
-  const targetCollaborator = path?.user;
+  const targetCollaborator = undefined as { imageURL?: string; name?: string } | undefined;
   const targetGroup = amendment?.group;
 
   const isAdmin = collaborationData.status === 'admin';
@@ -110,6 +110,10 @@ export function useAmendmentWikiPage(amendmentId: string) {
   const handleVote = async (voteValue: number) => {
     if (!user?.id) {
       toast.error('Please log in to vote');
+      return;
+    }
+    if (!amendment) {
+      toast.error('Amendment not found');
       return;
     }
 
@@ -153,7 +157,7 @@ export function useAmendmentWikiPage(amendmentId: string) {
 
       // Notify amendment author about vote (skip on vote removal)
       if (!(userVote && userVote.vote === voteValue)) {
-        const adminCollab = collaborators.find((c: any) => c.status === 'admin');
+        const adminCollab = collaborators.find((c) => c.status === 'admin');
         const authorUserId = adminCollab?.user?.id;
         if (authorUserId && authorUserId !== user.id) {
           await notifyAmendmentVoted({
@@ -161,7 +165,7 @@ export function useAmendmentWikiPage(amendmentId: string) {
             senderName: user.email || 'Someone',
             recipientUserId: authorUserId,
             amendmentId,
-            amendmentTitle: amendment.title,
+            amendmentTitle: amendment.title ?? '',
             voteType: voteValue === 1 ? 'upvote' : 'downvote',
           });
         }
@@ -173,7 +177,13 @@ export function useAmendmentWikiPage(amendmentId: string) {
   };
 
   const getSupportStatusForGroup = (groupId: string) =>
-    getSupportStatus(groupId, supportConfirmations);
+    getSupportStatus(
+      groupId,
+      supportConfirmations.map(sc => ({
+        group: sc.group_id ? { id: sc.group_id } : undefined,
+        status: sc.status ?? undefined,
+      })),
+    );
 
   return {
     // Navigation

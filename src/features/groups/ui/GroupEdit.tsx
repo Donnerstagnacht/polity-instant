@@ -41,7 +41,7 @@ export function GroupEdit({ groupId }: GroupEditProps) {
           <p className="text-lg font-semibold">{t('features.groups.editPage.notFound')}</p>
           <p className="text-muted-foreground">{t('features.groups.editPage.notFoundDescription')}</p>
           <div className="mt-6">
-            <Button onClick={() => navigate({ to: '/groups' })} variant="default">
+            <Button onClick={() => navigate({ to: '/home' })} variant="default">
               {t('features.groups.backToGroups')}
             </Button>
           </div>

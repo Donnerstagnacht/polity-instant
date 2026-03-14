@@ -12,6 +12,8 @@ const ENTITY_TYPE_LABELS: Record<EntityType, string> = {
   group: 'Groups',
   amendment: 'Amendments',
   event: 'Events',
+  election: 'Elections',
+  position: 'Positions',
 };
 
 interface TypeaheadDropdownProps {

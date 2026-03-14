@@ -96,7 +96,7 @@ export function VerifyForm() {
       if (result.isNewUser) {
         // New user - redirect to onboarding
         console.log('🎉 Redirecting to onboarding');
-        navigate({ to: '/?onboarding=true' });
+        navigate({ to: '/', search: { onboarding: 'true' } });
       } else {
         // Existing user - redirect to homepage
         console.log('✅ Existing user, redirecting to homepage');

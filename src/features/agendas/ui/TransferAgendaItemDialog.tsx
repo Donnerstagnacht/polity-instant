@@ -15,8 +15,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/features/shared/ui/ui/dialog';
-import { TypeAheadSelect } from '@/features/shared/ui/ui/type-ahead-select';
-import { EventSelectCard } from '@/features/shared/ui/ui/entity-select-cards';
+import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
+import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
+import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { ArrowRight, Calendar, AlertTriangle, Loader2 } from 'lucide-react';
@@ -37,10 +38,9 @@ interface TransferAgendaItemDialogProps {
 interface EventWithPermission {
   id: string;
   title: string;
-  startDate?: string;
-  location?: string;
-  group?: { name: string };
-  participantCount?: number;
+  start_date?: number | null;
+  location_name?: string | null;
+  group?: { name: string | null };
 }
 
 export function TransferAgendaItemDialog({
@@ -73,7 +73,7 @@ export function TransferAgendaItemDialog({
 
     const events: EventWithPermission[] = [];
 
-    participationsData.forEach((participation: any) => {
+    participationsData.forEach((participation) => {
       // Skip current event
       if (participation.event?.id === currentEventId) return;
       if (!participation.event) return;
@@ -85,8 +85,8 @@ export function TransferAgendaItemDialog({
         events.push({
           id: participation.event.id,
           title: participation.event.title || 'Untitled Event',
-          startDate: participation.event.start_date,
-          location: participation.event.location,
+          start_date: participation.event.start_date,
+          location_name: participation.event.location_name,
           group: participation.event.group,
         });
       }
@@ -175,14 +175,16 @@ export function TransferAgendaItemDialog({
                 </CardContent>
               </Card>
             ) : (
-              <TypeAheadSelect
-                items={eventsWithPermission}
+              <TypeaheadSearch
+                items={toTypeaheadItems(
+                  eventsWithPermission,
+                  'event',
+                  (e: EventWithPermission) => e.title,
+                  (e: EventWithPermission) => e.group?.name,
+                )}
                 value={selectedEventId}
-                onChange={setSelectedEventId}
+                onChange={(item: TypeaheadItem | null) => setSelectedEventId(item?.id ?? '')}
                 placeholder={t('features.events.agenda.searchEvents')}
-                searchKeys={['title', 'location']}
-                renderItem={event => <EventSelectCard event={event} />}
-                getItemId={event => event.id}
               />
             )}
           </div>

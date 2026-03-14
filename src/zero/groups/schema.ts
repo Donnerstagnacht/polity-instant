@@ -1,6 +1,8 @@
 import { z } from 'zod'
 import { timestampSchema, nullableTimestampSchema } from '../shared/helpers'
 
+const groupTypeSchema = z.enum(['base', 'hierarchical'])
+
 // ── group ─────────────────────────────────────────────────────────────
 const groupBaseSchema = z.object({
   id: z.string(),
@@ -10,12 +12,16 @@ const groupBaseSchema = z.object({
   image_url: z.string().nullable(),
   is_public: z.boolean(),
   member_count: z.number(),
+  subscriber_count: z.number(),
+  event_count: z.number(),
+  amendment_count: z.number(),
+  document_count: z.number(),
   x: z.string().nullable(),
   youtube: z.string().nullable(),
   linkedin: z.string().nullable(),
   website: z.string().nullable(),
   visibility: z.string(),
-  group_type: z.string(),
+  group_type: groupTypeSchema,
   owner_id: z.string().nullable(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
@@ -23,8 +29,8 @@ const groupBaseSchema = z.object({
 
 export const groupSelectSchema = groupBaseSchema
 export const groupCreateSchema = groupBaseSchema
-  .omit({ id: true, created_at: true, updated_at: true, member_count: true, group_type: true })
-  .extend({ id: z.string(), group_type: z.string().optional() })
+  .omit({ id: true, created_at: true, updated_at: true, member_count: true, subscriber_count: true, event_count: true, amendment_count: true, document_count: true })
+  .extend({ id: z.string() })
 export const groupUpdateSchema = groupBaseSchema
   .pick({
     name: true,

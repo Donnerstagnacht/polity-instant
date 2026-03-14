@@ -6,8 +6,8 @@ export interface SuggestionContent {
   type: string;
   text: string;
   newText: string;
-  properties: Record<string, any>;
-  newProperties: Record<string, any>;
+  properties: Record<string, unknown>;
+  newProperties: Record<string, unknown>;
 }
 
 /**
@@ -15,7 +15,7 @@ export interface SuggestionContent {
  */
 export function extractSuggestionContent(
   discussionId: string,
-  documentContent: any[] | undefined
+  documentContent: Record<string, unknown>[] | undefined
 ): SuggestionContent {
   if (!documentContent || !Array.isArray(documentContent)) {
     return { type: 'unknown', text: '', newText: '', properties: {}, newProperties: {} };
@@ -24,18 +24,18 @@ export function extractSuggestionContent(
   let type = 'unknown';
   let text = '';
   let newText = '';
-  let properties: any = {};
-  let newProperties: any = {};
+  let properties: Record<string, unknown> = {};
+  let newProperties: Record<string, unknown> = {};
 
   // Recursively search through the document content for suggestion marks
-  const searchNodes = (nodes: any[]): void => {
+  const searchNodes = (nodes: Record<string, unknown>[]): void => {
     for (const node of nodes) {
       if (node && typeof node === 'object') {
         // Look for suggestion_* properties
         const suggestionKeys = Object.keys(node).filter(key => key.startsWith('suggestion_'));
 
         for (const key of suggestionKeys) {
-          const suggestionData = node[key];
+          const suggestionData = node[key] as { id?: string; type?: string; properties?: Record<string, unknown>; newProperties?: Record<string, unknown> } | undefined;
           if (suggestionData && suggestionData.id === discussionId) {
             type = suggestionData.type || type;
 

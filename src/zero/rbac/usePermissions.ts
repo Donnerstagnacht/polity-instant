@@ -56,16 +56,16 @@ interface UsePermissionsData {
   isLoading: boolean
 }
 
-function mapActionRights(raw: any[] | undefined): ActionRight[] {
+function mapActionRights(raw: readonly Record<string, string | null | number>[] | undefined): ActionRight[] {
   if (!raw) return []
-  return raw.map((ar: any) => ({
-    id: ar.id,
-    resource: ar.resource,
-    action: ar.action,
-    group: ar.group_id ? { id: ar.group_id } : undefined,
-    event: ar.event_id ? { id: ar.event_id } : undefined,
-    amendment: ar.amendment_id ? { id: ar.amendment_id } : undefined,
-    blog: ar.blog_id ? { id: ar.blog_id } : undefined,
+  return raw.map((ar) => ({
+    id: String(ar.id ?? ''),
+    resource: String(ar.resource ?? '') as ActionRight['resource'],
+    action: String(ar.action ?? '') as ActionRight['action'],
+    group: ar.group_id ? { id: String(ar.group_id) } : undefined,
+    event: ar.event_id ? { id: String(ar.event_id) } : undefined,
+    amendment: ar.amendment_id ? { id: String(ar.amendment_id) } : undefined,
+    blog: ar.blog_id ? { id: String(ar.blog_id) } : undefined,
   }))
 }
 
@@ -89,7 +89,7 @@ function usePermissionsData(userId: string | undefined): UsePermissionsData {
 
   const memberships = useMemo(() => {
     if (!membershipsRaw) return undefined
-    return (membershipsRaw as any[]).map((m: any) => ({
+    return membershipsRaw.map((m) => ({
       id: m.id,
       group: m.group ? { id: m.group.id } : undefined,
       role: m.role
@@ -106,7 +106,7 @@ function usePermissionsData(userId: string | undefined): UsePermissionsData {
 
   const participations = useMemo(() => {
     if (!participationsRaw) return undefined
-    return (participationsRaw as any[]).map((p: any) => ({
+    return participationsRaw.map((p) => ({
       id: p.id,
       event: p.event ? { id: p.event.id } : undefined,
       role: p.role
@@ -123,7 +123,7 @@ function usePermissionsData(userId: string | undefined): UsePermissionsData {
 
   const bloggerRelations = useMemo(() => {
     if (!bloggerRelationsRaw) return undefined
-    return (bloggerRelationsRaw as any[]).map((b: any) => ({
+    return bloggerRelationsRaw.map((b) => ({
       id: b.id,
       blog: b.blog ? { id: b.blog.id } : undefined,
       role: b.role

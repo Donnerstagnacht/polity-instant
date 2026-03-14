@@ -163,7 +163,6 @@ export function CreateBlogForm() {
           status: 'member',
           visibility: formData.visibility,
         },
-        hashtags: [],
       });
 
       // Sync hashtags via junction tables

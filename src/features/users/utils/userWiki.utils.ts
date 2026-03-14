@@ -96,6 +96,7 @@ export function getRoleBadgeColor(role: string) {
 }
 
 // Function to get a deterministic gradient based on blog ID
-export function getBlogGradient(blogId: number, gradientVariants: string[]) {
-  return gradientVariants[blogId % gradientVariants.length];
+export function getBlogGradient(blogId: string, gradientVariants: string[]) {
+  const hash = blogId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return gradientVariants[hash % gradientVariants.length];
 }

@@ -16,6 +16,7 @@ import { commonQueries } from './common/queries'
 import { searchQueries } from './shared/queries'
 import { rbacQueries } from './rbac/queries'
 import { preferenceQueries } from './preferences/queries'
+import { calendarSubscriptionQueries } from './calendar-subscriptions/queries'
 
 export const queries = defineQueries({
   users: userQueries,
@@ -34,4 +35,5 @@ export const queries = defineQueries({
   search: searchQueries,
   rbac: rbacQueries,
   preferences: preferenceQueries,
+  calendarSubscriptions: calendarSubscriptionQueries,
 })

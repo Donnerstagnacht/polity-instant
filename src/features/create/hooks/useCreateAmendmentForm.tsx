@@ -88,6 +88,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                   {t('pages.create.amendment.titleLabel')}{' '}
                   <span className="text-destructive">*</span>
                 </Label>
+                <p className="text-muted-foreground text-xs">{t('pages.create.amendment.tips.title')}</p>
                 <Input
                   value={title}
                   onChange={e => setTitle(e.target.value)}
@@ -96,6 +97,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
               </div>
               <div className="space-y-2">
                 <Label>{t('pages.create.amendment.subtitleOptional')}</Label>
+                <p className="text-muted-foreground text-xs">{t('pages.create.amendment.tips.subtitle')}</p>
                 <Input
                   value={subtitle}
                   onChange={e => setSubtitle(e.target.value)}

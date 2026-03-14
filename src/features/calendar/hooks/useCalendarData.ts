@@ -1,15 +1,15 @@
 import { useMemo } from 'react';
 import { useAuth } from '@/providers/auth-provider';
-import { useEventsForCalendar, useMeetingSlotsWithBookings } from '@/zero/events/useEventState';
-import { CalendarEvent } from '../types/calendar.types';
+import { useEventsForCalendarWithExceptions } from '@/zero/events/useEventState';
 import { addYears, generateRecurringInstances } from '../logic/recurringEventHelpers';
+import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
+import type { CalendarEvent } from '../types/calendar.types';
+import { getInstanceBookingCount, isBookedByUser } from '@/zero/events/useMeetingState';
 
 export const useCalendarData = () => {
   const { user } = useAuth();
 
-  const { events: eventsData } = useEventsForCalendar();
-
-  const { meetingSlots } = useMeetingSlotsWithBookings();
+  const { events: eventsData } = useEventsForCalendarWithExceptions();
 
   const isLoading = false;
 
@@ -21,46 +21,56 @@ export const useCalendarData = () => {
     const rangeStart = addYears(now, -1);
     const rangeEnd = addYears(now, 1);
 
-    // Filter events where user is a participant or organizer
+    // Filter events where user is a participant, organizer, or meeting is bookable by them
     const userEvents = (eventsData || [])
       .filter((event: any) => {
         const isOrganizer = event.creator?.id === user.id;
         const isParticipant = event.participants?.some((p: any) => p.user?.id === user.id);
-        return isOrganizer || isParticipant;
+        // Include bookable meetings even if user hasn't booked yet (so they appear as available)
+        const isBookableMeeting = event.is_bookable && event.meeting_type;
+        return isOrganizer || isParticipant || isBookableMeeting;
       })
       .flatMap((event: any) => {
-        // Expand recurring events into instances
-        const instances = generateRecurringInstances(event, rangeStart, rangeEnd);
-        return instances.map((instance: any) => ({
-          ...instance,
-          description: instance.description || '',
-        }));
+        const isMeeting = !!event.meeting_type;
+        const participants = event.participants ?? [];
+        // Expand recurring events into instances, passing exceptions
+        const instances = generateRecurringInstances(event, rangeStart, rangeEnd, event.exceptions);
+        return instances.map((instance: any) => {
+          const instanceDate = instance.isRecurringInstance ? instance.start_date : null;
+          const bookingCount = isMeeting
+            ? getInstanceBookingCount(participants, event.creator_id, instanceDate)
+            : undefined;
+          const bookedByMe = isMeeting
+            ? isBookedByUser(participants, user.id, instanceDate)
+            : undefined;
+
+          return {
+            ...instance,
+            startDate: instance.start_date,
+            endDate: instance.end_date,
+            location: instance.location_name || instance.location,
+            isPublic: instance.is_public ?? true,
+            imageURL: instance.image_url,
+            description: instance.description || '',
+            organizer: event.creator,
+            participants: event.participants,
+            groupName: event.group?.name,
+            groupId: event.group_id,
+            organizerName: event.group?.name || event.creator?.name,
+            attendeeCount: event.participants?.length,
+            hashtags: extractHashtagTags(event.event_hashtags)?.map((tag: string) => ({ id: tag, tag })),
+            isMeeting,
+            meetingType: event.meeting_type,
+            isBookable: event.is_bookable,
+            maxBookings: event.max_bookings,
+            bookingCount,
+            isBookedByMe: bookedByMe,
+          };
+        });
       });
 
-    // Filter meeting slots where user is owner or has booked
-    const userMeetings = (meetingSlots || []).filter((slot: any) => {
-      const isOwner = slot.user?.id === user.id;
-      const hasBooked = slot.bookings?.some((b: any) => b.user?.id === user.id);
-      return isOwner || hasBooked;
-    });
-
-    // Convert meetings to event-like format for unified display
-    const meetingEvents = userMeetings.map((slot: any) => ({
-      id: slot.id,
-      title: slot.title || 'Meeting',
-      description: slot.description || '',
-      location: slot.is_public ? 'Public Meeting' : 'Private Meeting',
-      startDate: slot.start_time,
-      endDate: slot.end_time,
-      isPublic: slot.is_public,
-      imageURL: null,
-      organizer: slot.user,
-      participants: slot.bookings?.map((b: any) => ({ user: b.user })) || [],
-      isMeeting: true,
-    }));
-
-    return [...userEvents, ...meetingEvents];
-  }, [eventsData, meetingSlots, user]);
+    return userEvents;
+  }, [eventsData, user]);
 
   return { events: calendarEvents, isLoading };
 };

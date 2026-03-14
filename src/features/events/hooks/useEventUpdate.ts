@@ -69,7 +69,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
     if (event && !initializedRef.current) {
       initializedRef.current = true;
       // Format dates for datetime-local input
-      const formatDateForInput = (date: any) => {
+      const formatDateForInput = (date: string | number | null | undefined) => {
         if (!date) return '';
         const d = new Date(date);
         return d.toISOString().slice(0, 16);
@@ -106,7 +106,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           return;
         }
 
-        const createData: any = {
+        const createData = {
           id: eventId,
           title: formData.title,
           description: formData.description || null,
@@ -128,22 +128,16 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           return;
         }
 
-        const updateData: any = {
+        const updateData = {
           title: formData.title,
           description: formData.description,
           location_name: formData.location,
           start_date: new Date(formData.startDate).getTime(),
+          end_date: formData.endDate ? new Date(formData.endDate).getTime() : null,
           is_public: formData.isPublic,
           image_url: formData.imageURL || null,
+          capacity: formData.capacity ? parseInt(formData.capacity, 10) : null,
         };
-
-        if (formData.endDate) {
-          updateData.end_date = new Date(formData.endDate).getTime();
-        }
-
-        if (formData.capacity) {
-          updateData.capacity = parseInt(formData.capacity, 10);
-        }
 
         await updateEvent(updateData);
       }

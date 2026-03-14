@@ -69,7 +69,8 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
         <div>
           <label className="mb-2 block text-sm font-medium">Created By</label>
           <Link
-            to={`/user/${todo.creator.id}`}
+            to="/user/$id"
+            params={{ id: todo.creator.id }}
             className="flex items-center gap-2 text-sm hover:underline"
           >
             <Avatar className="h-6 w-6">
@@ -92,7 +93,8 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
             {todo.assignments.map((assignment, idx) => (
               <Link
                 key={idx}
-                to={`/user/${assignment.user?.id}`}
+                to="/user/$id"
+                params={{ id: assignment.user?.id ?? '' }}
                 className="flex items-center gap-2 text-sm hover:underline"
               >
                 <Avatar className="h-6 w-6">
@@ -116,7 +118,8 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
             Group
           </label>
           <Link
-            to={`/group/${todo.group.id}`}
+            to="/group/$id"
+            params={{ id: todo.group.id }}
             className="flex items-center gap-2 text-sm hover:underline"
           >
             <Avatar className="h-6 w-6">

@@ -14,10 +14,10 @@ import { Check, X, Trash2, LucideIcon } from 'lucide-react';
 
 interface MembershipItem {
   id: string;
-  status: string;
+  status?: string | null;
   createdAt?: string;
-  role?: { name: string };
-  [key: string]: any;
+  role?: { name?: string | null };
+  [key: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic entity key access requires index signature
 }
 
 interface EntityData {

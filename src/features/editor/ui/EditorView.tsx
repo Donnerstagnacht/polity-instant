@@ -21,15 +21,12 @@ import { useSuggestionIdAssignment } from '@/features/documents/hooks/use-sugges
 import { useEditor } from '../hooks/useEditor';
 import { useEditorPresence } from '../hooks/useEditorPresence';
 import { useEditorUsers } from '../hooks/useEditorUsers';
+import { useEditorOperations } from '../hooks/useEditorOperations';
 import { VersionControl } from './VersionControl';
 import { ModeSelector } from './ModeSelector';
 import { InviteCollaboratorDialog } from './InviteCollaboratorDialog';
 import { EditorHeader } from './EditorHeader';
-import {
-  handleSuggestionAccepted,
-  handleSuggestionDeclined,
-  handleVoteOnSuggestion,
-} from '../utils/editor-operations';
+import type { ResolvedSuggestion } from '@/features/shared/ui/ui-platejs/block-suggestion.tsx';
 import type { EditorViewProps, EditorUser, TDiscussion } from '../types';
 
 export function EditorView({
@@ -111,6 +108,9 @@ export function EditorView({
     onDiscussionsUpdate: setDiscussions,
   });
 
+  // Editor operations (suggestion accept/decline/vote via Zero)
+  const editorOps = useEditorOperations(entityType, contentEntityId);
+
   // Get amendment-specific data
   const amendmentId = entity?.metadata?.amendmentId;
   const amendmentTitle = entity?.metadata?.amendmentCode
@@ -119,75 +119,65 @@ export function EditorView({
 
   // Handle suggestion accepted
   const onSuggestionAccepted = useCallback(
-    async (suggestion: any) => {
+    async (suggestion: ResolvedSuggestion) => {
       if (!contentEntityId || !userId || !content) return;
 
-      const { updatedDiscussions } = await handleSuggestionAccepted(
-        entityType,
-        contentEntityId,
+      const { updatedDiscussions } = await editorOps.handleSuggestionAccepted(
         userId,
         content,
         discussions,
         suggestion,
         mode,
         amendmentId,
-        amendmentTitle
       );
 
       setDiscussions(updatedDiscussions);
     },
     [
-      entityType,
       contentEntityId,
       userId,
       content,
       discussions,
       mode,
       amendmentId,
-      amendmentTitle,
       setDiscussions,
+      editorOps,
     ]
   );
 
   // Handle suggestion declined
   const onSuggestionDeclined = useCallback(
-    async (suggestion: any) => {
+    async (suggestion: ResolvedSuggestion) => {
       if (!contentEntityId || !userId || !content) return;
 
-      const { updatedDiscussions } = await handleSuggestionDeclined(
-        entityType,
-        contentEntityId,
+      const { updatedDiscussions } = await editorOps.handleSuggestionDeclined(
         userId,
         content,
         discussions,
         suggestion,
         mode,
         amendmentId,
-        amendmentTitle
       );
 
       setDiscussions(updatedDiscussions);
     },
     [
-      entityType,
       contentEntityId,
       userId,
       content,
       discussions,
       mode,
       amendmentId,
-      amendmentTitle,
       setDiscussions,
+      editorOps,
     ]
   );
 
   // Handle voting
   const onVoteAccept = useCallback(
-    async (suggestion: any) => {
+    async (suggestion: ResolvedSuggestion) => {
       if (!contentEntityId || !userId || !amendmentId) return;
-      await handleVoteOnSuggestion(
-        entityType,
-        contentEntityId,
+      await editorOps.handleVoteOnSuggestion(
         amendmentId,
         userId,
         discussions,
@@ -195,15 +185,13 @@ export function EditorView({
         'accept'
       );
     },
-    [entityType, contentEntityId, amendmentId, userId, discussions]
+    [contentEntityId, amendmentId, userId, discussions, editorOps]
   );
 
   const onVoteReject = useCallback(
-    async (suggestion: any) => {
+    async (suggestion: ResolvedSuggestion) => {
       if (!contentEntityId || !userId || !amendmentId) return;
-      await handleVoteOnSuggestion(
-        entityType,
-        contentEntityId,
+      await editorOps.handleVoteOnSuggestion(
         amendmentId,
         userId,
         discussions,
@@ -211,15 +199,13 @@ export function EditorView({
         'reject'
       );
     },
-    [entityType, contentEntityId, amendmentId, userId, discussions]
+    [contentEntityId, amendmentId, userId, discussions, editorOps]
   );
 
   const onVoteAbstain = useCallback(
-    async (suggestion: any) => {
+    async (suggestion: ResolvedSuggestion) => {
       if (!contentEntityId || !userId || !amendmentId) return;
-      await handleVoteOnSuggestion(
-        entityType,
-        contentEntityId,
+      await editorOps.handleVoteOnSuggestion(
         amendmentId,
         userId,
         discussions,
@@ -227,7 +213,7 @@ export function EditorView({
         'abstain'
       );
     },
-    [entityType, contentEntityId, amendmentId, userId, discussions]
+    [contentEntityId, amendmentId, userId, discussions, editorOps]
   );
 
   // Get existing collaborator IDs

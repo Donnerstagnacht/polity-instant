@@ -7,6 +7,7 @@ export const calendarTranslations = {
     week: 'Week',
     month: 'Month',
     agenda: 'Agenda',
+    list: 'List',
   },
   today: 'Today',
   navigation: {
@@ -30,6 +31,10 @@ export const calendarTranslations = {
     myEvents: 'My events',
     groupEvents: 'Group events',
     publicEvents: 'Public events',
+  },
+  search: {
+    placeholder: 'Search events...',
+    clearDate: 'Clear date',
   },
   actions: {
     createEvent: 'Create Event',
@@ -63,10 +68,15 @@ export const calendarTranslations = {
     unknown: 'Unknown',
     youreOrganizing: "You're organizing",
     youreAttending: "You're attending",
-    yourMeetingSlot: 'Your meeting slot',
+    yourMeeting: 'Your meeting',
     youBookedThis: 'You booked this',
     publicMeeting: 'Public Meeting',
     privateMeeting: 'Private Meeting',
+  },
+  meeting: {
+    booked: 'Booked',
+    fullyBooked: 'Fully booked',
+    available: 'Available',
   },
   stats: {
     title: 'Stats',

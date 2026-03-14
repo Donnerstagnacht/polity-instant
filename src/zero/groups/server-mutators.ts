@@ -1,9 +1,12 @@
 import { defineMutator } from '@rocicorp/zero'
+import { z } from 'zod'
 import { mutators } from '../mutators'
 import { zql } from '../schema'
 import { fireNotification } from '../server-notify'
-import { groupName, userName, roleName } from '../server-helpers'
+import { groupName, userName, roleName, recomputeGroupCounters, recomputeUserCounters } from '../server-helpers'
+import { DEFAULT_GROUP_ROLES } from '../rbac/constants'
 import {
+  groupCreateSchema,
   groupMembershipCreateSchema,
   groupMembershipDeleteSchema,
   groupMembershipUpdateSchema,
@@ -32,6 +35,65 @@ import {
 
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 export const groupServerMutators = {
+  create: defineMutator(groupCreateSchema, async ({ tx, ctx, args }) => {
+    await mutators.groups.create.fn({ tx, ctx, args })
+
+    const now = Date.now()
+    let adminRoleId: string | null = null
+    const totalRoles = DEFAULT_GROUP_ROLES.length
+
+    for (let index = 0; index < totalRoles; index++) {
+      const roleDef = DEFAULT_GROUP_ROLES[index]
+      const roleId = crypto.randomUUID()
+
+      if (roleDef.name === 'Admin') {
+        adminRoleId = roleId
+      }
+
+      await tx.mutate.role.insert({
+        id: roleId,
+        name: roleDef.name,
+        description: roleDef.description,
+        scope: 'group',
+        group_id: args.id,
+        event_id: null,
+        amendment_id: null,
+        blog_id: null,
+        sort_order: totalRoles - 1 - index,
+        created_at: now,
+      })
+
+      for (const permission of roleDef.permissions) {
+        await tx.mutate.action_right.insert({
+          id: crypto.randomUUID(),
+          resource: permission.resource,
+          action: permission.action,
+          role_id: roleId,
+          group_id: args.id,
+          event_id: null,
+          amendment_id: null,
+          blog_id: null,
+          created_at: now,
+        })
+      }
+    }
+
+    await tx.mutate.group_membership.insert({
+      id: crypto.randomUUID(),
+      group_id: args.id,
+      user_id: ctx.userID,
+      status: 'active',
+      visibility: 'public',
+      role_id: adminRoleId,
+      source: 'direct',
+      source_group_id: null,
+      created_at: now,
+    })
+
+    await recomputeGroupCounters(tx, args.id)
+    await recomputeUserCounters(tx, ctx.userID)
+  }),
+
   joinGroup: defineMutator(groupMembershipCreateSchema, async ({ tx, ctx, args }) => {
     const group = await tx.run(zql.group.where('id', args.group_id).one())
 
@@ -52,6 +114,9 @@ export const groupServerMutators = {
 
     // Run shared mutator (guards + direct insert)
     await mutators.groups.joinGroup.fn({ tx, ctx, args })
+
+    await recomputeGroupCounters(tx, args.group_id)
+    await recomputeUserCounters(tx, ctx.userID)
 
     if (args.status === 'requested' && args.group_id) {
       const [gName, uName] = await Promise.all([
@@ -83,7 +148,7 @@ export const groupServerMutators = {
         id: crypto.randomUUID(),
         group_id: ancestorId,
         user_id: ctx.userID,
-        status: 'member',
+        status: 'active',
         visibility: 'public',
         role_id: memberRole?.id ?? null,
         source: 'derived',
@@ -91,14 +156,7 @@ export const groupServerMutators = {
         created_at: Date.now(),
       })
 
-      // Update member_count
-      const ancestorGroup = await tx.run(zql.group.where('id', ancestorId).one())
-      if (ancestorGroup) {
-        await tx.mutate.group.update({
-          id: ancestorId,
-          member_count: (ancestorGroup.member_count ?? 0) + 1,
-        })
-      }
+      await recomputeGroupCounters(tx, ancestorId)
     }
   }),
 
@@ -113,12 +171,70 @@ export const groupServerMutators = {
     }
   }),
 
+  acceptInvitation: defineMutator(z.object({ id: z.string() }), async ({ tx, ctx, args }) => {
+    const membership = await tx.run(zql.group_membership.where('id', args.id).one())
+
+    await mutators.groups.acceptInvitation.fn({ tx, ctx, args })
+
+    if (!membership) return
+
+    await recomputeGroupCounters(tx, membership.group_id)
+    await recomputeUserCounters(tx, membership.user_id)
+
+    const [gName, uName] = await Promise.all([
+      groupName(tx, membership.group_id),
+      userName(tx, ctx.userID),
+    ])
+    fireNotification('notifyGroupInvitationAccepted', {
+      senderId: ctx.userID, senderName: uName, groupId: membership.group_id, groupName: gName,
+    })
+
+    // Propagate derived memberships when accepting invitation to a base group
+    const group = await tx.run(zql.group.where('id', membership.group_id).one())
+    if (!group || group.group_type !== 'base') return
+
+    const pvrRels = await tx.run(
+      zql.group_relationship.where('with_right', 'passiveVotingRight').where('status', 'active')
+    )
+    const ancestors = resolveHierarchicalAncestors(membership.group_id, pvrRels)
+    if (ancestors.length === 0) return
+
+    for (const ancestorId of ancestors) {
+      const existing = await tx.run(
+        zql.group_membership.where('user_id', membership.user_id).where('group_id', ancestorId)
+      )
+      if (existing.length > 0) continue
+
+      const roles = await tx.run(
+        zql.role.where('group_id', ancestorId).where('scope', 'group')
+      )
+      const memberRole = roles.find(r => r.name === 'Member')
+
+      await tx.mutate.group_membership.insert({
+        id: crypto.randomUUID(),
+        group_id: ancestorId,
+        user_id: membership.user_id,
+        status: 'active',
+        visibility: 'public',
+        role_id: memberRole?.id ?? null,
+        source: 'derived',
+        source_group_id: membership.group_id,
+        created_at: Date.now(),
+      })
+
+      await recomputeGroupCounters(tx, ancestorId)
+    }
+  }),
+
   leaveGroup: defineMutator(groupMembershipDeleteSchema, async ({ tx, ctx, args }) => {
     const membership = await tx.run(zql.group_membership.where('id', args.id).one())
 
     await mutators.groups.leaveGroup.fn({ tx, ctx, args })
 
     if (!membership) return
+
+    await recomputeGroupCounters(tx, membership.group_id)
+    await recomputeUserCounters(tx, membership.user_id)
 
     // Cascade: delete derived memberships from ancestor groups
     if (membership.source === 'direct') {
@@ -128,14 +244,7 @@ export const groupServerMutators = {
       const toDelete = allDerived.filter(m => m.source_group_id === membership.group_id)
       for (const derived of toDelete) {
         await tx.mutate.group_membership.delete({ id: derived.id })
-        // Decrement member_count
-        const ancestorGroup = await tx.run(zql.group.where('id', derived.group_id).one())
-        if (ancestorGroup) {
-          await tx.mutate.group.update({
-            id: derived.group_id,
-            member_count: Math.max(0, (ancestorGroup.member_count ?? 0) - 1),
-          })
-        }
+        await recomputeGroupCounters(tx, derived.group_id)
       }
     }
 
@@ -183,6 +292,9 @@ export const groupServerMutators = {
 
     if (!oldMembership) return
 
+    await recomputeGroupCounters(tx, oldMembership.group_id)
+    await recomputeUserCounters(tx, oldMembership.user_id)
+
     const gId = oldMembership.group_id
     const membUserId = oldMembership.user_id
     const oldStatus = oldMembership.status
@@ -191,7 +303,7 @@ export const groupServerMutators = {
 
     const gName = await groupName(tx, gId)
 
-    if (newStatus === 'member' && (oldStatus === 'requested' || oldStatus === 'invited')) {
+    if (newStatus === 'active' && (oldStatus === 'requested' || oldStatus === 'invited')) {
       if (isSelf) {
         const uName = await userName(tx, ctx.userID)
         fireNotification('notifyGroupInvitationAccepted', {
@@ -206,7 +318,7 @@ export const groupServerMutators = {
       fireNotification('notifyAdminPromoted', {
         senderId: ctx.userID, recipientUserId: membUserId, groupId: gId, groupName: gName,
       })
-    } else if (newStatus === 'member' && oldStatus === 'admin') {
+    } else if (newStatus === 'active' && oldStatus === 'admin') {
       fireNotification('notifyAdminDemoted', {
         senderId: ctx.userID, recipientUserId: membUserId, groupId: gId, groupName: gName,
       })
@@ -217,6 +329,42 @@ export const groupServerMutators = {
       fireNotification('notifyMembershipRoleChanged', {
         senderId: ctx.userID, recipientUserId: membUserId, groupId: gId, groupName: gName, newRole: rInfo.name,
       })
+    }
+
+    // Propagate derived memberships when admin approves a request or invitation
+    if (newStatus === 'active' && (oldStatus === 'requested' || oldStatus === 'invited')) {
+      const group = await tx.run(zql.group.where('id', gId).one())
+      if (group?.group_type === 'base') {
+        const pvrRels = await tx.run(
+          zql.group_relationship.where('with_right', 'passiveVotingRight').where('status', 'active')
+        )
+        const ancestors = resolveHierarchicalAncestors(gId, pvrRels)
+        for (const ancestorId of ancestors) {
+          const existing = await tx.run(
+            zql.group_membership.where('user_id', membUserId).where('group_id', ancestorId)
+          )
+          if (existing.length > 0) continue
+
+          const roles = await tx.run(
+            zql.role.where('group_id', ancestorId).where('scope', 'group')
+          )
+          const memberRole = roles.find(r => r.name === 'Member')
+
+          await tx.mutate.group_membership.insert({
+            id: crypto.randomUUID(),
+            group_id: ancestorId,
+            user_id: membUserId,
+            status: 'active',
+            visibility: 'public',
+            role_id: memberRole?.id ?? null,
+            source: 'derived',
+            source_group_id: gId,
+            created_at: Date.now(),
+          })
+
+          await recomputeGroupCounters(tx, ancestorId)
+        }
+      }
     }
   }),
 
@@ -409,7 +557,7 @@ export const groupServerMutators = {
       const baseMembers = await tx.run(
         zql.group_membership.where('group_id', baseGroupId).where('source', 'direct')
       )
-      const activeMembers = baseMembers.filter(m => m.status === 'member')
+      const activeMembers = baseMembers.filter(m => m.status === 'active')
 
       const ancestors = resolveHierarchicalAncestors(baseGroupId, allPvrRels)
       for (const ancestorId of ancestors) {
@@ -429,7 +577,7 @@ export const groupServerMutators = {
             id: crypto.randomUUID(),
             group_id: ancestorId,
             user_id: member.user_id,
-            status: 'member',
+            status: 'active',
             visibility: 'public',
             role_id: memberRole?.id ?? null,
             source: 'derived',
@@ -438,14 +586,7 @@ export const groupServerMutators = {
           })
         }
 
-        // Update member_count
-        const allAncestorMembers = await tx.run(
-          zql.group_membership.where('group_id', ancestorId).where('status', 'member')
-        )
-        await tx.mutate.group.update({
-          id: ancestorId,
-          member_count: allAncestorMembers.length,
-        })
+        await recomputeGroupCounters(tx, ancestorId)
       }
     }
   }),
@@ -495,14 +636,7 @@ export const groupServerMutators = {
       }
     }
 
-    // Update member_counts for parent and its ancestors
-    const parentMembers = await tx.run(
-      zql.group_membership.where('group_id', parentGroupId).where('status', 'member')
-    )
-    await tx.mutate.group.update({
-      id: parentGroupId,
-      member_count: parentMembers.length,
-    })
+    await recomputeGroupCounters(tx, parentGroupId)
 
     // If parent has no more pvr children, transition back to base
     const remainingChildren = remainingPvrRels.filter(r => r.group_id === parentGroupId)

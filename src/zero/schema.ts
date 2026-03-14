@@ -1,9 +1,9 @@
 import { createSchema, createBuilder, type Row } from '@rocicorp/zero'
 
 // Table imports
-import { user, file, userStats } from './users/table'
+import { user, file } from './users/table'
 import { group, groupMembership, role, actionRight } from './groups/table'
-import { event, eventParticipant, participant } from './events/table'
+import { event, eventParticipant, participant, eventException } from './events/table'
 import { amendment, amendmentCollaborator, amendmentPath, amendmentPathSegment, supportConfirmation } from './amendments/table'
 import { document, documentVersion, documentCollaborator, documentCursor } from './documents/table'
 import { agendaItem, speakerList } from './agendas/table'
@@ -24,6 +24,7 @@ import { eventDelegate, groupDelegateAllocation } from './delegates/table'
 import { meetingSlot, meetingBooking } from './meet/table'
 import { follow, groupRelationship, subscriber } from './network/table'
 import { userPreference } from './preferences/table'
+import { calendarSubscription } from './calendar-subscriptions/table'
 
 // Relationship imports
 import { allRelationships } from './relationships'
@@ -34,11 +35,11 @@ import { allRelationships } from './relationships'
 export const schema = createSchema({
   tables: [
     // Users
-    user, file, userStats,
+    user, file,
     // Groups
     group, groupMembership, role, actionRight,
     // Events
-    event, eventParticipant, participant,
+    event, eventParticipant, participant, eventException,
     // Amendments
     amendment, amendmentCollaborator, amendmentPath, amendmentPathSegment, supportConfirmation,
     // Documents
@@ -79,6 +80,8 @@ export const schema = createSchema({
     userPreference,
     // Common
     hashtag, userHashtag, groupHashtag, amendmentHashtag, eventHashtag, blogHashtag, statementHashtag, link, timelineEvent, reaction,
+    // Calendar Subscriptions
+    calendarSubscription,
   ],
   relationships: allRelationships,
 })
@@ -94,7 +97,6 @@ export const zql = createBuilder(schema)
 export type User = Row<Schema['tables']['user']>
 export type File = Row<Schema['tables']['file']>
 export type Follow = Row<Schema['tables']['follow']>
-export type UserStats = Row<Schema['tables']['user_stats']>
 
 // Groups
 export type Group = Row<Schema['tables']['group']>
@@ -118,6 +120,8 @@ export type EventPositionHolder = Row<Schema['tables']['event_position_holder']>
 export type EventVotingSession = Row<Schema['tables']['event_voting_session']>
 export type EventVote = Row<Schema['tables']['event_vote']>
 export type ScheduledElection = Row<Schema['tables']['scheduled_election']>
+export type EventException = Row<Schema['tables']['event_exception']>
+export type CalendarSubscription = Row<Schema['tables']['calendar_subscription']>
 
 // Amendments
 export type Amendment = Row<Schema['tables']['amendment']>

@@ -5,15 +5,12 @@
 import { useState } from 'react';
 import { useGroupLinks as useFacadeGroupLinks } from '@/zero/groups/useGroupState';
 import { toast } from 'sonner';
-import type { GroupLink } from '@/features/groups/types/group.types';
 import { useCommonActions } from '@/zero/common/useCommonActions';
 
 export function useGroupLinks(groupId: string) {
   const [isLoading, setIsLoading] = useState(false);
-  const { links: linksData, isLoading: isQuerying } = useFacadeGroupLinks(groupId);
+  const { links, isLoading: isQuerying } = useFacadeGroupLinks(groupId);
   const { createLink: createLinkAction, deleteLink: deleteLinkAction } = useCommonActions();
-
-  const links = linksData as any as GroupLink[];
 
   const addLink = async (label: string, url: string, senderId?: string) => {
     setIsLoading(true);

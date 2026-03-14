@@ -3,7 +3,7 @@
  * Extracted from content-type-config.ts for reuse outside timeline code.
  */
 
-export type EntityType = 'group' | 'event' | 'amendment' | 'blog' | 'user'
+export type EntityType = 'group' | 'event' | 'amendment' | 'blog' | 'user' | 'election' | 'position'
 
 export interface EntityColorConfig {
   gradient: string
@@ -57,28 +57,20 @@ export const ENTITY_COLORS: Record<EntityType, EntityColorConfig> = {
     notificationBorderLeft: 'border-l-blue-500',
     badgeBg: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
   },
-}
-
-/**
- * Get the full gradient class string for an entity type
- */
-export function getEntityGradientClasses(entityType: EntityType): string {
-  const config = ENTITY_COLORS[entityType]
-  return `bg-gradient-to-br ${config.gradient} ${config.gradientDark}`
-}
-
-/**
- * Get entity type from notification recipient fields
- */
-export function getEntityTypeFromRecipient(notification: {
-  recipient_group_id?: string | null
-  recipient_event_id?: string | null
-  recipient_amendment_id?: string | null
-  recipient_blog_id?: string | null
-}): EntityType | null {
-  if (notification.recipient_group_id) return 'group'
-  if (notification.recipient_event_id) return 'event'
-  if (notification.recipient_amendment_id) return 'amendment'
-  if (notification.recipient_blog_id) return 'blog'
-  return null
+  election: {
+    gradient: 'from-rose-100 to-pink-100',
+    gradientDark: 'dark:from-rose-900/40 dark:to-pink-900/50',
+    accentColor: 'text-rose-600 dark:text-rose-400',
+    borderColor: 'border-rose-500',
+    notificationBorderLeft: 'border-l-rose-500',
+    badgeBg: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
+  },
+  position: {
+    gradient: 'from-cyan-100 to-sky-100',
+    gradientDark: 'dark:from-cyan-900/40 dark:to-sky-900/50',
+    accentColor: 'text-cyan-600 dark:text-cyan-400',
+    borderColor: 'border-cyan-500',
+    notificationBorderLeft: 'border-l-cyan-500',
+    badgeBg: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300',
+  },
 }

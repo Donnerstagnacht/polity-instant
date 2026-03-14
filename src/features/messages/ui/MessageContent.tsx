@@ -1,6 +1,6 @@
 'use client';
 
-import { parseMessageWithLinks } from '@/features/shared/utils/url-utils.ts';
+import { parseMessageWithLinks } from '@/features/messages/utils/url-utils.ts';
 import { LinkPreview } from './LinkPreview.tsx';
 
 interface MessageContentProps {

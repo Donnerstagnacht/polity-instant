@@ -153,7 +153,7 @@ export const groupsSeeder: EntitySeeder = {
       transactions.push(
         tx.groupMemberships[ownerMembershipId]
           .update({
-            status: 'member',
+            status: 'active',
             createdAt: faker.date.past({ years: 1 }),
             visibility: 'public',
           })
@@ -176,7 +176,7 @@ export const groupsSeeder: EntitySeeder = {
         transactions.push(
           tx.groupMemberships[tobiasMembershipId]
             .update({
-              status: 'member',
+              status: 'active',
               createdAt: faker.date.past({ years: 0.5 }),
               visibility: 'public',
             })
@@ -208,11 +208,11 @@ export const groupsSeeder: EntitySeeder = {
             ? boardMemberRoleId
             : memberRoleId;
 
-        // Board Members always have 'member' status, regular members can be invited/requested
+        // Board Members always have 'active' status, regular members can be invited/requested
         const status =
           roleId === boardMemberRoleId
-            ? ('member' as const)
-            : randomItem(['member', 'member', 'member', 'requested', 'invited'] as const);
+            ? ('active' as const)
+            : randomItem(['active', 'active', 'active', 'requested', 'invited'] as const);
 
         if (roleId === boardMemberRoleId) {
           usersWithBoardMemberRole.add(memberId);
@@ -422,7 +422,7 @@ export const groupsSeeder: EntitySeeder = {
       transactions.push(
         tx.groupMemberships[ownerMembershipId]
           .update({
-            status: 'member',
+            status: 'active',
             createdAt: faker.date.past({ years: 1 }),
             visibility: randomVisibility(),
           })
@@ -458,11 +458,11 @@ export const groupsSeeder: EntitySeeder = {
             ? boardMemberRoleId
             : memberRoleId;
 
-        // Board Members always have 'member' status, regular members can be invited/requested
+        // Board Members always have 'active' status, regular members can be invited/requested
         const status =
           roleId === boardMemberRoleId
-            ? ('member' as const)
-            : randomItem(['member', 'member', 'requested', 'invited'] as const);
+            ? ('active' as const)
+            : randomItem(['active', 'active', 'requested', 'invited'] as const);
 
         if (roleId === boardMemberRoleId) {
           usersWithBoardMemberRole.add(memberId);

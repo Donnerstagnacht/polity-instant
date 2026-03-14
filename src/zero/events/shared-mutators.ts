@@ -8,6 +8,11 @@ import {
   eventParticipantCreateSchema,
   eventParticipantUpdateSchema,
   eventParticipantDeleteSchema,
+  eventExceptionCreateSchema,
+  eventExceptionUpdateSchema,
+  eventExceptionDeleteSchema,
+  bookMeetingSchema,
+  cancelMeetingBookingSchema,
 } from './schema'
 import {
   eventVoteCreateSchema,
@@ -34,7 +39,11 @@ export const eventSharedMutators = {
     await tx.mutate.event.insert({
       ...args,
       creator_id: userID,
-      participant_count: 0,
+      participant_count: 1,
+      subscriber_count: 0,
+      election_count: 0,
+      amendment_count: 0,
+      open_change_request_count: 0,
       delegate_count: 0,
       cancel_reason: '',
       cancelled_at: 0,
@@ -42,6 +51,19 @@ export const eventSharedMutators = {
       created_at: now,
       updated_at: now,
     } as Parameters<typeof tx.mutate.event.insert>[0])
+
+    // Optimistically add creator as participant (server mutator assigns Organizer role)
+    await tx.mutate.event_participant.insert({
+      id: crypto.randomUUID(),
+      event_id: args.id,
+      user_id: userID,
+      group_id: args.group_id ?? null,
+      status: 'confirmed',
+      role_id: null,
+      visibility: args.visibility ?? 'public',
+      instance_date: null,
+      created_at: now,
+    })
   }),
 
   update: defineMutator(eventUpdateSchema, async ({ tx, args }) => {
@@ -65,6 +87,7 @@ export const eventSharedMutators = {
     await tx.mutate.event_participant.insert({
       ...args,
       user_id: userID,
+      status: args.status ?? 'requested',
       created_at: now,
     })
   }),
@@ -86,12 +109,11 @@ export const eventSharedMutators = {
   finalizeAgendaItem: defineMutator(
     z.object({ id: z.string(), status: z.string(), end_time: z.number().optional() }),
     async ({ tx, args }) => {
-      const update: Record<string, unknown> = {
+      await tx.mutate.event_voting_session.update({
         id: args.id,
         status: args.status,
-      }
-      if (args.end_time !== undefined) update.end_time = args.end_time
-      await tx.mutate.event_voting_session.update(update as any)
+        ...(args.end_time !== undefined ? { end_time: args.end_time } : {}),
+      })
     }
   ),
 
@@ -218,6 +240,76 @@ export const eventSharedMutators = {
     deleteMeetingBookingSchema,
     async ({ tx, args }) => {
       await tx.mutate.meeting_booking.delete({ id: args.id })
+    }
+  ),
+
+  // Event Exception mutators
+  createException: defineMutator(
+    eventExceptionCreateSchema,
+    async ({ tx, args }) => {
+      const now = Date.now()
+      await tx.mutate.event_exception.insert({
+        ...args,
+        created_at: now,
+        updated_at: now,
+      })
+    }
+  ),
+
+  updateException: defineMutator(
+    eventExceptionUpdateSchema,
+    async ({ tx, args }) => {
+      await tx.mutate.event_exception.update({
+        ...args,
+        updated_at: Date.now(),
+      })
+    }
+  ),
+
+  deleteException: defineMutator(
+    eventExceptionDeleteSchema,
+    async ({ tx, args }) => {
+      await tx.mutate.event_exception.delete({ id: args.id })
+    }
+  ),
+
+  // Meeting booking mutators (meetings as events)
+  bookMeeting: defineMutator(
+    bookMeetingSchema,
+    async ({ tx, ctx: { userID }, args }) => {
+      const now = Date.now()
+      await tx.mutate.event_participant.insert({
+        id: crypto.randomUUID(),
+        event_id: args.event_id,
+        user_id: userID,
+        group_id: null,
+        status: 'confirmed',
+        role_id: null,
+        visibility: 'public',
+        instance_date: args.instance_date,
+        created_at: now,
+      })
+    }
+  ),
+
+  cancelMeetingBooking: defineMutator(
+    cancelMeetingBookingSchema,
+    async ({ tx, ctx: { userID }, args }) => {
+      // Find the participant entry for this user + event + instance
+      const participants = await tx.run(
+        zql.event_participant
+          .where('event_id', args.event_id)
+          .where('user_id', userID)
+      )
+      const match = participants.find(p => {
+        if (args.instance_date === null || args.instance_date === undefined) {
+          return p.instance_date === null || p.instance_date === undefined || p.instance_date === 0
+        }
+        return p.instance_date === args.instance_date
+      })
+      if (match) {
+        await tx.mutate.event_participant.delete({ id: match.id })
+      }
     }
   ),
 }

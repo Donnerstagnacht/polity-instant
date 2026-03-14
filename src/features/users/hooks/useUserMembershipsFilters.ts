@@ -1,17 +1,30 @@
 import { useState, useMemo } from 'react';
 
+/** Shared shape for items passed through the membership filter hook */
+export interface FilterableRecord {
+  id: string;
+  status?: string | null;
+  group?: { id?: string; name?: string | null; description?: string | null };
+  event?: { id?: string; title?: string | null };
+  amendment?: { id?: string; title?: string | null; visibility?: string | null };
+  blog?: { id?: string; title?: string | null };
+  role?: { name?: string | null };
+  createdAt?: string;
+  [key: string]: unknown;
+}
+
 // Co-located types
 export interface UseUserMembershipsFiltersOptions {
-  memberships: any[];
-  participations: any[];
-  collaborations: any[];
-  blogRelations: any[];
+  memberships: readonly FilterableRecord[];
+  participations: readonly FilterableRecord[];
+  collaborations: readonly FilterableRecord[];
+  blogRelations: readonly FilterableRecord[];
 }
 
 export interface MembershipsByStatus {
-  invited: any[];
-  active: any[];
-  requested: any[];
+  invited: FilterableRecord[];
+  active: FilterableRecord[];
+  requested: FilterableRecord[];
 }
 
 export interface UseUserMembershipsFiltersReturn {
@@ -19,10 +32,10 @@ export interface UseUserMembershipsFiltersReturn {
   setSearchQuery: (query: string) => void;
   
   // Filtered results
-  filteredMemberships: any[];
-  filteredParticipations: any[];
-  filteredCollaborations: any[];
-  filteredBlogRelations: any[];
+  filteredMemberships: readonly FilterableRecord[];
+  filteredParticipations: readonly FilterableRecord[];
+  filteredCollaborations: readonly FilterableRecord[];
+  filteredBlogRelations: readonly FilterableRecord[];
   
   // Separated by status
   membershipsByStatus: MembershipsByStatus;
@@ -44,7 +57,7 @@ export function useUserMembershipsFilters({
     if (!searchQuery.trim()) return memberships;
 
     const query = searchQuery.toLowerCase();
-    return memberships.filter((membership: any) => {
+    return memberships.filter((membership) => {
       const groupName = membership.group?.name?.toLowerCase() || '';
       const groupDescription = membership.group?.description?.toLowerCase() || '';
       const role = membership.role?.name?.toLowerCase() || '';
@@ -63,7 +76,7 @@ export function useUserMembershipsFilters({
     if (!searchQuery.trim()) return participations;
 
     const query = searchQuery.toLowerCase();
-    return participations.filter((participation: any) => {
+    return participations.filter((participation) => {
       const eventTitle = participation.event?.title?.toLowerCase() || '';
       const status = participation.status?.toLowerCase() || '';
       return eventTitle.includes(query) || status.includes(query);
@@ -75,7 +88,7 @@ export function useUserMembershipsFilters({
     if (!searchQuery.trim()) return collaborations;
 
     const query = searchQuery.toLowerCase();
-    return collaborations.filter((collaboration: any) => {
+    return collaborations.filter((collaboration) => {
       const amendmentTitle = collaboration.amendment?.title?.toLowerCase() || '';
       const status = collaboration.status?.toLowerCase() || '';
       return amendmentTitle.includes(query) || status.includes(query);
@@ -87,7 +100,7 @@ export function useUserMembershipsFilters({
     if (!searchQuery.trim()) return blogRelations;
 
     const query = searchQuery.toLowerCase();
-    return blogRelations.filter((relation: any) => {
+    return blogRelations.filter((relation) => {
       const blogTitle = relation.blog?.title?.toLowerCase() || '';
       const role = relation.role?.name?.toLowerCase() || '';
       const status = relation.status?.toLowerCase() || '';
@@ -98,11 +111,11 @@ export function useUserMembershipsFilters({
   // Separate memberships by status
   const membershipsByStatus: MembershipsByStatus = useMemo(
     () => ({
-      invited: filteredMemberships.filter((m: any) => m.status === 'invited'),
+      invited: filteredMemberships.filter((m) => m.status === 'invited'),
       active: filteredMemberships.filter(
-        (m: any) => m.status === 'member' || m.status === 'admin'
+        (m) => m.status === 'member' || m.status === 'admin'
       ),
-      requested: filteredMemberships.filter((m: any) => m.status === 'requested'),
+      requested: filteredMemberships.filter((m) => m.status === 'requested'),
     }),
     [filteredMemberships]
   );
@@ -110,11 +123,11 @@ export function useUserMembershipsFilters({
   // Separate participations by status
   const participationsByStatus: MembershipsByStatus = useMemo(
     () => ({
-      invited: filteredParticipations.filter((p: any) => p.status === 'invited'),
+      invited: filteredParticipations.filter((p) => p.status === 'invited'),
       active: filteredParticipations.filter(
-        (p: any) => p.status === 'member' || p.status === 'admin' || p.status === 'confirmed'
+        (p) => p.status === 'member' || p.status === 'admin' || p.status === 'confirmed'
       ),
-      requested: filteredParticipations.filter((p: any) => p.status === 'requested'),
+      requested: filteredParticipations.filter((p) => p.status === 'requested'),
     }),
     [filteredParticipations]
   );
@@ -122,11 +135,11 @@ export function useUserMembershipsFilters({
   // Separate collaborations by status
   const collaborationsByStatus: MembershipsByStatus = useMemo(
     () => ({
-      invited: filteredCollaborations.filter((c: any) => c.status === 'invited'),
+      invited: filteredCollaborations.filter((c) => c.status === 'invited'),
       active: filteredCollaborations.filter(
-        (c: any) => c.status === 'member' || c.status === 'admin' || c.role?.name === 'Author'
+        (c) => c.status === 'member' || c.status === 'admin' || c.role?.name === 'Author'
       ),
-      requested: filteredCollaborations.filter((c: any) => c.status === 'requested'),
+      requested: filteredCollaborations.filter((c) => c.status === 'requested'),
     }),
     [filteredCollaborations]
   );
@@ -134,11 +147,11 @@ export function useUserMembershipsFilters({
   // Separate blog relations by status
   const blogRelationsByStatus: MembershipsByStatus = useMemo(
     () => ({
-      invited: filteredBlogRelations.filter((b: any) => b.status === 'invited'),
+      invited: filteredBlogRelations.filter((b) => b.status === 'invited'),
       active: filteredBlogRelations.filter(
-        (b: any) => b.status === 'writer' || b.status === 'owner' || b.status === 'member'
+        (b) => b.status === 'writer' || b.status === 'owner' || b.status === 'member'
       ),
-      requested: filteredBlogRelations.filter((b: any) => b.status === 'requested'),
+      requested: filteredBlogRelations.filter((b) => b.status === 'requested'),
     }),
     [filteredBlogRelations]
   );

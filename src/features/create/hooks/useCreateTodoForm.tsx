@@ -11,6 +11,7 @@ import { PriorityInput } from '../ui/inputs/PriorityInput'
 import { StatusInput } from '../ui/inputs/StatusInput'
 import { VisibilityInput } from '../ui/inputs/VisibilityInput'
 import { TagsInput } from '../ui/inputs/TagsInput'
+import { UserSearchInput } from '../ui/inputs/UserSearchInput'
 import { CreateSummaryStep } from '../ui/CreateSummaryStep'
 import type { CreateFormConfig } from '../types/create-form.types'
 
@@ -27,6 +28,7 @@ export function useCreateTodoForm(): CreateFormConfig {
   const [dueDate, setDueDate] = useState('')
   const [visibility, setVisibility] = useState<'public' | 'authenticated' | 'private'>('private')
   const [tags, setTags] = useState<string[]>([])
+  const [assigneeIds, setAssigneeIds] = useState<string[]>([])
 
   const handleSubmit = async () => {
     if (!title.trim() || !user?.id) return
@@ -35,14 +37,14 @@ export function useCreateTodoForm(): CreateFormConfig {
         title: title.trim(),
         description: description.trim() || undefined,
         ownerId: user.id,
-        assigneeId: user.id,
+        assigneeId: assigneeIds.length > 0 ? assigneeIds[0] : user.id,
         priority,
         status,
         dueDate: dueDate ? new Date(dueDate).getTime() : undefined,
         visibility,
       })
       toast.success(t('pages.create.success.created'))
-      navigate({ to: '/user/$id', params: { id: user.id } })
+      navigate({ to: '/todos' })
     } catch {
       toast.error(t('pages.create.error.createFailed'))
     }
@@ -63,6 +65,7 @@ export function useCreateTodoForm(): CreateFormConfig {
               <Label>
                 {t('pages.create.todo.titleLabel')} <span className="text-destructive">*</span>
               </Label>
+              <p className="text-muted-foreground text-xs">{t('pages.create.todo.tips.title')}</p>
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -71,6 +74,7 @@ export function useCreateTodoForm(): CreateFormConfig {
             </div>
             <div className="space-y-2">
               <Label>{t('pages.create.todo.descriptionLabel')}</Label>
+              <p className="text-muted-foreground text-xs">{t('pages.create.todo.tips.description')}</p>
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -88,6 +92,21 @@ export function useCreateTodoForm(): CreateFormConfig {
           <div className="space-y-4">
             <PriorityInput value={priority} onChange={setPriority} />
             <StatusInput value={status} onChange={setStatus} />
+          </div>
+        ),
+      },
+      {
+        label: t('pages.create.todo.assignTo'),
+        isValid: () => true,
+        optional: true,
+        content: (
+          <div className="space-y-4">
+            <UserSearchInput
+              value={assigneeIds}
+              onChange={setAssigneeIds}
+              label={t('pages.create.todo.assignToLabel')}
+              placeholder={t('pages.create.todo.assignToPlaceholder')}
+            />
           </div>
         ),
       },
@@ -123,6 +142,7 @@ export function useCreateTodoForm(): CreateFormConfig {
             fields={[
               { label: t('pages.create.todo.priorityLabel'), value: t(`pages.create.todo.priority.${priority}`) },
               { label: t('pages.create.todo.statusLabel'), value: status },
+              ...(assigneeIds.length > 0 ? [{ label: t('pages.create.todo.assignedTo'), value: `${assigneeIds.length} user(s)` }] : []),
               ...(dueDate ? [{ label: t('pages.create.todo.dueDateLabel'), value: dueDate }] : []),
               { label: t('pages.create.common.visibility'), value: visibility },
               ...(tags.length > 0 ? [{ label: t('pages.create.todo.tagsLabel'), value: tags.join(', ') }] : []),
@@ -131,7 +151,7 @@ export function useCreateTodoForm(): CreateFormConfig {
         ),
       },
     ],
-  }), [title, description, priority, status, dueDate, visibility, tags, isLoading, t])
+  }), [title, description, priority, status, assigneeIds, dueDate, visibility, tags, isLoading, t])
 
   return config
 }

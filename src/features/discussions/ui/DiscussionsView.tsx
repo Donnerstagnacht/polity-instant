@@ -13,6 +13,8 @@ import {
 import { PageWrapper } from '@/layout/page-wrapper';
 import { ArrowLeft, MessageSquare, Plus, TrendingUp, Calendar as CalendarIcon } from 'lucide-react';
 import { useDiscussions } from '../hooks/useDiscussions';
+import { useDiscussionMutations } from '../hooks/useDiscussionMutations';
+import { useVotingMutations } from '@/features/votes/hooks/useVotingMutations';
 import { ThreadCard } from './ThreadCard';
 import { CreateThreadDialog } from './CreateThreadDialog';
 import { useInfiniteScroll } from '@/features/shared/hooks/useInfiniteScroll';
@@ -29,6 +31,8 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
   const { user: authUser } = useAuth();
 
   const { amendment, threads, isLoading, hasMore, loadMore } = useDiscussions(amendmentId, sortBy);
+  const { createThread, createComment } = useDiscussionMutations();
+  const { voteOnThread, voteOnComment } = useVotingMutations();
 
   const loadMoreRef = useInfiniteScroll({
     hasMore,
@@ -61,7 +65,7 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
     <PageWrapper>
       {/* Back button */}
       <div className="mb-6">
-        <Link to={`/amendment/${amendmentId}`}>
+        <Link to="/amendment/$id" params={{ id: amendmentId }}>
           <Button variant="ghost" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Amendment
@@ -136,6 +140,9 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
                 amendmentId={amendmentId}
                 amendmentTitle={amendment?.title ?? undefined}
                 senderName={authUser?.email ?? undefined}
+                onCreateComment={createComment}
+                onVoteThread={voteOnThread}
+                onVoteComment={voteOnComment}
               />
             ))}
             {hasMore && <div ref={loadMoreRef} className="h-px" />}
@@ -151,6 +158,7 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
         senderName={authUser?.email ?? undefined}
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
+        onCreateThread={createThread}
       />
     </PageWrapper>
   );

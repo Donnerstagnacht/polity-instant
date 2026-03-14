@@ -12,9 +12,13 @@ import {
 import {
   createThreadSchema,
   createCommentSchema,
+  updateThreadSchema,
+  updateCommentSchema,
 } from '../discussions/schema'
 import {
   createThreadVoteSchema,
+  updateThreadVoteSchema,
+  deleteThreadVoteSchema,
   createCommentVoteSchema,
   updateCommentVoteSchema,
   deleteCommentVoteSchema,
@@ -160,6 +164,44 @@ export const documentSharedMutators = {
     deleteCommentVoteSchema,
     async ({ tx, args }) => {
       await tx.mutate.comment_vote.delete({ id: args.id })
+    }
+  ),
+
+  // Update a thread vote
+  updateThreadVote: defineMutator(
+    updateThreadVoteSchema,
+    async ({ tx, args }) => {
+      await tx.mutate.thread_vote.update(args)
+    }
+  ),
+
+  // Delete a thread vote
+  deleteThreadVote: defineMutator(
+    deleteThreadVoteSchema,
+    async ({ tx, args }) => {
+      await tx.mutate.thread_vote.delete({ id: args.id })
+    }
+  ),
+
+  // Update a thread (vote counts)
+  updateThread: defineMutator(
+    updateThreadSchema,
+    async ({ tx, args }) => {
+      await tx.mutate.thread.update({
+        ...args,
+        updated_at: Date.now(),
+      })
+    }
+  ),
+
+  // Update a comment (vote counts)
+  updateComment: defineMutator(
+    updateCommentSchema,
+    async ({ tx, args }) => {
+      await tx.mutate.comment.update({
+        ...args,
+        updated_at: Date.now(),
+      })
     }
   ),
 }

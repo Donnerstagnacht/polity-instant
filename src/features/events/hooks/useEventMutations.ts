@@ -31,7 +31,7 @@ export function useEventMutations(eventId: string) {
           event_id: eventId,
           group_id: null,
           visibility: 'public',
-          role_id: roleId ?? '',
+          role_id: roleId ?? null,
         });
 
         if (senderId && eventTitle) {
@@ -173,7 +173,7 @@ export function useEventMutations(eventId: string) {
    * Update event details
    */
   const updateEvent = async (
-    updates: any,
+    updates: Record<string, unknown>,
     options?: {
       actorId?: string;
       eventTitle?: string;

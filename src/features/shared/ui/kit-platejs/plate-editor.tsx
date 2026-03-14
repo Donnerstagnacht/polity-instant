@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import { type Value } from 'platejs';
 import { Plate, usePlateEditor } from 'platejs/react';
 
 import { EditorKit } from '@/features/shared/ui/kit-platejs/editor-kit.tsx';
@@ -10,16 +11,18 @@ import { Editor, EditorContainer } from '@/features/shared/ui/ui-platejs/editor.
 import { SuggestionCallbacksProvider } from '@/features/shared/ui/kit-platejs/suggestion-callbacks-context.tsx';
 import { ModeProvider } from '@/features/shared/ui/kit-platejs/mode-context.tsx';
 import { ModeSync } from '@/features/shared/ui/kit-platejs/mode-sync.tsx';
+import type { TDiscussion } from '@/features/shared/ui/kit-platejs/discussion-kit.tsx';
+import type { ResolvedSuggestion } from '@/features/shared/ui/ui-platejs/block-suggestion.tsx';
 
 interface PlateEditorProps {
-  initialValue?: any[];
-  value?: any[]; // Controlled mode
-  onChange?: (value: any[]) => void;
+  initialValue?: unknown[];
+  value?: unknown[]; // Controlled mode
+  onChange?: (value: unknown[]) => void;
   cursors?: {
     id: string;
     name: string;
     color: string;
-    position: any;
+    position: Record<string, unknown>;
   }[];
   currentUser?: {
     id: string;
@@ -27,13 +30,13 @@ interface PlateEditorProps {
     avatar?: string;
   };
   users?: Record<string, { id: string; name: string; avatarUrl: string }>;
-  discussions?: any[]; // Discussions/comments data
-  onDiscussionsChange?: (discussions: any[]) => void;
-  onSuggestionAccepted?: (suggestion: any) => void;
-  onSuggestionDeclined?: (suggestion: any) => void;
-  onVoteAccept?: (suggestion: any) => void; // Vote accept callback
-  onVoteReject?: (suggestion: any) => void; // Vote reject callback
-  onVoteAbstain?: (suggestion: any) => void; // Vote abstain callback
+  discussions?: TDiscussion[]; // Discussions/comments data
+  onDiscussionsChange?: (discussions: TDiscussion[]) => void;
+  onSuggestionAccepted?: (suggestion: ResolvedSuggestion) => void;
+  onSuggestionDeclined?: (suggestion: ResolvedSuggestion) => void;
+  onVoteAccept?: (suggestion: ResolvedSuggestion) => void; // Vote accept callback
+  onVoteReject?: (suggestion: ResolvedSuggestion) => void; // Vote reject callback
+  onVoteAbstain?: (suggestion: ResolvedSuggestion) => void; // Vote abstain callback
   documentId?: string; // Document ID for suggestion ID generation
   documentTitle?: string; // Document title to show in discussions/suggestions
   currentMode?: 'edit' | 'view' | 'suggest' | 'vote'; // Current editing mode from DB
@@ -72,7 +75,7 @@ export function PlateEditor({
 
   // Memoize the editor configuration to prevent unnecessary re-creations
   const editorConfig = React.useMemo(() => {
-    const config: any = {
+    const config: Record<string, unknown> = {
       plugins: EditorKit,
       value: isControlled ? value : initialValue || defaultValue,
     };
@@ -158,7 +161,7 @@ export function PlateEditor({
         // Scan the editor content for comment marks
         const commentNodes = editor.api.nodes({
           at: [],
-          match: (n: any) => {
+          match: (n: Record<string, unknown>) => {
             if (!n) return false;
             // Check if node has any comment_* properties
             return Object.keys(n).some(key => key.startsWith('comment_') && key !== 'comment');
@@ -177,7 +180,7 @@ export function PlateEditor({
         // Also scan for suggestion marks
         const suggestionNodes = editor.api.nodes({
           at: [],
-          match: (n: any) => {
+          match: (n: Record<string, unknown>) => {
             if (!n) return false;
             // Check if node has any suggestion_* properties or has suggestion data
             return Object.keys(n).some(key => key.startsWith('suggestion_')) || n.suggestion;
@@ -200,7 +203,7 @@ export function PlateEditor({
         }
 
         // Filter discussions to only keep those with active marks
-        const cleanedDiscussions = currentDiscussions.filter((d: any) =>
+        const cleanedDiscussions = currentDiscussions.filter((d: TDiscussion) =>
           activeDiscussionIds.has(d.id)
         );
 
@@ -233,7 +236,7 @@ export function PlateEditor({
       if (valueChanged) {
         // Update the editor's children directly
         try {
-          editor.children = value;
+          editor.children = value as Value;
           // Force a re-render
           if (typeof editor.onChange === 'function') {
             (editor.onChange as () => void)();
@@ -247,7 +250,7 @@ export function PlateEditor({
   }, [value, isControlled, editor]);
 
   // Handle changes from the editor using ref to avoid recreating function
-  const handleEditorChange = React.useCallback(({ value: newValue }: { value: any }) => {
+  const handleEditorChange = React.useCallback(({ value: newValue }: { value: unknown[] }) => {
     if (onChangeRef.current) {
       onChangeRef.current(newValue);
     }

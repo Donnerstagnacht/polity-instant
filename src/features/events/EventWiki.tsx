@@ -28,6 +28,7 @@ import { extractHashtags } from '@/zero/common/hashtagHelpers';
 import { StatsBar } from '@/features/shared/ui/ui/StatsBar';
 import { ActionBar } from '@/features/shared/ui/ui/ActionBar';
 import { SubscribeButton, MembershipButton } from 'src/features/shared/ui/action-buttons';
+import type { MembershipStatus } from 'src/features/shared/ui/action-buttons/MembershipButton';
 import { InfoTabs } from '@/features/shared/ui/wiki/InfoTabs.tsx';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -98,9 +99,9 @@ export function EventWiki({ eventId }: EventWikiProps) {
           ) : (
             <Badge variant="secondary">{t('components.badges.private')}</Badge>
           )}
-          {event.event_type && event.event_type !== 'other' && (
+          {event.event_type && (
             <Badge variant="outline">
-              {t(`pages.create.event.eventTypes.${event.event_type === 'delegate_conference' ? 'delegateConference' : event.event_type === 'general_assembly' ? 'generalAssembly' : 'openAssembly'}`)}
+              {t(`pages.create.event.eventTypes.${event.event_type === 'delegate_assembly' ? 'delegateAssembly' : event.event_type === 'general_assembly' ? 'generalAssembly' : event.event_type === 'on_invite' ? 'onInvite' : 'open'}`)}
             </Badge>
           )}
           {event.recurrence_pattern && (
@@ -137,11 +138,11 @@ export function EventWiki({ eventId }: EventWikiProps) {
       {/* Stats Bar */}
       <StatsBar
         stats={[
-          { value: participation.participantCount, labelKey: 'components.labels.participants' },
+          { value: event.participant_count ?? participation.participantCount, labelKey: 'components.labels.participants' },
           { value: subscriberCount, labelKey: 'components.labels.subscribers' },
-          { value: electionsCount, labelKey: 'components.labels.elections' },
-          { value: amendmentsCount, labelKey: 'components.labels.amendments' },
-          { value: openChangeRequestsCount, labelKey: 'components.labels.openChangeRequests' },
+          { value: event.election_count ?? electionsCount, labelKey: 'components.labels.elections' },
+          { value: event.amendment_count ?? amendmentsCount, labelKey: 'components.labels.amendments' },
+          { value: event.open_change_request_count ?? openChangeRequestsCount, labelKey: 'components.labels.openChangeRequests' },
         ]}
       />
 
@@ -156,7 +157,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
         />
         <MembershipButton
           actionType="participate"
-          status={participation.status as any}
+          status={participation.status as MembershipStatus | null}
           isMember={participation.isParticipant}
           hasRequested={participation.hasRequested}
           isInvited={participation.isInvited}
@@ -294,10 +295,10 @@ export function EventWiki({ eventId }: EventWikiProps) {
               className="w-full"
             >
               <CarouselContent className="-ml-2 md:-ml-4">
-                {event.event_positions.map((position: any, index: number) => {
+                {event.event_positions.map((position, index) => {
                   const holders = position.holders || [];
                   const filledSlots = holders.length;
-                  const totalSlots = position.capacity || 1;
+                  const totalSlots = filledSlots || 1;
 
                   return (
                     <CarouselItem
@@ -330,7 +331,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
                                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                                   Current {holders.length === 1 ? 'Holder' : 'Holders'}
                                 </p>
-                                {holders.map((holder: any) => (
+                                {holders.map((holder) => (
                                   <div
                                     key={holder.id}
                                     className="cursor-pointer rounded-lg border bg-background/80 p-3 shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
@@ -339,16 +340,16 @@ export function EventWiki({ eventId }: EventWikiProps) {
                                     <div className="flex items-center gap-3">
                                       <Avatar className="h-10 w-10 ring-2 ring-background">
                                         <AvatarImage
-                                          src={holder.user?.avatar}
-                                          alt={holder.user?.name || 'User'}
+                                          src={holder.user?.avatar ?? undefined}
+                                          alt={`${holder.user?.first_name ?? ''} ${holder.user?.last_name ?? ''}`.trim() || 'User'}
                                         />
                                         <AvatarFallback>
-                                          {holder.user?.name?.[0]?.toUpperCase() || '?'}
+                                          {holder.user?.first_name?.[0]?.toUpperCase() || '?'}
                                         </AvatarFallback>
                                       </Avatar>
                                       <div className="min-w-0 flex-1">
                                         <p className="truncate font-semibold">
-                                          {holder.user?.name || 'Unknown'}
+                                          {`${holder.user?.first_name ?? ''} ${holder.user?.last_name ?? ''}`.trim() || 'Unknown'}
                                         </p>
                                         {holder.user?.handle && (
                                           <p className="truncate text-sm text-muted-foreground">
@@ -367,19 +368,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
                                 </p>
                               </div>
                             )}
-                            {/* Show election info if exists */}
-                            {position.election && (
-                              <div className="rounded-lg border border-border/50 bg-background/50 p-3 text-sm">
-                                <div className="flex items-center justify-between">
-                                  <span className="font-medium text-muted-foreground">
-                                    Election:
-                                  </span>
-                                  <Badge variant="secondary" className="text-xs">
-                                    {position.election.status || 'Scheduled'}
-                                  </Badge>
-                                </div>
-                              </div>
-                            )}
+                            {/* Elections are managed at the agenda item level, not per position */}
                           </div>
                         </CardContent>
                       </Card>
@@ -404,7 +393,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4 sm:grid-cols-2">
-            {elections.map((election: any, index: number) => {
+            {elections.map((election, index) => {
               const existingCandidacy = getUserCandidacy(election);
               const gradientClass = GRADIENTS[index % GRADIENTS.length];
 
@@ -440,9 +429,9 @@ export function EventWiki({ eventId }: EventWikiProps) {
                     )}
                     <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
                       <span>Kandidaten: {election.candidates?.length || 0}</span>
-                      {election.majorityType && (
+                      {election.majority_type && (
                         <Badge variant="outline" className="text-xs">
-                          {election.majorityType}
+                          {election.majority_type}
                         </Badge>
                       )}
                     </div>
@@ -492,11 +481,11 @@ export function EventWiki({ eventId }: EventWikiProps) {
                     <span className="text-muted-foreground">Aktuelle Kandidaten:</span>
                     <span className="font-medium">{selectedElection.candidates?.length || 0}</span>
                   </div>
-                  {selectedElection.majorityType && (
+                  {selectedElection.majority_type && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Wahlverfahren:</span>
                       <Badge variant="outline" className="text-xs">
-                        {selectedElection.majorityType}
+                        {selectedElection.majority_type}
                       </Badge>
                     </div>
                   )}
@@ -524,7 +513,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
             </DialogDescription>
           </DialogHeader>
           
-          {event.event_type === 'delegate_conference' ? (
+          {event.event_type === 'delegate_assembly' ? (
             <Tabs defaultValue="participants" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="participants">Participants</TabsTrigger>
@@ -534,7 +523,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
               <TabsContent value="participants" className="space-y-4">
                 <div className="grid gap-4 py-4 sm:grid-cols-2">
                   {event.participants && event.participants.length > 0 ? (
-                    event.participants.map((participant: any) => (
+                    event.participants.map((participant) => (
                       <Card
                         key={participant.id}
                         className="cursor-pointer transition-all duration-300 hover:shadow-lg"
@@ -543,16 +532,16 @@ export function EventWiki({ eventId }: EventWikiProps) {
                         <CardContent className="flex items-center gap-4 p-4">
                           <Avatar className="h-12 w-12">
                             <AvatarImage
-                              src={participant.user?.avatar}
-                              alt={participant.user?.name || 'User'}
+                              src={participant.user?.avatar ?? undefined}
+                              alt={`${participant.user?.first_name ?? ''} ${participant.user?.last_name ?? ''}`.trim() || 'User'}
                             />
                             <AvatarFallback>
-                              {participant.user?.name?.[0]?.toUpperCase() || '?'}
+                              {participant.user?.first_name?.[0]?.toUpperCase() || '?'}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1 space-y-1">
                             <p className="font-semibold leading-none">
-                              {participant.user?.name || 'Unknown'}
+                              {`${participant.user?.first_name ?? ''} ${participant.user?.last_name ?? ''}`.trim() || 'Unknown'}
                             </p>
                             {participant.user?.handle && (
                               <p className="text-sm text-muted-foreground">
@@ -583,7 +572,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
           ) : (
             <div className="grid gap-4 py-4 sm:grid-cols-2">
               {event.participants && event.participants.length > 0 ? (
-                event.participants.map((participant: any) => (
+                event.participants.map((participant) => (
                   <Card
                     key={participant.id}
                     className="cursor-pointer transition-all duration-300 hover:shadow-lg"
@@ -592,16 +581,16 @@ export function EventWiki({ eventId }: EventWikiProps) {
                     <CardContent className="flex items-center gap-4 p-4">
                       <Avatar className="h-12 w-12">
                         <AvatarImage
-                          src={participant.user?.avatar}
-                          alt={participant.user?.name || 'User'}
+                          src={participant.user?.avatar ?? undefined}
+                          alt={`${participant.user?.first_name ?? ''} ${participant.user?.last_name ?? ''}`.trim() || 'User'}
                         />
                         <AvatarFallback>
-                          {participant.user?.name?.[0]?.toUpperCase() || '?'}
+                          {participant.user?.first_name?.[0]?.toUpperCase() || '?'}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 space-y-1">
                         <p className="font-semibold leading-none">
-                          {participant.user?.name || 'Unknown'}
+                          {`${participant.user?.first_name ?? ''} ${participant.user?.last_name ?? ''}`.trim() || 'Unknown'}
                         </p>
                         {participant.user?.handle && (
                           <p className="text-sm text-muted-foreground">

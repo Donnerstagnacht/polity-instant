@@ -10,6 +10,7 @@
 // ============================================================================
 
 export interface GroupNotificationSettings {
+  [key: string]: boolean;
   /** Tasks assigned to the user within the group */
   tasksAssigned: boolean;
   /** Payment-related notifications (created, updated, deleted) */
@@ -43,6 +44,7 @@ export interface GroupNotificationSettings {
 // ============================================================================
 
 export interface EventNotificationSettings {
+  [key: string]: boolean;
   /** Agenda item changes */
   agendaItems: boolean;
   /** Election events (created, started, ended) */
@@ -78,6 +80,7 @@ export interface EventNotificationSettings {
 // ============================================================================
 
 export interface AmendmentNotificationSettings {
+  [key: string]: boolean;
   /** Change requests created */
   changeRequests: boolean;
   /** Change request decisions (accepted, rejected) */
@@ -115,6 +118,7 @@ export interface AmendmentNotificationSettings {
 // ============================================================================
 
 export interface BlogNotificationSettings {
+  [key: string]: boolean;
   /** New subscribers (owner only) */
   newSubscribers: boolean;
   /** Upvotes/downvotes (owner only) */
@@ -138,6 +142,7 @@ export interface BlogNotificationSettings {
 // ============================================================================
 
 export interface TodoNotificationSettings {
+  [key: string]: boolean;
   /** Task assigned to user */
   taskAssigned: boolean;
   /** Task updated (status, due date, priority) */
@@ -155,6 +160,7 @@ export interface TodoNotificationSettings {
 // ============================================================================
 
 export interface SocialNotificationSettings {
+  [key: string]: boolean;
   /** New followers */
   newFollowers: boolean;
   /** Mentions in content */
@@ -170,6 +176,7 @@ export interface SocialNotificationSettings {
 // ============================================================================
 
 export interface DeliverySettings {
+  [key: string]: boolean;
   /** Browser push notifications (requires permission) */
   pushNotifications: boolean;
   /** In-app notifications */
@@ -185,6 +192,7 @@ export interface DeliverySettings {
 export type TimelineRefreshFrequency = 'realtime' | 'every5min' | 'every15min' | 'manual';
 
 export interface TimelineSettings {
+  [key: string]: boolean | TimelineRefreshFrequency;
   /** Show timeline on homepage */
   showOnHomepage: boolean;
   /** Timeline refresh frequency */

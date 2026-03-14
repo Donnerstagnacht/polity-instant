@@ -18,20 +18,28 @@ export function DelegatesOverview({ eventId, groupId }: DelegatesOverviewProps) 
   const subgroups = groupId
     ? getDirectSubgroups(
         groupId,
-        (relationshipsRows || []).filter(
-          (rel: any) => rel.related_group && rel.group
-        ) as any
+        (relationshipsRows || [])
+          .filter(rel => rel.related_group && rel.group)
+          .map(rel => ({
+            id: rel.id,
+            parentGroup: { id: rel.group!.id },
+            childGroup: {
+              id: rel.related_group!.id,
+              name: rel.related_group!.name || '',
+              memberCount: rel.related_group!.member_count ?? 0,
+            },
+          }))
       )
     : [];
 
   // Group delegates by subgroup
   const delegatesByGroup = subgroups.map(subgroup => {
-    const allocation = allocations.find((a: any) => a.group_id === subgroup.id);
-    const groupDelegates = delegates.filter((d: any) => d.group_id === subgroup.id);
+    const allocation = allocations.find(a => a.group_id === subgroup.id);
+    const groupDelegates = delegates.filter(d => d.group_id === subgroup.id);
 
-    const confirmedDelegates = groupDelegates.filter((d: any) => d.status === 'confirmed');
-    const nominatedDelegates = groupDelegates.filter((d: any) => d.status === 'nominated');
-    const standbyDelegates = groupDelegates.filter((d: any) => d.status === 'standby');
+    const confirmedDelegates = groupDelegates.filter(d => d.status === 'confirmed');
+    const nominatedDelegates = groupDelegates.filter(d => d.status === 'nominated');
+    const standbyDelegates = groupDelegates.filter(d => d.status === 'standby');
 
     return {
       subgroup,

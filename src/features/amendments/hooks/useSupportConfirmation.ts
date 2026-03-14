@@ -7,7 +7,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { useAuth } from '@/providers/auth-provider';
-import { notifySupportConfirmed, notifySupportDeclined } from '@/features/shared/utils/notification-helpers';
+import { notifySupportConfirmed, notifySupportDeclined } from '@/features/notifications/utils/notification-helpers.ts';
 import { toast } from 'sonner';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
@@ -162,7 +162,7 @@ export async function triggerSupporterConfirmation(
   params: {
     amendmentId: string;
     changeRequestId: string;
-    changeRequestTitle?: string;
+    changeRequestTitle?: string | null;
     userId: string;
     amendmentTitle?: string;
     supporterGroups?: Array<{ id: string }>;
@@ -183,8 +183,8 @@ export async function triggerSupporterConfirmation(
       status: 'pending',
       amendment_id: amendmentId,
       group_id: group.id,
-      event_id: null,
-      confirmed_by_id: null,
+      event_id: '',
+      confirmed_by_id: '',
       confirmed_at: 0,
     }));
 

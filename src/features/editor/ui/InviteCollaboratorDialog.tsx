@@ -33,7 +33,7 @@ import { useUserState } from '@/zero/users/useUserState';
 import { UserPlus, X, Loader2, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { notifyDocumentCollaboratorInvited, notifyBloggerInvited } from '@/features/shared/utils/notification-helpers';
+import { notifyDocumentCollaboratorInvited, notifyBloggerInvited } from '@/features/notifications/utils/notification-helpers.ts';
 import type { EditorEntityType } from '../types';
 
 interface InviteCollaboratorDialogProps {
@@ -173,7 +173,7 @@ export function InviteCollaboratorDialog({
           {selectedUsers.length > 0 && (
             <div className="mb-4 flex flex-wrap gap-2">
               {selectedUsers.map(userId => {
-                const user = users?.find((u: any) => u.id === userId);
+                const user = users?.find((u) => u.id === userId);
                 if (!user) return null;
 
                 return (
@@ -215,7 +215,7 @@ export function InviteCollaboratorDialog({
                 <>
                   <CommandEmpty>{t('features.editor.inviteDialog.noUsers')}</CommandEmpty>
                   <CommandGroup>
-                    {filteredUsers?.slice(0, 10).map((user: any) => {
+                    {filteredUsers?.slice(0, 10).map((user) => {
                       const isSelected = selectedUsers.includes(user.id);
 
                       return (
@@ -228,15 +228,15 @@ export function InviteCollaboratorDialog({
                           <div className="flex flex-1 items-center gap-2">
                             <Avatar className="h-8 w-8">
                               {user.avatar ? (
-                                <AvatarImage src={user.avatar} alt={user.name || ''} />
+                                <AvatarImage src={user.avatar} alt={[user.first_name, user.last_name].filter(Boolean).join(' ') || ''} />
                               ) : null}
                               <AvatarFallback>
-                                {user.name?.[0]?.toUpperCase() || '?'}
+                                {user.first_name?.[0]?.toUpperCase() || '?'}
                               </AvatarFallback>
                             </Avatar>
                             <div>
                               <p className="text-sm font-medium">
-                                {user.name || user.handle || 'User'}
+                                {[user.first_name, user.last_name].filter(Boolean).join(' ') || user.handle || 'User'}
                               </p>
                               {user.handle && (
                                 <p className="text-xs text-muted-foreground">@{user.handle}</p>

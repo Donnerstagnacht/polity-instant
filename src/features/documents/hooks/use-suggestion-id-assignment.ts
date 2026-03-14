@@ -2,14 +2,14 @@
 // Hook for automatically assigning CR-x IDs to suggestions
 
 import React from 'react';
-import { getNextSuggestionId } from '@/features/shared/utils/suggestion-utils.ts';
+import { getNextSuggestionIdFromDiscussions } from '@/features/shared/utils/suggestion-utils.ts';
 import type { TDiscussion } from '@/features/shared/ui/kit-platejs/discussion-kit.tsx';
 
 interface UseSuggestionIdAssignmentProps {
   documentId: string;
   discussions: TDiscussion[];
   onDiscussionsUpdate: (discussions: TDiscussion[]) => void;
-  suggestions?: any[]; // Optional: resolved suggestions from PlateJS
+  suggestions?: unknown[]; // Optional: resolved suggestions from PlateJS
 }
 
 /**
@@ -23,7 +23,7 @@ export function useSuggestionIdAssignment({
 }: UseSuggestionIdAssignmentProps) {
   const processedDiscussions = React.useRef(new Set<string>());
 
-  const assignMissingIds = React.useCallback(async () => {
+  const assignMissingIds = React.useCallback(() => {
     if (!documentId || !discussions || discussions.length === 0) return;
 
     // Find discussions that don't have crId assigned yet
@@ -38,36 +38,27 @@ export function useSuggestionIdAssignment({
       (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
 
-    try {
-      // Assign IDs one by one to maintain order
-      const updatedDiscussions = [...discussions];
+    // Assign IDs using local computation from existing discussions
+    const updatedDiscussions = [...discussions];
 
-      for (const discussion of discussionsNeedingIds) {
-        try {
-          const crId = await getNextSuggestionId(documentId);
-          const index = updatedDiscussions.findIndex(d => d.id === discussion.id);
+    for (const discussion of discussionsNeedingIds) {
+      const crId = getNextSuggestionIdFromDiscussions(updatedDiscussions);
+      const index = updatedDiscussions.findIndex(d => d.id === discussion.id);
 
-          if (index !== -1) {
-            updatedDiscussions[index] = {
-              ...updatedDiscussions[index],
-              crId,
-            };
+      if (index !== -1) {
+        updatedDiscussions[index] = {
+          ...updatedDiscussions[index],
+          crId,
+        };
 
-            // Mark as processed to avoid re-processing
-            processedDiscussions.current.add(discussion.id);
-          }
-        } catch (error) {
-          console.error(`Failed to assign ID to suggestion ${discussion.id}:`, error);
-          // Continue with next suggestion even if one fails
-        }
+        // Mark as processed to avoid re-processing
+        processedDiscussions.current.add(discussion.id);
       }
+    }
 
-      // Update discussions with the new IDs if any were assigned
-      if (discussionsNeedingIds.some(d => processedDiscussions.current.has(d.id))) {
-        onDiscussionsUpdate(updatedDiscussions);
-      }
-    } catch (error) {
-      console.error('Failed to assign suggestion IDs:', error);
+    // Update discussions with the new IDs if any were assigned
+    if (discussionsNeedingIds.some(d => processedDiscussions.current.has(d.id))) {
+      onDiscussionsUpdate(updatedDiscussions);
     }
   }, [documentId, discussions, onDiscussionsUpdate]);
 

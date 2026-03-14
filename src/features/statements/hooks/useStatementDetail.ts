@@ -59,24 +59,24 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
   );
 
   // ── Vote handling ──────────────────────────────────────────────
-  const supportVotes = (statement as any)?.support_votes ?? [];
+  const supportVotes = statement?.support_votes ?? [];
 
   const computedUpvotes = useMemo(
-    () => supportVotes.filter((v: any) => v.vote === 1).length,
+    () => supportVotes.filter((v) => v.vote === 1).length,
     [supportVotes],
   );
 
   const computedDownvotes = useMemo(
-    () => supportVotes.filter((v: any) => v.vote === -1).length,
+    () => supportVotes.filter((v) => v.vote === -1).length,
     [supportVotes],
   );
 
   const currentVote = useMemo(() => {
     if (!userId || !statement) return null;
-    return supportVotes.find((v: any) => v.user_id === userId) ?? null;
+    return supportVotes.find((v) => v.user_id === userId) ?? null;
   }, [userId, statement, supportVotes]);
 
-  const currentVoteValue: VoteValue = currentVote?.vote ?? 0;
+  const currentVoteValue: VoteValue = (currentVote?.vote ?? 0) as VoteValue;
 
   const handleVote = useCallback(
     async (value: VoteValue) => {
@@ -98,7 +98,7 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
 
   // ── Survey handling ────────────────────────────────────────────
   const survey = useMemo(() => {
-    const surveys = (statement as any)?.surveys ?? [];
+    const surveys = statement?.surveys ?? [];
     return surveys[0] ?? null;
   }, [statement]);
 
@@ -127,7 +127,7 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
   }, [id, deleteStatement]);
 
   // ── Thread / Comment handling ──────────────────────────────────
-  const threads = (statement as any)?.threads ?? [];
+  const threads = statement?.threads ?? [];
 
   // Get or lazily create the single discussion thread for this statement
   const discussionThread = threads[0] ?? null;
@@ -137,9 +137,9 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
     let count = 0;
     for (const thread of threads) {
       const allComments = thread.comments ?? [];
-      const countNested = (c: any): number => {
+      const countNested = (c: { replies?: readonly unknown[] }): number => {
         let n = 1;
-        for (const r of c.replies ?? []) n += countNested(r);
+        for (const r of (c.replies ?? []) as { replies?: readonly unknown[] }[]) n += countNested(r);
         return n;
       };
       for (const c of allComments) count += countNested(c);
@@ -152,28 +152,28 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
     if (!discussionThread) return [];
     const rawComments = discussionThread.comments ?? [];
 
-    const mapComment = (c: any): CommentData => ({
-      id: c.id,
-      text: c.content ?? '',
-      createdAt: c.created_at ?? 0,
-      creator: c.user
+    const mapComment = (c: Record<string, unknown>): CommentData => ({
+      id: c.id as string,
+      text: (c.content as string) ?? '',
+      createdAt: (c.created_at as number) ?? 0,
+      creator: (c as { user?: { id: string; first_name?: string; last_name?: string; handle?: string; image_url?: string } }).user
         ? {
-            id: c.user.id,
-            name: `${c.user.first_name ?? ''} ${c.user.last_name ?? ''}`.trim() || c.user.handle || 'Unknown',
-            handle: c.user.handle,
-            avatar: c.user.image_url,
+            id: (c as { user: { id: string } }).user.id,
+            name: `${(c as { user: { first_name?: string } }).user.first_name ?? ''} ${(c as { user: { last_name?: string } }).user.last_name ?? ''}`.trim() || (c as { user: { handle?: string } }).user.handle || 'Unknown',
+            handle: (c as { user: { handle?: string } }).user.handle,
+            avatar: (c as { user: { image_url?: string } }).user.image_url,
           }
         : undefined,
-      votes: (c.votes ?? []).map((v: any) => ({
-        id: v.id,
-        vote: v.vote ?? 0,
-        user: v.user ? { id: v.user.id } : undefined,
+      votes: ((c.votes ?? []) as Record<string, unknown>[]).map((v) => ({
+        id: v.id as string,
+        vote: (v.vote as number) ?? 0,
+        user: (v as { user?: { id: string } }).user ? { id: (v as { user: { id: string } }).user.id } : undefined,
       })),
-      replies: (c.replies ?? []).map(mapComment),
+      replies: ((c.replies ?? []) as Record<string, unknown>[]).map(mapComment),
     });
 
     // Top-level: comments with no parent_id
-    return rawComments.filter((c: any) => !c.parent_id).map(mapComment);
+    return rawComments.filter((c: Record<string, unknown>) => !c.parent_id).map(mapComment);
   }, [discussionThread]);
 
   const handleAddComment = useCallback(
@@ -189,6 +189,7 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
           statement_id: id,
           document_id: null,
           amendment_id: null,
+          blog_id: null,
           content: null,
           status: 'open',
           resolved_at: null,
@@ -236,7 +237,7 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
     [userId, voteComment, updateCommentVote, deleteCommentVote],
   );
 
-  const isOwner = !!userId && (statement as any)?.user_id === userId;
+  const isOwner = !!userId && statement?.user_id === userId;
 
   // ── Survey CRUD for editing ────────────────────────────────────
   const handleSaveSurvey = useCallback(

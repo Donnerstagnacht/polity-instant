@@ -114,6 +114,7 @@ export function useCreateStatementForm(): CreateFormConfig {
               <Label>
                 {t('pages.create.statement.textLabel')} <span className="text-destructive">*</span>
               </Label>
+              <p className="text-muted-foreground text-xs">{t('pages.create.statement.tips.text')}</p>
               <Textarea
                 value={text}
                 onChange={(e) => setText(e.target.value.slice(0, MAX_CHARS))}

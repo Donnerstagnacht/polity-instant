@@ -680,7 +680,7 @@ export const useResolveSuggestion = (
       const comments = discussion?.comments || [];
       const title = discussion?.title; // Get the title from the discussion
       const crId = discussion?.crId; // Get the CR-x ID from the discussion
-      const votes = (discussion as any)?.votes; // Get the votes from the discussion
+      const votes = discussion?.votes; // Get the votes from the discussion
       const createdAt = new Date(nodeData.createdAt);
 
       const keyId = getSuggestionKey(id);
@@ -771,8 +771,8 @@ export const useResolveSuggestion = (
         if (!discussion) {
           // Create new discussion with CR ID
           try {
-            const { getNextSuggestionId } = await import('@/features/shared/utils/suggestion-utils.ts');
-            const crId = await getNextSuggestionId(documentId);
+            const { getNextSuggestionIdFromDiscussions } = await import('@/features/shared/utils/suggestion-utils.ts');
+            const crId = getNextSuggestionIdFromDiscussions(updatedDiscussions);
 
             const newDiscussion: TDiscussion = {
               id: discussionId,
@@ -791,8 +791,8 @@ export const useResolveSuggestion = (
         } else if (!discussion.crId) {
           // Discussion exists but doesn't have crId
           try {
-            const { getNextSuggestionId } = await import('@/features/shared/utils/suggestion-utils.ts');
-            const crId = await getNextSuggestionId(documentId);
+            const { getNextSuggestionIdFromDiscussions } = await import('@/features/shared/utils/suggestion-utils.ts');
+            const crId = getNextSuggestionIdFromDiscussions(updatedDiscussions);
 
             const index = updatedDiscussions.findIndex(d => d.id === discussionId);
             if (index !== -1) {

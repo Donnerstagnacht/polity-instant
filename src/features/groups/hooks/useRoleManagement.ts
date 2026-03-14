@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { toast } from 'sonner';
-import { notifyActionRightsChanged } from '@/features/shared/utils/notification-helpers';
+import { notifyActionRightsChanged } from '@/features/notifications/utils/notification-helpers.ts';
 
 export function useRoleManagement(groupId: string) {
   const [isLoading, setIsLoading] = useState(false);

@@ -164,7 +164,8 @@ export function AgendaSpeakerListSection({
                 </Avatar>
                 <div>
                   <Link
-                    to={`/user/${currentSpeaker.user?.id}`}
+                    to="/user/$id"
+                    params={{ id: currentSpeaker.user?.id ?? '' }}
                     className="font-medium hover:underline"
                   >
                     {currentSpeaker.user?.name || currentSpeaker.user?.email}
@@ -275,7 +276,7 @@ function SpeakerCard({
           </Badge>
         )}
         {isCompleted && <CheckCircle2 className="h-5 w-5 text-green-500" />}
-        <Link to={`/user/${speaker.user?.id}`} className="flex items-center gap-2">
+        <Link to="/user/$id" params={{ id: speaker.user?.id ?? '' }} className="flex items-center gap-2">
           <Avatar className="h-8 w-8">
             <AvatarImage src={speaker.user?.avatar} />
             <AvatarFallback>{speakerName[0]?.toUpperCase()}</AvatarFallback>

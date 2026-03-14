@@ -110,14 +110,14 @@ export function collectAvailableTopics(contentItems: SearchContentItem[]): strin
 }
 
 export function buildAgendaItemsByEventId(
-  agendaItems: any[],
-): Map<string, Array<{ election?: unknown; amendmentVote?: unknown }>> {
-  const map = new Map<string, Array<{ election?: unknown; amendmentVote?: unknown }>>();
+  agendaItems: readonly { event_id?: string | null; event?: { id?: string } | null; election?: { id?: string } | null; amendment?: { id?: string } | null }[],
+): Map<string, Array<{ election?: { id?: string } | null; amendment?: { id?: string } | null }>> {
+  const map = new Map<string, Array<{ election?: { id?: string } | null; amendment?: { id?: string } | null }>>();
   for (const item of agendaItems ?? []) {
-    const eventId = (item as any).event?.id as string | undefined;
+    const eventId = item.event?.id ?? item.event_id;
     if (!eventId) continue;
     const list = map.get(eventId) ?? [];
-    list.push(item as any);
+    list.push(item);
     map.set(eventId, list);
   }
   return map;

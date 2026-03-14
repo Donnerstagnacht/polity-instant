@@ -1,5 +1,12 @@
 import { cn } from '@/features/shared/utils/utils'
 import { Progress } from '@/features/shared/ui/ui/progress'
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/features/shared/ui/ui/carousel'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 
 interface CreateProgressIndicatorProps {
@@ -34,39 +41,47 @@ export function CreateProgressIndicator({
         </span>
       </div>
 
-      {/* Step dots */}
-      <div className="flex items-center justify-center gap-2">
-        {stepLabels.map((label, index) => {
-          const isCompleted = index < currentStep
-          const isCurrent = index === currentStep
-          const isClickable =
-            onStepClick &&
-            (isCompleted || (validSteps ? validSteps[index] : index <= currentStep))
+      {/* Step badges carousel */}
+      <Carousel
+        opts={{ dragFree: true, containScroll: 'trimSnaps', align: 'start' }}
+        className="w-full"
+      >
+        <CarouselContent className="-ml-2">
+          {stepLabels.map((label, index) => {
+            const isCompleted = index < currentStep
+            const isCurrent = index === currentStep
+            const isClickable =
+              onStepClick &&
+              (isCompleted || (validSteps ? validSteps[index] : index <= currentStep))
 
-          return (
-            <button
-              key={index}
-              type="button"
-              onClick={() => isClickable && onStepClick(index)}
-              disabled={!isClickable}
-              className={cn(
-                'flex h-7 items-center gap-1 rounded-full px-2.5 text-xs font-medium transition-all',
-                isCurrent && 'bg-primary text-primary-foreground shadow-sm',
-                isCompleted && 'bg-primary/20 text-primary cursor-pointer hover:bg-primary/30',
-                !isCurrent &&
-                  !isCompleted &&
-                  'bg-muted text-muted-foreground cursor-default opacity-50'
-              )}
-              title={label}
-            >
-              <span className="flex h-4 w-4 items-center justify-center rounded-full text-[10px]">
-                {index + 1}
-              </span>
-              <span className="hidden sm:inline">{label}</span>
-            </button>
-          )
-        })}
-      </div>
+            return (
+              <CarouselItem key={index} className="basis-auto pl-2">
+                <button
+                  type="button"
+                  onClick={() => isClickable && onStepClick(index)}
+                  disabled={!isClickable}
+                  className={cn(
+                    'flex h-8 items-center gap-1.5 rounded-full px-3.5 text-xs font-medium transition-all',
+                    isCurrent && 'bg-primary text-primary-foreground shadow-sm',
+                    isCompleted && 'bg-primary/20 text-primary cursor-pointer hover:bg-primary/30',
+                    !isCurrent &&
+                      !isCompleted &&
+                      'bg-muted text-muted-foreground cursor-default opacity-50'
+                  )}
+                  title={label}
+                >
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full text-[10px]">
+                    {index + 1}
+                  </span>
+                  <span className="hidden sm:inline">{label}</span>
+                </button>
+              </CarouselItem>
+            )
+          })}
+        </CarouselContent>
+        <CarouselPrevious className="-left-3 h-6 w-6" />
+        <CarouselNext className="-right-3 h-6 w-6" />
+      </Carousel>
     </div>
   )
 }

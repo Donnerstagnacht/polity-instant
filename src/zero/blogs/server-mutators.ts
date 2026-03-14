@@ -2,11 +2,16 @@ import { defineMutator } from '@rocicorp/zero'
 import { mutators } from '../mutators'
 import { zql } from '../schema'
 import { fireNotification } from '../server-notify'
-import { blogTitle, userName } from '../server-helpers'
+import { blogTitle, userName, recomputeBlogCounters } from '../server-helpers'
 import {
   updateBlogBloggerSchema,
   deleteBlogBloggerSchema,
 } from './schema'
+import {
+  createBlogSupportVoteSchema,
+  updateBlogSupportVoteSchema,
+  deleteBlogSupportVoteSchema,
+} from '../votes/schema'
 
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 export const blogServerMutators = {
@@ -74,6 +79,27 @@ export const blogServerMutators = {
       fireNotification('notifyBlogWriterRemoved', {
         senderId: ctx.userID, recipientUserId: entryUserId, blogId: bId, blogTitle: bTitle,
       })
+    }
+  }),
+
+  createSupportVote: defineMutator(createBlogSupportVoteSchema, async ({ tx, ctx, args }) => {
+    await mutators.blogs.createSupportVote.fn({ tx, ctx, args })
+    await recomputeBlogCounters(tx, args.blog_id)
+  }),
+
+  updateSupportVote: defineMutator(updateBlogSupportVoteSchema, async ({ tx, ctx, args }) => {
+    const vote = await tx.run(zql.blog_support_vote.where('id', args.id).one())
+    await mutators.blogs.updateSupportVote.fn({ tx, ctx, args })
+    if (vote?.blog_id) {
+      await recomputeBlogCounters(tx, vote.blog_id)
+    }
+  }),
+
+  deleteSupportVote: defineMutator(deleteBlogSupportVoteSchema, async ({ tx, ctx, args }) => {
+    const vote = await tx.run(zql.blog_support_vote.where('id', args.id).one())
+    await mutators.blogs.deleteSupportVote.fn({ tx, ctx, args })
+    if (vote?.blog_id) {
+      await recomputeBlogCounters(tx, vote.blog_id)
     }
   }),
 }

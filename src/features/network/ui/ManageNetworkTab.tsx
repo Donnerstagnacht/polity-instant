@@ -32,13 +32,13 @@ import { RightBadge } from './RightBadge';
 import { RIGHT_TYPES, RIGHT_GRADIENTS } from './RightFilters';
 import { LinkGroupDialog } from './LinkGroupDialog';
 import { PermissionGuard } from '@/features/auth/PermissionGuard';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Clock } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import type { NormalizedGroupRelationship } from '../types/network.types';
 
 interface GroupedRequest {
   group: { id: string; name: string; description?: string };
-  rights: string[];
-  rels: any[];
+  rels: NormalizedGroupRelationship[];
   type: 'parent' | 'child';
 }
 
@@ -82,6 +82,8 @@ export function ManageNetworkTab({
   onDeleteRelationship,
 }: ManageNetworkTabProps) {
   const { t } = useTranslation();
+  const incomingRequestCount = incomingRequests.reduce((total, entry) => total + entry.rels.length, 0);
+  const outgoingRequestCount = outgoingRequests.reduce((total, entry) => total + entry.rels.length, 0);
 
   const filterOptions: FilterOption[] = RIGHT_TYPES.map(right => ({
     label: t(`common.rights.${right === 'informationRight' ? 'information' : right === 'amendmentRight' ? 'amendment' : right === 'rightToSpeak' ? 'speak' : right === 'activeVotingRight' ? 'activeVoting' : 'passiveVoting'}`) || right,
@@ -109,116 +111,14 @@ export function ManageNetworkTab({
         </PermissionGuard>
       </div>
 
-      {/* Incoming Requests */}
-      {incomingRequests.length > 0 && (
-        <Card className="border-primary/20 bg-primary/5">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">{t('common.network.incomingRequests')}</CardTitle>
-            <CardDescription>
-              {t('common.network.incomingRequestsDescription')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {incomingRequests.map(req => (
-              <div
-                key={req.group.id}
-                className="flex items-center justify-between rounded-lg border bg-background p-3"
-              >
-                <div className="space-y-1">
-                  <div className="font-medium">{req.group.name}</div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>
-                      {req.type === 'parent'
-                        ? t('common.network.wantsToBeParent')
-                        : t('common.network.wantsToBeChild')}
-                    </span>
-                    <div className="flex gap-1">
-                      {req.rights.map(r => (
-                        <RightBadge key={r} right={r} />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <PermissionGuard
-                  action="manage"
-                  resource="groupRelationships"
-                  context={{ groupId }}
-                >
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onRejectRequest(req.rels)}
-                    >
-                      {t('common.network.reject')}
-                    </Button>
-                    <Button size="sm" onClick={() => onAcceptRequest(req.rels)}>
-                      {t('common.network.accept')}
-                    </Button>
-                  </div>
-                </PermissionGuard>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Outgoing Requests */}
-      {outgoingRequests.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">{t('common.network.outgoingRequests')}</CardTitle>
-            <CardDescription>
-              {t('common.network.outgoingRequestsDescription')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {outgoingRequests.map(req => (
-              <div
-                key={req.group.id}
-                className="flex items-center justify-between rounded-lg border bg-background p-3"
-              >
-                <div className="space-y-1">
-                  <div className="font-medium">{req.group.name}</div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>
-                      {req.type === 'parent'
-                        ? t('common.network.requestAsParent')
-                        : t('common.network.requestAsChild')}
-                    </span>
-                    <div className="flex gap-1">
-                      {req.rights.map(r => (
-                        <RightBadge key={r} right={r} />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <PermissionGuard
-                  action="manage"
-                  resource="groupRelationships"
-                  context={{ groupId }}
-                >
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onRejectRequest(req.rels)}
-                  >
-                    {t('common.network.cancelRequest')}
-                  </Button>
-                </PermissionGuard>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Active Relationships — Search, Filters & Table */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">{t('common.network.activeRelationships')}</CardTitle>
+          <CardDescription>
+            {t('common.network.groupRelationshipsDescription')}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Search + Right Filters */}
           <EntitySearchBar
             searchQuery={searchQuery}
             onSearchQueryChange={onSearchQueryChange}
@@ -227,7 +127,6 @@ export function ManageNetworkTab({
             onFilterToggle={onToggleRightFilter}
           />
 
-          {/* Direction Filter */}
           <div className="flex gap-2">
             <Select
               value={directionFilter}
@@ -243,8 +142,155 @@ export function ManageNetworkTab({
               </SelectContent>
             </Select>
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Table */}
+      {/* Incoming Requests */}
+      {incomingRequests.length > 0 && (
+        <div className="mb-8">
+          <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold">
+            <Clock className="h-5 w-5" />
+            {t('common.network.incomingRequests')} ({incomingRequestCount})
+          </h2>
+          <div className="space-y-4">
+            {incomingRequests.map(req => (
+              <Card key={req.group.id} className="border-primary/20 bg-primary/5">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">{req.group.name}</CardTitle>
+                  <CardDescription>
+                    {req.type === 'parent'
+                      ? t('common.network.wantsToBeParent')
+                      : t('common.network.wantsToBeChild')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t('common.network.relationship')}</TableHead>
+                        <TableHead>{t('common.labels.rights')}</TableHead>
+                        <TableHead>{t('common.network.requested')}</TableHead>
+                        <TableHead>{t('common.actions.actions')}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {req.rels.map(rel => (
+                        <TableRow key={rel.id}>
+                          <TableCell>
+                            <Badge variant={req.type === 'parent' ? 'default' : 'secondary'}>
+                              {req.type === 'parent'
+                                ? t('common.network.parent')
+                                : t('common.network.child')}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <RightBadge right={rel.withRight} />
+                          </TableCell>
+                          <TableCell>
+                            {rel.created_at
+                              ? new Date(rel.created_at).toLocaleDateString()
+                              : '-'}
+                          </TableCell>
+                          <TableCell>
+                            <PermissionGuard
+                              action="manage"
+                              resource="groupRelationships"
+                              context={{ groupId }}
+                            >
+                              <div className="flex gap-2">
+                                <Button size="sm" variant="outline" onClick={() => onRejectRequest([rel])}>
+                                  {t('common.network.reject')}
+                                </Button>
+                                <Button size="sm" onClick={() => onAcceptRequest([rel])}>
+                                  {t('common.network.accept')}
+                                </Button>
+                              </div>
+                            </PermissionGuard>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Outgoing Requests */}
+      {outgoingRequests.length > 0 && (
+        <div className="mb-8">
+          <h2 className="mb-4 text-xl font-semibold">
+            {t('common.network.outgoingRequests')} ({outgoingRequestCount})
+          </h2>
+          <div className="space-y-4">
+            {outgoingRequests.map(req => (
+              <Card key={req.group.id}>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">{req.group.name}</CardTitle>
+                  <CardDescription>
+                    {req.type === 'parent'
+                      ? t('common.network.requestAsParent')
+                      : t('common.network.requestAsChild')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t('common.network.relationship')}</TableHead>
+                        <TableHead>{t('common.labels.rights')}</TableHead>
+                        <TableHead>{t('common.network.requested')}</TableHead>
+                        <TableHead>{t('common.actions.actions')}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {req.rels.map(rel => (
+                        <TableRow key={rel.id}>
+                          <TableCell>
+                            <Badge variant={req.type === 'parent' ? 'default' : 'secondary'}>
+                              {req.type === 'parent'
+                                ? t('common.network.parent')
+                                : t('common.network.child')}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <RightBadge right={rel.withRight} />
+                          </TableCell>
+                          <TableCell>
+                            {rel.created_at
+                              ? new Date(rel.created_at).toLocaleDateString()
+                              : '-'}
+                          </TableCell>
+                          <TableCell>
+                            <PermissionGuard
+                              action="manage"
+                              resource="groupRelationships"
+                              context={{ groupId }}
+                            >
+                              <Button size="sm" variant="outline" onClick={() => onRejectRequest([rel])}>
+                                {t('common.network.cancelRequest')}
+                              </Button>
+                            </PermissionGuard>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Active Relationships — Search, Filters & Table */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">{t('common.network.activeRelationships')}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div className="rounded-md border">
             <Table>
               <TableHeader>

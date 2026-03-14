@@ -24,6 +24,7 @@ export const blogsTranslations = {
     noContentAvailable: 'No content available yet.',
     startWriting: 'Start Writing',
     editContent: 'Edit Content',
+    editBlog: 'Edit Blog',
     discussion: 'Discussion',
     discussionDescription: 'Join the conversation',
     addComment: 'Add Comment',

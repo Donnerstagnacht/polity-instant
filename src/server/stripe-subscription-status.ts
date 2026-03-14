@@ -1,6 +1,16 @@
 import { createServerFn } from '@tanstack/react-start'
 import Stripe from 'stripe'
 
+/**
+ * The clover API version removed `current_period_start` / `current_period_end`
+ * from the `Stripe.Subscription` types, but the fields are still present in
+ * the API response.
+ */
+interface SubscriptionWithLegacyPeriod extends Stripe.Subscription {
+  current_period_start: number
+  current_period_end: number
+}
+
 function getStripe() {
   if (!process.env.STRIPE_SECRET_KEY) {
     throw new Error('STRIPE_SECRET_KEY is not defined')
@@ -67,7 +77,7 @@ export const stripeSubscriptionStatusFn = createServerFn({ method: 'POST' })
         limit: 10,
       })
 
-      const activeSubscription = subscriptions.data.find((sub) => sub.status === 'active')
+      const activeSubscription = subscriptions.data.find((sub) => sub.status === 'active') as SubscriptionWithLegacyPeriod | undefined
 
       // Get recent invoices/payments
       const invoices = await stripe.invoices.list({
@@ -105,10 +115,10 @@ export const stripeSubscriptionStatusFn = createServerFn({ method: 'POST' })
               interval:
                 activeSubscription.items.data[0]?.price.recurring?.interval || 'month',
               currentPeriodStart: timestampToISO(
-                (activeSubscription as any).current_period_start,
+                activeSubscription.current_period_start,
               ),
               currentPeriodEnd: timestampToISO(
-                (activeSubscription as any).current_period_end,
+                activeSubscription.current_period_end,
               ),
               cancelAtPeriodEnd: activeSubscription.cancel_at_period_end,
             }

@@ -85,15 +85,35 @@ export function useNavigation() {
   const blogUnread = useEntityUnreadCount(blogId ?? '', 'blog');
 
   // Fetch amendment data via facade for permission context
-  const { amendment: amendmentData } = useAmendmentState({ amendmentId: amendmentId || undefined });
-  
-  // Map the query result to match the Amendment interface expected by usePermissions
-  const amendment = amendmentData as unknown as Amendment;
+  const { amendment: amendmentData, collaborators: amendmentCollaborators, roles: amendmentRoles } = useAmendmentState({
+    amendmentId: amendmentId || undefined,
+    includeRoles: Boolean(amendmentId),
+  });
+
+  const amendment = useMemo(() => {
+    if (!amendmentData) return undefined;
+
+    const roles = amendmentRoles ?? [];
+    const collaborators = amendmentCollaborators ?? [];
+
+    return {
+      id: amendmentData.id,
+      user: amendmentData.created_by ? { id: amendmentData.created_by.id } : undefined,
+      group: amendmentData.group ? { id: amendmentData.group.id } : undefined,
+      status: amendmentData.status ?? undefined,
+      roles,
+      amendmentRoleCollaborators: collaborators.map(collaborator => ({
+        ...collaborator,
+        role: roles.find(role => role.id === collaborator.role_id),
+      })),
+    } as Amendment;
+  }, [amendmentData, amendmentCollaborators, amendmentRoles]);
   
   // Let's use the permission hook
   const { 
     canManage,
     canView,
+    canUpdate,
     can,
     isMe, 
     isABlogger,
@@ -114,6 +134,7 @@ export function useNavigation() {
     
     // For amendment, we check if user can view or manage it
     const canViewAmendment = canView('amendments');
+    const canUpdateAmendment = canUpdate('amendments');
     const canManageAmendment = canManage('amendments');
 
     // For blog, we check if user can manage bloggers (which is the Owner permission)
@@ -139,6 +160,7 @@ export function useNavigation() {
       isGroupAdmin,
       isEventAdmin,
       canViewAmendment,
+      canUpdateAmendment,
       canManageAmendment,
       blogId,
       isBlogOwner,
@@ -155,25 +177,10 @@ export function useNavigation() {
       currentPrimaryRoute === 'amendment' ? amendmentUnread :
       currentPrimaryRoute === 'blog' ? blogUnread : 0;
 
-    // Override labels with translations for secondary items
+    // Secondary items are already localized in the nav item factories.
+    // Rebuilding keys from item.id breaks route-style ids like "blogs-and-statements".
     return baseSecondaryItems.map(item => ({
       ...item,
-      label:
-        currentPrimaryRoute === 'projects'
-          ? t(`navigation.secondary.projects.${item.id}`)
-          : currentPrimaryRoute === 'dashboard'
-            ? t(`navigation.secondary.dashboard.${item.id}`)
-            : currentPrimaryRoute === 'event'
-                ? t(`navigation.secondary.event.${item.id}`)
-                : currentPrimaryRoute === 'user'
-                  ? t(`navigation.secondary.user.${item.id}`)
-                  : currentPrimaryRoute === 'group'
-                    ? t(`navigation.secondary.group.${item.id}`)
-                    : currentPrimaryRoute === 'amendment'
-                      ? t(`navigation.secondary.amendment.${item.id}`)
-                      : currentPrimaryRoute === 'blog'
-                        ? t(`navigation.secondary.blog.${item.id}`)
-                        : item.label,
       ...(item.id === 'notifications' && entityUnreadCount > 0
         ? { badge: entityUnreadCount }
         : {}),

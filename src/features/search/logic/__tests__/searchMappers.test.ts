@@ -38,9 +38,46 @@ describe('searchMappers', () => {
   describe('mapMosaicToContentItems — hashtag extraction', () => {
     const emptyAgendaMap = new Map();
 
+    it('should map searchableUsers payload into user cards with full name and avatar', () => {
+      const items = [{
+        _type: 'user' as const,
+        id: 'u-1',
+        first_name: 'Ada',
+        last_name: 'Lovelace',
+        handle: 'ada',
+        bio: 'Computing pioneer',
+        avatar: 'https://example.com/ada.png',
+        location: 'London',
+        created_at: 1717200000000,
+        group_count: 3,
+        amendment_count: 5,
+        user_hashtags: [
+          { hashtag: { tag: 'math' } },
+        ],
+      }];
+
+      const result = mapMosaicToContentItems(items, emptyAgendaMap);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        id: 'u-1',
+        type: 'user',
+        title: 'Ada Lovelace',
+        authorName: 'Ada Lovelace',
+        authorAvatar: 'https://example.com/ada.png',
+        handle: 'ada',
+        description: 'Computing pioneer',
+        location: 'London',
+        groupCount: 3,
+        amendmentCount: 5,
+        tags: ['math'],
+      });
+      expect(result[0].createdAt).toBeInstanceOf(Date);
+    });
+
     it('should extract tags from group_hashtags junctions', () => {
       const items = [{
-        _type: 'group',
+        _type: 'group' as const,
         id: 'g1',
         name: 'Test Group',
         group_hashtags: [
@@ -55,7 +92,7 @@ describe('searchMappers', () => {
 
     it('should extract tags from event_hashtags junctions', () => {
       const items = [{
-        _type: 'event',
+        _type: 'event' as const,
         id: 'e1',
         title: 'Test Event',
         event_hashtags: [
@@ -69,7 +106,7 @@ describe('searchMappers', () => {
 
     it('should extract tags from amendment_hashtags junctions', () => {
       const items = [{
-        _type: 'amendment',
+        _type: 'amendment' as const,
         id: 'a1',
         title: 'Test Amendment',
         amendment_hashtags: [
@@ -84,7 +121,7 @@ describe('searchMappers', () => {
 
     it('should extract tags from blog_hashtags junctions', () => {
       const items = [{
-        _type: 'blog',
+        _type: 'blog' as const,
         id: 'b1',
         title: 'Test Blog',
         blog_hashtags: [
@@ -96,9 +133,79 @@ describe('searchMappers', () => {
       expect(result[0].tags).toEqual(['opinion']);
     });
 
+    it('should preserve a group-owned blog route context', () => {
+      const items = [{
+        _type: 'blog' as const,
+        id: 'b-group',
+        title: 'Group Blog',
+        group_id: 'g-1',
+        bloggers: [
+          {
+            status: 'owner',
+            user_id: 'u-1',
+            user: { id: 'u-1', name: 'Owner' },
+          },
+        ],
+      }];
+
+      const result = mapMosaicToContentItems(items, emptyAgendaMap);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].groupId).toBe('g-1');
+      expect(result[0].authorId).toBe('u-1');
+    });
+
+    it('should preserve a user-owned blog route context', () => {
+      const items = [{
+        _type: 'blog' as const,
+        id: 'b-user',
+        title: 'User Blog',
+        bloggers: [
+          {
+            status: 'owner',
+            user_id: 'u-2',
+            user: { id: 'u-2', name: 'Owner' },
+          },
+        ],
+      }];
+
+      const result = mapMosaicToContentItems(items, emptyAgendaMap);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].groupId).toBeUndefined();
+      expect(result[0].authorId).toBe('u-2');
+    });
+
+    it('should support the searchableBlogs snake_case payload', () => {
+      const items = [{
+        _type: 'blog' as const,
+        id: 'b-snake',
+        title: 'Snake Blog',
+        created_at: 1717200000000,
+        image_url: 'https://example.com/cover.png',
+        comment_count: 4,
+        support_votes: [{ id: 'v-1' }],
+        bloggers: [
+          {
+            status: 'owner',
+            user_id: 'u-3',
+            user: { id: 'u-3', name: 'Snake Owner', avatar: 'https://example.com/avatar.png' },
+          },
+        ],
+      }];
+
+      const result = mapMosaicToContentItems(items, emptyAgendaMap);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].authorId).toBe('u-3');
+      expect(result[0].authorAvatar).toBe('https://example.com/avatar.png');
+      expect(result[0].commentCount).toBe(4);
+      expect(result[0].stats?.reactions).toBe(1);
+    });
+
     it('should return empty tags when no junctions exist', () => {
       const items = [{
-        _type: 'group',
+        _type: 'group' as const,
         id: 'g1',
         name: 'No Tags Group',
       }];
@@ -109,7 +216,7 @@ describe('searchMappers', () => {
 
     it('should filter out null hashtags from junctions', () => {
       const items = [{
-        _type: 'group',
+        _type: 'group' as const,
         id: 'g1',
         name: 'Partial Tags',
         group_hashtags: [

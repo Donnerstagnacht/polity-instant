@@ -6,8 +6,7 @@ import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { ArrowUp, ArrowDown, User, Clock, MessageSquare, File } from 'lucide-react';
 import { toast } from 'sonner';
-import { createComment } from '../utils/thread-operations';
-import { voteOnThread, calculateScore } from '@/features/votes/utils/voting-utils';
+import { calculateScore } from '@/features/votes/utils/voting-utils';
 import { CommentTree } from './CommentTree';
 import type { Thread } from '../hooks/useDiscussions';
 
@@ -17,9 +16,31 @@ interface ThreadCardProps {
   amendmentId?: string;
   amendmentTitle?: string;
   senderName?: string;
+  onCreateComment: (
+    threadId: string,
+    text: string,
+    userId: string,
+    parentCommentId?: string,
+  ) => Promise<string>;
+  onVoteThread: (
+    threadId: string,
+    voteValue: number,
+    currentVote: { id: string; vote?: number } | undefined,
+    currentUpvotes: number,
+    currentDownvotes: number,
+    userId?: string,
+  ) => Promise<void>;
+  onVoteComment: (
+    commentId: string,
+    voteValue: number,
+    currentVote: { id: string; vote: number } | undefined,
+    currentUpvotes: number,
+    currentDownvotes: number,
+    userId?: string,
+  ) => Promise<void>;
 }
 
-export function ThreadCard({ thread, userId, amendmentId, amendmentTitle, senderName }: ThreadCardProps) {
+export function ThreadCard({ thread, userId, amendmentId, amendmentTitle, senderName, onCreateComment, onVoteThread, onVoteComment }: ThreadCardProps) {
   const [isCommenting, setIsCommenting] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -38,7 +59,7 @@ export function ThreadCard({ thread, userId, amendmentId, amendmentTitle, sender
     }
 
     try {
-      await voteOnThread(
+      await onVoteThread(
         thread.id,
         voteValue,
         userVote,
@@ -57,19 +78,16 @@ export function ThreadCard({ thread, userId, amendmentId, amendmentTitle, sender
 
     setIsSubmitting(true);
     try {
-      await createComment(
+      await onCreateComment(
         thread.id,
         commentText,
         userId,
         undefined,
-        senderName && amendmentId && amendmentTitle ? { senderName, amendmentId, amendmentTitle } : undefined
       );
-      toast.success('Comment posted successfully');
       setCommentText('');
       setIsCommenting(false);
     } catch (error) {
       console.error('Error posting comment:', error);
-      toast.error('Failed to post comment');
     } finally {
       setIsSubmitting(false);
     }
@@ -154,6 +172,8 @@ export function ThreadCard({ thread, userId, amendmentId, amendmentTitle, sender
               amendmentId={amendmentId}
               amendmentTitle={amendmentTitle}
               senderName={senderName}
+              onCreateComment={onCreateComment}
+              onVoteComment={onVoteComment}
             />
           ))}
 

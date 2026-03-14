@@ -16,6 +16,18 @@ export interface CalendarEvent {
   isPublic: boolean;
   imageURL?: string | null;
   organizer?: CalendarUser;
-  participants?: { user: CalendarUser }[];
+  participants?: { user: CalendarUser; instance_date?: number | null }[];
   isMeeting?: boolean;
+  meetingType?: string | null;
+  isBookable?: boolean;
+  maxBookings?: number;
+  bookingCount?: number;
+  isBookedByMe?: boolean;
+  groupName?: string;
+  groupId?: string;
+  isRecurringInstance?: boolean;
+  recurringParentId?: string;
+  hashtags?: { id: string; tag: string }[];
+  attendeeCount?: number;
+  organizerName?: string;
 }

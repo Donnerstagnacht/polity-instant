@@ -10,8 +10,11 @@ import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
-import { syncGroupNameToConversation } from '@/features/shared/utils/groupConversationSync';
-import { notifyGroupProfileUpdated } from '@/features/shared/utils/notification-helpers';
+import { useMessageActions } from '@/zero/messages/useMessageActions';
+import { useMessageState } from '@/zero/messages/useMessageState';
+import { notifyGroupProfileUpdated } from '@/features/notifications/utils/notification-helpers.ts';
+
+export type GroupType = 'base' | 'hierarchical';
 
 export interface GroupFormData {
   name: string;
@@ -66,12 +69,18 @@ const initialFormState: GroupFormData = {
 export function useGroupUpdate(
   groupId: string,
   initialData?: Partial<GroupFormData>,
-  options?: { actorId?: string; visibility?: 'public' | 'private' | 'authenticated' }
+  options?: {
+    actorId?: string;
+    visibility?: 'public' | 'private' | 'authenticated';
+    groupType?: GroupType;
+  }
 ): UseGroupUpdateResult {
   const navigate = useNavigate();
-  const { createGroup, updateGroup, setupGroupAdminRoles } = useGroupActions();
+  const { createGroup, updateGroup } = useGroupActions();
   const isCreating = !initialData;
   const commonActions = useCommonActions();
+  const { updateConversation } = useMessageActions();
+  const { groupConversation } = useMessageState({ groupId });
   const { groupHashtags, allHashtags } = useCommonState({
     group_id: groupId,
     loadAllHashtags: true,
@@ -172,6 +181,10 @@ export function useGroupUpdate(
       const nameChanged = formData.name !== originalName;
 
       if (isCreating) {
+        if (!options?.groupType) {
+          throw new Error('groupType is required when creating a group from useGroupUpdate');
+        }
+
         await createGroup({
           id: groupId,
           name: formData.name,
@@ -184,9 +197,9 @@ export function useGroupUpdate(
           website: null,
           is_public: true,
           visibility: options?.visibility ?? 'public',
+          group_type: options.groupType,
           owner_id: null,
         });
-        await setupGroupAdminRoles(groupId);
       } else {
         await updateGroup({
           id: groupId,
@@ -198,8 +211,12 @@ export function useGroupUpdate(
         });
 
         // Sync name to group conversation if it changed
-        if (nameChanged) {
-          await syncGroupNameToConversation(groupId, formData.name);
+        if (nameChanged && groupConversation) {
+          await updateConversation({
+            id: groupConversation.id,
+            name: formData.name,
+            last_message_at: Date.now(),
+          });
         }
       }
 

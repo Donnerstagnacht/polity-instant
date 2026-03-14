@@ -35,6 +35,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useZero } from '@rocicorp/zero/react';
+import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useDocumentState } from '@/zero/documents/useDocumentState';
@@ -105,7 +106,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
 
   // State
   const [title, setTitleState] = useState('');
-  const [content, setContentState] = useState<any[]>(DEFAULT_EDITOR_CONTENT);
+  const [content, setContentState] = useState<unknown[]>(DEFAULT_EDITOR_CONTENT);
   const [discussions, setDiscussionsState] = useState<TDiscussion[]>([]);
   const [mode, setModeState] = useState<EditorMode>('edit');
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
@@ -132,16 +133,22 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
   const entity = useMemo<EditorEntity | null>(() => {
     switch (entityType) {
       case 'amendment': {
-        const doc = (amendmentDocsCollabs as any)?.documents?.[0];
+        if (!amendmentDocsCollabs) return null;
+        const docs = amendmentDocsCollabs.documents;
+        const doc = Array.isArray(docs) ? docs[0] : undefined;
+        if (!doc) return null;
         return adaptAmendmentToEntity(amendmentDocsCollabs, doc);
       }
       case 'blog': {
+        if (!blogForEditor) return null;
         return adaptBlogToEntity(blogForEditor);
       }
       case 'document': {
+        if (!documentData) return null;
         return adaptDocumentToEntity(documentData);
       }
       case 'groupDocument': {
+        if (!documentData) return null;
         return adaptGroupDocumentToEntity(documentData, groupId || '', undefined);
       }
       default:
@@ -152,7 +159,9 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
   // Get the content entity ID (document ID for amendments, blog ID for blogs, etc.)
   const contentEntityId = useMemo(() => {
     if (entityType === 'amendment') {
-      return (amendmentDocsCollabs as any)?.documents?.[0]?.id || '';
+      const docs = amendmentDocsCollabs?.documents;
+      const doc = Array.isArray(docs) ? docs[0] : undefined;
+      return doc?.id ?? '';
     }
     return entityId;
   }, [entityType, entityId, amendmentDocsCollabs]);
@@ -216,13 +225,13 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
 
   // Persist content via Zero
   const saveContent = useCallback(
-    async (newContent: any[]) => {
+    async (newContent: unknown[]) => {
       setSaveStatus('saving');
       try {
         if (entityType === 'blog') {
-          await zero.mutate(mutators.blogs.update({ id: contentEntityId, content: newContent }));
+          await zero.mutate(mutators.blogs.update({ id: contentEntityId, content: newContent as ReadonlyJSONValue[] }));
         } else {
-          await zero.mutate(mutators.documents.updateContent({ id: contentEntityId, content: newContent }));
+          await zero.mutate(mutators.documents.updateContent({ id: contentEntityId, content: newContent as ReadonlyJSONValue[] }));
         }
         lastSaveTime.current = Date.now();
         lastRemoteUpdate.current = Date.now();
@@ -238,7 +247,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
 
   // Content change handler - throttled with trailing edge
   const setContent = useCallback(
-    (newContent: any[]) => {
+    (newContent: unknown[]) => {
       if (!contentEntityId || !userId) {
         console.warn('⚠️ Cannot save: missing entityId or userId', { contentEntityId, userId });
         return;
@@ -306,10 +315,11 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       if (!contentEntityId || !userId) return;
 
       try {
+        const serializedDiscussions: ReadonlyJSONValue = JSON.parse(JSON.stringify(newDiscussions));
         if (entityType === 'blog') {
-          await zero.mutate(mutators.blogs.update({ id: contentEntityId, discussions: newDiscussions }));
+          await zero.mutate(mutators.blogs.update({ id: contentEntityId, discussions: serializedDiscussions }));
         } else {
-          await zero.mutate(mutators.documents.updateContent({ id: contentEntityId, content: newDiscussions as any }));
+          await zero.mutate(mutators.documents.updateContent({ id: contentEntityId, content: serializedDiscussions }));
         }
       } catch (error) {
         console.error('Failed to save discussions:', error);
@@ -341,14 +351,14 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
 
   // Restore version handler
   const handleRestoreVersion = useCallback(
-    async (versionContent: any[]) => {
+    async (versionContent: unknown[]) => {
       if (!contentEntityId || !userId) return;
 
       try {
         if (entityType === 'blog') {
-          await zero.mutate(mutators.blogs.update({ id: contentEntityId, content: versionContent }));
+          await zero.mutate(mutators.blogs.update({ id: contentEntityId, content: versionContent as ReadonlyJSONValue[] }));
         } else {
-          await zero.mutate(mutators.documents.updateContent({ id: contentEntityId, content: versionContent }));
+          await zero.mutate(mutators.documents.updateContent({ id: contentEntityId, content: versionContent as ReadonlyJSONValue[] }));
         }
         isLocalChange.current = true;
         setContentState(versionContent);

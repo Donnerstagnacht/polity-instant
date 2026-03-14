@@ -25,6 +25,10 @@ import { useGroupState } from '@/zero/groups/useGroupState';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { toast } from 'sonner';
+import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
+import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
+import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
+import { RIGHT_GRADIENTS } from './RightFilters';
 
 interface LinkGroupDialogProps {
   currentGroupId: string;
@@ -121,7 +125,7 @@ export function LinkGroupDialog({
           (rel.parentGroup?.id === currentGroupId && rel.childGroup?.id === selectedGroupId) ||
           (rel.parentGroup?.id === selectedGroupId && rel.childGroup?.id === currentGroupId)
         )
-      : ((hierarchyRaw || []) as any[]).filter((rel: any) =>
+      : (hierarchyRaw || []).filter(rel =>
           (rel.group_id === currentGroupId && rel.related_group_id === selectedGroupId) ||
           (rel.group_id === selectedGroupId && rel.related_group_id === currentGroupId)
         );
@@ -307,22 +311,24 @@ export function LinkGroupDialog({
           {/* Group Selection */}
           <div className="grid gap-2">
             <Label htmlFor="group">{t('common.network.selectGroup')}</Label>
-            <Select 
-                value={selectedGroupId} 
-                onValueChange={setSelectedGroupId}
-                disabled={isEditMode}
-            >
-              <SelectTrigger id="group">
-                <SelectValue placeholder={t('common.network.selectGroupPlaceholder')} />
-              </SelectTrigger>
-              <SelectContent>
-                {availableGroups.map(group => (
-                  <SelectItem key={group.id} value={group.id}>
-                    {group.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {isEditMode ? (
+              <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm font-medium">
+                {availableGroups.find(group => group.id === selectedGroupId)?.name ?? currentGroupName}
+              </div>
+            ) : (
+              <TypeaheadSearch
+                items={toTypeaheadItems(
+                  availableGroups,
+                  'group',
+                  (group: any) => group.name || 'Group',
+                  (group: any) => group.description?.substring(0, 60),
+                )}
+                value={selectedGroupId}
+                onChange={(item: TypeaheadItem | null) => setSelectedGroupId(item?.id ?? '')}
+                placeholder={t('common.network.selectGroupPlaceholder')}
+                disablePortal
+              />
+            )}
           </div>
 
           {/* Relationship Type */}
@@ -354,15 +360,17 @@ export function LinkGroupDialog({
                   type="button"
                   onClick={() => toggleRight(right.value)}
                   className={cn(
-                    'flex items-start gap-3 rounded-lg border p-3 text-left transition-colors hover:bg-accent',
-                    selectedRights.has(right.value) && 'border-primary bg-primary/5'
+                    'flex items-start gap-3 rounded-lg border p-3 text-left transition-colors hover:opacity-90',
+                    selectedRights.has(right.value)
+                      ? cn('border-0 text-white shadow-sm', RIGHT_GRADIENTS[right.value])
+                      : 'border-border bg-muted/20 hover:bg-accent'
                   )}
                 >
                   <div
                     className={cn(
                       'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border',
                       selectedRights.has(right.value)
-                        ? 'border-primary bg-primary text-primary-foreground'
+                        ? 'border-white/70 bg-white/15 text-white'
                         : 'border-muted-foreground'
                     )}
                   >
@@ -370,7 +378,14 @@ export function LinkGroupDialog({
                   </div>
                   <div className="flex-1">
                     <div className="font-medium">{t(right.labelKey)}</div>
-                    <div className="text-sm text-muted-foreground">{t(right.descKey)}</div>
+                    <div
+                      className={cn(
+                        'text-sm',
+                        selectedRights.has(right.value) ? 'text-white/90' : 'text-muted-foreground'
+                      )}
+                    >
+                      {t(right.descKey)}
+                    </div>
                   </div>
                 </button>
               ))}

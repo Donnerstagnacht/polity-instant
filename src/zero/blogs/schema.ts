@@ -14,6 +14,8 @@ const baseBlogSchema = z.object({
   image_url: z.string().nullable(),
   is_public: z.boolean().nullable(),
   visibility: z.string(),
+  subscriber_count: z.number(),
+  supporter_count: z.number(),
   like_count: z.number(),
   comment_count: z.number(),
   upvotes: z.number(),
@@ -28,7 +30,7 @@ const baseBlogSchema = z.object({
 export const selectBlogSchema = baseBlogSchema
 
 export const createBlogSchema = baseBlogSchema
-  .omit({ id: true, created_at: true, updated_at: true })
+  .omit({ id: true, created_at: true, updated_at: true, subscriber_count: true, supporter_count: true })
   .extend({ id: z.string() })
 
 export const updateBlogSchema = baseBlogSchema

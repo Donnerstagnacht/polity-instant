@@ -7,6 +7,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { EntitySearchBar } from '@/features/shared/ui/ui/entity-search-bar';
 import { useCollaborators } from '../hooks/useCollaborators';
+import { useCollaboratorMutations } from '../hooks/useCollaboratorMutations';
 import { InviteDialog } from './InviteDialog.tsx';
 import { PendingRequestsCard } from './PendingRequestsCard.tsx';
 import { ActiveCollaboratorsCard } from './ActiveCollaboratorsCard.tsx';
@@ -34,6 +35,8 @@ export function CollaboratorsView({
     activeCollaborators,
     pendingInvitations,
   } = useCollaborators(amendmentId, currentUserId, searchQuery);
+
+  const mutations = useCollaboratorMutations();
 
   const navigateToUser = (userId: string) => {
     navigate({ to: `/user/${userId}` });
@@ -72,6 +75,7 @@ export function CollaboratorsView({
               amendmentId={amendmentId} 
               existingCollaborators={activeCollaborators}
               roles={roles}
+              onInviteUsers={mutations.inviteUsers}
             />
           </div>
 
@@ -80,6 +84,8 @@ export function CollaboratorsView({
             <PendingRequestsCard
               requests={pendingRequests}
               onNavigateToUser={navigateToUser}
+              onApproveRequest={mutations.approveRequest}
+              onRejectRequest={mutations.rejectRequest}
             />
           )}
 
@@ -88,6 +94,10 @@ export function CollaboratorsView({
             collaborators={activeCollaborators}
             roles={roles}
             onNavigateToUser={navigateToUser}
+            onChangeRole={mutations.changeCollaboratorRole}
+            onPromoteToAdmin={mutations.promoteToAdmin}
+            onDemoteToMember={mutations.demoteToMember}
+            onRemoveCollaborator={mutations.removeCollaborator}
           />
 
           {/* Pending Invitations */}
@@ -95,13 +105,20 @@ export function CollaboratorsView({
             <PendingInvitationsCard
               invitations={pendingInvitations}
               onNavigateToUser={navigateToUser}
+              onWithdrawInvitation={mutations.withdrawInvitation}
             />
           )}
         </TabsContent>
 
         {/* Roles Tab */}
         <TabsContent value="roles" className="space-y-6">
-          <RolesManagementCard amendmentId={amendmentId} roles={roles} />
+          <RolesManagementCard
+            amendmentId={amendmentId}
+            roles={roles}
+            onCreateRole={mutations.createRole}
+            onDeleteRole={mutations.deleteRole}
+            onToggleActionRight={mutations.toggleActionRight}
+          />
         </TabsContent>
       </Tabs>
     </div>

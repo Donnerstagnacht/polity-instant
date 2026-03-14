@@ -17,6 +17,9 @@ export const user = table('user')
     location: string().optional(),
     is_public: boolean(),
     visibility: string(),
+    subscriber_count: number(),
+    amendment_count: number(),
+    group_count: number(),
     tutorial_step: number().optional(),
     assistant_introduction: boolean().optional(),
     created_at: number(),
@@ -29,17 +32,6 @@ export const file = table('file')
     id: string(),
     path: string().optional(),
     url: string().optional(),
-    created_at: number(),
-  })
-  .primaryKey('id')
-
-export const userStats = table('user_stats')
-  .columns({
-    id: string(),
-    user_id: string(),
-    label: string().optional(),
-    unit: string().optional(),
-    value: number().optional(),
     created_at: number(),
   })
   .primaryKey('id')

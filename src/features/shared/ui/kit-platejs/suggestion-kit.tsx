@@ -75,7 +75,8 @@ export const suggestionPlugin = toTPlatePlugin<SuggestionConfig>(
     },
   },
   render: {
-    belowNodes: SuggestionLineBreak as any,
+    // @ts-expect-error - SuggestionConfig extends the base plugin config but Plate's internal WithAnyKey wrapper changes the generic
+    belowNodes: SuggestionLineBreak,
     node: SuggestionLeaf,
     belowRootNodes: ({ api, element }) => {
       if (!api.suggestion?.isBlockSuggestion(element)) {

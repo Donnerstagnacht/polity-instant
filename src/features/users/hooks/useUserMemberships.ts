@@ -46,7 +46,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
   const leaveGroup = async (membershipId: string, groupId: string) => {
     try {
       // Snapshot group data before mutation (Zero reactivity may invalidate after delete)
-      const membership = memberships.find((m: any) => m.id === membershipId);
+      const membership = memberships.find((m) => m.id === membershipId);
       const groupSnapshot = membership?.group ? { id: membership.group.id, name: membership.group.name } : null;
 
       console.log(LOG_PREFIX, 'leaveGroup — snapshot:', { membershipId, groupId, groupSnapshot, userId, safeSenderName });
@@ -68,7 +68,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawFromEvent = async (participationId: string, eventId: string) => {
     try {
-      const participation = participations.find((p: any) => p.id === participationId);
+      const participation = participations.find((p) => p.id === participationId);
       const eventSnapshot = participation?.event ? { id: participation.event.id, title: participation.event.title } : null;
 
       console.log(LOG_PREFIX, 'withdrawFromEvent — snapshot:', { participationId, eventId, eventSnapshot, userId, safeSenderName });
@@ -89,7 +89,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const leaveCollaboration = async (collaborationId: string, amendmentId: string) => {
     try {
-      const collaboration = collaborations.find((c: any) => c.id === collaborationId);
+      const collaboration = collaborations.find((c) => c.id === collaborationId);
       const amendmentSnapshot = collaboration?.amendment ? { id: collaboration.amendment.id, title: collaboration.amendment.title } : null;
 
       console.log(LOG_PREFIX, 'leaveCollaboration — snapshot:', { collaborationId, amendmentId, amendmentSnapshot, userId, safeSenderName });
@@ -110,7 +110,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const leaveBlog = async (relationId: string) => {
     try {
-      const blogRelation = blogRelations.find((r: any) => r.id === relationId);
+      const blogRelation = blogRelations.find((r) => r.id === relationId);
       const blogSnapshot = blogRelation?.blog ? { id: blogRelation.blog.id, title: blogRelation.blog.title } : null;
 
       console.log(LOG_PREFIX, 'leaveBlog — snapshot:', { relationId, blogSnapshot, userId, safeSenderName });
@@ -130,7 +130,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const acceptGroupInvitation = async (membershipId: string) => {
     try {
-      const membership = memberships.find((m: any) => m.id === membershipId);
+      const membership = memberships.find((m) => m.id === membershipId);
       const groupSnapshot = membership?.group ? { id: membership.group.id, name: membership.group.name } : null;
 
       await groupActions.updateMemberRole({
@@ -163,7 +163,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const declineGroupInvitation = async (membershipId: string) => {
     try {
-      const membership = memberships.find((m: any) => m.id === membershipId);
+      const membership = memberships.find((m) => m.id === membershipId);
       const groupSnapshot = membership?.group ? { id: membership.group.id, name: membership.group.name } : null;
 
       console.log(LOG_PREFIX, 'declineGroupInvitation — snapshot:', { membershipId, groupSnapshot, userId, safeSenderName });
@@ -183,7 +183,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawGroupRequest = async (membershipId: string) => {
     try {
-      const membership = memberships.find((m: any) => m.id === membershipId);
+      const membership = memberships.find((m) => m.id === membershipId);
       const groupSnapshot = membership?.group ? { id: membership.group.id, name: membership.group.name } : null;
 
       console.log(LOG_PREFIX, 'withdrawGroupRequest — snapshot:', { membershipId, groupSnapshot, userId, safeSenderName });
@@ -203,7 +203,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const acceptEventInvitation = async (participationId: string) => {
     try {
-      const participation = participations.find((p: any) => p.id === participationId);
+      const participation = participations.find((p) => p.id === participationId);
       const eventSnapshot = participation?.event ? { id: participation.event.id, title: participation.event.title } : null;
 
       await eventActions.updateParticipant({
@@ -224,7 +224,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const declineEventInvitation = async (participationId: string) => {
     try {
-      const participation = participations.find((p: any) => p.id === participationId);
+      const participation = participations.find((p) => p.id === participationId);
       const eventSnapshot = participation?.event ? { id: participation.event.id, title: participation.event.title } : null;
 
       console.log(LOG_PREFIX, 'declineEventInvitation — snapshot:', { participationId, eventSnapshot, userId, safeSenderName });
@@ -244,7 +244,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawEventRequest = async (participationId: string) => {
     try {
-      const participation = participations.find((p: any) => p.id === participationId);
+      const participation = participations.find((p) => p.id === participationId);
       const eventSnapshot = participation?.event ? { id: participation.event.id, title: participation.event.title } : null;
 
       console.log(LOG_PREFIX, 'withdrawEventRequest — snapshot:', { participationId, eventSnapshot, userId, safeSenderName });
@@ -264,7 +264,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const acceptCollaborationInvitation = async (collaborationId: string) => {
     try {
-      const collaboration = collaborations.find((c: any) => c.id === collaborationId);
+      const collaboration = collaborations.find((c) => c.id === collaborationId);
       const amendmentSnapshot = collaboration?.amendment ? { id: collaboration.amendment.id, title: collaboration.amendment.title, visibility: collaboration.amendment.visibility } : null;
 
       await amendmentActions.updateCollaborator({
@@ -298,7 +298,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const declineCollaborationInvitation = async (collaborationId: string) => {
     try {
-      const collaboration = collaborations.find((c: any) => c.id === collaborationId);
+      const collaboration = collaborations.find((c) => c.id === collaborationId);
       const amendmentSnapshot = collaboration?.amendment ? { id: collaboration.amendment.id, title: collaboration.amendment.title } : null;
 
       console.log(LOG_PREFIX, 'declineCollaborationInvitation — snapshot:', { collaborationId, amendmentSnapshot, userId, safeSenderName });
@@ -318,7 +318,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawCollaborationRequest = async (collaborationId: string) => {
     try {
-      const collaboration = collaborations.find((c: any) => c.id === collaborationId);
+      const collaboration = collaborations.find((c) => c.id === collaborationId);
       const amendmentSnapshot = collaboration?.amendment ? { id: collaboration.amendment.id, title: collaboration.amendment.title } : null;
 
       console.log(LOG_PREFIX, 'withdrawCollaborationRequest — snapshot:', { collaborationId, amendmentSnapshot, userId, safeSenderName });
@@ -338,7 +338,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const acceptBlogInvitation = async (blogRelationId: string) => {
     try {
-      const blogRelation = blogRelations.find((r: any) => r.id === blogRelationId);
+      const blogRelation = blogRelations.find((r) => r.id === blogRelationId);
       const blogSnapshot = blogRelation?.blog ? { id: blogRelation.blog.id, title: blogRelation.blog.title } : null;
 
       await blogActions.updateEntry({
@@ -359,7 +359,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const declineBlogInvitation = async (blogRelationId: string) => {
     try {
-      const blogRelation = blogRelations.find((r: any) => r.id === blogRelationId);
+      const blogRelation = blogRelations.find((r) => r.id === blogRelationId);
       const blogSnapshot = blogRelation?.blog ? { id: blogRelation.blog.id, title: blogRelation.blog.title } : null;
 
       console.log(LOG_PREFIX, 'declineBlogInvitation — snapshot:', { blogRelationId, blogSnapshot, userId, safeSenderName });
@@ -379,7 +379,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawBlogRequest = async (blogRelationId: string) => {
     try {
-      const blogRelation = blogRelations.find((r: any) => r.id === blogRelationId);
+      const blogRelation = blogRelations.find((r) => r.id === blogRelationId);
       const blogSnapshot = blogRelation?.blog ? { id: blogRelation.blog.id, title: blogRelation.blog.title } : null;
 
       console.log(LOG_PREFIX, 'withdrawBlogRequest — snapshot:', { blogRelationId, blogSnapshot, userId, safeSenderName });

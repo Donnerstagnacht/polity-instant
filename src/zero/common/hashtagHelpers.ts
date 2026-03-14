@@ -3,7 +3,7 @@
  * Works for user_hashtags, group_hashtags, amendment_hashtags, event_hashtags, blog_hashtags.
  */
 export function extractHashtags(
-  junctions: Array<{ hashtag?: { id: string; tag: string } | null }> | undefined | null,
+  junctions: ReadonlyArray<{ hashtag?: { id: string; tag: string } | null }> | undefined | null,
 ): { id: string; tag: string }[] {
   if (!junctions) return [];
   return junctions.map(j => j.hashtag).filter((h): h is { id: string; tag: string } => !!h);
@@ -13,7 +13,7 @@ export function extractHashtags(
  * Extract just tag strings from junction rows.
  */
 export function extractHashtagTags(
-  junctions: Array<{ hashtag?: { tag?: string | null } | null }> | undefined | null,
+  junctions: ReadonlyArray<{ hashtag?: { tag?: string | null } | null }> | undefined | null,
 ): string[] {
   if (!junctions) return [];
   return junctions

@@ -71,4 +71,14 @@ export const messageQueries = {
             .related('messages')
         )
   ),
+
+  // Find group conversation by group_id
+  conversationByGroupId: defineQuery(
+    z.object({ group_id: z.string() }),
+    ({ args: { group_id } }) =>
+      zql.conversation
+        .where('group_id', group_id)
+        .where('type', 'group')
+        .one()
+  ),
 }

@@ -129,7 +129,7 @@ export function OnboardingWizard({ userId, userEmail, onComplete }: OnboardingWi
     console.log('💬 handleGoToAssistant called');
     try {
       console.log('✅ Redirecting to messages with AriaKai');
-      navigate({ to: '/messages?openAriaKai=true' });
+      navigate({ to: '/messages', search: { openAriaKai: 'true' } });
       onComplete();
       console.log('✅ onComplete called');
     } catch (error) {

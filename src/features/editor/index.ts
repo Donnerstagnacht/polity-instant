@@ -38,15 +38,7 @@ export {
   checkIsOwnerOrCollaborator,
 } from './logic/entity-adapter';
 
-export {
-  createVersion,
-  getLatestVersionNumber,
-  restoreVersion,
-  updateEntityContent,
-  updateEntityTitle,
-  updateEntityDiscussions,
-  updateEntityMode,
-} from './utils/version-utils';
+// version-utils exports removed — module moved to hooks/useEditorVersion
 
 export {
   buildVersionWhereClause,
@@ -58,10 +50,6 @@ export {
   filterVersions,
 } from './logic/version-queries';
 
-export {
-  handleSuggestionAccepted,
-  handleSuggestionDeclined,
-  handleVoteOnSuggestion,
-} from './utils/editor-operations';
+// editor-operations exports removed — module moved to hooks/useEditorOperations
 
 export { generateUserColor } from './logic/editor-helpers';

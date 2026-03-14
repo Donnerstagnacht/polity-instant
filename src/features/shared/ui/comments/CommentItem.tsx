@@ -11,6 +11,7 @@ export interface CommentData {
   id: string;
   text: string;
   createdAt: number;
+  parent_id?: string | null;
   creator?: {
     id?: string;
     name?: string;

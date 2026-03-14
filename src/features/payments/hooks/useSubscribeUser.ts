@@ -3,7 +3,7 @@ import { useUserState } from '@/zero/users/useUserState';
 import { useCommonActions } from '@/zero/common/useCommonActions';
 import { useCommonState } from '@/zero/common/useCommonState';
 import { useAuth } from '@/providers/auth-provider';
-import { notifyNewFollower } from '@/features/shared/utils/notification-helpers';
+import { notifyNewFollower } from '@/features/notifications/utils/notification-helpers.ts';
 
 /**
  * Hook to handle user subscription functionality
@@ -11,7 +11,7 @@ import { notifyNewFollower } from '@/features/shared/utils/notification-helpers'
  */
 export function useSubscribeUser(targetUserId?: string) {
   const { user: authUser } = useAuth();
-  const { currentUser } = useUserState();
+  const { currentUser, user: targetUser } = useUserState({ userId: targetUserId });
   const commonActions = useCommonActions();
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscriberCount, setSubscriberCount] = useState(0);
@@ -44,14 +44,14 @@ export function useSubscribeUser(targetUserId?: string) {
       if (subscribed === optimisticTargetRef.current) {
         optimisticTargetRef.current = null;
         createdSubscriptionIdRef.current = null;
-        setSubscriberCount(subscribers.length);
+        setSubscriberCount(targetUser?.subscriber_count ?? subscribers.length);
       }
       return;
     }
 
     setIsSubscribed(subscribed);
-    setSubscriberCount(subscribers.length);
-  }, [subscriptionRows, authUser?.id, targetUserId, subscriptionLoading]);
+    setSubscriberCount(targetUser?.subscriber_count ?? subscribers.length);
+  }, [subscriptionRows, authUser?.id, targetUserId, subscriptionLoading, targetUser?.subscriber_count]);
 
   // Subscribe to a user
   const subscribe = async () => {

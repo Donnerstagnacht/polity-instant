@@ -30,7 +30,7 @@ export function LinksSection({ links, addLinkButton }: LinksSectionProps) {
             {links.map((link) => (
               <a
                 key={link.id}
-                href={link.url}
+                href={link.url ?? undefined}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 rounded-lg border p-3 transition-colors hover:bg-accent"

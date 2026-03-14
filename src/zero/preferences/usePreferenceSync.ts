@@ -23,6 +23,9 @@ export function usePreferenceSync() {
   const preferenceRef = useRef(preference)
   preferenceRef.current = preference
 
+  const isLoadingRef = useRef(isLoading)
+  isLoadingRef.current = isLoading
+
   const setTheme = useThemeStore(state => state.setTheme)
   const theme = useThemeStore(state => state.theme)
 
@@ -39,6 +42,10 @@ export function usePreferenceSync() {
 
   const persistField = useCallback(
     (fields: Record<string, string>) => {
+      // Skip if preference data is still loading — a null preferenceRef
+      // during loading does NOT mean the row doesn't exist on the server.
+      if (isLoadingRef.current) return
+
       const pref = preferenceRef.current
       if (!pref) {
         zero.mutate(

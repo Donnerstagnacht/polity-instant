@@ -1,6 +1,7 @@
 export const calendarPageTranslations = {
   title: 'Calendar',
   views: {
+    list: 'List',
     day: 'Day',
     week: 'Week',
     month: 'Month',

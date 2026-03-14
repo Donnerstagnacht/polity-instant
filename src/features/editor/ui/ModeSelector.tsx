@@ -19,7 +19,6 @@ import {
 import { Edit, Eye, MessageSquare, Vote, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { updateEntityMode } from '../utils/version-utils';
 import type { EditorEntityType, EditorMode } from '../types';
 
 interface ModeSelectorProps {
@@ -32,7 +31,6 @@ interface ModeSelectorProps {
 
 export function ModeSelector({
   entityType,
-  entityId,
   currentMode,
   isOwnerOrCollaborator,
   onModeChange,
@@ -86,11 +84,6 @@ export function ModeSelector({
     }
 
     try {
-      await updateEntityMode(entityType, entityId, newMode);
-
-      const modeConfig = modes.find(m => m.value === newMode);
-      toast.success(`${t('features.editor.modeSelector.title')}: ${modeConfig?.label}`);
-
       if (onModeChange) {
         onModeChange(newMode);
       }
@@ -134,7 +127,7 @@ export function ModeSelector({
                     </Badge>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground">{mode.description}</p>
+                <p className="text-muted-foreground text-xs">{mode.description}</p>
               </div>
             </DropdownMenuItem>
           );

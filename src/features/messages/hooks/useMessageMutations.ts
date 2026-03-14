@@ -6,7 +6,7 @@ import {
   notifyDirectMessage,
   notifyConversationRequest,
   notifyConversationAccepted,
-} from '@/features/shared/utils/notification-helpers';
+} from '@/features/notifications/utils/notification-helpers.ts';
 
 export function useMessageMutations() {
   const actions = useMessageActions();

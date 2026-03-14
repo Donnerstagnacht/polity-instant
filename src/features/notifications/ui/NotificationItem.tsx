@@ -128,13 +128,13 @@ export function NotificationItem({
                   >
                     <AvatarImage src={onBehalfEntity.imageURL} />
                     <AvatarFallback className="bg-blue-500 text-[10px] text-white">
-                      {((onBehalfEntity as any).name?.[0] || (onBehalfEntity as any).title?.[0])?.toUpperCase() || 'E'}
+                      {('name' in onBehalfEntity ? onBehalfEntity.name?.[0] : 'title' in onBehalfEntity ? onBehalfEntity.title?.[0] : '')?.toUpperCase() || 'E'}
                     </AvatarFallback>
                   </Avatar>
                   <span
                     className="font-medium truncate"
                   >
-                    {(onBehalfEntity as any).name || (onBehalfEntity as any).title || 'Entity'}
+                    {'name' in onBehalfEntity ? onBehalfEntity.name : 'title' in onBehalfEntity ? onBehalfEntity.title : 'Entity'}
                   </span>
                 </>
               )}
@@ -148,7 +148,7 @@ export function NotificationItem({
               {isEntityNotification && recipientEntity && (
                 <Badge variant="outline" className={cn('w-fit', entityColors?.badgeBg)}>
                   <Users className="mr-1 h-3 w-3" />
-                  {(recipientEntity as any).name || (recipientEntity as any).title || 'Entity'} {t('features.notifications.item.notification')}
+                  {'name' in recipientEntity ? recipientEntity.name : 'title' in recipientEntity ? recipientEntity.title : 'Entity'} {t('features.notifications.item.notification')}
                 </Badge>
               )}
             </div>

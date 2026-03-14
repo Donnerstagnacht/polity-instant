@@ -21,24 +21,26 @@ import {
   SelectValue,
 } from '@/features/shared/ui/ui/select';
 import { Users, Shield, Trash2 } from 'lucide-react';
-import {
-  changeCollaboratorRole,
-  promoteToAdmin,
-  demoteToMember,
-  removeCollaborator,
-} from '../utils/collaborator-operations';
 import type { Collaborator, Role } from '../hooks/useCollaborators';
 
 interface ActiveCollaboratorsCardProps {
   collaborators: Collaborator[];
   roles: Role[];
   onNavigateToUser: (userId: string) => void;
+  onChangeRole: (collaboratorId: string, newRoleId: string) => Promise<void>;
+  onPromoteToAdmin: (collaboratorId: string, roles: Role[]) => Promise<void>;
+  onDemoteToMember: (collaboratorId: string, roles: Role[]) => Promise<void>;
+  onRemoveCollaborator: (collaboratorId: string) => Promise<void>;
 }
 
 export function ActiveCollaboratorsCard({
   collaborators,
   roles,
   onNavigateToUser,
+  onChangeRole,
+  onPromoteToAdmin,
+  onDemoteToMember,
+  onRemoveCollaborator,
 }: ActiveCollaboratorsCardProps) {
   return (
     <Card className="mb-6">
@@ -109,7 +111,7 @@ export function ActiveCollaboratorsCard({
                       <Select
                         value={roleId}
                         onValueChange={newRoleId =>
-                          changeCollaboratorRole(collaboration.id, newRoleId)
+                          onChangeRole(collaboration.id, newRoleId)
                         }
                       >
                         <SelectTrigger className="w-40">
@@ -131,7 +133,7 @@ export function ActiveCollaboratorsCard({
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => promoteToAdmin(collaboration.id, roles)}
+                            onClick={() => onPromoteToAdmin(collaboration.id, roles)}
                           >
                             <Shield className="mr-1 h-4 w-4" />
                             Promote to Author
@@ -141,7 +143,7 @@ export function ActiveCollaboratorsCard({
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => demoteToMember(collaboration.id, roles)}
+                            onClick={() => onDemoteToMember(collaboration.id, roles)}
                           >
                             Demote to Collaborator
                           </Button>
@@ -149,7 +151,7 @@ export function ActiveCollaboratorsCard({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => removeCollaborator(collaboration.id)}
+                          onClick={() => onRemoveCollaborator(collaboration.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                           <span className="ml-2">Remove</span>

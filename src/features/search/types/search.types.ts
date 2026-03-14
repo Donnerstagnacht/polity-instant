@@ -63,6 +63,8 @@ export type SearchContentItem = {
   status?: string;
   dueDate?: Date;
   isCompleted?: boolean;
+  isRecurring?: boolean;
+  recurrencePattern?: string;
   assigneeCount?: number;
   tags?: string[];
   memberCount?: number;

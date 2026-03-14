@@ -26,8 +26,13 @@ const baseAmendmentSchema = z.object({
   tags: jsonSchema.nullable(),
   visibility: z.string(),
   is_public: z.boolean(),
+  subscriber_count: z.number(),
+  clone_count: z.number(),
+  change_request_count: z.number(),
   editing_mode: z.string().nullable(),
   discussions: jsonSchema.nullable(),
+  comment_count: z.number(),
+  collaborator_count: z.number(),
   image_url: z.string().nullable(),
   x: z.string().nullable(),
   youtube: z.string().nullable(),
@@ -40,7 +45,7 @@ const baseAmendmentSchema = z.object({
 export const selectAmendmentSchema = baseAmendmentSchema
 
 export const createAmendmentSchema = baseAmendmentSchema
-  .omit({ id: true, created_at: true, updated_at: true, created_by_id: true, supporters: true, supporters_required: true, supporters_percentage: true, upvotes: true, downvotes: true })
+  .omit({ id: true, created_at: true, updated_at: true, created_by_id: true, supporters: true, supporters_required: true, supporters_percentage: true, upvotes: true, downvotes: true, subscriber_count: true, clone_count: true, change_request_count: true, comment_count: true, collaborator_count: true })
   .extend({ id: z.string() })
 
 export const updateAmendmentSchema = baseAmendmentSchema

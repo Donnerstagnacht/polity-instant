@@ -58,71 +58,54 @@ export function useDecisionTerminal(
     const items: DecisionItem[] = [];
     const now = new Date();
 
+    // Group individual amendment_vote rows by amendment_id
     const amendmentVotes = data?.amendmentVotes || [];
-    amendmentVotes.forEach((vote: any, index: number) => {
-      const endsAt = vote.voting_end_time
-        ? new Date(vote.voting_end_time)
-        : vote.updated_at
-          ? new Date(vote.updated_at)
-          : vote.created_at
-            ? new Date(vote.created_at)
-            : now;
+    type AmendmentVoteRow = (typeof amendmentVotes)[number];
+    const votesByAmendment = new Map<string, AmendmentVoteRow[]>();
+    for (const vote of amendmentVotes) {
+      const key = vote.amendment_id;
+      const existing = votesByAmendment.get(key);
+      if (existing) {
+        existing.push(vote);
+      } else {
+        votesByAmendment.set(key, [vote]);
+      }
+    }
 
-      const entries = vote.vote_entries || [];
+    let voteIndex = 0;
+    for (const [amendmentId, votes] of votesByAmendment) {
+      voteIndex++;
+      const amendment = votes[0]?.amendment;
 
-      // Separate indication votes from actual votes
-      const indicationEntries = entries.filter((entry: any) => entry.is_indication === true);
-      const actualEntries = entries.filter((entry: any) => !entry.is_indication);
+      const endsAt = amendment?.updated_at
+        ? new Date(amendment.updated_at)
+        : amendment?.created_at
+          ? new Date(amendment.created_at)
+          : now;
 
-      // Calculate actual vote counts
-      const support = actualEntries.filter(
-        (entry: any) => entry.vote === 'yes' || entry.vote === 'accept'
+      // Calculate vote counts
+      const support = votes.filter(
+        (v) => v.vote === 'yes' || v.vote === 'accept'
       ).length;
-      const oppose = actualEntries.filter(
-        (entry: any) => entry.vote === 'no' || entry.vote === 'reject'
+      const oppose = votes.filter(
+        (v) => v.vote === 'no' || v.vote === 'reject'
       ).length;
-      const abstain = actualEntries.filter((entry: any) => entry.vote === 'abstain').length;
+      const abstain = votes.filter((v) => v.vote === 'abstain').length;
       const voteData = { support, oppose, abstain };
       const totalVotes = support + oppose + abstain;
 
-      // Calculate indication vote counts
-      const indicationSupport = indicationEntries.filter(
-        (entry: any) => entry.vote === 'yes' || entry.vote === 'accept'
-      ).length;
-      const indicationOppose = indicationEntries.filter(
-        (entry: any) => entry.vote === 'no' || entry.vote === 'reject'
-      ).length;
-      const indicationAbstain = indicationEntries.filter(
-        (entry: any) => entry.vote === 'abstain'
-      ).length;
-      const indicationVoteData = {
-        support: indicationSupport,
-        oppose: indicationOppose,
-        abstain: indicationAbstain,
-      };
-      const totalIndicationVotes = indicationSupport + indicationOppose + indicationAbstain;
-
-      // Determine if we're in indication phase (agenda status = planned)
-      const agendaStatus = vote.agenda_item?.status;
-      const isIndicationPhase = agendaStatus === 'planned';
-
-      const closedByStatus = vote.status === 'completed';
+      const closedByStatus = amendment?.status === 'completed';
       const isEnded = isClosed(endsAt) || closedByStatus;
       const resultStatus = support === oppose ? 'tied' : support > oppose ? 'passed' : 'failed';
       const status = isEnded ? resultStatus : getDecisionStatus(endsAt);
 
-      const amendment = vote.agenda_item?.amendment;
-      const amendmentId = amendment?.id || vote.id;
-      const amendmentTitle = amendment?.title || vote.title || 'Amendment Vote';
-      const eventTitle = vote.agenda_item?.event?.title || vote.agenda_item?.title || 'Vote';
-      const agendaItemId = vote.agenda_item?.id;
-      const agendaEventId = vote.agenda_item?.event?.id;
+      const amendmentTitle = amendment?.title ?? 'Amendment Vote';
 
       items.push({
-        id: generateDecisionId('vote', index + 1),
+        id: generateDecisionId('vote', voteIndex),
         type: 'vote',
         title: amendmentTitle,
-        body: eventTitle,
+        body: 'Vote',
         endsAt,
         status,
         isClosed: isEnded,
@@ -132,13 +115,8 @@ export function useDecisionTerminal(
         votes: voteData,
         votedCount: totalVotes,
         supportPercentage: isEnded ? calculateSupportPercentage(voteData) : undefined,
-        // Indication phase data
-        isIndicationPhase,
-        indicationVotes: totalIndicationVotes > 0 ? indicationVoteData : undefined,
-        indicationSupportPercentage:
-          totalIndicationVotes > 0 ? calculateSupportPercentage(indicationVoteData) : undefined,
         href: `/amendment/${amendmentId}`,
-        summary: vote.description || undefined,
+        summary: amendment?.reason ?? undefined,
         entity: amendment
           ? {
               id: amendmentId,
@@ -147,19 +125,11 @@ export function useDecisionTerminal(
               href: `/amendment/${amendmentId}`,
             }
           : undefined,
-        agendaItem:
-          agendaItemId && agendaEventId
-            ? {
-                id: agendaItemId,
-                name: eventTitle,
-                href: `/event/${agendaEventId}/agenda/${agendaItemId}`,
-              }
-            : undefined,
       });
-    });
+    }
 
     const elections = data?.elections || [];
-    elections.forEach((election: any, index: number) => {
+    elections.forEach((election, index) => {
       const endsAt = election.voting_end_time
         ? new Date(election.voting_end_time)
         : election.updated_at
@@ -172,8 +142,8 @@ export function useDecisionTerminal(
       const votes = election.votes || [];
 
       // Separate indication votes from actual votes
-      const indicationVotes = votes.filter((v: any) => v.is_indication === true);
-      const actualVotes = votes.filter((v: any) => !v.is_indication);
+      const indicationVotes = votes.filter(v => v.is_indication === true);
+      const actualVotes = votes.filter(v => !v.is_indication);
 
       // Count actual votes per candidate
       const voteCounts = new Map<string, number>();
@@ -206,13 +176,13 @@ export function useDecisionTerminal(
         indicationVotes?: number;
         indicationPercentage?: number;
         actualPercentage?: number;
-      }> = candidates.map((candidate: any) => {
+      }> = candidates.map(candidate => {
         const actualVoteCount = voteCounts.get(candidate.id) || 0;
         const indicationVoteCount = indicationCounts.get(candidate.id) || 0;
         return {
           id: candidate.id,
-          name: candidate.name,
-          avatarUrl: candidate.image_url,
+          name: candidate.name ?? '',
+          avatarUrl: candidate.image_url ?? undefined,
           votes: actualVoteCount,
           isWinner: false,
           indicationVotes: indicationVoteCount > 0 ? indicationVoteCount : undefined,
@@ -243,7 +213,7 @@ export function useDecisionTerminal(
         id: generateDecisionId('election', index + 1),
         type: 'election',
         title: election.title || 'Election',
-        body: election.position?.title || election.agendaItem?.event?.title || 'Election',
+        body: election.position?.title || election.agenda_item?.event?.title || 'Election',
         endsAt,
         status,
         isClosed: isEnded,

@@ -15,10 +15,17 @@ import type {
   EditorMode,
 } from '../types';
 
+// Raw entity type for adapter function parameters.
+// These receive untyped data from various Zero query shapes.
+// Using `any` here at the system boundary is intentional to avoid
+// duplicating Zero's complex inferred return types.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type RawEntity = Record<string, any>;
+
 /**
  * Adapts an amendment with its document to EditorEntity
  */
-export function adaptAmendmentToEntity(amendment: any, document: any): EditorEntity | null {
+export function adaptAmendmentToEntity(amendment: RawEntity | undefined | null, document: RawEntity | undefined | null): EditorEntity | null {
   if (!amendment || !document) return null;
 
   const owner: EditorUser | undefined = document.owner
@@ -34,7 +41,7 @@ export function adaptAmendmentToEntity(amendment: any, document: any): EditorEnt
 
   // Add document collaborators
   if (document.collaborators) {
-    document.collaborators.forEach((collab: any) => {
+    document.collaborators.forEach((collab: RawEntity) => {
       if (collab.user?.id) {
         collaborators.push({
           id: collab.id,
@@ -53,7 +60,7 @@ export function adaptAmendmentToEntity(amendment: any, document: any): EditorEnt
 
   // Add amendment role collaborators
   if (amendment.amendmentRoleCollaborators) {
-    amendment.amendmentRoleCollaborators.forEach((collab: any) => {
+    amendment.amendmentRoleCollaborators.forEach((collab: RawEntity) => {
       if (collab.user?.id && !collaborators.some(c => c.user.id === collab.user.id)) {
         collaborators.push({
           id: collab.id,
@@ -97,14 +104,14 @@ export function adaptAmendmentToEntity(amendment: any, document: any): EditorEnt
 /**
  * Adapts a blog to EditorEntity
  */
-export function adaptBlogToEntity(blog: any): EditorEntity | null {
+export function adaptBlogToEntity(blog: RawEntity | undefined | null): EditorEntity | null {
   if (!blog) return null;
 
   const collaborators: EditorCollaborator[] = [];
 
   // Add bloggers as collaborators (Zero relation name is 'bloggers')
   if (blog.bloggers) {
-    blog.bloggers.forEach((blogger: any) => {
+    blog.bloggers.forEach((blogger: RawEntity) => {
       if (blogger.user?.id) {
         collaborators.push({
           id: blogger.id,
@@ -128,7 +135,7 @@ export function adaptBlogToEntity(blog: any): EditorEntity | null {
   }
 
   // Find owner from bloggers
-  const ownerBlogger = blog.bloggers?.find((b: any) => b.status === 'owner');
+  const ownerBlogger = blog.bloggers?.find((b: RawEntity) => b.status === 'owner');
   const owner: EditorUser | undefined = ownerBlogger?.user
     ? {
         id: ownerBlogger.user.id,
@@ -163,7 +170,7 @@ export function adaptBlogToEntity(blog: any): EditorEntity | null {
 /**
  * Adapts a standalone document to EditorEntity
  */
-export function adaptDocumentToEntity(document: any): EditorEntity | null {
+export function adaptDocumentToEntity(document: RawEntity | undefined | null): EditorEntity | null {
   if (!document) return null;
 
   const owner: EditorUser | undefined = document.owner
@@ -178,7 +185,7 @@ export function adaptDocumentToEntity(document: any): EditorEntity | null {
   const collaborators: EditorCollaborator[] = [];
 
   if (document.collaborators) {
-    document.collaborators.forEach((collab: any) => {
+    document.collaborators.forEach((collab: RawEntity) => {
       if (collab.user?.id) {
         collaborators.push({
           id: collab.id,
@@ -217,7 +224,7 @@ export function adaptDocumentToEntity(document: any): EditorEntity | null {
  * Adapts a group document to EditorEntity
  */
 export function adaptGroupDocumentToEntity(
-  document: any,
+  document: RawEntity | undefined | null,
   groupId: string,
   groupName?: string
 ): EditorEntity | null {
@@ -235,7 +242,7 @@ export function adaptGroupDocumentToEntity(
   const collaborators: EditorCollaborator[] = [];
 
   if (document.collaborators) {
-    document.collaborators.forEach((collab: any) => {
+    document.collaborators.forEach((collab: RawEntity) => {
       if (collab.user?.id) {
         collaborators.push({
           id: collab.id,
@@ -277,7 +284,7 @@ export function adaptGroupDocumentToEntity(
  */
 export function adaptToEditorEntity(
   entityType: EditorEntityType,
-  data: any,
+  data: RawEntity,
   options?: { groupId?: string; groupName?: string }
 ): EditorEntity | null {
   switch (entityType) {

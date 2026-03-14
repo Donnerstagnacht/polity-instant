@@ -13,9 +13,9 @@ export function useUnreadNotificationsCount() {
 
   const count = useMemo(() => {
     if (!userId) return 0;
-    const notifications = (data?.notifications || []) as any[];
+    const notifications = data?.notifications || [];
     const accessible = filterAccessibleNotifications(notifications, userId);
-    return accessible.filter((n: any) => !n.isRead).length;
+    return accessible.filter(n => !n.isRead).length;
   }, [data?.notifications, userId]);
 
   return { count, isLoading };

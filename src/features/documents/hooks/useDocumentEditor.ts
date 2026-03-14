@@ -10,10 +10,12 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { toast } from 'sonner';
 import { useAllDocuments } from '@/zero/groups/useGroupState';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useAutoSave } from '@/features/documents/hooks/useAutoSave.ts';
+import type { TDiscussion } from '@/features/shared/ui/kit-platejs/discussion-kit.tsx';
 import type { DocumentWithMetadata } from './useGroupDocuments';
 
 const DEFAULT_CONTENT = [
@@ -36,13 +38,13 @@ interface UseDocumentEditorResult {
 
   // Editor state
   title: string;
-  content: any[];
-  discussions: any[];
+  content: unknown[];
+  discussions: TDiscussion[];
 
   // State setters
   setTitle: (title: string) => void;
-  setContent: (content: any[]) => void;
-  setDiscussions: (discussions: any[]) => void;
+  setContent: (content: unknown[]) => void;
+  setDiscussions: (discussions: TDiscussion[]) => void;
 
   // Save status
   isSavingTitle: boolean;
@@ -73,8 +75,8 @@ export function useDocumentEditor(options: UseDocumentEditorOptions): UseDocumen
 
   // State
   const [title, setTitleState] = useState('');
-  const [content, setContentState] = useState<any[]>(DEFAULT_CONTENT);
-  const [discussions, setDiscussionsState] = useState<any[]>([]);
+  const [content, setContentState] = useState<unknown[]>(DEFAULT_CONTENT);
+  const [discussions, setDiscussionsState] = useState<TDiscussion[]>([]);
   const [isSavingTitle, setIsSavingTitle] = useState(false);
   const [isSavingContent, setIsSavingContent] = useState(false);
   const [isSavingDiscussions, setIsSavingDiscussions] = useState(false);
@@ -86,7 +88,7 @@ export function useDocumentEditor(options: UseDocumentEditorOptions): UseDocumen
   // Query document
   const isLoading = docsLoading;
 
-  const document = (documentsData?.find((d: any) => d.id === documentId) ||
+  const document = (documentsData?.find((d) => d.id === documentId) ||
     null) as DocumentWithMetadata | null;
 
   // Check access
@@ -97,7 +99,7 @@ export function useDocumentEditor(options: UseDocumentEditorOptions): UseDocumen
     if (document && !isInitialized.current) {
       setTitleState(document.title || '');
       setContentState(document.content || DEFAULT_CONTENT);
-      setDiscussionsState((document as any).discussions || []);
+      setDiscussionsState((document as DocumentWithMetadata & { discussions?: TDiscussion[] }).discussions || []);
       isInitialized.current = true;
     }
   }, [document]);
@@ -125,7 +127,7 @@ export function useDocumentEditor(options: UseDocumentEditorOptions): UseDocumen
 
   // Auto-save content (throttled)
   const contentAutoSave = useAutoSave({
-    onSave: async (newContent: any[]) => {
+    onSave: async (newContent: unknown[]) => {
       if (!documentId || !userId) return;
 
       isLocalChange.current = true;
@@ -133,7 +135,7 @@ export function useDocumentEditor(options: UseDocumentEditorOptions): UseDocumen
       try {
         await updateDocument({
           id: documentId,
-          content: newContent,
+          content: newContent as ReadonlyJSONValue,
         });
       } catch (error) {
         console.error('Content save failed:', error);
@@ -149,7 +151,7 @@ export function useDocumentEditor(options: UseDocumentEditorOptions): UseDocumen
 
   // Auto-save discussions (throttled)
   const discussionsAutoSave = useAutoSave({
-    onSave: async (newDiscussions: any[]) => {
+    onSave: async (newDiscussions: TDiscussion[]) => {
       if (!documentId || !userId) return;
 
       try {
@@ -179,7 +181,7 @@ export function useDocumentEditor(options: UseDocumentEditorOptions): UseDocumen
 
   // Content change handler
   const setContent = useCallback(
-    (newContent: any[]) => {
+    (newContent: unknown[]) => {
       setContentState(newContent);
       contentAutoSave.save(newContent);
     },
@@ -188,7 +190,7 @@ export function useDocumentEditor(options: UseDocumentEditorOptions): UseDocumen
 
   // Discussions change handler
   const setDiscussions = useCallback(
-    (newDiscussions: any[]) => {
+    (newDiscussions: TDiscussion[]) => {
       // Check if actually changed
       const currentStr = JSON.stringify(discussions);
       const newStr = JSON.stringify(newDiscussions);

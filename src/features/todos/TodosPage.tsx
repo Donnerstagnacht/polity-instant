@@ -88,7 +88,7 @@ export function TodosPage() {
             </CardContent>
           </Card>
         ) : viewMode === 'kanban' ? (
-          <KanbanBoard todos={filteredTodos as any} />
+          <KanbanBoard todos={filteredTodos} />
         ) : (
           <ScrollArea className="h-[calc(100vh-20rem)]">
             <TodoList

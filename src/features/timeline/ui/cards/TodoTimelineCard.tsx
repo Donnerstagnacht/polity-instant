@@ -18,7 +18,7 @@ import { useAuth } from '@/providers/auth-provider';
 import { useTodoActions } from '@/zero/todos/useTodoActions';
 import { useTodoState } from '@/zero/todos/useTodoState';
 import { toast } from 'sonner';
-import { notifyStandaloneTodoAssigned } from '@/features/shared/utils/notification-helpers';
+import { notifyStandaloneTodoAssigned } from '@/features/notifications/utils/notification-helpers.ts';
 import {
   TimelineCardBase,
   TimelineCardContent,
@@ -212,7 +212,8 @@ export function TodoTimelineCard({ todo, onToggle, className }: TodoTimelineCard
             )}
           >
             <Link
-              to={`/todos/${todo.id}`}
+              to="/todos/$id"
+              params={{ id: todo.id }}
               onClick={e => e.stopPropagation()}
               className="hover:underline"
             >
@@ -288,7 +289,8 @@ export function TodoTimelineCard({ todo, onToggle, className }: TodoTimelineCard
           )}
           {todo.groupName && (
             <Link
-              to={`/group/${todo.groupId}`}
+              to="/group/$id"
+              params={{ id: todo.groupId! }}
               className="truncate hover:underline"
               onClick={e => e.stopPropagation()}
             >

@@ -3,6 +3,7 @@ import { queries } from '../queries'
 
 interface MessageStateOptions {
   conversationId?: string
+  groupId?: string
   includeRelations?: boolean
   includeForUnread?: boolean
   includeConversationsByUser?: boolean
@@ -15,7 +16,7 @@ interface MessageStateOptions {
  * Returns query-derived state — no mutations.
  */
 export function useMessageState(options: MessageStateOptions = {}) {
-  const { conversationId, includeRelations, includeForUnread, includeConversationsByUser, userId, limit } = options
+  const { conversationId, groupId, includeRelations, includeForUnread, includeConversationsByUser, userId, limit } = options
 
   const [messages, messagesResult] = useQuery(
     conversationId
@@ -54,6 +55,13 @@ export function useMessageState(options: MessageStateOptions = {}) {
       : undefined
   )
 
+  // ── Group conversation (opt-in by groupId) ──────────────────────────
+  const [groupConversation, groupConversationResult] = useQuery(
+    groupId
+      ? queries.messages.conversationByGroupId({ group_id: groupId })
+      : undefined
+  )
+
   const isLoading =
     (conversationId !== undefined && (
       messagesResult.type === 'unknown' ||
@@ -62,7 +70,8 @@ export function useMessageState(options: MessageStateOptions = {}) {
     )) ||
     (includeRelations === true && conversationsWithRelationsResult.type === 'unknown') ||
     (includeForUnread === true && conversationsForUnreadResult.type === 'unknown') ||
-    (includeConversationsByUser === true && userId !== undefined && conversationsByUserResult.type === 'unknown')
+    (includeConversationsByUser === true && userId !== undefined && conversationsByUserResult.type === 'unknown') ||
+    (groupId !== undefined && groupConversationResult.type === 'unknown')
 
   return {
     messages: messages ?? [],
@@ -71,6 +80,7 @@ export function useMessageState(options: MessageStateOptions = {}) {
     conversationsWithRelations: conversationsWithRelations ?? [],
     conversationsForUnread: conversationsForUnread ?? [],
     conversationsByUser: conversationsByUser ?? [],
+    groupConversation: groupConversation ?? undefined,
     isLoading,
   }
 }

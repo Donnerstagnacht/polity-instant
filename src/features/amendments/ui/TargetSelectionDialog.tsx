@@ -11,24 +11,48 @@ import {
 } from '@/features/shared/ui/ui/dialog';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Badge } from '@/features/shared/ui/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
-import { TypeAheadSelect } from '@/features/shared/ui/ui/type-ahead-select';
+import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
+import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
+import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { CalendarIcon, User } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+
+interface NetworkDataProp {
+  groups: ReadonlyArray<{ id: string; name?: string | null; description?: string | null; memberCount?: number }>;
+  groupRelationships: ReadonlyArray<{
+    with_right?: string | null;
+    group?: { id: string } | null;
+    related_group?: { id: string } | null;
+  }>;
+  groupMemberships: ReadonlyArray<{
+    status?: string | null;
+    user?: { id: string } | null;
+    group?: { id: string } | null;
+  }>;
+}
+
+interface EventsDataProp {
+  events: ReadonlyArray<{
+    id: string;
+    title?: string | null;
+    description?: string | null;
+    start_date?: number | null;
+  }>;
+}
 
 interface TargetSelectionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  networkData: any;
-  targetGroupEventsData: any;
+  networkData: NetworkDataProp;
+  targetGroupEventsData: EventsDataProp;
   currentUserId: string;
-  allUsers: any[];
+  allUsers: Array<{ id: string; name: string; email: string | null; avatar?: string | null }>;
   onConfirm: (selection: {
     groupId: string;
-    groupData: any;
+    groupData: Record<string, unknown>;
     eventId: string;
-    eventData: any;
+    eventData: Record<string, unknown>;
     collaboratorUserId: string;
   }) => void;
   onGroupSelect?: (groupId: string) => void;
@@ -58,13 +82,13 @@ export function TargetSelectionDialog({
   const [targetCollaboratorUserId, setTargetCollaboratorUserId] = useState<string>('');
   const [selectedTargetGroup, setSelectedTargetGroup] = useState<{
     id: string;
-    data: any;
+    data: Record<string, unknown>;
   } | null>(null);
   const [pendingTarget, setPendingTarget] = useState<{
     groupId: string;
-    groupData: any;
+    groupData: Record<string, unknown>;
     eventId: string;
-    eventData: any;
+    eventData: Record<string, unknown>;
   } | null>(null);
 
   const dialogTitle = title || t('features.amendments.targetSelection.defaultTitle');
@@ -100,43 +124,42 @@ export function TargetSelectionDialog({
 
   const targetUserId = targetCollaboratorUserId || currentUserId;
 
-  const userMemberships =
-    (networkData as any)?.groupMemberships?.filter(
-      (m: any) => (m.status === 'member' || m.status === 'admin') && m.user?.id === targetUserId
-    ) || [];
+  const userMemberships = networkData.groupMemberships.filter(
+    (m) => (m.status === 'active' || m.status === 'admin') && m.user?.id === targetUserId
+  );
 
-  const userGroupIds = userMemberships.map((m: any) => m.group?.id).filter(Boolean);
-  const allGroups = (networkData as any)?.groups || [];
-  const relationships = (networkData as any)?.groupRelationships || [];
+  const userGroupIds = userMemberships.map((m) => m.group?.id).filter((id): id is string => !!id);
+  const allGroups = networkData.groups;
+  const relationships = networkData.groupRelationships;
 
   // Filter for amendmentRight relationships
-  const amendmentRelationships = relationships.filter((r: any) => r.withRight === 'amendmentRight');
+  const amendmentRelationships = relationships.filter((r) => r.with_right === 'amendmentRight');
 
   // Build set of connected groups (direct and indirect)
   const connectedGroupIds = new Set<string>(userGroupIds);
 
   // Add directly connected groups
-  amendmentRelationships.forEach((rel: any) => {
-    if (userGroupIds.includes(rel.parentGroup?.id)) {
-      connectedGroupIds.add(rel.childGroup?.id);
+  amendmentRelationships.forEach((rel) => {
+    if (userGroupIds.includes(rel.group?.id ?? '')) {
+      if (rel.related_group?.id) connectedGroupIds.add(rel.related_group.id);
     }
-    if (userGroupIds.includes(rel.childGroup?.id)) {
-      connectedGroupIds.add(rel.parentGroup?.id);
+    if (userGroupIds.includes(rel.related_group?.id ?? '')) {
+      if (rel.group?.id) connectedGroupIds.add(rel.group.id);
     }
   });
 
   // Add indirectly connected groups (2 hops)
   const firstHopGroups = Array.from(connectedGroupIds);
-  amendmentRelationships.forEach((rel: any) => {
-    if (firstHopGroups.includes(rel.parentGroup?.id)) {
-      connectedGroupIds.add(rel.childGroup?.id);
+  amendmentRelationships.forEach((rel) => {
+    if (firstHopGroups.includes(rel.group?.id ?? '')) {
+      if (rel.related_group?.id) connectedGroupIds.add(rel.related_group.id);
     }
-    if (firstHopGroups.includes(rel.childGroup?.id)) {
-      connectedGroupIds.add(rel.parentGroup?.id);
+    if (firstHopGroups.includes(rel.related_group?.id ?? '')) {
+      if (rel.group?.id) connectedGroupIds.add(rel.group.id);
     }
   });
 
-  const connectedGroups = allGroups.filter((g: any) => connectedGroupIds.has(g.id));
+  const connectedGroups = allGroups.filter((g) => connectedGroupIds.has(g.id));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -151,57 +174,17 @@ export function TargetSelectionDialog({
             <div className="flex items-center gap-3">
               <User className="h-4 w-4 text-muted-foreground" />
               <div className="flex-1">
-                <TypeAheadSelect
-                  items={allUsers}
+                <TypeaheadSearch
+                  items={toTypeaheadItems(
+                    allUsers,
+                    'user',
+                    (u) => u.name || 'User',
+                    (u) => u.email,
+                    (u) => u.avatar,
+                  )}
                   value={targetCollaboratorUserId}
-                  onChange={setTargetCollaboratorUserId}
+                  onChange={(item: TypeaheadItem | null) => setTargetCollaboratorUserId(item?.id ?? '')}
                   placeholder={t('features.amendments.targetSelection.selectCollaboratorPlaceholder')}
-                  searchKeys={['name', 'email']}
-                  getItemId={(user: any) => user.id}
-                  renderItem={(user: any) => (
-                    <div className="flex items-center gap-3 p-2">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.avatar || undefined} alt={user.name} />
-                        <AvatarFallback>
-                          {user.name
-                            ?.split(' ')
-                            .map((n: string) => n[0])
-                            .join('')
-                            .toUpperCase()
-                            .slice(0, 2) || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="font-medium">{user.name}</div>
-                        {user.email && (
-                          <div className="text-xs text-muted-foreground">{user.email}</div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  renderSelected={(user: any) => (
-                    <div className="flex items-center justify-between rounded-md border bg-background p-3">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={user.avatar || undefined} alt={user.name} />
-                          <AvatarFallback>
-                            {user.name
-                              ?.split(' ')
-                              .map((n: string) => n[0])
-                              .join('')
-                              .toUpperCase()
-                              .slice(0, 2) || 'U'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-medium">{user.name}</div>
-                          {user.email && (
-                            <div className="text-xs text-muted-foreground">{user.email}</div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
                   label={t('features.amendments.targetSelection.selectNetworkFor')}
                 />
               </div>
@@ -224,7 +207,7 @@ export function TargetSelectionDialog({
                 {t('features.amendments.targetSelection.noConnectedGroups')}
               </p>
             ) : (
-              connectedGroups.map((group: any, index: number) => {
+              connectedGroups.map((group, index: number) => {
                 const gradientClass = gradients[index % gradients.length];
                 const isSelected = selectedTargetGroup?.id === group.id;
                 const isMemberGroup = userGroupIds.includes(group.id);
@@ -278,12 +261,12 @@ export function TargetSelectionDialog({
                     {isSelected && (
                       <div className="ml-6 mt-2 space-y-2 border-l-2 border-primary/30 pl-4">
                         {(() => {
-                          const events = (targetGroupEventsData as any)?.events || [];
-                          const upcomingEvents = events
-                            .filter((e: any) => new Date(e.startDate) > new Date())
+                          const events = targetGroupEventsData.events;
+                          const upcomingEvents = [...events]
+                            .filter((e) => new Date(e.start_date ?? 0) > new Date())
                             .sort(
-                              (a: any, b: any) =>
-                                new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+                              (a, b) =>
+                                new Date(a.start_date ?? 0).getTime() - new Date(b.start_date ?? 0).getTime()
                             );
 
                           if (upcomingEvents.length === 0) {
@@ -294,7 +277,7 @@ export function TargetSelectionDialog({
                             );
                           }
 
-                          return upcomingEvents.map((event: any, eventIndex: number) => {
+                          return upcomingEvents.map((event, eventIndex: number) => {
                             const eventGradientClass = gradients[eventIndex % gradients.length];
 
                             return (
@@ -321,7 +304,7 @@ export function TargetSelectionDialog({
                                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                     <CalendarIcon className="h-3 w-3" />
                                     <span>
-                                      {new Date(event.startDate).toLocaleDateString('en-US', {
+                                      {new Date(event.start_date ?? 0).toLocaleDateString('en-US', {
                                         weekday: 'short',
                                         month: 'short',
                                         day: 'numeric',

@@ -40,9 +40,9 @@ function getStatusIcon(status: string) {
 
 interface ChangeRequestCardProps {
   request: ChangeRequest;
-  users: Record<string, any>;
-  document?: any;
-  collaborators: readonly any[];
+  users: Record<string, { name?: string }>;
+  document?: { id?: string; editingMode?: string };
+  collaborators: readonly { id: string; user_id?: string; user?: { id: string; first_name?: string | null; last_name?: string | null; avatar?: string | null } | null }[];
   amendmentId: string;
   amendmentTitle?: string;
   userId?: string;
@@ -201,7 +201,7 @@ function ChangeRequestCard({
             <div>
               <h4 className="mb-2 font-semibold">Discussion ({request.comments.length})</h4>
               <div className="space-y-2">
-                {request.comments.slice(0, 3).map((comment: any, idx: number) => (
+                {request.comments.slice(0, 3).map((comment, idx) => (
                   <div key={idx} className="rounded-lg border bg-muted/50 p-3 text-sm">
                     <p className="text-muted-foreground">{comment.text || comment.value}</p>
                     {comment.userId && users[comment.userId] && (
@@ -255,17 +255,26 @@ function ChangeRequestCard({
               <VoteControls
                 changeRequestId={request.changeRequestEntityId || request.id}
                 currentUserId={userId}
-                votes={request.votes || []}
+                votes={[...(request.votes || [])].map(v => ({
+                  id: v.id,
+                  vote: v.vote ?? '',
+                  createdAt: v.created_at ?? 0,
+                  voter: {
+                    id: v.user?.id ?? v.user_id ?? '',
+                    user: v.user ? {
+                      name: `${v.user.first_name ?? ''} ${v.user.last_name ?? ''}`.trim() || undefined,
+                      avatar: v.user.avatar ?? undefined,
+                    } : undefined,
+                  },
+                }))}
                 collaborators={collaborators
                   .filter(c => c.user?.id)
                   .map(c => ({
                     id: c.id,
                     user: {
                       id: c.user?.id ?? '',
-                      user: {
-                        name: c.user?.name ?? '',
-                        avatar: c.user?.avatar ?? '',
-                      },
+                      name: `${c.user?.first_name ?? ''} ${c.user?.last_name ?? ''}`.trim() || undefined,
+                      avatar: c.user?.avatar ?? undefined,
                     },
                   }))}
                 status={request.status}
@@ -333,7 +342,7 @@ export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewPr
     <PageWrapper>
       {/* Back button */}
       <div className="mb-6">
-        <Link to={`/amendment/${amendmentId}`}>
+        <Link to="/amendment/$id" params={{ id: amendmentId }}>
           <Button variant="ghost" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Amendment

@@ -28,9 +28,9 @@ export function useGroupWikiPage(groupId: string) {
   const { group } = useGroupWikiData(groupId);
 
   // ── Derived counts ────────────────────────────────────────────────
-  const memberCount = membershipCount || group?.memberships?.length || group?.member_count || 0;
-  const eventsCount = group?.events?.length || 0;
-  const amendmentsCount = group?.amendments?.length || 0;
+  const memberCount = group?.member_count ?? membershipCount ?? group?.memberships?.length ?? 0;
+  const eventsCount = group?.event_count ?? group?.events?.length ?? 0;
+  const amendmentsCount = group?.amendment_count ?? group?.amendments?.length ?? 0;
 
   return {
     // Group data

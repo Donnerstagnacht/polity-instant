@@ -14,6 +14,7 @@ export interface CreateGroupOptions {
   description?: string;
   isPublic?: boolean;
   visibility?: string;
+  groupType?: 'base' | 'hierarchical';
   location?: string;
   imageURL?: string;
 }
@@ -26,7 +27,7 @@ export interface CreatedGroup {
 }
 
 export interface AddMemberOptions {
-  status?: 'member' | 'invited' | 'requested';
+  status?: 'active' | 'invited' | 'requested';
   roleType?: 'admin' | 'member';
   visibility?: string;
 }
@@ -54,6 +55,7 @@ export class GroupFactory extends FactoryBase {
       is_public: overrides.isPublic ?? true,
       member_count: 1,
       visibility: overrides.visibility ?? 'public',
+      group_type: overrides.groupType ?? 'base',
       location: overrides.location ?? '',
       owner_id: ownerId,
       created_at: now,
@@ -124,7 +126,7 @@ export class GroupFactory extends FactoryBase {
       group_id: groupId,
       user_id: ownerId,
       role_id: adminRoleId,
-      status: 'member',
+      status: 'active',
       visibility: 'public',
       created_at: now,
     });
@@ -150,7 +152,7 @@ export class GroupFactory extends FactoryBase {
       group_id: groupId,
       user_id: userId,
       role_id: roleId,
-      status: options.status ?? 'member',
+      status: options.status ?? 'active',
       visibility: options.visibility ?? 'public',
       created_at: now,
     });

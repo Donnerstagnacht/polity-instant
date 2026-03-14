@@ -366,8 +366,8 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
       <StatsBar
         stats={[
           { value: subscriberCount, labelKey: 'components.labels.subscribers' },
-          { value: score, labelKey: 'components.labels.supporters' },
-          { value: allComments.length, labelKey: 'components.labels.comments' },
+          { value: blog.supporter_count ?? score, labelKey: 'components.labels.supporters' },
+          { value: blog.comment_count ?? allComments.length, labelKey: 'components.labels.comments' },
         ]}
       />
 
@@ -428,7 +428,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
         <CardContent className="prose prose-slate dark:prose-invert max-w-none">
           {blog.content && Array.isArray(blog.content) && blog.content.length > 0 ? (
             <PlateEditor
-              value={blog.content as any[]}
+              value={blog.content as unknown[]}
               currentMode="view"
               isOwnerOrCollaborator={false}
             />

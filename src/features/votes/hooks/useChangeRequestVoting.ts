@@ -21,7 +21,7 @@ import {
 import {
   notifyChangeRequestAccepted,
   notifyChangeRequestRejected,
-} from '@/features/shared/utils/notification-helpers';
+} from '@/features/notifications/utils/notification-helpers.ts';
 import { triggerSupporterConfirmation } from '@/features/amendments/hooks/useSupportConfirmation';
 
 interface UseChangeRequestVotingOptions {
@@ -56,27 +56,27 @@ export function useChangeRequestVoting({
   const isLoading = sessionLoading || crLoading;
   const error = undefined;
 
-  const changeRequests = (changeRequestsRaw ?? []) as any[];
-  const votes = ((votingSession as any)?.votes ?? []) as any[];
+  const changeRequests = changeRequestsRaw ?? [];
+  const votes = votingSession?.votes ?? [];
 
   // We track current change request by finding the one with voting_status 'voting'
   const currentChangeRequestId = useMemo(() => {
-    const active = changeRequests.find((cr: any) => cr.voting_status === 'voting');
+    const active = changeRequests.find((cr) => cr.voting_status === 'voting');
     return active?.id ?? null;
   }, [changeRequests]);
 
   // Current change request being voted on
   const currentChangeRequest = useMemo(() => {
     if (!currentChangeRequestId) return null;
-    return changeRequests.find((cr: any) => cr.id === currentChangeRequestId) ?? null;
+    return changeRequests.find((cr) => cr.id === currentChangeRequestId) ?? null;
   }, [currentChangeRequestId, changeRequests]);
 
   // Change requests that haven't been voted on yet
   // Ordered by votingOrder if present, otherwise by characterCount descending
   const pendingChangeRequests = useMemo(() => {
     return changeRequests
-      .filter((cr: any) => cr.status === 'pending')
-      .sort((a: any, b: any) => {
+      .filter((cr) => cr.status === 'pending')
+      .sort((a, b) => {
         // Sort by created_at ascending (oldest first)
         return (a.created_at ?? 0) - (b.created_at ?? 0);
       });
@@ -84,7 +84,7 @@ export function useChangeRequestVoting({
 
   // Get votes for current voting session
   const currentVotes = useMemo(() => {
-    return votes.map((v: any) => ({
+    return votes.map((v) => ({
       vote: v.vote as VoteValue,
       voter: v.user,
     }));
@@ -92,7 +92,7 @@ export function useChangeRequestVoting({
 
   // Check if user has already voted
   const hasVoted = useMemo(() => {
-    return votes.some((v: any) => v.user?.id === userId);
+    return votes.some((v) => v.user?.id === userId);
   }, [votes, userId]);
 
   // Calculate vote results
@@ -157,7 +157,7 @@ export function useChangeRequestVoting({
     }
 
     const currentIndex = pendingChangeRequests.findIndex(
-      (cr: any) => cr.id === currentChangeRequest?.id
+      (cr) => cr.id === currentChangeRequest?.id
     );
 
     const nextChangeRequest = pendingChangeRequests[currentIndex + 1];
@@ -285,7 +285,7 @@ export function useChangeRequestVoting({
           // Trigger supporter confirmation for groups that support this amendment
           // They need to confirm their support now that changes have been made
           try {
-            await triggerSupporterConfirmation((mutation: any) => zero.mutate(mutation), {
+            await triggerSupporterConfirmation((mutation) => zero.mutate(mutation), {
               amendmentId,
               changeRequestId: currentChangeRequest.id,
               changeRequestTitle: currentChangeRequest.title,
@@ -344,11 +344,11 @@ export function useChangeRequestVoting({
     hasVoted,
 
     // Derived state
-    currentIndex: pendingChangeRequests.findIndex((cr: any) => cr.id === currentChangeRequest?.id),
+    currentIndex: pendingChangeRequests.findIndex((cr) => cr.id === currentChangeRequest?.id),
     totalChangeRequests: pendingChangeRequests.length,
     progress:
       pendingChangeRequests.length > 0
-        ? (pendingChangeRequests.findIndex((cr: any) => cr.id === currentChangeRequest?.id) + 1) /
+        ? (pendingChangeRequests.findIndex((cr) => cr.id === currentChangeRequest?.id) + 1) /
           pendingChangeRequests.length
         : 0,
 

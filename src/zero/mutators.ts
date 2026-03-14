@@ -14,6 +14,7 @@ import { paymentSharedMutators } from './payments/shared-mutators'
 import { statementSharedMutators } from './statements/shared-mutators'
 import { commonSharedMutators } from './common/shared-mutators'
 import { preferenceSharedMutators } from './preferences/shared-mutators'
+import { calendarSubscriptionSharedMutators } from './calendar-subscriptions/shared-mutators'
 
 export const mutators = defineMutators({
   users: userSharedMutators,
@@ -30,4 +31,5 @@ export const mutators = defineMutators({
   statements: statementSharedMutators,
   common: commonSharedMutators,
   preferences: preferenceSharedMutators,
+  calendarSubscriptions: calendarSubscriptionSharedMutators,
 })

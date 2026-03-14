@@ -11,14 +11,14 @@ import { useEventActions } from '@/zero/events/useEventActions';
 import { useEventWithAgendaAndParticipants } from '@/zero/events/useEventState';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac';
-import { notifyAgendaItemActivated } from '@/features/shared/utils/notification-helpers';
+import { notifyAgendaItemActivated } from '@/features/notifications/utils/notification-helpers.ts';
 import { toast } from 'sonner';
 
 interface AgendaItem {
   id: string;
-  title: string;
-  type: string;
-  status: string;
+  title: string | null;
+  type: string | null;
+  status: string | null;
   order: number;
   activatedAt?: number;
   completedAt?: number;
@@ -50,12 +50,12 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
   const agendaItems: AgendaItem[] = useMemo(() => {
     if (!event?.agenda_items) return [];
     return [...event.agenda_items]
-      .map((item: any) => ({
+      .map((item) => ({
         id: item.id,
         title: item.title,
         type: item.type,
         status: item.status,
-        order: item.order || 0,
+        order: item.order_index || 0,
         activatedAt: typeof item.activated_at === 'number' ? item.activated_at : undefined,
         completedAt: typeof item.completed_at === 'number' ? item.completed_at : undefined,
       }))
@@ -64,7 +64,7 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
 
   const currentAgendaItemId = useMemo(() => {
     if (!event?.agenda_items) return null;
-    const inProgress = [...event.agenda_items].find((item: any) => item.status === 'in-progress');
+    const inProgress = [...event.agenda_items].find((item) => item.status === 'in-progress');
     return inProgress?.id || null;
   }, [event?.agenda_items]);
 
@@ -179,7 +179,7 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
         });
 
         // Send notification for next item
-        if (event?.title) {
+        if (event?.title && nextItem.title && nextItem.type) {
           await notifyAgendaItemActivated({
             senderId: user.id,
             eventId,

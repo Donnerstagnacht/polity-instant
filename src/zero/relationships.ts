@@ -1,11 +1,11 @@
 import { relationships } from '@rocicorp/zero'
 
 // Users
-import { user, file, userStats } from './users/table'
+import { user, file } from './users/table'
 // Groups
 import { group, groupMembership, role, actionRight } from './groups/table'
 // Events
-import { event, eventParticipant, participant } from './events/table'
+import { event, eventParticipant, participant, eventException } from './events/table'
 // Amendments
 import { amendment, amendmentCollaborator, amendmentPath, amendmentPathSegment, supportConfirmation } from './amendments/table'
 // Documents
@@ -42,6 +42,8 @@ import { payment, stripeCustomer, stripeSubscription, stripePayment } from './pa
 import { statement, statementSurvey, statementSurveyOption, statementSurveyVote } from './statements/table'
 // Preferences
 import { userPreference } from './preferences/table'
+// Calendar Subscriptions
+import { calendarSubscription } from './calendar-subscriptions/table'
 // Common
 import { hashtag, userHashtag, groupHashtag, amendmentHashtag, eventHashtag, blogHashtag, statementHashtag, link, timelineEvent, reaction } from './common/table'
 
@@ -51,7 +53,6 @@ import { hashtag, userHashtag, groupHashtag, amendmentHashtag, eventHashtag, blo
 export const userRelationships = relationships(user, ({ many }) => ({
   follows_as_follower: many({ sourceField: ['id'], destSchema: follow, destField: ['follower_id'] }),
   follows_as_followee: many({ sourceField: ['id'], destSchema: follow, destField: ['followee_id'] }),
-  stats: many({ sourceField: ['id'], destSchema: userStats, destField: ['user_id'] }),
   group_memberships: many({ sourceField: ['id'], destSchema: groupMembership, destField: ['user_id'] }),
   owned_groups: many({ sourceField: ['id'], destSchema: group, destField: ['owner_id'] }),
   created_events: many({ sourceField: ['id'], destSchema: event, destField: ['creator_id'] }),
@@ -124,10 +125,6 @@ export const userPreferenceRelationships = relationships(userPreference, ({ one 
 export const followRelationships = relationships(follow, ({ one }) => ({
   follower: one({ sourceField: ['follower_id'], destSchema: user, destField: ['id'] }),
   followee: one({ sourceField: ['followee_id'], destSchema: user, destField: ['id'] }),
-}))
-
-export const userStatsRelationships = relationships(userStats, ({ one }) => ({
-  user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
 }))
 
 // ============================================
@@ -204,6 +201,7 @@ export const eventRelationships = relationships(event, ({ one, many }) => ({
   subscribers: many({ sourceField: ['id'], destSchema: subscriber, destField: ['event_id'] }),
   event_hashtags: many({ sourceField: ['id'], destSchema: eventHashtag, destField: ['event_id'] }),
   timeline_events: many({ sourceField: ['id'], destSchema: timelineEvent, destField: ['event_id'] }),
+  exceptions: many({ sourceField: ['id'], destSchema: eventException, destField: ['parent_event_id'] }),
 }))
 
 export const eventParticipantRelationships = relationships(eventParticipant, ({ one }) => ({
@@ -261,6 +259,16 @@ export const eventVoteRelationships = relationships(eventVote, ({ one }) => ({
 
 export const scheduledElectionRelationships = relationships(scheduledElection, ({ one }) => ({
   event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
+}))
+
+export const eventExceptionRelationships = relationships(eventException, ({ one }) => ({
+  parent_event: one({ sourceField: ['parent_event_id'], destSchema: event, destField: ['id'] }),
+}))
+
+export const calendarSubscriptionRelationships = relationships(calendarSubscription, ({ one }) => ({
+  user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
+  target_group: one({ sourceField: ['target_group_id'], destSchema: group, destField: ['id'] }),
+  target_user: one({ sourceField: ['target_user_id'], destSchema: user, destField: ['id'] }),
 }))
 
 // ============================================
@@ -676,7 +684,6 @@ export const allRelationships = [
   fileRelationships,
   userPreferenceRelationships,
   followRelationships,
-  userStatsRelationships,
   // Groups
   groupRelationships,
   groupMembershipRelationships,
@@ -765,4 +772,7 @@ export const allRelationships = [
   linkRelationships,
   timelineEventRelationships,
   reactionRelationships,
+  // Calendar Subscriptions
+  calendarSubscriptionRelationships,
+  eventExceptionRelationships,
 ]

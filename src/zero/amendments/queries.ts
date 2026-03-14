@@ -50,7 +50,8 @@ export const amendmentQueries = {
         .related('group')
         .related('event')
         .related('agenda_items')
-        .related('paths', q => q.related('segments'))
+        .related('votes')
+        .related('paths', q => q.related('segments', sq => sq.related('group').related('event')))
         .one()
   ),
 

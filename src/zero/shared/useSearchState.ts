@@ -51,16 +51,16 @@ export function useSearchState(options: SearchOptions = {}) {
   const memberGroupIds = useMemo(
     () =>
       (groupMemberships ?? [])
-        .filter((m: any) => m.group)
-        .map((m: any) => m.group.id),
+        .filter(m => m.group)
+        .map(m => m.group!.id),
     [groupMemberships]
   )
 
   const assignedTodoIds = useMemo(
     () =>
       (todoAssignments ?? [])
-        .filter((a: any) => a.todo)
-        .map((a: any) => a.todo.id),
+        .filter(a => a.todo)
+        .map(a => a.todo!.id),
     [todoAssignments]
   )
 
@@ -81,7 +81,7 @@ export function useSearchState(options: SearchOptions = {}) {
 
   // ── Event-derived queries ───────────────────────────────────────────
   const eventIds = useMemo(
-    () => (events ?? []).map((e: any) => e.id).filter(Boolean),
+    () => (events ?? []).map(e => e.id).filter(Boolean),
     [events]
   )
 

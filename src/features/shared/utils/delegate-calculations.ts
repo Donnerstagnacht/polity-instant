@@ -175,14 +175,14 @@ export function calculateTotalDelegates(
 }
 
 /**
- * Validate that a group is eligible for a delegate conference
+ * Validate that a group is eligible for a delegate assembly
  * Must have at least one subgroup
  * 
  * @param groupId - ID of the group to check
  * @param groupRelationships - Array of group relationships
  * @returns Boolean indicating eligibility
  */
-export function isEligibleForDelegateConference(
+export function isEligibleForDelegateAssembly(
   groupId: string,
   groupRelationships: Array<{ parentGroup: { id: string } }>
 ): boolean {

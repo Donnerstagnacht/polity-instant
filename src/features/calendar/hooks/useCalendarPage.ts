@@ -1,62 +1,32 @@
-import { useMemo } from 'react';
 import { useCalendarData } from './useCalendarData';
-import { useCalendarState } from './useCalendarState';
-import { useCalendarNavigation } from './useCalendarNavigation';
+import { useCalendarView } from '@/features/events/hooks/useCalendarView';
+import { useCalendarEventFilter } from '@/features/events/hooks/useCalendarEventFilter';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import {
-  startOfWeek,
-  endOfWeek,
-  startOfMonth,
-  endOfMonth,
-  isSameDay,
-  isDateInRange,
-  formatDate,
-  formatWeekRange,
-  formatMonth,
-} from '../logic/dateUtils';
 
 export function useCalendarPage() {
   const { t } = useTranslation();
   const { events, isLoading } = useCalendarData();
-  const { view, setView, selectedDate, setSelectedDate } = useCalendarState();
-  const { goToPrevious, goToNext, goToToday } = useCalendarNavigation(
-    view,
-    selectedDate,
-    setSelectedDate
-  );
+  const calendar = useCalendarView('list');
+  const filter = useCalendarEventFilter(events);
 
-  const filteredEvents = useMemo(() => {
-    if (view === 'day') {
-      return events.filter(event => isSameDay(event.startDate, selectedDate));
-    } else if (view === 'week') {
-      const start = startOfWeek(selectedDate);
-      const end = endOfWeek(selectedDate);
-      return events.filter(event => isDateInRange(event.startDate, start, end));
-    } else {
-      const start = startOfMonth(selectedDate);
-      const end = endOfMonth(selectedDate);
-      return events.filter(event => isDateInRange(event.startDate, start, end));
-    }
-  }, [events, view, selectedDate]);
-
-  const currentViewTitle = useMemo(() => {
-    if (view === 'day') return formatDate(selectedDate);
-    if (view === 'week') return formatWeekRange(selectedDate);
-    return formatMonth(selectedDate);
-  }, [view, selectedDate]);
+  const filteredEvents = calendar.filterEventsForRange(filter.filteredBySearch);
 
   return {
     t,
     isLoading,
-    view,
-    setView,
-    selectedDate,
-    setSelectedDate,
+    viewMode: calendar.viewMode,
+    setViewMode: calendar.setViewMode,
+    selectedDate: calendar.selectedDate,
+    setSelectedDate: calendar.setSelectedDate,
+    currentViewTitle: calendar.currentViewTitle,
+    goToPrevious: calendar.goToPrevious,
+    goToNext: calendar.goToNext,
+    goToToday: calendar.goToToday,
     filteredEvents,
-    events,
-    currentViewTitle,
-    goToPrevious,
-    goToNext,
-    goToToday,
+    events: filter.filteredBySearch,
+    searchQuery: filter.searchQuery,
+    setSearchQuery: filter.setSearchQuery,
+    dateFilter: filter.dateFilter,
+    setDateFilter: filter.setDateFilter,
   };
 }

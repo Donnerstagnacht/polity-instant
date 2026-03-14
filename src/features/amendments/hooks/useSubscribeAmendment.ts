@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useAuth } from '@/providers/auth-provider';
-import { notifyAmendmentNewSubscriber } from '@/features/shared/utils/notification-helpers';
+import { notifyAmendmentNewSubscriber } from '@/features/notifications/utils/notification-helpers.ts';
 import { toast } from 'sonner';
 
 /**
@@ -32,7 +32,7 @@ export function useSubscribeAmendment(targetAmendmentId?: string) {
   const currentUserName = authUser?.email?.split('@')[0] || 'Someone';
 
   // Get amendment title from facade
-  const amendmentTitle = (amendmentRows as any)?.title || 'Amendment';
+  const amendmentTitle = amendmentRows?.title || 'Amendment';
 
   // Update subscription state when data changes
   useEffect(() => {
@@ -48,14 +48,14 @@ export function useSubscribeAmendment(targetAmendmentId?: string) {
       if (subscribed === optimisticTargetRef.current) {
         optimisticTargetRef.current = null;
         createdSubscriptionIdRef.current = null;
-        setSubscriberCount(subscribers.length);
+        setSubscriberCount(amendmentRows?.subscriber_count ?? subscribers.length);
       }
       return;
     }
 
     setIsSubscribed(subscribed);
-    setSubscriberCount(subscribers.length);
-  }, [subscriptionData, authUser?.id, targetAmendmentId, subscriptionLoading]);
+    setSubscriberCount(amendmentRows?.subscriber_count ?? subscribers.length);
+  }, [subscriptionData, authUser?.id, targetAmendmentId, subscriptionLoading, amendmentRows?.subscriber_count]);
 
   // Subscribe to an amendment
   const subscribe = async () => {

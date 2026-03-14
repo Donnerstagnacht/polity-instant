@@ -197,12 +197,14 @@ export function CancelEventDialog({
                       {t('features.events.cancel.reassign.noEvents')}
                     </div>
                   ) : (
-                    availableEvents.map((event: any) => (
+                    availableEvents.map((event) => (
                       <SelectItem key={event.id} value={event.id}>
                         <div className="flex items-center gap-2">
                           <span>{event.title}</span>
                           <Badge variant="outline" className="text-xs">
-                            {new Date(event.startDate).toLocaleDateString()}
+                            {event.start_date
+                              ? new Date(event.start_date).toLocaleDateString()
+                              : ''}
                           </Badge>
                         </div>
                       </SelectItem>
@@ -216,7 +218,7 @@ export function CancelEventDialog({
                   <Badge variant="secondary">{selectedItems.length}</Badge>
                   <span>{t('features.events.cancel.reassign.itemCount')}</span>
                   <ArrowRight className="h-4 w-4" />
-                  <span>{availableEvents.find((e: any) => e.id === targetEventId)?.title}</span>
+                  <span>{availableEvents.find((e) => e.id === targetEventId)?.title}</span>
                 </div>
               )}
             </div>

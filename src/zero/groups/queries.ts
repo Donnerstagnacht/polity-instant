@@ -22,7 +22,12 @@ export const groupQueries = {
   ),
 
   hierarchy: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.group_relationship.where('group_id', groupId).orderBy('created_at', 'desc')
+    zql.group_relationship.where('group_id', groupId).related('group').related('related_group').orderBy('created_at', 'desc')
+  ),
+
+  /** Reverse direction: relationships where this group is the target */
+  hierarchyAsTarget: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
+    zql.group_relationship.where('related_group_id', groupId).related('group').related('related_group').orderBy('created_at', 'desc')
   ),
 
   allRelationships: defineQuery(z.object({}), () =>
@@ -50,6 +55,14 @@ export const groupQueries = {
 
   currentUserMembershipsWithGroups: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     zql.group_membership.where('user_id', userID).related('group').related('role')
+  ),
+
+  /** Current user's memberships with group and role→action_rights (for permission-filtered dropdowns) */
+  currentUserMembershipsWithRights: defineQuery(z.object({}), ({ ctx: { userID } }) =>
+    zql.group_membership
+      .where('user_id', userID)
+      .related('group')
+      .related('role', q => q.related('action_rights'))
   ),
 
   membershipsWithUsers: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
@@ -193,9 +206,9 @@ export const groupQueries = {
       .related('payer_user')
   ),
 
-  /** Active (status='member') memberships for a group with user data (for dialogs) */
+  /** Active (status='active') memberships for a group with user data (for dialogs) */
   activeMembersByGroup: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.group_membership.where('group_id', groupId).where('status', 'member').related('user')
+    zql.group_membership.where('group_id', groupId).where('status', 'active').related('user')
   ),
 
   /** All users limited to 20 (for user search / invite dialogs) */

@@ -8,45 +8,49 @@ export interface GroupMembershipWithUser {
   id: string;
   user_id?: string;
   group_id?: string;
-  role_id?: string;
-  status?: string;
+  role_id?: string | null;
+  status?: string | null;
+  source?: string;
   created_at?: number | string;
   visibility?: string;
   user?: {
     id: string;
-    first_name?: string;
-    last_name?: string;
-    email?: string;
-    avatar?: string;
-    handle?: string;
+    first_name?: string | null;
+    last_name?: string | null;
+    email?: string | null;
+    avatar?: string | null;
+    handle?: string | null;
     [key: string]: any;
   };
   role?: {
     id: string;
-    name: string;
+    name: string | null;
     [key: string]: any;
   };
 }
 
 export interface GroupRole {
   id: string;
-  name: any;
-  description?: string;
-  group_id?: string;
-  scope?: string;
+  name: string | null;
+  description?: string | null;
+  group_id?: string | null;
+  scope?: string | null;
   sort_order?: number;
   created_at?: number | string;
   updated_at?: number | string;
-  action_rights?: GroupActionRight[];
+  action_rights?: readonly GroupActionRight[];
 }
 
 export interface GroupActionRight {
   id: string;
-  roleId?: string;
-  resource: string;
-  action: string;
-  createdAt?: number | string;
-  [key: string]: any;
+  role_id?: string;
+  resource: string | null;
+  action: string | null;
+  group_id?: string | null;
+  event_id?: string | null;
+  amendment_id?: string | null;
+  blog_id?: string | null;
+  created_at?: number;
 }
 
 export interface ActionRightOption {
@@ -58,8 +62,8 @@ export interface ActionRightOption {
 export interface GroupLink {
   id: string;
   groupId?: string;
-  label: string;
-  url: string;
+  label: string | null;
+  url: string | null;
   description?: string;
   createdAt?: number;
   updatedAt?: number;
@@ -69,7 +73,7 @@ export interface GroupLink {
 export interface GroupPayment {
   id: string;
   groupId?: string;
-  amount: number;
+  amount: number | null;
   currency?: string;
   description?: string;
   type?: 'income' | 'expense' | string;

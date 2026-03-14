@@ -35,13 +35,7 @@ This boots up a local Supabase stack (Postgres, Auth, Studio, Inbucket, etc.) vi
 ### 3. Apply the database schema
 
 ```bash
-Get-ChildItem supabase/schemas/*.sql | Sort-Object Name | ForEach-Object { docker exec -i supabase_db_polity psql -U postgres -d postgres -c (Get-Content $_.FullName -Raw) }
-```
-
-On Linux/macOS:
-
-```bash
-for f in supabase/schemas/*.sql; do docker exec -i supabase_db_polity psql -U postgres -d postgres < "$f"; done
+supabase migration up
 ```
 
 This creates all tables, indexes, RLS policies, storage policies, and functions from `supabase/schemas/`.
@@ -70,20 +64,6 @@ In a **separate terminal**:
 ```bash
 npm run zero:dev
 ```
-
-Or via Docker Compose (which also starts the app):
-
-```bash
-docker compose up -d
-```
-
-### 6. (Optional) Seed the database
-
-```bash
-npm run seed
-```
-
----
 
 ## Where to Find What
 
@@ -119,26 +99,6 @@ npm run seed
 | `npm run format`          | Format code with Prettier                      |
 | `npm run format:check`    | Check formatting                               |
 | `npm run storybook`       | Start Storybook on port 6006                   |
-
----
-
-## Docker Compose
-
-`docker compose up -d` starts:
-
-- **zero-cache** — Zero sync server on port 4848, connected to Supabase Postgres
-- **app** — The Polity dev server on port 3000
-
-> **Note:** Supabase must be running first (`npx supabase start`) since Docker Compose connects to the Supabase Docker network (`supabase_network_polity`).
-
-### Stopping everything
-
-```bash
-docker compose down      # Stop zero-cache & app containers
-npx supabase stop        # Stop local Supabase
-```
-
----
 
 ## Project Structure
 
@@ -180,7 +140,6 @@ e2e/              # Playwright E2E tests
 ## Community
 
 - **Email**: tobias.hassebrock@gmail.com
-- **GitHub**: [Donnerstagnacht/polity-instant](https://github.com/Donnerstagnacht/polity-instant)
 
 ---
 

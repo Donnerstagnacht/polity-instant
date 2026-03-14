@@ -30,7 +30,7 @@ import {
 } from '@/zero/rbac/workflow-constants';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
-import { notifyAmendmentProfileUpdated } from '@/features/shared/utils/notification-helpers';
+import { notifyAmendmentProfileUpdated } from '@/features/notifications/utils/notification-helpers.ts';
 import { CreateReviewCard, SummaryField } from '@/features/shared/ui/ui/create-review-card';
 
 interface AmendmentEditContentProps {
@@ -105,7 +105,6 @@ export function AmendmentEditContent({
         autoCloseVoting: false, // Will be loaded from document settings
         date: amendment.date || new Date().toLocaleDateString(),
         supporters: amendment.supporters || 0,
-        tags: Array.isArray(amendment.tags) ? amendment.tags : [],
         hashtags: amendmentHashtags
           ? amendmentHashtags.map(j => j.hashtag?.tag).filter((t): t is string => !!t)
           : Array.isArray(amendment.tags) ? amendment.tags : [],

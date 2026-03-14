@@ -3,7 +3,7 @@
  */
 
 import { ENTITY_COLORS, type EntityType } from '@/features/shared/utils/entity-colors';
-import { Users, Calendar, FileText, BookOpen, User } from 'lucide-react';
+import { Users, Calendar, FileText, BookOpen, User, Vote, UserCheck } from 'lucide-react';
 
 /**
  * Returns gradient classes for an entity type card background.
@@ -28,6 +28,10 @@ export function getEntityIcon(entityType: string) {
       return BookOpen;
     case 'user':
       return User;
+    case 'election':
+      return Vote;
+    case 'position':
+      return UserCheck;
     default:
       return FileText;
   }

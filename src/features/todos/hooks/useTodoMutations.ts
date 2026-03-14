@@ -92,6 +92,7 @@ export function useTodoMutations() {
           sender_id: todoData.senderId,
           recipient_id: todoData.assigneeId,
           type: 'todo_assigned',
+          category: null,
           title: 'Task Assigned',
           message: `You have been assigned "${todoData.title}"`,
           action_url: '/todos',
@@ -127,7 +128,7 @@ export function useTodoMutations() {
 
   const updateTodo = async (
     todoId: string,
-    updates: any,
+    updates: Record<string, unknown>,
     options?: {
       senderId?: string;
       senderName?: string;
@@ -139,13 +140,13 @@ export function useTodoMutations() {
     setIsLoading(true);
     try {
       // Convert camelCase update keys to snake_case for Zero schema
-      const snakeCaseUpdates: Record<string, any> = { id: todoId };
+      const snakeCaseUpdates: Record<string, unknown> = { id: todoId };
       for (const [key, value] of Object.entries(updates)) {
         const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
         snakeCaseUpdates[snakeKey] = value;
       }
 
-      await todoActions.updateTodo(snakeCaseUpdates as any);
+      await todoActions.updateTodo(snakeCaseUpdates as Parameters<typeof todoActions.updateTodo>[0]);
 
       if (updates.status === 'completed' && options?.visibility === 'public' && options?.senderId) {
         await commonActions.createTimelineEvent({
@@ -190,6 +191,7 @@ export function useTodoMutations() {
           sender_id: options.senderId,
           recipient_id: options.creatorId,
           type: 'todo_completed',
+          category: null,
           title: 'Task Completed',
           message: `${options.senderName || 'Someone'} has completed "${options.todoTitle}"`,
           action_url: '/todos',
@@ -244,6 +246,7 @@ export function useTodoMutations() {
               sender_id: params.senderId,
               recipient_id: assigneeId,
               type: 'todo_deleted',
+              category: null,
               title: 'Task Deleted',
               message: `${params.senderName} has deleted "${params.todoTitle}"`,
               action_url: '/todos',

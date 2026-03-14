@@ -5,7 +5,12 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Clock, Check } from 'lucide-react';
 
 interface StatementSurveyProps {
-  survey: any;
+  survey: {
+    id: string;
+    question: string;
+    ends_at: number;
+    options?: { id: string; label: string; vote_count: number; position: number; votes?: { id: string; option_id: string; user_id: string }[] }[];
+  };
   userId?: string;
   onVote?: (optionId: string, existingVoteId?: string) => void;
   onRetract?: (voteId: string) => void;

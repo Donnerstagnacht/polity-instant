@@ -9,7 +9,7 @@ import { Check, X, Minus } from 'lucide-react';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { toast } from 'sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { notifyChangeRequestVoteCast } from '@/features/shared/utils/notification-helpers';
+import { notifyChangeRequestVoteCast } from '@/features/notifications/utils/notification-helpers.ts';
 
 interface VoteControlsProps {
   changeRequestId: string;

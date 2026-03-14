@@ -65,4 +65,10 @@ export const meetTranslations = {
     cancelBooking: 'Cancel Booking',
     viewInCalendar: 'View in Calendar',
   },
+  toasts: {
+    booked: 'Meeting booked successfully',
+    bookFailed: 'Failed to book meeting',
+    bookingCancelled: 'Booking cancelled',
+    cancelFailed: 'Failed to cancel booking',
+  },
 } as const;

@@ -185,6 +185,7 @@ export function useCreateBlogForm(): CreateFormConfig {
                   {t('pages.create.blog.titleLabel')}{' '}
                   <span className="text-destructive">*</span>
                 </Label>
+                <p className="text-muted-foreground text-xs">{t('pages.create.blog.tips.title')}</p>
                 <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -193,6 +194,7 @@ export function useCreateBlogForm(): CreateFormConfig {
               </div>
               <div className="space-y-2">
                 <Label>{t('pages.create.blog.dateLabel')}</Label>
+                <p className="text-muted-foreground text-xs">{t('pages.create.blog.tips.date')}</p>
                 <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
               </div>
               <ImageUpload
@@ -256,7 +258,7 @@ export function useCreateBlogForm(): CreateFormConfig {
         },
       ],
     }),
-    [title, date, visibility, hashtags, imageURL, isSubmitting, blogId, groupId, groupName, t],
+    [title, date, visibility, hashtags, imageURL, isSubmitting, blogId, groupId, groupName, t, memberGroupIds],
   )
 
   return config

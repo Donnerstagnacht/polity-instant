@@ -24,18 +24,18 @@ export function useEventStream(eventId: string) {
     amendmentVoteEntries: amendmentVoteEntriesData,
   };
 
-  const event = eventRaw as any;
+  const event = eventRaw;
 
   // Get current agenda item (in-progress or first pending)
   const agendaItems = event?.agenda_items || [];
   const currentAgendaItem =
-    agendaItems.find((item: any) => item.status === 'in-progress') ||
-    agendaItems.find((item: any) => item.status === 'pending') ||
-    agendaItems.sort((a: any, b: any) => a.order - b.order)[0];
+    agendaItems.find((item) => item.status === 'in-progress') ||
+    agendaItems.find((item) => item.status === 'pending') ||
+    [...agendaItems].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))[0];
 
   // Get speaker list for current agenda item, sorted by order
   const speakerList = currentAgendaItem?.speaker_list
-    ? [...currentAgendaItem.speaker_list].sort((a: any, b: any) => a.order - b.order)
+    ? [...currentAgendaItem.speaker_list].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
     : [];
 
   // Calculate current time and speaker times
@@ -51,8 +51,8 @@ export function useEventStream(eventId: string) {
   }, []);
 
   const calculateSpeakerTime = (index: number) => {
-    const startTime = currentAgendaItem?.startTime
-      ? new Date(currentAgendaItem.startTime)
+    const startTime = currentAgendaItem?.start_time
+      ? new Date(currentAgendaItem.start_time)
       : currentTime;
     return calcSpeakerTime(index, speakerList, startTime);
   };
@@ -65,7 +65,7 @@ export function useEventStream(eventId: string) {
     try {
       // Find the maximum order value
       const maxOrder =
-        speakerList.length > 0 ? Math.max(...speakerList.map((s: any) => s.order || 0)) : 0;
+        speakerList.length > 0 ? Math.max(...speakerList.map((s) => s.order_index ?? 0)) : 0;
 
       const speakerId = crypto.randomUUID();
       await addSpeaker({
@@ -99,14 +99,14 @@ export function useEventStream(eventId: string) {
   };
 
   // Check if user is already in speaker list
-  const userSpeaker = speakerList.find((speaker: any) => speaker.user?.id === user?.id);
+  const userSpeaker = speakerList.find((speaker) => speaker.user?.id === user?.id);
 
   // Get user's existing votes
   const userElectionVotes = (data?.electionVotes || []).filter(
-    (vote: any) => vote.voter?.id === user?.id
+    (vote) => vote.voter?.id === user?.id
   );
   const userAmendmentVotes = (data?.amendmentVoteEntries || []).filter(
-    (entry: any) => entry.voter?.id === user?.id
+    (entry) => entry.user?.id === user?.id
   );
 
   // Handle election vote
@@ -115,7 +115,7 @@ export function useEventStream(eventId: string) {
 
     setVotingLoading(electionId);
     try {
-      const existingVote = userElectionVotes.find((vote: any) => vote.election?.id === electionId);
+      const existingVote = userElectionVotes.find((vote) => vote.election?.id === electionId);
 
       if (existingVote) {
         if (existingVote.candidate?.id === candidateId) {
@@ -159,7 +159,7 @@ export function useEventStream(eventId: string) {
     setVotingLoading(amendmentId);
     try {
       const existingVote = userAmendmentVotes.find(
-        (entry: any) => entry.amendment?.id === amendmentId
+        (entry) => entry.amendment?.id === amendmentId
       );
 
       if (existingVote) {

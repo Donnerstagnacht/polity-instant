@@ -7,7 +7,7 @@ import { useGroupTodos as useFacadeGroupTodos } from '@/zero/groups/useGroupStat
 import { useTodoActions } from '@/zero/todos/useTodoActions';
 import { toast } from 'sonner';
 import type { GroupTodo } from '../types/group.types';
-import { notifyTodoAssigned, notifyTodoUpdated, notifyTodoCompleted } from '@/features/shared/utils/notification-helpers';
+import { notifyTodoAssigned, notifyTodoUpdated, notifyTodoCompleted } from '@/features/notifications/utils/notification-helpers.ts';
 
 export function useGroupTodos(groupId: string, userId?: string) {
   const [isLoading, setIsLoading] = useState(false);
@@ -38,7 +38,7 @@ export function useGroupTodos(groupId: string, userId?: string) {
         id: todoId,
         title: todoData.title,
         description: todoData.description,
-        priority: todoData.priority as any,
+        priority: todoData.priority,
         status: 'pending',
         due_date: todoData.dueDate ? new Date(todoData.dueDate).getTime() : 0,
         completed_at: 0,

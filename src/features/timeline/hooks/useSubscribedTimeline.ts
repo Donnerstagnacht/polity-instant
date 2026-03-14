@@ -63,9 +63,14 @@ export interface TimelineItem {
   changeRequestCount?: number;
   commentCount?: number;
   groupCount?: number;
+  handle?: string;
+  subtitle?: string;
   // Agenda item links for vote/election cards navigation
   agendaEventId?: string;
   agendaItemId?: string;
+  /** Whether this is a recurring event */
+  isRecurring?: boolean;
+  recurrencePattern?: string;
 }
 
 export interface UseSubscribedTimelineOptions {
@@ -114,15 +119,15 @@ export function useSubscribedTimeline(
   }, [participationData]);
 
   // Agenda items are already retrieved via related queries on event participation data
-  const { data: agendaItemsData } = { data: { agendaItems: [] as any[] } };
+  const { data: agendaItemsData } = { data: { agendaItems: [] as Array<{ event_id?: string | null; election?: unknown; amendmentVote?: unknown }> } };
 
   const agendaItemsByEventId = useMemo(() => {
     const map = new Map<string, Array<{ election?: unknown; amendmentVote?: unknown }>>();
     for (const item of agendaItemsData?.agendaItems ?? []) {
-      const eventId = (item as any).event?.id as string | undefined;
+      const eventId = item.event_id;
       if (!eventId) continue;
       const list = map.get(eventId) ?? [];
-      list.push(item as any);
+      list.push(item);
       map.set(eventId, list);
     }
     return map;
@@ -223,6 +228,8 @@ export function useSubscribedTimeline(
         tags: ((p.event as Record<string, unknown>).event_hashtags as Array<{ hashtag?: { tag?: string | null } | null }> | undefined)
           ?.map(j => j.hashtag?.tag)
           .filter((tag): tag is string => Boolean(tag)),
+        isRecurring: Boolean((p.event as Record<string, unknown>).is_recurring),
+        recurrencePattern: (p.event as Record<string, unknown>).recurrence_pattern as string | undefined,
       }));
   }, [participationData]);
 

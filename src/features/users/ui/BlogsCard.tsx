@@ -4,12 +4,13 @@ import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/feat
 
 export interface BlogsCardProps {
   blog: {
-    id: number;
+    id: string;
     title: string;
     date: string;
     supporters?: number;
     likes?: number; // Legacy support
     comments?: number;
+    commentCount?: number;
     group_id?: string | null;
     user_id?: string | null;
   };
@@ -21,9 +22,9 @@ export const BlogsCard: React.FC<BlogsCardProps> = ({ blog, gradientClass }) => 
 
   const handleClick = () => {
     if (blog.group_id) {
-      navigate({ to: `/group/${blog.group_id}/blog/${blog.id}` });
+      navigate({ to: '/group/$id/blog/$entryId', params: { id: blog.group_id!, entryId: blog.id } });
     } else if (blog.user_id) {
-      navigate({ to: `/user/${blog.user_id}/blog/${blog.id}` });
+      navigate({ to: '/user/$id/blog/$entryId', params: { id: blog.user_id!, entryId: blog.id } });
     }
   };
 

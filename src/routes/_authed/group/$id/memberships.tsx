@@ -32,7 +32,7 @@ function GroupMembershipsPage() {
   const navigate = useNavigate()
   const { user: authUser } = useAuth()
   const { group } = useGroupData(groupId)
-  const groupName = (group as any)?.name || 'Group'
+  const groupName = group?.name || 'Group'
 
   // ── Tab state ──────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<MembershipTab>('memberships')
@@ -51,7 +51,7 @@ function GroupMembershipsPage() {
   const [userSearchQuery, setUserSearchQuery] = useState('')
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
   const [isInviting, setIsInviting] = useState(false)
-  const existingMemberIds = activeMemberships.map((m: any) => m.user?.id).filter(Boolean)
+  const existingMemberIds = activeMemberships.map((m) => m.user?.id).filter((id): id is string => Boolean(id))
   const { users: searchedUsers, isLoading: usersLoading } = useUserSearch(
     userSearchQuery,
     existingMemberIds
@@ -74,8 +74,8 @@ function GroupMembershipsPage() {
     if (!changeRoleMembership) return
     const userId = changeRoleMembership.user?.id
     if (userId) {
-      const roleName = (roles as any[]).find((r) => r.id === newRoleId)?.name
-      await changeMemberRole(changeRoleMembership.id, newRoleId, userId, authUser?.id, undefined, groupName, roleName)
+      const roleName = roles.find((r) => r.id === newRoleId)?.name
+      await changeMemberRole(changeRoleMembership.id, newRoleId, userId, authUser?.id ?? undefined, undefined, groupName, roleName ?? undefined)
     }
   }
 
@@ -105,7 +105,7 @@ function GroupMembershipsPage() {
   const [newRoleDescription, setNewRoleDescription] = useState('')
 
   const handleAddRole = async () => {
-    const nextSortOrder = (roles as any[]).length
+    const nextSortOrder = roles.length
     const result = await addRole(newRoleName, newRoleDescription, nextSortOrder)
     if (result.success) {
       setNewRoleName('')
@@ -120,8 +120,8 @@ function GroupMembershipsPage() {
     action: string,
     currentlyHas: boolean
   ) => {
-    const role = (roles as any[]).find((r) => r.id === roleId)
-    await toggleActionRight(roleId, resource, action, currentlyHas, role?.action_rights || [])
+    const role = roles.find((r) => r.id === roleId)
+    await toggleActionRight(roleId, resource, action, currentlyHas, [...(role?.action_rights || [])])
   }
 
   // ── Positions data & management ────────────────────────────────────
@@ -147,33 +147,39 @@ function GroupMembershipsPage() {
                 onOpenChange={setInviteOpen}
                 searchQuery={userSearchQuery}
                 onSearchQueryChange={setUserSearchQuery}
-                users={searchedUsers as any[]}
+                users={searchedUsers.map((u) => ({
+                  id: u.id,
+                  name: [u.first_name, u.last_name].filter(Boolean).join(' ') || undefined,
+                  avatar: u.avatar ?? undefined,
+                  username: u.handle ?? undefined,
+                  email: u.email ?? undefined,
+                }))}
                 selectedUsers={selectedUserIds}
                 onToggleUser={handleToggleUser}
                 onInvite={handleInvite}
                 isLoading={usersLoading}
                 isInviting={isInviting}
-                disabled={(group as any)?.group_type === 'hierarchical'}
+                disabled={group?.group_type === 'hierarchical'}
                 disabledReason="Members join through subgroups"
               />
             </div>
             <PendingRequestsTable
-              requests={pendingRequests as any[]}
-              onApprove={(membershipId, userId) => approveMembership(membershipId, userId, undefined, authUser?.id, undefined, groupName)}
-              onReject={(membershipId, userId) => rejectMembership(membershipId, userId, authUser?.id, undefined, groupName)}
+              requests={pendingRequests}
+              onApprove={(membershipId, userId) => approveMembership(membershipId, userId, undefined, authUser?.id ?? undefined, undefined, groupName)}
+              onReject={(membershipId, userId) => rejectMembership(membershipId, userId, authUser?.id ?? undefined, undefined, groupName)}
               onNavigateToUser={(userId) => navigate({ to: '/user/$id', params: { id: userId } })}
             />
             <PendingInvitationsTable
-              invitations={pendingInvitations as any[]}
-              onWithdraw={(membershipId, userId) => rejectMembership(membershipId, userId, authUser?.id, undefined, groupName)}
+              invitations={pendingInvitations}
+              onWithdraw={(membershipId, userId) => rejectMembership(membershipId, userId, authUser?.id ?? undefined, undefined, groupName)}
               onNavigateToUser={(userId) => navigate({ to: '/user/$id', params: { id: userId } })}
             />
             <ActiveMembersTable
-              members={activeMembers as any[]}
-              roles={roles as any[]}
-              onChangeRole={(membershipId, roleId, userId) => changeMemberRole(membershipId, roleId, userId, authUser?.id, undefined, groupName, (roles as any[]).find((r) => r.id === roleId)?.name)}
+              members={activeMembers}
+              roles={[...roles]}
+              onChangeRole={(membershipId, roleId, userId) => changeMemberRole(membershipId, roleId, userId, authUser?.id ?? undefined, undefined, groupName, roles.find((r) => r.id === roleId)?.name ?? undefined)}
               onOpenChangeRoleDialog={handleOpenChangeRoleDialog}
-              onRemove={(membershipId, userId) => removeMember(membershipId, userId, undefined, authUser?.id, undefined, groupName)}
+              onRemove={(membershipId, userId) => removeMember(membershipId, userId, undefined, authUser?.id ?? undefined, undefined, groupName)}
               onNavigateToUser={(userId) => navigate({ to: '/user/$id', params: { id: userId } })}
             />
             <ChangeRoleDialog
@@ -184,15 +190,15 @@ function GroupMembershipsPage() {
                   ? [changeRoleMembership.user?.first_name, changeRoleMembership.user?.last_name].filter(Boolean).join(' ') || 'Unknown User'
                   : ''
               }
-              currentRole={changeRoleMembership?.role ? { id: changeRoleMembership.role.id, name: changeRoleMembership.role.name, ...(changeRoleMembership.role as any) } : null}
-              roles={roles as any[]}
+              currentRole={changeRoleMembership?.role ?? null}
+              roles={[...roles]}
               onConfirm={handleConfirmRoleChange}
             />
           </div>
         }
         rolesContent={
           <RolesPermissionsTable
-            roles={roles as any[]}
+            roles={[...roles]}
             onTogglePermission={handleTogglePermission}
             onRemoveRole={removeRole}
             onReorderRoles={reorderRoles}

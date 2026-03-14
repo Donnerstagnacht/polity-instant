@@ -83,6 +83,7 @@ export function useCreatePositionForm(): CreateFormConfig {
               <Label>
                 {t('pages.create.position.titleLabel')} <span className="text-destructive">*</span>
               </Label>
+              <p className="text-muted-foreground text-xs">{t('pages.create.position.tips.title')}</p>
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -91,6 +92,7 @@ export function useCreatePositionForm(): CreateFormConfig {
             </div>
             <div className="space-y-2">
               <Label>{t('pages.create.position.descriptionLabel')}</Label>
+              <p className="text-muted-foreground text-xs">{t('pages.create.position.tips.description')}</p>
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -110,6 +112,7 @@ export function useCreatePositionForm(): CreateFormConfig {
               <Label>
                 {t('pages.create.position.termLabel')} <span className="text-destructive">*</span>
               </Label>
+              <p className="text-muted-foreground text-xs">{t('pages.create.position.tips.termLength')}</p>
               <Input
                 type="number"
                 min={1}

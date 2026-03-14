@@ -22,15 +22,15 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
     amendmentVoteEntries,
   };
 
-  const agendaItem = agendaItemRaw as any;
+  const agendaItem = agendaItemRaw;
   const event = agendaItem?.event;
 
   // Get user's existing votes
   const userElectionVotes = (data?.electionVotes || []).filter(
-    (vote: any) => vote.voter?.id === user?.id
+    (vote) => vote.voter?.id === user?.id
   );
   const userAmendmentVotes = (data?.amendmentVoteEntries || []).filter(
-    (entry: any) => entry.user?.id === user?.id
+    (entry) => entry.user?.id === user?.id
   );
 
   // Handle election vote
@@ -39,7 +39,7 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
 
     setVotingLoading(electionId);
     try {
-      const existingVote = userElectionVotes.find((vote: any) => vote.election?.id === electionId);
+      const existingVote = userElectionVotes.find((vote) => vote.election?.id === electionId);
 
       // Determine if this is an indication vote based on agenda item status
       const isIndicationVote = agendaItem?.status === 'planned';
@@ -85,7 +85,7 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
     setVotingLoading(amendmentVoteId);
     try {
       const existingVote = userAmendmentVotes.find(
-        (entry: any) => entry.amendment?.id === amendmentVoteId
+        (entry) => entry.amendment?.id === amendmentVoteId
       );
 
       const voteMap = { yes: 1, no: -1, abstain: 0 } as const;
@@ -133,7 +133,7 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
       // Find the maximum order value
       const speakers = agendaItem?.speaker_list || [];
       const maxOrder =
-        speakers.length > 0 ? Math.max(...speakers.map((s: any) => s.order_index || 0)) : 0;
+        speakers.length > 0 ? Math.max(...speakers.map((s) => s.order_index || 0)) : 0;
 
       const speakerId = crypto.randomUUID();
       await addSpeaker({

@@ -32,7 +32,7 @@ export function CommentThread({
   const threadedComments = useMemo(() => {
     // Comments already have `replies` populated from the data layer
     // or are top-level comments — filter to top-level only
-    const topLevel = comments.filter(c => !(c as any).parentComment && !(c as any).parent_id);
+    const topLevel = comments.filter(c => !c.parent_id);
 
     if (sortBy === 'time') {
       return [...topLevel].sort((a, b) => b.createdAt - a.createdAt);

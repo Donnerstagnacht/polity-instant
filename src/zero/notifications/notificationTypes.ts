@@ -8,6 +8,9 @@ export const NOTIFICATION_CATEGORIES = {
   MODERATION: 'moderation',
   VOTING: 'voting',
   SYSTEM: 'system',
+  AMENDMENT: 'amendment',
+  EVENT: 'event',
+  GROUP: 'group',
 } as const
 
 export type NotificationCategory = typeof NOTIFICATION_CATEGORIES[keyof typeof NOTIFICATION_CATEGORIES]

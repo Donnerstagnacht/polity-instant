@@ -90,8 +90,8 @@ function UserMembershipsPage() {
             onAcceptInvitation={acceptGroupInvitation}
             onDeclineInvitation={declineGroupInvitation}
             onLeave={(membershipId) => {
-              const m = memberships.find((mem: any) => mem.id === membershipId)
-              if (m) leaveGroup(membershipId, (m as any).group?.id || '')
+              const m = memberships.find((mem) => mem.id === membershipId)
+              if (m) leaveGroup(membershipId, m.group?.id || '')
             }}
             onWithdrawRequest={withdrawGroupRequest}
             onNavigate={(groupId) => navigate({ to: `/group/${groupId}` })}
@@ -104,8 +104,8 @@ function UserMembershipsPage() {
             onAcceptInvitation={acceptEventInvitation}
             onDeclineInvitation={declineEventInvitation}
             onLeave={(participationId) => {
-              const p = participations.find((par: any) => par.id === participationId)
-              if (p) withdrawFromEvent(participationId, (p as any).event?.id || '')
+              const p = participations.find((par) => par.id === participationId)
+              if (p) withdrawFromEvent(participationId, (p).event?.id || '')
             }}
             onWithdrawRequest={withdrawEventRequest}
             onNavigate={(eventId) => navigate({ to: `/event/${eventId}` })}
@@ -118,8 +118,8 @@ function UserMembershipsPage() {
             onAcceptInvitation={acceptCollaborationInvitation}
             onDeclineInvitation={declineCollaborationInvitation}
             onLeave={(collaborationId) => {
-              const c = collaborations.find((col: any) => col.id === collaborationId)
-              if (c) leaveCollaboration(collaborationId, (c as any).amendment?.id || '')
+              const c = collaborations.find((col) => col.id === collaborationId)
+              if (c) leaveCollaboration(collaborationId, (c).amendment?.id || '')
             }}
             onWithdrawRequest={withdrawCollaborationRequest}
             onNavigate={(amendmentId) => navigate({ to: `/amendment/${amendmentId}` })}

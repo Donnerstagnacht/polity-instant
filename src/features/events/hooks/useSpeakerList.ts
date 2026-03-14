@@ -8,13 +8,13 @@ export function useSpeakerList(agendaItemId?: string) {
   const [addingSpeaker, setAddingSpeaker] = useState(false);
   const [removingSpeaker, setRemovingSpeaker] = useState<string | null>(null);
 
-  const handleAddToSpeakerList = async (speakerList: any[] = []) => {
+  const handleAddToSpeakerList = async (speakerList: { order?: number }[] = []) => {
     if (!user?.id || !agendaItemId) return;
 
     setAddingSpeaker(true);
     try {
       const maxOrder =
-        speakerList.length > 0 ? Math.max(...speakerList.map((s: any) => s.order || 0)) : 0;
+        speakerList.length > 0 ? Math.max(...speakerList.map((s) => s.order || 0)) : 0;
 
       const speakerId = crypto.randomUUID();
       await addSpeaker({

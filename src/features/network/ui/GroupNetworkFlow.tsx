@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { Node, Edge, useNodesState, useEdgesState, MarkerType } from '@xyflow/react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { NetworkFlowBase, Panel } from '@/features/network/ui/NetworkFlowBase';
@@ -10,12 +10,15 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { NetworkEntityDialog } from '@/features/network/ui/NetworkEntityDialog';
 import { useGroupState } from '@/zero/groups/useGroupState';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { normalizeGroupRelationship, type NormalizedGroupRelationship, type NetworkGroupEntity } from '../types/network.types';
 
 interface GroupNode extends Node {
   data: {
     label: string;
     description?: string;
     level: number;
+    role?: 'parent' | 'child' | 'center';
+    groupType?: 'base' | 'hierarchical';
   };
 }
 
@@ -36,18 +39,24 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedEntity, setSelectedEntity] = useState<{
     type: 'group' | 'relationship';
-    data: any;
+    data: Record<string, unknown>;
   } | null>(null);
 
-  // Fetch the specific group and relationships
-  const { group, relationships: relationshipsRaw } = useGroupState({ groupId });
+  // Fetch the specific group and relationships (both directions)
+  const { group, relationships: relationshipsRaw, relationshipsAsTarget: relationshipsAsTargetRaw } = useGroupState({ groupId });
 
-  const relationships = relationshipsRaw || [];
+  const relationships = useMemo(
+    () => [
+      ...(relationshipsRaw || []).map(rel => normalizeGroupRelationship(rel)),
+      ...(relationshipsAsTargetRaw || []).map(rel => normalizeGroupRelationship(rel)),
+    ],
+    [relationshipsRaw, relationshipsAsTargetRaw],
+  ) as NormalizedGroupRelationship[];
 
   // Memoize relationships to prevent infinite loops
   // Only recreate when the actual relationship IDs change
   const stableRelationships = useMemo(() => {
-    return relationships.filter((r: any) => !r.status || r.status === 'active');
+    return relationships.filter((r) => !r.status || r.status === 'active');
   }, [
     relationships
   ]);
@@ -55,16 +64,16 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
   // Build direct relationships
   const getDirectRelationships = useCallback(
     (targetGroupId: string) => {
-      const parentsMap = new Map<string, { group: any; rights: string[] }>();
-      const childrenMap = new Map<string, { group: any; rights: string[] }>();
+      const parentsMap = new Map<string, { group: NetworkGroupEntity; rights: string[]; level?: number; childId?: string }>();
+      const childrenMap = new Map<string, { group: NetworkGroupEntity; rights: string[]; level?: number; parentId?: string }>();
 
-      stableRelationships.forEach((rel: any) => {
+      stableRelationships.forEach((rel) => {
         if (rel.childGroup?.id === targetGroupId) {
           // This is a parent relationship
           const parentId = rel.parentGroup?.id;
           if (!parentId) return;
 
-          if (!parentsMap.has(parentId)) {
+          if (!parentsMap.has(parentId) && rel.parentGroup) {
             parentsMap.set(parentId, { group: rel.parentGroup, rights: [] });
           }
           const parentEntry = parentsMap.get(parentId);
@@ -77,7 +86,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
           const childId = rel.childGroup?.id;
           if (!childId) return;
 
-          if (!childrenMap.has(childId)) {
+          if (!childrenMap.has(childId) && rel.childGroup) {
             childrenMap.set(childId, { group: rel.childGroup, rights: [] });
           }
           const childEntry = childrenMap.get(childId);
@@ -100,11 +109,11 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
     (targetGroupId: string) => {
       const parentsMap = new Map<
         string,
-        { group: any; rights: string[]; level: number; childId?: string }
+        { group: NetworkGroupEntity; rights: string[]; level: number; childId?: string }
       >();
       const childrenMap = new Map<
         string,
-        { group: any; rights: string[]; level: number; parentId?: string }
+        { group: NetworkGroupEntity; rights: string[]; level: number; parentId?: string }
       >();
 
       // First, get all direct relationships and their rights
@@ -127,14 +136,13 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
           visited.add(parent.group.id); // Mark direct parent as visited
 
           const findParentsForRight = (id: string, level: number) => {
-            stableRelationships.forEach((rel: any) => {
+            stableRelationships.forEach((rel) => {
               if (
                 rel.childGroup?.id === id &&
                 rel.withRight === right &&
-                !visited.has(rel.parentGroup?.id)
+                rel.parentGroup?.id && !visited.has(rel.parentGroup.id)
               ) {
-                const parentId = rel.parentGroup?.id;
-                if (!parentId) return;
+                const parentId = rel.parentGroup.id;
 
                 visited.add(parentId);
 
@@ -180,14 +188,13 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
           visited.add(child.group.id); // Mark direct child as visited
 
           const findChildrenForRight = (id: string, level: number, currentParentId: string) => {
-            stableRelationships.forEach((rel: any) => {
+            stableRelationships.forEach((rel) => {
               if (
                 rel.parentGroup?.id === id &&
                 rel.withRight === right &&
-                !visited.has(rel.childGroup?.id)
+                rel.childGroup?.id && !visited.has(rel.childGroup.id)
               ) {
-                const childId = rel.childGroup?.id;
-                if (!childId) return;
+                const childId = rel.childGroup.id;
 
                 visited.add(childId);
 
@@ -261,11 +268,13 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         label: group.name ?? '',
         description: group.description ?? '',
         level: 0,
+        role: 'center',
+        groupType: (group as { group_type?: string }).group_type === 'hierarchical' ? 'hierarchical' : 'base',
       },
       style: {
         background: '#bbdefb',
         color: '#333',
-        border: '2px solid #90caf9',
+        border: (group as { group_type?: string }).group_type === 'hierarchical' ? '3px dashed #64b5f6' : '2px solid #90caf9',
         borderRadius: '5px',
         padding: '10px',
         fontSize: '14px',
@@ -276,7 +285,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
     });
 
     // Add parent nodes
-    parents.forEach((parent: any, index: number) => {
+    parents.forEach((parent, index: number) => {
       const level = parent.level || 1;
       const yOffset = -150 * level;
       const xOffset = (index - parents.length / 2) * 200;
@@ -284,19 +293,23 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
       // Use a unique ID for the parent node instance in the graph
       const parentNodeId = `parent-${parent.group.id}`;
 
+      const isHierarchical = parent.group.group_type === 'hierarchical';
+
       newNodes.push({
         id: parentNodeId,
         type: 'default',
         position: { x: 400 + xOffset, y: 300 + yOffset },
         data: {
-          label: parent.group.name,
-          description: parent.group.description,
+          label: `${isHierarchical ? '🏛 ' : ''}${parent.group.name ?? ''}`,
+          description: parent.group.description ?? undefined,
           level,
+          role: 'parent',
+          groupType: isHierarchical ? 'hierarchical' : 'base',
         },
         style: {
           background: '#c8e6c9',
           color: '#333',
-          border: '2px solid #a5d6a7',
+          border: isHierarchical ? '3px dashed #81c784' : '2px solid #a5d6a7',
           borderRadius: '5px',
           padding: '10px',
           fontSize: '12px',
@@ -341,26 +354,29 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
     });
 
     // Add child nodes
-    children.forEach((child: any, index: number) => {
+    children.forEach((child, index: number) => {
       const level = child.level || 1;
       const yOffset = 150 * level;
       const xOffset = (index - children.length / 2) * 200;
 
       const childNodeId = `child-${child.group.id}`;
+      const isHierarchicalChild = child.group.group_type === 'hierarchical';
 
       newNodes.push({
         id: childNodeId,
         type: 'default',
         position: { x: 400 + xOffset, y: 300 + yOffset },
         data: {
-          label: child.group.name,
-          description: child.group.description,
+          label: `${isHierarchicalChild ? '🏛 ' : ''}${child.group.name ?? ''}`,
+          description: child.group.description ?? undefined,
           level,
+          role: 'child',
+          groupType: isHierarchicalChild ? 'hierarchical' : 'base',
         },
         style: {
           background: '#ffe0b2',
           color: '#333',
-          border: '2px solid #ffcc80',
+          border: isHierarchicalChild ? '3px dashed #ffa726' : '2px solid #ffcc80',
           borderRadius: '5px',
           padding: '10px',
           fontSize: '12px',
@@ -461,7 +477,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
 
   // Handle node selection
   const onNodeClick = useCallback(
-    (_event: any, node: Node) => {
+    (_event: React.MouseEvent, node: Node) => {
       if (!isInteractive) return;
 
       const rawId = node.id.replace(/^(parent-|child-)/, '');
@@ -485,7 +501,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
 
   // Handle edge click
   const onEdgeClick = useCallback(
-    (_event: any, edge: Edge) => {
+    (_event: React.MouseEvent, edge: Edge) => {
       if (!isInteractive) return;
 
       setSelectedEntity({
@@ -616,6 +632,15 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
                     <div className="flex items-center gap-2">
                       <div className="h-4 w-4 rounded border border-[#ffcc80] bg-[#ffe0b2]"></div>
                       <span>{t('common.network.childGroups')}</span>
+                    </div>
+                    <hr className="my-1 border-gray-200 dark:border-gray-700" />
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 rounded border-2 border-solid border-gray-400 bg-gray-100"></div>
+                      <span>{t('common.network.baseGroup', 'Base group')}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 rounded border-2 border-dashed border-gray-400 bg-gray-100"></div>
+                      <span>🏛 {t('common.network.hierarchicalGroup', 'Hierarchical group')}</span>
                     </div>
                   </div>
                 )}

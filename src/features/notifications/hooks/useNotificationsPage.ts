@@ -5,8 +5,9 @@ import { useNotificationActions } from './useNotificationActions';
 import { useUserNotifications } from './useUserNotifications';
 import { useNotificationActions as useZeroNotificationActions } from '@/zero/notifications/useNotificationActions';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import type { Notification } from '../types/notification.types';
 
-const EMPTY_NOTIFICATIONS: any[] = [];
+const EMPTY_NOTIFICATIONS: Notification[] = [];
 const PAGE_SIZE = 30;
 
 export function useNotificationsPage() {
@@ -18,7 +19,7 @@ export function useNotificationsPage() {
   const { markRead } = useZeroNotificationActions();
 
   const notifications = useMemo(
-    () => (data?.notifications as any[] | undefined) ?? EMPTY_NOTIFICATIONS,
+    () => (data?.notifications as Notification[] | undefined) ?? EMPTY_NOTIFICATIONS,
     [data?.notifications]
   );
 
@@ -35,7 +36,7 @@ export function useNotificationsPage() {
   // Filter notifications based on search query
   const searchFilteredNotifications = useMemo(() => {
     const lowerQuery = searchQuery.toLowerCase();
-    const matchesSearch = (n: any) =>
+    const matchesSearch = (n: Notification) =>
       !searchQuery ||
       n.title?.toLowerCase().includes(lowerQuery) ||
       n.message?.toLowerCase().includes(lowerQuery);

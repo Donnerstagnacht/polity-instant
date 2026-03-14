@@ -1,24 +1,78 @@
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
+import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
-import { findShortestPath } from '@/features/shared/utils/path-finding';
-import { notifyAmendmentCloned } from '@/features/shared/utils/notification-helpers';
+import { findShortestPath, type GroupRelationship, type GroupNode } from '@/features/amendments/logic/path-finding.ts';
+import { notifyAmendmentCloned } from '@/features/notifications/utils/notification-helpers.ts';
+
+interface CloneAmendmentDocument {
+  readonly content: ReadonlyJSONValue | null;
+}
+
+interface CloneAmendmentData {
+  readonly title: string | null;
+  readonly code: string | null;
+  readonly reason: string | null;
+  readonly category: string | null;
+  readonly preamble: string | null;
+  readonly tags: ReadonlyJSONValue | null;
+  readonly visibility: string;
+  readonly editing_mode: string | null;
+  readonly discussions: ReadonlyJSONValue | null;
+  readonly image_url: string | null;
+  readonly documents: readonly CloneAmendmentDocument[];
+}
+
+interface CloneNetworkMembership {
+  readonly status: string | null;
+  readonly user: { readonly id: string } | undefined;
+  readonly group: { readonly id: string } | undefined;
+}
+
+interface CloneNetworkGroup {
+  readonly id: string;
+  readonly name: string | null;
+  readonly description: string | null;
+}
+
+interface CloneNetworkEvent {
+  readonly id: string;
+  readonly title: string | null;
+  readonly start_date: number | null;
+  readonly group: { readonly id: string } | undefined;
+}
+
+interface CloneNetworkRelationship {
+  readonly id: string;
+  readonly with_right: string | null;
+  readonly group_id: string;
+  readonly related_group_id: string;
+  readonly group: { readonly id: string; readonly name: string | null; readonly description: string | null } | undefined;
+  readonly related_group: { readonly id: string; readonly name: string | null; readonly description: string | null } | undefined;
+}
+
+interface CloneNetworkData {
+  groupMemberships: readonly CloneNetworkMembership[];
+  groups: readonly CloneNetworkGroup[];
+  groupRelationships: readonly CloneNetworkRelationship[];
+  events: readonly CloneNetworkEvent[];
+}
 
 interface CloneSelection {
   groupId: string;
-  groupData: any;
+  groupData: Record<string, unknown>;
   eventId: string;
-  eventData: any;
+  eventData: Record<string, unknown>;
   collaboratorUserId: string;
 }
 
 export function useCloneAmendment(
   amendmentId: string,
-  amendment: any,
-  networkData: any,
+  amendment: CloneAmendmentData | null | undefined,
+  networkData: CloneNetworkData | null | undefined,
   userId: string | undefined,
   userEmail: string | undefined,
 ) {
@@ -50,6 +104,10 @@ export function useCloneAmendment(
       toast.error('Please log in to clone this amendment');
       return;
     }
+    if (!amendment) {
+      toast.error('Amendment data not loaded');
+      return;
+    }
 
     const {
       groupId: targetGroupId,
@@ -69,21 +127,34 @@ export function useCloneAmendment(
       // Calculate path
       const targetUserId = collaboratorUserId || userId;
       const userMemberships =
-        networkData?.groupMemberships?.filter(
-          (m: any) => (m.status === 'member' || m.status === 'admin') && m.user?.id === targetUserId,
-        ) || [];
-      const userGroupIds = userMemberships.map((m: any) => m.group.id);
-      const allGroups = networkData?.groups || [];
-      const relationships = networkData?.groupRelationships || [];
-      const events = networkData?.events || [];
+        networkData?.groupMemberships.filter(
+          (m) => (m.status === 'active' || m.status === 'admin') && m.user?.id === targetUserId,
+        ) ?? [];
+      const userGroupIds = userMemberships.map(m => m.group?.id).filter((id): id is string => !!id);
+      const allGroups = networkData?.groups ?? [];
+      const rawRelationships = networkData?.groupRelationships ?? [];
+      const events = networkData?.events ?? [];
 
-      const amendmentRelationships = relationships.filter(
-        (r: any) => r.withRight === 'amendmentRight',
-      );
+      const amendmentRelationships: GroupRelationship[] = rawRelationships
+        .filter(r => r.with_right === 'amendmentRight')
+        .map(r => ({
+          id: r.id,
+          withRight: r.with_right ?? '',
+          parentGroup: {
+            id: r.group?.id ?? r.group_id,
+            name: r.group?.name ?? '',
+            description: r.group?.description ?? undefined,
+          },
+          childGroup: {
+            id: r.related_group?.id ?? r.related_group_id,
+            name: r.related_group?.name ?? '',
+            description: r.related_group?.description ?? undefined,
+          },
+        }));
 
-      const groupsMap = new Map();
-      allGroups.forEach((g: any) => {
-        groupsMap.set(g.id, { id: g.id, name: g.name, description: g.description });
+      const groupsMap = new Map<string, GroupNode>();
+      allGroups.forEach(g => {
+        groupsMap.set(g.id, { id: g.id, name: g.name ?? '', description: g.description ?? undefined });
       });
 
       const path = findShortestPath(
@@ -101,24 +172,24 @@ export function useCloneAmendment(
 
       // For each group in path, find the closest upcoming event
       const now = new Date();
-      const pathWithEvents = path.map((segment: any) => {
+      const pathWithEvents = path.map((segment) => {
         const groupId = segment.group.id;
         const groupName = segment.group.name;
 
         const groupEvents = events.filter(
-          (e: any) => e.group?.id === groupId && new Date(e.startDate) > now,
+          e => e.group?.id === groupId && e.start_date != null && new Date(e.start_date) > now,
         );
         groupEvents.sort(
-          (a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
+          (a, b) => (a.start_date ?? 0) - (b.start_date ?? 0),
         );
         const closestEvent = groupEvents[0];
 
         return {
           groupId,
           groupName,
-          eventId: closestEvent?.id || null,
-          eventTitle: closestEvent?.title || 'No upcoming event',
-          eventStartDate: closestEvent?.startDate || null,
+          eventId: closestEvent?.id ?? null,
+          eventTitle: (closestEvent?.title ?? null) || 'No upcoming event',
+          eventStartDate: closestEvent?.start_date ?? null,
         };
       });
 
@@ -126,18 +197,18 @@ export function useCloneAmendment(
       const lastSegment = pathWithEvents[pathWithEvents.length - 1];
       if (lastSegment && lastSegment.groupId === targetGroupId) {
         lastSegment.eventId = selectedEventId;
-        const selectedEvent = events.find((e: any) => e.id === selectedEventId);
+        const selectedEvent = events.find(e => e.id === selectedEventId);
         if (selectedEvent) {
-          lastSegment.eventTitle = selectedEvent.title;
-          lastSegment.eventStartDate = selectedEvent.startDate;
+          lastSegment.eventTitle = selectedEvent.title ?? 'No upcoming event';
+          lastSegment.eventStartDate = selectedEvent.start_date ?? null;
         }
       }
 
       // Find the closest event in the path
       const eventsWithDates = pathWithEvents.filter(
-        (seg: { eventStartDate: string | null }) => seg.eventStartDate,
+        (seg) => seg.eventStartDate != null,
       );
-      eventsWithDates.sort((a: any, b: any) => {
+      eventsWithDates.sort((a, b) => {
         const dateA = a.eventStartDate ? new Date(a.eventStartDate).getTime() : 0;
         const dateB = b.eventStartDate ? new Date(b.eventStartDate).getTime() : 0;
         return dateA - dateB;
@@ -162,8 +233,8 @@ export function useCloneAmendment(
 
           await createAgendaItem({
             id: agendaItemId,
-            title: `Amendment: ${amendment.title} (Clone)`,
-            description: amendment.reason || '',
+            title: `Amendment: ${amendment.title ?? ''} (Clone)`,
+            description: amendment.reason ?? '',
             type: 'amendment',
             status: 'pending',
             forwarding_status: forwardingStatus,
@@ -200,32 +271,33 @@ export function useCloneAmendment(
       // Create cloned amendment
       await createAmendment({
         id: cloneId,
-        title: `${amendment.title} (Clone)`,
+        title: `${amendment.title ?? ''} (Clone)`,
         code: amendment.code ? `${amendment.code}-CLONE` : '',
         status: 'Drafting',
         workflow_status: '',
-        reason: amendment.reason || '',
-        category: amendment.category || '',
-        preamble: amendment.preamble || '',
+        reason: amendment.reason ?? '',
+        category: amendment.category ?? '',
+        preamble: amendment.preamble ?? '',
         group_id: targetGroupId,
         event_id: selectedEventId,
         clone_source_id: amendmentId,
-        tags: amendment.tags || [],
-        visibility: amendment.visibility || 'public',
+        tags: amendment.tags ?? [],
+        visibility: amendment.visibility ?? 'public',
         is_public: true,
-        editing_mode: amendment.editing_mode || 'collaborative',
-        discussions: amendment.discussions || [],
+        editing_mode: amendment.editing_mode ?? 'collaborative',
+        discussions: amendment.discussions ?? [],
         x: '',
         youtube: '',
         linkedin: '',
         website: '',
+        image_url: amendment.image_url ?? null,
       });
 
       // Create cloned document
       await createDocument({
         id: cloneDocumentId,
         amendment_id: cloneId,
-        content: originalDocument?.content || { type: 'doc', content: [] },
+        content: originalDocument?.content ?? { type: 'doc', content: [] },
         editing_mode: 'collaborative',
       });
 
@@ -253,7 +325,7 @@ export function useCloneAmendment(
           id: segmentId,
           path_id: pathId,
           group_id: segment.groupId,
-          event_id: segment.eventId || undefined,
+          event_id: segment.eventId ?? null,
           order_index: index,
           status: segment.forwardingStatus,
         });
@@ -264,7 +336,7 @@ export function useCloneAmendment(
         senderId: userId,
         senderName: userEmail || 'Someone',
         originalAmendmentId: amendmentId,
-        originalAmendmentTitle: amendment.title,
+        originalAmendmentTitle: amendment.title ?? '',
         newAmendmentId: cloneId,
       });
 

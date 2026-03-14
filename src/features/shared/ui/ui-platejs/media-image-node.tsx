@@ -47,7 +47,7 @@ export const ImageElement = withHOC(
                   focused && selected && 'ring-2 ring-ring ring-offset-2',
                   isDragging && 'opacity-50'
                 )}
-                alt={(props.attributes as any).alt}
+                alt={(props.attributes as Record<string, string>).alt}
               />
               <ResizeHandle
                 className={mediaResizeHandleVariants({

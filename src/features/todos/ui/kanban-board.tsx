@@ -9,22 +9,7 @@ import { useTodoActions } from '@/zero/todos/useTodoActions.ts';
 import { toast } from 'sonner';
 import { TodoDetailDialog } from './todo-detail-dialog.tsx';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
-
-type TodoStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
-type TodoPriority = 'low' | 'medium' | 'high' | 'urgent';
-
-interface Todo {
-  id: string;
-  title: string;
-  description?: string;
-  status: TodoStatus;
-  priority: TodoPriority;
-  dueDate?: number;
-  tags?: string[];
-  creator?: any;
-  assignments?: any[];
-  group?: any;
-}
+import type { Todo, TodoStatus, TodoPriority } from '../types/todo.types';
 
 interface KanbanBoardProps {
   todos: Todo[];
@@ -159,7 +144,8 @@ interface TodoKanbanCardProps {
 }
 
 function TodoKanbanCard({ todo, onDragStart, onClick, isDragging, t }: TodoKanbanCardProps) {
-  const isOverdue = todo.dueDate && todo.status !== 'completed' && todo.dueDate < Date.now();
+  const dueDateMs = todo.dueDate ? (typeof todo.dueDate === 'number' ? todo.dueDate : parseInt(todo.dueDate, 10)) : null;
+  const isOverdue = dueDateMs !== null && todo.status !== 'completed' && dueDateMs < Date.now();
   const [isDraggingCard, setIsDraggingCard] = useState(false);
 
   const parsedTags: string[] = Array.isArray(todo.tags)

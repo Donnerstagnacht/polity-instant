@@ -2,6 +2,16 @@ import { createServerFn } from '@tanstack/react-start'
 import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
 
+/**
+ * The clover API version removed `current_period_start` / `current_period_end`
+ * from the `Stripe.Subscription` types, but the fields are still present in
+ * the API response.  This interface re-adds them so we can access them safely.
+ */
+interface SubscriptionWithLegacyPeriod extends Stripe.Subscription {
+  current_period_start: number
+  current_period_end: number
+}
+
 function getStripe() {
   if (!process.env.STRIPE_SECRET_KEY) {
     throw new Error('STRIPE_SECRET_KEY is not defined')
@@ -129,7 +139,8 @@ export const stripeWebhookFn = createServerFn({ method: 'POST' })
                     ? session.subscription
                     : session.subscription.id
 
-                const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+                const subscriptionRaw = await stripe.subscriptions.retrieve(subscriptionId)
+                const subscription = subscriptionRaw as Stripe.Subscription as SubscriptionWithLegacyPeriod
 
                 await supabase.from('stripe_subscription').insert({
                   customer_id: customerEntityId,
@@ -137,16 +148,16 @@ export const stripeWebhookFn = createServerFn({ method: 'POST' })
                   stripe_customer_id: customerId,
                   status: subscription.status,
                   current_period_start: new Date(
-                    (subscription as any).current_period_start * 1000,
+                    subscription.current_period_start * 1000,
                   ).toISOString(),
                   current_period_end: new Date(
-                    (subscription as any).current_period_end * 1000,
+                    subscription.current_period_end * 1000,
                   ).toISOString(),
-                  cancel_at_period_end: (subscription as any).cancel_at_period_end,
+                  cancel_at_period_end: subscription.cancel_at_period_end,
                   amount: subscription.items.data[0]?.price.unit_amount || 0,
                   currency: subscription.currency,
                   interval: subscription.items.data[0]?.price.recurring?.interval || 'month',
-                  created_at: new Date((subscription as any).created * 1000).toISOString(),
+                  created_at: new Date(subscription.created * 1000).toISOString(),
                   updated_at: new Date().toISOString(),
                 })
               }
@@ -157,7 +168,7 @@ export const stripeWebhookFn = createServerFn({ method: 'POST' })
           break
         }
         case 'customer.subscription.updated': {
-          const subscription = event.data.object as Stripe.Subscription
+          const subscription = event.data.object as SubscriptionWithLegacyPeriod
 
           try {
             const { data: existingSubs } = await supabase
@@ -171,15 +182,15 @@ export const stripeWebhookFn = createServerFn({ method: 'POST' })
                 .update({
                   status: subscription.status,
                   current_period_start: new Date(
-                    (subscription as any).current_period_start * 1000,
+                    subscription.current_period_start * 1000,
                   ).toISOString(),
                   current_period_end: new Date(
-                    (subscription as any).current_period_end * 1000,
+                    subscription.current_period_end * 1000,
                   ).toISOString(),
-                  cancel_at_period_end: (subscription as any).cancel_at_period_end,
+                  cancel_at_period_end: subscription.cancel_at_period_end,
                   updated_at: new Date().toISOString(),
-                  canceled_at: (subscription as any).canceled_at
-                    ? new Date((subscription as any).canceled_at * 1000).toISOString()
+                  canceled_at: subscription.canceled_at
+                    ? new Date(subscription.canceled_at * 1000).toISOString()
                     : null,
                 })
                 .eq('id', existingSubs[0].id)
@@ -215,7 +226,7 @@ export const stripeWebhookFn = createServerFn({ method: 'POST' })
         }
         case 'invoice.payment_succeeded': {
           const invoice = event.data.object as Stripe.Invoice
-          const subscriptionId = (invoice as any).subscription
+          const subscriptionId = invoice.parent?.subscription_details?.subscription
           try {
             const customerId =
               typeof invoice.customer === 'string'
@@ -252,7 +263,7 @@ export const stripeWebhookFn = createServerFn({ method: 'POST' })
         }
         case 'invoice.payment_failed': {
           const invoice = event.data.object as Stripe.Invoice
-          const subscriptionId = (invoice as any).subscription
+          const subscriptionId = invoice.parent?.subscription_details?.subscription
 
           try {
             const customerId =

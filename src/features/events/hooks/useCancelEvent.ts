@@ -11,7 +11,7 @@ import {
   notifyEventCancelled,
   notifyAgendaItemsReassigned,
   notifyRevoteScheduled,
-} from '@/features/shared/utils/notification-helpers';
+} from '@/features/notifications/utils/notification-helpers.ts';
 import { toast } from 'sonner';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
@@ -67,14 +67,23 @@ export function useCancelEvent(eventId: string): UseCancelEventResult {
   const agendaItems = useMemo((): AgendaItem[] => {
     if (!event?.agenda_items) return [];
     return event.agenda_items
-      .map((item: any) => ({
+      .map((item) => ({
         id: item.id,
-        title: item.title,
+        title: item.title || '',
         sortOrder: item.order_index || 0,
-        amendment: item.amendment,
-        election: item.election,
+        amendment: item.amendment
+          ? { id: item.amendment.id, title: item.amendment.title || '' }
+          : undefined,
+        election: item.election[0]
+          ? {
+              id: item.election[0].id,
+              position: item.election[0].position
+                ? { id: item.election[0].position.id, name: item.election[0].position.title || '' }
+                : undefined,
+            }
+          : undefined,
       }))
-      .sort((a: AgendaItem, b: AgendaItem) => a.sortOrder - b.sortOrder);
+      .sort((a, b) => a.sortOrder - b.sortOrder);
   }, [event?.agenda_items]);
 
   const cancelEvent = useCallback(

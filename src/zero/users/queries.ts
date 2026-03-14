@@ -52,7 +52,6 @@ export const userQueries = {
     ({ args: { id } }) =>
       zql.user
         .where('id', id)
-        .related('stats')
         .related('statements', q =>
           q.related('group')
             .related('statement_hashtags', q2 => q2.related('hashtag'))

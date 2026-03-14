@@ -30,7 +30,7 @@ interface UseDocumentPresenceOptions {
 interface UseDocumentPresenceResult {
   onlinePeers: PresencePeer[];
   userColor: string;
-  publishPresence: ((data: any) => void) | null;
+  publishPresence: ((data: Record<string, unknown>) => void) | null;
 }
 
 /**
@@ -73,14 +73,14 @@ export function useDocumentPresence(
       enabled: !!documentId && !!userId,
     }
   );
-  const peers: Record<string, any> = Object.fromEntries(presencePeers.map(p => [p.userId, p]));
-  const publishPresence = wsPublishPresence as ((data: any) => void) | null;
+  const peers: Record<string, Record<string, unknown>> = Object.fromEntries(presencePeers.map(p => [p.userId, p]));
+  const publishPresence = wsPublishPresence as ((data: Record<string, unknown>) => void) | null;
 
   // Publish presence when user data changes
   // NOTE: publishPresence is null until a real-time presence solution is wired up
   useEffect(() => {
     if (userId && publishPresence != null) {
-      (publishPresence as (data: any) => void)({
+      (publishPresence as (data: Record<string, unknown>) => void)({
         name: userName || 'Anonymous',
         avatar: userAvatar,
         color: userColor,
@@ -92,13 +92,13 @@ export function useDocumentPresence(
   // Get online peers (excluding current user)
   const onlinePeers = useMemo<PresencePeer[]>(() => {
     return Object.values(peers)
-      .filter((peer: any) => peer.userId !== userId)
-      .map((peer: any) => ({
-        peerId: peer.peerId || '',
-        userId: peer.userId || '',
-        name: peer.name || 'Anonymous',
-        avatar: peer.avatar,
-        color: peer.color || '#888888',
+      .filter((peer) => peer['userId'] !== userId)
+      .map((peer) => ({
+        peerId: String(peer['peerId'] || ''),
+        userId: String(peer['userId'] || ''),
+        name: String(peer['name'] || 'Anonymous'),
+        avatar: peer['avatar'] as string | undefined,
+        color: String(peer['color'] || '#888888'),
       }));
   }, [peers, userId]);
 

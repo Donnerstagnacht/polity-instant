@@ -2,7 +2,7 @@
  * Pure functions for typeahead search filtering, ranking, and result grouping.
  */
 
-export type EntityType = 'user' | 'group' | 'amendment' | 'event';
+export type EntityType = 'user' | 'group' | 'amendment' | 'event' | 'election' | 'position';
 
 export interface TypeaheadItem {
   id: string;
@@ -70,6 +70,8 @@ export function groupResultsByType(
     group: [],
     amendment: [],
     event: [],
+    election: [],
+    position: [],
   };
   for (const item of items) {
     groups[item.entityType].push(item);

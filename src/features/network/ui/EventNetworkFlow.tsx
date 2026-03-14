@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNodesState, useEdgesState, type Node, type Edge } from '@xyflow/react';
 import { useEventWithGroup, useGroupRelationships } from '@/zero/events/useEventState';
 import { NetworkFlowBase } from '@/features/network/ui/NetworkFlowBase';
+import { type NetworkGroupEntity } from '../types/network.types';
 import { NetworkEntityDialog } from '@/features/network/ui/NetworkEntityDialog';
 import { RIGHT_TYPES, formatRights } from '@/features/network/ui/RightFilters';
 import { Switch } from '@/features/shared/ui/ui/switch';
@@ -16,12 +17,20 @@ interface EventNode extends Node {
     description?: string;
     level: number;
     type: 'event' | 'group';
-    groupData?: any;
+    groupData?: NetworkGroupEntity;
   };
 }
 
 interface EventNetworkFlowProps {
   eventId: string;
+}
+
+interface RelationshipEntry {
+  group: NetworkGroupEntity;
+  rights: string[];
+  level?: number;
+  childId?: string;
+  parentId?: string;
 }
 
 export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
@@ -36,7 +45,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedEntity, setSelectedEntity] = useState<{
     type: 'event' | 'group' | 'relationship';
-    data: any;
+    data: Record<string, unknown>;
   } | null>(null);
 
   // Fetch the specific event with its group
@@ -59,29 +68,31 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
   // Build direct relationships
   const getDirectRelationships = useCallback(
     (targetGroupId: string) => {
-      const parentsMap = new Map<string, { group: any; rights: string[] }>();
-      const childrenMap = new Map<string, { group: any; rights: string[] }>();
+      const parentsMap = new Map<string, RelationshipEntry>();
+      const childrenMap = new Map<string, RelationshipEntry>();
 
-      stableRelationships.forEach((rel: any) => {
-        if (rel.related_group?.id === targetGroupId) {
-          const existing = parentsMap.get(rel.group.id);
+      stableRelationships.forEach((rel) => {
+        if (rel.related_group?.id === targetGroupId && rel.group) {
+          const parentId = rel.group.id;
+          const existing = parentsMap.get(parentId);
           if (existing) {
-            existing.rights.push(rel.rightType);
+            existing.rights.push(rel.with_right ?? '');
           } else {
-            parentsMap.set(rel.group.id, {
+            parentsMap.set(parentId, {
               group: rel.group,
-              rights: [rel.rightType],
+              rights: [rel.with_right ?? ''],
             });
           }
         }
-        if (rel.group?.id === targetGroupId) {
-          const existing = childrenMap.get(rel.related_group.id);
+        if (rel.group?.id === targetGroupId && rel.related_group) {
+          const childId = rel.related_group.id;
+          const existing = childrenMap.get(childId);
           if (existing) {
-            existing.rights.push(rel.rightType);
+            existing.rights.push(rel.with_right ?? '');
           } else {
-            childrenMap.set(rel.related_group.id, {
+            childrenMap.set(childId, {
               group: rel.related_group,
-              rights: [rel.rightType],
+              rights: [rel.with_right ?? ''],
             });
           }
         }
@@ -98,14 +109,8 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
   // Build indirect (recursive) relationships
   const getIndirectRelationships = useCallback(
     (targetGroupId: string) => {
-      const parentsMap = new Map<
-        string,
-        { group: any; rights: string[]; level: number; childId?: string }
-      >();
-      const childrenMap = new Map<
-        string,
-        { group: any; rights: string[]; level: number; parentId?: string }
-      >();
+      const parentsMap = new Map<string, RelationshipEntry>();
+      const childrenMap = new Map<string, RelationshipEntry>();
 
       const directRels = getDirectRelationships(targetGroupId);
 
@@ -128,19 +133,19 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
             const current = queue.shift();
             if (!current) continue;
             const currentParents = stableRelationships.filter(
-              (rel: any) =>
-                rel.related_group?.id === current.groupId && rel.rightType === current.right
+              (rel) =>
+                rel.related_group?.id === current.groupId && rel.with_right === current.right
             );
 
-            currentParents.forEach((rel: any) => {
-              if (!visited.has(rel.group.id)) {
-                visited.add(rel.group.id);
-                const existing = parentsMap.get(rel.group.id);
+            currentParents.forEach((rel) => {
+              if (!rel.group || visited.has(rel.group.id)) return;
+              visited.add(rel.group.id);
+              const existing = parentsMap.get(rel.group.id);
                 if (existing) {
                   if (!existing.rights.includes(right)) {
                     existing.rights.push(right);
                   }
-                  existing.level = Math.min(existing.level, current.level + 1);
+                  existing.level = Math.min(existing.level ?? Infinity, current.level + 1);
                 } else {
                   parentsMap.set(rel.group.id, {
                     group: rel.group,
@@ -154,7 +159,6 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
                   level: current.level + 1,
                   right,
                 });
-              }
             });
           }
         });
@@ -179,19 +183,19 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
             const current = queue.shift();
             if (!current) continue;
             const currentChildren = stableRelationships.filter(
-              (rel: any) =>
-                rel.group?.id === current.groupId && rel.rightType === current.right
+              (rel) =>
+                rel.group?.id === current.groupId && rel.with_right === current.right
             );
 
-            currentChildren.forEach((rel: any) => {
-              if (!visited.has(rel.related_group.id)) {
-                visited.add(rel.related_group.id);
-                const existing = childrenMap.get(rel.related_group.id);
+            currentChildren.forEach((rel) => {
+              if (!rel.related_group || visited.has(rel.related_group.id)) return;
+              visited.add(rel.related_group.id);
+              const existing = childrenMap.get(rel.related_group.id);
                 if (existing) {
                   if (!existing.rights.includes(right)) {
                     existing.rights.push(right);
                   }
-                  existing.level = Math.min(existing.level, current.level + 1);
+                  existing.level = Math.min(existing.level ?? Infinity, current.level + 1);
                 } else {
                   childrenMap.set(rel.related_group.id, {
                     group: rel.related_group,
@@ -205,7 +209,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
                   level: current.level + 1,
                   right,
                 });
-              }
+
             });
           }
         });
@@ -310,13 +314,13 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
     });
 
     // Add parent nodes
-    parents.forEach((parent: any) => {
+    parents.forEach((parent) => {
       const level = parent.level || 1;
       const yOffset = -150 * level;
-      const totalAtLevel = parents.filter((p: any) => (p.level || 1) === level).length;
+      const totalAtLevel = parents.filter((p) => (p.level || 1) === level).length;
       const indexAtLevel = parents
-        .filter((p: any) => (p.level || 1) === level)
-        .findIndex((p: any) => p.group.id === parent.group.id);
+        .filter((p) => (p.level || 1) === level)
+        .findIndex((p) => p.group.id === parent.group.id);
       const xOffset = (indexAtLevel - (totalAtLevel - 1) / 2) * 250;
 
       newNodes.push({
@@ -324,8 +328,8 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
         type: 'default',
         position: { x: 400 + xOffset, y: 450 + yOffset },
         data: {
-          label: parent.group.name,
-          description: parent.group.description,
+          label: parent.group.name ?? '',
+          description: parent.group.description ?? undefined,
           level: level + 1,
           type: 'group',
           groupData: parent.group,
@@ -358,13 +362,13 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
     });
 
     // Add child nodes
-    children.forEach((child: any) => {
+    children.forEach((child) => {
       const level = child.level || 1;
       const yOffset = 150 * level;
-      const totalAtLevel = children.filter((c: any) => (c.level || 1) === level).length;
+      const totalAtLevel = children.filter((c) => (c.level || 1) === level).length;
       const indexAtLevel = children
-        .filter((c: any) => (c.level || 1) === level)
-        .findIndex((c: any) => c.group.id === child.group.id);
+        .filter((c) => (c.level || 1) === level)
+        .findIndex((c) => c.group.id === child.group.id);
       const xOffset = (indexAtLevel - (totalAtLevel - 1) / 2) * 250;
 
       newNodes.push({
@@ -372,8 +376,8 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
         type: 'default',
         position: { x: 400 + xOffset, y: 450 + yOffset },
         data: {
-          label: child.group.name,
-          description: child.group.description,
+          label: child.group.name ?? '',
+          description: child.group.description ?? undefined,
           level: level + 1,
           type: 'group',
           groupData: child.group,
@@ -466,19 +470,19 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
 
   // Handle node selection
   const onNodeClick = useCallback(
-    (_event: any, node: Node) => {
+    (_event: React.MouseEvent, node: Node) => {
       if (!isInteractive) return;
 
       if (node.data.type === 'event') {
         setSelectedEntity({
           type: 'event',
-          data: event,
+          data: { id: eventId, title: event?.title ?? '', description: event?.description ?? '' },
         });
         setDialogOpen(true);
       } else if (node.data.type === 'group' && node.data.groupData) {
         setSelectedEntity({
           type: 'group',
-          data: node.data.groupData,
+          data: node.data.groupData as Record<string, unknown>,
         });
         setDialogOpen(true);
       }
@@ -488,7 +492,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
 
   // Handle edge click
   const onEdgeClick = useCallback(
-    (_event: any, edge: Edge) => {
+    (_event: React.MouseEvent, edge: Edge) => {
       if (!isInteractive) return;
 
       setSelectedEntity({

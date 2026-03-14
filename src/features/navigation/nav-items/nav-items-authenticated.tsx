@@ -91,14 +91,14 @@ export const navItemsAuthenticated = (
   const projectSecondaryNavItems: NavigationItem[] = [
     {
       id: 'tasks',
-      label: 'Tasks',
+      label: t ? t('navigation.secondary.projects.tasks') : 'Tasks',
       icon: 'File',
       href: '/projects/tasks',
       onClick: () => navigate({ to: '/projects/tasks' }),
     },
     {
       id: 'tests',
-      label: 'Tests',
+      label: t ? t('navigation.secondary.projects.tests') : 'Tests',
       icon: 'FolderOpen',
       href: '/projects/tests',
       onClick: () => navigate({ to: '/projects/tests' }),
@@ -364,6 +364,7 @@ export const navItemsAuthenticated = (
   const getAmendmentSecondaryNavItems = (
     amendmentId: string,
     canView = false,
+    canUpdate = false,
     canManage = false,
     canViewNotifications = false
   ): NavigationItem[] => {
@@ -403,7 +404,7 @@ export const navItemsAuthenticated = (
     }
 
     // Add items requiring manage permission
-    if (canManage) {
+    if (canUpdate || canManage) {
       items.push(
         {
           id: 'text',
@@ -412,14 +413,17 @@ export const navItemsAuthenticated = (
           href: `/amendment/${amendmentId}/text`,
           onClick: () => navigate({ to: `/amendment/${amendmentId}/text` }),
         },
-        {
-          id: 'collaborators',
-          label: t ? t('navigation.secondary.amendment.collaborators') : 'Collaborators',
-          icon: 'Users',
-          href: `/amendment/${amendmentId}/collaborators`,
-          onClick: () => navigate({ to: `/amendment/${amendmentId}/collaborators` }),
-        },
       );
+    }
+
+    if (canManage) {
+      items.push({
+        id: 'collaborators',
+        label: t ? t('navigation.secondary.amendment.collaborators') : 'Collaborators',
+        icon: 'Users',
+        href: `/amendment/${amendmentId}/collaborators`,
+        onClick: () => navigate({ to: `/amendment/${amendmentId}/collaborators` }),
+      });
     }
 
     if (canViewNotifications) {
@@ -519,6 +523,7 @@ export const navItemsAuthenticated = (
       isGroupAdmin?: boolean,
       isEventAdmin?: boolean,
       canViewAmendment?: boolean,
+      canUpdateAmendment?: boolean,
       canManageAmendment?: boolean,
       blogId?: string,
       isBlogOwner?: boolean,
@@ -537,7 +542,7 @@ export const navItemsAuthenticated = (
           return groupId ? getGroupSecondaryNavItems(groupId, isGroupAdmin ?? false, isGroupMember ?? false, canManageMembers ?? false, canViewNotifications ?? false) : null;
         case 'amendment':
           return amendmentId
-            ? getAmendmentSecondaryNavItems(amendmentId, canViewAmendment ?? false, canManageAmendment ?? false, canViewNotifications ?? false)
+            ? getAmendmentSecondaryNavItems(amendmentId, canViewAmendment ?? false, canUpdateAmendment ?? false, canManageAmendment ?? false, canViewNotifications ?? false)
             : null;
         case 'blog':
           return blogId ? getBlogSecondaryNavItems(blogId, isBlogOwner ?? false, groupId, userId) : null;

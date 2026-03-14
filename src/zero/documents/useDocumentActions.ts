@@ -193,6 +193,58 @@ export function useDocumentActions() {
     [zero]
   )
 
+  // ── Thread vote management ─────────────────────────────────────────
+  const updateThreadVote = useCallback(
+    async (args: Parameters<typeof mutators.documents.updateThreadVote>[0]) => {
+      try {
+        await zero.mutate(mutators.documents.updateThreadVote(args))
+      } catch (error) {
+        console.error('Failed to update thread vote:', error)
+        toast.error(t('features.documents.toasts.voteThreadFailed'))
+        throw error
+      }
+    },
+    [zero]
+  )
+
+  const deleteThreadVote = useCallback(
+    async (id: string) => {
+      try {
+        await zero.mutate(mutators.documents.deleteThreadVote({ id }))
+      } catch (error) {
+        console.error('Failed to delete thread vote:', error)
+        toast.error(t('features.documents.toasts.voteThreadFailed'))
+        throw error
+      }
+    },
+    [zero]
+  )
+
+  // ── Thread/Comment count updates ───────────────────────────────────
+  const updateThread = useCallback(
+    async (args: Parameters<typeof mutators.documents.updateThread>[0]) => {
+      try {
+        await zero.mutate(mutators.documents.updateThread(args))
+      } catch (error) {
+        console.error('Failed to update thread:', error)
+        throw error
+      }
+    },
+    [zero]
+  )
+
+  const updateComment = useCallback(
+    async (args: Parameters<typeof mutators.documents.updateComment>[0]) => {
+      try {
+        await zero.mutate(mutators.documents.updateComment(args))
+      } catch (error) {
+        console.error('Failed to update comment:', error)
+        throw error
+      }
+    },
+    [zero]
+  )
+
   return {
     // CRUD
     createDocument,
@@ -207,12 +259,16 @@ export function useDocumentActions() {
     // Threads
     createThread,
     voteThread,
+    updateThreadVote,
+    deleteThreadVote,
+    updateThread,
 
     // Comments
     addComment,
     voteComment,
     updateCommentVote,
     deleteCommentVote,
+    updateComment,
 
     // Collaboration
     addCollaborator,

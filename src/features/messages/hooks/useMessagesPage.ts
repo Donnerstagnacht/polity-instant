@@ -24,7 +24,7 @@ export function useMessagesPage() {
   // Current user name for notifications
   const { currentUser: currentUserData } = useUserState();
   const currentUserName =
-    `${(currentUserData as any)?.first_name ?? ''} ${(currentUserData as any)?.last_name ?? ''}`.trim() ||
+    `${currentUserData?.first_name ?? ''} ${currentUserData?.last_name ?? ''}`.trim() ||
     'Someone';
 
   // Data hooks

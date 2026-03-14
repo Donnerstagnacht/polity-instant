@@ -28,7 +28,7 @@ export function CalloutElement({
     <PlateElement
       className={cn('my-1 flex rounded-sm bg-muted p-4 pl-3', className)}
       style={{
-        backgroundColor: props.element.backgroundColor as any,
+        backgroundColor: (props.element as { backgroundColor?: string }).backgroundColor,
       }}
       attributes={{
         ...attributes,
@@ -49,7 +49,7 @@ export function CalloutElement({
               }}
               contentEditable={false}
             >
-              {(props.element.icon as any) || '💡'}
+              {(props.element as { icon?: string }).icon || '💡'}
             </Button>
           }
         >

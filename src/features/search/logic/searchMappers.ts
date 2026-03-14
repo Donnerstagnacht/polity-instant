@@ -1,13 +1,14 @@
-import type { SearchContentItem } from '../types/search.types';
+import type { SearchContentItem, SearchResultItem } from '../types/search.types';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
+import { getUserAvatar, getUserDisplayName } from '../utils/searchUtils';
 
 export function toTags(hashtags?: Array<{ tag?: string | null }>): string[] {
   if (!hashtags) return [];
   return hashtags.map(tag => tag?.tag).filter((tag): tag is string => Boolean(tag));
 }
 
-export function toDate(value?: string | Date | null): Date {
-  if (!value) return new Date();
+export function toDate(value?: string | number | Date | null): Date {
+  if (!value && value !== 0) return new Date();
   return value instanceof Date ? value : new Date(value);
 }
 
@@ -16,12 +17,12 @@ export function toDate(value?: string | Date | null): Date {
  * `SearchContentItem[]` that the UI can render uniformly.
  */
 export function mapMosaicToContentItems(
-  mosaicResults: any[],
-  agendaItemsByEventId: Map<string, Array<{ election?: unknown; amendmentVote?: unknown }>>,
+  mosaicResults: readonly SearchResultItem[],
+  agendaItemsByEventId: Map<string, Array<{ election?: { id?: string } | null; amendment?: { id?: string } | null }>>,
 ): SearchContentItem[] {
   if (!mosaicResults || mosaicResults.length === 0) return [];
 
-  return mosaicResults.reduce<SearchContentItem[]>((acc, item: any) => {
+  return mosaicResults.reduce<SearchContentItem[]>((acc, item) => {
     switch (item._type) {
       case 'group':
         acc.push({
@@ -46,23 +47,25 @@ export function mapMosaicToContentItems(
           type: 'event',
           title: item.title,
           description: item.description,
-          createdAt: toDate(item.createdAt || item.startDate),
-          startDate: item.startDate ? new Date(item.startDate) : undefined,
-          endDate: item.endDate ? new Date(item.endDate) : undefined,
-          location: item.location || item.locationName,
+          createdAt: toDate(item.created_at || item.createdAt),
+          startDate: (item.start_date != null && item.start_date !== 0) ? new Date(item.start_date) : (item.startDate ? new Date(item.startDate) : undefined),
+          endDate: (item.end_date != null && item.end_date !== 0) ? new Date(item.end_date) : (item.endDate ? new Date(item.endDate) : undefined),
+          location: item.location || item.location_name || item.locationName,
           city: item.city,
-          postcode: item.postalCode,
+          postcode: item.postal_code || item.postalCode,
           attendeeCount: item.participants?.length,
           electionsCount:
-            item.eventPositions?.filter((position: any) => Boolean(position?.election)).length ??
+            item.eventPositions?.filter((position: { election?: unknown }) => Boolean(position?.election)).length ??
             item.scheduledElections?.length ??
             agendaItemsByEventId
               .get(item.id)
-              ?.filter((agendaItem: any) => Boolean(agendaItem?.election)).length ??
-            item.votingSessions?.filter((session: any) => Boolean(session?.election)).length,
+              ?.filter((agendaItem) => Boolean(agendaItem?.election)).length ??
+            item.votingSessions?.filter((session: { election?: unknown }) => Boolean(session?.election)).length,
           amendmentsCount: item.targetedAmendments?.length,
           tags: extractHashtagTags(item.event_hashtags),
           groupName: item.group?.name,
+          isRecurring: Boolean(item.is_recurring || item.isRecurring),
+          recurrencePattern: item.recurrence_pattern || item.recurrencePattern,
           stats: {
             members: item.participants?.length,
           },
@@ -88,24 +91,30 @@ export function mapMosaicToContentItems(
         });
         break;
       case 'blog': {
-        const blogAuthor = (item.blogRoleBloggers || [])
-          .map((relation: any) => relation?.user)
-          .find(Boolean);
+        const blogRelations = item.bloggers || item.blogRoleBloggers || [];
+        const blogOwnerRelation = blogRelations
+          .find((relation: { status?: string | null }) => relation?.status === 'owner')
+          || blogRelations.find((relation: { user?: unknown; user_id?: string | null }) => Boolean(relation?.user || relation?.user_id));
+        const blogAuthor = blogOwnerRelation?.user
+          || blogRelations
+            .map((relation: { user?: unknown }) => relation?.user)
+            .find(Boolean);
         acc.push({
           id: item.id,
           type: 'blog',
           title: item.title,
           description: item.description,
-          imageUrl: item.imageURL || item.imageUrl,
-          createdAt: toDate(item.createdAt),
+          imageUrl: item.image_url || item.imageURL || item.imageUrl,
+          createdAt: toDate(item.created_at || item.createdAt),
           tags: extractHashtagTags(item.blog_hashtags),
-          authorId: blogAuthor?.id,
+          authorId: blogAuthor?.id || blogOwnerRelation?.user_id,
           authorName: blogAuthor?.name,
-          authorAvatar: blogAuthor?.avatarUrl,
-          commentCount: item.comments?.length,
+          authorAvatar: blogAuthor?.avatar || blogAuthor?.avatarUrl,
+          groupId: item.group_id || item.group?.id,
+          commentCount: item.comment_count ?? item.comments?.length,
           stats: {
-            reactions: item.votes?.length,
-            comments: item.comments?.length,
+            reactions: item.support_votes?.length ?? item.votes?.length,
+            comments: item.comment_count ?? item.comments?.length,
           },
         });
         break;
@@ -127,10 +136,10 @@ export function mapMosaicToContentItems(
           groupName: item.group?.name,
           groupImageUrl: item.group?.image_url,
           commentCount: item.comment_count,
-          upvotes: item.support_votes?.filter((v: any) => v.vote === 1).length ?? item.upvotes ?? 0,
-          downvotes: item.support_votes?.filter((v: any) => v.vote === -1).length ?? item.downvotes ?? 0,
+          upvotes: item.support_votes?.filter((v: { vote: number }) => v.vote === 1).length ?? item.upvotes ?? 0,
+          downvotes: item.support_votes?.filter((v: { vote: number }) => v.vote === -1).length ?? item.downvotes ?? 0,
           surveyQuestion: item.surveys?.[0]?.question,
-          surveyOptions: item.surveys?.[0]?.options?.map((o: any) => ({
+          surveyOptions: item.surveys?.[0]?.options?.map((o: { label: string; votes?: unknown[] }) => ({
             label: o.label,
             voteCount: o.votes?.length ?? 0,
           })),
@@ -163,18 +172,22 @@ export function mapMosaicToContentItems(
         acc.push({
           id: item.id,
           type: 'user',
-          title: item.name || '',
+          title: getUserDisplayName(item),
           description: item.bio,
-          createdAt: toDate(item.createdAt || item.joinedAt),
+          createdAt: toDate(item.created_at || item.createdAt || item.joinedAt),
           tags: extractHashtagTags(item.user_hashtags),
           authorId: item.id,
-          authorName: item.name,
-          authorAvatar: item.imageURL || item.avatarUrl,
+          authorName: getUserDisplayName(item),
+          authorAvatar: getUserAvatar(item),
           handle: item.handle,
           subtitle: item.subtitle,
-          location: item.contactLocation,
-          groupCount: item.memberships?.length,
-          amendmentCount: item.collaborations?.length,
+          location: item.location || item.contactLocation,
+          groupCount: item.group_count ?? item.groupCount ?? item.group_memberships?.length ?? item.memberships?.length,
+          amendmentCount:
+            item.amendment_count ??
+            item.amendmentCount ??
+            item.amendment_collaborations?.length ??
+            item.collaborations?.length,
         });
         break;
       case 'election':
@@ -212,8 +225,8 @@ export function mapMosaicToContentItems(
           phase: item.phase,
           result: item.result,
           stats: {
-            reactions: item.votes?.filter((v: any) => v.vote === 'accept')?.length || 0,
-            comments: item.votes?.filter((v: any) => v.vote === 'reject')?.length || 0,
+            reactions: item.votes?.filter((v: { vote: string }) => v.vote === 'accept')?.length || 0,
+            comments: item.votes?.filter((v: { vote: string }) => v.vote === 'reject')?.length || 0,
           },
           agendaEventId:
             item.election?.agendaItem?.event?.id || item.amendment?.agendaItems?.[0]?.event?.id,

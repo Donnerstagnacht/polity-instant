@@ -51,6 +51,8 @@ export {
   deleteStatementSupportVoteSchema,
   selectThreadVoteSchema,
   createThreadVoteSchema,
+  updateThreadVoteSchema,
+  deleteThreadVoteSchema,
   selectCommentVoteSchema,
   createCommentVoteSchema,
   updateCommentVoteSchema,

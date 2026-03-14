@@ -264,9 +264,9 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Network className="h-5 w-5" />
-              {t('pages.groups.childGroups.title')}
+              {t('pages.group.childGroups.title')}
             </CardTitle>
-            <CardDescription>{t('pages.groups.childGroups.description')}</CardDescription>
+            <CardDescription>{t('pages.group.childGroups.description')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">

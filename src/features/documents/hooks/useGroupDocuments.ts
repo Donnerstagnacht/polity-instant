@@ -10,8 +10,8 @@ import { useGroupDocuments as useFacadeGroupDocuments } from '@/zero/groups/useG
 export interface DocumentWithMetadata {
   id: string;
   title: string;
-  content?: any[];
-  discussions?: any[];
+  content?: unknown[];
+  discussions?: unknown[];
   isPublic?: boolean;
   createdAt: number;
   updatedAt: number;

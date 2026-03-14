@@ -1,19 +1,22 @@
 import { useMemo } from 'react';
+import { useSearchData } from './useSearchData';
 import { SearchFilters } from '../types/search.types';
-import { filterByQuery, matchesHashtag, sortResults } from '../utils/searchUtils';
+import { filterByQuery, matchesHashtag, matchesUserQuery, sortResults } from '../utils/searchUtils';
 
-export function useSearchFilters(data: any, filters: SearchFilters) {
+type SearchData = ReturnType<typeof useSearchData>['data'];
+
+export function useSearchFilters(data: SearchData | undefined, filters: SearchFilters) {
   const { query, sortBy, topics } = filters;
 
-  const matchesTopics = (item: any) => {
+  const matchesTopics = (item: Record<string, unknown>) => {
     if (!topics || topics.length === 0) return true;
     return topics.some(topic => matchesHashtag(item, topic));
   };
 
   const filteredUsers = useMemo(
     () =>
-      data?.$users?.filter((user: any) => {
-        if (!filterByQuery(user.name || '', query)) return false;
+      data?.$users?.filter(user => {
+        if (!matchesUserQuery(user, query)) return false;
         if (!matchesTopics(user)) return false;
         return true;
       }) || [],
@@ -22,7 +25,7 @@ export function useSearchFilters(data: any, filters: SearchFilters) {
 
   const filteredGroups = useMemo(
     () =>
-      data?.groups?.filter((group: any) => {
+      data?.groups?.filter(group => {
         if (!filterByQuery(group.name || '', query)) return false;
         if (!matchesTopics(group)) return false;
         return true;
@@ -32,34 +35,36 @@ export function useSearchFilters(data: any, filters: SearchFilters) {
 
   const filteredStatements = useMemo(
     () =>
-      data?.statements?.filter((statement: any) => {
+      data?.statements?.filter(statement => {
         // Search in text, hashtags, and user name
         const matchesText = filterByQuery(statement.text || '', query);
         const matchesHashtag = statement.statement_hashtags?.some(
-          (jn: any) => jn.hashtag?.tag && filterByQuery(jn.hashtag.tag, query)
+          jn => jn.hashtag?.tag && filterByQuery(jn.hashtag.tag, query)
         );
-        const matchesType = statement.type && filterByQuery(statement.type, query);
-        const matchesUser = statement.user?.name && filterByQuery(statement.user.name, query);
+        const matchesUser =
+          filterByQuery(statement.user?.first_name, query) ||
+          filterByQuery(statement.user?.last_name, query);
 
         if (!matchesTopics(statement)) return false;
         if (!query) return true;
-        return matchesText || matchesHashtag || matchesType || matchesUser;
+        return matchesText || matchesHashtag || matchesUser;
       }) || [],
     [data?.statements, query, topics]
   );
 
   const filteredBlogs = useMemo(
     () =>
-      data?.blogs?.filter((blog: any) => {
+      data?.blogs?.filter(blog => {
         if (!matchesTopics(blog)) return false;
 
         // Search in title and content
         const matchesTitle = filterByQuery(blog.title || '', query);
-        const matchesContent = blog.content && filterByQuery(blog.content, query);
-        const authorNames = (blog.blogRoleBloggers || [])
-          .map((relation: any) => relation?.user?.name)
-          .filter(Boolean);
-        const matchesUser = authorNames.some((name: string) => filterByQuery(name, query));
+        const matchesContent = blog.description && filterByQuery(blog.description, query);
+        const matchesUser = (blog.bloggers ?? []).some(
+          blogger =>
+            filterByQuery(blogger.user?.first_name, query) ||
+            filterByQuery(blogger.user?.last_name, query)
+        );
 
         if (!query) return true;
         return matchesTitle || matchesContent || matchesUser;
@@ -69,37 +74,42 @@ export function useSearchFilters(data: any, filters: SearchFilters) {
 
   const filteredAmendments = useMemo(
     () =>
-      data?.amendments?.filter((amendment: any) => {
+      data?.amendments?.filter(amendment => {
         if (!matchesTopics(amendment)) return false;
 
-        // Search in title, subtitle, and content
+        // Search in title, preamble, and reason
         const matchesTitle = filterByQuery(amendment.title || '', query);
-        const matchesSubtitle = amendment.subtitle && filterByQuery(amendment.subtitle, query);
-        const matchesContent = amendment.content && filterByQuery(amendment.content, query);
-        const matchesUser = amendment.user?.name && filterByQuery(amendment.user.name, query);
+        const matchesPreamble = amendment.preamble && filterByQuery(amendment.preamble, query);
+        const matchesReason = amendment.reason && filterByQuery(amendment.reason, query);
+        const matchesUser = (amendment.collaborators ?? []).some(
+          c =>
+            filterByQuery(c.user?.first_name, query) ||
+            filterByQuery(c.user?.last_name, query)
+        );
 
         if (!query) return true;
-        return matchesTitle || matchesSubtitle || matchesContent || matchesUser;
+        return matchesTitle || matchesPreamble || matchesReason || matchesUser;
       }) || [],
     [data?.amendments, query, topics]
   );
 
   const filteredEvents = useMemo(
     () =>
-      data?.events?.filter((event: any) => {
+      data?.events?.filter(event => {
         if (!matchesTopics(event)) return false;
 
-        // Search in title, description, location, and organizer name
+        // Search in title, description, location, and creator name
         const matchesTitle = filterByQuery(event.title || '', query);
         const matchesDescription = event.description && filterByQuery(event.description, query);
-        const matchesLocation = event.location && filterByQuery(event.location, query);
-        const matchesOrganizer =
-          event.organizer?.name && filterByQuery(event.organizer.name, query);
+        const matchesLocation = event.location_name && filterByQuery(event.location_name, query);
+        const matchesCreator =
+          filterByQuery(event.creator?.first_name, query) ||
+          filterByQuery(event.creator?.last_name, query);
         const matchesGroup = event.group?.name && filterByQuery(event.group.name, query);
 
         if (!query) return true;
         return (
-          matchesTitle || matchesDescription || matchesLocation || matchesOrganizer || matchesGroup
+          matchesTitle || matchesDescription || matchesLocation || matchesCreator || matchesGroup
         );
       }) || [],
     [data?.events, query, topics]
@@ -107,7 +117,7 @@ export function useSearchFilters(data: any, filters: SearchFilters) {
 
   const filteredTodos = useMemo(
     () =>
-      data?.todos?.filter((todo: any) => {
+      data?.todos?.filter(todo => {
         const todoTags = (todo.tags || []) as string[];
         if (topics.length > 0 && !topics.some(topic => todoTags.includes(topic))) {
           return false;
@@ -116,7 +126,9 @@ export function useSearchFilters(data: any, filters: SearchFilters) {
         const matchesTitle = filterByQuery(todo.title || '', query);
         const matchesDescription = todo.description && filterByQuery(todo.description, query);
         const matchesGroup = todo.group?.name && filterByQuery(todo.group.name, query);
-        const matchesCreator = todo.creator?.name && filterByQuery(todo.creator.name, query);
+        const matchesCreator =
+          filterByQuery(todo.creator?.first_name, query) ||
+          filterByQuery(todo.creator?.last_name, query);
 
         if (!query) return true;
         return matchesTitle || matchesDescription || matchesGroup || matchesCreator;
@@ -127,7 +139,7 @@ export function useSearchFilters(data: any, filters: SearchFilters) {
   // Filter elections from direct query
   const filteredElections = useMemo(
     () =>
-      data?.elections?.filter((election: any) => {
+      data?.elections?.filter(election => {
         const matchesTitle = filterByQuery(election.title || '', query);
         const matchesDescription =
           election.description && filterByQuery(election.description, query);
@@ -145,13 +157,13 @@ export function useSearchFilters(data: any, filters: SearchFilters) {
   // Filter voting sessions (votes)
   const filteredVotes = useMemo(
     () =>
-      data?.eventVotingSessions?.filter((session: any) => {
-        const matchesType = session.votingType && filterByQuery(session.votingType, query);
-        const matchesPhase = session.phase && filterByQuery(session.phase, query);
+      data?.eventVotingSessions?.filter(session => {
+        const matchesType = session.voting_type && filterByQuery(session.voting_type, query);
+        const matchesStatus = session.status && filterByQuery(session.status, query);
         const matchesEvent = session.event?.title && filterByQuery(session.event.title, query);
 
         if (!query) return true;
-        return matchesType || matchesPhase || matchesEvent;
+        return matchesType || matchesStatus || matchesEvent;
       }) || [],
     [data?.eventVotingSessions, query]
   );
@@ -159,8 +171,8 @@ export function useSearchFilters(data: any, filters: SearchFilters) {
   // Filter timeline events for video and image content
   const filteredVideos = useMemo(
     () =>
-      data?.timelineEvents?.filter((event: any) => {
-        if (event.contentType !== 'video') return false;
+      data?.timelineEvents?.filter(event => {
+        if (event.content_type !== 'video') return false;
 
         const matchesTitle = filterByQuery(event.title || '', query);
         const matchesDescription = event.description && filterByQuery(event.description, query);
@@ -174,8 +186,8 @@ export function useSearchFilters(data: any, filters: SearchFilters) {
 
   const filteredImages = useMemo(
     () =>
-      data?.timelineEvents?.filter((event: any) => {
-        if (event.contentType !== 'image') return false;
+      data?.timelineEvents?.filter(event => {
+        if (event.content_type !== 'image') return false;
 
         const matchesTitle = filterByQuery(event.title || '', query);
         const matchesDescription = event.description && filterByQuery(event.description, query);
@@ -232,17 +244,17 @@ export function useSearchFilters(data: any, filters: SearchFilters) {
 
   const mosaicResults = useMemo(
     () => [
-      ...allResults.users.map((item: any) => ({ ...item, _type: 'user' as const })),
-      ...allResults.groups.map((item: any) => ({ ...item, _type: 'group' as const })),
-      ...allResults.statements.map((item: any) => ({ ...item, _type: 'statement' as const })),
-      ...allResults.todos.map((item: any) => ({ ...item, _type: 'todo' as const })),
-      ...allResults.blogs.map((item: any) => ({ ...item, _type: 'blog' as const })),
-      ...allResults.amendments.map((item: any) => ({ ...item, _type: 'amendment' as const })),
-      ...allResults.events.map((item: any) => ({ ...item, _type: 'event' as const })),
-      ...allResults.elections.map((item: any) => ({ ...item, _type: 'election' as const })),
-      ...allResults.votes.map((item: any) => ({ ...item, _type: 'vote' as const })),
-      ...allResults.videos.map((item: any) => ({ ...item, _type: 'video' as const })),
-      ...allResults.images.map((item: any) => ({ ...item, _type: 'image' as const })),
+      ...allResults.users.map(item => ({ ...item, _type: 'user' as const })),
+      ...allResults.groups.map(item => ({ ...item, _type: 'group' as const })),
+      ...allResults.statements.map(item => ({ ...item, _type: 'statement' as const })),
+      ...allResults.todos.map(item => ({ ...item, _type: 'todo' as const })),
+      ...allResults.blogs.map(item => ({ ...item, _type: 'blog' as const })),
+      ...allResults.amendments.map(item => ({ ...item, _type: 'amendment' as const })),
+      ...allResults.events.map(item => ({ ...item, _type: 'event' as const })),
+      ...allResults.elections.map(item => ({ ...item, _type: 'election' as const })),
+      ...allResults.votes.map(item => ({ ...item, _type: 'vote' as const })),
+      ...allResults.videos.map(item => ({ ...item, _type: 'video' as const })),
+      ...allResults.images.map(item => ({ ...item, _type: 'image' as const })),
     ],
     [allResults]
   );

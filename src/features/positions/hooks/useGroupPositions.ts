@@ -14,7 +14,7 @@ import {
   notifyPositionVacated,
   notifyPositionDeleted,
   notifyElectionCreated,
-} from '@/features/shared/utils/notification-helpers';
+} from '@/features/notifications/utils/notification-helpers.ts';
 
 export function useGroupPositions(groupId: string) {
   const { positions: positionsData, isLoading } = useFacadeGroupPositions(groupId);

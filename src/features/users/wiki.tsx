@@ -50,6 +50,8 @@ export function UserWiki(_props: UserWikiProps) {
   } = useSubscribeUser(userIdToFetch);
 
   const isOwnUser = authUser?.id === userIdToFetch;
+  const groupsStat = dbUser?.stats?.find((stat: any) => stat.label === 'Groups')?.value ?? dbUser?.groups?.length ?? 0;
+  const amendmentsStat = dbUser?.stats?.find((stat: any) => stat.label === 'Amendments')?.value ?? dbUser?.amendmentCollaborationsCount ?? 0;
 
   return (
     <>
@@ -103,9 +105,9 @@ export function UserWiki(_props: UserWikiProps) {
           <StatsBar
             stats={[
               { value: subscriberCount, labelKey: 'components.labels.subscribers' },
-              { value: dbUser.groups?.length || 0, labelKey: 'components.labels.groups' },
+              { value: groupsStat, labelKey: 'components.labels.groups' },
               {
-                value: dbUser.amendmentCollaborationsCount || 0,
+                value: amendmentsStat,
                 labelKey: 'components.labels.amendments',
               },
             ]}

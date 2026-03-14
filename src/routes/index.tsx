@@ -39,7 +39,7 @@ function HomePage() {
         </p>
         <div className="flex gap-4 mt-4">
           <Button asChild size="lg">
-            <Link to="/auth/login">{t('pages.home.hero.getStarted')}</Link>
+            <Link to="/auth">{t('pages.home.hero.getStarted')}</Link>
           </Button>
           <Button asChild variant="outline" size="lg">
             <Link to="/features">{t('pages.home.hero.exploreFeatures')}</Link>

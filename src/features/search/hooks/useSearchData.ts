@@ -45,7 +45,7 @@ export function useSearchData(
       statements: searchState.statements,
       blogs: searchState.blogs,
       amendments: searchState.amendments,
-      events: searchState.events,
+      events: (searchState.events ?? []).filter(e => !e.is_bookable),
       todos: searchState.todos,
       timelineEvents: searchState.timelineEvents,
       elections: searchState.elections,

@@ -479,4 +479,53 @@ export const eventQueries = {
             .related('agenda_items', q => q.related('election').related('amendment'))
         )
   ),
+
+  // ── Event exception queries ───────────────────────────────────────
+
+  /** Exceptions for a recurring event */
+  exceptionsByEvent: defineQuery(
+    z.object({ eventId: z.string() }),
+    ({ args: { eventId } }) =>
+      zql.event_exception
+        .where('parent_event_id', eventId)
+        .orderBy('original_date', 'asc')
+  ),
+
+  /** All events with creator, group, participants→user, exceptions, hashtags (for calendar with recurrence) */
+  forCalendarWithExceptions: defineQuery(
+    z.object({}),
+    () =>
+      zql.event
+        .related('creator')
+        .related('group')
+        .related('participants', q => q.related('user'))
+        .related('exceptions')
+        .related('event_hashtags', q => q.related('hashtag'))
+  ),
+
+  /** Group events with creator, participants→user, exceptions, hashtags (for group calendar view) */
+  byGroupForCalendar: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId } }) =>
+      zql.event
+        .where('group_id', groupId)
+        .related('creator')
+        .related('group')
+        .related('participants', q => q.related('user'))
+        .related('exceptions')
+        .related('event_hashtags', q => q.related('hashtag'))
+  ),
+
+  /** Events created by a user with participants→user, exceptions, hashtags (for meet page) */
+  byCreator: defineQuery(
+    z.object({ userId: z.string() }),
+    ({ args: { userId } }) =>
+      zql.event
+        .where('creator_id', userId)
+        .related('creator')
+        .related('group')
+        .related('participants', q => q.related('user'))
+        .related('exceptions')
+        .related('event_hashtags', q => q.related('hashtag'))
+  ),
 }

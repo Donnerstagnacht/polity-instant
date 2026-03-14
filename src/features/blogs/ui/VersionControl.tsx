@@ -70,7 +70,7 @@ export function VersionControl({
     id: v.id,
     versionNumber: v.version_number,
     title: v.change_summary || '',
-    content: v.content as any[],
+    content: v.content as unknown[],
     createdAt: v.created_at,
     creationType: 'manual',
     creator: v.author ? { id: v.author.id, email: v.author.email, name: v.author.first_name, avatar: v.author.avatar } : undefined,
@@ -105,7 +105,7 @@ export function VersionControl({
       const versionId = crypto.randomUUID();
       await createVersion({
         id: versionId,
-        document_id: null,
+        document_id: '',
         amendment_id: null,
         blog_id: blogId,
         version_number: nextVersionNumber,

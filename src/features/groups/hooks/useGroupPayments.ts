@@ -3,16 +3,13 @@
  */
 
 import { useState } from 'react';
-import type { GroupPayment } from '../types/group.types';
 import { useGroupPaymentsData } from '@/zero/groups/useGroupState';
 import { usePaymentActions } from '@/zero/payments/usePaymentActions';
 
 export function useGroupPayments(groupId: string) {
   const [isLoading, setIsLoading] = useState(false);
-  const { payments: rawPayments, isLoading: isQuerying } = useGroupPaymentsData(groupId);
+  const { payments, isLoading: isQuerying } = useGroupPaymentsData(groupId);
   const { createPayment, deletePayment: deletePaymentAction } = usePaymentActions();
-
-  const payments = rawPayments as any as GroupPayment[];
 
   const addPayment = async (paymentData: {
     label: string;

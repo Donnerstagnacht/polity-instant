@@ -33,8 +33,8 @@ export const ScrollableTabsList = React.forwardRef<
       {React.Children.map(children, child => {
         // Add whitespace-nowrap to each TabsTrigger child to prevent wrapping
         if (React.isValidElement(child)) {
-          const existingClassName = (child.props as any).className;
-          return React.cloneElement(child as React.ReactElement<any>, {
+          const existingClassName = (child.props as React.HTMLAttributes<HTMLElement>).className;
+          return React.cloneElement(child as React.ReactElement<React.HTMLAttributes<HTMLElement>>, {
             className: cn('whitespace-nowrap', existingClassName),
           });
         }

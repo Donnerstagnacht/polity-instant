@@ -36,6 +36,7 @@ import {
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useDocumentState } from '@/zero/documents/useDocumentState';
 import { useBlogState } from '@/zero/blogs/useBlogState';
+import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { toast } from 'sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { EditorEntityType, EditorVersion, VersionCreationType } from '../types';
@@ -44,9 +45,9 @@ interface VersionControlProps {
   entityType: EditorEntityType;
   /** Document ID for amendments/documents, blog ID for blogs */
   entityId: string;
-  currentContent: any[];
+  currentContent: unknown[];
   currentUserId: string;
-  onRestoreVersion: (content: any[]) => void;
+  onRestoreVersion: (content: unknown[]) => void;
   /** Amendment-specific props for notifications */
   amendmentId?: string;
   amendmentTitle?: string;
@@ -117,7 +118,7 @@ export function VersionControl({
         id: versionId,
         version_number: nextVersionNumber,
         change_summary: versionTitle,
-        content: currentContent,
+        content: currentContent as ReadonlyJSONValue,
         document_id: entityType === 'blog' ? '' : entityId,
         amendment_id: null,
         blog_id: entityType === 'blog' ? entityId : '',

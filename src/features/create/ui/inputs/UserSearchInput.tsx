@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react'
-import { TypeAheadSelect } from '@/features/shared/ui/ui/type-ahead-select'
+import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch'
+import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems'
+import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers'
 import { useUserState } from '@/zero/users/useUserState'
 import { Label } from '@/features/shared/ui/ui/label'
 import { Badge } from '@/features/shared/ui/ui/badge'
 import { Button } from '@/features/shared/ui/ui/button'
 import { X, Users } from 'lucide-react'
-import { Card, CardHeader, CardTitle, CardDescription } from '@/features/shared/ui/ui/card'
 
 interface UserSearchInputProps {
   value: string[]
@@ -16,27 +17,6 @@ interface UserSearchInputProps {
   excludeUserId?: string
   /** Allow selecting multiple users */
   multi?: boolean
-}
-
-function UserCard({ user }: { user: any }) {
-  return (
-    <Card className="bg-gradient-to-br from-blue-100 to-indigo-100 transition-all hover:shadow-md dark:from-blue-900/40 dark:to-indigo-900/50">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-base">
-            {user.first_name} {user.last_name}
-          </CardTitle>
-          <Badge variant="outline" className="flex-shrink-0">
-            <Users className="mr-1 h-3 w-3" />
-            User
-          </Badge>
-        </div>
-        {user.handle && (
-          <CardDescription className="text-xs">@{user.handle}</CardDescription>
-        )}
-      </CardHeader>
-    </Card>
-  )
 }
 
 export function UserSearchInput({
@@ -66,6 +46,18 @@ export function UserSearchInput({
     return value.map((id) => allUsers.find((u: any) => u.id === id)).filter(Boolean)
   }, [allUsers, value])
 
+  const items = useMemo(
+    () =>
+      toTypeaheadItems(
+        filteredUsers,
+        'user',
+        (u: any) => `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'User',
+        (u: any) => u.handle ? `@${u.handle}` : u.email,
+        (u: any) => u.avatar,
+      ),
+    [filteredUsers],
+  )
+
   const handleSelect = (userId: string) => {
     if (multi) {
       if (!value.includes(userId)) {
@@ -84,14 +76,13 @@ export function UserSearchInput({
   return (
     <div className="space-y-3">
       {label && <Label className="mb-2 block">{label}</Label>}
-      <TypeAheadSelect
-        items={filteredUsers}
+      <TypeaheadSearch
+        items={items}
         value={multi ? '' : singleValue}
-        onChange={handleSelect}
+        onChange={(item: TypeaheadItem | null) => {
+          if (item) handleSelect(item.id)
+        }}
         placeholder={placeholder}
-        searchKeys={['first_name', 'last_name', 'handle', 'email'] as any}
-        renderItem={(user: any) => <UserCard user={user} />}
-        getItemId={(user: any) => user.id}
       />
 
       {/* Selected users list */}

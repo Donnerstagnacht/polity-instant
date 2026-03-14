@@ -6,7 +6,7 @@ import {
   calculateDelegateAllocations,
   finalizeDelegateSelection,
 } from '@/features/shared/utils/delegate-calculations'
-import { notifyDelegatesFinalized } from '@/features/shared/utils/notification-helpers'
+import { notifyDelegatesFinalized } from '@/features/notifications/utils/notification-helpers.ts'
 
 function getSupabase() {
   return createClient(
@@ -70,7 +70,7 @@ export const finalizeDelegatesFn = createServerFn({ method: 'POST' })
 
       const subgroups = getDirectSubgroups(
         parentGroupId,
-        (groupRelationships || []) as any,
+        (groupRelationships || []),
       )
 
       if (subgroups.length === 0) {
@@ -78,20 +78,20 @@ export const finalizeDelegatesFn = createServerFn({ method: 'POST' })
       }
 
       const totalMembers = subgroups.reduce(
-        (sum: number, g: any) => sum + g.memberCount,
+        (sum: number, g) => sum + g.memberCount,
         0,
       )
       const totalDelegates = Math.max(1, Math.floor(totalMembers / 50))
 
       const allocations = calculateDelegateAllocations(
-        subgroups.map((g: any) => ({ id: g.id, memberCount: g.memberCount })),
+        subgroups.map((g) => ({ id: g.id, memberCount: g.memberCount })),
         totalDelegates,
       )
 
       const nominations = event.delegates || []
 
       const finalizedDelegates = finalizeDelegateSelection(
-        nominations.map((d: any) => ({
+        nominations.map((d: { id: string; group?: { id?: string } | null; group_id?: string | null; user?: { id?: string } | null; user_id?: string | null; priority?: number | null; status?: string | null }) => ({
           id: d.id,
           groupId: d.group?.id || d.group_id || '',
           userId: d.user?.id || d.user_id || '',

@@ -54,23 +54,9 @@ export function useUserActions() {
     [zero]
   )
 
-  const updateStats = useCallback(
-    async (args: Parameters<typeof mutators.users.updateStats>[0]) => {
-      try {
-        await zero.mutate(mutators.users.updateStats(args))
-      } catch (error) {
-        console.error('Failed to update user stats:', error)
-        toast.error(t('features.user.toasts.statsUpdateFailed'))
-        throw error
-      }
-    },
-    [zero]
-  )
-
   return {
     updateProfile,
     follow,
     unfollow,
-    updateStats,
   }
 }

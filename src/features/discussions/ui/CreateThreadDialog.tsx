@@ -12,9 +12,7 @@ import {
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
 import { File, Upload, X } from 'lucide-react';
-import { toast } from 'sonner';
 import { useUploadFile } from '@/features/file-upload/hooks/use-upload-file.ts';
-import { createThread, uploadThreadFile } from '../utils/thread-operations';
 
 interface CreateThreadDialogProps {
   amendmentId: string;
@@ -23,6 +21,13 @@ interface CreateThreadDialogProps {
   senderName?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onCreateThread: (
+    amendmentId: string,
+    title: string,
+    description: string,
+    userId: string,
+    fileId?: string,
+  ) => Promise<string>;
 }
 
 export function CreateThreadDialog({
@@ -32,6 +37,7 @@ export function CreateThreadDialog({
   senderName,
   open,
   onOpenChange,
+  onCreateThread,
 }: CreateThreadDialogProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -47,27 +53,29 @@ export function CreateThreadDialog({
       // Upload file if selected
       let uploadedFileId: string | null = null;
       if (selectedFile) {
-        uploadedFileId = await uploadThreadFile(selectedFile, uploadFile);
+        try {
+          const uploadResult = await uploadFile(selectedFile);
+          uploadedFileId = uploadResult?.key ?? null;
+        } catch (error) {
+          console.error('Error uploading file:', error);
+        }
       }
 
       // Create thread
-      await createThread(
+      await onCreateThread(
         amendmentId,
         title,
         description,
         userId,
         uploadedFileId || undefined,
-        senderName && amendmentTitle ? { senderName, amendmentTitle } : undefined
       );
 
-      toast.success('Thread created successfully');
       setTitle('');
       setDescription('');
       setSelectedFile(null);
       onOpenChange(false);
     } catch (error) {
       console.error('Error creating thread:', error);
-      toast.error('Failed to create thread');
     } finally {
       setIsSubmitting(false);
     }

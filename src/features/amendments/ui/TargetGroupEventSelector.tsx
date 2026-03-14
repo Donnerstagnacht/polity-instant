@@ -4,10 +4,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Label } from '@/features/shared/ui/ui/label';
 import { Input } from '@/features/shared/ui/ui/input';
-import { TypeAheadSelect } from '@/features/shared/ui/ui/type-ahead-select';
+import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
+import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
+import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
 import {
   Dialog,
@@ -18,7 +19,7 @@ import {
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
-import { findShortestPath } from '@/features/shared/utils/path-finding';
+import { findShortestPath } from '@/features/amendments/logic/path-finding.ts';
 import { CalendarIcon, Target, User, MapPin, Clock, Users, ChevronRight, Search } from 'lucide-react';
 
 interface TargetGroupEventSelectorProps {
@@ -26,10 +27,10 @@ interface TargetGroupEventSelectorProps {
   collaborators?: Array<{ id: string; name?: string; email?: string; avatar?: string }>;
   onSelect: (data: {
     groupId: string;
-    groupData: any;
+    groupData: Record<string, unknown>;
     eventId: string;
-    eventData: any;
-    pathWithEvents: any[];
+    eventData: Record<string, unknown>;
+    pathWithEvents: Array<{ groupId: string; groupName: string; eventId: string | null; eventTitle: string; eventStartDate: number | null }>;
     selectedUserId: string;
   }) => void;
   selectedGroupId?: string;
@@ -44,8 +45,8 @@ export function TargetGroupEventSelector({
   selectedEventId,
 }: TargetGroupEventSelectorProps) {
   const [selectedUserId, setSelectedUserId] = useState<string>(userId);
-  const [selectedGroup, setSelectedGroup] = useState<{ id: string; data: any } | null>(null);
-  const [selectedEvent, setSelectedEvent] = useState<{ id: string; data: any } | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<{ id: string; data: Record<string, unknown> } | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<{ id: string; data: Record<string, unknown> } | null>(null);
   const [eventSearchQuery, setEventSearchQuery] = useState<string>('');
 
   // Fetch network data via facade
@@ -66,9 +67,9 @@ export function TargetGroupEventSelector({
     groupRelationships: groupRelationshipsData ?? [],
     groupMemberships: groupMembershipsData ?? [],
     events: eventsData ?? [],
-  } as any;
+  };
 
-  const groupEventsData = { events: groupEventsResult ?? [] } as any;
+  const groupEventsData = { events: groupEventsResult ?? [] };
 
   // Reset selection when user changes
   useEffect(() => {
@@ -86,8 +87,8 @@ export function TargetGroupEventSelector({
         const lastSegment = pathWithEvents[pathWithEvents.length - 1];
         if (lastSegment && lastSegment.groupId === selectedGroup.id) {
           lastSegment.eventId = selectedEvent.id;
-          lastSegment.eventTitle = selectedEvent.data.title;
-          lastSegment.eventStartDate = selectedEvent.data.startDate;
+          lastSegment.eventTitle = String(selectedEvent.data.title ?? '');
+          lastSegment.eventStartDate = (selectedEvent.data.start_date as number) ?? null;
         }
 
         onSelect({
@@ -107,25 +108,29 @@ export function TargetGroupEventSelector({
     if (!networkData) return null;
 
     const currentUserId = selectedUserId || userId;
-    const userMemberships =
-      (networkData as any)?.groupMemberships?.filter(
-        (m: any) =>
-          (m.status === 'member' || m.status === 'admin') && m.user?.id === currentUserId
-      ) || [];
-
-    const userGroupIds = userMemberships.map((m: any) => m.group.id);
-    const allGroups = (networkData as any)?.groups || [];
-    const relationships = (networkData as any)?.groupRelationships || [];
-    const events = (networkData as any)?.events || [];
-
-    // Filter for amendmentRight relationships
-    const amendmentRelationships = relationships.filter(
-      (r: any) => r.withRight === 'amendmentRight'
+    const userMemberships = networkData.groupMemberships.filter(
+      (m) =>
+        (m.status === 'active' || m.status === 'admin') && m.user?.id === currentUserId
     );
+
+    const userGroupIds = userMemberships.map((m) => m.group?.id).filter((id): id is string => !!id);
+    const groups = networkData.groups;
+    const relationships = networkData.groupRelationships;
+    const events = networkData.events;
+
+    // Filter for amendmentRight relationships and map to findShortestPath interface
+    const amendmentRelationships = relationships
+      .filter((r) => r.with_right === 'amendmentRight')
+      .map((r) => ({
+        id: r.id,
+        parentGroup: { id: r.group?.id ?? '', name: r.group?.name ?? '' },
+        childGroup: { id: r.related_group?.id ?? '', name: r.related_group?.name ?? '' },
+        withRight: r.with_right ?? '',
+      }));
 
     // Build groups map
     const groupsMap = new Map();
-    allGroups.forEach((g: any) => {
+    groups.forEach((g) => {
       groupsMap.set(g.id, {
         id: g.id,
         name: g.name,
@@ -140,18 +145,18 @@ export function TargetGroupEventSelector({
 
     // For each group in path, find the closest upcoming event
     const now = new Date();
-    const pathWithEvents = path.map((segment: any) => {
+    const pathWithEvents = path.map((segment) => {
       const groupId = segment.group.id;
       const groupName = segment.group.name;
 
       // Find all upcoming events for this group
       const groupEvents = events.filter(
-        (e: any) => e.group?.id === groupId && new Date(e.startDate) > now
+        (e) => e.group?.id === groupId && new Date(e.start_date ?? 0) > now
       );
 
       // Sort by start date and pick the closest one
       groupEvents.sort(
-        (a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+        (a, b) => new Date(a.start_date ?? 0).getTime() - new Date(b.start_date ?? 0).getTime()
       );
 
       const closestEvent = groupEvents[0];
@@ -161,7 +166,7 @@ export function TargetGroupEventSelector({
         groupName,
         eventId: closestEvent?.id || null,
         eventTitle: closestEvent?.title || 'No upcoming event',
-        eventStartDate: closestEvent?.startDate || null,
+        eventStartDate: closestEvent?.start_date || null,
       };
     });
 
@@ -173,75 +178,73 @@ export function TargetGroupEventSelector({
     if (!networkData) return [];
 
     const currentUserId = selectedUserId || userId;
-    const userMemberships =
-      (networkData as any)?.groupMemberships?.filter(
-        (m: any) =>
-          (m.status === 'member' || m.status === 'admin') && m.user?.id === currentUserId
-      ) || [];
+    const userMemberships = networkData.groupMemberships.filter(
+      (m) =>
+        (m.status === 'active' || m.status === 'admin') && m.user?.id === currentUserId
+    );
 
-    const userGroupIds = userMemberships.map((m: any) => m.group.id);
-    const allGroups = (networkData as any)?.groups || [];
-    const relationships = (networkData as any)?.groupRelationships || [];
+    const userGroupIds = userMemberships.map((m) => m.group?.id).filter((id): id is string => !!id);
+    const allGroups = networkData.groups;
+    const relationships = networkData.groupRelationships;
 
     // Filter for amendmentRight relationships
     const amendmentRelationships = relationships.filter(
-      (r: any) => r.withRight === 'amendmentRight'
+      (r) => r.with_right === 'amendmentRight'
     );
 
     // Build set of connected groups (direct and indirect)
     const connectedGroupIds = new Set<string>(userGroupIds);
 
     // Add directly connected groups
-    amendmentRelationships.forEach((rel: any) => {
-      if (userGroupIds.includes(rel.parentGroup?.id)) {
-        connectedGroupIds.add(rel.childGroup?.id);
+    amendmentRelationships.forEach((rel) => {
+      if (userGroupIds.includes(rel.group?.id ?? '')) {
+        if (rel.related_group?.id) connectedGroupIds.add(rel.related_group.id);
       }
-      if (userGroupIds.includes(rel.childGroup?.id)) {
-        connectedGroupIds.add(rel.parentGroup?.id);
+      if (userGroupIds.includes(rel.related_group?.id ?? '')) {
+        if (rel.group?.id) connectedGroupIds.add(rel.group.id);
       }
     });
 
     // Add indirectly connected groups (2 hops)
     const firstHopGroups = Array.from(connectedGroupIds);
-    amendmentRelationships.forEach((rel: any) => {
-      if (firstHopGroups.includes(rel.parentGroup?.id)) {
-        connectedGroupIds.add(rel.childGroup?.id);
+    amendmentRelationships.forEach((rel) => {
+      if (firstHopGroups.includes(rel.group?.id ?? '')) {
+        if (rel.related_group?.id) connectedGroupIds.add(rel.related_group.id);
       }
-      if (firstHopGroups.includes(rel.childGroup?.id)) {
-        connectedGroupIds.add(rel.parentGroup?.id);
+      if (firstHopGroups.includes(rel.related_group?.id ?? '')) {
+        if (rel.group?.id) connectedGroupIds.add(rel.group.id);
       }
     });
 
-    return allGroups.filter((g: any) => connectedGroupIds.has(g.id));
+    return allGroups.filter((g) => connectedGroupIds.has(g.id));
   };
 
   const connectedGroups = getConnectedGroups();
-  const userMemberships =
-    (networkData as any)?.groupMemberships?.filter(
-      (m: any) =>
-        (m.status === 'member' || m.status === 'admin') && m.user?.id === (selectedUserId || userId)
-    ) || [];
-  const userGroupIds = userMemberships.map((m: any) => m.group.id);
+  const userMemberships = networkData.groupMemberships.filter(
+    (m) =>
+      (m.status === 'active' || m.status === 'admin') && m.user?.id === (selectedUserId || userId)
+  );
+  const userGroupIds = userMemberships.map((m) => m.group?.id).filter((id): id is string => !!id);
 
   // Get upcoming events for selected group
   const upcomingEvents =
     selectedGroup?.id && groupEventsData
-      ? ((groupEventsData as any)?.events || [])
-          .filter((e: any) => new Date(e.startDate) > new Date())
+      ? [...groupEventsData.events]
+          .filter((e) => new Date(e.start_date ?? 0) > new Date())
           .sort(
-            (a: any, b: any) =>
-              new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+            (a, b) =>
+              new Date(a.start_date ?? 0).getTime() - new Date(b.start_date ?? 0).getTime()
           )
       : [];
 
   // Filter events based on search query
-  const filteredEvents = upcomingEvents.filter((event: any) => {
+  const filteredEvents = upcomingEvents.filter((event) => {
     if (!eventSearchQuery.trim()) return true;
     
     const searchLower = eventSearchQuery.toLowerCase();
     const titleMatch = event.title?.toLowerCase().includes(searchLower);
     const descriptionMatch = event.description?.toLowerCase().includes(searchLower);
-    const locationMatch = event.location?.toLowerCase().includes(searchLower);
+    const locationMatch = event.location_name?.toLowerCase().includes(searchLower);
     
     return titleMatch || descriptionMatch || locationMatch;
   });
@@ -253,57 +256,17 @@ export function TargetGroupEventSelector({
         <div className="flex items-center gap-3">
           <User className="h-4 w-4 text-muted-foreground" />
           <div className="flex-1">
-            <TypeAheadSelect
-              items={collaborators}
+            <TypeaheadSearch
+              items={toTypeaheadItems(
+                collaborators,
+                'user',
+                (u) => u.name || 'User',
+                (u) => u.email,
+                (u) => u.avatar,
+              )}
               value={selectedUserId}
-              onChange={setSelectedUserId}
+              onChange={(item: TypeaheadItem | null) => setSelectedUserId(item?.id ?? '')}
               placeholder="Select collaborator to view their network..."
-              searchKeys={['name', 'email']}
-              getItemId={(user: any) => user.id}
-              renderItem={(user: any) => (
-                <div className="flex items-center gap-3 p-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.avatar || undefined} alt={user.name} />
-                    <AvatarFallback>
-                      {user.name
-                        ?.split(' ')
-                        .map((n: string) => n[0])
-                        .join('')
-                        .toUpperCase()
-                        .slice(0, 2) || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="font-medium">{user.name}</div>
-                    {user.email && (
-                      <div className="text-xs text-muted-foreground">{user.email}</div>
-                    )}
-                  </div>
-                </div>
-              )}
-              renderSelected={(user: any) => (
-                <div className="flex items-center justify-between rounded-md border bg-background p-3">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={user.avatar || undefined} alt={user.name} />
-                      <AvatarFallback>
-                        {user.name
-                          ?.split(' ')
-                          .map((n: string) => n[0])
-                          .join('')
-                          .toUpperCase()
-                          .slice(0, 2) || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-medium">{user.name}</div>
-                      {user.email && (
-                        <div className="text-xs text-muted-foreground">{user.email}</div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
               label="Select Network For:"
             />
           </div>
@@ -318,56 +281,24 @@ export function TargetGroupEventSelector({
             No connected groups found. You need to be a member of groups with amendment rights.
           </p>
         ) : (
-          <TypeAheadSelect
-            items={connectedGroups}
+          <TypeaheadSearch
+            items={toTypeaheadItems(
+              connectedGroups,
+              'group',
+              (g) => g.name || 'Group',
+              (g) => g.description?.substring(0, 60),
+            )}
             value={selectedGroup?.id || ''}
-            onChange={(groupId: string) => {
-              const group = connectedGroups.find((g: any) => g.id === groupId);
-              if (group) {
-                setSelectedGroup({ id: group.id, data: group });
-                setSelectedEvent(null);
+            onChange={(item: TypeaheadItem | null) => {
+              if (item) {
+                const group = connectedGroups.find((g) => g.id === item.id);
+                if (group) {
+                  setSelectedGroup({ id: group.id, data: group });
+                  setSelectedEvent(null);
+                }
               }
             }}
             placeholder="Search for a group..."
-            searchKeys={['name', 'description']}
-            getItemId={(group: any) => group.id}
-            renderItem={(group: any) => {
-              const isMemberGroup = userGroupIds.includes(group.id);
-              return (
-                <Card className="overflow-hidden border-2 bg-gradient-to-br from-blue-100 to-purple-100 transition-all duration-300 dark:from-blue-900/40 dark:to-purple-900/50">
-                  <CardHeader className="space-y-3 pb-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        {group.abbr && (
-                          <Badge variant="secondary" className="mb-2 w-fit font-semibold">
-                            {group.abbr}
-                          </Badge>
-                        )}
-                        <CardTitle className="line-clamp-1 text-lg">{group.name}</CardTitle>
-                        {group.description && (
-                          <CardDescription className="mt-1.5 line-clamp-2">
-                            {group.description}
-                          </CardDescription>
-                        )}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3 pt-0">
-                    <div className="flex flex-wrap gap-3 border-t border-border/50 pt-3">
-                      {isMemberGroup && (
-                        <Badge variant="secondary" className="text-xs">
-                          Member
-                        </Badge>
-                      )}
-                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                        <Users className="h-3.5 w-3.5" />
-                        <span>{group.memberCount || 0} members</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            }}
           />
         )}
       </div>
@@ -401,7 +332,7 @@ export function TargetGroupEventSelector({
                       No events match your search
                     </p>
                   ) : (
-                    filteredEvents.map((event: any) => {
+                    filteredEvents.map((event) => {
                       const isEventSelected = selectedEvent?.id === event.id;
                       
                       return (
@@ -427,7 +358,7 @@ export function TargetGroupEventSelector({
                                   Selected
                                 </Badge>
                               )}
-                              {event.isPublic && (
+                              {event.is_public && (
                                 <Badge variant="outline" className="text-xs">
                                   Public
                                 </Badge>
@@ -438,12 +369,12 @@ export function TargetGroupEventSelector({
                           {/* Event details */}
                           <div className="space-y-1.5 text-xs text-muted-foreground">
                             {/* Date and time */}
-                            {event.startDate && (
+                            {event.start_date && (
                               <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-1.5">
                                   <CalendarIcon className="h-3.5 w-3.5" />
                                   <span>
-                                    {new Date(event.startDate).toLocaleDateString('en-US', {
+                                    {new Date(event.start_date).toLocaleDateString('en-US', {
                                       weekday: 'short',
                                       month: 'short',
                                       day: 'numeric',
@@ -454,7 +385,7 @@ export function TargetGroupEventSelector({
                                 <div className="flex items-center gap-1.5">
                                   <Clock className="h-3.5 w-3.5" />
                                   <span>
-                                    {new Date(event.startDate).toLocaleTimeString('en-US', {
+                                    {new Date(event.start_date).toLocaleTimeString('en-US', {
                                       hour: 'numeric',
                                       minute: '2-digit',
                                     })}
@@ -464,10 +395,10 @@ export function TargetGroupEventSelector({
                             )}
 
                             {/* Location */}
-                            {event.location && (
+                            {event.location_name && (
                               <div className="flex items-center gap-1.5">
                                 <MapPin className="h-3.5 w-3.5" />
-                                <span className="truncate">{event.location}</span>
+                                <span className="truncate">{event.location_name}</span>
                               </div>
                             )}
                           </div>
@@ -492,10 +423,25 @@ export function TargetGroupEventSelector({
   );
 }
 
+interface DisplayGroupData {
+  abbr?: string | null;
+  name?: string | null;
+  description?: string | null;
+  member_count?: number;
+}
+
+interface DisplayEventData {
+  title?: string | null;
+  is_public?: boolean;
+  start_date?: number | null;
+  location_name?: string | null;
+  description?: string | null;
+}
+
 interface TargetGroupEventDisplayProps {
-  groupData: any;
-  eventData: any;
-  pathWithEvents?: any[];
+  groupData: DisplayGroupData;
+  eventData: DisplayEventData;
+  pathWithEvents?: Array<{ groupId: string; groupName: string; eventId: string | null; eventTitle: string; eventStartDate: number | null }>;
 }
 
 export function TargetGroupEventDisplay({
@@ -519,7 +465,7 @@ export function TargetGroupEventDisplay({
                     {groupData.abbr}
                   </Badge>
                 )}
-                <CardTitle className="line-clamp-1 text-xl">{groupData.name}</CardTitle>
+                <CardTitle className="line-clamp-1 text-xl">{groupData.name ?? ''}</CardTitle>
                 {groupData.description && (
                   <CardDescription className="mt-1.5 line-clamp-2">
                     {groupData.description}
@@ -532,7 +478,7 @@ export function TargetGroupEventDisplay({
             <div className="flex flex-wrap gap-3 border-t border-border/50 pt-3">
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <User className="h-4 w-4" />
-                <span className="font-medium">{groupData.memberCount || 0} members</span>
+                <span className="font-medium">{groupData.member_count ?? 0} members</span>
               </div>
             </div>
           </CardContent>
@@ -546,9 +492,9 @@ export function TargetGroupEventDisplay({
         </h4>
         <div className="rounded-lg border-2 bg-gradient-to-br from-green-100 to-blue-100 p-4 dark:from-green-900/40 dark:to-blue-900/50">
           <div className="mb-3 flex items-start justify-between gap-2">
-            <h4 className="flex-1 text-lg font-semibold leading-tight">{eventData.title}</h4>
+            <h4 className="flex-1 text-lg font-semibold leading-tight">{eventData.title ?? ''}</h4>
             <div className="flex gap-1">
-              {eventData.isPublic && (
+              {eventData.is_public && (
                 <Badge variant="outline" className="text-xs">
                   Public
                 </Badge>
@@ -557,12 +503,12 @@ export function TargetGroupEventDisplay({
           </div>
 
           <div className="space-y-1.5 text-xs text-muted-foreground">
-            {eventData.startDate && (
+            {eventData.start_date && (
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5">
                   <CalendarIcon className="h-3.5 w-3.5" />
                   <span>
-                    {new Date(eventData.startDate).toLocaleDateString('en-US', {
+                    {new Date(eventData.start_date).toLocaleDateString('en-US', {
                       weekday: 'short',
                       month: 'short',
                       day: 'numeric',
@@ -573,7 +519,7 @@ export function TargetGroupEventDisplay({
                 <div className="flex items-center gap-1.5">
                   <Clock className="h-3.5 w-3.5" />
                   <span>
-                    {new Date(eventData.startDate).toLocaleTimeString('en-US', {
+                    {new Date(eventData.start_date).toLocaleTimeString('en-US', {
                       hour: 'numeric',
                       minute: '2-digit',
                     })}
@@ -582,10 +528,10 @@ export function TargetGroupEventDisplay({
               </div>
             )}
 
-            {eventData.location && (
+            {eventData.location_name && (
               <div className="flex items-center gap-1.5">
                 <MapPin className="h-3.5 w-3.5" />
-                <span className="truncate">{eventData.location}</span>
+                <span className="truncate">{eventData.location_name}</span>
               </div>
             )}
           </div>
