@@ -1,4 +1,4 @@
-import { defineQuery } from '@rocicorp/zero';
+import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import { zql } from '../schema';
 
@@ -236,3 +236,21 @@ export const groupQueries = {
     zql.group.where('id', id)
   ),
 };
+
+// ── Query Row Types ─────────────────────────────────────────────────
+export type GroupByIdFullRow = QueryRowType<typeof groupQueries.byIdFull>;
+export type GroupWikiRow = QueryRowType<typeof groupQueries.wikiData>;
+export type GroupMembershipWithUserRow = QueryRowType<typeof groupQueries.membershipsWithUsers>;
+export type GroupMembershipWithRoleRow = QueryRowType<typeof groupQueries.allMembershipsInGroupWithRole>;
+export type GroupMembershipWithRelationsRow = QueryRowType<typeof groupQueries.userMembershipsWithGroupRelations>;
+export type GroupMembershipsByUserRow = QueryRowType<typeof groupQueries.membershipsByUser>;
+export type GroupRoleWithRightsRow = QueryRowType<typeof groupQueries.rolesWithRights>;
+export type GroupMembershipWithRolesAndRightsRow = QueryRowType<typeof groupQueries.membershipsWithRolesAndRights>;
+export type GroupPositionFullRow = QueryRowType<typeof groupQueries.positionsFull>;
+export type GroupTodoRow = QueryRowType<typeof groupQueries.todosByGroup>;
+export type GroupAmendmentRow = QueryRowType<typeof groupQueries.amendmentsByGroup>;
+export type GroupAmendmentWithDocsRow = QueryRowType<typeof groupQueries.amendmentsWithDocuments>;
+export type GroupNetworkRelationshipRow = QueryRowType<typeof groupQueries.networkRelationships>;
+export type GroupSubscriberRow = QueryRowType<typeof groupQueries.subscribersByGroup>;
+export type GroupPaymentRow = QueryRowType<typeof groupQueries.paymentsReceivedByGroup>;
+export type GroupLinkRow = QueryRowType<typeof groupQueries.linksByGroup>;

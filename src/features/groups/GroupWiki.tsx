@@ -1,6 +1,12 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   Carousel,
@@ -78,7 +84,9 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
             </Badge>
           )}
           <Badge variant="outline" className="text-sm">
-            {isHierarchical ? t('components.badges.hierarchicalGroup') : t('components.badges.baseGroup')}
+            {isHierarchical
+              ? t('components.badges.hierarchicalGroup')
+              : t('components.badges.baseGroup')}
           </Badge>
         </div>
         {group.location && <p className="text-muted-foreground">{group.location}</p>}
@@ -115,7 +123,9 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
           onAcceptInvitation={acceptInvitation}
           isLoading={membershipLoading}
           disabled={isHierarchical && !isMember}
-          disabledReason={isHierarchical ? t('features.groups.hierarchicalMembershipDisabled') : undefined}
+          disabledReason={
+            isHierarchical ? t('features.groups.hierarchicalMembershipDisabled') : undefined
+          }
         />
         <ShareButton
           url={`/group/${groupId}`}
@@ -186,13 +196,11 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
                       <CardContent className="space-y-3">
                         <div className="space-y-3">
                           {(() => {
-                            const currentHistory = position.holder_history?.find(
-                              (h) => !h.end_date
-                            );
+                            const currentHistory = position.holder_history?.find(h => !h.end_date);
                             const holder = currentHistory?.user;
                             return holder ? (
-                              <div className="rounded-lg border bg-background/80 p-3 shadow-sm backdrop-blur-sm">
-                                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              <div className="bg-background/80 rounded-lg border p-3 shadow-sm backdrop-blur-sm">
+                                <p className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
                                   Current Holder
                                 </p>
                                 <div className="flex items-center gap-3">
@@ -200,7 +208,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
                                     <img
                                       src={holder.avatar}
                                       alt={holder.first_name || 'User'}
-                                      className="h-10 w-10 rounded-full object-cover ring-2 ring-background"
+                                      className="ring-background h-10 w-10 rounded-full object-cover ring-2"
                                     />
                                   )}
                                   <div className="min-w-0 flex-1">
@@ -210,7 +218,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
                                         .join(' ') || 'Unknown'}
                                     </p>
                                     {holder.handle && (
-                                      <p className="truncate text-sm text-muted-foreground">
+                                      <p className="text-muted-foreground truncate text-sm">
                                         @{holder.handle}
                                       </p>
                                     )}
@@ -218,24 +226,24 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
                                 </div>
                               </div>
                             ) : (
-                              <div className="rounded-lg border border-dashed border-border/50 bg-background/50 p-4 text-center">
-                                <p className="text-sm font-medium text-muted-foreground">
+                              <div className="border-border/50 bg-background/50 rounded-lg border border-dashed p-4 text-center">
+                                <p className="text-muted-foreground text-sm font-medium">
                                   Vacant Position
                                 </p>
                               </div>
                             );
                           })()}
                           {(position.term || position.first_term_start) && (
-                            <div className="space-y-2 rounded-lg border border-border/50 bg-background/50 p-3 text-sm">
+                            <div className="border-border/50 bg-background/50 space-y-2 rounded-lg border p-3 text-sm">
                               {position.term && (
                                 <div className="flex justify-between">
-                                  <span className="font-medium text-muted-foreground">Term:</span>
+                                  <span className="text-muted-foreground font-medium">Term:</span>
                                   <span className="font-semibold">{position.term}</span>
                                 </div>
                               )}
                               {position.first_term_start && (
                                 <div className="flex justify-between">
-                                  <span className="font-medium text-muted-foreground">
+                                  <span className="text-muted-foreground font-medium">
                                     Started:
                                   </span>
                                   <span className="font-semibold">
@@ -276,7 +284,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
                     key={`child-${relatedGroup.id}`}
                     group={{
                       id: String(relatedGroup.id),
-                      name: relatedGroup.name || t('common.unknown'),
+                      name: relatedGroup.name || t('common.unspecified'),
                       description: relatedGroup.description ?? undefined,
                       memberCount:
                         relatedGroup.memberships?.length || relatedGroup.member_count || 0,

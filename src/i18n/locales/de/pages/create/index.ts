@@ -307,7 +307,7 @@ export const createPageTranslations = {
     participants: 'Teilnehmer',
     participantList: 'Teilnehmerliste:',
     untitledEvent: 'Unbenanntes Event',
-    unknownGroup: 'Unbekannte Gruppe',
+    unspecifiedGroup: 'nicht angegeben',
     delegateNomination: 'Delegiertennominierung',
     proposalSubmission: 'Antragseingabe',
     amendmentCutoff: 'Änderungsanträge',

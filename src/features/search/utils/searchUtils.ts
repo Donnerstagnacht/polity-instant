@@ -1,22 +1,56 @@
 import { SearchType } from '../types/search.types';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
 
+type HashtagJunction = ReadonlyArray<{ hashtag?: { id: string; tag: string } | null }>;
+
+interface HashtagEntity {
+  hashtags?: { id: string; tag: string }[];
+  user_hashtags?: HashtagJunction;
+  group_hashtags?: HashtagJunction;
+  amendment_hashtags?: HashtagJunction;
+  event_hashtags?: HashtagJunction;
+  blog_hashtags?: HashtagJunction;
+  statement_hashtags?: HashtagJunction;
+}
+
+interface UserLike {
+  first_name?: string | null;
+  last_name?: string | null;
+  name?: string | null;
+  handle?: string | null;
+  avatar?: string | null;
+  avatarUrl?: string | null;
+  imageURL?: string | null;
+  avatarFile?: { url?: string | null } | null;
+  bio?: string | null;
+  location?: string | null;
+  contactLocation?: string | null;
+}
+
+interface SortableItem {
+  created_at?: string | number | Date | null;
+  date?: string | number | Date | null;
+  joined_at?: string | number | Date | null;
+  name?: string | null;
+  title?: string | null;
+}
+
 /**
  * Match against hashtags on an item.
  * Accepts either extracted { id, tag }[] or junction rows with nested .hashtag.
  */
-export const matchesHashtag = (item: Record<string, unknown>, hashtagFilter: string) => {
+export const matchesHashtag = (item: HashtagEntity, hashtagFilter: string) => {
   if (!hashtagFilter) return true;
 
   // Support both extracted { id, tag }[] and junction rows
   const tags: { id: string; tag: string }[] = item.hashtags
-    ? (item.hashtags as { id: string; tag: string }[])
+    ? item.hashtags
     : extractHashtags(
-        (item.user_hashtags ||
+        item.user_hashtags ||
           item.group_hashtags ||
           item.amendment_hashtags ||
           item.event_hashtags ||
-          item.blog_hashtags) as ReadonlyArray<{ hashtag?: { id: string; tag: string } | null }> | undefined
+          item.blog_hashtags
       );
 
   if (!tags || tags.length === 0) return false;
@@ -39,16 +73,16 @@ export const filterByQuery = (text: unknown, queryParam: string) => {
   return String(text).toLowerCase().includes(queryParam.toLowerCase());
 };
 
-export const getUserDisplayName = (user: Record<string, unknown> | null | undefined): string => {
+export const getUserDisplayName = (user: UserLike | null | undefined): string => {
   const fullName = [user?.first_name, user?.last_name].filter(Boolean).join(' ').trim();
   return fullName || String(user?.name ?? user?.handle ?? '');
 };
 
-export const getUserAvatar = (user: Record<string, unknown> | null | undefined): string => {
-  return String(user?.avatar ?? user?.avatarUrl ?? user?.imageURL ?? (user?.avatarFile as Record<string, unknown> | undefined)?.url ?? '');
+export const getUserAvatar = (user: UserLike | null | undefined): string => {
+  return String(user?.avatar ?? user?.avatarUrl ?? user?.imageURL ?? user?.avatarFile?.url ?? '');
 };
 
-export const matchesUserQuery = (user: Record<string, unknown> | null | undefined, queryParam: string) => {
+export const matchesUserQuery = (user: UserLike | null | undefined, queryParam: string) => {
   if (!queryParam) return true;
 
   const displayName = getUserDisplayName(user);
@@ -61,11 +95,11 @@ export const matchesUserQuery = (user: Record<string, unknown> | null | undefine
   ].some(value => filterByQuery(value, queryParam));
 };
 
-export const sortResults = <T extends Record<string, unknown>>(items: readonly T[], sortBy: string): T[] => {
+export const sortResults = <T extends SortableItem>(items: readonly T[], sortBy: string): T[] => {
   if (sortBy === 'date') {
     return [...items].sort((a, b) => {
-      const dateA = (a.createdAt ?? a.date ?? a.joinedAt ?? new Date(0)) as string | number | Date;
-      const dateB = (b.createdAt ?? b.date ?? b.joinedAt ?? new Date(0)) as string | number | Date;
+      const dateA = (a.created_at ?? a.date ?? a.joined_at ?? new Date(0)) as string | number | Date;
+      const dateB = (b.created_at ?? b.date ?? b.joined_at ?? new Date(0)) as string | number | Date;
       return new Date(dateB).getTime() - new Date(dateA).getTime();
     });
   }

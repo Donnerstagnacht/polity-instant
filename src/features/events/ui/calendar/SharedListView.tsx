@@ -16,10 +16,10 @@ interface SharedListViewProps {
 function groupByDate(events: CalendarEvent[]): Map<string, CalendarEvent[]> {
   const map = new Map<string, CalendarEvent[]>();
   const sorted = [...events].sort(
-    (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+    (a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
   );
   for (const event of sorted) {
-    const d = new Date(event.startDate);
+    const d = new Date(event.start_date);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(event);
@@ -32,19 +32,19 @@ function toTimelineEvent(event: CalendarEvent) {
     id: getBaseEventId(event.id),
     title: event.title,
     description: event.description,
-    startDate: new Date(event.startDate),
-    endDate: event.endDate ? new Date(event.endDate) : undefined,
+    startDate: new Date(event.start_date),
+    endDate: event.end_date ? new Date(event.end_date) : undefined,
     location: event.location,
     attendeeCount: event.attendeeCount,
     organizerName: event.organizerName,
-    groupId: event.groupId,
+    groupId: event.group_id,
     hashtags: event.hashtags,
   };
 }
 
 function MeetingBadge({ event, t }: { event: CalendarEvent; t: (key: string) => string }) {
-  if (!event.isMeeting || !event.isBookable) return null;
-  const maxBookings = event.maxBookings ?? 1;
+  if (!event.isMeeting || !event.is_bookable) return null;
+  const maxBookings = event.max_bookings ?? 1;
   const bookingCount = event.bookingCount ?? 0;
   const isFull = bookingCount >= maxBookings;
 
@@ -78,7 +78,7 @@ function getMeetingCardClassName(event: CalendarEvent) {
     return 'rounded-lg border-green-300 bg-green-50 shadow-sm dark:border-green-800 dark:bg-green-950';
   }
 
-  if (event.isBookable) {
+  if (event.is_bookable) {
     return 'rounded-lg border-dashed border-blue-300 bg-blue-50/50 shadow-sm dark:border-blue-800 dark:bg-blue-950/50';
   }
 

@@ -5,15 +5,21 @@ import { useAuth } from '@/providers/auth-provider';
 
 import { type SearchGroup } from '../types/search.types';
 
+interface BasicGroupData {
+  id: string;
+  name?: string | null;
+  description?: string | null;
+}
+
 interface GroupSearchCardProps {
-  group: SearchGroup | Record<string, unknown>;
+  group: SearchGroup | BasicGroupData;
 }
 
 export function GroupSearchCard({ group }: GroupSearchCardProps) {
   const { user } = useAuth();
 
   // Type guard: check if this is a full SearchGroup from Zero queries
-  const isSearchGroup = (g: SearchGroup | Record<string, unknown>): g is SearchGroup =>
+  const isSearchGroup = (g: SearchGroup | BasicGroupData): g is SearchGroup =>
     'memberships' in g && Array.isArray(g.memberships);
 
   if (isSearchGroup(group)) {
@@ -43,8 +49,8 @@ export function GroupSearchCard({ group }: GroupSearchCardProps) {
     <GroupTimelineCard
       group={{
         id: String(group.id ?? ''),
-        name: (group.name as string | null) ?? '',
-        description: (group.description as string | null) ?? undefined,
+        name: group.name ?? '',
+        description: group.description ?? undefined,
         memberCount: 0,
         eventCount: 0,
         amendmentCount: 0,

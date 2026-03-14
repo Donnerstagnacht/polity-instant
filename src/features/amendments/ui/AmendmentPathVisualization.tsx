@@ -248,7 +248,7 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <h4 className="font-semibold">{segment.group_id || t('common.unknown')}</h4>
+                    <h4 className="font-semibold">{segment.group_id || t('common.unspecified')}</h4>
                     {index === 0 && <Badge variant="secondary">{t('features.amendments.pathVisualization.start')}</Badge>}
                     {index === pathSegments.length - 1 && (
                       <Badge variant="destructive">{t('features.amendments.process.target')}</Badge>

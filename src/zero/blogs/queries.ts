@@ -1,4 +1,4 @@
-import { defineQuery } from '@rocicorp/zero'
+import { defineQuery, type QueryRowType } from '@rocicorp/zero'
 import { z } from 'zod'
 import { zql } from '../schema'
 
@@ -155,3 +155,12 @@ export const blogQueries = {
         .related('blog_hashtags', q => q.related('hashtag'))
   ),
 }
+
+// ── Query Row Types ─────────────────────────────────────────────────
+export type BlogByIdWithDetailsRow = QueryRowType<typeof blogQueries.byIdWithDetails>;
+export type BlogByIdWithBloggersRow = QueryRowType<typeof blogQueries.byIdWithBloggers>;
+export type BlogByIdForEditorRow = QueryRowType<typeof blogQueries.byIdForEditor>;
+export type BlogByIdWithManagementRow = QueryRowType<typeof blogQueries.byIdWithManagement>;
+export type BlogVersionRow = QueryRowType<typeof blogQueries.versionsByBlogId>;
+export type BlogThreadRow = QueryRowType<typeof blogQueries.blogThread>;
+export type BloggersByUserRow = QueryRowType<typeof blogQueries.bloggersByUser>;

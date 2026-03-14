@@ -16,6 +16,7 @@ import { formatRights } from './RightFilters';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { SearchResultItem } from '@/features/search/types/search.types';
+import type { EventByGroupRow } from '@/zero/events/useEventState';
 
 interface NetworkEventData {
   id?: string;
@@ -39,8 +40,15 @@ interface NetworkRelationshipData {
   label?: string | null;
 }
 
+interface NetworkGroupData {
+  id: string;
+  name?: string | null;
+  description?: string | null;
+  onEventSelect?: (eventId: string, eventData: EventByGroupRow) => void;
+}
+
 type NetworkDialogEntity =
-  | { type: 'group'; data: SearchResultItem & { onEventSelect?: (eventId: string, eventData: unknown) => void } }
+  | { type: 'group'; data: NetworkGroupData }
   | { type: 'event'; data: NetworkEventData }
   | { type: 'user'; data: NetworkUserData }
   | { type: 'relationship'; data: NetworkRelationshipData };

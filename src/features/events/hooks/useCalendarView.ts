@@ -1,4 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
+import type { CalendarEvent } from '@/features/calendar/types/calendar.types';
+
+export type { CalendarEvent } from '@/features/calendar/types/calendar.types';
 
 export type CalendarViewMode = 'list' | 'week' | 'month';
 
@@ -39,32 +42,6 @@ function getVisibleRange(viewMode: CalendarViewMode, selectedDate: Date): Visibl
   }
   // list: show the entire month for grouping
   return { start: startOfMonth(selectedDate), end: endOfMonth(selectedDate) };
-}
-
-export interface CalendarEvent {
-  id: string;
-  title: string;
-  description?: string;
-  location?: string;
-  startDate: string | number | Date;
-  endDate: string | number | Date;
-  isPublic: boolean;
-  imageURL?: string | null;
-  organizer?: { id: string; name?: string; avatar?: string };
-  participants?: readonly { user?: { id: string; name?: string; avatar?: string }; instance_date?: number | null }[];
-  isMeeting?: boolean;
-  meetingType?: string | null;
-  isBookable?: boolean;
-  maxBookings?: number;
-  bookingCount?: number;
-  isBookedByMe?: boolean;
-  groupName?: string;
-  groupId?: string;
-  isRecurringInstance?: boolean;
-  recurringParentId?: string;
-  hashtags?: { id: string; tag: string }[];
-  attendeeCount?: number;
-  organizerName?: string;
 }
 
 function isDateInRange(date: Date | string | number, start: Date, end: Date): boolean {
@@ -120,14 +97,14 @@ export function useCalendarView(initialView: CalendarViewMode = 'list') {
 
   const filterEventsForRange = useCallback(
     (events: CalendarEvent[]): CalendarEvent[] => {
-      return events.filter(e => isDateInRange(e.startDate, visibleRange.start, visibleRange.end));
+      return events.filter(e => isDateInRange(e.start_date, visibleRange.start, visibleRange.end));
     },
     [visibleRange]
   );
 
   const getEventsForDate = useCallback(
     (events: CalendarEvent[], date: Date): CalendarEvent[] => {
-      return events.filter(e => isSameDay(e.startDate, date));
+      return events.filter(e => isSameDay(e.start_date, date));
     },
     []
   );

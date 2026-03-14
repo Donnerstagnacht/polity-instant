@@ -192,7 +192,7 @@ export function RolesManagementCard({ amendmentId, roles, onCreateRole, onDelete
                       <TableCell className="font-medium">{label}</TableCell>
                       {roles.map(role => {
                         const hasRight = role.action_rights?.some(
-                          (ar: { resource: string; action: string }) => ar.resource === resource && ar.action === action
+                          ar => ar.resource === resource && ar.action === action
                         );
                         return (
                           <TableCell key={role.id} className="text-center">

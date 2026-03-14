@@ -36,6 +36,7 @@ import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { notifyAmendmentTargetSet } from '@/features/notifications/utils/notification-helpers.ts';
 import type { NetworkGroupEntity } from '@/features/network/types/network.types';
+import type { EventByGroupRow } from '@/zero/events/useEventState';
 
 interface PendingTargetGroupData {
   id: string;
@@ -73,10 +74,9 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
   const { user } = useAuth();
   const navigate = useNavigate();
   const [entityDialogOpen, setEntityDialogOpen] = useState(false);
-  const [selectedEntity, setSelectedEntity] = useState<{
-    type: 'group' | 'event' | 'relationship' | 'user';
-    data: Record<string, unknown>;
-  } | null>(null);
+  const [selectedEntity, setSelectedEntity] = useState<
+    React.ComponentProps<typeof NetworkEntityDialog>['entity']
+  >(null);
   const [targetDialogOpen, setTargetDialogOpen] = useState(false);
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
   const [pendingTarget, setPendingTarget] = useState<{
@@ -198,7 +198,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
       type: 'group',
       data: {
         ...groupData,
-        onEventSelect: (eventId: string, eventData: Record<string, unknown>) => {
+        onEventSelect: (eventId: string, eventData: EventByGroupRow) => {
           // When an event is selected from the dialog, set it as pending target
           setPendingTarget({
             groupId,
@@ -209,11 +209,11 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
             },
             eventId,
             eventData: {
-              title: (eventData.title as string | null) ?? null,
-              description: (eventData.description as string | null) ?? null,
-              is_public: eventData.is_public as boolean | undefined,
-              start_date: (eventData.start_date as number | null) ?? null,
-              location_name: (eventData.location_name as string | null) ?? null,
+              title: eventData.title ?? null,
+              description: eventData.description ?? null,
+              is_public: eventData.is_public,
+              start_date: eventData.start_date ?? null,
+              location_name: eventData.location_name ?? null,
             },
           });
           setEntityDialogOpen(false);
@@ -547,7 +547,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
 
   // Handle node click in path visualization
   const handlePathNodeClick = useCallback(
-    (_event: unknown, node: { data: Record<string, unknown> }) => {
+    (_event: unknown, node: { data: { eventId?: string } }) => {
       // Only handle clicks on the target node with an event
       if (typeof node.data.eventId === 'string') {
         navigate({ to: `/event/${node.data.eventId}` });
@@ -1124,7 +1124,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
       <NetworkEntityDialog
         open={entityDialogOpen}
         onOpenChange={setEntityDialogOpen}
-        entity={selectedEntity as React.ComponentProps<typeof NetworkEntityDialog>['entity']}
+        entity={selectedEntity}
       />
 
       {/* Target Selection Dialog */}

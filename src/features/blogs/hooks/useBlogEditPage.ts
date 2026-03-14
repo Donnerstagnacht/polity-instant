@@ -88,15 +88,13 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
         return;
       }
 
-      const updateData: Record<string, string | boolean | null> = {
+      await updateBlog({
         id: blogId,
         title: formData.title,
         description: formData.description,
         image_url: formData.imageURL,
         is_public: formData.isPublic,
-      };
-
-      await updateBlog(updateData as unknown as Parameters<typeof updateBlog>[0]);
+      });
 
       // Timeline and notifications are server-only — send separately
       try {

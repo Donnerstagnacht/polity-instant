@@ -1,4 +1,4 @@
-import { defineQuery } from '@rocicorp/zero'
+import { defineQuery, type QueryRowType } from '@rocicorp/zero'
 import { z } from 'zod'
 import { zql } from '../schema'
 
@@ -67,7 +67,8 @@ export const messageQueries = {
       zql.conversation_participant
         .where('user_id', user_id)
         .related('conversation', q =>
-          q.related('participants', pq => pq.related('user'))
+          q.related('group')
+            .related('participants', pq => pq.related('user'))
             .related('messages')
         )
   ),
@@ -82,3 +83,6 @@ export const messageQueries = {
         .one()
   ),
 }
+
+// ── Query Row Types ─────────────────────────────────────────────────
+export type ConversationWithRelationsRow = QueryRowType<typeof messageQueries.conversationsWithRelations>;

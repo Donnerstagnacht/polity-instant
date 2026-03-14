@@ -178,9 +178,9 @@ describe('searchUtils', () => {
   describe('sortResults', () => {
     it('should sort by date descending', () => {
       const items = [
-        { id: '1', createdAt: new Date('2024-01-01') },
-        { id: '2', createdAt: new Date('2024-06-01') },
-        { id: '3', createdAt: new Date('2024-03-01') },
+        { id: '1', created_at: new Date('2024-01-01') },
+        { id: '2', created_at: new Date('2024-06-01') },
+        { id: '3', created_at: new Date('2024-03-01') },
       ];
       const sorted = sortResults(items, 'date');
       expect(sorted[0].id).toBe('2');
@@ -201,7 +201,7 @@ describe('searchUtils', () => {
     });
 
     it('should return unsorted for unknown sort key', () => {
-      const items = [{ id: '1' }, { id: '2' }];
+      const items = [{ id: '1', name: 'a' }, { id: '2', name: 'b' }];
       const sorted = sortResults(items, 'unknown');
       expect(sorted).toEqual(items);
     });

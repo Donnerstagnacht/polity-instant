@@ -49,7 +49,7 @@ export function SharedWeekView({ selectedDate, events }: SharedWeekViewProps) {
       <CardContent className="pt-6">
         <div className="grid grid-cols-7 gap-2">
           {weekDays.map((day, index) => {
-            const dayEvents = events.filter(e => isSameDay(e.startDate, day));
+            const dayEvents = events.filter(e => isSameDay(e.start_date, day));
             const isToday = isSameDay(day, new Date());
             const isSelected = isSameDay(day, selectedDate);
 
@@ -87,7 +87,7 @@ export function SharedWeekView({ selectedDate, events }: SharedWeekViewProps) {
                             'cursor-pointer rounded-md border p-1.5 text-xs shadow-sm transition-colors hover:bg-accent',
                             event.isMeeting && event.isBookedByMe
                               ? 'border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950'
-                              : event.isMeeting && event.isBookable
+                              : event.isMeeting && event.is_bookable
                                 ? 'border-dashed border-blue-300 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/50'
                                 : 'bg-card',
                           )}
@@ -104,7 +104,7 @@ export function SharedWeekView({ selectedDate, events }: SharedWeekViewProps) {
                           {event.isMeeting && '📅 '}
                           {event.title}
                         </p>
-                        <p className="text-muted-foreground">{formatTime(event.startDate)}</p>
+                        <p className="text-muted-foreground">{formatTime(event.start_date)}</p>
                         {event.location && (
                           <p className="flex items-center gap-0.5 truncate text-muted-foreground">
                             <MapPin className="h-2.5 w-2.5 shrink-0" />

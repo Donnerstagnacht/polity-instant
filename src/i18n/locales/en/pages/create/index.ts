@@ -294,7 +294,7 @@ export const createPageTranslations = {
     participants: 'participants',
     participantList: 'Participant List:',
     untitledEvent: 'Untitled Event',
-    unknownGroup: 'Unknown Group',
+    unspecifiedGroup: 'not specified',
     delegateNomination: 'Delegate Nomination',
     proposalSubmission: 'Proposal Submission',
     amendmentCutoff: 'Amendment Cutoff',

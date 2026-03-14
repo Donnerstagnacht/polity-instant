@@ -348,7 +348,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
                       <GroupTimelineCard
                         group={{
                           id: String(group.group_id ?? group.id),
-                          name: t('common.unknown'),
+                          name: t('common.unspecified'),
                           memberCount: 0,
                           hashtags: [],
                         }}

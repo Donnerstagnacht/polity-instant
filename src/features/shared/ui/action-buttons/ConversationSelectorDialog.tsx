@@ -20,26 +20,6 @@ interface ConversationSelectorDialogProps {
   shareTitle: string;
 }
 
-interface Conversation {
-  id: string;
-  createdAt: string;
-  lastMessageAt: string;
-  participants: {
-    id: string;
-    user?: {
-      id: string;
-      name?: string;
-      avatar?: string;
-      handle?: string;
-    };
-  }[];
-  messages: Record<string, unknown>[];
-  status?: string;
-  type?: string;
-  name?: string;
-  group?: { id: string; name?: string; imageURL?: string };
-}
-
 export function ConversationSelectorDialog({
   open,
   onOpenChange,
@@ -58,24 +38,30 @@ export function ConversationSelectorDialog({
     userId: user?.id,
   });
 
-  const conversations = (conversationsRaw || []) as unknown as Conversation[];
+  // Extract the nested conversation from each participant row
+  const conversations = useMemo(() =>
+    (conversationsRaw || [])
+      .map(cp => cp.conversation)
+      .filter((c): c is NonNullable<typeof c> => c != null),
+    [conversationsRaw]
+  );
 
   // Filter conversations based on search query
   const filteredConversations = useMemo(() => {
     if (!searchQuery.trim()) {
-      // Sort conversations by lastMessageAt (newest first)
+      // Sort conversations by last_message_at (newest first)
       return [...conversations].sort((a, b) => {
-        const timeA = new Date(a.lastMessageAt || 0).getTime();
-        const timeB = new Date(b.lastMessageAt || 0).getTime();
+        const timeA = a.last_message_at || 0;
+        const timeB = b.last_message_at || 0;
         return timeB - timeA;
       });
     }
 
     return conversations
-      .filter((conv: Conversation) => {
+      .filter((conv) => {
         // Search in participant names
         const participantMatch = conv.participants.some((p) => {
-          const name = p.user?.name?.toLowerCase() || '';
+          const name = [p.user?.first_name, p.user?.last_name].filter(Boolean).join(' ').toLowerCase();
           const handle = p.user?.handle?.toLowerCase() || '';
           return (
             name.includes(searchQuery.toLowerCase()) || handle.includes(searchQuery.toLowerCase())
@@ -88,18 +74,18 @@ export function ConversationSelectorDialog({
         return participantMatch || groupMatch;
       })
       .sort((a, b) => {
-        const timeA = new Date(a.lastMessageAt || 0).getTime();
-        const timeB = new Date(b.lastMessageAt || 0).getTime();
+        const timeA = a.last_message_at || 0;
+        const timeB = b.last_message_at || 0;
         return timeB - timeA;
       });
   }, [conversations, searchQuery]);
 
   // Get the other participant in the conversation (for 1-on-1 chats) or group info
-  const getConversationDisplay = (conversation: Conversation) => {
+  const getConversationDisplay = (conversation: (typeof conversations)[number]) => {
     if (conversation.type === 'group') {
       return {
         name: conversation.name || conversation.group?.name || t('common.labels.groupChat'),
-        avatar: conversation.group?.imageURL || null,
+        avatar: conversation.group?.image_url || null,
         handle: null,
         isGroup: true,
         participantCount: conversation.participants.length,
@@ -107,7 +93,7 @@ export function ConversationSelectorDialog({
     } else {
       const otherUser = conversation.participants.find(p => p.user?.id !== user?.id)?.user;
       return {
-        name: otherUser?.name || t('common.labels.unknownUser'),
+        name: [otherUser?.first_name, otherUser?.last_name].filter(Boolean).join(' ') || t('common.labels.unspecifiedUser'),
         avatar: otherUser?.avatar,
         handle: otherUser?.handle,
         isGroup: false,
@@ -173,7 +159,7 @@ export function ConversationSelectorDialog({
                 </p>
               </div>
             ) : (
-              filteredConversations.map((conversation: Conversation) => {
+              filteredConversations.map((conversation) => {
                 const display = getConversationDisplay(conversation);
                 const isSending = sending === conversation.id;
 

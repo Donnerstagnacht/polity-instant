@@ -74,7 +74,7 @@ export const eventsTranslations = {
     speakerListDescription: 'Select a speaker to view their profile.',
     speakerListEmpty: 'No speakers yet',
     speakerCount: '{{count}} speakers',
-    unknownSpeaker: 'Unknown',
+    unspecifiedSpeaker: 'not specified',
     noItems: 'No agenda items',
     noItemsDescription: 'No agenda items have been created for this event yet.',
     createFirstItem: 'Create first agenda item',
@@ -106,7 +106,7 @@ export const eventsTranslations = {
     active: 'Active',
     details: 'Details',
     by: 'By {{name}}',
-    unknown: 'Unknown',
+    unspecified: 'not specified',
     itemActivated: 'Agenda Item Activated',
     // Context card
     scheduledFor: 'Scheduled for',

@@ -1,4 +1,4 @@
-import { defineQuery } from '@rocicorp/zero'
+import { defineQuery, type QueryRowType } from '@rocicorp/zero'
 import { z } from 'zod'
 import { zql } from '../schema'
 
@@ -213,3 +213,10 @@ export const commonQueries = {
         .limit(limit)
   ),
 }
+
+export type LinkRow = QueryRowType<typeof commonQueries.links>
+export type TimelineEventByEntityRow = QueryRowType<typeof commonQueries.timelineByEntity>
+export type ReactionRow = QueryRowType<typeof commonQueries.reactions>
+export type SubscriberRow = QueryRowType<typeof commonQueries.subscribers>
+export type UserSubscriptionRow = QueryRowType<typeof commonQueries.userSubscriptions>
+export type TimelineEventsByContentTypeRow = QueryRowType<typeof commonQueries.timelineEventsByContentTypes>

@@ -6,11 +6,19 @@
 
 import { Card, CardHeader, CardTitle, CardDescription } from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
-import { FileText, Calendar, User } from 'lucide-react';
-import type { DocumentWithMetadata } from '../hooks/useGroupDocuments';
+import { FileText, Calendar } from 'lucide-react';
 
 interface GroupDocumentCardProps {
-  document: DocumentWithMetadata;
+  document: {
+    id: string;
+    title?: string | null;
+    created_at: number;
+    updated_at: number;
+    collaborators?: ReadonlyArray<{
+      id: string;
+      user?: { id: string } | null;
+    }>;
+  };
   userId?: string;
   onClick?: () => void;
 }
@@ -28,7 +36,6 @@ function formatDate(timestamp: number | string | Date): string {
 }
 
 export function GroupDocumentCard({ document, userId, onClick }: GroupDocumentCardProps) {
-  const isOwner = document.owner?.id === userId;
   const collaboratorCount = document.collaborators?.length || 0;
 
   return (
@@ -44,19 +51,12 @@ export function GroupDocumentCard({ document, userId, onClick }: GroupDocumentCa
               {document.title}
             </CardTitle>
           </div>
-          {isOwner && <Badge variant="outline">Owner</Badge>}
         </div>
         <CardDescription className="mt-2 flex flex-col gap-2">
           <div className="flex items-center gap-2 text-xs">
             <Calendar className="h-3 w-3" />
-            <span>Updated: {formatDate(document.updatedAt || document.createdAt)}</span>
+            <span>Updated: {formatDate(document.updated_at || document.created_at)}</span>
           </div>
-          {document.owner && (
-            <div className="flex items-center gap-2 text-xs">
-              <User className="h-3 w-3" />
-              <span>By {document.owner.email || document.owner.name || 'Unknown'}</span>
-            </div>
-          )}
           {collaboratorCount > 0 && (
             <div className="text-xs text-muted-foreground">
               {collaboratorCount} collaborator{collaboratorCount > 1 ? 's' : ''}

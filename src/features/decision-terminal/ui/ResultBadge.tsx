@@ -50,7 +50,7 @@ export function getResultConfig(result: ResultType) {
       };
     default:
       return {
-        labelKey: 'timeline.terminal.results.unknown',
+        labelKey: 'timeline.terminal.results.unspecified',
         emoji: '⚪',
         Icon: Minus,
         colorClass: 'bg-gray-500/20 text-gray-600 dark:text-gray-400 border-gray-500/30',

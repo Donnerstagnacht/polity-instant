@@ -39,7 +39,7 @@ export function MeetingParticipants({ bookings, count }: MeetingParticipantsProp
                 <AvatarFallback>{booking.booker?.name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
               </Avatar>
               <div className="flex-1">
-                <p className="font-medium">{booking.booker?.name || t('features.meet.participants.unknown')}</p>
+                <p className="font-medium">{booking.booker?.name || t('features.meet.participants.unspecified')}</p>
                 <p className="text-sm text-muted-foreground">
                   @{booking.booker?.handle || 'unknown'}
                 </p>

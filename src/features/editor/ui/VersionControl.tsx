@@ -38,16 +38,17 @@ import { useDocumentState } from '@/zero/documents/useDocumentState';
 import { useBlogState } from '@/zero/blogs/useBlogState';
 import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { toast } from 'sonner';
+import type { Value } from 'platejs';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import type { EditorEntityType, EditorVersion, VersionCreationType } from '../types';
+import type { EditorEntityType, EditorVersion } from '../types';
 
 interface VersionControlProps {
   entityType: EditorEntityType;
   /** Document ID for amendments/documents, blog ID for blogs */
   entityId: string;
-  currentContent: unknown[];
+  currentContent: Value;
   currentUserId: string;
-  onRestoreVersion: (content: unknown[]) => void;
+  onRestoreVersion: (content: Value) => void;
   /** Amendment-specific props for notifications */
   amendmentId?: string;
   amendmentTitle?: string;
@@ -85,8 +86,8 @@ export function VersionControl({
   });
   const versionsData = isBlog ? blogVersions : docVersions;
   const isLoading = isBlog ? blogVersionsLoading : docVersionsLoading;
-  const versions = versionsData as unknown as EditorVersion[];
-  const sortedVersions = [...versions].sort((a, b) => b.versionNumber - a.versionNumber);
+  const versions = versionsData as EditorVersion[];
+  const sortedVersions = [...versions].sort((a, b) => (b.version_number ?? 0) - (a.version_number ?? 0));
 
   // Filter versions based on search query
   const filteredVersions = useMemo(() => {
@@ -95,9 +96,9 @@ export function VersionControl({
     const query = searchQuery.toLowerCase();
     return sortedVersions.filter(
       version =>
-        version.title.toLowerCase().includes(query) ||
-        version.versionNumber.toString().includes(query) ||
-        version.creator?.name?.toLowerCase().includes(query)
+        (version.change_summary ?? '').toLowerCase().includes(query) ||
+        (version.version_number ?? 0).toString().includes(query) ||
+        [version.author?.first_name, version.author?.last_name].filter(Boolean).join(' ').toLowerCase().includes(query)
     );
   }, [sortedVersions, searchQuery]);
 
@@ -111,7 +112,7 @@ export function VersionControl({
     setIsCreating(true);
     try {
       const nextVersionNumber =
-        versions.length > 0 ? Math.max(...versions.map(v => v.versionNumber)) + 1 : 1;
+        versions.length > 0 ? Math.max(...versions.map(v => v.version_number ?? 0)) + 1 : 1;
 
       const versionId = crypto.randomUUID();
       await doCreateVersion({
@@ -144,11 +145,11 @@ export function VersionControl({
   // Restore a version
   const handleRestoreVersion = async (version: EditorVersion) => {
     try {
-      onRestoreVersion(version.content);
+      onRestoreVersion(version.content as Value);
       toast.success(
         t('features.editor.versionControl.restoredTo').replace(
           '{{number}}',
-          String(version.versionNumber)
+          String(version.version_number ?? 0)
         )
       );
       setIsHistoryDialogOpen(false);
@@ -161,7 +162,7 @@ export function VersionControl({
   // Start editing a version title
   const startEditingTitle = (version: EditorVersion) => {
     setEditingVersionId(version.id);
-    setEditingTitle(version.title);
+    setEditingTitle(version.change_summary ?? '');
   };
 
   // Save edited version title
@@ -185,37 +186,9 @@ export function VersionControl({
     }
   };
 
-  // Get badge variant for creation type
-  const getCreationTypeBadge = (creationType: string) => {
-    const typeConfig: Record<
-      string,
-      { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }
-    > = {
-      manual: { label: t('features.editor.versionControl.types.manual'), variant: 'default' },
-      suggestion_added: {
-        label: t('features.editor.versionControl.types.suggestionAdded'),
-        variant: 'secondary',
-      },
-      suggestion_accepted: {
-        label: t('features.editor.versionControl.types.suggestionAccepted'),
-        variant: 'outline',
-      },
-      suggestion_declined: {
-        label: t('features.editor.versionControl.types.suggestionDeclined'),
-        variant: 'destructive',
-      },
-    };
-
-    const config = typeConfig[creationType] || {
-      label: creationType,
-      variant: 'secondary' as const,
-    };
-    return <Badge variant={config.variant}>{config.label}</Badge>;
-  };
-
   // Format date
-  const formatDate = (date: number | Date) => {
-    const d = typeof date === 'number' ? new Date(date) : date;
+  const formatDate = (date: number) => {
+    const d = new Date(date);
     return d.toLocaleString();
   };
 
@@ -316,7 +289,7 @@ export function VersionControl({
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline">v{version.versionNumber}</Badge>
+                        <Badge variant="outline">v{version.version_number ?? 0}</Badge>
                         {editingVersionId === version.id ? (
                           <div className="flex items-center gap-1">
                             <Input
@@ -344,7 +317,7 @@ export function VersionControl({
                           </div>
                         ) : (
                           <>
-                            <span className="font-medium">{version.title}</span>
+                            <span className="font-medium">{version.change_summary ?? ''}</span>
                             <Button
                               variant="ghost"
                               size="sm"
@@ -355,17 +328,16 @@ export function VersionControl({
                             </Button>
                           </>
                         )}
-                        {getCreationTypeBadge(version.creationType)}
                       </div>
                       <div className="mt-1 flex items-center gap-4 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          {formatDate(version.createdAt)}
+                          {formatDate(version.created_at)}
                         </span>
-                        {version.creator && (
+                        {version.author && (
                           <span className="flex items-center gap-1">
                             <User className="h-3 w-3" />
-                            {version.creator.name || version.creator.email}
+                            {[version.author.first_name, version.author.last_name].filter(Boolean).join(' ') || version.author.email}
                           </span>
                         )}
                       </div>

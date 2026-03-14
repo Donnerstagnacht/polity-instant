@@ -16,7 +16,7 @@ export function useTodosPage() {
   const { updateTodo } = useTodoMutations();
   const { allTodos } = useTodoState({});
 
-  const todosTyped = allTodos as unknown as Todo[];
+  const todosTyped = allTodos;
 
   const {
     searchQuery,
@@ -41,8 +41,7 @@ export function useTodosPage() {
     const isCompleting = todo.status !== 'completed';
     await updateTodo(todo.id, {
       status: isCompleting ? 'completed' : 'pending',
-      updatedAt: Date.now(),
-      completedAt: isCompleting ? Date.now() : null,
+      completed_at: isCompleting ? Date.now() : null,
     });
   };
 
@@ -50,8 +49,7 @@ export function useTodosPage() {
     const isCompleting = newStatus === 'completed';
     await updateTodo(todoId, {
       status: newStatus,
-      updatedAt: Date.now(),
-      completedAt: isCompleting ? Date.now() : null,
+      completed_at: isCompleting ? Date.now() : null,
     });
   };
 

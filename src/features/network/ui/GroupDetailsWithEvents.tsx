@@ -8,11 +8,12 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 import { type NetworkGroupEntity } from '../types/network.types';
+import type { EventByGroupRow } from '@/zero/events/useEventState';
 
 interface GroupDetailsWithEventsProps {
   groupId: string;
   groupData: NetworkGroupEntity;
-  onEventClick?: (eventId: string, eventData: Record<string, unknown>) => void;
+  onEventClick?: (eventId: string, eventData: EventByGroupRow) => void;
   onClose?: () => void;
 }
 

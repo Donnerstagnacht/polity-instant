@@ -18,7 +18,7 @@ interface CloneAmendmentData {
   readonly reason: string | null;
   readonly category: string | null;
   readonly preamble: string | null;
-  readonly tags: ReadonlyJSONValue | null;
+  readonly tags: string[] | null;
   readonly visibility: string;
   readonly editing_mode: string | null;
   readonly discussions: ReadonlyJSONValue | null;
@@ -63,9 +63,9 @@ interface CloneNetworkData {
 
 interface CloneSelection {
   groupId: string;
-  groupData: Record<string, unknown>;
+  groupData: { id: string; name?: string | null; description?: string | null };
   eventId: string;
-  eventData: Record<string, unknown>;
+  eventData: { id: string; title?: string | null };
   collaboratorUserId: string;
 }
 

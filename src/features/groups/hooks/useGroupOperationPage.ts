@@ -5,7 +5,7 @@ import { useGroupLinks } from '@/features/network/hooks/useGroupLinks';
 import { useGroupPayments } from './useGroupPayments';
 import { useFinancialData } from './useFinancialData';
 import { useGroupTodos } from './useGroupTodos';
-import type { TodoViewMode, GroupPayment } from '../types/group.types';
+import type { TodoViewMode } from '../types/group.types';
 
 export function useGroupOperationPage(groupId: string) {
   const { user } = useAuth();
@@ -23,7 +23,7 @@ export function useGroupOperationPage(groupId: string) {
   // Data
   const { links, addLink } = useGroupLinks(groupId);
   const { payments, addPayment } = useGroupPayments(groupId);
-  const { summary, incomeData, expenditureData } = useFinancialData(payments as GroupPayment[], groupId);
+  const { summary, incomeData, expenditureData } = useFinancialData(payments, groupId);
   const { todos, addTodo, updateTodoStatus, toggleTodoComplete } = useGroupTodos(groupId, user?.id);
 
   const groupName = group?.name ?? '';

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useEventActions } from '@/zero/events/useEventActions';
+import type { EventUpdateInput } from '@/zero/events/schema';
 
 /**
  * Hook for event mutations
@@ -173,7 +174,7 @@ export function useEventMutations(eventId: string) {
    * Update event details
    */
   const updateEvent = async (
-    updates: Record<string, unknown>,
+    updates: Partial<EventUpdateInput>,
     options?: {
       actorId?: string;
       eventTitle?: string;

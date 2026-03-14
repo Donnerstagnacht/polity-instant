@@ -26,12 +26,6 @@ import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { toast } from 'sonner';
 import { useState, useMemo } from 'react';
-import type {
-  SpeakerListItem,
-  ElectionVote,
-  ElectionCandidate,
-  VoteEntry,
-} from '../types/agenda-section-types';
 import {
   notifyVotingSessionStarted,
   notifyVotingSessionCompleted,
@@ -314,7 +308,7 @@ export function EventAgendaItemDetail({
   };
 
   // Prepare speaker list data
-  const speakerListData = useMemo((): SpeakerListItem[] => {
+  const speakerListData = useMemo(() => {
     return (agendaItem?.speaker_list || []).map((speaker) => ({
       id: speaker.id,
       order: speaker.order_index || 0,
@@ -337,7 +331,7 @@ export function EventAgendaItemDetail({
   // Prepare election data
   const election = agendaItem?.election?.[0];
 
-  const electionCandidates = useMemo((): ElectionCandidate[] => {
+  const electionCandidates = useMemo(() => {
     if (!election?.candidates) return [];
     return election.candidates
       .filter((candidate) => candidate.user?.id || candidate.user_id)
@@ -356,7 +350,7 @@ export function EventAgendaItemDetail({
       }));
   }, [election?.candidates]);
 
-  const electionVotes = useMemo((): ElectionVote[] => {
+  const electionVotes = useMemo(() => {
     if (!election?.id) return [];
     // Use nested election.votes query for better reactivity
     const votes = election?.votes || [];
@@ -370,7 +364,7 @@ export function EventAgendaItemDetail({
       }));
   }, [election]);
 
-  const userElectionVote = useMemo((): ElectionVote | undefined => {
+  const userElectionVote = useMemo(() => {
     if (!user?.id || !election?.id) return undefined;
     const vote = userElectionVotes.find((v) => v.election?.id === election.id);
     if (!vote || !vote.candidate?.id) return undefined;
@@ -389,7 +383,7 @@ export function EventAgendaItemDetail({
   // Prepare amendment vote data
   const amendmentVote = agendaItem?.amendment;
 
-  const amendmentVoteEntries = useMemo((): VoteEntry[] => {
+  const amendmentVoteEntries = useMemo(() => {
     if (!amendmentVote?.id) return [];
     // Use global query which is reactive, then filter by amendment id
     return (data?.amendmentVoteEntries || [])
@@ -406,7 +400,7 @@ export function EventAgendaItemDetail({
       }));
   }, [amendmentVote?.id, data]);
 
-  const userAmendmentVote = useMemo((): VoteEntry | undefined => {
+  const userAmendmentVote = useMemo(() => {
     if (!user?.id || !amendmentVote?.id) return undefined;
     const entry = userAmendmentVotes.find((e) => e.amendment?.id === amendmentVote.id);
     if (!entry) return undefined;
@@ -423,14 +417,14 @@ export function EventAgendaItemDetail({
 
   // Change request votes (grouped by CR id)
   const changeRequestVotes = useMemo(() => {
-    const votes: Record<string, VoteEntry[]> = {};
+    const votes: Record<string, { id: string; vote: 'yes' | 'no' | 'abstain' }[]> = {};
     // Change request votes: Requires querying change_request_vote table filtered by relevant change request IDs.
     // Deferred until change request voting UI is fully integrated.
     return votes;
   }, []);
 
   const userChangeRequestVotes = useMemo(() => {
-    const votes: Record<string, VoteEntry> = {};
+    const votes: Record<string, { id: string; vote: 'yes' | 'no' | 'abstain' }> = {};
     // User's change request votes: Requires querying change_request_vote table filtered by user ID.
     // Deferred until change request voting UI is fully integrated.
     return votes;

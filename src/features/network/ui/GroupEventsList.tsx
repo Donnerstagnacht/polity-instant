@@ -2,12 +2,12 @@
 
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Calendar, MapPin, Users, Clock } from 'lucide-react';
-import { useEventState } from '@/zero/events/useEventState';
+import { useEventState, type EventByGroupRow } from '@/zero/events/useEventState';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface GroupEventsListProps {
   groupId: string;
-  onEventClick?: (eventId: string, eventData: Record<string, unknown>) => void;
+  onEventClick?: (eventId: string, eventData: EventByGroupRow) => void;
 }
 
 export function GroupEventsList({ groupId, onEventClick }: GroupEventsListProps) {

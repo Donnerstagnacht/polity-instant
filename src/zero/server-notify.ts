@@ -21,7 +21,7 @@ export function fireNotification(helperName: string, params: Params): void {
     console.error(LOG, `Unknown helper: ${helperName}`)
     return
   }
-  ;(fn as (p: Params) => Promise<unknown>)(params)
+  ;(fn as (p: Params) => Promise<void>)(params)
     .then(() => console.log(LOG, `${helperName} sent`))
     .catch((err: unknown) => console.error(LOG, `${helperName} failed:`, err))
 }

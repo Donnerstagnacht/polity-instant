@@ -74,8 +74,8 @@ export function SharedMonthView({ selectedDate, onDateSelect, events }: SharedMo
 
   const getEventsForDate = (date: Date) =>
     events
-      .filter(e => isSameDay(e.startDate, date))
-      .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+      .filter(e => isSameDay(e.start_date, date))
+      .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
 
   return (
     <Card>
@@ -131,7 +131,7 @@ export function SharedMonthView({ selectedDate, onDateSelect, events }: SharedMo
                             'cursor-pointer rounded px-1 py-0.5 text-[11px] leading-tight transition-colors',
                             event.isMeeting && event.isBookedByMe
                               ? 'bg-green-500/15 hover:bg-green-500/25'
-                              : event.isMeeting && event.isBookable
+                              : event.isMeeting && event.is_bookable
                                 ? 'border border-dashed border-blue-300 bg-blue-500/10 hover:bg-blue-500/20 dark:border-blue-700'
                                 : 'bg-primary/10 hover:bg-primary/20',
                           )}
@@ -149,7 +149,7 @@ export function SharedMonthView({ selectedDate, onDateSelect, events }: SharedMo
                             {event.isMeeting && '📅 '}
                             {event.title}
                           </p>
-                          <p className="text-muted-foreground">{formatTime(event.startDate)}</p>
+                          <p className="text-muted-foreground">{formatTime(event.start_date)}</p>
                           {event.location && (
                             <p className="flex items-center gap-0.5 truncate text-muted-foreground">
                               <MapPin className="h-2 w-2 shrink-0" />

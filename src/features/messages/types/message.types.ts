@@ -1,44 +1,8 @@
-export interface Message {
-  id: string;
-  content: string;
-  isRead: boolean;
-  createdAt: string | number;
-  sender?: {
-    id: string;
-    name?: string;
-    avatar?: string;
-    handle?: string;
-  };
-}
+import type { ConversationWithRelationsRow } from '@/zero/messages/queries';
 
-export interface ConversationParticipant {
-  id: string;
-  user?: {
-    id: string;
-    name?: string;
-    avatar?: string;
-    handle?: string;
-    imageURL?: string;
-  };
-}
-
-export interface Conversation {
-  id: string;
-  createdAt: string;
-  lastMessageAt: string;
-  participants: ConversationParticipant[];
-  messages: Message[];
-  pinned?: boolean;
-  status?: string; // 'pending', 'accepted', 'rejected'
-  requestedBy?: { id: string; name?: string; handle?: string }; // User who initiated the conversation request
-  type?: string; // 'direct', 'group'
-  name?: string; // For group conversations
-  group?: {
-    id: string;
-    name?: string;
-    imageURL?: string;
-  }; // Group entity if this is a group conversation
-}
+export type Conversation = ConversationWithRelationsRow;
+export type Message = Conversation['messages'][number];
+export type ConversationParticipant = Conversation['participants'][number];
 
 export interface ConversationDisplay {
   name: string;

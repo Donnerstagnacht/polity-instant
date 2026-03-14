@@ -7,6 +7,7 @@
 
 // Import TDiscussion for internal use and re-export for external use
 import type { TDiscussion as TDiscussionType } from '@/features/shared/ui/kit-platejs/discussion-kit';
+import type { Value } from 'platejs';
 export type { TDiscussion } from '@/features/shared/ui/kit-platejs/discussion-kit';
 
 /**
@@ -140,24 +141,16 @@ export interface EditorDiscussion {
  */
 export interface EditorComment {
   id: string;
-  contentRich: unknown[];
+  contentRich: Value;
   createdAt: Date;
   isEdited?: boolean;
   userId: string;
 }
 
 /**
- * Document version
+ * Document version — matches the Zero `document_version` table + `.related('author')`.
  */
-export interface EditorVersion {
-  id: string;
-  versionNumber: number;
-  title: string;
-  content: unknown[];
-  createdAt: number | Date;
-  creationType: VersionCreationType;
-  creator?: EditorUser;
-}
+export type { DocumentVersionRow as EditorVersion } from '@/zero/documents/queries';
 
 /**
  * Version creation type
@@ -174,7 +167,7 @@ export type VersionCreationType =
 export interface EditorEntity {
   id: string;
   title: string;
-  content: unknown[];
+  content: Value;
   discussions: TDiscussionType[];
   editingMode: EditorMode;
   isPublic: boolean;
@@ -237,7 +230,7 @@ export interface EditorState {
 
   // Editor state
   title: string;
-  content: unknown[];
+  content: Value;
   discussions: TDiscussionType[];
   mode: EditorMode;
 
@@ -259,10 +252,10 @@ export interface EditorState {
  */
 export interface EditorActions {
   setTitle: (title: string) => void;
-  setContent: (content: unknown[]) => void;
+  setContent: (content: Value) => void;
   setDiscussions: (discussions: TDiscussionType[]) => void;
   setMode: (mode: EditorMode) => Promise<void>;
-  restoreVersion: (content: unknown[]) => Promise<void>;
+  restoreVersion: (content: Value) => Promise<void>;
 }
 
 /**
@@ -294,9 +287,9 @@ export interface VersionControlProps {
   entityId: string;
   /** Document ID for amendments/documents, blog ID for blogs */
   versionEntityId: string;
-  currentContent: unknown[];
+  currentContent: Value;
   currentUserId: string;
-  onRestoreVersion: (content: unknown[]) => void;
+  onRestoreVersion: (content: Value) => void;
   /** Amendment-specific props */
   amendmentId?: string;
   amendmentTitle?: string;

@@ -1,4 +1,4 @@
-import { defineQuery } from '@rocicorp/zero'
+import { defineQuery, type QueryRowType } from '@rocicorp/zero'
 import { z } from 'zod'
 import { zql } from '../schema'
 
@@ -94,3 +94,14 @@ export const agendaQueries = {
         .related('position', q => q.related('group'))
   ),
 }
+
+// ── Query Row Types ─────────────────────────────────────────────────
+export type AgendaItemByEventRow = QueryRowType<typeof agendaQueries.byEvent>
+export type AgendaItemByEventIdsRow = QueryRowType<typeof agendaQueries.byEventIds>
+export type AgendaItemByIdRow = QueryRowType<typeof agendaQueries.byId>
+export type SpeakerListRow = QueryRowType<typeof agendaQueries.speakerList>
+export type ElectionRow = QueryRowType<typeof agendaQueries.elections>
+export type ElectionWithDetailsRow = QueryRowType<typeof agendaQueries.electionsWithDetails>
+export type ElectionForSearchRow = QueryRowType<typeof agendaQueries.electionsForSearch>
+export type ElectionCandidateRow = QueryRowType<typeof agendaQueries.candidates>
+export type ElectionVoteRow = QueryRowType<typeof agendaQueries.votes>

@@ -19,7 +19,7 @@ export const MonthView = ({ selectedDate, onDateSelect, events, allEvents }: Mon
   const { t, language } = useTranslation();
 
   const getEventsForDate = (date: Date) => {
-    return allEvents.filter(event => isSameDay(event.startDate, date));
+    return allEvents.filter(event => isSameDay(event.start_date, date));
   };
 
   const selectedDateEvents = getEventsForDate(selectedDate);
@@ -99,13 +99,13 @@ export const MonthView = ({ selectedDate, onDateSelect, events, allEvents }: Mon
                         {event.isMeeting && '📅 '}
                         {event.title}
                       </h4>
-                      <p className="text-sm text-muted-foreground">{formatTime(event.startDate)}</p>
+                      <p className="text-sm text-muted-foreground">{formatTime(event.start_date)}</p>
                       {event.location && !event.isMeeting && (
                         <p className="mt-1 text-xs text-muted-foreground">{event.location}</p>
                       )}
                       {event.isMeeting && (
                         <p className="mt-1 text-xs text-muted-foreground">
-                          {event.isPublic
+                          {event.is_public
                             ? t('features.calendar.eventCard.publicMeeting')
                             : t('features.calendar.eventCard.privateMeeting')}
                         </p>

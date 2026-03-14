@@ -1,8 +1,7 @@
 'use client';
 
-import * as React from 'react';
 import { useState, useMemo, useCallback } from 'react';
-import { Rss, RefreshCw } from 'lucide-react';
+import { Rss } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { cn } from '@/features/shared/utils/utils';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -77,7 +76,7 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
     if (!subscriptionTimeline.events.length) return [] as TimelineItem[];
 
     const getString = (value: unknown) => (typeof value === 'string' ? value : undefined);
-    const getTags = (junctions?: Array<{ hashtag?: { tag?: string | null } | null }>) =>
+    const getTags = (junctions?: { hashtag?: { tag?: string | null } | null }[]) =>
       junctions?.map(j => j.hashtag?.tag).filter((tag): tag is string => Boolean(tag)) ?? [];
     const supportedTypes = new Set<TimelineItem['type']>([
       'group',
@@ -124,10 +123,10 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
       const tags = (eventRecord.tags as string[] | undefined) ?? fallbackTags;
       const eventParticipants = eventRecord.event?.participants as unknown[] | undefined;
       const eventVotingSessions = eventRecord.event?.votingSessions as
-        | Array<{ election?: unknown; amendment?: unknown }>
+        | { election?: unknown; amendment?: unknown }[]
         | undefined;
       const eventPositions = eventRecord.event?.eventPositions as
-        | Array<{ election?: unknown }>
+        | { election?: unknown }[]
         | undefined;
       const scheduledElections = eventRecord.event?.scheduledElections as unknown[] | undefined;
       const agendaItems = subscriptionTimeline.agendaItemsByEventId?.get(
@@ -232,10 +231,6 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
       return true;
     });
   }, [subscriptionTimeline.events, subscriptionTimeline.agendaItemsByEventId]);
-
-  const subscribedGroupIds = subscriptionTimeline.subscribedEntityIds?.groups?.length
-    ? subscriptionTimeline.subscribedEntityIds.groups
-    : subscribedResult.subscribedGroupIds;
 
   // Current data - only Following mode
   const currentData = useMemo(() => {
@@ -659,8 +654,7 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
               subtitle: item.subtitle,
               avatarUrl: item.authorAvatar,
               location: item.location,
-              groupCount:
-                item.groupCount,
+              groupCount: item.groupCount,
               amendmentCount: item.amendmentCount,
               hashtags: (item.tags ?? []).map(tag => ({ id: tag, tag })),
             },
@@ -745,11 +739,11 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
         )}
 
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="mb-4 rounded-full bg-muted p-4">
-            <Rss className="h-8 w-8 text-muted-foreground" />
+          <div className="bg-muted mb-4 rounded-full p-4">
+            <Rss className="text-muted-foreground h-8 w-8" />
           </div>
           <h3 className="mb-2 text-lg font-semibold">{t('features.timeline.empty.title')}</h3>
-          <p className="mb-4 text-muted-foreground">{t('features.timeline.emptyTimelineHint')}</p>
+          <p className="text-muted-foreground mb-4">{t('features.timeline.emptyTimelineHint')}</p>
           <Button variant="outline" asChild>
             <a href="/search">{t('features.timeline.discoverContent')}</a>
           </Button>

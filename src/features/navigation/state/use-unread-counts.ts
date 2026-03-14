@@ -15,7 +15,7 @@ export function useUnreadNotificationsCount() {
     if (!userId) return 0;
     const notifications = data?.notifications || [];
     const accessible = filterAccessibleNotifications(notifications, userId);
-    return accessible.filter(n => !n.isRead).length;
+    return accessible.filter(n => !n.is_read).length;
   }, [data?.notifications, userId]);
 
   return { count, isLoading };

@@ -19,7 +19,7 @@ export const WeekView = ({ selectedDate, events, allEvents }: WeekViewProps) => 
   const weekDays = getWeekDays(selectedDate);
 
   const getEventsForDate = (date: Date) => {
-    return allEvents.filter(event => isSameDay(event.startDate, date));
+    return allEvents.filter(event => isSameDay(event.start_date, date));
   };
 
   return (
@@ -83,7 +83,7 @@ export const WeekView = ({ selectedDate, events, allEvents }: WeekViewProps) => 
                           {event.isMeeting && '📅 '}
                           {event.title}
                         </p>
-                        <p className="text-muted-foreground">{formatTime(event.startDate)}</p>
+                        <p className="text-muted-foreground">{formatTime(event.start_date)}</p>
                       </div>
                     ))}
                   </div>

@@ -19,6 +19,7 @@ import { Link } from '@tanstack/react-router';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { VersionControl } from './VersionControl';
 import { ModeSelector } from './ModeSelector';
+import type { Value } from 'platejs';
 import type {
   EditorEntityType,
   EditorMode,
@@ -42,9 +43,9 @@ interface EditorToolbarProps {
   /** Description for sharing */
   shareDescription?: string;
   /** Current content for version control */
-  currentContent?: unknown[];
+  currentContent?: Value;
   /** Handler for restoring a version */
-  onRestoreVersion?: (content: unknown[]) => void;
+  onRestoreVersion?: (content: Value) => void;
   /** Amendment ID (for amendment-specific notifications) */
   amendmentId?: string;
   /** Amendment title (for amendment-specific notifications) */

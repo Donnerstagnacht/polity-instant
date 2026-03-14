@@ -4,7 +4,7 @@ export const getConversationDisplay = (conversation: Conversation, currentUserId
   if (conversation.type === 'group') {
     return {
       name: conversation.name || conversation.group?.name || 'Group Chat',
-      avatar: conversation.group?.imageURL || null,
+      avatar: conversation.group?.image_url || null,
       handle: null,
       isGroup: true,
       participantCount: conversation.participants.length,
@@ -12,7 +12,7 @@ export const getConversationDisplay = (conversation: Conversation, currentUserId
   } else {
     const otherUser = conversation.participants.find(p => p.user?.id !== currentUserId)?.user;
     return {
-      name: otherUser?.name || 'Unknown User',
+      name: [otherUser?.first_name, otherUser?.last_name].filter(Boolean).join(' ') || 'Unknown User',
       avatar: otherUser?.avatar,
       handle: otherUser?.handle,
       isGroup: false,
@@ -51,6 +51,6 @@ export const formatTime = (date: string | number) => {
 };
 
 export const getUnreadCount = (conversation: Conversation, currentUserId?: string) => {
-  return conversation.messages.filter(msg => !msg.isRead && msg.sender?.id !== currentUserId)
+  return conversation.messages.filter(msg => !msg.is_read && msg.sender?.id !== currentUserId)
     .length;
 };

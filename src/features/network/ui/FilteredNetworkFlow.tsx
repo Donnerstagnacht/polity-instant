@@ -98,30 +98,30 @@ export function FilteredNetworkFlow({
 
       stableRelationships.forEach((rel) => {
         // Skip if filtering by right and this relationship doesn't have it
-        if (filterRight && rel.withRight !== filterRight) {
+        if (filterRight && (rel.with_right ?? '') !== filterRight) {
           return;
         }
 
-        if (rel.childGroup?.id === groupId && rel.parentGroup) {
-          const parentId = rel.parentGroup.id;
+        if (rel.related_group?.id === groupId && rel.group) {
+          const parentId = rel.group.id;
 
           if (!parentsMap.has(parentId)) {
-            parentsMap.set(parentId, { group: rel.parentGroup, rights: [] });
+            parentsMap.set(parentId, { group: rel.group, rights: [] });
           }
           const parentEntry = parentsMap.get(parentId);
           if (parentEntry) {
-            parentEntry.rights.push(rel.withRight);
+            parentEntry.rights.push(rel.with_right ?? '');
           }
         }
-        if (rel.parentGroup?.id === groupId && rel.childGroup) {
-          const childId = rel.childGroup.id;
+        if (rel.group?.id === groupId && rel.related_group) {
+          const childId = rel.related_group.id;
 
           if (!childrenMap.has(childId)) {
-            childrenMap.set(childId, { group: rel.childGroup, rights: [] });
+            childrenMap.set(childId, { group: rel.related_group, rights: [] });
           }
           const childEntry = childrenMap.get(childId);
           if (childEntry) {
-            childEntry.rights.push(rel.withRight);
+            childEntry.rights.push(rel.with_right ?? '');
           }
         }
       });
@@ -153,16 +153,16 @@ export function FilteredNetworkFlow({
 
         stableRelationships.forEach((rel) => {
           // Skip if filtering by right and this relationship doesn't have it
-          if (filterRight && rel.withRight !== filterRight) {
+          if (filterRight && (rel.with_right ?? '') !== filterRight) {
             return;
           }
 
-          if (rel.childGroup?.id === id && rel.parentGroup && !visited.has(rel.parentGroup.id)) {
-            const parentId = rel.parentGroup.id;
+          if (rel.related_group?.id === id && rel.group && !visited.has(rel.group.id)) {
+            const parentId = rel.group.id;
 
             if (!parentsMap.has(parentId)) {
               parentsMap.set(parentId, {
-                group: rel.parentGroup,
+                group: rel.group,
                 rights: [],
                 level,
                 childId: id,
@@ -170,7 +170,7 @@ export function FilteredNetworkFlow({
             }
             const parentEntry = parentsMap.get(parentId);
             if (parentEntry) {
-              parentEntry.rights.push(rel.withRight);
+              parentEntry.rights.push(rel.with_right ?? '');
             }
             findParents(parentId, level + 1);
           }
@@ -180,17 +180,17 @@ export function FilteredNetworkFlow({
       const findChildren = (id: string, level = 1, currentParentId?: string) => {
         stableRelationships.forEach((rel) => {
           // Skip if filtering by right and this relationship doesn't have it
-          if (filterRight && rel.withRight !== filterRight) {
+          if (filterRight && (rel.with_right ?? '') !== filterRight) {
             return;
           }
 
-          if (rel.parentGroup?.id === id && rel.childGroup && !visited.has(rel.childGroup.id)) {
-            const childId = rel.childGroup.id;
+          if (rel.group?.id === id && rel.related_group && !visited.has(rel.related_group.id)) {
+            const childId = rel.related_group.id;
 
             visited.add(childId);
             if (!childrenMap.has(childId)) {
               childrenMap.set(childId, {
-                group: rel.childGroup,
+                group: rel.related_group,
                 rights: [],
                 level,
                 parentId: currentParentId,
@@ -198,7 +198,7 @@ export function FilteredNetworkFlow({
             }
             const childEntry = childrenMap.get(childId);
             if (childEntry) {
-              childEntry.rights.push(rel.withRight);
+              childEntry.rights.push(rel.with_right ?? '');
             }
             findChildren(childId, level + 1, childId);
           }

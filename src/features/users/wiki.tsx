@@ -154,7 +154,7 @@ export function UserWiki(_props: UserWikiProps) {
 
           <StatementCarousel
             statements={dbUser.statements}
-            authorName={dbUser.name || t('common.unknownUser')}
+            authorName={dbUser.name || t('common.labels.unspecifiedUser')}
             authorTitle={dbUser.subtitle}
             authorAvatar={dbUser.avatar}
           />

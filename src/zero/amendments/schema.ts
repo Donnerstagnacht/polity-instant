@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { timestampSchema, nullableTimestampSchema, jsonSchema } from '../shared/helpers'
+import { timestampSchema, nullableTimestampSchema, jsonSchema, jsonStringArraySchema } from '../shared/helpers'
 
 // ============================================
 // Amendment Zod Schemas
@@ -23,7 +23,7 @@ const baseAmendmentSchema = z.object({
   supporters_percentage: z.number().nullable(),
   upvotes: z.number(),
   downvotes: z.number(),
-  tags: jsonSchema.nullable(),
+  tags: jsonStringArraySchema.nullable(),
   visibility: z.string(),
   is_public: z.boolean(),
   subscriber_count: z.number(),

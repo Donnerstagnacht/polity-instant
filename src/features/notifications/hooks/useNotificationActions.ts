@@ -10,48 +10,48 @@ export function useNotificationActions() {
   const handleNotificationClick = useCallback(
     async (notification: Notification) => {
       // Mark as read if not already
-      if (!notification.isRead) {
+      if (!notification.is_read) {
         await markRead({ id: notification.id });
       }
 
       // Navigate based on related entity
-      if (notification.actionUrl) {
-        navigate({ to: notification.actionUrl });
-      } else if (notification.relatedEntityType) {
-        switch (notification.relatedEntityType) {
+      if (notification.action_url) {
+        navigate({ to: notification.action_url });
+      } else if (notification.related_entity_type) {
+        switch (notification.related_entity_type) {
           case 'group':
-            if (notification.relatedGroup?.id) {
-              navigate({ to: `/group/${notification.relatedGroup.id}` });
+            if (notification.related_group?.id) {
+              navigate({ to: `/group/${notification.related_group.id}` });
             }
             break;
           case 'event':
-            if (notification.relatedEvent?.id) {
-              navigate({ to: `/event/${notification.relatedEvent.id}` });
+            if (notification.related_event?.id) {
+              navigate({ to: `/event/${notification.related_event.id}` });
             }
             break;
           case 'user':
-            if (notification.relatedUser?.id) {
-              navigate({ to: `/user/${notification.relatedUser.id}` });
+            if (notification.related_user?.id) {
+              navigate({ to: `/user/${notification.related_user.id}` });
             }
             break;
           case 'message':
             navigate({ to: '/messages' });
             break;
           case 'blog':
-            if (notification.relatedBlog?.id) {
-              const blogId = notification.relatedBlog.id;
-              if (notification.onBehalfOfGroup?.id) {
-                navigate({ to: `/group/${notification.onBehalfOfGroup.id}/blog/${blogId}` });
-              } else if (notification.relatedUser?.id) {
-                navigate({ to: `/user/${notification.relatedUser.id}/blog/${blogId}` });
+            if (notification.related_blog?.id) {
+              const blogId = notification.related_blog.id;
+              if (notification.on_behalf_of_group?.id) {
+                navigate({ to: `/group/${notification.on_behalf_of_group.id}/blog/${blogId}` });
+              } else if (notification.related_user?.id) {
+                navigate({ to: `/user/${notification.related_user.id}/blog/${blogId}` });
               } else if (notification.sender?.id) {
                 navigate({ to: `/user/${notification.sender.id}/blog/${blogId}` });
               }
             }
             break;
           case 'amendment':
-            if (notification.relatedAmendment?.id) {
-              navigate({ to: `/amendment/${notification.relatedAmendment.id}` });
+            if (notification.related_amendment?.id) {
+              navigate({ to: `/amendment/${notification.related_amendment.id}` });
             }
             break;
           default:

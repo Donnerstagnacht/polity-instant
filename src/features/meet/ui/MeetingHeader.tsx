@@ -41,7 +41,7 @@ export function MeetingHeader({ title, isPublic, owner, meetingType }: MeetingHe
           <AvatarFallback>{owner?.name?.[0]?.toUpperCase() || 'O'}</AvatarFallback>
         </Avatar>
         <div className="text-left">
-          <p className="text-sm font-medium">{t('features.meet.page.hostedBy', { name: owner?.name || t('features.meet.participants.unknown') })}</p>
+          <p className="text-sm font-medium">{t('features.meet.page.hostedBy', { name: owner?.name || t('features.meet.participants.unspecified') })}</p>
           <p className="text-xs text-muted-foreground">{formatMeetingType(meetingType)}</p>
         </div>
       </div>

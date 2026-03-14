@@ -15,9 +15,9 @@ import type { TDiscussion } from '@/features/shared/ui/kit-platejs/discussion-ki
 import type { ResolvedSuggestion } from '@/features/shared/ui/ui-platejs/block-suggestion.tsx';
 
 interface PlateEditorProps {
-  initialValue?: unknown[];
-  value?: unknown[]; // Controlled mode
-  onChange?: (value: unknown[]) => void;
+  initialValue?: Value;
+  value?: Value; // Controlled mode
+  onChange?: (value: Value) => void;
   cursors?: {
     id: string;
     name: string;
@@ -250,7 +250,7 @@ export function PlateEditor({
   }, [value, isControlled, editor]);
 
   // Handle changes from the editor using ref to avoid recreating function
-  const handleEditorChange = React.useCallback(({ value: newValue }: { value: unknown[] }) => {
+  const handleEditorChange = React.useCallback(({ value: newValue }: { value: Value }) => {
     if (onChangeRef.current) {
       onChangeRef.current(newValue);
     }

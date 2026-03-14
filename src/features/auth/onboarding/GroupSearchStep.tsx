@@ -56,9 +56,9 @@ export function GroupSearchStep({
         id: group.id,
         name: group.name ?? '',
         description: group.description ?? undefined,
-        memberCount: group.member_count || 0,
+        member_count: group.member_count || 0,
         location: group.location ?? undefined,
-        isPublic: group.is_public,
+        is_public: group.is_public,
       });
     }
   };

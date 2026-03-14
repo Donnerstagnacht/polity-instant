@@ -27,13 +27,14 @@ export function MessageInput({
     setMessageText('');
   };
 
-  const otherParticipantName = getOtherParticipant(conversation, currentUserId)?.name || t('common.labels.unknownUser');
+  const otherUser = getOtherParticipant(conversation, currentUserId);
+  const otherParticipantName = [otherUser?.first_name, otherUser?.last_name].filter(Boolean).join(' ') || t('common.labels.unspecifiedUser');
 
   return (
     <CardContent className="flex-shrink-0 border-t p-4">
       {conversation.type !== 'group' &&
       conversation.status === 'pending' &&
-      conversation.requestedBy?.id === currentUserId ? (
+      conversation.requested_by?.id === currentUserId ? (
         <div className="text-center text-sm text-muted-foreground">
           {t('features.messages.conversation.waitingForAccept', { name: otherParticipantName })}
         </div>

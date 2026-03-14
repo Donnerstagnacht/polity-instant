@@ -328,7 +328,7 @@ export const timelineTranslations = {
       failed: 'FAILED',
       tied: 'TIED',
       elected: 'ELECTED',
-      unknown: 'UNKNOWN',
+      unspecified: 'not specified',
     },
     empty: {
       live: 'No live decisions at the moment',

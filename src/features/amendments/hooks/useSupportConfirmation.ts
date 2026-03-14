@@ -11,28 +11,11 @@ import { notifySupportConfirmed, notifySupportDeclined } from '@/features/notifi
 import { toast } from 'sonner';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
+import type { SupportConfirmationRow } from '@/zero/amendments/queries';
 import { mutators } from '@/zero/mutators';
 
-interface SupportConfirmation {
-  id: string;
-  amendment_id: string;
-  group_id: string;
-  event_id: string;
-  confirmed_by_id: string;
-  status: string;
-  confirmed_at: number;
-  created_at: number;
-  amendment?: {
-    id: string;
-    title: string;
-    documents?: Array<{
-      content: Record<string, unknown>;
-    }>;
-  };
-}
-
 interface UseSupportConfirmationResult {
-  pendingConfirmations: SupportConfirmation[];
+  pendingConfirmations: SupportConfirmationRow[];
   isLoading: boolean;
   confirmSupport: (confirmationId: string) => Promise<void>;
   declineSupport: (confirmationId: string) => Promise<void>;
@@ -52,9 +35,9 @@ export function useSupportConfirmation(groupId?: string): UseSupportConfirmation
     groupId,
   });
 
-  const pendingConfirmations = useMemo((): SupportConfirmation[] => {
+  const pendingConfirmations = useMemo((): SupportConfirmationRow[] => {
     if (!confirmationsData) return [];
-    return confirmationsData as unknown as SupportConfirmation[];
+    return confirmationsData;
   }, [confirmationsData]);
 
   const confirmSupport = useCallback(
@@ -83,9 +66,9 @@ export function useSupportConfirmation(groupId?: string): UseSupportConfirmation
           await notifySupportConfirmed({
             senderId: user.id,
             amendmentId: confirmation.amendment.id,
-            amendmentTitle: confirmation.amendment.title,
-            groupId: confirmation.group_id,
-            groupName: confirmation.group_id,
+            amendmentTitle: confirmation.amendment.title ?? '',
+            groupId: confirmation.group_id ?? '',
+            groupName: confirmation.group_id ?? '',
           });
         }
         toast.success('Support confirmed');
@@ -127,9 +110,9 @@ export function useSupportConfirmation(groupId?: string): UseSupportConfirmation
           await notifySupportDeclined({
             senderId: user.id,
             amendmentId: confirmation.amendment.id,
-            amendmentTitle: confirmation.amendment.title,
-            groupId: confirmation.group_id,
-            groupName: confirmation.group_id,
+            amendmentTitle: confirmation.amendment.title ?? '',
+            groupId: confirmation.group_id ?? '',
+            groupName: confirmation.group_id ?? '',
           });
         }
         toast.success('Support declined');
@@ -158,7 +141,7 @@ export function useSupportConfirmation(groupId?: string): UseSupportConfirmation
  * Caller must provide supporterGroups since this is a plain function, not a hook.
  */
 export async function triggerSupporterConfirmation(
-  mutate: (mutation: ReturnType<typeof mutators.amendments.createSupportConfirmation> | ReturnType<typeof mutators.agendas.createAgendaItem>) => Promise<unknown>,
+  mutate: (mutation: ReturnType<typeof mutators.amendments.createSupportConfirmation> | ReturnType<typeof mutators.agendas.createAgendaItem>) => Promise<void | { readonly type: string }>,
   params: {
     amendmentId: string;
     changeRequestId: string;
@@ -217,7 +200,7 @@ export async function triggerSupporterConfirmation(
  * Accepts a mutate function (from useMutate) instead of a Zero instance.
  */
 export async function createConfirmationAgendaItem(
-  mutate: (mutation: ReturnType<typeof mutators.agendas.createAgendaItem>) => Promise<unknown>,
+  mutate: (mutation: ReturnType<typeof mutators.agendas.createAgendaItem>) => Promise<void>,
   params: {
     confirmationId: string;
     amendmentTitle: string;

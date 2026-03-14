@@ -2,6 +2,8 @@
  * Utility functions for extracting suggestion content from document nodes
  */
 
+import type { Value } from 'platejs';
+
 export interface SuggestionContent {
   type: string;
   text: string;
@@ -15,7 +17,7 @@ export interface SuggestionContent {
  */
 export function extractSuggestionContent(
   discussionId: string,
-  documentContent: Record<string, unknown>[] | undefined
+  documentContent: Value | undefined
 ): SuggestionContent {
   if (!documentContent || !Array.isArray(documentContent)) {
     return { type: 'unknown', text: '', newText: '', properties: {}, newProperties: {} };

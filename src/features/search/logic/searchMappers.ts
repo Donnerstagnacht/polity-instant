@@ -195,7 +195,7 @@ export function mapMosaicToContentItems(
           groupName: item.position?.group?.name,
           startDate: item.voting_start_time ? toDate(item.voting_start_time) : undefined,
           endDate: item.voting_end_time ? toDate(item.voting_end_time) : undefined,
-          candidates: item.candidates as unknown as Record<string, unknown>[],
+          candidates: item.candidates ?? [],
           totalCandidates: item.candidates?.length || 0,
           agendaEventId: item.agenda_item?.event?.id,
           agendaItemId: item.agenda_item?.id,

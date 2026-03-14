@@ -1,5 +1,4 @@
 import { useMessageState } from '@/zero/messages/useMessageState';
-import { Conversation } from '../types/message.types';
 
 export function useConversationData(
   userId?: string,
@@ -10,9 +9,9 @@ export function useConversationData(
     limit: cursor.first,
   });
 
-  const filteredConversations = (userId
+  const filteredConversations = userId
     ? (conversationsWithRelations || []).filter((c) => c.participants?.some((p) => p.user_id === userId))
-    : []) as unknown as Conversation[];
+    : [];
 
   return {
     conversations: filteredConversations,

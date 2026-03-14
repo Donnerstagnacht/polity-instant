@@ -25,7 +25,7 @@ export const meetTranslations = {
     muted: 'Muted',
     speaking: 'Speaking',
     note: 'Note:',
-    unknown: 'Unknown',
+    unspecified: 'not specified',
   },
   chat: {
     title: 'Meeting Chat',

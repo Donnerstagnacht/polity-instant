@@ -2,35 +2,42 @@
  * Utility functions for building and managing comment trees
  */
 
+/**
+ * A comment row from Zero's threads query, augmented with a `replies` tree.
+ * Fields match the Zero schema: `content`, `user`, `parent`, `created_at`, etc.
+ */
 export interface CommentWithReplies {
   id: string;
-  text: string;
-  createdAt: number;
-  updatedAt?: number;
-  parentComment?: { id: string };
-  upvotes?: number;
-  downvotes?: number;
-  creator?: {
-    id?: string;
-    name?: string;
-    handle?: string;
-    avatar?: string;
-    imageURL?: string;
-  };
-  votes?: {
+  thread_id: string;
+  user_id: string;
+  content: string | null;
+  created_at: number;
+  updated_at: number;
+  parent_id: string | null;
+  parent?: { id: string } | null;
+  upvotes: number;
+  downvotes: number;
+  user?: {
     id: string;
-    vote: number;
+    first_name?: string | null;
+    last_name?: string | null;
+    handle?: string | null;
+    avatar?: string | null;
+  } | null;
+  votes?: ReadonlyArray<{
+    id: string;
+    vote: number | null;
     user?: {
       id: string;
-    };
-  }[];
+    } | null;
+  }>;
   replies?: CommentWithReplies[];
 }
 
 /**
  * Build a tree structure from flat comments array
  */
-export function buildCommentTree(comments: CommentWithReplies[]): CommentWithReplies[] {
+export function buildCommentTree(comments: ReadonlyArray<CommentWithReplies>): CommentWithReplies[] {
   const rootComments: CommentWithReplies[] = [];
   const commentMap = new Map<string, CommentWithReplies>();
 
@@ -44,8 +51,8 @@ export function buildCommentTree(comments: CommentWithReplies[]): CommentWithRep
     const commentNode = commentMap.get(comment.id);
     if (!commentNode) return;
 
-    if (comment.parentComment?.id) {
-      const parentNode = commentMap.get(comment.parentComment.id);
+    if (comment.parent_id) {
+      const parentNode = commentMap.get(comment.parent_id);
       if (parentNode) {
         if (!parentNode.replies) {
           parentNode.replies = [];
@@ -72,9 +79,9 @@ export function sortComments(
       const scoreA = (a.upvotes || 0) - (a.downvotes || 0);
       const scoreB = (b.upvotes || 0) - (b.downvotes || 0);
       if (scoreA !== scoreB) return scoreB - scoreA;
-      return b.createdAt - a.createdAt;
+      return b.created_at - a.created_at;
     } else {
-      return b.createdAt - a.createdAt;
+      return b.created_at - a.created_at;
     }
   });
 }

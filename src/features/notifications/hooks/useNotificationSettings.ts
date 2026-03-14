@@ -39,35 +39,35 @@ export function useNotificationSettings(_userId?: string) {
       id: rawSettings.id,
       groupNotifications: {
         ...DEFAULT_NOTIFICATION_SETTINGS.groupNotifications,
-        ...(rawSettings.group_notifications as unknown as GroupNotificationSettings | undefined),
+        ...(rawSettings.group_notifications as GroupNotificationSettings | undefined),
       },
       eventNotifications: {
         ...DEFAULT_NOTIFICATION_SETTINGS.eventNotifications,
-        ...(rawSettings.event_notifications as unknown as EventNotificationSettings | undefined),
+        ...(rawSettings.event_notifications as EventNotificationSettings | undefined),
       },
       amendmentNotifications: {
         ...DEFAULT_NOTIFICATION_SETTINGS.amendmentNotifications,
-        ...(rawSettings.amendment_notifications as unknown as AmendmentNotificationSettings | undefined),
+        ...(rawSettings.amendment_notifications as AmendmentNotificationSettings | undefined),
       },
       blogNotifications: {
         ...DEFAULT_NOTIFICATION_SETTINGS.blogNotifications,
-        ...(rawSettings.blog_notifications as unknown as BlogNotificationSettings | undefined),
+        ...(rawSettings.blog_notifications as BlogNotificationSettings | undefined),
       },
       todoNotifications: {
         ...DEFAULT_NOTIFICATION_SETTINGS.todoNotifications,
-        ...(rawSettings.todo_notifications as unknown as TodoNotificationSettings | undefined),
+        ...(rawSettings.todo_notifications as TodoNotificationSettings | undefined),
       },
       socialNotifications: {
         ...DEFAULT_NOTIFICATION_SETTINGS.socialNotifications,
-        ...(rawSettings.social_notifications as unknown as SocialNotificationSettings | undefined),
+        ...(rawSettings.social_notifications as SocialNotificationSettings | undefined),
       },
       deliverySettings: {
         ...DEFAULT_NOTIFICATION_SETTINGS.deliverySettings,
-        ...(rawSettings.delivery_settings as unknown as DeliverySettings | undefined),
+        ...(rawSettings.delivery_settings as DeliverySettings | undefined),
       },
       timelineSettings: {
         ...DEFAULT_NOTIFICATION_SETTINGS.timelineSettings,
-        ...(rawSettings.timeline_settings as unknown as TimelineSettings | undefined),
+        ...(rawSettings.timeline_settings as TimelineSettings | undefined),
       },
       createdAt: rawSettings.created_at ? new Date(rawSettings.created_at) : undefined,
       updatedAt: rawSettings.updated_at ? new Date(rawSettings.updated_at) : undefined,
@@ -252,7 +252,7 @@ export function useNotificationSettings(_userId?: string) {
       category: T,
       key: keyof NotificationSettings[T]
     ) => {
-      const categorySettings = settings[category] as unknown as Record<string, boolean>;
+      const categorySettings = settings[category] as Record<string, boolean>;
       const currentValue = categorySettings[key as string];
       const updates = {
         [category]: {

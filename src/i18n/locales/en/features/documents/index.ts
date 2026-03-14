@@ -54,7 +54,7 @@ export const documentsTranslations = {
     restoredTo: 'Restored to version v.{{number}}',
     createFailed: 'Failed to create version',
     restoreFailed: 'Failed to restore version',
-    unknown: 'Unknown',
+    unspecified: 'not specified',
     types: {
       manual: 'Manual',
       suggestionAdded: 'Suggestion Added',

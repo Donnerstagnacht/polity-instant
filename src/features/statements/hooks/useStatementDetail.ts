@@ -132,17 +132,25 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
   // Get or lazily create the single discussion thread for this statement
   const discussionThread = threads[0] ?? null;
 
+  // Type aliases for the 3 levels of comment nesting the query returns
+  type TopComment = NonNullable<typeof discussionThread>['comments'][number];
+  type Level1Reply = TopComment['replies'][number];
+  type Level2Reply = Level1Reply['replies'][number];
+  type AnyComment = TopComment | Level1Reply | Level2Reply;
+
   // Count all comments (including nested replies) across all threads
   const computedCommentCount = useMemo(() => {
     let count = 0;
     for (const thread of threads) {
-      const allComments = thread.comments ?? [];
-      const countNested = (c: { replies?: readonly unknown[] }): number => {
-        let n = 1;
-        for (const r of (c.replies ?? []) as { replies?: readonly unknown[] }[]) n += countNested(r);
-        return n;
-      };
-      for (const c of allComments) count += countNested(c);
+      for (const c of thread.comments ?? []) {
+        count++;
+        for (const r1 of c.replies ?? []) {
+          count++;
+          for (const r2 of r1.replies ?? []) {
+            count++;
+          }
+        }
+      }
     }
     return count;
   }, [threads]);
@@ -152,28 +160,28 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
     if (!discussionThread) return [];
     const rawComments = discussionThread.comments ?? [];
 
-    const mapComment = (c: Record<string, unknown>): CommentData => ({
-      id: c.id as string,
-      text: (c.content as string) ?? '',
-      createdAt: (c.created_at as number) ?? 0,
-      creator: (c as { user?: { id: string; first_name?: string; last_name?: string; handle?: string; image_url?: string } }).user
+    const mapComment = (c: AnyComment): CommentData => ({
+      id: c.id,
+      text: c.content ?? '',
+      createdAt: c.created_at,
+      creator: c.user
         ? {
-            id: (c as { user: { id: string } }).user.id,
-            name: `${(c as { user: { first_name?: string } }).user.first_name ?? ''} ${(c as { user: { last_name?: string } }).user.last_name ?? ''}`.trim() || (c as { user: { handle?: string } }).user.handle || 'Unknown',
-            handle: (c as { user: { handle?: string } }).user.handle,
-            avatar: (c as { user: { image_url?: string } }).user.image_url,
+            id: c.user.id,
+            name: `${c.user.first_name ?? ''} ${c.user.last_name ?? ''}`.trim() || c.user.handle || 'Unknown',
+            handle: c.user.handle ?? undefined,
+            avatar: c.user.avatar ?? undefined,
           }
         : undefined,
-      votes: ((c.votes ?? []) as Record<string, unknown>[]).map((v) => ({
-        id: v.id as string,
-        vote: (v.vote as number) ?? 0,
-        user: (v as { user?: { id: string } }).user ? { id: (v as { user: { id: string } }).user.id } : undefined,
+      votes: [...c.votes].map((v) => ({
+        id: v.id,
+        vote: v.vote ?? 0,
+        user: v.user ? { id: v.user.id } : undefined,
       })),
-      replies: ((c.replies ?? []) as Record<string, unknown>[]).map(mapComment),
+      replies: 'replies' in c ? [...(c.replies as readonly AnyComment[])].map(mapComment) : [],
     });
 
     // Top-level: comments with no parent_id
-    return rawComments.filter((c: Record<string, unknown>) => !c.parent_id).map(mapComment);
+    return rawComments.filter((c) => !c.parent_id).map(mapComment);
   }, [discussionThread]);
 
   const handleAddComment = useCallback(

@@ -1,4 +1,4 @@
-import { defineQuery } from '@rocicorp/zero'
+import { defineQuery, type QueryRowType } from '@rocicorp/zero'
 import { z } from 'zod'
 import { zql } from '../schema'
 
@@ -95,16 +95,40 @@ export const notificationQueries = {
   // Group notifications by recipient group IDs
   byRecipientGroups: defineQuery(
     z.object({ groupIds: z.array(z.string()) }),
-    ({ args: { groupIds } }) =>
+    ({ ctx: { userID }, args: { groupIds } }) =>
       zql.notification
         .where('recipient_group_id', 'IN', groupIds)
-        .related('recipient')
         .related('sender')
+        .related('recipient')
         .related('related_user')
         .related('related_group')
         .related('related_event')
         .related('related_amendment')
         .related('related_blog')
+        .related('on_behalf_of_group')
+        .related('on_behalf_of_event')
+        .related('on_behalf_of_amendment')
+        .related('on_behalf_of_blog')
+        .related('recipient_group', q =>
+          q.related('memberships', q =>
+            q.where('user_id', userID).related('role', q => q.related('action_rights'))
+          )
+        )
+        .related('recipient_event', q =>
+          q.related('participants', q =>
+            q.where('user_id', userID).related('role', q => q.related('action_rights'))
+          )
+        )
+        .related('recipient_amendment', q =>
+          q.related('collaborators', q =>
+            q.where('user_id', userID)
+          )
+        )
+        .related('recipient_blog', q =>
+          q.related('bloggers', q =>
+            q.where('user_id', userID).related('role', q => q.related('action_rights'))
+          )
+        )
         .orderBy('created_at', 'desc')
         .limit(50)
   ),
@@ -176,3 +200,6 @@ export const notificationQueries = {
         .where('read_by_user_id', userID)
   ),
 }
+
+export type NotificationWithRelationsRow = QueryRowType<typeof notificationQueries.byUserWithRelations>
+export type NotificationSettingsRow = QueryRowType<typeof notificationQueries.settings>

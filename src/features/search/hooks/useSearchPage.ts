@@ -303,7 +303,7 @@ export function useSearchPage() {
                   id: item.authorId || item.id,
                   name:
                     item.authorName ||
-                    t('common.labels.unknownUser', { defaultValue: 'Unknown User' }),
+                    t('common.labels.unspecifiedUser', { defaultValue: 'not specified' }),
                   avatarUrl: item.authorAvatar,
                 },
               ],
@@ -313,7 +313,7 @@ export function useSearchPage() {
                     type: 'user' as const,
                     name:
                       item.authorName ||
-                      t('common.labels.unknownUser', { defaultValue: 'Unknown User' }),
+                      t('common.labels.unspecifiedUser', { defaultValue: 'not specified' }),
                     url: `/user/${item.authorId}`,
                   }
                 : undefined,

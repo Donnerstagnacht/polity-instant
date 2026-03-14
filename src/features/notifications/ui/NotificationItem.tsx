@@ -7,7 +7,7 @@ import { Users, X, Bell } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
 import { Notification, NotificationType } from '../types/notification.types';
 import { getNotificationIcon, getNotificationColor } from '../utils/notificationConstants';
-import { formatTime } from '../logic/notificationHelpers';
+import { formatTime, getDisplayName } from '../logic/notificationHelpers';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { ENTITY_COLORS, type EntityType as EntityColorType } from '@/features/shared/utils/entity-colors';
 
@@ -29,20 +29,20 @@ export function NotificationItem({
 
   // Determine if this is a personal or entity notification
   const isEntityNotification = !!(
-    notification.recipientGroup ||
-    notification.recipientEvent ||
-    notification.recipientAmendment ||
-    notification.recipientBlog
+    notification.recipient_group ||
+    notification.recipient_event ||
+    notification.recipient_amendment ||
+    notification.recipient_blog
   );
 
   // Determine entity type for color coding
-  const entityType: EntityColorType | null = notification.recipientGroup
+  const entityType: EntityColorType | null = notification.recipient_group
     ? 'group'
-    : notification.recipientEvent
+    : notification.recipient_event
       ? 'event'
-      : notification.recipientAmendment
+      : notification.recipient_amendment
         ? 'amendment'
-        : notification.recipientBlog
+        : notification.recipient_blog
           ? 'blog'
           : null;
 
@@ -50,30 +50,30 @@ export function NotificationItem({
 
   // Get entity sent on behalf of
   const onBehalfEntity =
-    notification.onBehalfOfGroup ||
-    notification.onBehalfOfEvent ||
-    notification.onBehalfOfAmendment ||
-    notification.onBehalfOfBlog;
+    notification.on_behalf_of_group ||
+    notification.on_behalf_of_event ||
+    notification.on_behalf_of_amendment ||
+    notification.on_behalf_of_blog;
 
   // Get recipient entity
   const recipientEntity =
-    notification.recipientGroup ||
-    notification.recipientEvent ||
-    notification.recipientAmendment ||
-    notification.recipientBlog;
+    notification.recipient_group ||
+    notification.recipient_event ||
+    notification.recipient_amendment ||
+    notification.recipient_blog;
 
   return (
     <Card
       className={cn(
         'cursor-pointer transition-all hover:shadow-md',
-        !notification.isRead && 'border-l-4 border-l-primary bg-accent/50',
+        !notification.is_read && 'border-l-4 border-l-primary bg-accent/50',
         isEntityNotification && entityColors && `border-l-4 ${entityColors.notificationBorderLeft}`
       )}
       onClick={() => onNotificationClick(notification)}
     >
       <CardContent className="flex items-start gap-3 p-3">
         {/* Notification Icon */}
-        <div className={cn('rounded-full bg-muted p-1.5 mt-0.5', !notification.isRead && 'bg-primary/10')}>
+        <div className={cn('rounded-full bg-muted p-1.5 mt-0.5', !notification.is_read && 'bg-primary/10')}>
           <Icon className={cn('h-3.5 w-3.5', iconColor)} />
         </div>
 
@@ -91,9 +91,9 @@ export function NotificationItem({
                       navigate({ to: `/user/${notification.sender!.id}` });
                     }}
                   >
-                    <AvatarImage src={notification.sender.avatar} />
+                    <AvatarImage src={notification.sender.avatar ?? undefined} />
                     <AvatarFallback className="text-[10px]">
-                      {notification.sender.name?.[0]?.toUpperCase() || 'U'}
+                      {getDisplayName(notification.sender)?.[0]?.toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
                   <span
@@ -103,7 +103,7 @@ export function NotificationItem({
                       navigate({ to: `/user/${notification.sender!.id}` });
                     }}
                   >
-                    {notification.sender.name}
+                    {getDisplayName(notification.sender)}
                   </span>
                 </>
               )}
@@ -116,17 +116,17 @@ export function NotificationItem({
                     className="h-5 w-5 shrink-0 cursor-pointer hover:ring-1 hover:ring-blue-500"
                     onClick={(e) => {
                       e.stopPropagation();
-                      const eType = notification.onBehalfOfGroup
+                      const eType = notification.on_behalf_of_group
                         ? 'group'
-                        : notification.onBehalfOfEvent
+                        : notification.on_behalf_of_event
                           ? 'event'
-                          : notification.onBehalfOfAmendment
+                          : notification.on_behalf_of_amendment
                             ? 'amendment'
                             : 'blog';
                       navigate({ to: `/${eType}/${onBehalfEntity.id}` });
                     }}
                   >
-                    <AvatarImage src={onBehalfEntity.imageURL} />
+                    <AvatarImage src={onBehalfEntity.image_url ?? undefined} />
                     <AvatarFallback className="bg-blue-500 text-[10px] text-white">
                       {('name' in onBehalfEntity ? onBehalfEntity.name?.[0] : 'title' in onBehalfEntity ? onBehalfEntity.title?.[0] : '')?.toUpperCase() || 'E'}
                     </AvatarFallback>
@@ -142,7 +142,7 @@ export function NotificationItem({
           )}
           <div className="flex items-start justify-between gap-2">
             <div className="flex flex-col gap-1">
-              <p className={cn('text-sm font-medium', !notification.isRead && 'font-semibold')}>
+              <p className={cn('text-sm font-medium', !notification.is_read && 'font-semibold')}>
                 {notification.title}
               </p>
               {isEntityNotification && recipientEntity && (
@@ -152,13 +152,13 @@ export function NotificationItem({
                 </Badge>
               )}
             </div>
-            {!notification.isRead && (
+            {!notification.is_read && (
               <Badge variant="default" className="h-2 w-2 rounded-full p-0" />
             )}
           </div>
           <p className="text-sm text-muted-foreground">{notification.message}</p>
           <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">{formatTime(notification.createdAt)}</p>
+            <p className="text-xs text-muted-foreground">{formatTime(notification.created_at)}</p>
             <Button
               variant="ghost"
               size="icon"

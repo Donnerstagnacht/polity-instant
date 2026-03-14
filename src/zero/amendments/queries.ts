@@ -1,4 +1,4 @@
-import { defineQuery } from '@rocicorp/zero'
+import { defineQuery, type QueryRowType } from '@rocicorp/zero'
 import { z } from 'zod'
 import { zql } from '../schema'
 
@@ -303,3 +303,17 @@ export const amendmentQueries = {
         .related('amendment', q => q.related('created_by'))
   ),
 }
+
+// ── Query Row Types ─────────────────────────────────────────────────
+export type AmendmentRow = QueryRowType<typeof amendmentQueries.byId>
+export type AmendmentWithRelationsRow = QueryRowType<typeof amendmentQueries.byIdWithRelations>
+export type AmendmentFullRow = QueryRowType<typeof amendmentQueries.byIdFull>
+export type AmendmentWithProcessDataRow = QueryRowType<typeof amendmentQueries.byIdWithProcessData>
+export type AmendmentWithDocsAndCollabsRow = QueryRowType<typeof amendmentQueries.byIdWithDocsAndCollabs>
+export type AmendmentCollaboratorRow = QueryRowType<typeof amendmentQueries.collaborators>
+export type AmendmentThreadRow = QueryRowType<typeof amendmentQueries.threads>
+export type AmendmentRoleRow = QueryRowType<typeof amendmentQueries.rolesByAmendment>
+export type ChangeRequestRow = QueryRowType<typeof amendmentQueries.changeRequests>
+export type ChangeRequestWithVotesRow = QueryRowType<typeof amendmentQueries.changeRequestsWithVotes>
+export type DocumentVersionRow = QueryRowType<typeof amendmentQueries.documentVersionsByDocument>
+export type SupportConfirmationRow = QueryRowType<typeof amendmentQueries.supportConfirmations>

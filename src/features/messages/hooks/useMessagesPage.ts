@@ -7,7 +7,7 @@ import { useMessageMutations } from './useMessageMutations';
 import { useConversationFilters } from './useConversationFilters';
 import { useConversationSelection } from './useConversationSelection';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { Conversation } from '../types/message.types';
+import type { Conversation } from '../types/message.types';
 
 export function useMessagesPage() {
   const { t } = useTranslation();
@@ -88,7 +88,7 @@ export function useMessagesPage() {
     if (!selectedConversation || !user?.id) return;
 
     const unreadMessages = selectedConversation.messages.filter(
-      msg => !msg.isRead && msg.sender?.id !== user.id
+      msg => !msg.is_read && msg.sender?.id !== user.id
     );
 
     if (unreadMessages.length > 0) {
@@ -141,7 +141,7 @@ export function useMessagesPage() {
     await mutations.acceptConversation(conversation.id, {
       senderId: user.id,
       senderName: currentUserName,
-      requesterUserId: conversation.requestedBy?.id,
+      requesterUserId: conversation.requested_by?.id,
     });
   };
 

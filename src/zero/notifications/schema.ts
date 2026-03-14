@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { timestampSchema, nullableTimestampSchema, jsonSchema } from '../shared/helpers'
+import { timestampSchema, nullableTimestampSchema, jsonBooleanRecordSchema, jsonBooleanOrStringRecordSchema } from '../shared/helpers'
 
 // ============================================
 // Notification
@@ -68,14 +68,14 @@ export const deletePushSubscriptionSchema = z.object({ id: z.string() })
 const baseNotificationSettingSchema = z.object({
   id: z.string(),
   user_id: z.string(),
-  group_notifications: jsonSchema.nullable(),
-  event_notifications: jsonSchema.nullable(),
-  amendment_notifications: jsonSchema.nullable(),
-  blog_notifications: jsonSchema.nullable(),
-  todo_notifications: jsonSchema.nullable(),
-  social_notifications: jsonSchema.nullable(),
-  delivery_settings: jsonSchema.nullable(),
-  timeline_settings: jsonSchema.nullable(),
+  group_notifications: jsonBooleanRecordSchema.nullable(),
+  event_notifications: jsonBooleanRecordSchema.nullable(),
+  amendment_notifications: jsonBooleanRecordSchema.nullable(),
+  blog_notifications: jsonBooleanRecordSchema.nullable(),
+  todo_notifications: jsonBooleanRecordSchema.nullable(),
+  social_notifications: jsonBooleanRecordSchema.nullable(),
+  delivery_settings: jsonBooleanRecordSchema.nullable(),
+  timeline_settings: jsonBooleanOrStringRecordSchema.nullable(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
 })

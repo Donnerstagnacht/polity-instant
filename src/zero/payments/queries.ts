@@ -1,4 +1,4 @@
-import { defineQuery } from '@rocicorp/zero'
+import { defineQuery, type QueryRowType } from '@rocicorp/zero'
 import { z } from 'zod'
 import { zql } from '../schema'
 
@@ -22,3 +22,6 @@ export const paymentQueries = {
         .one()
   ),
 }
+
+export type PaymentByUserRow = QueryRowType<typeof paymentQueries.byUser>
+export type SubscriptionStatusRow = QueryRowType<typeof paymentQueries.subscriptionStatus>

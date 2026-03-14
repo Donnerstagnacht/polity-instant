@@ -1,4 +1,4 @@
-import { defineQuery } from '@rocicorp/zero'
+import { defineQuery, type QueryRowType } from '@rocicorp/zero'
 import { z } from 'zod'
 import { zql } from '../schema'
 
@@ -529,3 +529,20 @@ export const eventQueries = {
         .related('event_hashtags', q => q.related('hashtag'))
   ),
 }
+
+// ── Query Row Types ─────────────────────────────────────────────────
+export type EventByIdFullRow = QueryRowType<typeof eventQueries.byIdFull>;
+export type EventWithVotingRow = QueryRowType<typeof eventQueries.withVoting>;
+export type EventStreamRow = QueryRowType<typeof eventQueries.streamEvent>;
+export type EventWikiRow = QueryRowType<typeof eventQueries.wikiData>;
+export type EventForCalendarRow = QueryRowType<typeof eventQueries.forCalendarWithExceptions>;
+export type EventByCreatorRow = QueryRowType<typeof eventQueries.byCreator>;
+export type EventSubscriptionRow = QueryRowType<typeof eventQueries.userSubscriptions>;
+export type EventParticipantWithUserRow = QueryRowType<typeof eventQueries.participantsWithUserAndRole>;
+export type EventAgendaItemFullRow = QueryRowType<typeof eventQueries.agendaItemsFull>;
+export type EventAgendaItemDetailRow = QueryRowType<typeof eventQueries.agendaItemDetail>;
+export type EventWikiAgendaRow = QueryRowType<typeof eventQueries.wikiAgendaItems>;
+export type EventPositionWithHoldersRow = QueryRowType<typeof eventQueries.positionsWithHolders>;
+export type EventElectionWithVotesRow = QueryRowType<typeof eventQueries.electionWithVotes>;
+export type EventMeetingSlotRow = QueryRowType<typeof eventQueries.meetingSlotById>;
+export type EventDelegatesFullRow = QueryRowType<typeof eventQueries.delegatesFull>;

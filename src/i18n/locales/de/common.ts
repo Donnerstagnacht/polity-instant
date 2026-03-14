@@ -72,7 +72,7 @@ export const commonTranslations = {
   },
   labels: {
     groups: 'Gruppen',
-    unknownUser: 'Unbekannter Benutzer',
+    unspecifiedUser: 'nicht angegeben',
     groupChat: 'Gruppenchat',
     pending: 'Ausstehend',
     sending: 'Wird gesendet...',
@@ -225,7 +225,7 @@ export const commonTranslations = {
   goBack: 'Zurück',
   goHome: 'Zur Startseite',
   search: 'Suchen',
-  unknown: 'Unbekannt',
+  unspecified: 'nicht angegeben',
   minutes: 'Minuten',
   groups: 'Gruppen',
   agendaItems: 'Tagesordnungspunkte',

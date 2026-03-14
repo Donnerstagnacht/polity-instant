@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { timestampSchema, nullableTimestampSchema, jsonSchema } from '../shared/helpers'
+import { timestampSchema, nullableTimestampSchema, jsonSchema, jsonStringRecordSchema, jsonStringArraySchema, jsonNumberRecordSchema } from '../shared/helpers'
 
 // ============================================
 // Hashtag Zod Schemas
@@ -95,13 +95,13 @@ const baseTimelineEventSchema = z.object({
   entity_id: z.string().nullable(),
   title: z.string().nullable(),
   description: z.string().nullable(),
-  metadata: jsonSchema.nullable(),
+  metadata: jsonStringRecordSchema.nullable(),
   image_url: z.string().nullable(),
   video_url: z.string().nullable(),
   video_thumbnail_url: z.string().nullable(),
   content_type: z.string().nullable(),
-  tags: jsonSchema.nullable(),
-  stats: jsonSchema.nullable(),
+  tags: jsonStringArraySchema.nullable(),
+  stats: jsonNumberRecordSchema.nullable(),
   vote_status: z.string().nullable(),
   election_status: z.string().nullable(),
   ends_at: nullableTimestampSchema,

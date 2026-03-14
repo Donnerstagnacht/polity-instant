@@ -101,7 +101,7 @@ export const amendmentsTranslations = {
     voted: 'abgestimmt',
     votedList: 'Abgestimmt',
     waitingFor: 'Warten auf',
-    unknown: 'Unbekannt',
+    unspecified: 'nicht angegeben',
   },
   changeRequests: {
     title: 'Änderungsanträge',
@@ -121,7 +121,7 @@ export const amendmentsTranslations = {
       voted: 'abgestimmt',
       votedLabel: 'Abgestimmt',
       waitingFor: 'Warten auf',
-      unknown: 'Unbekannt',
+      unspecified: 'nicht angegeben',
       voteTypes: {
         accept: 'Annehmen',
         reject: 'Ablehnen',

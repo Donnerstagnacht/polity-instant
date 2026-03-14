@@ -13,7 +13,7 @@ export function useCalendarEventFilter(events: CalendarEvent[]) {
     return events.filter(event => {
       // Date filter
       if (dateFilter) {
-        const eventDate = new Date(event.startDate);
+        const eventDate = new Date(event.start_date);
         const filterDate = new Date(dateFilter + 'T00:00:00');
         const sameDay =
           eventDate.getFullYear() === filterDate.getFullYear() &&

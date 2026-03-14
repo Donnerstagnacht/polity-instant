@@ -288,7 +288,7 @@ export function VoteControls({
                       {vote.voter?.user?.name?.[0]?.toUpperCase() || '?'}
                     </AvatarFallback>
                   </Avatar>
-                  <span>{vote.voter?.user?.name || t('features.amendments.voteControls.unknown')}</span>
+                  <span>{vote.voter?.user?.name || t('features.amendments.voteControls.unspecified')}</span>
                   <Badge
                     variant="outline"
                     className={`ml-1 ${
@@ -326,7 +326,7 @@ export function VoteControls({
                       {collab.user?.name?.[0]?.toUpperCase() || '?'}
                     </AvatarFallback>
                   </Avatar>
-                  <span>{collab.user?.name || t('features.amendments.voteControls.unknown')}</span>
+                  <span>{collab.user?.name || t('features.amendments.voteControls.unspecified')}</span>
                 </div>
               ))}
             </div>

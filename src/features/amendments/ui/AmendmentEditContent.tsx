@@ -32,12 +32,13 @@ import {
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { notifyAmendmentProfileUpdated } from '@/features/notifications/utils/notification-helpers.ts';
+import type { AmendmentCollaboratorRow } from '@/zero/amendments/queries';
 import { CreateReviewCard, SummaryField } from '@/features/shared/ui/ui/create-review-card';
 
 interface AmendmentEditContentProps {
   amendmentId: string;
   amendment: ReturnType<typeof useAmendmentState>['amendment'];
-  collaborators: ReadonlyArray<Record<string, unknown>>;
+  collaborators: readonly AmendmentCollaboratorRow[];
   currentUserId: string;
   isLoading: boolean;
   mode?: 'create' | 'edit';
@@ -183,7 +184,7 @@ export function AmendmentEditContent({
             status: {},
           } });
         }
-        if (formData.videoURL && formData.videoURL !== (amendment as Record<string, unknown>).videoURL) {
+        if (formData.videoURL) {
           await createTimelineEvent({ data: {
             eventType: 'video_uploaded',
             entityType: 'amendment',

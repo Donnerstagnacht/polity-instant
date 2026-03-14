@@ -123,8 +123,8 @@ export function LinkGroupDialog({
 
   const relevantRelationships = allRelationships 
       ? allRelationships.filter(rel => 
-          (rel.parentGroup?.id === currentGroupId && rel.childGroup?.id === selectedGroupId) ||
-          (rel.parentGroup?.id === selectedGroupId && rel.childGroup?.id === currentGroupId)
+          (rel.group?.id === currentGroupId && rel.related_group?.id === selectedGroupId) ||
+          (rel.group?.id === selectedGroupId && rel.related_group?.id === currentGroupId)
         )
       : (hierarchyRaw || []).filter(rel =>
           (rel.group_id === currentGroupId && rel.related_group_id === selectedGroupId) ||

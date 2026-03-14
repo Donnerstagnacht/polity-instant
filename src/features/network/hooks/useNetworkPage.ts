@@ -56,8 +56,8 @@ export function useNetworkPage(groupId: string) {
   const groupedIncoming = useMemo(() => {
     const groups = new Map<string, GroupedRelationshipRequests>();
     incomingRequests.forEach(rel => {
-      const isParent = rel.childGroup?.id === groupId;
-      const otherGroup = isParent ? rel.parentGroup : rel.childGroup;
+      const isParent = rel.related_group?.id === groupId;
+      const otherGroup = isParent ? rel.group : rel.related_group;
       if (!otherGroup) return;
 
       if (!groups.has(otherGroup.id)) {
@@ -77,8 +77,8 @@ export function useNetworkPage(groupId: string) {
   const groupedOutgoing = useMemo(() => {
     const groups = new Map<string, GroupedRelationshipRequests>();
     outgoingRequests.forEach(rel => {
-      const isParent = rel.childGroup?.id === groupId;
-      const otherGroup = isParent ? rel.parentGroup : rel.childGroup;
+      const isParent = rel.related_group?.id === groupId;
+      const otherGroup = isParent ? rel.group : rel.related_group;
       if (!otherGroup) return;
 
       if (!groups.has(otherGroup.id)) {
@@ -139,7 +139,7 @@ export function useNetworkPage(groupId: string) {
     return groupedIncoming
       .map(entry => ({
         ...entry,
-        rels: entry.rels.filter(rel => manageRightFilter.has(rel.withRight)),
+        rels: entry.rels.filter(rel => manageRightFilter.has(rel.with_right ?? '')),
       }))
       .filter(
         entry =>
@@ -156,7 +156,7 @@ export function useNetworkPage(groupId: string) {
     return groupedOutgoing
       .map(entry => ({
         ...entry,
-        rels: entry.rels.filter(rel => manageRightFilter.has(rel.withRight)),
+        rels: entry.rels.filter(rel => manageRightFilter.has(rel.with_right ?? '')),
       }))
       .filter(
         entry =>
@@ -188,8 +188,8 @@ export function useNetworkPage(groupId: string) {
     async (targetGroupId: string) => {
       const rels = activeRelationships.filter(
         rel =>
-          (rel.parentGroup?.id === groupId && rel.childGroup?.id === targetGroupId) ||
-          (rel.childGroup?.id === groupId && rel.parentGroup?.id === targetGroupId)
+          (rel.group?.id === groupId && rel.related_group?.id === targetGroupId) ||
+          (rel.related_group?.id === groupId && rel.group?.id === targetGroupId)
       );
       for (const rel of rels) {
         await deleteRelationship({ id: rel.id });

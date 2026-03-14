@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useTodoState } from '@/zero/todos/useTodoState';
 import { useTodoMutations } from './useTodoMutations';
-import { TodoFormData, Todo, TodoStatus, TodoPriority } from '../types/todo.types';
+import { TodoFormData, TodoStatus, TodoPriority } from '../types/todo.types';
 
 export function useTodoDetailPage(todoId: string) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { updateTodo } = useTodoMutations();
 
-  const { todo: rawTodo } = useTodoState({ todoId });
-  const todo = rawTodo as unknown as Todo | undefined;
+  const { todo } = useTodoState({ todoId });
 
   const [formData, setFormData] = useState<TodoFormData>({
     title: todo?.title || '',
@@ -35,19 +34,18 @@ export function useTodoDetailPage(todoId: string) {
     if (!todo) return;
 
     setIsSaving(true);
-    const updates: Record<string, unknown> = {
+    const updates: Parameters<typeof updateTodo>[1] = {
       title: formData.title,
       description: formData.description,
       status: formData.status,
       priority: formData.priority,
-      dueDate: formData.dueDate ? new Date(formData.dueDate).getTime() : null,
-      updatedAt: Date.now(),
+      due_date: formData.dueDate ? new Date(formData.dueDate).getTime() : null,
     };
 
     if (formData.status === 'completed' && todo.status !== 'completed') {
-      updates.completedAt = Date.now();
+      updates.completed_at = Date.now();
     } else if (formData.status !== 'completed' && todo.status === 'completed') {
-      updates.completedAt = null;
+      updates.completed_at = null;
     }
 
     const result = await updateTodo(todo.id, updates);

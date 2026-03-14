@@ -30,8 +30,9 @@ export function MessageList({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [conversation.messages]);
 
+  const otherUser = getOtherParticipant(conversation, currentUserId);
   const otherParticipantName =
-    getOtherParticipant(conversation, currentUserId)?.name || t('common.labels.unknownUser');
+    [otherUser?.first_name, otherUser?.last_name].filter(Boolean).join(' ') || t('common.labels.unspecifiedUser');
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -59,7 +60,7 @@ export function MessageList({
           <div className="border-t pt-4">
             <Card className="bg-muted/50">
               <CardContent className="flex flex-col items-center gap-3 p-4">
-                {conversation.requestedBy?.id === currentUserId ? (
+                {conversation.requested_by?.id === currentUserId ? (
                   <p className="text-center text-sm font-medium">
                     {t('features.messages.conversation.waitingForAccept', {
                       name: otherParticipantName,

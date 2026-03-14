@@ -104,7 +104,7 @@ export function NewConversationDialog({
                     </Avatar>
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-semibold">
-                        {[searchUser.first_name, searchUser.last_name].filter(Boolean).join(' ') || t('common.labels.unknownUser')}
+                        {[searchUser.first_name, searchUser.last_name].filter(Boolean).join(' ') || t('common.labels.unspecifiedUser')}
                       </p>
                       {searchUser.handle && (
                         <p className="truncate text-sm text-muted-foreground">

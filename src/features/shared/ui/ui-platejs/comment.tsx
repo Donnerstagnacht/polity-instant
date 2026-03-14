@@ -359,7 +359,7 @@ function CommentMoreDropdown(props: {
 
 const useCommentEditor = (
   options: Omit<CreatePlateEditorOptions, 'plugins'> = {},
-  deps: unknown[] = []
+  deps: React.DependencyList = []
 ) => {
   const commentEditor = usePlateEditor(
     {

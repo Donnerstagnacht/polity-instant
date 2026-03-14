@@ -17,11 +17,11 @@ export function useNotificationFilters({
   );
 
   const unreadNotifications = useMemo(() => {
-    return accessibleNotifications.filter(n => !n.isRead);
+    return accessibleNotifications.filter(n => !n.is_read);
   }, [accessibleNotifications]);
 
   const readNotifications = useMemo(() => {
-    return accessibleNotifications.filter(n => n.isRead);
+    return accessibleNotifications.filter(n => n.is_read);
   }, [accessibleNotifications]);
 
   const personalNotifications = useMemo(() => {
@@ -33,8 +33,8 @@ export function useNotificationFilters({
   const entityNotifications = useMemo(() => {
     return accessibleNotifications.filter(
       n =>
-        n.recipientGroup || n.recipientEvent || n.recipientAmendment || n.recipientBlog ||
-        n.onBehalfOfGroup || n.onBehalfOfEvent || n.onBehalfOfAmendment || n.onBehalfOfBlog
+        n.recipient_group || n.recipient_event || n.recipient_amendment || n.recipient_blog ||
+        n.on_behalf_of_group || n.on_behalf_of_event || n.on_behalf_of_amendment || n.on_behalf_of_blog
     );
   }, [accessibleNotifications]);
 

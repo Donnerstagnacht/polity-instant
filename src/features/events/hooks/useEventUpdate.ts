@@ -136,7 +136,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           description: formData.description,
           location_name: formData.location,
           start_date: new Date(formData.startDate).getTime(),
-          end_date: formData.endDate ? new Date(formData.endDate).getTime() : null,
+          end_date: formData.endDate ? new Date(formData.endDate).getTime() : undefined,
           is_public: formData.isPublic,
           image_url: formData.imageURL || null,
           capacity: formData.capacity ? parseInt(formData.capacity, 10) : null,

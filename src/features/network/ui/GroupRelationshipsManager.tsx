@@ -72,7 +72,7 @@ export function GroupRelationshipsManager({ groupId }: GroupRelationshipsManager
   const [isPropagating, setIsPropagating] = useState(false);
 
   const handleAcceptRequest = async (relationships: NormalizedGroupRelationship[]) => {
-      const hasPvr = relationships.some((r) => r.with_right === 'passiveVotingRight' || r.withRight === 'passiveVotingRight');
+      const hasPvr = relationships.some((r) => r.with_right === 'passiveVotingRight');
       if (hasPvr) setIsPropagating(true);
       try {
         for (const rel of relationships) {
@@ -95,15 +95,15 @@ export function GroupRelationshipsManager({ groupId }: GroupRelationshipsManager
   const groupedIncoming = useMemo(() => {
       const groups = new Map();
       incomingRequests.forEach(rel => {
-          const checkParent = rel.childGroup?.id === groupId;
-          const otherGroup = checkParent ? rel.parentGroup : rel.childGroup;
+          const checkParent = rel.related_group?.id === groupId;
+          const otherGroup = checkParent ? rel.group : rel.related_group;
           if (!otherGroup) return;
           
           if (!groups.has(otherGroup.id)) {
               groups.set(otherGroup.id, { group: otherGroup, rights: [], rels: [], type: checkParent ? 'parent' : 'child' });
           }
           const entry = groups.get(otherGroup.id);
-          entry.rights.push(rel.withRight);
+          entry.rights.push(rel.with_right ?? '');
           entry.rels.push(rel);
       });
       return Array.from(groups.values());
@@ -112,15 +112,15 @@ export function GroupRelationshipsManager({ groupId }: GroupRelationshipsManager
   const groupedOutgoing = useMemo(() => {
       const groups = new Map();
       outgoingRequests.forEach(rel => {
-          const checkParent = rel.childGroup?.id === groupId;
-          const otherGroup = checkParent ? rel.parentGroup : rel.childGroup;
+          const checkParent = rel.related_group?.id === groupId;
+          const otherGroup = checkParent ? rel.group : rel.related_group;
           if (!otherGroup) return;
 
           if (!groups.has(otherGroup.id)) {
               groups.set(otherGroup.id, { group: otherGroup, rights: [], rels: [], type: checkParent ? 'parent' : 'child' });
           }
           const entry = groups.get(otherGroup.id);
-          entry.rights.push(rel.withRight);
+          entry.rights.push(rel.with_right ?? '');
           entry.rels.push(rel);
       });
       return Array.from(groups.values());
@@ -155,8 +155,8 @@ export function GroupRelationshipsManager({ groupId }: GroupRelationshipsManager
       // Find all relationships between the two groups (both directions)
       const relationshipsToDelete = stableRelationships.filter(
         (rel) =>
-          (rel.parentGroup?.id === groupId && rel.childGroup?.id === targetGroupId) ||
-          (rel.childGroup?.id === groupId && rel.parentGroup?.id === targetGroupId)
+        (rel.group?.id === groupId && rel.related_group?.id === targetGroupId) ||
+        (rel.related_group?.id === groupId && rel.group?.id === targetGroupId)
       );
 
       // Delete all relationships

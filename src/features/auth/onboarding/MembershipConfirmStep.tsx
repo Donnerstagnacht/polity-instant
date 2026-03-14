@@ -49,7 +49,7 @@ export function MembershipConfirmStep({
             <CardTitle className="text-lg">{group.name}</CardTitle>
             <Badge variant="outline" className="flex-shrink-0">
               <Users className="mr-1 h-3 w-3" />
-              {group.memberCount}
+              {group.member_count}
             </Badge>
           </div>
           {group.description && (

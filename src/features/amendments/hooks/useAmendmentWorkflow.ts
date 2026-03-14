@@ -52,18 +52,10 @@ export function useAmendmentWorkflow({
       setIsTransitioning(true);
 
       try {
-        const updates: Record<string, string | number | null> = {
+        await updateAmendment({
           id: amendmentId,
           workflow_status: targetStatus,
-          updated_at: Date.now(),
-        };
-
-        // Clear current_event_id if transitioning out of event phase
-        if (!isEventPhase(targetStatus) && currentEventId) {
-          updates.current_event_id = null;
-        }
-
-        await updateAmendment(updates as unknown as Parameters<typeof updateAmendment>[0]);
+        });
 
         // Send notification to collaborators
         if (senderId) {

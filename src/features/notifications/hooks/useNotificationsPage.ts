@@ -19,7 +19,7 @@ export function useNotificationsPage() {
   const { markRead } = useZeroNotificationActions();
 
   const notifications = useMemo(
-    () => (data?.notifications as Notification[] | undefined) ?? EMPTY_NOTIFICATIONS,
+    () => data?.notifications ?? EMPTY_NOTIFICATIONS,
     [data?.notifications]
   );
 

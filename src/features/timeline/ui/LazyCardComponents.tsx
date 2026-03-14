@@ -172,7 +172,7 @@ export function withLazyLoading<P extends object>(
  * ```
  */
 export function preloadCard(cardType: CardType): void {
-  const componentMap: Record<CardType, () => Promise<unknown>> = {
+  const componentMap: Record<CardType, () => Promise<Record<string, unknown>>> = {
     group: () => import('./cards/GroupTimelineCard'),
     event: () => import('./cards/EventTimelineCard'),
     amendment: () => import('./cards/AmendmentTimelineCard'),

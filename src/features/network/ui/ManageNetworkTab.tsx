@@ -184,7 +184,7 @@ export function ManageNetworkTab({
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <RightBadge right={rel.withRight} />
+                            <RightBadge right={rel.with_right ?? ''} />
                           </TableCell>
                           <TableCell>
                             {rel.created_at
@@ -256,7 +256,7 @@ export function ManageNetworkTab({
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <RightBadge right={rel.withRight} />
+                            <RightBadge right={rel.with_right ?? ''} />
                           </TableCell>
                           <TableCell>
                             {rel.created_at

@@ -259,7 +259,7 @@ function SpeakerCard({
   onMarkCompleted?: (speakerId: string) => void;
 }) {
   const { t } = useTranslation();
-  const speakerName = speaker.user?.name || speaker.user?.email || t('common.unknown');
+  const speakerName = speaker.user?.name || speaker.user?.email || t('common.unspecified');
 
   return (
     <div

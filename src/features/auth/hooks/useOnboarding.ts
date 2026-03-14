@@ -14,9 +14,9 @@ export interface Group {
   id: string;
   name: string;
   description?: string;
-  memberCount: number;
+  member_count: number;
   location?: string;
-  isPublic: boolean;
+  is_public: boolean;
 }
 
 export interface OnboardingData {

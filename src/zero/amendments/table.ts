@@ -19,7 +19,7 @@ export const amendment = table('amendment')
     supporters_percentage: number().optional(),
     upvotes: number(),
     downvotes: number(),
-    tags: json().optional(),
+    tags: json<string[]>().optional(),
     visibility: string(),
     is_public: boolean(),
     subscriber_count: number(),

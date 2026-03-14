@@ -54,7 +54,7 @@ export const documentsTranslations = {
     restoredTo: 'Auf Version v.{{number}} wiederhergestellt',
     createFailed: 'Version konnte nicht erstellt werden',
     restoreFailed: 'Version konnte nicht wiederhergestellt werden',
-    unknown: 'Unbekannt',
+    unspecified: 'nicht angegeben',
     types: {
       manual: 'Manuell',
       suggestionAdded: 'Vorschlag hinzugefügt',

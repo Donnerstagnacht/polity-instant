@@ -33,17 +33,15 @@ export function useConversationSelection(conversations: Conversation[]) {
     );
     if (!conversation) return undefined;
 
-    // Sort messages by createdAt timestamp (oldest to newest, like WhatsApp)
+    // Sort messages by created_at timestamp (oldest to newest, like WhatsApp)
     const sortedMessages = [...conversation.messages].sort((a, b) => {
-      const timeA = new Date(a.createdAt).getTime();
-      const timeB = new Date(b.createdAt).getTime();
-      return timeA - timeB;
+      return a.created_at - b.created_at;
     });
 
     return {
       ...conversation,
       messages: sortedMessages,
-    } as Conversation;
+    };
   }, [conversations, selectedConversationId]);
 
   return {

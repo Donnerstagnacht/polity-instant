@@ -34,6 +34,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useBlogPermissions } from '../hooks/useBlogPermissions';
 import { usePermissions } from '@/zero/rbac/usePermissions';
 import { PlateEditor } from '@/features/shared/ui/kit-platejs/plate-editor';
+import type { Value } from 'platejs';
 import { Link } from '@tanstack/react-router';
 import { mutators } from '@/zero/mutators';
 import { useNotificationDispatch } from '@/zero/notifications/useNotificationDispatch';
@@ -428,7 +429,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
         <CardContent className="prose prose-slate dark:prose-invert max-w-none">
           {blog.content && Array.isArray(blog.content) && blog.content.length > 0 ? (
             <PlateEditor
-              value={blog.content as unknown[]}
+              value={blog.content as Value}
               currentMode="view"
               isOwnerOrCollaborator={false}
             />

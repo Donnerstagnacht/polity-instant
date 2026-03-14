@@ -1,4 +1,4 @@
-import { defineQuery } from '@rocicorp/zero'
+import { defineQuery, type QueryRowType } from '@rocicorp/zero'
 import { z } from 'zod'
 import { zql } from '../schema'
 
@@ -101,3 +101,9 @@ export const userQueries = {
         .related('amendment_collaborations')
   ),
 }
+
+export type UserCurrentRow = QueryRowType<typeof userQueries.current>
+export type UserByIdRow = QueryRowType<typeof userQueries.byId>
+export type UserByHandleRow = QueryRowType<typeof userQueries.byHandle>
+export type UserFullProfileRow = QueryRowType<typeof userQueries.fullProfile>
+export type UserSearchRow = QueryRowType<typeof userQueries.search>

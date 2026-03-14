@@ -25,29 +25,16 @@ import { GitBranch, Clock, User, Plus, History, Search, Pencil, Check, X } from 
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { toast } from 'sonner';
+import type { Value } from 'platejs';
 import { notifyVersionCreated } from '@/features/notifications/utils/notification-helpers.ts';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-
-interface Version {
-  id: string;
-  versionNumber: number;
-  title: string;
-  content: Record<string, unknown>[];
-  createdAt: number | Date;
-  creationType: string;
-  creator?: {
-    id: string;
-    email?: string;
-    name?: string;
-    avatar?: string;
-  };
-}
+import type { DocumentVersionRow } from '@/zero/documents/queries';
 
 interface VersionControlProps {
   documentId: string;
-  currentContent: Record<string, unknown>[];
+  currentContent: Value;
   currentUserId: string;
-  onRestoreVersion: (content: Record<string, unknown>[]) => void;
+  onRestoreVersion: (content: Value) => void;
   amendmentId?: string;
   amendmentTitle?: string;
 }
@@ -75,8 +62,8 @@ export function VersionControl({
     documentId,
   });
 
-  const versions = (versionsResult || []) as unknown as Version[];
-  const sortedVersions = [...versions].sort((a, b) => b.versionNumber - a.versionNumber);
+  const versions = (versionsResult || []) as DocumentVersionRow[];
+  const sortedVersions = [...versions].sort((a, b) => (b.version_number ?? 0) - (a.version_number ?? 0));
 
   const filteredVersions = useMemo(() => {
     if (!searchQuery.trim()) return sortedVersions;
@@ -84,9 +71,9 @@ export function VersionControl({
     const query = searchQuery.toLowerCase();
     return sortedVersions.filter(
       version =>
-        version.title.toLowerCase().includes(query) ||
-        version.versionNumber.toString().includes(query) ||
-        version.creator?.name?.toLowerCase().includes(query)
+        (version.change_summary ?? '').toLowerCase().includes(query) ||
+        (version.version_number ?? 0).toString().includes(query) ||
+        [version.author?.first_name, version.author?.last_name].filter(Boolean).join(' ').toLowerCase().includes(query)
     );
   }, [sortedVersions, searchQuery]);
 
@@ -99,7 +86,7 @@ export function VersionControl({
     setIsCreating(true);
     try {
       const nextVersionNumber =
-        versions.length > 0 ? Math.max(...versions.map(v => v.versionNumber)) + 1 : 1;
+        versions.length > 0 ? Math.max(...versions.map(v => v.version_number ?? 0)) + 1 : 1;
 
       const versionId = crypto.randomUUID();
 
@@ -110,7 +97,7 @@ export function VersionControl({
         blog_id: null,
         version_number: nextVersionNumber,
         change_summary: versionTitle,
-        content: currentContent as unknown as import('@rocicorp/zero').ReadonlyJSONValue,
+        content: JSON.stringify(currentContent) as import('@rocicorp/zero').ReadonlyJSONValue,
       });
 
       // Send notification to amendment subscribers if amendmentId is provided
@@ -137,12 +124,12 @@ export function VersionControl({
     }
   };
 
-  const handleRestoreVersion = async (version: Version) => {
+  const handleRestoreVersion = async (version: DocumentVersionRow) => {
     try {
-      onRestoreVersion(version.content);
+      onRestoreVersion(version.content as Value);
 
       toast.success(
-        `${t('features.amendments.versionControl.restoredTo')} ${version.versionNumber}`
+        `${t('features.amendments.versionControl.restoredTo')} ${version.version_number ?? 0}`
       );
 
       setIsHistoryDialogOpen(false);
@@ -152,8 +139,8 @@ export function VersionControl({
     }
   };
 
-  const formatDate = (timestamp: number | Date) => {
-    const date = typeof timestamp === 'number' ? new Date(timestamp) : new Date(timestamp);
+  const formatDate = (timestamp: number) => {
+    const date = new Date(timestamp);
     return date.toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -183,33 +170,6 @@ export function VersionControl({
       console.error('Failed to update version title:', error);
       toast.error(t('features.amendments.versionControl.updateFailed'));
     }
-  };
-
-  const getCreationTypeBadge = (type: string) => {
-    const variants: Record<
-      string,
-      { labelKey: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }
-    > = {
-      manual: {
-        labelKey: 'features.amendments.versionControl.creationType.manual',
-        variant: 'default',
-      },
-      suggestion_added: {
-        labelKey: 'features.amendments.versionControl.creationType.suggestionAdded',
-        variant: 'secondary',
-      },
-      suggestion_accepted: {
-        labelKey: 'features.amendments.versionControl.creationType.suggestionAccepted',
-        variant: 'outline',
-      },
-      suggestion_declined: {
-        labelKey: 'features.amendments.versionControl.creationType.suggestionDeclined',
-        variant: 'destructive',
-      },
-    };
-
-    const config = variants[type] || { labelKey: type, variant: 'outline' };
-    return <Badge variant={config.variant}>{t(config.labelKey)}</Badge>;
   };
 
   return (
@@ -247,7 +207,7 @@ export function VersionControl({
             </div>
             <div className="text-sm text-muted-foreground">
               {t('features.amendments.versionControl.versionNumber')}: v.
-              {versions.length > 0 ? Math.max(...versions.map(v => v.versionNumber)) + 1 : 1}
+              {versions.length > 0 ? Math.max(...versions.map(v => v.version_number ?? 0)) + 1 : 1}
             </div>
           </div>
           <DialogFooter>
@@ -305,7 +265,7 @@ export function VersionControl({
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center gap-2">
                         <GitBranch className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-semibold">v.{version.versionNumber}</span>
+                        <span className="font-semibold">v.{version.version_number ?? 0}</span>
 
                         {editingVersionId === version.id ? (
                           <div className="flex items-center gap-2">
@@ -345,31 +305,29 @@ export function VersionControl({
                           </div>
                         ) : (
                           <>
-                            <span className="text-sm font-medium">{version.title}</span>
+                            <span className="text-sm font-medium">{version.change_summary ?? ''}</span>
                             <Button
                               size="sm"
                               variant="ghost"
                               className="h-6 w-6 p-0"
                               onClick={() => {
                                 setEditingVersionId(version.id);
-                                setEditingTitle(version.title);
+                                setEditingTitle(version.change_summary ?? '');
                               }}
                             >
                               <Pencil className="h-3 w-3" />
                             </Button>
                           </>
                         )}
-
-                        {getCreationTypeBadge(version.creationType)}
                       </div>
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          {formatDate(version.createdAt)}
+                          {formatDate(version.created_at)}
                         </div>
                         <div className="flex items-center gap-1">
                           <User className="h-3 w-3" />
-                          {version.creator?.name || version.creator?.email || 'Unknown'}
+                          {[version.author?.first_name, version.author?.last_name].filter(Boolean).join(' ') || version.author?.email || 'Unknown'}
                         </div>
                       </div>
                     </div>

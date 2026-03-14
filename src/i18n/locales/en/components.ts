@@ -134,7 +134,7 @@ export const componentsTranslations = {
   },
   linkPreview: {
     externalLink: 'External Link',
-    unknownUser: 'Unknown User',
+    unspecifiedUser: 'not specified',
     members: 'members',
     likes: 'likes',
     comments: 'comments',

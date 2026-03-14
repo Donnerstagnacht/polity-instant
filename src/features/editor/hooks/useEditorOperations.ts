@@ -9,6 +9,7 @@
 import { useCallback } from 'react'
 import { toast } from 'sonner'
 import type { ReadonlyJSONValue } from '@rocicorp/zero'
+import type { Value } from 'platejs'
 import { useDocumentActions } from '@/zero/documents/useDocumentActions'
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions'
 import { useDocumentState } from '@/zero/documents/useDocumentState'
@@ -52,18 +53,18 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
   })
 
   const latestVersionNumber = versions.length > 0
-    ? Math.max(...versions.map((v) => (v as unknown as Record<string, number>).version_number ?? 0))
+    ? Math.max(...versions.map((v) => v.version_number ?? 0))
     : 0
 
   const createVersionForEntity = useCallback(
-    async (content: unknown[], creationType: string, title?: string) => {
+    async (content: Value, creationType: string, title?: string) => {
       const versionId = crypto.randomUUID()
       const newVersionNumber = latestVersionNumber + 1
       const versionTitle = title || getDefaultVersionTitle(creationType)
 
       await createVersion({
         id: versionId,
-        content: JSON.stringify(content) as unknown as ReadonlyJSONValue,
+        content: content as unknown as ReadonlyJSONValue,
         version_number: newVersionNumber,
         change_summary: versionTitle,
         document_id: isBlog ? '' : entityId,
@@ -77,7 +78,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
   const handleSuggestionAccepted = useCallback(
     async (
       userId: string,
-      content: unknown[],
+      content: Value,
       discussions: TDiscussion[],
       suggestion: SuggestionRef,
       editingMode?: EditorMode,
@@ -97,7 +98,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
 
         const discussion = discussions.find(
           (d) => d.id === suggestion.suggestionId || d.id === suggestion.id
-        ) as (TDiscussion & Record<string, unknown>) | undefined
+        )
 
         const updatedDiscussions = discussions.map((d) => {
           if (d.id === suggestion.suggestionId || d.id === suggestion.id) {
@@ -112,7 +113,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
             id: changeRequestId,
             amendment_id: amendmentId,
             title: discussion.crId || 'Change Request',
-            description: (discussion as Record<string, unknown>).description as string || '',
+            description: '',
             status: 'accepted',
             source_type: null,
             source_id: null,
@@ -138,7 +139,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
   const handleSuggestionDeclined = useCallback(
     async (
       userId: string,
-      content: unknown[],
+      content: Value,
       discussions: TDiscussion[],
       suggestion: SuggestionRef,
       editingMode?: EditorMode,
@@ -166,7 +167,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
         if (entityType === 'amendment' && amendmentId) {
           const discussion = discussions.find(
             (d) => d.id === suggestion.suggestionId || d.id === suggestion.id
-          ) as (TDiscussion & Record<string, unknown>) | undefined
+          )
 
           if (discussion) {
             const changeRequestId = crypto.randomUUID()
@@ -174,7 +175,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
               id: changeRequestId,
               amendment_id: amendmentId,
               title: discussion.crId || 'Change Request',
-              description: (discussion as Record<string, unknown>).description as string || '',
+              description: '',
               status: 'rejected',
               source_type: null,
               source_id: null,
@@ -209,7 +210,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
       try {
         const discussion = discussions.find(
           (d) => d.id === suggestion.suggestionId || d.id === suggestion.id
-        ) as (TDiscussion & Record<string, unknown>) | undefined
+        )
 
         if (!discussion) {
           toast.error('Suggestion not found')
@@ -222,7 +223,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
           id: changeRequestId,
           amendment_id: amendmentId,
           title: discussion.crId || 'Change Request',
-          description: (discussion as Record<string, unknown>).description as string || '',
+          description: '',
           status: 'pending',
           source_type: null,
           source_id: null,

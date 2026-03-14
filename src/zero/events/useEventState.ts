@@ -1,6 +1,10 @@
 import { useMemo } from 'react'
 import { useQuery } from '@rocicorp/zero/react'
+import { type QueryRowType } from '@rocicorp/zero'
 import { queries } from '../queries'
+
+/** A single event row from the byGroup query (flat, no relations) */
+export type EventByGroupRow = QueryRowType<typeof queries.events.byGroup>
 
 interface EventStateOptions {
   eventId?: string

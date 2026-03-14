@@ -6,7 +6,6 @@ import { useState } from 'react';
 import { useGroupTodos as useFacadeGroupTodos } from '@/zero/groups/useGroupState';
 import { useTodoActions } from '@/zero/todos/useTodoActions';
 import { toast } from 'sonner';
-import type { GroupTodo } from '../types/group.types';
 import { notifyTodoAssigned, notifyTodoUpdated, notifyTodoCompleted } from '@/features/notifications/utils/notification-helpers.ts';
 
 export function useGroupTodos(groupId: string, userId?: string) {
@@ -14,7 +13,7 @@ export function useGroupTodos(groupId: string, userId?: string) {
   const { todos: todosData, isLoading: isQuerying } = useFacadeGroupTodos(groupId);
   const { createTodo: createTodoAction, updateTodo: updateTodoAction, deleteTodo: deleteTodoAction, assignUser: assignUserAction } = useTodoActions();
 
-  const todos = todosData as unknown as GroupTodo[];
+  const todos = todosData;
 
   const addTodo = async (todoData: {
     title: string;
@@ -42,7 +41,7 @@ export function useGroupTodos(groupId: string, userId?: string) {
         status: 'pending',
         due_date: todoData.dueDate ? new Date(todoData.dueDate).getTime() : 0,
         completed_at: 0,
-        tags: '[]',
+        tags: [],
         visibility: 'group',
         group_id: groupId,
         event_id: null,

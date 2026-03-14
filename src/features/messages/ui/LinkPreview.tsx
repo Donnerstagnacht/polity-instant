@@ -153,7 +153,7 @@ function UserPreview({ userId, className }: { userId: string; className?: string
           <div className="min-w-0 flex-1">
             <p className="truncate font-semibold">
               {`${user.first_name || ''} ${user.last_name || ''}`.trim() ||
-                t('components.linkPreview.unknownUser')}
+                t('components.linkPreview.unspecifiedUser')}
             </p>
             {user.handle && (
               <p className="text-muted-foreground truncate text-sm">@{user.handle}</p>

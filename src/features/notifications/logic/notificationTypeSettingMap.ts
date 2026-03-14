@@ -219,6 +219,6 @@ export function shouldDispatchNotification(
   const categorySettings = recipientSettings[mapping.category]
   if (!categorySettings) return true // NULL category = all true
 
-  const value = (categorySettings as unknown as Record<string, boolean>)[mapping.key]
+  const value = (categorySettings as Record<string, boolean>)[mapping.key]
   return value !== false // undefined or true = dispatch
 }

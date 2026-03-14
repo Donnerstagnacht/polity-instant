@@ -1,6 +1,19 @@
 import { useMemo } from 'react';
+import type { Value } from 'platejs';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { extractSuggestionContent } from '../utils/suggestion-extraction';
+
+/** Shape of entries in the amendment's `discussions` JSON column */
+interface DiscussionEntry {
+  id: string;
+  crId?: string;
+  title?: string;
+  description?: string;
+  justification?: string;
+  createdAt?: number;
+  userId?: string;
+  comments?: readonly { text?: string; value?: string; userId?: string }[];
+}
 
 export interface ChangeRequest {
   id: string;
@@ -61,39 +74,39 @@ export function useChangeRequests(amendmentId: string) {
     // Process open change requests from amendment.discussions
     if (amendment?.discussions && Array.isArray(amendment.discussions)) {
       openRequests.push(
-        ...((amendment.discussions as readonly Record<string, unknown>[])
-          .filter((discussion) => !!(discussion as { crId?: string }).crId)
+        ...((amendment.discussions as readonly DiscussionEntry[])
+          .filter((discussion) => !!discussion.crId)
           .map((suggestion) => {
             const suggestionContent = extractSuggestionContent(
-              suggestion.id as string,
-              document?.content as Record<string, unknown>[] ?? []
+              suggestion.id,
+              document?.content as Value | undefined
             );
 
             const matchingChangeRequest = savedChangeRequests.find(
-              (cr) => cr.title === (suggestion as { crId?: string }).crId
+              (cr) => cr.title === suggestion.crId
             );
 
             return {
-              id: suggestion.id as string,
-              crId: (suggestion as { crId?: string }).crId ?? '',
-              crNumber: parseInt((suggestion as { crId?: string }).crId?.replace('CR-', '') || '0'),
-              title: (suggestion as { title?: string }).title || (suggestion as { crId?: string }).crId || '',
-              description: (suggestion as { description?: string }).description || '',
+              id: suggestion.id,
+              crId: suggestion.crId ?? '',
+              crNumber: parseInt(suggestion.crId?.replace('CR-', '') || '0'),
+              title: suggestion.title || suggestion.crId || '',
+              description: suggestion.description || '',
               type: suggestionContent.type,
               text: suggestionContent.text,
               newText: suggestionContent.newText,
               properties: suggestionContent.properties,
               newProperties: suggestionContent.newProperties,
               proposedChange: suggestionContent.newText || suggestionContent.text,
-              justification: (suggestion as { justification?: string }).justification || '',
+              justification: suggestion.justification || '',
               isResolved: false,
               status: matchingChangeRequest?.status || 'open',
               resolution: null,
               resolvedAt: null,
               resolvedBy: null,
-              createdAt: (suggestion as { createdAt?: number }).createdAt ?? 0,
-              userId: (suggestion as { userId?: string }).userId ?? '',
-              comments: (suggestion as { comments?: readonly unknown[] }).comments || [],
+              createdAt: suggestion.createdAt ?? 0,
+              userId: suggestion.userId ?? '',
+              comments: suggestion.comments || [],
               votes: matchingChangeRequest?.votes || [],
               changeRequestEntityId: matchingChangeRequest?.id,
             } as ChangeRequest;

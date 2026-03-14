@@ -74,7 +74,7 @@ export const eventsTranslations = {
     speakerListDescription: 'Wähle eine Person, um ihr Profil zu öffnen.',
     speakerListEmpty: 'Noch keine Redner',
     speakerCount: '{{count}} Redner',
-    unknownSpeaker: 'Unbekannt',
+    unspecifiedSpeaker: 'nicht angegeben',
     noItems: 'Keine Tagesordnungspunkte',
     noItemsDescription: 'Für diese Veranstaltung wurden noch keine Tagesordnungspunkte erstellt.',
     createFirstItem: 'Ersten Tagesordnungspunkt erstellen',
@@ -106,7 +106,7 @@ export const eventsTranslations = {
     active: 'Aktiv',
     details: 'Details',
     by: 'Von {{name}}',
-    unknown: 'Unbekannt',
+    unspecified: 'nicht angegeben',
     itemActivated: 'Tagesordnungspunkt aktiviert',
     // Context card
     scheduledFor: 'Geplant für',

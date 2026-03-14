@@ -328,7 +328,7 @@ export const timelineTranslations = {
       failed: 'ABGELEHNT',
       tied: 'UNENTSCHIEDEN',
       elected: 'GEWÄHLT',
-      unknown: 'UNBEKANNT',
+      unspecified: 'nicht angegeben',
     },
     empty: {
       live: 'Momentan keine aktiven Entscheidungen',

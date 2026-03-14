@@ -1,4 +1,4 @@
-import { defineQuery } from '@rocicorp/zero'
+import { defineQuery, type QueryRowType } from '@rocicorp/zero'
 import { z } from 'zod'
 import { zql } from '../schema'
 
@@ -104,3 +104,7 @@ export const statementQueries = {
         .orderBy('created_at', 'desc')
   ),
 }
+
+export type StatementByIdWithDetailsRow = QueryRowType<typeof statementQueries.byIdWithDetails>
+export type StatementByGroupRow = QueryRowType<typeof statementQueries.byGroup>
+export type StatementByUserRow = QueryRowType<typeof statementQueries.byUser>

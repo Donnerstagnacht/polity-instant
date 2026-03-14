@@ -1,4 +1,4 @@
-import { defineQuery } from '@rocicorp/zero'
+import { defineQuery, type QueryRowType } from '@rocicorp/zero'
 import { z } from 'zod'
 import { zql } from '../schema'
 
@@ -43,3 +43,7 @@ export const documentQueries = {
         .orderBy('created_at', 'asc')
   ),
 }
+
+// ── Query Row Types ─────────────────────────────────────────────────
+export type DocumentVersionRow = QueryRowType<typeof documentQueries.versions>;
+export type DocumentCollaboratorRow = QueryRowType<typeof documentQueries.collaborators>;

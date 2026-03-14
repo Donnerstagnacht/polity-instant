@@ -1,148 +1,22 @@
 /**
  * Group Feature Types
  *
- * TypeScript type definitions for the group feature.
+ * Entity types are re-exported from Zero (single source of truth).
+ * UI-only types are defined locally.
  */
 
-export interface GroupMembershipWithUser {
-  id: string;
-  user_id?: string;
-  group_id?: string;
-  role_id?: string | null;
-  status?: string | null;
-  source?: string;
-  created_at?: number | string;
-  visibility?: string;
-  user?: {
-    id: string;
-    first_name?: string | null;
-    last_name?: string | null;
-    email?: string | null;
-    avatar?: string | null;
-    handle?: string | null;
-    [key: string]: unknown;
-  };
-  role?: {
-    id: string;
-    name: string | null;
-    [key: string]: unknown;
-  };
-}
+// ── Zero-derived entity types ───────────────────────────────────────
+export type { GroupMembershipWithRolesAndRightsRow as GroupMembershipWithUser } from '@/zero/groups/queries';
+export type { GroupRoleWithRightsRow as GroupRole } from '@/zero/groups/queries';
+export type { GroupLinkRow as GroupLink } from '@/zero/groups/queries';
+export type { GroupPaymentRow as GroupPayment } from '@/zero/groups/queries';
 
-export interface GroupRole {
-  id: string;
-  name: string | null;
-  description?: string | null;
-  group_id?: string | null;
-  scope?: string | null;
-  sort_order?: number;
-  created_at?: number | string;
-  updated_at?: number | string;
-  action_rights?: readonly GroupActionRight[];
-}
-
-export interface GroupActionRight {
-  id: string;
-  role_id?: string;
-  resource: string | null;
-  action: string | null;
-  group_id?: string | null;
-  event_id?: string | null;
-  amendment_id?: string | null;
-  blog_id?: string | null;
-  created_at?: number;
-}
+// ── UI-only types (not in Zero schema) ──────────────────────────────
 
 export interface ActionRightOption {
   resource: string;
   action: string;
   label: string;
-}
-
-export interface GroupLink {
-  id: string;
-  groupId?: string;
-  label: string | null;
-  url: string | null;
-  description?: string;
-  createdAt?: number;
-  updatedAt?: number;
-}
-
-export interface GroupPayment {
-  id: string;
-  groupId?: string;
-  amount: number | null;
-  currency?: string;
-  description?: string;
-  type?: 'income' | 'expense' | string;
-  date?: number;
-  payerId?: string;
-  receiverId?: string;
-  relatedEntityId?: string;
-  relatedEntityType?: 'user' | 'group' | 'event' | 'amendment';
-  createdAt?: number;
-  updatedAt?: number;
-  payer?: {
-    id: string;
-    name?: string;
-    avatar?: string;
-  };
-  receiver?: {
-    id: string;
-    name?: string;
-    avatar?: string;
-  };
-  payerGroup?: {
-    id: string;
-    name?: string;
-  };
-  receiverGroup?: {
-    id: string;
-    name?: string;
-  };
-  payerUser?: {
-    id: string;
-    name?: string;
-  };
-  receiverUser?: {
-    id: string;
-    name?: string;
-  };
-}
-
-export interface GroupTodo {
-  id: string;
-  groupId?: string;
-  title: string;
-  description?: string;
-  status?: 'todo' | 'in_progress' | 'done' | string;
-  priority?: 'low' | 'medium' | 'high' | string;
-  assignedToId?: string;
-  dueDate?: number | string;
-  createdAt?: number;
-  updatedAt?: number;
-  assignedTo?: {
-    id: string;
-    name?: string;
-    avatar?: string;
-  };
-}
-
-export interface GroupDocument {
-  id: string;
-  groupId: string;
-  title: string;
-  content?: unknown;
-  discussions?: unknown;
-  createdById: string;
-  createdAt: number;
-  updatedAt: number;
-  createdBy?: {
-    id: string;
-    name?: string;
-    avatar?: string;
-  };
 }
 
 export interface FinancialSummary {

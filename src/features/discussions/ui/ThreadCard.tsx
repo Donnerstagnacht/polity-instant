@@ -4,7 +4,7 @@ import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { ArrowUp, ArrowDown, User, Clock, MessageSquare, File } from 'lucide-react';
+import { ArrowUp, ArrowDown, User, Clock, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { calculateScore } from '@/features/votes/utils/voting-utils';
 import { CommentTree } from './CommentTree';
@@ -25,7 +25,7 @@ interface ThreadCardProps {
   onVoteThread: (
     threadId: string,
     voteValue: number,
-    currentVote: { id: string; vote?: number } | undefined,
+    currentVote: { id: string; vote?: number | null } | undefined,
     currentUpvotes: number,
     currentDownvotes: number,
     userId?: string,
@@ -33,7 +33,7 @@ interface ThreadCardProps {
   onVoteComment: (
     commentId: string,
     voteValue: number,
-    currentVote: { id: string; vote: number } | undefined,
+    currentVote: { id: string; vote: number | null } | undefined,
     currentUpvotes: number,
     currentDownvotes: number,
     userId?: string,
@@ -125,38 +125,24 @@ export function ThreadCard({ thread, userId, amendmentId, amendmentTitle, sender
           {/* Thread content */}
           <div className="flex flex-1 items-start justify-between">
             <div className="flex-1">
-              <CardTitle className="mb-2">{thread.title}</CardTitle>
-              {thread.description && (
-                <CardDescription className="mb-3">{thread.description}</CardDescription>
-              )}
+              <CardTitle className="mb-2">{thread.content}</CardTitle>
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <Avatar className="h-6 w-6">
-                    <AvatarImage src={thread.creator?.avatar || thread.creator?.imageURL} />
-                    <AvatarFallback>{thread.creator?.name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+                    <AvatarImage src={thread.user?.avatar ?? undefined} />
+                    <AvatarFallback>{thread.user?.first_name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
                   </Avatar>
-                  <span>{thread.creator?.name || 'Anonymous'}</span>
+                  <span>{[thread.user?.first_name, thread.user?.last_name].filter(Boolean).join(' ') || 'Anonymous'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4" />
-                  <span>{new Date(thread.createdAt).toLocaleDateString()}</span>
+                  <span>{new Date(thread.created_at).toLocaleDateString()}</span>
                 </div>
                 <Badge variant="outline">
                   {sortedComments.length} comment{sortedComments.length !== 1 ? 's' : ''}
                 </Badge>
               </div>
             </div>
-            {thread.file?.url && (
-              <a
-                href={thread.file.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm text-blue-500 hover:text-blue-600"
-              >
-                <File className="h-4 w-4" />
-                Attachment
-              </a>
-            )}
           </div>
         </div>
       </CardHeader>

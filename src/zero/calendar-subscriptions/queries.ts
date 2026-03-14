@@ -1,4 +1,4 @@
-import { defineQuery } from '@rocicorp/zero'
+import { defineQuery, type QueryRowType } from '@rocicorp/zero'
 import { z } from 'zod'
 import { zql } from '../schema'
 
@@ -28,3 +28,5 @@ export const calendarSubscriptionQueries = {
         .where('target_user_id', targetUserId)
   ),
 }
+
+export type CalendarSubscriptionByUserRow = QueryRowType<typeof calendarSubscriptionQueries.byUser>

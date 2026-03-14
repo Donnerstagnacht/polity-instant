@@ -4,33 +4,10 @@
 
 import { useMemo } from 'react';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
+import type { AmendmentCollaboratorRow, AmendmentRoleRow } from '@/zero/amendments/queries';
 
-export interface Collaborator {
-  id: string;
-  role_id: string;
-  status: string;
-  created_at: number;
-  user?: {
-    id: string;
-    first_name?: string;
-    last_name?: string;
-    avatar?: string;
-    handle?: string;
-    email?: string;
-  };
-}
-
-export interface Role {
-  id: string;
-  name: string;
-  description?: string;
-  scope: string;
-  action_rights?: Array<{
-    id: string;
-    resource: string;
-    action: string;
-  }>;
-}
+export type Collaborator = AmendmentCollaboratorRow;
+export type Role = AmendmentRoleRow;
 
 export interface CollaboratorsData {
   collaborators: Collaborator[];
@@ -59,8 +36,8 @@ export function useCollaborators(
     includeRoles: true,
   });
 
-  const collaborators = (collabData || []) as unknown as Collaborator[];
-  const roles = (rolesData || []) as unknown as Role[];
+  const collaborators = collabData || [];
+  const roles = rolesData || [];
 
   // Check if current user is admin (has 'manage' action right for 'amendments')
   const currentUserCollaboration = collaborators.find(c => c.user?.id === currentUserId);
@@ -116,7 +93,7 @@ export function useCollaborators(
 
   return {
     collaborators: filteredCollaborators,
-    roles: roles as unknown as Role[],
+    roles,
     pendingRequests,
     activeCollaborators,
     pendingInvitations,

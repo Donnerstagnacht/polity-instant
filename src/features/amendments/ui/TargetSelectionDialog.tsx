@@ -50,9 +50,9 @@ interface TargetSelectionDialogProps {
   allUsers: Array<{ id: string; name: string; email: string | null; avatar?: string | null }>;
   onConfirm: (selection: {
     groupId: string;
-    groupData: Record<string, unknown>;
+    groupData: NetworkDataProp['groups'][number];
     eventId: string;
-    eventData: Record<string, unknown>;
+    eventData: EventsDataProp['events'][number];
     collaboratorUserId: string;
   }) => void;
   onGroupSelect?: (groupId: string) => void;
@@ -82,13 +82,13 @@ export function TargetSelectionDialog({
   const [targetCollaboratorUserId, setTargetCollaboratorUserId] = useState<string>('');
   const [selectedTargetGroup, setSelectedTargetGroup] = useState<{
     id: string;
-    data: Record<string, unknown>;
+    data: NetworkDataProp['groups'][number];
   } | null>(null);
   const [pendingTarget, setPendingTarget] = useState<{
     groupId: string;
-    groupData: Record<string, unknown>;
+    groupData: NetworkDataProp['groups'][number];
     eventId: string;
-    eventData: Record<string, unknown>;
+    eventData: EventsDataProp['events'][number];
   } | null>(null);
 
   const dialogTitle = title || t('features.amendments.targetSelection.defaultTitle');

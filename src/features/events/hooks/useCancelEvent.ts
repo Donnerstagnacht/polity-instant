@@ -21,7 +21,7 @@ import { useEventForCancel } from '@/zero/events/useEventState';
 interface AgendaItem {
   id: string;
   title: string;
-  sortOrder: number;
+  order_index: number;
   amendment?: {
     id: string;
     title: string;
@@ -70,7 +70,7 @@ export function useCancelEvent(eventId: string): UseCancelEventResult {
       .map((item) => ({
         id: item.id,
         title: item.title || '',
-        sortOrder: item.order_index || 0,
+        order_index: item.order_index || 0,
         amendment: item.amendment
           ? { id: item.amendment.id, title: item.amendment.title || '' }
           : undefined,
@@ -83,7 +83,7 @@ export function useCancelEvent(eventId: string): UseCancelEventResult {
             }
           : undefined,
       }))
-      .sort((a, b) => a.sortOrder - b.sortOrder);
+      .sort((a, b) => a.order_index - b.order_index);
   }, [event?.agenda_items]);
 
   const cancelEvent = useCallback(

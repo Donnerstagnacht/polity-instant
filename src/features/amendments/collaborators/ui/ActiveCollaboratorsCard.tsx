@@ -74,7 +74,7 @@ export function ActiveCollaboratorsCard({
                 const userHandle = user?.handle || '';
                 const matchedRole = roles.find(r => r.id === collaboration.role_id);
                 const roleName = matchedRole?.name || 'Collaborator';
-                const roleId = collaboration.role_id;
+                const roleId = collaboration.role_id ?? undefined;
                 const createdAt = collaboration.created_at
                   ? new Date(collaboration.created_at).toLocaleDateString()
                   : 'N/A';

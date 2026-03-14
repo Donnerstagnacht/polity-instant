@@ -18,8 +18,8 @@ export function CalendarExportButton({ events, filename }: CalendarExportButtonP
       title: e.title,
       description: e.description ?? null,
       location_name: e.location ?? null,
-      start_date: typeof e.startDate === 'number' ? e.startDate : new Date(e.startDate).getTime(),
-      end_date: typeof e.endDate === 'number' ? e.endDate : new Date(e.endDate).getTime(),
+      start_date: typeof e.start_date === 'number' ? e.start_date : new Date(e.start_date).getTime(),
+      end_date: typeof e.end_date === 'number' ? e.end_date : new Date(e.end_date).getTime(),
       creator: e.organizer ? { name: e.organizer.name } : null,
     }));
     downloadICalFile(icalEvents, filename);

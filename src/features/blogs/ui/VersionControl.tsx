@@ -25,13 +25,14 @@ import { GitBranch, Clock, User, Plus, History, Search, Pencil, Check, X } from 
 import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { toast } from 'sonner';
+import type { Value } from 'platejs';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface Version {
   id: string;
   versionNumber: number;
   title: string;
-  content: Record<string, unknown>[];
+  content: Value;
   createdAt: number | Date;
   creationType: string;
   creator?: {
@@ -44,9 +45,9 @@ interface Version {
 
 interface VersionControlProps {
   blogId: string;
-  currentContent: Record<string, unknown>[];
+  currentContent: Value;
   currentUserId: string;
-  onRestoreVersion: (content: Record<string, unknown>[]) => void;
+  onRestoreVersion: (content: Value) => void;
 }
 
 export function VersionControl({
@@ -70,7 +71,7 @@ export function VersionControl({
     id: v.id,
     versionNumber: v.version_number,
     title: v.change_summary || '',
-    content: v.content as unknown[],
+    content: v.content as Value,
     createdAt: v.created_at,
     creationType: 'manual',
     creator: v.author ? { id: v.author.id, email: v.author.email, name: v.author.first_name, avatar: v.author.avatar } : undefined,
@@ -110,7 +111,7 @@ export function VersionControl({
         blog_id: blogId,
         version_number: nextVersionNumber,
         change_summary: versionTitle,
-        content: currentContent as unknown as import('@rocicorp/zero').ReadonlyJSONValue,
+        content: JSON.stringify(currentContent) as import('@rocicorp/zero').ReadonlyJSONValue,
       });
 
       toast.success(

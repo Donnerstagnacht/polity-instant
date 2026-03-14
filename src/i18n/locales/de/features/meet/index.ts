@@ -25,7 +25,7 @@ export const meetTranslations = {
     muted: 'Stummgeschaltet',
     speaking: 'Spricht',
     note: 'Notiz:',
-    unknown: 'Unbekannt',
+    unspecified: 'nicht angegeben',
   },
   chat: {
     title: 'Konferenz-Chat',

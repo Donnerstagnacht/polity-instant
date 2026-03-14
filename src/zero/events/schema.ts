@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { timestampSchema, nullableTimestampSchema, jsonSchema } from '../shared/helpers';
+import { timestampSchema, nullableTimestampSchema, jsonSchema, jsonNumberArraySchema, jsonStringStringRecordSchema } from '../shared/helpers';
 
 // ── event ─────────────────────────────────────────────────────────────
 const eventBaseSchema = z.object({
@@ -32,7 +32,7 @@ const eventBaseSchema = z.object({
   recurrence_pattern: z.string().nullable(),
   recurrence_rule: z.string().nullable(),
   recurrence_interval: z.number().nullable(),
-  recurrence_days: jsonSchema.nullable(),
+  recurrence_days: jsonNumberArraySchema.nullable(),
   recurrence_end_date: nullableTimestampSchema,
   original_event_id: z.string().nullable(),
   cancel_reason: z.string().nullable(),
@@ -53,7 +53,7 @@ const eventBaseSchema = z.object({
   delegate_quorum_percentage: z.number().nullable(),
   delegate_vote_weight_type: z.string().nullable(),
   delegate_vote_threshold_percentage: z.number().nullable(),
-  delegate_accepted_states: jsonSchema.nullable(),
+  delegate_accepted_states: jsonStringStringRecordSchema.nullable(),
   delegate_finalized_at: nullableTimestampSchema,
   delegate_approval_type: z.string().nullable(),
   delegate_check_mode: z.string().nullable(),
@@ -129,6 +129,7 @@ export const eventCancelSchema = z.object({
   cancel_reason: z.string(),
 });
 export type Event = z.infer<typeof eventSelectSchema>;
+export type EventUpdateInput = z.infer<typeof eventUpdateSchema>;
 
 // ── event_participant ─────────────────────────────────────────────────
 const eventParticipantBaseSchema = z.object({

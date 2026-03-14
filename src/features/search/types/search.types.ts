@@ -1,5 +1,6 @@
 import { type ContentType } from '@/features/timeline/constants/content-type-config';
 import type { useSearchState } from '@/zero/shared/useSearchState';
+import type { ElectionCandidateRow } from '@/zero/agendas/queries';
 
 // ============================================
 // Derive search entity types from Zero query results
@@ -116,7 +117,7 @@ export type SearchContentItem = {
   votingType?: string | null;
   phase?: string | null;
   result?: string | null;
-  candidates?: Record<string, unknown>[];
+  candidates?: readonly ElectionCandidateRow[];
   totalCandidates?: number;
   agendaEventId?: string | null;
   agendaItemId?: string | null;

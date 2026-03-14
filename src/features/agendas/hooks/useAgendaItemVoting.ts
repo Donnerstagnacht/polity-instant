@@ -1,15 +1,9 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
-
-interface VoteData {
-  support: number;
-  oppose: number;
-  abstain: number;
-}
+import type { ElectionCandidateRow, ElectionVoteRow } from '@/zero/agendas/queries';
 
 interface ElectionCandidateStats {
-  candidate: Record<string, unknown>;
+  candidate: ElectionCandidateRow;
   totalVotes: number;
   indicationCount: number;
   actualCount: number;
@@ -48,8 +42,8 @@ export function getVotingPhase(status?: string): VotingPhase {
  * Utility function to calculate election statistics with indication support
  */
 export function calculateElectionStats(
-  candidates: Record<string, unknown>[],
-  votes: Record<string, unknown>[]
+  candidates: ElectionCandidateRow[],
+  votes: ElectionVoteRow[]
 ): { candidates: ElectionCandidateStats[]; totalVotes: number } {
   if (!candidates?.length) {
     return { candidates: [], totalVotes: 0 };
@@ -57,10 +51,10 @@ export function calculateElectionStats(
 
   const totalVotes = votes.length;
 
-  const candidateStats = candidates.map((candidate) => {
-    const candidateVotes = votes.filter((v) => (v as { candidate?: { id: string } }).candidate?.id === (candidate as { id: string }).id);
-    const indicationVotesArr = candidateVotes.filter((v) => (v as { isIndication?: boolean }).isIndication);
-    const actualVotesArr = candidateVotes.filter((v) => !(v as { isIndication?: boolean }).isIndication);
+  const candidateStats = candidates.map(candidate => {
+    const candidateVotes = votes.filter(v => v.candidate_id === candidate.id);
+    const indicationVotesArr = candidateVotes.filter(v => v.is_indication);
+    const actualVotesArr = candidateVotes.filter(v => !v.is_indication);
 
     return {
       candidate,
@@ -78,7 +72,12 @@ export function calculateElectionStats(
 /**
  * Utility function to calculate amendment vote statistics with indication support
  */
-export function calculateAmendmentStats(entries: Record<string, unknown>[]): AmendmentVoteStats {
+interface VotingEntry {
+  is_indication?: boolean;
+  vote?: string;
+}
+
+export function calculateAmendmentStats(entries: VotingEntry[]): AmendmentVoteStats {
   if (!entries?.length) {
     return {
       yes: 0,
@@ -95,11 +94,11 @@ export function calculateAmendmentStats(entries: Record<string, unknown>[]): Ame
     };
   }
 
-  const indicationEntries = entries.filter((e) => (e as { isIndication?: boolean }).isIndication);
-  const actualEntries = entries.filter((e) => !(e as { isIndication?: boolean }).isIndication);
+  const indicationEntries = entries.filter(e => e.is_indication);
+  const actualEntries = entries.filter(e => !e.is_indication);
 
-  const countVotes = (votes: Record<string, unknown>[], type: string) =>
-    votes.filter((v) => (v as { vote?: string }).vote === type).length;
+  const countVotes = (votes: VotingEntry[], type: string) =>
+    votes.filter(v => v.vote === type).length;
 
   const total = entries.length;
   const yes = countVotes(actualEntries, 'yes');

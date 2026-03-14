@@ -17,7 +17,7 @@ interface BlogItem {
   group_id?: string | null;
   user_id?: string | null;
   date?: string | null;
-  blog_hashtags?: Array<{ hashtag?: Record<string, unknown> | null }>;
+  blog_hashtags?: readonly { hashtag?: { id: string; tag: string } | null }[];
 }
 
 interface StatementItem {
@@ -30,7 +30,7 @@ interface StatementItem {
   image_url?: string | null;
   video_url?: string | null;
   group_id?: string | null;
-  statement_hashtags?: Array<{ hashtag?: Record<string, unknown> | null }>;
+  statement_hashtags?: readonly { hashtag?: { id: string; tag: string } | null }[];
 }
 
 interface BlogsAndStatementsViewProps {

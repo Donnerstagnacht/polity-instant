@@ -1,4 +1,4 @@
-import { defineQuery } from '@rocicorp/zero'
+import { defineQuery, type QueryRowType } from '@rocicorp/zero'
 import { z } from 'zod'
 import { zql } from '../schema'
 
@@ -86,3 +86,11 @@ export const todoQueries = {
         .related('assignments', q => q.related('user'))
   ),
 }
+
+// ── Query Row Types ─────────────────────────────────────────────────
+export type TodoRow = QueryRowType<typeof todoQueries.byId>
+export type TodoWithRelationsRow = QueryRowType<typeof todoQueries.allWithRelations>
+export type TodoByIdWithRelationsRow = QueryRowType<typeof todoQueries.byIdWithRelations>
+export type TodoByGroupWithRelationsRow = QueryRowType<typeof todoQueries.byGroupWithRelations>
+export type TodoByGroupWithAssignmentsRow = QueryRowType<typeof todoQueries.byGroupWithAssignments>
+export type TodoAssignmentRow = QueryRowType<typeof todoQueries.assignments>

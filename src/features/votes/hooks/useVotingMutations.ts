@@ -17,7 +17,7 @@ export function useVotingMutations() {
     async (
       threadId: string,
       voteValue: number,
-      currentVote: { id: string; vote?: number } | undefined,
+      currentVote: { id: string; vote?: number | null } | undefined,
       currentUpvotes: number = 0,
       currentDownvotes: number = 0,
       userId?: string,
@@ -72,7 +72,7 @@ export function useVotingMutations() {
     async (
       commentId: string,
       voteValue: number,
-      currentVote: { id: string; vote: number } | undefined,
+      currentVote: { id: string; vote: number | null } | undefined,
       currentUpvotes: number = 0,
       currentDownvotes: number = 0,
       userId?: string,

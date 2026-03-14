@@ -8,7 +8,7 @@ type SearchData = ReturnType<typeof useSearchData>['data'];
 export function useSearchFilters(data: SearchData | undefined, filters: SearchFilters) {
   const { query, sortBy, topics } = filters;
 
-  const matchesTopics = (item: Record<string, unknown>) => {
+  const matchesTopics = (item: Parameters<typeof matchesHashtag>[0]) => {
     if (!topics || topics.length === 0) return true;
     return topics.some(topic => matchesHashtag(item, topic));
   };

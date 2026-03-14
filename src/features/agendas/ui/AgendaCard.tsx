@@ -147,7 +147,7 @@ export function AgendaCard({
                     <div className="flex items-center gap-1">
                       <span>
                         {t('features.events.agenda.by', {
-                          name: creatorName || t('features.events.agenda.unknown'),
+                          name: creatorName || t('features.events.agenda.unspecified'),
                         })}
                       </span>
                     </div>

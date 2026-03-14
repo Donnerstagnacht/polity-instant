@@ -26,7 +26,7 @@ export function useGroupNetwork(groupId: string) {
         if (status === 'active') {
             active.push(rel);
         } else if (status === 'requested') {
-            if (rel.initiatorGroupId === groupId) {
+            if (rel.initiator_group_id === groupId) {
                 outgoing.push(rel);
             } else {
                 incoming.push(rel);
@@ -52,30 +52,30 @@ export function useGroupNetwork(groupId: string) {
       const childrenMap = new Map<string, { group: NetworkGroupEntity; rights: string[] }>();
 
       stableRelationships.forEach((rel) => {
-        if (rel.childGroup?.id === targetGroupId) {
+        if (rel.related_group?.id === targetGroupId) {
           // This is a parent relationship
-          const parentId = rel.parentGroup?.id;
+          const parentId = rel.group?.id;
           if (!parentId) return;
 
-          if (!parentsMap.has(parentId) && rel.parentGroup) {
-            parentsMap.set(parentId, { group: rel.parentGroup, rights: [] });
+          if (!parentsMap.has(parentId) && rel.group) {
+            parentsMap.set(parentId, { group: rel.group, rights: [] });
           }
           const parentEntry = parentsMap.get(parentId);
-          if (parentEntry && !parentEntry.rights.includes(rel.withRight)) {
-            parentEntry.rights.push(rel.withRight);
+          if (parentEntry && rel.with_right && !parentEntry.rights.includes(rel.with_right)) {
+            parentEntry.rights.push(rel.with_right);
           }
         }
-        if (rel.parentGroup?.id === targetGroupId) {
+        if (rel.group?.id === targetGroupId) {
           // This is a child relationship
-          const childId = rel.childGroup?.id;
+          const childId = rel.related_group?.id;
           if (!childId) return;
 
-          if (!childrenMap.has(childId) && rel.childGroup) {
-            childrenMap.set(childId, { group: rel.childGroup, rights: [] });
+          if (!childrenMap.has(childId) && rel.related_group) {
+            childrenMap.set(childId, { group: rel.related_group, rights: [] });
           }
           const childEntry = childrenMap.get(childId);
-          if (childEntry && !childEntry.rights.includes(rel.withRight)) {
-            childEntry.rights.push(rel.withRight);
+          if (childEntry && rel.with_right && !childEntry.rights.includes(rel.with_right)) {
+            childEntry.rights.push(rel.with_right);
           }
         }
       });
@@ -122,18 +122,18 @@ export function useGroupNetwork(groupId: string) {
           const findParentsForRight = (id: string, level: number) => {
             stableRelationships.forEach((rel) => {
               if (
-                rel.childGroup?.id === id &&
-                rel.withRight === right &&
-                rel.parentGroup?.id &&
-                !visited.has(rel.parentGroup.id)
+                rel.related_group?.id === id &&
+                rel.with_right === right &&
+                rel.group?.id &&
+                !visited.has(rel.group.id)
               ) {
-                const parentId = rel.parentGroup.id;
+                const parentId = rel.group.id;
                 visited.add(parentId);
 
                 // Add or update parent in map
-                if (!parentsMap.has(parentId) && rel.parentGroup) {
+                if (!parentsMap.has(parentId) && rel.group) {
                   parentsMap.set(parentId, {
-                    group: rel.parentGroup,
+                    group: rel.group,
                     rights: [],
                     level,
                     childId: id,
@@ -174,18 +174,18 @@ export function useGroupNetwork(groupId: string) {
           const findChildrenForRight = (id: string, level: number, currentParentId: string) => {
             stableRelationships.forEach((rel) => {
               if (
-                rel.parentGroup?.id === id &&
-                rel.withRight === right &&
-                rel.childGroup?.id &&
-                !visited.has(rel.childGroup.id)
+                rel.group?.id === id &&
+                rel.with_right === right &&
+                rel.related_group?.id &&
+                !visited.has(rel.related_group.id)
               ) {
-                const childId = rel.childGroup.id;
+                const childId = rel.related_group.id;
                 visited.add(childId);
 
                 // Add or update child in map
-                if (!childrenMap.has(childId) && rel.childGroup) {
+                if (!childrenMap.has(childId) && rel.related_group) {
                   childrenMap.set(childId, {
-                    group: rel.childGroup,
+                    group: rel.related_group,
                     rights: [],
                     level,
                     parentId: currentParentId,

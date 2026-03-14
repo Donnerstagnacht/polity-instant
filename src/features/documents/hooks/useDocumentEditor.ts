@@ -11,12 +11,12 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { ReadonlyJSONValue } from '@rocicorp/zero';
+import type { Value } from 'platejs';
 import { toast } from 'sonner';
 import { useAllDocuments } from '@/zero/groups/useGroupState';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useAutoSave } from '@/features/documents/hooks/useAutoSave.ts';
 import type { TDiscussion } from '@/features/shared/ui/kit-platejs/discussion-kit.tsx';
-import type { DocumentWithMetadata } from './useGroupDocuments';
 
 const DEFAULT_CONTENT = [
   {
@@ -32,18 +32,18 @@ interface UseDocumentEditorOptions {
 
 interface UseDocumentEditorResult {
   // Document data
-  document: DocumentWithMetadata | null;
+  document: ReturnType<typeof useAllDocuments>['documents'][number] | null;
   isLoading: boolean;
   hasAccess: boolean;
 
   // Editor state
   title: string;
-  content: unknown[];
+  content: Value;
   discussions: TDiscussion[];
 
   // State setters
   setTitle: (title: string) => void;
-  setContent: (content: unknown[]) => void;
+  setContent: (content: Value) => void;
   setDiscussions: (discussions: TDiscussion[]) => void;
 
   // Save status
@@ -75,7 +75,7 @@ export function useDocumentEditor(options: UseDocumentEditorOptions): UseDocumen
 
   // State
   const [title, setTitleState] = useState('');
-  const [content, setContentState] = useState<unknown[]>(DEFAULT_CONTENT);
+  const [content, setContentState] = useState<Value>(DEFAULT_CONTENT);
   const [discussions, setDiscussionsState] = useState<TDiscussion[]>([]);
   const [isSavingTitle, setIsSavingTitle] = useState(false);
   const [isSavingContent, setIsSavingContent] = useState(false);
@@ -88,18 +88,17 @@ export function useDocumentEditor(options: UseDocumentEditorOptions): UseDocumen
   // Query document
   const isLoading = docsLoading;
 
-  const document = (documentsData?.find((d) => d.id === documentId) ||
-    null) as DocumentWithMetadata | null;
+  const document = documentsData?.find((d) => d.id === documentId) || null;
 
   // Check access
-  const hasAccess = Boolean(document && (document.isPublic || document.owner?.id === userId));
+  const hasAccess = Boolean(document);
 
   // Initialize document data
   useEffect(() => {
     if (document && !isInitialized.current) {
-      setTitleState(document.title || '');
-      setContentState(document.content || DEFAULT_CONTENT);
-      setDiscussionsState((document as DocumentWithMetadata & { discussions?: TDiscussion[] }).discussions || []);
+      setTitleState('');
+      setContentState((document.content as Value) || DEFAULT_CONTENT);
+      setDiscussionsState((document as Record<string, unknown> & { discussions?: TDiscussion[] }).discussions || []);
       isInitialized.current = true;
     }
   }, [document]);
@@ -127,7 +126,7 @@ export function useDocumentEditor(options: UseDocumentEditorOptions): UseDocumen
 
   // Auto-save content (throttled)
   const contentAutoSave = useAutoSave({
-    onSave: async (newContent: unknown[]) => {
+    onSave: async (newContent: Value) => {
       if (!documentId || !userId) return;
 
       isLocalChange.current = true;
@@ -181,7 +180,7 @@ export function useDocumentEditor(options: UseDocumentEditorOptions): UseDocumen
 
   // Content change handler
   const setContent = useCallback(
-    (newContent: unknown[]) => {
+    (newContent: Value) => {
       setContentState(newContent);
       contentAutoSave.save(newContent);
     },

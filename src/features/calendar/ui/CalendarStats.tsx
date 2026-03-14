@@ -25,7 +25,7 @@ export const CalendarStats = ({ events }: CalendarStatsProps) => {
           <span className="font-semibold">
             {
               events.filter((e) =>
-                isDateInRange(e.startDate, startOfWeek(new Date()), endOfWeek(new Date()))
+                isDateInRange(e.start_date, startOfWeek(new Date()), endOfWeek(new Date()))
               ).length
             }
           </span>
@@ -36,7 +36,7 @@ export const CalendarStats = ({ events }: CalendarStatsProps) => {
             {
               events.filter((e) =>
                 isDateInRange(
-                  e.startDate,
+                  e.start_date,
                   startOfMonth(new Date()),
                   endOfMonth(new Date())
                 )

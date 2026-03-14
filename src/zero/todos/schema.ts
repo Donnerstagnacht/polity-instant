@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { timestampSchema, nullableTimestampSchema, jsonSchema } from '../shared/helpers'
+import { timestampSchema, nullableTimestampSchema, jsonSchema, jsonStringArraySchema } from '../shared/helpers'
 
 // ============================================
 // Todo
@@ -12,7 +12,7 @@ const baseTodoSchema = z.object({
   priority: z.string().nullable(),
   due_date: nullableTimestampSchema,
   completed_at: nullableTimestampSchema,
-  tags: jsonSchema.nullable(),
+  tags: jsonStringArraySchema.nullable(),
   visibility: z.string(),
   creator_id: z.string(),
   group_id: z.string().nullable(),

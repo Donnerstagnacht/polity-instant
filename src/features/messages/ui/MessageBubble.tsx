@@ -18,9 +18,9 @@ export function MessageBubble({ message, isOwnMessage }: MessageBubbleProps) {
       )}
     >
       <Avatar className="h-8 w-8 flex-shrink-0">
-        <AvatarImage src={message.sender?.avatar} />
+        <AvatarImage src={message.sender?.avatar ?? undefined} />
         <AvatarFallback>
-          {message.sender?.name?.[0]?.toUpperCase() || 'U'}
+          {message.sender?.first_name?.[0]?.toUpperCase() || 'U'}
         </AvatarFallback>
       </Avatar>
       <div
@@ -29,7 +29,7 @@ export function MessageBubble({ message, isOwnMessage }: MessageBubbleProps) {
           isOwnMessage ? 'bg-primary text-primary-foreground' : 'bg-muted'
         )}
       >
-        <MessageContent content={message.content} />
+        <MessageContent content={message.content ?? ''} />
         <p
           className={cn(
             'mt-1 text-xs',
@@ -38,7 +38,7 @@ export function MessageBubble({ message, isOwnMessage }: MessageBubbleProps) {
               : 'text-muted-foreground'
           )}
         >
-          {formatTime(message.createdAt)}
+          {formatTime(message.created_at)}
         </p>
       </div>
     </div>

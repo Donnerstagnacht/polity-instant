@@ -93,7 +93,7 @@ export function useMeetPage(userId: string) {
         const instDateMs = inst.isRecurringInstance
           ? inst.start_date
           : null
-        const participants = [...(meeting.participants ?? [])] as unknown as MeetingInstance['participants']
+        const participants = [...(meeting.participants ?? [])] as MeetingInstance['participants']
         const bookingCount = getInstanceBookingCount(
           participants,
           meeting.creator_id,
@@ -109,8 +109,8 @@ export function useMeetPage(userId: string) {
           title: inst.title ?? 'Meeting',
           description: inst.description ?? null,
           meetingType: meeting.meeting_type ?? null,
-          startDate: typeof inst.start_date === 'number' ? inst.start_date : new Date(inst.start_date as unknown as string | Date).getTime(),
-          endDate: typeof inst.end_date === 'number' ? inst.end_date : new Date(inst.end_date as unknown as string | Date).getTime(),
+          startDate: inst.start_date ?? 0,
+          endDate: inst.end_date ?? 0,
           isBookable: meeting.is_bookable,
           maxBookings: meeting.max_bookings ?? 1,
           bookingCount,

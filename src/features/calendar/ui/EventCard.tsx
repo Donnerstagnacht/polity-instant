@@ -37,9 +37,9 @@ export const EventCard = ({ event }: EventCardProps) => {
     >
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
-          {event.imageURL && !isMeeting && (
+          {event.image_url && !isMeeting && (
             <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md">
-              <img src={event.imageURL} alt={event.title} className="h-full w-full object-cover" />
+              <img src={event.image_url} alt={event.title} className="h-full w-full object-cover" />
             </div>
           )}
           <div className="flex-1 space-y-2">
@@ -51,7 +51,7 @@ export const EventCard = ({ event }: EventCardProps) => {
                     {t('features.calendar.eventCard.meeting')}
                   </Badge>
                 )}
-                {event.isPublic ? (
+                {event.is_public ? (
                   <Badge variant="secondary" className="text-xs">
                     {t('features.calendar.eventCard.public')}
                   </Badge>
@@ -66,7 +66,7 @@ export const EventCard = ({ event }: EventCardProps) => {
             <div className="space-y-1 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Clock className="h-3.5 w-3.5" />
-                <span>{formatTime(event.startDate)}</span>
+                <span>{formatTime(event.start_date)}</span>
               </div>
               {event.location && (
                 <div className="flex items-center gap-2">
@@ -97,7 +97,7 @@ export const EventCard = ({ event }: EventCardProps) => {
                   </AvatarFallback>
                 </Avatar>
                 <span className="text-xs text-muted-foreground">
-                  {event.organizer.name || t('features.calendar.eventCard.unknown')}
+                  {event.organizer.name || t('features.calendar.eventCard.unspecified')}
                 </span>
               </div>
             )}

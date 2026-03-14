@@ -24,10 +24,20 @@ export function formatRight(right: string): string {
  * @param type - Whether to pick the parent (`rel.group`) or child (`rel.related_group`) side
  * @returns Deduplicated array of `{ group, rights }` entries
  */
+interface RelatedGroupLike {
+  id: string;
+  name?: string | null;
+  description?: string | null;
+  member_count?: number;
+  memberships?: readonly { id: string }[];
+  amendments?: readonly { id: string }[];
+  events?: readonly { id: string }[];
+}
+
 interface RelationshipRow {
-  group?: { id: string; name?: string | null; description?: string | null; member_count?: number; memberships?: readonly unknown[]; amendments?: readonly unknown[]; events?: readonly unknown[]; [key: string]: unknown };
-  related_group?: { id: string; name?: string | null; description?: string | null; member_count?: number; memberships?: readonly unknown[]; amendments?: readonly unknown[]; events?: readonly unknown[]; [key: string]: unknown };
-  with_right: string | null;
+  group?: RelatedGroupLike;
+  related_group?: RelatedGroupLike;
+  with_right?: string | null;
 }
 
 type GroupEntry = RelationshipRow['group'] & {};

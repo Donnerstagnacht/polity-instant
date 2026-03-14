@@ -4,12 +4,13 @@
 import React from 'react';
 import { getNextSuggestionIdFromDiscussions } from '@/features/shared/utils/suggestion-utils.ts';
 import type { TDiscussion } from '@/features/shared/ui/kit-platejs/discussion-kit.tsx';
+import type { ResolvedSuggestion } from '@/features/shared/ui/ui-platejs/block-suggestion.tsx';
 
 interface UseSuggestionIdAssignmentProps {
   documentId: string;
   discussions: TDiscussion[];
   onDiscussionsUpdate: (discussions: TDiscussion[]) => void;
-  suggestions?: unknown[]; // Optional: resolved suggestions from PlateJS
+  suggestions?: ResolvedSuggestion[]; // Optional: resolved suggestions from PlateJS
 }
 
 /**

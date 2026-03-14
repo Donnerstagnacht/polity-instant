@@ -65,7 +65,7 @@ export const calendarTranslations = {
     private: 'Privat',
     participant: '{{count}} Teilnehmer',
     participantPlural: '{{count}} Teilnehmer',
-    unknown: 'Unbekannt',
+    unspecified: 'nicht angegeben',
     youreOrganizing: 'Du organisierst',
     youreAttending: 'Du nimmst teil',
     yourMeeting: 'Deine Besprechung',

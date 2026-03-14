@@ -40,15 +40,15 @@ export function GroupMembersDialog({
             >
               <Avatar className="h-10 w-10">
                 <AvatarImage
-                  src={participant.user?.avatar || participant.user?.imageURL}
+                  src={participant.user?.avatar ?? undefined}
                 />
                 <AvatarFallback>
-                  {participant.user?.name?.[0]?.toUpperCase() || 'U'}
+                  {participant.user?.first_name?.[0]?.toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">
                 <p className="font-semibold">
-                  {participant.user?.name || t('common.labels.unknownUser')}
+                  {[participant.user?.first_name, participant.user?.last_name].filter(Boolean).join(' ') || t('common.labels.unspecifiedUser')}
                 </p>
                 {participant.user?.handle && (
                   <p className="text-sm text-muted-foreground">

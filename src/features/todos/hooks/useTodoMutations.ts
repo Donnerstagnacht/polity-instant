@@ -128,7 +128,7 @@ export function useTodoMutations() {
 
   const updateTodo = async (
     todoId: string,
-    updates: Record<string, unknown>,
+    updates: Omit<Parameters<typeof todoActions.updateTodo>[0], 'id'>,
     options?: {
       senderId?: string;
       senderName?: string;
@@ -139,14 +139,7 @@ export function useTodoMutations() {
   ) => {
     setIsLoading(true);
     try {
-      // Convert camelCase update keys to snake_case for Zero schema
-      const snakeCaseUpdates: Record<string, unknown> = { id: todoId };
-      for (const [key, value] of Object.entries(updates)) {
-        const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
-        snakeCaseUpdates[snakeKey] = value;
-      }
-
-      await todoActions.updateTodo(snakeCaseUpdates as Parameters<typeof todoActions.updateTodo>[0]);
+      await todoActions.updateTodo({ id: todoId, ...updates });
 
       if (updates.status === 'completed' && options?.visibility === 'public' && options?.senderId) {
         await commonActions.createTimelineEvent({

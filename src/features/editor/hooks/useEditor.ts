@@ -36,6 +36,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useZero } from '@rocicorp/zero/react';
 import type { ReadonlyJSONValue } from '@rocicorp/zero';
+import type { Value } from 'platejs';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useDocumentState } from '@/zero/documents/useDocumentState';
@@ -106,7 +107,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
 
   // State
   const [title, setTitleState] = useState('');
-  const [content, setContentState] = useState<unknown[]>(DEFAULT_EDITOR_CONTENT);
+  const [content, setContentState] = useState<Value>(DEFAULT_EDITOR_CONTENT);
   const [discussions, setDiscussionsState] = useState<TDiscussion[]>([]);
   const [mode, setModeState] = useState<EditorMode>('edit');
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
@@ -225,7 +226,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
 
   // Persist content via Zero
   const saveContent = useCallback(
-    async (newContent: unknown[]) => {
+    async (newContent: Value) => {
       setSaveStatus('saving');
       try {
         if (entityType === 'blog') {
@@ -247,7 +248,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
 
   // Content change handler - throttled with trailing edge
   const setContent = useCallback(
-    (newContent: unknown[]) => {
+    (newContent: Value) => {
       if (!contentEntityId || !userId) {
         console.warn('⚠️ Cannot save: missing entityId or userId', { contentEntityId, userId });
         return;
@@ -351,7 +352,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
 
   // Restore version handler
   const handleRestoreVersion = useCallback(
-    async (versionContent: unknown[]) => {
+    async (versionContent: Value) => {
       if (!contentEntityId || !userId) return;
 
       try {

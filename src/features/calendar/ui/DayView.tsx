@@ -24,7 +24,7 @@ export const DayView = ({ selectedDate, events, allEvents, onDateSelect }: DayVi
 
   // Sort events by start time and calculate time slots
   const sortedEvents = [...events].sort(
-    (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+    (a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
   );
 
   const formatTime = (date: Date | number) => {
@@ -63,8 +63,8 @@ export const DayView = ({ selectedDate, events, allEvents, onDateSelect }: DayVi
               <ScrollArea className="h-[600px] pr-4">
                 <div className="space-y-6">
                   {sortedEvents.map((event, index) => {
-                    const startTime = new Date(event.startDate);
-                    const endTime = new Date(event.endDate);
+                    const startTime = new Date(event.start_date);
+                    const endTime = new Date(event.end_date);
                     const duration = calculateDuration(startTime.getTime(), endTime.getTime());
                     const baseEventId = getBaseEventId(event.id);
 

@@ -24,7 +24,7 @@ interface CommentTreeProps {
   onVoteComment: (
     commentId: string,
     voteValue: number,
-    currentVote: { id: string; vote: number } | undefined,
+    currentVote: { id: string; vote: number | null } | undefined,
     currentUpvotes: number,
     currentDownvotes: number,
     userId?: string,
@@ -117,19 +117,19 @@ export function CommentTree({ comment, threadId, userId, amendmentId, amendmentT
               <div className="mb-3 flex items-start justify-between">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Avatar className="h-6 w-6">
-                    <AvatarImage src={comment.creator?.avatar || comment.creator?.imageURL} />
-                    <AvatarFallback>{comment.creator?.name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+                    <AvatarImage src={comment.user?.avatar ?? undefined} />
+                    <AvatarFallback>{comment.user?.first_name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
                   </Avatar>
-                  <span>{comment.creator?.name || 'Anonymous'}</span>
-                  {comment.creator?.handle && (
-                    <span className="text-xs">@{comment.creator.handle}</span>
+                  <span>{[comment.user?.first_name, comment.user?.last_name].filter(Boolean).join(' ') || 'Anonymous'}</span>
+                  {comment.user?.handle && (
+                    <span className="text-xs">@{comment.user.handle}</span>
                   )}
                   <span>•</span>
                   <Clock className="h-4 w-4" />
-                  <span>{new Date(comment.createdAt).toLocaleDateString()}</span>
+                  <span>{new Date(comment.created_at).toLocaleDateString()}</span>
                 </div>
               </div>
-              <p className="mb-3 whitespace-pre-wrap">{comment.text}</p>
+              <p className="mb-3 whitespace-pre-wrap">{comment.content}</p>
               <Button variant="ghost" size="sm" onClick={() => setIsReplying(!isReplying)}>
                 <Reply className="mr-2 h-4 w-4" />
                 Reply

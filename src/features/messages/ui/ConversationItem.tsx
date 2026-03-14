@@ -49,15 +49,15 @@ export function ConversationItem({
           </div>
           {lastMessage && (
             <span className="flex-shrink-0 whitespace-nowrap text-xs text-muted-foreground">
-              {formatTime(lastMessage.createdAt)}
+              {formatTime(lastMessage.created_at)}
             </span>
           )}
         </div>
         <div className="flex items-center justify-between gap-2">
           {lastMessage && (
             <p className="truncate text-sm text-muted-foreground">
-              {lastMessage.content.length > 40
-                ? `${lastMessage.content.substring(0, 40)}...`
+              {(lastMessage.content ?? '').length > 40
+                ? `${(lastMessage.content ?? '').substring(0, 40)}...`
                 : lastMessage.content}
             </p>
           )}
