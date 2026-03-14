@@ -41,24 +41,24 @@ export function GroupSearchStep({
 
     const term = searchTerm.toLowerCase();
     return groups.filter(
-      (group: any) =>
+      (group) =>
         group.name?.toLowerCase().includes(term) ||
         group.description?.toLowerCase().includes(term) ||
         group.location?.toLowerCase().includes(term)
     );
   }, [groupsData, searchTerm]);
 
-  const handleSelectGroup = (group: any) => {
+  const handleSelectGroup = (group: (typeof filteredGroups)[number]) => {
     if (selectedGroup?.id === group.id) {
       onSelectGroup(null); // Deselect
     } else {
       onSelectGroup({
         id: group.id,
-        name: group.name,
-        description: group.description,
-        memberCount: group.memberCount || 0,
-        location: group.location,
-        isPublic: group.isPublic,
+        name: group.name ?? '',
+        description: group.description ?? undefined,
+        memberCount: group.member_count || 0,
+        location: group.location ?? undefined,
+        isPublic: group.is_public,
       });
     }
   };
@@ -103,7 +103,7 @@ export function GroupSearchStep({
             {t('onboarding.groupStep.noResults')}
           </div>
         ) : (
-          filteredGroups.map((group: any) => (
+          filteredGroups.map((group) => (
             <Card
               key={group.id}
               className={cn(
@@ -124,7 +124,7 @@ export function GroupSearchStep({
                     )}
                     <Badge variant="outline" className="flex-shrink-0">
                       <Users className="mr-1 h-3 w-3" />
-                      {group.memberCount || 0}
+                      {group.member_count || 0}
                     </Badge>
                   </div>
                 </div>

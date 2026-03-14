@@ -21,13 +21,13 @@ export function useGroupEventsPage(groupId: string) {
     const rangeStart = addYears(now, -1);
     const rangeEnd = addYears(now, 1);
 
-    return (eventsData || []).flatMap((event: any) => {
+    return (eventsData || []).flatMap(event => {
       // Exclude bookable meetings from group event listings (shown in calendar instead)
       if (event.is_bookable) return [];
       const isMeeting = !!event.meeting_type;
       const participants = event.participants ?? [];
       const instances = generateRecurringInstances(event, rangeStart, rangeEnd, event.exceptions);
-      return instances.map((instance: any) => {
+      return instances.map(instance => {
         const instanceDate = instance.isRecurringInstance ? instance.start_date : null;
         const bookingCount = isMeeting
           ? getInstanceBookingCount(participants, event.creator_id, instanceDate)
@@ -36,19 +36,21 @@ export function useGroupEventsPage(groupId: string) {
           ? isBookedByUser(participants, user.id, instanceDate)
           : undefined;
 
+        const creatorName = [event.creator?.first_name, event.creator?.last_name].filter(Boolean).join(' ') || undefined;
         return {
           ...instance,
-          startDate: instance.start_date,
-          endDate: instance.end_date,
-          location: instance.location_name || instance.location,
+            title: instance.title || '',
+            startDate: instance.start_date ?? 0,
+            endDate: instance.end_date ?? 0,
+          location: instance.location_name || instance.location_address || undefined,
           isPublic: instance.is_public ?? true,
           imageURL: instance.image_url,
           description: instance.description || '',
-          organizer: event.creator,
+          organizer: event.creator ? { id: event.creator.id, name: creatorName, avatar: event.creator.avatar ?? undefined } : undefined,
           participants: event.participants,
           groupName: event.group?.name,
           groupId: event.group_id,
-          organizerName: event.group?.name || event.creator?.name,
+          organizerName: event.group?.name || creatorName,
           attendeeCount: event.participants?.length,
           hashtags: extractHashtagTags(event.event_hashtags)?.map((tag: string) => ({ id: tag, tag })),
           isMeeting,
@@ -57,7 +59,7 @@ export function useGroupEventsPage(groupId: string) {
           maxBookings: event.max_bookings,
           bookingCount,
           isBookedByMe: bookedByMe,
-        };
+        } as CalendarEvent;
       });
     });
   }, [eventsData, user]);

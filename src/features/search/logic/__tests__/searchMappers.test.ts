@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { toTags, toDate, mapMosaicToContentItems } from '../searchMappers';
+import type { SearchResultItem } from '../../types/search.types';
 
 describe('searchMappers', () => {
   describe('toTags', () => {
@@ -56,7 +57,7 @@ describe('searchMappers', () => {
         ],
       }];
 
-      const result = mapMosaicToContentItems(items, emptyAgendaMap);
+      const result = mapMosaicToContentItems(items as unknown as readonly SearchResultItem[], emptyAgendaMap);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchObject({
@@ -85,7 +86,7 @@ describe('searchMappers', () => {
           { hashtag: { tag: 'education' } },
         ],
       }];
-      const result = mapMosaicToContentItems(items, emptyAgendaMap);
+      const result = mapMosaicToContentItems(items as unknown as readonly SearchResultItem[], emptyAgendaMap);
       expect(result).toHaveLength(1);
       expect(result[0].tags).toEqual(['politics', 'education']);
     });
@@ -99,7 +100,7 @@ describe('searchMappers', () => {
           { hashtag: { tag: 'summit' } },
         ],
       }];
-      const result = mapMosaicToContentItems(items, emptyAgendaMap);
+      const result = mapMosaicToContentItems(items as unknown as readonly SearchResultItem[], emptyAgendaMap);
       expect(result).toHaveLength(1);
       expect(result[0].tags).toEqual(['summit']);
     });
@@ -114,7 +115,7 @@ describe('searchMappers', () => {
           { hashtag: { tag: 'climate' } },
         ],
       }];
-      const result = mapMosaicToContentItems(items, emptyAgendaMap);
+      const result = mapMosaicToContentItems(items as unknown as readonly SearchResultItem[], emptyAgendaMap);
       expect(result).toHaveLength(1);
       expect(result[0].tags).toEqual(['reform', 'climate']);
     });
@@ -128,7 +129,7 @@ describe('searchMappers', () => {
           { hashtag: { tag: 'opinion' } },
         ],
       }];
-      const result = mapMosaicToContentItems(items, emptyAgendaMap);
+      const result = mapMosaicToContentItems(items as unknown as readonly SearchResultItem[], emptyAgendaMap);
       expect(result).toHaveLength(1);
       expect(result[0].tags).toEqual(['opinion']);
     });
@@ -148,7 +149,7 @@ describe('searchMappers', () => {
         ],
       }];
 
-      const result = mapMosaicToContentItems(items, emptyAgendaMap);
+      const result = mapMosaicToContentItems(items as unknown as readonly SearchResultItem[], emptyAgendaMap);
 
       expect(result).toHaveLength(1);
       expect(result[0].groupId).toBe('g-1');
@@ -169,7 +170,7 @@ describe('searchMappers', () => {
         ],
       }];
 
-      const result = mapMosaicToContentItems(items, emptyAgendaMap);
+      const result = mapMosaicToContentItems(items as unknown as readonly SearchResultItem[], emptyAgendaMap);
 
       expect(result).toHaveLength(1);
       expect(result[0].groupId).toBeUndefined();
@@ -194,7 +195,7 @@ describe('searchMappers', () => {
         ],
       }];
 
-      const result = mapMosaicToContentItems(items, emptyAgendaMap);
+      const result = mapMosaicToContentItems(items as unknown as readonly SearchResultItem[], emptyAgendaMap);
 
       expect(result).toHaveLength(1);
       expect(result[0].authorId).toBe('u-3');
@@ -209,7 +210,7 @@ describe('searchMappers', () => {
         id: 'g1',
         name: 'No Tags Group',
       }];
-      const result = mapMosaicToContentItems(items, emptyAgendaMap);
+      const result = mapMosaicToContentItems(items as unknown as readonly SearchResultItem[], emptyAgendaMap);
       expect(result).toHaveLength(1);
       expect(result[0].tags).toEqual([]);
     });
@@ -225,7 +226,7 @@ describe('searchMappers', () => {
           { hashtag: { tag: null } },
         ],
       }];
-      const result = mapMosaicToContentItems(items, emptyAgendaMap);
+      const result = mapMosaicToContentItems(items as unknown as readonly SearchResultItem[], emptyAgendaMap);
       expect(result[0].tags).toEqual(['valid']);
     });
 

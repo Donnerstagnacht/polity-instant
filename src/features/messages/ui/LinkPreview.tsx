@@ -279,7 +279,7 @@ function BlogPreview({ blogId, className }: { blogId: string; className?: string
     return <PreviewSkeleton />;
   }
 
-  const blogOwner = blog.bloggers?.find((b: any) => b.status === 'owner')?.user;
+  const blogOwner = blog.bloggers?.find((b) => b.status === 'owner')?.user;
   const blogViewUrl = blog.group_id
     ? `/group/${blog.group_id}/blog/${blogId}`
     : `/user/${blogOwner?.id || ''}/blog/${blogId}`;

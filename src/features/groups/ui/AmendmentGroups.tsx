@@ -8,12 +8,20 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { AmendmentTimelineCard } from '@/features/timeline/ui/cards/AmendmentTimelineCard';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
 
+interface AmendmentItem {
+  id: string;
+  title?: string | null;
+  subtitle?: string | null;
+  status?: string | null;
+  amendment_hashtags?: ReadonlyArray<{ hashtag?: { id: string; tag: string } | null }>;
+}
+
 interface AmendmentGroupsProps {
   groupedAmendments: {
-    passed: any[];
-    underReview: any[];
-    drafting: any[];
-    rejected: any[];
+    passed: AmendmentItem[];
+    underReview: AmendmentItem[];
+    drafting: AmendmentItem[];
+    rejected: AmendmentItem[];
   };
   groupName?: string;
   groupId?: string;
@@ -33,7 +41,7 @@ export function AmendmentGroups({ groupedAmendments, groupName, groupId }: Amend
   };
 
   const normalizeStatus = (
-    status?: string
+    status?: string | null
   ):
     | 'collaborative_editing'
     | 'internal_suggesting'
@@ -95,14 +103,14 @@ export function AmendmentGroups({ groupedAmendments, groupName, groupId }: Amend
             </CollapsibleTrigger>
             <CollapsibleContent>
               <div className="grid gap-4 p-4 md:grid-cols-2">
-                {groupedAmendments.passed.map((amendment: any) => (
+                {groupedAmendments.passed.map((amendment) => (
                   <AmendmentTimelineCard
                     key={amendment.id}
                     amendment={{
                       id: String(amendment.id),
-                      title: amendment.title,
+                      title: amendment.title ?? '',
                       subtitle: groupName,
-                      description: amendment.subtitle,
+                      description: amendment.subtitle ?? undefined,
                       status: normalizeStatus(amendment.status),
                       groupName,
                       groupId,
@@ -138,14 +146,14 @@ export function AmendmentGroups({ groupedAmendments, groupName, groupId }: Amend
             </CollapsibleTrigger>
             <CollapsibleContent>
               <div className="grid gap-4 p-4 md:grid-cols-2">
-                {groupedAmendments.underReview.map((amendment: any) => (
+                {groupedAmendments.underReview.map((amendment) => (
                   <AmendmentTimelineCard
                     key={amendment.id}
                     amendment={{
                       id: String(amendment.id),
-                      title: amendment.title,
+                      title: amendment.title ?? '',
                       subtitle: groupName,
-                      description: amendment.subtitle,
+                      description: amendment.subtitle ?? undefined,
                       status: normalizeStatus(amendment.status),
                       groupName,
                       groupId,
@@ -178,14 +186,14 @@ export function AmendmentGroups({ groupedAmendments, groupName, groupId }: Amend
             </CollapsibleTrigger>
             <CollapsibleContent>
               <div className="grid gap-4 p-4 md:grid-cols-2">
-                {groupedAmendments.drafting.map((amendment: any) => (
+                {groupedAmendments.drafting.map((amendment) => (
                   <AmendmentTimelineCard
                     key={amendment.id}
                     amendment={{
                       id: String(amendment.id),
-                      title: amendment.title,
+                      title: amendment.title ?? '',
                       subtitle: groupName,
-                      description: amendment.subtitle,
+                      description: amendment.subtitle ?? undefined,
                       status: normalizeStatus(amendment.status),
                       groupName,
                       groupId,
@@ -218,14 +226,14 @@ export function AmendmentGroups({ groupedAmendments, groupName, groupId }: Amend
             </CollapsibleTrigger>
             <CollapsibleContent>
               <div className="grid gap-4 p-4 md:grid-cols-2">
-                {groupedAmendments.rejected.map((amendment: any) => (
+                {groupedAmendments.rejected.map((amendment) => (
                   <AmendmentTimelineCard
                     key={amendment.id}
                     amendment={{
                       id: String(amendment.id),
-                      title: amendment.title,
+                      title: amendment.title ?? '',
                       subtitle: groupName,
-                      description: amendment.subtitle,
+                      description: amendment.subtitle ?? undefined,
                       status: normalizeStatus(amendment.status),
                       groupName,
                       groupId,

@@ -7,7 +7,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface GroupEventsListProps {
   groupId: string;
-  onEventClick?: (eventId: string, eventData: any) => void;
+  onEventClick?: (eventId: string, eventData: Record<string, unknown>) => void;
 }
 
 export function GroupEventsList({ groupId, onEventClick }: GroupEventsListProps) {
@@ -18,17 +18,18 @@ export function GroupEventsList({ groupId, onEventClick }: GroupEventsListProps)
   const events = eventsByGroup;
 
   // Deduplicate events by ID (in case of query issues)
-  const uniqueEvents = Array.from(new Map(events.map((event: any) => [event.id, event])).values());
+  const uniqueEvents = Array.from(new Map(events.map((event) => [event.id, event])).values());
 
   // Filter for future events only and sort by date
   const futureEvents = uniqueEvents
-    .filter((event: any) => {
-      const eventDate = new Date(event.startDate);
+    .filter((event) => {
+      if (!event.start_date) return false;
+      const eventDate = new Date(event.start_date);
       return eventDate > new Date();
     })
-    .sort((a: any, b: any) => {
-      const dateA = new Date(a.startDate).getTime();
-      const dateB = new Date(b.startDate).getTime();
+    .sort((a, b) => {
+      const dateA = new Date(a.start_date!).getTime();
+      const dateB = new Date(b.start_date!).getTime();
       return dateA - dateB;
     });
 
@@ -62,7 +63,7 @@ export function GroupEventsList({ groupId, onEventClick }: GroupEventsListProps)
 
   return (
     <div className="space-y-2">
-      {futureEvents.map((event: any, index: number) => {
+      {futureEvents.map((event, index) => {
         // Create two-color gradient for each event based on index (matching group gradient style)
         const gradients = [
           'bg-gradient-to-br from-pink-100 to-blue-100 dark:from-pink-900/40 dark:to-blue-900/50',
@@ -89,7 +90,7 @@ export function GroupEventsList({ groupId, onEventClick }: GroupEventsListProps)
                 {event.title}
               </h4>
               <div className="flex gap-1">
-                {event.isPublic && (
+                {event.is_public && (
                   <Badge variant="outline" className="text-xs">
                     {t('common.labels.public')}
                   </Badge>
@@ -103,26 +104,26 @@ export function GroupEventsList({ groupId, onEventClick }: GroupEventsListProps)
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5">
                   <Calendar className="h-3.5 w-3.5" />
-                  <span>{formatEventDate(event.startDate)}</span>
+                  <span>{formatEventDate(event.start_date!)}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Clock className="h-3.5 w-3.5" />
-                  <span>{formatEventTime(event.startDate)}</span>
+                  <span>{formatEventTime(event.start_date!)}</span>
                 </div>
               </div>
 
               {/* Location */}
-              {event.location && (
+              {event.location_name && (
                 <div className="flex items-center gap-1.5">
                   <MapPin className="h-3.5 w-3.5" />
-                  <span className="truncate">{event.location}</span>
+                  <span className="truncate">{event.location_name}</span>
                 </div>
               )}
 
               {/* Participants */}
               <div className="flex items-center gap-1.5">
                 <Users className="h-3.5 w-3.5" />
-                <span>{event.participants?.length || 0} {t('common.labels.participants')}</span>
+                <span>{event.participant_count || 0} {t('common.labels.participants')}</span>
               </div>
             </div>
 

@@ -7,10 +7,12 @@ import { X } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
+import { type NetworkGroupEntity } from '../types/network.types';
+
 interface GroupDetailsWithEventsProps {
   groupId: string;
-  groupData: any;
-  onEventClick?: (eventId: string, eventData: any) => void;
+  groupData: NetworkGroupEntity;
+  onEventClick?: (eventId: string, eventData: Record<string, unknown>) => void;
   onClose?: () => void;
 }
 

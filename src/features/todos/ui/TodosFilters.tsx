@@ -47,7 +47,7 @@ export function TodosFilters({
             </div>
           </div>
           <div className="flex gap-2">
-            <Select value={filterPriority} onValueChange={(v: any) => setFilterPriority(v)}>
+            <Select value={filterPriority} onValueChange={(v) => setFilterPriority(v as typeof filterPriority)}>
               <SelectTrigger className="w-[140px]">
                 <SelectValue placeholder={t('features.todos.priority.title')} />
               </SelectTrigger>
@@ -59,7 +59,7 @@ export function TodosFilters({
                 <SelectItem value="low">{t('features.todos.priority.low')}</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
               <SelectTrigger className="w-[140px]">
                 <SelectValue placeholder={t('features.todos.sort.title')} />
               </SelectTrigger>

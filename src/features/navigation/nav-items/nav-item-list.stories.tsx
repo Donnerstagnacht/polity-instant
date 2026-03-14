@@ -3,9 +3,10 @@ import { NavItemList } from './nav-item-list.tsx';
 import { navItemsAuthenticated } from './nav-items-authenticated.tsx';
 import { navItemsUnauthenticated } from './nav-items-unauthenticated.tsx';
 import { fn } from 'storybook/test';
+import type { NavigationView } from '@/features/navigation/types/navigation.types.tsx';
 
 // Wrapper component to use the function
-function AuthenticatedNavItemWrapper(args: any) {
+function AuthenticatedNavItemWrapper(args: Record<string, unknown>) {
   const router = {
     navigate: fn(() => {
       // Mock navigation for Storybook
@@ -21,7 +22,9 @@ function AuthenticatedNavItemWrapper(args: any) {
     <NavItemList
       {...args}
       navigationItems={primaryNavItems}
-      navigationView={args.navigationView || 'asButtonList'}
+      isMobile={args.isMobile as boolean ?? true}
+      isPrimary={args.isPrimary as boolean ?? true}
+      navigationView={(args.navigationView as string as NavigationView) || 'asButtonList'}
     />
   );
 }

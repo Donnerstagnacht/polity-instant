@@ -229,11 +229,11 @@ export function EventPositions({ eventId }: { eventId: string }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {positions.map((position: any) => {
+                  {positions.map((position) => {
                     const holders = position.holders || [];
                     const filledSlots = holders.length;
-                    const totalSlots = position.capacity || 1;
-                    const hasElection = position.createElectionOnAgenda;
+                    const totalSlots = 1;
+                    const hasElection = false;
 
                     return (
                       <TableRow key={position.id}>
@@ -255,14 +255,14 @@ export function EventPositions({ eventId }: { eventId: string }) {
                         <TableCell>
                           {holders.length > 0 ? (
                             <div className='flex -space-x-2'>
-                              {holders.slice(0, 3).map((holder: any) => (
+                              {holders.slice(0, 3).map((holder) => (
                                 <Avatar
                                   key={holder.id}
                                   className='h-8 w-8 border-2 border-background'
                                 >
-                                  <AvatarImage src={holder.user?.avatar} alt={holder.user?.name} />
+                                  <AvatarImage src={holder.user?.avatar ?? undefined} alt={[holder.user?.first_name, holder.user?.last_name].filter(Boolean).join(' ') || undefined} />
                                   <AvatarFallback>
-                                    {holder.user?.name?.[0]?.toUpperCase() || '?'}
+                                    {holder.user?.first_name?.[0]?.toUpperCase() || '?'}
                                   </AvatarFallback>
                                 </Avatar>
                               ))}

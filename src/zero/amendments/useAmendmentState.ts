@@ -241,14 +241,14 @@ export function useAmendmentState(options: AmendmentStateOptions = {}) {
   const collaboratorCount = useMemo(
     () =>
       collaborators.filter(
-        (c: any) => c.status === 'member' || c.status === 'admin'
+        c => c.status === 'member' || c.status === 'admin'
       ).length,
     [collaborators]
   )
 
   const collaboratorStats = useMemo(() => {
     const stats = { total: collaborators.length, admins: 0, members: 0, invited: 0 }
-    collaborators.forEach((c: any) => {
+    collaborators.forEach(c => {
       if (c.status === 'admin') stats.admins++
       if (c.status === 'member') stats.members++
       if (c.status === 'invited') stats.invited++
@@ -269,7 +269,7 @@ export function useAmendmentState(options: AmendmentStateOptions = {}) {
   const isSubscribed = useMemo(
     () =>
       userId
-        ? (subscribers ?? []).some((s: any) => s.subscriber_user?.id === userId)
+        ? (subscribers ?? []).some(s => s.subscriber_user?.id === userId)
         : false,
     [subscribers, userId]
   )

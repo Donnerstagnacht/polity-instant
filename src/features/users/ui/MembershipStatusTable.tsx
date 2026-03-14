@@ -17,7 +17,7 @@ interface MembershipItem {
   status?: string | null;
   createdAt?: string;
   role?: { name?: string | null };
-  [key: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any -- dynamic entity key access requires index signature
+  [key: string]: unknown;
 }
 
 interface EntityData {
@@ -82,7 +82,7 @@ export function MembershipStatusTable({
   }
 
   const getEntityData = (item: MembershipItem): EntityData | null => {
-    return item[entityKey] || null;
+    return (item[entityKey] as EntityData | null | undefined) ?? null;
   };
 
   const getEntityName = (entity: EntityData | null): string => {

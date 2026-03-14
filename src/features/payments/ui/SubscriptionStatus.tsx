@@ -237,7 +237,7 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {payments.map((payment: any) => (
+              {payments.map((payment) => (
                 <div
                   key={payment.id}
                   className="flex items-center justify-between rounded-lg border p-3"
@@ -274,7 +274,7 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {subscriptions.slice(1).map((subscription: any) => (
+              {subscriptions.slice(1).map((subscription) => (
                 <div
                   key={subscription.id}
                   className="flex items-center justify-between rounded-lg border p-3"

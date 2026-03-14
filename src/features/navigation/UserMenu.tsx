@@ -60,9 +60,9 @@ export function UserMenu({
     const memberships = membershipsData?.groupMemberships || [];
     return memberships
       .filter(
-        (m: any) => m.group && (m.status === 'active' || m.status === 'admin' || m.role === 'admin')
+        (m) => m.group && (m.status === 'active' || m.status === 'admin' || m.role?.name === 'admin')
       )
-      .map((m: any) => m.group)
+      .map((m) => m.group)
       .slice(0, 5); // Limit to 5 groups to keep menu manageable
   }, [membershipsData]);
 
@@ -156,7 +156,7 @@ export function UserMenu({
               <DropdownMenuLabel className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
                 {t('common.labels.groups')}
               </DropdownMenuLabel>
-              {activeGroups.map((group: any) => (
+          {activeGroups.map((group) => group && (
                 <DropdownMenuItem
                   key={group.id}
                   onClick={() => handleGroupClick(group.id)}
@@ -164,7 +164,7 @@ export function UserMenu({
                 >
                   <div className="flex items-center gap-2">
                     <Avatar className="h-5 w-5">
-                      <AvatarImage src={group.imageURL} alt={group.name} />
+                      <AvatarImage src={group.image_url ?? undefined} alt={group.name ?? undefined} />
                       <AvatarFallback className="text-[10px]">
                         {group.name?.[0]?.toUpperCase() || 'G'}
                       </AvatarFallback>

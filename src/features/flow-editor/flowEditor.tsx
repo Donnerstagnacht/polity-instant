@@ -30,7 +30,7 @@ interface Node {
   id: string;
   position: { x: number; y: number };
 
-  data: any;
+  data: Record<string, unknown>;
   type?: string;
   style?: React.CSSProperties;
   parentId?: string;
@@ -45,7 +45,7 @@ interface Edge {
   animated?: boolean;
   type?: string;
   style?: React.CSSProperties;
-  data?: any;
+  data?: Record<string, unknown>;
 }
 
 // Custom Group Node component
@@ -348,7 +348,7 @@ export function FlowEditor() {
       } else {
         // In single-select mode, just select this node
         setSelectedNodes([node]);
-        setNodeLabel(node.data.label || '');
+        setNodeLabel((node.data.label as string) || '');
         setIsEditingNode(false);
       }
     },
@@ -524,7 +524,7 @@ export function FlowEditor() {
   const cancelEditNode = useCallback(() => {
     if (selectedNodes.length !== 1) return;
     setIsEditingNode(false);
-    setNodeLabel(selectedNodes[0].data.label || '');
+    setNodeLabel((selectedNodes[0].data.label as string) || '');
   }, [selectedNodes]);
 
   // Update node properties
@@ -717,7 +717,7 @@ export function FlowEditor() {
               </div>
             ) : (
               <div>
-                <h3 className="text-md font-bold">{selectedNodes[0].data.label}</h3>
+                <h3 className="text-md font-bold">{selectedNodes[0].data.label as string}</h3>
                 <div className="mt-2 flex gap-2">
                   <Button size="sm" onClick={startEditingNode}>
                     Edit Node

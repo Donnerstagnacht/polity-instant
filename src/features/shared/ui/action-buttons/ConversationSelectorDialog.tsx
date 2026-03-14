@@ -33,11 +33,11 @@ interface Conversation {
       handle?: string;
     };
   }[];
-  messages: any[];
+  messages: Record<string, unknown>[];
   status?: string;
   type?: string;
   name?: string;
-  group?: any;
+  group?: { id: string; name?: string; imageURL?: string };
 }
 
 export function ConversationSelectorDialog({
@@ -74,7 +74,7 @@ export function ConversationSelectorDialog({
     return conversations
       .filter((conv: Conversation) => {
         // Search in participant names
-        const participantMatch = conv.participants.some((p: any) => {
+        const participantMatch = conv.participants.some((p) => {
           const name = p.user?.name?.toLowerCase() || '';
           const handle = p.user?.handle?.toLowerCase() || '';
           return (

@@ -57,15 +57,15 @@ export function KanbanBoard({ todos }: KanbanBoardProps) {
     if (!draggedTodoId) return;
 
     try {
-      const updates: any = {
+      const updates: Record<string, string | number | null> = {
         status,
-        updatedAt: Date.now(),
+        updated_at: Date.now(),
       };
 
       if (status === 'completed') {
-        updates.completedAt = Date.now();
+        updates.completed_at = Date.now();
       } else {
-        updates.completedAt = null;
+        updates.completed_at = null;
       }
 
       await updateTodo({ id: draggedTodoId, ...updates });
@@ -140,11 +140,11 @@ interface TodoKanbanCardProps {
   onDragStart: (todoId: string) => void;
   onClick: (todo: Todo) => void;
   isDragging: boolean;
-  t: (key: string, options?: any) => string;
+  t: (key: string, paramsOrFallback?: string | Record<string, string | number | undefined | null>, fallback?: string) => string;
 }
 
 function TodoKanbanCard({ todo, onDragStart, onClick, isDragging, t }: TodoKanbanCardProps) {
-  const dueDateMs = todo.dueDate ? (typeof todo.dueDate === 'number' ? todo.dueDate : parseInt(todo.dueDate, 10)) : null;
+  const dueDateMs = todo.due_date ? (typeof todo.due_date === 'number' ? todo.due_date : parseInt(String(todo.due_date), 10)) : null;
   const isOverdue = dueDateMs !== null && todo.status !== 'completed' && dueDateMs < Date.now();
   const [isDraggingCard, setIsDraggingCard] = useState(false);
 
@@ -197,7 +197,7 @@ function TodoKanbanCard({ todo, onDragStart, onClick, isDragging, t }: TodoKanba
         <div className="space-y-2">
           {/* Priority */}
           <div className="flex items-center justify-between">
-            <PriorityBadge priority={todo.priority} t={t} />
+            <PriorityBadge priority={(todo.priority ?? 'medium') as TodoPriority} t={t} />
             {isOverdue && (
               <Badge variant="destructive" className="text-xs">
                 {t('features.todos.status.overdue')}
@@ -206,10 +206,10 @@ function TodoKanbanCard({ todo, onDragStart, onClick, isDragging, t }: TodoKanba
           </div>
 
           {/* Due date */}
-          {todo.dueDate && (
+          {todo.due_date && (
             <div className="text-muted-foreground flex items-center gap-1 text-xs">
               <Calendar className="h-3 w-3" />
-              <span>{formatDate(todo.dueDate)}</span>
+              <span>{formatDate(todo.due_date)}</span>
             </div>
           )}
 
@@ -217,9 +217,9 @@ function TodoKanbanCard({ todo, onDragStart, onClick, isDragging, t }: TodoKanba
           {todo.assignments && todo.assignments.length > 0 && (
             <div className="flex items-center gap-1">
               <div className="flex -space-x-2">
-                {todo.assignments.slice(0, 3).map((assignment: any, idx: number) => (
+                {todo.assignments.slice(0, 3).map((assignment, idx: number) => (
                   <Avatar key={idx} className="border-background h-5 w-5 border-2">
-                    <AvatarImage src={assignment.user?.avatar} />
+                    <AvatarImage src={assignment.user?.avatar ?? undefined} />
                     <AvatarFallback className="text-xs">
                       {assignment.user?.email?.[0]?.toUpperCase() || '?'}
                     </AvatarFallback>
@@ -255,7 +255,7 @@ function TodoKanbanCard({ todo, onDragStart, onClick, isDragging, t }: TodoKanba
   );
 }
 
-function PriorityBadge({ priority, t }: { priority: TodoPriority; t: (key: string) => string }) {
+function PriorityBadge({ priority, t }: { priority: TodoPriority; t: (key: string, paramsOrFallback?: string | Record<string, string | number | undefined | null>, fallback?: string) => string }) {
   const colors = {
     urgent: 'bg-red-500/10 text-red-500 border-red-500/20',
     high: 'bg-orange-500/10 text-orange-500 border-orange-500/20',

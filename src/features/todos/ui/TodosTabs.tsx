@@ -32,7 +32,7 @@ export function TodosTabs({
   const { t } = useTranslation();
   
   return (
-    <Tabs value={selectedTab} onValueChange={(v: any) => setSelectedTab(v)}>
+    <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as typeof selectedTab)}>
       <ScrollableTabsList className="mb-6">
         <TabsTrigger value="all" className="flex items-center gap-2">
           <CheckSquare className="h-4 w-4" />

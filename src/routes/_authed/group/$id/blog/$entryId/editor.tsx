@@ -16,9 +16,9 @@ function GroupBlogEditorPage() {
     ? {
         name: [currentUser.first_name, currentUser.last_name].filter(Boolean).join(' ') || currentUser.handle || '',
         email: user?.email,
-        avatar: currentUser.avatar,
+        avatar: currentUser.avatar ?? undefined,
       }
-    : undefined
+    : {}
 
   return (
     <BlogEditorView

@@ -18,7 +18,7 @@ export interface GroupRelationship {
 
 export interface PathSegment {
   group: GroupNode;
-  event?: any;
+  event?: { id: string; title?: string; startDate?: string | number };
   relationship?: {
     type: 'parent' | 'child' | 'member';
     right?: string;
@@ -198,9 +198,16 @@ export function findAllPaths(
  * Convert a path to storage format for the database
  * Returns an array suitable for storing in amendmentPaths.pathData
  */
+interface EventWithGroup {
+  id: string;
+  title?: string;
+  startDate: string | number;
+  group?: { id: string };
+}
+
 export function pathToStorageFormat(
   path: PathSegment[],
-  events: any[] = []
+  events: EventWithGroup[] = []
 ): {
   groupId: string;
   groupName: string;
@@ -209,10 +216,10 @@ export function pathToStorageFormat(
 }[] {
   return path.map(segment => {
     // Find the nearest future event for this group
-    const groupEvents = events.filter((e: any) => e.group?.id === segment.group.id);
-    const futureEvents = groupEvents.filter((e: any) => new Date(e.startDate) > new Date());
+    const groupEvents = events.filter((e) => e.group?.id === segment.group.id);
+    const futureEvents = groupEvents.filter((e) => new Date(e.startDate) > new Date());
     const nearestEvent = futureEvents.sort(
-      (a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+      (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
     )[0];
 
     return {

@@ -2,7 +2,7 @@ import { Badge } from '@/features/shared/ui/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Calendar, Tag, Users, Building2, AlertTriangle } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
-import { Todo } from '../types/todo.types';
+import { Todo, TodoStatus, TodoPriority } from '../types/todo.types';
 import { formatTodoDate, formatTodoDateTime, isOverdue } from '../utils/todoFormatters';
 import { TodoStatusIcon } from './TodoStatusIcon';
 import { TodoPriorityBadge, TodoPriorityIcon } from './TodoPriorityBadge';
@@ -12,7 +12,7 @@ interface TodoDetailViewProps {
 }
 
 export function TodoDetailView({ todo }: TodoDetailViewProps) {
-  const todoIsOverdue = isOverdue(todo.dueDate, todo.status);
+  const todoIsOverdue = isOverdue(todo.due_date ?? undefined, todo.status ?? '');
 
   return (
     <div className="space-y-6">
@@ -21,16 +21,16 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
         <div>
           <label className="mb-2 block text-sm font-medium">Status</label>
           <div className="flex items-center gap-2">
-            <TodoStatusIcon status={todo.status} />
-            <span className="capitalize">{todo.status.replace('_', ' ')}</span>
+            <TodoStatusIcon status={(todo.status ?? 'pending') as TodoStatus} />
+            <span className="capitalize">{(todo.status ?? '').replace('_', ' ')}</span>
           </div>
         </div>
 
         <div>
           <label className="mb-2 block text-sm font-medium">Priority</label>
           <div className="flex items-center gap-2">
-            <TodoPriorityIcon priority={todo.priority} />
-            <TodoPriorityBadge priority={todo.priority} />
+            <TodoPriorityIcon priority={(todo.priority ?? 'medium') as TodoPriority} />
+            <TodoPriorityBadge priority={(todo.priority ?? 'medium') as TodoPriority} />
           </div>
         </div>
       </div>
@@ -46,11 +46,11 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
       {/* Due Date */}
       <div>
         <label className="mb-2 block text-sm font-medium">Due Date</label>
-        {todo.dueDate ? (
+        {todo.due_date ? (
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <span className={todoIsOverdue ? 'font-medium text-destructive' : ''}>
-              {formatTodoDate(todo.dueDate)}
+              {formatTodoDate(todo.due_date)}
             </span>
             {todoIsOverdue && (
               <Badge variant="destructive" className="ml-2">
@@ -74,7 +74,7 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
             className="flex items-center gap-2 text-sm hover:underline"
           >
             <Avatar className="h-6 w-6">
-              <AvatarImage src={todo.creator.avatar} />
+              <AvatarImage src={todo.creator.avatar ?? undefined} />
               <AvatarFallback>{todo.creator.email?.[0]?.toUpperCase() || '?'}</AvatarFallback>
             </Avatar>
             <span>{todo.creator.email?.split('@')[0] || 'Unknown'}</span>
@@ -98,7 +98,7 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
                 className="flex items-center gap-2 text-sm hover:underline"
               >
                 <Avatar className="h-6 w-6">
-                  <AvatarImage src={assignment.user?.avatar} />
+                  <AvatarImage src={assignment.user?.avatar ?? undefined} />
                   <AvatarFallback>
                     {assignment.user?.email?.[0]?.toUpperCase() || '?'}
                   </AvatarFallback>
@@ -123,7 +123,7 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
             className="flex items-center gap-2 text-sm hover:underline"
           >
             <Avatar className="h-6 w-6">
-              <AvatarImage src={todo.group.imageURL} />
+              <AvatarImage src={todo.group.image_url ?? undefined} />
               <AvatarFallback>{todo.group.name?.[0]?.toUpperCase() || 'G'}</AvatarFallback>
             </Avatar>
             <span>{todo.group.name}</span>
@@ -151,10 +151,10 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
       {/* Metadata */}
       <div className="border-t pt-4 text-xs text-muted-foreground">
         <div className="grid grid-cols-2 gap-2">
-          <div>Created: {todo.createdAt ? formatTodoDateTime(todo.createdAt) : 'N/A'}</div>
-          <div>Updated: {todo.updatedAt ? formatTodoDateTime(todo.updatedAt) : 'N/A'}</div>
-          {todo.completedAt && (
-            <div className="col-span-2">Completed: {formatTodoDateTime(todo.completedAt)}</div>
+          <div>Created: {todo.created_at ? formatTodoDateTime(todo.created_at) : 'N/A'}</div>
+          <div>Updated: {todo.updated_at ? formatTodoDateTime(todo.updated_at) : 'N/A'}</div>
+          {todo.completed_at && (
+            <div className="col-span-2">Completed: {formatTodoDateTime(todo.completed_at)}</div>
           )}
         </div>
       </div>

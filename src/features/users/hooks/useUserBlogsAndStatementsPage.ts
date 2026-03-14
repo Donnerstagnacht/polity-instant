@@ -19,14 +19,14 @@ export function useUserBlogsAndStatementsPage({ userId }: UseUserBlogsAndStateme
   // Filter to only personal blogs (no group_id) since group blogs appear on group pages
   const blogs = useMemo(() => {
     const items = (bloggersByUser ?? [])
-      .map((row: any) => row.blog ? { ...row.blog, user_id: userId } : null)
-      .filter((blog: any) => blog && !blog.group_id);
+      .map((row) => row.blog ? { ...row.blog, user_id: userId } : null)
+      .filter((blog) => blog && !blog.group_id);
     if (!searchQuery) return items;
     const q = searchQuery.toLowerCase();
     return items.filter(
-      (b: any) =>
-        (b.title ?? '').toLowerCase().includes(q) ||
-        (b.description ?? '').toLowerCase().includes(q),
+      (b) =>
+        (b?.title ?? '').toLowerCase().includes(q) ||
+        (b?.description ?? '').toLowerCase().includes(q),
     );
   }, [bloggersByUser, searchQuery]);
 
@@ -34,7 +34,7 @@ export function useUserBlogsAndStatementsPage({ userId }: UseUserBlogsAndStateme
     const items = statementsByUser ?? [];
     if (!searchQuery) return items;
     const q = searchQuery.toLowerCase();
-    return items.filter((s: any) => (s.text ?? '').toLowerCase().includes(q));
+    return items.filter((s) => (s.text ?? '').toLowerCase().includes(q));
   }, [statementsByUser, searchQuery]);
 
   return {

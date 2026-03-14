@@ -27,6 +27,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { toast } from 'sonner';
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
+import type { NormalizedGroupRelationship } from '../types/network.types';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { RIGHT_GRADIENTS } from './RightFilters';
 
@@ -39,7 +40,7 @@ interface LinkGroupDialogProps {
   initialRights?: string[];
   trigger?: React.ReactNode;
   // Optimistic/Parent Data
-  allRelationships?: any[];
+  allRelationships?: NormalizedGroupRelationship[];
 }
 
 type RelationshipType = 'isParent' | 'isChild';
@@ -108,7 +109,7 @@ export function LinkGroupDialog({
 
   // Fetch all groups (needed for name info if not passed, and for selector)
   const { searchResults: availableGroupsRaw } = useGroupState({ includeSearch: true });
-  const availableGroups = (availableGroupsRaw || []).filter((g: any) => g.id !== currentGroupId);
+  const availableGroups = (availableGroupsRaw || []).filter((g) => g.id !== currentGroupId);
 
   // Fetch existing relationships to Handle Syncing (avoid duplicates, handle removals)
   const shouldQuery = !allRelationships && !!selectedGroupId && open;
@@ -166,37 +167,29 @@ export function LinkGroupDialog({
       // 3. Remove unchecked rights
 
       // Filter existing relationships to match the CURRENT direction selection
-      const currentDirectionRels = relevantRelationships.filter((rel: any) => {
+      const currentDirectionRels = relevantRelationships.filter((rel) => {
           if (relationshipType === 'isParent') {
               // Selected is Parent, Current is Child
-              return rel.parentGroup?.id === selectedGroupId && rel.childGroup?.id === currentGroupId;
+              return rel.group_id === selectedGroupId && rel.related_group_id === currentGroupId;
           } else {
                // Current is Parent, Selected is Child
-               return rel.parentGroup?.id === currentGroupId && rel.childGroup?.id === selectedGroupId;
+               return rel.group_id === currentGroupId && rel.related_group_id === selectedGroupId;
           }
       });
       
-      const existingRightsSet = new Set(currentDirectionRels.map((r: any) => r.withRight));
+      const existingRightsSet = new Set(currentDirectionRels.map((r) => r.with_right));
 
       // 1. Additions
       for (const right of selectedRights) {
           if (!existingRightsSet.has(right)) {
               // Create new
               const relationshipId = crypto.randomUUID();
-              const relationshipData: any = {
-                relationshipType, // This string is stored in DB? Or just used for structure? Seeder uses 'isParent'/'isChild' string? Let's check. 
-                // Seeder uses 'groupRelationships' entries, usually just link. 
-                // Wait, schemas usually don't have 'relationshipType' string field if structure defines it.
-                // Checking previous `GroupNetworkFlow` code, it reads `rel.withRight`.
-                // Converting `relationshipType` state to DB structure:
-                // If isParent: parent=Selected, child=Current
-                // If isChild: parent=Current, child=Selected
-                // The DB object usually stores `withRight`.
-                withRight: right,
+              const relationshipData = {
+                withRight: right as string | null,
                 createdAt: now,
                 updatedAt: now,
-                status: 'requested', 
-                initiatorGroupId: currentGroupId,
+                status: 'requested' as string | null, 
+                initiatorGroupId: currentGroupId as string | null,
               };
 
               if (relationshipType === 'isParent') {
@@ -222,7 +215,7 @@ export function LinkGroupDialog({
 
       // 2. Removals
       for (const rel of currentDirectionRels) {
-          if (!selectedRights.has(rel.withRight as WithRight)) {
+          if (!selectedRights.has(rel.with_right as WithRight)) {
               // Remove this relationship
               // Group relationship deletion via raw zero.mutate
               transactions.push({
@@ -320,8 +313,8 @@ export function LinkGroupDialog({
                 items={toTypeaheadItems(
                   availableGroups,
                   'group',
-                  (group: any) => group.name || 'Group',
-                  (group: any) => group.description?.substring(0, 60),
+                  (group) => group.name || 'Group',
+                  (group) => group.description?.substring(0, 60),
                 )}
                 value={selectedGroupId}
                 onChange={(item: TypeaheadItem | null) => setSelectedGroupId(item?.id ?? '')}

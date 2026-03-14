@@ -43,9 +43,9 @@ export function PushNotificationToggle({
         // Only show success if subscribe didn't throw
         toast.success(t('components.pushNotifications.activated'));
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[PushNotificationToggle] Error:', err);
-      toast.error(err.message || t('components.pushNotifications.error'));
+      toast.error(err instanceof Error ? err.message : t('components.pushNotifications.error'));
     }
   };
 

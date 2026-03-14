@@ -2,7 +2,8 @@
  * Shared helpers for server-side mutator overrides.
  * Provides DB lookup functions used across domain server-mutators.
  */
-import { zql } from './schema'
+import { type Transaction } from '@rocicorp/zero'
+import { zql, type Schema } from './schema'
 
 const ACTIVE_GROUP_STATUSES = new Set(['active', 'member', 'admin'])
 const ACTIVE_EVENT_STATUSES = new Set(['confirmed', 'member', 'admin'])
@@ -13,42 +14,42 @@ function isOpenChangeRequest(status: string | null | undefined) {
 }
 
 /** Read group name by id. */
-export async function groupName(tx: any, groupId: string): Promise<string> {
+export async function groupName(tx: Transaction<Schema>, groupId: string): Promise<string> {
   const g = await tx.run(zql.group.where('id', groupId).one())
   return g?.name ?? 'Group'
 }
 
 /** Read event title by id. */
-export async function eventTitle(tx: any, eventId: string): Promise<string> {
+export async function eventTitle(tx: Transaction<Schema>, eventId: string): Promise<string> {
   const e = await tx.run(zql.event.where('id', eventId).one())
   return e?.title ?? 'Event'
 }
 
 /** Read amendment title by id. */
-export async function amendmentTitle(tx: any, amendmentId: string): Promise<string> {
+export async function amendmentTitle(tx: Transaction<Schema>, amendmentId: string): Promise<string> {
   const a = await tx.run(zql.amendment.where('id', amendmentId).one())
   return a?.title ?? 'Amendment'
 }
 
 /** Read blog title by id. */
-export async function blogTitle(tx: any, blogId: string): Promise<string> {
+export async function blogTitle(tx: Transaction<Schema>, blogId: string): Promise<string> {
   const b = await tx.run(zql.blog.where('id', blogId).one())
   return b?.title ?? 'Blog'
 }
 
 /** Read user display name. */
-export async function userName(tx: any, userId: string): Promise<string> {
+export async function userName(tx: Transaction<Schema>, userId: string): Promise<string> {
   const u = await tx.run(zql.user.where('id', userId).one())
-  return u?.name || u?.email?.split('@')[0] || 'A user'
+  return [u?.first_name, u?.last_name].filter(Boolean).join(' ') || u?.email?.split('@')[0] || 'A user'
 }
 
 /** Read role by id. */
-export async function roleName(tx: any, roleId: string): Promise<{ name: string; groupId: string | null }> {
+export async function roleName(tx: Transaction<Schema>, roleId: string): Promise<{ name: string; groupId: string | null }> {
   const r = await tx.run(zql.role.where('id', roleId).one())
   return { name: r?.name ?? 'Role', groupId: r?.group_id ?? null }
 }
 
-export async function recomputeUserCounters(tx: any, userId: string): Promise<void> {
+export async function recomputeUserCounters(tx: Transaction<Schema>, userId: string): Promise<void> {
   const [subscribers, memberships, amendments] = await Promise.all([
     tx.run(zql.subscriber.where('user_id', userId)),
     tx.run(zql.group_membership.where('user_id', userId)),
@@ -56,7 +57,7 @@ export async function recomputeUserCounters(tx: any, userId: string): Promise<vo
   ])
 
   const groups = memberships.filter(
-    (membership: any) => membership.source !== 'derived' && ACTIVE_GROUP_STATUSES.has(membership.status ?? '')
+    membership => membership.source !== 'derived' && ACTIVE_GROUP_STATUSES.has(membership.status ?? '')
   ).length
 
   await tx.mutate.user.update({
@@ -67,7 +68,7 @@ export async function recomputeUserCounters(tx: any, userId: string): Promise<vo
   })
 }
 
-export async function recomputeGroupCounters(tx: any, groupId: string): Promise<void> {
+export async function recomputeGroupCounters(tx: Transaction<Schema>, groupId: string): Promise<void> {
   const [memberships, subscribers, events, amendments] = await Promise.all([
     tx.run(zql.group_membership.where('group_id', groupId)),
     tx.run(zql.subscriber.where('group_id', groupId)),
@@ -75,8 +76,8 @@ export async function recomputeGroupCounters(tx: any, groupId: string): Promise<
     tx.run(zql.amendment.where('group_id', groupId)),
   ])
 
-  const members = memberships.filter((membership: any) => ACTIVE_GROUP_STATUSES.has(membership.status ?? '')).length
-  const activeEvents = events.filter((event: any) => event.status !== 'cancelled').length
+  const members = memberships.filter(membership => ACTIVE_GROUP_STATUSES.has(membership.status ?? '')).length
+  const activeEvents = events.filter(event => event.status !== 'cancelled').length
 
   await tx.mutate.group.update({
     id: groupId,
@@ -87,7 +88,7 @@ export async function recomputeGroupCounters(tx: any, groupId: string): Promise<
   })
 }
 
-export async function recomputeEventCounters(tx: any, eventId: string): Promise<void> {
+export async function recomputeEventCounters(tx: Transaction<Schema>, eventId: string): Promise<void> {
   const [participants, subscribers, agendaItems, amendments] = await Promise.all([
     tx.run(zql.event_participant.where('event_id', eventId)),
     tx.run(zql.subscriber.where('event_id', eventId)),
@@ -95,9 +96,9 @@ export async function recomputeEventCounters(tx: any, eventId: string): Promise<
     tx.run(zql.amendment.where('event_id', eventId)),
   ])
 
-  const participantCount = participants.filter((participant: any) => ACTIVE_EVENT_STATUSES.has(participant.status ?? '')).length
-  const agendaItemIds = agendaItems.map((item: any) => item.id)
-  const amendmentIds = amendments.map((amendment: any) => amendment.id)
+  const participantCount = participants.filter(participant => ACTIVE_EVENT_STATUSES.has(participant.status ?? '')).length
+  const agendaItemIds = agendaItems.map(item => item.id)
+  const amendmentIds = amendments.map(amendment => amendment.id)
 
   const [elections, changeRequests] = await Promise.all([
     agendaItemIds.length > 0
@@ -108,7 +109,7 @@ export async function recomputeEventCounters(tx: any, eventId: string): Promise<
       : Promise.resolve([]),
   ])
 
-  const openChangeRequests = changeRequests.filter((changeRequest: any) => isOpenChangeRequest(changeRequest.status)).length
+  const openChangeRequests = changeRequests.filter(changeRequest => isOpenChangeRequest(changeRequest.status)).length
 
   await tx.mutate.event.update({
     id: eventId,
@@ -120,7 +121,7 @@ export async function recomputeEventCounters(tx: any, eventId: string): Promise<
   })
 }
 
-export async function recomputeAmendmentCounters(tx: any, amendmentId: string): Promise<void> {
+export async function recomputeAmendmentCounters(tx: Transaction<Schema>, amendmentId: string): Promise<void> {
   const [collaborators, subscribers, clones, changeRequests, supportVotes] = await Promise.all([
     tx.run(zql.amendment_collaborator.where('amendment_id', amendmentId)),
     tx.run(zql.subscriber.where('amendment_id', amendmentId)),
@@ -129,7 +130,7 @@ export async function recomputeAmendmentCounters(tx: any, amendmentId: string): 
     tx.run(zql.amendment_support_vote.where('amendment_id', amendmentId)),
   ])
 
-  const activeCollaborators = collaborators.filter((collaborator: any) =>
+  const activeCollaborators = collaborators.filter(collaborator =>
     ACTIVE_COLLABORATOR_STATUSES.has(collaborator.status ?? '')
   ).length
 
@@ -143,19 +144,19 @@ export async function recomputeAmendmentCounters(tx: any, amendmentId: string): 
   })
 }
 
-export async function recomputeBlogCounters(tx: any, blogId: string): Promise<void> {
+export async function recomputeBlogCounters(tx: Transaction<Schema>, blogId: string): Promise<void> {
   const [subscribers, supportVotes, threads] = await Promise.all([
     tx.run(zql.subscriber.where('blog_id', blogId)),
     tx.run(zql.blog_support_vote.where('blog_id', blogId)),
     tx.run(zql.thread.where('blog_id', blogId)),
   ])
 
-  const threadIds = threads.map((thread: any) => thread.id)
+  const threadIds = threads.map(thread => thread.id)
   const comments = threadIds.length > 0
     ? await tx.run(zql.comment.where('thread_id', 'IN', threadIds))
     : []
 
-  const supporters = supportVotes.filter((vote: any) => (vote.vote ?? 0) > 0).length
+  const supporters = supportVotes.filter(vote => (vote.vote ?? 0) > 0).length
 
   await tx.mutate.blog.update({
     id: blogId,

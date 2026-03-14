@@ -103,7 +103,7 @@ export const PlaceholderElement = withHOC(
       }
 
       // Create the appropriate node based on media type
-      const node: any = {
+      const node: Record<string, unknown> = {
         children: [{ text: '' }],
         isUpload: true,
         type: element.mediaType || 'file',
@@ -129,11 +129,11 @@ export const PlaceholderElement = withHOC(
 
       // Remove the placeholder and insert the actual media node at the same location
       editor.tf.removeNodes({ at: path });
-      editor.tf.insertNodes(node, { at: path });
+      editor.tf.insertNodes(node as never, { at: path });
 
       // Only update upload history if the plugin is configured
       try {
-        updateUploadHistory(editor, node);
+        updateUploadHistory(editor, node as never);
       } catch (error) {
         console.warn('Upload history plugin not configured:', error);
       }

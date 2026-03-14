@@ -30,10 +30,26 @@ import { Network, Pencil, Trash2 } from 'lucide-react';
 import { formatRights } from '@/features/network/ui/RightFilters';
 import { LinkGroupDialog } from '@/features/network/ui/LinkGroupDialog';
 import { PermissionGuard } from '@/features/auth/PermissionGuard';
+import type { NormalizedGroupRelationship } from '@/features/network/types/network.types';
 import { useState } from 'react';
 
+interface RelationshipGroup {
+  id: string;
+  name?: string | null;
+  imageURL?: string | null;
+  description?: string | null;
+}
+
+interface RelationshipRow {
+  id: string;
+  with_right?: string;
+  parent_group_id?: string;
+  child_group_id?: string;
+  status?: string;
+}
+
 interface RelationshipItem {
-  group: any;
+  group: RelationshipGroup;
   rights: string[];
   type: 'parent' | 'child';
 }
@@ -42,7 +58,7 @@ interface ActiveRelationshipsTableProps {
   relationships: RelationshipItem[];
   groupId: string;
   groupName: string;
-  allRelationships: any[];
+  allRelationships: NormalizedGroupRelationship[];
   onDelete: (targetGroupId: string) => void;
 }
 

@@ -46,7 +46,7 @@ export function StatementSearchCard({ item }: StatementSearchCardProps) {
               <div className="mt-0.5 flex flex-wrap gap-1">
                 {item.surveyOptions!.slice(0, 4).map((opt, i) => (
                   <span key={i} className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                    {opt}
+                    {opt.label}
                   </span>
                 ))}
               </div>
@@ -62,7 +62,7 @@ export function StatementSearchCard({ item }: StatementSearchCardProps) {
             {/* Creator */}
             <div className="flex items-center gap-1 min-w-0">
               <Avatar className="h-4 w-4 shrink-0">
-                <AvatarImage src={item.authorAvatar} />
+                <AvatarImage src={item.authorAvatar ?? undefined} />
                 <AvatarFallback className="text-[8px]">
                   <User className="h-2.5 w-2.5" />
                 </AvatarFallback>

@@ -200,9 +200,9 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
 
       setIsSubscribed(true);
       setError(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       const errorMsg =
-        err.message || tRef.current('components.pushNotifications.errors.subscribeFailed');
+        err instanceof Error ? err.message : tRef.current('components.pushNotifications.errors.subscribeFailed');
       setError(errorMsg);
       setIsSubscribed(false);
       throw err;
@@ -237,7 +237,7 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
 
         // Remove matching subscription record(s) from Zero
         const matchingSubs = (pushSubscriptionsData || []).filter(
-          (sub: any) => sub.endpoint === endpoint
+          (sub) => sub.endpoint === endpoint
         );
 
         for (const sub of matchingSubs) {
@@ -247,9 +247,9 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
 
       setIsSubscribed(false);
       setError(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(
-        err.message || tRef.current('components.pushNotifications.errors.unsubscribeFailed')
+        err instanceof Error ? err.message : tRef.current('components.pushNotifications.errors.unsubscribeFailed')
       );
     } finally {
       setIsLoading(false);

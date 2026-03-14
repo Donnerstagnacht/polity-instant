@@ -5,7 +5,7 @@ import { useGroupAmendments as useFacadeGroupAmendments } from '@/zero/groups/us
  */
 export function useGroupAmendments(
   groupId: string,
-  _cursor: { after?: any; first: number } = { first: 20 }
+  _cursor: { after?: string; first: number } = { first: 20 }
 ) {
   const { amendments, isLoading } = useFacadeGroupAmendments(groupId)
 

@@ -20,7 +20,11 @@ import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from 'sonner';
-import { findShortestPath } from '@/features/amendments/logic/path-finding.ts';
+import {
+  calculateUpwardPathWithClosestEvents,
+  getActiveUserGroupIds,
+  getUpwardConnectedGroupsForUser,
+} from '@/features/amendments/logic/amendmentPathHelpers';
 import { NetworkFlowBase } from '@/features/network/ui/NetworkFlowBase';
 import { CalendarIcon, Target, X, RefreshCw, User } from 'lucide-react';
 import { MarkerType } from '@xyflow/react';
@@ -37,7 +41,7 @@ interface PendingTargetGroupData {
   id: string;
   name: string | null;
   description?: string | null;
-  member_count?: number;
+  member_count?: number | null;
 }
 
 interface PendingTargetEventData {
@@ -225,68 +229,15 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
     if (!user || !networkData) return null;
 
     const selectedUserId = targetCollaboratorUserId || user.id;
-    const userMemberships = networkData.groupMemberships.filter(
-      (m) => (m.status === 'active' || m.status === 'admin') && m.user?.id === selectedUserId
-    );
+    const userGroupIds = getActiveUserGroupIds(networkData.groupMemberships, selectedUserId);
 
-    const userGroupIds = userMemberships.map((m) => m.group?.id).filter((id): id is string => !!id);
-    const groups = networkData.groups;
-    const relationships = networkData.groupRelationships;
-    const events = networkData.events;
-
-    // Filter for amendmentRight relationships and map to findShortestPath interface
-    const amendmentRelationships = relationships
-      .filter((r) => r.with_right === 'amendmentRight')
-      .map((r) => ({
-        id: r.id,
-        parentGroup: { id: r.group?.id ?? '', name: r.group?.name ?? '' },
-        childGroup: { id: r.related_group?.id ?? '', name: r.related_group?.name ?? '' },
-        withRight: r.with_right ?? '',
-      }));
-
-    // Build groups map
-    const groupsMap = new Map();
-    groups.forEach((g) => {
-      groupsMap.set(g.id, {
-        id: g.id,
-        name: g.name,
-        description: g.description,
-      });
+    return calculateUpwardPathWithClosestEvents({
+      userGroupIds,
+      targetGroupId,
+      groups: networkData.groups,
+      relationships: networkData.groupRelationships,
+      events: networkData.events,
     });
-
-    // Find shortest path
-    const path = findShortestPath(userGroupIds, targetGroupId, amendmentRelationships, groupsMap);
-
-    if (!path) return null;
-
-    // For each group in path, find the closest upcoming event
-    const now = new Date();
-    const pathWithEvents = path.map((segment) => {
-      const groupId = segment.group.id;
-      const groupName = segment.group.name;
-
-      // Find all upcoming events for this group
-      const groupEvents = events.filter(
-        (e) => e.group?.id === groupId && new Date(e.start_date ?? 0) > now
-      );
-
-      // Sort by start date and pick the closest one
-      groupEvents.sort(
-        (a, b) => new Date(a.start_date ?? 0).getTime() - new Date(b.start_date ?? 0).getTime()
-      );
-
-      const closestEvent = groupEvents[0];
-
-      return {
-        groupId,
-        groupName,
-        eventId: closestEvent?.id || null,
-        eventTitle: closestEvent?.title || 'No upcoming event',
-        eventStartDate: closestEvent?.start_date || null,
-      };
-    });
-
-    return pathWithEvents;
   };
 
   // Handle target confirmation (new or update)
@@ -1173,7 +1124,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
       <NetworkEntityDialog
         open={entityDialogOpen}
         onOpenChange={setEntityDialogOpen}
-        entity={selectedEntity}
+        entity={selectedEntity as React.ComponentProps<typeof NetworkEntityDialog>['entity']}
       />
 
       {/* Target Selection Dialog */}
@@ -1521,45 +1472,12 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                   );
                 }
 
-                const userMemberships = networkData.groupMemberships.filter(
-                  (m) =>
-                    (m.status === 'active' || m.status === 'admin') && m.user?.id === targetUserId
+                const userGroupIds = getActiveUserGroupIds(networkData.groupMemberships, targetUserId);
+                const connectedGroups = getUpwardConnectedGroupsForUser(
+                  userGroupIds,
+                  networkData.groups,
+                  networkData.groupRelationships
                 );
-
-                const userGroupIds = userMemberships.map((m) => m.group?.id).filter((id): id is string => !!id);
-                const allGroups = networkData.groups;
-                const relationships = networkData.groupRelationships;
-
-                // Filter for amendmentRight relationships
-                const amendmentRelationships = relationships.filter(
-                  (r) => r.with_right === 'amendmentRight'
-                );
-
-                // Build set of connected groups (direct and indirect)
-                const connectedGroupIds = new Set<string>(userGroupIds);
-
-                // Add directly connected groups
-                amendmentRelationships.forEach((rel) => {
-                  if (userGroupIds.includes(rel.group?.id ?? '')) {
-                    if (rel.related_group?.id) connectedGroupIds.add(rel.related_group.id);
-                  }
-                  if (userGroupIds.includes(rel.related_group?.id ?? '')) {
-                    if (rel.group?.id) connectedGroupIds.add(rel.group.id);
-                  }
-                });
-
-                // Add indirectly connected groups (2 hops)
-                const firstHopGroups = Array.from(connectedGroupIds);
-                amendmentRelationships.forEach((rel) => {
-                  if (firstHopGroups.includes(rel.group?.id ?? '')) {
-                    if (rel.related_group?.id) connectedGroupIds.add(rel.related_group.id);
-                  }
-                  if (firstHopGroups.includes(rel.related_group?.id ?? '')) {
-                    if (rel.group?.id) connectedGroupIds.add(rel.group.id);
-                  }
-                });
-
-                const connectedGroups = allGroups.filter((g) => connectedGroupIds.has(g.id));
 
                 if (connectedGroups.length === 0) {
                   return (

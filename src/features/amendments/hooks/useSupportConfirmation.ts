@@ -26,7 +26,7 @@ interface SupportConfirmation {
     id: string;
     title: string;
     documents?: Array<{
-      content: any;
+      content: Record<string, unknown>;
     }>;
   };
 }
@@ -158,7 +158,7 @@ export function useSupportConfirmation(groupId?: string): UseSupportConfirmation
  * Caller must provide supporterGroups since this is a plain function, not a hook.
  */
 export async function triggerSupporterConfirmation(
-  mutate: (mutation: any) => any,
+  mutate: (mutation: ReturnType<typeof mutators.amendments.createSupportConfirmation> | ReturnType<typeof mutators.agendas.createAgendaItem>) => Promise<unknown>,
   params: {
     amendmentId: string;
     changeRequestId: string;
@@ -217,7 +217,7 @@ export async function triggerSupporterConfirmation(
  * Accepts a mutate function (from useMutate) instead of a Zero instance.
  */
 export async function createConfirmationAgendaItem(
-  mutate: (mutation: any) => any,
+  mutate: (mutation: ReturnType<typeof mutators.agendas.createAgendaItem>) => Promise<unknown>,
   params: {
     confirmationId: string;
     amendmentTitle: string;

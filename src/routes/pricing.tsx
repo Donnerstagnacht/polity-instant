@@ -32,7 +32,7 @@ function PricingPage() {
           {tierKeys.map((key) => {
             const highlighted = key === 'runningCosts'
             const isYourChoice = key === 'yourChoice'
-            const features = t(`pages.pricing.tiers.${key}.features`) as string[]
+            const features = t(`pages.pricing.tiers.${key}.features`) as unknown as string[]
             const period = t(`pages.pricing.tiers.${key}.period`)
             return (
               <Card key={key} className={highlighted ? 'border-primary shadow-md' : ''}>

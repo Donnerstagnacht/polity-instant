@@ -34,10 +34,10 @@ import { LinkGroupDialog } from './LinkGroupDialog';
 import { PermissionGuard } from '@/features/auth/PermissionGuard';
 import { Pencil, Trash2, Clock } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import type { NormalizedGroupRelationship } from '../types/network.types';
+import type { NormalizedGroupRelationship, NetworkGroupEntity } from '../types/network.types';
 
 interface GroupedRequest {
-  group: { id: string; name: string; description?: string };
+  group: { id: string; name?: string | null; description?: string | null; [key: string]: unknown };
   rels: NormalizedGroupRelationship[];
   type: 'parent' | 'child';
 }
@@ -56,11 +56,11 @@ interface ManageNetworkTabProps {
   incomingRequests: GroupedRequest[];
   outgoingRequests: GroupedRequest[];
   // Active relationships
-  filteredRelationships: { group: any; rights: string[]; type: 'parent' | 'child' }[];
-  allRelationships: any[];
+  filteredRelationships: { group: NetworkGroupEntity; rights: string[]; type: 'parent' | 'child' }[];
+  allRelationships: NormalizedGroupRelationship[];
   // Handlers
-  onAcceptRequest: (rels: any[]) => void;
-  onRejectRequest: (rels: any[]) => void;
+  onAcceptRequest: (rels: NormalizedGroupRelationship[]) => void;
+  onRejectRequest: (rels: NormalizedGroupRelationship[]) => void;
   onDeleteRelationship: (targetGroupId: string) => void;
 }
 

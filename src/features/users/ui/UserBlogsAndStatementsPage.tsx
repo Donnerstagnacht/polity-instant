@@ -38,8 +38,8 @@ export function UserBlogsAndStatementsPage({ userId }: UserBlogsAndStatementsPag
 
   return (
     <BlogsAndStatementsView
-      blogs={blogs}
-      statements={statements}
+      blogs={blogs as unknown as Parameters<typeof BlogsAndStatementsView>[0]['blogs']}
+      statements={statements as unknown as Parameters<typeof BlogsAndStatementsView>[0]['statements']}
       filter={filter}
       setFilter={setFilter}
       searchQuery={searchQuery}

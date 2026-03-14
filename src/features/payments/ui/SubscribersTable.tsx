@@ -11,8 +11,12 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Trash2, User } from 'lucide-react';
 
+import { useCommonState } from '@/zero/common/useCommonState';
+
+type SubscriberRow = NonNullable<ReturnType<typeof useCommonState>['userSubscribers']>[number];
+
 interface SubscribersTableProps {
-  subscribers: any[];
+  subscribers: SubscriberRow[];
   onRemove: (id: string) => void;
   onNavigate: (id: string) => void;
 }
@@ -51,13 +55,13 @@ export function SubscribersTable({ subscribers, onRemove, onNavigate }: Subscrib
           </TableHeader>
           <TableBody>
             {subscribers.map(subscription => {
-              const subscriber = subscription.subscriber;
+              const subscriber = subscription.subscriber_user;
               if (!subscriber) return null;
 
-              const name = subscriber.name || 'Unknown User';
+              const name = [subscriber.first_name, subscriber.last_name].filter(Boolean).join(' ') || 'Unknown User';
               const avatar = subscriber.avatar;
-              const createdAt = subscription.createdAt
-                ? new Date(subscription.createdAt).toLocaleDateString()
+              const createdAt = subscription.created_at
+                ? new Date(subscription.created_at).toLocaleDateString()
                 : 'N/A';
 
               return (

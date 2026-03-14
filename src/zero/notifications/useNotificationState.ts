@@ -89,16 +89,16 @@ export function useNotificationState(options?: {
     if (!includeUserNotifications) return null
     return {
       groupIds: (groupMemberships ?? [])
-        .map((m: any) => m.group?.id)
+        .map(m => m.group?.id)
         .filter(Boolean) as string[],
       eventIds: (eventParticipations ?? [])
-        .map((p: any) => p.event?.id)
+        .map(p => p.event?.id)
         .filter(Boolean) as string[],
       amendmentIds: (amendmentCollaborations ?? [])
-        .map((c: any) => c.amendment?.id)
+        .map(c => c.amendment?.id)
         .filter(Boolean) as string[],
       blogIds: (blogRelations ?? [])
-        .map((b: any) => b.blog?.id)
+        .map(b => b.blog?.id)
         .filter(Boolean) as string[],
     }
   }, [includeUserNotifications, groupMemberships, eventParticipations, amendmentCollaborations, blogRelations])

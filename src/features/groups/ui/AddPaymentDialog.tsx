@@ -78,13 +78,13 @@ export function AddPaymentDialog({
   const { allUsers } = useUserState({ includeAllUsers: true });
   const { groups: allGroups } = useAllGroups();
 
-  const getUserDisplayName = (user: any): string =>
+  const getUserDisplayName = (user: { first_name?: string | null; last_name?: string | null; handle?: string | null }): string =>
     [user.first_name, user.last_name].filter(Boolean).join(' ') || user.handle || 'Unnamed User';
 
   // Filter entities based on search query and selected entity type
   const filteredUsers =
     entityType === 'user'
-      ? allUsers?.filter((user: any) => {
+      ? allUsers?.filter((user) => {
           if (!user?.id) return false;
           const query = searchQuery.toLowerCase();
           const fullName = getUserDisplayName(user).toLowerCase();
@@ -98,7 +98,7 @@ export function AddPaymentDialog({
 
   const filteredGroups =
     entityType === 'group'
-      ? allGroups?.filter((group: any) => {
+      ? allGroups?.filter((group) => {
           const query = searchQuery.toLowerCase();
           return group.name?.toLowerCase().includes(query);
         })
@@ -113,7 +113,16 @@ export function AddPaymentDialog({
       return;
     }
 
-    const paymentData: any = {
+    const paymentData: {
+      label: string;
+      type: string;
+      amount: number;
+      direction: 'income' | 'expense';
+      payerUserId?: string;
+      payerGroupId?: string;
+      receiverUserId?: string;
+      receiverGroupId?: string;
+    } = {
       label,
       type,
       amount: parseFloat(amount),
@@ -282,7 +291,7 @@ export function AddPaymentDialog({
                       </CommandEmpty>
                       {filteredUsers && filteredUsers.length > 0 && (
                         <CommandGroup heading="Users">
-                          {filteredUsers.map((user: any) => {
+                          {filteredUsers.map((user) => {
                             if (!user?.id) return null;
                             const userId = user.id;
                             const isSelected = selectedEntity?.id === userId;
@@ -328,7 +337,7 @@ export function AddPaymentDialog({
                       )}
                       {filteredGroups && filteredGroups.length > 0 && (
                         <CommandGroup heading="Groups">
-                          {filteredGroups.map((group: any) => {
+                          {filteredGroups.map((group) => {
                             const isSelected = selectedEntity?.id === group.id;
                             return (
                               <CommandItem
@@ -337,7 +346,7 @@ export function AddPaymentDialog({
                                 onSelect={() => {
                                   setSelectedEntity({
                                     id: group.id,
-                                    name: group.name,
+                                    name: group.name ?? 'Unnamed',
                                     type: 'group',
                                   });
                                   setPopoverOpen(false);
@@ -346,12 +355,12 @@ export function AddPaymentDialog({
                               >
                                 <div className="flex flex-1 items-center gap-2">
                                   <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                                    {group.name[0]?.toUpperCase()}
+                                    {(group.name ?? '')[0]?.toUpperCase()}
                                   </div>
                                   <div className="flex-1">
                                     <div className="text-sm font-medium">{group.name}</div>
                                     <div className="text-xs text-muted-foreground">
-                                      {group.memberCount} members
+                                      {group.member_count} members
                                     </div>
                                   </div>
                                 </div>

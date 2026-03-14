@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import { useNodesState, useEdgesState, type Node, type Edge } from '@xyflow/react';
 import { useEventWithGroup, useGroupRelationships } from '@/zero/events/useEventState';
 import { NetworkFlowBase } from '@/features/network/ui/NetworkFlowBase';
@@ -10,6 +11,9 @@ import { RIGHT_TYPES, formatRights } from '@/features/network/ui/RightFilters';
 import { Switch } from '@/features/shared/ui/ui/switch';
 import { Label } from '@/features/shared/ui/ui/label';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Button } from '@/features/shared/ui/ui/button';
+import { usePermissions } from '@/zero/rbac';
 
 interface EventNode extends Node {
   data: {
@@ -34,6 +38,7 @@ interface RelationshipEntry {
 }
 
 export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
+  const navigate = useNavigate();
   const [showIndirect, setShowIndirect] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState<EventNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -50,7 +55,9 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
 
   // Fetch the specific event with its group
   const { event } = useEventWithGroup(eventId);
+  const { can } = usePermissions({ eventId });
   const group = event?.group;
+  const canManageEvent = can('manage', 'events');
 
   // Fetch group relationships
   const { relationships } = useGroupRelationships();
@@ -64,6 +71,31 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
     relationships.length,
     relationships.map(r => `${r.id}-${r.group?.id}-${r.related_group?.id}`).join(','),
   ]);
+
+  if (event && !group) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>This event is not associated with a group</CardTitle>
+          <CardDescription>
+            Network visualization is only available for events that belong to a group.
+            Associate this event with a group in the settings page to enable the network view.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-3">
+          {canManageEvent ? (
+            <Button onClick={() => navigate({ to: `/event/${eventId}/settings` })}>
+              Zur Event-Einstellungen
+            </Button>
+          ) : (
+            <Button variant="outline" onClick={() => navigate({ to: `/event/${eventId}` })}>
+              Zurück zur Veranstaltung
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
 
   // Build direct relationships
   const getDirectRelationships = useCallback(
@@ -635,7 +667,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
         </div>
       }
     >
-      <NetworkEntityDialog open={dialogOpen} onOpenChange={setDialogOpen} entity={selectedEntity} />
+      <NetworkEntityDialog open={dialogOpen} onOpenChange={setDialogOpen} entity={selectedEntity as React.ComponentProps<typeof NetworkEntityDialog>['entity']} />
     </NetworkFlowBase>
   );
 }

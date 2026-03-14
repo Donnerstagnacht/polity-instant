@@ -20,12 +20,12 @@ export interface GroupMembershipWithUser {
     email?: string | null;
     avatar?: string | null;
     handle?: string | null;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   role?: {
     id: string;
     name: string | null;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
@@ -67,7 +67,6 @@ export interface GroupLink {
   description?: string;
   createdAt?: number;
   updatedAt?: number;
-  [key: string]: any;
 }
 
 export interface GroupPayment {
@@ -110,7 +109,6 @@ export interface GroupPayment {
     id: string;
     name?: string;
   };
-  [key: string]: any;
 }
 
 export interface GroupTodo {
@@ -129,15 +127,14 @@ export interface GroupTodo {
     name?: string;
     avatar?: string;
   };
-  [key: string]: any;
 }
 
 export interface GroupDocument {
   id: string;
   groupId: string;
   title: string;
-  content?: any;
-  discussions?: any;
+  content?: unknown;
+  discussions?: unknown;
   createdById: string;
   createdAt: number;
   updatedAt: number;

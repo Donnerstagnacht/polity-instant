@@ -1,19 +1,37 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { useAuth } from '@/providers/auth-provider';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
+import { TargetGroupEventSelector, TargetGroupEventDisplay } from '@/features/amendments/ui/TargetGroupEventSelector';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import type { CreateFormConfig } from '../types/create-form.types';
 
+interface CreateTargetGroupData {
+  abbr?: string | null;
+  name?: string | null;
+  description?: string | null;
+  member_count?: number | null;
+}
+
+interface CreateTargetEventData {
+  title?: string | null;
+  is_public?: boolean;
+  start_date?: number | null;
+  location_name?: string | null;
+  description?: string | null;
+}
+
 export function useCreateAmendmentForm(): CreateFormConfig {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { createAmendment } = useAmendmentActions();
   const commonActions = useCommonActions();
 
@@ -23,6 +41,19 @@ export function useCreateAmendmentForm(): CreateFormConfig {
   const [imageURL, setImageURL] = useState('');
   const [visibility, setVisibility] = useState<'public' | 'authenticated' | 'private'>('public');
   const [hashtags, setHashtags] = useState<string[]>([]);
+  const [targetSelection, setTargetSelection] = useState<{
+    groupId: string;
+    groupData: CreateTargetGroupData;
+    eventId: string;
+    eventData: CreateTargetEventData;
+    pathWithEvents: Array<{
+      groupId: string;
+      groupName: string;
+      eventId: string | null;
+      eventTitle: string;
+      eventStartDate: number | null;
+    }>;
+  } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { allHashtags } = useCommonState({ loadAllHashtags: true });
@@ -40,8 +71,8 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         reason: null,
         category: null,
         preamble: null,
-        group_id: null,
-        event_id: null,
+        group_id: targetSelection?.groupId ?? null,
+        event_id: targetSelection?.eventId ?? null,
         clone_source_id: null,
         tags: hashtags.length > 0 ? hashtags : null,
         visibility,
@@ -116,6 +147,43 @@ export function useCreateAmendmentForm(): CreateFormConfig {
           ),
         },
         {
+          label: t('pages.create.amendment.targetGroupEvent'),
+          isValid: () => !!targetSelection,
+          content: (
+            <div className="space-y-4">
+              <p className="text-muted-foreground text-xs">
+                {t('pages.create.amendment.tips.targetGroupEvent')}
+              </p>
+              {user?.id ? (
+                <TargetGroupEventSelector
+                  userId={user.id}
+                  onSelect={(selection) => {
+                    setTargetSelection({
+                      groupId: selection.groupId,
+                      groupData: selection.groupData,
+                      eventId: selection.eventId,
+                      eventData: selection.eventData,
+                      pathWithEvents: selection.pathWithEvents,
+                    });
+                  }}
+                  selectedGroupId={targetSelection?.groupId}
+                  selectedEventId={targetSelection?.eventId}
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground">{t('pages.create.common.loading')}</p>
+              )}
+
+              {targetSelection && (
+                <TargetGroupEventDisplay
+                  groupData={targetSelection.groupData}
+                  eventData={targetSelection.eventData}
+                  pathWithEvents={targetSelection.pathWithEvents}
+                />
+              )}
+            </div>
+          ),
+        },
+        {
           label: t('pages.create.amendment.visibilityAndTags'),
           isValid: () => true,
           optional: true,
@@ -141,6 +209,14 @@ export function useCreateAmendmentForm(): CreateFormConfig {
               subtitle={subtitle || undefined}
               hashtags={hashtags.length > 0 ? hashtags : undefined}
               fields={[
+                ...(targetSelection
+                  ? [
+                      {
+                        label: t('pages.create.amendment.target'),
+                        value: `${String(targetSelection.groupData.name ?? '')} -> ${String(targetSelection.eventData.title ?? '')}`,
+                      },
+                    ]
+                  : []),
                 {
                   label: t('pages.create.common.visibility'),
                   value: visibility,
@@ -151,7 +227,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         },
       ],
     }),
-    [title, subtitle, imageURL, visibility, hashtags, isSubmitting, amendmentId, t]
+    [title, subtitle, imageURL, visibility, hashtags, targetSelection, isSubmitting, amendmentId, t, user?.id]
   );
 
   return config;

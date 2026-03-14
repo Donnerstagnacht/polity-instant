@@ -21,9 +21,17 @@ interface ChangeRequest {
   description: string;
 }
 
+interface PlateNode {
+  text?: string;
+  children?: PlateNode[];
+  [key: string]: unknown;
+}
+
+type PlateContent = string | PlateNode | PlateContent[];
+
 interface VersionComparisonViewProps {
-  originalVersion: any;
-  currentVersion: any;
+  originalVersion: PlateContent;
+  currentVersion: PlateContent;
   changeRequest?: ChangeRequest | null;
 }
 
@@ -35,7 +43,7 @@ export function VersionComparisonView({
   const { t } = useTranslation();
 
   // Extract text from Plate.js document format
-  const extractText = (content: any): string => {
+  const extractText = (content: PlateContent): string => {
     if (!content) return '';
     if (typeof content === 'string') return content;
     if (Array.isArray(content)) {

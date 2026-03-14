@@ -161,7 +161,7 @@ export function BlockSuggestionCard({
   const currentUserId = usePluginOption(discussionPlugin, 'currentUserId');
 
   // Check if current user has already voted
-  const currentUserVote = suggestion.votes?.find((v: any) => v.voterId === currentUserId);
+  const currentUserVote = suggestion.votes?.find((v: { voterId?: string }) => v.voterId === currentUserId);
   const hasVoted = !!currentUserVote;
 
   const [editingTitle, setEditingTitle] = React.useState(false);
@@ -611,8 +611,8 @@ export const useResolveSuggestion = (
 
       let newText = '';
       let text = '';
-      let properties: any = {};
-      let newProperties: any = {};
+      let properties: Record<string, unknown> = {};
+      let newProperties: Record<string, unknown> = {};
 
       // overlapping suggestion
       entries.forEach(([node]) => {

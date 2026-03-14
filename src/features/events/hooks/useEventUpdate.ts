@@ -14,6 +14,7 @@ export interface EventFormData {
   startDate: string;
   endDate: string;
   capacity: string;
+  groupId: string;
   imageURL: string;
   isPublic: boolean;
   tags: string[];
@@ -34,6 +35,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
     startDate: '',
     endDate: '',
     capacity: '',
+    groupId: '',
     imageURL: '',
     isPublic: true,
     tags: [],
@@ -82,6 +84,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
         startDate: formatDateForInput(event.start_date),
         endDate: formatDateForInput(event.end_date),
         capacity: event.capacity?.toString() || '',
+        groupId: event.group_id || '',
         imageURL: event.image_url || '',
         isPublic: event.is_public ?? true,
         tags: [],
@@ -117,7 +120,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           visibility: formData.isPublic ? 'public' : 'private',
           image_url: formData.imageURL || null,
           capacity: formData.capacity ? parseInt(formData.capacity, 10) : null,
-          group_id: null,
+          group_id: formData.groupId || null,
           creator_id: user.id,
         };
 
@@ -137,6 +140,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           is_public: formData.isPublic,
           image_url: formData.imageURL || null,
           capacity: formData.capacity ? parseInt(formData.capacity, 10) : null,
+          group_id: formData.groupId || null,
         };
 
         await updateEvent(updateData);

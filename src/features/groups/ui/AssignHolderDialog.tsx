@@ -37,10 +37,16 @@ import { Check, ChevronsUpDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/features/shared/utils/utils';
 
+interface PositionWithHistory {
+  id: string;
+  title?: string | null;
+  holder_history?: readonly { end_date?: number | string | null; user?: { id: string; first_name?: string | null; handle?: string | null; avatar?: string | null } }[];
+}
+
 interface AssignHolderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  position: any;
+  position: PositionWithHistory;
   groupId: string;
   onAssign: (userId: string, reason: 'elected' | 'appointed') => void;
 }
@@ -58,10 +64,10 @@ export function AssignHolderDialog({
   const [reason, setReason] = useState<'elected' | 'appointed'>('appointed');
 
   const { members } = useGroupActiveMembers(groupId);
-  const currentHolder = position?.holder_history?.find((h: any) => !h.end_date)?.user;
+  const currentHolder = position?.holder_history?.find((h) => !h.end_date)?.user;
 
   // Filter members based on search query
-  const filteredMembers = members.filter((membership: any) => {
+  const filteredMembers = members.filter((membership) => {
     const user = membership.user;
     if (!user?.id) return false;
     const query = searchQuery.toLowerCase();
@@ -72,7 +78,7 @@ export function AssignHolderDialog({
     );
   });
 
-  const selectedMember = members.find((m: any) => m.user?.id === selectedUserId);
+  const selectedMember = members.find((m) => m.user?.id === selectedUserId);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,7 +112,7 @@ export function AssignHolderDialog({
               <div className="rounded-lg border border-orange-200 bg-orange-50 p-3">
                 <div className="flex items-center gap-2">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={currentHolder.avatar} />
+                    <AvatarImage src={currentHolder.avatar ?? undefined} />
                     <AvatarFallback>
                       {currentHolder.first_name?.[0] || 
                        currentHolder.handle?.[0] || 'U'}
@@ -166,8 +172,9 @@ export function AssignHolderDialog({
                     <CommandList>
                       <CommandEmpty>No members found.</CommandEmpty>
                       <CommandGroup>
-                        {filteredMembers.map((membership: any) => {
+                        {filteredMembers.map((membership) => {
                           const user = membership.user;
+                          if (!user) return null;
                           return (
                             <CommandItem
                               key={user.id}
@@ -184,7 +191,7 @@ export function AssignHolderDialog({
                                 )}
                               />
                               <Avatar className="mr-2 h-8 w-8">
-                                <AvatarImage src={user.avatar} />
+                                <AvatarImage src={user.avatar ?? undefined} />
                                 <AvatarFallback>
                                   {user.first_name?.[0] || user.handle?.[0] || 'U'}
                                 </AvatarFallback>

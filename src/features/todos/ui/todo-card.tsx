@@ -21,21 +21,22 @@ import {
   User,
 } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
+import type { Todo } from '../types/todo.types';
 
 type TodoStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 type TodoPriority = 'low' | 'medium' | 'high' | 'urgent';
 
 interface TodoCardProps {
-  todo: any;
-  onToggleComplete: (todo: any) => void;
+  todo: Todo;
+  onToggleComplete: (todo: Todo) => void;
   onUpdateStatus: (todoId: string, status: TodoStatus) => void;
-  onClick?: (todo: any) => void;
+  onClick?: (todo: Todo) => void;
 }
 
 export function TodoCard({ todo, onToggleComplete, onUpdateStatus, onClick }: TodoCardProps) {
   const { t } = useTranslation();
   const isCompleted = todo.status === 'completed';
-  const isOverdue = todo.dueDate && todo.status !== 'completed' && todo.dueDate < Date.now();
+  const isOverdue = todo.due_date && todo.status !== 'completed' && todo.due_date < Date.now();
 
   const handleCardClick = (e: React.MouseEvent) => {
     // Don't trigger if clicking on interactive elements
@@ -89,17 +90,17 @@ export function TodoCard({ todo, onToggleComplete, onUpdateStatus, onClick }: To
                 <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                   {/* Priority */}
                   <div className="flex items-center gap-1">
-                    <PriorityIcon priority={todo.priority} />
+                    <PriorityIcon priority={(todo.priority ?? 'medium') as TodoPriority} />
                     <span className="capitalize">{todo.priority}</span>
                   </div>
 
                   {/* Due date */}
-                  {todo.dueDate && (
+                  {todo.due_date && (
                     <div
                       className={`flex items-center gap-1 ${isOverdue ? 'font-medium text-destructive' : ''}`}
                     >
                       <Calendar className="h-3.5 w-3.5" />
-                      <span>{formatDate(todo.dueDate)}</span>
+                      <span>{formatDate(todo.due_date)}</span>
                       {isOverdue && <AlertTriangle className="h-3.5 w-3.5" />}
                     </div>
                   )}
@@ -116,9 +117,9 @@ export function TodoCard({ todo, onToggleComplete, onUpdateStatus, onClick }: To
                   {todo.assignments && todo.assignments.length > 0 && (
                     <div className="flex items-center gap-1">
                       <div className="flex -space-x-2">
-                        {todo.assignments.slice(0, 3).map((assignment: any, idx: number) => (
+                        {todo.assignments.slice(0, 3).map((assignment, idx: number) => (
                           <Avatar key={idx} className="h-5 w-5 border-2 border-background">
-                            <AvatarImage src={assignment.user?.avatar} />
+                            <AvatarImage src={assignment.user?.avatar ?? undefined} />
                             <AvatarFallback className="text-xs">
                               {assignment.user?.email?.[0]?.toUpperCase() || '?'}
                             </AvatarFallback>
@@ -148,8 +149,8 @@ export function TodoCard({ todo, onToggleComplete, onUpdateStatus, onClick }: To
               {/* Status badge and actions */}
               <div className="flex flex-col items-end gap-2">
                 <Select
-                  value={todo.status}
-                  onValueChange={(v: TodoStatus) => onUpdateStatus(todo.id, v)}
+                  value={todo.status ?? ''}
+                  onValueChange={(v: string) => onUpdateStatus(todo.id, v as TodoStatus)}
                 >
                   <SelectTrigger className="w-[140px]">
                     <SelectValue />
@@ -182,7 +183,7 @@ export function TodoCard({ todo, onToggleComplete, onUpdateStatus, onClick }: To
                   </SelectContent>
                 </Select>
 
-                <PriorityBadge priority={todo.priority} />
+                <PriorityBadge priority={(todo.priority ?? 'medium') as TodoPriority} />
               </div>
             </div>
           </div>

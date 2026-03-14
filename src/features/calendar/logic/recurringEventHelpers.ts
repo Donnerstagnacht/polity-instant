@@ -41,17 +41,45 @@ function toDateKey(val: number | Date | string): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+interface RecurringEvent {
+  id: string;
+  title?: string | null;
+  description?: string | null;
+  start_date: number | null;
+  end_date: number | null;
+  is_recurring?: boolean;
+  recurrence_pattern?: string | null;
+  recurrence_rule?: string | null;
+  recurrence_interval?: number | null;
+  recurrence_end_date?: number | null;
+  location_name?: string | null;
+  location_address?: string | null;
+  is_public?: boolean;
+  image_url?: string | null;
+  [key: string]: unknown;
+}
+
+type RecurringEventInstance = RecurringEvent & {
+  isRecurringInstance?: boolean;
+  recurringParentId?: string;
+  instanceDate?: string;
+}
+
 export const generateRecurringInstances = (
-  event: any,
+  event: RecurringEvent,
   rangeStart: Date,
   rangeEnd: Date,
-  exceptions?: EventException[],
-): any[] => {
+  exceptions?: ReadonlyArray<EventException>,
+): RecurringEventInstance[] => {
   const isNotRecurring =
     (!event.recurrence_rule && (!event.recurrence_pattern || event.recurrence_pattern === 'none')) ||
     !event.is_recurring
 
   if (isNotRecurring) {
+    return [event];
+  }
+
+  if (!event.start_date || !event.end_date) {
     return [event];
   }
 
@@ -83,17 +111,18 @@ export const generateRecurringInstances = (
 }
 
 function expandWithRRule(
-  event: any,
+  event: RecurringEvent,
   eventStart: Date,
   duration: number,
   rangeStart: Date,
   rangeEnd: Date,
   cancelledDates: Set<string>,
   modifiedDates: Map<string, EventException>,
-): any[] {
-  const rruleStr = event.recurrence_rule.startsWith('RRULE:')
-    ? event.recurrence_rule
-    : `RRULE:${event.recurrence_rule}`
+): RecurringEventInstance[] {
+  const rawRule = event.recurrence_rule ?? ''
+  const rruleStr = rawRule.startsWith('RRULE:')
+    ? rawRule
+    : `RRULE:${rawRule}`
 
   const rule = RRule.fromString(rruleStr)
   // Override dtstart to match the event's actual start
@@ -103,7 +132,7 @@ function expandWithRRule(
   })
 
   const occurrences = ruleWithStart.between(rangeStart, rangeEnd, true)
-  const instances: any[] = []
+  const instances: RecurringEventInstance[] = []
   const MAX_INSTANCES = 365
 
   for (let i = 0; i < occurrences.length && instances.length < MAX_INSTANCES; i++) {
@@ -136,15 +165,15 @@ function expandWithRRule(
 }
 
 function expandWithPattern(
-  event: any,
+  event: RecurringEvent,
   eventStart: Date,
   duration: number,
   rangeStart: Date,
   rangeEnd: Date,
   cancelledDates: Set<string>,
   modifiedDates: Map<string, EventException>,
-): any[] {
-  const instances: any[] = []
+): RecurringEventInstance[] {
+  const instances: RecurringEventInstance[] = []
   const recurringEndDate = event.recurrence_end_date
     ? new Date(event.recurrence_end_date)
     : addYears(rangeEnd, 1)

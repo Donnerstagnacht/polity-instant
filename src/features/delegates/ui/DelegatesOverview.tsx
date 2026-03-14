@@ -106,22 +106,22 @@ export function DelegatesOverview({ eventId, groupId }: DelegatesOverviewProps) 
                   Confirmed Delegates ({confirmedDelegates.length})
                 </p>
                 <div className="space-y-2">
-                  {confirmedDelegates.map((delegate: any) => (
+                  {confirmedDelegates.map((delegate) => (
                     <div
                       key={delegate.id}
                       className="flex items-center gap-3 rounded-lg border bg-green-50 p-3 dark:bg-green-900/20"
                     >
                       <Avatar className="h-10 w-10">
                         <AvatarImage
-                          src={delegate.user?.avatar}
-                          alt={delegate.user?.name || 'User'}
+                          src={delegate.user?.avatar ?? undefined}
+                          alt={[delegate.user?.first_name, delegate.user?.last_name].filter(Boolean).join(' ') || 'User'}
                         />
                         <AvatarFallback>
-                          {delegate.user?.name?.[0]?.toUpperCase() || '?'}
+                          {delegate.user?.first_name?.[0]?.toUpperCase() || '?'}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <p className="font-semibold">{delegate.user?.name || 'Unknown'}</p>
+                        <p className="font-semibold">{[delegate.user?.first_name, delegate.user?.last_name].filter(Boolean).join(' ') || 'Unknown'}</p>
                         {delegate.user?.handle && (
                           <p className="text-sm text-muted-foreground">
                             @{delegate.user.handle}
@@ -145,22 +145,22 @@ export function DelegatesOverview({ eventId, groupId }: DelegatesOverviewProps) 
                   Nominated ({nominatedDelegates.length})
                 </p>
                 <div className="space-y-2">
-                  {nominatedDelegates.map((delegate: any, index: number) => (
+                  {nominatedDelegates.map((delegate, index) => (
                     <div
                       key={delegate.id}
                       className="flex items-center gap-3 rounded-lg border bg-blue-50 p-3 dark:bg-blue-900/20"
                     >
                       <Avatar className="h-10 w-10">
                         <AvatarImage
-                          src={delegate.user?.avatar}
-                          alt={delegate.user?.name || 'User'}
+                          src={delegate.user?.avatar ?? undefined}
+                          alt={[delegate.user?.first_name, delegate.user?.last_name].filter(Boolean).join(' ') || 'User'}
                         />
                         <AvatarFallback>
-                          {delegate.user?.name?.[0]?.toUpperCase() || '?'}
+                          {delegate.user?.first_name?.[0]?.toUpperCase() || '?'}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <p className="font-semibold">{delegate.user?.name || 'Unknown'}</p>
+                        <p className="font-semibold">{[delegate.user?.first_name, delegate.user?.last_name].filter(Boolean).join(' ') || 'Unknown'}</p>
                         {delegate.user?.handle && (
                           <p className="text-sm text-muted-foreground">
                             @{delegate.user.handle}
@@ -168,7 +168,7 @@ export function DelegatesOverview({ eventId, groupId }: DelegatesOverviewProps) 
                         )}
                       </div>
                       <Badge variant="outline">
-                        #{delegate.priority || index + 1}
+                        #{index + 1}
                       </Badge>
                     </div>
                   ))}
@@ -183,22 +183,22 @@ export function DelegatesOverview({ eventId, groupId }: DelegatesOverviewProps) 
                   Standby ({standbyDelegates.length})
                 </p>
                 <div className="space-y-2">
-                  {standbyDelegates.map((delegate: any, index: number) => (
+                  {standbyDelegates.map((delegate, index) => (
                     <div
                       key={delegate.id}
                       className="flex items-center gap-3 rounded-lg border p-3"
                     >
                       <Avatar className="h-10 w-10">
                         <AvatarImage
-                          src={delegate.user?.avatar}
-                          alt={delegate.user?.name || 'User'}
+                          src={delegate.user?.avatar ?? undefined}
+                          alt={[delegate.user?.first_name, delegate.user?.last_name].filter(Boolean).join(' ') || 'User'}
                         />
                         <AvatarFallback>
-                          {delegate.user?.name?.[0]?.toUpperCase() || '?'}
+                          {delegate.user?.first_name?.[0]?.toUpperCase() || '?'}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <p className="font-semibold">{delegate.user?.name || 'Unknown'}</p>
+                        <p className="font-semibold">{[delegate.user?.first_name, delegate.user?.last_name].filter(Boolean).join(' ') || 'Unknown'}</p>
                         {delegate.user?.handle && (
                           <p className="text-sm text-muted-foreground">
                             @{delegate.user.handle}

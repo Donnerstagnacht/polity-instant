@@ -66,7 +66,7 @@ export async function hasAriaKaiConversation(userId: string): Promise<boolean> {
       .eq('user_id', userId);
 
     const hasConversation = (participants ?? []).some(
-      (participant: any) => participant.conversation?.requested_by?.id === ARIA_KAI_USER_ID
+      (participant) => participant.conversation?.requested_by?.id === ARIA_KAI_USER_ID
     );
 
     console.log(hasConversation ? '✅ Found existing Aria & Kai conversation' : '❌ No Aria & Kai conversation found');

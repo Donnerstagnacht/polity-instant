@@ -30,14 +30,27 @@ import { Briefcase, Edit, Trash2, UserPlus, History, Vote, Calendar, User } from
 import { useState } from 'react';
 import { formatDistanceToNow, format } from 'date-fns';
 
+import { useGroupPositions as useFacadeGroupPositions } from '@/zero/groups/useGroupState';
+
+type PositionRowBase = ReturnType<typeof useFacadeGroupPositions>['positions'][number];
+
+type PositionRow = PositionRowBase & {
+  currentHolder?: {
+    id: string;
+    fullName?: string | null;
+    handle?: string | null;
+    imageURL?: string | null;
+  } | null;
+};
+
 interface PositionsTableProps {
-  positions: any[];
+  positions: PositionRow[];
   canManage: boolean;
-  onEdit: (position: any) => void;
+  onEdit: (position: PositionRow) => void;
   onDelete: (positionId: string) => void;
-  onAssignHolder: (position: any) => void;
+  onAssignHolder: (position: PositionRow) => void;
   onRemoveHolder: (positionId: string) => void;
-  onViewHistory: (position: any) => void;
+  onViewHistory: (position: PositionRow) => void;
   onCreateElection: (positionId: string) => void;
   addPositionButton: React.ReactNode;
 }
@@ -55,9 +68,9 @@ export function PositionsTable({
 }: PositionsTableProps) {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [removeHolderConfirmOpen, setRemoveHolderConfirmOpen] = useState(false);
-  const [selectedPosition, setSelectedPosition] = useState<any>(null);
+  const [selectedPosition, setSelectedPosition] = useState<PositionRow | null>(null);
 
-  const handleDeleteClick = (position: any) => {
+  const handleDeleteClick = (position: PositionRow) => {
     setSelectedPosition(position);
     setDeleteConfirmOpen(true);
   };
@@ -70,7 +83,7 @@ export function PositionsTable({
     setSelectedPosition(null);
   };
 
-  const handleRemoveHolderClick = (position: any) => {
+  const handleRemoveHolderClick = (position: PositionRow) => {
     setSelectedPosition(position);
     setRemoveHolderConfirmOpen(true);
   };
@@ -83,15 +96,15 @@ export function PositionsTable({
     setSelectedPosition(null);
   };
 
-  const getTermEndDate = (position: any) => {
+  const getTermEndDate = (position: PositionRow) => {
     if (!position.first_term_start || !position.term) return null;
     const start = new Date(position.first_term_start);
     const end = new Date(start);
-    end.setFullYear(end.getFullYear() + position.term);
+    end.setFullYear(end.getFullYear() + Number(position.term));
     return end;
   };
 
-  const isTermExpiring = (position: any) => {
+  const isTermExpiring = (position: PositionRow) => {
     const termEnd = getTermEndDate(position);
     if (!termEnd) return false;
     const now = new Date();
@@ -100,7 +113,7 @@ export function PositionsTable({
     return termEnd <= sixMonthsFromNow && termEnd >= now;
   };
 
-  const isTermExpired = (position: any) => {
+  const isTermExpired = (position: PositionRow) => {
     const termEnd = getTermEndDate(position);
     if (!termEnd) return false;
     return termEnd < new Date();
@@ -142,7 +155,7 @@ export function PositionsTable({
                     const isExpiring = isTermExpiring(position);
                     const isExpired = isTermExpired(position);
                     const activeElections = position.elections?.filter(
-                      (e: any) => e.status === 'active' || e.status === 'pending'
+                      (e) => e.status === 'active' || e.status === 'pending'
                     ) || [];
 
                     return (
@@ -161,7 +174,7 @@ export function PositionsTable({
                           {position.currentHolder ? (
                             <div className="flex items-center gap-2">
                               <Avatar className="h-8 w-8">
-                                <AvatarImage src={position.currentHolder.imageURL} />
+                                <AvatarImage src={position.currentHolder.imageURL || undefined} />
                                 <AvatarFallback>
                                   {position.currentHolder.fullName?.[0] || 
                                    position.currentHolder.handle?.[0] || 'U'}
@@ -189,7 +202,7 @@ export function PositionsTable({
                           <div className="space-y-1">
                             <div className="flex items-center gap-1 text-sm">
                               <Calendar className="h-3 w-3" />
-                              <span>{position.term} year{position.term > 1 ? 's' : ''}</span>
+                              <span>{position.term ?? '—'} year{Number(position.term ?? 0) > 1 ? 's' : ''}</span>
                             </div>
                             {termEnd && (
                               <div className="flex flex-col gap-1">

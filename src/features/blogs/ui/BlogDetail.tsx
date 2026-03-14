@@ -92,7 +92,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
 
   // Map Zero comment rows → CommentData shape expected by CommentThread
   const allComments: CommentData[] = useMemo(() => {
-    return (commentsRows || []).map((c: any) => ({
+    return (commentsRows || []).map((c) => ({
       id: c.id,
       text: c.content ?? '',
       createdAt: c.created_at ?? 0,
@@ -104,12 +104,12 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
             avatar: c.user.avatar ?? undefined,
           }
         : undefined,
-      votes: (c.votes ?? []).map((v: any) => ({
+      votes: (c.votes ?? []).map((v) => ({
         id: v.id,
-        vote: v.vote,
+        vote: v.vote ?? 0,
         user: v.user ? { id: v.user.id } : undefined,
       })),
-      replies: (c.replies ?? []).map((r: any) => ({
+      replies: (c.replies ?? []).map((r) => ({
         id: r.id,
         text: r.content ?? '',
         createdAt: r.created_at ?? 0,
@@ -121,9 +121,9 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
               avatar: r.user.avatar ?? undefined,
             }
           : undefined,
-        votes: (r.votes ?? []).map((v: any) => ({
+        votes: (r.votes ?? []).map((v) => ({
           id: v.id,
-          vote: v.vote,
+          vote: v.vote ?? 0,
           user: v.user ? { id: v.user.id } : undefined,
         })),
       })),
@@ -140,7 +140,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
 
   // Vote handling
   const score = (blog?.upvotes || 0) - (blog?.downvotes || 0);
-  const userVote = blog?.support_votes?.find((v: any) => v.user?.id === user?.id);
+  const userVote = blog?.support_votes?.find((v) => v.user?.id === user?.id);
   const currentVoteValue: VoteValue = userVote ? (userVote.vote === 1 ? 1 : -1) : 0;
 
   const handleVote = async (voteValue: VoteValue) => {
@@ -179,7 +179,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
         });
 
         const blogAuthor =
-          blog.bloggers?.find((b: any) => b.status === 'owner')?.user || blog.bloggers?.[0]?.user;
+          blog.bloggers?.find((b) => b.status === 'owner')?.user || blog.bloggers?.[0]?.user;
         if (blogAuthor?.id && blogAuthor.id !== user.id) {
           await dispatchNotification({
             type: 'blog_vote_cast',
@@ -315,7 +315,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
 
   // Get the blog author - find the owner or first blogger
   const author =
-    blog.bloggers?.find((blogger: any) => blogger.status === 'owner')?.user ||
+    blog.bloggers?.find((blogger) => blogger.status === 'owner')?.user ||
     blog.bloggers?.[0]?.user;
 
   // Compute context-aware editor URL

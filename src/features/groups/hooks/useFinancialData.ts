@@ -14,15 +14,16 @@ export function useFinancialData(payments: GroupPayment[], groupId: string) {
     let totalIncome = 0;
     let totalExpenditure = 0;
 
-    payments.forEach((payment: any) => {
-      const isIncome = payment.receiver_group_id === groupId;
+    payments.forEach(payment => {
+      const isIncome = payment.receiverGroup?.id === groupId;
+      const amount = payment.amount ?? 0;
 
       if (isIncome) {
-        totalIncome += payment.amount;
-        incomeByType[payment.type || 'other'] = (incomeByType[payment.type || 'other'] || 0) + payment.amount;
+        totalIncome += amount;
+        incomeByType[payment.type || 'other'] = (incomeByType[payment.type || 'other'] || 0) + amount;
       } else {
-        totalExpenditure += payment.amount;
-        expenditureByType[payment.type || 'other'] = (expenditureByType[payment.type || 'other'] || 0) + payment.amount;
+        totalExpenditure += amount;
+        expenditureByType[payment.type || 'other'] = (expenditureByType[payment.type || 'other'] || 0) + amount;
       }
     });
 

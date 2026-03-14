@@ -32,7 +32,7 @@ interface Version {
   id: string;
   versionNumber: number;
   title: string;
-  content: any[];
+  content: Record<string, unknown>[];
   createdAt: number | Date;
   creationType: string;
   creator?: {
@@ -45,9 +45,9 @@ interface Version {
 
 interface VersionControlProps {
   documentId: string;
-  currentContent: any[];
+  currentContent: Record<string, unknown>[];
   currentUserId: string;
-  onRestoreVersion: (content: any[]) => void;
+  onRestoreVersion: (content: Record<string, unknown>[]) => void;
   amendmentId?: string;
   amendmentTitle?: string;
 }
@@ -110,7 +110,7 @@ export function VersionControl({
         blog_id: null,
         version_number: nextVersionNumber,
         change_summary: versionTitle,
-        content: currentContent,
+        content: currentContent as unknown as import('@rocicorp/zero').ReadonlyJSONValue,
       });
 
       // Send notification to amendment subscribers if amendmentId is provided

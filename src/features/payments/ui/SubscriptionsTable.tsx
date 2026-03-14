@@ -12,8 +12,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/ava
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Trash2, User, Users, Scale, Calendar, BookOpen } from 'lucide-react';
 
+import { useCommonState } from '@/zero/common/useCommonState';
+
+type SubscriptionRow = NonNullable<ReturnType<typeof useCommonState>['userSubscriptions']>[number];
+
 interface SubscriptionsTableProps {
-  subscriptions: any[];
+  subscriptions: SubscriptionRow[];
   onUnsubscribe: (id: string) => void;
   onNavigateToUser: (id: string) => void;
   onNavigateToGroup: (id: string) => void;
@@ -31,46 +35,51 @@ export function SubscriptionsTable({
   onNavigateToEvent,
   onNavigateToBlog,
 }: SubscriptionsTableProps) {
-  const getEntityInfo = (subscription: any) => {
+  const getEntityInfo = (subscription: SubscriptionRow) => {
     if (subscription.user) {
+      const u = subscription.user;
       return {
-        name: subscription.user.name || 'Unknown User',
+        name: [u.first_name, u.last_name].filter(Boolean).join(' ') || 'Unknown User',
         type: 'User',
         icon: User,
-        avatar: subscription.user.avatar,
-        onNavigate: () => onNavigateToUser(subscription.user.id),
+        avatar: u.avatar,
+        onNavigate: () => onNavigateToUser(u.id),
       };
     } else if (subscription.group) {
+      const g = subscription.group;
       return {
-        name: subscription.group.name || 'Unknown Group',
+        name: g.name || 'Unknown Group',
         type: 'Group',
         icon: Users,
-        avatar: subscription.group.imageURL,
-        onNavigate: () => onNavigateToGroup(subscription.group.id),
+        avatar: g.image_url,
+        onNavigate: () => onNavigateToGroup(g.id),
       };
     } else if (subscription.amendment) {
+      const a = subscription.amendment;
       return {
-        name: subscription.amendment.title || 'Unknown Amendment',
+        name: a.title || 'Unknown Amendment',
         type: 'Amendment',
         icon: Scale,
-        avatar: subscription.amendment.imageURL,
-        onNavigate: () => onNavigateToAmendment(subscription.amendment.id),
+        avatar: a.image_url,
+        onNavigate: () => onNavigateToAmendment(a.id),
       };
     } else if (subscription.event) {
+      const e = subscription.event;
       return {
-        name: subscription.event.title || 'Unknown Event',
+        name: e.title || 'Unknown Event',
         type: 'Event',
         icon: Calendar,
-        avatar: subscription.event.imageURL,
-        onNavigate: () => onNavigateToEvent(subscription.event.id),
+        avatar: e.image_url,
+        onNavigate: () => onNavigateToEvent(e.id),
       };
     } else if (subscription.blog) {
+      const b = subscription.blog;
       return {
-        name: subscription.blog.title || 'Unknown Blog',
+        name: b.title || 'Unknown Blog',
         type: 'Blog',
         icon: BookOpen,
-        avatar: subscription.blog.imageURL || subscription.blog.thumbnailURL,
-        onNavigate: () => onNavigateToBlog(subscription.blog.id, subscription.blog.group_id),
+        avatar: b.image_url,
+        onNavigate: () => onNavigateToBlog(b.id, b.group_id),
       };
     }
     return null;
@@ -115,8 +124,8 @@ export function SubscriptionsTable({
               if (!entityInfo) return null;
 
               const { name, type, icon: Icon, avatar, onNavigate } = entityInfo;
-              const createdAt = subscription.createdAt
-                ? new Date(subscription.createdAt).toLocaleDateString()
+              const createdAt = subscription.created_at
+                ? new Date(subscription.created_at).toLocaleDateString()
                 : 'N/A';
 
               return (

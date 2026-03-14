@@ -11,7 +11,7 @@ export function useEventPositions(eventId: string) {
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editingPosition, setEditingPosition] = useState<any>(null);
+  const [editingPosition, setEditingPosition] = useState<(typeof positions)[number] | null>(null);
 
   // Form state
   const [title, setTitle] = useState('');
@@ -106,12 +106,12 @@ export function useEventPositions(eventId: string) {
     }
   };
 
-  const openEditDialog = (position: any) => {
+  const openEditDialog = (position: (typeof positions)[number]) => {
     setEditingPosition(position);
     setTitle(position.title || '');
     setDescription(position.description || '');
-    setCapacity(String(position.capacity || 1));
-    setCreateElection(position.createElectionOnAgenda || false);
+    setCapacity('1');
+    setCreateElection(false);
     setEditDialogOpen(true);
   };
 

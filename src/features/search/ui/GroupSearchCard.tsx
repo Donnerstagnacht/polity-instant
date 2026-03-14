@@ -3,33 +3,51 @@ import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCar
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
 import { useAuth } from '@/providers/auth-provider';
 
+import { type SearchGroup } from '../types/search.types';
+
 interface GroupSearchCardProps {
-  group: any;
+  group: SearchGroup | Record<string, unknown>;
 }
 
 export function GroupSearchCard({ group }: GroupSearchCardProps) {
   const { user } = useAuth();
 
-  // Find current user's membership to get their actual role
-  const userMembership = group.memberships?.find((m: any) => m.user?.id === user?.id);
+  // Type guard: check if this is a full SearchGroup from Zero queries
+  const isSearchGroup = (g: SearchGroup | Record<string, unknown>): g is SearchGroup =>
+    'memberships' in g && Array.isArray(g.memberships);
 
-  // Use the actual role from membership, fallback to 'Member' if not a member
-  const role = userMembership?.role?.name || (userMembership ? 'Member' : 'Visitor');
-  // Calculate member count from memberships or use memberCount field
-  const memberCount = group.memberCount || group.memberships?.length || 0;
+  if (isSearchGroup(group)) {
+    // Find current user's membership to get their actual role
+    const userMembership = group.memberships?.find(m => m.user?.id === user?.id);
+    const role = userMembership?.role?.name || (userMembership ? 'Member' : 'Visitor');
+    const memberCount = group.member_count ?? group.memberships?.length ?? 0;
 
+    return (
+      <GroupTimelineCard
+        group={{
+          id: String(group.id),
+          name: group.name ?? '',
+          description: group.description ?? undefined,
+          memberCount,
+          eventCount: group.events?.length || 0,
+          amendmentCount: group.amendments?.length || 0,
+          hashtags: extractHashtags(group.group_hashtags),
+          membershipStatus: (userMembership?.status as 'admin' | 'invited' | 'requested' | 'member' | null | undefined) || (role === 'Visitor' ? null : 'member'),
+        }}
+      />
+    );
+  }
+
+  // Fallback for NetworkGroupEntity or other basic group data
   return (
     <GroupTimelineCard
       group={{
-        id: String(group.id),
-        name: group.name,
-        description: group.description,
-        memberCount,
-        eventCount: group.events?.length || 0,
-        amendmentCount: group.amendments?.length || 0,
-        topics: group.tags,
-        hashtags: extractHashtags(group.group_hashtags),
-        membershipStatus: userMembership?.status || (role === 'Visitor' ? null : 'member'),
+        id: String(group.id ?? ''),
+        name: (group.name as string | null) ?? '',
+        description: (group.description as string | null) ?? undefined,
+        memberCount: 0,
+        eventCount: 0,
+        amendmentCount: 0,
       }}
     />
   );

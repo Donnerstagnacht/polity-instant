@@ -83,7 +83,7 @@ export function ConfirmationRequestNotice({
         </p>
 
         <div className="space-y-2">
-          {pendingConfirmations.map((confirmation: any) => (
+          {pendingConfirmations.map((confirmation) => (
             <div
               key={confirmation.id}
               className="flex items-center justify-between gap-2 rounded-md border bg-white p-2 dark:bg-gray-900"
@@ -92,10 +92,10 @@ export function ConfirmationRequestNotice({
                 <p className="truncate text-sm font-medium">
                   {confirmation.amendment?.title ?? t('features.amendments.common.untitled')}
                 </p>
-                {confirmation.changeRequest?.title && (
+                {(confirmation as { changeRequest?: { title?: string } }).changeRequest?.title && (
                   <p className="truncate text-xs text-muted-foreground">
                     {t('features.amendments.changeRequests.changeRequest')}:{' '}
-                    {confirmation.changeRequest.title}
+                    {(confirmation as { changeRequest?: { title?: string } }).changeRequest?.title}
                   </p>
                 )}
               </div>
@@ -105,7 +105,7 @@ export function ConfirmationRequestNotice({
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8"
-                  onClick={() => onViewChanges?.(confirmation.id, confirmation.amendment?.id)}
+                  onClick={() => onViewChanges?.(confirmation.id, confirmation.amendment?.id ?? '')}
                   title={t('features.amendments.supportConfirmation.actions.viewChanges')}
                 >
                   <Eye className="h-4 w-4" />

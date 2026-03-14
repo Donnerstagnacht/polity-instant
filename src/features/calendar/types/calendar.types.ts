@@ -16,7 +16,7 @@ export interface CalendarEvent {
   isPublic: boolean;
   imageURL?: string | null;
   organizer?: CalendarUser;
-  participants?: { user: CalendarUser; instance_date?: number | null }[];
+  participants?: readonly { user?: CalendarUser; instance_date?: number | null }[];
   isMeeting?: boolean;
   meetingType?: string | null;
   isBookable?: boolean;

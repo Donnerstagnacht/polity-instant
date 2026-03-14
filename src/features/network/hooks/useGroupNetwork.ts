@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useGroupNetwork as useFacadeGroupNetwork } from '@/zero/groups/useGroupState';
 import { RIGHT_TYPES, formatRights } from '@/features/network/ui/RightFilters';
-import { normalizeGroupRelationship, type NormalizedGroupRelationship } from '../types/network.types';
+import { normalizeGroupRelationship, type NormalizedGroupRelationship, type NetworkGroupEntity } from '../types/network.types';
 
 export function useGroupNetwork(groupId: string) {
   const { group, relationships: rawRelationships, isLoading } = useFacadeGroupNetwork(groupId);
@@ -48,8 +48,8 @@ export function useGroupNetwork(groupId: string) {
   // Build direct relationships
   const getDirectRelationships = useCallback(
     (targetGroupId: string) => {
-      const parentsMap = new Map<string, { group: any; rights: string[] }>();
-      const childrenMap = new Map<string, { group: any; rights: string[] }>();
+      const parentsMap = new Map<string, { group: NetworkGroupEntity; rights: string[] }>();
+      const childrenMap = new Map<string, { group: NetworkGroupEntity; rights: string[] }>();
 
       stableRelationships.forEach((rel) => {
         if (rel.childGroup?.id === targetGroupId) {
@@ -93,11 +93,11 @@ export function useGroupNetwork(groupId: string) {
     (targetGroupId: string) => {
         const parentsMap = new Map<
         string,
-        { group: any; rights: string[]; level: number; childId?: string }
+        { group: NetworkGroupEntity; rights: string[]; level: number; childId?: string }
         >();
         const childrenMap = new Map<
         string,
-        { group: any; rights: string[]; level: number; parentId?: string }
+        { group: NetworkGroupEntity; rights: string[]; level: number; parentId?: string }
         >();
 
       // First, get all direct relationships and their rights

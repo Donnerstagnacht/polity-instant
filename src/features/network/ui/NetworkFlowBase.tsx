@@ -19,8 +19,8 @@ interface NetworkFlowBaseProps<T extends Node = Node> {
   edges: Edge[];
   onNodesChange?: OnNodesChange<T>;
   onEdgesChange?: OnEdgesChange;
-  onNodeClick?: (event: any, node: Node) => void;
-  onEdgeClick?: (event: any, edge: Edge) => void;
+  onNodeClick?: (event: React.MouseEvent, node: Node) => void;
+  onEdgeClick?: (event: React.MouseEvent, edge: Edge) => void;
   nodesDraggable?: boolean;
   nodesFocusable?: boolean;
   nodesConnectable?: boolean;

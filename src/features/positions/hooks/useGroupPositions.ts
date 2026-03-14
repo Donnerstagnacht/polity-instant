@@ -30,8 +30,8 @@ export function useGroupPositions(groupId: string) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [assignHolderDialogOpen, setAssignHolderDialogOpen] = useState(false);
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
-  const [selectedPosition, setSelectedPosition] = useState<any>(null);
-  const [editingPosition, setEditingPosition] = useState<any>(null);
+  const [selectedPosition, setSelectedPosition] = useState<(typeof positions)[number] | null>(null);
+  const [editingPosition, setEditingPosition] = useState<(typeof positions)[number] | null>(null);
 
   // Form state
   const [title, setTitle] = useState('');
@@ -224,12 +224,12 @@ export function useGroupPositions(groupId: string) {
 
     try {
       const now = Date.now();
-      const position: any = positions.find((p) => p.id === positionId);
+      const position = positions.find((p) => p.id === positionId);
 
       // If there's a current holder, end their history entry
       // End the current active history entry (if any)
       const currentHistoryEntry = position?.holder_history?.find(
-        (h: any) => !h.end_date
+        (h) => !h.end_date
       );
       if (currentHistoryEntry) {
         await updateHistoryAction({
@@ -274,12 +274,12 @@ export function useGroupPositions(groupId: string) {
 
     try {
       const now = Date.now();
-      const position: any = positions.find((p) => p.id === positionId);
+      const position = positions.find((p) => p.id === positionId);
 
       // End the current holder's history entry
       // End the current active history entry
       const currentHistoryEntry = position?.holder_history?.find(
-        (h: any) => !h.end_date
+        (h) => !h.end_date
       );
       if (currentHistoryEntry) {
         await updateHistoryAction({
@@ -310,7 +310,7 @@ export function useGroupPositions(groupId: string) {
     }
   ) => {
     try {
-      const position: any = positions.find((p) => p.id === positionId);
+      const position = positions.find((p) => p.id === positionId);
       if (!position) {
         toast.error('Position not found');
         return { success: false };
@@ -365,7 +365,7 @@ export function useGroupPositions(groupId: string) {
   /**
    * Open edit dialog with position data
    */
-  const openEditDialog = (position: any) => {
+  const openEditDialog = (position: (typeof positions)[number]) => {
     setEditingPosition(position);
     setTitle(position.title || '');
     setDescription(position.description || '');
@@ -379,7 +379,7 @@ export function useGroupPositions(groupId: string) {
   /**
    * Open assign holder dialog
    */
-  const openAssignHolderDialog = (position: any) => {
+  const openAssignHolderDialog = (position: (typeof positions)[number]) => {
     setSelectedPosition(position);
     setAssignHolderDialogOpen(true);
   };
@@ -387,7 +387,7 @@ export function useGroupPositions(groupId: string) {
   /**
    * Open history dialog
    */
-  const openHistoryDialog = (position: any) => {
+  const openHistoryDialog = (position: (typeof positions)[number]) => {
     setSelectedPosition(position);
     setHistoryDialogOpen(true);
   };

@@ -173,7 +173,7 @@ export function useGroupMutations(groupId: string) {
   const createRole = async (
     name: string,
     description: string,
-    actionRights: any[],
+    actionRights: { resource: string; action: string }[],
     senderId?: string,
     groupName?: string,
     adminUserIds?: string[],

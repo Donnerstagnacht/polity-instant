@@ -9,15 +9,15 @@ const translations = {
   de: deTranslation,
 };
 
-function getNestedValue(obj: any, path: string): any {
+function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
   if (!path || !obj) return path;
 
   const keys = path.split('.');
-  let current = obj;
+  let current: unknown = obj;
 
   for (const key of keys) {
     if (current && typeof current === 'object' && key in current) {
-      current = current[key];
+      current = (current as Record<string, unknown>)[key];
     } else {
       return path; // Return the original key if not found
     }
@@ -60,7 +60,7 @@ export function useTranslation() {
     key: string, 
     paramsOrFallback?: string | Record<string, string | number | undefined | null>,
     fallback?: string
-  ): any => {
+  ): string => {
     const translation = getNestedValue(translations[language], key);
     
     // Determine if second argument is params object or fallback string
@@ -75,7 +75,7 @@ export function useTranslation() {
       return interpolate(result, params);
     }
     
-    return result;
+    return String(result);
   };
 
   const changeLanguage = async (newLanguage: Language) => {

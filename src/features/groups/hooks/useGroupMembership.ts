@@ -20,9 +20,9 @@ export function useGroupMembership(groupId: string) {
 
   // If there are multiple memberships, prioritize by role/status
   if (memberships.length > 1) {
-    const boardMemberMembership = memberships.find((m: any) => m.role?.name === 'Board Member');
-    const memberMembership = memberships.find((m: any) => m.status === 'member');
-    const invitedMembership = memberships.find((m: any) => m.status === 'invited');
+    const boardMemberMembership = memberships.find(m => m.role?.name === 'Board Member');
+    const memberMembership = memberships.find(m => m.status === 'member');
+    const invitedMembership = memberships.find(m => m.status === 'invited');
 
     membership = boardMemberMembership || memberMembership || invitedMembership || membership;
 
@@ -30,7 +30,7 @@ export function useGroupMembership(groupId: string) {
       groupId,
       userId: user?.id,
       count: memberships.length,
-      memberships: memberships.map((m: any) => ({
+      memberships: memberships.map(m => ({
         id: m.id,
         status: m.status,
         role: m.role?.name,
@@ -42,7 +42,7 @@ export function useGroupMembership(groupId: string) {
   // Filter to count only members and board members (excluding invited and requested)
   const memberCount =
     (allMembershipsData || []).filter(
-      (m: any) => m.status === 'member' || m.role?.name === 'Board Member'
+      m => m.status === 'member' || m.role?.name === 'Board Member'
     ).length || 0;
   const status: MembershipStatus | null = (membership?.status as MembershipStatus) || null;
   const role = membership?.role?.name;

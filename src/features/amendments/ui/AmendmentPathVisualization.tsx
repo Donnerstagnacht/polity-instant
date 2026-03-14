@@ -27,12 +27,12 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
 
   // Derive pathSegments for use in JSX
   const pathSegments = [...(amendment?.paths?.[0]?.segments || [])].sort(
-    (a: any, b: any) => a.order_index - b.order_index
+    (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)
   );
 
   // Generate visualization nodes and edges
   useEffect(() => {
-    const segments = [...(amendment?.paths?.[0]?.segments || [])].sort((a: any, b: any) => a.order_index - b.order_index);
+    const segments = [...(amendment?.paths?.[0]?.segments || [])].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
 
     if (!segments || segments.length === 0) {
       setNodes([]);
@@ -44,7 +44,7 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
     const newEdges: Edge[] = [];
 
     // Create nodes for each step in the path
-    segments.forEach((segment: any, index: number) => {
+    segments.forEach((segment, index) => {
       const xPos = 100 + index * 250;
       const yPos = 200;
       const isFirst = index === 0;
@@ -55,8 +55,8 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
         type: 'default',
         position: { x: xPos, y: yPos },
         data: {
-          label: segment.group?.name || 'Unknown Group',
-          event: segment.event?.title || 'No Event',
+          label: segment.group_id || 'Unknown Group',
+          event: segment.event_id || 'No Event',
           type: 'group',
         },
         style: {
@@ -74,7 +74,7 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
     });
 
     // Create edges between groups
-    segments.forEach((segment: any, index: number) => {
+    segments.forEach((segment, index) => {
       if (index < segments.length - 1) {
         newEdges.push({
           id: `path-edge-${index}`,
@@ -241,23 +241,23 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
 
           {/* Path details list */}
           <div className="mt-6 space-y-3">
-            {pathSegments?.map((segment: any, index: number) => (
-              <div key={segment.group?.id || index} className="flex items-start gap-3">
+            {pathSegments?.map((segment, index) => (
+              <div key={segment.group_id || index} className="flex items-start gap-3">
                 <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
                   {index + 1}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <h4 className="font-semibold">{segment.group?.name || t('common.unknown')}</h4>
+                    <h4 className="font-semibold">{segment.group_id || t('common.unknown')}</h4>
                     {index === 0 && <Badge variant="secondary">{t('features.amendments.pathVisualization.start')}</Badge>}
                     {index === pathSegments.length - 1 && (
                       <Badge variant="destructive">{t('features.amendments.process.target')}</Badge>
                     )}
                   </div>
-                  {segment.event?.title && (
+                  {segment.event_id && (
                     <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4" />
-                      <span>{segment.event.title}</span>
+                      <span>{segment.event_id}</span>
                     </div>
                   )}
                 </div>

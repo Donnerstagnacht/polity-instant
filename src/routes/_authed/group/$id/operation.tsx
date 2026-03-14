@@ -69,7 +69,7 @@ function GroupOperationPage() {
 
       {/* 3. Todos */}
       <TodosSection
-        todos={todos}
+        todos={todos as unknown as import('@/features/todos/types/todo.types').Todo[]}
         viewMode={todoViewMode}
         onViewModeChange={setTodoViewMode}
         dialogOpen={todoDialogOpen}

@@ -21,6 +21,7 @@ import {
 } from '@/features/shared/ui/ui/select';
 import { Switch } from '@/features/shared/ui/ui/switch';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
+import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import type { WorkflowStatus } from '@/zero/rbac/workflow-constants';
 import {
@@ -35,8 +36,8 @@ import { CreateReviewCard, SummaryField } from '@/features/shared/ui/ui/create-r
 
 interface AmendmentEditContentProps {
   amendmentId: string;
-  amendment: any;
-  collaborators: any[];
+  amendment: ReturnType<typeof useAmendmentState>['amendment'];
+  collaborators: ReadonlyArray<Record<string, unknown>>;
   currentUserId: string;
   isLoading: boolean;
   mode?: 'create' | 'edit';
@@ -95,16 +96,16 @@ export function AmendmentEditContent({
       initializedRef.current = true;
       setFormData({
         title: amendment.title || '',
-        subtitle: amendment.subtitle || '',
+        subtitle: '',
         code: amendment.code || '',
         imageURL: amendment.image_url || '',
-        videoURL: amendment.videoURL || '',
-        videoThumbnailURL: amendment.videoThumbnailURL || '',
+        videoURL: '',
+        videoThumbnailURL: '',
         status: amendment.status || 'Drafting',
-        workflowStatus: (amendment.workflowStatus as WorkflowStatus) || 'collaborative_editing',
+        workflowStatus: (amendment.workflow_status as WorkflowStatus) || 'collaborative_editing',
         autoCloseVoting: false, // Will be loaded from document settings
-        date: amendment.date || new Date().toLocaleDateString(),
-        supporters: amendment.supporters || 0,
+        date: new Date().toLocaleDateString(),
+        supporters: 0,
         hashtags: amendmentHashtags
           ? amendmentHashtags.map(j => j.hashtag?.tag).filter((t): t is string => !!t)
           : Array.isArray(amendment.tags) ? amendment.tags : [],
@@ -168,7 +169,7 @@ export function AmendmentEditContent({
 
       // Only create timeline events for public amendments in edit mode
       if (!isCreating && amendment?.visibility === 'public') {
-        if (formData.imageURL && formData.imageURL !== amendment.imageURL) {
+        if (formData.imageURL && formData.imageURL !== amendment.image_url) {
           await createTimelineEvent({ data: {
             eventType: 'image_uploaded',
             entityType: 'amendment',
@@ -182,7 +183,7 @@ export function AmendmentEditContent({
             status: {},
           } });
         }
-        if (formData.videoURL && formData.videoURL !== amendment.videoURL) {
+        if (formData.videoURL && formData.videoURL !== (amendment as Record<string, unknown>).videoURL) {
           await createTimelineEvent({ data: {
             eventType: 'video_uploaded',
             entityType: 'amendment',
@@ -513,14 +514,14 @@ export function AmendmentEditContent({
               </div>
             )}
 
-            {amendment?.currentEventId && (
+            {amendment?.event_id && (
               <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-950">
                 <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">
                   {t('features.amendments.editContent.eventPhase')}
                 </p>
                 <p className="mt-1 text-xs text-blue-700 dark:text-blue-300">
                   {t('features.amendments.editContent.eventPhaseDescription', {
-                    eventId: amendment.currentEventId,
+                    eventId: amendment.event_id,
                   })}
                 </p>
               </div>

@@ -19,7 +19,7 @@ export const EventCard = ({ event }: EventCardProps) => {
   const { user } = useAuth();
 
   const participantCount = event.participants?.length || 0;
-  const userIsParticipant = event.participants?.some((p: any) => p.user?.id === user?.id);
+  const userIsParticipant = event.participants?.some((p) => p.user?.id === user?.id);
   const userIsOrganizer = event.organizer?.id === user?.id;
   const isMeeting = event.isMeeting || false;
 

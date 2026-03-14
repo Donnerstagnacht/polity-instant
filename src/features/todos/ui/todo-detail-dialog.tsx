@@ -53,12 +53,13 @@ import { useTodoActions } from '@/zero/todos/useTodoActions.ts';
 import { toast } from 'sonner';
 import { cn } from '@/features/shared/utils/utils.ts';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
+import type { Todo } from '../types/todo.types';
 
 type TodoStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 type TodoPriority = 'low' | 'medium' | 'high' | 'urgent';
 
 interface TodoDetailDialogProps {
-  todo: any;
+  todo: Todo;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -71,17 +72,17 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
   const [searchQuery, setSearchQuery] = useState('');
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>(
-    todo.assignments?.map((a: any) => a.user?.id).filter(Boolean) || []
+    todo.assignments?.map((a) => a.user?.id).filter((x): x is string => Boolean(x)) || []
   );
   const [formData, setFormData] = useState({
     title: todo.title || '',
     description: todo.description || '',
     status: todo.status || 'pending',
     priority: todo.priority || 'medium',
-    dueDate: todo.dueDate ? new Date(todo.dueDate).toISOString().split('T')[0] : '',
+    dueDate: todo.due_date ? new Date(todo.due_date).toISOString().split('T')[0] : '',
   });
 
-  const isOverdue = todo.dueDate && todo.status !== 'completed' && todo.dueDate < Date.now();
+  const isOverdue = todo.due_date && todo.status !== 'completed' && todo.due_date < Date.now();
 
   // Query group members if the todo belongs to a group
   const { membershipsWithUsers: membershipsRaw } = useGroupState(
@@ -93,12 +94,13 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
   const members = membershipsRaw || [];
 
   // Filter members based on search query
-  const filteredMembers = members.filter((membership: any) => {
+  const filteredMembers = members.filter((membership) => {
     const user = membership.user;
     if (!user?.id) return false;
     const query = searchQuery.toLowerCase();
+    const displayName = [user.first_name, user.last_name].filter(Boolean).join(' ');
     return (
-      user.fullName?.toLowerCase().includes(query) ||
+      displayName.toLowerCase().includes(query) ||
       user.handle?.toLowerCase().includes(query) ||
       user.email?.toLowerCase().includes(query)
     );
@@ -107,29 +109,29 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const updates: any = {
+      const updates: Record<string, string | number | null> = {
         title: formData.title,
         description: formData.description,
         status: formData.status,
         priority: formData.priority,
-        dueDate: formData.dueDate ? new Date(formData.dueDate).getTime() : null,
-        updatedAt: Date.now(),
+        due_date: formData.dueDate ? new Date(formData.dueDate).getTime() : null,
+        updated_at: Date.now(),
       };
 
       if (formData.status === 'completed' && todo.status !== 'completed') {
-        updates.completedAt = Date.now();
+        updates.completed_at = Date.now();
       } else if (formData.status !== 'completed' && todo.status === 'completed') {
-        updates.completedAt = null;
+        updates.completed_at = null;
       }
 
       // Update todo
       await updateTodo({ id: todo.id, ...updates });
 
       // Handle assignment changes
-      const currentAssignmentIds = todo.assignments?.map((a: any) => a.user?.id).filter(Boolean) || [];
+      const currentAssignmentIds = todo.assignments?.map((a) => a.user?.id).filter((x): x is string => Boolean(x)) || [];
       const addedUserIds = selectedUserIds.filter(id => !currentAssignmentIds.includes(id));
       const removedAssignments = todo.assignments?.filter(
-        (a: any) => a.user?.id && !selectedUserIds.includes(a.user.id)
+        (a) => a.user?.id && !selectedUserIds.includes(a.user.id)
       ) || [];
 
       // Remove old assignments
@@ -165,10 +167,10 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
       description: todo.description || '',
       status: todo.status || 'pending',
       priority: todo.priority || 'medium',
-      dueDate: todo.dueDate ? new Date(todo.dueDate).toISOString().split('T')[0] : '',
+      dueDate: todo.due_date ? new Date(todo.due_date).toISOString().split('T')[0] : '',
     });
     setSelectedUserIds(
-      todo.assignments?.map((a: any) => a.user?.id).filter(Boolean) || []
+      todo.assignments?.map((a) => a.user?.id).filter((x): x is string => Boolean(x)) || []
     );
     setSearchQuery('');
     setIsEditing(false);
@@ -267,8 +269,8 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                 </Select>
               ) : (
                 <div className="flex items-center gap-2">
-                  <StatusIcon status={todo.status} />
-                  <span className="capitalize">{todo.status.replace('_', ' ')}</span>
+                  <StatusIcon status={(todo.status ?? 'pending') as TodoStatus} />
+                  <span className="capitalize">{(todo.status ?? '').replace('_', ' ')}</span>
                 </div>
               )}
             </div>
@@ -312,8 +314,8 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                 </Select>
               ) : (
                 <div className="flex items-center gap-2">
-                  <PriorityIcon priority={todo.priority} />
-                  <PriorityBadge priority={todo.priority} />
+                  <PriorityIcon priority={(todo.priority ?? 'medium') as TodoPriority} />
+                  <PriorityBadge priority={(todo.priority ?? 'medium') as TodoPriority} />
                 </div>
               )}
             </div>
@@ -345,11 +347,11 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                 value={formData.dueDate}
                 onChange={e => setFormData({ ...formData, dueDate: e.target.value })}
               />
-            ) : todo.dueDate ? (
+            ) : todo.due_date ? (
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <span className={isOverdue ? 'font-medium text-destructive' : ''}>
-                  {formatDate(todo.dueDate)}
+                  {formatDate(todo.due_date)}
                 </span>
                 {isOverdue && (
                   <Badge variant="destructive" className="ml-2">
@@ -373,10 +375,10 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                 className="flex items-center gap-2 text-sm hover:underline"
               >
                 <Avatar className="h-6 w-6">
-                  <AvatarImage src={todo.creator.avatar} />
-                  <AvatarFallback>{todo.creator.email?.[0]?.toUpperCase() || '?'}</AvatarFallback>
+                  <AvatarImage src={todo.creator.avatar ?? undefined} />
+                  <AvatarFallback>{(todo.creator.first_name?.[0] || todo.creator.email?.[0])?.toUpperCase() || '?'}</AvatarFallback>
                 </Avatar>
-                <span>{todo.creator.email?.split('@')[0] || 'Unknown'}</span>
+                <span>{[todo.creator.first_name, todo.creator.last_name].filter(Boolean).join(' ') || todo.creator.email?.split('@')[0] || 'Unknown'}</span>
               </Link>
             </div>
           )}
@@ -393,8 +395,8 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                 {selectedUserIds.length > 0 && (
                   <div className="space-y-2">
                     {selectedUserIds.map((userId: string) => {
-                      const membership = members.find((m: any) => m.user?.id === userId);
-                      const user = membership?.user || todo.assignments?.find((a: any) => a.user?.id === userId)?.user;
+                      const membership = members.find((m) => m.user?.id === userId);
+                      const user = membership?.user || todo.assignments?.find((a) => a.user?.id === userId)?.user;
                       if (!user) return null;
                       return (
                         <div
@@ -403,13 +405,13 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                         >
                           <div className="flex items-center gap-2">
                             <Avatar className="h-6 w-6">
-                              <AvatarImage src={user.imageURL || user.avatar} />
+                              <AvatarImage src={user.avatar ?? undefined} />
                               <AvatarFallback>
-                                {user.fullName?.[0] || user.email?.[0]?.toUpperCase() || '?'}
+                                {(user.first_name?.[0] || user.email?.[0])?.toUpperCase() || '?'}
                               </AvatarFallback>
                             </Avatar>
                             <span className="text-sm">
-                              {user.fullName || user.email?.split('@')[0] || 'Unknown'}
+                              {[user.first_name, user.last_name].filter(Boolean).join(' ') || user.email?.split('@')[0] || 'Unknown'}
                             </span>
                           </div>
                           <Button
@@ -451,9 +453,10 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                           <CommandEmpty>{t('features.todos.assignee.noMembersFound')}</CommandEmpty>
                           <CommandGroup>
                             {filteredMembers
-                              .filter((m: any) => !selectedUserIds.includes(m.user?.id))
-                              .map((membership: any) => {
+                              .filter((m) => m.user?.id != null && !selectedUserIds.includes(m.user.id))
+                              .map((membership) => {
                                 const user = membership.user;
+                                if (!user) return null;
                                 return (
                                   <CommandItem
                                     key={user.id}
@@ -467,14 +470,14 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                                       )}
                                     />
                                     <Avatar className="mr-2 h-6 w-6">
-                                      <AvatarImage src={user.imageURL} />
+                                      <AvatarImage src={user.avatar ?? undefined} />
                                       <AvatarFallback>
-                                        {user.fullName?.[0] || user.email?.[0]?.toUpperCase() || 'U'}
+                                        {(user.first_name?.[0] || user.email?.[0])?.toUpperCase() || 'U'}
                                       </AvatarFallback>
                                     </Avatar>
                                     <div className="flex flex-col">
                                       <span className="text-sm font-medium">
-                                        {user.fullName || user.handle || 'Unknown'}
+                                        {[user.first_name, user.last_name].filter(Boolean).join(' ') || user.handle || 'Unknown'}
                                       </span>
                                       {user.email && (
                                         <span className="text-xs text-muted-foreground">
@@ -494,7 +497,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
               </div>
             ) : todo.assignments && todo.assignments.length > 0 ? (
               <div className="space-y-2">
-                {todo.assignments.map((assignment: any, idx: number) => (
+                {todo.assignments.map((assignment, idx: number) => (
                   <Link
                     key={idx}
                     to="/user/$id"
@@ -502,12 +505,12 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                     className="flex items-center gap-2 text-sm hover:underline"
                   >
                     <Avatar className="h-6 w-6">
-                      <AvatarImage src={assignment.user?.avatar} />
+                      <AvatarImage src={assignment.user?.avatar ?? undefined} />
                       <AvatarFallback>
-                        {assignment.user?.email?.[0]?.toUpperCase() || '?'}
+                        {(assignment.user?.first_name?.[0] || assignment.user?.email?.[0])?.toUpperCase() || '?'}
                       </AvatarFallback>
                     </Avatar>
-                    <span>{assignment.user?.email?.split('@')[0] || 'Unknown'}</span>
+                    <span>{[assignment.user?.first_name, assignment.user?.last_name].filter(Boolean).join(' ') || assignment.user?.email?.split('@')[0] || 'Unknown'}</span>
                   </Link>
                 ))}
               </div>
@@ -529,7 +532,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                 className="flex items-center gap-2 text-sm hover:underline"
               >
                 <Avatar className="h-6 w-6">
-                  <AvatarImage src={todo.group.avatar} />
+                  <AvatarImage src={todo.group.image_url ?? undefined} />
                   <AvatarFallback>{todo.group.name?.[0]?.toUpperCase() || 'G'}</AvatarFallback>
                 </Avatar>
                 <span>{todo.group.name}</span>
@@ -558,14 +561,14 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
           <div className="border-t pt-4 text-xs text-muted-foreground">
             <div className="grid grid-cols-2 gap-2">
               <div>
-                {t('features.todos.detail.created')}: {todo.createdAt ? new Date(todo.createdAt).toLocaleString() : 'N/A'}
+                {t('features.todos.detail.created')}: {todo.created_at ? new Date(todo.created_at).toLocaleString() : 'N/A'}
               </div>
               <div>
-                {t('features.todos.detail.updated')}: {todo.updatedAt ? new Date(todo.updatedAt).toLocaleString() : 'N/A'}
+                {t('features.todos.detail.updated')}: {todo.updated_at ? new Date(todo.updated_at).toLocaleString() : 'N/A'}
               </div>
-              {todo.completedAt && (
+              {todo.completed_at && (
                 <div className="col-span-2">
-                  {t('features.todos.status.completed')}: {new Date(todo.completedAt).toLocaleString()}
+                  {t('features.todos.status.completed')}: {new Date(todo.completed_at).toLocaleString()}
                 </div>
               )}
             </div>

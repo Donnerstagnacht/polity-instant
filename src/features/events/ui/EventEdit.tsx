@@ -22,6 +22,9 @@ import { CancelEventDialog } from './CancelEventDialog';
 import { usePermissions } from '@/zero/rbac';
 import { useState, useRef } from 'react';
 import { CreateReviewCard, SummaryField } from '@/features/shared/ui/ui/create-review-card';
+import { useUserGroupsWithManageEvents } from '@/zero/groups/useGroupState';
+import { TypeaheadSearch } from '@/features/shared/ui/typeahead';
+import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 
 interface EventEditProps {
   eventId: string;
@@ -35,6 +38,7 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
   const [showReview, setShowReview] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const { can } = usePermissions({ eventId });
+  const { manageEventGroupIds } = useUserGroupsWithManageEvents();
   const canDeleteEvent = mode === 'edit' && can('delete', 'events');
 
   const {
@@ -203,6 +207,24 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
                 </div>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Date & Time Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('pages.create.event.associatedGroup')}</CardTitle>
+            <CardDescription>{t('pages.create.event.tips.group')}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Label htmlFor="groupId">{t('pages.create.event.associatedGroupLabel')}</Label>
+            <TypeaheadSearch
+              entityTypes={['group']}
+              value={formData.groupId || undefined}
+              onChange={(item: TypeaheadItem | null) => updateField('groupId', item?.id ?? '')}
+              filterFn={(item: TypeaheadItem) => manageEventGroupIds.has(item.id)}
+              placeholder={t('pages.create.event.associatedGroupPlaceholder')}
+            />
           </CardContent>
         </Card>
 

@@ -33,17 +33,17 @@ export function UserSearchInput({
   const filteredUsers = useMemo(() => {
     let users = allUsers ?? []
     if (excludeUserId) {
-      users = users.filter((u: any) => u.id !== excludeUserId)
+      users = users.filter((u) => u.id !== excludeUserId)
     }
     if (multi) {
-      users = users.filter((u: any) => !value.includes(u.id))
+      users = users.filter((u) => !value.includes(u.id))
     }
     return users
   }, [allUsers, excludeUserId, value, multi])
 
   const selectedUsers = useMemo(() => {
     if (!allUsers) return []
-    return value.map((id) => allUsers.find((u: any) => u.id === id)).filter(Boolean)
+    return value.map((id) => allUsers.find((u) => u.id === id)).filter((u): u is NonNullable<typeof u> => Boolean(u))
   }, [allUsers, value])
 
   const items = useMemo(
@@ -51,9 +51,9 @@ export function UserSearchInput({
       toTypeaheadItems(
         filteredUsers,
         'user',
-        (u: any) => `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'User',
-        (u: any) => u.handle ? `@${u.handle}` : u.email,
-        (u: any) => u.avatar,
+        (u) => `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'User',
+        (u) => u.handle ? `@${u.handle}` : u.email,
+        (u) => u.avatar,
       ),
     [filteredUsers],
   )
@@ -92,7 +92,7 @@ export function UserSearchInput({
             {selectedUsers.length} selected
           </Label>
           <div className="flex flex-wrap gap-2">
-            {selectedUsers.map((user: any) => (
+            {selectedUsers.map((user) => (
               <Badge key={user.id} variant="secondary" className="gap-1 py-1">
                 {user.first_name} {user.last_name}
                 <Button

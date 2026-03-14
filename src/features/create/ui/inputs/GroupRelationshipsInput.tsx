@@ -114,8 +114,8 @@ export function GroupRelationshipsInput({ value, onChange }: GroupRelationshipsI
           items={toTypeaheadItems(
             availableGroups,
             'group',
-            (g: any) => g.name || 'Group',
-            (g: any) => g.description?.substring(0, 60),
+            (g) => g.name || 'Group',
+            (g) => g.description?.substring(0, 60),
           )}
           value={selectedGroupId}
           onChange={(item: TypeaheadItem | null) => setSelectedGroupId(item?.id ?? '')}

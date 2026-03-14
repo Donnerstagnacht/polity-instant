@@ -4,8 +4,52 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/fea
 import { Badge } from '@/features/shared/ui/ui/badge.tsx';
 import { Calendar, Users, MapPin, Scale, FileText } from 'lucide-react';
 
+interface SelectableEvent {
+  title?: string | null;
+  startDate?: string | number | Date | null;
+  location?: string | null;
+  group?: { name?: string | null } | null;
+}
+
+interface SelectableGroup {
+  name?: string | null;
+  description?: string | null;
+  memberCount?: number | null;
+}
+
+interface SelectableAmendment {
+  title?: string | null;
+  subtitle?: string | null;
+  status?: string | null;
+}
+
+interface SelectableElection {
+  title?: string | null;
+  description?: string | null;
+  status?: string | null;
+}
+
+interface SelectablePosition {
+  title?: string | null;
+  description?: string | null;
+  group?: { name?: string | null } | null;
+  term?: string | number | null;
+}
+
+interface SelectableAmendmentVote {
+  title?: string | null;
+  description?: string | null;
+  status?: string | null;
+}
+
+interface SelectableAgendaItem {
+  title?: string | null;
+  type?: string | null;
+  event?: { title?: string | null } | null;
+}
+
 // Event Selection Card
-export function EventSelectCard({ event }: { event: any }) {
+export function EventSelectCard({ event }: { event: SelectableEvent }) {
   const formatDate = (date: string | Date) => {
     return new Date(date).toLocaleDateString('en-US', {
       month: 'short',
@@ -25,7 +69,7 @@ export function EventSelectCard({ event }: { event: any }) {
           </Badge>
         </div>
         {event.startDate && (
-          <CardDescription className="text-xs">{formatDate(event.startDate)}</CardDescription>
+          <CardDescription className="text-xs">{formatDate(event.startDate as string | Date)}</CardDescription>
         )}
       </CardHeader>
       {(event.location || event.group?.name) && (
@@ -51,7 +95,7 @@ export function EventSelectCard({ event }: { event: any }) {
 }
 
 // Group Selection Card
-export function GroupSelectCard({ group }: { group: any }) {
+export function GroupSelectCard({ group }: { group: SelectableGroup }) {
   return (
     <Card className="overflow-hidden bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/50 transition-all hover:shadow-md">
       <CardHeader className="pb-3">
@@ -78,7 +122,7 @@ export function GroupSelectCard({ group }: { group: any }) {
 }
 
 // Amendment Selection Card
-export function AmendmentSelectCard({ amendment }: { amendment: any }) {
+export function AmendmentSelectCard({ amendment }: { amendment: SelectableAmendment }) {
   return (
     <Card className="transition-all hover:shadow-md">
       <CardHeader className="pb-3">
@@ -105,7 +149,7 @@ export function AmendmentSelectCard({ amendment }: { amendment: any }) {
 }
 
 // Election Selection Card
-export function ElectionSelectCard({ election }: { election: any }) {
+export function ElectionSelectCard({ election }: { election: SelectableElection }) {
   return (
     <Card className="overflow-hidden bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/50 transition-all hover:shadow-md">
       <CardHeader className="pb-3">
@@ -131,7 +175,7 @@ export function ElectionSelectCard({ election }: { election: any }) {
 }
 
 // Position Selection Card
-export function PositionSelectCard({ position }: { position: any }) {
+export function PositionSelectCard({ position }: { position: SelectablePosition }) {
   return (
     <Card className="transition-all hover:shadow-md">
       <CardHeader className="pb-3">
@@ -161,7 +205,7 @@ export function PositionSelectCard({ position }: { position: any }) {
 }
 
 // Amendment Vote Selection Card (for change requests)
-export function AmendmentVoteSelectCard({ amendmentVote }: { amendmentVote: any }) {
+export function AmendmentVoteSelectCard({ amendmentVote }: { amendmentVote: SelectableAmendmentVote }) {
   return (
     <Card className="transition-all hover:shadow-md">
       <CardHeader className="pb-3">
@@ -190,7 +234,7 @@ export function AmendmentVoteSelectCard({ amendmentVote }: { amendmentVote: any 
 }
 
 // Agenda Item Selection Card (for elections/votes)
-export function AgendaItemSelectCard({ agendaItem }: { agendaItem: any }) {
+export function AgendaItemSelectCard({ agendaItem }: { agendaItem: SelectableAgendaItem }) {
   return (
     <Card className="transition-all hover:shadow-md">
       <CardHeader className="pb-3">

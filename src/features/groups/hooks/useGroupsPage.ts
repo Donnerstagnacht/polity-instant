@@ -21,14 +21,14 @@ export function useGroupsPage() {
 
   const groups: GroupDisplay[] = useMemo(
     () =>
-      (searchResults ?? []).map((g: any) => ({
+      (searchResults ?? []).map(g => ({
         id: g.id,
         name: g.name ?? '',
         description: g.description ?? '',
         memberCount: g.member_count ?? 0,
         eventCount: g.event_count ?? 0,
         amendmentCount: g.amendment_count ?? 0,
-        topics: g.topics ?? [],
+        topics: [],
       })),
     [searchResults]
   );

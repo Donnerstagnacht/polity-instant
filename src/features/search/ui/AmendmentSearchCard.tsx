@@ -3,8 +3,10 @@ import { AmendmentTimelineCard } from '@/features/timeline/ui/cards/AmendmentTim
 import { useAuth } from '@/providers/auth-provider';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
 
+import { type SearchAmendment } from '../types/search.types';
+
 interface AmendmentSearchCardProps {
-  amendment: any;
+  amendment: SearchAmendment;
 }
 
 export function AmendmentSearchCard({ amendment }: AmendmentSearchCardProps) {
@@ -14,16 +16,13 @@ export function AmendmentSearchCard({ amendment }: AmendmentSearchCardProps) {
   const supporters = (amendment.upvotes || 0) - (amendment.downvotes || 0);
 
   // Count collaborators
-  const collaboratorsCount = amendment.amendmentRoleCollaborators?.length || 0;
-
-  // Count supporting groups
-  const supportingGroupsCount = amendment.groupSupporters?.length || 0;
+  const collaboratorsCount = amendment.collaborators?.length || 0;
 
   // Find current user's collaboration
-  const currentUserCollaboration = amendment.amendmentRoleCollaborators?.find(
-    (collab: any) => collab.user?.id === user?.id
+  const currentUserCollaboration = amendment.collaborators?.find(
+    collab => collab.user?.id === user?.id
   );
-  const collaborationRole = currentUserCollaboration?.role?.name;
+  const collaborationRole = currentUserCollaboration?.user ? 'collaborator' : undefined;
 
   const normalizedCollaborationStatus = collaborationRole
     ? collaborationRole.toLowerCase()
@@ -41,7 +40,7 @@ export function AmendmentSearchCard({ amendment }: AmendmentSearchCardProps) {
             : undefined;
 
   const normalizeStatus = (
-    status?: string
+    status?: string | null
   ):
     | 'collaborative_editing'
     | 'internal_suggesting'
@@ -82,22 +81,19 @@ export function AmendmentSearchCard({ amendment }: AmendmentSearchCardProps) {
     return 'viewing';
   };
 
-  const primaryGroup = amendment.groups?.[0];
-
   return (
     <AmendmentTimelineCard
       amendment={{
         id: String(amendment.id),
-        title: amendment.title,
-        subtitle: primaryGroup?.name,
-        description: amendment.subtitle,
+        title: amendment.title ?? '',
+        subtitle: amendment.group?.name ?? undefined,
+        description: amendment.reason ?? undefined,
         status: normalizeStatus(amendment.status),
         supportCount: supporters,
-        groupName: primaryGroup?.name,
-        groupId: primaryGroup?.id,
+        groupName: amendment.group?.name ?? undefined,
+        groupId: amendment.group?.id,
         collaboratorCount: collaboratorsCount,
-        supportingGroupsCount: supportingGroupsCount,
-        changeRequestCount: amendment.changeRequests?.length,
+        changeRequestCount: amendment.change_requests?.length,
         hashtags: extractHashtags(amendment.amendment_hashtags),
         collaborationStatus,
       }}

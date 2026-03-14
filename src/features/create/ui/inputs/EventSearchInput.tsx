@@ -25,13 +25,13 @@ export function EventSearchInput({
 
   const items = useMemo(() => {
     const filtered = filterByGroupId
-      ? events.filter((e: any) => e.group_id === filterByGroupId)
+      ? events.filter((e) => e.group_id === filterByGroupId)
       : events
     return toTypeaheadItems(
       filtered,
       'event',
-      (e: any) => e.title || 'Event',
-      (e: any) => e.description?.substring(0, 60),
+      (e) => e.title || 'Event',
+      (e) => e.description?.substring(0, 60),
     )
   }, [events, filterByGroupId])
 

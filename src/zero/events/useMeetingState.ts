@@ -28,7 +28,7 @@ export function useMeetingsByCreator(userId?: string) {
  * Excludes the organizer (creator) from counting.
  */
 export function getInstanceBookingCount(
-  participants: Array<{ user_id: string; instance_date?: number | null }>,
+  participants: ReadonlyArray<{ user_id: string; instance_date?: number | null }>,
   creatorId: string,
   instanceDate: number | null,
 ): number {
@@ -45,7 +45,7 @@ export function getInstanceBookingCount(
  * Checks if a specific user has booked a specific instance.
  */
 export function isBookedByUser(
-  participants: Array<{ user_id: string; instance_date?: number | null }>,
+  participants: ReadonlyArray<{ user_id: string; instance_date?: number | null }>,
   userId: string,
   instanceDate: number | null,
 ): boolean {

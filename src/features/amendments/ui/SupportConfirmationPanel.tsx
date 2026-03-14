@@ -134,8 +134,10 @@ export function SupportConfirmationPanel({ groupId }: SupportConfirmationPanelPr
             {/* Version comparison */}
             {selectedConfirmation === confirmation.id && (
               <VersionComparisonView
-                originalVersion={undefined}
-                currentVersion={confirmation.amendment?.documents?.[0]?.content}
+                originalVersion={''
+                }
+                currentVersion={(confirmation.amendment?.documents?.[0]?.content ?? '') as string
+                }
                 changeRequest={undefined}
               />
             )}

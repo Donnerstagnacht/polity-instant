@@ -243,25 +243,28 @@ function GroupMembershipsPage() {
               onSubmit={positionHook.actions.update}
               form={positionHook.form}
             />
-            <AssignHolderDialog
-              open={positionHook.dialogs.assignHolder.open}
-              onOpenChange={positionHook.dialogs.assignHolder.setOpen}
-              position={positionHook.selectedPosition}
-              groupId={groupId}
-              onAssign={(userId, reason) =>
-                positionHook.selectedPosition &&
-                positionHook.actions.assignHolder(
-                  positionHook.selectedPosition.id,
-                  userId,
-                  reason
-                )
-              }
-            />
-            <PositionHolderHistoryDialog
-              open={positionHook.dialogs.history.open}
-              onOpenChange={positionHook.dialogs.history.setOpen}
-              position={positionHook.selectedPosition}
-            />
+            {positionHook.selectedPosition && (
+              <AssignHolderDialog
+                open={positionHook.dialogs.assignHolder.open}
+                onOpenChange={positionHook.dialogs.assignHolder.setOpen}
+                position={positionHook.selectedPosition}
+                groupId={groupId}
+                onAssign={(userId, reason) =>
+                  positionHook.actions.assignHolder(
+                    positionHook.selectedPosition!.id,
+                    userId,
+                    reason
+                  )
+                }
+              />
+            )}
+            {positionHook.selectedPosition && (
+              <PositionHolderHistoryDialog
+                open={positionHook.dialogs.history.open}
+                onOpenChange={positionHook.dialogs.history.setOpen}
+                position={positionHook.selectedPosition}
+              />
+            )}
           </>
         }
       />

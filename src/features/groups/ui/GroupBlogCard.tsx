@@ -13,7 +13,7 @@ interface GroupBlogCardProps {
     upvotes?: number;
     downvotes?: number;
     commentCount?: number;
-    blog_hashtags?: any[];
+    blog_hashtags?: { hashtag?: { tag?: string | null } | null }[];
     bloggers?: { user?: { first_name?: string; last_name?: string; handle?: string } | null; status?: string }[];
   };
   groupId: string;

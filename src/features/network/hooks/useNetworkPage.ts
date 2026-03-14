@@ -4,10 +4,10 @@ import { useGroupData } from '@/features/groups/hooks/useGroupData';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useAuth } from '@/providers/auth-provider';
 import { RIGHT_TYPES } from '@/features/network/ui/RightFilters';
-import type { NetworkTab, NormalizedGroupRelationship } from '../types/network.types';
+import type { NetworkTab, NormalizedGroupRelationship, NetworkGroupEntity } from '../types/network.types';
 
 interface GroupedRelationshipRequests {
-  group: any;
+  group: NetworkGroupEntity;
   rels: NormalizedGroupRelationship[];
   type: 'parent' | 'child';
 }
@@ -96,7 +96,7 @@ export function useNetworkPage(groupId: string) {
 
   // Filtered active relationships for manage tab
   const filteredRelationships = useMemo(() => {
-    let items: { group: any; rights: string[]; type: 'parent' | 'child' }[] = [];
+    let items: { group: NetworkGroupEntity; rights: string[]; type: 'parent' | 'child' }[] = [];
 
     if (directionFilter !== 'child') {
       items = items.concat(
@@ -167,7 +167,7 @@ export function useNetworkPage(groupId: string) {
 
   // Handlers
   const handleAcceptRequest = useCallback(
-    async (rels: any[]) => {
+    async (rels: NormalizedGroupRelationship[]) => {
       for (const rel of rels) {
         await updateRelationship({ id: rel.id, status: 'active' });
       }
@@ -176,7 +176,7 @@ export function useNetworkPage(groupId: string) {
   );
 
   const handleRejectRequest = useCallback(
-    async (rels: any[]) => {
+    async (rels: NormalizedGroupRelationship[]) => {
       for (const rel of rels) {
         await deleteRelationship({ id: rel.id });
       }

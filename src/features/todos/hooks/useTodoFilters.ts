@@ -17,14 +17,14 @@ export function useTodoFilters(todos: Todo[] | undefined, userId: string | undef
     // Filter by user's todos (created by or assigned to)
     result = result.filter(
       todo =>
-        todo.creator?.id === userId || todo.assignments?.some((a: any) => a.user?.id === userId)
+        todo.creator?.id === userId || todo.assignments?.some((a) => a.user?.id === userId)
     );
 
     // Filter by search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
-        (todo: any) =>
+        (todo) =>
           todo.title?.toLowerCase().includes(query) ||
           todo.description?.toLowerCase().includes(query) ||
           todo.tags?.some((tag: string) => tag.toLowerCase().includes(query))
@@ -33,21 +33,21 @@ export function useTodoFilters(todos: Todo[] | undefined, userId: string | undef
 
     // Filter by status tab
     if (selectedTab !== 'all') {
-      result = result.filter((todo: any) => todo.status === selectedTab);
+      result = result.filter((todo) => todo.status === selectedTab);
     }
 
     // Filter by priority
     if (filterPriority !== 'all') {
-      result = result.filter((todo: any) => todo.priority === filterPriority);
+      result = result.filter((todo) => todo.priority === filterPriority);
     }
 
     // Sort todos
-    result = [...result].sort((a: any, b: any) => {
+    result = [...result].sort((a, b) => {
       switch (sortBy) {
         case 'dueDate':
-          if (!a.dueDate) return 1;
-          if (!b.dueDate) return -1;
-          return a.dueDate - b.dueDate;
+          if (!a.due_date) return 1;
+          if (!b.due_date) return -1;
+          return a.due_date - b.due_date;
         case 'priority': {
           const priorityOrder: Record<TodoPriority, number> = {
             urgent: 4,
@@ -60,7 +60,7 @@ export function useTodoFilters(todos: Todo[] | undefined, userId: string | undef
           );
         }
         case 'createdAt':
-          return (b.createdAt || 0) - (a.createdAt || 0);
+          return b.created_at - a.created_at;
         case 'title':
           return (a.title || '').localeCompare(b.title || '');
         default:

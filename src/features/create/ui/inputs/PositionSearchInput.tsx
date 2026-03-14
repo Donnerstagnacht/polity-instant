@@ -25,8 +25,8 @@ export function PositionSearchInput({
       toTypeaheadItems(
         positions ?? [],
         'position',
-        (p: any) => p.title || 'Position',
-        (p: any) => p.description?.substring(0, 60),
+        (p) => p.title || 'Position',
+        (p) => p.description?.substring(0, 60),
       ),
     [positions],
   )

@@ -23,7 +23,7 @@ import { useBlogState } from '@/zero/blogs/useBlogState';
 interface BlogEditorViewProps {
   blogId: string;
   userId: string | undefined;
-  userRecord: any;
+  userRecord: { name?: string; email?: string; avatar?: string };
   userColor: string;
 }
 
@@ -76,11 +76,11 @@ export function BlogEditorView({ blogId, userId, userRecord, userColor }: BlogEd
   const isOwnerOrCollabFromData =
     blog &&
     blog.bloggers?.some(
-      (b: any) => b.user?.id === userId && (b.status === 'owner' || b.status === 'admin')
+      (b) => b.user?.id === userId && (b.status === 'owner' || b.status === 'admin')
     );
 
   // Compute context-aware URLs based on blog ownership
-  const blogOwner = blog?.bloggers?.find((b: any) => b.status === 'owner')?.user;
+  const blogOwner = blog?.bloggers?.find((b) => b.status === 'owner')?.user;
   const blogViewUrl = blog?.group_id
     ? `/group/${blog.group_id}/blog/${blogId}`
     : `/user/${blogOwner?.id || userId}/blog/${blogId}`;
@@ -231,20 +231,20 @@ export function BlogEditorView({ blogId, userId, userRecord, userColor }: BlogEd
           {blog.bloggers && blog.bloggers.length > 0 && (
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <span className="text-sm text-muted-foreground">Bloggers:</span>
-              {blog.bloggers.map((blogger: any) => (
+              {blog.bloggers.map((blogger) => (
                 <div
                   key={blogger.id}
                   className="flex items-center gap-1 rounded-full bg-muted px-2 py-1"
                 >
                   <Avatar className="h-5 w-5">
                     {blogger.user?.avatar ? (
-                      <AvatarImage src={blogger.user.avatar} alt={blogger.user.name || ''} />
+                      <AvatarImage src={blogger.user.avatar} alt={[blogger.user?.first_name, blogger.user?.last_name].filter(Boolean).join(' ') || ''} />
                     ) : null}
                     <AvatarFallback className="text-xs">
-                      {blogger.user?.name?.[0]?.toUpperCase() || '?'}
+                      {blogger.user?.first_name?.[0]?.toUpperCase() || '?'}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-xs">{blogger.user?.name || 'Unknown'}</span>
+                  <span className="text-xs">{[blogger.user?.first_name, blogger.user?.last_name].filter(Boolean).join(' ') || 'Unknown'}</span>
                 </div>
               ))}
             </div>

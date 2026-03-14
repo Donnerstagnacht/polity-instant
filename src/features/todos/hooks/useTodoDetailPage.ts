@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTodoState } from '@/zero/todos/useTodoState';
 import { useTodoMutations } from './useTodoMutations';
-import { TodoFormData, Todo } from '../types/todo.types';
+import { TodoFormData, Todo, TodoStatus, TodoPriority } from '../types/todo.types';
 
 export function useTodoDetailPage(todoId: string) {
   const [isEditing, setIsEditing] = useState(false);
@@ -14,9 +14,9 @@ export function useTodoDetailPage(todoId: string) {
   const [formData, setFormData] = useState<TodoFormData>({
     title: todo?.title || '',
     description: todo?.description || '',
-    status: todo?.status || 'pending',
-    priority: todo?.priority || 'medium',
-    dueDate: todo?.dueDate ? new Date(todo.dueDate).toISOString().split('T')[0] : '',
+    status: (todo?.status || 'pending') as TodoStatus,
+    priority: (todo?.priority || 'medium') as TodoPriority,
+    dueDate: todo?.due_date ? new Date(todo.due_date).toISOString().split('T')[0] : '',
   });
 
   useEffect(() => {
@@ -24,9 +24,9 @@ export function useTodoDetailPage(todoId: string) {
       setFormData({
         title: todo.title || '',
         description: todo.description || '',
-        status: todo.status || 'pending',
-        priority: todo.priority || 'medium',
-        dueDate: todo.dueDate ? new Date(todo.dueDate).toISOString().split('T')[0] : '',
+        status: (todo.status || 'pending') as TodoStatus,
+        priority: (todo.priority || 'medium') as TodoPriority,
+        dueDate: todo.due_date ? new Date(todo.due_date).toISOString().split('T')[0] : '',
       });
     }
   }, [todo]);
@@ -62,9 +62,9 @@ export function useTodoDetailPage(todoId: string) {
     setFormData({
       title: todo.title || '',
       description: todo.description || '',
-      status: todo.status || 'pending',
-      priority: todo.priority || 'medium',
-      dueDate: todo.dueDate ? new Date(todo.dueDate).toISOString().split('T')[0] : '',
+      status: (todo.status || 'pending') as TodoStatus,
+      priority: (todo.priority || 'medium') as TodoPriority,
+      dueDate: todo.due_date ? new Date(todo.due_date).toISOString().split('T')[0] : '',
     });
     setIsEditing(false);
   };

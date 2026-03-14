@@ -52,7 +52,7 @@ export function useUserSubscriptions(userId?: string) {
       total: subscriptions.length,
     };
 
-    subscriptions.forEach((sub: any) => {
+    subscriptions.forEach((sub) => {
       if (sub.user) counts.users++;
       if (sub.group) counts.groups++;
       if (sub.amendment) counts.amendments++;

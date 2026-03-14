@@ -24,13 +24,21 @@ export function formatRight(right: string): string {
  * @param type - Whether to pick the parent (`rel.group`) or child (`rel.related_group`) side
  * @returns Deduplicated array of `{ group, rights }` entries
  */
-export function groupRelationshipsByGroup(
-  relationships: any[],
-  type: 'parent' | 'child'
-): { group: any; rights: string[] }[] {
-  const grouped = new Map<string, { group: any; rights: string[] }>();
+interface RelationshipRow {
+  group?: { id: string; name?: string | null; description?: string | null; member_count?: number; memberships?: readonly unknown[]; amendments?: readonly unknown[]; events?: readonly unknown[]; [key: string]: unknown };
+  related_group?: { id: string; name?: string | null; description?: string | null; member_count?: number; memberships?: readonly unknown[]; amendments?: readonly unknown[]; events?: readonly unknown[]; [key: string]: unknown };
+  with_right: string | null;
+}
 
-  relationships?.forEach((rel: any) => {
+type GroupEntry = RelationshipRow['group'] & {};
+
+export function groupRelationshipsByGroup(
+  relationships: RelationshipRow[],
+  type: 'parent' | 'child'
+): { group: GroupEntry; rights: string[] }[] {
+  const grouped = new Map<string, { group: GroupEntry; rights: string[] }>();
+
+  relationships?.forEach((rel) => {
     const targetGroup = type === 'parent' ? rel.group : rel.related_group;
     if (!targetGroup) return;
 
@@ -38,7 +46,7 @@ export function groupRelationshipsByGroup(
       grouped.set(targetGroup.id, { group: targetGroup, rights: [] });
     }
     const entry = grouped.get(targetGroup.id);
-    if (entry) {
+    if (entry && rel.with_right) {
       entry.rights.push(rel.with_right);
     }
   });

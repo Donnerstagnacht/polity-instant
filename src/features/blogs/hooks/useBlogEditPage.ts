@@ -88,7 +88,7 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
         return;
       }
 
-      const updateData: any = {
+      const updateData: Record<string, string | boolean | null> = {
         id: blogId,
         title: formData.title,
         description: formData.description,
@@ -96,7 +96,7 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
         is_public: formData.isPublic,
       };
 
-      await updateBlog(updateData);
+      await updateBlog(updateData as unknown as Parameters<typeof updateBlog>[0]);
 
       // Timeline and notifications are server-only — send separately
       try {

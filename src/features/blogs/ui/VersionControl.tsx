@@ -31,7 +31,7 @@ interface Version {
   id: string;
   versionNumber: number;
   title: string;
-  content: any[];
+  content: Record<string, unknown>[];
   createdAt: number | Date;
   creationType: string;
   creator?: {
@@ -44,9 +44,9 @@ interface Version {
 
 interface VersionControlProps {
   blogId: string;
-  currentContent: any[];
+  currentContent: Record<string, unknown>[];
   currentUserId: string;
-  onRestoreVersion: (content: any[]) => void;
+  onRestoreVersion: (content: Record<string, unknown>[]) => void;
 }
 
 export function VersionControl({
@@ -110,7 +110,7 @@ export function VersionControl({
         blog_id: blogId,
         version_number: nextVersionNumber,
         change_summary: versionTitle,
-        content: currentContent,
+        content: currentContent as unknown as import('@rocicorp/zero').ReadonlyJSONValue,
       });
 
       toast.success(

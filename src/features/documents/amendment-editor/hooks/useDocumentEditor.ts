@@ -8,6 +8,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import type { ReadonlyJSONValue } from '@rocicorp/zero';
+import type { TDiscussion } from '@/features/shared/ui/kit-platejs/discussion-kit';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
@@ -26,6 +27,17 @@ const DEFAULT_CONTENT = [
   },
 ];
 
+const asReadonlyJsonArray = (value: ReadonlyJSONValue | null): ReadonlyJSONValue[] =>
+  Array.isArray(value) ? [...value] : [...DEFAULT_CONTENT];
+
+const asDiscussionList = (value: ReadonlyJSONValue | null): TDiscussion[] => {
+  if (!Array.isArray(value)) return [];
+  return value as TDiscussion[];
+};
+
+const toReadonlyJsonValue = (value: TDiscussion[] | ReadonlyJSONValue[]): ReadonlyJSONValue =>
+  JSON.parse(JSON.stringify(value)) as ReadonlyJSONValue;
+
 export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocumentEditorProps) {
   const { updateDocument } = useDocumentActions();
   const { updateAmendment } = useAmendmentActions();
@@ -33,8 +45,8 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
   const [documentTitle, setDocumentTitle] = useState('');
   const [isSavingTitle, setIsSavingTitle] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [editorValue, setEditorValue] = useState<unknown[] | null>(null);
-  const [discussions, setDiscussions] = useState<unknown[]>([]);
+  const [editorValue, setEditorValue] = useState<ReadonlyJSONValue[] | null>(null);
+  const [discussions, setDiscussions] = useState<TDiscussion[]>([]);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
@@ -70,8 +82,8 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
   useEffect(() => {
     if (amendment && !isInitialized.current) {
       setDocumentTitle(amendment.title || '');
-      setEditorValue((document?.content as unknown[] | null) || DEFAULT_CONTENT);
-      setDiscussions((amendment.discussions as unknown[]) || []);
+      setEditorValue(asReadonlyJsonArray(document?.content ?? null));
+      setDiscussions(asDiscussionList(amendment.discussions ?? null));
       isInitialized.current = true;
     }
   }, [amendment, document]);
@@ -80,7 +92,7 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
   useEffect(() => {
     if (!amendment || !isInitialized.current) return;
 
-    const remoteDiscussions = (amendment.discussions as unknown[]) || [];
+    const remoteDiscussions = asDiscussionList(amendment.discussions ?? null);
     const localDiscussionsStr = JSON.stringify(discussions);
     const remoteDiscussionsStr = JSON.stringify(remoteDiscussions);
 
@@ -97,12 +109,11 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
     if (!discussions || discussions.length === 0) return discussions;
 
     return discussions.map((discussion) => {
-      const discObj = (typeof discussion === 'object' && discussion !== null) ? discussion as { crId?: string } : { crId: undefined };
-      const matchingChangeRequest = changeRequests.find((cr) => cr.title === discObj.crId);
+      const matchingChangeRequest = changeRequests.find((cr) => cr.title === discussion.crId);
 
       if (matchingChangeRequest && matchingChangeRequest.votes.length > 0) {
         return {
-          ...(discussion as object),
+          ...discussion,
           votes: matchingChangeRequest.votes.map((vote) => ({
             id: vote.id,
             vote: vote.vote,
@@ -125,7 +136,7 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
         : new Date(document.updated_at).getTime()
       : 0;
 
-    const remoteContent = (document.content as unknown[] | null) || DEFAULT_CONTENT;
+    const remoteContent = asReadonlyJsonArray(document.content ?? null);
     const hasRemoteChanges = JSON.stringify(remoteContent) !== JSON.stringify(editorValue);
 
     if (
@@ -157,7 +168,7 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
 
   // Content change handler - throttled saves
   const handleContentChange = useCallback(
-    async (newContent: unknown[]) => {
+    async (newContent: ReadonlyJSONValue[]) => {
       if (!actualDocumentId || !userId) {
         console.warn('⚠️ Cannot save: missing documentId or userId', { actualDocumentId, userId });
         return;
@@ -178,7 +189,7 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
       try {
         await updateDocument({
           id: actualDocumentId,
-          content: newContent as ReadonlyJSONValue,
+          content: toReadonlyJsonValue(newContent),
         });
         lastRemoteUpdate.current = now;
         setSaveStatus('saved');
@@ -234,7 +245,7 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
 
   // Save discussions (debounced and deduped)
   const handleDiscussionsChange = useCallback(
-    async (newDiscussions: unknown[]) => {
+    async (newDiscussions: TDiscussion[]) => {
       if (!amendmentId || !userId) {
         console.warn('⚠️ Cannot save discussions: missing amendmentId or userId', {
           amendmentId,
@@ -269,7 +280,7 @@ export function useDocumentEditor({ documentId, amendmentId, userId }: UseDocume
       try {
         await updateAmendment({
           id: amendmentId,
-          discussions: newDiscussions as ReadonlyJSONValue,
+          discussions: toReadonlyJsonValue(newDiscussions),
         });
         setSaveStatus('saved');
         setHasUnsavedChanges(false);

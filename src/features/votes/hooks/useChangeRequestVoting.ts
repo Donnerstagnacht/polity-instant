@@ -285,7 +285,7 @@ export function useChangeRequestVoting({
           // Trigger supporter confirmation for groups that support this amendment
           // They need to confirm their support now that changes have been made
           try {
-            await triggerSupporterConfirmation((mutation) => zero.mutate(mutation), {
+            await triggerSupporterConfirmation((mutation) => zero.mutate(mutation).client, {
               amendmentId,
               changeRequestId: currentChangeRequest.id,
               changeRequestTitle: currentChangeRequest.title,

@@ -137,6 +137,12 @@ export const DEFAULT_AMENDMENT_ROLES = [
     description: 'Full amendment control',
     permissions: [
       { resource: 'amendments' as ResourceType, action: 'manage' as ActionType },
+      { resource: 'amendments' as ResourceType, action: 'view' as ActionType },
+      { resource: 'amendments' as ResourceType, action: 'create' as ActionType },
+      { resource: 'amendments' as ResourceType, action: 'update' as ActionType },
+      { resource: 'amendments' as ResourceType, action: 'delete' as ActionType },
+      { resource: 'amendments' as ResourceType, action: 'vote' as ActionType },
+      { resource: 'amendments' as ResourceType, action: 'moderate' as ActionType },
       {
         resource: 'groupNotifications' as ResourceType,
         action: 'viewNotifications' as ActionType,

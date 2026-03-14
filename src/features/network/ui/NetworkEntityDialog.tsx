@@ -15,14 +15,40 @@ import { GRADIENTS } from '@/features/users/state/gradientColors';
 import { formatRights } from './RightFilters';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import type { SearchResultItem } from '@/features/search/types/search.types';
+
+interface NetworkEventData {
+  id?: string;
+  imageURL?: string | null;
+  title?: string | null;
+  description?: string | null;
+  startDate?: string | number | Date | null;
+  location?: string | null;
+}
+
+interface NetworkUserData {
+  id?: string;
+  name?: string | null;
+  subtitle?: string | null;
+  avatarFile?: { url?: string | null } | null;
+}
+
+interface NetworkRelationshipData {
+  id?: string;
+  rights?: string[];
+  label?: string | null;
+}
+
+type NetworkDialogEntity =
+  | { type: 'group'; data: SearchResultItem & { onEventSelect?: (eventId: string, eventData: unknown) => void } }
+  | { type: 'event'; data: NetworkEventData }
+  | { type: 'user'; data: NetworkUserData }
+  | { type: 'relationship'; data: NetworkRelationshipData };
 
 interface NetworkEntityDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  entity: {
-    type: 'group' | 'relationship' | 'user' | 'event';
-    data: any;
-  } | null;
+  entity: NetworkDialogEntity | null;
 }
 
 export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntityDialogProps) {
@@ -88,7 +114,7 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
                 {entity.data.imageURL && (
                   <img
                     src={entity.data.imageURL}
-                    alt={entity.data.title}
+                    alt={entity.data.title ?? undefined}
                     className="h-32 w-full rounded-md object-cover"
                   />
                 )}
@@ -121,7 +147,7 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
                   {entity.data.avatarFile?.url && (
                     <img
                       src={entity.data.avatarFile.url}
-                      alt={entity.data.name}
+                    alt={entity.data.name ?? undefined}
                       className="h-16 w-16 rounded-full object-cover"
                     />
                   )}

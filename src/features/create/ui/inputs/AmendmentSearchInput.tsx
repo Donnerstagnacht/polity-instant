@@ -25,7 +25,7 @@ export function AmendmentSearchInput({
       toTypeaheadItems(
         amendments ?? [],
         'amendment',
-        (a: any) => a.title || 'Amendment',
+        (a) => a.title || 'Amendment',
       ),
     [amendments],
   )

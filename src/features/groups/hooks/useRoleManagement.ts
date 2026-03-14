@@ -88,7 +88,7 @@ export function useRoleManagement(groupId: string) {
     resource: string,
     action: string,
     currentlyHasRight: boolean,
-    roleActionRights: any[],
+    roleActionRights: readonly { id: string; resource: string | null; action: string | null }[],
     senderId?: string,
     groupName?: string,
     roleName?: string,

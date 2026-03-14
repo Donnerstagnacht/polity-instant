@@ -650,7 +650,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         </Panel>
       }
     >
-      <NetworkEntityDialog open={dialogOpen} onOpenChange={setDialogOpen} entity={selectedEntity} />
+      <NetworkEntityDialog open={dialogOpen} onOpenChange={setDialogOpen} entity={selectedEntity as React.ComponentProps<typeof NetworkEntityDialog>['entity']} />
     </NetworkFlowBase>
   );
 }

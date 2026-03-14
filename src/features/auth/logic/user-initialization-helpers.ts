@@ -105,7 +105,7 @@ export function buildUserInitializationTransactions(
   firstName: string,
   lastName: string,
   handle?: string
-): any[] {
+): ReturnType<typeof buildUserInitializationData>[] {
   // Legacy compatibility — returns an array with the data object
   return [buildUserInitializationData(userId, firstName, lastName, handle)];
 }

@@ -579,10 +579,10 @@ export function useCreateGroupForm(): CreateFormConfig {
                 <Label>{t('pages.create.group.selectGroup')}</Label>
                 <TypeaheadSearch
                   items={toTypeaheadItems(
-                    allGroups.filter((g: any) => g.id !== groupId),
+                    allGroups.filter((g) => g.id !== groupId),
                     'group',
-                    (g: any) => g.name || 'Group',
-                    (g: any) => g.description?.substring(0, 60),
+                    (g) => g.name || 'Group',
+                    (g) => g.description?.substring(0, 60),
                   )}
                   value={linkGroupId}
                   onChange={(item: TypeaheadItem | null) => setLinkGroupId(item?.id ?? '')}

@@ -434,7 +434,7 @@ export function TableRowElement(props: PlateElementProps<TTableRowElement>) {
   );
 }
 
-function RowDragHandle({ dragRef }: { dragRef: React.Ref<any> }) {
+function RowDragHandle({ dragRef }: { dragRef: React.Ref<HTMLButtonElement> }) {
   const editor = useEditorRef();
   const element = useElement();
 

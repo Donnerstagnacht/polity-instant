@@ -14,6 +14,7 @@ import {
   TableRow,
 } from '@/features/shared/ui/ui/table';
 import { useGroupNetwork } from '@/features/network/hooks/useGroupNetwork';
+import type { NormalizedGroupRelationship, NetworkGroupEntity } from '@/features/network/types/network.types';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Search, Pencil, Trash2 } from 'lucide-react';
@@ -70,8 +71,8 @@ export function GroupRelationshipsManager({ groupId }: GroupRelationshipsManager
 
   const [isPropagating, setIsPropagating] = useState(false);
 
-  const handleAcceptRequest = async (relationships: any[]) => {
-      const hasPvr = relationships.some((r: any) => r.with_right === 'passiveVotingRight' || r.withRight === 'passiveVotingRight');
+  const handleAcceptRequest = async (relationships: NormalizedGroupRelationship[]) => {
+      const hasPvr = relationships.some((r) => r.with_right === 'passiveVotingRight' || r.withRight === 'passiveVotingRight');
       if (hasPvr) setIsPropagating(true);
       try {
         for (const rel of relationships) {
@@ -85,7 +86,7 @@ export function GroupRelationshipsManager({ groupId }: GroupRelationshipsManager
       }
   };
 
-  const handleRejectRequest = async (relationships: any[]) => {
+  const handleRejectRequest = async (relationships: NormalizedGroupRelationship[]) => {
       for (const rel of relationships) {
         await deleteRelationship({ id: rel.id });
       }
@@ -126,7 +127,7 @@ export function GroupRelationshipsManager({ groupId }: GroupRelationshipsManager
   }, [outgoingRequests, groupId]);
 
   const filteredRelationships = useMemo(() => {
-    let items: { group: any; rights: string[]; type: 'parent' | 'child' }[] = [];
+    let items: { group: NetworkGroupEntity; rights: string[]; type: 'parent' | 'child' }[] = [];
 
     // Flatten data for the table
     if (directionFilter !== 'child') {
@@ -140,7 +141,7 @@ export function GroupRelationshipsManager({ groupId }: GroupRelationshipsManager
     if (searchQuery) {
         const lowerQuery = searchQuery.toLowerCase();
         items = items.filter(item => 
-            item.group.name.toLowerCase().includes(lowerQuery) ||
+            item.group.name?.toLowerCase().includes(lowerQuery) ||
             (item.group.description && item.group.description.toLowerCase().includes(lowerQuery))
         );
     }
@@ -268,7 +269,7 @@ export function GroupRelationshipsManager({ groupId }: GroupRelationshipsManager
                 />
             </div>
             <div className="flex gap-2">
-                 <Select value={directionFilter} onValueChange={(v: any) => setDirectionFilter(v)}>
+                 <Select value={directionFilter} onValueChange={(v) => setDirectionFilter(v as typeof directionFilter)}>
                     <SelectTrigger className="w-[150px]">
                         <SelectValue placeholder="Direction" />
                     </SelectTrigger>
@@ -379,7 +380,7 @@ export function GroupRelationshipsManager({ groupId }: GroupRelationshipsManager
                                                 <AlertDialogCancel>{t('common.actions.cancel')}</AlertDialogCancel>
                                                 <AlertDialogAction
                                                     onClick={() => handleDeleteRelationship(rel.group.id)}
-                                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                                  className="bg-destructive text-white hover:bg-destructive/90"
                                                 >
                                                     {t('common.actions.delete')}
                                                 </AlertDialogAction>

@@ -13,10 +13,14 @@ import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { History, User, Calendar, TrendingUp, UserX, Award, UserCheck, Clock } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 
+import { useGroupPositions as useFacadeGroupPositions } from '@/zero/groups/useGroupState';
+
+type PositionRow = ReturnType<typeof useFacadeGroupPositions>['positions'][number];
+
 interface PositionHolderHistoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  position: any;
+  position: PositionRow;
 }
 
 const getReasonIcon = (reason: string) => {
@@ -77,11 +81,11 @@ export function PositionHolderHistoryDialog({
 }: PositionHolderHistoryDialogProps) {
   // Sort history by start_date (most recent first)
   const sortedHistory = [...(position?.holder_history || [])].sort(
-    (a: any, b: any) => (b.start_date ?? 0) - (a.start_date ?? 0)
+    (a, b) => (b.start_date ?? 0) - (a.start_date ?? 0)
   );
 
   // Derive current holder: the most recent entry with no end_date
-  const currentHolderEntry = sortedHistory.find((e: any) => !e.end_date);
+  const currentHolderEntry = sortedHistory.find((e) => !e.end_date);
   const currentHolder = currentHolderEntry?.user;
 
   return (
@@ -104,7 +108,7 @@ export function PositionHolderHistoryDialog({
               <CardContent className="pt-6">
                 <div className="flex items-start gap-4">
                   <Avatar className="h-12 w-12 ring-2 ring-primary">
-                    <AvatarImage src={currentHolder.avatar} />
+                    <AvatarImage src={currentHolder.avatar ?? undefined} />
                     <AvatarFallback>
                       {currentHolder.first_name?.[0] || currentHolder.handle?.[0] || 'U'}
                     </AvatarFallback>
@@ -128,9 +132,9 @@ export function PositionHolderHistoryDialog({
                     {currentHolderEntry && (
                       <div className="mt-3 flex flex-wrap gap-4 text-sm">
                         <div className="flex items-center gap-1.5">
-                          {getReasonIcon(currentHolderEntry.reason)}
+                          {getReasonIcon(currentHolderEntry.reason ?? '')}
                           <span className="text-muted-foreground">
-                            {getReasonLabel(currentHolderEntry.reason)}
+                            {getReasonLabel(currentHolderEntry.reason ?? '')}
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5">
@@ -160,10 +164,10 @@ export function PositionHolderHistoryDialog({
                 History Timeline
               </h4>
               <div className="relative space-y-4 before:absolute before:left-6 before:top-4 before:bottom-4 before:w-0.5 before:bg-border">
-                {sortedHistory.map((entry: any, index: number) => {
+                {sortedHistory.map((entry, index) => {
                   const isActive = !entry.end_date;
                   const duration = entry.end_date
-                    ? formatDistanceToNow(new Date(entry.start_date), {
+                    ? formatDistanceToNow(new Date(entry.start_date!), {
                         addSuffix: false,
                       }) + ' - ' + formatDistanceToNow(new Date(entry.end_date), {
                         addSuffix: false,
@@ -182,7 +186,7 @@ export function PositionHolderHistoryDialog({
                       >
                         {entry.user ? (
                           <Avatar className="h-10 w-10">
-                            <AvatarImage src={entry.user.avatar} />
+                            <AvatarImage src={entry.user.avatar ?? undefined} />
                             <AvatarFallback>
                               {entry.user.first_name?.[0] || entry.user.handle?.[0] || 'U'}
                             </AvatarFallback>
@@ -209,10 +213,10 @@ export function PositionHolderHistoryDialog({
                               </div>
                               <Badge
                                 variant="outline"
-                                className={getReasonColor(entry.reason)}
+                                className={getReasonColor(entry.reason ?? '')}
                               >
-                                <span className="mr-1">{getReasonIcon(entry.reason)}</span>
-                                {getReasonLabel(entry.reason)}
+                                <span className="mr-1">{getReasonIcon(entry.reason ?? '')}</span>
+                                {getReasonLabel(entry.reason ?? '')}
                               </Badge>
                             </div>
 
@@ -222,7 +226,7 @@ export function PositionHolderHistoryDialog({
                                 <span>
                                   {entry.start_date ? format(new Date(entry.start_date), 'MMM d, yyyy') : 'N/A'}
                                   {entry.end_date && (
-                                    <> → {format(new Date(entry.end_date), 'MMM d, yyyy')}</>
+                                    <> → {format(new Date(entry.end_date!), 'MMM d, yyyy')}</>
                                   )}
                                 </span>
                               </div>

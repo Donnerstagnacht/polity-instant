@@ -67,7 +67,7 @@ export function TodoDetailPage({ todoId }: TodoDetailPageProps) {
           <TodoDetailHeader
             isEditing={isEditing}
             isSaving={isSaving}
-            title={todo.title}
+            title={todo.title ?? ''}
             formTitle={formData.title}
             onEdit={() => setIsEditing(true)}
             onSave={handleSave}

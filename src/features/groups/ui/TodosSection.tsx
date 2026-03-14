@@ -5,15 +5,16 @@ import { KanbanBoard } from '@/features/todos/ui/kanban-board.tsx';
 import { TodoList } from '@/features/todos/ui/todo-list.tsx';
 import { AddTodoDialog } from './AddTodoDialog';
 import type { TodoViewMode } from '../types/group.types';
+import type { Todo } from '@/features/todos/types/todo.types';
 
 interface TodosSectionProps {
-  todos: any[];
+  todos: Todo[];
   viewMode: TodoViewMode;
   onViewModeChange: (mode: TodoViewMode) => void;
   dialogOpen: boolean;
   onDialogChange: (open: boolean) => void;
   onAddTodo: (data: { title: string; description: string; priority: string; dueDate: string }) => void;
-  onToggleComplete: (todo: any) => void;
+  onToggleComplete: (todo: Todo) => void;
   onUpdateStatus: (todoId: string, status: string) => void;
 }
 

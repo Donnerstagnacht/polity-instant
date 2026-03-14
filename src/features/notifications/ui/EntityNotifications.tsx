@@ -54,7 +54,7 @@ export function EntityNotifications({
   const filteredNotifications = useMemo(() => {
     if (!searchQuery.trim()) return notifications;
     const q = searchQuery.toLowerCase();
-    return notifications.filter((n: any) => {
+    return notifications.filter((n) => {
       const senderName = [n.sender?.first_name, n.sender?.last_name].filter(Boolean).join(' ').toLowerCase();
       const title = (n.title || '').toLowerCase();
       const message = (n.message || '').toLowerCase();
@@ -62,10 +62,10 @@ export function EntityNotifications({
     });
   }, [notifications, searchQuery]);
 
-  const unreadNotifications = filteredNotifications.filter((n: any) => !n.is_read);
-  const readNotifications = filteredNotifications.filter((n: any) => n.is_read);
+  const unreadNotifications = filteredNotifications.filter((n) => !n.is_read);
+  const readNotifications = filteredNotifications.filter((n) => n.is_read);
 
-  const handleNotificationClick = async (notification: any) => {
+  const handleNotificationClick = async (notification: (typeof notifications)[number]) => {
     // Mark as read on click
     if (!notification.is_read) {
       markRead({ id: notification.id });
@@ -79,7 +79,7 @@ export function EntityNotifications({
   };
 
   const markAllAsRead = async () => {
-    const unreadIds = unreadNotifications.map((n: any) => n.id);
+    const unreadIds = unreadNotifications.map((n) => n.id);
     if (unreadIds.length > 0) {
       for (const notifId of unreadIds) {
         await markRead({ id: notifId });
@@ -108,12 +108,12 @@ export function EntityNotifications({
     }
   };
 
-  const getUserName = (user: any) => {
+  const getUserName = (user: (typeof notifications)[number]['sender']) => {
     if (!user) return null;
     return [user.first_name, user.last_name].filter(Boolean).join(' ') || user.email || null;
   };
 
-  const NotificationItem = ({ notification }: { notification: any }) => {
+  const NotificationItem = ({ notification }: { notification: (typeof notifications)[number] }) => {
     const Icon = getNotificationIcon(notification.type as NotificationType);
     const iconColor = getNotificationColor(notification.type as NotificationType);
     const senderName = getUserName(notification.sender);
@@ -149,10 +149,10 @@ export function EntityNotifications({
                       className="hover:ring-primary h-5 w-5 shrink-0 cursor-pointer hover:ring-1"
                       onClick={e => {
                         e.stopPropagation();
-                        navigate({ to: `/user/${notification.sender.id}` });
+                        navigate({ to: `/user/${notification.sender?.id}` });
                       }}
                     >
-                      <AvatarImage src={notification.sender.avatar} />
+                      <AvatarImage src={notification.sender?.avatar || undefined} />
                       <AvatarFallback className="text-[10px]">
                         {senderName?.[0]?.toUpperCase() || 'U'}
                       </AvatarFallback>
@@ -161,7 +161,7 @@ export function EntityNotifications({
                       className="hover:text-primary cursor-pointer truncate font-medium hover:underline"
                       onClick={e => {
                         e.stopPropagation();
-                        navigate({ to: `/user/${notification.sender.id}` });
+                        navigate({ to: `/user/${notification.sender?.id}` });
                       }}
                     >
                       {senderName}
@@ -177,7 +177,7 @@ export function EntityNotifications({
                       className="hover:text-primary cursor-pointer truncate font-medium hover:underline"
                       onClick={e => {
                         e.stopPropagation();
-                        navigate({ to: `/user/${notification.related_user.id}` });
+                        navigate({ to: `/user/${notification.related_user?.id}` });
                       }}
                     >
                       {receiverName}
@@ -186,10 +186,10 @@ export function EntityNotifications({
                       className="hover:ring-primary h-5 w-5 shrink-0 cursor-pointer hover:ring-1"
                       onClick={e => {
                         e.stopPropagation();
-                        navigate({ to: `/user/${notification.related_user.id}` });
+                        navigate({ to: `/user/${notification.related_user?.id}` });
                       }}
                     >
-                      <AvatarImage src={notification.related_user.avatar} />
+                      <AvatarImage src={notification.related_user?.avatar || undefined} />
                       <AvatarFallback className="text-[10px]">
                         {receiverName?.[0]?.toUpperCase() || 'U'}
                       </AvatarFallback>
@@ -294,7 +294,7 @@ export function EntityNotifications({
             </Card>
           ) : (
             <div className="space-y-3">
-              {filteredNotifications.map((notification: any) => (
+              {filteredNotifications.map((notification) => (
                 <NotificationItem key={notification.id} notification={notification} />
               ))}
             </div>
@@ -316,7 +316,7 @@ export function EntityNotifications({
             </Card>
           ) : (
             <div className="space-y-3">
-              {unreadNotifications.map((notification: any) => (
+              {unreadNotifications.map((notification) => (
                 <NotificationItem key={notification.id} notification={notification} />
               ))}
             </div>
@@ -338,7 +338,7 @@ export function EntityNotifications({
             </Card>
           ) : (
             <div className="space-y-3">
-              {readNotifications.map((notification: any) => (
+              {readNotifications.map((notification) => (
                 <NotificationItem key={notification.id} notification={notification} />
               ))}
             </div>

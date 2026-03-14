@@ -95,7 +95,7 @@ export function useEventById(eventId?: string) {
 
   const participantStats = useMemo(() => {
     const stats = { total: participants.length, members: 0, admins: 0, invited: 0, requested: 0 }
-    participants.forEach((p: any) => {
+    participants.forEach((p) => {
       if (p.status === 'member') stats.members++
       if (p.status === 'admin') stats.admins++
       if (p.status === 'invited') stats.invited++
@@ -170,10 +170,10 @@ export function useEventParticipantsQuery(eventId?: string) {
   const participants = useMemo(() => eventParticipants || [], [eventParticipants])
 
   const { activeParticipants, invitedParticipants, requestedParticipants } = useMemo(() => {
-    const active: any[] = []
-    const invited: any[] = []
-    const requested: any[] = []
-    participants.forEach((p: any) => {
+    const active: typeof participants = []
+    const invited: typeof participants = []
+    const requested: typeof participants = []
+    participants.forEach(p => {
       if (p.status === 'member' || p.status === 'admin') active.push(p)
       else if (p.status === 'invited') invited.push(p)
       else if (p.status === 'requested') requested.push(p)
@@ -366,7 +366,7 @@ export function useEventsByGroup(groupId?: string, excludeEventId?: string) {
   )
 
   const events = (eventsData || []).filter(
-    (e: any) => e.id !== excludeEventId && e.start_date > Date.now()
+    e => e.id !== excludeEventId && (e.start_date ?? 0) > Date.now()
   )
 
   return { events }

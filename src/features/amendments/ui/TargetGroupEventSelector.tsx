@@ -19,7 +19,14 @@ import {
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
-import { findShortestPath } from '@/features/amendments/logic/path-finding.ts';
+import {
+  type AmendmentNetworkEvent,
+  type AmendmentNetworkGroup,
+  type PathWithEventSegment,
+  calculateUpwardPathWithClosestEvents,
+  getActiveUserGroupIds,
+  getUpwardConnectedGroupsForUser,
+} from '@/features/amendments/logic/amendmentPathHelpers';
 import { CalendarIcon, Target, User, MapPin, Clock, Users, ChevronRight, Search } from 'lucide-react';
 
 interface TargetGroupEventSelectorProps {
@@ -27,10 +34,10 @@ interface TargetGroupEventSelectorProps {
   collaborators?: Array<{ id: string; name?: string; email?: string; avatar?: string }>;
   onSelect: (data: {
     groupId: string;
-    groupData: Record<string, unknown>;
+    groupData: AmendmentNetworkGroup;
     eventId: string;
-    eventData: Record<string, unknown>;
-    pathWithEvents: Array<{ groupId: string; groupName: string; eventId: string | null; eventTitle: string; eventStartDate: number | null }>;
+    eventData: AmendmentNetworkEvent;
+    pathWithEvents: PathWithEventSegment[];
     selectedUserId: string;
   }) => void;
   selectedGroupId?: string;
@@ -45,8 +52,8 @@ export function TargetGroupEventSelector({
   selectedEventId,
 }: TargetGroupEventSelectorProps) {
   const [selectedUserId, setSelectedUserId] = useState<string>(userId);
-  const [selectedGroup, setSelectedGroup] = useState<{ id: string; data: Record<string, unknown> } | null>(null);
-  const [selectedEvent, setSelectedEvent] = useState<{ id: string; data: Record<string, unknown> } | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<{ id: string; data: AmendmentNetworkGroup } | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<{ id: string; data: AmendmentNetworkEvent } | null>(null);
   const [eventSearchQuery, setEventSearchQuery] = useState<string>('');
 
   // Fetch network data via facade
@@ -108,69 +115,15 @@ export function TargetGroupEventSelector({
     if (!networkData) return null;
 
     const currentUserId = selectedUserId || userId;
-    const userMemberships = networkData.groupMemberships.filter(
-      (m) =>
-        (m.status === 'active' || m.status === 'admin') && m.user?.id === currentUserId
-    );
+    const userGroupIds = getActiveUserGroupIds(networkData.groupMemberships, currentUserId);
 
-    const userGroupIds = userMemberships.map((m) => m.group?.id).filter((id): id is string => !!id);
-    const groups = networkData.groups;
-    const relationships = networkData.groupRelationships;
-    const events = networkData.events;
-
-    // Filter for amendmentRight relationships and map to findShortestPath interface
-    const amendmentRelationships = relationships
-      .filter((r) => r.with_right === 'amendmentRight')
-      .map((r) => ({
-        id: r.id,
-        parentGroup: { id: r.group?.id ?? '', name: r.group?.name ?? '' },
-        childGroup: { id: r.related_group?.id ?? '', name: r.related_group?.name ?? '' },
-        withRight: r.with_right ?? '',
-      }));
-
-    // Build groups map
-    const groupsMap = new Map();
-    groups.forEach((g) => {
-      groupsMap.set(g.id, {
-        id: g.id,
-        name: g.name,
-        description: g.description,
-      });
+    return calculateUpwardPathWithClosestEvents({
+      userGroupIds,
+      targetGroupId,
+      groups: networkData.groups,
+      relationships: networkData.groupRelationships,
+      events: networkData.events,
     });
-
-    // Find shortest path
-    const path = findShortestPath(userGroupIds, targetGroupId, amendmentRelationships, groupsMap);
-
-    if (!path) return null;
-
-    // For each group in path, find the closest upcoming event
-    const now = new Date();
-    const pathWithEvents = path.map((segment) => {
-      const groupId = segment.group.id;
-      const groupName = segment.group.name;
-
-      // Find all upcoming events for this group
-      const groupEvents = events.filter(
-        (e) => e.group?.id === groupId && new Date(e.start_date ?? 0) > now
-      );
-
-      // Sort by start date and pick the closest one
-      groupEvents.sort(
-        (a, b) => new Date(a.start_date ?? 0).getTime() - new Date(b.start_date ?? 0).getTime()
-      );
-
-      const closestEvent = groupEvents[0];
-
-      return {
-        groupId,
-        groupName,
-        eventId: closestEvent?.id || null,
-        eventTitle: closestEvent?.title || 'No upcoming event',
-        eventStartDate: closestEvent?.start_date || null,
-      };
-    });
-
-    return pathWithEvents;
   };
 
   // Get connected groups for the selected user
@@ -178,53 +131,20 @@ export function TargetGroupEventSelector({
     if (!networkData) return [];
 
     const currentUserId = selectedUserId || userId;
-    const userMemberships = networkData.groupMemberships.filter(
-      (m) =>
-        (m.status === 'active' || m.status === 'admin') && m.user?.id === currentUserId
+    const userGroupIds = getActiveUserGroupIds(networkData.groupMemberships, currentUserId);
+
+    return getUpwardConnectedGroupsForUser(
+      userGroupIds,
+      networkData.groups,
+      networkData.groupRelationships
     );
-
-    const userGroupIds = userMemberships.map((m) => m.group?.id).filter((id): id is string => !!id);
-    const allGroups = networkData.groups;
-    const relationships = networkData.groupRelationships;
-
-    // Filter for amendmentRight relationships
-    const amendmentRelationships = relationships.filter(
-      (r) => r.with_right === 'amendmentRight'
-    );
-
-    // Build set of connected groups (direct and indirect)
-    const connectedGroupIds = new Set<string>(userGroupIds);
-
-    // Add directly connected groups
-    amendmentRelationships.forEach((rel) => {
-      if (userGroupIds.includes(rel.group?.id ?? '')) {
-        if (rel.related_group?.id) connectedGroupIds.add(rel.related_group.id);
-      }
-      if (userGroupIds.includes(rel.related_group?.id ?? '')) {
-        if (rel.group?.id) connectedGroupIds.add(rel.group.id);
-      }
-    });
-
-    // Add indirectly connected groups (2 hops)
-    const firstHopGroups = Array.from(connectedGroupIds);
-    amendmentRelationships.forEach((rel) => {
-      if (firstHopGroups.includes(rel.group?.id ?? '')) {
-        if (rel.related_group?.id) connectedGroupIds.add(rel.related_group.id);
-      }
-      if (firstHopGroups.includes(rel.related_group?.id ?? '')) {
-        if (rel.group?.id) connectedGroupIds.add(rel.group.id);
-      }
-    });
-
-    return allGroups.filter((g) => connectedGroupIds.has(g.id));
   };
 
   const connectedGroups = getConnectedGroups();
-  const userMemberships = networkData.groupMemberships.filter(
-    (m) =>
-      (m.status === 'active' || m.status === 'admin') && m.user?.id === (selectedUserId || userId)
+  const userGroupIds = getActiveUserGroupIds(
+    networkData.groupMemberships,
+    selectedUserId || userId
   );
-  const userGroupIds = userMemberships.map((m) => m.group?.id).filter((id): id is string => !!id);
 
   // Get upcoming events for selected group
   const upcomingEvents =
@@ -427,7 +347,7 @@ interface DisplayGroupData {
   abbr?: string | null;
   name?: string | null;
   description?: string | null;
-  member_count?: number;
+  member_count?: number | null;
 }
 
 interface DisplayEventData {
@@ -441,7 +361,7 @@ interface DisplayEventData {
 interface TargetGroupEventDisplayProps {
   groupData: DisplayGroupData;
   eventData: DisplayEventData;
-  pathWithEvents?: Array<{ groupId: string; groupName: string; eventId: string | null; eventTitle: string; eventStartDate: number | null }>;
+  pathWithEvents?: PathWithEventSegment[];
 }
 
 export function TargetGroupEventDisplay({

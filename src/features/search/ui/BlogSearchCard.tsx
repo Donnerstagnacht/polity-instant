@@ -3,8 +3,10 @@ import { BlogsCard } from '@/features/users/ui/BlogsCard';
 import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
 
+import { type SearchBlog } from '../types/search.types';
+
 interface BlogSearchCardProps {
-  blog: any;
+  blog: SearchBlog;
   gradientClass?: string;
 }
 
@@ -14,17 +16,13 @@ export function BlogSearchCard({
 }: BlogSearchCardProps) {
   // Calculate supporters from upvotes and downvotes
   const supporters = (blog.upvotes || 0) - (blog.downvotes || 0);
-  const comments = blog.comments?.length || blog.commentCount || 0;
+  const comments = blog.comment_count || 0;
   const hashtags = extractHashtags(blog.blog_hashtags);
 
   // Compute context-aware blog URL
-  const blogOwnerUserId = blog.user_id
-    || blog.authorId
-    || blog.blogRoleBloggers?.find((relation: any) => relation?.status === 'owner')?.user_id
-    || blog.blogRoleBloggers?.find((relation: any) => Boolean(relation?.user_id))?.user_id
-    || blog.bloggers?.find((relation: any) => relation?.status === 'owner')?.user_id
-    || blog.bloggers?.find((relation: any) => Boolean(relation?.user_id))?.user_id;
-  const blogGroupId = blog.group_id || blog.groupId || blog.group?.id;
+  const blogOwnerUserId = blog.bloggers?.find(relation => relation.status === 'owner')?.user_id
+    || blog.bloggers?.find(relation => Boolean(relation.user_id))?.user_id;
+  const blogGroupId = blog.group_id;
   const blogUrl = blogGroupId
     ? `/group/${blogGroupId}/blog/${blog.id}`
     : blogOwnerUserId
@@ -36,8 +34,8 @@ export function BlogSearchCard({
       <BlogsCard
         blog={{
           id: blog.id,
-          title: blog.title,
-          date: blog.date || new Date(blog.createdAt).toLocaleDateString(),
+          title: blog.title ?? '',
+          date: blog.date || new Date(blog.created_at).toLocaleDateString(),
           supporters: supporters,
           comments: comments,
           group_id: blogGroupId,

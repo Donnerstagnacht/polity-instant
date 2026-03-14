@@ -1,18 +1,19 @@
 import { TodoCard } from './todo-card.tsx';
+import type { Todo } from '../types/todo.types';
 
 type TodoStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 
 interface TodoListProps {
-  todos: any[];
-  onToggleComplete: (todo: any) => void;
+  todos: Todo[];
+  onToggleComplete: (todo: Todo) => void;
   onUpdateStatus: (todoId: string, status: TodoStatus) => void;
-  onTodoClick?: (todo: any) => void;
+  onTodoClick?: (todo: Todo) => void;
 }
 
 export function TodoList({ todos, onToggleComplete, onUpdateStatus, onTodoClick }: TodoListProps) {
   return (
     <div className="space-y-3">
-      {todos.map((todo: any) => (
+      {todos.map((todo) => (
         <TodoCard
           key={todo.id}
           todo={todo}

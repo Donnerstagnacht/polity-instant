@@ -32,7 +32,7 @@ export function useAmendmentWorkflow({
   amendmentTitle,
 }: UseAmendmentWorkflowProps) {
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const { updateAmendment, createVotingSession: createVotingSessionAction, submitToEvent: submitToEventAction } = useAmendmentActions();
+  const { updateAmendment, createVotingSession: createVotingSessionAction } = useAmendmentActions();
 
   /**
    * Transition to a new workflow status
@@ -40,9 +40,7 @@ export function useAmendmentWorkflow({
   const transitionTo = useCallback(
     async (targetStatus: WorkflowStatus): Promise<boolean> => {
       if (!canTransitionTo(currentStatus, targetStatus)) {
-        toast.error(
-          `Ungültiger Übergang von ${currentStatus} zu ${targetStatus}`
-        );
+        toast.error(`Ungültiger Übergang von ${currentStatus} zu ${targetStatus}`);
         return false;
       }
 
@@ -54,7 +52,7 @@ export function useAmendmentWorkflow({
       setIsTransitioning(true);
 
       try {
-        const updates: any = {
+        const updates: Record<string, string | number | null> = {
           id: amendmentId,
           workflow_status: targetStatus,
           updated_at: Date.now(),
@@ -65,7 +63,7 @@ export function useAmendmentWorkflow({
           updates.current_event_id = null;
         }
 
-        await updateAmendment(updates);
+        await updateAmendment(updates as unknown as Parameters<typeof updateAmendment>[0]);
 
         // Send notification to collaborators
         if (senderId) {
@@ -94,7 +92,7 @@ export function useAmendmentWorkflow({
    * Start internal voting session
    */
   const startInternalVoting = useCallback(
-    async (intervalMinutes: number, autoClose: boolean = false): Promise<string | null> => {
+    async (intervalMinutes: number): Promise<string | null> => {
       if (currentStatus !== 'internal_suggesting' && currentStatus !== 'internal_voting') {
         toast.error('Internes Voting kann nur im Suggesting oder Voting Modus gestartet werden.');
         return null;
@@ -139,7 +137,7 @@ export function useAmendmentWorkflow({
    * Submit amendment to event (transition to event phase)
    */
   const submitToEvent = useCallback(
-    async (eventId: string, agendaItemId?: string): Promise<boolean> => {
+    async (eventId: string): Promise<boolean> => {
       // Can submit from any collaborator phase
       const allowedPhases: WorkflowStatus[] = [
         'collaborative_editing',
@@ -173,21 +171,18 @@ export function useAmendmentWorkflow({
   /**
    * Add group as supporter (called after event approval)
    */
-  const addGroupSupporter = useCallback(
-    async (groupId: string): Promise<boolean> => {
-      try {
-        // Note: supporter_groups is not a column on amendment table.
-        // Group supporters are tracked via support_confirmation records.
-        toast.success('Gruppe als Supporter hinzugefügt');
-        return true;
-      } catch (error) {
-        console.error('Failed to add group supporter:', error);
-        toast.error('Fehler beim Hinzufügen des Supporters');
-        return false;
-      }
-    },
-    [amendmentId]
-  );
+  const addGroupSupporter = useCallback(async (): Promise<boolean> => {
+    try {
+      // Note: supporter_groups is not a column on amendment table.
+      // Group supporters are tracked via support_confirmation records.
+      toast.success('Gruppe als Supporter hinzugefügt');
+      return true;
+    } catch (error) {
+      console.error('Failed to add group supporter:', error);
+      toast.error('Fehler beim Hinzufügen des Supporters');
+      return false;
+    }
+  }, []);
 
   /**
    * Finalize amendment as passed or rejected
@@ -207,9 +202,7 @@ export function useAmendmentWorkflow({
         });
 
         toast.success(
-          result === 'passed'
-            ? '🎉 Amendment wurde angenommen!'
-            : 'Amendment wurde abgelehnt'
+          result === 'passed' ? '🎉 Amendment wurde angenommen!' : 'Amendment wurde abgelehnt'
         );
         return true;
       } catch (error) {

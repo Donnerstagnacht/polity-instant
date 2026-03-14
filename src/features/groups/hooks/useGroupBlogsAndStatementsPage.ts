@@ -20,7 +20,7 @@ export function useGroupBlogsAndStatementsPage({ groupId }: UseGroupBlogsAndStat
     if (!searchQuery) return items;
     const q = searchQuery.toLowerCase();
     return items.filter(
-      (b: any) =>
+      b =>
         (b.title ?? '').toLowerCase().includes(q) ||
         (b.description ?? '').toLowerCase().includes(q),
     );
@@ -30,7 +30,7 @@ export function useGroupBlogsAndStatementsPage({ groupId }: UseGroupBlogsAndStat
     const items = statementsByGroup ?? [];
     if (!searchQuery) return items;
     const q = searchQuery.toLowerCase();
-    return items.filter((s: any) => (s.text ?? '').toLowerCase().includes(q));
+    return items.filter(s => (s.text ?? '').toLowerCase().includes(q));
   }, [statementsByGroup, searchQuery]);
 
   return {

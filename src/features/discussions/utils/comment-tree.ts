@@ -7,7 +7,7 @@ export interface CommentWithReplies {
   text: string;
   createdAt: number;
   updatedAt?: number;
-  parentComment?: any;
+  parentComment?: { id: string };
   upvotes?: number;
   downvotes?: number;
   creator?: {
@@ -30,7 +30,7 @@ export interface CommentWithReplies {
 /**
  * Build a tree structure from flat comments array
  */
-export function buildCommentTree(comments: any[]): CommentWithReplies[] {
+export function buildCommentTree(comments: CommentWithReplies[]): CommentWithReplies[] {
   const rootComments: CommentWithReplies[] = [];
   const commentMap = new Map<string, CommentWithReplies>();
 

@@ -38,9 +38,9 @@ export function useUnreadMessagesCount() {
     }
 
     let totalUnread = 0;
-    conversations.forEach((conversation: any) => {
+    conversations.forEach((conversation) => {
       const unreadInConversation = conversation.messages.filter(
-        (msg: any) => !msg.is_read && msg.sender?.id !== user.id
+        (msg) => !msg.is_read && msg.sender?.id !== user.id
       ).length;
 
       totalUnread += unreadInConversation;

@@ -12,8 +12,26 @@ interface PaymentsSectionProps {
   onIncomeDialogChange: (open: boolean) => void;
   expenditureDialogOpen: boolean;
   onExpenditureDialogChange: (open: boolean) => void;
-  onAddIncome: (data: any) => void;
-  onAddExpense: (data: any) => void;
+  onAddIncome: (data: {
+    label: string;
+    type: string;
+    amount: number;
+    direction: 'income' | 'expense';
+    payerUserId?: string;
+    payerGroupId?: string;
+    receiverUserId?: string;
+    receiverGroupId?: string;
+  }) => void;
+  onAddExpense: (data: {
+    label: string;
+    type: string;
+    amount: number;
+    direction: 'income' | 'expense';
+    payerUserId?: string;
+    payerGroupId?: string;
+    receiverUserId?: string;
+    receiverGroupId?: string;
+  }) => void;
 }
 
 export function PaymentsSection({

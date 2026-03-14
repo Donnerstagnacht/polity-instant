@@ -95,7 +95,7 @@ export function useGroupTodos(groupId: string, userId?: string) {
     }
   };
 
-  const toggleTodoComplete = async (todo: any) => {
+  const toggleTodoComplete = async (todo: { id: string; status: string | null }) => {
     const newStatus = todo.status === 'completed' ? 'pending' : 'completed';
     return updateTodoStatus(todo.id, newStatus);
   };

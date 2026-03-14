@@ -37,23 +37,23 @@ export function useTodoState(args: { groupId?: string; todoId?: string; userId?:
   const userTodos = useMemo(() => {
     if (!allTodos || !args.userId) return allTodos ?? []
     return allTodos.filter(
-      (t: any) =>
+      t =>
         t.creator?.id === args.userId ||
-        t.assignments?.some((a: any) => a.user?.id === args.userId)
+        t.assignments?.some(a => a.user?.id === args.userId)
     )
   }, [allTodos, args.userId])
 
   // Derived status buckets
   const openTodos = useMemo(
-    () => userTodos.filter((t: any) => t.status === 'open' || t.status === 'pending'),
+    () => userTodos.filter(t => t.status === 'open' || t.status === 'pending'),
     [userTodos]
   )
   const completedTodos = useMemo(
-    () => userTodos.filter((t: any) => t.status === 'completed'),
+    () => userTodos.filter(t => t.status === 'completed'),
     [userTodos]
   )
   const inProgressTodos = useMemo(
-    () => userTodos.filter((t: any) => t.status === 'in_progress'),
+    () => userTodos.filter(t => t.status === 'in_progress'),
     [userTodos]
   )
 

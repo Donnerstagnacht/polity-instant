@@ -8,9 +8,34 @@ import { Search, BookOpen, MessageSquareText, Plus, Edit, Trash2 } from 'lucide-
 
 type ContentFilter = 'all' | 'blogs' | 'statements';
 
+interface BlogItem {
+  id: string;
+  title?: string | null;
+  description?: string | null;
+  image_url?: string | null;
+  comment_count?: number | null;
+  group_id?: string | null;
+  user_id?: string | null;
+  date?: string | null;
+  blog_hashtags?: Array<{ hashtag?: Record<string, unknown> | null }>;
+}
+
+interface StatementItem {
+  id: string;
+  text?: string | null;
+  user?: { first_name?: string | null; last_name?: string | null; handle?: string | null; avatar?: string | null } | null;
+  upvotes?: number | null;
+  downvotes?: number | null;
+  comment_count?: number | null;
+  image_url?: string | null;
+  video_url?: string | null;
+  group_id?: string | null;
+  statement_hashtags?: Array<{ hashtag?: Record<string, unknown> | null }>;
+}
+
 interface BlogsAndStatementsViewProps {
-  blogs: any[];
-  statements: any[];
+  blogs: BlogItem[];
+  statements: StatementItem[];
   filter: ContentFilter;
   setFilter: (filter: ContentFilter) => void;
   searchQuery: string;
@@ -96,19 +121,19 @@ export function BlogsAndStatementsView({
             </h2>
           )}
           <div className="grid gap-4 sm:grid-cols-2">
-            {blogs.map((blog: any) => (
+            {blogs.map((blog) => (
               <div key={blog.id} className="relative">
                 <BlogTimelineCard
                   blog={{
                     id: blog.id,
                     title: blog.title ?? '',
-                    excerpt: blog.description,
-                    coverImageUrl: blog.image_url,
-                    commentCount: blog.comment_count,
+                    excerpt: blog.description ?? undefined,
+                    coverImageUrl: blog.image_url ?? undefined,
+                    commentCount: blog.comment_count ?? undefined,
                     groupId: blog.group_id,
-                    authorId: blog.user_id,
-                    publishedAt: blog.date,
-                    hashtags: (blog.blog_hashtags ?? []).map((bh: any) => bh.hashtag).filter(Boolean),
+                    authorId: blog.user_id ?? undefined,
+                    publishedAt: blog.date ?? undefined,
+                    hashtags: (blog.blog_hashtags ?? []).map((bh) => bh.hashtag).filter((h): h is { id: string; tag: string } => !!h),
                   }}
                 />
                 {canManage && (
@@ -125,7 +150,7 @@ export function BlogsAndStatementsView({
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        onDeleteBlog(blog.id, blog.title);
+                        onDeleteBlog(blog.id, blog.title ?? '');
                       }}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -147,7 +172,7 @@ export function BlogsAndStatementsView({
             </h2>
           )}
           <div className="grid gap-4 sm:grid-cols-2">
-            {statements.map((s: any) => (
+            {statements.map((s) => (
               <StatementTimelineCard
                 key={s.id}
                 statement={{
@@ -156,14 +181,14 @@ export function BlogsAndStatementsView({
                   authorName: s.user
                     ? [s.user.first_name, s.user.last_name].filter(Boolean).join(' ') || s.user.handle || ''
                     : '',
-                  authorAvatar: s.user?.avatar,
-                  supportCount: s.upvotes,
-                  opposeCount: s.downvotes,
-                  commentCount: s.comment_count,
-                  imageUrl: s.image_url,
-                  videoUrl: s.video_url,
-                  groupId: s.group_id,
-                  hashtags: (s.statement_hashtags ?? []).map((sh: any) => sh.hashtag).filter(Boolean),
+                  authorAvatar: s.user?.avatar ?? undefined,
+                  supportCount: s.upvotes ?? undefined,
+                  opposeCount: s.downvotes ?? undefined,
+                  commentCount: s.comment_count ?? undefined,
+                  imageUrl: s.image_url ?? undefined,
+                  videoUrl: s.video_url ?? undefined,
+                  groupId: s.group_id ?? undefined,
+                  hashtags: (s.statement_hashtags ?? []).map((sh) => sh.hashtag).filter((h): h is { id: string; tag: string } => !!h),
                 }}
               />
             ))}

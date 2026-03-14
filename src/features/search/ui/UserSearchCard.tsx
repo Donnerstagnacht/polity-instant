@@ -3,8 +3,10 @@ import { Badge } from '@/features/shared/ui/ui/badge';
 import { Users } from 'lucide-react';
 import { GRADIENTS } from '@/features/users/state/gradientColors';
 
+import { type SearchUser } from '../types/search.types';
+
 interface UserSearchCardProps {
-  user: any;
+  user: SearchUser;
   index?: number;
 }
 
@@ -12,8 +14,11 @@ export function UserSearchCard({ user, index }: UserSearchCardProps) {
   // User ID is now directly on the $users entity
   const userId = user.id;
 
-  // Get avatar from various possible sources
-  const avatar = user.avatarFile?.url || user.avatar || user.imageURL || '';
+  // Get avatar from possible sources
+  const avatar = user.avatar || '';
+
+  // Build display name from first_name + last_name
+  const displayName = [user.first_name, user.last_name].filter(Boolean).join(' ').trim() || user.handle || 'Unknown User';
 
   // Get gradient class for this user card
   const gradientClass = GRADIENTS[(index || 0) % GRADIENTS.length];
@@ -33,19 +38,19 @@ export function UserSearchCard({ user, index }: UserSearchCardProps) {
               {avatar ? (
                 <img
                   src={avatar}
-                  alt={user.name || 'User'}
+                  alt={displayName}
                   className="h-full w-full object-cover transition-transform group-hover:scale-110"
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 text-lg font-bold text-white">
-                  {(user.name || 'U').charAt(0).toUpperCase()}
+                  {displayName.charAt(0).toUpperCase()}
                 </div>
               )}
             </div>
 
             {/* Name and handle */}
             <div className="min-w-0 flex-1">
-              <CardTitle className="text-lg leading-tight">{user.name || 'Unknown User'}</CardTitle>
+              <CardTitle className="text-lg leading-tight">{displayName}</CardTitle>
               {user.handle && <CardDescription className="mt-0.5">@{user.handle}</CardDescription>}
             </div>
 
@@ -59,8 +64,8 @@ export function UserSearchCard({ user, index }: UserSearchCardProps) {
 
         <CardContent className="pt-0">
           {user.bio && <p className="line-clamp-2 text-sm text-muted-foreground">{user.bio}</p>}
-          {user.contactLocation && (
-            <p className="mt-2 text-xs text-muted-foreground">{user.contactLocation}</p>
+          {user.location && (
+            <p className="mt-2 text-xs text-muted-foreground">{user.location}</p>
           )}
         </CardContent>
       </Card>

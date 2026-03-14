@@ -44,7 +44,7 @@ export function NewConversationDialog({
   // Filter users in search dialog
   const filteredUsers = useMemo(() => {
     // Base filter: exclude current user, Aria & Kai, and users with existing conversations
-    const baseFilter = (u: any) =>
+    const baseFilter = (u: (typeof allUsers)[number]) =>
       u.id !== currentUserId &&
       u.id !== ARIA_KAI_USER_ID &&
       !existingConversationUserIds.includes(u.id);
@@ -52,8 +52,8 @@ export function NewConversationDialog({
     if (!userSearchQuery.trim()) {
       return allUsers.filter(baseFilter);
     }
-    return allUsers.filter(baseFilter).filter((u: any) => {
-      const name = u.name?.toLowerCase() || '';
+    return allUsers.filter(baseFilter).filter((u) => {
+      const name = [u.first_name, u.last_name].filter(Boolean).join(' ').toLowerCase();
       const handle = u.handle?.toLowerCase() || '';
       return (
         name.includes(userSearchQuery.toLowerCase()) ||
@@ -89,7 +89,7 @@ export function NewConversationDialog({
                 </p>
               </div>
             ) : (
-              filteredUsers.map((searchUser: any) => (
+              filteredUsers.map((searchUser) => (
                 <div
                   key={searchUser.id}
                   className="flex w-full items-center justify-between gap-3 rounded-lg p-3 transition-colors hover:bg-accent"
@@ -99,12 +99,12 @@ export function NewConversationDialog({
                     className="flex flex-1 items-center gap-3 text-left"
                   >
                     <Avatar className="h-10 w-10 flex-shrink-0">
-                      <AvatarImage src={searchUser.avatar || searchUser.imageURL} />
-                      <AvatarFallback>{searchUser.name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+                      <AvatarImage src={searchUser.avatar ?? undefined} />
+                      <AvatarFallback>{searchUser.first_name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-semibold">
-                        {searchUser.name || t('common.labels.unknownUser')}
+                        {[searchUser.first_name, searchUser.last_name].filter(Boolean).join(' ') || t('common.labels.unknownUser')}
                       </p>
                       {searchUser.handle && (
                         <p className="truncate text-sm text-muted-foreground">

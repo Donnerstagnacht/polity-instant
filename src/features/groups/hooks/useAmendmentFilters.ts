@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { extractHashtags } from '@/zero/common/hashtagHelpers';
+import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 
 export interface AmendmentFilters {
   searchQuery: string;
@@ -43,28 +43,34 @@ export function useAmendmentFilters() {
   };
 }
 
+interface FilterableAmendment {
+  title?: string | null;
+  subtitle?: string | null;
+  code?: string | null;
+  status?: string | null;
+  date?: string | number | null;
+  amendment_hashtags?: readonly { hashtag?: { tag?: string | null } | null }[];
+}
+
 /**
  * Filter amendment by hashtag
  */
-function matchesHashtag(amendment: any, hashtagFilter: string) {
+function matchesHashtag(amendment: FilterableAmendment, hashtagFilter: string) {
   if (!hashtagFilter) return true;
-  const tags = extractHashtags(amendment.amendment_hashtags);
+  const tags = extractHashtagTags(amendment.amendment_hashtags);
   if (tags.length === 0) return false;
 
   const cleanFilter = hashtagFilter.startsWith('#')
     ? hashtagFilter.substring(1).toLowerCase()
     : hashtagFilter.toLowerCase();
 
-  return tags.some(h => {
-    if (!h || !h.tag) return false;
-    return h.tag.toLowerCase() === cleanFilter || h.tag.toLowerCase().includes(cleanFilter);
-  });
+  return tags.some(tag => tag.toLowerCase() === cleanFilter || tag.toLowerCase().includes(cleanFilter));
 }
 
 /**
  * Filter amendment by search query
  */
-function matchesSearchQuery(amendment: any, searchQuery: string) {
+function matchesSearchQuery(amendment: FilterableAmendment, searchQuery: string) {
   if (!searchQuery) return true;
   const query = searchQuery.toLowerCase();
 
@@ -78,12 +84,9 @@ function matchesSearchQuery(amendment: any, searchQuery: string) {
   }
 
   // Check if query matches any hashtag
-  const tags = extractHashtags(amendment.amendment_hashtags);
+  const tags = extractHashtagTags(amendment.amendment_hashtags);
   if (tags.length > 0) {
-    return tags.some(h => {
-      if (!h || !h.tag) return false;
-      return h.tag.toLowerCase().includes(query);
-    });
+    return tags.some(tag => tag.toLowerCase().includes(query));
   }
 
   return false;
@@ -92,9 +95,9 @@ function matchesSearchQuery(amendment: any, searchQuery: string) {
 /**
  * Filter and sort amendments based on filters
  */
-export function useFilteredAmendments(amendments: any[], filters: AmendmentFilters) {
+export function useFilteredAmendments(amendments: FilterableAmendment[], filters: AmendmentFilters) {
   // Apply all filters
-  const filteredAmendments = amendments.filter((amendment: any) => {
+  const filteredAmendments = amendments.filter(amendment => {
     if (!matchesSearchQuery(amendment, filters.searchQuery)) return false;
     if (filters.statusFilter !== 'all' && amendment.status !== filters.statusFilter) return false;
     if (!matchesHashtag(amendment, filters.hashtagFilter)) return false;
@@ -103,26 +106,26 @@ export function useFilteredAmendments(amendments: any[], filters: AmendmentFilte
 
   // Sort by date (most recent first)
   const sortedAmendments = [...filteredAmendments].sort((a, b) => {
-    const dateA = new Date(a.date).getTime();
-    const dateB = new Date(b.date).getTime();
+    const dateA = new Date(a.date ?? 0).getTime();
+    const dateB = new Date(b.date ?? 0).getTime();
     return dateB - dateA;
   });
 
   // Group amendments by status
   const groupedAmendments = {
-    passed: sortedAmendments.filter((a: any) => {
+    passed: sortedAmendments.filter(a => {
       const status = a.status?.toLowerCase();
       return status === 'approved' || status === 'passed' || status === 'active';
     }),
-    underReview: sortedAmendments.filter((a: any) => {
+    underReview: sortedAmendments.filter(a => {
       const status = a.status?.toLowerCase();
       return status === 'pending' || status === 'under review' || status === 'review';
     }),
-    drafting: sortedAmendments.filter((a: any) => {
+    drafting: sortedAmendments.filter(a => {
       const status = a.status?.toLowerCase();
       return status === 'draft' || status === 'drafting';
     }),
-    rejected: sortedAmendments.filter((a: any) => {
+    rejected: sortedAmendments.filter(a => {
       const status = a.status?.toLowerCase();
       return status === 'rejected' || status === 'denied';
     }),

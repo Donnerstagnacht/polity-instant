@@ -48,7 +48,7 @@ export function MeetingPage({ meetingId }: MeetingPageProps) {
   };
 
   const creator = event.creator as { id: string; first_name?: string | null; avatar?: string | null } | undefined;
-  const participants = (event.participants ?? []).map((p: any) => ({
+  const participants = (event.participants ?? []).map((p) => ({
     id: p.id ?? '',
     status: p.status ?? '',
     booker: p.user ? {
@@ -57,7 +57,7 @@ export function MeetingPage({ meetingId }: MeetingPageProps) {
       handle: p.user.handle ?? undefined,
       avatar: p.user.avatar ?? undefined,
     } : undefined,
-  })).filter((p: any) => p.booker?.id !== event.creator_id);
+  })).filter((p) => p.booker?.id !== event.creator_id);
 
   return (
     <>

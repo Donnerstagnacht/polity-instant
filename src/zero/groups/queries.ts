@@ -164,12 +164,12 @@ export const groupQueries = {
     zql.position
       .where('group_id', groupId)
       .related('group')
-      .related('elections', (q: any) =>
+      .related('elections', q =>
         q
-          .related('agenda_item', (a: any) => a.related('event'))
-          .related('candidates', (c: any) => c.related('user'))
+          .related('agenda_item', a => a.related('event'))
+          .related('candidates', c => c.related('user'))
       )
-      .related('holder_history', (q: any) => q.related('user'))
+      .related('holder_history', q => q.related('user'))
   ),
 
   /** Todos for a group with creator, assignments→user, and group */
@@ -177,7 +177,7 @@ export const groupQueries = {
     zql.todo
       .where('group_id', groupId)
       .related('creator')
-      .related('assignments', (q: any) => q.related('user'))
+      .related('assignments', q => q.related('user'))
       .related('group')
   ),
 

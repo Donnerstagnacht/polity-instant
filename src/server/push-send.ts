@@ -111,14 +111,15 @@ export const pushSendFn = createServerFn({ method: 'POST' })
             )
 
             return { success: true, subscriptionId: subscription.id }
-          } catch (error: any) {
+          } catch (error: unknown) {
+            const err = error as { statusCode?: number; message?: string }
             console.error(
               `[Push API] Failed to send to subscription ${subscription.id}:`,
               error,
             )
 
             // Handle expired or invalid subscriptions
-            if (error.statusCode === 410 || error.statusCode === 404) {
+            if (err.statusCode === 410 || err.statusCode === 404) {
               console.log(
                 `[Push API] Subscription ${subscription.id} is no longer valid, removing...`,
               )
@@ -142,7 +143,7 @@ export const pushSendFn = createServerFn({ method: 'POST' })
             return {
               success: false,
               subscriptionId: subscription.id,
-              error: error.message,
+              error: err.message,
             }
           }
         }),

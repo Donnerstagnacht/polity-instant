@@ -18,16 +18,30 @@ import {
 import { Trash2, Send } from 'lucide-react';
 import { formatRights } from '@/features/network/ui/RightFilters';
 
+interface RelationshipGroup {
+  id: string;
+  name?: string | null;
+  imageURL?: string | null;
+  description?: string | null;
+}
+
+interface RelationshipRow {
+  id: string;
+  with_right?: string;
+  status?: string;
+  created_at?: number | string;
+}
+
 interface GroupedRequest {
-  group: any;
+  group: RelationshipGroup;
   rights: string[];
-  rels: any[];
+  rels: RelationshipRow[];
   type: 'parent' | 'child';
 }
 
 interface OutgoingRelationshipRequestsTableProps {
   requests: GroupedRequest[];
-  onCancel: (relationships: any[]) => void;
+  onCancel: (relationships: RelationshipRow[]) => void;
 }
 
 export function OutgoingRelationshipRequestsTable({

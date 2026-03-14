@@ -15,12 +15,19 @@ export function getSupportStatus(
   return 'active';
 }
 
+interface VotableAmendment {
+  upvotes?: number | null;
+  downvotes?: number | null;
+  vote_entries?: ReadonlyArray<{ id: string; vote: number | null; user?: { id: string } }>;
+  [key: string]: unknown;
+}
+
 export function deriveVoteState(
-  amendment: any,
+  amendment: VotableAmendment,
   userId: string | undefined,
 ) {
   const score = (amendment.upvotes || 0) - (amendment.downvotes || 0);
-  const userVote = amendment.vote_entries?.find((v: any) => v.user?.id === userId);
+  const userVote = amendment.vote_entries?.find((v) => v.user?.id === userId);
   const hasUpvoted = userVote?.vote === 1;
   const hasDownvoted = userVote?.vote === -1;
   return { score, userVote, hasUpvoted, hasDownvoted };

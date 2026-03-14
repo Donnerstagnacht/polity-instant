@@ -25,8 +25,8 @@ export function ElectionSearchInput({
       toTypeaheadItems(
         pendingElections ?? [],
         'election',
-        (e: any) => e.title || 'Election',
-        (e: any) => e.description?.substring(0, 60),
+        (e) => e.title || 'Election',
+        (e) => e.description?.substring(0, 60),
       ),
     [pendingElections],
   )

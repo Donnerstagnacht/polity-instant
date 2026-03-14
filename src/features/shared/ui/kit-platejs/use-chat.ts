@@ -21,7 +21,7 @@ export const useChat = () => {
   const chat = useBaseChat({
     id: 'editor',
     // Mock the API response. Remove it when you implement the route /api/ai/command
-    fetch: async (input: any, init?: any) => {
+    fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
       const res = await globalThis.fetch(input, init);
 
       if (!res.ok) {

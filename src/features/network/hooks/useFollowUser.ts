@@ -18,7 +18,7 @@ export function useFollowUser(targetUserId?: string) {
 
   // Derive isFollowing from followers list
   const isFollowing = useMemo(
-    () => !!authUser?.id && followers.some((f: any) => f.follower_id === authUser.id),
+    () => !!authUser?.id && followers.some((f) => f.follower_id === authUser.id),
     [followers, authUser?.id]
   );
 
@@ -26,7 +26,7 @@ export function useFollowUser(targetUserId?: string) {
 
   // Find the current user's follow record (needed for unfollow)
   const currentFollowRecord = useMemo(
-    () => authUser?.id ? followers.find((f: any) => f.follower_id === authUser.id) : undefined,
+    () => authUser?.id ? followers.find((f) => f.follower_id === authUser.id) : undefined,
     [followers, authUser?.id]
   );
 

@@ -16,10 +16,10 @@
  */
 
 import { createBuilder, type Transaction } from '@rocicorp/zero'
-import { schema, type Schema } from '../schema'
+import { schema, type Schema, type ActionRight as ActionRightRow } from '../schema'
 import { checkPermission, type PermissionData } from './check'
 import { PermissionError } from './errors'
-import type { ResourceType, ActionType, Membership, ActionRight } from './types'
+import type { ResourceType, ActionType, Membership, ActionRight, Role } from './types'
 
 // Build zql inside this module to avoid circular imports with schema.ts
 const zql = createBuilder(schema)
@@ -116,7 +116,7 @@ async function loadGroupMemberships(
   userId: string,
   groupId: string,
 ): Promise<Membership[]> {
-  const rows: any[] = await tx.run(
+  const rows = await tx.run(
     zql.group_membership
       .where('user_id', userId)
       .where('group_id', groupId)
@@ -130,9 +130,9 @@ async function loadGroupMemberships(
     role: m.role
       ? {
           id: m.role.id,
-          name: m.role.name,
-          description: m.role.description,
-          scope: m.role.scope,
+          name: m.role.name ?? '',
+          description: m.role.description ?? undefined,
+          scope: (m.role.scope ?? 'group') as Role['scope'],
           actionRights: mapActionRights(m.role.action_rights),
         }
       : undefined,
@@ -144,7 +144,7 @@ async function loadEventParticipations(
   userId: string,
   eventId: string,
 ) {
-  const rows: any[] = await tx.run(
+  const rows = await tx.run(
     zql.event_participant
       .where('user_id', userId)
       .where('event_id', eventId)
@@ -158,9 +158,9 @@ async function loadEventParticipations(
     role: p.role
       ? {
           id: p.role.id,
-          name: p.role.name,
-          description: p.role.description,
-          scope: p.role.scope,
+          name: p.role.name ?? '',
+          description: p.role.description ?? undefined,
+          scope: (p.role.scope ?? 'event') as Role['scope'],
           actionRights: mapActionRights(p.role.action_rights),
         }
       : undefined,
@@ -172,7 +172,7 @@ async function loadBloggerRelations(
   userId: string,
   blogId: string,
 ) {
-  const rows: any[] = await tx.run(
+  const rows = await tx.run(
     zql.blog_blogger
       .where('user_id', userId)
       .where('blog_id', blogId)
@@ -186,21 +186,21 @@ async function loadBloggerRelations(
     role: b.role
       ? {
           id: b.role.id,
-          name: b.role.name,
-          description: b.role.description,
-          scope: b.role.scope,
+          name: b.role.name ?? '',
+          description: b.role.description ?? undefined,
+          scope: (b.role.scope ?? 'blog') as Role['scope'],
           actionRights: mapActionRights(b.role.action_rights),
         }
       : undefined,
   }))
 }
 
-function mapActionRights(raw: any[] | undefined): ActionRight[] {
+function mapActionRights(raw: readonly ActionRightRow[] | undefined): ActionRight[] {
   if (!raw) return []
-  return raw.map((ar: any) => ({
+  return raw.map(ar => ({
     id: ar.id,
-    resource: ar.resource,
-    action: ar.action,
+    resource: (ar.resource ?? 'groups') as ResourceType,
+    action: (ar.action ?? 'view') as ActionType,
     group: ar.group_id ? { id: ar.group_id } : undefined,
     event: ar.event_id ? { id: ar.event_id } : undefined,
     amendment: ar.amendment_id ? { id: ar.amendment_id } : undefined,

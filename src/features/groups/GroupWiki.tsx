@@ -167,7 +167,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
               className="w-full"
             >
               <CarouselContent className="-ml-2 md:-ml-4">
-                {group.positions.map((position: any, index: number) => (
+                {group.positions.map((position, index: number) => (
                   <CarouselItem
                     key={position.id}
                     className="pl-2 md:basis-1/2 md:pl-4 lg:basis-1/3"
@@ -187,7 +187,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
                         <div className="space-y-3">
                           {(() => {
                             const currentHistory = position.holder_history?.find(
-                              (h: any) => !h.end_date
+                              (h) => !h.end_date
                             );
                             const holder = currentHistory?.user;
                             return holder ? (
@@ -277,7 +277,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
                     group={{
                       id: String(relatedGroup.id),
                       name: relatedGroup.name || t('common.unknown'),
-                      description: relatedGroup.description,
+                      description: relatedGroup.description ?? undefined,
                       memberCount:
                         relatedGroup.memberships?.length || relatedGroup.member_count || 0,
                       amendmentCount: relatedGroup.amendments?.length || 0,
@@ -303,19 +303,19 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {group.blogs.map((blog: any, index: number) => (
+              {group.blogs.map((blog, index: number) => (
                 <BlogTimelineCard
                   key={blog.id}
                   blog={{
                     id: String(blog.id),
-                    title: blog.title,
-                    excerpt: blog.description,
-                    coverImageUrl: blog.imageURL,
-                    commentCount: blog.commentCount,
-                    hashtags: blog.hashtags,
-                    authorName: blog.authorName || group.name,
+                    title: blog.title ?? '',
+                    excerpt: blog.description ?? undefined,
+                    coverImageUrl: blog.image_url ?? undefined,
+                    commentCount: blog.comment_count,
+                    hashtags: extractHashtags(blog.blog_hashtags),
+                    authorName: group.name ?? undefined,
                     groupId: group.id,
-                    publishedAt: blog.date,
+                    publishedAt: blog.date ?? undefined,
                   }}
                   className={GRADIENTS[index % GRADIENTS.length]}
                 />

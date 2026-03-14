@@ -19,7 +19,7 @@ export default meta;
 
 type Story = StoryObj<typeof DynamicNavigation>;
 
-const NavigationStory = (args: any) => {
+const NavigationStory = (args: Record<string, unknown>) => {
   const setNavigationType = useNavigationStore(state => state.setNavigationType);
   const setNavigationView = useNavigationStore(state => state.setNavigationView);
 
@@ -35,14 +35,16 @@ const NavigationStory = (args: any) => {
   const { primaryNavItems } = navItemsAuthenticated(mockRouter);
 
   useEffect(() => {
-    setNavigationType(args.navigationType);
-    setNavigationView(args.navigationView);
+    setNavigationType(args.navigationType as NavigationType);
+    setNavigationView(args.navigationView as NavigationView);
   }, [args.navigationType, args.navigationView, setNavigationType, setNavigationView]);
 
   return (
     <DynamicNavigation
       {...args}
-      navigationView={args.navigationView}
+      navigationView={args.navigationView as NavigationView}
+      navigationType={args.navigationType as NavigationType}
+      screenType={args.screenType as ScreenType}
       navigationItems={primaryNavItems}
     />
   );
