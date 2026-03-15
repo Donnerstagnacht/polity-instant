@@ -6,6 +6,7 @@ import {
   useAllEvents,
   useAllAmendments,
   usePositionsWithGroups,
+  useEventAgenda,
 } from '@/zero/events/useEventState';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { toast } from 'sonner';
@@ -41,11 +42,22 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
   const [description, setDescription] = useState('');
   const [type, setType] = useState<AgendaItemType>(typeParam || 'discussion');
   const [order, setOrder] = useState(1);
+  const [hasCustomOrder, setHasCustomOrder] = useState(false);
   const [duration, setDuration] = useState('');
   const [eventId, setEventId] = useState(eventIdParam || '');
   const [amendmentId, setAmendmentId] = useState('');
   const [positionId, setPositionId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { agendaItems: eventAgendaItems } = useEventAgenda(eventId || undefined);
+
+  const nextOrder = useMemo(
+    () =>
+      eventAgendaItems.reduce((highestOrder, agendaItem) => {
+        return Math.max(highestOrder, agendaItem.order_index ?? 0);
+      }, 0) + 1,
+    [eventAgendaItems]
+  );
 
   useEffect(() => {
     if (eventIdParam && eventIdParam !== eventId) {
@@ -58,6 +70,18 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       setType(typeParam);
     }
   }, [typeParam, type]);
+
+  useEffect(() => {
+    setHasCustomOrder(false);
+  }, [eventId]);
+
+  useEffect(() => {
+    if (!hasCustomOrder) {
+      setOrder(nextOrder);
+    }
+  }, [hasCustomOrder, nextOrder]);
+
+  const resolvedOrder = hasCustomOrder ? order : nextOrder;
 
   const selectedEvent = userEvents.find(e => e.id === eventId);
 
@@ -73,7 +97,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
         title: title.trim(),
         description: description.trim() || '',
         type,
-        order_index: order,
+        order_index: resolvedOrder,
         duration: duration ? parseInt(duration) : 0,
         status: 'pending',
         forwarding_status: '',
@@ -186,7 +210,10 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                     type="number"
                     min="1"
                     value={order}
-                    onChange={e => setOrder(parseInt(e.target.value) || 1)}
+                    onChange={e => {
+                      setHasCustomOrder(true);
+                      setOrder(parseInt(e.target.value) || 1);
+                    }}
                   />
                 </div>
                 <div className="space-y-2">
@@ -263,7 +290,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                   value: selectedEvent?.title || t('pages.create.common.notSelected'),
                 },
                 { label: t('pages.create.agendaItem.typeLabel'), value: type },
-                { label: t('pages.create.agendaItem.orderLabel'), value: `#${order}` },
+                { label: t('pages.create.agendaItem.orderLabel'), value: `#${resolvedOrder}` },
                 ...(duration
                   ? [
                       {
