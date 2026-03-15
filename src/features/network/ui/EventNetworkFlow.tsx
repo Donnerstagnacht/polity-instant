@@ -1,15 +1,17 @@
 'use client';
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useNodesState, useEdgesState, type Node, type Edge } from '@xyflow/react';
 import { useEventWithGroup, useGroupRelationships } from '@/zero/events/useEventState';
 import { NetworkFlowBase } from '@/features/network/ui/NetworkFlowBase';
 import { type NetworkGroupEntity } from '../types/network.types';
-import { NetworkEntityDialog, type NetworkDialogEntity } from '@/features/network/ui/NetworkEntityDialog';
+import { NetworkEntityDialog } from '@/features/network/ui/NetworkEntityDialog';
 import { NetworkControlPanel } from '@/features/network/ui/NetworkControlPanel';
-import { RIGHT_TYPES } from '@/features/network/ui/RightFilters';
-import { getGroupDisplayLabel, renderRightsEdgeLabel } from '@/features/network/ui/networkVisualHelpers';
+import { useNetworkFlowControls } from '@/features/network/hooks/useNetworkFlowControls';
+import { buildDirectRelationships, buildIndirectRelationships } from '@/features/network/logic/networkRelationshipHelpers';
+import { filterEdgesByRights, filterNodesByEdges } from '@/features/network/logic/networkFilterHelpers';
+import { getGroupDisplayLabel } from '@/features/network/ui/networkVisualHelpers';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { usePermissions } from '@/zero/rbac';
@@ -29,27 +31,22 @@ interface EventNetworkFlowProps {
   eventId: string;
 }
 
-interface RelationshipEntry {
-  group: NetworkGroupEntity;
-  rights: string[];
-  level?: number;
-  childId?: string;
-  parentId?: string;
-}
-
 export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [showIndirect, setShowIndirect] = useState(false);
+  const controls = useNetworkFlowControls();
+  const {
+    showIndirect, setShowIndirect,
+    selectedNodes, isInteractive, setIsInteractive,
+    selectedRights,
+    panelCollapsed, setPanelCollapsed,
+    legendCollapsed, setLegendCollapsed,
+    dialogOpen, setDialogOpen,
+    selectedEntity, setSelectedEntity,
+    toggleRight, handleInteractiveChange,
+  } = controls;
   const [nodes, setNodes, onNodesChange] = useNodesState<EventNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
-  const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
-  const [isInteractive, setIsInteractive] = useState<boolean>(true);
-  const [selectedRights, setSelectedRights] = useState<Set<string>>(new Set(RIGHT_TYPES));
-  const [panelCollapsed, setPanelCollapsed] = useState(false);
-  const [legendCollapsed, setLegendCollapsed] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedEntity, setSelectedEntity] = useState<NetworkDialogEntity | null>(null);
 
   // Fetch the specific event with its group
   const { event } = useEventWithGroup(eventId);
@@ -95,177 +92,6 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
     );
   }
 
-  // Build direct relationships
-  const getDirectRelationships = useCallback(
-    (targetGroupId: string) => {
-      const parentsMap = new Map<string, RelationshipEntry>();
-      const childrenMap = new Map<string, RelationshipEntry>();
-
-      stableRelationships.forEach((rel) => {
-        if (rel.related_group?.id === targetGroupId && rel.group) {
-          const parentId = rel.group.id;
-          const existing = parentsMap.get(parentId);
-          if (existing) {
-            existing.rights.push(rel.with_right ?? '');
-          } else {
-            parentsMap.set(parentId, {
-              group: rel.group,
-              rights: [rel.with_right ?? ''],
-            });
-          }
-        }
-        if (rel.group?.id === targetGroupId && rel.related_group) {
-          const childId = rel.related_group.id;
-          const existing = childrenMap.get(childId);
-          if (existing) {
-            existing.rights.push(rel.with_right ?? '');
-          } else {
-            childrenMap.set(childId, {
-              group: rel.related_group,
-              rights: [rel.with_right ?? ''],
-            });
-          }
-        }
-      });
-
-      return {
-        parents: Array.from(parentsMap.values()),
-        children: Array.from(childrenMap.values()),
-      };
-    },
-    [stableRelationships]
-  );
-
-  // Build indirect (recursive) relationships
-  const getIndirectRelationships = useCallback(
-    (targetGroupId: string) => {
-      const parentsMap = new Map<string, RelationshipEntry>();
-      const childrenMap = new Map<string, RelationshipEntry>();
-
-      const directRels = getDirectRelationships(targetGroupId);
-
-      // For parents: Add direct parents first (level 1), then follow chains for each right type
-      directRels.parents.forEach(parent => {
-        parentsMap.set(parent.group.id, {
-          group: parent.group,
-          rights: [...parent.rights],
-          level: 1,
-          childId: targetGroupId,
-        });
-
-        parent.rights.forEach(right => {
-          const visited = new Set<string>([targetGroupId, parent.group.id]);
-          const queue: { groupId: string; level: number; right: string }[] = [
-            { groupId: parent.group.id, level: 1, right },
-          ];
-
-          while (queue.length > 0) {
-            const current = queue.shift();
-            if (!current) continue;
-            const currentParents = stableRelationships.filter(
-              (rel) =>
-                rel.related_group?.id === current.groupId && rel.with_right === current.right
-            );
-
-            currentParents.forEach((rel) => {
-              if (!rel.group || visited.has(rel.group.id)) return;
-              visited.add(rel.group.id);
-              const existing = parentsMap.get(rel.group.id);
-                if (existing) {
-                  if (!existing.rights.includes(right)) {
-                    existing.rights.push(right);
-                  }
-                  existing.level = Math.min(existing.level ?? Infinity, current.level + 1);
-                } else {
-                  parentsMap.set(rel.group.id, {
-                    group: rel.group,
-                    rights: [right],
-                    level: current.level + 1,
-                    childId: current.groupId,
-                  });
-                }
-                queue.push({
-                  groupId: rel.group.id,
-                  level: current.level + 1,
-                  right,
-                });
-            });
-          }
-        });
-      });
-
-      // For children: Add direct children first (level 1), then follow chains for each right type
-      directRels.children.forEach(child => {
-        childrenMap.set(child.group.id, {
-          group: child.group,
-          rights: [...child.rights],
-          level: 1,
-          parentId: targetGroupId,
-        });
-
-        child.rights.forEach(right => {
-          const visited = new Set<string>([targetGroupId, child.group.id]);
-          const queue: { groupId: string; level: number; right: string }[] = [
-            { groupId: child.group.id, level: 1, right },
-          ];
-
-          while (queue.length > 0) {
-            const current = queue.shift();
-            if (!current) continue;
-            const currentChildren = stableRelationships.filter(
-              (rel) =>
-                rel.group?.id === current.groupId && rel.with_right === current.right
-            );
-
-            currentChildren.forEach((rel) => {
-              if (!rel.related_group || visited.has(rel.related_group.id)) return;
-              visited.add(rel.related_group.id);
-              const existing = childrenMap.get(rel.related_group.id);
-                if (existing) {
-                  if (!existing.rights.includes(right)) {
-                    existing.rights.push(right);
-                  }
-                  existing.level = Math.min(existing.level ?? Infinity, current.level + 1);
-                } else {
-                  childrenMap.set(rel.related_group.id, {
-                    group: rel.related_group,
-                    rights: [right],
-                    level: current.level + 1,
-                    parentId: current.groupId,
-                  });
-                }
-                queue.push({
-                  groupId: rel.related_group.id,
-                  level: current.level + 1,
-                  right,
-                });
-
-            });
-          }
-        });
-      });
-
-      return {
-        parents: Array.from(parentsMap.values()),
-        children: Array.from(childrenMap.values()),
-      };
-    },
-    [stableRelationships, getDirectRelationships]
-  );
-
-  // Toggle right filter
-  const toggleRight = useCallback((right: string) => {
-    setSelectedRights(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(right)) {
-        newSet.delete(right);
-      } else {
-        newSet.add(right);
-      }
-      return newSet;
-    });
-  }, []);
-
   // Generate flow chart
   const generateFlowChart = useCallback(() => {
     if (!event || !group) {
@@ -275,11 +101,18 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
     }
 
     const { parents, children } = showIndirect
-      ? getIndirectRelationships(group.id)
-      : getDirectRelationships(group.id);
+      ? buildIndirectRelationships(stableRelationships, group.id)
+      : buildDirectRelationships(stableRelationships, group.id);
 
     const newNodes: EventNode[] = [];
     const newEdges: Edge[] = [];
+
+    // Build a name lookup for resolving edge source/target names
+    const groupNameMap = new Map<string, string>();
+    groupNameMap.set(group.id, group.name ?? '');
+    groupNameMap.set(eventId, event.title ?? '');
+    parents.forEach((p) => groupNameMap.set(p.group.id, p.group.name ?? ''));
+    children.forEach((c) => groupNameMap.set(c.group.id, c.group.name ?? ''));
 
     // Add center node (event)
     newNodes.push({
@@ -380,13 +213,10 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
         id: `${parent.group.id}-${parent.childId || group.id}`,
         source: parent.group.id,
         target: parent.childId || group.id,
-        type: 'smoothstep',
+        type: 'rightsLabel',
         animated: true,
-        label: renderRightsEdgeLabel(parent.rights),
-        data: { rights: parent.rights },
+        data: { rights: parent.rights, sourceName: groupNameMap.get(parent.group.id) ?? null, targetName: groupNameMap.get(parent.childId || group.id) ?? null },
         style: { stroke: '#fbc02d', strokeWidth: 2 },
-        labelStyle: { fontSize: '9px', fontWeight: 'bold' },
-        labelBgStyle: { fill: '#fff9c4' },
       });
     });
 
@@ -427,69 +257,36 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
         id: `${child.parentId || group.id}-${child.group.id}`,
         source: child.parentId || group.id,
         target: child.group.id,
-        type: 'smoothstep',
+        type: 'rightsLabel',
         animated: true,
-        label: renderRightsEdgeLabel(child.rights),
-        data: { rights: child.rights },
+        data: { rights: child.rights, sourceName: groupNameMap.get(child.parentId || group.id) ?? null, targetName: groupNameMap.get(child.group.id) ?? null },
         style: { stroke: '#4caf50', strokeWidth: 2 },
-        labelStyle: { fontSize: '9px', fontWeight: 'bold' },
-        labelBgStyle: { fill: '#c8e6c9' },
       });
     });
 
     setNodes(newNodes);
     setEdges(newEdges);
-  }, [event, group, eventId, showIndirect, getDirectRelationships, getIndirectRelationships]);
+  }, [event, group, eventId, showIndirect, stableRelationships]);
 
-  // Filter edges based on selected rights
+  // Filter edges based on selected rights (always show event-to-group edge)
+  const eventToGroupEdgeIds = useMemo(() => {
+    return new Set(edges.filter(e => e.source === eventId).map(e => e.id));
+  }, [edges, eventId]);
+
   const filteredEdges = useMemo(() => {
-    return edges
-      .map(edge => {
-        // Always show the event-to-group edge
-        if (edge.source === eventId) {
-          return edge;
-        }
-
-        if (!edge.data?.rights || !Array.isArray(edge.data.rights)) {
-          return edge;
-        }
-
-        const visibleRights = edge.data.rights.filter((r: string) => selectedRights.has(r));
-        if (visibleRights.length === 0) {
-          return null;
-        }
-
-        if (visibleRights.length === edge.data.rights.length) {
-          return edge;
-        }
-
-        return {
-          ...edge,
-          label: renderRightsEdgeLabel(visibleRights),
-          data: { ...edge.data, rights: visibleRights },
-        };
-      })
-      .filter((edge): edge is Edge => edge !== null);
-  }, [edges, selectedRights, eventId]);
+    return filterEdgesByRights(edges, selectedRights, eventToGroupEdgeIds);
+  }, [edges, selectedRights, eventToGroupEdgeIds]);
 
   // Filter nodes to only show those connected via visible edges
+  const alwaysIncludeIds = useMemo(() => {
+    const ids = [eventId];
+    if (group) ids.push(group.id);
+    return ids;
+  }, [eventId, group]);
+
   const filteredNodes = useMemo(() => {
-    const connectedNodeIds = new Set<string>();
-
-    // Always include the center nodes (event and its group)
-    connectedNodeIds.add(eventId);
-    if (group) {
-      connectedNodeIds.add(group.id);
-    }
-
-    // Add nodes that are source or target of visible edges
-    filteredEdges.forEach(edge => {
-      connectedNodeIds.add(edge.source);
-      connectedNodeIds.add(edge.target);
-    });
-
-    return nodes.filter(node => connectedNodeIds.has(node.id));
-  }, [nodes, filteredEdges, eventId, group]);
+    return filterNodesByEdges(nodes, filteredEdges, alwaysIncludeIds);
+  }, [nodes, filteredEdges, alwaysIncludeIds]);
 
   // Generate flow chart when event or showIndirect changes
   useEffect(() => {
@@ -530,6 +327,8 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
         data: {
           source: edge.source,
           target: edge.target,
+          sourceName: typeof edge.data?.sourceName === 'string' ? edge.data.sourceName : null,
+          targetName: typeof edge.data?.targetName === 'string' ? edge.data.targetName : null,
           rights: Array.isArray(edge.data?.rights) ? (edge.data.rights as string[]) : [],
           label: typeof edge.label === 'string' ? edge.label : null,
         },
@@ -539,17 +338,9 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
     [isInteractive]
   );
 
-  // Handle interactive mode changes
-  const handleInteractiveChange = useCallback((interactiveState: boolean) => {
-    setIsInteractive(interactiveState);
-    if (!interactiveState) {
-      setSelectedNodes([]);
-    }
-  }, []);
-
   if (!event) {
     return (
-      <div className="flex h-[600px] items-center justify-center">
+      <div className="flex h-[calc(100dvh-12rem)] min-h-[400px] items-center justify-center">
         <p className="text-muted-foreground">Event not found</p>
       </div>
     );
@@ -557,7 +348,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
 
   if (!group) {
     return (
-      <div className="flex h-[600px] items-center justify-center px-4">
+      <div className="flex h-[calc(100dvh-12rem)] min-h-[400px] items-center justify-center px-4">
         <div className="text-center">
           <p className="text-muted-foreground">This event is not associated with a group</p>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -648,6 +439,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
           showRightsFilter
           selectedRights={selectedRights}
           onToggleRight={toggleRight}
+          showRightsLegend
         />
       }
     >

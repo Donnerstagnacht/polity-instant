@@ -13,8 +13,7 @@ import {
 import { Button } from '@/features/shared/ui/ui/button';
 import { GroupSearchCard } from '@/features/search/ui/GroupSearchCard';
 import { GroupEventsList } from './GroupEventsList';
-import { GRADIENTS } from '@/features/users/state/gradientColors';
-import { formatRights } from './RightFilters';
+import { RightBadge } from './RightBadge';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { SearchResultItem } from '@/features/search/types/search.types';
@@ -41,6 +40,8 @@ interface NetworkRelationshipData {
   id?: string;
   source?: string;
   target?: string;
+  sourceName?: string | null;
+  targetName?: string | null;
   rights?: string[];
   label?: string | null | ReactNode;
 }
@@ -177,37 +178,58 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
 
           {/* Relationship Details */}
           {entity.type === 'relationship' && entity.data && (
-            <div>
+            <div className="space-y-4">
+              {/* Direction: Parent → Child */}
+              {(entity.data.sourceName || entity.data.targetName) && (
+                <div className="flex items-center gap-2 rounded-lg border bg-muted/30 p-3">
+                  <button
+                    type="button"
+                    className="flex-1 text-center transition-colors hover:bg-muted/50 rounded-md p-1.5 cursor-pointer"
+                    onClick={() => {
+                      if (entity.data.source) {
+                        const groupId = entity.data.source.replace(/^(parent-|child-)/, '');
+                        navigate({ to: `/group/${groupId}` });
+                        onOpenChange(false);
+                      }
+                    }}
+                  >
+                    <p className="text-xs font-medium uppercase text-muted-foreground">
+                      {t('common.labels.parentGroup', 'Parent')}
+                    </p>
+                    <p className="text-sm font-semibold text-primary underline-offset-2 hover:underline">{entity.data.sourceName ?? entity.data.source}</p>
+                  </button>
+                  <div className="text-muted-foreground">→</div>
+                  <button
+                    type="button"
+                    className="flex-1 text-center transition-colors hover:bg-muted/50 rounded-md p-1.5 cursor-pointer"
+                    onClick={() => {
+                      if (entity.data.target) {
+                        const groupId = entity.data.target.replace(/^(parent-|child-)/, '');
+                        navigate({ to: `/group/${groupId}` });
+                        onOpenChange(false);
+                      }
+                    }}
+                  >
+                    <p className="text-xs font-medium uppercase text-muted-foreground">
+                      {t('common.labels.childGroup', 'Child')}
+                    </p>
+                    <p className="text-sm font-semibold text-primary underline-offset-2 hover:underline">{entity.data.targetName ?? entity.data.target}</p>
+                  </button>
+                </div>
+              )}
+
               {entity.data.rights && (entity.data.rights as string[]).length > 0 ? (
                 <div className="space-y-3">
-                  <div className="mb-4">
+                  <div>
                     <p className="text-sm font-medium text-muted-foreground">{t('common.labels.relationshipRights')}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {(entity.data.rights as string[]).length} {t('common.labels.rightsGranted')}
                     </p>
                   </div>
-                  <div className="grid gap-3">
-                    {(entity.data.rights as string[]).map((right: string, index: number) => {
-                      const gradientClass = GRADIENTS[index % GRADIENTS.length];
-                      return (
-                        <div
-                          key={right}
-                          className={`rounded-lg border p-4 ${gradientClass} shadow-sm`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-lg font-semibold">{formatRights([right])}</p>
-                              <p className="mt-1 text-xs text-muted-foreground">
-                                {t('common.labels.relationshipRight')}
-                              </p>
-                            </div>
-                            <div className="rounded-full bg-white/80 px-3 py-1 text-xs font-medium">
-                              {right}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <div className="flex flex-wrap gap-2">
+                    {(entity.data.rights as string[]).map((right: string) => (
+                      <RightBadge key={right} right={right} className="px-3 py-1.5 text-sm" />
+                    ))}
                   </div>
                 </div>
               ) : (

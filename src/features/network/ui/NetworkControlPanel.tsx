@@ -3,7 +3,7 @@
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Panel } from '@/features/network/ui/NetworkFlowBase';
-import { RightFilters } from '@/features/network/ui/RightFilters';
+import { RightFilters, RIGHT_TYPES, RIGHT_GRADIENTS, RIGHT_LABELS } from '@/features/network/ui/RightFilters';
 
 export interface NetworkLegendItem {
   id: string;
@@ -38,6 +38,7 @@ interface NetworkControlPanelProps {
   onToggleRight?: (right: string) => void;
   filterRight?: string;
   filteredByPrefix?: string;
+  showRightsLegend?: boolean;
 }
 
 export function NetworkControlPanel({
@@ -67,6 +68,7 @@ export function NetworkControlPanel({
   onToggleRight,
   filterRight,
   filteredByPrefix = 'Filtered by',
+  showRightsLegend = false,
 }: NetworkControlPanelProps) {
   const canRenderRightFilter = showRightsFilter && !filterRight && selectedRights && onToggleRight;
 
@@ -166,6 +168,18 @@ export function NetworkControlPanel({
                       <div className="h-4 w-4 rounded border-2 border-dashed border-gray-400 bg-gray-100"></div>
                       <span>{hierarchicalGroupLabel}</span>
                     </div>
+                  </>
+                ) : null}
+
+                {showRightsLegend ? (
+                  <>
+                    <hr className="my-1 border-gray-200 dark:border-gray-700" />
+                    {RIGHT_TYPES.map((right) => (
+                      <div key={right} className="flex items-center gap-2">
+                        <div className={`h-3 w-6 rounded-sm ${RIGHT_GRADIENTS[right]}`}></div>
+                        <span>{RIGHT_LABELS[right]}</span>
+                      </div>
+                    ))}
                   </>
                 ) : null}
               </div>

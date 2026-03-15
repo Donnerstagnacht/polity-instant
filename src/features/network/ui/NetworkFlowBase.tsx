@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { createContext, ReactNode, useCallback, useContext } from 'react';
 import {
   ReactFlow,
   Controls,
@@ -13,6 +13,13 @@ import {
   OnEdgesChange,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { RightsLabelEdge } from '@/features/network/ui/RightsLabelEdge';
+
+// Context to allow custom edge components to trigger onEdgeClick
+const EdgeClickContext = createContext<((edgeId: string) => void) | null>(null);
+export const useEdgeClickContext = () => useContext(EdgeClickContext);
+
+const edgeTypes = { rightsLabel: RightsLabelEdge };
 
 interface NetworkFlowBaseProps<T extends Node = Node> {
   nodes: T[];
@@ -45,9 +52,22 @@ export function NetworkFlowBase<T extends Node = Node>({
   onInteractiveChange,
   children,
 }: NetworkFlowBaseProps<T>) {
+  const handleEdgeLabelClick = useCallback(
+    (edgeId: string) => {
+      if (!onEdgeClick) return;
+      const edge = edges.find(e => e.id === edgeId);
+      if (edge) {
+        const syntheticEvent = new MouseEvent('click') as unknown as React.MouseEvent;
+        onEdgeClick(syntheticEvent, edge);
+      }
+    },
+    [onEdgeClick, edges],
+  );
+
   return (
-    <div className="h-[600px] w-full rounded-lg border bg-background">
-      <style>{`
+    <EdgeClickContext.Provider value={handleEdgeLabelClick}>
+      <div className="h-[calc(100dvh-12rem)] min-h-[400px] w-full rounded-lg border bg-background">
+        <style>{`
         /* Dark mode styles for ReactFlow controls */
         .dark .react-flow__controls {
           button {
@@ -85,6 +105,7 @@ export function NetworkFlowBase<T extends Node = Node>({
       <ReactFlow
         nodes={nodes}
         edges={edges}
+        edgeTypes={edgeTypes}
         nodesDraggable={nodesDraggable}
         nodesFocusable={nodesFocusable}
         nodesConnectable={nodesConnectable}
@@ -101,7 +122,8 @@ export function NetworkFlowBase<T extends Node = Node>({
         <Background color="#aaa" gap={16} />
       </ReactFlow>
       {children}
-    </div>
+      </div>
+    </EdgeClickContext.Provider>
   );
 }
 

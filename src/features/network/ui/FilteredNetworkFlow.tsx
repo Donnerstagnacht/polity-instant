@@ -1,16 +1,12 @@
 'use client';
 
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { Node, Edge, useNodesState, useEdgesState, MarkerType } from '@xyflow/react';
-import { Button } from '@/features/shared/ui/ui/button';
-import { NetworkFlowBase, Panel } from '@/features/network/ui/NetworkFlowBase';
-import {
-  RightFilters,
-  formatRights,
-  isEdgeVisible,
-  RIGHT_TYPES,
-} from '@/features/network/ui/RightFilters';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { NetworkFlowBase } from '@/features/network/ui/NetworkFlowBase';
+import { NetworkControlPanel } from '@/features/network/ui/NetworkControlPanel';
+import { useNetworkFlowControls } from '@/features/network/hooks/useNetworkFlowControls';
+import { buildDirectRelationships, buildIndirectRelationships, type RelationshipEntry } from '@/features/network/logic/networkRelationshipHelpers';
+import { filterEdgesByRights, filterNodesByEdges } from '@/features/network/logic/networkFilterHelpers';
 import { useUserState } from '@/zero/users/useUserState';
 import { useGroupState } from '@/zero/groups/useGroupState';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -34,14 +30,6 @@ interface FilteredNetworkFlowProps {
   description?: string;
 }
 
-interface RelationshipEntry {
-  group: NetworkGroupEntity;
-  rights: string[];
-  level?: number;
-  childId?: string;
-  parentId?: string;
-}
-
 export function FilteredNetworkFlow({
   userId,
   filterRight,
@@ -50,14 +38,18 @@ export function FilteredNetworkFlow({
   description,
 }: FilteredNetworkFlowProps) {
   const { t } = useTranslation();
-  const [showIndirect, setShowIndirect] = useState(false);
+  const controls = useNetworkFlowControls();
+  const {
+    showIndirect, setShowIndirect,
+    selectedNodes, setSelectedNodes,
+    isInteractive, setIsInteractive,
+    selectedRights,
+    legendCollapsed, setLegendCollapsed,
+    panelCollapsed, setPanelCollapsed,
+    toggleRight, handleInteractiveChange,
+  } = controls;
   const [nodes, setNodes, onNodesChange] = useNodesState<NetworkNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
-  const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
-  const [isInteractive, setIsInteractive] = useState<boolean>(true);
-  const [selectedRights, setSelectedRights] = useState<Set<string>>(new Set(RIGHT_TYPES));
-  const [legendCollapsed, setLegendCollapsed] = useState(false);
-  const [panelCollapsed, setPanelCollapsed] = useState(false);
 
   // Fetch the specific user
   const { user } = useUserState({ userId });
@@ -89,155 +81,6 @@ export function FilteredNetworkFlow({
     if (!relationships.length) return [];
     return relationships;
 }, [relationships.length, relationships.map((r) => r.id).join(',')]);
-
-  // Build direct relationships for a group
-  const getDirectGroupRelationships = useCallback(
-    (groupId: string) => {
-      const parentsMap = new Map<string, RelationshipEntry>();
-      const childrenMap = new Map<string, RelationshipEntry>();
-
-      stableRelationships.forEach((rel) => {
-        // Skip if filtering by right and this relationship doesn't have it
-        if (filterRight && (rel.with_right ?? '') !== filterRight) {
-          return;
-        }
-
-        if (rel.related_group?.id === groupId && rel.group) {
-          const parentId = rel.group.id;
-
-          if (!parentsMap.has(parentId)) {
-            parentsMap.set(parentId, { group: rel.group, rights: [] });
-          }
-          const parentEntry = parentsMap.get(parentId);
-          if (parentEntry) {
-            parentEntry.rights.push(rel.with_right ?? '');
-          }
-        }
-        if (rel.group?.id === groupId && rel.related_group) {
-          const childId = rel.related_group.id;
-
-          if (!childrenMap.has(childId)) {
-            childrenMap.set(childId, { group: rel.related_group, rights: [] });
-          }
-          const childEntry = childrenMap.get(childId);
-          if (childEntry) {
-            childEntry.rights.push(rel.with_right ?? '');
-          }
-        }
-      });
-
-      return {
-        parents: Array.from(parentsMap.values()),
-        children: Array.from(childrenMap.values()),
-      };
-    },
-    [stableRelationships, filterRight]
-  );
-
-  // Build indirect (recursive) relationships for a group
-  const getIndirectGroupRelationships = useCallback(
-    (groupId: string) => {
-      const visited = new Set<string>();
-      const parentsMap = new Map<
-        string,
-        RelationshipEntry
-      >();
-      const childrenMap = new Map<
-        string,
-        RelationshipEntry
-      >();
-
-      const findParents = (id: string, level = 1) => {
-        if (visited.has(id)) return;
-        visited.add(id);
-
-        stableRelationships.forEach((rel) => {
-          // Skip if filtering by right and this relationship doesn't have it
-          if (filterRight && (rel.with_right ?? '') !== filterRight) {
-            return;
-          }
-
-          if (rel.related_group?.id === id && rel.group && !visited.has(rel.group.id)) {
-            const parentId = rel.group.id;
-
-            if (!parentsMap.has(parentId)) {
-              parentsMap.set(parentId, {
-                group: rel.group,
-                rights: [],
-                level,
-                childId: id,
-              });
-            }
-            const parentEntry = parentsMap.get(parentId);
-            if (parentEntry) {
-              parentEntry.rights.push(rel.with_right ?? '');
-            }
-            findParents(parentId, level + 1);
-          }
-        });
-      };
-
-      const findChildren = (id: string, level = 1, currentParentId?: string) => {
-        stableRelationships.forEach((rel) => {
-          // Skip if filtering by right and this relationship doesn't have it
-          if (filterRight && (rel.with_right ?? '') !== filterRight) {
-            return;
-          }
-
-          if (rel.group?.id === id && rel.related_group && !visited.has(rel.related_group.id)) {
-            const childId = rel.related_group.id;
-
-            visited.add(childId);
-            if (!childrenMap.has(childId)) {
-              childrenMap.set(childId, {
-                group: rel.related_group,
-                rights: [],
-                level,
-                parentId: currentParentId,
-              });
-            }
-            const childEntry = childrenMap.get(childId);
-            if (childEntry) {
-              childEntry.rights.push(rel.with_right ?? '');
-            }
-            findChildren(childId, level + 1, childId);
-          }
-        });
-      };
-
-      findParents(groupId);
-      visited.clear();
-      visited.add(groupId);
-      findChildren(groupId);
-
-      return {
-        parents: Array.from(parentsMap.values()),
-        children: Array.from(childrenMap.values()),
-      };
-    },
-    [stableRelationships, filterRight]
-  );
-
-  // Toggle right filter
-  const toggleRight = useCallback((right: string) => {
-    setSelectedRights(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(right)) {
-        newSet.delete(right);
-      } else {
-        newSet.add(right);
-      }
-      return newSet;
-    });
-  }, []);
-
-  // Check if edge should be visible based on selected rights
-  const checkEdgeVisible = useCallback(
-    (rights: string[]) => {
-      return isEdgeVisible(rights, selectedRights);
-    },
-    [selectedRights]
-  );
 
   // Generate flow chart
   const generateFlowChart = useCallback(() => {
@@ -348,8 +191,8 @@ export function FilteredNetworkFlow({
 
     userGroups.forEach((group) => {
       const { parents, children } = showIndirect
-        ? getIndirectGroupRelationships(group.id)
-        : getDirectGroupRelationships(group.id);
+        ? buildIndirectRelationships(stableRelationships, group.id, filterRight)
+        : buildDirectRelationships(stableRelationships, group.id, filterRight);
 
       // Process parent groups
       parents.forEach((parent) => {
@@ -375,21 +218,9 @@ export function FilteredNetworkFlow({
             id: edgeId,
             source: parent.group.id,
             target: edgeTarget,
-            type: 'smoothstep',
+            type: 'rightsLabel',
             animated: true,
-            label: formatRights(parent.rights),
             style: { stroke: '#66bb6a', strokeWidth: 2, strokeDasharray: '5 5' },
-            labelStyle: {
-              fill: '#2e7d32',
-              fontWeight: 600,
-              fontSize: '11px',
-            },
-            labelBgStyle: {
-              fill: 'white',
-              fillOpacity: 0.9,
-            },
-            labelBgPadding: [8, 4] as [number, number],
-            labelBgBorderRadius: 4,
             markerEnd: {
               type: MarkerType.ArrowClosed,
               color: '#66bb6a',
@@ -423,21 +254,9 @@ export function FilteredNetworkFlow({
             id: edgeId,
             source: edgeSource,
             target: child.group.id,
-            type: 'smoothstep',
+            type: 'rightsLabel',
             animated: true,
-            label: formatRights(child.rights),
             style: { stroke: '#ffb74d', strokeWidth: 2, strokeDasharray: '5 5' },
-            labelStyle: {
-              fill: '#f57c00',
-              fontWeight: 600,
-              fontSize: '11px',
-            },
-            labelBgStyle: {
-              fill: 'white',
-              fillOpacity: 0.9,
-            },
-            labelBgPadding: [8, 4] as [number, number],
-            labelBgBorderRadius: 4,
             markerEnd: {
               type: MarkerType.ArrowClosed,
               color: '#ffb74d',
@@ -525,19 +344,15 @@ export function FilteredNetworkFlow({
     userId,
     userGroups,
     showIndirect,
-    getDirectGroupRelationships,
-    getIndirectGroupRelationships,
+    stableRelationships,
+    filterRight,
     onGroupClick,
   ]);
 
   // Filter edges based on selected rights
   const filteredEdges = useMemo(() => {
-    return edges.filter(edge => {
-      if (!edge.data?.rights) return true;
-      if ((edge.data.rights as string[]).length === 0) return true;
-      return checkEdgeVisible(edge.data.rights as string[]);
-    });
-  }, [edges, checkEdgeVisible]);
+    return filterEdgesByRights(edges, selectedRights);
+  }, [edges, selectedRights]);
 
   // Generate flow chart when data or showIndirect changes
   useEffect(() => {
@@ -564,17 +379,9 @@ export function FilteredNetworkFlow({
     [isInteractive, onGroupClick]
   );
 
-  // Handle interactive mode changes
-  const handleInteractiveChange = useCallback((interactiveState: boolean) => {
-    setIsInteractive(interactiveState);
-    if (!interactiveState) {
-      setSelectedNodes([]);
-    }
-  }, []);
-
   if (!user) {
     return (
-      <div className="flex h-[600px] w-full items-center justify-center rounded-lg border bg-background">
+      <div className="flex h-[calc(100dvh-12rem)] min-h-[400px] w-full items-center justify-center rounded-lg border bg-background">
         <p className="text-muted-foreground">{t('common.network.loadingNetwork')}</p>
       </div>
     );
@@ -599,107 +406,52 @@ export function FilteredNetworkFlow({
       onNodeClick={onNodeClick}
       onInteractiveChange={handleInteractiveChange}
       panel={
-        <Panel position="top-left" className="rounded bg-white p-4 shadow">
-          {panelCollapsed ? (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setPanelCollapsed(false)}
-              className="flex items-center gap-2"
-            >
-              <ChevronDown className="h-4 w-4" />
-              {t('common.network.showControls')}
-            </Button>
-          ) : (
-            <>
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-lg font-bold">{title}</h2>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setPanelCollapsed(true)}
-                  className="h-6 w-6 p-0"
-                >
-                  <ChevronUp className="h-4 w-4" />
-                </Button>
-              </div>
-              {description && <p className="mb-3 text-sm text-gray-600">{description}</p>}
-              <div className="flex flex-wrap gap-2">
-                {isInteractive && (
-                  <>
-                    <Button
-                      size="sm"
-                      variant={!showIndirect ? 'default' : 'outline'}
-                      onClick={() => setShowIndirect(false)}
-                    >
-                      {t('common.network.direct')}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant={showIndirect ? 'default' : 'outline'}
-                      onClick={() => setShowIndirect(true)}
-                    >
-                      {t('common.network.indirect')}
-                    </Button>
-                  </>
-                )}
-                <Button
-                  size="sm"
-                  variant={isInteractive ? 'outline' : 'default'}
-                  onClick={() => setIsInteractive(!isInteractive)}
-                >
-                  {isInteractive ? t('common.network.lockEditor') : t('common.network.unlockEditor')}
-                </Button>
-              </div>
-
-              {/* Right type filters - only show if not filtering by specific right */}
-              {!filterRight && (
-                <RightFilters selectedRights={selectedRights} onToggleRight={toggleRight} />
-              )}
-
-              {filterRight && (
-                <div className="mt-3 text-sm text-muted-foreground">
-                  {t('common.network.filteredBy')}: {filterRight.replace('Right', '')}
-                </div>
-              )}
-
-              {/* Color legend */}
-              <div className="mt-3">
-                <button
-                  onClick={() => setLegendCollapsed(!legendCollapsed)}
-                  className="flex w-full items-center justify-between text-sm font-medium hover:text-primary"
-                >
-                  <span>{t('common.network.legend')}</span>
-                  {legendCollapsed ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronUp className="h-4 w-4" />
-                  )}
-                </button>
-                {!legendCollapsed && (
-                  <div className="mt-2 space-y-2 text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded-full border-2 border-[#2196f3] bg-[#e3f2fd]"></div>
-                      <span>{t('common.network.user')}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded border border-[#a5d6a7] bg-[#c8e6c9]"></div>
-                      <span>{t('common.network.userGroups')}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded border border-[#80cbc4] bg-[#b2dfdb]"></div>
-                      <span>{t('common.network.parentGroups')}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded border border-[#ffcc80] bg-[#ffe0b2]"></div>
-                      <span>{t('common.network.childGroups')}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </Panel>
+        <NetworkControlPanel
+          title={title}
+          description={description}
+          panelCollapsed={panelCollapsed}
+          onPanelCollapsedChange={setPanelCollapsed}
+          legendCollapsed={legendCollapsed}
+          onLegendCollapsedChange={setLegendCollapsed}
+          legendTitle={t('common.network.legend')}
+          legendItems={[
+            {
+              id: 'user',
+              label: t('common.network.user'),
+              swatchClassName: 'h-4 w-4 rounded-full border-2 border-[#2196f3] bg-[#e3f2fd]',
+            },
+            {
+              id: 'user-groups',
+              label: t('common.network.userGroups'),
+              swatchClassName: 'h-4 w-4 rounded border border-[#a5d6a7] bg-[#c8e6c9]',
+            },
+            {
+              id: 'parent-groups',
+              label: t('common.network.parentGroups'),
+              swatchClassName: 'h-4 w-4 rounded border border-[#80cbc4] bg-[#b2dfdb]',
+            },
+            {
+              id: 'child-groups',
+              label: t('common.network.childGroups'),
+              swatchClassName: 'h-4 w-4 rounded border border-[#ffcc80] bg-[#ffe0b2]',
+            },
+          ]}
+          showDisplayControls
+          showIndirect={showIndirect}
+          onShowIndirectChange={setShowIndirect}
+          isInteractive={isInteractive}
+          onInteractiveChange={setIsInteractive}
+          directLabel={t('common.network.direct')}
+          indirectLabel={t('common.network.indirect')}
+          lockLabel={t('common.network.lockEditor')}
+          unlockLabel={t('common.network.unlockEditor')}
+          showRightsFilter={!filterRight}
+          selectedRights={selectedRights}
+          onToggleRight={toggleRight}
+          filterRight={filterRight}
+          filteredByPrefix={t('common.network.filteredBy')}
+          showRightsLegend
+        />
       }
     />
   );
