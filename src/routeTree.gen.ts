@@ -84,6 +84,7 @@ import { Route as AuthedAmendmentIdCollaboratorsImport } from './routes/_authed/
 import { Route as AuthedAmendmentIdChangeRequestsImport } from './routes/_authed/amendment/$id/change-requests'
 import { Route as AuthedGroupIdEditorIndexImport } from './routes/_authed/group/$id/editor/index'
 import { Route as AuthedGroupIdBlogIndexImport } from './routes/_authed/group/$id/blog/index'
+import { Route as AuthedEventIdAgendaIndexImport } from './routes/_authed/event/$id/agenda/index'
 import { Route as AuthedUserIdEditorDocIdImport } from './routes/_authed/user/$id/editor/$docId'
 import { Route as AuthedUserIdBlogEntryIdImport } from './routes/_authed/user/$id/blog/$entryId'
 import { Route as AuthedGroupIdEditorDocIdImport } from './routes/_authed/group/$id/editor/$docId'
@@ -545,6 +546,12 @@ const AuthedGroupIdBlogIndexRoute = AuthedGroupIdBlogIndexImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthedGroupIdBlogRoute,
+} as any)
+
+const AuthedEventIdAgendaIndexRoute = AuthedEventIdAgendaIndexImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedEventIdAgendaRoute,
 } as any)
 
 const AuthedUserIdEditorDocIdRoute = AuthedUserIdEditorDocIdImport.update({
@@ -1142,6 +1149,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedUserIdEditorDocIdImport
       parentRoute: typeof AuthedUserIdEditorImport
     }
+    '/_authed/event/$id/agenda/': {
+      id: '/_authed/event/$id/agenda/'
+      path: '/'
+      fullPath: '/event/$id/agenda/'
+      preLoaderRoute: typeof AuthedEventIdAgendaIndexImport
+      parentRoute: typeof AuthedEventIdAgendaImport
+    }
     '/_authed/group/$id/blog/': {
       id: '/_authed/group/$id/blog/'
       path: '/'
@@ -1228,10 +1242,12 @@ const AuthedAmendmentIdRouteWithChildren =
 
 interface AuthedEventIdAgendaRouteChildren {
   AuthedEventIdAgendaAgendaItemIdRoute: typeof AuthedEventIdAgendaAgendaItemIdRoute
+  AuthedEventIdAgendaIndexRoute: typeof AuthedEventIdAgendaIndexRoute
 }
 
 const AuthedEventIdAgendaRouteChildren: AuthedEventIdAgendaRouteChildren = {
   AuthedEventIdAgendaAgendaItemIdRoute: AuthedEventIdAgendaAgendaItemIdRoute,
+  AuthedEventIdAgendaIndexRoute: AuthedEventIdAgendaIndexRoute,
 }
 
 const AuthedEventIdAgendaRouteWithChildren =
@@ -1549,6 +1565,7 @@ export interface FileRoutesByFullPath {
   '/group/$id/editor/$docId': typeof AuthedGroupIdEditorDocIdRoute
   '/user/$id/blog/$entryId': typeof AuthedUserIdBlogEntryIdRouteWithChildren
   '/user/$id/editor/$docId': typeof AuthedUserIdEditorDocIdRoute
+  '/event/$id/agenda/': typeof AuthedEventIdAgendaIndexRoute
   '/group/$id/blog/': typeof AuthedGroupIdBlogIndexRoute
   '/group/$id/editor/': typeof AuthedGroupIdEditorIndexRoute
   '/group/$id/blog/$entryId/editor': typeof AuthedGroupIdBlogEntryIdEditorRoute
@@ -1593,7 +1610,6 @@ export interface FileRoutesByTo {
   '/amendment/$id/process': typeof AuthedAmendmentIdProcessRoute
   '/amendment/$id/settings': typeof AuthedAmendmentIdSettingsRoute
   '/amendment/$id/text': typeof AuthedAmendmentIdTextRoute
-  '/event/$id/agenda': typeof AuthedEventIdAgendaRouteWithChildren
   '/event/$id/network': typeof AuthedEventIdNetworkRoute
   '/event/$id/notifications': typeof AuthedEventIdNotificationsRoute
   '/event/$id/participants': typeof AuthedEventIdParticipantsRoute
@@ -1626,6 +1642,7 @@ export interface FileRoutesByTo {
   '/event/$id/agenda/$agendaItemId': typeof AuthedEventIdAgendaAgendaItemIdRoute
   '/group/$id/editor/$docId': typeof AuthedGroupIdEditorDocIdRoute
   '/user/$id/editor/$docId': typeof AuthedUserIdEditorDocIdRoute
+  '/event/$id/agenda': typeof AuthedEventIdAgendaIndexRoute
   '/group/$id/blog': typeof AuthedGroupIdBlogIndexRoute
   '/group/$id/editor': typeof AuthedGroupIdEditorIndexRoute
   '/group/$id/blog/$entryId/editor': typeof AuthedGroupIdBlogEntryIdEditorRoute
@@ -1712,6 +1729,7 @@ export interface FileRoutesById {
   '/_authed/group/$id/editor/$docId': typeof AuthedGroupIdEditorDocIdRoute
   '/_authed/user/$id/blog/$entryId': typeof AuthedUserIdBlogEntryIdRouteWithChildren
   '/_authed/user/$id/editor/$docId': typeof AuthedUserIdEditorDocIdRoute
+  '/_authed/event/$id/agenda/': typeof AuthedEventIdAgendaIndexRoute
   '/_authed/group/$id/blog/': typeof AuthedGroupIdBlogIndexRoute
   '/_authed/group/$id/editor/': typeof AuthedGroupIdEditorIndexRoute
   '/_authed/group/$id/blog/$entryId/editor': typeof AuthedGroupIdBlogEntryIdEditorRoute
@@ -1799,6 +1817,7 @@ export interface FileRouteTypes {
     | '/group/$id/editor/$docId'
     | '/user/$id/blog/$entryId'
     | '/user/$id/editor/$docId'
+    | '/event/$id/agenda/'
     | '/group/$id/blog/'
     | '/group/$id/editor/'
     | '/group/$id/blog/$entryId/editor'
@@ -1842,7 +1861,6 @@ export interface FileRouteTypes {
     | '/amendment/$id/process'
     | '/amendment/$id/settings'
     | '/amendment/$id/text'
-    | '/event/$id/agenda'
     | '/event/$id/network'
     | '/event/$id/notifications'
     | '/event/$id/participants'
@@ -1875,6 +1893,7 @@ export interface FileRouteTypes {
     | '/event/$id/agenda/$agendaItemId'
     | '/group/$id/editor/$docId'
     | '/user/$id/editor/$docId'
+    | '/event/$id/agenda'
     | '/group/$id/blog'
     | '/group/$id/editor'
     | '/group/$id/blog/$entryId/editor'
@@ -1959,6 +1978,7 @@ export interface FileRouteTypes {
     | '/_authed/group/$id/editor/$docId'
     | '/_authed/user/$id/blog/$entryId'
     | '/_authed/user/$id/editor/$docId'
+    | '/_authed/event/$id/agenda/'
     | '/_authed/group/$id/blog/'
     | '/_authed/group/$id/editor/'
     | '/_authed/group/$id/blog/$entryId/editor'
@@ -2239,7 +2259,8 @@ export const routeTree = rootRoute
       "filePath": "_authed/event/$id/agenda.tsx",
       "parent": "/_authed/event/$id",
       "children": [
-        "/_authed/event/$id/agenda/$agendaItemId"
+        "/_authed/event/$id/agenda/$agendaItemId",
+        "/_authed/event/$id/agenda/"
       ]
     },
     "/_authed/event/$id/network": {
@@ -2407,6 +2428,10 @@ export const routeTree = rootRoute
     "/_authed/user/$id/editor/$docId": {
       "filePath": "_authed/user/$id/editor/$docId.tsx",
       "parent": "/_authed/user/$id/editor"
+    },
+    "/_authed/event/$id/agenda/": {
+      "filePath": "_authed/event/$id/agenda/index.tsx",
+      "parent": "/_authed/event/$id/agenda"
     },
     "/_authed/group/$id/blog/": {
       "filePath": "_authed/group/$id/blog/index.tsx",

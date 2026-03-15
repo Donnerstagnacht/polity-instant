@@ -1,11 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { EventAgenda } from '@/features/agendas/ui/EventAgenda'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_authed/event/$id/agenda')({
-  component: EventAgendaPage,
+  component: () => <Outlet />,
 })
-
-function EventAgendaPage() {
-  const { id } = Route.useParams()
-  return <EventAgenda eventId={id} />
-}
