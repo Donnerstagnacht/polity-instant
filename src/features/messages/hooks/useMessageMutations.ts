@@ -46,7 +46,9 @@ export function useMessageMutations() {
             }
           }
         }
-      } catch { /* notification delivery is best-effort */ }
+      } catch {
+        /* notification delivery is best-effort */
+      }
       return { success: true, messageId };
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -87,8 +89,8 @@ export function useMessageMutations() {
         id: conversationId,
         type,
         status: 'pending',
-        group_id: groupId ?? '',
-        name: '',
+        group_id: groupId ?? null,
+        name: null,
         pinned: false,
         last_message_at: 0,
       });
@@ -121,7 +123,9 @@ export function useMessageMutations() {
             }
           }
         }
-      } catch { /* notification delivery is best-effort */ }
+      } catch {
+        /* notification delivery is best-effort */
+      }
       toast.success('Conversation created');
       return { success: true, conversationId };
     } catch (error) {
@@ -189,7 +193,9 @@ export function useMessageMutations() {
             conversationId,
           });
         }
-      } catch { /* notification delivery is best-effort */ }
+      } catch {
+        /* notification delivery is best-effort */
+      }
       toast.success('Conversation accepted');
       return { success: true };
     } catch (error) {
