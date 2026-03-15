@@ -4,6 +4,18 @@ import { toast } from 'sonner'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { mutators } from '../mutators'
 
+function isConnectivityFailure(error: unknown): boolean {
+  if (!(error instanceof Error)) return false
+
+  const message = error.message.toLowerCase()
+  return (
+    message.includes('econnrefused') ||
+    message.includes('failed to open database transaction') ||
+    message.includes('protocolerror') ||
+    message.includes('websocket')
+  )
+}
+
 /**
  * Action hook for amendment mutations.
  * Every function is a thin wrapper around a custom mutator + sonner toast.
@@ -20,7 +32,11 @@ export function useAmendmentActions() {
         toast.success(t('features.amendments.toasts.created'))
       } catch (error) {
         console.error('Failed to create amendment:', error)
-        toast.error(t('features.amendments.toasts.createFailed'))
+        if (isConnectivityFailure(error)) {
+          toast.error('Connection issue while creating amendment. Please check your connection and retry.')
+        } else {
+          toast.error(t('features.amendments.toasts.createFailed'))
+        }
         throw error
       }
     },

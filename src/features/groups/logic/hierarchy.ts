@@ -5,29 +5,10 @@
  * so every function is easy to unit-test without a database.
  */
 
+import type { GroupRelationship as GroupRelationshipRow } from '@/zero/network/schema'
+import type { GroupMembership as GroupMembershipRow } from '@/zero/groups/schema'
+
 // ── Types (minimal shapes expected from Zero query results) ─────────
-
-export interface GroupRelationshipRow {
-  id: string
-  group_id: string         // parent group
-  related_group_id: string // child group
-  with_right: string | null
-  status: string | null
-}
-
-export interface GroupMembershipRow {
-  id: string
-  group_id: string
-  user_id: string
-  source: string           // 'direct' | 'derived'
-  source_group_id: string | null
-  status: string | null
-}
-
-export interface GroupRow {
-  id: string
-  group_type: string       // 'base' | 'hierarchical'
-}
 
 // ── Traversal helpers ───────────────────────────────────────────────
 

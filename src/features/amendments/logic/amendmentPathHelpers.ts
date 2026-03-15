@@ -24,6 +24,9 @@ export interface AmendmentNetworkEvent {
   id: string;
   title: string | null;
   start_date: number | null;
+  description?: string | null;
+  location_name?: string | null;
+  is_public?: boolean | null;
   group?: { id: string } | null;
 }
 

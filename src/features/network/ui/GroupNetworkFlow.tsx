@@ -2,12 +2,11 @@
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { Node, Edge, useNodesState, useEdgesState, MarkerType } from '@xyflow/react';
-import { Button } from '@/features/shared/ui/ui/button';
-import { NetworkFlowBase, Panel } from '@/features/network/ui/NetworkFlowBase';
-import { RightFilters, formatRights, RIGHT_TYPES } from '@/features/network/ui/RightFilters';
-import { RightBadge } from '@/features/network/ui/RightBadge';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { NetworkEntityDialog } from '@/features/network/ui/NetworkEntityDialog';
+import { NetworkFlowBase } from '@/features/network/ui/NetworkFlowBase';
+import { RIGHT_TYPES } from '@/features/network/ui/RightFilters';
+import { getGroupDisplayLabel, renderRightsEdgeLabel } from '@/features/network/ui/networkVisualHelpers';
+import { NetworkControlPanel } from '@/features/network/ui/NetworkControlPanel';
+import { NetworkEntityDialog, type NetworkDialogEntity } from '@/features/network/ui/NetworkEntityDialog';
 import { useGroupState } from '@/zero/groups/useGroupState';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { normalizeGroupRelationship, type NormalizedGroupRelationship, type NetworkGroupEntity } from '../types/network.types';
@@ -37,10 +36,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [legendCollapsed, setLegendCollapsed] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedEntity, setSelectedEntity] = useState<{
-    type: 'group' | 'relationship';
-    data: Record<string, unknown>;
-  } | null>(null);
+  const [selectedEntity, setSelectedEntity] = useState<NetworkDialogEntity | null>(null);
 
   // Fetch the specific group and relationships (both directions)
   const { group, relationships: relationshipsRaw, relationshipsAsTarget: relationshipsAsTargetRaw } = useGroupState({ groupId });
@@ -265,7 +261,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
       type: 'default',
       position: { x: 400, y: 300 },
       data: {
-        label: group.name ?? '',
+        label: getGroupDisplayLabel(group.name, (group as { group_type?: string }).group_type),
         description: group.description ?? '',
         level: 0,
         role: 'center',
@@ -300,7 +296,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         type: 'default',
         position: { x: 400 + xOffset, y: 300 + yOffset },
         data: {
-          label: `${isHierarchical ? '🏛 ' : ''}${parent.group.name ?? ''}`,
+          label: getGroupDisplayLabel(parent.group.name, parent.group.group_type),
           description: parent.group.description ?? undefined,
           level,
           role: 'parent',
@@ -331,13 +327,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         target: edgeTarget,
         type: 'smoothstep',
         animated: true,
-        label: (
-          <div className="flex flex-wrap gap-0.5">
-            {parent.rights.map((r: string) => (
-              <RightBadge key={r} right={r} className="px-1 py-0 text-[10px] leading-tight" />
-            ))}
-          </div>
-        ),
+        label: renderRightsEdgeLabel(parent.rights),
         style: { stroke: '#66bb6a', strokeWidth: 2, strokeDasharray: '5 5' },
         labelBgStyle: {
           fill: 'white',
@@ -367,7 +357,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         type: 'default',
         position: { x: 400 + xOffset, y: 300 + yOffset },
         data: {
-          label: `${isHierarchicalChild ? '🏛 ' : ''}${child.group.name ?? ''}`,
+          label: getGroupDisplayLabel(child.group.name, child.group.group_type),
           description: child.group.description ?? undefined,
           level,
           role: 'child',
@@ -397,13 +387,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         target: childNodeId,
         type: 'smoothstep',
         animated: true,
-        label: (
-          <div className="flex flex-wrap gap-0.5">
-            {child.rights.map((r: string) => (
-              <RightBadge key={r} right={r} className="px-1 py-0 text-[10px] leading-tight" />
-            ))}
-          </div>
-        ),
+        label: renderRightsEdgeLabel(child.rights),
         style: { stroke: '#ffb74d', strokeWidth: 2, strokeDasharray: '5 5' },
         labelBgStyle: {
           fill: 'white',
@@ -440,13 +424,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         // Return edge with filtered label
         return {
           ...edge,
-          label: (
-            <div className="flex flex-wrap gap-0.5">
-              {visibleRights.map((r: string) => (
-                <RightBadge key={r} right={r} className="px-1 py-0 text-[10px] leading-tight" />
-              ))}
-            </div>
-          ),
+          label: renderRightsEdgeLabel(visibleRights),
           data: { ...edge.data, visibleRights },
         };
       })
@@ -480,6 +458,8 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
     (_event: React.MouseEvent, node: Node) => {
       if (!isInteractive) return;
 
+      const nodeData = node.data as GroupNode['data'];
+
       const rawId = node.id.replace(/^(parent-|child-)/, '');
 
       // Find the group data from relationships
@@ -488,7 +468,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
       );
 
       const groupData = nodeGroup
-        ? { id: rawId, name: node.data.label, description: node.data.description }
+        ? { id: rawId, name: nodeData.label, description: nodeData.description ?? null }
         : (node.id === groupId || rawId === groupId ? group : null);
 
       if (groupData) {
@@ -509,8 +489,8 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         data: {
           source: edge.source,
           target: edge.target,
-          rights: edge.data?.rights || [],
-          label: edge.label,
+          rights: Array.isArray(edge.data?.rights) ? (edge.data.rights as string[]) : [],
+          label: typeof edge.label === 'string' ? edge.label : null,
         },
       });
       setDialogOpen(true);
@@ -554,103 +534,50 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
       onEdgeClick={onEdgeClick}
       onInteractiveChange={handleInteractiveChange}
       panel={
-        <Panel position="top-left" className="rounded bg-white p-4 shadow dark:bg-background">
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-lg font-bold">{t('common.network.groupNetwork')}</h2>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setPanelCollapsed(!panelCollapsed)}
-              className="h-6 w-6 p-0"
-            >
-              {panelCollapsed ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronUp className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-          {!panelCollapsed && (
-            <>
-              <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
-                {t('common.network.groupNetworkDescription', { groupName: group.name })}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {isInteractive && (
-                  <>
-                    <Button
-                      size="sm"
-                      variant={!showIndirect ? 'default' : 'outline'}
-                      onClick={() => setShowIndirect(false)}
-                    >
-                      {t('common.network.direct')}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant={showIndirect ? 'default' : 'outline'}
-                      onClick={() => setShowIndirect(true)}
-                    >
-                      {t('common.network.indirect')}
-                    </Button>
-                  </>
-                )}
-                <Button
-                  size="sm"
-                  variant={isInteractive ? 'outline' : 'default'}
-                  onClick={() => setIsInteractive(!isInteractive)}
-                >
-                  {isInteractive ? t('common.network.lockEditor') : t('common.network.unlockEditor')}
-                </Button>
-              </div>
-
-              {/* Right type filters */}
-              <RightFilters selectedRights={selectedRights} onToggleRight={toggleRight} />
-
-              {/* Color legend */}
-              <div className="mt-3">
-                <button
-                  onClick={() => setLegendCollapsed(!legendCollapsed)}
-                  className="flex w-full items-center justify-between text-sm font-medium hover:text-primary"
-                >
-                  <span>{t('common.network.legend')}</span>
-                  {legendCollapsed ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronUp className="h-4 w-4" />
-                  )}
-                </button>
-                {!legendCollapsed && (
-                  <div className="mt-2 space-y-2 text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded border border-[#a5d6a7] bg-[#c8e6c9]"></div>
-                      <span>{t('common.network.parentGroups')}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded border border-[#90caf9] bg-[#bbdefb]"></div>
-                      <span>{t('common.network.selectedGroup')}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded border border-[#ffcc80] bg-[#ffe0b2]"></div>
-                      <span>{t('common.network.childGroups')}</span>
-                    </div>
-                    <hr className="my-1 border-gray-200 dark:border-gray-700" />
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded border-2 border-solid border-gray-400 bg-gray-100"></div>
-                      <span>{t('common.network.baseGroup', 'Base group')}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded border-2 border-dashed border-gray-400 bg-gray-100"></div>
-                      <span>🏛 {t('common.network.hierarchicalGroup', 'Hierarchical group')}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </Panel>
+        <NetworkControlPanel
+          title={t('common.network.groupNetwork')}
+          description={t('common.network.groupNetworkDescription', { groupName: group.name })}
+          panelCollapsed={panelCollapsed}
+          onPanelCollapsedChange={setPanelCollapsed}
+          legendCollapsed={legendCollapsed}
+          onLegendCollapsedChange={setLegendCollapsed}
+          legendTitle={t('common.network.legend')}
+          legendItems={[
+            {
+              id: 'parent-groups',
+              label: t('common.network.parentGroups'),
+              swatchClassName: 'h-4 w-4 rounded border border-[#a5d6a7] bg-[#c8e6c9]',
+            },
+            {
+              id: 'selected-group',
+              label: t('common.network.selectedGroup'),
+              swatchClassName: 'h-4 w-4 rounded border border-[#90caf9] bg-[#bbdefb]',
+            },
+            {
+              id: 'child-groups',
+              label: t('common.network.childGroups'),
+              swatchClassName: 'h-4 w-4 rounded border border-[#ffcc80] bg-[#ffe0b2]',
+            },
+          ]}
+          showGroupTypeLegend
+          baseGroupLabel={t('common.network.baseGroup', '◉ Base group')}
+          hierarchicalGroupLabel={t('common.network.hierarchicalGroup', '🏛 Hierarchical group')}
+          showDisplayControls
+          showIndirect={showIndirect}
+          onShowIndirectChange={setShowIndirect}
+          isInteractive={isInteractive}
+          onInteractiveChange={setIsInteractive}
+          directLabel={t('common.network.direct')}
+          indirectLabel={t('common.network.indirect')}
+          lockLabel={t('common.network.lockEditor')}
+          unlockLabel={t('common.network.unlockEditor')}
+          showRightsFilter
+          selectedRights={selectedRights}
+          onToggleRight={toggleRight}
+        />
       }
     >
-      <NetworkEntityDialog open={dialogOpen} onOpenChange={setDialogOpen} entity={selectedEntity as React.ComponentProps<typeof NetworkEntityDialog>['entity']} />
+      <NetworkEntityDialog open={dialogOpen} onOpenChange={setDialogOpen} entity={selectedEntity} />
     </NetworkFlowBase>
   );
 }

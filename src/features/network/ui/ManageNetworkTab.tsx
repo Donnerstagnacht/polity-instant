@@ -37,7 +37,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { NormalizedGroupRelationship, NetworkGroupEntity } from '../types/network.types';
 
 interface GroupedRequest {
-  group: { id: string; name?: string | null; description?: string | null; [key: string]: unknown };
+  group: NetworkGroupEntity;
   rels: NormalizedGroupRelationship[];
   type: 'parent' | 'child';
 }
@@ -371,7 +371,7 @@ export function ManageNetworkTab({
                                   </AlertDialogCancel>
                                   <AlertDialogAction
                                     onClick={() => onDeleteRelationship(rel.group.id)}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    className="bg-destructive text-white hover:bg-destructive/90"
                                   >
                                     {t('common.actions.delete')}
                                   </AlertDialogAction>

@@ -13,32 +13,40 @@ export interface SearchableUser {
   contactEmail?: string;
 }
 
-export function useUserSearch(
-  existingCollaboratorIds: string[],
-  searchQuery: string = ''
-): { users: SearchableUser[]; isLoading: boolean } {
+function buildDisplayName(user: {
+  first_name?: string | null;
+  last_name?: string | null;
+  handle?: string | null;
+}): string {
+  const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ').trim();
+  return fullName || user.handle || 'Unnamed User';
+}
+
+export function useUserSearch(existingCollaboratorIds: string[]): {
+  users: SearchableUser[];
+  isLoading: boolean;
+} {
   const { allUsers: usersData, isLoading } = useAmendmentState({
     includeAllUsers: true,
   });
 
-  // Filter users for invite search
   const filteredUsers = useMemo(() => {
     const allUsers = usersData || [];
-    
-    return allUsers.filter(user => {
-      if (!user?.id) return false;
-      if (existingCollaboratorIds.includes(user.id)) return false;
 
-      const query = searchQuery.toLowerCase();
-      if (!query) return true;
-
-      return (
-        [user.first_name, user.last_name].filter(Boolean).join(' ').toLowerCase().includes(query) ||
-        user.handle?.toLowerCase().includes(query) ||
-        user.email?.toLowerCase().includes(query)
-      );
-    }) as SearchableUser[];
-  }, [usersData, existingCollaboratorIds, searchQuery]);
+    return allUsers
+      .filter(user => {
+        if (!user?.id) return false;
+        if (existingCollaboratorIds.includes(user.id)) return false;
+        return true;
+      })
+      .map(user => ({
+        id: user.id,
+        name: buildDisplayName(user),
+        avatar: user.avatar ?? undefined,
+        handle: user.handle ?? undefined,
+        contactEmail: user.email ?? undefined,
+      }));
+  }, [usersData, existingCollaboratorIds]);
 
   return {
     users: filteredUsers,

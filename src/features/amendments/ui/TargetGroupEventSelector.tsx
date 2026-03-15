@@ -55,6 +55,8 @@ export function TargetGroupEventSelector({
   const [selectedGroup, setSelectedGroup] = useState<{ id: string; data: AmendmentNetworkGroup } | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<{ id: string; data: AmendmentNetworkEvent } | null>(null);
   const [eventSearchQuery, setEventSearchQuery] = useState<string>('');
+  const [pathWithEvents, setPathWithEvents] = useState<PathWithEventSegment[]>([]);
+  const [pathValidationError, setPathValidationError] = useState<string | null>(null);
 
   // Fetch network data via facade
   const {
@@ -83,32 +85,36 @@ export function TargetGroupEventSelector({
     setSelectedGroup(null);
     setEventSearchQuery('');
     setSelectedEvent(null);
+    setPathWithEvents([]);
+    setPathValidationError(null);
   }, [selectedUserId]);
 
-  // Notify parent when selection is complete
+  // Seed the computed path when user picks target group/event.
   useEffect(() => {
-    if (selectedGroup && selectedEvent) {
-      const pathWithEvents = calculatePathWithEvents(selectedGroup.id);
-      if (pathWithEvents) {
-        // Override the last segment's event with the user-selected event
-        const lastSegment = pathWithEvents[pathWithEvents.length - 1];
-        if (lastSegment && lastSegment.groupId === selectedGroup.id) {
-          lastSegment.eventId = selectedEvent.id;
-          lastSegment.eventTitle = String(selectedEvent.data.title ?? '');
-          lastSegment.eventStartDate = (selectedEvent.data.start_date as number) ?? null;
-        }
-
-        onSelect({
-          groupId: selectedGroup.id,
-          groupData: selectedGroup.data,
-          eventId: selectedEvent.id,
-          eventData: selectedEvent.data,
-          pathWithEvents,
-          selectedUserId,
-        });
-      }
+    if (!selectedGroup || !selectedEvent) {
+      setPathWithEvents([]);
+      return;
     }
-  }, [selectedGroup, selectedEvent, selectedUserId]);
+
+    const calculatedPath = calculatePathWithEvents(selectedGroup.id);
+    if (!calculatedPath) {
+      setPathWithEvents([]);
+      return;
+    }
+
+    const seededPath = calculatedPath.map((segment) =>
+      segment.groupId === selectedGroup.id
+        ? {
+            ...segment,
+            eventId: selectedEvent.id,
+            eventTitle: String(selectedEvent.data.title ?? ''),
+            eventStartDate: selectedEvent.data.start_date ?? null,
+          }
+        : segment
+    );
+
+    setPathWithEvents(seededPath);
+  }, [selectedGroup, selectedEvent, selectedUserId, eventsData]);
 
   // Calculate path from user to target group with events for each step
   const calculatePathWithEvents = (targetGroupId: string) => {
@@ -168,6 +174,98 @@ export function TargetGroupEventSelector({
     
     return titleMatch || descriptionMatch || locationMatch;
   });
+
+  const getUpcomingEventsForGroup = useCallback(
+    (groupId: string): AmendmentNetworkEvent[] => {
+      const now = Date.now();
+      return [...(networkData.events ?? [])]
+        .filter((event) => event.group?.id === groupId && (event.start_date ?? 0) > now)
+        .sort((a, b) => (a.start_date ?? 0) - (b.start_date ?? 0));
+    },
+    [networkData.events]
+  );
+
+  const validatePathEventOrder = useCallback((segments: PathWithEventSegment[]): string | null => {
+    if (segments.some((segment) => !segment.eventId)) {
+      return 'Please select an event for each group in the amendment path.';
+    }
+
+    for (let index = 1; index < segments.length; index++) {
+      const previous = segments[index - 1];
+      const current = segments[index];
+
+      if (
+        previous?.eventStartDate &&
+        current?.eventStartDate &&
+        previous.eventStartDate > current.eventStartDate
+      ) {
+        return 'Events of lower groups must be before events of higher groups.';
+      }
+    }
+
+    return null;
+  }, []);
+
+  const updatePathSegmentEvent = useCallback(
+    (groupId: string, item: TypeaheadItem | null) => {
+      if (!item) return;
+
+      const event = getUpcomingEventsForGroup(groupId).find((entry) => entry.id === item.id);
+      if (!event) return;
+
+      setPathWithEvents((previous) =>
+        previous.map((segment) =>
+          segment.groupId === groupId
+            ? {
+                ...segment,
+                eventId: event.id,
+                eventTitle: String(event.title ?? ''),
+                eventStartDate: event.start_date ?? null,
+              }
+            : segment
+        )
+      );
+
+      if (selectedGroup?.id === groupId) {
+        setSelectedEvent({ id: event.id, data: event });
+      }
+    },
+    [getUpcomingEventsForGroup, selectedGroup?.id]
+  );
+
+  useEffect(() => {
+    if (!selectedGroup || !selectedEvent || pathWithEvents.length === 0) {
+      setPathValidationError(null);
+      return;
+    }
+
+    const validationError = validatePathEventOrder(pathWithEvents);
+    setPathValidationError(validationError);
+    if (validationError) return;
+
+    const targetSegment = pathWithEvents.find((segment) => segment.groupId === selectedGroup.id);
+    const targetEventId = targetSegment?.eventId ?? selectedEvent.id;
+    const targetEvent =
+      getUpcomingEventsForGroup(selectedGroup.id).find((event) => event.id === targetEventId) ??
+      selectedEvent.data;
+
+    onSelect({
+      groupId: selectedGroup.id,
+      groupData: selectedGroup.data,
+      eventId: targetEventId,
+      eventData: targetEvent,
+      pathWithEvents,
+      selectedUserId,
+    });
+  }, [
+    getUpcomingEventsForGroup,
+    onSelect,
+    pathWithEvents,
+    selectedEvent,
+    selectedGroup,
+    selectedUserId,
+    validatePathEventOrder,
+  ]);
 
   return (
     <div className="space-y-4">
@@ -339,6 +437,65 @@ export function TargetGroupEventSelector({
           )}
         </div>
       )}
+
+      {pathWithEvents.length > 0 && (
+        <div className="space-y-3 rounded-md border border-border bg-muted/30 p-3">
+          <div className="flex items-center gap-2">
+            <Target className="h-4 w-4 text-muted-foreground" />
+            <Label className="text-sm">Amendment path events</Label>
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            Select one event per group. Events of lower groups must happen before events of higher groups.
+          </p>
+
+          <div className="space-y-3">
+            {pathWithEvents.map((segment, index) => {
+              const segmentEvents = getUpcomingEventsForGroup(segment.groupId);
+
+              return (
+                <div key={segment.groupId} className="rounded-md border border-border bg-background p-3">
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium">{segment.groupName}</p>
+                    <Badge variant="secondary" className="text-xs">Step {index + 1}</Badge>
+                  </div>
+
+                  {segmentEvents.length > 0 ? (
+                    <TypeaheadSearch
+                      items={toTypeaheadItems(
+                        segmentEvents,
+                        'event',
+                        (event) => event.title || 'Event',
+                        (event) =>
+                          event.start_date
+                            ? new Date(event.start_date).toLocaleString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                                hour: 'numeric',
+                                minute: '2-digit',
+                              })
+                            : 'No date'
+                      )}
+                      value={segment.eventId ?? undefined}
+                      onChange={(item: TypeaheadItem | null) => updatePathSegmentEvent(segment.groupId, item)}
+                      placeholder="Select an event for this group..."
+                    />
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      No upcoming events available for this group.
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {pathValidationError && (
+            <p className="text-xs text-destructive">{pathValidationError}</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -352,7 +509,7 @@ interface DisplayGroupData {
 
 interface DisplayEventData {
   title?: string | null;
-  is_public?: boolean;
+  is_public?: boolean | null;
   start_date?: number | null;
   location_name?: string | null;
   description?: string | null;

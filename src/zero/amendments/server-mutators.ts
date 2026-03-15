@@ -62,15 +62,42 @@ export const amendmentServerMutators = {
       }
     }
 
-    await tx.mutate.amendment_collaborator.insert({
-      id: crypto.randomUUID(),
-      amendment_id: args.id,
-      user_id: ctx.userID,
-      role_id: authorRoleId,
-      status: 'admin',
-      visibility: args.visibility,
-      created_at: now,
-    })
+    if (!authorRoleId) {
+      const existingAuthorRole = await tx.run(
+        zql.role
+          .where('amendment_id', args.id)
+          .where('scope', 'amendment')
+          .where('name', 'Author')
+          .one()
+      )
+      authorRoleId = existingAuthorRole?.id ?? null
+    }
+
+    const existingCreatorCollaborator = await tx.run(
+      zql.amendment_collaborator
+        .where('amendment_id', args.id)
+        .where('user_id', ctx.userID)
+        .one()
+    )
+
+    if (existingCreatorCollaborator) {
+      await tx.mutate.amendment_collaborator.update({
+        id: existingCreatorCollaborator.id,
+        role_id: authorRoleId,
+        status: 'admin',
+        visibility: args.visibility,
+      })
+    } else {
+      await tx.mutate.amendment_collaborator.insert({
+        id: crypto.randomUUID(),
+        amendment_id: args.id,
+        user_id: ctx.userID,
+        role_id: authorRoleId,
+        status: 'admin',
+        visibility: args.visibility,
+        created_at: now,
+      })
+    }
 
     await recomputeAmendmentCounters(tx, args.id)
 

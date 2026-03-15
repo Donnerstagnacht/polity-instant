@@ -2,13 +2,14 @@
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { Node, Edge, useNodesState, useEdgesState, MarkerType } from '@xyflow/react';
-import { Button } from '@/features/shared/ui/ui/button';
-import { NetworkFlowBase, Panel } from '@/features/network/ui/NetworkFlowBase';
-import { RightFilters, formatRights, RIGHT_TYPES } from '@/features/network/ui/RightFilters';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { NetworkEntityDialog } from '@/features/network/ui/NetworkEntityDialog';
+import { NetworkFlowBase } from '@/features/network/ui/NetworkFlowBase';
+import { RIGHT_TYPES } from '@/features/network/ui/RightFilters';
+import { NetworkControlPanel } from '@/features/network/ui/NetworkControlPanel';
+import { NetworkEntityDialog, type NetworkDialogEntity } from '@/features/network/ui/NetworkEntityDialog';
+import { getGroupDisplayLabel, renderRightsEdgeLabel } from '@/features/network/ui/networkVisualHelpers';
 import { useUserState } from '@/zero/users/useUserState';
 import { useGroupState } from '@/zero/groups/useGroupState';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { type NetworkGroupEntity } from '../types/network.types';
 
 interface NetworkNode extends Node {
@@ -36,6 +37,7 @@ interface RelationshipEntry {
 }
 
 export function UserNetworkFlow({ userId, onGroupClick, filterRight }: UserNetworkFlowProps) {
+  const { t } = useTranslation();
   const [showIndirect, setShowIndirect] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState<NetworkNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -45,10 +47,7 @@ export function UserNetworkFlow({ userId, onGroupClick, filterRight }: UserNetwo
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [legendCollapsed, setLegendCollapsed] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedEntity, setSelectedEntity] = useState<{
-    type: 'group' | 'relationship' | 'user';
-    data: Record<string, unknown>;
-  } | null>(null);
+  const [selectedEntity, setSelectedEntity] = useState<NetworkDialogEntity | null>(null);
 
   const { userWithGroupMemberships } = useUserState({ userId, includeGroupMemberships: true });
 
@@ -324,7 +323,7 @@ export function UserNetworkFlow({ userId, onGroupClick, filterRight }: UserNetwo
         type: 'default',
         position: { x: 400 + xOffset, y: 300 + yOffset },
         data: {
-          label: group.name ?? '',
+          label: getGroupDisplayLabel(group.name, group.group_type),
           description: group.description ?? '',
           level: 1,
           type: 'group',
@@ -410,7 +409,7 @@ export function UserNetworkFlow({ userId, onGroupClick, filterRight }: UserNetwo
             target: edgeTarget,
             type: 'smoothstep',
             animated: true,
-            label: formatRights(parent.rights),
+            label: renderRightsEdgeLabel(parent.rights),
             style: { stroke: '#66bb6a', strokeWidth: 2, strokeDasharray: '5 5' },
             labelStyle: {
               fill: '#2e7d32',
@@ -459,7 +458,7 @@ export function UserNetworkFlow({ userId, onGroupClick, filterRight }: UserNetwo
             target: child.group.id,
             type: 'smoothstep',
             animated: true,
-            label: formatRights(child.rights),
+            label: renderRightsEdgeLabel(child.rights),
             style: { stroke: '#ffb74d', strokeWidth: 2, strokeDasharray: '5 5' },
             labelStyle: {
               fill: '#f57c00',
@@ -498,7 +497,7 @@ export function UserNetworkFlow({ userId, onGroupClick, filterRight }: UserNetwo
         type: 'default',
         position: { x: 400 + xOffset, y: 300 + yOffset },
         data: {
-          label: parent.group.name ?? '',
+          label: getGroupDisplayLabel(parent.group.name, parent.group.group_type),
           description: parent.group.description ?? '',
           level,
           type: 'group',
@@ -531,7 +530,7 @@ export function UserNetworkFlow({ userId, onGroupClick, filterRight }: UserNetwo
         type: 'default',
         position: { x: 400 + xOffset, y: 300 + yOffset },
         data: {
-          label: child.group.name ?? '',
+          label: getGroupDisplayLabel(child.group.name, child.group.group_type),
           description: child.group.description ?? '',
           level,
           type: 'group',
@@ -582,7 +581,7 @@ export function UserNetworkFlow({ userId, onGroupClick, filterRight }: UserNetwo
         // Return edge with filtered label
         return {
           ...edge,
-          label: formatRights(visibleRights),
+          label: renderRightsEdgeLabel(visibleRights),
           data: { ...edge.data, visibleRights },
         };
       })
@@ -616,16 +615,18 @@ export function UserNetworkFlow({ userId, onGroupClick, filterRight }: UserNetwo
     (_event: React.MouseEvent, node: Node) => {
       if (!isInteractive) return;
 
+      const nodeData = node.data as NetworkNode['data'];
+
       // Open dialog with entity data
-      if (node.data.type === 'group' && node.data.groupData) {
-        setSelectedEntity({ type: 'group', data: node.data.groupData as Record<string, unknown> });
+      if (nodeData.type === 'group' && nodeData.groupData) {
+        setSelectedEntity({ type: 'group', data: nodeData.groupData });
         setDialogOpen(true);
 
         // Still call onGroupClick if provided
         if (onGroupClick) {
-          onGroupClick(node.id, node.data.groupData as NetworkGroupEntity);
+          onGroupClick(node.id, nodeData.groupData as NetworkGroupEntity);
         }
-      } else if (node.data.type === 'user') {
+      } else if (nodeData.type === 'user') {
         setSelectedEntity({ type: 'user', data: { id: userId, name: [user?.first_name, user?.last_name].filter(Boolean).join(' ') } });
         setDialogOpen(true);
       }
@@ -643,8 +644,8 @@ export function UserNetworkFlow({ userId, onGroupClick, filterRight }: UserNetwo
         data: {
           source: edge.source,
           target: edge.target,
-          rights: edge.data?.rights || [],
-          label: edge.label,
+          rights: Array.isArray(edge.data?.rights) ? (edge.data.rights as string[]) : [],
+          label: typeof edge.label === 'string' ? edge.label : null,
         },
       });
       setDialogOpen(true);
@@ -688,109 +689,59 @@ export function UserNetworkFlow({ userId, onGroupClick, filterRight }: UserNetwo
       onEdgeClick={onEdgeClick}
       onInteractiveChange={handleInteractiveChange}
       panel={
-        <Panel position="top-left" className="rounded bg-white p-4 shadow dark:bg-background">
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-lg font-bold">User Network</h2>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setPanelCollapsed(!panelCollapsed)}
-              className="h-6 w-6 p-0"
-            >
-              {panelCollapsed ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronUp className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-          {!panelCollapsed && (
-            <>
-              <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
-                Visualization of {[user.first_name, user.last_name].filter(Boolean).join(' ')}'s group network
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {isInteractive && (
-                  <>
-                    <Button
-                      size="sm"
-                      variant={!showIndirect ? 'default' : 'outline'}
-                      onClick={() => setShowIndirect(false)}
-                    >
-                      Direct
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant={showIndirect ? 'default' : 'outline'}
-                      onClick={() => setShowIndirect(true)}
-                    >
-                      Indirect
-                    </Button>
-                  </>
-                )}
-                <Button
-                  size="sm"
-                  variant={isInteractive ? 'outline' : 'default'}
-                  onClick={() => setIsInteractive(!isInteractive)}
-                >
-                  {isInteractive ? 'Lock Editor' : 'Unlock Editor'}
-                </Button>
-              </div>
-
-              {/* Right type filters - only show if not filtering by specific right */}
-              {!filterRight && (
-                <RightFilters selectedRights={selectedRights} onToggleRight={toggleRight} />
-              )}
-
-              {filterRight && (
-                <div className="mt-3 rounded-md bg-blue-50 p-2 text-sm dark:bg-blue-950/20">
-                  <span className="font-medium">Filtered by:</span>{' '}
-                  <span className="text-blue-700 dark:text-blue-300">
-                    {filterRight.replace('Right', '')}
-                  </span>
-                </div>
-              )}
-
-              {/* Color legend */}
-              <div className="mt-3">
-                <button
-                  onClick={() => setLegendCollapsed(!legendCollapsed)}
-                  className="flex w-full items-center justify-between text-sm font-medium hover:text-primary"
-                >
-                  <span>Legend</span>
-                  {legendCollapsed ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronUp className="h-4 w-4" />
-                  )}
-                </button>
-                {!legendCollapsed && (
-                  <div className="mt-2 space-y-2 text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded-full border-2 border-[#2196f3] bg-[#e3f2fd]"></div>
-                      <span>User</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded border border-[#a5d6a7] bg-[#c8e6c9]"></div>
-                      <span>User's Groups</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded border border-[#80cbc4] bg-[#b2dfdb]"></div>
-                      <span>Parent Groups</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded border border-[#ffcc80] bg-[#ffe0b2]"></div>
-                      <span>Child Groups</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </Panel>
+        <NetworkControlPanel
+          title={t('common.network.userNetwork', 'User Network')}
+          description={t('common.network.userNetworkDescription', {
+            userName: [user.first_name, user.last_name].filter(Boolean).join(' '),
+          })}
+          panelCollapsed={panelCollapsed}
+          onPanelCollapsedChange={setPanelCollapsed}
+          legendCollapsed={legendCollapsed}
+          onLegendCollapsedChange={setLegendCollapsed}
+          legendTitle={t('common.network.legend')}
+          legendItems={[
+            {
+              id: 'user',
+              label: t('common.network.user', 'User'),
+              swatchClassName: 'h-4 w-4 rounded-full border-2 border-[#2196f3] bg-[#e3f2fd]',
+            },
+            {
+              id: 'user-groups',
+              label: t('common.network.userGroups', "User's Groups"),
+              swatchClassName: 'h-4 w-4 rounded border border-[#a5d6a7] bg-[#c8e6c9]',
+            },
+            {
+              id: 'parent-groups',
+              label: t('common.network.parentGroups'),
+              swatchClassName: 'h-4 w-4 rounded border border-[#80cbc4] bg-[#b2dfdb]',
+            },
+            {
+              id: 'child-groups',
+              label: t('common.network.childGroups'),
+              swatchClassName: 'h-4 w-4 rounded border border-[#ffcc80] bg-[#ffe0b2]',
+            },
+          ]}
+          showGroupTypeLegend
+          baseGroupLabel={t('common.network.baseGroup', '◉ Base group')}
+          hierarchicalGroupLabel={t('common.network.hierarchicalGroup', '🏛 Hierarchical group')}
+          showDisplayControls
+          showIndirect={showIndirect}
+          onShowIndirectChange={setShowIndirect}
+          isInteractive={isInteractive}
+          onInteractiveChange={setIsInteractive}
+          directLabel={t('common.network.direct')}
+          indirectLabel={t('common.network.indirect')}
+          lockLabel={t('common.network.lockEditor')}
+          unlockLabel={t('common.network.unlockEditor')}
+          showRightsFilter={!filterRight}
+          selectedRights={selectedRights}
+          onToggleRight={toggleRight}
+          filterRight={filterRight}
+          filteredByPrefix={t('common.network.filteredBy')}
+        />
       }
     >
-      <NetworkEntityDialog open={dialogOpen} onOpenChange={setDialogOpen} entity={selectedEntity as React.ComponentProps<typeof NetworkEntityDialog>['entity']} />
+      <NetworkEntityDialog open={dialogOpen} onOpenChange={setDialogOpen} entity={selectedEntity} />
     </NetworkFlowBase>
   );
 }

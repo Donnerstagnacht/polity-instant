@@ -2,11 +2,10 @@
  * Dialog for inviting collaborators
  */
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Badge } from '@/features/shared/ui/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { UserPlus, Loader2, Check, X } from 'lucide-react';
+import { UserPlus, Loader2, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -16,14 +15,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/features/shared/ui/ui/dialog';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/features/shared/ui/ui/command';
+import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
+import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
 import { toast } from 'sonner';
 import { useUserSearch } from '../hooks/useUserSearch';
 import type { Collaborator, Role } from '../hooks/useCollaborators';
@@ -36,7 +29,6 @@ interface InviteDialogProps {
 }
 
 export function InviteDialog({ amendmentId, existingCollaborators, roles, onInviteUsers }: InviteDialogProps) {
-  const [inviteSearchQuery, setInviteSearchQuery] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
@@ -46,7 +38,19 @@ export function InviteDialog({ amendmentId, existingCollaborators, roles, onInvi
     .map(c => c.user?.id)
     .filter(Boolean) as string[];
 
-  const { users, isLoading } = useUserSearch(existingCollaboratorIds, inviteSearchQuery);
+  const { users, isLoading } = useUserSearch(existingCollaboratorIds);
+
+  const typeaheadItems = useMemo(
+    () =>
+      toTypeaheadItems(
+        users.filter(user => !selectedUsers.includes(user.id)),
+        'user',
+        user => user.name || 'Unnamed User',
+        user => (user.handle ? `@${user.handle}` : user.contactEmail),
+        user => user.avatar,
+      ),
+    [users, selectedUsers],
+  );
 
   const toggleUserSelection = (userId: string) => {
     setSelectedUsers(prev =>
@@ -70,7 +74,6 @@ export function InviteDialog({ amendmentId, existingCollaborators, roles, onInvi
 
       // Reset state
       setSelectedUsers([]);
-      setInviteSearchQuery('');
       setInviteDialogOpen(false);
     } catch (error) {
       console.error('Failed to invite collaborators:', error);
@@ -97,58 +100,22 @@ export function InviteDialog({ amendmentId, existingCollaborators, roles, onInvi
         </DialogHeader>
 
         <div className="py-4">
-          {/* Search and selection UI */}
-          <Command className="rounded-lg border">
-            <CommandInput
+          {isLoading ? (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <TypeaheadSearch
+              items={typeaheadItems}
+              onChange={(item) => {
+                if (item) {
+                  toggleUserSelection(item.id);
+                }
+              }}
               placeholder="Search by name, handle, or email..."
-              value={inviteSearchQuery}
-              onValueChange={setInviteSearchQuery}
+              disablePortal
             />
-            <CommandList>
-              {isLoading ? (
-                <div className="flex items-center justify-center py-6">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : (
-                <>
-                  <CommandEmpty>No users found.</CommandEmpty>
-                  <CommandGroup>
-                    {users?.map(user => {
-                      const isSelected = selectedUsers.includes(user.id);
-                      return (
-                        <CommandItem
-                          key={user.id}
-                          value={`${user.name} ${user.handle} ${user.contactEmail}`}
-                          onSelect={() => toggleUserSelection(user.id)}
-                          className="cursor-pointer"
-                        >
-                          <div className="flex flex-1 items-center gap-3">
-                            <Avatar className="h-8 w-8">
-                              {user.avatar ? (
-                                <AvatarImage src={user.avatar} alt={user.name || ''} />
-                              ) : null}
-                              <AvatarFallback>
-                                {user.name?.[0]?.toUpperCase() || '?'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1">
-                              <div className="font-medium">{user.name || 'Unnamed User'}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {user.handle ? `@${user.handle}` : user.contactEmail}
-                              </div>
-                            </div>
-                          </div>
-                          {isSelected && (
-                            <Check className="ml-2 h-4 w-4 text-primary" strokeWidth={3} />
-                          )}
-                        </CommandItem>
-                      );
-                    })}
-                  </CommandGroup>
-                </>
-              )}
-            </CommandList>
-          </Command>
+          )}
 
           {/* Selected users display */}
           {selectedUsers.length > 0 && (

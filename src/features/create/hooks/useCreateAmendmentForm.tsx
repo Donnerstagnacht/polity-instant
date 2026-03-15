@@ -22,7 +22,7 @@ interface CreateTargetGroupData {
 
 interface CreateTargetEventData {
   title?: string | null;
-  is_public?: boolean;
+  is_public?: boolean | null;
   start_date?: number | null;
   location_name?: string | null;
   description?: string | null;
@@ -62,6 +62,9 @@ export function useCreateAmendmentForm(): CreateFormConfig {
     if (!title.trim()) return;
     setIsSubmitting(true);
     try {
+      const normalizedGroupId = targetSelection?.groupId ? targetSelection.groupId : null;
+      const normalizedEventId = targetSelection?.eventId ? targetSelection.eventId : null;
+
       await createAmendment({
         id: amendmentId,
         title: title.trim(),
@@ -71,8 +74,8 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         reason: null,
         category: null,
         preamble: null,
-        group_id: targetSelection?.groupId ?? null,
-        event_id: targetSelection?.eventId ?? null,
+        group_id: normalizedGroupId,
+        event_id: normalizedEventId,
         clone_source_id: null,
         tags: hashtags.length > 0 ? hashtags : null,
         visibility,

@@ -37,6 +37,8 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { notifyAmendmentTargetSet } from '@/features/notifications/utils/notification-helpers.ts';
 import type { NetworkGroupEntity } from '@/features/network/types/network.types';
 import type { EventByGroupRow } from '@/zero/events/useEventState';
+import { getGroupDisplayLabel, renderRightsEdgeLabel } from '@/features/network/ui/networkVisualHelpers';
+import { NetworkControlPanel } from '@/features/network/ui/NetworkControlPanel';
 
 interface PendingTargetGroupData {
   id: string;
@@ -87,6 +89,8 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
   } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'path' | 'network'>('network');
+  const [pathPanelCollapsed, setPathPanelCollapsed] = useState(false);
+  const [pathLegendCollapsed, setPathLegendCollapsed] = useState(false);
   const [eventChangeDialog, setEventChangeDialog] = useState<{
     open: boolean;
     groupId: string;
@@ -138,6 +142,13 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
     groupMemberships: allGroupMemberships ?? [],
     events: allEvents ?? [],
   };
+
+  const groupTypeById = new Map(
+    (networkData.groups as Array<{ id: string; group_type?: string | null }>).map((group) => [
+      group.id,
+      group.group_type ?? null,
+    ])
+  );
 
   // Use the same events query for both dialogs
   const groupEventsData = { events: groupEventsResult ?? [] };
@@ -637,7 +648,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
               <div>
                 {/* Group Name */}
                 <div style={{ fontWeight: '600', marginBottom: '8px', fontSize: '13px' }}>
-                  {segment.groupName}
+                  {getGroupDisplayLabel(segment.groupName, groupTypeById.get(segment.groupId ?? '') ?? null)}
                 </div>
 
                 {/* Event Information */}
@@ -786,7 +797,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
         target: `path-node-${index + 1}`,
         type: 'smoothstep',
         animated: true,
-        label: 'amendmentRight',
+        label: renderRightsEdgeLabel(['amendmentRight']),
         style: { stroke: '#66bb6a', strokeWidth: 2 },
         labelStyle: {
           fill: '#2e7d32',
@@ -1109,7 +1120,41 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                     <NetworkFlowBase
                       nodes={pathViz.nodes}
                       edges={pathViz.edges}
-                      panel={<div />}
+                      panel={
+                        <NetworkControlPanel
+                          title={t('features.amendments.process.pathVisualization', 'Path Visualization')}
+                          description={t('features.amendments.process.pathNetworkDescription', 'Amendment forwarding path through connected groups and agenda events.')}
+                          panelCollapsed={pathPanelCollapsed}
+                          onPanelCollapsedChange={setPathPanelCollapsed}
+                          legendCollapsed={pathLegendCollapsed}
+                          onLegendCollapsedChange={setPathLegendCollapsed}
+                          legendTitle={t('common.network.legend')}
+                          legendItems={[
+                            {
+                              id: 'path-user',
+                              label: t('common.network.user', 'User'),
+                              swatchClassName: 'h-4 w-4 rounded-full border-2 border-[#2196f3] bg-[#e3f2fd]',
+                            },
+                            {
+                              id: 'path-current-group',
+                              label: t('features.amendments.process.currentTargetGroup', 'Current Target Group'),
+                              swatchClassName: 'h-4 w-4 rounded border border-[#66bb6a] bg-[#c8e6c9]',
+                            },
+                            {
+                              id: 'path-forwarded-group',
+                              label: t('features.amendments.process.forwardedGroups', 'Forwarded Groups'),
+                              swatchClassName: 'h-4 w-4 rounded border border-[#ffa726] bg-[#ffecb3]',
+                            },
+                          ]}
+                          showGroupTypeLegend
+                          baseGroupLabel={t('common.network.baseGroup', '◉ Base group')}
+                          hierarchicalGroupLabel={t('common.network.hierarchicalGroup', '🏛 Hierarchical group')}
+                          showDisplayControls={false}
+                          showInteractiveToggle={false}
+                          isInteractive={true}
+                          onInteractiveChange={() => {}}
+                        />
+                      }
                       onNodeClick={handlePathNodeClick}
                     />
                   );

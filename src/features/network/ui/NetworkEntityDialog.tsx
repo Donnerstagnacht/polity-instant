@@ -1,5 +1,7 @@
 'use client';
 
+import type { ReactNode } from 'react';
+
 import {
   Dialog,
   DialogContent,
@@ -17,6 +19,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { SearchResultItem } from '@/features/search/types/search.types';
 import type { EventByGroupRow } from '@/zero/events/useEventState';
+import type { NetworkGroupEntity } from '../types/network.types';
 
 interface NetworkEventData {
   id?: string;
@@ -36,18 +39,20 @@ interface NetworkUserData {
 
 interface NetworkRelationshipData {
   id?: string;
+  source?: string;
+  target?: string;
   rights?: string[];
-  label?: string | null;
+  label?: string | null | ReactNode;
 }
 
-interface NetworkGroupData {
+interface NetworkGroupData extends Partial<NetworkGroupEntity> {
   id: string;
   name?: string | null;
   description?: string | null;
   onEventSelect?: (eventId: string, eventData: EventByGroupRow) => void;
 }
 
-type NetworkDialogEntity =
+export type NetworkDialogEntity =
   | { type: 'group'; data: NetworkGroupData }
   | { type: 'event'; data: NetworkEventData }
   | { type: 'user'; data: NetworkUserData }

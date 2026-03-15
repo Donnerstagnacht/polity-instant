@@ -6,14 +6,14 @@ import { useNodesState, useEdgesState, type Node, type Edge } from '@xyflow/reac
 import { useEventWithGroup, useGroupRelationships } from '@/zero/events/useEventState';
 import { NetworkFlowBase } from '@/features/network/ui/NetworkFlowBase';
 import { type NetworkGroupEntity } from '../types/network.types';
-import { NetworkEntityDialog } from '@/features/network/ui/NetworkEntityDialog';
-import { RIGHT_TYPES, formatRights } from '@/features/network/ui/RightFilters';
-import { Switch } from '@/features/shared/ui/ui/switch';
-import { Label } from '@/features/shared/ui/ui/label';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { NetworkEntityDialog, type NetworkDialogEntity } from '@/features/network/ui/NetworkEntityDialog';
+import { NetworkControlPanel } from '@/features/network/ui/NetworkControlPanel';
+import { RIGHT_TYPES } from '@/features/network/ui/RightFilters';
+import { getGroupDisplayLabel, renderRightsEdgeLabel } from '@/features/network/ui/networkVisualHelpers';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { usePermissions } from '@/zero/rbac';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface EventNode extends Node {
   data: {
@@ -38,6 +38,7 @@ interface RelationshipEntry {
 }
 
 export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [showIndirect, setShowIndirect] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState<EventNode>([]);
@@ -48,10 +49,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [legendCollapsed, setLegendCollapsed] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedEntity, setSelectedEntity] = useState<{
-    type: 'event' | 'group' | 'relationship';
-    data: Record<string, unknown>;
-  } | null>(null);
+  const [selectedEntity, setSelectedEntity] = useState<NetworkDialogEntity | null>(null);
 
   // Fetch the specific event with its group
   const { event } = useEventWithGroup(eventId);
@@ -313,7 +311,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
       type: 'default',
       position: { x: 400, y: 450 },
       data: {
-        label: group.name ?? '',
+          label: getGroupDisplayLabel(group.name, group.group_type),
         description: group.description ?? '',
         level: 1,
         type: 'group',
@@ -360,7 +358,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
         type: 'default',
         position: { x: 400 + xOffset, y: 450 + yOffset },
         data: {
-          label: parent.group.name ?? '',
+          label: getGroupDisplayLabel(parent.group.name, parent.group.group_type),
           description: parent.group.description ?? undefined,
           level: level + 1,
           type: 'group',
@@ -378,14 +376,13 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
         },
       });
 
-      const rightsText = formatRights(parent.rights);
       newEdges.push({
         id: `${parent.group.id}-${parent.childId || group.id}`,
         source: parent.group.id,
         target: parent.childId || group.id,
         type: 'smoothstep',
         animated: true,
-        label: rightsText,
+        label: renderRightsEdgeLabel(parent.rights),
         data: { rights: parent.rights },
         style: { stroke: '#fbc02d', strokeWidth: 2 },
         labelStyle: { fontSize: '9px', fontWeight: 'bold' },
@@ -408,7 +405,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
         type: 'default',
         position: { x: 400 + xOffset, y: 450 + yOffset },
         data: {
-          label: child.group.name ?? '',
+          label: getGroupDisplayLabel(child.group.name, child.group.group_type),
           description: child.group.description ?? undefined,
           level: level + 1,
           type: 'group',
@@ -426,14 +423,13 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
         },
       });
 
-      const rightsText = formatRights(child.rights);
       newEdges.push({
         id: `${child.parentId || group.id}-${child.group.id}`,
         source: child.parentId || group.id,
         target: child.group.id,
         type: 'smoothstep',
         animated: true,
-        label: rightsText,
+        label: renderRightsEdgeLabel(child.rights),
         data: { rights: child.rights },
         style: { stroke: '#4caf50', strokeWidth: 2 },
         labelStyle: { fontSize: '9px', fontWeight: 'bold' },
@@ -469,7 +465,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
 
         return {
           ...edge,
-          label: formatRights(visibleRights),
+          label: renderRightsEdgeLabel(visibleRights),
           data: { ...edge.data, rights: visibleRights },
         };
       })
@@ -505,16 +501,18 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
     (_event: React.MouseEvent, node: Node) => {
       if (!isInteractive) return;
 
-      if (node.data.type === 'event') {
+      const nodeData = node.data as EventNode['data'];
+
+      if (nodeData.type === 'event') {
         setSelectedEntity({
           type: 'event',
           data: { id: eventId, title: event?.title ?? '', description: event?.description ?? '' },
         });
         setDialogOpen(true);
-      } else if (node.data.type === 'group' && node.data.groupData) {
+      } else if (nodeData.type === 'group' && nodeData.groupData) {
         setSelectedEntity({
           type: 'group',
-          data: node.data.groupData as Record<string, unknown>,
+          data: nodeData.groupData,
         });
         setDialogOpen(true);
       }
@@ -532,8 +530,8 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
         data: {
           source: edge.source,
           target: edge.target,
-          rights: edge.data?.rights || [],
-          label: edge.label,
+          rights: Array.isArray(edge.data?.rights) ? (edge.data.rights as string[]) : [],
+          label: typeof edge.label === 'string' ? edge.label : null,
         },
       });
       setDialogOpen(true);
@@ -559,12 +557,24 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
 
   if (!group) {
     return (
-      <div className="flex h-[600px] items-center justify-center">
+      <div className="flex h-[600px] items-center justify-center px-4">
         <div className="text-center">
           <p className="text-muted-foreground">This event is not associated with a group</p>
           <p className="mt-2 text-sm text-muted-foreground">
-            Network visualization is only available for events that belong to a group
+            Network visualization is only available for events that belong to a group.
+            Associate this event with a group in the settings page to enable the network view.
           </p>
+          <div className="mt-4 flex justify-center gap-3">
+            {canManageEvent ? (
+              <Button onClick={() => navigate({ to: `/event/${eventId}/settings` })}>
+                Zur Event-Einstellungen
+              </Button>
+            ) : (
+              <Button variant="outline" onClick={() => navigate({ to: `/event/${eventId}` })}>
+                Zurück zur Veranstaltung
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -590,84 +600,58 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
       onEdgeClick={onEdgeClick}
       onInteractiveChange={handleInteractiveChange}
       panel={
-        <div className="absolute right-4 top-4 z-10 w-72 rounded-lg border bg-white shadow-lg">
-          {/* Header */}
-          <div
-            className="flex cursor-pointer items-center justify-between border-b p-4"
-            onClick={() => setPanelCollapsed(!panelCollapsed)}
-          >
-            <h3 className="font-semibold">Network Controls</h3>
-            {panelCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
-          </div>
-
-          {/* Content */}
-          {!panelCollapsed && (
-            <div className="space-y-4 p-4">
-              {/* Show Indirect Toggle */}
-              <div className="flex items-center justify-between">
-                <Label htmlFor="show-indirect">Show Indirect</Label>
-                <Switch
-                  id="show-indirect"
-                  checked={showIndirect}
-                  onCheckedChange={setShowIndirect}
-                />
-              </div>
-
-              {/* Rights Filter */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Filter by Rights:</Label>
-                {RIGHT_TYPES.map(right => (
-                  <div key={right} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id={`right-${right}`}
-                      checked={selectedRights.has(right)}
-                      onChange={() => toggleRight(right)}
-                      className="h-4 w-4"
-                    />
-                    <label htmlFor={`right-${right}`} className="text-sm">
-                      {formatRights([right])}
-                    </label>
-                  </div>
-                ))}
-              </div>
-
-              {/* Legend */}
-              <div className="space-y-2 border-t pt-4">
-                <div
-                  className="flex cursor-pointer items-center justify-between"
-                  onClick={() => setLegendCollapsed(!legendCollapsed)}
-                >
-                  <Label className="text-sm font-medium">Legend</Label>
-                  {legendCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
-                </div>
-                {!legendCollapsed && (
-                  <div className="space-y-2 text-xs">
-                    <div className="flex items-center gap-2">
-                      <div className="h-3 w-3 rounded border-2 border-[#66bb6a] bg-[#e8f5e9]"></div>
-                      <span>Event (Center)</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-3 w-3 rounded border border-[#90caf9] bg-[#bbdefb]"></div>
-                      <span>Event's Group</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-3 w-3 rounded border border-[#fbc02d] bg-[#fff9c4]"></div>
-                      <span>Parent Groups</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-3 w-3 rounded border border-[#4caf50] bg-[#c8e6c9]"></div>
-                      <span>Child Groups</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+        <NetworkControlPanel
+          title={t('common.network.eventNetwork', 'Event Network')}
+          description={t('common.network.eventNetworkDescription', {
+            eventName: event.title ?? '',
+            groupName: group.name ?? '',
+          })}
+          panelCollapsed={panelCollapsed}
+          onPanelCollapsedChange={setPanelCollapsed}
+          legendCollapsed={legendCollapsed}
+          onLegendCollapsedChange={setLegendCollapsed}
+          legendTitle={t('common.network.legend')}
+          legendItems={[
+            {
+              id: 'event-center',
+              label: t('common.network.eventCenter', 'Event (Center)'),
+              swatchClassName: 'h-4 w-4 rounded border-2 border-[#66bb6a] bg-[#e8f5e9]',
+            },
+            {
+              id: 'event-group',
+              label: t('common.network.eventGroup', "Event's Group"),
+              swatchClassName: 'h-4 w-4 rounded border border-[#90caf9] bg-[#bbdefb]',
+            },
+            {
+              id: 'parent-groups',
+              label: t('common.network.parentGroups'),
+              swatchClassName: 'h-4 w-4 rounded border border-[#fbc02d] bg-[#fff9c4]',
+            },
+            {
+              id: 'child-groups',
+              label: t('common.network.childGroups'),
+              swatchClassName: 'h-4 w-4 rounded border border-[#4caf50] bg-[#c8e6c9]',
+            },
+          ]}
+          showGroupTypeLegend
+          baseGroupLabel={t('common.network.baseGroup', '◉ Base group')}
+          hierarchicalGroupLabel={t('common.network.hierarchicalGroup', '🏛 Hierarchical group')}
+          showDisplayControls
+          showIndirect={showIndirect}
+          onShowIndirectChange={setShowIndirect}
+          isInteractive={isInteractive}
+          onInteractiveChange={setIsInteractive}
+          directLabel={t('common.network.direct')}
+          indirectLabel={t('common.network.indirect')}
+          lockLabel={t('common.network.lockEditor')}
+          unlockLabel={t('common.network.unlockEditor')}
+          showRightsFilter
+          selectedRights={selectedRights}
+          onToggleRight={toggleRight}
+        />
       }
     >
-      <NetworkEntityDialog open={dialogOpen} onOpenChange={setDialogOpen} entity={selectedEntity as React.ComponentProps<typeof NetworkEntityDialog>['entity']} />
+      <NetworkEntityDialog open={dialogOpen} onOpenChange={setDialogOpen} entity={selectedEntity} />
     </NetworkFlowBase>
   );
 }

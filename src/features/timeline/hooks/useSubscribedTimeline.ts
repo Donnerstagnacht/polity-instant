@@ -95,6 +95,12 @@ export interface UseSubscribedTimelineResult {
   subscribedGroupIds: string[];
 }
 
+interface AgendaItemPreview {
+  event_id?: string | null;
+  election?: { id?: string } | null;
+  amendmentVote?: { id?: string } | null;
+}
+
 /**
  * Fetch timeline content from subscribed groups and events
  */
@@ -119,10 +125,10 @@ export function useSubscribedTimeline(
   }, [participationData]);
 
   // Agenda items are already retrieved via related queries on event participation data
-  const { data: agendaItemsData } = { data: { agendaItems: [] as Array<{ event_id?: string | null; election?: unknown; amendmentVote?: unknown }> } };
+  const { data: agendaItemsData } = { data: { agendaItems: [] as AgendaItemPreview[] } };
 
   const agendaItemsByEventId = useMemo(() => {
-    const map = new Map<string, Array<{ election?: unknown; amendmentVote?: unknown }>>();
+    const map = new Map<string, Array<Pick<AgendaItemPreview, 'election' | 'amendmentVote'>>>();
     for (const item of agendaItemsData?.agendaItems ?? []) {
       const eventId = item.event_id;
       if (!eventId) continue;

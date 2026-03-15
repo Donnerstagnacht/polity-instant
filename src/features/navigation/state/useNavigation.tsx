@@ -9,7 +9,7 @@ import { useAuth } from '@/providers/auth-provider.tsx';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState.ts';
 import type { NavigationItem } from '@/features/navigation/types/navigation.types.tsx';
 import { usePermissions } from '@/zero/rbac/usePermissions.ts';
-import type { Amendment } from '@/zero/rbac/types.ts';
+import type { Amendment, ActionRight } from '@/zero/rbac/types.ts';
 import { useEntityUnreadCount } from '@/zero/notifications/useEntityUnreadCount.ts';
 
 /**
@@ -93,21 +93,41 @@ export function useNavigation() {
   const amendment = useMemo(() => {
     if (!amendmentData) return undefined;
 
-    const roles = amendmentRoles ?? [];
-    const collaborators = amendmentCollaborators ?? [];
+    const rawRoles = amendmentRoles ?? [];
+    const rawCollaborators = amendmentCollaborators ?? [];
+
+    // Map Zero query rows (snake_case, flat IDs) → RBAC types (camelCase, nested objects)
+    const mappedRoles = rawRoles.map(role => ({
+      id: role.id,
+      name: role.name ?? '',
+      description: role.description ?? undefined,
+      scope: (role.scope ?? 'amendment') as 'group' | 'event' | 'amendment' | 'blog',
+      actionRights: (role.action_rights ?? []).map(ar => ({
+        id: String(ar.id),
+        resource: String(ar.resource ?? '') as ActionRight['resource'],
+        action: String(ar.action ?? '') as ActionRight['action'],
+        group: ar.group_id ? { id: String(ar.group_id) } : undefined,
+        event: ar.event_id ? { id: String(ar.event_id) } : undefined,
+        amendment: ar.amendment_id ? { id: String(ar.amendment_id) } : undefined,
+        blog: ar.blog_id ? { id: String(ar.blog_id) } : undefined,
+      })),
+    }));
 
     return {
       id: amendmentData.id,
       user: amendmentData.created_by ? { id: amendmentData.created_by.id } : undefined,
       group: amendmentData.group ? { id: amendmentData.group.id } : undefined,
       status: amendmentData.status ?? undefined,
-      roles,
-      amendmentRoleCollaborators: collaborators.map(collaborator => ({
-        ...collaborator,
-        role: roles.find(role => role.id === collaborator.role_id),
+      roles: mappedRoles,
+      amendmentRoleCollaborators: rawCollaborators.map(collaborator => ({
+        id: collaborator.id,
+        user: collaborator.user ? { id: collaborator.user.id } : undefined,
+        role: mappedRoles.find(role => role.id === collaborator.role_id),
       })),
     } as Amendment;
   }, [amendmentData, amendmentCollaborators, amendmentRoles]);
+
+  const permissionGroupId = groupId ?? amendmentData?.group?.id;
   
   // Let's use the permission hook
   const { 
@@ -120,7 +140,7 @@ export function useNavigation() {
     isAuthor: isAmendmentAuthor,
     isMember
   } = usePermissions({
-    groupId,
+    groupId: permissionGroupId,
     eventId,
     blogId,
     amendmentId,
@@ -147,8 +167,13 @@ export function useNavigation() {
     // Check if user can manage group memberships (for Members nav item)
     const canManageMembers = canManage('groupMemberships');
 
-    // Check if user can view entity notifications
-    const canViewNotifications = can('viewNotifications', 'groupNotifications');
+    // Notification rights are scoped differently by entity type.
+    const canViewNotifications =
+      currentPrimaryRoute === 'group'
+        ? can('viewNotifications', 'groupNotifications')
+        : currentPrimaryRoute === 'event' || currentPrimaryRoute === 'amendment'
+          ? can('viewNotifications', 'notifications')
+          : false;
 
     const baseSecondaryItems = baseGetSecondaryNavItems(
       currentPrimaryRoute,

@@ -129,25 +129,45 @@ export const DEFAULT_BLOG_ROLES = [
 ];
 
 /**
+ * Available action rights for amendment-scoped roles.
+ * This is the single source of truth for amendment collaborator permissions.
+ */
+export const AMENDMENT_ACTION_RIGHTS = [
+  { resource: 'amendments' as ResourceType, action: 'manage' as ActionType, label: 'Manage Amendment' },
+  { resource: 'amendments' as ResourceType, action: 'view' as ActionType, label: 'View Amendment' },
+  { resource: 'amendments' as ResourceType, action: 'create' as ActionType, label: 'Create Amendment' },
+  { resource: 'amendments' as ResourceType, action: 'update' as ActionType, label: 'Update Amendment' },
+  { resource: 'amendments' as ResourceType, action: 'delete' as ActionType, label: 'Delete Amendment' },
+  { resource: 'amendments' as ResourceType, action: 'vote' as ActionType, label: 'Vote on Amendment' },
+  { resource: 'amendments' as ResourceType, action: 'moderate' as ActionType, label: 'Moderate Amendment' },
+  { resource: 'documents' as ResourceType, action: 'view' as ActionType, label: 'View Document' },
+  { resource: 'documents' as ResourceType, action: 'update' as ActionType, label: 'Edit Document' },
+  { resource: 'threads' as ResourceType, action: 'create' as ActionType, label: 'Create Threads' },
+  { resource: 'threads' as ResourceType, action: 'update' as ActionType, label: 'Update Threads' },
+  { resource: 'threads' as ResourceType, action: 'delete' as ActionType, label: 'Delete Threads' },
+  { resource: 'comments' as ResourceType, action: 'create' as ActionType, label: 'Create Comments' },
+  { resource: 'comments' as ResourceType, action: 'update' as ActionType, label: 'Update Comments' },
+  { resource: 'comments' as ResourceType, action: 'delete' as ActionType, label: 'Delete Comments' },
+  {
+    resource: 'notifications' as ResourceType,
+    action: 'manageNotifications' as ActionType,
+    label: 'Manage Notifications',
+  },
+  {
+    resource: 'notifications' as ResourceType,
+    action: 'viewNotifications' as ActionType,
+    label: 'View Notifications',
+  },
+] as const;
+
+/**
  * Default role templates for amendments.
  */
 export const DEFAULT_AMENDMENT_ROLES = [
   {
     name: 'Author',
     description: 'Full amendment control',
-    permissions: [
-      { resource: 'amendments' as ResourceType, action: 'manage' as ActionType },
-      { resource: 'amendments' as ResourceType, action: 'view' as ActionType },
-      { resource: 'amendments' as ResourceType, action: 'create' as ActionType },
-      { resource: 'amendments' as ResourceType, action: 'update' as ActionType },
-      { resource: 'amendments' as ResourceType, action: 'delete' as ActionType },
-      { resource: 'amendments' as ResourceType, action: 'vote' as ActionType },
-      { resource: 'amendments' as ResourceType, action: 'moderate' as ActionType },
-      {
-        resource: 'groupNotifications' as ResourceType,
-        action: 'viewNotifications' as ActionType,
-      },
-    ],
+    permissions: AMENDMENT_ACTION_RIGHTS.map(({ resource, action }) => ({ resource, action })),
   },
   {
     name: 'Collaborator',
