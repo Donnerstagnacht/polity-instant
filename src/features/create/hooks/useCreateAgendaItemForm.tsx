@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
@@ -21,6 +21,8 @@ import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { notifyAgendaItemCreated } from '@/features/notifications/utils/notification-helpers.ts';
 import type { CreateFormConfig } from '../types/create-form.types';
 
+type AgendaItemType = 'election' | 'vote' | 'speech' | 'discussion';
+
 export function useCreateAgendaItemForm(): CreateFormConfig {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -29,6 +31,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
   const { createAgendaItem, createElection } = useAgendaActions();
 
   const eventIdParam = (searchParams as { eventId?: string }).eventId;
+  const typeParam = (searchParams as { type?: AgendaItemType }).type;
 
   const { events: userEvents } = useAllEvents();
   const { amendments: userAmendments } = useAllAmendments();
@@ -36,13 +39,25 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [type, setType] = useState<'election' | 'vote' | 'speech' | 'discussion'>('discussion');
+  const [type, setType] = useState<AgendaItemType>(typeParam || 'discussion');
   const [order, setOrder] = useState(1);
   const [duration, setDuration] = useState('');
   const [eventId, setEventId] = useState(eventIdParam || '');
   const [amendmentId, setAmendmentId] = useState('');
   const [positionId, setPositionId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (eventIdParam && eventIdParam !== eventId) {
+      setEventId(eventIdParam);
+    }
+  }, [eventIdParam, eventId]);
+
+  useEffect(() => {
+    if (typeParam && typeParam !== type) {
+      setType(typeParam);
+    }
+  }, [typeParam, type]);
 
   const selectedEvent = userEvents.find(e => e.id === eventId);
 
