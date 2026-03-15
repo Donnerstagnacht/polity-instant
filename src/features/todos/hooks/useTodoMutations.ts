@@ -41,9 +41,9 @@ export function useTodoMutations() {
         completed_at: 0,
         tags: [],
         visibility: todoData.visibility || 'private',
-        group_id: todoData.groupId ?? '',
-        event_id: todoData.eventId ?? '',
-        amendment_id: todoData.amendmentId ?? '',
+        group_id: todoData.groupId ?? null,
+        event_id: todoData.eventId ?? null,
+        amendment_id: todoData.amendmentId ?? null,
       });
 
       if (todoData.assigneeId) {
