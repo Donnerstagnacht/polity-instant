@@ -1,24 +1,22 @@
 import { useState, useMemo } from 'react';
+import type { GroupMembershipsByUserRow } from '@/zero/groups/queries';
+import type { EventParticipantsByUserRow } from '@/zero/events/queries';
+import type { AmendmentCollaboratorsByUserRow } from '@/zero/amendments/queries';
+import type { BloggersByUserRow } from '@/zero/blogs/queries';
 
-/** Shared shape for items passed through the membership filter hook */
-export interface FilterableRecord {
-  id: string;
-  status?: string | null;
-  group?: { id?: string; name?: string | null; description?: string | null };
-  event?: { id?: string; title?: string | null };
-  amendment?: { id?: string; title?: string | null; visibility?: string | null };
-  blog?: { id?: string; title?: string | null };
-  role?: { name?: string | null };
-  createdAt?: string;
-  [key: string]: unknown;
-}
+/** Union of all membership-like zero row types */
+export type FilterableRecord =
+  | GroupMembershipsByUserRow
+  | EventParticipantsByUserRow
+  | AmendmentCollaboratorsByUserRow
+  | BloggersByUserRow;
 
 // Co-located types
 export interface UseUserMembershipsFiltersOptions {
-  memberships: readonly FilterableRecord[];
-  participations: readonly FilterableRecord[];
-  collaborations: readonly FilterableRecord[];
-  blogRelations: readonly FilterableRecord[];
+  memberships: readonly GroupMembershipsByUserRow[];
+  participations: readonly EventParticipantsByUserRow[];
+  collaborations: readonly AmendmentCollaboratorsByUserRow[];
+  blogRelations: readonly BloggersByUserRow[];
 }
 
 export interface MembershipsByStatus {
@@ -32,10 +30,10 @@ export interface UseUserMembershipsFiltersReturn {
   setSearchQuery: (query: string) => void;
   
   // Filtered results
-  filteredMemberships: readonly FilterableRecord[];
-  filteredParticipations: readonly FilterableRecord[];
-  filteredCollaborations: readonly FilterableRecord[];
-  filteredBlogRelations: readonly FilterableRecord[];
+  filteredMemberships: readonly GroupMembershipsByUserRow[];
+  filteredParticipations: readonly EventParticipantsByUserRow[];
+  filteredCollaborations: readonly AmendmentCollaboratorsByUserRow[];
+  filteredBlogRelations: readonly BloggersByUserRow[];
   
   // Separated by status
   membershipsByStatus: MembershipsByStatus;
@@ -137,7 +135,7 @@ export function useUserMembershipsFilters({
     () => ({
       invited: filteredCollaborations.filter((c) => c.status === 'invited'),
       active: filteredCollaborations.filter(
-        (c) => c.status === 'member' || c.status === 'admin' || c.role?.name === 'Author'
+        (c) => c.status === 'member' || c.status === 'admin'
       ),
       requested: filteredCollaborations.filter((c) => c.status === 'requested'),
     }),

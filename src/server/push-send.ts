@@ -1,29 +1,13 @@
 import { createServerFn } from '@tanstack/react-start'
 import { createClient } from '@supabase/supabase-js'
 import webpush from 'web-push'
+import { z } from 'zod'
 
 function getSupabase() {
   return createClient(
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   )
-}
-
-interface NotificationPayload {
-  title: string
-  message: string
-  actionUrl?: string
-  notificationId?: string
-  type?: string
-  icon?: string
-  badge?: string
-  tag?: string
-  requireInteraction?: boolean
-  actions?: {
-    action: string
-    title: string
-    icon?: string
-  }[]
 }
 
 function initVapid() {
@@ -37,14 +21,28 @@ function initVapid() {
   )
 }
 
+const pushSendSchema = z.object({
+  userId: z.string(),
+  notification: z.object({
+    title: z.string(),
+    message: z.string(),
+    actionUrl: z.string().optional(),
+    notificationId: z.string().optional(),
+    type: z.string().optional(),
+    icon: z.string().optional(),
+    badge: z.string().optional(),
+    tag: z.string().optional(),
+    requireInteraction: z.boolean().optional(),
+    actions: z.array(z.object({
+      action: z.string(),
+      title: z.string(),
+      icon: z.string().optional(),
+    })).optional(),
+  }),
+})
+
 export const pushSendFn = createServerFn({ method: 'POST' })
-  .validator(
-    (data: unknown) =>
-      data as {
-        userId: string
-        notification: NotificationPayload
-      },
-  )
+  .validator(pushSendSchema.parse)
   .handler(async ({ data }) => {
     try {
       const { userId, notification } = data

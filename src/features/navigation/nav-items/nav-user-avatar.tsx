@@ -43,7 +43,7 @@ function NavUserAvatarInner({
     return null;
   }
 
-  const displayName = user?.name || authUser.email?.split('@')[0] || 'User';
+  const displayName = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || authUser.email?.split('@')[0] || 'User';
   const displayAvatar = user?.avatar;
 
   const userInitials = displayName

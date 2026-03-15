@@ -23,7 +23,7 @@ import type {
 // Types
 // ============================================================================
 
-/** All permission data needed to evaluate any permission check. */
+/** All permission data needed to evaluate permission checks. */
 export interface PermissionData {
   userId: string
   memberships?: Membership[]

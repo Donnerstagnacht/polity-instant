@@ -1,8 +1,20 @@
 import { create } from 'zustand';
-import type { UserGroup } from '@/features/users/types/user.types.ts';
+
+/** Local mock group type for the zustand store — not derived from zero */
+interface MockGroup {
+  id: number;
+  name: string;
+  members: number;
+  role: string;
+  description?: string;
+  tags?: string[];
+  amendments?: number;
+  events?: number;
+  abbr?: string;
+}
 
 // Mock data for groups - in a real app this would come from an API
-const MOCK_GROUPS: UserGroup[] = [
+const MOCK_GROUPS: MockGroup[] = [
   {
     id: 1,
     name: 'Constitutional Reform Network',
@@ -72,7 +84,7 @@ const MOCK_GROUPS: UserGroup[] = [
 ];
 
 interface GroupsState {
-  groups: UserGroup[];
+  groups: MockGroup[];
   loading: boolean;
   searchTerm: string;
   selectedTags: string[];
@@ -82,7 +94,7 @@ interface GroupsState {
   setSelectedTags: (tags: string[]) => void;
   toggleTag: (tag: string) => void;
   fetchGroups: () => Promise<void>;
-  getFilteredGroups: () => UserGroup[];
+  getFilteredGroups: () => MockGroup[];
   getAllTags: () => string[];
 }
 
@@ -118,13 +130,13 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
         searchTerm === '' ||
         group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         group.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        group.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+        group.tags?.some((tag: string) => tag.toLowerCase().includes(searchTerm.toLowerCase()));
 
       // Filter by selected tags
       const matchesTags =
         selectedTags.length === 0 ||
         selectedTags.every(selectedTag =>
-          group.tags?.some(groupTag => groupTag.toLowerCase().includes(selectedTag.toLowerCase()))
+          group.tags?.some((groupTag: string) => groupTag.toLowerCase().includes(selectedTag.toLowerCase()))
         );
 
       return matchesSearch && matchesTags;

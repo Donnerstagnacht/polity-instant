@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { Value } from 'platejs';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
-import { extractSuggestionContent } from '../utils/suggestion-extraction';
+import { extractSuggestionContent, type SuggestionProperties } from '../utils/suggestion-extraction';
 
 /** Shape of entries in the amendment's `discussions` JSON column */
 interface DiscussionEntry {
@@ -24,8 +24,8 @@ export interface ChangeRequest {
   type: string;
   text: string;
   newText: string;
-  properties: Record<string, unknown>;
-  newProperties: Record<string, unknown>;
+  properties: SuggestionProperties;
+  newProperties: SuggestionProperties;
   proposedChange: string;
   justification: string;
   isResolved: boolean;

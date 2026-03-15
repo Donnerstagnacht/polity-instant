@@ -11,7 +11,6 @@ interface PeerData {
   name: string;
   avatar?: string;
   color: string;
-  [key: string]: unknown;
 }
 
 interface PresenceMessage {
@@ -19,7 +18,7 @@ interface PresenceMessage {
   room: string;
   peer?: PeerData;
   peers?: PeerData[];
-  data?: Record<string, unknown>;
+  data?: Partial<PeerData>;
   topic?: string;
 }
 

@@ -282,3 +282,68 @@ src/features/<feature>/
 ├── XxxPage.tsx                 # Thin page shell
 └── XxxDetailPage.tsx           # Thin detail page shell
 ```
+
+---
+
+## Type Definitions
+
+### Single source of truth
+
+The **Zero data layer** (`src/zero/*/`) is the single source of truth for all types
+that describe data flowing into (mutations) or out of (queries) the database.
+
+| Kind               | Where to define                            | How to derive                                           |
+| ------------------ | ------------------------------------------ | ------------------------------------------------------- |
+| Query result shape | `src/zero/*/queries.ts`                    | `QueryRowType<typeof query>` → exported as `*Row`       |
+| Mutator input      | `src/zero/*/schema.ts`                     | `z.infer<typeof schema>` → exported as named type       |
+| Table flat row     | `src/zero/*/schema.ts`                     | `z.infer<typeof selectXxxSchema>`                       |
+
+Feature-layer files (`src/features/*/types/`) may define **UI-only** types such as
+view-mode enums, form step configs, display helpers, and component prop interfaces.
+They must **never** redefine the shape of a database entity. Instead, import and
+re-export (or intersect) the zero-derived type:
+
+```ts
+// ✅ Good — re-export from zero
+import type { TodoWithRelationsRow } from '@/zero/todos/queries';
+export type Todo = TodoWithRelationsRow;
+
+// ✅ Good — extend with UI-only fields
+import type { EventForCalendarRow } from '@/zero/events/queries';
+export type CalendarEvent = EventForCalendarRow & {
+  isRecurringInstance?: boolean;
+  recurringParentId?: string;
+};
+
+// ❌ Bad — hand-written interface duplicating zero's shape
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  start_date: number;
+  // ...
+}
+```
+
+### Naming rules
+
+Because Zero and Postgres use **snake_case**, all fields that originate from the
+database keep their snake_case names throughout the entire stack — including the
+feature and UI layers. Only variables and functions that are **not** database fields
+use camelCase.
+
+### Forbidden patterns
+
+- **`any` is forbidden.** Never use `any` as a type annotation, return type, or
+  generic argument. Use the correct specific type, or at minimum `unknown` with a
+  type guard.
+- **`unknown` should be avoided.** Acceptable uses:
+  - `catch (err: unknown)` — TypeScript best practice for error handling.
+  - Generic defaults (`T = unknown`) when the caller always provides a concrete type.
+  - `Record<string, unknown>` only when interfacing with a truly dynamic third-party
+    API that has no type definitions.
+
+  In all other cases, replace `unknown` with the actual type derived from zero,
+  a library, or an explicit interface.
+- **Index signatures `[key: string]: unknown`** must not be added to types that
+  represent database rows. If a type needs an index signature, it is not properly
+  typed — add the missing fields instead.

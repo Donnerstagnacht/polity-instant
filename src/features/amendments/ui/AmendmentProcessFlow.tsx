@@ -558,7 +558,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
 
   // Handle node click in path visualization
   const handlePathNodeClick = useCallback(
-    (_event: unknown, node: { data: { eventId?: string } }) => {
+    (_event: React.MouseEvent, node: { data: { eventId?: string } }) => {
       // Only handle clicks on the target node with an event
       if (typeof node.data.eventId === 'string') {
         navigate({ to: `/event/${node.data.eventId}` });

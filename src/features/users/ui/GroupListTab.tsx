@@ -4,30 +4,46 @@ import { Search } from 'lucide-react';
 import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
-import type { UserGroup } from '../types/user.types';
+import type { ProfileGroupMembership } from '../types/user.types';
 
 interface GroupsListTabProps {
-  groups: UserGroup[];
+  memberships: readonly ProfileGroupMembership[];
   searchValue: string;
   onSearchChange: (value: string) => void;
 }
 
 export const GroupsListTab: React.FC<GroupsListTabProps> = ({
-  groups,
+  memberships,
   searchValue,
   onSearchChange,
 }) => {
   const { t } = useTranslation();
+
+  const withGroup = useMemo(
+    () => memberships.filter((m) => m.group),
+    [memberships],
+  );
+
   const filteredGroups = useMemo(() => {
     const term = (searchValue ?? '').toLowerCase();
-    if (!term) return groups;
-    return groups.filter(
-      group =>
-        group.name.toLowerCase().includes(term) ||
-        group.role.toLowerCase().includes(term) ||
-        (group.description && group.description.toLowerCase().includes(term))
+    if (!term) return withGroup;
+    return withGroup.filter(
+      (m) =>
+        (m.group?.name ?? '').toLowerCase().includes(term) ||
+        (m.role?.name ?? '').toLowerCase().includes(term) ||
+        (m.group?.description ?? '').toLowerCase().includes(term)
     );
-  }, [groups, searchValue]);
+  }, [withGroup, searchValue]);
+
+  // Deduplicate by membership id
+  const unique = useMemo(() => {
+    const seen = new Set<string>();
+    return filteredGroups.filter((m) => {
+      if (seen.has(m.id)) return false;
+      seen.add(m.id);
+      return true;
+    });
+  }, [filteredGroups]);
 
   return (
     <>
@@ -40,23 +56,22 @@ export const GroupsListTab: React.FC<GroupsListTabProps> = ({
           onChange={e => onSearchChange(e.target.value)}
         />
       </div>
-      {filteredGroups.length === 0 ? (
+      {unique.length === 0 ? (
         <p className="py-8 text-center text-muted-foreground">{t('pages.user.groups.noResults')}</p>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredGroups.map(group => {
-            const groupId = group.groupId || group.id;
+          {unique.map(membership => {
+            const group = membership.group!;
             return (
               <GroupTimelineCard
-                key={group.id}
+                key={membership.id}
                 group={{
-                  id: String(groupId),
-                  name: group.name,
-                  description: group.description,
-                  memberCount: group.members,
-                  eventCount: group.events,
-                  amendmentCount: group.amendments,
-                  topics: group.tags,
+                  id: String(group.id),
+                  name: group.name ?? '',
+                  description: group.description ?? undefined,
+                  memberCount: group.member_count ?? 0,
+                  eventCount: group.event_count ?? group.events?.length,
+                  amendmentCount: group.amendment_count ?? group.amendments?.length,
                 }}
               />
             );

@@ -3,7 +3,7 @@
 /**
  * Unified Invite Collaborator Dialog
  *
- * Allows inviting collaborators/bloggers to any entity type.
+ * Allows inviting collaborators/bloggers to entity types.
  */
 
 import { useState } from 'react';

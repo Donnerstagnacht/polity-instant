@@ -71,7 +71,7 @@ export function useEventParticipation(eventId: string) {
       toast.error('This event is by invitation only');
       return;
     }
-    // For 'open', anyone can request participation
+    // For 'open', everyone can request participation
 
     setIsLoading(true);
     try {

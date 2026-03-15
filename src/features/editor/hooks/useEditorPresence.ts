@@ -6,7 +6,7 @@
  */
 
 import { useMemo } from 'react';
-import { usePresence } from '@/presence/usePresence';
+import { usePresence, type PeerData } from '@/presence/usePresence';
 import { generateUserColor } from '../logic/editor-helpers';
 import type { EditorPresencePeer } from '../types';
 
@@ -29,7 +29,7 @@ interface UseEditorPresenceResult {
   /** The current user's color */
   userColor: string;
   /** Function to publish presence updates */
-  publishPresence: ((data: Record<string, unknown>) => void) | null;
+  publishPresence: ((data: Partial<PeerData>) => void) | null;
 }
 
 /**
@@ -67,7 +67,7 @@ export function useEditorPresence(options: UseEditorPresenceOptions): UseEditorP
 
   const publishPresence = useMemo(() => {
     if (!enabled) return null;
-    return (data: Record<string, unknown>) => wsPublish(data);
+    return (data: Partial<PeerData>) => wsPublish(data);
   }, [enabled, wsPublish]);
 
   return {

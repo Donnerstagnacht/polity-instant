@@ -5,16 +5,20 @@ import { BlogListTab } from './BlogListTab';
 import { GroupsListTab } from './GroupListTab';
 import { AmendmentListTab } from './AmendmentListTab';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import type { User, TabSearchState } from '../types/user.types';
+import type { UserProfile, TabSearchState } from '../types/user.types';
 
 interface UserWikiContentTabsProps {
-  user: User;
+  user: UserProfile;
+  authorName: string;
+  authorAvatar: string;
   searchTerms: TabSearchState;
   handleSearchChange: (tab: keyof TabSearchState, value: string) => void;
 }
 
 export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
   user,
+  authorName,
+  authorAvatar,
   searchTerms,
   handleSearchChange,
 }) => {
@@ -31,7 +35,9 @@ export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
 
         <TabsContent value="blogs" className="mt-4">
           <BlogListTab
-            blogs={user.blogs}
+            bloggerRelations={user.blogger_relations ?? []}
+            authorName={authorName}
+            authorAvatar={authorAvatar}
             userId={user.id}
             searchValue={searchTerms.blogs}
             onSearchChange={(value: string) => handleSearchChange('blogs', value)}
@@ -40,7 +46,7 @@ export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
 
         <TabsContent value="groups" className="mt-4">
           <GroupsListTab
-            groups={user.groups}
+            memberships={user.group_memberships ?? []}
             searchValue={searchTerms.groups}
             onSearchChange={(value: string) => handleSearchChange('groups', value)}
           />
@@ -48,7 +54,7 @@ export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
 
         <TabsContent value="amendments" className="mt-4">
           <AmendmentListTab
-            amendments={user.amendments}
+            collaborations={user.amendment_collaborations ?? []}
             searchValue={searchTerms.amendments}
             onSearchChange={(value: string) => handleSearchChange('amendments', value)}
           />

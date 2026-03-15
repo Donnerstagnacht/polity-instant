@@ -37,7 +37,7 @@ function toTimelineEvent(event: CalendarEvent) {
     location: event.location,
     attendeeCount: event.attendeeCount,
     organizerName: event.organizerName,
-    groupId: event.group_id,
+    groupId: event.group_id ?? undefined,
     hashtags: event.hashtags,
   };
 }

@@ -1,5 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import Stripe from 'stripe'
+import { z } from 'zod'
 
 function getStripe() {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -10,8 +11,12 @@ function getStripe() {
   })
 }
 
+const stripeCancelSubscriptionSchema = z.object({
+  subscriptionId: z.string(),
+})
+
 export const stripeCancelSubscriptionFn = createServerFn({ method: 'POST' })
-  .validator((data: unknown) => data as { subscriptionId: string })
+  .validator(stripeCancelSubscriptionSchema.parse)
   .handler(async ({ data }) => {
     try {
       const stripe = getStripe()

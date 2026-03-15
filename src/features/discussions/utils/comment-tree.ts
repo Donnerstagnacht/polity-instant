@@ -2,37 +2,12 @@
  * Utility functions for building and managing comment trees
  */
 
+import type { AmendmentCommentRow } from '@/zero/amendments/queries';
+
 /**
- * A comment row from Zero's threads query, augmented with a `replies` tree.
- * Fields match the Zero schema: `content`, `user`, `parent`, `created_at`, etc.
+ * A comment row from Zero's threads query, augmented with a recursive `replies` tree.
  */
-export interface CommentWithReplies {
-  id: string;
-  thread_id: string;
-  user_id: string;
-  content: string | null;
-  created_at: number;
-  updated_at: number;
-  parent_id: string | null;
-  parent?: { id: string } | null;
-  upvotes: number;
-  downvotes: number;
-  user?: {
-    id: string;
-    first_name?: string | null;
-    last_name?: string | null;
-    handle?: string | null;
-    avatar?: string | null;
-  } | null;
-  votes?: ReadonlyArray<{
-    id: string;
-    vote: number | null;
-    user?: {
-      id: string;
-    } | null;
-  }>;
-  replies?: CommentWithReplies[];
-}
+export type CommentWithReplies = AmendmentCommentRow & { replies?: CommentWithReplies[] };
 
 /**
  * Build a tree structure from flat comments array

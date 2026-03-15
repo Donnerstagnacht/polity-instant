@@ -1,28 +1,19 @@
-import { useMemo } from 'react';
 import { useUserState } from '@/zero/users/useUserState';
-import type { User } from '../types/user.types';
-import { transformUserData } from '../logic/transformUserData';
+import type { UserProfile } from '../types/user.types';
 
 /**
- * Hook to fetch user data from Zero
- * @param userId - The ID of the user to fetch
- * @returns User data with loading and error states
+ * Hook to fetch user profile data from Zero.
+ * Returns the raw FullProfileRow directly — no transformation layer.
  */
 export function useUserData(userId?: string) {
   const { fullProfile, isLoading } = useUserState({ userId, includeFullProfile: true });
 
-  const data = fullProfile;
-  const error = null;
-
-  const user: User | null = useMemo(() => {
-    if (!userId) return null;
-    if (!data || data.length === 0) return null;
-    return transformUserData(data[0]);
-  }, [data, userId]);
+  const user: UserProfile | null =
+    userId && fullProfile.length > 0 ? fullProfile[0] : null;
 
   return {
     user,
-    userId: userId,
+    userId,
     isLoading,
     error: null,
   };

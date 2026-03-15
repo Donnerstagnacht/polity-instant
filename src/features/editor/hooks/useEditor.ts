@@ -258,7 +258,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       setContentState(newContent);
       setHasUnsavedChanges(true);
 
-      // Clear any pending trailing save
+      // Clear pending trailing save
       if (contentSaveTimeoutRef.current) {
         clearTimeout(contentSaveTimeoutRef.current);
       }

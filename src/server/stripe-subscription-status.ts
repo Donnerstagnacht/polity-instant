@@ -1,5 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import Stripe from 'stripe'
+import { z } from 'zod'
 
 /**
  * The clover API version removed `current_period_start` / `current_period_end`
@@ -20,8 +21,12 @@ function getStripe() {
   })
 }
 
+const stripeSubscriptionStatusSchema = z.object({
+  userId: z.string(),
+})
+
 export const stripeSubscriptionStatusFn = createServerFn({ method: 'POST' })
-  .validator((data: unknown) => data as { userId: string })
+  .validator(stripeSubscriptionStatusSchema.parse)
   .handler(async ({ data }) => {
     try {
       const stripe = getStripe()

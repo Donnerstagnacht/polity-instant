@@ -120,7 +120,7 @@ export const StateSwitcher: React.FC<{
             size="icon"
             className="h-8 w-8"
             onMouseEnter={() => {
-              // Clear any existing timeout
+              // Clear existing timeout
               if (hoverTimeout) {
                 clearTimeout(hoverTimeout);
               }
@@ -141,14 +141,14 @@ export const StateSwitcher: React.FC<{
           style={{ width: 'max-content', minWidth: 'fit-content' }}
           sideOffset={5}
           onMouseEnter={() => {
-            // Clear any existing timeout
+            // Clear existing timeout
             if (hoverTimeout) {
               clearTimeout(hoverTimeout);
             }
             setIsExpanded(true);
           }}
           onMouseLeave={() => {
-            // Clear any existing timeout
+            // Clear existing timeout
             if (hoverTimeout) {
               clearTimeout(hoverTimeout);
             }

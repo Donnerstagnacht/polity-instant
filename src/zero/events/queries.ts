@@ -546,3 +546,4 @@ export type EventPositionWithHoldersRow = QueryRowType<typeof eventQueries.posit
 export type EventElectionWithVotesRow = QueryRowType<typeof eventQueries.electionWithVotes>;
 export type EventMeetingSlotRow = QueryRowType<typeof eventQueries.meetingSlotById>;
 export type EventDelegatesFullRow = QueryRowType<typeof eventQueries.delegatesFull>;
+export type EventParticipantsByUserRow = QueryRowType<typeof eventQueries.participantsByUser>;

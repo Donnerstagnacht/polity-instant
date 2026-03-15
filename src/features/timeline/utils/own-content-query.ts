@@ -46,7 +46,7 @@ export const DEFAULT_OWN_CONTENT_OPTIONS: Partial<OwnContentQueryOptions> = {
  * Build filter criteria for user's own amendments
  */
 export function buildAmendmentFilters(userId: string, options: OwnContentQueryOptions) {
-  const filters: Record<string, unknown> = {
+  const filters: { authorId: string; createdAfter?: Date; excludeStatus?: string } = {
     authorId: userId,
   };
 
@@ -67,7 +67,7 @@ export function buildAmendmentFilters(userId: string, options: OwnContentQueryOp
  * Build filter criteria for user's organized events
  */
 export function buildEventFilters(userId: string, options: OwnContentQueryOptions) {
-  const filters: Record<string, unknown> = {
+  const filters: { organizerId: string; createdAfter?: Date } = {
     organizerId: userId,
   };
 
@@ -93,20 +93,20 @@ export function buildAdminGroupFilters(userId: string) {
  * Transform user amendment to ContentItem
  */
 export function transformAmendmentToContentItem(
-  amendment: Record<string, unknown>,
+  amendment: { id: string; groupId?: string; topics?: string[]; commentCount?: number; voteCount?: number; createdAt?: string },
   userId: string
 ): ContentItem {
-  const commentCount = (amendment.commentCount as number) || 0;
-  const voteCount = (amendment.voteCount as number) || 0;
+  const commentCount = amendment.commentCount || 0;
+  const voteCount = amendment.voteCount || 0;
   return {
-    id: amendment.id as string,
+    id: amendment.id,
     type: 'amendment',
     authorId: userId,
-    groupId: amendment.groupId as string | undefined,
-    topics: amendment.topics as string[] | undefined,
+    groupId: amendment.groupId,
+    topics: amendment.topics,
     engagementScore: commentCount + voteCount,
     isUserContent: true,
-    createdAt: amendment.createdAt ? new Date(amendment.createdAt as string) : undefined,
+    createdAt: amendment.createdAt ? new Date(amendment.createdAt) : undefined,
   };
 }
 
@@ -114,18 +114,18 @@ export function transformAmendmentToContentItem(
  * Transform user event to ContentItem
  */
 export function transformEventToContentItem(
-  event: Record<string, unknown>,
+  event: { id: string; groupId?: string; topics?: string[]; participantCount?: number; createdAt?: string },
   userId: string
 ): ContentItem {
   return {
-    id: event.id as string,
+    id: event.id,
     type: 'event',
     authorId: userId,
-    groupId: event.groupId as string | undefined,
-    topics: event.topics as string[] | undefined,
-    engagementScore: (event.participantCount || 0) as number,
+    groupId: event.groupId,
+    topics: event.topics,
+    engagementScore: event.participantCount || 0,
     isUserContent: true,
-    createdAt: event.createdAt ? new Date(event.createdAt as string) : undefined,
+    createdAt: event.createdAt ? new Date(event.createdAt) : undefined,
   };
 }
 
@@ -133,17 +133,17 @@ export function transformEventToContentItem(
  * Transform user admin group to ContentItem
  */
 export function transformGroupToContentItem(
-  group: Record<string, unknown>,
+  group: { id: string; topics?: string[]; memberCount?: number; createdAt?: string },
   userId: string
 ): ContentItem {
   return {
-    id: group.id as string,
+    id: group.id,
     type: 'group',
     authorId: userId,
-    topics: group.topics as string[] | undefined,
-    engagementScore: (group.memberCount || 0) as number,
+    topics: group.topics,
+    engagementScore: group.memberCount || 0,
     isUserContent: true,
-    createdAt: group.createdAt ? new Date(group.createdAt as string) : undefined,
+    createdAt: group.createdAt ? new Date(group.createdAt) : undefined,
   };
 }
 

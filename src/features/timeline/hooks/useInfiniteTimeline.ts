@@ -28,7 +28,7 @@ export interface UseInfiniteTimelineReturn<T> {
   isLoadingMore: boolean;
   /** Whether there are more items to load */
   hasMore: boolean;
-  /** Error if any occurred */
+  /** Error if occurred */
   error: Error | null;
   /** Function to manually load more */
   loadMore: () => Promise<void>;

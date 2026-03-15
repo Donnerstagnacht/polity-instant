@@ -11,7 +11,7 @@ const solutionKeys = ['parties', 'ngos', 'corporations', 'government'] as const
 const solutionIcons = ['🏛️', '🤝', '🏢', '⚖️'] as const
 
 function SolutionsPage() {
-  const { t } = useTranslation()
+  const { t, tArray } = useTranslation()
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -27,7 +27,7 @@ function SolutionsPage() {
       <section className="max-w-6xl mx-auto w-full px-4 py-16">
         <div className="grid gap-8 md:grid-cols-2">
           {solutionKeys.map((key, i) => {
-            const features = t(`pages.solutions.solutions.${key}.features`) as unknown as string[]
+            const features = tArray(`pages.solutions.solutions.${key}.features`)
             return (
               <Card key={key}>
                 <CardHeader>

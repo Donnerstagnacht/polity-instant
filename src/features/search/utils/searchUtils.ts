@@ -60,14 +60,14 @@ export const matchesHashtag = (item: HashtagEntity, hashtagFilter: string) => {
     ? hashtagFilter.substring(1).toLowerCase()
     : hashtagFilter.toLowerCase();
 
-  // Check if any hashtag matches
+  // Check if hashtags match the filter
   return tags.some(h => {
     if (!h || !h.tag) return false;
     return h.tag.toLowerCase() === cleanFilter || h.tag.toLowerCase().includes(cleanFilter);
   });
 };
 
-export const filterByQuery = (text: unknown, queryParam: string) => {
+export const filterByQuery = (text: string | null | undefined, queryParam: string) => {
   if (!queryParam) return true; // If no query, don't filter by text
   if (text == null) return false;
   return String(text).toLowerCase().includes(queryParam.toLowerCase());

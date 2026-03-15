@@ -16,6 +16,7 @@ import { ActionBar } from '@/features/shared/ui/ui/ActionBar';
 import { SubscribeButton } from 'src/features/shared/ui/action-buttons';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { useMemo } from 'react';
 
 interface UserWikiProps {
   userId?: string;
@@ -38,7 +39,7 @@ export function UserWiki(_props: UserWikiProps) {
   const { user: authUser } = useAuth();
   const userIdToFetch = _props.userId || authUser?.id;
 
-  // Fetch user data from Instant DB
+  // Fetch user data from Zero
   const { user: dbUser, isLoading, error } = useUserData(userIdToFetch);
 
   // Subscribe/unsubscribe functionality
@@ -50,8 +51,28 @@ export function UserWiki(_props: UserWikiProps) {
   } = useSubscribeUser(userIdToFetch);
 
   const isOwnUser = authUser?.id === userIdToFetch;
-  const groupsStat = dbUser?.stats?.find((stat) => stat.label === 'Groups')?.value ?? dbUser?.groups?.length ?? 0;
-  const amendmentsStat = dbUser?.stats?.find((stat) => stat.label === 'Amendments')?.value ?? dbUser?.amendmentCollaborationsCount ?? 0;
+
+  // Derived values from zero row
+  const fullName = useMemo(
+    () => [dbUser?.first_name, dbUser?.last_name].filter(Boolean).join(' '),
+    [dbUser?.first_name, dbUser?.last_name],
+  );
+
+  const hashtags = useMemo(
+    () =>
+      (dbUser?.user_hashtags ?? [])
+        .map((j) => j.hashtag)
+        .filter((h): h is NonNullable<typeof h> => !!h?.id && !!h?.tag),
+    [dbUser?.user_hashtags],
+  );
+
+  const collabCount = useMemo(
+    () =>
+      (dbUser?.amendment_collaborations ?? []).filter(
+        (c) => c.status === 'admin' || c.status === 'collaborator',
+      ).length,
+    [dbUser?.amendment_collaborations],
+  );
 
   return (
     <>
@@ -86,8 +107,8 @@ export function UserWiki(_props: UserWikiProps) {
         <div>
           {/* Header with centered title and subtitle */}
           <div className="mb-8 text-center">
-            <h1 className="text-4xl font-bold">{dbUser.name}</h1>
-            {dbUser.subtitle && <p className="text-muted-foreground">{dbUser.subtitle}</p>}
+            <h1 className="text-4xl font-bold">{fullName}</h1>
+            {dbUser.bio && <p className="text-muted-foreground">{dbUser.bio}</p>}
           </div>
 
           {/* User Image */}
@@ -95,7 +116,7 @@ export function UserWiki(_props: UserWikiProps) {
             <div className="mb-8">
               <img
                 src={dbUser.avatar}
-                alt={dbUser.name}
+                alt={fullName}
                 className="mx-auto h-64 w-full max-w-4xl rounded-lg object-cover shadow-lg"
               />
             </div>
@@ -105,9 +126,9 @@ export function UserWiki(_props: UserWikiProps) {
           <StatsBar
             stats={[
               { value: subscriberCount, labelKey: 'components.labels.subscribers' },
-              { value: groupsStat, labelKey: 'components.labels.groups' },
+              { value: dbUser.group_count ?? dbUser.group_memberships?.length ?? 0, labelKey: 'components.labels.groups' },
               {
-                value: amendmentsStat,
+                value: dbUser.amendment_count ?? collabCount,
                 labelKey: 'components.labels.amendments',
               },
             ]}
@@ -127,7 +148,7 @@ export function UserWiki(_props: UserWikiProps) {
                 variant="outline"
                 onClick={() =>
                   navigate({ to:
-                    `/messages?userId=${encodeURIComponent(dbUser.id || '')}&name=${encodeURIComponent(dbUser.name || '')}` })
+                    `/messages?userId=${encodeURIComponent(dbUser.id || '')}&name=${encodeURIComponent(fullName || '')}` })
                 }
               >
                 <Mail className="h-4 w-4" />
@@ -135,32 +156,43 @@ export function UserWiki(_props: UserWikiProps) {
               </Button>
               <ShareButton
                 url={`/user/${userIdToFetch}`}
-                title={dbUser.name || 'User'}
+                title={fullName || 'User'}
                 description={dbUser.about || ''}
               />
             </ActionBar>
           )}
 
           {/* Hashtags */}
-          {dbUser.hashtags && dbUser.hashtags.length > 0 && (
+          {hashtags.length > 0 && (
             <div className="mb-6">
-              <HashtagDisplay hashtags={dbUser.hashtags} centered />
+              <HashtagDisplay hashtags={hashtags} centered />
             </div>
           )}
 
-          <SocialBar socialMedia={dbUser.socialMedia} />
+          <SocialBar socialMedia={{ twitter: dbUser.x ?? undefined }} />
 
-          <InfoTabs about={dbUser.about} contact={dbUser.contact} className="mb-12" />
+          <InfoTabs
+            about={dbUser.about ?? undefined}
+            contact={{
+              email: dbUser.email || '',
+              twitter: dbUser.x || '',
+              website: dbUser.website || '',
+              location: dbUser.location || '',
+            }}
+            className="mb-12"
+          />
 
           <StatementCarousel
-            statements={dbUser.statements}
-            authorName={dbUser.name || t('common.labels.unspecifiedUser')}
-            authorTitle={dbUser.subtitle}
-            authorAvatar={dbUser.avatar}
+            statements={dbUser.statements ?? []}
+            authorName={fullName || t('common.labels.unspecifiedUser')}
+            authorTitle={dbUser.bio ?? undefined}
+            authorAvatar={dbUser.avatar ?? undefined}
           />
 
           <UserWikiContentTabs
             user={dbUser}
+            authorName={fullName}
+            authorAvatar={dbUser.avatar ?? ''}
             searchTerms={searchTerms}
             handleSearchChange={handleSearchChange}
           />

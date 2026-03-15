@@ -82,8 +82,9 @@ export function useCommonActions() {
       try {
         // Each mutator expects a specific FK field (user_id, group_id, etc.)
         // which is included in args via Record<string, string>.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const mutator: (a: Record<string, string>) => ReturnType<(typeof mutatorMap)[typeof entityType]> = mutatorMap[entityType] as any
+        // Cast through unknown: mutators have specific FK arg types but caller
+        // provides a generic Record keyed by entity type.
+        const mutator = mutatorMap[entityType] as unknown as (a: Record<string, string>) => ReturnType<(typeof mutatorMap)[EntityType]>
         await zero.mutate(mutator(args))
       } catch (error) {
         console.error(`Failed to link ${entityType} hashtag:`, error)

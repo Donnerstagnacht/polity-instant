@@ -75,8 +75,7 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
   const subscriptionItems = useMemo(() => {
     if (!subscriptionTimeline.events.length) return [] as TimelineItem[];
 
-    const getString = (value: unknown) => (typeof value === 'string' ? value : undefined);
-    const getTags = (junctions?: { hashtag?: { tag?: string | null } | null }[]) =>
+    const getTags = (junctions?: readonly { hashtag?: { tag?: string | null } | null }[]) =>
       junctions?.map(j => j.hashtag?.tag).filter((tag): tag is string => Boolean(tag)) ?? [];
     const supportedTypes = new Set<TimelineItem['type']>([
       'group',
@@ -94,9 +93,7 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
     ]);
 
     const items = subscriptionTimeline.events.reduce<TimelineItem[]>((acc, event) => {
-      const eventRecord = event as Record<string, any>;
-      const rawContentType =
-        getString(eventRecord.contentType) || getString(eventRecord.entityType) || undefined;
+      const rawContentType = event.content_type || event.entity_type || undefined;
       const normalizedContentType = rawContentType === 'activity' ? 'action' : rawContentType;
       const contentType = normalizedContentType as TimelineItem['type'] | undefined;
 
@@ -104,12 +101,12 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
         return acc;
       }
 
-      const createdAt = eventRecord.createdAt ? new Date(eventRecord.createdAt) : new Date();
-      const stats = (eventRecord.stats as TimelineItem['stats']) || undefined;
-      const amendmentTags = getTags(eventRecord.amendment?.amendment_hashtags);
-      const blogTags = getTags(eventRecord.blog?.blog_hashtags);
-      const userTags = getTags(eventRecord.user?.user_hashtags);
-      const eventTags = getTags(eventRecord.event?.event_hashtags);
+      const createdAt = new Date(event.created_at);
+      const stats = event.stats ? { reactions: event.stats.reactions, comments: event.stats.comments, views: event.stats.views, members: event.stats.members } as TimelineItem['stats'] : undefined;
+      const amendmentTags = getTags(event.amendment?.amendment_hashtags);
+      const blogTags = getTags(event.blog?.blog_hashtags);
+      const userTags = getTags(event.user?.user_hashtags);
+      const eventTags = getTags(event.event?.event_hashtags);
       const fallbackTags =
         amendmentTags.length > 0
           ? amendmentTags
@@ -120,100 +117,79 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
               : eventTags.length > 0
                 ? eventTags
                 : undefined;
-      const tags = (eventRecord.tags as string[] | undefined) ?? fallbackTags;
-      const eventParticipants = eventRecord.event?.participants as unknown[] | undefined;
-      const eventVotingSessions = eventRecord.event?.votingSessions as
-        | { election?: unknown; amendment?: unknown }[]
-        | undefined;
-      const eventPositions = eventRecord.event?.eventPositions as
-        | { election?: unknown }[]
-        | undefined;
-      const scheduledElections = eventRecord.event?.scheduledElections as unknown[] | undefined;
-      const agendaItems = subscriptionTimeline.agendaItemsByEventId?.get(
-        eventRecord.event?.id as string
-      );
-      const eventTargetedAmendments = eventRecord.event?.targetedAmendments as
-        | unknown[]
-        | undefined;
+      const tags = event.tags ?? fallbackTags;
+      const eventParticipants = event.event?.participants;
+      const eventVotingSessions = event.event?.voting_sessions;
+      const eventPositions = event.event?.event_positions;
+      const scheduledElections = event.event?.scheduled_elections;
+      const eventEventId = event.event?.id;
+      const agendaItems = eventEventId
+        ? subscriptionTimeline.agendaItemsByEventId?.get(eventEventId)
+        : undefined;
 
-      // Extract agenda item links from election or amendmentVote relationships
-      // First try linked entities, then fall back to metadata
-      const linkedElection = eventRecord.election as
-        | { agendaItem?: { id?: string; event?: { id?: string } } }
-        | undefined;
-      const linkedAmendmentVote = eventRecord.amendmentVote as
-        | { agendaItem?: { id?: string; event?: { id?: string } } }
-        | undefined;
-      const metadata = eventRecord.metadata as
-        | { agendaEventId?: string; agendaItemId?: string }
-        | undefined;
+      // Extract agenda item links from election or amendment_vote relationships
+      const linkedElection = event.election;
+      const linkedAmendmentVote = event.amendment_vote;
 
       const agendaEventId =
-        linkedElection?.agendaItem?.event?.id ||
-        linkedAmendmentVote?.agendaItem?.event?.id ||
-        metadata?.agendaEventId ||
+        linkedElection?.agenda_item?.event?.id ||
         undefined;
       const agendaItemId =
-        linkedElection?.agendaItem?.id ||
-        linkedAmendmentVote?.agendaItem?.id ||
-        metadata?.agendaItemId ||
+        linkedElection?.agenda_item?.id ||
         undefined;
 
       acc.push({
-        id: eventRecord.id,
-        entityId: eventRecord.entityId || undefined,
+        id: event.id,
+        entityId: event.entity_id || undefined,
         type: contentType,
-        eventType: eventRecord.eventType || undefined,
-        title: eventRecord.title || '',
-        description: eventRecord.description || undefined,
-        imageUrl: eventRecord.imageURL || eventRecord.videoThumbnailURL || undefined,
-        videoUrl: eventRecord.videoURL || undefined,
-        authorId: eventRecord.actor?.id || undefined,
+        eventType: event.event_type || undefined,
+        title: event.title || '',
+        description: event.description || undefined,
+        imageUrl: event.image_url || event.video_thumbnail_url || undefined,
+        videoUrl: event.video_url || undefined,
+        authorId: event.actor?.id || undefined,
         authorAvatar:
-          getString(eventRecord.actor?.avatarUrl) ||
-          getString(eventRecord.user?.avatarUrl) ||
+          event.actor?.avatar ||
+          event.user?.avatar ||
           undefined,
-        groupId: eventRecord.group?.id || undefined,
-        groupName: eventRecord.group?.name || undefined,
-        eventId: eventRecord.event?.id || undefined,
-        eventName: eventRecord.event?.title || undefined,
-        startDate: eventRecord.event?.startDate ? new Date(eventRecord.event.startDate) : undefined,
-        endDate: eventRecord.endsAt ? new Date(eventRecord.endsAt) : undefined,
+        groupId: event.group?.id || undefined,
+        groupName: event.group?.name || undefined,
+        eventId: event.event?.id || undefined,
+        eventName: event.event?.title || undefined,
+        startDate: event.event?.start_date ? new Date(event.event.start_date) : undefined,
+        endDate: event.ends_at ? new Date(event.ends_at) : undefined,
         location:
-          getString(eventRecord.event?.locationName) ||
-          getString(eventRecord.event?.location) ||
-          getString(eventRecord.event?.city) ||
+          event.event?.location_name ||
           undefined,
-        city: getString(eventRecord.event?.city),
-        postcode: getString(eventRecord.event?.postalCode),
+        city: undefined,
+        postcode: undefined,
         createdAt,
         status:
           contentType === 'vote'
-            ? eventRecord.voteStatus
+            ? event.vote_status || undefined
             : contentType === 'election'
-              ? eventRecord.electionStatus
+              ? event.election_status || undefined
               : undefined,
         stats,
         tags,
         attendeeCount: eventParticipants?.length,
         electionsCount:
-          eventPositions?.filter(position => Boolean(position?.election)).length ??
-          scheduledElections?.length ??
-          agendaItems?.length ??
-          eventVotingSessions?.filter(session => Boolean(session?.election)).length ??
+          eventPositions?.filter(position => Boolean(position?.holders?.length)).length ||
+          scheduledElections?.length ||
+          agendaItems?.length ||
+          eventVotingSessions?.filter(session => Boolean(session?.votes?.length)).length ||
           undefined,
         amendmentsCount:
-          eventTargetedAmendments?.length ??
-          eventVotingSessions?.filter(session => Boolean(session?.amendment)).length ??
+          event.event?.agenda_items?.filter(item => Boolean(item?.amendment)).length ||
           undefined,
-        eventCount: eventRecord.group?.events?.length,
+        eventCount: undefined,
         amendmentCount:
-          eventRecord.user?.collaborations?.length ?? eventRecord.group?.amendments?.length,
-        collaboratorCount: eventRecord.amendment?.amendmentRoleCollaborators?.length,
-        supportingGroupsCount: eventRecord.amendment?.groupSupporters?.length,
-        changeRequestCount: eventRecord.amendment?.changeRequests?.length,
-        commentCount: eventRecord.blog?.comments?.length ?? eventRecord.statement?.comment_count,
-        groupCount: eventRecord.user?.memberships?.length,
+          event.user?.amendment_collaborations?.length,
+        collaboratorCount: event.amendment?.collaborators?.length,
+        supportingGroupsCount: event.amendment?.support_votes?.length,
+        changeRequestCount: event.amendment?.change_requests?.length,
+        commentCount: event.statement?.comment_count,
+        groupCount: event.user?.group_memberships?.length,
         // Agenda item links for vote/election navigation
         agendaEventId,
         agendaItemId,

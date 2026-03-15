@@ -13,7 +13,7 @@ export interface TodoStatusCounts {
  * filtered to those owned by or assigned to the given user.
  *
  * Extracted from the former `useTodoStats` hook so it can be called
- * inside a `useMemo` (or anywhere else) without carrying a React dependency.
+ * inside a `useMemo` (or elsewhere) without carrying a React dependency.
  */
 export function computeTodoStats(
   todos: Todo[] | undefined,

@@ -3,7 +3,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useUserMutations } from './useUserMutations';
 import { useCommonState } from '@/zero/common/useCommonState';
-import type { User } from '../types/user.types';
+import type { UserProfile } from '../types/user.types';
 
 // Co-located types
 export interface UserProfileFormData {
@@ -21,7 +21,7 @@ export interface UserProfileFormData {
 
 export interface UseUserProfileFormOptions {
   userId: string;
-  user: User | null;
+  user: UserProfile | null;
   onSuccess?: () => void;
 }
 
@@ -76,14 +76,14 @@ export function useUserProfileForm({
     if (user && !initializedRef.current) {
       initializedRef.current = true;
       setFormData({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        subtitle: user.subtitle || '',
+        firstName: user.first_name || '',
+        lastName: user.last_name || '',
+        subtitle: user.bio || '',
         about: user.about || '',
-        email: user.contact?.email || '',
-        twitter: user.contact?.twitter || '',
-        website: user.contact?.website || '',
-        location: user.contact?.location || '',
+        email: user.email || '',
+        twitter: user.x || '',
+        website: user.website || '',
+        location: user.location || '',
         avatar: user.avatar || '',
         hashtags: [],
       });

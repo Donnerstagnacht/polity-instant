@@ -1,102 +1,18 @@
-export interface UserStat {
-  label: string;
-  value: number;
-  unit?: string;
-}
+import type { UserFullProfileRow } from '@/zero/users/queries'
 
-export interface UserContact {
-  email: string;
-  twitter: string;
-  website: string;
-  location: string;
-}
+/**
+ * Re-export the zero-derived user profile row as the canonical type.
+ * All consumers should use `UserProfile` (a.k.a. `UserFullProfileRow`) directly,
+ * accessing snake_case fields from the Zero sync engine.
+ */
+export type UserProfile = UserFullProfileRow
 
-export interface UserSocialMedia {
-  whatsapp?: string;
-  instagram?: string;
-  twitter?: string;
-  facebook?: string;
-  snapchat?: string;
-}
-
-export interface UserStatement {
-  id: string;
-  text: string;
-  imageUrl?: string;
-  videoUrl?: string;
-  groupName?: string;
-  groupAvatar?: string;
-  groupId?: string;
-  supportCount: number;
-  opposeCount: number;
-  commentCount: number;
-  surveyQuestion?: string;
-  surveyOptions?: { label: string; voteCount: number }[];
-  hashtags: { id: string; tag: string }[];
-}
-
-export interface UserBlog {
-  id: string;
-  title: string;
-  date: string;
-  description?: string;
-  imageURL?: string;
-  commentCount?: number;
-  hashtags?: { id: string; tag: string }[];
-  authorName?: string;
-  authorAvatar?: string;
-  groupId?: string | null;
-}
-
-export interface UserGroup {
-  id: number | string; // Membership ID for unique keys
-  groupId?: string; // Actual group ID for navigation
-  name: string;
-  members: number;
-  role: string;
-  description?: string;
-  tags?: string[];
-  amendments?: number;
-  events?: number;
-  abbr?: string;
-}
-
-export interface UserAmendment {
-  id: number;
-  title: string;
-  subtitle?: string;
-  status: 'Passed' | 'Rejected' | 'Under Review' | 'Drafting';
-  supporters: number;
-  date: string;
-  code?: string;
-  tags?: string[];
-  groupId?: string;
-  groupName?: string;
-}
-
-export interface UserHashtag {
-  id: string;
-  tag: string;
-}
-
-export interface User {
-  id: string; // Add the user ID
-  name: string;
-  firstName: string;
-  lastName: string;
-  subtitle: string;
-  avatar: string;
-  stats: UserStat[];
-  about: string;
-  contact: UserContact;
-  socialMedia: UserSocialMedia;
-  statements: UserStatement[];
-  blogs: UserBlog[];
-  groups: UserGroup[];
-  amendments: UserAmendment[];
-  hashtags: UserHashtag[];
-  amendmentCollaborationsCount?: number;
-}
+/** Derived sub-relation types from the fullProfile query */
+export type ProfileStatement = UserProfile['statements'][number]
+export type ProfileGroupMembership = UserProfile['group_memberships'][number]
+export type ProfileBloggerRelation = UserProfile['blogger_relations'][number]
+export type ProfileAmendmentCollaboration = UserProfile['amendment_collaborations'][number]
+export type ProfileUserHashtag = UserProfile['user_hashtags'][number]
 
 export interface TabSearchState {
   blogs: string;

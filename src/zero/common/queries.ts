@@ -216,6 +216,7 @@ export const commonQueries = {
 
 export type LinkRow = QueryRowType<typeof commonQueries.links>
 export type TimelineEventByEntityRow = QueryRowType<typeof commonQueries.timelineByEntity>
+export type TimelineEventsByEntityIdsRow = QueryRowType<typeof commonQueries.timelineEventsByEntityIds>
 export type ReactionRow = QueryRowType<typeof commonQueries.reactions>
 export type SubscriberRow = QueryRowType<typeof commonQueries.subscribers>
 export type UserSubscriptionRow = QueryRowType<typeof commonQueries.userSubscriptions>

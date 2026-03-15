@@ -28,7 +28,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
   const { user } = useAuth();
   const { createAgendaItem, createElection } = useAgendaActions();
 
-  const eventIdParam = (searchParams as Record<string, unknown>).eventId as string | undefined;
+  const eventIdParam = (searchParams as { eventId?: string }).eventId;
 
   const { events: userEvents } = useAllEvents();
   const { amendments: userAmendments } = useAllAmendments();

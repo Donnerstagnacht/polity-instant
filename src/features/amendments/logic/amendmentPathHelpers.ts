@@ -1,34 +1,15 @@
 import { findShortestPath, type GroupNode, type GroupRelationship, type PathSegment } from './path-finding';
+import type {
+  NetworkGroupRow,
+  NetworkGroupRelationshipRow,
+  NetworkGroupMembershipRow,
+  NetworkEventRow,
+} from '@/zero/amendments/queries';
 
-export interface AmendmentNetworkGroup {
-  id: string;
-  name: string | null;
-  description?: string | null;
-  member_count?: number | null;
-}
-
-export interface AmendmentNetworkRelationship {
-  id: string;
-  with_right: string | null;
-  group?: { id: string; name: string | null } | null;
-  related_group?: { id: string; name: string | null } | null;
-}
-
-export interface AmendmentNetworkMembership {
-  status: string | null;
-  user?: { id: string } | null;
-  group?: { id: string } | null;
-}
-
-export interface AmendmentNetworkEvent {
-  id: string;
-  title: string | null;
-  start_date: number | null;
-  description?: string | null;
-  location_name?: string | null;
-  is_public?: boolean | null;
-  group?: { id: string } | null;
-}
+export type { NetworkGroupRow as AmendmentNetworkGroup };
+export type { NetworkGroupRelationshipRow as AmendmentNetworkRelationship };
+export type { NetworkGroupMembershipRow as AmendmentNetworkMembership };
+export type { NetworkEventRow as AmendmentNetworkEvent };
 
 export interface PathWithEventSegment {
   groupId: string;
@@ -41,15 +22,15 @@ export interface PathWithEventSegment {
 interface BuildPathInput {
   userGroupIds: string[];
   targetGroupId: string;
-  groups: AmendmentNetworkGroup[];
-  relationships: AmendmentNetworkRelationship[];
-  events: AmendmentNetworkEvent[];
+  groups: NetworkGroupRow[];
+  relationships: NetworkGroupRelationshipRow[];
+  events: NetworkEventRow[];
 }
 
 const AMENDMENT_RIGHT = 'amendmentRight';
 
 export function getActiveUserGroupIds(
-  memberships: AmendmentNetworkMembership[],
+  memberships: NetworkGroupMembershipRow[],
   userId: string
 ): string[] {
   return memberships
@@ -62,7 +43,7 @@ export function getActiveUserGroupIds(
 }
 
 function toPathRelationships(
-  relationships: AmendmentNetworkRelationship[]
+  relationships: NetworkGroupRelationshipRow[]
 ): GroupRelationship[] {
   return relationships
     .filter((relationship) => relationship.with_right === AMENDMENT_RIGHT)
@@ -81,7 +62,7 @@ function toPathRelationships(
     }));
 }
 
-function toGroupsMap(groups: AmendmentNetworkGroup[]): Map<string, GroupNode> {
+function toGroupsMap(groups: NetworkGroupRow[]): Map<string, GroupNode> {
   return new Map(
     groups.map((group) => [
       group.id,
@@ -100,8 +81,8 @@ function isUpwardPath(path: PathSegment[]): boolean {
 
 function getClosestUpcomingEventForGroup(
   groupId: string,
-  events: AmendmentNetworkEvent[]
-): AmendmentNetworkEvent | undefined {
+  events: NetworkEventRow[]
+): NetworkEventRow | undefined {
   const now = Date.now();
   return events
     .filter((event) => event.group?.id === groupId && (event.start_date ?? 0) > now)
@@ -141,9 +122,9 @@ export function calculateUpwardPathWithClosestEvents({
 
 export function getUpwardConnectedGroupsForUser(
   userGroupIds: string[],
-  groups: AmendmentNetworkGroup[],
-  relationships: AmendmentNetworkRelationship[]
-): AmendmentNetworkGroup[] {
+  groups: NetworkGroupRow[],
+  relationships: NetworkGroupRelationshipRow[]
+): NetworkGroupRow[] {
   if (userGroupIds.length === 0) return [];
 
   return groups.filter((group) =>

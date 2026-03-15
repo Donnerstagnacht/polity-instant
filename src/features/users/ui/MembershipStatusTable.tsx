@@ -11,33 +11,30 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Check, X, Trash2, LucideIcon } from 'lucide-react';
+import type { FilterableRecord } from '../hooks/useUserMembershipsFilters';
+import type { GroupMembershipsByUserRow } from '@/zero/groups/queries';
+import type { EventParticipantsByUserRow } from '@/zero/events/queries';
+import type { AmendmentCollaboratorsByUserRow } from '@/zero/amendments/queries';
+import type { BloggersByUserRow } from '@/zero/blogs/queries';
 
-interface MembershipItem {
-  id: string;
-  status?: string | null;
-  createdAt?: string;
-  role?: { name?: string | null };
-  [key: string]: unknown;
-}
+type EntityKey = 'group' | 'event' | 'amendment' | 'blog';
 
-interface EntityData {
+/** Minimal display shape shared by group, event, amendment, and blog entities */
+interface DisplayEntity {
   id: string;
-  name?: string;
-  title?: string;
-  description?: string;
-  imageURL?: string;
-  imageUrl?: string;
-  image?: string;
-  thumbnailURL?: string;
+  name?: string | null;
+  title?: string | null;
+  description?: string | null;
+  image_url?: string | null;
 }
 
 interface MembershipStatusTableProps {
   title: string;
   description: string;
   icon: LucideIcon;
-  items: MembershipItem[];
+  items: FilterableRecord[];
   statusType: 'invited' | 'active' | 'requested';
-  entityKey: string; // 'group', 'event', 'amendment', 'blog'
+  entityKey: EntityKey;
   fallbackIcon: LucideIcon;
   onAccept?: (id: string) => void;
   onDecline?: (id: string) => void;
@@ -81,18 +78,27 @@ export function MembershipStatusTable({
     return null;
   }
 
-  const getEntityData = (item: MembershipItem): EntityData | null => {
-    return (item[entityKey] as EntityData | null | undefined) ?? null;
+  const getEntityData = (item: FilterableRecord): DisplayEntity | null => {
+    switch (entityKey) {
+      case 'group':
+        return (item as GroupMembershipsByUserRow).group ?? null;
+      case 'event':
+        return (item as EventParticipantsByUserRow).event ?? null;
+      case 'amendment':
+        return (item as AmendmentCollaboratorsByUserRow).amendment ?? null;
+      case 'blog':
+        return (item as BloggersByUserRow).blog ?? null;
+    }
   };
 
-  const getEntityName = (entity: EntityData | null): string => {
+  const getEntityName = (entity: DisplayEntity | null): string => {
     if (!entity) return `Unknown ${entityKey}`;
     return entity.name || entity.title || `Unknown ${entityKey}`;
   };
 
-  const getEntityImage = (entity: EntityData | null): string | undefined => {
+  const getEntityImage = (entity: DisplayEntity | null): string | undefined => {
     if (!entity) return undefined;
-    return entity.imageURL || entity.imageUrl || entity.image || entity.thumbnailURL;
+    return entity.image_url ?? undefined;
   };
 
   return (
@@ -127,9 +133,9 @@ export function MembershipStatusTable({
               const entity = getEntityData(item);
               const entityName = getEntityName(entity);
               const entityImage = getEntityImage(entity);
-              const role = item.role?.name || 'Member';
-              const createdAt = item.createdAt
-                ? new Date(item.createdAt).toLocaleDateString()
+              const role = (item as { role?: { name?: string | null } }).role?.name || 'Member';
+              const createdAt = item.created_at
+                ? new Date(item.created_at).toLocaleDateString()
                 : 'N/A';
               const entityDescription =
                 statusType === 'active' ? entity?.description || '' : '';

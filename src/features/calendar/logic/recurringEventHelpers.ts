@@ -5,6 +5,7 @@
  */
 
 import { RRule } from 'rrule'
+import type { EventForCalendarRow } from '@/zero/events/queries';
 
 export const addDays = (date: Date, days: number): Date => {
   const result = new Date(date);
@@ -24,16 +25,7 @@ export const addYears = (date: Date, years: number): Date => {
   return result;
 };
 
-interface EventException {
-  original_date: number | Date
-  action: string
-  new_title?: string | null
-  new_description?: string | null
-  new_start_date?: number | Date | null
-  new_end_date?: number | Date | null
-  new_location_name?: string | null
-  new_location_address?: string | null
-}
+type EventException = EventForCalendarRow['exceptions'][number];
 
 /** Normalize a date value into epoch ms for comparison (strips time to date-only). */
 function toDateKey(val: number | Date | string): string {
@@ -41,23 +33,7 @@ function toDateKey(val: number | Date | string): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-interface RecurringEvent {
-  id: string;
-  title?: string | null;
-  description?: string | null;
-  start_date: number | null;
-  end_date: number | null;
-  is_recurring?: boolean;
-  recurrence_pattern?: string | null;
-  recurrence_rule?: string | null;
-  recurrence_interval?: number | null;
-  recurrence_end_date?: number | null;
-  location_name?: string | null;
-  location_address?: string | null;
-  is_public?: boolean;
-  image_url?: string | null;
-  [key: string]: unknown;
-}
+type RecurringEvent = EventForCalendarRow;
 
 type RecurringEventInstance = RecurringEvent & {
   isRecurringInstance?: boolean;

@@ -2,14 +2,17 @@
  * Utility functions for extracting suggestion content from document nodes
  */
 
-import type { Value } from 'platejs';
+import type { Value, TElement, Descendant } from 'platejs';
+
+/** Properties diff for a Plate suggestion (subset of TElement properties) */
+export type SuggestionProperties = Record<string, string | number | boolean | null | undefined>;
 
 export interface SuggestionContent {
   type: string;
   text: string;
   newText: string;
-  properties: Record<string, unknown>;
-  newProperties: Record<string, unknown>;
+  properties: SuggestionProperties;
+  newProperties: SuggestionProperties;
 }
 
 /**
@@ -26,18 +29,18 @@ export function extractSuggestionContent(
   let type = 'unknown';
   let text = '';
   let newText = '';
-  let properties: Record<string, unknown> = {};
-  let newProperties: Record<string, unknown> = {};
+  let properties: SuggestionProperties = {};
+  let newProperties: SuggestionProperties = {};
 
   // Recursively search through the document content for suggestion marks
-  const searchNodes = (nodes: Record<string, unknown>[]): void => {
+  const searchNodes = (nodes: Descendant[]): void => {
     for (const node of nodes) {
       if (node && typeof node === 'object') {
         // Look for suggestion_* properties
         const suggestionKeys = Object.keys(node).filter(key => key.startsWith('suggestion_'));
 
         for (const key of suggestionKeys) {
-          const suggestionData = node[key] as { id?: string; type?: string; properties?: Record<string, unknown>; newProperties?: Record<string, unknown> } | undefined;
+          const suggestionData = node[key] as { id?: string; type?: string; properties?: SuggestionProperties; newProperties?: SuggestionProperties } | undefined;
           if (suggestionData && suggestionData.id === discussionId) {
             type = suggestionData.type || type;
 

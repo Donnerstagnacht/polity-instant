@@ -1,3 +1,5 @@
+import type { EventForCalendarRow } from '@/zero/events/queries';
+
 export type CalendarView = 'day' | 'week' | 'month';
 
 export interface CalendarUser {
@@ -6,28 +8,21 @@ export interface CalendarUser {
   avatar?: string;
 }
 
-export interface CalendarEvent {
-  id: string;
+export type CalendarEvent = Omit<EventForCalendarRow, 'start_date' | 'end_date' | 'title' | 'description'> & {
+  start_date: number;
+  end_date: number;
   title: string;
   description: string;
   location?: string;
-  start_date: string | number | Date;
-  end_date: string | number | Date;
-  is_public: boolean;
-  image_url?: string | null;
   organizer?: CalendarUser;
-  participants?: readonly { user?: CalendarUser; instance_date?: number | null }[];
+  groupName?: string;
+  organizerName?: string;
+  attendeeCount?: number;
+  hashtags?: { id: string; tag: string }[];
   isMeeting?: boolean;
-  meeting_type?: string | null;
-  is_bookable?: boolean;
-  max_bookings?: number;
   bookingCount?: number;
   isBookedByMe?: boolean;
-  groupName?: string;
-  group_id?: string;
   isRecurringInstance?: boolean;
   recurringParentId?: string;
-  hashtags?: { id: string; tag: string }[];
-  attendeeCount?: number;
-  organizerName?: string;
-}
+  instanceDate?: string;
+};

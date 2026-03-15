@@ -16,7 +16,7 @@ interface SocialBarProps {
 }
 
 export const SocialBar: React.FC<SocialBarProps> = ({ socialMedia }) => {
-  // Check if there are any social media links
+  // Check if there are social media links
   const hasSocialMedia =
     socialMedia.whatsapp ||
     socialMedia.instagram ||

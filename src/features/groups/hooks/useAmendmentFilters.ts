@@ -83,7 +83,7 @@ function matchesSearchQuery(amendment: FilterableAmendment, searchQuery: string)
     return true;
   }
 
-  // Check if query matches any hashtag
+  // Check if query matches hashtags
   const tags = extractHashtagTags(amendment.amendment_hashtags);
   if (tags.length > 0) {
     return tags.some(tag => tag.toLowerCase().includes(query));

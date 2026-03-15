@@ -16,7 +16,7 @@ const areaCtaLinks: Record<number, { href: string; external?: boolean }> = {
 }
 
 function SupportPage() {
-  const { t } = useTranslation()
+  const { t, tArray } = useTranslation()
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -33,7 +33,7 @@ function SupportPage() {
         <h2 className="text-2xl font-bold text-center mb-8">{t('pages.support.howCanHelp')}</h2>
         <div className="grid gap-6 md:grid-cols-3">
           {areaKeys.map((key, i) => {
-            const details = t(`pages.support.areas.${key}.details`) as unknown as string[]
+            const details = tArray(`pages.support.areas.${key}.details`)
             return (
               <Card key={key}>
                 <CardHeader>

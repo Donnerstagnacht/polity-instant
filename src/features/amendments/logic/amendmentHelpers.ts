@@ -2,6 +2,8 @@
  * Pure helper functions for amendment wiki page.
  */
 
+import type { AmendmentFullRow } from '@/zero/amendments/queries';
+
 export function getSupportStatus(
   groupId: string,
   supportConfirmations: Array<{ group?: { id: string }; status?: string }>,
@@ -15,12 +17,7 @@ export function getSupportStatus(
   return 'active';
 }
 
-interface VotableAmendment {
-  upvotes?: number | null;
-  downvotes?: number | null;
-  vote_entries?: ReadonlyArray<{ id: string; vote: number | null; user?: { id: string } }>;
-  [key: string]: unknown;
-}
+type VotableAmendment = Pick<NonNullable<AmendmentFullRow>, 'upvotes' | 'downvotes' | 'vote_entries'>;
 
 export function deriveVoteState(
   amendment: VotableAmendment,

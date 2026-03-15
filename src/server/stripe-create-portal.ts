@@ -1,5 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import Stripe from 'stripe'
+import { z } from 'zod'
 
 function getStripe() {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -10,14 +11,13 @@ function getStripe() {
   })
 }
 
+const stripeCreatePortalSchema = z.object({
+  customerId: z.string(),
+  returnOrigin: z.string().optional(),
+})
+
 export const stripeCreatePortalFn = createServerFn({ method: 'POST' })
-  .validator(
-    (data: unknown) =>
-      data as {
-        customerId: string
-        returnOrigin?: string
-      },
-  )
+  .validator(stripeCreatePortalSchema.parse)
   .handler(async ({ data }) => {
     try {
       const stripe = getStripe()

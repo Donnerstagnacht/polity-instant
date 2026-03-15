@@ -4,20 +4,27 @@ import deTranslation from '@/i18n/locales/de/deTranslation.ts';
 import i18n from '@/i18n/i18n.ts';
 import { useEffect } from 'react';
 
+type TranslationValue = string | readonly string[] | TranslationTree
+interface TranslationTree { readonly [key: string]: TranslationValue }
+
 const translations = {
   en: enTranslation,
   de: deTranslation,
 };
 
-function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
+function getNestedValue(obj: TranslationTree, path: string): TranslationValue {
   if (!path || !obj) return path;
 
   const keys = path.split('.');
-  let current: unknown = obj;
+  let current: TranslationValue = obj;
 
   for (const key of keys) {
-    if (current && typeof current === 'object' && key in current) {
-      current = (current as Record<string, unknown>)[key];
+    if (typeof current !== 'object' || current === null || Array.isArray(current)) {
+      return path;
+    }
+    const tree = current as TranslationTree;
+    if (key in tree) {
+      current = tree[key];
     } else {
       return path; // Return the original key if not found
     }
@@ -78,6 +85,11 @@ export function useTranslation() {
     return String(result);
   };
 
+  const tArray = (key: string): string[] => {
+    const value = getNestedValue(translations[language], key);
+    return Array.isArray(value) ? value : [];
+  };
+
   const changeLanguage = async (newLanguage: Language) => {
     setLanguage(newLanguage);
     // Also change i18next language
@@ -86,6 +98,7 @@ export function useTranslation() {
 
   return {
     t,
+    tArray,
     language,
     changeLanguage,
     i18n: {

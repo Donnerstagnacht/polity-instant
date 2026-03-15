@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { type Value } from 'platejs';
+import { type Value, type TElement } from 'platejs';
 import { Plate, usePlateEditor } from 'platejs/react';
 
 import { EditorKit } from '@/features/shared/ui/kit-platejs/editor-kit.tsx';
@@ -22,7 +22,7 @@ interface PlateEditorProps {
     id: string;
     name: string;
     color: string;
-    position: Record<string, unknown>;
+    position: Record<string, string | number | boolean | null>;
   }[];
   currentUser?: {
     id: string;
@@ -75,30 +75,32 @@ export function PlateEditor({
 
   // Memoize the editor configuration to prevent unnecessary re-creations
   const editorConfig = React.useMemo(() => {
-    const config: Record<string, unknown> = {
-      plugins: EditorKit,
-      value: isControlled ? value : initialValue || defaultValue,
-    };
+    const baseValue = isControlled ? value : initialValue || defaultValue;
 
-    // Override discussion plugin options with real user data
-    // IMPORTANT: Only set initial discussions, don't override on every render
     if (currentUser && users) {
-      config.override = {
-        plugins: {
-          discussion: {
-            options: {
-              currentUserId: currentUser.id,
-              users: users,
-              discussions: discussions || [], // Initial discussions from DB
-              documentTitle: documentTitle || '', // Pass document title
-              documentId: documentId || '', // Pass document ID for suggestion ID generation
+      return {
+        plugins: EditorKit,
+        value: baseValue,
+        override: {
+          plugins: {
+            discussion: {
+              options: {
+                currentUserId: currentUser.id,
+                users: users,
+                discussions: discussions || [],
+                documentTitle: documentTitle || '',
+                documentId: documentId || '',
+              },
             },
           },
         },
       };
     }
 
-    return config;
+    return {
+      plugins: EditorKit,
+      value: baseValue,
+    };
   }, [isControlled, value, initialValue, currentUser, users, documentTitle, documentId]); // Added documentId to deps
 
   const editor = usePlateEditor(editorConfig);
@@ -161,9 +163,9 @@ export function PlateEditor({
         // Scan the editor content for comment marks
         const commentNodes = editor.api.nodes({
           at: [],
-          match: (n: Record<string, unknown>) => {
+          match: (n: TElement) => {
             if (!n) return false;
-            // Check if node has any comment_* properties
+            // Check if node has comment_* properties
             return Object.keys(n).some(key => key.startsWith('comment_') && key !== 'comment');
           },
         });
@@ -180,9 +182,9 @@ export function PlateEditor({
         // Also scan for suggestion marks
         const suggestionNodes = editor.api.nodes({
           at: [],
-          match: (n: Record<string, unknown>) => {
+          match: (n: TElement) => {
             if (!n) return false;
-            // Check if node has any suggestion_* properties or has suggestion data
+            // Check if node has suggestion_* properties or has suggestion data
             return Object.keys(n).some(key => key.startsWith('suggestion_')) || n.suggestion;
           },
         });

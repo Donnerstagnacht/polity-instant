@@ -30,7 +30,7 @@ interface Node {
   id: string;
   position: { x: number; y: number };
 
-  data: Record<string, unknown>;
+  data: { label: string };
   type?: string;
   style?: React.CSSProperties;
   parentId?: string;
@@ -45,7 +45,7 @@ interface Edge {
   animated?: boolean;
   type?: string;
   style?: React.CSSProperties;
-  data?: Record<string, unknown>;
+  data?: { label?: string; type?: string; positionHandlers?: { x: number; y: number; active: boolean }[] };
 }
 
 // Custom Group Node component
@@ -332,7 +332,7 @@ export function FlowEditor() {
     (event: NodeMouseHandler, node: Node) => {
       if (!isInteractive) return; // Prevent selection when not interactive
 
-      // Clear any selected edge when selecting a node
+      // Clear selected edge when selecting a node
       setSelectedEdge(null);
 
       if (multiSelectMode) {
@@ -348,7 +348,7 @@ export function FlowEditor() {
       } else {
         // In single-select mode, just select this node
         setSelectedNodes([node]);
-        setNodeLabel((node.data.label as string) || '');
+        setNodeLabel((node.data.label) || '');
         setIsEditingNode(false);
       }
     },
@@ -360,7 +360,7 @@ export function FlowEditor() {
     (event: EdgeMouseHandler, edge: Edge) => {
       if (!isInteractive) return; // Prevent selection when not interactive
 
-      // Clear any selected nodes when selecting an edge
+      // Clear selected nodes when selecting an edge
       setSelectedNodes([]);
       setSelectedEdge(edge);
       setEdgeLabel(edge.label || '');
@@ -524,7 +524,7 @@ export function FlowEditor() {
   const cancelEditNode = useCallback(() => {
     if (selectedNodes.length !== 1) return;
     setIsEditingNode(false);
-    setNodeLabel((selectedNodes[0].data.label as string) || '');
+    setNodeLabel((selectedNodes[0].data.label) || '');
   }, [selectedNodes]);
 
   // Update node properties
@@ -554,7 +554,7 @@ export function FlowEditor() {
     // Get IDs of nodes to delete
     let nodeIdsToDelete = selectedNodes.map(node => node.id);
 
-    // Also identify child nodes of any group that's being deleted
+    // Also identify child nodes of each group that's being deleted
     selectedNodes.forEach(node => {
       if (node.type === 'group') {
         // Find all child nodes of this group
@@ -717,7 +717,7 @@ export function FlowEditor() {
               </div>
             ) : (
               <div>
-                <h3 className="text-md font-bold">{selectedNodes[0].data.label as string}</h3>
+                <h3 className="text-md font-bold">{selectedNodes[0].data.label}</h3>
                 <div className="mt-2 flex gap-2">
                   <Button size="sm" onClick={startEditingNode}>
                     Edit Node

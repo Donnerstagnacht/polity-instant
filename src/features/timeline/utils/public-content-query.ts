@@ -43,7 +43,13 @@ export const DEFAULT_PUBLIC_QUERY_OPTIONS: Partial<PublicContentQueryOptions> = 
  * This returns InstantDB-compatible query filters
  */
 export function buildPublicContentFilters(options: PublicContentQueryOptions) {
-  const filters: Record<string, unknown> = {};
+  const filters: {
+    excludeGroupIds?: string[];
+    contentTypes?: Array<ContentItem['type']>;
+    minEngagement?: number;
+    createdAfter?: Date;
+    topicIds?: string[];
+  } = {};
 
   // Exclude subscribed groups
   if (options.subscribedGroupIds.length > 0) {
@@ -80,19 +86,19 @@ export function buildPublicContentFilters(options: PublicContentQueryOptions) {
  * This is a utility for mapping query results
  */
 export function transformToContentItem(
-  rawItem: Record<string, unknown>,
+  rawItem: { id: string; authorId?: string; groupId?: string; topics?: string[]; engagementScore?: number; recentEngagementVelocity?: number; createdAt?: string },
   type: ContentItem['type']
 ): ContentItem {
   return {
-    id: rawItem.id as string,
+    id: rawItem.id,
     type,
-    authorId: rawItem.authorId as string | undefined,
-    groupId: rawItem.groupId as string | undefined,
-    topics: rawItem.topics as string[] | undefined,
-    engagementScore: rawItem.engagementScore as number | undefined,
+    authorId: rawItem.authorId,
+    groupId: rawItem.groupId,
+    topics: rawItem.topics,
+    engagementScore: rawItem.engagementScore,
     isUserContent: false,
-    recentEngagementVelocity: rawItem.recentEngagementVelocity as number | undefined,
-    createdAt: rawItem.createdAt ? new Date(rawItem.createdAt as string) : undefined,
+    recentEngagementVelocity: rawItem.recentEngagementVelocity,
+    createdAt: rawItem.createdAt ? new Date(rawItem.createdAt) : undefined,
   };
 }
 

@@ -317,3 +317,13 @@ export type ChangeRequestRow = QueryRowType<typeof amendmentQueries.changeReques
 export type ChangeRequestWithVotesRow = QueryRowType<typeof amendmentQueries.changeRequestsWithVotes>
 export type DocumentVersionRow = QueryRowType<typeof amendmentQueries.documentVersionsByDocument>
 export type SupportConfirmationRow = QueryRowType<typeof amendmentQueries.supportConfirmations>
+export type AmendmentCollaboratorsByUserRow = QueryRowType<typeof amendmentQueries.collaboratorsByUser>
+
+// Cross-domain network Row types (used by amendmentPathHelpers)
+export type NetworkGroupRow = QueryRowType<typeof amendmentQueries.allGroups>
+export type NetworkGroupRelationshipRow = QueryRowType<typeof amendmentQueries.allGroupRelationships>
+export type NetworkGroupMembershipRow = QueryRowType<typeof amendmentQueries.allGroupMemberships>
+export type NetworkEventRow = QueryRowType<typeof amendmentQueries.allEvents>
+
+/** Single comment from the threads query (element of AmendmentThreadRow['comments']). */
+export type AmendmentCommentRow = AmendmentThreadRow['comments'][number]

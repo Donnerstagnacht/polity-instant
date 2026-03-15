@@ -12,7 +12,7 @@ export function useScreenReaderAnnounce() {
 
   const announce = React.useCallback(
     (message: string, priority: 'polite' | 'assertive' = 'polite') => {
-      // Clear any pending announcement
+      // Clear pending announcement
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }

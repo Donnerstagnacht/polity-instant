@@ -280,7 +280,7 @@ export function adaptGroupDocumentToEntity(
 }
 
 /**
- * Adapts any entity to EditorEntity based on type
+ * Adapts entities to EditorEntity based on type
  */
 export function adaptToEditorEntity(
   entityType: EditorEntityType,

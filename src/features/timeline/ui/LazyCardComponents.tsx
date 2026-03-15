@@ -3,6 +3,18 @@
 import * as React from 'react';
 import { Suspense, lazy, type ComponentType } from 'react';
 import { cn } from '@/features/shared/utils/utils';
+import type { GroupTimelineCardProps } from './cards/GroupTimelineCard';
+import type { EventTimelineCardProps } from './cards/EventTimelineCard';
+import type { AmendmentTimelineCardProps } from './cards/AmendmentTimelineCard';
+import type { VideoTimelineCardProps } from './cards/VideoTimelineCard';
+import type { ImageTimelineCardProps } from './cards/ImageTimelineCard';
+import type { StatementTimelineCardProps } from './cards/StatementTimelineCard';
+import type { TodoTimelineCardProps } from './cards/TodoTimelineCard';
+import type { BlogTimelineCardProps } from './cards/BlogTimelineCard';
+import type { VoteTimelineCardProps } from './cards/VoteTimelineCard';
+import type { ElectionTimelineCardProps } from './cards/ElectionTimelineCard';
+import type { ActionTimelineCardProps } from './cards/ActionTimelineCard';
+import type { UserTimelineCardProps } from './cards/UserTimelineCard';
 
 /**
  * Lazy-loaded card components for code splitting
@@ -84,6 +96,25 @@ export const LAZY_CARD_COMPONENTS = {
 } as const;
 
 export type CardType = keyof typeof LAZY_CARD_COMPONENTS;
+
+/** Maps each card type to its component props */
+export interface CardPropsMap {
+  group: GroupTimelineCardProps;
+  event: EventTimelineCardProps;
+  amendment: AmendmentTimelineCardProps;
+  video: VideoTimelineCardProps;
+  image: ImageTimelineCardProps;
+  statement: StatementTimelineCardProps;
+  todo: TodoTimelineCardProps;
+  blog: BlogTimelineCardProps;
+  vote: VoteTimelineCardProps;
+  election: ElectionTimelineCardProps;
+  action: ActionTimelineCardProps;
+  user: UserTimelineCardProps;
+}
+
+/** Union of all possible card props */
+export type AnyCardProps = CardPropsMap[CardType];
 
 /**
  * Props for DynamicTimelineCard
@@ -172,7 +203,7 @@ export function withLazyLoading<P extends object>(
  * ```
  */
 export function preloadCard(cardType: CardType): void {
-  const componentMap: Record<CardType, () => Promise<Record<string, unknown>>> = {
+  const componentMap: Record<CardType, () => Promise<object>> = {
     group: () => import('./cards/GroupTimelineCard'),
     event: () => import('./cards/EventTimelineCard'),
     amendment: () => import('./cards/AmendmentTimelineCard'),

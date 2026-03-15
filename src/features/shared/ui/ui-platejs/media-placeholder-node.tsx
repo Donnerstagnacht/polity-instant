@@ -103,7 +103,16 @@ export const PlaceholderElement = withHOC(
       }
 
       // Create the appropriate node based on media type
-      const node: Record<string, unknown> = {
+      const node: {
+        children: { text: string }[];
+        isUpload: boolean;
+        type: string;
+        url: string;
+        initialHeight?: number;
+        initialWidth?: number;
+        name?: string;
+        placeholderId?: string;
+      } = {
         children: [{ text: '' }],
         isUpload: true,
         type: element.mediaType || 'file',

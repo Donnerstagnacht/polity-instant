@@ -1,9 +1,8 @@
-import type { UserAmendment } from '../types/user.types';
-
 // Helper function to get appropriate styling based on amendment status
-export function getStatusStyles(status: UserAmendment['status']) {
+export function getStatusStyles(status: string) {
   switch (status) {
     case 'Passed':
+    case 'passed':
       return {
         badge: 'primary',
         bgColor:
@@ -12,6 +11,7 @@ export function getStatusStyles(status: UserAmendment['status']) {
         badgeTextColor: 'bg-green-600 text-white hover:bg-green-700',
       };
     case 'Rejected':
+    case 'rejected':
       return {
         badge: 'destructive',
         bgColor:

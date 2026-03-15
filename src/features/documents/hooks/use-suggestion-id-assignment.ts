@@ -57,7 +57,7 @@ export function useSuggestionIdAssignment({
       }
     }
 
-    // Update discussions with the new IDs if any were assigned
+    // Update discussions with the new IDs if one was assigned
     if (discussionsNeedingIds.some(d => processedDiscussions.current.has(d.id))) {
       onDiscussionsUpdate(updatedDiscussions);
     }

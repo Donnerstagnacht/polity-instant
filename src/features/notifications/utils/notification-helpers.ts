@@ -270,7 +270,7 @@ async function getEntityMembersWithViewRight(
 export async function createNotification(config: NotificationConfig): Promise<string> {
   const notificationId = crypto.randomUUID();
 
-  const notification: Record<string, unknown> = {
+  const notification: Record<string, string | boolean | null> = {
     id: notificationId,
     type: config.type,
     title: config.title,

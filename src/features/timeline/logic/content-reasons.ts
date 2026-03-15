@@ -94,7 +94,7 @@ export function getContentReason(
   // Check if content is from a group similar to subscribed groups
   if (content.groupId && !userContext.subscribedGroupIds.includes(content.groupId)) {
     // In real implementation, we'd check group similarity
-    // For now, assume any content from an unsubscribed group is "similar"
+    // For now, assume content from an unsubscribed group is "similar"
     reasons.push({
       category: 'similar_groups',
       priority: REASON_PRIORITY.similar_groups,

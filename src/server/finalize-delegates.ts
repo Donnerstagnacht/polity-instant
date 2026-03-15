@@ -1,5 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import { createClient } from '@supabase/supabase-js'
+import { z } from 'zod'
 
 import {
   getDirectSubgroups,
@@ -15,8 +16,13 @@ function getSupabase() {
   )
 }
 
+const finalizeDelegatesSchema = z.object({
+  eventId: z.string(),
+  senderId: z.string().optional(),
+})
+
 export const finalizeDelegatesFn = createServerFn({ method: 'POST' })
-  .validator((data: unknown) => data as { eventId: string; senderId?: string })
+  .validator(finalizeDelegatesSchema.parse)
   .handler(async ({ data }) => {
     const supabase = getSupabase()
 

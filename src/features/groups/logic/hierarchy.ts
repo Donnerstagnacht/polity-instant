@@ -124,7 +124,7 @@ export function checkExclusivityConstraint(
     }
   }
 
-  // 3. Check if the user is a direct member of any sibling base group
+  // 3. Check if the user is a direct member of a sibling base group
   for (const m of memberships) {
     if (
       m.user_id === userId &&

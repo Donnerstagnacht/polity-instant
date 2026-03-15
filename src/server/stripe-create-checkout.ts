@@ -1,5 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import Stripe from 'stripe'
+import { z } from 'zod'
 
 function getStripe() {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -10,16 +11,15 @@ function getStripe() {
   })
 }
 
+const stripeCreateCheckoutSchema = z.object({
+  priceId: z.string().optional(),
+  amount: z.number().optional(),
+  userId: z.string().optional(),
+  origin: z.string().optional(),
+})
+
 export const stripeCreateCheckoutFn = createServerFn({ method: 'POST' })
-  .validator(
-    (data: unknown) =>
-      data as {
-        priceId?: string
-        amount?: number
-        userId?: string
-        origin?: string
-      },
-  )
+  .validator(stripeCreateCheckoutSchema.parse)
   .handler(async ({ data }) => {
     try {
       const stripe = getStripe()

@@ -9,7 +9,7 @@ interface UseHashtagsOptions {
 }
 
 /**
- * Reusable hook for hashtag management on any entity.
+ * Reusable hook for hashtag management on entities.
  * Wraps common state (all hashtags + entity hashtags) and sync action.
  */
 export function useHashtags({ entityType, entityId }: UseHashtagsOptions) {

@@ -16,7 +16,7 @@ interface SubscribeButtonProps {
 }
 
 /**
- * Generic subscribe button for any entity (group, blog, amendment, event, user).
+ * Generic subscribe button for entities (group, blog, amendment, event, user).
  * Handles only display and click, not state.
  */
 export function SubscribeButton({

@@ -3,36 +3,55 @@ import { Input } from '@/features/shared/ui/ui/input';
 import { Search } from 'lucide-react';
 import { AmendmentTimelineCard } from '@/features/timeline/ui/cards/AmendmentTimelineCard';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import type { UserAmendment } from '../types/user.types';
+import type { ProfileAmendmentCollaboration } from '../types/user.types';
 
 interface AmendmentListTabProps {
-  amendments: UserAmendment[];
+  collaborations: readonly ProfileAmendmentCollaboration[];
   searchValue: string;
   onSearchChange: (value: string) => void;
 }
 
 export const AmendmentListTab: React.FC<AmendmentListTabProps> = ({
-  amendments,
+  collaborations,
   searchValue,
   onSearchChange,
 }) => {
   const { t } = useTranslation();
-  const filteredAmendments = useMemo(() => {
+
+  const withAmendment = useMemo(
+    () => collaborations.filter((c) => c.amendment),
+    [collaborations],
+  );
+
+  const filtered = useMemo(() => {
     const term = (searchValue ?? '').toLowerCase();
-    if (!term) return amendments;
-    return amendments.filter(
-      amendment =>
-        amendment.title.toLowerCase().includes(term) ||
-        amendment.status.toLowerCase().includes(term) ||
-        (amendment.subtitle && amendment.subtitle.toLowerCase().includes(term)) ||
-        (amendment.code && amendment.code.toLowerCase().includes(term)) ||
-        amendment.date.toLowerCase().includes(term) ||
-        (amendment.tags && amendment.tags.some(tag => tag.toLowerCase().includes(term)))
-    );
-  }, [amendments, searchValue]);
+    if (!term) return withAmendment;
+    return withAmendment.filter((collab) => {
+      const a = collab.amendment!;
+      return (
+        (a.title ?? '').toLowerCase().includes(term) ||
+        (a.status ?? '').toLowerCase().includes(term) ||
+        (a.reason ?? '').toLowerCase().includes(term) ||
+        (a.code ?? '').toLowerCase().includes(term) ||
+        String(a.created_at).toLowerCase().includes(term) ||
+        (Array.isArray(a.tags) && a.tags.some((tag) => typeof tag === 'string' && tag.toLowerCase().includes(term)))
+      );
+    });
+  }, [withAmendment, searchValue]);
+
+  // Deduplicate by amendment id
+  const unique = useMemo(() => {
+    const seen = new Set<string>();
+    return filtered.filter((c) => {
+      const id = c.amendment!.id;
+      if (seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+  }, [filtered]);
 
   const normalizeStatus = (
-    status?: string
+    status?: string | null
   ):
     | 'collaborative_editing'
     | 'internal_suggesting'
@@ -84,30 +103,43 @@ export const AmendmentListTab: React.FC<AmendmentListTabProps> = ({
           onChange={e => onSearchChange(e.target.value)}
         />
       </div>
-      {filteredAmendments.length === 0 ? (
+      {unique.length === 0 ? (
         <p className="py-8 text-center text-muted-foreground">
           {t('pages.user.amendments.noResults')}
         </p>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-          {filteredAmendments.map(amendment => (
-            <AmendmentTimelineCard
-              key={amendment.id}
-              amendment={{
-                id: String(amendment.id),
-                title: amendment.title,
-                subtitle: amendment.subtitle,
-                description: amendment.subtitle,
-                status: normalizeStatus(amendment.status),
-                groupName: amendment.groupName,
-                groupId: amendment.groupId,
-                hashtags: amendment.tags?.map((tag, index) => ({
-                  id: `${amendment.id}-${index}-${tag}`,
-                  tag,
-                })),
-              }}
-            />
-          ))}
+          {unique.map((collab) => {
+            const a = collab.amendment!;
+            const hashtagTags = (a.amendment_hashtags ?? [])
+              .map((j) => j.hashtag?.tag)
+              .filter((tag): tag is string => !!tag);
+            const rawTags = a.tags;
+            const tags = hashtagTags.length > 0
+              ? hashtagTags
+              : Array.isArray(rawTags)
+                ? rawTags.filter((tag): tag is string => typeof tag === 'string')
+                : undefined;
+
+            return (
+              <AmendmentTimelineCard
+                key={a.id}
+                amendment={{
+                  id: String(a.id),
+                  title: a.title ?? '',
+                  subtitle: a.reason ?? undefined,
+                  description: a.reason ?? undefined,
+                  status: normalizeStatus(a.status),
+                  groupName: a.group?.name ?? undefined,
+                  groupId: a.group?.id,
+                  hashtags: tags?.map((tag, index) => ({
+                    id: `${a.id}-${index}-${tag}`,
+                    tag,
+                  })),
+                }}
+              />
+            );
+          })}
         </div>
       )}
     </>

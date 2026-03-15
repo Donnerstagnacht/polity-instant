@@ -29,7 +29,7 @@ export function useNavigationKeyboard({
 
       // Handle navigation item shortcuts (Alt+Shift+Key)
       if (e.altKey && e.shiftKey) {
-        // Check if key matches any navigation item
+        // Check if key matches navigation items
         const matchedItem = items.find(item => isShortcutMatch(e, item.id));
 
         if (matchedItem) {

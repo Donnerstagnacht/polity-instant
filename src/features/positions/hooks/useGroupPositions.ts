@@ -227,7 +227,7 @@ export function useGroupPositions(groupId: string) {
       const position = positions.find((p) => p.id === positionId);
 
       // If there's a current holder, end their history entry
-      // End the current active history entry (if any)
+      // End the current active history entry (if exists)
       const currentHistoryEntry = position?.holder_history?.find(
         (h) => !h.end_date
       );

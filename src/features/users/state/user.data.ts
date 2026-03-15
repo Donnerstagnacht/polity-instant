@@ -1,6 +1,9 @@
-import type { User } from '../types/user.types';
-
-export const USER: User = {
+/**
+ * @deprecated Mock data file for Storybook stories.
+ * Shape no longer matches production types (UserProfile).
+ * Stories should be updated to use zero-derived mock shapes.
+ */
+export const USER = {
   id: 'user-123',
   name: 'Sarah Johnson',
   firstName: 'Sarah',

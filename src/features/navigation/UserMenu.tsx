@@ -27,14 +27,14 @@ import { useAuth } from '@/providers/auth-provider.tsx';
 import { useGroupState } from '@/zero/groups/useGroupState.ts';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { cn } from '@/features/shared/utils/utils.ts';
-import type { User as UserType } from '@/features/users/types/user.types.ts';
+import type { UserProfile } from '@/features/users/types/user.types.ts';
 
 interface UserMenuProps {
   className?: string;
   isMobile?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  user?: UserType | null;
+  user?: UserProfile | null;
 }
 
 export function UserMenu({
@@ -69,8 +69,8 @@ export function UserMenu({
   if (!authUser) return null;
 
   // Prefer user data, fallback to auth data
-  const displayName = userData?.name || authUser.email?.split('@')[0] || 'User';
-  const displayAvatar = userData?.avatar;
+  const displayName = [userData?.first_name, userData?.last_name].filter(Boolean).join(' ') || authUser.email?.split('@')[0] || 'User';
+  const displayAvatar = userData?.avatar ?? undefined;
   const displayEmail = authUser.email || '';
 
   const handleLogout = async () => {

@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { createServerFn } from '@tanstack/react-start';
+import { z } from 'zod';
 
 let _supabase: SupabaseClient | null = null;
 function getSupabase(): SupabaseClient {
@@ -96,26 +97,6 @@ export interface TimelineStatsParams {
   shares?: number;
 }
 
-interface CreateTimelineEventParams {
-  eventType: TimelineEventType;
-  entityType: TimelineContentType;
-  entityId: string;
-  actorId: string;
-  title: string;
-  description?: string;
-  metadata?: Record<string, unknown>;
-  /** Topic/category tags */
-  tags?: string[];
-  /** Content type for filtering (defaults to entityType) */
-  contentType?: TimelineContentType;
-  /** Media attachments */
-  media?: TimelineMediaParams;
-  /** Vote/election status */
-  status?: TimelineStatusParams;
-  /** Engagement stats */
-  stats?: TimelineStatsParams;
-}
-
 /**
  * Creates a timeline event via Supabase insert
  *
@@ -133,69 +114,118 @@ interface CreateTimelineEventParams {
  * });
  * ```
  */
-export const createTimelineEvent = createServerFn({ method: 'POST' })
-  .validator((data: unknown) => data as CreateTimelineEventParams)
-  .handler(async ({ data: {
-    eventType,
-    entityType,
-    entityId,
-    actorId,
-    title,
-    description,
-    metadata,
-    tags,
-    contentType,
-    media,
-    status,
-    stats,
-  } }): Promise<void> => {
-  const eventId = crypto.randomUUID();
-
-  const insertData: Record<string, unknown> = {
-    id: eventId,
-    event_type: eventType,
-    entity_type: entityType,
-    entity_id: entityId,
-    actor_id: actorId,
-    title,
-    description: description ?? null,
-    created_at: new Date().toISOString(),
-    content_type: contentType || entityType,
-  };
-
-  // Map entity type to specific FK column
-  const entityFkKey = `${entityType}_id`;
-  insertData[entityFkKey] = entityId;
-
-  if (tags && tags.length > 0) {
-    insertData.tags = tags;
-  }
-
-  if (metadata) {
-    insertData.metadata = metadata;
-  }
-
-  if (media) {
-    if (media.imageURL) insertData.image_url = media.imageURL;
-    if (media.videoURL) insertData.video_url = media.videoURL;
-    if (media.videoThumbnailURL) insertData.video_thumbnail_url = media.videoThumbnailURL;
-  }
-
-  if (status) {
-    if (status.voteStatus) insertData.vote_status = status.voteStatus;
-    if (status.electionStatus) insertData.election_status = status.electionStatus;
-    if (status.endsAt) insertData.ends_at = status.endsAt;
-  }
-
-  if (stats) {
-    insertData.stats = stats;
-  }
-
-  const { error } = await getSupabase().from('timeline_event').insert(insertData);
-  if (error) {
-    console.error('[Timeline] Failed to create timeline event:', error);
-  }
+const createTimelineEventSchema = z.object({
+  eventType: z.string(),
+  entityType: z.string(),
+  entityId: z.string(),
+  actorId: z.string(),
+  title: z.string(),
+  description: z.string().optional(),
+  metadata: z.record(z.union([z.string(), z.number(), z.boolean(), z.null()])).optional(),
+  tags: z.array(z.string()).optional(),
+  contentType: z.string().optional(),
+  media: z
+    .object({
+      imageURL: z.string().optional(),
+      videoURL: z.string().optional(),
+      videoThumbnailURL: z.string().optional(),
+      videoDuration: z.number().optional(),
+    })
+    .optional(),
+  status: z
+    .object({
+      voteStatus: z.enum(['open', 'closed', 'passed', 'rejected']).optional(),
+      electionStatus: z.enum(['nominations', 'voting', 'closed', 'winner']).optional(),
+      endsAt: z.coerce.date().optional(),
+    })
+    .optional(),
+  stats: z
+    .object({
+      likes: z.number().optional(),
+      views: z.number().optional(),
+      comments: z.number().optional(),
+      shares: z.number().optional(),
+    })
+    .optional(),
 });
+
+export const createTimelineEvent = createServerFn({ method: 'POST' })
+  .validator(createTimelineEventSchema.parse)
+  .handler(
+    async ({
+      data: {
+        eventType,
+        entityType,
+        entityId,
+        actorId,
+        title,
+        description,
+        metadata,
+        tags,
+        contentType,
+        media,
+        status,
+        stats,
+      },
+    }): Promise<void> => {
+      const eventId = crypto.randomUUID();
+
+      const insertData: Record<
+        string,
+        | string
+        | number
+        | boolean
+        | null
+        | string[]
+        | Record<string, string | number | boolean | null>
+        | Record<string, number>
+        | Date
+      > = {
+        id: eventId,
+        event_type: eventType,
+        entity_type: entityType,
+        entity_id: entityId,
+        actor_id: actorId,
+        title,
+        description: description ?? null,
+        created_at: new Date().toISOString(),
+        content_type: contentType || entityType,
+      };
+
+      // Map entity type to specific FK column
+      const entityFkKey = `${entityType}_id`;
+      insertData[entityFkKey] = entityId;
+
+      if (tags && tags.length > 0) {
+        insertData.tags = tags;
+      }
+
+      if (metadata) {
+        insertData.metadata = metadata;
+      }
+
+      if (media) {
+        if (media.imageURL) insertData.image_url = media.imageURL;
+        if (media.videoURL) insertData.video_url = media.videoURL;
+        if (media.videoThumbnailURL) insertData.video_thumbnail_url = media.videoThumbnailURL;
+      }
+
+      if (status) {
+        if (status.voteStatus) insertData.vote_status = status.voteStatus;
+        if (status.electionStatus) insertData.election_status = status.electionStatus;
+        if (status.endsAt) insertData.ends_at = status.endsAt;
+      }
+
+      if (stats) {
+        insertData.stats = stats;
+      }
+
+      const { error } = await getSupabase().from('timeline_event').insert(insertData);
+      if (error) {
+        console.error('[Timeline] Failed to create timeline event:', error);
+      }
+    }
+  );
 
 /**
  * Helper to create a video upload timeline event

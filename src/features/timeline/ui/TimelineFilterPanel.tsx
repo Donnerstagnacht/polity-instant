@@ -45,7 +45,7 @@ export interface TimelineFilterPanelProps {
   onEngagementChange: (engagement: EngagementFilter) => void;
   /** Callback to reset all filters */
   onResetFilters: () => void;
-  /** Whether any filters are active */
+  /** Whether filters are active */
   hasActiveFilters: boolean;
 }
 

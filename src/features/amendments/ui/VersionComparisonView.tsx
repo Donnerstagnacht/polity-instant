@@ -13,6 +13,7 @@ import { Badge } from '@/features/shared/ui/ui/badge';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
+import type { TElement } from 'platejs';
 import { AlertTriangle, FileText, ArrowRight } from 'lucide-react';
 
 interface ChangeRequest {
@@ -21,10 +22,8 @@ interface ChangeRequest {
   description: string;
 }
 
-interface PlateNode {
+interface PlateNode extends TElement {
   text?: string;
-  children?: PlateNode[];
-  [key: string]: unknown;
 }
 
 type PlateContent = string | PlateNode | PlateContent[];
@@ -49,8 +48,8 @@ export function VersionComparisonView({
     if (Array.isArray(content)) {
       return content.map(extractText).join('\n');
     }
-    if (content.text) return content.text;
-    if (content.children) return extractText(content.children);
+    if (typeof content.text === 'string') return content.text;
+    if (content.children) return extractText(content.children as PlateContent[]);
     return '';
   };
 

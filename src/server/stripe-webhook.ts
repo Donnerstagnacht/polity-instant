@@ -1,6 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
+import { z } from 'zod'
 
 /**
  * The clover API version removed `current_period_start` / `current_period_end`
@@ -34,8 +35,13 @@ function getSupabase() {
  * from a thin API route wrapper that reads the raw request body, since Stripe
  * signature verification requires the raw body string.
  */
+const stripeWebhookSchema = z.object({
+  rawBody: z.string(),
+  signature: z.string(),
+})
+
 export const stripeWebhookFn = createServerFn({ method: 'POST' })
-  .validator((data: unknown) => data as { rawBody: string; signature: string })
+  .validator(stripeWebhookSchema.parse)
   .handler(async ({ data }) => {
     const { rawBody, signature } = data
 

@@ -130,7 +130,7 @@ export function useAmendmentWorkflow({
    */
   const submitToEvent = useCallback(
     async (eventId: string): Promise<boolean> => {
-      // Can submit from any collaborator phase
+      // Can submit from all collaborator phase
       const allowedPhases: WorkflowStatus[] = [
         'collaborative_editing',
         'internal_suggesting',

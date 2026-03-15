@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
-interface PeerData {
+export interface PeerData {
   userId: string;
   name: string;
   avatar?: string;
   color: string;
-  [key: string]: unknown;
 }
 
 interface UsePresenceOptions {
@@ -16,7 +15,7 @@ interface UsePresenceOptions {
 interface UsePresenceReturn {
   peers: PeerData[];
   publishPresence: (data: Partial<PeerData>) => void;
-  publishTopic: (topic: string, data: Record<string, unknown>) => void;
+  publishTopic: (topic: string, data: Partial<PeerData>) => void;
   isConnected: boolean;
 }
 
@@ -127,7 +126,7 @@ export function usePresence(
   );
 
   const publishTopic = useCallback(
-    (topic: string, data: Record<string, unknown>) => {
+    (topic: string, data: Partial<PeerData>) => {
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         wsRef.current.send(
           JSON.stringify({

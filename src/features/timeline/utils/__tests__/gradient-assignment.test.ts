@@ -52,7 +52,7 @@ describe('gradient-assignment', () => {
   });
 
   describe('getGradientByEntityId', () => {
-    it('should return a gradient for any entity ID', () => {
+    it('should return a gradient for entity IDs', () => {
       const gradient = getGradientByEntityId('test-entity-id-123');
       expect(EXTENDED_GRADIENTS).toContain(gradient);
     });

@@ -18,7 +18,7 @@ function UserMembershipsPage() {
   const { id } = Route.useParams()
   const navigate = useNavigate()
   const { user } = useUserData(id)
-  const userName = [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.name || ''
+  const userName = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || ''
 
   const {
     memberships,

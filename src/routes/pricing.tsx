@@ -13,7 +13,7 @@ export const Route = createFileRoute('/pricing')({
 const tierKeys = ['free', 'runningCosts', 'development', 'yourChoice'] as const
 
 function PricingPage() {
-  const { t } = useTranslation()
+  const { t, tArray } = useTranslation()
   const [customAmount, setCustomAmount] = useState('')
 
   return (
@@ -32,7 +32,7 @@ function PricingPage() {
           {tierKeys.map((key) => {
             const highlighted = key === 'runningCosts'
             const isYourChoice = key === 'yourChoice'
-            const features = t(`pages.pricing.tiers.${key}.features`) as unknown as string[]
+            const features = tArray(`pages.pricing.tiers.${key}.features`)
             const period = t(`pages.pricing.tiers.${key}.period`)
             return (
               <Card key={key} className={highlighted ? 'border-primary shadow-md' : ''}>

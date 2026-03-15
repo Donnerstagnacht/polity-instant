@@ -98,7 +98,8 @@ export function useDocumentEditor(options: UseDocumentEditorOptions): UseDocumen
     if (document && !isInitialized.current) {
       setTitleState('');
       setContentState((document.content as Value) || DEFAULT_CONTENT);
-      setDiscussionsState((document as Record<string, unknown> & { discussions?: TDiscussion[] }).discussions || []);
+      // discussions field exists on amendment/blog tables, not document — initialize empty
+      setDiscussionsState([]);
       isInitialized.current = true;
     }
   }, [document]);

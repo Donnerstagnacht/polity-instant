@@ -217,7 +217,7 @@ export function useTimelineFilters(initialFilters?: Partial<TimelineFilters>) {
   }, []);
 
   /**
-   * Check if any filters are active (non-default)
+   * Check if filters are active (non-default)
    */
   const hasActiveFilters = useMemo(() => {
     return (
