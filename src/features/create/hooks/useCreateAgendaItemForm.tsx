@@ -44,7 +44,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
   const [positionId, setPositionId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const selectedEvent = userEvents.find((e) => e.id === eventId);
+  const selectedEvent = userEvents.find(e => e.id === eventId);
 
   const handleSubmit = async () => {
     if (!user?.id || !eventId || !title.trim()) return;
@@ -67,8 +67,8 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
         end_time: 0,
         activated_at: 0,
         completed_at: 0,
-        event_id: eventId,
-        amendment_id: amendmentId || '',
+        event_id: eventId || null,
+        amendment_id: amendmentId || null,
       });
 
       if (type === 'election') {
@@ -84,7 +84,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
           voting_start_time: 0,
           voting_end_time: 0,
           agenda_item_id: agendaItemId,
-          position_id: positionId || '',
+          position_id: positionId || null,
           amendment_id: null,
         });
       }
@@ -125,8 +125,8 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                   items={toTypeaheadItems(
                     userEvents,
                     'event',
-                    (e) => e.title || 'Event',
-                    (e) => e.description?.substring(0, 60),
+                    e => e.title || 'Event',
+                    e => e.description?.substring(0, 60)
                   )}
                   value={eventId}
                   onChange={(item: TypeaheadItem | null) => setEventId(item?.id ?? '')}
@@ -201,7 +201,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                     items={toTypeaheadItems(
                       userAmendments,
                       'amendment',
-                      (a) => a.title || 'Amendment',
+                      a => a.title || 'Amendment'
                     )}
                     value={amendmentId}
                     onChange={(item: TypeaheadItem | null) => setAmendmentId(item?.id ?? '')}
@@ -216,8 +216,8 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                     items={toTypeaheadItems(
                       userPositions,
                       'position',
-                      (p) => p.title || 'Position',
-                      (p) => p.description?.substring(0, 60),
+                      p => p.title || 'Position',
+                      p => p.description?.substring(0, 60)
                     )}
                     value={positionId}
                     onChange={(item: TypeaheadItem | null) => setPositionId(item?.id ?? '')}
@@ -261,9 +261,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                   ? [
                       {
                         label: t('pages.create.agendaItem.amendmentLabel'),
-                        value:
-                          userAmendments.find((a) => a.id === amendmentId)?.title ||
-                          amendmentId,
+                        value: userAmendments.find(a => a.id === amendmentId)?.title || amendmentId,
                       },
                     ]
                   : []),
@@ -271,8 +269,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                   ? [
                       {
                         label: t('pages.create.agendaItem.positionLabel'),
-                        value:
-                          userPositions.find((p) => p.id === positionId)?.title || positionId,
+                        value: userPositions.find(p => p.id === positionId)?.title || positionId,
                       },
                     ]
                   : []),

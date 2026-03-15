@@ -18,17 +18,17 @@ export function ElectionSearchInput({
   label,
   placeholder = 'Search for an election...',
 }: ElectionSearchInputProps) {
-  const { pendingElections } = useAgendaState({ includeElectionsForSearch: true })
+  const { electionsForSearch } = useAgendaState({ includeElectionsForSearch: true })
 
   const items = useMemo(
     () =>
       toTypeaheadItems(
-        pendingElections ?? [],
+        electionsForSearch ?? [],
         'election',
         (e) => e.title || 'Election',
         (e) => e.description?.substring(0, 60),
       ),
-    [pendingElections],
+    [electionsForSearch],
   )
 
   const handleChange = (item: TypeaheadItem | null) => {

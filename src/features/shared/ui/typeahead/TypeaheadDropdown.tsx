@@ -36,7 +36,7 @@ export function TypeaheadDropdown({
   className,
 }: TypeaheadDropdownProps) {
   const grouped = useMemo(() => groupResultsByType(results), [results]);
-  const typeOrder: EntityType[] = ['user', 'group', 'amendment', 'event'];
+  const typeOrder: EntityType[] = ['user', 'group', 'amendment', 'event', 'election', 'position'];
 
   if (isLoading) {
     return (

@@ -46,13 +46,13 @@ export function useCreatePaymentForm(): CreateFormConfig {
       let receiver_group_id: string | null = null
 
       if (direction === 'income') {
-        receiver_group_id = groupId
-        if (entityType === 'user') payer_user_id = entityId
-        else payer_group_id = entityGroupId
+        receiver_group_id = groupId || null
+        if (entityType === 'user') payer_user_id = entityId || null
+        else payer_group_id = entityGroupId || null
       } else {
-        payer_group_id = groupId
-        if (entityType === 'user') receiver_user_id = entityId
-        else receiver_group_id = entityGroupId
+        payer_group_id = groupId || null
+        if (entityType === 'user') receiver_user_id = entityId || null
+        else receiver_group_id = entityGroupId || null
       }
 
       await createPayment({
