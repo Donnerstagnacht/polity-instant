@@ -6,7 +6,7 @@ import { timestampSchema, nullableTimestampSchema, jsonBooleanRecordSchema, json
 // ============================================
 const baseNotificationSchema = z.object({
   id: z.string(),
-  recipient_id: z.string(),
+  recipient_id: z.string().nullable(),
   sender_id: z.string().nullable(),
   title: z.string().nullable(),
   message: z.string().nullable(),

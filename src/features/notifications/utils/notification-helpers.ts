@@ -3,17 +3,69 @@
  *
  * Utilities for creating notifications on behalf of entities
  * and sending notifications to entity recipients.
+ *
+ * On the client, uses a Zero mutator dispatch set via setNotificationDispatch().
+ * On the server (server-notify.ts), falls back to Supabase with service_role.
  */
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
+// ── Dispatch pattern ─────────────────────────────────────────────────────────
+// On the client, a Zero-backed dispatch is injected at app startup.
+// On the server, we fall back to Supabase with the service_role key.
+
+export interface CreateNotificationInput {
+  id: string;
+  recipient_id: string | null;
+  sender_id: string | null;
+  title: string | null;
+  message: string | null;
+  type: string | null;
+  action_url: string | null;
+  is_read: boolean;
+  related_entity_type: string | null;
+  on_behalf_of_entity_type: string | null;
+  on_behalf_of_entity_id: string | null;
+  recipient_entity_type: string | null;
+  recipient_entity_id: string | null;
+  related_user_id: string | null;
+  related_group_id: string | null;
+  related_amendment_id: string | null;
+  related_event_id: string | null;
+  related_blog_id: string | null;
+  on_behalf_of_group_id: string | null;
+  on_behalf_of_event_id: string | null;
+  on_behalf_of_amendment_id: string | null;
+  on_behalf_of_blog_id: string | null;
+  recipient_group_id: string | null;
+  recipient_event_id: string | null;
+  recipient_amendment_id: string | null;
+  recipient_blog_id: string | null;
+  category: string | null;
+}
+
+type NotificationDispatchFn = (args: CreateNotificationInput) => Promise<void>;
+
+let _clientDispatch: NotificationDispatchFn | null = null;
+
+/**
+ * Set the dispatch function used to create notifications.
+ * Called once from useNotificationDispatch() at app startup.
+ */
+export function setNotificationDispatch(fn: NotificationDispatchFn | null): void {
+  _clientDispatch = fn;
+}
+
+// ── Server-side Supabase fallback ────────────────────────────────────────────
+// Used when _clientDispatch is null (i.e. on the server in server-notify.ts).
+
 let _supabase: SupabaseClient | null = null;
-function getSupabase() {
+function getServerSupabase(): SupabaseClient {
   if (!_supabase) {
-    const url = process.env.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!url || !key) {
-      throw new Error('Supabase URL and key are required for notification helpers');
+      throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required for server-side notifications');
     }
     _supabase = createClient(url, key);
   }
@@ -215,6 +267,8 @@ export interface NotificationConfig {
 /**
  * Queries for all user IDs who have viewNotifications (or manageNotifications)
  * rights for a given entity. Returns user IDs excluding the sender.
+ *
+ * Server-side only — requires Supabase service_role.
  */
 async function getEntityMembersWithViewRight(
   entityType: EntityType,
@@ -231,7 +285,7 @@ async function getEntityMembersWithViewRight(
   const config = membershipTable[entityType];
   if (!config) return [];
 
-  const supabase = getSupabase();
+  const supabase = getServerSupabase();
 
   // Join membership → role → action_right to find users with viewNotifications
   const { data: members, error } = await supabase
@@ -263,22 +317,17 @@ async function getEntityMembersWithViewRight(
 }
 
 /**
- * Creates a notification via Supabase insert and triggers push notification.
- * For entity notifications, also creates personal copies for all members
- * with viewNotifications rights.
+ * Maps a camelCase NotificationConfig to snake_case CreateNotificationInput.
  */
-export async function createNotification(config: NotificationConfig): Promise<string> {
-  const notificationId = crypto.randomUUID();
-
-  const notification: Record<string, string | boolean | null> = {
+function mapConfigToInput(config: NotificationConfig, notificationId: string): CreateNotificationInput {
+  const input: CreateNotificationInput = {
     id: notificationId,
     type: config.type,
     title: config.title,
     message: config.message,
     action_url: config.actionUrl ?? null,
-    related_entity_type: config.relatedEntityType ?? null,
     is_read: false,
-    created_at: new Date().toISOString(),
+    related_entity_type: config.relatedEntityType ?? null,
     sender_id: config.senderId,
     recipient_id: config.recipientUserId ?? null,
     on_behalf_of_entity_type: config.onBehalfOfEntityType ?? null,
@@ -290,30 +339,70 @@ export async function createNotification(config: NotificationConfig): Promise<st
     related_amendment_id: config.relatedAmendmentId ?? null,
     related_event_id: config.relatedEventId ?? null,
     related_blog_id: config.relatedBlogId ?? null,
+    on_behalf_of_group_id: null,
+    on_behalf_of_event_id: null,
+    on_behalf_of_amendment_id: null,
+    on_behalf_of_blog_id: null,
+    recipient_group_id: null,
+    recipient_event_id: null,
+    recipient_amendment_id: null,
+    recipient_blog_id: null,
+    category: null,
   };
 
   // Map onBehalfOf entity to specific FK columns
   if (config.onBehalfOfEntityType && config.onBehalfOfEntityId) {
-    const key = `on_behalf_of_${config.onBehalfOfEntityType}_id`;
-    notification[key] = config.onBehalfOfEntityId;
+    const entityType = config.onBehalfOfEntityType as 'group' | 'event' | 'amendment' | 'blog';
+    const keyMap = {
+      group: 'on_behalf_of_group_id',
+      event: 'on_behalf_of_event_id',
+      amendment: 'on_behalf_of_amendment_id',
+      blog: 'on_behalf_of_blog_id',
+    } as const;
+    if (keyMap[entityType]) {
+      input[keyMap[entityType]] = config.onBehalfOfEntityId;
+    }
   }
 
   // Map recipient entity to specific FK columns
   if (config.recipientEntityType && config.recipientEntityId) {
-    const key = `recipient_${config.recipientEntityType}_id`;
-    notification[key] = config.recipientEntityId;
+    const entityType = config.recipientEntityType as 'group' | 'event' | 'amendment' | 'blog';
+    const keyMap = {
+      group: 'recipient_group_id',
+      event: 'recipient_event_id',
+      amendment: 'recipient_amendment_id',
+      blog: 'recipient_blog_id',
+    } as const;
+    if (keyMap[entityType]) {
+      input[keyMap[entityType]] = config.recipientEntityId;
+    }
   }
 
-  const { error } = await getSupabase().from('notification').insert(notification);
-  if (error) {
-    console.error('[Notification] Failed to create notification:', error);
-  }
+  return input;
+}
 
-  // Trigger push notification if recipient is a user (client-side only)
-  if (typeof window !== 'undefined' && config.recipientUserId) {
-    const userId = config.recipientUserId;
-    setTimeout(() => {
-      sendPushNotification(userId, {
+/**
+ * Creates a notification.
+ *
+ * On the client (dispatch configured), inserts via Zero mutator.
+ * On the server (no dispatch), inserts via Supabase service_role
+ * and also creates personal copies for entity members.
+ */
+export async function createNotification(config: NotificationConfig): Promise<string> {
+  const notificationId = crypto.randomUUID();
+  const input = mapConfigToInput(config, notificationId);
+
+  if (_clientDispatch) {
+    // ── Client-side: insert via Zero mutator ──────────────────────────
+    try {
+      await _clientDispatch(input);
+    } catch (err) {
+      console.error('[Notification] Failed to create notification:', err);
+    }
+
+    // Trigger push notification (client-side only, fire-and-forget)
+    if (config.recipientUserId) {
+      sendPushNotification(config.recipientUserId, {
         title: config.title,
         message: config.message,
         actionUrl: config.actionUrl,
@@ -322,54 +411,51 @@ export async function createNotification(config: NotificationConfig): Promise<st
       }).catch(error => {
         console.error('[Notification] Failed to send push notification:', error);
       });
-    }, 0);
-  }
+    }
+  } else {
+    // ── Server-side: insert via Supabase service_role ─────────────────
+    const { error } = await getServerSupabase().from('notification').insert(input);
+    if (error) {
+      console.error('[Notification] Failed to create notification:', error);
+    }
 
-  // For entity notifications, also create personal copies for members with viewNotifications right
-  if (config.recipientEntityType && config.recipientEntityId) {
-    getEntityMembersWithViewRight(
-      config.recipientEntityType,
-      config.recipientEntityId,
-      config.senderId,
-    )
-      .then(async (userIds) => {
-        if (userIds.length === 0) return;
+    // For entity notifications, also create personal copies
+    if (config.recipientEntityType && config.recipientEntityId) {
+      getEntityMembersWithViewRight(
+        config.recipientEntityType,
+        config.recipientEntityId,
+        config.senderId,
+      )
+        .then(async (userIds) => {
+          if (userIds.length === 0) return;
 
-        const now = new Date().toISOString();
-        const personalCopies = userIds.map((uid) => ({
-          id: crypto.randomUUID(),
-          type: config.type,
-          title: config.title,
-          message: config.message,
-          action_url: config.actionUrl ?? null,
-          related_entity_type: config.relatedEntityType ?? null,
-          is_read: false,
-          created_at: now,
-          sender_id: config.senderId,
-          recipient_id: uid,
-          // Keep entity context so it appears in the entity tab on /notifications
-          on_behalf_of_entity_type: config.recipientEntityType ?? null,
-          on_behalf_of_entity_id: config.recipientEntityId ?? null,
-          [`on_behalf_of_${config.recipientEntityType}_id`]: config.recipientEntityId,
-          recipient_entity_type: null,
-          recipient_entity_id: null,
-          related_user_id: config.relatedUserId ?? null,
-          related_group_id: config.relatedGroupId ?? null,
-          related_amendment_id: config.relatedAmendmentId ?? null,
-          related_event_id: config.relatedEventId ?? null,
-          related_blog_id: config.relatedBlogId ?? null,
-        }));
+          const personalCopies = userIds.map((uid) => {
+            const copy = mapConfigToInput(
+              {
+                ...config,
+                recipientUserId: uid,
+                recipientEntityType: undefined,
+                recipientEntityId: undefined,
+                // Keep entity context for the entity tab in /notifications
+                onBehalfOfEntityType: config.recipientEntityType,
+                onBehalfOfEntityId: config.recipientEntityId,
+              },
+              crypto.randomUUID(),
+            );
+            return copy;
+          });
 
-        const { error: copyError } = await getSupabase()
-          .from('notification')
-          .insert(personalCopies);
-        if (copyError) {
-          console.error('[Notification] Failed to create personal copies:', copyError);
-        }
-      })
-      .catch((err) => {
-        console.error('[Notification] Error creating personal copies:', err);
-      });
+          const { error: copyError } = await getServerSupabase()
+            .from('notification')
+            .insert(personalCopies);
+          if (copyError) {
+            console.error('[Notification] Failed to create personal copies:', copyError);
+          }
+        })
+        .catch((err: unknown) => {
+          console.error('[Notification] Error creating personal copies:', err);
+        });
+    }
   }
 
   return notificationId;

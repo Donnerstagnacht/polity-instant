@@ -143,14 +143,10 @@ export const finalizeDelegatesFn = createServerFn({ method: 'POST' })
 
       // 4. Send notification
       if (senderId) {
-        // Inline notification creation via Supabase instead of the helper
-        await supabase.from('notification').insert({
-          sender_id: senderId,
-          type: 'delegates_finalized',
-          title: 'Delegates Finalized',
-          message: `Delegates have been finalized for "${event.title || 'Event'}"`,
-          action_url: `/event/${event.id}`,
-          related_event_id: event.id,
+        await notifyDelegatesFinalized({
+          senderId,
+          eventId: event.id,
+          eventTitle: event.title || 'Event',
         })
       }
 

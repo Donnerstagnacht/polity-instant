@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 export function useSubscribeBlog(targetBlogId?: string) {
   const { user: authUser } = useAuth();
   const { blog, subscribers } = useBlogState({ blogId: targetBlogId, includeSubscribers: true });
-  const { subscribeToBlog, unsubscribeFromBlog, sendNotifications } = useBlogActions();
+  const { subscribeToBlog, unsubscribeFromBlog } = useBlogActions();
   const { currentUser } = useUserState();
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscriberCount, setSubscriberCount] = useState(0);
@@ -79,17 +79,14 @@ export function useSubscribeBlog(targetBlogId?: string) {
         blog_id: targetBlogId,
       });
 
-      // Send notification separately — notifications.create is server-only
+      // Send notification (routed through Zero via dispatch pattern)
       try {
-        const notifications = await notifyBlogNewSubscriber({
+        await notifyBlogNewSubscriber({
           senderId: authUser.id,
           senderName: currentUserName,
           blogId: targetBlogId,
           blogTitle: blogTitle,
         });
-        if (Array.isArray(notifications) && notifications.length > 0) {
-          await sendNotifications(notifications);
-        }
       } catch {
         /* notification delivery is best-effort */
       }

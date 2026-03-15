@@ -19,6 +19,7 @@ import { useZeroReady } from '@/providers/zero-provider.tsx';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { createNavItemsUnauthenticated } from '@/features/navigation/nav-items/nav-items-unauthenticated.tsx';
 import { usePreferenceSync } from '@/zero/preferences/usePreferenceSync.ts';
+import { useNotificationDispatch } from '@/features/notifications/hooks/useNotificationDispatch.ts';
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [isClient, setIsClient] = useState(false);
@@ -89,6 +90,7 @@ function UnauthenticatedShell({ children }: { children: ReactNode }) {
 
 function AuthenticatedShell({ children }: { children: ReactNode }) {
   usePreferenceSync();
+  useNotificationDispatch();
   const { screenType, isMobileScreen } = useScreenStore();
   const { navigationType, navigationView } = useNavigationStore();
   const { primaryNavItems, secondaryNavItems } = useNavigation();

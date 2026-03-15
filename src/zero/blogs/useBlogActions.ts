@@ -184,18 +184,6 @@ export function useBlogActions() {
     [zero]
   )
 
-  /** Send multiple notifications silently (best-effort) */
-  const sendNotifications = useCallback(
-    async (notifications: Array<Parameters<typeof mutators.notifications.createNotification>[0]>) => {
-      for (const n of notifications) {
-        try {
-          await zero.mutate(mutators.notifications.createNotification(n))
-        } catch { /* notification delivery is best-effort */ }
-      }
-    },
-    [zero]
-  )
-
   return {
     // CRUD
     createBlog,
@@ -217,6 +205,5 @@ export function useBlogActions() {
     createBlogFull,
     subscribeToBlog,
     unsubscribeFromBlog,
-    sendNotifications,
   }
 }

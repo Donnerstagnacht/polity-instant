@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS public.event_participant (
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
   group_id UUID,
   status TEXT,
-  role_id UUID,
+  role_id UUID REFERENCES public.role (id) ON DELETE SET NULL,
   visibility TEXT,
   instance_date TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()

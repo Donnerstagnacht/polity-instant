@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS public.blog_blogger (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   blog_id UUID NOT NULL REFERENCES public.blog (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  role_id UUID,
+  role_id UUID REFERENCES public.role (id) ON DELETE SET NULL,
   status TEXT,
   visibility TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()

@@ -3,7 +3,7 @@ import { table, string, number, boolean, json } from '@rocicorp/zero'
 export const notification = table('notification')
   .columns({
     id: string(),
-    recipient_id: string(),
+    recipient_id: string().optional(),
     sender_id: string().optional(),
     title: string().optional(),
     message: string().optional(),

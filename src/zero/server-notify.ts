@@ -20,7 +20,7 @@ type HelperFn = (...args: never[]) => Promise<unknown>
  * Swallows all errors so it never affects the mutation.
  */
 export function fireNotification(helperName: string, params: Params): void {
-  const fn = (helpers as Record<string, HelperFn | undefined>)[helperName]
+  const fn = (helpers as unknown as Record<string, HelperFn | undefined>)[helperName]
   if (typeof fn !== 'function') {
     console.error(LOG, `Unknown helper: ${helperName}`)
     return
