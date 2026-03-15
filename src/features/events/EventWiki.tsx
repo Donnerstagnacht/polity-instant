@@ -20,7 +20,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/features/shared/ui/ui/alert-dialog';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { GRADIENTS } from '@/features/users/state/gradientColors';
 import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
@@ -101,17 +107,25 @@ export function EventWiki({ eventId }: EventWikiProps) {
           )}
           {event.event_type && (
             <Badge variant="outline">
-              {t(`pages.create.event.eventTypes.${event.event_type === 'delegate_assembly' ? 'delegateAssembly' : event.event_type === 'general_assembly' ? 'generalAssembly' : event.event_type === 'on_invite' ? 'onInvite' : 'open'}`)}
+              {t(
+                `pages.create.event.eventTypes.${event.event_type === 'delegate_assembly' ? 'delegateAssembly' : event.event_type === 'general_assembly' ? 'generalAssembly' : event.event_type === 'on_invite' ? 'onInvite' : 'open'}`
+              )}
             </Badge>
           )}
           {event.recurrence_pattern && (
             <Badge variant="outline">
               <Repeat className="mr-1 h-3 w-3" />
-              {event.recurrence_pattern === 'daily' ? 'Täglich' :
-               event.recurrence_pattern === 'weekly' ? 'Wöchentlich' :
-               event.recurrence_pattern === 'monthly' ? 'Monatlich' :
-               event.recurrence_pattern === 'yearly' ? 'Jährlich' :
-               event.recurrence_pattern === 'four-yearly' ? '4 Jährig' : event.recurrence_pattern}
+              {event.recurrence_pattern === 'daily'
+                ? 'Täglich'
+                : event.recurrence_pattern === 'weekly'
+                  ? 'Wöchentlich'
+                  : event.recurrence_pattern === 'monthly'
+                    ? 'Monatlich'
+                    : event.recurrence_pattern === 'yearly'
+                      ? 'Jährlich'
+                      : event.recurrence_pattern === 'four-yearly'
+                        ? '4 Jährig'
+                        : event.recurrence_pattern}
             </Badge>
           )}
         </div>
@@ -127,7 +141,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
               {t('components.labels.organizedBy')} {event.creator?.first_name || 'Unknown'}
             </p>
             {event.group && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 {t('components.labels.partOf')} {event.group.name}
               </p>
             )}
@@ -135,14 +149,37 @@ export function EventWiki({ eventId }: EventWikiProps) {
         </div>
       </div>
 
+      {/* Event Image */}
+      {event.image_url && (
+        <div className="mb-8">
+          <img
+            src={event.image_url}
+            alt={event.title ?? ''}
+            className="mx-auto h-64 w-full max-w-4xl rounded-lg object-cover shadow-lg"
+          />
+        </div>
+      )}
+
       {/* Stats Bar */}
       <StatsBar
         stats={[
-          { value: event.participant_count ?? participation.participantCount, labelKey: 'components.labels.participants' },
+          {
+            value: event.participant_count ?? participation.participantCount,
+            labelKey: 'components.labels.participants',
+          },
           { value: subscriberCount, labelKey: 'components.labels.subscribers' },
-          { value: event.election_count ?? electionsCount, labelKey: 'components.labels.elections' },
-          { value: event.amendment_count ?? amendmentsCount, labelKey: 'components.labels.amendments' },
-          { value: event.open_change_request_count ?? openChangeRequestsCount, labelKey: 'components.labels.openChangeRequests' },
+          {
+            value: event.election_count ?? electionsCount,
+            labelKey: 'components.labels.elections',
+          },
+          {
+            value: event.amendment_count ?? amendmentsCount,
+            labelKey: 'components.labels.amendments',
+          },
+          {
+            value: event.open_change_request_count ?? openChangeRequestsCount,
+            labelKey: 'components.labels.openChangeRequests',
+          },
         ]}
       />
 
@@ -202,8 +239,6 @@ export function EventWiki({ eventId }: EventWikiProps) {
         />
       )}
 
-
-
       {/* Location Card */}
       {event.location_type && (
         <Card className={`mb-6 overflow-hidden ${GRADIENTS[2]}`}>
@@ -223,34 +258,31 @@ export function EventWiki({ eventId }: EventWikiProps) {
             {event.location_type === 'online' ? (
               <>
                 {event.location_url && (
-                  <div className="flex items-center justify-between rounded-lg border bg-background/80 p-4 shadow-sm backdrop-blur-sm">
+                  <div className="bg-background/80 flex items-center justify-between rounded-lg border p-4 shadow-sm backdrop-blur-sm">
                     <span className="font-medium">Meeting Link:</span>
-                    <a 
-                      href={event.location_url} 
-                      target="_blank" 
+                    <a
+                      href={event.location_url}
+                      target="_blank"
                       rel="noopener noreferrer"
-                      className="text-primary hover:underline truncate max-w-[60%]"
+                      className="text-primary max-w-[60%] truncate hover:underline"
                     >
                       {event.location_url}
                     </a>
                   </div>
                 )}
-
               </>
             ) : event.location_type === 'physical' ? (
-              <div className="rounded-lg border bg-background/80 p-4 shadow-sm backdrop-blur-sm space-y-2">
+              <div className="bg-background/80 space-y-2 rounded-lg border p-4 shadow-sm backdrop-blur-sm">
                 {event.location_name && (
-                  <p className="font-semibold text-lg">{event.location_name}</p>
+                  <p className="text-lg font-semibold">{event.location_name}</p>
                 )}
                 {event.location_address && (
-                  <p className="text-muted-foreground">
-                    {event.location_address}
-                  </p>
+                  <p className="text-muted-foreground">{event.location_address}</p>
                 )}
               </div>
             ) : event.location_name ? (
-              <div className="flex items-center gap-2 rounded-lg border bg-background/80 p-4 shadow-sm backdrop-blur-sm">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
+              <div className="bg-background/80 flex items-center gap-2 rounded-lg border p-4 shadow-sm backdrop-blur-sm">
+                <MapPin className="text-muted-foreground h-4 w-4" />
                 <span>{event.location_name}</span>
               </div>
             ) : null}
@@ -328,20 +360,23 @@ export function EventWiki({ eventId }: EventWikiProps) {
                             {/* Display holders */}
                             {holders.length > 0 ? (
                               <div className="space-y-2">
-                                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
                                   Current {holders.length === 1 ? 'Holder' : 'Holders'}
                                 </p>
-                                {holders.map((holder) => (
+                                {holders.map(holder => (
                                   <div
                                     key={holder.id}
-                                    className="cursor-pointer rounded-lg border bg-background/80 p-3 shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
+                                    className="bg-background/80 cursor-pointer rounded-lg border p-3 shadow-sm backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
                                     onClick={() => navigate({ to: `/user/${holder.user?.id}` })}
                                   >
                                     <div className="flex items-center gap-3">
-                                      <Avatar className="h-10 w-10 ring-2 ring-background">
+                                      <Avatar className="ring-background h-10 w-10 ring-2">
                                         <AvatarImage
                                           src={holder.user?.avatar ?? undefined}
-                                          alt={`${holder.user?.first_name ?? ''} ${holder.user?.last_name ?? ''}`.trim() || 'User'}
+                                          alt={
+                                            `${holder.user?.first_name ?? ''} ${holder.user?.last_name ?? ''}`.trim() ||
+                                            'User'
+                                          }
                                         />
                                         <AvatarFallback>
                                           {holder.user?.first_name?.[0]?.toUpperCase() || '?'}
@@ -349,10 +384,11 @@ export function EventWiki({ eventId }: EventWikiProps) {
                                       </Avatar>
                                       <div className="min-w-0 flex-1">
                                         <p className="truncate font-semibold">
-                                          {`${holder.user?.first_name ?? ''} ${holder.user?.last_name ?? ''}`.trim() || 'Unknown'}
+                                          {`${holder.user?.first_name ?? ''} ${holder.user?.last_name ?? ''}`.trim() ||
+                                            'Unknown'}
                                         </p>
                                         {holder.user?.handle && (
-                                          <p className="truncate text-sm text-muted-foreground">
+                                          <p className="text-muted-foreground truncate text-sm">
                                             @{holder.user.handle}
                                           </p>
                                         )}
@@ -362,8 +398,8 @@ export function EventWiki({ eventId }: EventWikiProps) {
                                 ))}
                               </div>
                             ) : (
-                              <div className="rounded-lg border border-dashed border-border/50 bg-background/50 p-4 text-center">
-                                <p className="text-sm font-medium text-muted-foreground">
+                              <div className="border-border/50 bg-background/50 rounded-lg border border-dashed p-4 text-center">
+                                <p className="text-muted-foreground text-sm font-medium">
                                   Vacant Position
                                 </p>
                               </div>
@@ -418,16 +454,16 @@ export function EventWiki({ eventId }: EventWikiProps) {
                   </CardHeader>
                   <CardContent>
                     {election.position && (
-                      <div className="rounded-md border bg-background/50 p-3">
+                      <div className="bg-background/50 rounded-md border p-3">
                         <div className="text-sm font-medium">{election.position.title}</div>
                         {election.position.description && (
-                          <div className="mt-1 text-xs text-muted-foreground">
+                          <div className="text-muted-foreground mt-1 text-xs">
                             {election.position.description}
                           </div>
                         )}
                       </div>
                     )}
-                    <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
+                    <div className="text-muted-foreground mt-3 flex items-center justify-between text-sm">
                       <span>Kandidaten: {election.candidates?.length || 0}</span>
                       {election.majority_type && (
                         <Badge variant="outline" className="text-xs">
@@ -465,12 +501,12 @@ export function EventWiki({ eventId }: EventWikiProps) {
               </CardHeader>
               <CardContent>
                 {selectedElection.position && (
-                  <div className="rounded-md border bg-background/50 p-3">
+                  <div className="bg-background/50 rounded-md border p-3">
                     <div className="text-sm font-semibold">
                       Position: {selectedElection.position.title}
                     </div>
                     {selectedElection.position.description && (
-                      <div className="mt-1 text-xs text-muted-foreground">
+                      <div className="text-muted-foreground mt-1 text-xs">
                         {selectedElection.position.description}
                       </div>
                     )}
@@ -505,25 +541,25 @@ export function EventWiki({ eventId }: EventWikiProps) {
 
       {/* Participants Dialog */}
       <Dialog open={participantsDialogOpen} onOpenChange={setParticipantsDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-h-[80vh] max-w-3xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Event Participants</DialogTitle>
             <DialogDescription>
               {event.participants?.length || 0} participant(s) registered for this event
             </DialogDescription>
           </DialogHeader>
-          
+
           {event.event_type === 'delegate_assembly' ? (
             <Tabs defaultValue="participants" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="participants">Participants</TabsTrigger>
                 <TabsTrigger value="delegates">Delegates by Subgroup</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="participants" className="space-y-4">
                 <div className="grid gap-4 py-4 sm:grid-cols-2">
                   {event.participants && event.participants.length > 0 ? (
-                    event.participants.map((participant) => (
+                    event.participants.map(participant => (
                       <Card
                         key={participant.id}
                         className="cursor-pointer transition-all duration-300 hover:shadow-lg"
@@ -533,18 +569,22 @@ export function EventWiki({ eventId }: EventWikiProps) {
                           <Avatar className="h-12 w-12">
                             <AvatarImage
                               src={participant.user?.avatar ?? undefined}
-                              alt={`${participant.user?.first_name ?? ''} ${participant.user?.last_name ?? ''}`.trim() || 'User'}
+                              alt={
+                                `${participant.user?.first_name ?? ''} ${participant.user?.last_name ?? ''}`.trim() ||
+                                'User'
+                              }
                             />
                             <AvatarFallback>
                               {participant.user?.first_name?.[0]?.toUpperCase() || '?'}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1 space-y-1">
-                            <p className="font-semibold leading-none">
-                              {`${participant.user?.first_name ?? ''} ${participant.user?.last_name ?? ''}`.trim() || 'Unknown'}
+                            <p className="leading-none font-semibold">
+                              {`${participant.user?.first_name ?? ''} ${participant.user?.last_name ?? ''}`.trim() ||
+                                'Unknown'}
                             </p>
                             {participant.user?.handle && (
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-muted-foreground text-sm">
                                 @{participant.user.handle}
                               </p>
                             )}
@@ -558,13 +598,13 @@ export function EventWiki({ eventId }: EventWikiProps) {
                       </Card>
                     ))
                   ) : (
-                    <div className="col-span-2 py-8 text-center text-muted-foreground">
+                    <div className="text-muted-foreground col-span-2 py-8 text-center">
                       No participants yet
                     </div>
                   )}
                 </div>
               </TabsContent>
-              
+
               <TabsContent value="delegates" className="space-y-4">
                 <DelegatesOverview eventId={event.id} groupId={event.group?.id} />
               </TabsContent>
@@ -572,7 +612,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
           ) : (
             <div className="grid gap-4 py-4 sm:grid-cols-2">
               {event.participants && event.participants.length > 0 ? (
-                event.participants.map((participant) => (
+                event.participants.map(participant => (
                   <Card
                     key={participant.id}
                     className="cursor-pointer transition-all duration-300 hover:shadow-lg"
@@ -582,18 +622,22 @@ export function EventWiki({ eventId }: EventWikiProps) {
                       <Avatar className="h-12 w-12">
                         <AvatarImage
                           src={participant.user?.avatar ?? undefined}
-                          alt={`${participant.user?.first_name ?? ''} ${participant.user?.last_name ?? ''}`.trim() || 'User'}
+                          alt={
+                            `${participant.user?.first_name ?? ''} ${participant.user?.last_name ?? ''}`.trim() ||
+                            'User'
+                          }
                         />
                         <AvatarFallback>
                           {participant.user?.first_name?.[0]?.toUpperCase() || '?'}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 space-y-1">
-                        <p className="font-semibold leading-none">
-                          {`${participant.user?.first_name ?? ''} ${participant.user?.last_name ?? ''}`.trim() || 'Unknown'}
+                        <p className="leading-none font-semibold">
+                          {`${participant.user?.first_name ?? ''} ${participant.user?.last_name ?? ''}`.trim() ||
+                            'Unknown'}
                         </p>
                         {participant.user?.handle && (
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-muted-foreground text-sm">
                             @{participant.user.handle}
                           </p>
                         )}
@@ -607,7 +651,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
                   </Card>
                 ))
               ) : (
-                <div className="col-span-2 py-8 text-center text-muted-foreground">
+                <div className="text-muted-foreground col-span-2 py-8 text-center">
                   No participants yet
                 </div>
               )}

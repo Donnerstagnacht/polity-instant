@@ -29,8 +29,10 @@ export const eventsTranslations = {
     dateTime: {
       title: 'Datum & Uhrzeit',
       description: 'Wann findet diese Veranstaltung statt?',
-      startDate: 'Startdatum & Uhrzeit *',
-      endDate: 'Enddatum & Uhrzeit',
+      startDate: 'Startdatum *',
+      startTime: 'Startzeit',
+      endDate: 'Enddatum',
+      endTime: 'Endzeit',
     },
     locationCapacity: {
       title: 'Ort & Kapazität',

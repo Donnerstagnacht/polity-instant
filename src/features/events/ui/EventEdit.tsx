@@ -242,19 +242,39 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
                 </Label>
                 <Input
                   id="startDate"
-                  type="datetime-local"
+                  type="date"
                   value={formData.startDate}
                   onChange={e => updateField('startDate', e.target.value)}
                   required
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="startTime">
+                  {t('features.events.editPage.dateTime.startTime')}
+                </Label>
+                <Input
+                  id="startTime"
+                  type="time"
+                  value={formData.startTime}
+                  onChange={e => updateField('startTime', e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="endDate">{t('features.events.editPage.dateTime.endDate')}</Label>
                 <Input
                   id="endDate"
-                  type="datetime-local"
+                  type="date"
                   value={formData.endDate}
                   onChange={e => updateField('endDate', e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="endTime">{t('features.events.editPage.dateTime.endTime')}</Label>
+                <Input
+                  id="endTime"
+                  type="time"
+                  value={formData.endTime}
+                  onChange={e => updateField('endTime', e.target.value)}
                 />
               </div>
             </div>

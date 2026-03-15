@@ -12,7 +12,9 @@ export interface EventFormData {
   description: string;
   location: string;
   startDate: string;
+  startTime: string;
   endDate: string;
+  endTime: string;
   capacity: string;
   groupId: string;
   imageURL: string;
@@ -33,7 +35,9 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
     description: '',
     location: '',
     startDate: '',
+    startTime: '',
     endDate: '',
+    endTime: '',
     capacity: '',
     groupId: '',
     imageURL: '',
@@ -70,19 +74,26 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
   useEffect(() => {
     if (event && !initializedRef.current) {
       initializedRef.current = true;
-      // Format dates for datetime-local input
-      const formatDateForInput = (date: string | number | null | undefined) => {
+      // Format dates into separate date and time parts
+      const formatDatePart = (date: string | number | null | undefined) => {
         if (!date) return '';
         const d = new Date(date);
-        return d.toISOString().slice(0, 16);
+        return d.toISOString().slice(0, 10); // YYYY-MM-DD
+      };
+      const formatTimePart = (date: string | number | null | undefined) => {
+        if (!date) return '';
+        const d = new Date(date);
+        return d.toISOString().slice(11, 16); // HH:mm
       };
 
       setFormData({
         title: event.title || '',
         description: event.description || '',
         location: event.location_name || '',
-        startDate: formatDateForInput(event.start_date),
-        endDate: formatDateForInput(event.end_date),
+        startDate: formatDatePart(event.start_date),
+        startTime: formatTimePart(event.start_date),
+        endDate: formatDatePart(event.end_date),
+        endTime: formatTimePart(event.end_date),
         capacity: event.capacity?.toString() || '',
         groupId: event.group_id || '',
         imageURL: event.image_url || '',
@@ -114,8 +125,8 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           title: formData.title,
           description: formData.description || null,
           location_name: formData.location || null,
-          start_date: formData.startDate ? new Date(formData.startDate).getTime() : null,
-          end_date: formData.endDate ? new Date(formData.endDate).getTime() : null,
+          start_date: formData.startDate ? new Date(`${formData.startDate}T${formData.startTime || '00:00'}`).getTime() : null,
+          end_date: formData.endDate ? new Date(`${formData.endDate}T${formData.endTime || '00:00'}`).getTime() : null,
           is_public: formData.isPublic,
           visibility: formData.isPublic ? 'public' : 'private',
           image_url: formData.imageURL || null,
@@ -135,8 +146,8 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           title: formData.title,
           description: formData.description,
           location_name: formData.location,
-          start_date: new Date(formData.startDate).getTime(),
-          end_date: formData.endDate ? new Date(formData.endDate).getTime() : undefined,
+          start_date: formData.startDate ? new Date(`${formData.startDate}T${formData.startTime || '00:00'}`).getTime() : undefined,
+          end_date: formData.endDate ? new Date(`${formData.endDate}T${formData.endTime || '00:00'}`).getTime() : undefined,
           is_public: formData.isPublic,
           image_url: formData.imageURL || null,
           capacity: formData.capacity ? parseInt(formData.capacity, 10) : null,
