@@ -1,12 +1,16 @@
-import { createFileRoute, Link, Navigate } from '@tanstack/react-router'
+import { createFileRoute, Link, Navigate, useSearch, useNavigate } from '@tanstack/react-router'
 import { Button } from '@/features/shared/ui/ui/button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/features/shared/ui/ui/card'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { useAuth } from '@/providers/auth-provider'
 import { useZeroReady } from '@/providers/zero-provider'
+import { OnboardingWizard } from '@/features/auth/onboarding/OnboardingWizard'
 
 export const Route = createFileRoute('/')({
   component: HomePage,
+  validateSearch: (search: Record<string, unknown>) => ({
+    onboarding: search.onboarding === 'true' ? ('true' as const) : undefined,
+  }),
 })
 
 const featureIcons = ['👥', '📅', '📝', '💬'] as const
@@ -16,6 +20,18 @@ function HomePage() {
   const { t } = useTranslation()
   const { user } = useAuth()
   const zeroReady = useZeroReady()
+  const navigate = useNavigate()
+  const { onboarding } = useSearch({ from: '/' })
+
+  if (user && zeroReady && onboarding === 'true') {
+    return (
+      <OnboardingWizard
+        userId={user.id}
+        userEmail={user.email}
+        onComplete={() => navigate({ to: '/home' })}
+      />
+    )
+  }
 
   if (user && zeroReady) {
     return <Navigate to="/home" />

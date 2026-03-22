@@ -17,10 +17,7 @@ interface VerificationResult {
 
 interface UseAuthVerificationReturn {
   isVerifying: boolean;
-  verifyAndInitialize: (
-    email: string,
-    code: string
-  ) => Promise<VerificationResult>;
+  verifyAndInitialize: (email: string, code: string) => Promise<VerificationResult>;
 }
 
 /**
@@ -33,10 +30,7 @@ export function useAuthVerification(): UseAuthVerificationReturn {
   const { verifyMagicCode } = useAuthStore();
 
   const verifyAndInitialize = useCallback(
-    async (
-      email: string,
-      code: string
-    ): Promise<VerificationResult> => {
+    async (email: string, code: string): Promise<VerificationResult> => {
       setIsVerifying(true);
       console.log('🔐 Starting verification and initialization flow');
 
@@ -47,23 +41,38 @@ export function useAuthVerification(): UseAuthVerificationReturn {
 
         if (!verifySuccess) {
           console.log('❌ Verification failed');
-          return { success: false, isNewUser: false, error: t('features.auth.errors.invalidOrExpiredCode') };
+          return {
+            success: false,
+            isNewUser: false,
+            error: t('features.auth.errors.invalidOrExpiredCode'),
+          };
         }
 
         console.log('✅ Magic code verified successfully');
 
         // Step 2: Get the authenticated user from Supabase session
         const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
 
         if (!user?.id) {
           console.error('❌ No user after verification');
-          return { success: false, isNewUser: false, error: t('features.auth.errors.authenticationFailed') };
+          return {
+            success: false,
+            isNewUser: false,
+            error: t('features.auth.errors.authenticationFailed'),
+          };
         }
 
         console.log('✅ User verified:', user.id);
 
-        return { success: true, isNewUser: false };
+        // Detect new user: created_at within the last 60 seconds means first-time signup
+        const createdAt = new Date(user.created_at).getTime();
+        const now = Date.now();
+        const isNewUser = now - createdAt < 60_000;
+
+        return { success: true, isNewUser };
       } catch (error) {
         console.error('❌ Verification flow failed:', error);
         const errorMessage =
