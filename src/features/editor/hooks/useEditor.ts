@@ -48,6 +48,7 @@ import {
   adaptDocumentToEntity,
   adaptGroupDocumentToEntity,
 } from '../logic/entity-adapter';
+import { useRealtimeSync } from './useRealtimeSync';
 import type {
   EditorEntityType,
   EditorEntity,
@@ -135,8 +136,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
     switch (entityType) {
       case 'amendment': {
         if (!amendmentDocsCollabs) return null;
-        const docs = amendmentDocsCollabs.documents;
-        const doc = Array.isArray(docs) ? docs[0] : undefined;
+        const doc = amendmentDocsCollabs.document;
         if (!doc) return null;
         return adaptAmendmentToEntity(amendmentDocsCollabs, doc);
       }
@@ -160,18 +160,32 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
   // Get the content entity ID (document ID for amendments, blog ID for blogs, etc.)
   const contentEntityId = useMemo(() => {
     if (entityType === 'amendment') {
-      const docs = amendmentDocsCollabs?.documents;
-      const doc = Array.isArray(docs) ? docs[0] : undefined;
-      return doc?.id ?? '';
+      return amendmentDocsCollabs?.document?.id ?? '';
     }
     return entityId;
   }, [entityType, entityId, amendmentDocsCollabs]);
+
+  // Handler for remote content arriving via broadcast (does NOT persist to Zero)
+  const handleRemoteContent = useCallback((remoteContent: Value) => {
+    if (!isInitialized.current) return;
+    lastRemoteUpdate.current = Date.now();
+    setContentState(remoteContent);
+  }, []);
+
+  // Real-time content broadcasting via Supabase
+  const { broadcastContent } = useRealtimeSync({
+    entityId: contentEntityId,
+    userId,
+    content,
+    onRemoteContent: handleRemoteContent,
+    enabled: !!contentEntityId && !!userId,
+  });
 
   // Initialize entity data
   useEffect(() => {
     if (entity && !isInitialized.current) {
       setTitleState(entity.title || '');
-      setContentState(entity.content || DEFAULT_EDITOR_CONTENT);
+      setContentState(entity.content?.length ? entity.content : DEFAULT_EDITOR_CONTENT);
       setDiscussionsState(entity.discussions || []);
       setModeState(entity.editingMode || 'edit');
       isInitialized.current = true;
@@ -194,24 +208,23 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
     }
   }, [entity?.discussions, discussions]);
 
-  // Sync remote content updates without destroying local selection
+  // Sync remote content updates without destroying local selection.
+  // Only applies when a genuinely new remote version arrives and the user
+  // is NOT actively typing (no pending local changes, no recent save).
   useEffect(() => {
     if (!entity || !isInitialized.current) return;
+    // Skip if we have an active local edit in progress
+    if (isLocalChange.current || hasUnsavedChanges) return;
+    // Skip if a save just happened (the poke is echoing our own write)
+    if (Date.now() - lastSaveTime.current < 2000) return;
 
     const remoteUpdatedAt = entity.updatedAt || 0;
-    const remoteContent = entity.content || DEFAULT_EDITOR_CONTENT;
-    const hasRemoteChanges = JSON.stringify(remoteContent) !== JSON.stringify(content);
+    if (remoteUpdatedAt <= lastRemoteUpdate.current) return;
 
-    if (
-      remoteUpdatedAt > lastRemoteUpdate.current &&
-      hasRemoteChanges &&
-      !isLocalChange.current &&
-      Date.now() - lastSaveTime.current > 1500
-    ) {
-      setContentState(remoteContent);
-      lastRemoteUpdate.current = remoteUpdatedAt;
-    }
-  }, [entity?.content, entity?.updatedAt, content]);
+    const remoteContent = entity.content?.length ? entity.content : DEFAULT_EDITOR_CONTENT;
+    setContentState(remoteContent);
+    lastRemoteUpdate.current = remoteUpdatedAt;
+  }, [entity?.content, entity?.updatedAt, hasUnsavedChanges]);
 
   // Reset local change flag
   useEffect(() => {
@@ -255,8 +268,14 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       }
 
       isLocalChange.current = true;
-      setContentState(newContent);
+      // Don't call setContentState — the editor already has this content.
+      // Updating React state here would trigger a re-render cascade:
+      //   useEditor → EditorView → PlateEditor → controlled value effect
+      // Content state only updates from external sources (init, remote, restore).
       setHasUnsavedChanges(true);
+
+      // Broadcast to peers via Supabase Realtime
+      broadcastContent(newContent);
 
       // Clear pending trailing save
       if (contentSaveTimeoutRef.current) {
@@ -274,7 +293,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         }, 1000);
       }
     },
-    [contentEntityId, userId, saveContent]
+    [contentEntityId, userId, saveContent, broadcastContent]
   );
 
   // Title change handler - debounced
@@ -287,11 +306,13 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       }
 
       titleSaveTimeoutRef.current = setTimeout(async () => {
-        if (!contentEntityId || !userId) return;
+        if (!userId) return;
 
         setIsSavingTitle(true);
         try {
-          if (entityType === 'blog') {
+          if (entityType === 'amendment') {
+            await zero.mutate(mutators.amendments.update({ id: entityId, title: newTitle }));
+          } else if (entityType === 'blog') {
             await zero.mutate(mutators.blogs.update({ id: contentEntityId, title: newTitle }));
           } else {
             // Documents don't have a title field — title lives on the parent entity
@@ -304,7 +325,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         }
       }, 500);
     },
-    [entityType, contentEntityId, userId, zero]
+    [entityType, entityId, contentEntityId, userId, zero]
   );
 
   // Discussions change handler
@@ -316,11 +337,12 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       if (!contentEntityId || !userId) return;
 
       try {
-        const serializedDiscussions: ReadonlyJSONValue = JSON.parse(JSON.stringify(newDiscussions));
+        // Only blogs store discussions as a JSON column on the entity row.
+        // Documents don't have a discussions column — their discussion data
+        // lives in the thread/comment tables managed by the discussion plugin.
         if (entityType === 'blog') {
+          const serializedDiscussions: ReadonlyJSONValue = JSON.parse(JSON.stringify(newDiscussions));
           await zero.mutate(mutators.blogs.update({ id: contentEntityId, discussions: serializedDiscussions }));
-        } else {
-          await zero.mutate(mutators.documents.updateContent({ id: contentEntityId, content: serializedDiscussions }));
         }
       } catch (error) {
         console.error('Failed to save discussions:', error);

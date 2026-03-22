@@ -156,6 +156,7 @@ export const groupQueries = {
   amendmentsWithDocuments: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
     zql.amendment
       .where('group_id', groupId)
+      .where('document_id', 'IS', null)
       .related('documents', q => q.related('collaborators', cq => cq.related('user')))
   ),
 

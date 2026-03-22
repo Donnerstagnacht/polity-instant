@@ -69,6 +69,7 @@ alter table "public"."agenda_item" enable row level security;
     "group_id" uuid,
     "event_id" uuid,
     "clone_source_id" uuid,
+    "document_id" uuid,
     "supporters" integer not null default 0,
     "supporters_required" integer,
     "supporters_percentage" numeric,
@@ -227,7 +228,7 @@ alter table "public"."blog_hashtag" enable row level security;
     "id" uuid not null default gen_random_uuid(),
     "blog_id" uuid not null,
     "user_id" uuid not null,
-    "vote" text,
+    "vote" integer,
     "created_at" timestamp with time zone not null default now()
       );
 
@@ -308,7 +309,7 @@ alter table "public"."comment" enable row level security;
     "id" uuid not null default gen_random_uuid(),
     "comment_id" uuid not null,
     "user_id" uuid not null,
-    "vote" text,
+    "vote" integer,
     "created_at" timestamp with time zone not null default now()
       );
 
@@ -1100,7 +1101,7 @@ alter table "public"."statement_hashtag" enable row level security;
     "id" uuid not null default gen_random_uuid(),
     "statement_id" uuid not null,
     "user_id" uuid not null,
-    "vote" text,
+    "vote" integer,
     "created_at" timestamp with time zone not null default now()
       );
 
@@ -1250,7 +1251,7 @@ alter table "public"."thread" enable row level security;
     "id" uuid not null default gen_random_uuid(),
     "thread_id" uuid not null,
     "user_id" uuid not null,
-    "vote" text,
+    "vote" integer,
     "created_at" timestamp with time zone not null default now()
       );
 
@@ -2212,6 +2213,10 @@ alter table "public"."agenda_item" validate constraint "agenda_item_creator_id_f
 alter table "public"."amendment" add constraint "amendment_created_by_id_fkey" FOREIGN KEY (created_by_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
 
 alter table "public"."amendment" validate constraint "amendment_created_by_id_fkey";
+
+alter table "public"."amendment" add constraint "amendment_document_id_fkey" FOREIGN KEY (document_id) REFERENCES public.document(id) ON DELETE SET NULL not valid;
+
+alter table "public"."amendment" validate constraint "amendment_document_id_fkey";
 
 alter table "public"."amendment_collaborator" add constraint "amendment_collaborator_amendment_id_fkey" FOREIGN KEY (amendment_id) REFERENCES public.amendment(id) ON DELETE CASCADE not valid;
 

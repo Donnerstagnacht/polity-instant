@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS public.blog_support_vote (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   blog_id UUID NOT NULL REFERENCES public.blog (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  vote TEXT,
+  vote INTEGER,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

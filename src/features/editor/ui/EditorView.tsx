@@ -28,6 +28,7 @@ import { InviteCollaboratorDialog } from './InviteCollaboratorDialog';
 import { EditorHeader } from './EditorHeader';
 import type { ResolvedSuggestion } from '@/features/shared/ui/ui-platejs/block-suggestion.tsx';
 import type { EditorViewProps, EditorUser, TDiscussion } from '../types';
+import { generateUserColor } from '../logic/editor-helpers';
 
 export function EditorView({
   entityType,
@@ -98,8 +99,20 @@ export function EditorView({
     enabled: capabilities.presence,
   });
 
+  // Map of online peer userId → peer (for collaborator online indicators)
+  const onlinePeerMap = useMemo(() => {
+    const map = new Map<string, typeof onlinePeers[number]>();
+    for (const peer of onlinePeers) {
+      map.set(peer.userId, peer);
+    }
+    return map;
+  }, [onlinePeers]);
+
   // Build users map for the editor
   const editorUsers = useEditorUsers(entity, currentUser);
+
+  // Track which remote users have active cursors in the editor
+  const [activeCursorUserIds, setActiveCursorUserIds] = useState<Set<string>>(new Set());
 
   // Auto-assign suggestion IDs
   useSuggestionIdAssignment({
@@ -434,22 +447,36 @@ export function EditorView({
               <span className="text-sm text-muted-foreground">
                 {t('features.editor.metadata.collaborators')}:
               </span>
-              {entity.collaborators.map(collab => (
-                <div
-                  key={collab.id}
-                  className="flex items-center gap-1 rounded-full bg-muted px-2 py-1"
-                >
-                  <Avatar className="h-5 w-5">
-                    {collab.user.avatarUrl ? (
-                      <AvatarImage src={collab.user.avatarUrl} alt={collab.user.name} />
-                    ) : null}
-                    <AvatarFallback className="text-xs">
-                      {collab.user.name?.[0]?.toUpperCase() || '?'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-xs">{collab.user.name || 'Unknown'}</span>
-                </div>
-              ))}
+              {entity.collaborators.map(collab => {
+                const isOnline = onlinePeerMap.has(collab.user.id) || collab.user.id === userId || activeCursorUserIds.has(collab.user.id);
+                const userColor = generateUserColor(collab.user.id);
+
+                return (
+                  <div
+                    key={collab.id}
+                    className="relative flex items-center gap-1 rounded-full bg-muted px-2 py-1"
+                    style={{ borderWidth: 2, borderStyle: 'solid', borderColor: userColor }}
+                  >
+                    <div className="relative">
+                      <Avatar className="h-5 w-5">
+                        {collab.user.avatarUrl ? (
+                          <AvatarImage src={collab.user.avatarUrl} alt={collab.user.name} />
+                        ) : null}
+                        <AvatarFallback className="text-xs">
+                          {collab.user.name?.[0]?.toUpperCase() || '?'}
+                        </AvatarFallback>
+                      </Avatar>
+                      {isOnline && (
+                        <span
+                          className="absolute -bottom-0.5 -right-0.5 block h-2 w-2 rounded-full ring-1 ring-background animate-pulse"
+                          style={{ backgroundColor: '#22c55e' }}
+                        />
+                      )}
+                    </div>
+                    <span className="text-xs">{collab.user.name || 'Unknown'}</span>
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardHeader>
@@ -481,6 +508,14 @@ export function EditorView({
               onVoteAccept={capabilities.voting ? onVoteAccept : undefined}
               onVoteReject={capabilities.voting ? onVoteReject : undefined}
               onVoteAbstain={capabilities.voting ? onVoteAbstain : undefined}
+              remoteCursors={{
+                entityId: contentEntityId,
+                userId,
+                userName: currentUser?.name || 'Anonymous',
+                userColor,
+                enabled: capabilities.presence,
+                onActiveCursorsChange: setActiveCursorUserIds,
+              }}
             />
           </div>
         </CardContent>

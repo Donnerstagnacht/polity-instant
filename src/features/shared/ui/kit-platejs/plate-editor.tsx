@@ -12,18 +12,13 @@ import { SuggestionCallbacksProvider } from '@/features/shared/ui/kit-platejs/su
 import { ModeProvider } from '@/features/shared/ui/kit-platejs/mode-context.tsx';
 import { ModeSync } from '@/features/shared/ui/kit-platejs/mode-sync.tsx';
 import type { TDiscussion } from '@/features/shared/ui/kit-platejs/discussion-kit.tsx';
+import { RemoteCursorsSync } from '@/features/editor/ui/RemoteCursorsSync';
 import type { ResolvedSuggestion } from '@/features/shared/ui/ui-platejs/block-suggestion.tsx';
 
 interface PlateEditorProps {
   initialValue?: Value;
   value?: Value; // Controlled mode
   onChange?: (value: Value) => void;
-  cursors?: {
-    id: string;
-    name: string;
-    color: string;
-    position: Record<string, string | number | boolean | null>;
-  }[];
   currentUser?: {
     id: string;
     name: string;
@@ -42,13 +37,21 @@ interface PlateEditorProps {
   currentMode?: 'edit' | 'view' | 'suggest' | 'vote'; // Current editing mode from DB
   onModeChange?: (mode: 'edit' | 'view' | 'suggest' | 'vote') => void; // Mode change callback
   isOwnerOrCollaborator?: boolean; // Whether user can change modes
+  /** Remote cursor sync props */
+  remoteCursors?: {
+    entityId: string;
+    userId?: string;
+    userName?: string;
+    userColor?: string;
+    enabled?: boolean;
+    onActiveCursorsChange?: (userIds: Set<string>) => void;
+  };
 }
 
 export function PlateEditor({
   initialValue,
   value,
   onChange,
-  cursors = [],
   currentUser,
   users,
   discussions,
@@ -63,19 +66,26 @@ export function PlateEditor({
   currentMode,
   onModeChange,
   isOwnerOrCollaborator = true,
+  remoteCursors,
 }: PlateEditorProps) {
   const onChangeRef = React.useRef(onChange);
   const isControlled = value !== undefined;
   const prevValueRef = React.useRef(value);
+
+  // Capture the initial value in a ref so the editor is created once,
+  // not re-created on every controlled value change.
+  const initialValueRef = React.useRef(isControlled ? value : initialValue || defaultValue);
 
   // Update the ref when onChange changes, but don't cause re-render
   React.useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
 
-  // Memoize the editor configuration to prevent unnecessary re-creations
+  // Memoize the editor configuration to prevent unnecessary re-creations.
+  // `value` is intentionally NOT a dependency — the initial value is captured
+  // in a ref above, and subsequent controlled updates go through the effect below.
   const editorConfig = React.useMemo(() => {
-    const baseValue = isControlled ? value : initialValue || defaultValue;
+    const baseValue = initialValueRef.current;
 
     if (currentUser && users) {
       return {
@@ -101,7 +111,8 @@ export function PlateEditor({
       plugins: EditorKit,
       value: baseValue,
     };
-  }, [isControlled, value, initialValue, currentUser, users, documentTitle, documentId]); // Added documentId to deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isControlled, initialValue, currentUser, users, documentTitle, documentId]);
 
   const editor = usePlateEditor(editorConfig);
 
@@ -231,28 +242,35 @@ export function PlateEditor({
   }, [editor, onDiscussionsChange]); // Removed 'discussions' from dependencies
 
   // Update editor value when controlled value changes (without destroying selection)
+  const isUpdatingFromProps = React.useRef(false);
   React.useEffect(() => {
+    // This effect now only fires for genuine external changes (init, remote
+    // content, version restore) because local edits no longer update the
+    // content state in useEditor — so the `value` prop stays stable.
     if (isControlled && value && prevValueRef.current !== value) {
-      // Only update if there's an actual change
-      const valueChanged = JSON.stringify(prevValueRef.current) !== JSON.stringify(value);
-      if (valueChanged) {
-        // Update the editor's children directly
-        try {
-          editor.children = value as Value;
-          // Force a re-render
-          if (typeof editor.onChange === 'function') {
-            (editor.onChange as () => void)();
-          }
-        } catch (e) {
-          console.warn('Failed to update editor value:', e);
+      try {
+        // Reset selection before swapping content to prevent toolbar
+        // crashes from stale paths (e.g. MarkToolbarButton → getMarks).
+        editor.selection = null;
+        isUpdatingFromProps.current = true;
+        editor.children = value as Value;
+        // Trigger a re-render without calling parent onChange
+        if (typeof editor.onChange === 'function') {
+          (editor as unknown as { onChange: () => void }).onChange();
         }
-        prevValueRef.current = value;
+      } catch (e) {
+        console.warn('Failed to update editor value:', e);
+      } finally {
+        isUpdatingFromProps.current = false;
       }
+      prevValueRef.current = value;
     }
   }, [value, isControlled, editor]);
 
   // Handle changes from the editor using ref to avoid recreating function
   const handleEditorChange = React.useCallback(({ value: newValue }: { value: Value }) => {
+    // Skip onChange triggered by controlled value updates to prevent feedback loops
+    if (isUpdatingFromProps.current) return;
     if (onChangeRef.current) {
       onChangeRef.current(newValue);
     }
@@ -277,34 +295,20 @@ export function PlateEditor({
           {/* Sync external mode with PlateJS internal state */}
           <ModeSync currentMode={currentMode} />
 
+          {/* Sync remote cursors via Supabase Realtime */}
+          {remoteCursors?.enabled && (
+            <RemoteCursorsSync
+              entityId={remoteCursors.entityId}
+              userId={remoteCursors.userId}
+              userName={remoteCursors.userName}
+              userColor={remoteCursors.userColor}
+              enabled={remoteCursors.enabled}
+              onActiveCursorsChange={remoteCursors.onActiveCursorsChange}
+            />
+          )}
+
           <EditorContainer>
             <Editor variant="demo" />
-
-            {/* Render other users' cursors */}
-            {cursors.map(cursor => (
-              <div
-                key={cursor.id}
-                className="pointer-events-none absolute z-50"
-                style={
-                  {
-                    // Position would be calculated based on cursor.position
-                    // This is a simplified version - full implementation would need
-                    // to convert Slate position to DOM position
-                  }
-                }
-              >
-                <div
-                  className="h-5 w-0.5 animate-pulse"
-                  style={{ backgroundColor: cursor.color }}
-                />
-                <div
-                  className="mt-1 whitespace-nowrap rounded px-2 py-0.5 text-xs text-white"
-                  style={{ backgroundColor: cursor.color }}
-                >
-                  {cursor.name}
-                </div>
-              </div>
-            ))}
           </EditorContainer>
 
           <SettingsDialog />

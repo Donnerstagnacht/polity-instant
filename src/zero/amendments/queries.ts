@@ -37,6 +37,7 @@ export const amendmentQueries = {
         .related('group')
         .related('paths', q => q.related('segments'))
         .related('documents')
+        .related('document', q => q.related('collaborators', cq => cq.related('user')))
         .related('clone_source')
         .one()
   ),
@@ -61,7 +62,7 @@ export const amendmentQueries = {
     ({ args: { id } }) =>
       zql.amendment
         .where('id', id)
-        .related('documents', q => q.related('collaborators', cq => cq.related('user')))
+        .related('document', q => q.related('collaborators', cq => cq.related('user')))
         .related('collaborators', q => q.related('user'))
         .one()
   ),

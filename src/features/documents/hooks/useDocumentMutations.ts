@@ -72,6 +72,7 @@ export function useDocumentMutations(groupId: string): UseDocumentMutationsResul
         preamble: null,
         event_id: null,
         clone_source_id: null,
+        document_id: null,
         tags: null,
         discussions: null,
         image_url: null,

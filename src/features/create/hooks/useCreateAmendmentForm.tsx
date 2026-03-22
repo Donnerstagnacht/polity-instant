@@ -10,6 +10,7 @@ import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { TargetGroupEventSelector, TargetGroupEventDisplay } from '@/features/amendments/ui/TargetGroupEventSelector';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
+import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import type { CreateFormConfig } from '../types/create-form.types';
 
@@ -33,6 +34,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { createAmendment } = useAmendmentActions();
+  const { createDocument, addCollaborator } = useDocumentActions();
   const commonActions = useCommonActions();
 
   const [amendmentId] = useState(() => crypto.randomUUID());
@@ -59,11 +61,23 @@ export function useCreateAmendmentForm(): CreateFormConfig {
   const { allHashtags } = useCommonState({ loadAllHashtags: true });
 
   const handleSubmit = async () => {
-    if (!title.trim()) return;
+    if (!title.trim() || !user?.id) return;
     setIsSubmitting(true);
     try {
       const normalizedGroupId = targetSelection?.groupId ? targetSelection.groupId : null;
       const normalizedEventId = targetSelection?.eventId ? targetSelection.eventId : null;
+      const documentId = crypto.randomUUID();
+
+      // Create document first so amendment can reference it
+      await createDocument({
+        id: documentId,
+        amendment_id: null,
+        content: [
+          { type: 'h1', children: [{ text: title.trim() }] },
+          { type: 'p', children: [{ text: '' }] },
+        ],
+        editing_mode: 'collaborative',
+      });
 
       await createAmendment({
         id: amendmentId,
@@ -77,6 +91,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         group_id: normalizedGroupId,
         event_id: normalizedEventId,
         clone_source_id: null,
+        document_id: documentId,
         tags: hashtags.length > 0 ? hashtags : null,
         visibility,
         is_public: visibility === 'public',
@@ -87,6 +102,16 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         youtube: null,
         linkedin: null,
         website: null,
+      });
+
+      // Add creator as document collaborator
+      await addCollaborator({
+        id: crypto.randomUUID(),
+        document_id: documentId,
+        user_id: user.id,
+        role_id: null,
+        status: 'active',
+        visibility: 'public',
       });
 
       if (hashtags.length > 0) {

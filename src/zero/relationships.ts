@@ -267,6 +267,7 @@ export const amendmentRelationships = relationships(amendment, ({ one, many }) =
   group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
   event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
   clone_source: one({ sourceField: ['clone_source_id'], destSchema: amendment, destField: ['id'] }),
+  document: one({ sourceField: ['document_id'], destSchema: document, destField: ['id'] }),
   vote_entries: many({ sourceField: ['id'], destSchema: vote, destField: ['amendment_id'] }),
   support_votes: many({ sourceField: ['id'], destSchema: amendmentSupportVote, destField: ['amendment_id'] }),
   change_requests: many({ sourceField: ['id'], destSchema: changeRequest, destField: ['amendment_id'] }),

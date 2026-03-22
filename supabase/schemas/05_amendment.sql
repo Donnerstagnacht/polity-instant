@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS public.amendment (
   group_id UUID,
   event_id UUID,
   clone_source_id UUID,
+  document_id UUID REFERENCES public.document (id) ON DELETE SET NULL,
   supporters INTEGER NOT NULL DEFAULT 0,
   supporters_required INTEGER,
   supporters_percentage NUMERIC,

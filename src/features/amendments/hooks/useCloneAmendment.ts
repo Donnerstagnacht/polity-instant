@@ -263,6 +263,14 @@ export function useCloneAmendment(
         });
       }
 
+      // Create cloned document first so amendment can reference it
+      await createDocument({
+        id: cloneDocumentId,
+        amendment_id: null,
+        content: originalDocument?.content ?? { type: 'doc', content: [] },
+        editing_mode: 'collaborative',
+      });
+
       // Create cloned amendment
       await createAmendment({
         id: cloneId,
@@ -276,6 +284,7 @@ export function useCloneAmendment(
         group_id: targetGroupId,
         event_id: selectedEventId,
         clone_source_id: amendmentId,
+        document_id: cloneDocumentId,
         tags: amendment.tags ?? [],
         visibility: amendment.visibility ?? 'public',
         is_public: true,
@@ -286,14 +295,6 @@ export function useCloneAmendment(
         linkedin: '',
         website: '',
         image_url: amendment.image_url ?? null,
-      });
-
-      // Create cloned document
-      await createDocument({
-        id: cloneDocumentId,
-        amendment_id: cloneId,
-        content: originalDocument?.content ?? { type: 'doc', content: [] },
-        editing_mode: 'collaborative',
       });
 
       // Add current user as admin collaborator

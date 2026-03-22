@@ -16,6 +16,7 @@ import {
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import { addMinutes, format, formatDistanceToNow } from 'date-fns';
+import type { Locale } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
 import {
   AgendaCountdownPill,
@@ -118,7 +119,10 @@ export function AgendaItemContextCard({
   const actualCompletedAt = agendaItem.completedAt ?? agendaItem.endTime;
   const estimatedStartedAt = scheduledAt ?? agendaItem.startTime;
   const estimatedCompletedAt = getEstimatedEndTime(estimatedStartedAt, estimatedDurationMinutes);
-  const estimatedOngoingCompletedAt = getEstimatedEndTime(actualStartedAt, estimatedDurationMinutes);
+  const estimatedOngoingCompletedAt = getEstimatedEndTime(
+    actualStartedAt,
+    estimatedDurationMinutes
+  );
   const isCompleted = agendaItem.status === 'completed' || !!actualCompletedAt;
   const isOngoing =
     !isCompleted && (agendaItem.status === 'in-progress' || agendaItem.status === 'active');
@@ -143,10 +147,24 @@ export function AgendaItemContextCard({
               </h2>
               <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                 <AgendaTypeBadge
-                  type={agendaItem.type as 'election' | 'vote' | 'speech' | 'discussion' | 'accreditation'}
+                  type={
+                    agendaItem.type as
+                      | 'election'
+                      | 'vote'
+                      | 'speech'
+                      | 'discussion'
+                      | 'accreditation'
+                  }
                 />
                 <AgendaStatusBadge
-                  status={agendaItem.status as 'completed' | 'in-progress' | 'pending' | 'planned' | 'active'}
+                  status={
+                    agendaItem.status as
+                      | 'completed'
+                      | 'in-progress'
+                      | 'pending'
+                      | 'planned'
+                      | 'active'
+                  }
                 />
                 {durationMinutes && (
                   <div className="inline-flex items-center gap-1 rounded-full border border-white/50 bg-white/70 px-3 py-1 text-xs font-medium text-gray-700 shadow-sm dark:border-gray-700 dark:bg-gray-900/60 dark:text-gray-200">
@@ -165,14 +183,14 @@ export function AgendaItemContextCard({
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {!isCompleted && !isOngoing && estimatedStartedAt && (
             <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 p-3 shadow-sm">
-              <div className="mb-1 flex items-center gap-1 text-xs text-muted-foreground">
+              <div className="text-muted-foreground mb-1 flex items-center gap-1 text-xs">
                 <Calendar className="h-3 w-3" />
                 {t('features.events.agenda.estimatedStartAt', 'Estimated to start at')}
               </div>
               <div className="text-sm font-medium">
                 {formatAgendaDateTime(estimatedStartedAt, locale)}
               </div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-muted-foreground text-xs">
                 {formatRelativeTime(estimatedStartedAt)}
               </div>
               {estimatedStartedAt.getTime() > now ? (
@@ -188,14 +206,14 @@ export function AgendaItemContextCard({
 
           {actualStartedAt && (isCompleted || isOngoing) && (
             <div className="rounded-xl border border-green-500/25 bg-green-500/10 p-3 shadow-sm">
-              <div className="mb-1 flex items-center gap-1 text-xs text-muted-foreground">
+              <div className="text-muted-foreground mb-1 flex items-center gap-1 text-xs">
                 <Play className="h-3 w-3" />
                 {t('features.events.agenda.startedAt')}
               </div>
               <div className="text-sm font-medium">
                 {formatAgendaDateTime(actualStartedAt, locale)}
               </div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-muted-foreground text-xs">
                 {formatRelativeTime(actualStartedAt)}
               </div>
             </div>
@@ -203,14 +221,14 @@ export function AgendaItemContextCard({
 
           {actualCompletedAt && isCompleted && (
             <div className="rounded-xl border border-blue-500/25 bg-blue-500/10 p-3 shadow-sm">
-              <div className="mb-1 flex items-center gap-1 text-xs text-muted-foreground">
+              <div className="text-muted-foreground mb-1 flex items-center gap-1 text-xs">
                 <CheckCircle2 className="h-3 w-3" />
                 {t('features.events.agenda.completedAt')}
               </div>
               <div className="text-sm font-medium">
                 {formatAgendaDateTime(actualCompletedAt, locale)}
               </div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-muted-foreground text-xs">
                 {formatRelativeTime(actualCompletedAt)}
               </div>
               <AgendaEndedPill className="mt-3" endedAt={actualCompletedAt} />
@@ -219,14 +237,14 @@ export function AgendaItemContextCard({
 
           {!isCompleted && estimatedCompletedAt && !isOngoing && (
             <div className="rounded-xl border border-blue-500/25 bg-blue-500/10 p-3 shadow-sm">
-              <div className="mb-1 flex items-center gap-1 text-xs text-muted-foreground">
+              <div className="text-muted-foreground mb-1 flex items-center gap-1 text-xs">
                 <Clock className="h-3 w-3" />
                 {t('features.events.agenda.estimatedCompleteAt', 'Estimated to complete at')}
               </div>
               <div className="text-sm font-medium">
                 {formatAgendaDateTime(estimatedCompletedAt, locale)}
               </div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-muted-foreground text-xs">
                 {formatRelativeTime(estimatedCompletedAt)}
               </div>
               {estimatedCompletedAt.getTime() > now ? (
@@ -242,14 +260,14 @@ export function AgendaItemContextCard({
 
           {!isCompleted && isOngoing && estimatedOngoingCompletedAt && (
             <div className="rounded-xl border border-green-500/25 bg-green-500/10 p-3 shadow-sm">
-              <div className="mb-1 flex items-center gap-1 text-xs text-muted-foreground">
+              <div className="text-muted-foreground mb-1 flex items-center gap-1 text-xs">
                 <Clock className="h-3 w-3" />
                 {t('features.events.agenda.estimatedCompleteAt', 'Estimated to complete at')}
               </div>
               <div className="text-sm font-medium">
                 {formatAgendaDateTime(estimatedOngoingCompletedAt, locale)}
               </div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-muted-foreground text-xs">
                 {formatRelativeTime(estimatedOngoingCompletedAt)}
               </div>
               {estimatedOngoingCompletedAt.getTime() > now ? (
@@ -265,7 +283,7 @@ export function AgendaItemContextCard({
 
           {durationMinutes && (
             <div className="rounded-xl border border-slate-500/20 bg-slate-500/5 p-3 shadow-sm">
-              <div className="mb-1 flex items-center gap-1 text-xs text-muted-foreground">
+              <div className="text-muted-foreground mb-1 flex items-center gap-1 text-xs">
                 <Timer className="h-3 w-3" />
                 {t('features.events.agenda.duration')}
               </div>
@@ -277,14 +295,14 @@ export function AgendaItemContextCard({
 
           {votingStartTime && (
             <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 p-3 shadow-sm">
-              <div className="mb-1 flex items-center gap-1 text-xs text-muted-foreground">
+              <div className="text-muted-foreground mb-1 flex items-center gap-1 text-xs">
                 <Vote className="h-3 w-3" />
                 {t('features.events.agenda.votingStart', 'Voting Start')}
               </div>
               <div className="text-sm font-medium">
                 {format(votingStartTime, 'PPp', { locale })}
               </div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-muted-foreground text-xs">
                 {formatRelativeTime(votingStartTime)}
               </div>
               {votingStartTime.getTime() > now ? (
@@ -300,14 +318,12 @@ export function AgendaItemContextCard({
 
           {votingEndTime && (
             <div className="rounded-xl border border-red-500/25 bg-red-500/10 p-3 shadow-sm">
-              <div className="mb-1 flex items-center gap-1 text-xs text-muted-foreground">
+              <div className="text-muted-foreground mb-1 flex items-center gap-1 text-xs">
                 <Clock className="h-3 w-3" />
                 {t('features.events.agenda.votingEnd', 'Voting End')}
               </div>
-              <div className="text-sm font-medium">
-                {format(votingEndTime, 'PPp', { locale })}
-              </div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-sm font-medium">{format(votingEndTime, 'PPp', { locale })}</div>
+              <div className="text-muted-foreground text-xs">
                 {formatRelativeTime(votingEndTime)}
               </div>
               {votingEndTime.getTime() > now ? (
@@ -326,8 +342,8 @@ export function AgendaItemContextCard({
 
         {/* Description */}
         {agendaItem.description && (
-          <div className="rounded-lg bg-muted/50 p-4">
-            <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+          <div className="bg-muted/50 rounded-lg p-4">
+            <p className="text-muted-foreground text-sm whitespace-pre-wrap">
               {agendaItem.description}
             </p>
           </div>

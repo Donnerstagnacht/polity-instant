@@ -1,8 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { DocumentEditorView } from '@/features/documents/amendment-editor/ui/DocumentEditorView'
+import { EditorView } from '@/features/editor/ui/EditorView'
 import { useAuth } from '@/providers/auth-provider'
 import { useUserState } from '@/zero/users/useUserState'
-import { generateUserColor } from '@/features/editor'
 
 export const Route = createFileRoute('/_authed/amendment/$id/text')({
   component: AmendmentTextPage,
@@ -12,7 +11,7 @@ function AmendmentTextPage() {
   const { id } = Route.useParams()
   const { user } = useAuth()
   const { user: userRecord } = useUserState({ userId: user?.id })
-  const userColor = user?.id ? generateUserColor(user.id) : '#888888'
+
   const mappedUserRecord = userRecord
     ? {
         id: userRecord.id,
@@ -21,12 +20,13 @@ function AmendmentTextPage() {
         avatar: userRecord.avatar ?? undefined,
       }
     : undefined
+
   return (
-    <DocumentEditorView
-      amendmentId={id}
+    <EditorView
+      entityType="amendment"
+      entityId={id}
       userId={user?.id}
       userRecord={mappedUserRecord}
-      userColor={userColor}
     />
   )
 }

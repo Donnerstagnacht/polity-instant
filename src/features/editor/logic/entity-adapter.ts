@@ -14,6 +14,7 @@ import type {
   TDiscussion,
   EditorMode,
 } from '../types';
+import { DEFAULT_EDITOR_CONTENT } from '../types';
 
 // Raw entity type for adapter function parameters.
 // These receive untyped data from various Zero query shapes.
@@ -21,6 +22,34 @@ import type {
 // duplicating Zero's complex inferred return types.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type RawEntity = Record<string, any>;
+
+/**
+ * Ensures every element node in a Plate/Slate tree has a valid `children` array.
+ * Prevents `Array.from(undefined)` crashes in Slate's rendering pipeline.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function sanitizeContent(nodes: any[]): any[] {
+  return nodes.map(node => {
+    if (node == null || typeof node !== 'object') return node;
+    // Text leaf — must have `text` property, no children
+    if ('text' in node) return node;
+    // Element node — must have children array
+    const children = Array.isArray(node.children) && node.children.length > 0
+      ? sanitizeContent(node.children)
+      : [{ text: '' }];
+    return { ...node, children };
+  });
+}
+
+/**
+ * Builds a display name from first_name / last_name / email fields.
+ */
+function buildUserName(user: RawEntity, fallback = 'Unknown'): string {
+  const first = user.first_name?.trim() ?? '';
+  const last = user.last_name?.trim() ?? '';
+  const full = `${first} ${last}`.trim();
+  return full || user.email || fallback;
+}
 
 /**
  * Adapts an amendment with its document to EditorEntity
@@ -31,7 +60,7 @@ export function adaptAmendmentToEntity(amendment: RawEntity | undefined | null, 
   const owner: EditorUser | undefined = document.owner
     ? {
         id: document.owner.id,
-        name: document.owner.name || document.owner.email || 'Owner',
+        name: buildUserName(document.owner, 'Owner'),
         email: document.owner.email,
         avatarUrl: document.owner.avatar,
       }
@@ -47,7 +76,7 @@ export function adaptAmendmentToEntity(amendment: RawEntity | undefined | null, 
           id: collab.id,
           user: {
             id: collab.user.id,
-            name: collab.user.name || collab.user.email || 'Collaborator',
+            name: buildUserName(collab.user, 'Collaborator'),
             email: collab.user.email,
             avatarUrl: collab.user.avatar,
           },
@@ -66,7 +95,7 @@ export function adaptAmendmentToEntity(amendment: RawEntity | undefined | null, 
           id: collab.id,
           user: {
             id: collab.user.id,
-            name: collab.user.name || collab.user.email || 'Collaborator',
+            name: buildUserName(collab.user, 'Collaborator'),
             email: collab.user.email,
             avatarUrl: collab.user.avatar,
           },
@@ -87,14 +116,18 @@ export function adaptAmendmentToEntity(amendment: RawEntity | undefined | null, 
     amendmentStatus: amendment.status,
   };
 
+  const content = Array.isArray(document.content) && document.content.length > 0
+    ? sanitizeContent(document.content)
+    : DEFAULT_EDITOR_CONTENT;
+
   return {
     id: document.id,
     title: document.title || amendment.title || '',
-    content: document.content || [],
+    content,
     discussions: (document.discussions || []) as TDiscussion[],
-    editingMode: (document.editingMode as EditorMode) || 'suggest',
-    isPublic: document.isPublic ?? false,
-    updatedAt: document.updatedAt || Date.now(),
+    editingMode: (document.editing_mode as EditorMode) || 'suggest',
+    isPublic: document.is_public ?? false,
+    updatedAt: document.updated_at || Date.now(),
     owner,
     collaborators,
     metadata,
@@ -117,7 +150,7 @@ export function adaptBlogToEntity(blog: RawEntity | undefined | null): EditorEnt
           id: blogger.id,
           user: {
             id: blogger.user.id,
-            name: blogger.user.name || blogger.user.email || 'Blogger',
+            name: buildUserName(blogger.user, 'Blogger'),
             email: blogger.user.email,
             avatarUrl: blogger.user.avatar,
           },
@@ -139,7 +172,7 @@ export function adaptBlogToEntity(blog: RawEntity | undefined | null): EditorEnt
   const owner: EditorUser | undefined = ownerBlogger?.user
     ? {
         id: ownerBlogger.user.id,
-        name: ownerBlogger.user.name || ownerBlogger.user.email || 'Owner',
+        name: buildUserName(ownerBlogger.user, 'Owner'),
         email: ownerBlogger.user.email,
         avatarUrl: ownerBlogger.user.avatar,
       }
@@ -156,7 +189,7 @@ export function adaptBlogToEntity(blog: RawEntity | undefined | null): EditorEnt
   return {
     id: blog.id,
     title: blog.title || '',
-    content: blog.content || [],
+    content: Array.isArray(blog.content) && blog.content.length > 0 ? sanitizeContent(blog.content) : DEFAULT_EDITOR_CONTENT,
     discussions: (blog.discussions || []) as TDiscussion[],
     editingMode: (blog.editing_mode as EditorMode) || 'edit',
     isPublic: blog.is_public ?? true,
@@ -176,7 +209,7 @@ export function adaptDocumentToEntity(document: RawEntity | undefined | null): E
   const owner: EditorUser | undefined = document.owner
     ? {
         id: document.owner.id,
-        name: document.owner.name || document.owner.email || 'Owner',
+        name: buildUserName(document.owner, 'Owner'),
         email: document.owner.email,
         avatarUrl: document.owner.avatar,
       }
@@ -191,7 +224,7 @@ export function adaptDocumentToEntity(document: RawEntity | undefined | null): E
           id: collab.id,
           user: {
             id: collab.user.id,
-            name: collab.user.name || collab.user.email || 'Collaborator',
+            name: buildUserName(collab.user, 'Collaborator'),
             email: collab.user.email,
             avatarUrl: collab.user.avatar,
           },
@@ -206,14 +239,18 @@ export function adaptDocumentToEntity(document: RawEntity | undefined | null): E
     entityType: 'document',
   };
 
+  const content = Array.isArray(document.content) && document.content.length > 0
+    ? sanitizeContent(document.content)
+    : DEFAULT_EDITOR_CONTENT;
+
   return {
     id: document.id,
     title: document.title || '',
-    content: document.content || [],
+    content,
     discussions: (document.discussions || []) as TDiscussion[],
-    editingMode: (document.editingMode as EditorMode) || 'edit',
-    isPublic: document.isPublic ?? false,
-    updatedAt: document.updatedAt || Date.now(),
+    editingMode: (document.editing_mode as EditorMode) || 'edit',
+    isPublic: document.is_public ?? false,
+    updatedAt: document.updated_at || Date.now(),
     owner,
     collaborators,
     metadata,
@@ -233,7 +270,7 @@ export function adaptGroupDocumentToEntity(
   const owner: EditorUser | undefined = document.owner
     ? {
         id: document.owner.id,
-        name: document.owner.name || document.owner.email || 'Owner',
+        name: buildUserName(document.owner, 'Owner'),
         email: document.owner.email,
         avatarUrl: document.owner.avatar,
       }
@@ -248,7 +285,7 @@ export function adaptGroupDocumentToEntity(
           id: collab.id,
           user: {
             id: collab.user.id,
-            name: collab.user.name || collab.user.email || 'Collaborator',
+            name: buildUserName(collab.user, 'Collaborator'),
             email: collab.user.email,
             avatarUrl: collab.user.avatar,
           },
@@ -265,14 +302,18 @@ export function adaptGroupDocumentToEntity(
     groupName,
   };
 
+  const content = Array.isArray(document.content) && document.content.length > 0
+    ? sanitizeContent(document.content)
+    : DEFAULT_EDITOR_CONTENT;
+
   return {
     id: document.id,
     title: document.title || '',
-    content: document.content || [],
+    content,
     discussions: (document.discussions || []) as TDiscussion[],
-    editingMode: (document.editingMode as EditorMode) || 'edit',
-    isPublic: document.isPublic ?? false,
-    updatedAt: document.updatedAt || Date.now(),
+    editingMode: (document.editing_mode as EditorMode) || 'edit',
+    isPublic: document.is_public ?? false,
+    updatedAt: document.updated_at || Date.now(),
     owner,
     collaborators,
     metadata,

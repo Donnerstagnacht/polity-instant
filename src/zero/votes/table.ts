@@ -107,7 +107,7 @@ export const blogSupportVote = table('blog_support_vote')
     id: string(),
     blog_id: string(),
     user_id: string(),
-    vote: string().optional(),
+    vote: number().optional(),
     created_at: number(),
   })
   .primaryKey('id')
@@ -119,7 +119,7 @@ export const statementSupportVote = table('statement_support_vote')
     id: string(),
     statement_id: string(),
     user_id: string(),
-    vote: string().optional(),
+    vote: number().optional(),
     created_at: number(),
   })
   .primaryKey('id')
@@ -131,7 +131,7 @@ export const threadVote = table('thread_vote')
     id: string(),
     thread_id: string(),
     user_id: string(),
-    vote: string().optional(),
+    vote: number().optional(),
     created_at: number(),
   })
   .primaryKey('id')
@@ -141,7 +141,7 @@ export const commentVote = table('comment_vote')
     id: string(),
     comment_id: string(),
     user_id: string(),
-    vote: string().optional(),
+    vote: number().optional(),
     created_at: number(),
   })
   .primaryKey('id')

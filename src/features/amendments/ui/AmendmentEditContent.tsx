@@ -131,6 +131,7 @@ export function AmendmentEditContent({
           group_id: null,
           event_id: null,
           clone_source_id: null,
+          document_id: null,
           tags: formData.hashtags.length > 0 ? formData.hashtags : null,
           visibility: 'public',
           is_public: true,

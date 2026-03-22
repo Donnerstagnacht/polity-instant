@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS public.thread_vote (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   thread_id UUID NOT NULL REFERENCES public.thread (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  vote TEXT,
+  vote INTEGER,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS public.comment_vote (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   comment_id UUID NOT NULL REFERENCES public.comment (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  vote TEXT,
+  vote INTEGER,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

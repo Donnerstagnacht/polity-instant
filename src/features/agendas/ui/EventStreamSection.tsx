@@ -92,6 +92,7 @@ interface CurrentAgendaItem {
     indicative_decisions?: ReadonlyArray<ChoiceDecision>;
     final_decisions?: ReadonlyArray<ChoiceDecision>;
     voters?: Array<{ user_id?: string | null }>;
+    majority_type?: string | null;
   }>;
   speaker_list?: Speaker[];
 }

@@ -3,6 +3,8 @@ import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { useEventAgendaItem } from '../hooks/useEventAgendaItem';
+import type { CandidatesByElectionRow } from '@/zero/elections/queries';
+import type { ChoicesByVoteRow } from '@/zero/votes/queries';
 import { TransferAgendaItemDialog } from './TransferAgendaItemDialog';
 import { AgendaItemContextCard } from './AgendaItemContextCard';
 import {
@@ -409,7 +411,7 @@ export function EventAgendaItemDetail({
               election.title ??
               t('features.events.agenda.position')
             }
-            candidates={candidates}
+            candidates={[...candidates] as CandidatesByElectionRow[]}
             indicativeSelections={indicativeSelections}
             finalSelections={finalSelections}
             userHasVoted={userHasElectionVoted}
@@ -434,7 +436,7 @@ export function EventAgendaItemDetail({
         <div className="space-y-4">
           <AgendaVoteSection
             voteTitle={vote.title || agendaItem.title || 'Vote'}
-            choices={choices}
+            choices={[...choices] as ChoicesByVoteRow[]}
             indicativeDecisions={indicativeDecisions}
             finalDecisions={finalDecisions}
             userHasVoted={userHasVoteVoted}

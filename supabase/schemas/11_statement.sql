@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS public.statement_support_vote (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   statement_id UUID NOT NULL REFERENCES public.statement (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  vote TEXT,
+  vote INTEGER,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

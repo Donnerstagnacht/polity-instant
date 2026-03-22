@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { BlogEditorView } from '@/features/blogs/ui/BlogEditorView'
+import { EditorView } from '@/features/editor/ui/EditorView'
 import { useAuth } from '@/providers/auth-provider'
 import { useUserState } from '@/zero/users/useUserState'
 
@@ -14,18 +14,19 @@ function GroupBlogEditorPage() {
 
   const userRecord = currentUser
     ? {
+        id: currentUser.id,
         name: [currentUser.first_name, currentUser.last_name].filter(Boolean).join(' ') || currentUser.handle || '',
         email: user?.email,
         avatar: currentUser.avatar ?? undefined,
       }
-    : {}
+    : undefined
 
   return (
-    <BlogEditorView
-      blogId={entryId}
+    <EditorView
+      entityType="blog"
+      entityId={entryId}
       userId={user?.id}
       userRecord={userRecord}
-      userColor="#4f46e5"
     />
   )
 }

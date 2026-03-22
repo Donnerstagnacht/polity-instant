@@ -55,7 +55,7 @@ export const DEFAULT_CAPABILITIES: Record<EditorEntityType, EditorCapabilities> 
   },
   blog: {
     versioning: true,
-    presence: false,
+    presence: true,
     voting: false,
     modeSelection: true,
     sharing: true,
