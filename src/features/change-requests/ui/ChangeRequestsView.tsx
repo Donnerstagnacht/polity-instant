@@ -14,6 +14,14 @@ interface ChangeRequestsViewProps {
   userId?: string;
 }
 
+function isApprovedResolution(resolution: string | null | undefined) {
+  return resolution === 'approved' || resolution === 'accepted';
+}
+
+function getResolutionLabel(resolution: string | null | undefined) {
+  return isApprovedResolution(resolution) ? 'Approved' : 'Declined';
+}
+
 function getStatusColor(status: string) {
   switch (status) {
     case 'approved':
@@ -73,10 +81,10 @@ function ChangeRequestCard({
               <span>{request.title}</span>
               {isClosed && request.resolution && (
                 <Badge
-                  variant={request.resolution === 'accepted' ? 'default' : 'destructive'}
+                  variant={isApprovedResolution(request.resolution) ? 'default' : 'destructive'}
                   className="ml-2"
                 >
-                  {request.resolution === 'accepted' ? 'Accepted' : 'Rejected'}
+                  {getResolutionLabel(request.resolution)}
                 </Badge>
               )}
             </CardTitle>
@@ -303,13 +311,14 @@ function ChangeRequestCard({
 }
 
 export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewProps) {
-  const [activeTab, setActiveTab] = useState<'open' | 'closed'>('open');
+  const [activeTab, setActiveTab] = useState<'open' | 'approved' | 'declined'>('open');
 
   const {
     amendment,
     document,
     openChangeRequests,
-    closedChangeRequests,
+    approvedChangeRequests,
+    declinedChangeRequests,
     users,
     collaborators,
     isLoading,
@@ -336,7 +345,8 @@ export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewPr
     );
   }
 
-  const totalChangeRequests = openChangeRequests.length + closedChangeRequests.length;
+  const totalChangeRequests =
+    openChangeRequests.length + approvedChangeRequests.length + declinedChangeRequests.length;
 
   return (
     <PageWrapper>
@@ -357,13 +367,17 @@ export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewPr
           <h1 className="text-4xl font-bold">Change Requests</h1>
         </div>
         <p className="text-muted-foreground">
-          {openChangeRequests.length} open, {closedChangeRequests.length} closed change request
+          {openChangeRequests.length} open, {approvedChangeRequests.length} approved,{' '}
+          {declinedChangeRequests.length} declined change request
           {totalChangeRequests !== 1 ? 's' : ''} for this amendment
         </p>
       </div>
 
-      {/* Tabs for Open/Closed */}
-      <Tabs value={activeTab} onValueChange={value => setActiveTab(value as 'open' | 'closed')}>
+      {/* Tabs for Open/Approved/Declined */}
+      <Tabs
+        value={activeTab}
+        onValueChange={value => setActiveTab(value as 'open' | 'approved' | 'declined')}
+      >
         <TabsList className="mb-6">
           <TabsTrigger value="open" className="gap-2">
             Open
@@ -371,10 +385,16 @@ export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewPr
               {openChangeRequests.length}
             </Badge>
           </TabsTrigger>
-          <TabsTrigger value="closed" className="gap-2">
-            Closed
+          <TabsTrigger value="approved" className="gap-2">
+            Approved
             <Badge variant="secondary" className="ml-1">
-              {closedChangeRequests.length}
+              {approvedChangeRequests.length}
+            </Badge>
+          </TabsTrigger>
+          <TabsTrigger value="declined" className="gap-2">
+            Declined
+            <Badge variant="secondary" className="ml-1">
+              {declinedChangeRequests.length}
             </Badge>
           </TabsTrigger>
         </TabsList>
@@ -406,17 +426,43 @@ export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewPr
           )}
         </TabsContent>
 
-        {/* Closed Change Requests Tab */}
-        <TabsContent value="closed" className="space-y-4">
-          {closedChangeRequests.length === 0 ? (
+        {/* Approved Change Requests Tab */}
+        <TabsContent value="approved" className="space-y-4">
+          {approvedChangeRequests.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
                 <FileEdit className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                <p className="text-muted-foreground">No closed change requests yet.</p>
+                <p className="text-muted-foreground">No approved change requests yet.</p>
               </CardContent>
             </Card>
           ) : (
-            closedChangeRequests.map(request => (
+            approvedChangeRequests.map(request => (
+              <ChangeRequestCard
+                key={request.id}
+                request={request}
+                users={users}
+                document={document}
+                collaborators={collaborators}
+                amendmentId={amendmentId}
+                amendmentTitle={amendment?.title ?? undefined}
+                userId={userId}
+                isClosed={true}
+              />
+            ))
+          )}
+        </TabsContent>
+
+        {/* Declined Change Requests Tab */}
+        <TabsContent value="declined" className="space-y-4">
+          {declinedChangeRequests.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <FileEdit className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                <p className="text-muted-foreground">No declined change requests yet.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            declinedChangeRequests.map(request => (
               <ChangeRequestCard
                 key={request.id}
                 request={request}

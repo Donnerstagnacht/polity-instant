@@ -46,6 +46,14 @@ export interface ChangeRequest {
   changeRequestEntityId?: string;
 }
 
+function isApprovedStatus(status: string | null | undefined) {
+  return status === 'approved' || status === 'accepted';
+}
+
+function isDeclinedStatus(status: string | null | undefined) {
+  return status === 'declined' || status === 'rejected';
+}
+
 export function useChangeRequests(amendmentId: string) {
   // Fetch amendment data using hook
   const {
@@ -125,7 +133,7 @@ export function useChangeRequests(amendmentId: string) {
             if (openRequestCrIds.has(cr.title)) {
               return false;
             }
-            return cr.status === 'accepted' || cr.status === 'rejected';
+            return isApprovedStatus(cr.status) || isDeclinedStatus(cr.status);
           })
           .map((cr) => ({
             id: cr.id,
@@ -168,6 +176,16 @@ export function useChangeRequests(amendmentId: string) {
     [changeRequests]
   );
 
+  const approvedChangeRequests = useMemo(
+    () => closedChangeRequests.filter(req => isApprovedStatus(req.status) || isApprovedStatus(req.resolution)),
+    [closedChangeRequests]
+  );
+
+  const declinedChangeRequests = useMemo(
+    () => closedChangeRequests.filter(req => isDeclinedStatus(req.status) || isDeclinedStatus(req.resolution)),
+    [closedChangeRequests]
+  );
+
   // Get unique user IDs from change requests
   const userIds = useMemo(
     () => Array.from(new Set(changeRequests.map((cr) => cr.userId).filter(Boolean))),
@@ -202,6 +220,8 @@ export function useChangeRequests(amendmentId: string) {
     changeRequests,
     openChangeRequests,
     closedChangeRequests,
+    approvedChangeRequests,
+    declinedChangeRequests,
     users,
     collaborators,
     isLoading,

@@ -19,6 +19,64 @@ export interface PathWithEventSegment {
   eventStartDate: number | null;
 }
 
+export interface EnrichedPathSegment extends PathWithEventSegment {
+  agendaItemId: string | null;
+  amendmentVoteId: string | null;
+  forwardingStatus: string;
+}
+
+/**
+ * Enrich path segments with IDs for agenda items, votes, and forwarding status.
+ * Pure computation — generates UUIDs and determines status, no side effects.
+ */
+export function enrichPathSegments(
+  pathWithEvents: PathWithEventSegment[],
+  targetGroupId: string,
+  targetEventId: string,
+  targetEventTitle: string | null,
+  targetEventStartDate: number | null,
+): EnrichedPathSegment[] {
+  // Override the last segment's event with the user-selected event
+  const segments = pathWithEvents.map(seg => ({ ...seg }));
+  const lastSegment = segments[segments.length - 1];
+  if (lastSegment && lastSegment.groupId === targetGroupId) {
+    lastSegment.eventId = targetEventId;
+    lastSegment.eventTitle = targetEventTitle ?? 'No Event';
+    lastSegment.eventStartDate = targetEventStartDate ?? null;
+  }
+
+  // Find the closest event (earliest start date) in the path
+  const eventsWithDates = segments.filter(seg => seg.eventStartDate);
+  eventsWithDates.sort((a, b) => {
+    const dateA = a.eventStartDate ? new Date(a.eventStartDate).getTime() : 0;
+    const dateB = b.eventStartDate ? new Date(b.eventStartDate).getTime() : 0;
+    return dateA - dateB;
+  });
+  const closestEventId = eventsWithDates.length > 0 ? eventsWithDates[0].eventId : null;
+
+  return segments.map(segment => {
+    let agendaItemId: string | null = null;
+    let amendmentVoteId: string | null = null;
+    let forwardingStatus = 'previous_decision_outstanding';
+
+    if (segment.eventId) {
+      agendaItemId = crypto.randomUUID();
+      amendmentVoteId = crypto.randomUUID();
+
+      if (segment.eventId === closestEventId) {
+        forwardingStatus = 'forward_confirmed';
+      }
+    }
+
+    return {
+      ...segment,
+      agendaItemId,
+      amendmentVoteId,
+      forwardingStatus,
+    };
+  });
+}
+
 interface BuildPathInput {
   userGroupIds: string[];
   targetGroupId: string;

@@ -12,21 +12,28 @@ import { TargetGroupEventSelector, TargetGroupEventDisplay } from '@/features/am
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
+import { enrichPathSegments } from '@/features/amendments/logic/amendmentPathHelpers';
+import { useCreateAmendmentPath } from '@/features/amendments/hooks/useCreateAmendmentPath';
 import type { CreateFormConfig } from '../types/create-form.types';
 
 interface CreateTargetGroupData {
+  id: string;
   abbr?: string | null;
   name?: string | null;
   description?: string | null;
   member_count?: number | null;
+  event_count?: number | null;
+  amendment_count?: number | null;
 }
 
 interface CreateTargetEventData {
+  id: string;
   title?: string | null;
   is_public?: boolean | null;
   start_date?: number | null;
   location_name?: string | null;
   description?: string | null;
+  participant_count?: number | null;
 }
 
 export function useCreateAmendmentForm(): CreateFormConfig {
@@ -36,6 +43,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
   const { createAmendment } = useAmendmentActions();
   const { createDocument, addCollaborator } = useDocumentActions();
   const commonActions = useCommonActions();
+  const { createAmendmentPath } = useCreateAmendmentPath();
 
   const [amendmentId] = useState(() => crypto.randomUUID());
   const [title, setTitle] = useState('');
@@ -122,6 +130,24 @@ export function useCreateAmendmentForm(): CreateFormConfig {
           [],
           allHashtags ?? []
         );
+      }
+
+      // Create amendment path with agenda items and votes if target was selected
+      if (targetSelection?.pathWithEvents && targetSelection.pathWithEvents.length > 0) {
+        const enrichedPath = enrichPathSegments(
+          targetSelection.pathWithEvents,
+          targetSelection.groupId,
+          targetSelection.eventId,
+          targetSelection.eventData.title ?? null,
+          targetSelection.eventData.start_date ?? null,
+        );
+
+        await createAmendmentPath({
+          amendmentId,
+          amendmentTitle: title.trim(),
+          amendmentReason: null,
+          enrichedPath,
+        });
       }
 
       navigate({ to: `/amendment/${amendmentId}` });

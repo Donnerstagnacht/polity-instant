@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Label } from '@/features/shared/ui/ui/label';
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
@@ -16,7 +15,9 @@ import {
   getActiveUserGroupIds,
   getUpwardConnectedGroupsForUser,
 } from '@/features/amendments/logic/amendmentPathHelpers';
-import { CalendarIcon, Target, User, MapPin, Clock, ChevronRight } from 'lucide-react';
+import { Target, User, ChevronRight } from 'lucide-react';
+import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
+import { EventTimelineCard } from '@/features/timeline/ui/cards/EventTimelineCard';
 
 interface TargetGroupEventSelectorProps {
   userId: string;
@@ -31,6 +32,8 @@ interface TargetGroupEventSelectorProps {
   }) => void;
   selectedGroupId?: string;
   selectedEventId?: string;
+  /** Pass true when rendered inside a Dialog to avoid portal/focus-trap conflicts */
+  disablePortal?: boolean;
 }
 
 export function TargetGroupEventSelector({
@@ -39,6 +42,7 @@ export function TargetGroupEventSelector({
   onSelect,
   selectedGroupId,
   selectedEventId,
+  disablePortal = false,
 }: TargetGroupEventSelectorProps) {
   const [selectedUserId, setSelectedUserId] = useState<string>(userId);
   const [selectedGroup, setSelectedGroup] = useState<{ id: string; data: AmendmentNetworkGroup } | null>(null);
@@ -214,7 +218,12 @@ export function TargetGroupEventSelector({
     (groupId: string, item: TypeaheadItem | null) => {
       if (!item) return;
 
-      const event = getUpcomingEventsForGroup(groupId).find((entry) => entry.id === item.id);
+      // For the target group, search upcomingEvents (from groupEventsResult) first
+      const event =
+        (groupId === selectedGroup?.id
+          ? upcomingEvents.find((entry) => entry.id === item.id)
+          : undefined) ??
+        getUpcomingEventsForGroup(groupId).find((entry) => entry.id === item.id);
       if (!event) return;
 
       setPathWithEvents((previous) =>
@@ -234,7 +243,7 @@ export function TargetGroupEventSelector({
         setSelectedEvent({ id: event.id, data: event });
       }
     },
-    [getUpcomingEventsForGroup, selectedGroup?.id]
+    [getUpcomingEventsForGroup, selectedGroup?.id, upcomingEvents]
   );
 
   useEffect(() => {
@@ -310,6 +319,7 @@ export function TargetGroupEventSelector({
               onChange={(item: TypeaheadItem | null) => setSelectedUserId(item?.id ?? '')}
               placeholder="Select collaborator to view their network..."
               label="Select Network For:"
+              disablePortal={disablePortal}
             />
           </div>
         </div>
@@ -341,6 +351,7 @@ export function TargetGroupEventSelector({
               }
             }}
             placeholder="Search for a group..."
+            disablePortal={disablePortal}
           />
         )}
       </div>
@@ -369,6 +380,7 @@ export function TargetGroupEventSelector({
                 }
               }}
               placeholder="Search for an event..."
+              disablePortal={disablePortal}
             />
           )}
         </div>
@@ -387,7 +399,11 @@ export function TargetGroupEventSelector({
 
           <div className="space-y-3">
             {pathWithEvents.map((segment, index) => {
-              const segmentEvents = getUpcomingEventsForGroup(segment.groupId);
+              // For the target group, use the same event list as the main typeahead
+              // (groupEventsResult includes past events), avoiding the "no upcoming events" mismatch
+              const segmentEvents = segment.groupId === selectedGroup?.id
+                ? upcomingEvents
+                : getUpcomingEventsForGroup(segment.groupId);
 
               return (
                 <div key={segment.groupId} className="rounded-md border border-border bg-background p-3">
@@ -416,6 +432,7 @@ export function TargetGroupEventSelector({
                       value={segment.eventId ?? undefined}
                       onChange={(item: TypeaheadItem | null) => updatePathSegmentEvent(segment.groupId, item)}
                       placeholder="Select an event for this group..."
+                      disablePortal={disablePortal}
                     />
                   ) : (
                     <p className="text-xs text-muted-foreground">
@@ -437,18 +454,23 @@ export function TargetGroupEventSelector({
 }
 
 interface DisplayGroupData {
+  id: string;
   abbr?: string | null;
   name?: string | null;
   description?: string | null;
   member_count?: number | null;
+  event_count?: number | null;
+  amendment_count?: number | null;
 }
 
 interface DisplayEventData {
+  id: string;
   title?: string | null;
   is_public?: boolean | null;
   start_date?: number | null;
   location_name?: string | null;
   description?: string | null;
+  participant_count?: number | null;
 }
 
 interface TargetGroupEventDisplayProps {
@@ -469,33 +491,16 @@ export function TargetGroupEventDisplay({
         <h4 className="mb-2 text-sm font-semibold uppercase text-muted-foreground">
           Target Group
         </h4>
-        <Card className="overflow-hidden border-2 bg-gradient-to-br from-blue-100 to-purple-100 transition-all duration-300 dark:from-blue-900/40 dark:to-purple-900/50">
-          <CardHeader className="space-y-3 pb-4">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                {groupData.abbr && (
-                  <Badge variant="secondary" className="mb-2 w-fit font-semibold">
-                    {groupData.abbr}
-                  </Badge>
-                )}
-                <CardTitle className="line-clamp-1 text-xl">{groupData.name ?? ''}</CardTitle>
-                {groupData.description && (
-                  <CardDescription className="mt-1.5 line-clamp-2">
-                    {groupData.description}
-                  </CardDescription>
-                )}
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3 pt-0">
-            <div className="flex flex-wrap gap-3 border-t border-border/50 pt-3">
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <User className="h-4 w-4" />
-                <span className="font-medium">{groupData.member_count ?? 0} members</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <GroupTimelineCard
+          group={{
+            id: groupData.id,
+            name: groupData.name ?? '',
+            description: groupData.description ?? undefined,
+            memberCount: groupData.member_count ?? 0,
+            eventCount: groupData.event_count ?? 0,
+            amendmentCount: groupData.amendment_count ?? 0,
+          }}
+        />
       </div>
 
       {/* Event Card */}
@@ -503,58 +508,16 @@ export function TargetGroupEventDisplay({
         <h4 className="mb-2 text-sm font-semibold uppercase text-muted-foreground">
           Target Event
         </h4>
-        <div className="rounded-lg border-2 bg-gradient-to-br from-green-100 to-blue-100 p-4 dark:from-green-900/40 dark:to-blue-900/50">
-          <div className="mb-3 flex items-start justify-between gap-2">
-            <h4 className="flex-1 text-lg font-semibold leading-tight">{eventData.title ?? ''}</h4>
-            <div className="flex gap-1">
-              {eventData.is_public && (
-                <Badge variant="outline" className="text-xs">
-                  Public
-                </Badge>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-1.5 text-xs text-muted-foreground">
-            {eventData.start_date && (
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1.5">
-                  <CalendarIcon className="h-3.5 w-3.5" />
-                  <span>
-                    {new Date(eventData.start_date).toLocaleDateString('en-US', {
-                      weekday: 'short',
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5" />
-                  <span>
-                    {new Date(eventData.start_date).toLocaleTimeString('en-US', {
-                      hour: 'numeric',
-                      minute: '2-digit',
-                    })}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {eventData.location_name && (
-              <div className="flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5" />
-                <span className="truncate">{eventData.location_name}</span>
-              </div>
-            )}
-          </div>
-
-          {eventData.description && (
-            <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">
-              {eventData.description}
-            </p>
-          )}
-        </div>
+        <EventTimelineCard
+          event={{
+            id: eventData.id,
+            title: eventData.title ?? '',
+            description: eventData.description ?? undefined,
+            startDate: eventData.start_date ? new Date(eventData.start_date) : new Date(),
+            location: eventData.location_name ?? undefined,
+            attendeeCount: eventData.participant_count ?? 0,
+          }}
+        />
       </div>
 
       {/* Path Preview */}
