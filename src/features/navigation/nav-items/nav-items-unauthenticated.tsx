@@ -1,4 +1,5 @@
 import type { NavigationItem } from '@/features/navigation/types/navigation.types.tsx';
+import { docsTopicDefinitions } from '@/features/docs/logic/docsTopics.ts';
 
 // TanStack Router navigate function type
 type NavigateFn = (opts: { to: string }) => void;
@@ -31,6 +32,13 @@ export const createNavItemsUnauthenticated = (
       onClick: () => navigate({ to: '/solutions' }),
     },
     {
+      id: 'docs',
+      icon: 'BookOpen',
+      label: t ? t('navigation.primary.docs') : 'Docs',
+      href: '/docs',
+      onClick: () => navigate({ to: '/docs' }),
+    },
+    {
       id: 'pricing',
       icon: 'CreditCard',
       label: t ? t('navigation.primary.pricing') : 'Pricing',
@@ -54,11 +62,34 @@ export const createNavItemsUnauthenticated = (
   ];
 };
 
+export const createDocsSecondaryNavItems = (
+  navigate: NavigateFn,
+  t?: (key: string) => string
+): NavigationItem[] => {
+  return [
+    {
+      id: 'docs-overview',
+      icon: 'BookOpen',
+      label: t ? t('pages.docs.overview.navLabel') : 'Overview',
+      href: '/docs',
+      onClick: () => navigate({ to: '/docs' }),
+    },
+    ...docsTopicDefinitions.map(topic => ({
+      id: `docs-${topic.slug}`,
+      icon: topic.icon,
+      label: t ? t(`pages.docs.topics.${topic.slug}.navLabel`) : topic.slug,
+      href: `/docs/${topic.slug}`,
+      onClick: () => navigate({ to: `/docs/${topic.slug}` }),
+    })),
+  ];
+};
+
 // Backward compatibility - static version for contexts where hooks can't be used
 export const navItemsUnauthenticated: NavigationItem[] = [
   { id: 'home', icon: 'Home', label: 'Home', href: '/' },
   { id: 'features', icon: 'Sparkles', label: 'Features', href: '/features' },
   { id: 'solutions', icon: 'Target', label: 'Solutions', href: '/solutions' },
+  { id: 'docs', icon: 'BookOpen', label: 'Docs', href: '/docs' },
   { id: 'pricing', icon: 'CreditCard', label: 'Pricing', href: '/pricing' },
   { id: 'support', icon: 'Heart', label: 'Support', href: '/support' },
   { id: 'auth', icon: 'User', label: 'Login', href: '/auth' },

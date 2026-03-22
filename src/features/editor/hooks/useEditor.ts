@@ -192,21 +192,24 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
     }
   }, [entity]);
 
-  // Sync discussions from database in real-time
+  // Sync discussions from database in real-time.
+  // Only pull remote discussions when we haven't saved recently — prevents
+  // overwriting local comments/votes with stale data before the poke arrives.
   useEffect(() => {
     if (!entity || !isInitialized.current) return;
+    // Skip if we saved discussions recently (wait for the poke to echo back)
+    if (Date.now() - lastDiscussionsSave.current < 5000) return;
 
     const remoteDiscussions = entity.discussions || [];
-    const localDiscussionsStr = JSON.stringify(discussions);
-    const remoteDiscussionsStr = JSON.stringify(remoteDiscussions);
+    if (!remoteDiscussions.length && !discussions.length) return;
 
-    if (
-      localDiscussionsStr !== remoteDiscussionsStr &&
-      Date.now() - lastDiscussionsSave.current > 2000
-    ) {
+    const remoteDiscussionsStr = JSON.stringify(remoteDiscussions);
+    const localDiscussionsStr = JSON.stringify(discussions);
+
+    if (localDiscussionsStr !== remoteDiscussionsStr) {
       setDiscussionsState(remoteDiscussions);
     }
-  }, [entity?.discussions, discussions]);
+  }, [entity?.discussions]);
 
   // Sync remote content updates without destroying local selection.
   // Only applies when a genuinely new remote version arrives and the user
@@ -331,24 +334,34 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
   // Discussions change handler
   const setDiscussions = useCallback(
     async (newDiscussions: TDiscussion[]) => {
+      // Skip if nothing changed — polling fires every 2s even when idle.
+      // Without this guard, lastDiscussionsSave gets bumped constantly,
+      // which blocks the sync effect from applying remote updates.
+      const newStr = JSON.stringify(newDiscussions);
+      const oldStr = JSON.stringify(discussions);
+      if (newStr === oldStr) return;
+
       setDiscussionsState(newDiscussions);
       lastDiscussionsSave.current = Date.now();
 
       if (!contentEntityId || !userId) return;
 
       try {
-        // Only blogs store discussions as a JSON column on the entity row.
-        // Documents don't have a discussions column — their discussion data
-        // lives in the thread/comment tables managed by the discussion plugin.
+        const serializedDiscussions: ReadonlyJSONValue = JSON.parse(newStr);
         if (entityType === 'blog') {
-          const serializedDiscussions: ReadonlyJSONValue = JSON.parse(JSON.stringify(newDiscussions));
           await zero.mutate(mutators.blogs.update({ id: contentEntityId, discussions: serializedDiscussions }));
+        } else if (entityType === 'amendment') {
+          // Amendments store discussions as a JSON column on the amendment row
+          // (not the document). This is where useChangeRequests reads them from.
+          await zero.mutate(mutators.amendments.update({ id: entityId, discussions: serializedDiscussions }));
         }
+        // Documents and groupDocuments don't have a discussions column —
+        // their discussion data lives in the thread/comment tables.
       } catch (error) {
         console.error('Failed to save discussions:', error);
       }
     },
-    [entityType, contentEntityId, userId, zero]
+    [entityType, entityId, contentEntityId, userId, zero, discussions]
   );
 
   // Mode change handler

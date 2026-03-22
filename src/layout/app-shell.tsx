@@ -17,7 +17,10 @@ import { useNavigation } from '@/features/navigation/state/useNavigation.tsx';
 import { useAuth } from '@/providers/auth-provider.tsx';
 import { useZeroReady } from '@/providers/zero-provider.tsx';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
-import { createNavItemsUnauthenticated } from '@/features/navigation/nav-items/nav-items-unauthenticated.tsx';
+import {
+  createDocsSecondaryNavItems,
+  createNavItemsUnauthenticated,
+} from '@/features/navigation/nav-items/nav-items-unauthenticated.tsx';
 import { usePreferenceSync } from '@/zero/preferences/usePreferenceSync.ts';
 import { useNotificationDispatch } from '@/features/notifications/hooks/useNotificationDispatch.ts';
 
@@ -52,9 +55,17 @@ function UnauthenticatedShell({ children }: { children: ReactNode }) {
   const { screenType, isMobileScreen } = useScreenStore();
   const { navigationType, navigationView } = useNavigationStore();
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: s => s.location.pathname });
   const { t } = useTranslation();
 
   const navigationItems = useMemo(() => createNavItemsUnauthenticated(navigate, t), [navigate, t]);
+  const secondaryNavItems = useMemo(() => {
+    if (!pathname.startsWith('/docs')) {
+      return null;
+    }
+
+    return createDocsSecondaryNavItems(navigate, t);
+  }, [navigate, pathname, t]);
   const isMobile = screenType === 'mobile' || (screenType === 'automatic' && isMobileScreen);
 
   return (
@@ -68,18 +79,26 @@ function UnauthenticatedShell({ children }: { children: ReactNode }) {
             screenType={screenType}
           />
         )}
+        {secondaryNavItems && ['secondary', 'combined'].includes(navigationType) && (
+          <DynamicNavigation
+            navigationType="secondary"
+            navigationView={navigationView}
+            navigationItems={secondaryNavItems}
+            screenType={screenType}
+          />
+        )}
         <main
           className={`transition-all duration-300 ${getMarginClasses({
             isMobile,
             navigationView,
             navigationType,
-            secondaryNavItems: null,
+            secondaryNavItems,
           })}`}
         >
           {children}
         </main>
 
-        <NavigationCommandDialog primaryNavItems={navigationItems} secondaryNavItems={null} />
+        <NavigationCommandDialog primaryNavItems={navigationItems} secondaryNavItems={secondaryNavItems} />
 
         <Toaster richColors position="top-right" />
         <PWAInstallPrompt />

@@ -13,6 +13,7 @@ import { notificationsPageTranslations } from './notifications';
 import { solutionsPageTranslations } from './solutions';
 import { pricingPageTranslations } from './pricing';
 import { featuresPageTranslations } from './features';
+import { docsPageTranslations } from './docs';
 import { supportPageTranslations } from './support';
 import { editorPageTranslations } from './editor';
 import { meetPageTranslations } from './meet';
@@ -42,6 +43,7 @@ export const pagesTranslations = {
   solutions: solutionsPageTranslations,
   pricing: pricingPageTranslations,
   features: featuresPageTranslations,
+  docs: docsPageTranslations,
   support: supportPageTranslations,
   editor: editorPageTranslations,
   meet: meetPageTranslations,

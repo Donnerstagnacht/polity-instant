@@ -127,37 +127,41 @@ export function PlateEditor({
     }
   }, [editor, discussions]);
 
-  // Update discussion plugin options when currentUser or users change
+  // Track the last discussions prop value we synced into the editor so we only
+  // push when props genuinely change — not when the effect re-runs due to other
+  // deps (users, documentTitle). This prevents stale props from overwriting
+  // in-memory editor discussions that have a newly added comment or vote.
+  const lastSyncedDiscussionsRef = React.useRef<string>('');
+
   React.useEffect(() => {
     if (currentUser && users && editor) {
-      // Get current discussions from editor
       const currentEditorDiscussions = editor.getOption(discussionPlugin, 'discussions') || [];
 
-      // Check if discussions have changed
       const propsDiscussionsStr = JSON.stringify(discussions || []);
-      const editorDiscussionsStr = JSON.stringify(currentEditorDiscussions);
-      const discussionsChanged = propsDiscussionsStr !== editorDiscussionsStr;
-
-      // Prefer editor discussions if they have more items (user may have added new discussions)
-      // Otherwise, use props discussions (which may have updated votes)
-      const shouldUsePropsDiscussions =
-        discussionsChanged && discussions && discussions.length >= currentEditorDiscussions.length;
+      const propsChanged = propsDiscussionsStr !== lastSyncedDiscussionsRef.current;
 
       // Update discussion plugin options
       editor.setOptions(discussionPlugin, {
         currentUserId: currentUser.id,
         users: users,
         documentTitle: documentTitle || '',
-        // Use props discussions if they're newer/different and have at least as many items
-        discussions: shouldUsePropsDiscussions ? discussions : currentEditorDiscussions,
+        // Only overwrite editor discussions when the props value itself has
+        // changed (e.g. remote poke arrived). Otherwise keep whatever the
+        // editor plugin currently holds — it may contain a comment the user
+        // just added that hasn't round-tripped through Zero yet.
+        discussions: propsChanged ? (discussions || []) : currentEditorDiscussions,
       });
+
+      if (propsChanged) {
+        lastSyncedDiscussionsRef.current = propsDiscussionsStr;
+      }
 
       // Also update suggestion plugin's currentUserId
       editor.setOptions(suggestionPlugin, {
         currentUserId: currentUser.id,
       });
     }
-  }, [currentUser, users, discussions, documentTitle, editor]); // Added documentTitle
+  }, [currentUser, users, discussions, documentTitle, editor]);
 
   // Watch for changes in discussions and call callback
   React.useEffect(() => {

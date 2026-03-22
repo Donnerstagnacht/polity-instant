@@ -15,10 +15,13 @@ import { Route as SupportImport } from './routes/support'
 import { Route as SolutionsImport } from './routes/solutions'
 import { Route as PricingImport } from './routes/pricing'
 import { Route as FeaturesImport } from './routes/features'
+import { Route as DocsImport } from './routes/docs'
 import { Route as AuthImport } from './routes/auth'
 import { Route as AuthedImport } from './routes/_authed'
 import { Route as SplatImport } from './routes/$'
 import { Route as IndexImport } from './routes/index'
+import { Route as DocsIndexImport } from './routes/docs/index'
+import { Route as DocsTopicImport } from './routes/docs/$topic'
 import { Route as AuthVerifyImport } from './routes/auth/verify'
 import { Route as AuthedTodosImport } from './routes/_authed/todos'
 import { Route as AuthedSearchImport } from './routes/_authed/search'
@@ -121,6 +124,12 @@ const FeaturesRoute = FeaturesImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const DocsRoute = DocsImport.update({
+  id: '/docs',
+  path: '/docs',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const AuthRoute = AuthImport.update({
   id: '/auth',
   path: '/auth',
@@ -142,6 +151,18 @@ const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRoute,
+} as any)
+
+const DocsIndexRoute = DocsIndexImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DocsRoute,
+} as any)
+
+const DocsTopicRoute = DocsTopicImport.update({
+  id: '/$topic',
+  path: '/$topic',
+  getParentRoute: () => DocsRoute,
 } as any)
 
 const AuthVerifyRoute = AuthVerifyImport.update({
@@ -645,6 +666,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthImport
       parentRoute: typeof rootRoute
     }
+    '/docs': {
+      id: '/docs'
+      path: '/docs'
+      fullPath: '/docs'
+      preLoaderRoute: typeof DocsImport
+      parentRoute: typeof rootRoute
+    }
     '/features': {
       id: '/features'
       path: '/features'
@@ -721,6 +749,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/verify'
       preLoaderRoute: typeof AuthVerifyImport
       parentRoute: typeof AuthImport
+    }
+    '/docs/$topic': {
+      id: '/docs/$topic'
+      path: '/$topic'
+      fullPath: '/docs/$topic'
+      preLoaderRoute: typeof DocsTopicImport
+      parentRoute: typeof DocsImport
+    }
+    '/docs/': {
+      id: '/docs/'
+      path: '/'
+      fullPath: '/docs/'
+      preLoaderRoute: typeof DocsIndexImport
+      parentRoute: typeof DocsImport
     }
     '/_authed/amendment/$id': {
       id: '/_authed/amendment/$id'
@@ -1488,11 +1530,24 @@ const AuthRouteChildren: AuthRouteChildren = {
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
+interface DocsRouteChildren {
+  DocsTopicRoute: typeof DocsTopicRoute
+  DocsIndexRoute: typeof DocsIndexRoute
+}
+
+const DocsRouteChildren: DocsRouteChildren = {
+  DocsTopicRoute: DocsTopicRoute,
+  DocsIndexRoute: DocsIndexRoute,
+}
+
+const DocsRouteWithChildren = DocsRoute._addFileChildren(DocsRouteChildren)
+
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '': typeof AuthedRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
+  '/docs': typeof DocsRouteWithChildren
   '/features': typeof FeaturesRoute
   '/pricing': typeof PricingRoute
   '/solutions': typeof SolutionsRoute
@@ -1504,6 +1559,8 @@ export interface FileRoutesByFullPath {
   '/search': typeof AuthedSearchRoute
   '/todos': typeof AuthedTodosRouteWithChildren
   '/auth/verify': typeof AuthVerifyRoute
+  '/docs/$topic': typeof DocsTopicRoute
+  '/docs/': typeof DocsIndexRoute
   '/amendment/$id': typeof AuthedAmendmentIdRouteWithChildren
   '/create/agenda-item': typeof AuthedCreateAgendaItemRoute
   '/create/amendment': typeof AuthedCreateAmendmentRoute
@@ -1590,6 +1647,8 @@ export interface FileRoutesByTo {
   '/search': typeof AuthedSearchRoute
   '/todos': typeof AuthedTodosRouteWithChildren
   '/auth/verify': typeof AuthVerifyRoute
+  '/docs/$topic': typeof DocsTopicRoute
+  '/docs': typeof DocsIndexRoute
   '/create/agenda-item': typeof AuthedCreateAgendaItemRoute
   '/create/amendment': typeof AuthedCreateAmendmentRoute
   '/create/blog-entry': typeof AuthedCreateBlogEntryRoute
@@ -1657,6 +1716,7 @@ export interface FileRoutesById {
   '/$': typeof SplatRoute
   '/_authed': typeof AuthedRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
+  '/docs': typeof DocsRouteWithChildren
   '/features': typeof FeaturesRoute
   '/pricing': typeof PricingRoute
   '/solutions': typeof SolutionsRoute
@@ -1668,6 +1728,8 @@ export interface FileRoutesById {
   '/_authed/search': typeof AuthedSearchRoute
   '/_authed/todos': typeof AuthedTodosRouteWithChildren
   '/auth/verify': typeof AuthVerifyRoute
+  '/docs/$topic': typeof DocsTopicRoute
+  '/docs/': typeof DocsIndexRoute
   '/_authed/amendment/$id': typeof AuthedAmendmentIdRouteWithChildren
   '/_authed/create/agenda-item': typeof AuthedCreateAgendaItemRoute
   '/_authed/create/amendment': typeof AuthedCreateAmendmentRoute
@@ -1745,6 +1807,7 @@ export interface FileRouteTypes {
     | '/$'
     | ''
     | '/auth'
+    | '/docs'
     | '/features'
     | '/pricing'
     | '/solutions'
@@ -1756,6 +1819,8 @@ export interface FileRouteTypes {
     | '/search'
     | '/todos'
     | '/auth/verify'
+    | '/docs/$topic'
+    | '/docs/'
     | '/amendment/$id'
     | '/create/agenda-item'
     | '/create/amendment'
@@ -1841,6 +1906,8 @@ export interface FileRouteTypes {
     | '/search'
     | '/todos'
     | '/auth/verify'
+    | '/docs/$topic'
+    | '/docs'
     | '/create/agenda-item'
     | '/create/amendment'
     | '/create/blog-entry'
@@ -1906,6 +1973,7 @@ export interface FileRouteTypes {
     | '/$'
     | '/_authed'
     | '/auth'
+    | '/docs'
     | '/features'
     | '/pricing'
     | '/solutions'
@@ -1917,6 +1985,8 @@ export interface FileRouteTypes {
     | '/_authed/search'
     | '/_authed/todos'
     | '/auth/verify'
+    | '/docs/$topic'
+    | '/docs/'
     | '/_authed/amendment/$id'
     | '/_authed/create/agenda-item'
     | '/_authed/create/amendment'
@@ -1993,6 +2063,7 @@ export interface RootRouteChildren {
   SplatRoute: typeof SplatRoute
   AuthedRoute: typeof AuthedRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
+  DocsRoute: typeof DocsRouteWithChildren
   FeaturesRoute: typeof FeaturesRoute
   PricingRoute: typeof PricingRoute
   SolutionsRoute: typeof SolutionsRoute
@@ -2004,6 +2075,7 @@ const rootRouteChildren: RootRouteChildren = {
   SplatRoute: SplatRoute,
   AuthedRoute: AuthedRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
+  DocsRoute: DocsRouteWithChildren,
   FeaturesRoute: FeaturesRoute,
   PricingRoute: PricingRoute,
   SolutionsRoute: SolutionsRoute,
@@ -2024,6 +2096,7 @@ export const routeTree = rootRoute
         "/$",
         "/_authed",
         "/auth",
+        "/docs",
         "/features",
         "/pricing",
         "/solutions",
@@ -2069,6 +2142,13 @@ export const routeTree = rootRoute
         "/auth/verify"
       ]
     },
+    "/docs": {
+      "filePath": "docs.tsx",
+      "children": [
+        "/docs/$topic",
+        "/docs/"
+      ]
+    },
     "/features": {
       "filePath": "features.tsx"
     },
@@ -2111,6 +2191,14 @@ export const routeTree = rootRoute
     "/auth/verify": {
       "filePath": "auth/verify.tsx",
       "parent": "/auth"
+    },
+    "/docs/$topic": {
+      "filePath": "docs/$topic.tsx",
+      "parent": "/docs"
+    },
+    "/docs/": {
+      "filePath": "docs/index.tsx",
+      "parent": "/docs"
     },
     "/_authed/amendment/$id": {
       "filePath": "_authed/amendment/$id.tsx",

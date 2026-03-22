@@ -3,6 +3,7 @@ export const navigationTranslations = {
     home: 'Startseite',
     features: 'Funktionen',
     solutions: 'Lösungen',
+    docs: 'Docs',
     pricing: 'Preise',
     support: 'Unterstützen',
     create: 'Erstellen',
