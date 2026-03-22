@@ -23,7 +23,8 @@ export const commonTranslations = {
     conversations: 'Loading conversations...',
     sync: {
       headline: 'Loading data locally...',
-      coffeeMessage: 'Grab a coffee — after this we\'ll be blazingly fast, no time for coffee breaks!',
+      coffeeMessage:
+        "Grab a coffee — after this we'll be blazingly fast, no time for coffee breaks!",
       connecting: 'Connecting...',
       connected: 'Connected',
       disconnected: 'Offline — retrying...',
@@ -288,5 +289,18 @@ export const commonTranslations = {
     voteCastFailed: 'Failed to cast vote',
     voteUpdateFailed: 'Failed to update vote',
     voteRemoveFailed: 'Failed to remove vote',
+  },
+  votingPassword: {
+    setSuccess: 'Voting password saved',
+    setFailed: 'Failed to save voting password',
+    verifySuccess: 'Password verified',
+    verifyFailed: 'Incorrect password',
+  },
+  voteToasts: {
+    indicativeVoteCast: 'Indicative vote cast',
+    indicativeVoteFailed: 'Failed to cast indicative vote',
+    voteUpdated: 'Vote updated',
+    voteUpdateFailed: 'Failed to update vote',
+    voteDeleteFailed: 'Failed to delete vote',
   },
 } as const;

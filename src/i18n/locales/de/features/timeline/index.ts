@@ -279,6 +279,8 @@ export const timelineTranslations = {
     active: 'aktiv',
     ended: 'Beendet',
     endedAgo: 'Vor {{time}} beendet',
+    startsIn: 'Startet in',
+    closesIn: 'Schliesst in',
     timeRemaining: 'Verbleibende Zeit',
     turnout: 'Beteiligung',
     trend: 'Trend',
@@ -305,6 +307,7 @@ export const timelineTranslations = {
     showLess: 'Weniger anzeigen',
     filters: {
       live: 'LIVE',
+      openingSoon: 'STARTET BALD',
       closingSoon: 'BALD ENDEND',
       recentlyClosed: 'KÜRZLICH GESCHLOSSEN',
       all: 'ALLE',
@@ -332,6 +335,7 @@ export const timelineTranslations = {
     },
     empty: {
       live: 'Momentan keine aktiven Entscheidungen',
+      openingSoon: 'Keine bald startenden Entscheidungen',
       closingSoon: 'Keine bald endenden Entscheidungen',
       recentlyClosed: 'Keine kürzlich geschlossenen Entscheidungen',
       all: 'Keine Entscheidungen vorhanden',

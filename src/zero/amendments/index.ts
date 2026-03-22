@@ -7,12 +7,8 @@ export {
   supportConfirmation,
 } from './table'
 export {
-  amendmentVoteEntry,
   amendmentSupportVote,
-  amendmentVote,
   changeRequestVote,
-  amendmentVotingSession,
-  amendmentVotingSessionVote,
 } from '../votes/table'
 export { changeRequest } from '../change-requests/table'
 
@@ -29,11 +25,7 @@ export {
   type SupportConfirmation,
 } from './schema'
 export type {
-  AmendmentVoteEntry,
   AmendmentSupportVote,
-  AmendmentVote,
-  AmendmentVotingSession,
-  AmendmentVotingSessionVote,
   ChangeRequestVote,
 } from '../votes/schema'
 export type { ChangeRequest } from '../change-requests/schema'

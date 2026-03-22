@@ -1,23 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Button } from '@/features/shared/ui/ui/button';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Label } from '@/features/shared/ui/ui/label';
-import { Input } from '@/features/shared/ui/ui/input';
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
-import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/features/shared/ui/ui/dialog';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import {
   type AmendmentNetworkEvent,
@@ -27,7 +16,7 @@ import {
   getActiveUserGroupIds,
   getUpwardConnectedGroupsForUser,
 } from '@/features/amendments/logic/amendmentPathHelpers';
-import { CalendarIcon, Target, User, MapPin, Clock, Users, ChevronRight, Search } from 'lucide-react';
+import { CalendarIcon, Target, User, MapPin, Clock, ChevronRight } from 'lucide-react';
 
 interface TargetGroupEventSelectorProps {
   userId: string;
@@ -54,9 +43,9 @@ export function TargetGroupEventSelector({
   const [selectedUserId, setSelectedUserId] = useState<string>(userId);
   const [selectedGroup, setSelectedGroup] = useState<{ id: string; data: AmendmentNetworkGroup } | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<{ id: string; data: AmendmentNetworkEvent } | null>(null);
-  const [eventSearchQuery, setEventSearchQuery] = useState<string>('');
   const [pathWithEvents, setPathWithEvents] = useState<PathWithEventSegment[]>([]);
   const [pathValidationError, setPathValidationError] = useState<string | null>(null);
+  const lastEmittedSelectionRef = useRef<string | null>(null);
 
   // Fetch network data via facade
   const {
@@ -78,21 +67,20 @@ export function TargetGroupEventSelector({
     events: eventsData ?? [],
   };
 
-  const groupEventsData = { events: groupEventsResult ?? [] };
-
   // Reset selection when user changes
   useEffect(() => {
     setSelectedGroup(null);
-    setEventSearchQuery('');
     setSelectedEvent(null);
     setPathWithEvents([]);
     setPathValidationError(null);
+    lastEmittedSelectionRef.current = null;
   }, [selectedUserId]);
 
   // Seed the computed path when user picks target group/event.
   useEffect(() => {
     if (!selectedGroup || !selectedEvent) {
       setPathWithEvents([]);
+      lastEmittedSelectionRef.current = null;
       return;
     }
 
@@ -152,37 +140,53 @@ export function TargetGroupEventSelector({
     selectedUserId || userId
   );
 
-  // Get upcoming events for selected group
-  const upcomingEvents =
-    selectedGroup?.id && groupEventsData
-      ? [...groupEventsData.events]
-          .filter((e) => new Date(e.start_date ?? 0) > new Date())
-          .sort(
-            (a, b) =>
-              new Date(a.start_date ?? 0).getTime() - new Date(b.start_date ?? 0).getTime()
-          )
-      : [];
-
-  // Filter events based on search query
-  const filteredEvents = upcomingEvents.filter((event) => {
-    if (!eventSearchQuery.trim()) return true;
-    
-    const searchLower = eventSearchQuery.toLowerCase();
-    const titleMatch = event.title?.toLowerCase().includes(searchLower);
-    const descriptionMatch = event.description?.toLowerCase().includes(searchLower);
-    const locationMatch = event.location_name?.toLowerCase().includes(searchLower);
-    
-    return titleMatch || descriptionMatch || locationMatch;
-  });
-
   const getUpcomingEventsForGroup = useCallback(
     (groupId: string): AmendmentNetworkEvent[] => {
       const now = Date.now();
       return [...(networkData.events ?? [])]
-        .filter((event) => event.group?.id === groupId && (event.start_date ?? 0) > now)
+        .filter((event) => event.group_id === groupId && (event.start_date ?? 0) > now)
         .sort((a, b) => (a.start_date ?? 0) - (b.start_date ?? 0));
     },
     [networkData.events]
+  );
+
+  // Get events for selected group from the dedicated eventsByGroup query
+  // Shows all events (upcoming first, then past) so users can always see available events
+  const upcomingEvents = selectedGroup?.id
+    ? [...(groupEventsResult ?? [])]
+        .sort((a, b) => {
+          const now = Date.now();
+          const aFuture = (a.start_date ?? 0) > now;
+          const bFuture = (b.start_date ?? 0) > now;
+          if (aFuture && !bFuture) return -1;
+          if (!aFuture && bFuture) return 1;
+          return (a.start_date ?? 0) - (b.start_date ?? 0);
+        })
+    : [];
+
+  const targetEventItems = useMemo(
+    () =>
+      toTypeaheadItems(
+        upcomingEvents,
+        'event',
+        (event) => event.title || 'Event',
+        (event) => {
+          const dateLabel = event.start_date
+            ? new Date(event.start_date).toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+              })
+            : 'No date';
+
+          return event.location_name
+            ? `${dateLabel} - ${event.location_name}`
+            : dateLabel;
+        }
+      ),
+    [upcomingEvents]
   );
 
   const validatePathEventOrder = useCallback((segments: PathWithEventSegment[]): string | null => {
@@ -241,13 +245,33 @@ export function TargetGroupEventSelector({
 
     const validationError = validatePathEventOrder(pathWithEvents);
     setPathValidationError(validationError);
-    if (validationError) return;
+    if (validationError) {
+      lastEmittedSelectionRef.current = null;
+      return;
+    }
 
     const targetSegment = pathWithEvents.find((segment) => segment.groupId === selectedGroup.id);
     const targetEventId = targetSegment?.eventId ?? selectedEvent.id;
     const targetEvent =
       getUpcomingEventsForGroup(selectedGroup.id).find((event) => event.id === targetEventId) ??
       selectedEvent.data;
+
+    const selectionSignature = JSON.stringify({
+      groupId: selectedGroup.id,
+      eventId: targetEventId,
+      selectedUserId,
+      pathWithEvents: pathWithEvents.map((segment) => ({
+        groupId: segment.groupId,
+        eventId: segment.eventId,
+        eventStartDate: segment.eventStartDate,
+      })),
+    });
+
+    if (lastEmittedSelectionRef.current === selectionSignature) {
+      return;
+    }
+
+    lastEmittedSelectionRef.current = selectionSignature;
 
     onSelect({
       groupId: selectedGroup.id,
@@ -327,113 +351,25 @@ export function TargetGroupEventSelector({
           <Label>Select Target Event</Label>
           {upcomingEvents.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No upcoming events for this group
+              No events found for this group
             </p>
           ) : (
-            <div className="space-y-3">
-              {/* Search Input */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search events by title, description, or location..."
-                  value={eventSearchQuery}
-                  onChange={(e) => setEventSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
+            <TypeaheadSearch
+              items={targetEventItems}
+              value={selectedEvent?.id || ''}
+              onChange={(item: TypeaheadItem | null) => {
+                if (!item) {
+                  setSelectedEvent(null);
+                  return;
+                }
 
-              {/* Events List */}
-              <ScrollArea className="h-[400px] pr-4">
-                <div className="space-y-2">
-                  {filteredEvents.length === 0 ? (
-                    <p className="py-8 text-center text-sm text-muted-foreground">
-                      No events match your search
-                    </p>
-                  ) : (
-                    filteredEvents.map((event) => {
-                      const isEventSelected = selectedEvent?.id === event.id;
-                      
-                      return (
-                        <div
-                          key={event.id}
-                          className={`cursor-pointer rounded-lg border-2 bg-gradient-to-br from-green-100 to-blue-100 p-4 transition-all dark:from-green-900/40 dark:to-blue-900/50 ${
-                            isEventSelected
-                              ? 'border-primary ring-2 ring-primary/20'
-                              : 'border-border hover:border-primary hover:shadow-md'
-                          }`}
-                          onClick={() => {
-                            setSelectedEvent({ id: event.id, data: event });
-                          }}
-                        >
-                          {/* Header with title and badges */}
-                          <div className="mb-3 flex items-start justify-between gap-2">
-                            <h4 className="flex-1 text-lg font-semibold leading-tight">
-                              {event.title}
-                            </h4>
-                            <div className="flex gap-1">
-                              {isEventSelected && (
-                                <Badge variant="default" className="text-xs">
-                                  Selected
-                                </Badge>
-                              )}
-                              {event.is_public && (
-                                <Badge variant="outline" className="text-xs">
-                                  Public
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Event details */}
-                          <div className="space-y-1.5 text-xs text-muted-foreground">
-                            {/* Date and time */}
-                            {event.start_date && (
-                              <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-1.5">
-                                  <CalendarIcon className="h-3.5 w-3.5" />
-                                  <span>
-                                    {new Date(event.start_date).toLocaleDateString('en-US', {
-                                      weekday: 'short',
-                                      month: 'short',
-                                      day: 'numeric',
-                                      year: 'numeric',
-                                    })}
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                  <Clock className="h-3.5 w-3.5" />
-                                  <span>
-                                    {new Date(event.start_date).toLocaleTimeString('en-US', {
-                                      hour: 'numeric',
-                                      minute: '2-digit',
-                                    })}
-                                  </span>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Location */}
-                            {event.location_name && (
-                              <div className="flex items-center gap-1.5">
-                                <MapPin className="h-3.5 w-3.5" />
-                                <span className="truncate">{event.location_name}</span>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Description */}
-                          {event.description && (
-                            <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">
-                              {event.description}
-                            </p>
-                          )}
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </ScrollArea>
-            </div>
+                const event = upcomingEvents.find((entry) => entry.id === item.id);
+                if (event) {
+                  setSelectedEvent({ id: event.id, data: event });
+                }
+              }}
+              placeholder="Search for an event..."
+            />
           )}
         </div>
       )}

@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useMemo } from 'react';
-import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
+import { useElectionActions } from '@/zero/elections/useElectionActions';
 import { useCommonActions } from '@/zero/common/useCommonActions';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useElectionWithVotes } from '@/zero/events/useEventState';
@@ -38,7 +38,7 @@ export function useElectionVoting({
   groupName,
 }: UseElectionVotingOptions) {
   const { can } = usePermissions({ eventId, groupId });
-  const { castElectionVote, updateElectionVote, updateElection, addCandidate, updateCandidate } = useAgendaActions();
+  const { castFinalVote, updateElection, addCandidate, updateCandidate } = useElectionActions();
   const { createTimelineEvent } = useCommonActions();
   const { createPositionHolderHistory } = useGroupActions();
 
@@ -48,7 +48,7 @@ export function useElectionVoting({
 
   const election = electionRaw;
   const candidates = election?.candidates ?? [];
-  const votes = election?.votes ?? [];
+  const finalSelections = election?.final_selections ?? [];
   const position = election?.position;
 
   // Candidates who accepted their nomination
@@ -56,10 +56,15 @@ export function useElectionVoting({
     return candidates.filter(c => c.status !== 'declined');
   }, [candidates]);
 
-  // Check if user has already voted
+  // Check if user has already voted (via elector participation)
+  const userElector = useMemo(() => {
+    return election?.electors?.find(e => e.user_id === userId) ?? null;
+  }, [election?.electors, userId]);
+
   const userVote = useMemo(() => {
-    return votes.find(v => v.voter?.id === userId);
-  }, [votes, userId]);
+    if (!userElector) return null;
+    return finalSelections.find(s => s.elector_participation_id === userElector.id) ?? null;
+  }, [finalSelections, userElector]);
 
   const hasVoted = !!userVote;
 
@@ -68,14 +73,14 @@ export function useElectionVoting({
     const counts: Record<string, number> = {};
 
     for (const candidate of eligibleCandidates) {
-      counts[candidate.id] = votes.filter(v => v.candidate?.id === candidate.id).length;
+      counts[candidate.id] = finalSelections.filter(s => s.candidate_id === candidate.id).length;
     }
 
     return counts;
-  }, [votes, eligibleCandidates]);
+  }, [finalSelections, eligibleCandidates]);
 
   // Total votes cast
-  const totalVotes = votes.length;
+  const totalVotes = finalSelections.length;
 
   // Calculate current leader
   const currentLeader = useMemo(() => {
@@ -106,33 +111,23 @@ export function useElectionVoting({
         throw new Error('Already voted');
       }
 
-      const voteId = crypto.randomUUID();
-      await castElectionVote({
-        id: voteId,
-        election_id: electionId,
-        candidate_id: candidateId,
-        is_indication: false,
-        indicated_at: 0,
-      });
+      const participationId = crypto.randomUUID();
+      await castFinalVote(
+        { id: participationId, election_id: electionId, elector_id: userId },
+        [{ id: crypto.randomUUID(), election_id: electionId, candidate_id: candidateId, elector_participation_id: participationId }]
+      );
 
-      return voteId;
+      return participationId;
     },
-    [electionId, userId, hasVoted, can]
+    [electionId, userId, hasVoted, can, castFinalVote]
   );
 
-  // Change vote (if allowed)
+  // Change vote — not supported in the new voting model
   const changeVote = useCallback(
-    async (newCandidateId: string) => {
-      if (!userVote) {
-        throw new Error('No existing vote to change');
-      }
-
-      await updateElectionVote({
-        id: userVote.id,
-        candidate_id: newCandidateId,
-      });
+    async (_newCandidateId: string) => {
+      throw new Error('Changing votes is not supported. Delete and re-cast instead.');
     },
-    [userVote]
+    []
   );
 
   // Complete election and determine winner
@@ -143,8 +138,8 @@ export function useElectionVoting({
       }
 
       // Transform data for calculateElectionWinner
-      const electionVotes = votes.map(v => ({
-        candidate: { id: v.candidate?.id ?? '', name: v.candidate?.name ?? '' },
+      const electionVotes = finalSelections.map(s => ({
+        candidate: { id: s.candidate?.id ?? '', name: s.candidate?.name ?? '' },
       }));
       const candidateList = eligibleCandidates.map(c => ({
         id: c.id,
@@ -227,7 +222,7 @@ export function useElectionVoting({
         voteCount: result.voteCount,
       };
     },
-    [electionId, eligibleCandidates, votes, can]
+    [electionId, eligibleCandidates, finalSelections, can]
   );
 
   // Assign position to election winner
@@ -356,7 +351,7 @@ export function useElectionVoting({
     position,
     candidates,
     eligibleCandidates,
-    votes,
+    finalSelections,
     voteCounts,
     totalVotes,
     currentLeader,

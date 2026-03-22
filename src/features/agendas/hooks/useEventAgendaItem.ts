@@ -1,141 +1,142 @@
-import { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
-import { useAuth } from '@/providers/auth-provider';
-import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
-import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
-import { useAgendaItemDetail } from '@/zero/events/useEventState';
+import { useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
+import { useAuth } from '@/providers/auth-provider'
+import { useAgendaState } from '@/zero/agendas/useAgendaState'
+import { useAgendaActions } from '@/zero/agendas/useAgendaActions'
+import { useElectionState } from '@/zero/elections/useElectionState'
+import { useElectionActions } from '@/zero/elections/useElectionActions'
+import { useVoteState } from '@/zero/votes/useVoteState'
+import { useVoteActions } from '@/zero/votes/useVoteActions'
+import { useAgendaItemDetail } from '@/zero/events/useEventState'
 
 export function useEventAgendaItem(eventId: string, agendaItemId: string) {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { deleteElectionVote, castElectionVote, deleteAgendaItem, addSpeaker } = useAgendaActions();
-  const { createVoteEntry, updateVoteEntry } = useAmendmentActions();
-  const [votingLoading, setVotingLoading] = useState<string | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [addingSpeaker, setAddingSpeaker] = useState(false);
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const { deleteAgendaItem, addSpeaker } = useAgendaActions()
+  const electionActions = useElectionActions()
+  const voteActionsHook = useVoteActions()
+  const [votingLoading, setVotingLoading] = useState<string | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [addingSpeaker, setAddingSpeaker] = useState(false)
 
   // Query agenda item with all related data
-  const { agendaItem: agendaItemRaw, electionVotes, amendmentVoteEntries, isLoading } = useAgendaItemDetail(agendaItemId);
-  const data = {
-    agendaItems: agendaItemRaw ? [agendaItemRaw] : [],
-    electionVotes,
-    amendmentVoteEntries,
-  };
+  const { agendaItem: agendaItemRaw, isLoading: agendaItemLoading } = useAgendaItemDetail(agendaItemId)
+  const agendaItem = agendaItemRaw
+  const event = agendaItem?.event
+  const { agendaItems, isLoading: agendaLoading } = useAgendaState({ eventId })
 
-  const agendaItem = agendaItemRaw;
-  const event = agendaItem?.event;
+  // Election state for this agenda item
+  const { election, candidates, electors, isLoading: electionLoading } = useElectionState({
+    agendaItemId,
+  })
 
-  // Get user's existing votes
-  const userElectionVotes = (data?.electionVotes || []).filter(
-    (vote) => vote.voter?.id === user?.id
-  );
-  const userAmendmentVotes = (data?.amendmentVoteEntries || []).filter(
-    (entry) => entry.user?.id === user?.id
-  );
+  // Vote state for this agenda item
+  const { vote, choices, isLoading: voteLoading } = useVoteState({
+    agendaItemId,
+  })
 
-  // Handle election vote
-  const handleElectionVote = async (electionId: string, candidateId: string) => {
-    if (!user) return;
+  // Find user's elector/voter record
+  const userElector = electors.find((e) => e.user_id === user?.id)
+  const userVoter = vote?.voters?.find((v: { user_id: string }) => v.user_id === user?.id)
+  const calculatedAgendaItem = agendaItems.find((item) => item.id === agendaItemId)
 
-    setVotingLoading(electionId);
+  const isLoading = agendaItemLoading || electionLoading || voteLoading || agendaLoading
+  const estimatedStartTime = calculatedAgendaItem?.calculated_start_time
+    ? new Date(calculatedAgendaItem.calculated_start_time)
+    : undefined
+
+  // Handle election vote — cast participation + candidate selection(s)
+  const handleElectionVote = async (candidateIds: string[]) => {
+    if (!user || !election || !userElector) return
+
+    setVotingLoading(election.id)
     try {
-      const existingVote = userElectionVotes.find((vote) => vote.election?.id === electionId);
+      const isIndicative = election.status === 'indicative'
+      const participationId = crypto.randomUUID()
+      const participationArgs = {
+        id: participationId,
+        election_id: election.id,
+        elector_id: userElector.id,
+      }
 
-      // Determine if this is an indication vote based on agenda item status
-      const isIndicationVote = agendaItem?.status === 'planned';
+      const selections = candidateIds.map((candidateId) => ({
+        id: crypto.randomUUID(),
+        election_id: election.id,
+        candidate_id: candidateId,
+        elector_participation_id: election.is_public ? participationId : null,
+      }))
 
-      if (existingVote) {
-        if (existingVote.candidate?.id === candidateId) {
-          await deleteElectionVote(existingVote.id);
-        } else {
-          const newVoteId = crypto.randomUUID();
-          await deleteElectionVote(existingVote.id);
-          await castElectionVote({
-            id: newVoteId,
-            is_indication: isIndicationVote,
-            indicated_at: isIndicationVote ? Date.now() : 0,
-            election_id: electionId,
-            candidate_id: candidateId,
-          });
-        }
+      if (isIndicative) {
+        await electionActions.castIndicativeVote(participationArgs, selections)
       } else {
-        const voteId = crypto.randomUUID();
-        await castElectionVote({
-          id: voteId,
-          is_indication: isIndicationVote,
-          indicated_at: isIndicationVote ? Date.now() : 0,
-          election_id: electionId,
-          candidate_id: candidateId,
-        });
+        await electionActions.castFinalVote(participationArgs, selections)
       }
     } catch (error) {
-      console.error('Error voting:', error);
+      console.error('Error voting:', error)
     } finally {
-      setVotingLoading(null);
+      setVotingLoading(null)
     }
-  };
+  }
 
-  // Handle amendment vote
-  const handleAmendmentVote = async (
-    amendmentVoteId: string,
-    voteValue: 'yes' | 'no' | 'abstain'
-  ) => {
-    if (!user) return;
+  // Handle amendment/discussion vote — cast participation + choice decision
+  const handleAmendmentVote = async (choiceId: string) => {
+    if (!user || !vote || !userVoter) return
 
-    setVotingLoading(amendmentVoteId);
+    setVotingLoading(vote.id)
     try {
-      const existingVote = userAmendmentVotes.find(
-        (entry) => entry.amendment?.id === amendmentVoteId
-      );
+      const isIndicative = vote.status === 'indicative'
+      const participationId = crypto.randomUUID()
+      const participationArgs = {
+        id: participationId,
+        vote_id: vote.id,
+        voter_id: userVoter.id,
+      }
 
-      const voteMap = { yes: 1, no: -1, abstain: 0 } as const;
-      if (existingVote) {
-        await updateVoteEntry({
-          id: existingVote.id,
-          vote: voteMap[voteValue],
-        });
+      const decisions = [{
+        id: crypto.randomUUID(),
+        vote_id: vote.id,
+        choice_id: choiceId,
+        voter_participation_id: vote.is_public ? participationId : null,
+      }]
+
+      if (isIndicative) {
+        await voteActionsHook.castIndicativeVote(participationArgs, decisions)
       } else {
-        const entryId = crypto.randomUUID();
-        await createVoteEntry({
-          id: entryId,
-          vote: voteMap[voteValue],
-          amendment_id: amendmentVoteId,
-        });
+        await voteActionsHook.castFinalVote(participationArgs, decisions)
       }
     } catch (error) {
-      console.error('Error voting:', error);
+      console.error('Error voting:', error)
     } finally {
-      setVotingLoading(null);
+      setVotingLoading(null)
     }
-  };
+  }
 
   // Handle delete agenda item
   const handleDelete = async () => {
-    if (!user || !agendaItem) return;
+    if (!user || !agendaItem) return
 
-    setDeleteLoading(true);
+    setDeleteLoading(true)
     try {
-      await deleteAgendaItem(agendaItemId);
-      navigate({ to: `/event/${eventId}/agenda` });
+      await deleteAgendaItem(agendaItemId)
+      navigate({ to: `/event/${eventId}/agenda` })
     } catch (error) {
-      console.error('Error deleting agenda item:', error);
+      console.error('Error deleting agenda item:', error)
     } finally {
-      setDeleteLoading(false);
+      setDeleteLoading(false)
     }
-  };
+  }
 
   // Handle adding yourself to speakers list
   const handleAddToSpeakerList = async () => {
-    if (!user?.id || !agendaItemId) return;
+    if (!user?.id || !agendaItemId) return
 
-    setAddingSpeaker(true);
+    setAddingSpeaker(true)
     try {
-      // Find the maximum order value
-      const speakers = agendaItem?.speaker_list || [];
+      const speakers = agendaItem?.speaker_list || []
       const maxOrder =
-        speakers.length > 0 ? Math.max(...speakers.map((s) => s.order_index || 0)) : 0;
+        speakers.length > 0 ? Math.max(...speakers.map((s) => s.order_index ?? 0)) : 0
 
-      const speakerId = crypto.randomUUID();
+      const speakerId = crypto.randomUUID()
       await addSpeaker({
         id: speakerId,
         title: 'Speaker',
@@ -144,13 +145,15 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
         order_index: maxOrder + 1,
         user_id: user.id,
         agenda_item_id: agendaItemId,
-      });
+        start_time: null,
+        end_time: null,
+      })
     } catch (error) {
-      console.error('Error adding to speaker list:', error);
+      console.error('Error adding to speaker list:', error)
     } finally {
-      setAddingSpeaker(false);
+      setAddingSpeaker(false)
     }
-  };
+  }
 
   return {
     agendaItem,
@@ -160,12 +163,17 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
     votingLoading,
     deleteLoading,
     addingSpeaker,
-    userElectionVotes,
-    userAmendmentVotes,
-    data,
+    election,
+    candidates,
+    electors,
+    vote,
+    choices,
+    userElector,
+    userVoter,
+    estimatedStartTime,
     handleElectionVote,
     handleAmendmentVote,
     handleDelete,
     handleAddToSpeakerList,
-  };
+  }
 }

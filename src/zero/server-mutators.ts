@@ -12,10 +12,14 @@ import { eventServerMutators } from './events/server-mutators'
 import { amendmentServerMutators } from './amendments/server-mutators'
 import { blogServerMutators } from './blogs/server-mutators'
 import { agendaServerMutators } from './agendas/server-mutators'
+import { electionServerMutators } from './elections/server-mutators'
+import { voteServerMutators } from './votes/server-mutators'
 import { todoServerMutators } from './todos/server-mutators'
 import { paymentServerMutators } from './payments/server-mutators'
 import { documentServerMutators } from './documents/server-mutators'
 import { commonServerMutators } from './common/server-mutators'
+import { votingPasswordServerMutators } from './voting-password/server-mutators'
+import { accreditationServerMutators } from './accreditation/server-mutators'
 
 export const serverMutators = defineMutators(mutators, {
   groups: groupServerMutators,
@@ -23,8 +27,12 @@ export const serverMutators = defineMutators(mutators, {
   amendments: amendmentServerMutators,
   blogs: blogServerMutators,
   agendas: agendaServerMutators,
+  elections: electionServerMutators,
+  votes: voteServerMutators,
   todos: todoServerMutators,
   payments: paymentServerMutators,
   documents: documentServerMutators,
   common: commonServerMutators,
+  votingPassword: votingPasswordServerMutators,
+  accreditation: accreditationServerMutators,
 })

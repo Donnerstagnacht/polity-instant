@@ -10,6 +10,7 @@ export interface CountdownTimerProps {
   className?: string;
   showIcon?: boolean;
   compact?: boolean;
+  compactLabel?: string;
   onExpire?: () => void;
 }
 
@@ -90,6 +91,7 @@ export function CountdownTimer({
   className,
   showIcon = true,
   compact = false,
+  compactLabel,
   onExpire,
 }: CountdownTimerProps) {
   const { t } = useTranslation();
@@ -131,9 +133,16 @@ export function CountdownTimer({
 
   if (compact) {
     return (
-      <span className={cn('font-mono text-xs font-medium', urgencyClasses, className)}>
-        {formattedTime}
-      </span>
+      <div className={cn('flex flex-col', className)}>
+        {compactLabel ? (
+          <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            {compactLabel}
+          </span>
+        ) : null}
+        <span className={cn('font-mono text-xs font-medium', urgencyClasses)}>
+          {formattedTime}
+        </span>
+      </div>
     );
   }
 

@@ -332,6 +332,51 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
           </CardContent>
         </Card>
 
+        {/* Deadlines */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('features.events.deadlines.title', 'Deadlines')}</CardTitle>
+            <CardDescription>
+              {t('features.events.deadlines.settingsDescription', 'Set deadlines for registration, amendments, and candidacy.')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="registrationDeadline">
+                {t('features.events.deadlines.registration', 'Registration Deadline')}
+              </Label>
+              <Input
+                id="registrationDeadline"
+                type="datetime-local"
+                value={formData.registrationDeadline}
+                onChange={e => updateField('registrationDeadline', e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="amendmentDeadline">
+                {t('features.events.deadlines.amendment', 'Amendment Deadline')}
+              </Label>
+              <Input
+                id="amendmentDeadline"
+                type="datetime-local"
+                value={formData.amendmentDeadline}
+                onChange={e => updateField('amendmentDeadline', e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="candidacyDeadline">
+                {t('features.events.deadlines.candidacy', 'Candidacy Deadline')}
+              </Label>
+              <Input
+                id="candidacyDeadline"
+                type="datetime-local"
+                value={formData.candidacyDeadline}
+                onChange={e => updateField('candidacyDeadline', e.target.value)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Action Buttons */}
         <div className="flex gap-4">
           <Button

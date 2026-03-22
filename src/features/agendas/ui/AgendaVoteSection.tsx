@@ -1,655 +1,298 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { Link } from '@tanstack/react-router';
+import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
-import { Button } from '@/features/shared/ui/ui/button';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/features/shared/ui/ui/dialog';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/features/shared/ui/ui/collapsible';
-import { Progress } from '@/features/shared/ui/ui/progress';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
-import {
-  ThumbsUp,
-  ThumbsDown,
-  Minus,
   Vote,
-  ChevronDown,
-  ChevronUp,
   CheckCircle2,
-  Clock,
-  Play,
-  AlertCircle,
+  Crown,
 } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
+import { VoteResultsDisplay, type VoteBarOption } from '@/features/vote-cast/ui/VoteResultsDisplay';
+import { VoteResultSentence } from '@/features/vote-cast/ui/VoteResultSentence';
+import { VotePhaseBadge } from '@/features/vote-cast/ui/VotePhaseBadge';
+import {
+  computeVoteResultSummary,
+  type MajorityType,
+  type VoteResult,
+} from '@/features/vote-cast/logic/computeVoteResults';
+import {
+  calculateVoteStats,
+  getVotingPhase,
+} from '@/features/agendas/hooks/useAgendaItemVoting';
+import type { ChoicesByVoteRow } from '@/zero/votes/queries';
 
-interface VoteEntry {
-  id: string;
-  vote: 'yes' | 'no' | 'abstain';
-  isIndication?: boolean;
-  voter?: {
-    id: string;
-    name?: string;
-  };
+interface ChoiceDecision {
+  choice_id: string;
 }
 
-interface ChangeRequest {
-  id: string;
-  title: string;
-  description: string;
-  characterCount?: number;
-  votingOrder?: number;
-  status: string;
-  activatedAt?: Date;
-  completedAt?: Date;
+function normalizeMajorityType(value?: string | null): MajorityType {
+  if (value === 'absolute' || value === 'two_thirds') {
+    return value;
+  }
+
+  return 'simple';
 }
+
+// Color palette for choices
+const CHOICE_COLORS = [
+  { color: 'bg-green-500', light: 'bg-green-300/60' },
+  { color: 'bg-red-500', light: 'bg-red-300/60' },
+  { color: 'bg-gray-400', light: 'bg-gray-300/60' },
+  { color: 'bg-blue-500', light: 'bg-blue-300/60' },
+  { color: 'bg-purple-500', light: 'bg-purple-300/60' },
+  { color: 'bg-orange-500', light: 'bg-orange-300/60' },
+];
 
 interface AgendaVoteSectionProps {
-  amendmentId: string;
-  amendmentTitle: string;
-  voteEntries: VoteEntry[];
-  changeRequests: ChangeRequest[];
-  changeRequestVotes: Record<string, VoteEntry[]>;
-  userVote?: VoteEntry;
-  userChangeRequestVotes: Record<string, VoteEntry>;
-  agendaStatus: 'planned' | 'active' | 'completed';
-  canVote: boolean;
-  canManageVotes: boolean;
-  isVotingLoading?: boolean;
-  onVote: (vote: 'yes' | 'no' | 'abstain') => void;
-  onChangeRequestVote: (changeRequestId: string, vote: 'yes' | 'no' | 'abstain') => void;
-  onActivateChangeRequest?: (changeRequestId: string) => void;
+  voteTitle: string;
+  choices: ChoicesByVoteRow[];
+  indicativeDecisions: ReadonlyArray<ChoiceDecision>;
+  finalDecisions: ReadonlyArray<ChoiceDecision>;
+  userHasVoted: boolean;
+  userSelectedChoiceIds: string[];
+  voteStatus?: string | null;
+  voteResult?: 'passed' | 'rejected' | 'tie';
+  voteSharePercent?: number;
+  majorityType?: string | null;
+  totalEligibleVoters?: number;
   className?: string;
 }
 
 /**
- * Calculate vote statistics
- */
-function calculateVoteStats(votes: VoteEntry[], isIndicationPhase: boolean) {
-  const indicationVotes = votes.filter(
-    v => v.isIndication || (isIndicationPhase && v.isIndication !== false)
-  );
-  const actualVotes = votes.filter(v => !v.isIndication && !isIndicationPhase);
-
-  const countVotes = (voteList: VoteEntry[]) => ({
-    yes: voteList.filter(v => v.vote === 'yes').length,
-    no: voteList.filter(v => v.vote === 'no').length,
-    abstain: voteList.filter(v => v.vote === 'abstain').length,
-    total: voteList.length,
-  });
-
-  return {
-    indication: countVotes(indicationVotes),
-    actual: countVotes(actualVotes),
-    showBoth: !isIndicationPhase && indicationVotes.length > 0,
-  };
-}
-
-/**
- * Horizontal vote bar visualization
- */
-function VoteBar({
-  yes,
-  no,
-  abstain,
-  total,
-  label,
-  showAbsolute = false,
-}: {
-  yes: number;
-  no: number;
-  abstain: number;
-  total: number;
-  label?: string;
-  showAbsolute?: boolean;
-}) {
-  const { t } = useTranslation();
-
-  if (total === 0) {
-    return (
-      <div className="space-y-1">
-        {label && <div className="text-xs text-muted-foreground">{label}</div>}
-        <div className="h-3 rounded-full bg-muted" />
-        <div className="text-xs text-muted-foreground">
-          {t('features.events.agenda.noVotesYet')}
-        </div>
-      </div>
-    );
-  }
-
-  const yesPercent = (yes / total) * 100;
-  const noPercent = (no / total) * 100;
-  const abstainPercent = (abstain / total) * 100;
-
-  return (
-    <TooltipProvider>
-      <div className="space-y-1">
-        {label && <div className="text-xs text-muted-foreground">{label}</div>}
-        <div className="flex h-3 overflow-hidden rounded-full">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="bg-green-500 transition-all" style={{ width: `${yesPercent}%` }} />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                {t('features.events.agenda.voteYes')}: {yes} ({yesPercent.toFixed(1)}%)
-              </p>
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="bg-red-500 transition-all" style={{ width: `${noPercent}%` }} />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                {t('features.events.agenda.voteNo')}: {no} ({noPercent.toFixed(1)}%)
-              </p>
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="bg-gray-400 transition-all" style={{ width: `${abstainPercent}%` }} />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                {t('features.events.agenda.voteAbstain')}: {abstain} ({abstainPercent.toFixed(1)}%)
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
-        <div className="flex justify-between text-xs">
-          <span className="flex items-center gap-1 text-green-600">
-            <ThumbsUp className="h-3 w-3" />
-            {showAbsolute ? yes : `${yesPercent.toFixed(0)}%`}
-          </span>
-          <span className="flex items-center gap-1 text-red-600">
-            <ThumbsDown className="h-3 w-3" />
-            {showAbsolute ? no : `${noPercent.toFixed(0)}%`}
-          </span>
-          <span className="flex items-center gap-1 text-gray-500">
-            <Minus className="h-3 w-3" />
-            {showAbsolute ? abstain : `${abstainPercent.toFixed(0)}%`}
-          </span>
-        </div>
-      </div>
-    </TooltipProvider>
-  );
-}
-
-/**
- * AgendaVoteSection - Section 3: Vote & Results for Amendment Votes
+ * AgendaVoteSection - Displays vote results for an agenda item.
  *
- * Displays:
- * - Collapsible change request votes (ordered by characterCount)
- * - Final amendment vote (blocked until all CRs are voted)
- * - Vote button with confirmation dialog
- * - Indication vs actual results display
+ * Shows dynamic choices from vote_choice table with TWO result bars
+ * (indicative + final). Winner gets golden border + crown when status=closed.
  */
 export function AgendaVoteSection({
-  amendmentId,
-  amendmentTitle,
-  voteEntries,
-  changeRequests,
-  changeRequestVotes,
-  userVote,
-  userChangeRequestVotes,
-  agendaStatus,
-  canVote,
-  canManageVotes,
-  isVotingLoading,
-  onVote,
-  onChangeRequestVote,
-  onActivateChangeRequest,
+  voteTitle,
+  choices,
+  indicativeDecisions,
+  finalDecisions,
+  userHasVoted,
+  userSelectedChoiceIds,
+  voteStatus,
+  voteResult,
+  voteSharePercent,
+  majorityType,
+  totalEligibleVoters,
   className,
 }: AgendaVoteSectionProps) {
   const { t } = useTranslation();
-  const [voteDialogOpen, setVoteDialogOpen] = useState(false);
-  const [selectedVote, setSelectedVote] = useState<'yes' | 'no' | 'abstain' | null>(null);
-  const [changeRequestsExpanded, setChangeRequestsExpanded] = useState(true);
-  const [crVoteDialogOpen, setCrVoteDialogOpen] = useState(false);
-  const [selectedCrId, setSelectedCrId] = useState<string | null>(null);
-  const [selectedCrVote, setSelectedCrVote] = useState<'yes' | 'no' | 'abstain' | null>(null);
 
-  const isIndicationPhase = agendaStatus === 'planned';
-  const isVotingActive = agendaStatus === 'active';
-  const isCompleted = agendaStatus === 'completed';
+  const phase = getVotingPhase(voteStatus);
+  const isIndicationPhase = phase === 'indicative';
+  const isClosed = phase === 'closed';
 
-  // Sort change requests by votingOrder or characterCount
-  const sortedChangeRequests = useMemo(() => {
-    return [...changeRequests].sort((a, b) => {
-      if (a.votingOrder !== undefined && b.votingOrder !== undefined) {
-        return a.votingOrder - b.votingOrder;
-      }
-      if (a.votingOrder !== undefined) return -1;
-      if (b.votingOrder !== undefined) return 1;
-      return (b.characterCount || 0) - (a.characterCount || 0);
+  const { choices: choiceStats, totalIndicative, totalFinal } = useMemo(() => {
+    return calculateVoteStats(choices, indicativeDecisions, finalDecisions);
+  }, [choices, indicativeDecisions, finalDecisions]);
+
+  const computedVoteSummary = useMemo(() => {
+    if (!isClosed || choiceStats.length === 0) {
+      return null;
+    }
+
+    return computeVoteResultSummary(
+      choices.map((choice, idx) => ({
+        id: choice.id,
+        label: choice.label || `Choice ${idx + 1}`,
+        order_index: choice.order_index ?? idx,
+      })),
+      finalDecisions,
+      totalEligibleVoters ?? totalFinal,
+      normalizeMajorityType(majorityType),
+    );
+  }, [choiceStats.length, choices, finalDecisions, isClosed, majorityType, totalEligibleVoters, totalFinal]);
+
+  const resolvedVoteResult: VoteResult | undefined = voteResult ?? computedVoteSummary?.result;
+
+  // Find the winning choice in final results
+  const leadingChoiceId = useMemo(() => {
+    if (choiceStats.length === 0) return null;
+    const maxVotes = Math.max(
+      ...choiceStats.map((s) => (isClosed || !isIndicationPhase ? s.finalCount : s.indicativeCount)),
+    );
+    if (maxVotes === 0) return null;
+    return choiceStats.find(
+      (s) => (isClosed || !isIndicationPhase ? s.finalCount : s.indicativeCount) === maxVotes,
+    )?.choice.id;
+  }, [choiceStats, isIndicationPhase, isClosed]);
+
+  const winningChoiceId = useMemo(() => {
+    if (resolvedVoteResult === 'tie') {
+      return null;
+    }
+
+    if (isClosed) {
+      return computedVoteSummary?.winningChoiceId ?? leadingChoiceId;
+    }
+
+    return leadingChoiceId;
+  }, [computedVoteSummary?.winningChoiceId, isClosed, leadingChoiceId, resolvedVoteResult]);
+
+  const voteBarOptions: VoteBarOption[] = useMemo(() => {
+    return choiceStats.map((cs, idx) => {
+      const colors = CHOICE_COLORS[idx % CHOICE_COLORS.length];
+      return {
+        key: cs.choice.id,
+        label: cs.choice.label || `Choice ${idx + 1}`,
+        color: colors.color,
+        lightColor: colors.light,
+        finalCount: cs.finalCount,
+        finalPercent: cs.finalPercentage,
+        indicationCount: cs.indicativeCount,
+        indicationPercent: cs.indicativePercentage,
+      };
     });
-  }, [changeRequests]);
+  }, [choiceStats]);
 
-  // Check if all change requests are completed
-  const allChangeRequestsCompleted = sortedChangeRequests.every(cr => cr.completedAt);
-  const canVoteFinal = allChangeRequestsCompleted || sortedChangeRequests.length === 0;
+  const winningLabel = useMemo(() => {
+    if (!winningChoiceId) return undefined;
+    const choice = choices.find((c) => c.id === winningChoiceId);
+    return choice?.label || undefined;
+  }, [winningChoiceId, choices]);
 
-  const stats = calculateVoteStats(voteEntries, isIndicationPhase);
-
-  const handleVoteClick = (vote: 'yes' | 'no' | 'abstain') => {
-    setSelectedVote(vote);
-    setVoteDialogOpen(true);
-  };
-
-  const handleConfirmVote = () => {
-    if (selectedVote) {
-      onVote(selectedVote);
+  const resolvedVoteSharePercent = useMemo(() => {
+    if (voteSharePercent !== undefined) {
+      return voteSharePercent;
     }
-    setVoteDialogOpen(false);
-    setSelectedVote(null);
-  };
 
-  const handleCrVoteClick = (crId: string, vote: 'yes' | 'no' | 'abstain') => {
-    setSelectedCrId(crId);
-    setSelectedCrVote(vote);
-    setCrVoteDialogOpen(true);
-  };
-
-  const handleConfirmCrVote = () => {
-    if (selectedCrId && selectedCrVote) {
-      onChangeRequestVote(selectedCrId, selectedCrVote);
+    if (!winningChoiceId) {
+      return undefined;
     }
-    setCrVoteDialogOpen(false);
-    setSelectedCrId(null);
-    setSelectedCrVote(null);
-  };
+
+    const winningStats = choiceStats.find((choice) => choice.choice.id === winningChoiceId);
+    if (!winningStats) {
+      return undefined;
+    }
+
+    return Math.round(winningStats.finalPercentage);
+  }, [choiceStats, voteSharePercent, winningChoiceId]);
 
   return (
     <Card className={cn(className)}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Vote className="h-5 w-5" />
-          {t('features.events.agenda.voteAndResults')}
+          {t('features.events.agenda.voteResults', 'Vote Results')}
+          <VotePhaseBadge
+            phase={
+              isIndicationPhase
+                ? 'indication'
+                : isClosed
+                  ? 'closed'
+                  : 'final_vote'
+            }
+            className="ml-auto"
+          />
         </CardTitle>
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* Change Request Votes */}
-        {sortedChangeRequests.length > 0 && (
-          <Collapsible open={changeRequestsExpanded} onOpenChange={setChangeRequestsExpanded}>
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" className="w-full justify-between">
-                <span className="flex items-center gap-2">
-                  {t('features.events.agenda.changeRequests')} ({sortedChangeRequests.length})
-                </span>
-                {changeRequestsExpanded ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-4 space-y-3">
-              {!allChangeRequestsCompleted && (
-                <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3 dark:border-yellow-800 dark:bg-yellow-950/30">
-                  <p className="flex items-center gap-2 text-sm text-yellow-800 dark:text-yellow-200">
-                    <AlertCircle className="h-4 w-4" />
-                    {t('features.events.agenda.voteChangeRequestsFirst')}
-                  </p>
-                </div>
-              )}
-              {sortedChangeRequests.map((cr, index) => {
-                const crVotes = changeRequestVotes[cr.id] || [];
-                const crStats = calculateVoteStats(crVotes, !cr.activatedAt);
-                const userCrVote = userChangeRequestVotes[cr.id];
-                const isActivated = !!cr.activatedAt;
-                const isCrCompleted = !!cr.completedAt;
-
-                return (
-                  <div
-                    key={cr.id}
-                    className={cn(
-                      'rounded-lg border p-4',
-                      isCrCompleted && 'bg-muted/30',
-                      isActivated && !isCrCompleted && 'border-primary/50 bg-primary/5'
-                    )}
-                  >
-                    <div className="mb-3 flex items-start justify-between">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">
-                          #{index + 1}
-                        </Badge>
-                        <span className="font-medium">{cr.title}</span>
-                        {isCrCompleted && <CheckCircle2 className="h-4 w-4 text-green-500" />}
-                      </div>
-                      {cr.characterCount && (
-                        <Badge variant="secondary" className="text-xs">
-                          {cr.characterCount} chars
-                        </Badge>
-                      )}
-                    </div>
-
-                    <p className="mb-3 text-sm text-muted-foreground">{cr.description}</p>
-
-                    {/* CR Vote Results */}
-                    <div className="mb-3 space-y-2">
-                      {!isActivated ? (
-                        <VoteBar
-                          {...crStats.indication}
-                          label={`${t('features.events.agenda.indication')} *`}
-                        />
-                      ) : (
-                        <>
-                          {crStats.showBoth && (
-                            <VoteBar
-                              {...crStats.indication}
-                              label={`${t('features.events.agenda.indication')}`}
-                            />
-                          )}
-                          <VoteBar
-                            {...crStats.actual}
-                            label={
-                              crStats.showBoth ? t('features.events.agenda.actual') : undefined
-                            }
-                          />
-                        </>
-                      )}
-                    </div>
-
-                    {/* CR Actions */}
-                    {!isCrCompleted && (
-                      <div className="flex items-center justify-center gap-2">
-                        {!isActivated && canManageVotes && onActivateChangeRequest && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => onActivateChangeRequest(cr.id)}
-                          >
-                            <Play className="mr-2 h-4 w-4" />
-                            {t('features.events.agenda.activate')}
-                          </Button>
-                        )}
-                        {(isActivated || isIndicationPhase) && canVote && (
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant={userCrVote?.vote === 'yes' ? 'default' : 'outline'}
-                              className={userCrVote?.vote === 'yes' ? 'bg-green-600' : ''}
-                              onClick={() => handleCrVoteClick(cr.id, 'yes')}
-                              disabled={isVotingLoading}
-                            >
-                              <ThumbsUp className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant={userCrVote?.vote === 'no' ? 'default' : 'outline'}
-                              className={userCrVote?.vote === 'no' ? 'bg-red-600' : ''}
-                              onClick={() => handleCrVoteClick(cr.id, 'no')}
-                              disabled={isVotingLoading}
-                            >
-                              <ThumbsDown className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant={userCrVote?.vote === 'abstain' ? 'default' : 'outline'}
-                              onClick={() => handleCrVoteClick(cr.id, 'abstain')}
-                              disabled={isVotingLoading}
-                            >
-                              <Minus className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </CollapsibleContent>
-          </Collapsible>
+        {/* Result sentence when voting is closed */}
+        {isClosed && resolvedVoteResult && (
+          <VoteResultSentence
+            type="vote"
+            result={resolvedVoteResult}
+            winnerName={winningLabel}
+            voteSharePercent={resolvedVoteSharePercent}
+            isFinal
+          />
         )}
 
-        {/* Divider */}
-        {sortedChangeRequests.length > 0 && <hr className="border-dashed" />}
+        {/* Vote title */}
+        <h3 className="font-semibold">{voteTitle}</h3>
 
-        {/* Final Amendment Vote */}
-        <div className={cn(!canVoteFinal && 'opacity-50')}>
-          <h3 className="mb-4 font-semibold">
-            {t('features.events.agenda.finalVote')}: {amendmentTitle}
-          </h3>
-
-          {/* Vote Results */}
-          <div className="mb-4 space-y-3">
-            {isIndicationPhase ? (
-              <VoteBar
-                {...stats.indication}
-                label={`${t('features.events.agenda.indication')} *`}
-              />
-            ) : (
-              <>
-                {stats.showBoth && (
-                  <VoteBar {...stats.indication} label={t('features.events.agenda.indication')} />
-                )}
-                <VoteBar
-                  {...stats.actual}
-                  label={stats.showBoth ? t('features.events.agenda.actual') : undefined}
-                />
-              </>
-            )}
-          </div>
-
-          {/* Vote Options */}
-          {!isCompleted && canVote && canVoteFinal && (
-            <div className="space-y-4">
-              <div className="grid gap-3 sm:grid-cols-3">
-                <Button
-                  size="lg"
-                  variant={userVote?.vote === 'yes' ? 'default' : 'outline'}
-                  className={cn(
-                    'flex-1',
-                    userVote?.vote === 'yes'
-                      ? 'bg-green-600 hover:bg-green-700'
-                      : 'border-green-600 text-green-600 hover:bg-green-50'
-                  )}
-                  onClick={() => handleVoteClick('yes')}
-                  disabled={isVotingLoading}
-                >
-                  <ThumbsUp className="mr-2 h-5 w-5" />
-                  {t('features.events.agenda.voteYesLabel')}
-                </Button>
-                <Button
-                  size="lg"
-                  variant={userVote?.vote === 'no' ? 'default' : 'outline'}
-                  className={cn(
-                    'flex-1',
-                    userVote?.vote === 'no'
-                      ? 'bg-red-600 hover:bg-red-700'
-                      : 'border-red-600 text-red-600 hover:bg-red-50'
-                  )}
-                  onClick={() => handleVoteClick('no')}
-                  disabled={isVotingLoading}
-                >
-                  <ThumbsDown className="mr-2 h-5 w-5" />
-                  {t('features.events.agenda.voteNoLabel')}
-                </Button>
-                <Button
-                  size="lg"
-                  variant={userVote?.vote === 'abstain' ? 'default' : 'outline'}
-                  className={cn(
-                    'flex-1',
-                    userVote?.vote === 'abstain'
-                      ? 'bg-gray-600 hover:bg-gray-700'
-                      : 'border-gray-500 text-gray-600 hover:bg-gray-50'
-                  )}
-                  onClick={() => handleVoteClick('abstain')}
-                  disabled={isVotingLoading}
-                >
-                  <Minus className="mr-2 h-5 w-5" />
-                  {t('features.events.agenda.voteAbstainLabel')}
-                </Button>
-              </div>
-
-              {/* Centered Vote Button */}
-              <div className="flex justify-center">
-                <Button
-                  size="lg"
-                  className="min-w-[200px]"
-                  onClick={() => setVoteDialogOpen(true)}
-                  disabled={isVotingLoading}
-                >
-                  <Vote className="mr-2 h-5 w-5" />
-                  {userVote
-                    ? t('features.events.agenda.changeVote')
-                    : isIndicationPhase
-                      ? t('features.events.agenda.indicateVote')
-                      : t('features.events.agenda.castVote')}
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* User's current vote */}
-          {userVote && (
-            <div className="mt-4 flex items-center justify-center gap-2 text-sm">
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
-              <span className="text-muted-foreground">
-                {userVote.isIndication
-                  ? t('features.events.agenda.yourIndication')
-                  : t('features.events.agenda.yourVote')}
-                :{' '}
-                <span className="font-medium">
-                  {userVote.vote === 'yes'
-                    ? t('features.events.agenda.voteYes')
-                    : userVote.vote === 'no'
-                      ? t('features.events.agenda.voteNo')
-                      : t('features.events.agenda.voteAbstain')}
-                </span>
-              </span>
-            </div>
+        {/* Vote count header */}
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span>
+            {isIndicationPhase
+              ? `${totalIndicative} ${t('features.events.agenda.indicationVotes')}`
+              : `${totalFinal} ${t('features.events.agenda.votes')}`}
+          </span>
+          {isIndicationPhase && (
+            <Badge variant="secondary" className="text-xs">
+              * {t('features.events.agenda.indicationOnly')}
+            </Badge>
           )}
         </div>
-      </CardContent>
 
-      {/* Vote Confirmation Dialog */}
-      <Dialog open={voteDialogOpen} onOpenChange={setVoteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
+        {/* Choices with result bars */}
+        {choices.length === 0 ? (
+          <div className="rounded-lg border border-dashed p-6 text-center">
+            <p className="text-muted-foreground">
+              {t('features.events.agenda.noChoices', 'No choices defined')}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {choiceStats.map((cs, idx) => {
+              const isWinner = cs.choice.id === winningChoiceId && !isIndicationPhase;
+              const isSelected = userSelectedChoiceIds.includes(cs.choice.id);
+              const colors = CHOICE_COLORS[idx % CHOICE_COLORS.length];
+
+              return (
+                <div
+                  key={cs.choice.id}
+                  className={cn(
+                    'rounded-lg border p-3 transition-colors',
+                    isSelected && 'border-primary bg-primary/5',
+                    isWinner &&
+                      isClosed &&
+                      'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30',
+                  )}
+                >
+                  <div className="mb-2 flex items-center gap-2">
+                    <span className="font-medium">{cs.choice.label || `Choice ${idx + 1}`}</span>
+                    {isWinner && isClosed && <Crown className="h-4 w-4 text-yellow-500" />}
+                    {isSelected && <CheckCircle2 className="h-4 w-4 text-primary" />}
+                  </div>
+
+                  <VoteResultsDisplay
+                    options={[
+                      {
+                        key: cs.choice.id,
+                        label: cs.choice.label || `Choice ${idx + 1}`,
+                        color: colors.color,
+                        lightColor: colors.light,
+                        finalCount: cs.finalCount,
+                        finalPercent: cs.finalPercentage,
+                        indicationCount: cs.indicativeCount,
+                        indicationPercent: cs.indicativePercentage,
+                      },
+                    ]}
+                    phase={
+                      isIndicationPhase
+                        ? 'indication'
+                        : isClosed
+                          ? 'closed'
+                          : 'final_vote'
+                    }
+                    totalFinal={totalFinal}
+                    totalIndication={totalIndicative}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* User's current vote indicator */}
+        {userHasVoted && (
+          <div className="flex items-center justify-center gap-2 text-sm">
+            <CheckCircle2 className="h-4 w-4 text-green-500" />
+            <span className="text-muted-foreground">
               {isIndicationPhase
-                ? t('features.events.agenda.confirmIndication')
-                : t('features.events.agenda.confirmVote')}
-            </DialogTitle>
-            <DialogDescription>{amendmentTitle}</DialogDescription>
-          </DialogHeader>
-
-          <div className="grid gap-3 py-4">
-            <Button
-              size="lg"
-              variant={selectedVote === 'yes' ? 'default' : 'outline'}
-              className={cn(
-                selectedVote === 'yes'
-                  ? 'bg-green-600 hover:bg-green-700'
-                  : 'border-green-600 text-green-600 hover:bg-green-50'
-              )}
-              onClick={() => setSelectedVote('yes')}
-            >
-              <ThumbsUp className="mr-2 h-5 w-5" />
-              {t('features.events.agenda.voteYesLabel')}
-            </Button>
-            <Button
-              size="lg"
-              variant={selectedVote === 'no' ? 'default' : 'outline'}
-              className={cn(
-                selectedVote === 'no'
-                  ? 'bg-red-600 hover:bg-red-700'
-                  : 'border-red-600 text-red-600 hover:bg-red-50'
-              )}
-              onClick={() => setSelectedVote('no')}
-            >
-              <ThumbsDown className="mr-2 h-5 w-5" />
-              {t('features.events.agenda.voteNoLabel')}
-            </Button>
-            <Button
-              size="lg"
-              variant={selectedVote === 'abstain' ? 'default' : 'outline'}
-              onClick={() => setSelectedVote('abstain')}
-            >
-              <Minus className="mr-2 h-5 w-5" />
-              {t('features.events.agenda.voteAbstain')}
-            </Button>
+                ? t('features.events.agenda.yourIndication')
+                : t('features.events.agenda.yourVote')}
+            </span>
           </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setVoteDialogOpen(false)}>
-              {t('common.actions.cancel')}
-            </Button>
-            <Button onClick={handleConfirmVote} disabled={!selectedVote}>
-              {t('common.actions.confirm')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* CR Vote Confirmation Dialog */}
-      <Dialog open={crVoteDialogOpen} onOpenChange={setCrVoteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('features.events.agenda.confirmVote')}</DialogTitle>
-            <DialogDescription>
-              {sortedChangeRequests.find(cr => cr.id === selectedCrId)?.title}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="grid gap-3 py-4">
-            <Button
-              size="lg"
-              variant={selectedCrVote === 'yes' ? 'default' : 'outline'}
-              className={cn(
-                selectedCrVote === 'yes'
-                  ? 'bg-green-600 hover:bg-green-700'
-                  : 'border-green-600 text-green-600 hover:bg-green-50'
-              )}
-              onClick={() => setSelectedCrVote('yes')}
-            >
-              <ThumbsUp className="mr-2 h-5 w-5" />
-              {t('features.events.agenda.voteYes')}
-            </Button>
-            <Button
-              size="lg"
-              variant={selectedCrVote === 'no' ? 'default' : 'outline'}
-              className={cn(
-                selectedCrVote === 'no'
-                  ? 'bg-red-600 hover:bg-red-700'
-                  : 'border-red-600 text-red-600 hover:bg-red-50'
-              )}
-              onClick={() => setSelectedCrVote('no')}
-            >
-              <ThumbsDown className="mr-2 h-5 w-5" />
-              {t('features.events.agenda.voteNo')}
-            </Button>
-            <Button
-              size="lg"
-              variant={selectedCrVote === 'abstain' ? 'default' : 'outline'}
-              onClick={() => setSelectedCrVote('abstain')}
-            >
-              <Minus className="mr-2 h-5 w-5" />
-              {t('features.events.agenda.voteAbstain')}
-            </Button>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCrVoteDialogOpen(false)}>
-              {t('common.actions.cancel')}
-            </Button>
-            <Button onClick={handleConfirmCrVote} disabled={!selectedCrVote}>
-              {t('common.actions.confirm')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        )}
+      </CardContent>
     </Card>
   );
 }

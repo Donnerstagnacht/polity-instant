@@ -48,4 +48,18 @@ CREATE INDEX idx_blog_blogger_user ON public.blog_blogger (user_id);
 ALTER TABLE public.blog_blogger ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.blog_blogger FOR ALL TO service_role USING (true);
 
+-- Blog support vote table
+CREATE TABLE IF NOT EXISTS public.blog_support_vote (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  blog_id UUID NOT NULL REFERENCES public.blog (id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
+  vote TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_blog_support_vote_blog ON public.blog_support_vote (blog_id);
+CREATE INDEX idx_blog_support_vote_user ON public.blog_support_vote (user_id);
+
+ALTER TABLE public.blog_support_vote ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.blog_support_vote FOR ALL TO service_role USING (true);
 

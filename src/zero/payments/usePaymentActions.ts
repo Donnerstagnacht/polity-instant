@@ -3,6 +3,7 @@ import { useZero } from '@rocicorp/zero/react'
 import { toast } from 'sonner'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { mutators } from '../mutators'
+import { serverConfirmed } from '../mutate-with-server-check'
 
 /**
  * Action hook for payment mutations.
@@ -15,7 +16,8 @@ export function usePaymentActions() {
   const createCustomer = useCallback(
     async (args: Parameters<typeof mutators.payments.createCustomer>[0]) => {
       try {
-        await zero.mutate(mutators.payments.createCustomer(args))
+        const result = zero.mutate(mutators.payments.createCustomer(args))
+        await serverConfirmed(result)
         toast.success(t('common.paymentToasts.customerCreated'))
       } catch (error) {
         console.error('Failed to create customer:', error)
@@ -29,7 +31,8 @@ export function usePaymentActions() {
   const updateSubscription = useCallback(
     async (args: Parameters<typeof mutators.payments.updateSubscription>[0]) => {
       try {
-        await zero.mutate(mutators.payments.updateSubscription(args))
+        const result = zero.mutate(mutators.payments.updateSubscription(args))
+        await serverConfirmed(result)
         toast.success(t('common.paymentToasts.subscriptionUpdated'))
       } catch (error) {
         console.error('Failed to update subscription:', error)
@@ -43,7 +46,8 @@ export function usePaymentActions() {
   const recordPayment = useCallback(
     async (args: Parameters<typeof mutators.payments.recordPayment>[0]) => {
       try {
-        await zero.mutate(mutators.payments.recordPayment(args))
+        const result = zero.mutate(mutators.payments.recordPayment(args))
+        await serverConfirmed(result)
         toast.success(t('common.paymentToasts.paymentRecorded'))
       } catch (error) {
         console.error('Failed to record payment:', error)
@@ -57,7 +61,8 @@ export function usePaymentActions() {
   const createPayment = useCallback(
     async (args: Parameters<typeof mutators.payments.createPayment>[0]) => {
       try {
-        await zero.mutate(mutators.payments.createPayment(args))
+        const result = zero.mutate(mutators.payments.createPayment(args))
+        await serverConfirmed(result)
         toast.success(t('common.paymentToasts.paymentCreated'))
       } catch (error) {
         console.error('Failed to create payment:', error)
@@ -71,7 +76,8 @@ export function usePaymentActions() {
   const deletePayment = useCallback(
     async (args: Parameters<typeof mutators.payments.deletePayment>[0]) => {
       try {
-        await zero.mutate(mutators.payments.deletePayment(args))
+        const result = zero.mutate(mutators.payments.deletePayment(args))
+        await serverConfirmed(result)
         toast.success(t('common.paymentToasts.paymentDeleted'))
       } catch (error) {
         console.error('Failed to delete payment:', error)

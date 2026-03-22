@@ -38,6 +38,9 @@ export interface DecisionItem {
   /** When the decision ends/ended */
   endsAt: Date;
 
+  /** When the decision starts/started (from agenda item or creation) */
+  startsAt?: Date;
+
   /** Display status */
   status: DecisionDisplayStatus;
 
@@ -46,6 +49,12 @@ export interface DecisionItem {
 
   /** Is this closing soon (< 24 hours)? */
   isClosingSoon: boolean;
+
+  /** Is this opening soon (starts within 24 hours, not yet active)? */
+  isOpeningSoon: boolean;
+
+  /** Was this recently closed (within last 24 hours)? */
+  isRecentlyClosed: boolean;
 
   /** Is this urgent (< 1 hour)? */
   isUrgent: boolean;

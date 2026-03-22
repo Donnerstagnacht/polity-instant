@@ -3,9 +3,9 @@
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { Label } from '@/features/shared/ui/ui/label.tsx';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip.tsx';
-import { Info, Check, MessageSquare, Mic, Vote, Users } from 'lucide-react';
+import { Info, Check, MessageSquare, Mic, Vote, Users, ShieldCheck } from 'lucide-react';
 
-type AgendaItemType = 'election' | 'vote' | 'speech' | 'discussion';
+type AgendaItemType = 'election' | 'vote' | 'speech' | 'discussion' | 'accreditation';
 
 interface TypeOption {
   value: AgendaItemType;
@@ -38,6 +38,12 @@ const typeOptions: TypeOption[] = [
     label: 'Vote',
     description: 'Vote on a proposal or amendment',
     icon: <Vote className="h-4 w-4" />,
+  },
+  {
+    value: 'accreditation',
+    label: 'Accreditation',
+    description: 'Confirm attendance of participants',
+    icon: <ShieldCheck className="h-4 w-4" />,
   },
 ];
 

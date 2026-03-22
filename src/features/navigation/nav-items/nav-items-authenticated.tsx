@@ -123,13 +123,6 @@ export const navItemsAuthenticated = (
         onClick: () => navigate({ to: `/event/${eventId}/agenda` }),
       },
       {
-        id: 'stream',
-        label: t ? t('navigation.secondary.event.stream') : 'Stream',
-        icon: 'Radio',
-        href: `/event/${eventId}/stream`,
-        onClick: () => navigate({ to: `/event/${eventId}/stream` }),
-      },
-      {
         id: 'network',
         label: t ? t('navigation.secondary.event.network') : 'Network',
         icon: 'Network',

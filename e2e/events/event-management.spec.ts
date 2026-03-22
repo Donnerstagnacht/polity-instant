@@ -48,11 +48,11 @@ test.describe('Event - Network & Stream', () => {
     }
   });
 
-  test('should display event stream page', async ({ authenticatedPage: page }) => {
-    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/stream`);
+  test('should display event agenda page', async ({ authenticatedPage: page }) => {
+    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda`);
     await page.waitForLoadState('networkidle');
 
-    // Stream page should load without errors
+    // Agenda page should load without errors
     await page.waitForLoadState('networkidle');
   });
 });

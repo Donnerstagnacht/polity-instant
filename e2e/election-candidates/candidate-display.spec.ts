@@ -8,7 +8,7 @@ test.describe('Election Candidates - Display and Ordering', () => {
   test('View candidates list', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
     // 2. Navigate to election page
-    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/stream`);
+    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda`);
     await page.waitForLoadState('networkidle');
 
     // 3. View candidates section
@@ -60,7 +60,7 @@ test.describe('Election Candidates - Display and Ordering', () => {
   test('View candidate details', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
     // 2. Navigate to election
-    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/stream`);
+    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda`);
     await page.waitForLoadState('networkidle');
 
     // 3. Click on candidate card

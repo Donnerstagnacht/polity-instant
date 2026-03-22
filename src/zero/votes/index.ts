@@ -1,14 +1,14 @@
 // Table
 export {
-  amendmentVoteEntry,
+  vote,
+  voteChoice,
+  voter,
+  indicativeVoterParticipation,
+  indicativeChoiceDecision,
+  finalVoterParticipation,
+  finalChoiceDecision,
   amendmentSupportVote,
-  amendmentVote,
-  amendmentVotingSession,
-  amendmentVotingSessionVote,
   changeRequestVote,
-  eventVotingSession,
-  eventVote,
-  electionVote,
   blogSupportVote,
   statementSupportVote,
   threadVote,
@@ -17,30 +17,29 @@ export {
 
 // Zod Schemas
 export {
-  selectAmendmentVoteEntrySchema,
-  createAmendmentVoteEntrySchema,
-  updateAmendmentVoteEntrySchema,
-  deleteAmendmentVoteEntrySchema,
+  selectVoteSchema,
+  createVoteSchema,
+  updateVoteSchema,
+  deleteVoteSchema,
+  selectVoteChoiceSchema,
+  createVoteChoiceSchema,
+  updateVoteChoiceSchema,
+  deleteVoteChoiceSchema,
+  selectVoterSchema,
+  createVoterSchema,
+  deleteVoterSchema,
+  selectIndicativeVoterParticipationSchema,
+  createIndicativeVoterParticipationSchema,
+  selectIndicativeChoiceDecisionSchema,
+  createIndicativeChoiceDecisionSchema,
+  selectFinalVoterParticipationSchema,
+  createFinalVoterParticipationSchema,
+  selectFinalChoiceDecisionSchema,
+  createFinalChoiceDecisionSchema,
   selectAmendmentSupportVoteSchema,
   createAmendmentSupportVoteSchema,
-  selectAmendmentVoteSchema,
-  createAmendmentVoteSchema,
-  deleteAmendmentVoteSchema,
-  selectAmendmentVotingSessionSchema,
-  createAmendmentVotingSessionSchema,
-  updateAmendmentVotingSessionSchema,
-  selectAmendmentVotingSessionVoteSchema,
   selectChangeRequestVoteSchema,
   createChangeRequestVoteSchema,
-  eventVotingSessionSelectSchema,
-  eventVotingSessionCreateSchema,
-  eventVotingSessionUpdateSchema,
-  eventVoteSelectSchema,
-  eventVoteCreateSchema,
-  selectElectionVoteSchema,
-  createElectionVoteSchema,
-  updateElectionVoteSchema,
-  deleteElectionVoteSchema,
   selectBlogSupportVoteSchema,
   createBlogSupportVoteSchema,
   updateBlogSupportVoteSchema,
@@ -57,17 +56,43 @@ export {
   createCommentVoteSchema,
   updateCommentVoteSchema,
   deleteCommentVoteSchema,
-  type AmendmentVoteEntry,
+  type Vote,
+  type VoteChoice,
+  type Voter,
+  type IndicativeVoterParticipation,
+  type IndicativeChoiceDecision,
+  type FinalVoterParticipation,
+  type FinalChoiceDecision,
   type AmendmentSupportVote,
-  type AmendmentVote,
-  type AmendmentVotingSession,
-  type AmendmentVotingSessionVote,
   type ChangeRequestVote,
-  type EventVotingSession,
-  type EventVote,
-  type ElectionVote,
   type BlogSupportVote,
   type StatementSupportVote,
   type ThreadVote,
   type CommentVote,
 } from './schema'
+
+// Queries
+export { voteQueries } from './queries'
+export type {
+  VoteWithDetailsRow,
+  VoteByAgendaItemRow,
+  VoteByIdRow,
+  ChoicesByVoteRow,
+  IndicativeDecisionResultRow,
+  FinalDecisionResultRow,
+  UserIndicativeVoterParticipationRow,
+  UserFinalVoterParticipationRow,
+  UserVoterRow,
+} from './queries'
+
+// Shared Mutators
+export { voteSharedMutators } from './shared-mutators'
+
+// Server Mutators
+export { voteServerMutators } from './server-mutators'
+
+// State Hook
+export { useVoteState } from './useVoteState'
+
+// Action Hook
+export { useVoteActions } from './useVoteActions'

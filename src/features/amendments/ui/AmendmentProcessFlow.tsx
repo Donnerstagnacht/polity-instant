@@ -22,6 +22,7 @@ import {
 } from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
+import { useVoteActions } from '@/zero/votes/useVoteActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useAuth } from '@/providers/auth-provider';
@@ -98,12 +99,11 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
   const {
     updateAmendment,
     deletePathSegment,
-    deleteAmendmentVote,
     deletePath,
-    castAmendmentVote,
     createPath,
     createPathSegment,
   } = useAmendmentActions();
+  const { deleteVote, castFinalVote } = useVoteActions();
   const { createAgendaItem: createAgendaItemAction, deleteAgendaItem: deleteAgendaItemAction } =
     useAgendaActions();
 
@@ -166,7 +166,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
   const enrichedPathData: EnrichedPathSegment[] = pathSegments.map(segment => {
     // Look up agenda item and amendment vote by event_id
     const agendaItem = amendment?.agenda_items?.find(ai => ai.event_id === segment.event_id);
-    const amendmentVote = amendment?.votes?.find(v => v.event_id === segment.event_id);
+    const amendmentVote = amendment?.vote_entries?.find(v => v.agenda_item_id === agendaItem?.id);
     return {
       groupId: segment.group_id ?? null,
       groupName: segment.group?.name || 'Unknown Group',
@@ -249,9 +249,9 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
       // If there's an existing target, remove old agenda items, votes, path segments, and path
       if (hasTarget && amendmentPath?.id) {
         // Delete amendment votes first
-        if (amendment.votes && amendment.votes.length > 0) {
-          for (const vote of amendment.votes) {
-            await deleteAmendmentVote({ id: vote.id });
+        if (amendment.vote_entries && amendment.vote_entries.length > 0) {
+          for (const vote of amendment.vote_entries) {
+            await deleteVote(vote.id);
           }
         }
         // Delete agenda items
@@ -335,18 +335,16 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
             completed_at: 0,
             event_id: segment.eventId,
             amendment_id: amendmentId,
+            majority_type: null,
+            time_limit: null,
+            voting_phase: null,
           });
 
           // Create amendment vote for the agenda item
-          await castAmendmentVote({
-            id: amendmentVoteId,
-            amendment_id: amendmentId,
-            event_id: segment.eventId,
-            vote: 'pending',
-            weight: 1,
-            is_delegate_vote: false,
-            group_id: null,
-          });
+          await castFinalVote(
+            { id: amendmentVoteId, vote_id: amendmentVoteId, voter_id: user.id },
+            []
+          );
         }
 
         // Add to enriched path with IDs
@@ -433,7 +431,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
           if (segment.agendaItemId) {
             // First delete the vote if it exists
             if (segment.amendmentVoteId) {
-              await deleteAmendmentVote({ id: segment.amendmentVoteId });
+              await deleteVote(segment.amendmentVoteId);
             }
             // Then delete the agenda item
             await deleteAgendaItemAction(segment.agendaItemId);
@@ -465,7 +463,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
 
   // Handle changing event for a specific group in the path
   const handleChangeEvent = async (groupId: string, newEventId: string) => {
-    if (!amendment || !amendmentPath || !enrichedPathData || enrichedPathData.length === 0) return;
+    if (!amendment || !amendmentPath || !enrichedPathData || enrichedPathData.length === 0 || !user) return;
 
     try {
       setIsSaving(true);
@@ -484,7 +482,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
         await deleteAgendaItemAction(segment.agendaItemId);
       }
       if (segment.amendmentVoteId) {
-        await deleteAmendmentVote({ id: segment.amendmentVoteId });
+        await deleteVote(segment.amendmentVoteId);
       }
 
       // Fetch the new event to get its details - we'll get it from the existing query data
@@ -516,17 +514,15 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
         completed_at: 0,
         event_id: newEventId,
         amendment_id: amendmentId,
+        majority_type: null,
+        time_limit: null,
+        voting_phase: null,
       });
 
-      await castAmendmentVote({
-        id: newAmendmentVoteId,
-        amendment_id: amendmentId,
-        event_id: newEventId,
-        vote: 'pending',
-        weight: 1,
-        is_delegate_vote: false,
-        group_id: null,
-      });
+      await castFinalVote(
+        { id: newAmendmentVoteId, vote_id: newAmendmentVoteId, voter_id: user.id },
+        []
+      );
 
       // Note: Segment is updated through the entity system, no need to update pathData
 
@@ -586,9 +582,9 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                     if (amendment?.agenda_items && amendment.agenda_items.length > 0) {
                       try {
                         // Delete amendment votes first
-                        if (amendment.votes && amendment.votes.length > 0) {
-                          for (const vote of amendment.votes) {
-                            await deleteAmendmentVote({ id: vote.id });
+                        if (amendment.vote_entries && amendment.vote_entries.length > 0) {
+                          for (const vote of amendment.vote_entries) {
+                            await deleteVote(vote.id);
                           }
                         }
                         // Delete agenda items

@@ -39,20 +39,22 @@ export const eventQueries = {
         .orderBy('created_at', 'asc')
   ),
 
+  /** Event agenda items by event (replaces old event_voting_session query) */
   agenda: defineQuery(
     z.object({ eventId: z.string() }),
     ({ args: { eventId } }) =>
-      zql.event_voting_session
+      zql.agenda_item
         .where('event_id', eventId)
-        .orderBy('created_at', 'asc')
+        .orderBy('order_index', 'asc')
   ),
 
+  /** Votes by agenda item */
   voting: defineQuery(
-    z.object({ sessionId: z.string() }),
-    ({ args: { sessionId } }) =>
-      zql.event_vote
-        .where('session_id', sessionId)
-        .orderBy('created_at', 'asc')
+    z.object({ agendaItemId: z.string() }),
+    ({ args: { agendaItemId } }) =>
+      zql.vote
+        .where('agenda_item_id', agendaItemId)
+        .related('choices')
   ),
 
   delegates: defineQuery(
@@ -122,7 +124,7 @@ export const eventQueries = {
         .related('participants', q => q.related('user'))
   ),
 
-  /** Event with voting sessions (participants→user+role→action_rights, voting_sessions→votes→user+agenda_item→amendment→group+event) */
+  /** Event with voting data (participants→user+role→action_rights, agenda_items→votes→choices+decisions) */
   withVoting: defineQuery(
     z.object({ id: z.string() }),
     ({ args: { id } }) =>
@@ -131,11 +133,14 @@ export const eventQueries = {
         .related('participants', q =>
           q.related('user').related('role', q => q.related('action_rights'))
         )
-        .related('voting_sessions', q =>
-          q.related('votes', q => q.related('user'))
-            .related('agenda_item', q =>
-              q.related('amendment', q => q.related('group').related('event'))
-            )
+        .related('agenda_items', q =>
+          q.related('votes', vq =>
+            vq.related('choices')
+              .related('indicative_decisions', d => d.related('choice'))
+              .related('final_decisions', d => d.related('choice'))
+              .related('voters')
+          )
+          .related('amendment', aq => aq.related('group').related('event'))
         )
   ),
 
@@ -150,31 +155,21 @@ export const eventQueries = {
           q.related('creator')
             .related('speaker_list', q => q.related('user'))
             .related('election', q =>
-              q.related('candidates').related('votes')
+              q.related('candidates', c => c.related('user'))
+                .related('indicative_selections', s => s.related('candidate'))
+                .related('final_selections', s => s.related('candidate'))
+                .related('electors')
+            )
+            .related('votes', q =>
+              q.related('choices')
+                .related('indicative_decisions', d => d.related('choice'))
+                .related('final_decisions', d => d.related('choice'))
+                .related('voters')
             )
             .related('amendment', q =>
-              q.related('change_requests').related('vote_entries')
+              q.related('change_requests')
             )
         )
-  ),
-
-  /** All election votes with voter, candidate, election relations */
-  allElectionVotes: defineQuery(
-    z.object({}),
-    () =>
-      zql.election_vote
-        .related('voter')
-        .related('candidate')
-        .related('election')
-  ),
-
-  /** All amendment vote entries with user, amendment relations */
-  allAmendmentVoteEntries: defineQuery(
-    z.object({}),
-    () =>
-      zql.amendment_vote_entry
-        .related('user')
-        .related('amendment')
   ),
 
   /** Event participants with user and role (for participant list) */
@@ -254,13 +249,36 @@ export const eventQueries = {
         .related('creator')
         .related('event')
         .related('election', q =>
-          q.related('candidates')
-            .related('votes')
+          q.related('candidates', c => c.related('user'))
+            .related('indicative_selections', s => s.related('candidate'))
+            .related('final_selections', s => s.related('candidate'))
+            .related('electors', e => e.related('user'))
+            .related(
+              'indicative_participations',
+              p => p.related('elector').related('selections', s => s.related('candidate'))
+            )
+            .related(
+              'final_participations',
+              p => p.related('elector').related('selections', s => s.related('candidate'))
+            )
             .related('position', q => q.related('group'))
         )
+        .related('votes', q =>
+          q.related('choices')
+            .related('indicative_decisions', d => d.related('choice'))
+            .related('final_decisions', d => d.related('choice'))
+            .related('voters', v => v.related('user'))
+            .related(
+              'indicative_participations',
+              p => p.related('voter').related('decisions', d => d.related('choice'))
+            )
+            .related(
+              'final_participations',
+              p => p.related('voter').related('decisions', d => d.related('choice'))
+            )
+        )
         .related('amendment', q =>
-          q.related('change_requests')
-            .related('vote_entries')
+          q.related('change_requests').related('group')
         )
         .related('speaker_list', q => q.related('user'))
   ),
@@ -275,11 +293,18 @@ export const eventQueries = {
         .related('event', q => q.related('creator'))
         .related('election', q =>
           q.related('candidates', c => c.related('user'))
-            .related('votes', v => v.related('voter').related('candidate'))
+            .related('indicative_selections', s => s.related('candidate'))
+            .related('final_selections', s => s.related('candidate'))
+            .related('electors', e => e.related('user'))
+        )
+        .related('votes', q =>
+          q.related('choices')
+            .related('indicative_decisions', d => d.related('choice'))
+            .related('final_decisions', d => d.related('choice'))
+            .related('voters', v => v.related('user'))
         )
         .related('amendment', q =>
-          q.related('change_requests')
-            .related('vote_entries', v => v.related('user'))
+          q.related('change_requests').related('group')
         )
         .related('speaker_list', q => q.related('user'))
   ),
@@ -396,7 +421,7 @@ export const eventQueries = {
         .related('group')
   ),
 
-  /** Election by ID with full relations (position→group, candidates→user, votes→voter+candidate) */
+  /** Election by ID with full relations (position→group, candidates→user, indicative/final selections) */
   electionWithVotes: defineQuery(
     z.object({ id: z.string() }),
     ({ args: { id } }) =>
@@ -404,16 +429,9 @@ export const eventQueries = {
         .where('id', id)
         .related('position', q => q.related('group'))
         .related('candidates', q => q.related('user'))
-        .related('votes', q => q.related('voter').related('candidate'))
-  ),
-
-  /** Voting session by ID with votes→user */
-  votingSessionWithVotes: defineQuery(
-    z.object({ id: z.string() }),
-    ({ args: { id } }) =>
-      zql.event_voting_session
-        .where('id', id)
-        .related('votes', q => q.related('user'))
+        .related('electors')
+        .related('indicative_selections', q => q.related('candidate'))
+        .related('final_selections', q => q.related('candidate'))
   ),
 
   /** Change requests by amendment with user */
@@ -473,9 +491,7 @@ export const eventQueries = {
         .related('event', q =>
           q.related('event_hashtags', q => q.related('hashtag'))
             .related('participants')
-            .related('voting_sessions')
             .related('event_positions')
-            .related('scheduled_elections')
             .related('agenda_items', q => q.related('election').related('amendment'))
         )
   ),

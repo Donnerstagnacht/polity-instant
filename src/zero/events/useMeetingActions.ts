@@ -3,6 +3,7 @@ import { useZero } from '@rocicorp/zero/react'
 import { toast } from 'sonner'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { mutators } from '../mutators'
+import { serverConfirmed } from '../mutate-with-server-check'
 
 /**
  * Action hook for meeting bookings (meetings as events).
@@ -15,10 +16,11 @@ export function useMeetingActions() {
   const bookMeeting = useCallback(
     async (eventId: string, instanceDate?: number | null) => {
       try {
-        await zero.mutate(mutators.events.bookMeeting({
+        const result = zero.mutate(mutators.events.bookMeeting({
           event_id: eventId,
           instance_date: instanceDate ?? null,
         }))
+        await serverConfirmed(result)
         toast.success(t('features.meet.toasts.booked'))
       } catch (error) {
         console.error('Failed to book meeting:', error)
@@ -32,10 +34,11 @@ export function useMeetingActions() {
   const cancelMeetingBooking = useCallback(
     async (eventId: string, instanceDate?: number | null) => {
       try {
-        await zero.mutate(mutators.events.cancelMeetingBooking({
+        const result = zero.mutate(mutators.events.cancelMeetingBooking({
           event_id: eventId,
           instance_date: instanceDate ?? null,
         }))
+        await serverConfirmed(result)
         toast.success(t('features.meet.toasts.bookingCancelled'))
       } catch (error) {
         console.error('Failed to cancel meeting booking:', error)

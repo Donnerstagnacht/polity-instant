@@ -1,38 +1,39 @@
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/features/shared/ui/ui/alert-dialog';
-import { ArrowLeft, ArrowRight, Edit, Trash2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { useEventAgendaItem } from '../hooks/useEventAgendaItem';
-import { AmendmentVotingQueue } from '@/features/votes/ui/AmendmentVotingQueue';
-import { VotingSessionManager } from '@/features/votes/ui/VotingSessionManager';
 import { TransferAgendaItemDialog } from './TransferAgendaItemDialog';
 import { AgendaItemContextCard } from './AgendaItemContextCard';
+import {
+  AgendaRelatedAmendmentCard,
+  AgendaRelatedPositionCard,
+} from './AgendaRelatedEntityCard';
 import { AgendaSpeakerListSection } from './AgendaSpeakerListSection';
 import { AgendaVoteSection } from './AgendaVoteSection';
 import { AgendaElectionSection } from './AgendaElectionSection';
+import { AgendaActionBar } from './AgendaActionBar';
+import { EditElectionVoteDialog } from './EditElectionVoteDialog';
+import { useAgendaActionBar } from '../hooks/useAgendaActionBar';
+import { useAgendaNavigation } from '../hooks/useAgendaNavigation';
+import { VoteCastDialog } from '@/features/vote-cast/ui/VoteCastDialog';
+import { AccreditationSection } from './AccreditationSection';
 import { usePermissions } from '@/zero/rbac';
-import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
+import { useVotingPasswordActions } from '@/zero/voting-password/useVotingPasswordActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { toast } from 'sonner';
 import { useState, useMemo } from 'react';
-import {
-  notifyVotingSessionStarted,
-  notifyVotingSessionCompleted,
-  notifyCandidateAdded,
-} from '@/features/notifications/utils/notification-helpers.ts';
-import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+
+function getEffectiveVotingPhase(
+  status?: string | null,
+  fallback?: string | null,
+): string | null {
+  if (status === 'final' || status === 'final_vote') return 'final_vote';
+  if (status === 'closed') return 'closed';
+  if (status === 'indicative') return 'indication';
+  return fallback ?? null;
+}
 
 export function EventAgendaItemDetail({
   eventId,
@@ -42,19 +43,23 @@ export function EventAgendaItemDetail({
   agendaItemId: string;
 }) {
   const { t } = useTranslation();
-  const { updateAmendment, createVotingSession, updateVotingSession, voteOnChangeRequest, updateChangeRequest } = useAmendmentActions();
-  const { updateSpeaker, addCandidate: doAddCandidate, deleteCandidate } = useAgendaActions();
+  const navigate = useNavigate();
+  const { updateSpeaker } = useAgendaActions();
   const {
     agendaItem,
     event,
     user,
     isLoading,
     votingLoading,
-    deleteLoading,
     addingSpeaker,
-    userElectionVotes,
-    userAmendmentVotes,
-    data,
+    election,
+    candidates,
+    electors,
+    vote,
+    choices,
+    userElector,
+    userVoter,
+    estimatedStartTime,
     handleElectionVote,
     handleAmendmentVote,
     handleDelete,
@@ -63,133 +68,39 @@ export function EventAgendaItemDetail({
 
   const { can, canVote, canBeCandidate } = usePermissions({ eventId });
   const canManageAgenda = can('manage', 'agendaItems');
-  const canManageVotes = canManageAgenda;
   const hasVotingRight = canVote();
   const hasCandidateRight = canBeCandidate();
 
-  const [startingVoting, setStartingVoting] = useState(false);
-  const [advancingVote, setAdvancingVote] = useState(false);
+  // Agenda navigation (Previous / Complete / Next)
+  const agendaNav = useAgendaNavigation(eventId);
+
+  const { verifyVotingPassword } = useVotingPasswordActions();
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [isPasswordVerifying, setIsPasswordVerifying] = useState(false);
+  const effectiveVotingPhase = getEffectiveVotingPhase(
+    election?.status ?? vote?.status,
+    agendaItem?.voting_phase ?? null,
+  );
+
+  // Action bar hook — pass election/vote data for phase management
+  const actionBarHook = useAgendaActionBar({
+    eventId,
+    currentAgendaItem: agendaItem ? {
+      id: agendaItem.id,
+      type: agendaItem.type,
+      status: agendaItem.status,
+      voting_phase: effectiveVotingPhase,
+      speaker_list: agendaItem.speaker_list ?? undefined,
+    } : null,
+    eventTitle: event?.title ?? undefined,
+    election: election ?? undefined,
+    vote: vote ?? undefined,
+    electorId: userElector?.id,
+    voterId: userVoter?.id,
+  });
+
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
-  const [candidateLoading, setCandidateLoading] = useState(false);
   const [markingSpeakerComplete, setMarkingSpeakerComplete] = useState<string | null>(null);
-
-  // Check if user is event organizer (uses permission system rather than traversing unloaded relationships)
-  const isOrganizer = canManageAgenda;
-
-  // Get amendment data if this is an amendment agenda item
-  const amendment = agendaItem?.type === 'amendment' && agendaItem?.amendment;
-  const changeRequests = amendment
-    ? (amendment.change_requests || []).filter((cr) => cr.amendment_id === amendment.id)
-    : [];
-  const votingSession = undefined as { id: string; status: string; currentChangeRequestIndex?: number; votingStartTime: number; votingEndTime: number } | undefined; // voting session data not loaded in current query
-
-  const handleStartEventVoting = async () => {
-    if (!amendment || !isOrganizer || !user) return;
-
-    setStartingVoting(true);
-    try {
-      const sessionId = crypto.randomUUID();
-      const now = Date.now();
-      const votingDuration = 30 * 60 * 1000; // 30 minutes default
-
-      // Update amendment to event_voting status
-      await updateAmendment({
-        id: amendment.id,
-        workflow_status: 'event_voting',
-      });
-
-      // Create voting session
-      await createVotingSession({
-        id: sessionId,
-        amendment_id: amendment.id,
-        event_id: eventId,
-        title: amendment.title || 'Voting Session',
-        description: '',
-        status: 'active',
-        voting_type: 'simple',
-        majority_type: 'simple',
-        start_time: now,
-        end_time: now + votingDuration,
-      });
-
-      // Add timeline event for public amendments
-      if (amendment.visibility === 'public') {
-        await createTimelineEvent({ data: {
-          eventType: 'vote_started',
-          entityType: 'amendment',
-          entityId: amendment.id,
-          actorId: user.id,
-          title: `Voting started for ${amendment.title || 'amendment'}`,
-          description: 'Event voting has begun',
-        } });
-      }
-
-      // Send notification
-      await notifyVotingSessionStarted({
-        senderId: user.id,
-        amendmentId: amendment.id,
-        amendmentTitle: amendment.title || 'Untitled Amendment',
-        eventId,
-      });
-
-      await Promise.resolve(); // mutations already committed above
-
-      toast.success('Event-Abstimmung gestartet');
-    } catch (error) {
-      console.error('Failed to start event voting:', error);
-      toast.error('Fehler beim Starten der Abstimmung');
-    } finally {
-      setStartingVoting(false);
-    }
-  };
-
-  const handleAdvanceToNext = async () => {
-    if (!votingSession || !isOrganizer) return;
-
-    setAdvancingVote(true);
-    try {
-      const currentIndex = votingSession.currentChangeRequestIndex || 0;
-      const newIndex = currentIndex + 1;
-
-      await updateVotingSession({
-        id: votingSession.id,
-      });
-
-      toast.success('Zur nächsten Abstimmung fortgeschritten');
-    } catch (error) {
-      console.error('Failed to advance vote:', error);
-      toast.error('Fehler beim Fortschreiten');
-    } finally {
-      setAdvancingVote(false);
-    }
-  };
-
-  const handleCompleteVoting = async () => {
-    if (!votingSession || !amendment || !isOrganizer || !user) return;
-
-    try {
-      await updateVotingSession({
-        id: votingSession.id,
-        status: 'completed',
-      });
-
-      // Send notification
-      await notifyVotingSessionCompleted({
-        senderId: user.id,
-        amendmentId: amendment.id,
-        amendmentTitle: amendment.title || 'Untitled Amendment',
-        eventId,
-      });
-
-      // Vote counting: Query vote records for this agenda item, tally results, then update voting session status.
-      // This should integrate with amendment-process-helpers.ts
-
-      toast.success('Abstimmung abgeschlossen');
-    } catch (error) {
-      console.error('Failed to complete voting:', error);
-      toast.error('Fehler beim Abschließen der Abstimmung');
-    }
-  };
 
   // Handler: Mark speaker as completed
   const handleMarkSpeakerCompleted = async (speakerId: string) => {
@@ -197,10 +108,24 @@ export function EventAgendaItemDetail({
 
     setMarkingSpeakerComplete(speakerId);
     try {
+      const now = Date.now();
       await updateSpeaker({
         id: speakerId,
         completed: true,
+        end_time: now,
       });
+
+      // Set start_time on the next active speaker (if any)
+      const sorted = [...speakerListData].sort((a, b) => a.order - b.order);
+      const activeAfter = sorted.filter(s => !s.completed && s.id !== speakerId);
+      if (activeAfter.length > 0) {
+        const next = activeAfter[0];
+        await updateSpeaker({
+          id: next.id,
+          start_time: now,
+        });
+      }
+
       toast.success(t('features.events.agenda.markCompleted'));
     } catch (error) {
       console.error('Error marking speaker completed:', error);
@@ -208,103 +133,6 @@ export function EventAgendaItemDetail({
     } finally {
       setMarkingSpeakerComplete(null);
     }
-  };
-
-  // Handler: Become candidate
-  const handleBecomeCandidate = async () => {
-    if (!user || !agendaItem?.election?.[0]?.id || !hasCandidateRight) return;
-
-    setCandidateLoading(true);
-    try {
-      const candidateName = user.email || 'Candidate';
-      const candidateOrder = electionCandidates.length + 1;
-      const candidateId = crypto.randomUUID();
-
-      await doAddCandidate({
-        id: candidateId,
-        name: candidateName,
-        description: '',
-        image_url: '',
-        order_index: candidateOrder,
-        status: 'nominated',
-        user_id: user.id,
-        election_id: agendaItem.election[0].id,
-      });
-
-      await notifyCandidateAdded({
-        senderId: user.id,
-        eventId,
-        eventTitle: event?.title || 'Event',
-        candidateName,
-      });
-      toast.success(t('features.events.agenda.becomeCandidate'));
-    } catch (error) {
-      console.error('Error becoming candidate:', error);
-      toast.error('Fehler beim Kandidieren');
-    } finally {
-      setCandidateLoading(false);
-    }
-  };
-
-  // Handler: Withdraw candidacy
-  const handleWithdrawCandidacy = async () => {
-    if (!user || !agendaItem?.election?.[0]?.id) return;
-
-    const candidates = agendaItem.election[0].candidates || [];
-    const userCandidate = candidates.find((c: { user?: { id: string } }) => c.user?.id === user.id);
-    if (!userCandidate) return;
-
-    setCandidateLoading(true);
-    try {
-      await deleteCandidate(userCandidate.id);
-      toast.success(t('features.events.agenda.withdrawCandidacy'));
-    } catch (error) {
-      console.error('Error withdrawing candidacy:', error);
-      toast.error('Fehler beim Zurückziehen');
-    } finally {
-      setCandidateLoading(false);
-    }
-  };
-
-  // Handler: Vote on change request
-  const handleChangeRequestVote = async (
-    changeRequestId: string,
-    vote: 'yes' | 'no' | 'abstain'
-  ) => {
-    if (!user) return;
-    try {
-      await voteOnChangeRequest({
-        id: crypto.randomUUID(),
-        change_request_id: changeRequestId,
-        vote: vote,
-      });
-      toast.success('Vote recorded');
-    } catch (error) {
-      console.error('Failed to record change request vote:', error);
-      toast.error('Failed to record vote');
-    }
-  };
-
-  // Handler: Activate change request for voting
-  const handleActivateChangeRequest = async (changeRequestId: string) => {
-    if (!user || !canManageVotes) return;
-    try {
-      await updateChangeRequest({
-        id: changeRequestId,
-        status: 'active',
-      });
-      toast.success('Change request activated');
-    } catch (error) {
-      console.error('Failed to activate change request:', error);
-      toast.error('Failed to activate change request');
-    }
-  };
-
-  // Map agenda status to component status
-  const mapAgendaStatus = (status: string): 'planned' | 'active' | 'completed' => {
-    if (status === 'completed' || status === 'done') return 'completed';
-    if (status === 'active' || status === 'in-progress') return 'active';
-    return 'planned';
   };
 
   // Prepare speaker list data
@@ -315,6 +143,8 @@ export function EventAgendaItemDetail({
       time: speaker.time || 3,
       completed: speaker.completed || false,
       title: speaker.title ?? undefined,
+      startTime: speaker.start_time ?? undefined,
+      endTime: speaker.end_time ?? undefined,
       user: speaker.user
         ? {
             id: speaker.user.id,
@@ -326,109 +156,84 @@ export function EventAgendaItemDetail({
     }));
   }, [agendaItem?.speaker_list]);
 
-  const isUserInSpeakerList = speakerListData.some(speaker => speaker.user?.id === user?.id);
+  const isUserInSpeakerList = speakerListData.some(speaker => speaker.user?.id === user?.id && !speaker.completed);
 
-  // Prepare election data
-  const election = agendaItem?.election?.[0];
+  // Derive election/vote data for section components
+  const indicativeSelections = useMemo(
+    () => election?.indicative_selections ?? [],
+    [election?.indicative_selections],
+  );
+  const finalSelections = useMemo(
+    () => election?.final_selections ?? [],
+    [election?.final_selections],
+  );
+  const userHasElectionVoted = useMemo(() => {
+    if (!userElector) return false;
+    const phase = election?.status;
+    if (phase === 'final' || phase === 'final_vote') {
+      return (election?.final_participations ?? []).some(
+        (p: { elector_id?: string | null }) => p.elector_id === userElector.id,
+      );
+    }
+    return (election?.indicative_participations ?? []).some(
+      (p: { elector_id?: string | null }) => p.elector_id === userElector.id,
+    );
+  }, [userElector, election]);
 
-  const electionCandidates = useMemo(() => {
-    if (!election?.candidates) return [];
-    return election.candidates
-      .filter((candidate) => candidate.user?.id || candidate.user_id)
-      .map((candidate) => ({
-        id: candidate.id,
-        userId: candidate.user?.id || candidate.user_id || '',
-        user: candidate.user
-          ? {
-              id: candidate.user.id,
-              name: `${candidate.user.first_name ?? ''} ${candidate.user.last_name ?? ''}`.trim() || undefined,
-              email: candidate.user.email ?? undefined,
-              avatar: candidate.user.avatar ?? undefined,
-            }
-          : undefined,
-        status: (candidate.status || 'nominated') as 'nominated' | 'accepted' | 'withdrawn',
-      }));
-  }, [election?.candidates]);
+  const userSelectedCandidateIds = useMemo(() => {
+    if (!userElector) return [];
+    const phase = election?.status;
+    const participations = phase === 'final' || phase === 'final_vote'
+      ? election?.final_participations ?? []
+      : election?.indicative_participations ?? [];
+    const userPart = participations.find(
+      (p: { elector_id?: string | null }) => p.elector_id === userElector.id,
+    );
+    if (!userPart) return [];
+    return (userPart.selections ?? []).map(
+      (s: { candidate_id?: string | null; candidate?: { id: string } | null }) =>
+        s.candidate?.id ?? s.candidate_id ?? '',
+    ).filter(Boolean);
+  }, [userElector, election]);
 
-  const electionVotes = useMemo(() => {
-    if (!election?.id) return [];
-    // Use nested election.votes query for better reactivity
-    const votes = election?.votes || [];
-    return votes
-      .filter((vote) => vote.candidate?.id)
-      .map((vote) => ({
-        id: vote.id,
-        candidateId: vote.candidate?.id || '',
-        isIndication: vote.is_indication,
-      voter: vote.voter ? { id: vote.voter.id, name: `${vote.voter.first_name ?? ''} ${vote.voter.last_name ?? ''}`.trim() || undefined } : undefined,
-      }));
-  }, [election]);
+  const indicativeDecisions = useMemo(
+    () => vote?.indicative_decisions ?? [],
+    [vote?.indicative_decisions],
+  );
+  const finalDecisions = useMemo(
+    () => vote?.final_decisions ?? [],
+    [vote?.final_decisions],
+  );
+  const userHasVoteVoted = useMemo(() => {
+    if (!userVoter) return false;
+    const phase = vote?.status;
+    if (phase === 'final' || phase === 'final_vote') {
+      return (vote?.final_participations ?? []).some(
+        (p: { voter_id?: string | null }) => p.voter_id === userVoter.id,
+      );
+    }
+    return (vote?.indicative_participations ?? []).some(
+      (p: { voter_id?: string | null }) => p.voter_id === userVoter.id,
+    );
+  }, [userVoter, vote]);
 
-  const userElectionVote = useMemo(() => {
-    if (!user?.id || !election?.id) return undefined;
-    const vote = userElectionVotes.find((v) => v.election?.id === election.id);
-    if (!vote || !vote.candidate?.id) return undefined;
-    return {
-      id: vote.id,
-      candidateId: vote.candidate?.id || '',
-      isIndication: vote.is_indication,
-      voter: { id: user.id, name: user.email },
-    };
-  }, [user?.id, election?.id, userElectionVotes]);
+  const userSelectedChoiceIds = useMemo(() => {
+    if (!userVoter) return [];
+    const phase = vote?.status;
+    const participations = phase === 'final' || phase === 'final_vote'
+      ? vote?.final_participations ?? []
+      : vote?.indicative_participations ?? [];
+    const userPart = participations.find(
+      (p: { voter_id?: string | null }) => p.voter_id === userVoter.id,
+    );
+    if (!userPart) return [];
+    return (userPart.decisions ?? []).map(
+      (d: { choice_id?: string | null; choice?: { id: string } | null }) =>
+        d.choice?.id ?? d.choice_id ?? '',
+    ).filter(Boolean);
+  }, [userVoter, vote]);
 
-  const isUserCandidate = useMemo(() => {
-    return electionCandidates.some(c => c.userId === user?.id);
-  }, [electionCandidates, user?.id]);
-
-  // Prepare amendment vote data
-  const amendmentVote = agendaItem?.amendment;
-
-  const amendmentVoteEntries = useMemo(() => {
-    if (!amendmentVote?.id) return [];
-    // Use global query which is reactive, then filter by amendment id
-    return (data?.amendmentVoteEntries || [])
-      .filter(
-        (entry) =>
-          entry.amendment?.id === amendmentVote.id &&
-          ['yes', 'no', 'abstain'].includes(String(entry.vote))
-      )
-      .map((entry) => ({
-        id: entry.id,
-        vote: String(entry.vote) as 'yes' | 'no' | 'abstain',
-        isIndication: false,
-        voter: entry.user ? { id: entry.user.id, name: `${entry.user.first_name ?? ''} ${entry.user.last_name ?? ''}`.trim() || undefined } : undefined,
-      }));
-  }, [amendmentVote?.id, data]);
-
-  const userAmendmentVote = useMemo(() => {
-    if (!user?.id || !amendmentVote?.id) return undefined;
-    const entry = userAmendmentVotes.find((e) => e.amendment?.id === amendmentVote.id);
-    if (!entry) return undefined;
-    if (entry.vote == null) return undefined;
-    const voteMap: Record<number, 'yes' | 'no' | 'abstain'> = { 1: 'yes', [-1]: 'no', 0: 'abstain' };
-    const mappedVote = voteMap[entry.vote];
-    if (!mappedVote) return undefined;
-    return {
-      id: entry.id,
-      vote: mappedVote,
-      voter: { id: user.id, name: user.email },
-    };
-  }, [user?.id, amendmentVote?.id, userAmendmentVotes]);
-
-  // Change request votes (grouped by CR id)
-  const changeRequestVotes = useMemo(() => {
-    const votes: Record<string, { id: string; vote: 'yes' | 'no' | 'abstain' }[]> = {};
-    // Change request votes: Requires querying change_request_vote table filtered by relevant change request IDs.
-    // Deferred until change request voting UI is fully integrated.
-    return votes;
-  }, []);
-
-  const userChangeRequestVotes = useMemo(() => {
-    const votes: Record<string, { id: string; vote: 'yes' | 'no' | 'abstain' }> = {};
-    // User's change request votes: Requires querying change_request_vote table filtered by user ID.
-    // Deferred until change request voting UI is fully integrated.
-    return votes;
-  }, []);
+  const voteAmendment = vote?.amendment ?? agendaItem?.amendment ?? null;
 
   if (isLoading) {
     return (
@@ -459,59 +264,100 @@ export function EventAgendaItemDetail({
     );
   }
 
-  const isCreator = user?.id === agendaItem.creator?.id;
-  const isEventOrganizer = user?.id === event.creator?.id;
-  const canEdit = isCreator || isEventOrganizer;
-
   return (
     <div className="space-y-6">
-      {/* Navigation Bar */}
-      <div className="flex items-center justify-between gap-2">
-        <Button asChild variant="outline" size="sm">
-          <Link to="/event/$id/agenda" params={{ id: eventId }}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {t('features.events.agenda.backToAgenda')}
-          </Link>
-        </Button>
-        <div className="flex items-center gap-2">
-          {canManageAgenda && (
-            <Button variant="outline" size="sm" onClick={() => setTransferDialogOpen(true)}>
-              <ArrowRight className="mr-2 h-4 w-4" />
-              {t('features.events.agenda.moveToEvent')}
-            </Button>
-          )}
-          {canEdit && (
-            <>
-              <Button variant="outline" size="sm">
-                <Edit className="mr-2 h-4 w-4" />
-                {t('common.actions.edit')}
-              </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" size="sm" disabled={deleteLoading}>
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    {t('common.actions.delete')}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>{t('features.events.agenda.deleteTitle')}</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {t('features.events.agenda.deleteDescription')}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>{t('common.actions.cancel')}</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} disabled={deleteLoading}>
-                      {deleteLoading ? t('common.actions.deleting') : t('common.actions.delete')}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </>
-          )}
-        </div>
-      </div>
+      {/* Fixed Action Bar */}
+      <AgendaActionBar
+        eventId={eventId}
+        currentAgendaItem={{
+          id: agendaItem.id,
+          type: agendaItem.type,
+          status: agendaItem.status,
+          voting_phase: effectiveVotingPhase,
+          election: election ? { id: election.id } : null,
+          vote: vote ? { id: vote.id } : null,
+        }}
+        canManageAgenda={actionBarHook.canManageAgenda}
+        canVote={actionBarHook.hasVotingRight}
+        canBeCandidate={actionBarHook.hasCandidateRight}
+        isEventStarted={event?.status === 'active' || event?.status === 'in-progress'}
+        isUserInSpeakerList={actionBarHook.isUserInSpeakerList}
+        isUserCandidate={actionBarHook.isUserCandidate}
+        hasPreviousItem={agendaNav.hasPreviousItem}
+        hasNextItem={agendaNav.hasNextItem}
+        onPreviousItem={agendaNav.moveToPreviousItem}
+        onNextItem={agendaNav.moveToNextItem}
+        onCompleteItem={agendaNav.completeCurrentItem}
+        navigationLoading={agendaNav.isLoading}
+        speakerLoading={actionBarHook.speakerLoading}
+        candidateLoading={actionBarHook.candidateLoading}
+        onBackToAgenda={() => navigate({ to: '/event/$id/agenda', params: { id: eventId } })}
+        onMoveToEvent={() => setTransferDialogOpen(true)}
+        onEditItem={actionBarHook.handleEditClick}
+        onDeleteItem={handleDelete}
+        onJoinSpeakerList={actionBarHook.handleJoinSpeakerList}
+        onLeaveSpeakerList={actionBarHook.handleLeaveSpeakerList}
+        onBecomeCandidate={actionBarHook.handleBecomeCandidate}
+        onWithdrawCandidacy={actionBarHook.handleWithdrawCandidacy}
+        onStartFinalVote={actionBarHook.handleStartFinalVote}
+        onCloseFinalVote={actionBarHook.handleCloseFinalVote}
+        onVoteClick={actionBarHook.handleVoteClick}
+      />
+      {/* Spacer for fixed toolbar */}
+      <div className="h-10" />
+
+      {/* Vote Cast Dialog (with password support) */}
+      <VoteCastDialog
+        open={actionBarHook.voteDialogOpen}
+        onOpenChange={actionBarHook.setVoteDialogOpen}
+        phase={actionBarHook.voteCasting.phase}
+        title={agendaItem.title ?? undefined}
+        candidates={election ? candidates.map(c => ({
+          id: c.id,
+          name: c.user ? `${c.user.first_name ?? ''} ${c.user.last_name ?? ''}`.trim() || c.user.email || 'Candidate' : c.name || 'Candidate',
+          avatar: c.user?.avatar ?? undefined,
+        })) : undefined}
+        maxVotes={election?.max_votes ?? 1}
+        choices={vote ? choices.map(c => ({
+          id: c.id,
+          label: c.label || 'Choice',
+        })) : undefined}
+        requirePassword
+        passwordError={passwordError}
+        isPasswordVerifying={isPasswordVerifying}
+        onPasswordSubmit={async (password: string) => {
+          setPasswordError(null);
+          setIsPasswordVerifying(true);
+          try {
+            await verifyVotingPassword(password);
+          } catch (err) {
+            const message = err instanceof Error ? err.message : 'Verification failed';
+            setPasswordError(message);
+            throw err;
+          } finally {
+            setIsPasswordVerifying(false);
+          }
+        }}
+        onCastVote={actionBarHook.voteCasting.castAmendmentVote}
+        onCastElectionVote={actionBarHook.voteCasting.castElectionVote}
+        isLoading={actionBarHook.voteCasting.isLoading}
+      />
+
+      {/* Edit Election/Vote Dialog */}
+      <EditElectionVoteDialog
+        open={actionBarHook.editDialogOpen}
+        onOpenChange={actionBarHook.setEditDialogOpen}
+        agendaItemId={agendaItem.id}
+        agendaItemTitle={agendaItem.title ?? null}
+        agendaItemDescription={agendaItem.description ?? null}
+        election={election ?? undefined}
+        vote={vote ?? undefined}
+        choices={choices.map(c => ({
+          id: c.id,
+          label: c.label,
+          order_index: c.order_index,
+        }))}
+      />
 
       {/* Section 1: Context Card */}
       <AgendaItemContextCard
@@ -522,24 +368,16 @@ export function EventAgendaItemDetail({
           type: agendaItem.type || '',
           status: agendaItem.status || '',
           duration: agendaItem.duration ?? undefined,
-          scheduledTime: agendaItem.scheduled_time ?? undefined,
+          scheduledTime: estimatedStartTime?.toISOString() ?? agendaItem.scheduled_time ?? undefined,
           startTime: agendaItem.start_time ? new Date(agendaItem.start_time) : undefined,
           endTime: agendaItem.end_time ? new Date(agendaItem.end_time) : undefined,
           activatedAt: agendaItem.activated_at ? new Date(agendaItem.activated_at) : undefined,
           completedAt: agendaItem.completed_at ? new Date(agendaItem.completed_at) : undefined,
         }}
-        position={undefined}
-        amendment={
-          amendment
-            ? {
-                id: amendment.id,
-                title: amendment.title ?? '',
-                subtitle: undefined,
-                status: amendment.status ?? undefined,
-                workflowStatus: amendment.workflow_status ?? undefined,
-                imageURL: amendment.image_url ?? undefined,
-                group: undefined,
-              }
+        votingStartTime={agendaItem.start_time ? new Date(agendaItem.start_time) : undefined}
+        votingEndTime={
+          (election?.closing_end_time ?? vote?.closing_end_time)
+            ? new Date(election?.closing_end_time ?? vote?.closing_end_time ?? 0)
             : undefined
         }
       />
@@ -550,122 +388,65 @@ export function EventAgendaItemDetail({
         isUserInSpeakerList={isUserInSpeakerList}
         canManageSpeakers={canManageAgenda}
         isAddingSpeaker={addingSpeaker}
+        isRemovingSpeaker={actionBarHook.speakerLoading}
         userId={user?.id}
+        agendaStartTime={agendaItem.start_time ?? undefined}
         onAddToSpeakerList={handleAddToSpeakerList}
+        onRemoveFromSpeakerList={actionBarHook.handleLeaveSpeakerList}
         onMarkCompleted={handleMarkSpeakerCompleted}
       />
 
+      {/* Accreditation Section */}
+      {agendaItem.type === 'accreditation' && (
+        <AccreditationSection eventId={eventId} agendaItemId={agendaItemId} />
+      )}
+
       {/* Section 3: Election */}
       {election && (
-        <>
-          <VotingSessionManager
-            eventId={eventId}
-            agendaItemId={agendaItemId}
-            agendaItemTitle={agendaItem.title || 'Election'}
-            votingType="election"
-            targetEntityId={election.id}
-          />
+        <div className="space-y-4">
           <AgendaElectionSection
-            positionId={election.id}
             positionName={
               election.title ??
               t('features.events.agenda.position')
             }
-            candidates={electionCandidates}
-            electionVotes={electionVotes}
-            userVote={userElectionVote}
-            agendaStatus={mapAgendaStatus(agendaItem.status || '')}
+            candidates={candidates}
+            indicativeSelections={indicativeSelections}
+            finalSelections={finalSelections}
+            userHasVoted={userHasElectionVoted}
+            userSelectedCandidateIds={userSelectedCandidateIds}
+            electionStatus={election.status}
             canVote={hasVotingRight}
             canBeCandidate={hasCandidateRight}
-            isUserCandidate={isUserCandidate}
+            isUserCandidate={actionBarHook.isUserCandidate}
             isVotingLoading={votingLoading === election.id}
-            isCandidateLoading={candidateLoading}
-            onVote={candidateId => handleElectionVote(election.id, candidateId)}
-            onBecomeCandidate={handleBecomeCandidate}
-            onWithdrawCandidacy={handleWithdrawCandidacy}
+            isCandidateLoading={actionBarHook.candidateLoading}
+            onBecomeCandidate={actionBarHook.handleBecomeCandidate}
+            onWithdrawCandidacy={actionBarHook.handleWithdrawCandidacy}
           />
-        </>
+          {election.position && (
+            <AgendaRelatedPositionCard position={election.position} />
+          )}
+        </div>
       )}
 
-      {/* Section 3: Amendment Vote (when amendment is linked) */}
-      {agendaItem.type === 'amendment' && amendment && (
-        <>
-          {(amendment.workflow_status === 'event_suggesting' ||
-            amendment.workflow_status === 'event_voting') && (
-            <VotingSessionManager
-              eventId={eventId}
-              agendaItemId={agendaItemId}
-              agendaItemTitle={amendment.title || 'Amendment'}
-              votingType="amendment"
-              targetEntityId={amendment.id}
-            />
-          )}
-          {amendment.workflow_status === 'event_voting' && votingSession && (
-            <AmendmentVotingQueue
-              amendmentId={amendment.id}
-              eventId={eventId}
-              agendaItemId={agendaItemId}
-              changeRequests={changeRequests.map((cr) => ({
-                id: cr.id,
-                title: cr.title || 'Change Request',
-                description: cr.description || '',
-                proposedChange: cr.description || '',
-                status: cr.status || 'proposed',
-                source: cr.source_type ?? undefined,
-                createdAt: cr.created_at,
-              }))}
-              currentSession={votingSession}
-              isOrganizer={!!isOrganizer}
-              onAdvanceToNext={handleAdvanceToNext}
-              onComplete={handleCompleteVoting}
-            />
-          )}
+      {/* Section 3: Vote */}
+      {vote && (
+        <div className="space-y-4">
           <AgendaVoteSection
-            amendmentId={amendment.id}
-            amendmentTitle={amendment.title || 'Amendment'}
-            voteEntries={amendmentVoteEntries}
-            changeRequests={changeRequests.map((cr) => ({
-              id: cr.id,
-              title: cr.title || 'Change Request',
-              description: cr.description || '',
-              characterCount: undefined,
-              votingOrder: undefined,
-              status: cr.status || 'proposed',
-              activatedAt: undefined,
-              completedAt: undefined,
-            }))}
-            changeRequestVotes={changeRequestVotes}
-            userVote={userAmendmentVote}
-            userChangeRequestVotes={userChangeRequestVotes}
-            agendaStatus={mapAgendaStatus(agendaItem.status || '')}
-            canVote={hasVotingRight}
-            canManageVotes={canManageVotes}
-            isVotingLoading={votingLoading === amendmentVote?.id}
-            onVote={vote => amendmentVote && handleAmendmentVote(amendmentVote.id, vote)}
-            onChangeRequestVote={handleChangeRequestVote}
-            onActivateChangeRequest={handleActivateChangeRequest}
+            voteTitle={vote.title || agendaItem.title || 'Vote'}
+            choices={choices}
+            indicativeDecisions={indicativeDecisions}
+            finalDecisions={finalDecisions}
+            userHasVoted={userHasVoteVoted}
+            userSelectedChoiceIds={userSelectedChoiceIds}
+            voteStatus={vote.status}
+            majorityType={vote.majority_type}
+            totalEligibleVoters={vote.voters?.length}
           />
-        </>
-      )}
-
-      {/* Section 3: Legacy Amendment Vote (when no amendment linked) */}
-      {amendmentVote && !amendment && (
-        <AgendaVoteSection
-          amendmentId={amendmentVote.id}
-          amendmentTitle={amendmentVote.title || 'Amendment Vote'}
-          voteEntries={amendmentVoteEntries}
-          changeRequests={[]}
-          changeRequestVotes={{}}
-          userVote={userAmendmentVote}
-          userChangeRequestVotes={{}}
-          agendaStatus={mapAgendaStatus(agendaItem.status || '')}
-          canVote={hasVotingRight}
-          canManageVotes={canManageVotes}
-          isVotingLoading={votingLoading === amendmentVote.id}
-          onVote={vote => handleAmendmentVote(amendmentVote.id, vote)}
-          onChangeRequestVote={handleChangeRequestVote}
-          onActivateChangeRequest={handleActivateChangeRequest}
-        />
+          {voteAmendment && (
+            <AgendaRelatedAmendmentCard amendment={voteAmendment} />
+          )}
+        </div>
       )}
 
       {/* Transfer Dialog */}

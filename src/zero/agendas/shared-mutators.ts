@@ -1,5 +1,4 @@
 import { defineMutator } from '@rocicorp/zero'
-import { zql } from '../schema'
 import {
   createAgendaItemSchema,
   updateAgendaItemSchema,
@@ -8,18 +7,6 @@ import {
   createSpeakerListSchema,
   deleteSpeakerListSchema,
 } from './schema'
-import {
-  createElectionSchema,
-  updateElectionSchema,
-  createElectionCandidateSchema,
-  updateElectionCandidateSchema,
-  deleteElectionCandidateSchema,
-} from '../elections/schema'
-import {
-  createElectionVoteSchema,
-  updateElectionVoteSchema,
-  deleteElectionVoteSchema,
-} from '../votes/schema'
 import { z } from 'zod'
 
 /** Shared mutators — run on both client and server. Server mutators may override these. */
@@ -77,45 +64,6 @@ export const agendaSharedMutators = {
     }
   ),
 
-  // Create an election
-  createElection: defineMutator(
-    createElectionSchema,
-    async ({ tx, args }) => {
-      const now = Date.now()
-      await tx.mutate.election.insert({
-        ...args,
-        created_at: now,
-        updated_at: now,
-      })
-    }
-  ),
-
-  // Add a candidate to an election
-  addCandidate: defineMutator(
-    createElectionCandidateSchema,
-    async ({ tx, args }) => {
-      const now = Date.now()
-      await tx.mutate.election_candidate.insert({
-        ...args,
-        created_at: now,
-      })
-    }
-  ),
-
-  // Cast a vote in an election
-  castElectionVote: defineMutator(
-    createElectionVoteSchema,
-    async ({ tx, ctx: { userID }, args }) => {
-      const now = Date.now()
-      await tx.mutate.election_vote.insert({
-        ...args,
-        voter_id: userID,
-        created_at: now,
-        updated_at: now,
-      })
-    }
-  ),
-
   // Delete an agenda item
   deleteAgendaItem: defineMutator(
     deleteAgendaItemSchema,
@@ -132,55 +80,16 @@ export const agendaSharedMutators = {
     }
   ),
 
-  // Update an election
-  updateElection: defineMutator(
-    updateElectionSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.election.update({
-        ...args,
-        updated_at: Date.now(),
-      })
-    }
-  ),
-
-  // Update an election candidate
-  updateCandidate: defineMutator(
-    updateElectionCandidateSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.election_candidate.update(args)
-    }
-  ),
-
-  // Update an election vote
-  updateElectionVote: defineMutator(
-    updateElectionVoteSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.election_vote.update({
-        ...args,
-        updated_at: Date.now(),
-      })
-    }
-  ),
-
-  // Delete an election vote
-  deleteElectionVote: defineMutator(
-    deleteElectionVoteSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.election_vote.delete({ id: args.id })
-    }
-  ),
-
-  // Delete an election candidate
-  deleteCandidate: defineMutator(
-    deleteElectionCandidateSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.election_candidate.delete({ id: args.id })
-    }
-  ),
-
   // Update a speaker in the speaker list
   updateSpeaker: defineMutator(
-    z.object({ id: z.string(), completed: z.boolean().optional(), order_index: z.number().optional(), time: z.number().optional() }),
+    z.object({
+      id: z.string(),
+      completed: z.boolean().optional(),
+      order_index: z.number().optional(),
+      time: z.number().optional(),
+      start_time: z.number().nullable().optional(),
+      end_time: z.number().nullable().optional(),
+    }),
     async ({ tx, args }) => {
       await tx.mutate.speaker_list.update(args)
     }

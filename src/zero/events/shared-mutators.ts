@@ -15,11 +15,6 @@ import {
   cancelMeetingBookingSchema,
 } from './schema'
 import {
-  eventVoteCreateSchema,
-  eventVotingSessionCreateSchema,
-  eventVotingSessionUpdateSchema,
-} from '../votes/schema'
-import {
   createEventPositionSchema,
   updateEventPositionSchema,
   deleteEventPositionSchema,
@@ -105,48 +100,6 @@ export const eventSharedMutators = {
   leaveEvent: defineMutator(eventParticipantDeleteSchema, async ({ tx, args }) => {
     await tx.mutate.event_participant.delete({ id: args.id })
   }),
-
-  finalizeAgendaItem: defineMutator(
-    z.object({ id: z.string(), status: z.string(), end_time: z.number().optional() }),
-    async ({ tx, args }) => {
-      await tx.mutate.event_voting_session.update({
-        id: args.id,
-        status: args.status,
-        ...(args.end_time !== undefined ? { end_time: args.end_time } : {}),
-      })
-    }
-  ),
-
-  castVote: defineMutator(eventVoteCreateSchema, async ({ tx, ctx: { userID }, args }) => {
-    const now = Date.now()
-    await tx.mutate.event_vote.insert({
-      ...args,
-      user_id: userID,
-      created_at: now,
-    })
-  }),
-
-  startVotingSession: defineMutator(eventVotingSessionCreateSchema, async ({ tx, args }) => {
-    const now = Date.now()
-    await tx.mutate.event_voting_session.insert({
-      ...args,
-      status: 'active',
-      start_time: now,
-      end_time: 0,
-      created_at: now,
-    })
-  }),
-
-  endVotingSession: defineMutator(
-    z.object({ id: z.string() }),
-    async ({ tx, args }) => {
-      await tx.mutate.event_voting_session.update({
-        id: args.id,
-        status: 'closed',
-        end_time: Date.now(),
-      })
-    }
-  ),
 
   finalizeDelegates: defineMutator(
     z.object({ eventId: z.string() }),

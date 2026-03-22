@@ -3,6 +3,7 @@ import { useZero } from '@rocicorp/zero/react'
 import { toast } from 'sonner'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { mutators } from '../mutators'
+import { serverConfirmed } from '../mutate-with-server-check'
 import { usePreferenceState } from './usePreferenceState'
 import type { CreateFormStyle, Theme, PreferenceLanguage, PreferenceNavigationView } from './schema'
 
@@ -28,14 +29,15 @@ export function usePreferenceActions() {
       if (isLoading) return
 
       if (preference) {
-        await zero.mutate(
+        const result = zero.mutate(
           mutators.preferences.update({
             id: preference.id,
             ...fields,
           })
         )
+        await serverConfirmed(result)
       } else {
-        await zero.mutate(
+        const result = zero.mutate(
           mutators.preferences.create({
             id: crypto.randomUUID(),
             create_form_style: fields.create_form_style ?? 'carousel',
@@ -44,6 +46,7 @@ export function usePreferenceActions() {
             navigation_view: fields.navigation_view ?? 'asButtonList',
           })
         )
+        await serverConfirmed(result)
       }
     },
     [zero, preference, isLoading]

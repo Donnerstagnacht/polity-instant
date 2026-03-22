@@ -1,55 +1,97 @@
 // Root barrel export for @/zero path alias
-export { schema, zql } from './schema'
-export type { Schema } from './schema'
-export { dbProvider } from './db-provider'
+export { schema, zql } from './schema';
+export type { Schema } from './schema';
+export { dbProvider } from './db-provider';
 
 // Re-export domain shared mutators for use in features
-export { amendmentSharedMutators } from './amendments/shared-mutators'
-export { eventSharedMutators } from './events/shared-mutators'
-export { groupSharedMutators } from './groups/shared-mutators'
-export { blogSharedMutators } from './blogs/shared-mutators'
-export { documentSharedMutators } from './documents/shared-mutators'
-export { messageSharedMutators } from './messages/shared-mutators'
-export { notificationSharedMutators } from './notifications/shared-mutators'
-export { agendaSharedMutators } from './agendas/shared-mutators'
-export { commonSharedMutators } from './common/shared-mutators'
-export { todoSharedMutators } from './todos/shared-mutators'
-export { userSharedMutators } from './users/shared-mutators'
-export { statementSharedMutators } from './statements/shared-mutators'
-export { paymentSharedMutators } from './payments/shared-mutators'
-export { preferenceSharedMutators } from './preferences/shared-mutators'
+export { amendmentSharedMutators } from './amendments/shared-mutators';
+export { eventSharedMutators } from './events/shared-mutators';
+export { groupSharedMutators } from './groups/shared-mutators';
+export { blogSharedMutators } from './blogs/shared-mutators';
+export { documentSharedMutators } from './documents/shared-mutators';
+export { messageSharedMutators } from './messages/shared-mutators';
+export { notificationSharedMutators } from './notifications/shared-mutators';
+export { agendaSharedMutators } from './agendas/shared-mutators';
+export { commonSharedMutators } from './common/shared-mutators';
+export { todoSharedMutators } from './todos/shared-mutators';
+export { userSharedMutators } from './users/shared-mutators';
+export { statementSharedMutators } from './statements/shared-mutators';
+export { paymentSharedMutators } from './payments/shared-mutators';
+export { preferenceSharedMutators } from './preferences/shared-mutators';
 
 // Re-export all Row types
 export type {
   // Users
-  User, File, Follow,
+  User,
+  File,
+  Follow,
   // Groups
-  Group, GroupMembership, GroupRelationship, Role, ActionRight, Position, PositionHolderHistory,
+  Group,
+  GroupMembership,
+  GroupRelationship,
+  Role,
+  ActionRight,
+  Position,
+  PositionHolderHistory,
   // Events
-  Event, EventParticipant, EventDelegate, GroupDelegateAllocation,
-  Participant, EventPosition, EventPositionHolder, EventVotingSession, EventVote, ScheduledElection,
+  Event,
+  EventParticipant,
+  EventDelegate,
+  GroupDelegateAllocation,
+  Participant,
+  EventPosition,
+  EventPositionHolder,
   // Amendments
-  Amendment, AmendmentVoteEntry, AmendmentSupportVote, AmendmentVote, ChangeRequest, ChangeRequestVote,
-  AmendmentVotingSession, AmendmentVotingSessionVote, AmendmentCollaborator, AmendmentPath,
-  AmendmentPathSegment, SupportConfirmation,
+  Amendment,
+  AmendmentSupportVote,
+  ChangeRequest,
+  ChangeRequestVote,
+  AmendmentCollaborator,
+  AmendmentPath,
+  AmendmentPathSegment,
+  SupportConfirmation,
   // Documents
-  Document, DocumentVersion, DocumentCollaborator, DocumentCursor, Thread, Comment, ThreadVote, CommentVote,
+  Document,
+  DocumentVersion,
+  DocumentCollaborator,
+  DocumentCursor,
+  Thread,
+  Comment,
+  ThreadVote,
+  CommentVote,
   // Agendas
-  AgendaItem, SpeakerList, Election, ElectionCandidate, ElectionVote,
+  AgendaItem,
+  SpeakerList,
+  Election,
+  ElectionCandidate,
   // Todos
-  Todo, TodoAssignment,
+  Todo,
+  TodoAssignment,
   // Messages
-  Conversation, ConversationParticipant, Message,
+  Conversation,
+  ConversationParticipant,
+  Message,
   // Notifications
-  Notification, PushSubscription, NotificationSetting,
+  Notification,
+  PushSubscription,
+  NotificationSetting,
   // Blogs
-  Blog, BlogBlogger, BlogSupportVote,
+  Blog,
+  BlogBlogger,
+  BlogSupportVote,
   // Payments
-  Payment, StripeCustomer, StripeSubscription, StripePayment,
+  Payment,
+  StripeCustomer,
+  StripeSubscription,
+  StripePayment,
   // Statements
   Statement,
   // Preferences
   UserPreference,
   // Common
-  Subscriber, Hashtag, Link, TimelineEvent, Reaction,
-} from './schema'
+  Subscriber,
+  Hashtag,
+  Link,
+  TimelineEvent,
+  Reaction,
+} from './schema';

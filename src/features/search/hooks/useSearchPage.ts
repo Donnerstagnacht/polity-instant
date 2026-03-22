@@ -40,7 +40,9 @@ export function useSearchPage() {
   const { data, isLoading } = useSearchData();
 
   const agendaItemsByEventId = useMemo(
-    () => buildAgendaItemsByEventId(data?.agendaItems ?? []),
+    () => buildAgendaItemsByEventId(
+      (data?.agendaItems ?? []) as Parameters<typeof buildAgendaItemsByEventId>[0]
+    ),
     [data?.agendaItems],
   );
 

@@ -7,6 +7,7 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
+import { useVoteActions } from '@/zero/votes/useVoteActions';
 import type { WorkflowStatus } from '@/zero/rbac/workflow-constants';
 import {
   canTransitionTo,
@@ -32,7 +33,8 @@ export function useAmendmentWorkflow({
   amendmentTitle,
 }: UseAmendmentWorkflowProps) {
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const { updateAmendment, createVotingSession: createVotingSessionAction } = useAmendmentActions();
+  const { updateAmendment } = useAmendmentActions();
+  const { createVote } = useVoteActions();
 
   /**
    * Transition to a new workflow status
@@ -101,17 +103,18 @@ export function useAmendmentWorkflow({
         const now = Date.now();
         const endTime = now + intervalMinutes * 60 * 1000;
 
-        await createVotingSessionAction({
+        await createVote({
           id: sessionId,
           amendment_id: amendmentId,
-          event_id: null,
-          title: '',
-          description: '',
-          voting_type: 'internal',
-          majority_type: '',
+          agenda_item_id: null,
+          title: 'Internal Vote',
+          description: null,
           status: 'active',
-          start_time: now,
-          end_time: endTime,
+          majority_type: null,
+          closing_type: null,
+          closing_duration_seconds: intervalMinutes * 60,
+          closing_end_time: endTime,
+          is_public: false,
         });
 
         toast.success(`Interne Abstimmung gestartet (${intervalMinutes} Minuten)`);

@@ -189,16 +189,13 @@ export const commonQueries = {
           q.related('creator')
             .related('event_hashtags', q => q.related('hashtag'))
             .related('participants')
-            .related('voting_sessions', q => q.related('agenda_item').related('votes'))
             .related('event_positions', q => q.related('holders'))
-            .related('scheduled_elections')
             .related('agenda_items', q => q.related('election').related('amendment'))
         )
         .related('blog', q => q.related('blog_hashtags', q => q.related('hashtag')))
         .related('todo', q => q.related('group').related('creator'))
         .related('statement', q => q.related('user'))
         .related('election', q => q.related('agenda_item', q => q.related('event')))
-        .related('amendment_vote')
   ),
 
   // Timeline events by content types with basic relations

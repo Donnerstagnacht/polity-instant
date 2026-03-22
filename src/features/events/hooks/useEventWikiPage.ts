@@ -5,6 +5,7 @@ import { useAuth } from '@/providers/auth-provider';
 import { useEventWikiData } from '@/zero/events/useEventState';
 import { useUserState } from '@/zero/users';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
+import { useElectionActions } from '@/zero/elections/useElectionActions';
 import { useSubscribeEvent } from './useSubscribeEvent';
 import { useEventParticipation } from './useEventParticipation';
 import { computeAgendaStats } from '@/features/agendas/logic/computeAgendaStats';
@@ -18,7 +19,7 @@ export function useEventWikiPage(eventId: string) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [participantsDialogOpen, setParticipantsDialogOpen] = useState(false);
 
-  const { addCandidate } = useAgendaActions();
+  const { addCandidate } = useElectionActions();
 
   const subscribeData = useSubscribeEvent(eventId);
   const participationData = useEventParticipation(eventId);

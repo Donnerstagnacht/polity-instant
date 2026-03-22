@@ -3,6 +3,7 @@ import { useZero } from '@rocicorp/zero/react'
 import { toast } from 'sonner'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { mutators } from '../mutators'
+import { serverConfirmed } from '../mutate-with-server-check'
 
 type EntityType = 'user' | 'group' | 'amendment' | 'event' | 'blog' | 'statement'
 
@@ -18,7 +19,8 @@ export function useCommonActions() {
   const subscribe = useCallback(
     async (args: Parameters<typeof mutators.common.subscribe>[0]) => {
       try {
-        await zero.mutate(mutators.common.subscribe(args))
+        const result = zero.mutate(mutators.common.subscribe(args))
+        await serverConfirmed(result)
         toast.success(t('common.toasts.subscribed'))
       } catch (error) {
         console.error('Failed to subscribe:', error)
@@ -32,7 +34,8 @@ export function useCommonActions() {
   const unsubscribe = useCallback(
     async (args: Parameters<typeof mutators.common.unsubscribe>[0]) => {
       try {
-        await zero.mutate(mutators.common.unsubscribe(args))
+        const result = zero.mutate(mutators.common.unsubscribe(args))
+        await serverConfirmed(result)
         toast.success(t('common.toasts.unsubscribed'))
       } catch (error) {
         console.error('Failed to unsubscribe:', error)
@@ -47,7 +50,8 @@ export function useCommonActions() {
   const addHashtag = useCallback(
     async (args: Parameters<typeof mutators.common.addHashtag>[0]) => {
       try {
-        await zero.mutate(mutators.common.addHashtag(args))
+        const result = zero.mutate(mutators.common.addHashtag(args))
+        await serverConfirmed(result)
       } catch (error) {
         console.error('Failed to add hashtag:', error)
         throw error
@@ -59,7 +63,8 @@ export function useCommonActions() {
   const deleteHashtag = useCallback(
     async (args: Parameters<typeof mutators.common.deleteHashtag>[0]) => {
       try {
-        await zero.mutate(mutators.common.deleteHashtag(args))
+        const result = zero.mutate(mutators.common.deleteHashtag(args))
+        await serverConfirmed(result)
       } catch (error) {
         console.error('Failed to delete hashtag:', error)
         throw error
@@ -85,7 +90,8 @@ export function useCommonActions() {
         // Cast through unknown: mutators have specific FK arg types but caller
         // provides a generic Record keyed by entity type.
         const mutator = mutatorMap[entityType] as unknown as (a: Record<string, string>) => ReturnType<(typeof mutatorMap)[EntityType]>
-        await zero.mutate(mutator(args))
+        const result = zero.mutate(mutator(args))
+        await serverConfirmed(result)
       } catch (error) {
         console.error(`Failed to link ${entityType} hashtag:`, error)
         throw error
@@ -105,7 +111,8 @@ export function useCommonActions() {
         statement: mutators.common.unlinkStatementHashtag,
       } as const
       try {
-        await zero.mutate(mutatorMap[entityType](args))
+        const result = zero.mutate(mutatorMap[entityType](args))
+        await serverConfirmed(result)
       } catch (error) {
         console.error(`Failed to unlink ${entityType} hashtag:`, error)
         throw error
@@ -184,7 +191,8 @@ export function useCommonActions() {
   const createLink = useCallback(
     async (args: Parameters<typeof mutators.common.createLink>[0]) => {
       try {
-        await zero.mutate(mutators.common.createLink(args))
+        const result = zero.mutate(mutators.common.createLink(args))
+        await serverConfirmed(result)
         toast.success(t('common.toasts.linkCreated'))
       } catch (error) {
         console.error('Failed to create link:', error)
@@ -198,7 +206,8 @@ export function useCommonActions() {
   const deleteLink = useCallback(
     async (args: Parameters<typeof mutators.common.deleteLink>[0]) => {
       try {
-        await zero.mutate(mutators.common.deleteLink(args))
+        const result = zero.mutate(mutators.common.deleteLink(args))
+        await serverConfirmed(result)
         toast.success(t('common.toasts.linkDeleted'))
       } catch (error) {
         console.error('Failed to delete link:', error)
@@ -213,7 +222,8 @@ export function useCommonActions() {
   const createReaction = useCallback(
     async (args: Parameters<typeof mutators.common.createReaction>[0]) => {
       try {
-        await zero.mutate(mutators.common.createReaction(args))
+        const result = zero.mutate(mutators.common.createReaction(args))
+        await serverConfirmed(result)
         toast.success(t('common.toasts.reactionAdded'))
       } catch (error) {
         console.error('Failed to create reaction:', error)
@@ -227,7 +237,8 @@ export function useCommonActions() {
   const deleteReaction = useCallback(
     async (args: Parameters<typeof mutators.common.deleteReaction>[0]) => {
       try {
-        await zero.mutate(mutators.common.deleteReaction(args))
+        const result = zero.mutate(mutators.common.deleteReaction(args))
+        await serverConfirmed(result)
         toast.success(t('common.toasts.reactionRemoved'))
       } catch (error) {
         console.error('Failed to delete reaction:', error)
@@ -244,7 +255,8 @@ export function useCommonActions() {
       args: Parameters<typeof mutators.common.createTimelineEvent>[0]
     ) => {
       try {
-        await zero.mutate(mutators.common.createTimelineEvent(args))
+        const result = zero.mutate(mutators.common.createTimelineEvent(args))
+        await serverConfirmed(result)
         toast.success(t('common.toasts.timelineEventCreated'))
       } catch (error) {
         console.error('Failed to create timeline event:', error)

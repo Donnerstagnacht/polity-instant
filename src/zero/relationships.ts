@@ -13,9 +13,9 @@ import { document, documentVersion, documentCollaborator, documentCursor } from 
 // Agendas
 import { agendaItem, speakerList } from './agendas/table'
 // Elections
-import { election, electionCandidate, scheduledElection } from './elections/table'
+import { election, electionCandidate, elector, indicativeElectorParticipation, indicativeCandidateSelection, finalElectorParticipation, finalCandidateSelection } from './elections/table'
 // Votes
-import { amendmentVoteEntry, amendmentSupportVote, amendmentVote, amendmentVotingSession, amendmentVotingSessionVote, changeRequestVote, eventVotingSession, eventVote, electionVote, blogSupportVote, statementSupportVote, threadVote, commentVote } from './votes/table'
+import { vote, voteChoice, voter, indicativeVoterParticipation, indicativeChoiceDecision, finalVoterParticipation, finalChoiceDecision, amendmentSupportVote, changeRequestVote, blogSupportVote, statementSupportVote, threadVote, commentVote } from './votes/table'
 // Change Requests
 import { changeRequest } from './change-requests/table'
 // Discussions
@@ -44,6 +44,11 @@ import { statement, statementSurvey, statementSurveyOption, statementSurveyVote 
 import { userPreference } from './preferences/table'
 // Calendar Subscriptions
 import { calendarSubscription } from './calendar-subscriptions/table'
+
+// Voting Password
+import { votingPassword } from './voting-password/table'
+// Accreditation
+import { accreditation } from './accreditation/table'
 // Common
 import { hashtag, userHashtag, groupHashtag, amendmentHashtag, eventHashtag, blogHashtag, statementHashtag, link, timelineEvent, reaction } from './common/table'
 
@@ -62,15 +67,14 @@ export const userRelationships = relationships(user, ({ many }) => ({
   meeting_bookings: many({ sourceField: ['id'], destSchema: meetingBooking, destField: ['user_id'] }),
   created_amendments: many({ sourceField: ['id'], destSchema: amendment, destField: ['created_by_id'] }),
   amendment_collaborations: many({ sourceField: ['id'], destSchema: amendmentCollaborator, destField: ['user_id'] }),
-  amendment_vote_entries: many({ sourceField: ['id'], destSchema: amendmentVoteEntry, destField: ['user_id'] }),
   amendment_support_votes: many({ sourceField: ['id'], destSchema: amendmentSupportVote, destField: ['user_id'] }),
-  amendment_votes: many({ sourceField: ['id'], destSchema: amendmentVote, destField: ['user_id'] }),
   change_requests: many({ sourceField: ['id'], destSchema: changeRequest, destField: ['user_id'] }),
   change_request_votes: many({ sourceField: ['id'], destSchema: changeRequestVote, destField: ['user_id'] }),
   created_agenda_items: many({ sourceField: ['id'], destSchema: agendaItem, destField: ['creator_id'] }),
   speaker_list_entries: many({ sourceField: ['id'], destSchema: speakerList, destField: ['user_id'] }),
   election_candidacies: many({ sourceField: ['id'], destSchema: electionCandidate, destField: ['user_id'] }),
-  election_votes: many({ sourceField: ['id'], destSchema: electionVote, destField: ['voter_id'] }),
+  electors: many({ sourceField: ['id'], destSchema: elector, destField: ['user_id'] }),
+  voters: many({ sourceField: ['id'], destSchema: voter, destField: ['user_id'] }),
   created_todos: many({ sourceField: ['id'], destSchema: todo, destField: ['creator_id'] }),
   todo_assignments: many({ sourceField: ['id'], destSchema: todoAssignment, destField: ['user_id'] }),
   conversation_participations: many({ sourceField: ['id'], destSchema: conversationParticipant, destField: ['user_id'] }),
@@ -95,7 +99,6 @@ export const userRelationships = relationships(user, ({ many }) => ({
   reactions: many({ sourceField: ['id'], destSchema: reaction, destField: ['user_id'] }),
   position_holder_histories: many({ sourceField: ['id'], destSchema: positionHolderHistory, destField: ['user_id'] }),
   event_position_holdings: many({ sourceField: ['id'], destSchema: eventPositionHolder, destField: ['user_id'] }),
-  event_votes: many({ sourceField: ['id'], destSchema: eventVote, destField: ['user_id'] }),
   document_versions: many({ sourceField: ['id'], destSchema: documentVersion, destField: ['author_id'] }),
   document_collaborations: many({ sourceField: ['id'], destSchema: documentCollaborator, destField: ['user_id'] }),
   document_cursors: many({ sourceField: ['id'], destSchema: documentCursor, destField: ['user_id'] }),
@@ -104,10 +107,11 @@ export const userRelationships = relationships(user, ({ many }) => ({
   thread_votes: many({ sourceField: ['id'], destSchema: threadVote, destField: ['user_id'] }),
   comment_votes: many({ sourceField: ['id'], destSchema: commentVote, destField: ['user_id'] }),
   support_confirmations: many({ sourceField: ['id'], destSchema: supportConfirmation, destField: ['confirmed_by_id'] }),
-  amendment_voting_session_votes: many({ sourceField: ['id'], destSchema: amendmentVotingSessionVote, destField: ['user_id'] }),
   requested_conversations: many({ sourceField: ['id'], destSchema: conversation, destField: ['requested_by_id'] }),
   participants: many({ sourceField: ['id'], destSchema: participant, destField: ['user_id'] }),
   preferences: many({ sourceField: ['id'], destSchema: userPreference, destField: ['user_id'] }),
+  voting_passwords: many({ sourceField: ['id'], destSchema: votingPassword, destField: ['user_id'] }),
+  accreditations: many({ sourceField: ['id'], destSchema: accreditation, destField: ['user_id'] }),
 }))
 
 export const fileRelationships = relationships(file, () => ({}))
@@ -194,14 +198,13 @@ export const eventRelationships = relationships(event, ({ one, many }) => ({
   meeting_slots: many({ sourceField: ['id'], destSchema: meetingSlot, destField: ['event_id'] }),
   event_participants: many({ sourceField: ['id'], destSchema: participant, destField: ['event_id'] }),
   event_positions: many({ sourceField: ['id'], destSchema: eventPosition, destField: ['event_id'] }),
-  voting_sessions: many({ sourceField: ['id'], destSchema: eventVotingSession, destField: ['event_id'] }),
-  scheduled_elections: many({ sourceField: ['id'], destSchema: scheduledElection, destField: ['event_id'] }),
   agenda_items: many({ sourceField: ['id'], destSchema: agendaItem, destField: ['event_id'] }),
   todos: many({ sourceField: ['id'], destSchema: todo, destField: ['event_id'] }),
   subscribers: many({ sourceField: ['id'], destSchema: subscriber, destField: ['event_id'] }),
   event_hashtags: many({ sourceField: ['id'], destSchema: eventHashtag, destField: ['event_id'] }),
   timeline_events: many({ sourceField: ['id'], destSchema: timelineEvent, destField: ['event_id'] }),
   exceptions: many({ sourceField: ['id'], destSchema: eventException, destField: ['parent_event_id'] }),
+  accreditations: many({ sourceField: ['id'], destSchema: accreditation, destField: ['event_id'] }),
 }))
 
 export const eventParticipantRelationships = relationships(eventParticipant, ({ one }) => ({
@@ -246,21 +249,6 @@ export const eventPositionHolderRelationships = relationships(eventPositionHolde
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
 }))
 
-export const eventVotingSessionRelationships = relationships(eventVotingSession, ({ one, many }) => ({
-  event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
-  agenda_item: one({ sourceField: ['agenda_item_id'], destSchema: agendaItem, destField: ['id'] }),
-  votes: many({ sourceField: ['id'], destSchema: eventVote, destField: ['session_id'] }),
-}))
-
-export const eventVoteRelationships = relationships(eventVote, ({ one }) => ({
-  session: one({ sourceField: ['session_id'], destSchema: eventVotingSession, destField: ['id'] }),
-  user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
-}))
-
-export const scheduledElectionRelationships = relationships(scheduledElection, ({ one }) => ({
-  event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
-}))
-
 export const eventExceptionRelationships = relationships(eventException, ({ one }) => ({
   parent_event: one({ sourceField: ['parent_event_id'], destSchema: event, destField: ['id'] }),
 }))
@@ -279,17 +267,14 @@ export const amendmentRelationships = relationships(amendment, ({ one, many }) =
   group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
   event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
   clone_source: one({ sourceField: ['clone_source_id'], destSchema: amendment, destField: ['id'] }),
-  vote_entries: many({ sourceField: ['id'], destSchema: amendmentVoteEntry, destField: ['amendment_id'] }),
+  vote_entries: many({ sourceField: ['id'], destSchema: vote, destField: ['amendment_id'] }),
   support_votes: many({ sourceField: ['id'], destSchema: amendmentSupportVote, destField: ['amendment_id'] }),
-  votes: many({ sourceField: ['id'], destSchema: amendmentVote, destField: ['amendment_id'] }),
   change_requests: many({ sourceField: ['id'], destSchema: changeRequest, destField: ['amendment_id'] }),
-  voting_sessions: many({ sourceField: ['id'], destSchema: amendmentVotingSession, destField: ['amendment_id'] }),
   collaborators: many({ sourceField: ['id'], destSchema: amendmentCollaborator, destField: ['amendment_id'] }),
   paths: many({ sourceField: ['id'], destSchema: amendmentPath, destField: ['amendment_id'] }),
   support_confirmations: many({ sourceField: ['id'], destSchema: supportConfirmation, destField: ['amendment_id'] }),
   documents: many({ sourceField: ['id'], destSchema: document, destField: ['amendment_id'] }),
   agenda_items: many({ sourceField: ['id'], destSchema: agendaItem, destField: ['amendment_id'] }),
-  elections: many({ sourceField: ['id'], destSchema: election, destField: ['amendment_id'] }),
   todos: many({ sourceField: ['id'], destSchema: todo, destField: ['amendment_id'] }),
   subscribers: many({ sourceField: ['id'], destSchema: subscriber, destField: ['amendment_id'] }),
   amendment_hashtags: many({ sourceField: ['id'], destSchema: amendmentHashtag, destField: ['amendment_id'] }),
@@ -297,17 +282,7 @@ export const amendmentRelationships = relationships(amendment, ({ one, many }) =
   threads: many({ sourceField: ['id'], destSchema: thread, destField: ['amendment_id'] }),
 }))
 
-export const amendmentVoteEntryRelationships = relationships(amendmentVoteEntry, ({ one }) => ({
-  amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
-  user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
-}))
-
 export const amendmentSupportVoteRelationships = relationships(amendmentSupportVote, ({ one }) => ({
-  amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
-  user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
-}))
-
-export const amendmentVoteRelationships = relationships(amendmentVote, ({ one }) => ({
   amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
 }))
@@ -320,16 +295,6 @@ export const changeRequestRelationships = relationships(changeRequest, ({ one, m
 
 export const changeRequestVoteRelationships = relationships(changeRequestVote, ({ one }) => ({
   change_request: one({ sourceField: ['change_request_id'], destSchema: changeRequest, destField: ['id'] }),
-  user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
-}))
-
-export const amendmentVotingSessionRelationships = relationships(amendmentVotingSession, ({ one, many }) => ({
-  amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
-  votes: many({ sourceField: ['id'], destSchema: amendmentVotingSessionVote, destField: ['session_id'] }),
-}))
-
-export const amendmentVotingSessionVoteRelationships = relationships(amendmentVotingSessionVote, ({ one }) => ({
-  session: one({ sourceField: ['session_id'], destSchema: amendmentVotingSession, destField: ['id'] }),
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
 }))
 
@@ -416,6 +381,8 @@ export const agendaItemRelationships = relationships(agendaItem, ({ one, many })
   creator: one({ sourceField: ['creator_id'], destSchema: user, destField: ['id'] }),
   speaker_list: many({ sourceField: ['id'], destSchema: speakerList, destField: ['agenda_item_id'] }),
   election: many({ sourceField: ['id'], destSchema: election, destField: ['agenda_item_id'] }),
+  votes: many({ sourceField: ['id'], destSchema: vote, destField: ['agenda_item_id'] }),
+  accreditations: many({ sourceField: ['id'], destSchema: accreditation, destField: ['agenda_item_id'] }),
 }))
 
 export const speakerListRelationships = relationships(speakerList, ({ one }) => ({
@@ -426,22 +393,49 @@ export const speakerListRelationships = relationships(speakerList, ({ one }) => 
 export const electionRelationships = relationships(election, ({ one, many }) => ({
   agenda_item: one({ sourceField: ['agenda_item_id'], destSchema: agendaItem, destField: ['id'] }),
   position: one({ sourceField: ['position_id'], destSchema: position, destField: ['id'] }),
-  amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
   candidates: many({ sourceField: ['id'], destSchema: electionCandidate, destField: ['election_id'] }),
-  votes: many({ sourceField: ['id'], destSchema: electionVote, destField: ['election_id'] }),
+  electors: many({ sourceField: ['id'], destSchema: elector, destField: ['election_id'] }),
+  indicative_participations: many({ sourceField: ['id'], destSchema: indicativeElectorParticipation, destField: ['election_id'] }),
+  indicative_selections: many({ sourceField: ['id'], destSchema: indicativeCandidateSelection, destField: ['election_id'] }),
+  final_participations: many({ sourceField: ['id'], destSchema: finalElectorParticipation, destField: ['election_id'] }),
+  final_selections: many({ sourceField: ['id'], destSchema: finalCandidateSelection, destField: ['election_id'] }),
   timeline_events: many({ sourceField: ['id'], destSchema: timelineEvent, destField: ['election_id'] }),
 }))
 
 export const electionCandidateRelationships = relationships(electionCandidate, ({ one, many }) => ({
   election: one({ sourceField: ['election_id'], destSchema: election, destField: ['id'] }),
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
-  votes: many({ sourceField: ['id'], destSchema: electionVote, destField: ['candidate_id'] }),
+  indicative_selections: many({ sourceField: ['id'], destSchema: indicativeCandidateSelection, destField: ['candidate_id'] }),
+  final_selections: many({ sourceField: ['id'], destSchema: finalCandidateSelection, destField: ['candidate_id'] }),
 }))
 
-export const electionVoteRelationships = relationships(electionVote, ({ one }) => ({
+export const electorRelationships = relationships(elector, ({ one }) => ({
+  election: one({ sourceField: ['election_id'], destSchema: election, destField: ['id'] }),
+  user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
+}))
+
+export const indicativeElectorParticipationRelationships = relationships(indicativeElectorParticipation, ({ one, many }) => ({
+  election: one({ sourceField: ['election_id'], destSchema: election, destField: ['id'] }),
+  elector: one({ sourceField: ['elector_id'], destSchema: elector, destField: ['id'] }),
+  selections: many({ sourceField: ['id'], destSchema: indicativeCandidateSelection, destField: ['elector_participation_id'] }),
+}))
+
+export const indicativeCandidateSelectionRelationships = relationships(indicativeCandidateSelection, ({ one }) => ({
   election: one({ sourceField: ['election_id'], destSchema: election, destField: ['id'] }),
   candidate: one({ sourceField: ['candidate_id'], destSchema: electionCandidate, destField: ['id'] }),
-  voter: one({ sourceField: ['voter_id'], destSchema: user, destField: ['id'] }),
+  participation: one({ sourceField: ['elector_participation_id'], destSchema: indicativeElectorParticipation, destField: ['id'] }),
+}))
+
+export const finalElectorParticipationRelationships = relationships(finalElectorParticipation, ({ one, many }) => ({
+  election: one({ sourceField: ['election_id'], destSchema: election, destField: ['id'] }),
+  elector: one({ sourceField: ['elector_id'], destSchema: elector, destField: ['id'] }),
+  selections: many({ sourceField: ['id'], destSchema: finalCandidateSelection, destField: ['elector_participation_id'] }),
+}))
+
+export const finalCandidateSelectionRelationships = relationships(finalCandidateSelection, ({ one }) => ({
+  election: one({ sourceField: ['election_id'], destSchema: election, destField: ['id'] }),
+  candidate: one({ sourceField: ['candidate_id'], destSchema: electionCandidate, destField: ['id'] }),
+  participation: one({ sourceField: ['elector_participation_id'], destSchema: finalElectorParticipation, destField: ['id'] }),
 }))
 
 // ============================================
@@ -666,13 +660,77 @@ export const timelineEventRelationships = relationships(timelineEvent, ({ one, m
   statement: one({ sourceField: ['statement_id'], destSchema: statement, destField: ['id'] }),
   actor: one({ sourceField: ['actor_id'], destSchema: user, destField: ['id'] }),
   election: one({ sourceField: ['election_id'], destSchema: election, destField: ['id'] }),
-  amendment_vote: one({ sourceField: ['amendment_vote_id'], destSchema: amendmentVote, destField: ['id'] }),
   reactions: many({ sourceField: ['id'], destSchema: reaction, destField: ['timeline_event_id'] }),
 }))
 
 export const reactionRelationships = relationships(reaction, ({ one }) => ({
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
   timeline_event: one({ sourceField: ['timeline_event_id'], destSchema: timelineEvent, destField: ['id'] }),
+}))
+
+// ============================================
+// Vote relationships (new)
+// ============================================
+export const voteRelationships = relationships(vote, ({ one, many }) => ({
+  agenda_item: one({ sourceField: ['agenda_item_id'], destSchema: agendaItem, destField: ['id'] }),
+  amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
+  choices: many({ sourceField: ['id'], destSchema: voteChoice, destField: ['vote_id'] }),
+  voters: many({ sourceField: ['id'], destSchema: voter, destField: ['vote_id'] }),
+  indicative_participations: many({ sourceField: ['id'], destSchema: indicativeVoterParticipation, destField: ['vote_id'] }),
+  indicative_decisions: many({ sourceField: ['id'], destSchema: indicativeChoiceDecision, destField: ['vote_id'] }),
+  final_participations: many({ sourceField: ['id'], destSchema: finalVoterParticipation, destField: ['vote_id'] }),
+  final_decisions: many({ sourceField: ['id'], destSchema: finalChoiceDecision, destField: ['vote_id'] }),
+}))
+
+export const voteChoiceRelationships = relationships(voteChoice, ({ one, many }) => ({
+  vote: one({ sourceField: ['vote_id'], destSchema: vote, destField: ['id'] }),
+  indicative_decisions: many({ sourceField: ['id'], destSchema: indicativeChoiceDecision, destField: ['choice_id'] }),
+  final_decisions: many({ sourceField: ['id'], destSchema: finalChoiceDecision, destField: ['choice_id'] }),
+}))
+
+export const voterRelationships = relationships(voter, ({ one }) => ({
+  vote: one({ sourceField: ['vote_id'], destSchema: vote, destField: ['id'] }),
+  user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
+}))
+
+export const indicativeVoterParticipationRelationships = relationships(indicativeVoterParticipation, ({ one, many }) => ({
+  vote: one({ sourceField: ['vote_id'], destSchema: vote, destField: ['id'] }),
+  voter: one({ sourceField: ['voter_id'], destSchema: voter, destField: ['id'] }),
+  decisions: many({ sourceField: ['id'], destSchema: indicativeChoiceDecision, destField: ['voter_participation_id'] }),
+}))
+
+export const indicativeChoiceDecisionRelationships = relationships(indicativeChoiceDecision, ({ one }) => ({
+  vote: one({ sourceField: ['vote_id'], destSchema: vote, destField: ['id'] }),
+  choice: one({ sourceField: ['choice_id'], destSchema: voteChoice, destField: ['id'] }),
+  participation: one({ sourceField: ['voter_participation_id'], destSchema: indicativeVoterParticipation, destField: ['id'] }),
+}))
+
+export const finalVoterParticipationRelationships = relationships(finalVoterParticipation, ({ one, many }) => ({
+  vote: one({ sourceField: ['vote_id'], destSchema: vote, destField: ['id'] }),
+  voter: one({ sourceField: ['voter_id'], destSchema: voter, destField: ['id'] }),
+  decisions: many({ sourceField: ['id'], destSchema: finalChoiceDecision, destField: ['voter_participation_id'] }),
+}))
+
+export const finalChoiceDecisionRelationships = relationships(finalChoiceDecision, ({ one }) => ({
+  vote: one({ sourceField: ['vote_id'], destSchema: vote, destField: ['id'] }),
+  choice: one({ sourceField: ['choice_id'], destSchema: voteChoice, destField: ['id'] }),
+  participation: one({ sourceField: ['voter_participation_id'], destSchema: finalVoterParticipation, destField: ['id'] }),
+}))
+
+// ============================================
+// Voting Password relationships
+// ============================================
+export const votingPasswordRelationships = relationships(votingPassword, ({ one }) => ({
+  user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
+}))
+
+// ============================================
+// Accreditation relationships
+// ============================================
+export const accreditationRelationships = relationships(accreditation, ({ one }) => ({
+  event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
+  agenda_item: one({ sourceField: ['agenda_item_id'], destSchema: agendaItem, destField: ['id'] }),
+  user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
 }))
 
 // ============================================
@@ -702,18 +760,11 @@ export const allRelationships = [
   participantRelationships,
   eventPositionRelationships,
   eventPositionHolderRelationships,
-  eventVotingSessionRelationships,
-  eventVoteRelationships,
-  scheduledElectionRelationships,
   // Amendments
   amendmentRelationships,
-  amendmentVoteEntryRelationships,
   amendmentSupportVoteRelationships,
-  amendmentVoteRelationships,
   changeRequestRelationships,
   changeRequestVoteRelationships,
-  amendmentVotingSessionRelationships,
-  amendmentVotingSessionVoteRelationships,
   amendmentCollaboratorRelationships,
   amendmentPathRelationships,
   amendmentPathSegmentRelationships,
@@ -732,7 +783,11 @@ export const allRelationships = [
   speakerListRelationships,
   electionRelationships,
   electionCandidateRelationships,
-  electionVoteRelationships,
+  electorRelationships,
+  indicativeElectorParticipationRelationships,
+  indicativeCandidateSelectionRelationships,
+  finalElectorParticipationRelationships,
+  finalCandidateSelectionRelationships,
   // Todos
   todoRelationships,
   todoAssignmentRelationships,
@@ -775,4 +830,16 @@ export const allRelationships = [
   // Calendar Subscriptions
   calendarSubscriptionRelationships,
   eventExceptionRelationships,
+  // Votes (new)
+  voteRelationships,
+  voteChoiceRelationships,
+  voterRelationships,
+  indicativeVoterParticipationRelationships,
+  indicativeChoiceDecisionRelationships,
+  finalVoterParticipationRelationships,
+  finalChoiceDecisionRelationships,
+  // Voting Password
+  votingPasswordRelationships,
+  // Accreditation
+  accreditationRelationships,
 ]

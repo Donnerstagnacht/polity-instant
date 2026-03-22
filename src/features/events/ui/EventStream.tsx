@@ -1,32 +1,35 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useNavigate } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/features/shared/ui/ui/collapsible';
 import {
   Clock,
   User,
   Plus,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   X,
   ArrowLeft,
   FileText,
   Users,
   Vote,
   UserCheck,
-  ThumbsUp,
-  ThumbsDown,
-  Minus,
-  CheckCircle2,
   Play,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEventStream } from '../hooks/useEventStream';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { AgendaNavigationControls } from '@/features/agendas/ui/AgendaNavigationControls';
+import { AgendaElectionSection } from '@/features/agendas/ui/AgendaElectionSection';
+import { AgendaVoteSection } from '@/features/agendas/ui/AgendaVoteSection';
+import type { CandidatesByElectionRow } from '@/zero/elections/queries';
+import type { ChoicesByVoteRow } from '@/zero/votes/queries';
 
 // Helper function to extract YouTube video ID from URL
 function getYouTubeVideoId(url: string): string | null {
@@ -64,9 +67,6 @@ export function EventStream({ eventId }: { eventId: string }) {
     removingSpeaker,
     votingLoading,
     userSpeaker,
-    userElectionVotes,
-    userAmendmentVotes,
-    data,
     handleAddToSpeakerList,
     handleRemoveFromSpeakerList,
     handleElectionVote,
@@ -74,6 +74,91 @@ export function EventStream({ eventId }: { eventId: string }) {
     calculateSpeakerTime,
     formatTime,
   } = useEventStream(eventId);
+
+  const [speakersExpanded, setSpeakersExpanded] = useState(true);
+
+  // Map agenda status to component status
+  const mapAgendaStatus = (status: string): 'planned' | 'active' | 'completed' => {
+    if (status === 'completed' || status === 'done') return 'completed';
+    if (status === 'active' || status === 'in-progress') return 'active';
+    return 'planned';
+  };
+
+  const agendaStatus = mapAgendaStatus(currentAgendaItem?.status || '');
+
+  // Prepare election data for AgendaElectionSection
+  const election = currentAgendaItem?.election?.[0];
+
+  const indicativeSelections = useMemo(() => {
+    if (!election) return [];
+    return election.indicative_selections || [];
+  }, [election]);
+
+  const finalSelections = useMemo(() => {
+    if (!election) return [];
+    return election.final_selections || [];
+  }, [election]);
+
+  const userHasElectionVoted = useMemo(() => {
+    if (!user?.id || !election) return false;
+    const userElector = election.electors?.find(
+      (e: { user_id: string }) => e.user_id === user.id
+    );
+    if (!userElector) return false;
+    // Check if user has any selections in indicative or final
+    return (
+      indicativeSelections.some(
+        (s: { elector_participation_id?: string | null }) => s.elector_participation_id != null
+      ) ||
+      finalSelections.some(
+        (s: { elector_participation_id?: string | null }) => s.elector_participation_id != null
+      )
+    );
+  }, [user?.id, election, indicativeSelections, finalSelections]);
+
+  const userSelectedCandidateIds = useMemo(() => {
+    if (!user?.id || !election) return [];
+    const selections = election.status === 'indicative' ? indicativeSelections : finalSelections;
+    return selections
+      .filter((s: { candidate_id: string }) => s.candidate_id)
+      .map((s: { candidate_id: string }) => s.candidate_id);
+  }, [user?.id, election, indicativeSelections, finalSelections]);
+
+  const isUserCandidate = useMemo(() => {
+    if (!user?.id || !election?.candidates) return false;
+    return election.candidates.some(
+      (c: { user_id: string }) => c.user_id === user.id
+    );
+  }, [user?.id, election?.candidates]);
+
+  // Prepare vote data for AgendaVoteSection
+  const voteEntity = currentAgendaItem?.votes?.[0];
+
+  const indicativeDecisions = useMemo(() => {
+    if (!voteEntity) return [];
+    return voteEntity.indicative_decisions || [];
+  }, [voteEntity]);
+
+  const finalDecisions = useMemo(() => {
+    if (!voteEntity) return [];
+    return voteEntity.final_decisions || [];
+  }, [voteEntity]);
+
+  const userHasVoteVoted = useMemo(() => {
+    if (!user?.id || !voteEntity) return false;
+    const userVoter = voteEntity.voters?.find(
+      (v: { user_id: string }) => v.user_id === user.id
+    );
+    return !!userVoter;
+  }, [user?.id, voteEntity]);
+
+  const userSelectedChoiceIds = useMemo(() => {
+    if (!user?.id || !voteEntity) return [];
+    const decisions = voteEntity.status === 'indicative' ? indicativeDecisions : finalDecisions;
+    return decisions
+      .filter((d: { choice_id: string }) => d.choice_id)
+      .map((d: { choice_id: string }) => d.choice_id);
+  }, [user?.id, voteEntity, indicativeDecisions, finalDecisions]);
 
   // Show toast notification when agenda item changes
   useEffect(() => {
@@ -265,361 +350,75 @@ export function EventStream({ eventId }: { eventId: string }) {
       </div>
 
       {/* Election Section */}
-      {currentAgendaItem.election.length > 0 && (() => {
-        const election = currentAgendaItem.election[0];
-        return (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Vote className="h-5 w-5" />
-                <CardTitle>Wahl</CardTitle>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {election.description && (
-              <div className="rounded-lg bg-muted/50 p-4">
-                <p className="text-sm text-muted-foreground">
-                  {election.description}
-                </p>
-              </div>
-            )}
+      {election && election.candidates && election.candidates.length > 0 && (
+        <AgendaElectionSection
+          positionName={election.title ?? t('features.events.agenda.position')}
+          candidates={[...election.candidates] as CandidatesByElectionRow[]}
+          indicativeSelections={indicativeSelections}
+          finalSelections={finalSelections}
+          userHasVoted={userHasElectionVoted}
+          userSelectedCandidateIds={userSelectedCandidateIds}
+          electionStatus={election.status ?? 'indicative'}
+          canVote={!!user}
+          canBeCandidate={false}
+          isUserCandidate={isUserCandidate}
+          onBecomeCandidate={() => {}}
+          onWithdrawCandidacy={() => {}}
+        />
+      )}
 
-            {(() => {
-              const userVote = userElectionVotes.find(
-                (vote) => vote.election?.id === election.id
-              );
-              const candidates = [...(election.candidates ?? [])];
-
-              // Get all votes for this election
-              const electionVotes = (data?.electionVotes || []).filter(
-                (vote) => vote.election?.id === election.id
-              );
-
-              // Count votes for each candidate
-              const voteCounts: Record<string, number> = {};
-              electionVotes.forEach((vote) => {
-                const candId = vote.candidate?.id;
-                if (candId) {
-                  voteCounts[candId] = (voteCounts[candId] || 0) + 1;
-                }
-              });
-
-              const totalVotes = electionVotes.length;
-
-              return (
-                <>
-                  {/* Candidates List */}
-                  {candidates.length > 0 ? (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-semibold">Kandidaten</h3>
-                        {userVote && (
-                          <Badge variant="outline" className="text-xs">
-                            <CheckCircle2 className="mr-1 h-3 w-3" />
-                            Sie haben gewählt
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="space-y-3">
-                        {candidates
-                          .sort((a: { order_index?: number | null }, b: { order_index?: number | null }) => (a.order_index || 0) - (b.order_index || 0))
-                          .map((candidate: { id: string; name: string | null; description: string | null; order_index?: number | null }) => {
-                            const voteCount = voteCounts[candidate.id] || 0;
-                            const isVoted = userVote?.candidate?.id === candidate.id;
-                            const percentage = totalVotes > 0 ? (voteCount / totalVotes) * 100 : 0;
-
-                            return (
-                              <div
-                                key={candidate.id}
-                                className={`relative overflow-hidden rounded-lg border p-4 transition-all ${
-                                  isVoted ? 'border-primary bg-primary/5' : ''
-                                }`}
-                              >
-                                {/* Progress bar background */}
-                                <div
-                                  className="absolute inset-0 bg-muted/30 transition-all"
-                                  style={{
-                                    width: `${percentage}%`,
-                                  }}
-                                />
-
-                                <div className="relative flex items-center justify-between gap-4">
-                                  <div className="flex-1 space-y-1">
-                                    <div className="flex items-center gap-2">
-                                      <h4 className="font-semibold">{candidate.name}</h4>
-                                      {isVoted && (
-                                        <Badge variant="default" className="text-xs">
-                                          <CheckCircle2 className="mr-1 h-3 w-3" />
-                                          Ihre Wahl
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    {candidate.description && (
-                                      <p className="text-sm text-muted-foreground">
-                                        {candidate.description}
-                                      </p>
-                                    )}
-                                    <div className="flex items-center gap-3 text-sm">
-                                      <Badge variant="outline">
-                                        {voteCount} {voteCount === 1 ? 'Stimme' : 'Stimmen'}
-                                      </Badge>
-                                      {totalVotes > 0 && (
-                                        <span className="text-muted-foreground">
-                                          {percentage.toFixed(1)}%
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <Button
-                                    size="lg"
-                                    variant={isVoted ? 'default' : 'outline'}
-                                    onClick={() => handleElectionVote(election.id, candidate.id)}
-                                    disabled={votingLoading === election.id || !user}
-                                  >
-                                    <Vote className="mr-2 h-4 w-4" />
-                                    {isVoted ? 'Gewählt' : 'Wählen'}
-                                  </Button>
-                                </div>
-                              </div>
-                            );
-                          })}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="rounded-lg border border-dashed p-8 text-center">
-                      <Users className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">
-                        Noch keine Kandidaten hinzugefügt
-                      </p>
-                    </div>
-                  )}
-                </>
-              );
-            })()}
-          </CardContent>
-        </Card>
-        );
-      })()}
-
-      {/* Amendment Vote Section */}
-      {currentAgendaItem.amendment && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Vote className="h-5 w-5" />
-              <CardTitle>Abstimmung</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {currentAgendaItem.amendment.reason && (
-              <div className="rounded-lg bg-muted/50 p-4">
-                <p className="text-sm text-muted-foreground">
-                  {currentAgendaItem.amendment.reason}
-                </p>
-              </div>
-            )}
-
-            {(() => {
-              const amendmentVote = currentAgendaItem.amendment;
-              const userVote = userAmendmentVotes.find(
-                (entry) => entry.amendment?.id === amendmentVote.id
-              );
-
-              // Get all vote entries for this amendment vote
-              const voteEntries = (data?.amendmentVoteEntries || []).filter(
-                (entry) => entry.amendment?.id === amendmentVote.id
-              );
-
-              // Count votes (1=yes, -1=no, 0=abstain)
-              const voteCounts = {
-                yes: voteEntries.filter((e) => e.vote === 1).length,
-                no: voteEntries.filter((e) => e.vote === -1).length,
-                abstain: voteEntries.filter((e) => e.vote === 0).length,
-              };
-              const totalVotes = voteCounts.yes + voteCounts.no + voteCounts.abstain;
-
-              return (
-                <>
-                  {/* Vote Statistics */}
-                  <div className="grid gap-4 sm:grid-cols-4">
-                    <div className="rounded-lg border bg-card p-4 text-center">
-                      <div className="text-2xl font-bold">{totalVotes}</div>
-                      <div className="text-sm text-muted-foreground">Gesamt</div>
-                    </div>
-                    <div className="rounded-lg bg-green-50 p-4 text-center dark:bg-green-950">
-                      <div className="text-2xl font-bold text-green-700 dark:text-green-300">
-                        {voteCounts.yes}
-                      </div>
-                      <div className="text-sm text-green-600 dark:text-green-400">Ja</div>
-                    </div>
-                    <div className="rounded-lg bg-red-50 p-4 text-center dark:bg-red-950">
-                      <div className="text-2xl font-bold text-red-700 dark:text-red-300">
-                        {voteCounts.no}
-                      </div>
-                      <div className="text-sm text-red-600 dark:text-red-400">Nein</div>
-                    </div>
-                    <div className="rounded-lg bg-gray-50 p-4 text-center dark:bg-gray-900">
-                      <div className="text-2xl font-bold text-gray-700 dark:text-gray-300">
-                        {voteCounts.abstain}
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">Enthalten</div>
-                    </div>
-                  </div>
-
-                  {/* Vote Percentages */}
-                  {totalVotes > 0 && (
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-medium">Ergebnisse in Prozent</h3>
-                      <div className="space-y-2">
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-green-600 dark:text-green-400">Ja</span>
-                            <span className="font-medium">
-                              {((voteCounts.yes / totalVotes) * 100).toFixed(1)}%
-                            </span>
-                          </div>
-                          <div className="h-2 overflow-hidden rounded-full bg-muted">
-                            <div
-                              className="h-full bg-green-600 transition-all dark:bg-green-400"
-                              style={{
-                                width: `${(voteCounts.yes / totalVotes) * 100}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-red-600 dark:text-red-400">Nein</span>
-                            <span className="font-medium">
-                              {((voteCounts.no / totalVotes) * 100).toFixed(1)}%
-                            </span>
-                          </div>
-                          <div className="h-2 overflow-hidden rounded-full bg-muted">
-                            <div
-                              className="h-full bg-red-600 transition-all dark:bg-red-400"
-                              style={{
-                                width: `${(voteCounts.no / totalVotes) * 100}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600 dark:text-gray-400">Enthalten</span>
-                            <span className="font-medium">
-                              {((voteCounts.abstain / totalVotes) * 100).toFixed(1)}%
-                            </span>
-                          </div>
-                          <div className="h-2 overflow-hidden rounded-full bg-muted">
-                            <div
-                              className="h-full bg-gray-600 transition-all dark:bg-gray-400"
-                              style={{
-                                width: `${(voteCounts.abstain / totalVotes) * 100}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Voting Interface */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold">Ihre Stimme abgeben</h3>
-                      {userVote && (
-                        <Badge variant="outline" className="text-xs">
-                          <CheckCircle2 className="mr-1 h-3 w-3" />
-                          Sie haben mit{' '}
-                          <span className="ml-1 font-medium">
-                            {userVote.vote === 1
-                              ? 'Ja'
-                              : userVote.vote === -1
-                                ? 'Nein'
-                                : 'Enthalten'}
-                          </span>{' '}
-                          gestimmt
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-3">
-                      <Button
-                        variant={userVote?.vote === 1 ? 'default' : 'outline'}
-                        size="lg"
-                        onClick={() => handleAmendmentVote(amendmentVote.id, 'yes')}
-                        disabled={votingLoading === amendmentVote.id || !user}
-                        className={
-                          userVote?.vote === 1
-                            ? 'bg-green-600 hover:bg-green-700'
-                            : 'border-green-600 text-green-600 hover:bg-green-50 dark:hover:bg-green-950'
-                        }
-                      >
-                        <ThumbsUp className="mr-2 h-5 w-5" />
-                        Ja
-                      </Button>
-                      <Button
-                        variant={userVote?.vote === -1 ? 'default' : 'outline'}
-                        size="lg"
-                        onClick={() => handleAmendmentVote(amendmentVote.id, 'no')}
-                        disabled={votingLoading === amendmentVote.id || !user}
-                        className={
-                          userVote?.vote === -1
-                            ? 'bg-red-600 hover:bg-red-700'
-                            : 'border-red-600 text-red-600 hover:bg-red-50 dark:hover:bg-red-950'
-                        }
-                      >
-                        <ThumbsDown className="mr-2 h-5 w-5" />
-                        Nein
-                      </Button>
-                      <Button
-                        variant={userVote?.vote === 0 ? 'default' : 'outline'}
-                        size="lg"
-                        onClick={() => handleAmendmentVote(amendmentVote.id, 'abstain')}
-                        disabled={votingLoading === amendmentVote.id || !user}
-                        className={
-                          userVote?.vote === 0
-                            ? 'bg-gray-600 hover:bg-gray-700'
-                            : 'border-gray-600 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-900'
-                        }
-                      >
-                        <Minus className="mr-2 h-5 w-5" />
-                        Enthalten
-                      </Button>
-                    </div>
-                  </div>
-                </>
-              );
-            })()}
-          </CardContent>
-        </Card>
+      {/* Vote Section */}
+      {voteEntity && voteEntity.choices && voteEntity.choices.length > 0 && (
+        <AgendaVoteSection
+          voteTitle={voteEntity.title || 'Vote'}
+          choices={[...voteEntity.choices] as ChoicesByVoteRow[]}
+          indicativeDecisions={indicativeDecisions}
+          finalDecisions={finalDecisions}
+          userHasVoted={userHasVoteVoted}
+          userSelectedChoiceIds={userSelectedChoiceIds}
+          voteStatus={voteEntity.status ?? 'indicative'}
+          majorityType={voteEntity.majority_type}
+          totalEligibleVoters={voteEntity.voters?.length}
+        />
       )}
 
       {/* Speaker List Section */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-2xl">Speakers List</CardTitle>
-            {userSpeaker ? (
-              <Button
-                onClick={() => handleRemoveFromSpeakerList(userSpeaker.id)}
-                disabled={removingSpeaker === userSpeaker.id}
-                variant="outline"
-                size="lg"
-              >
-                <X className="mr-2 h-5 w-5" />
-                {removingSpeaker === userSpeaker.id ? 'Removing...' : 'Remove Yourself'}
-              </Button>
-            ) : (
-              <Button onClick={handleAddToSpeakerList} disabled={addingSpeaker || !user} size="lg">
-                <Plus className="mr-2 h-5 w-5" />
-                {addingSpeaker ? 'Adding...' : 'Add Yourself'}
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
+      <Collapsible open={speakersExpanded} onOpenChange={setSpeakersExpanded}>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className="flex items-center gap-2 p-0 hover:bg-transparent">
+                  <CardTitle className="text-2xl">
+                    {t('features.events.stream.speakersList')} ({speakerList.length})
+                  </CardTitle>
+                  {speakersExpanded ? (
+                    <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+              {userSpeaker ? (
+                <Button
+                  onClick={() => handleRemoveFromSpeakerList(userSpeaker.id)}
+                  disabled={removingSpeaker === userSpeaker.id}
+                  variant="outline"
+                  size="lg"
+                >
+                  <X className="mr-2 h-5 w-5" />
+                  {removingSpeaker === userSpeaker.id ? 'Removing...' : 'Remove Yourself'}
+                </Button>
+              ) : (
+                <Button onClick={handleAddToSpeakerList} disabled={addingSpeaker || !user} size="lg">
+                  <Plus className="mr-2 h-5 w-5" />
+                  {addingSpeaker ? 'Adding...' : 'Add Yourself'}
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+          <CollapsibleContent>
+            <CardContent>
           {speakerList.length === 0 ? (
             <div className="py-12 text-center">
               <User className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
@@ -743,7 +542,9 @@ export function EventStream({ eventId }: { eventId: string }) {
             </div>
           )}
         </CardContent>
-      </Card>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
     </div>
   );
 }

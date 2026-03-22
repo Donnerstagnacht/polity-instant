@@ -77,7 +77,7 @@ export function ResultBadge({
     <Badge
       variant="outline"
       className={cn(
-        'font-mono text-xs font-bold uppercase tracking-wide',
+        'max-w-full font-mono text-xs font-bold uppercase tracking-wide',
         config.colorClass,
         className
       )}
@@ -85,7 +85,7 @@ export function ResultBadge({
       {showIcon && <Icon className="mr-1 h-3 w-3" />}
       <span>{t(config.labelKey)}</span>
       {result === 'elected' && winnerName && (
-        <span className="ml-1 font-normal normal-case">{winnerName}</span>
+        <span className="ml-1 truncate font-normal normal-case" title={winnerName}>{winnerName}</span>
       )}
       {percentage !== undefined && <span className="ml-1 font-normal">{percentage}%</span>}
     </Badge>
@@ -105,11 +105,12 @@ export function ResultCompact({
   className?: string;
 }) {
   const config = getResultConfig(result);
+  const label = result === 'elected' && winnerName ? winnerName : result.toUpperCase();
 
   return (
-    <span className={cn('font-mono text-xs font-medium', className)}>
-      <span className="mr-1">{config.emoji}</span>
-      {result === 'elected' && winnerName ? winnerName : result.toUpperCase()}
+    <span className={cn('flex min-w-0 max-w-full items-center font-mono text-xs font-medium', className)} title={label}>
+      <span className="mr-1 shrink-0">{config.emoji}</span>
+      <span className="min-w-0 truncate">{label}</span>
     </span>
   );
 }

@@ -8,7 +8,7 @@ import { X, ThumbsUp, ThumbsDown, MessageSquare, ExternalLink, Vote, Award } fro
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { StatusBadge, type DecisionStatus } from './StatusBadge';
 import { CountdownTimer } from './CountdownTimer';
-import { VoteProgressBar } from './VoteProgressBar';
+import { VoteProgressBar, CandidateBarCompact } from './VoteProgressBar';
 import { TrendIndicator } from './TrendIndicator';
 import { ResultBadge } from './ResultBadge';
 import type { DecisionItem } from './types';
@@ -81,14 +81,14 @@ export function DecisionSidePanel({ decision, onClose, className }: DecisionSide
             )}
           </div>
 
-          {/* Vote progress bar */}
-          {decision.votes && (
+          {/* Vote progress bar (for votes) */}
+          {decision.type === 'vote' && decision.votes && (
             <div className="space-y-2">
               {/* Indication phase display */}
               {decision.isIndicationPhase && decision.indicationVotes ? (
                 <>
                   <div className="text-xs text-blue-500">
-                    * {t('timeline.terminal.indicationOnly', { defaultValue: 'Indication only' })}
+                    * {t('timeline.terminal.indicationOnly', 'Indication only')}
                   </div>
                   <VoteProgressBar votes={decision.indicationVotes} showLabels showPercentages />
                 </>
@@ -98,18 +98,16 @@ export function DecisionSidePanel({ decision, onClose, className }: DecisionSide
                   {decision.indicationVotes && !decision.isIndicationPhase && (
                     <div className="rounded-md bg-blue-50 p-2 dark:bg-blue-950/30">
                       <div className="mb-1 text-xs font-medium text-blue-600 dark:text-blue-400">
-                        {t('timeline.terminal.indicationComparison', {
-                          defaultValue: 'Indication vs Actual',
-                        })}
+                        {t('timeline.terminal.indicationComparison', 'Indication vs Actual')}
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <span className="text-blue-500">
-                          {t('timeline.terminal.indication', { defaultValue: 'Ind' })}:{' '}
+                          {t('timeline.terminal.indication', 'Ind')}:{' '}
                           {decision.indicationSupportPercentage}%
                         </span>
                         <span className="text-muted-foreground">→</span>
                         <span className="font-medium">
-                          {t('timeline.terminal.actual', { defaultValue: 'Act' })}:{' '}
+                          {t('timeline.terminal.actual', 'Act')}:{' '}
                           {decision.supportPercentage}%
                         </span>
                       </div>
@@ -118,6 +116,64 @@ export function DecisionSidePanel({ decision, onClose, className }: DecisionSide
                   <VoteProgressBar votes={decision.votes} showLabels showPercentages />
                 </>
               )}
+            </div>
+          )}
+
+          {/* Election indication comparison + candidate bar */}
+          {decision.type === 'election' && decision.candidates && decision.candidates.length > 0 && (
+            <div className="space-y-2">
+              {/* Indication phase notice */}
+              {decision.isIndicationPhase && (
+                <div className="text-xs text-blue-500">
+                  * {t('timeline.terminal.indicationOnly', 'Indication only')}
+                </div>
+              )}
+
+              {/* Indication vs Actual comparison for elections */}
+              {!decision.isIndicationPhase &&
+                decision.candidates.some(c => c.indicationPercentage !== undefined) && (
+                  <div className="rounded-md bg-blue-50 p-2 dark:bg-blue-950/30">
+                    <div className="mb-1 text-xs font-medium text-blue-600 dark:text-blue-400">
+                      {t('timeline.terminal.indicationComparison', 'Indication vs Actual')}
+                    </div>
+                    <div className="space-y-1">
+                      {decision.candidates.map(candidate => (
+                        <div key={candidate.id} className="flex items-center gap-2 text-xs">
+                          <span className="w-24 truncate text-muted-foreground">
+                            {candidate.name}
+                          </span>
+                          <span className="text-blue-500">
+                            {t('timeline.terminal.indication', 'Ind')}:{' '}
+                            {Math.round(candidate.indicationPercentage ?? 0)}%
+                          </span>
+                          <span className="text-muted-foreground">→</span>
+                          <span className="font-medium">
+                            {t('timeline.terminal.actual', 'Act')}:{' '}
+                            {candidate.votes !== undefined && decision.votedCount
+                              ? Math.round(
+                                  (candidate.votes /
+                                    (decision.votedCount || 1)) *
+                                    100
+                                )
+                              : 0}
+                            %
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+              {/* Horizontal candidate bar */}
+              <CandidateBarCompact
+                candidates={decision.candidates.map(c => ({
+                  id: c.id,
+                  label: c.name,
+                  value: decision.isIndicationPhase
+                    ? (c.indicationVotes ?? 0)
+                    : (c.votes ?? 0),
+                }))}
+              />
             </div>
           )}
 
@@ -203,7 +259,7 @@ export function DecisionSidePanel({ decision, onClose, className }: DecisionSide
               </h3>
               {decision.isIndicationPhase && (
                 <div className="text-xs text-blue-500">
-                  * {t('timeline.terminal.indicationOnly', { defaultValue: 'Indication only' })}
+                  * {t('timeline.terminal.indicationOnly', 'Indication only')}
                 </div>
               )}
               <div className="space-y-2">

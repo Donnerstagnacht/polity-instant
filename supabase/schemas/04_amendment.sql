@@ -113,3 +113,34 @@ CREATE INDEX idx_support_confirmation_user ON public.support_confirmation (confi
 
 ALTER TABLE public.support_confirmation ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.support_confirmation FOR ALL TO service_role USING (true);
+
+-- Amendment support vote table
+CREATE TABLE IF NOT EXISTS public.amendment_support_vote (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_amendment_support_vote_amendment ON public.amendment_support_vote (amendment_id);
+CREATE INDEX idx_amendment_support_vote_user ON public.amendment_support_vote (user_id);
+
+ALTER TABLE public.amendment_support_vote ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.amendment_support_vote FOR ALL TO service_role USING (true);
+
+-- Amendment vote entry table (inline upvote/downvote)
+CREATE TABLE IF NOT EXISTS public.amendment_vote_entry (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
+  vote INTEGER,
+  is_indication BOOLEAN NOT NULL DEFAULT false,
+  indicated_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_amendment_vote_entry_amendment ON public.amendment_vote_entry (amendment_id);
+CREATE INDEX idx_amendment_vote_entry_user ON public.amendment_vote_entry (user_id);
+
+ALTER TABLE public.amendment_vote_entry ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.amendment_vote_entry FOR ALL TO service_role USING (true);

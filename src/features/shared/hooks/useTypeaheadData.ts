@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useUserState } from '@/zero/users/useUserState';
 import { useGroupState } from '@/zero/groups/useGroupState';
 import { useAllEvents, useAllAmendments, usePositionsWithGroups } from '@/zero/events/useEventState';
-import { useAgendaState } from '@/zero/agendas/useAgendaState';
+import { useElectionState } from '@/zero/elections/useElectionState';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import type { TypeaheadItem, EntityType } from '@/features/shared/logic/typeaheadHelpers';
 
@@ -33,8 +33,8 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
   const { events } = useAllEvents();
   const { amendments } = useAllAmendments();
   const { positions } = usePositionsWithGroups();
-  const { pendingElections } = useAgendaState({
-    includeElectionsForSearch: includeElections,
+  const { pendingElections } = useElectionState({
+    includePendingElections: includeElections,
   });
 
   const items = useMemo<TypeaheadItem[]>(() => {

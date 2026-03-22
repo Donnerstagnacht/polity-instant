@@ -1,42 +1,41 @@
 import { useState } from 'react';
 import { useAuth } from '@/providers/auth-provider';
-import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
-import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
+import { useElectionActions } from '@/zero/elections/useElectionActions';
+import { useVoteActions } from '@/zero/votes/useVoteActions';
 
 export function useVoting() {
   const { user } = useAuth();
-  const { castElectionVote, deleteElectionVote } = useAgendaActions();
-  const { createVoteEntry, updateVoteEntry } = useAmendmentActions();
+  const { castIndicativeVote: castElectionIndicative, castFinalVote: castElectionFinal, createElector } = useElectionActions();
+  const { castIndicativeVote: castVoteIndicative, castFinalVote: castVoteFinal, createVoter } = useVoteActions();
   const [votingLoading, setVotingLoading] = useState<string | null>(null);
 
-  const handleElectionVote = async (electionId: string, candidateId: string, existingVote?: { id: string; candidate?: { id: string } }) => {
+  const handleElectionVote = async (
+    electionId: string,
+    candidateId: string,
+    options?: { isIndicative?: boolean; electorId?: string }
+  ) => {
     if (!user) return;
 
     setVotingLoading(electionId);
     try {
-      if (existingVote) {
-        if (existingVote.candidate?.id === candidateId) {
-          await deleteElectionVote(existingVote.id);
-        } else {
-          const newVoteId = crypto.randomUUID();
-          await deleteElectionVote(existingVote.id);
-          await castElectionVote({
-            id: newVoteId,
-            election_id: electionId,
-            candidate_id: candidateId,
-            is_indication: false,
-            indicated_at: 0,
-          });
-        }
+      const electorId = options?.electorId ?? crypto.randomUUID();
+      const participationId = crypto.randomUUID();
+      const participationArgs = {
+        id: participationId,
+        election_id: electionId,
+        elector_id: electorId,
+      };
+      const selections = [{
+        id: crypto.randomUUID(),
+        election_id: electionId,
+        candidate_id: candidateId,
+        elector_participation_id: participationId,
+      }];
+
+      if (options?.isIndicative !== false) {
+        await castElectionIndicative(participationArgs, selections);
       } else {
-        const voteId = crypto.randomUUID();
-        await castElectionVote({
-          id: voteId,
-          election_id: electionId,
-          candidate_id: candidateId,
-          is_indication: false,
-          indicated_at: 0,
-        });
+        await castElectionFinal(participationArgs, selections);
       }
     } catch (error) {
       console.error('Error voting:', error);
@@ -47,29 +46,32 @@ export function useVoting() {
   };
 
   const handleAmendmentVote = async (
-    amendmentVoteId: string,
-    voteValue: 'yes' | 'no' | 'abstain',
-    existingVote?: { id: string; vote?: number }
+    voteId: string,
+    choiceId: string,
+    options?: { isIndicative?: boolean; voterId?: string }
   ) => {
     if (!user) return;
 
-    const voteMap: Record<string, number> = { yes: 1, no: -1, abstain: 0 };
-    const numericVote = voteMap[voteValue] ?? 0;
-
-    setVotingLoading(amendmentVoteId);
+    setVotingLoading(voteId);
     try {
-      if (existingVote) {
-        await updateVoteEntry({
-          id: existingVote.id,
-          vote: numericVote,
-        });
+      const voterId = options?.voterId ?? crypto.randomUUID();
+      const participationId = crypto.randomUUID();
+      const participationArgs = {
+        id: participationId,
+        vote_id: voteId,
+        voter_id: voterId,
+      };
+      const decisions = [{
+        id: crypto.randomUUID(),
+        vote_id: voteId,
+        choice_id: choiceId,
+        voter_participation_id: participationId,
+      }];
+
+      if (options?.isIndicative !== false) {
+        await castVoteIndicative(participationArgs, decisions);
       } else {
-        const entryId = crypto.randomUUID();
-        await createVoteEntry({
-          id: entryId,
-          vote: numericVote,
-          amendment_id: amendmentVoteId,
-        });
+        await castVoteFinal(participationArgs, decisions);
       }
     } catch (error) {
       console.error('Error voting:', error);

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
-import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
+import { useElectionActions } from '@/zero/elections/useElectionActions';
+import { useVoteActions } from '@/zero/votes/useVoteActions';
 import { useEventStreamData } from '@/zero/events/useEventState';
 import {
   calculateSpeakerTime as calcSpeakerTime,
@@ -10,19 +11,15 @@ import {
 
 export function useEventStream(eventId: string) {
   const { user } = useAuth();
-  const { addSpeaker, removeSpeaker, castElectionVote, deleteElectionVote } = useAgendaActions();
-  const { createVoteEntry, updateVoteEntry } = useAmendmentActions();
+  const { addSpeaker, removeSpeaker } = useAgendaActions();
+  const electionActions = useElectionActions();
+  const voteActionsHook = useVoteActions();
   const [addingSpeaker, setAddingSpeaker] = useState(false);
   const [removingSpeaker, setRemovingSpeaker] = useState<string | null>(null);
   const [votingLoading, setVotingLoading] = useState<string | null>(null);
 
   // Query event and agenda items
-  const { event: eventRaw, electionVotes: electionVotesData, amendmentVoteEntries: amendmentVoteEntriesData, isLoading } = useEventStreamData(eventId);
-
-  const data = {
-    electionVotes: electionVotesData,
-    amendmentVoteEntries: amendmentVoteEntriesData,
-  };
+  const { event: eventRaw, isLoading } = useEventStreamData(eventId);
 
   const event = eventRaw;
 
@@ -76,6 +73,8 @@ export function useEventStream(eventId: string) {
         order_index: maxOrder + 1,
         user_id: user.id,
         agenda_item_id: currentAgendaItem.id,
+        start_time: null,
+        end_time: null,
       });
     } catch (error) {
       console.error('Error adding to speaker list:', error);
@@ -101,45 +100,47 @@ export function useEventStream(eventId: string) {
   // Check if user is already in speaker list
   const userSpeaker = speakerList.find((speaker) => speaker.user?.id === user?.id);
 
-  // Get user's existing votes
-  const userElectionVotes = (data?.electionVotes || []).filter(
-    (vote) => vote.voter?.id === user?.id
-  );
-  const userAmendmentVotes = (data?.amendmentVoteEntries || []).filter(
-    (entry) => entry.user?.id === user?.id
-  );
-
-  // Handle election vote
+  // Handle election vote via new election actions
   const handleElectionVote = async (electionId: string, candidateId: string) => {
     if (!user) return;
 
     setVotingLoading(electionId);
     try {
-      const existingVote = userElectionVotes.find((vote) => vote.election?.id === electionId);
+      // Get the election from current agenda item
+      const election = currentAgendaItem?.election?.find(
+        (e: { id: string }) => e.id === electionId
+      );
+      if (!election) return;
 
-      if (existingVote) {
-        if (existingVote.candidate?.id === candidateId) {
-          await deleteElectionVote(existingVote.id);
-        } else {
-          const newVoteId = crypto.randomUUID();
-          await deleteElectionVote(existingVote.id);
-          await castElectionVote({
-            id: newVoteId,
-            election_id: electionId,
-            candidate_id: candidateId,
-            is_indication: false,
-            indicated_at: 0,
-          });
-        }
-      } else {
-        const voteId = crypto.randomUUID();
-        await castElectionVote({
-          id: voteId,
+      // Find or create elector record
+      const existingElector = election.electors?.find(
+        (e: { user_id: string }) => e.user_id === user.id
+      );
+      let electorId = existingElector?.id;
+      if (!electorId) {
+        electorId = crypto.randomUUID();
+        await electionActions.createElector({
+          id: electorId,
           election_id: electionId,
-          candidate_id: candidateId,
-          is_indication: false,
-          indicated_at: 0,
+          user_id: user.id,
         });
+      }
+
+      // Determine phase based on election status
+      const isIndicative = election.status === 'indicative';
+      const participationId = crypto.randomUUID();
+      const selectionId = crypto.randomUUID();
+
+      if (isIndicative) {
+        await electionActions.castIndicativeVote(
+          { id: participationId, election_id: electionId, elector_id: electorId },
+          [{ id: selectionId, election_id: electionId, candidate_id: candidateId, elector_participation_id: participationId }]
+        );
+      } else {
+        await electionActions.castFinalVote(
+          { id: participationId, election_id: electionId, elector_id: electorId },
+          [{ id: selectionId, election_id: electionId, candidate_id: candidateId, elector_participation_id: participationId }]
+        );
       }
     } catch (error) {
       console.error('Error voting:', error);
@@ -148,32 +149,50 @@ export function useEventStream(eventId: string) {
     }
   };
 
-  // Handle amendment vote
+  // Handle vote (amendment/choice) via new vote actions
   const handleAmendmentVote = async (
-    amendmentId: string,
-    voteValue: 'yes' | 'no' | 'abstain'
+    voteId: string,
+    choiceId: string
   ) => {
     if (!user) return;
 
-    const voteMap = { yes: 1, no: -1, abstain: 0 } as const;
-    setVotingLoading(amendmentId);
+    setVotingLoading(voteId);
     try {
-      const existingVote = userAmendmentVotes.find(
-        (entry) => entry.amendment?.id === amendmentId
+      // Get the vote from current agenda item
+      const voteEntity = currentAgendaItem?.votes?.find(
+        (v: { id: string }) => v.id === voteId
       );
+      if (!voteEntity) return;
 
-      if (existingVote) {
-        await updateVoteEntry({
-          id: existingVote.id,
-          vote: voteMap[voteValue],
+      // Find or create voter record
+      const existingVoter = voteEntity.voters?.find(
+        (v: { user_id: string }) => v.user_id === user.id
+      );
+      let voterId = existingVoter?.id;
+      if (!voterId) {
+        voterId = crypto.randomUUID();
+        await voteActionsHook.createVoter({
+          id: voterId,
+          vote_id: voteId,
+          user_id: user.id,
         });
+      }
+
+      // Determine phase based on vote status
+      const isIndicative = voteEntity.status === 'indicative';
+      const participationId = crypto.randomUUID();
+      const decisionId = crypto.randomUUID();
+
+      if (isIndicative) {
+        await voteActionsHook.castIndicativeVote(
+          { id: participationId, vote_id: voteId, voter_id: voterId },
+          [{ id: decisionId, vote_id: voteId, choice_id: choiceId, voter_participation_id: participationId }]
+        );
       } else {
-        const entryId = crypto.randomUUID();
-        await createVoteEntry({
-          id: entryId,
-          vote: voteMap[voteValue],
-          amendment_id: amendmentId,
-        });
+        await voteActionsHook.castFinalVote(
+          { id: participationId, vote_id: voteId, voter_id: voterId },
+          [{ id: decisionId, vote_id: voteId, choice_id: choiceId, voter_participation_id: participationId }]
+        );
       }
     } catch (error) {
       console.error('Error voting:', error);
@@ -192,9 +211,6 @@ export function useEventStream(eventId: string) {
     removingSpeaker,
     votingLoading,
     userSpeaker,
-    userElectionVotes,
-    userAmendmentVotes,
-    data,
     handleAddToSpeakerList,
     handleRemoveFromSpeakerList,
     handleElectionVote,

@@ -26,7 +26,7 @@ test.describe('Election Candidates - Permissions and Management', () => {
   test('Non-organizer cannot add candidates', async ({ authenticatedPage: page }) => {
     // 1. Login as regular user/voter
     // 2. Navigate to election
-    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/stream`);
+    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda`);
     await page.waitForLoadState('networkidle');
 
     // 3. Add button not visible

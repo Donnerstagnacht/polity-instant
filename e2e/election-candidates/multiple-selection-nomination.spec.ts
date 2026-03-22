@@ -8,7 +8,7 @@ test.describe('Election Candidates - Multiple Selection and Nomination', () => {
   test('Select multiple candidates', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as voter
     // 2. Election allows multiple selections
-    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/stream`);
+    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda`);
     await page.waitForLoadState('networkidle');
 
     // 3. Voter selects multiple candidates
@@ -39,7 +39,7 @@ test.describe('Election Candidates - Multiple Selection and Nomination', () => {
   test('Self-nominate as candidate', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as user
     // 2. Navigate to election
-    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/stream`);
+    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda`);
     await page.waitForLoadState('networkidle');
 
     // 3. Click "Nominate Myself"

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/features/shared/ui/ui/collapsible';
 import { Progress } from '@/features/shared/ui/ui/progress';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
@@ -14,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/features/shared/ui/ui/select';
-import { Clock, Users, Play, Square, CheckCircle2, Loader2, Timer } from 'lucide-react';
+import { Clock, Users, Play, Square, CheckCircle2, Loader2, Timer, ChevronDown, ChevronUp } from 'lucide-react';
 import { useEventVoting, type MajorityType, type VotingType } from '../hooks/useEventVoting';
 import { formatTimeRemaining, getMajorityTypeText } from '@/features/shared/utils/voting-utils';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -51,6 +52,7 @@ export function VotingSessionManager({
 
   const [majorityType, setMajorityType] = useState<MajorityType>('simple');
   const [timeLimit, setTimeLimit] = useState(300); // 5 minutes default
+  const [expanded, setExpanded] = useState(true);
 
   const handleStartIntroduction = async () => {
     await startIntroductionPhase({
@@ -80,14 +82,23 @@ export function VotingSessionManager({
   // No active session - show start options
   if (!currentSession && canManageVoting) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Play className="h-5 w-5" />
-            {t('features.events.voting.startVoting', 'Start Voting')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <Collapsible open={expanded} onOpenChange={setExpanded}>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className="h-auto p-0 hover:bg-transparent">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Play className="h-5 w-5" />
+                    {t('features.events.voting.startVoting', 'Start Voting')}
+                    {expanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                  </CardTitle>
+                </Button>
+              </CollapsibleTrigger>
+            </div>
+          </CardHeader>
+          <CollapsibleContent>
+            <CardContent className="space-y-4">
           <div>
             <Label>{t('features.events.voting.majorityType', 'Majority Type')}</Label>
             <Select value={majorityType} onValueChange={v => setMajorityType(v as MajorityType)}>
@@ -138,8 +149,10 @@ export function VotingSessionManager({
             )}
             {t('features.events.voting.startIntroduction', 'Start Introduction Phase')}
           </Button>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
     );
   }
 
@@ -148,10 +161,13 @@ export function VotingSessionManager({
   }
 
   return (
-    <Card className={currentSession.phase === 'voting' ? 'border-primary' : ''}>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-lg">
+    <Collapsible open={expanded} onOpenChange={setExpanded}>
+      <Card className={currentSession.phase === 'voting' ? 'border-primary' : ''}>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" className="h-auto p-0 hover:bg-transparent">
+                <CardTitle className="flex items-center gap-2 text-lg">
             {currentSession.phase === 'introduction' && (
               <>
                 <Play className="h-5 w-5 text-yellow-500" />
@@ -170,13 +186,17 @@ export function VotingSessionManager({
                 {t('features.events.voting.completed', 'Completed')}
               </>
             )}
-          </CardTitle>
-          <Badge variant={currentSession.result === 'passed' ? 'default' : 'secondary'}>
-            {getMajorityTypeText(currentSession.majorityType)}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
+                  {expanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                </CardTitle>
+              </Button>
+            </CollapsibleTrigger>
+            <Badge variant={currentSession.result === 'passed' ? 'default' : 'secondary'}>
+              {getMajorityTypeText(currentSession.majorityType)}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CollapsibleContent>
+          <CardContent className="space-y-4">
         {/* Timer for voting phase */}
         {currentSession.phase === 'voting' && timeRemaining !== null && (
           <div className="flex items-center justify-center gap-2 font-mono text-2xl">
@@ -277,7 +297,9 @@ export function VotingSessionManager({
             )}
           </div>
         )}
-      </CardContent>
-    </Card>
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 }

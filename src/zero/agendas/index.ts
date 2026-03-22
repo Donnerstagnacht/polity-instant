@@ -1,7 +1,6 @@
 // Table
 export { agendaItem, speakerList } from './table'
 export { election, electionCandidate } from '../elections/table'
-export { electionVote } from '../votes/table'
 
 // Zod Schemas
 export {
@@ -23,11 +22,6 @@ export {
   type Election,
   type ElectionCandidate,
 } from '../elections/schema'
-export {
-  selectElectionVoteSchema,
-  createElectionVoteSchema,
-  type ElectionVote,
-} from '../votes/schema'
 
 // Queries & Mutators
 export { agendaQueries } from './queries'

@@ -1,11 +1,8 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { EventStream } from '@/features/events/ui/EventStream'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_authed/event/$id/stream')({
-  component: EventStreamPage,
+  beforeLoad: ({ params }) => {
+    throw redirect({ to: '/event/$id/agenda', params: { id: params.id } })
+  },
+  component: () => null,
 })
-
-function EventStreamPage() {
-  const { id } = Route.useParams()
-  return <EventStream eventId={id} />
-}

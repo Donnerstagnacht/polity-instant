@@ -2,28 +2,150 @@ import { z } from 'zod'
 import { timestampSchema, nullableTimestampSchema } from '../shared/helpers'
 
 // ============================================
-// Amendment Vote Entry Schemas
+// Vote
 // ============================================
 
-const baseAmendmentVoteEntrySchema = z.object({
+const baseVoteSchema = z.object({
   id: z.string(),
-  amendment_id: z.string(),
-  user_id: z.string(),
-  vote: z.number().nullable(),
+  agenda_item_id: z.string().nullable(),
+  amendment_id: z.string().nullable(),
+  title: z.string().nullable(),
+  description: z.string().nullable(),
+  status: z.string().nullable(),
+  majority_type: z.string().nullable(),
+  closing_type: z.string().nullable(),
+  closing_duration_seconds: z.number().nullable(),
+  closing_end_time: nullableTimestampSchema,
+  is_public: z.boolean(),
+  created_at: timestampSchema,
+  updated_at: timestampSchema,
+})
+
+const defaultVoteStatusSchema = z.string().nullable().optional().transform(value => value ?? 'indicative')
+const defaultVoteMajorityTypeSchema = z.string().nullable().optional().transform(value => value ?? 'relative')
+const defaultVoteClosingTypeSchema = z.string().nullable().optional().transform(value => value ?? 'moderator')
+const defaultVoteVisibilitySchema = z.boolean().nullable().optional().transform(value => value ?? true)
+
+export const selectVoteSchema = baseVoteSchema
+export const createVoteSchema = baseVoteSchema
+  .omit({ id: true, created_at: true, updated_at: true, status: true, majority_type: true, closing_type: true, is_public: true })
+  .extend({
+    id: z.string(),
+    status: defaultVoteStatusSchema,
+    majority_type: defaultVoteMajorityTypeSchema,
+    closing_type: defaultVoteClosingTypeSchema,
+    is_public: defaultVoteVisibilitySchema,
+  })
+export const updateVoteSchema = baseVoteSchema
+  .pick({ title: true, description: true, status: true, majority_type: true, closing_type: true, closing_duration_seconds: true, closing_end_time: true, is_public: true })
+  .partial()
+  .extend({ id: z.string() })
+export const deleteVoteSchema = z.object({ id: z.string() })
+
+// ============================================
+// Vote Choice
+// ============================================
+
+const baseVoteChoiceSchema = z.object({
+  id: z.string(),
+  vote_id: z.string(),
+  label: z.string().nullable(),
+  order_index: z.number().nullable(),
   created_at: timestampSchema,
 })
 
-export const selectAmendmentVoteEntrySchema = baseAmendmentVoteEntrySchema
+export const selectVoteChoiceSchema = baseVoteChoiceSchema
+export const createVoteChoiceSchema = baseVoteChoiceSchema
+  .omit({ id: true, created_at: true })
+  .extend({ id: z.string() })
+export const updateVoteChoiceSchema = baseVoteChoiceSchema
+  .pick({ label: true, order_index: true })
+  .partial()
+  .extend({ id: z.string() })
+export const deleteVoteChoiceSchema = z.object({ id: z.string() })
 
-export const createAmendmentVoteEntrySchema = baseAmendmentVoteEntrySchema
-  .omit({ id: true, created_at: true, user_id: true })
+// ============================================
+// Voter
+// ============================================
+
+const baseVoterSchema = z.object({
+  id: z.string(),
+  vote_id: z.string(),
+  user_id: z.string(),
+  created_at: timestampSchema,
+})
+
+export const selectVoterSchema = baseVoterSchema
+export const createVoterSchema = baseVoterSchema
+  .omit({ id: true, created_at: true })
+  .extend({ id: z.string() })
+export const deleteVoterSchema = z.object({ id: z.string() })
+
+// ============================================
+// Indicative Voter Participation
+// ============================================
+
+const baseIndicativeVoterParticipationSchema = z.object({
+  id: z.string(),
+  vote_id: z.string(),
+  voter_id: z.string(),
+  created_at: timestampSchema,
+})
+
+export const selectIndicativeVoterParticipationSchema = baseIndicativeVoterParticipationSchema
+export const createIndicativeVoterParticipationSchema = baseIndicativeVoterParticipationSchema
+  .omit({ id: true, created_at: true })
   .extend({ id: z.string() })
 
-export const updateAmendmentVoteEntrySchema = baseAmendmentVoteEntrySchema
-  .pick({ vote: true })
+// ============================================
+// Indicative Choice Decision
+// ============================================
+
+const baseIndicativeChoiceDecisionSchema = z.object({
+  id: z.string(),
+  vote_id: z.string(),
+  choice_id: z.string(),
+  voter_participation_id: z.string().nullable(),
+  created_at: timestampSchema,
+})
+
+export const selectIndicativeChoiceDecisionSchema = baseIndicativeChoiceDecisionSchema
+export const createIndicativeChoiceDecisionSchema = baseIndicativeChoiceDecisionSchema
+  .omit({ id: true, created_at: true })
   .extend({ id: z.string() })
 
-export const deleteAmendmentVoteEntrySchema = z.object({ id: z.string() })
+// ============================================
+// Final Voter Participation
+// ============================================
+
+const baseFinalVoterParticipationSchema = z.object({
+  id: z.string(),
+  vote_id: z.string(),
+  voter_id: z.string(),
+  created_at: timestampSchema,
+})
+
+export const selectFinalVoterParticipationSchema = baseFinalVoterParticipationSchema
+export const createFinalVoterParticipationSchema = baseFinalVoterParticipationSchema
+  .omit({ id: true, created_at: true })
+  .extend({ id: z.string() })
+
+// ============================================
+// Final Choice Decision
+// ============================================
+
+const baseFinalChoiceDecisionSchema = z.object({
+  id: z.string(),
+  vote_id: z.string(),
+  choice_id: z.string(),
+  voter_participation_id: z.string().nullable(),
+  created_at: timestampSchema,
+})
+
+export const selectFinalChoiceDecisionSchema = baseFinalChoiceDecisionSchema
+export const createFinalChoiceDecisionSchema = baseFinalChoiceDecisionSchema
+  .omit({ id: true, created_at: true })
+  .extend({ id: z.string() })
 
 // ============================================
 // Amendment Support Vote Schemas
@@ -43,75 +165,6 @@ export const createAmendmentSupportVoteSchema = baseAmendmentSupportVoteSchema
   .extend({ id: z.string() })
 
 // ============================================
-// Amendment Vote Schemas
-// ============================================
-
-const baseAmendmentVoteSchema = z.object({
-  id: z.string(),
-  amendment_id: z.string(),
-  user_id: z.string(),
-  event_id: z.string().nullable(),
-  vote: z.string().nullable(),
-  weight: z.number(),
-  is_delegate_vote: z.boolean(),
-  group_id: z.string().nullable(),
-  created_at: timestampSchema,
-})
-
-export const selectAmendmentVoteSchema = baseAmendmentVoteSchema
-
-export const createAmendmentVoteSchema = baseAmendmentVoteSchema
-  .omit({ id: true, created_at: true, user_id: true })
-  .extend({ id: z.string() })
-
-export const deleteAmendmentVoteSchema = z.object({ id: z.string() })
-
-// ============================================
-// Amendment Voting Session Schemas
-// ============================================
-
-const baseAmendmentVotingSessionSchema = z.object({
-  id: z.string(),
-  amendment_id: z.string(),
-  event_id: z.string().nullable(),
-  title: z.string().nullable(),
-  description: z.string().nullable(),
-  status: z.string().nullable(),
-  voting_type: z.string().nullable(),
-  majority_type: z.string().nullable(),
-  start_time: nullableTimestampSchema,
-  end_time: nullableTimestampSchema,
-  created_at: timestampSchema,
-})
-
-export const selectAmendmentVotingSessionSchema = baseAmendmentVotingSessionSchema
-
-export const createAmendmentVotingSessionSchema = baseAmendmentVotingSessionSchema
-  .omit({ id: true, created_at: true })
-  .extend({ id: z.string() })
-
-export const updateAmendmentVotingSessionSchema = baseAmendmentVotingSessionSchema
-  .pick({ status: true, end_time: true })
-  .partial()
-  .extend({ id: z.string() })
-
-// ============================================
-// Amendment Voting Session Vote Schemas
-// ============================================
-
-const baseAmendmentVotingSessionVoteSchema = z.object({
-  id: z.string(),
-  session_id: z.string(),
-  user_id: z.string(),
-  vote: z.string().nullable(),
-  weight: z.number(),
-  is_delegate: z.boolean(),
-  created_at: timestampSchema,
-})
-
-export const selectAmendmentVotingSessionVoteSchema = baseAmendmentVotingSessionVoteSchema
-
-// ============================================
 // Change Request Vote Schemas
 // ============================================
 
@@ -128,79 +181,6 @@ export const selectChangeRequestVoteSchema = baseChangeRequestVoteSchema
 export const createChangeRequestVoteSchema = baseChangeRequestVoteSchema
   .omit({ id: true, created_at: true, user_id: true })
   .extend({ id: z.string() })
-
-// ============================================
-// Event Voting Session Schemas
-// ============================================
-
-const baseEventVotingSessionSchema = z.object({
-  id: z.string(),
-  event_id: z.string(),
-  agenda_item_id: z.string().nullable(),
-  title: z.string().nullable(),
-  description: z.string().nullable(),
-  status: z.string().nullable(),
-  voting_type: z.string().nullable(),
-  majority_type: z.string().nullable(),
-  start_time: nullableTimestampSchema,
-  end_time: nullableTimestampSchema,
-  created_at: timestampSchema,
-})
-
-export const eventVotingSessionSelectSchema = baseEventVotingSessionSchema
-export const eventVotingSessionCreateSchema = baseEventVotingSessionSchema
-  .omit({ id: true, created_at: true, start_time: true, end_time: true, status: true })
-  .extend({ id: z.string() })
-export const eventVotingSessionUpdateSchema = z.object({
-  id: z.string(),
-  status: z.string().optional(),
-  start_time: z.number().optional(),
-  end_time: z.number().optional(),
-})
-
-// ============================================
-// Event Vote Schemas
-// ============================================
-
-const baseEventVoteSchema = z.object({
-  id: z.string(),
-  session_id: z.string(),
-  user_id: z.string(),
-  vote: z.string().nullable(),
-  weight: z.number(),
-  is_delegate: z.boolean(),
-  created_at: timestampSchema,
-})
-
-export const eventVoteSelectSchema = baseEventVoteSchema
-export const eventVoteCreateSchema = baseEventVoteSchema
-  .omit({ id: true, created_at: true, user_id: true })
-  .extend({ id: z.string() })
-
-// ============================================
-// Election Vote Schemas
-// ============================================
-
-const baseElectionVoteSchema = z.object({
-  id: z.string(),
-  election_id: z.string(),
-  candidate_id: z.string(),
-  voter_id: z.string(),
-  is_indication: z.boolean(),
-  indicated_at: nullableTimestampSchema,
-  created_at: timestampSchema,
-  updated_at: timestampSchema,
-})
-
-export const selectElectionVoteSchema = baseElectionVoteSchema
-export const createElectionVoteSchema = baseElectionVoteSchema
-  .omit({ id: true, created_at: true, updated_at: true, voter_id: true })
-  .extend({ id: z.string() })
-export const updateElectionVoteSchema = baseElectionVoteSchema
-  .pick({ candidate_id: true, is_indication: true, indicated_at: true })
-  .partial()
-  .extend({ id: z.string() })
-export const deleteElectionVoteSchema = z.object({ id: z.string() })
 
 // ============================================
 // Blog Support Vote Schemas
@@ -302,15 +282,15 @@ export const deleteCommentVoteSchema = z.object({ id: z.string() })
 // Inferred Types
 // ============================================
 
-export type AmendmentVoteEntry = z.infer<typeof selectAmendmentVoteEntrySchema>
+export type Vote = z.infer<typeof selectVoteSchema>
+export type VoteChoice = z.infer<typeof selectVoteChoiceSchema>
+export type Voter = z.infer<typeof selectVoterSchema>
+export type IndicativeVoterParticipation = z.infer<typeof selectIndicativeVoterParticipationSchema>
+export type IndicativeChoiceDecision = z.infer<typeof selectIndicativeChoiceDecisionSchema>
+export type FinalVoterParticipation = z.infer<typeof selectFinalVoterParticipationSchema>
+export type FinalChoiceDecision = z.infer<typeof selectFinalChoiceDecisionSchema>
 export type AmendmentSupportVote = z.infer<typeof selectAmendmentSupportVoteSchema>
-export type AmendmentVote = z.infer<typeof selectAmendmentVoteSchema>
-export type AmendmentVotingSession = z.infer<typeof selectAmendmentVotingSessionSchema>
-export type AmendmentVotingSessionVote = z.infer<typeof selectAmendmentVotingSessionVoteSchema>
 export type ChangeRequestVote = z.infer<typeof selectChangeRequestVoteSchema>
-export type EventVotingSession = z.infer<typeof eventVotingSessionSelectSchema>
-export type EventVote = z.infer<typeof eventVoteSelectSchema>
-export type ElectionVote = z.infer<typeof selectElectionVoteSchema>
 export type BlogSupportVote = z.infer<typeof selectBlogSupportVoteSchema>
 export type StatementSupportVote = z.infer<typeof selectStatementSupportVoteSchema>
 export type ThreadVote = z.infer<typeof selectThreadVoteSchema>

@@ -15,6 +15,10 @@ import { statementSharedMutators } from './statements/shared-mutators'
 import { commonSharedMutators } from './common/shared-mutators'
 import { preferenceSharedMutators } from './preferences/shared-mutators'
 import { calendarSubscriptionSharedMutators } from './calendar-subscriptions/shared-mutators'
+import { electionSharedMutators } from './elections/shared-mutators'
+import { voteSharedMutators } from './votes/shared-mutators'
+import { votingPasswordSharedMutators } from './voting-password/shared-mutators'
+import { accreditationSharedMutators } from './accreditation/shared-mutators'
 
 export const mutators = defineMutators({
   users: userSharedMutators,
@@ -32,4 +36,8 @@ export const mutators = defineMutators({
   common: commonSharedMutators,
   preferences: preferenceSharedMutators,
   calendarSubscriptions: calendarSubscriptionSharedMutators,
+  elections: electionSharedMutators,
+  votes: voteSharedMutators,
+  votingPassword: votingPasswordSharedMutators,
+  accreditation: accreditationSharedMutators,
 })

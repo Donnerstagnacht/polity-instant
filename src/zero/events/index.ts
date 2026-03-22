@@ -27,7 +27,6 @@ export {
   useEventWithGroup,
   useGroupRelationships,
   useElectionWithVotes,
-  useVotingSessionWithVotes,
   useChangeRequestsByAmendment,
   useEventsForCalendar,
   useEventsForCalendarWithExceptions,
@@ -44,5 +43,3 @@ export type {
 } from './schema'
 export type { EventDelegate, GroupDelegateAllocation } from '../delegates/schema'
 export type { EventPosition, EventPositionHolder } from '../positions/schema'
-export type { EventVotingSession, EventVote } from '../votes/schema'
-export type { ScheduledElection } from '../elections/schema'

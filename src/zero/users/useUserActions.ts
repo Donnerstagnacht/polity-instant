@@ -3,6 +3,7 @@ import { useZero } from '@rocicorp/zero/react'
 import { toast } from 'sonner'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { mutators } from '../mutators'
+import { serverConfirmed } from '../mutate-with-server-check'
 
 /**
  * Action hook for user mutations.
@@ -15,7 +16,8 @@ export function useUserActions() {
   const updateProfile = useCallback(
     async (args: Parameters<typeof mutators.users.updateProfile>[0]) => {
       try {
-        await zero.mutate(mutators.users.updateProfile(args))
+        const result = zero.mutate(mutators.users.updateProfile(args))
+        await serverConfirmed(result)
         toast.success(t('features.user.toasts.profileUpdated'))
       } catch (error) {
         console.error('Failed to update profile:', error)
@@ -29,7 +31,8 @@ export function useUserActions() {
   const follow = useCallback(
     async (args: Parameters<typeof mutators.users.follow>[0]) => {
       try {
-        await zero.mutate(mutators.users.follow(args))
+        const result = zero.mutate(mutators.users.follow(args))
+        await serverConfirmed(result)
         toast.success(t('features.user.toasts.followed'))
       } catch (error) {
         console.error('Failed to follow user:', error)
@@ -43,7 +46,8 @@ export function useUserActions() {
   const unfollow = useCallback(
     async (id: string) => {
       try {
-        await zero.mutate(mutators.users.unfollow({ id }))
+        const result = zero.mutate(mutators.users.unfollow({ id }))
+        await serverConfirmed(result)
         toast.success(t('features.user.toasts.unfollowed'))
       } catch (error) {
         console.error('Failed to unfollow user:', error)

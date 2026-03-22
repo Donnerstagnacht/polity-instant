@@ -17,6 +17,10 @@ import { searchQueries } from './shared/queries'
 import { rbacQueries } from './rbac/queries'
 import { preferenceQueries } from './preferences/queries'
 import { calendarSubscriptionQueries } from './calendar-subscriptions/queries'
+import { electionQueries } from './elections/queries'
+import { voteQueries } from './votes/queries'
+import { votingPasswordQueries } from './voting-password/queries'
+import { accreditationQueries } from './accreditation/queries'
 
 export const queries = defineQueries({
   users: userQueries,
@@ -36,4 +40,8 @@ export const queries = defineQueries({
   rbac: rbacQueries,
   preferences: preferenceQueries,
   calendarSubscriptions: calendarSubscriptionQueries,
+  elections: electionQueries,
+  votes: voteQueries,
+  votingPassword: votingPasswordQueries,
+  accreditation: accreditationQueries,
 })

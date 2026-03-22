@@ -291,4 +291,17 @@ export const commonTranslations = {
     voteUpdateFailed: 'Stimme konnte nicht aktualisiert werden',
     voteRemoveFailed: 'Stimme konnte nicht entfernt werden',
   },
+  votingPassword: {
+    setSuccess: 'Abstimmungspasswort gespeichert',
+    setFailed: 'Abstimmungspasswort konnte nicht gespeichert werden',
+    verifySuccess: 'Passwort bestätigt',
+    verifyFailed: 'Falsches Passwort',
+  },
+  voteToasts: {
+    indicativeVoteCast: 'Meinungsbild abgegeben',
+    indicativeVoteFailed: 'Meinungsbild konnte nicht abgegeben werden',
+    voteUpdated: 'Stimme aktualisiert',
+    voteUpdateFailed: 'Stimme konnte nicht aktualisiert werden',
+    voteDeleteFailed: 'Stimme konnte nicht gelöscht werden',
+  },
 } as const;

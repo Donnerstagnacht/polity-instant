@@ -3,6 +3,7 @@ import { useZero } from '@rocicorp/zero/react'
 import { toast } from 'sonner'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { mutators } from '../mutators'
+import { serverConfirmed } from '../mutate-with-server-check'
 
 function isConnectivityFailure(error: unknown): boolean {
   if (!(error instanceof Error)) return false
@@ -28,7 +29,8 @@ export function useAmendmentActions() {
   const createAmendment = useCallback(
     async (args: Parameters<typeof mutators.amendments.create>[0]) => {
       try {
-        await zero.mutate(mutators.amendments.create(args))
+        const result = zero.mutate(mutators.amendments.create(args))
+        await serverConfirmed(result)
         toast.success(t('features.amendments.toasts.created'))
       } catch (error) {
         console.error('Failed to create amendment:', error)
@@ -46,7 +48,8 @@ export function useAmendmentActions() {
   const updateAmendment = useCallback(
     async (args: Parameters<typeof mutators.amendments.update>[0]) => {
       try {
-        await zero.mutate(mutators.amendments.update(args))
+        const result = zero.mutate(mutators.amendments.update(args))
+        await serverConfirmed(result)
       } catch (error) {
         console.error('Failed to update amendment:', error)
         toast.error(t('features.amendments.toasts.updateFailed'))
@@ -59,7 +62,8 @@ export function useAmendmentActions() {
   const deleteAmendment = useCallback(
     async (id: string) => {
       try {
-        await zero.mutate(mutators.amendments.delete({ id }))
+        const result = zero.mutate(mutators.amendments.delete({ id }))
+        await serverConfirmed(result)
         toast.success(t('features.amendments.toasts.deleted'))
       } catch (error) {
         console.error('Failed to delete amendment:', error)
@@ -74,7 +78,8 @@ export function useAmendmentActions() {
   const requestCollaboration = useCallback(
     async (args: Parameters<typeof mutators.amendments.addCollaborator>[0]) => {
       try {
-        await zero.mutate(mutators.amendments.addCollaborator(args))
+        const result = zero.mutate(mutators.amendments.addCollaborator(args))
+        await serverConfirmed(result)
         toast.success(t('features.amendments.toasts.collaborationRequested'))
       } catch (error) {
         console.error('Failed to request collaboration:', error)
@@ -88,7 +93,8 @@ export function useAmendmentActions() {
   const leaveCollaboration = useCallback(
     async (id: string) => {
       try {
-        await zero.mutate(mutators.amendments.removeCollaborator({ id }))
+        const result = zero.mutate(mutators.amendments.removeCollaborator({ id }))
+        await serverConfirmed(result)
         toast.success(t('features.amendments.toasts.leftCollaboration'))
       } catch (error) {
         console.error('Failed to leave collaboration:', error)
@@ -102,9 +108,10 @@ export function useAmendmentActions() {
   const acceptInvitation = useCallback(
     async (id: string) => {
       try {
-        await zero.mutate(
+        const result = zero.mutate(
           mutators.amendments.updateCollaborator({ id, status: 'member' })
         )
+        await serverConfirmed(result)
         toast.success(t('features.amendments.toasts.joinedCollaboration'))
       } catch (error) {
         console.error('Failed to accept invitation:', error)
@@ -118,7 +125,8 @@ export function useAmendmentActions() {
   const updateCollaborator = useCallback(
     async (args: Parameters<typeof mutators.amendments.updateCollaborator>[0]) => {
       try {
-        await zero.mutate(mutators.amendments.updateCollaborator(args))
+        const result = zero.mutate(mutators.amendments.updateCollaborator(args))
+        await serverConfirmed(result)
       } catch (error) {
         console.error('Failed to update collaborator:', error)
         toast.error(t('features.amendments.toasts.updateCollaboratorFailed'))
@@ -132,9 +140,10 @@ export function useAmendmentActions() {
   const updateWorkflowStatus = useCallback(
     async (id: string, workflowStatus: string) => {
       try {
-        await zero.mutate(
+        const result = zero.mutate(
           mutators.amendments.update({ id, workflow_status: workflowStatus })
         )
+        await serverConfirmed(result)
         toast.success(t('features.amendments.toasts.workflowChanged', { status: workflowStatus }))
       } catch (error) {
         console.error('Failed to update workflow status:', error)
@@ -148,13 +157,14 @@ export function useAmendmentActions() {
   const submitToEvent = useCallback(
     async (id: string, eventId: string) => {
       try {
-        await zero.mutate(
+        const result = zero.mutate(
           mutators.amendments.update({
             id,
             workflow_status: 'event_suggesting',
             event_id: eventId,
           })
         )
+        await serverConfirmed(result)
         toast.success(t('features.amendments.toasts.submittedToEvent'))
       } catch (error) {
         console.error('Failed to submit to event:', error)
@@ -168,13 +178,14 @@ export function useAmendmentActions() {
   const finalizeAmendment = useCallback(
     async (id: string, result: 'passed' | 'rejected') => {
       try {
-        await zero.mutate(
+        const mutationResult = zero.mutate(
           mutators.amendments.update({
             id,
             workflow_status: result,
             status: result === 'passed' ? 'Passed' : 'Rejected',
           })
         )
+        await serverConfirmed(mutationResult)
         toast.success(
           result === 'passed'
             ? t('features.amendments.toasts.passed')
@@ -189,80 +200,12 @@ export function useAmendmentActions() {
     [zero]
   )
 
-  // ── Voting Sessions ────────────────────────────────────────────────
-  const createVotingSession = useCallback(
-    async (args: Parameters<typeof mutators.amendments.createVotingSession>[0]) => {
-      try {
-        await zero.mutate(mutators.amendments.createVotingSession(args))
-        toast.success(t('features.amendments.toasts.votingSessionStarted'))
-        return args.id
-      } catch (error) {
-        console.error('Failed to start voting session:', error)
-        toast.error(t('features.amendments.toasts.votingSessionStartFailed'))
-        throw error
-      }
-    },
-    [zero]
-  )
-
-  const updateVotingSession = useCallback(
-    async (args: Parameters<typeof mutators.amendments.updateVotingSession>[0]) => {
-      try {
-        await zero.mutate(mutators.amendments.updateVotingSession(args))
-      } catch (error) {
-        console.error('Failed to update voting session:', error)
-        toast.error(t('features.amendments.toasts.votingSessionUpdateFailed'))
-        throw error
-      }
-    },
-    [zero]
-  )
-
-  // ── Vote Entries ───────────────────────────────────────────────────
-  const createVoteEntry = useCallback(
-    async (args: Parameters<typeof mutators.amendments.createVoteEntry>[0]) => {
-      try {
-        await zero.mutate(mutators.amendments.createVoteEntry(args))
-      } catch (error) {
-        console.error('Failed to create vote entry:', error)
-        toast.error(t('features.amendments.toasts.castVoteFailed'))
-        throw error
-      }
-    },
-    [zero]
-  )
-
-  const updateVoteEntry = useCallback(
-    async (args: Parameters<typeof mutators.amendments.updateVoteEntry>[0]) => {
-      try {
-        await zero.mutate(mutators.amendments.updateVoteEntry(args))
-      } catch (error) {
-        console.error('Failed to update vote entry:', error)
-        toast.error(t('features.amendments.toasts.updateVoteFailed'))
-        throw error
-      }
-    },
-    [zero]
-  )
-
-  const deleteVoteEntry = useCallback(
-    async (id: string) => {
-      try {
-        await zero.mutate(mutators.amendments.deleteVoteEntry({ id }))
-      } catch (error) {
-        console.error('Failed to delete vote entry:', error)
-        toast.error(t('features.amendments.toasts.removeVoteFailed'))
-        throw error
-      }
-    },
-    [zero]
-  )
-
   // ── Change Requests ────────────────────────────────────────────────
   const createChangeRequest = useCallback(
     async (args: Parameters<typeof mutators.amendments.createChangeRequest>[0]) => {
       try {
-        await zero.mutate(mutators.amendments.createChangeRequest(args))
+        const result = zero.mutate(mutators.amendments.createChangeRequest(args))
+        await serverConfirmed(result)
         toast.success(t('features.amendments.toasts.changeRequestCreated'))
       } catch (error) {
         console.error('Failed to create change request:', error)
@@ -276,7 +219,8 @@ export function useAmendmentActions() {
   const updateChangeRequest = useCallback(
     async (args: Parameters<typeof mutators.amendments.updateChangeRequest>[0]) => {
       try {
-        await zero.mutate(mutators.amendments.updateChangeRequest(args))
+        const result = zero.mutate(mutators.amendments.updateChangeRequest(args))
+        await serverConfirmed(result)
       } catch (error) {
         console.error('Failed to update change request:', error)
         toast.error(t('features.amendments.toasts.changeRequestUpdateFailed'))
@@ -289,7 +233,8 @@ export function useAmendmentActions() {
   const voteOnChangeRequest = useCallback(
     async (args: Parameters<typeof mutators.amendments.voteOnChangeRequest>[0]) => {
       try {
-        await zero.mutate(mutators.amendments.voteOnChangeRequest(args))
+        const result = zero.mutate(mutators.amendments.voteOnChangeRequest(args))
+        await serverConfirmed(result)
       } catch (error) {
         console.error('Failed to vote on change request:', error)
         toast.error(t('features.amendments.toasts.voteOnChangeRequestFailed'))
@@ -303,7 +248,8 @@ export function useAmendmentActions() {
   const supportAmendment = useCallback(
     async (args: Parameters<typeof mutators.amendments.supportAmendment>[0]) => {
       try {
-        await zero.mutate(mutators.amendments.supportAmendment(args))
+        const result = zero.mutate(mutators.amendments.supportAmendment(args))
+        await serverConfirmed(result)
         toast.success(t('features.amendments.toasts.supportAdded'))
       } catch (error) {
         console.error('Failed to support amendment:', error)
@@ -317,7 +263,8 @@ export function useAmendmentActions() {
   const createSupportConfirmation = useCallback(
     async (args: Parameters<typeof mutators.amendments.createSupportConfirmation>[0]) => {
       try {
-        await zero.mutate(mutators.amendments.createSupportConfirmation(args))
+        const result = zero.mutate(mutators.amendments.createSupportConfirmation(args))
+        await serverConfirmed(result)
       } catch (error) {
         console.error('Failed to create support confirmation:', error)
         toast.error(t('features.amendments.toasts.supportConfirmationFailed'))
@@ -330,7 +277,8 @@ export function useAmendmentActions() {
   const updateSupportConfirmation = useCallback(
     async (args: Parameters<typeof mutators.amendments.updateSupportConfirmation>[0]) => {
       try {
-        await zero.mutate(mutators.amendments.updateSupportConfirmation(args))
+        const result = zero.mutate(mutators.amendments.updateSupportConfirmation(args))
+        await serverConfirmed(result)
         const status = args.status
         toast.success(status === 'confirmed' ? t('features.amendments.toasts.supportConfirmed') : t('features.amendments.toasts.supportDeclined'))
       } catch (error) {
@@ -346,7 +294,7 @@ export function useAmendmentActions() {
   const subscribe = useCallback(
     async (args: { id: string; amendment_id: string }) => {
       try {
-        await zero.mutate(
+        const result = zero.mutate(
           mutators.common.subscribe({
             id: args.id,
             amendment_id: args.amendment_id,
@@ -356,6 +304,7 @@ export function useAmendmentActions() {
             blog_id: null,
           })
         )
+        await serverConfirmed(result)
         toast.success(t('features.amendments.toasts.subscribed'))
       } catch (error) {
         console.error('Failed to subscribe:', error)
@@ -369,7 +318,8 @@ export function useAmendmentActions() {
   const unsubscribe = useCallback(
     async (id: string) => {
       try {
-        await zero.mutate(mutators.common.unsubscribe({ id }))
+        const result = zero.mutate(mutators.common.unsubscribe({ id }))
+        await serverConfirmed(result)
         toast.success(t('features.amendments.toasts.unsubscribed'))
       } catch (error) {
         console.error('Failed to unsubscribe:', error)
@@ -380,38 +330,12 @@ export function useAmendmentActions() {
     [zero]
   )
 
-  // ── Amendment Votes (direct votes, not voting session entries) ────
-  const castAmendmentVote = useCallback(
-    async (args: Parameters<typeof mutators.amendments.castAmendmentVote>[0]) => {
-      try {
-        await zero.mutate(mutators.amendments.castAmendmentVote(args))
-      } catch (error) {
-        console.error('Failed to cast amendment vote:', error)
-        toast.error(t('features.amendments.toasts.voteFailed', 'Failed to cast vote'))
-        throw error
-      }
-    },
-    [zero]
-  )
-
-  const deleteAmendmentVote = useCallback(
-    async (args: Parameters<typeof mutators.amendments.deleteAmendmentVote>[0]) => {
-      try {
-        await zero.mutate(mutators.amendments.deleteAmendmentVote(args))
-      } catch (error) {
-        console.error('Failed to delete amendment vote:', error)
-        toast.error(t('features.amendments.toasts.voteDeleteFailed', 'Failed to delete vote'))
-        throw error
-      }
-    },
-    [zero]
-  )
-
   // ── Amendment Paths ────────────────────────────────────────────────
   const createPath = useCallback(
     async (args: Parameters<typeof mutators.amendments.createPath>[0]) => {
       try {
-        await zero.mutate(mutators.amendments.createPath(args))
+        const result = zero.mutate(mutators.amendments.createPath(args))
+        await serverConfirmed(result)
       } catch (error) {
         console.error('Failed to create path:', error)
         toast.error(t('features.amendments.toasts.pathCreateFailed', 'Failed to create path'))
@@ -424,7 +348,8 @@ export function useAmendmentActions() {
   const deletePath = useCallback(
     async (args: Parameters<typeof mutators.amendments.deletePath>[0]) => {
       try {
-        await zero.mutate(mutators.amendments.deletePath(args))
+        const result = zero.mutate(mutators.amendments.deletePath(args))
+        await serverConfirmed(result)
       } catch (error) {
         console.error('Failed to delete path:', error)
         toast.error(t('features.amendments.toasts.pathDeleteFailed', 'Failed to delete path'))
@@ -437,7 +362,8 @@ export function useAmendmentActions() {
   const createPathSegment = useCallback(
     async (args: Parameters<typeof mutators.amendments.createPathSegment>[0]) => {
       try {
-        await zero.mutate(mutators.amendments.createPathSegment(args))
+        const result = zero.mutate(mutators.amendments.createPathSegment(args))
+        await serverConfirmed(result)
       } catch (error) {
         console.error('Failed to create path segment:', error)
         toast.error(t('features.amendments.toasts.pathSegmentCreateFailed', 'Failed to create path segment'))
@@ -450,7 +376,8 @@ export function useAmendmentActions() {
   const deletePathSegment = useCallback(
     async (args: Parameters<typeof mutators.amendments.deletePathSegment>[0]) => {
       try {
-        await zero.mutate(mutators.amendments.deletePathSegment(args))
+        const result = zero.mutate(mutators.amendments.deletePathSegment(args))
+        await serverConfirmed(result)
       } catch (error) {
         console.error('Failed to delete path segment:', error)
         toast.error(t('features.amendments.toasts.pathSegmentDeleteFailed', 'Failed to delete path segment'))
@@ -476,19 +403,6 @@ export function useAmendmentActions() {
     updateWorkflowStatus,
     submitToEvent,
     finalizeAmendment,
-
-    // Voting sessions
-    createVotingSession,
-    updateVotingSession,
-
-    // Vote entries
-    createVoteEntry,
-    updateVoteEntry,
-    deleteVoteEntry,
-
-    // Amendment votes (direct)
-    castAmendmentVote,
-    deleteAmendmentVote,
 
     // Paths
     createPath,

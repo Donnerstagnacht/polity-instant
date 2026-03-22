@@ -3,6 +3,7 @@ import { useZero } from '@rocicorp/zero/react'
 import { toast } from 'sonner'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { mutators } from '../mutators'
+import { serverConfirmed } from '../mutate-with-server-check'
 import { DEFAULT_GROUP_ROLES } from '../rbac/constants'
 import { handleMutationError } from '../rbac/handleMutationError'
 
@@ -18,7 +19,8 @@ export function useGroupActions() {
   const createGroup = useCallback(
     async (args: Parameters<typeof mutators.groups.create>[0]) => {
       try {
-        await zero.mutate(mutators.groups.create(args))
+        const result = zero.mutate(mutators.groups.create(args))
+        await serverConfirmed(result)
         toast.success(t('features.groups.toasts.created'))
       } catch (error) {
         console.error('Failed to create group:', error)
@@ -32,7 +34,8 @@ export function useGroupActions() {
   const updateGroup = useCallback(
     async (args: Parameters<typeof mutators.groups.update>[0]) => {
       try {
-        await zero.mutate(mutators.groups.update(args))
+        const result = zero.mutate(mutators.groups.update(args))
+        await serverConfirmed(result)
         toast.success(t('features.groups.toasts.updated'))
       } catch (error) {
         console.error('Failed to update group:', error)
@@ -46,7 +49,8 @@ export function useGroupActions() {
   const deleteGroup = useCallback(
     async (args: Parameters<typeof mutators.groups.delete>[0]) => {
       try {
-        await zero.mutate(mutators.groups.delete(args))
+        const result = zero.mutate(mutators.groups.delete(args))
+        await serverConfirmed(result)
         toast.success(t('features.groups.toasts.deleted'))
       } catch (error) {
         console.error('Failed to delete group:', error)
@@ -61,7 +65,8 @@ export function useGroupActions() {
   const joinGroup = useCallback(
     async (args: Parameters<typeof mutators.groups.joinGroup>[0]) => {
       try {
-        await zero.mutate(mutators.groups.joinGroup(args))
+        const result = zero.mutate(mutators.groups.joinGroup(args))
+        await serverConfirmed(result)
         toast.success(t('features.groups.toasts.joined'))
       } catch (error) {
         console.error('Failed to join group:', error)
@@ -75,7 +80,8 @@ export function useGroupActions() {
   const leaveGroup = useCallback(
     async (args: Parameters<typeof mutators.groups.leaveGroup>[0]) => {
       try {
-        await zero.mutate(mutators.groups.leaveGroup(args))
+        const result = zero.mutate(mutators.groups.leaveGroup(args))
+        await serverConfirmed(result)
         toast.success(t('features.groups.toasts.left'))
       } catch (error) {
         console.error('Failed to leave group:', error)
@@ -89,7 +95,8 @@ export function useGroupActions() {
   const inviteMember = useCallback(
     async (args: Parameters<typeof mutators.groups.inviteMember>[0]) => {
       try {
-        await zero.mutate(mutators.groups.inviteMember(args))
+        const result = zero.mutate(mutators.groups.inviteMember(args))
+        await serverConfirmed(result)
         toast.success(t('features.groups.toasts.invitationSent'))
       } catch (error) {
         console.error('Failed to invite member:', error)
@@ -103,7 +110,8 @@ export function useGroupActions() {
   const acceptInvitation = useCallback(
     async (args: Parameters<typeof mutators.groups.acceptInvitation>[0]) => {
       try {
-        await zero.mutate(mutators.groups.acceptInvitation(args))
+        const result = zero.mutate(mutators.groups.acceptInvitation(args))
+        await serverConfirmed(result)
         toast.success(t('features.groups.toasts.invitationAccepted'))
       } catch (error) {
         console.error('Failed to accept invitation:', error)
@@ -117,7 +125,8 @@ export function useGroupActions() {
   const updateMemberRole = useCallback(
     async (args: Parameters<typeof mutators.groups.updateMemberRole>[0]) => {
       try {
-        await zero.mutate(mutators.groups.updateMemberRole(args))
+        const result = zero.mutate(mutators.groups.updateMemberRole(args))
+        await serverConfirmed(result)
         toast.success(t('features.groups.toasts.memberRoleUpdated'))
       } catch (error) {
         console.error('Failed to update member role:', error)
@@ -132,7 +141,8 @@ export function useGroupActions() {
   const createRole = useCallback(
     async (args: Parameters<typeof mutators.groups.createRole>[0]) => {
       try {
-        await zero.mutate(mutators.groups.createRole(args))
+        const result = zero.mutate(mutators.groups.createRole(args))
+        await serverConfirmed(result)
         toast.success(t('features.groups.toasts.roleCreated'))
       } catch (error) {
         console.error('Failed to create role:', error)
@@ -146,7 +156,8 @@ export function useGroupActions() {
   const deleteRole = useCallback(
     async (args: Parameters<typeof mutators.groups.deleteRole>[0]) => {
       try {
-        await zero.mutate(mutators.groups.deleteRole(args))
+        const result = zero.mutate(mutators.groups.deleteRole(args))
+        await serverConfirmed(result)
         toast.success(t('features.groups.toasts.roleDeleted'))
       } catch (error) {
         console.error('Failed to delete role:', error)
@@ -160,7 +171,8 @@ export function useGroupActions() {
   const updateRole = useCallback(
     async (args: Parameters<typeof mutators.groups.updateRole>[0]) => {
       try {
-        await zero.mutate(mutators.groups.updateRole(args))
+        const result = zero.mutate(mutators.groups.updateRole(args))
+        await serverConfirmed(result)
       } catch (error) {
         console.error('Failed to update role:', error)
         handleMutationError(error, t('features.groups.toasts.roleUpdateFailed'), t)
@@ -173,7 +185,8 @@ export function useGroupActions() {
   const assignActionRight = useCallback(
     async (args: Parameters<typeof mutators.groups.assignActionRight>[0]) => {
       try {
-        await zero.mutate(mutators.groups.assignActionRight(args))
+        const result = zero.mutate(mutators.groups.assignActionRight(args))
+        await serverConfirmed(result)
         toast.success(t('features.groups.toasts.actionRightAssigned'))
       } catch (error) {
         console.error('Failed to assign action right:', error)
@@ -187,7 +200,8 @@ export function useGroupActions() {
   const removeActionRight = useCallback(
     async (args: Parameters<typeof mutators.groups.removeActionRight>[0]) => {
       try {
-        await zero.mutate(mutators.groups.removeActionRight(args))
+        const result = zero.mutate(mutators.groups.removeActionRight(args))
+        await serverConfirmed(result)
         toast.success(t('features.groups.toasts.actionRightRemoved'))
       } catch (error) {
         console.error('Failed to remove action right:', error)
@@ -211,7 +225,7 @@ export function useGroupActions() {
           // Reverse the index so the last default role (Member) gets sort_order 0 (least rights)
           // and first (Admin) gets the highest sort_order (most rights)
           const sortOrder = totalRoles - 1 - i
-          await zero.mutate(mutators.groups.createRole({
+          const roleResult = zero.mutate(mutators.groups.createRole({
             id: roleId,
             name: roleDef.name,
             description: roleDef.description,
@@ -222,8 +236,9 @@ export function useGroupActions() {
             blog_id: null,
             sort_order: sortOrder,
           }))
+          await serverConfirmed(roleResult)
           for (const perm of roleDef.permissions) {
-            await zero.mutate(mutators.groups.assignActionRight({
+            const permResult = zero.mutate(mutators.groups.assignActionRight({
               id: crypto.randomUUID(),
               resource: perm.resource,
               action: perm.action,
@@ -233,16 +248,18 @@ export function useGroupActions() {
               amendment_id: null,
               blog_id: null,
             }))
+            await serverConfirmed(permResult)
           }
         }
         if (adminRoleId) {
-          await zero.mutate(mutators.groups.joinGroup({
+          const joinResult = zero.mutate(mutators.groups.joinGroup({
             id: crypto.randomUUID(),
             group_id: groupId,
             status: 'active',
             visibility: 'public',
             role_id: adminRoleId,
           }))
+          await serverConfirmed(joinResult)
         }
       } catch (error) {
         console.error('Failed to setup group admin roles:', error)
@@ -256,7 +273,8 @@ export function useGroupActions() {
   const createRelationship = useCallback(
     async (args: Parameters<typeof mutators.groups.createRelationship>[0]) => {
       try {
-        await zero.mutate(mutators.groups.createRelationship(args))
+        const result = zero.mutate(mutators.groups.createRelationship(args))
+        await serverConfirmed(result)
         toast.success(t('features.groups.toasts.relationshipCreated'))
       } catch (error) {
         console.error('Failed to create relationship:', error)
@@ -270,7 +288,8 @@ export function useGroupActions() {
   const updateRelationship = useCallback(
     async (args: Parameters<typeof mutators.groups.updateRelationship>[0]) => {
       try {
-        await zero.mutate(mutators.groups.updateRelationship(args))
+        const result = zero.mutate(mutators.groups.updateRelationship(args))
+        await serverConfirmed(result)
         toast.success(t('features.groups.toasts.relationshipUpdated'))
       } catch (error) {
         console.error('Failed to update relationship:', error)
@@ -284,7 +303,8 @@ export function useGroupActions() {
   const deleteRelationship = useCallback(
     async (args: Parameters<typeof mutators.groups.deleteRelationship>[0]) => {
       try {
-        await zero.mutate(mutators.groups.deleteRelationship(args))
+        const result = zero.mutate(mutators.groups.deleteRelationship(args))
+        await serverConfirmed(result)
         toast.success(t('features.groups.toasts.relationshipDeleted'))
       } catch (error) {
         console.error('Failed to delete relationship:', error)
@@ -299,7 +319,8 @@ export function useGroupActions() {
   const createPosition = useCallback(
     async (args: Parameters<typeof mutators.groups.createPosition>[0]) => {
       try {
-        await zero.mutate(mutators.groups.createPosition(args))
+        const result = zero.mutate(mutators.groups.createPosition(args))
+        await serverConfirmed(result)
         toast.success(t('features.groups.toasts.positionCreated'))
       } catch (error) {
         console.error('Failed to create position:', error)
@@ -313,7 +334,8 @@ export function useGroupActions() {
   const updatePosition = useCallback(
     async (args: Parameters<typeof mutators.groups.updatePosition>[0]) => {
       try {
-        await zero.mutate(mutators.groups.updatePosition(args))
+        const result = zero.mutate(mutators.groups.updatePosition(args))
+        await serverConfirmed(result)
         toast.success(t('features.groups.toasts.positionUpdated'))
       } catch (error) {
         console.error('Failed to update position:', error)
@@ -327,7 +349,8 @@ export function useGroupActions() {
   const deletePosition = useCallback(
     async (args: Parameters<typeof mutators.groups.deletePosition>[0]) => {
       try {
-        await zero.mutate(mutators.groups.deletePosition(args))
+        const result = zero.mutate(mutators.groups.deletePosition(args))
+        await serverConfirmed(result)
         toast.success(t('features.groups.toasts.positionDeleted'))
       } catch (error) {
         console.error('Failed to delete position:', error)
@@ -341,7 +364,8 @@ export function useGroupActions() {
   const createPositionHolderHistory = useCallback(
     async (args: Parameters<typeof mutators.groups.createPositionHolderHistory>[0]) => {
       try {
-        await zero.mutate(mutators.groups.createPositionHolderHistory(args))
+        const result = zero.mutate(mutators.groups.createPositionHolderHistory(args))
+        await serverConfirmed(result)
         toast.success(t('features.groups.toasts.positionHolderHistoryCreated'))
       } catch (error) {
         console.error('Failed to create position holder history:', error)
@@ -355,7 +379,8 @@ export function useGroupActions() {
   const updatePositionHolderHistory = useCallback(
     async (args: Parameters<typeof mutators.groups.updatePositionHolderHistory>[0]) => {
       try {
-        await zero.mutate(mutators.groups.updatePositionHolderHistory(args))
+        const result = zero.mutate(mutators.groups.updatePositionHolderHistory(args))
+        await serverConfirmed(result)
         toast.success(t('features.groups.toasts.positionHolderHistoryUpdated'))
       } catch (error) {
         console.error('Failed to update position holder history:', error)

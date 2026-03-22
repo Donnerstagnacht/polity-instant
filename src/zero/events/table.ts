@@ -59,6 +59,8 @@ export const event = table('event')
     main_group_delegate_allocation_mode: string().optional(),
     current_agenda_item_id: string().optional(),
     amendment_deadline: number().optional(),
+    registration_deadline: number().optional(),
+    candidacy_deadline: number().optional(),
     delegates_nomination_deadline: number().optional(),
     group_id: string().optional(),
     creator_id: string(),

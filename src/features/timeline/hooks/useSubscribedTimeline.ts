@@ -194,7 +194,6 @@ export function useSubscribedTimeline(
           location: e.location_name ?? undefined,
           attendeeCount: e.participants?.length,
           electionsCount:
-            e.scheduled_elections?.length ??
             agendaItemsByEventId.get(e.id)?.filter(item => Boolean(item?.election)).length,
           createdAt: new Date(e.created_at || Date.now()),
           status: e.status ?? undefined,

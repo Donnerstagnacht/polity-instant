@@ -144,22 +144,9 @@ export function useEventStreamData(eventId: string) {
     queries.events.streamEvent({ id: eventId })
   )
 
-  const [electionVotes, electionVotesResult] = useQuery(
-    queries.events.allElectionVotes({})
-  )
-
-  const [amendmentVoteEntries, amendmentVoteEntriesResult] = useQuery(
-    queries.events.allAmendmentVoteEntries({})
-  )
-
   return {
     event: eventsData?.[0] || null,
-    electionVotes: electionVotes || [],
-    amendmentVoteEntries: amendmentVoteEntries || [],
-    isLoading:
-      eventsResult.type === 'unknown' ||
-      electionVotesResult.type === 'unknown' ||
-      amendmentVoteEntriesResult.type === 'unknown',
+    isLoading: eventsResult.type === 'unknown',
   }
 }
 
@@ -252,26 +239,43 @@ export function useAgendaItemsByEvent(eventId: string) {
     queries.events.agendaItemsFull({ eventId })
   )
 
-  const [electionVotes, electionVotesResult] = useQuery(
-    queries.events.allElectionVotes({})
+  const agendaItemIds = useMemo(
+    () => (agendaItemsData || []).map(item => item.id),
+    [agendaItemsData]
   )
 
-  const [amendmentVoteEntries, amendmentVoteEntriesResult] = useQuery(
-    queries.events.allAmendmentVoteEntries({})
+  const [votesByAgendaItems, votesByAgendaItemsResult] = useQuery(
+    agendaItemIds.length > 0
+      ? queries.votes.byAgendaItems({ agenda_item_ids: agendaItemIds })
+      : undefined
   )
+
+  const votesByAgendaItemId = useMemo(() => {
+    const grouped = new Map<string, Array<NonNullable<typeof votesByAgendaItems>[number]>>()
+
+    for (const vote of votesByAgendaItems || []) {
+      if (!vote.agenda_item_id) continue
+
+      const existingVotes = grouped.get(vote.agenda_item_id) ?? []
+      grouped.set(vote.agenda_item_id, [...existingVotes, vote])
+    }
+
+    return grouped
+  }, [votesByAgendaItems])
 
   const agendaItems = (agendaItemsData || [])
     .filter((item) => item.event?.id === eventId)
+    .map((item) => ({
+      ...item,
+      votes: votesByAgendaItemId.get(item.id) ?? item.votes ?? [],
+    }))
     .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
 
   return {
     agendaItems,
-    electionVotes: electionVotes || [],
-    amendmentVoteEntries: amendmentVoteEntries || [],
     isLoading:
       agendaItemsResult.type === 'unknown' ||
-      electionVotesResult.type === 'unknown' ||
-      amendmentVoteEntriesResult.type === 'unknown',
+      (agendaItemIds.length > 0 && votesByAgendaItemsResult.type === 'unknown'),
   }
 }
 
@@ -282,25 +286,12 @@ export function useAgendaItemDetail(agendaItemId: string) {
     queries.events.agendaItemDetail({ id: agendaItemId })
   )
 
-  const [electionVotes, electionVotesResult] = useQuery(
-    queries.events.allElectionVotes({})
-  )
-
-  const [amendmentVoteEntries, amendmentVoteEntriesResult] = useQuery(
-    queries.events.allAmendmentVoteEntries({})
-  )
-
   const agendaItem = agendaItemsData?.[0]
 
   return {
     agendaItem,
     event: agendaItem?.event,
-    electionVotes: electionVotes || [],
-    amendmentVoteEntries: amendmentVoteEntries || [],
-    isLoading:
-      agendaItemsResult.type === 'unknown' ||
-      electionVotesResult.type === 'unknown' ||
-      amendmentVoteEntriesResult.type === 'unknown',
+    isLoading: agendaItemsResult.type === 'unknown',
   }
 }
 
@@ -425,17 +416,6 @@ export function useElectionWithVotes(electionId: string) {
   return {
     election: electionsData?.[0] || null,
     isLoading: electionsResult.type === 'unknown',
-  }
-}
-
-export function useVotingSessionWithVotes(sessionId: string) {
-  const [sessions, result] = useQuery(
-    queries.events.votingSessionWithVotes({ id: sessionId })
-  )
-
-  return {
-    session: sessions?.[0] || null,
-    isLoading: result.type === 'unknown',
   }
 }
 

@@ -25,6 +25,8 @@ export function useSpeakerList(agendaItemId?: string) {
         order_index: maxOrder + 1,
         user_id: user.id,
         agenda_item_id: agendaItemId,
+        start_time: null,
+        end_time: null,
       });
     } catch (error) {
       console.error('Error adding to speaker list:', error);

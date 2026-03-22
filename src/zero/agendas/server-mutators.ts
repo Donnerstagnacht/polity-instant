@@ -8,21 +8,9 @@ import {
   updateAgendaItemSchema,
   createSpeakerListSchema,
 } from './schema'
-import { createElectionSchema, updateElectionSchema } from '../elections/schema'
 
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 export const agendaServerMutators = {
-  createElection: defineMutator(createElectionSchema, async ({ tx, ctx, args }) => {
-    await mutators.agendas.createElection.fn({ tx, ctx, args })
-
-    if (args.agenda_item_id) {
-      const agendaItem = await tx.run(zql.agenda_item.where('id', args.agenda_item_id).one())
-      if (agendaItem?.event_id) {
-        await recomputeEventCounters(tx, agendaItem.event_id)
-      }
-    }
-  }),
-
   deleteAgendaItem: defineMutator(deleteAgendaItemSchema, async ({ tx, ctx, args }) => {
     const item = await tx.run(zql.agenda_item.where('id', args.id).one())
 
@@ -95,30 +83,6 @@ export const agendaServerMutators = {
           eventId: ai.event_id,
           eventTitle: eTitle,
           agendaItemId: args.agenda_item_id,
-        })
-      }
-    }
-  }),
-
-  updateElection: defineMutator(updateElectionSchema, async ({ tx, ctx, args }) => {
-    const oldElection = await tx.run(zql.election.where('id', args.id).one())
-
-    await mutators.agendas.updateElection.fn({ tx, ctx, args })
-
-    if (oldElection?.agenda_item_id) {
-      const agendaItem = await tx.run(zql.agenda_item.where('id', oldElection.agenda_item_id).one())
-      if (agendaItem?.event_id) {
-        await recomputeEventCounters(tx, agendaItem.event_id)
-      }
-    }
-
-    if (args.status === 'completed' && oldElection?.agenda_item_id) {
-      const ai = await tx.run(zql.agenda_item.where('id', oldElection.agenda_item_id).one())
-      if (ai?.event_id) {
-        fireNotification('notifyElectionResult', {
-          senderId: ctx.userID,
-          eventId: ai.event_id,
-          electionId: args.id,
         })
       }
     }

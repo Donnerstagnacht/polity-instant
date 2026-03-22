@@ -154,18 +154,10 @@ export function useSearchFilters(data: SearchData | undefined, filters: SearchFi
     [data?.elections, query]
   );
 
-  // Filter voting sessions (votes)
+  // TODO: Removed with voting session migration — vote filtering returns empty
   const filteredVotes = useMemo(
-    () =>
-      data?.eventVotingSessions?.filter(session => {
-        const matchesType = session.voting_type && filterByQuery(session.voting_type, query);
-        const matchesStatus = session.status && filterByQuery(session.status, query);
-        const matchesEvent = session.event?.title && filterByQuery(session.event.title, query);
-
-        if (!query) return true;
-        return matchesType || matchesStatus || matchesEvent;
-      }) || [],
-    [data?.eventVotingSessions, query]
+    () => data?.eventVotingSessions ?? [],
+    [data?.eventVotingSessions]
   );
 
   // Filter timeline events for video and image content
@@ -209,7 +201,7 @@ export function useSearchFilters(data: SearchData | undefined, filters: SearchFi
       amendments: sortResults(filteredAmendments, sortBy),
       events: sortResults(filteredEvents, sortBy),
       elections: sortResults(filteredElections, sortBy),
-      votes: sortResults(filteredVotes, sortBy),
+      votes: filteredVotes as { readonly id: string }[],
       videos: sortResults(filteredVideos, sortBy),
       images: sortResults(filteredImages, sortBy),
     }),

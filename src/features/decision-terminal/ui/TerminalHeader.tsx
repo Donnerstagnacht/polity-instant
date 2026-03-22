@@ -13,7 +13,7 @@ import {
 import { Search, Settings, SlidersHorizontal } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
-export type TerminalFilter = 'live' | 'closing_soon' | 'recently_closed' | 'all';
+export type TerminalFilter = 'live' | 'opening_soon' | 'recently_closed' | 'all';
 
 export interface TerminalHeaderProps {
   activeFilter: TerminalFilter;
@@ -43,7 +43,7 @@ export function TerminalHeader({
 
   const filters: { value: TerminalFilter; labelKey: string }[] = [
     { value: 'live', labelKey: 'timeline.terminal.filters.live' },
-    { value: 'closing_soon', labelKey: 'timeline.terminal.filters.closingSoon' },
+    { value: 'opening_soon', labelKey: 'timeline.terminal.filters.openingSoon' },
     { value: 'recently_closed', labelKey: 'timeline.terminal.filters.recentlyClosed' },
     { value: 'all', labelKey: 'timeline.terminal.filters.all' },
   ];

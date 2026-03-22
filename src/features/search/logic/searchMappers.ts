@@ -53,12 +53,11 @@ export function mapMosaicToContentItems(
           location: item.location_name,
           attendeeCount: item.participants?.length,
           electionsCount:
-            item.scheduled_elections?.length ??
             item.agenda_items?.filter(ai => Boolean(ai?.election)).length ??
             agendaItemsByEventId
               .get(item.id)
               ?.filter(agendaItem => Boolean(agendaItem?.election)).length ??
-            item.voting_sessions?.length,
+            0,
           amendmentsCount: item.agenda_items?.filter(ai => Boolean(ai?.amendment)).length,
           tags: extractHashtagTags(item.event_hashtags),
           groupName: item.group?.name,
@@ -82,7 +81,7 @@ export function mapMosaicToContentItems(
           collaboratorCount: item.collaborators?.length,
           changeRequestCount: item.change_requests?.length,
           stats: {
-            reactions: item.votes?.length,
+            reactions: item.vote_entries?.length,
             comments: item.comment_count,
           },
         });
@@ -193,8 +192,8 @@ export function mapMosaicToContentItems(
           status: item.status,
           groupId: item.position?.group?.id,
           groupName: item.position?.group?.name,
-          startDate: item.voting_start_time ? toDate(item.voting_start_time) : undefined,
-          endDate: item.voting_end_time ? toDate(item.voting_end_time) : undefined,
+          startDate: item.created_at ? toDate(item.created_at) : undefined,
+          endDate: item.closing_end_time ? toDate(item.closing_end_time) : undefined,
           candidates: item.candidates ?? [],
           totalCandidates: item.candidates?.length || 0,
           agendaEventId: item.agenda_item?.event?.id,
@@ -202,23 +201,13 @@ export function mapMosaicToContentItems(
         });
         break;
       case 'vote':
+        // TODO: Removed with voting session migration — vote search returns minimal data
         acc.push({
           id: item.id,
           type: 'vote',
-          title: item.event?.title || item.voting_type || 'Vote',
-          description: item.description,
-          createdAt: toDate(item.created_at),
-          eventId: item.event?.id,
-          eventName: item.event?.title,
-          status: item.status,
-          votingType: item.voting_type,
-          phase: item.status,
-          stats: {
-            reactions: item.votes?.filter(v => v.vote === 'accept')?.length || 0,
-            comments: item.votes?.filter(v => v.vote === 'reject')?.length || 0,
-          },
-          agendaEventId: item.agenda_item?.event?.id,
-          agendaItemId: item.agenda_item?.id,
+          title: 'Vote',
+          description: undefined,
+          createdAt: new Date(),
         });
         break;
       case 'video':

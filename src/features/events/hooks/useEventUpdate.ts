@@ -20,6 +20,9 @@ export interface EventFormData {
   imageURL: string;
   isPublic: boolean;
   tags: string[];
+  registrationDeadline: string;
+  amendmentDeadline: string;
+  candidacyDeadline: string;
 }
 
 /**
@@ -43,6 +46,9 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
     imageURL: '',
     isPublic: true,
     tags: [],
+    registrationDeadline: '',
+    amendmentDeadline: '',
+    candidacyDeadline: '',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -99,6 +105,9 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
         imageURL: event.image_url || '',
         isPublic: event.is_public ?? true,
         tags: [],
+        registrationDeadline: event.registration_deadline ? new Date(event.registration_deadline).toISOString().slice(0, 16) : '',
+        amendmentDeadline: event.amendment_deadline ? new Date(event.amendment_deadline).toISOString().slice(0, 16) : '',
+        candidacyDeadline: event.candidacy_deadline ? new Date(event.candidacy_deadline).toISOString().slice(0, 16) : '',
       });
     }
   }, [event]);
@@ -143,6 +152,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
         }
 
         const updateData = {
+          id: eventId,
           title: formData.title,
           description: formData.description,
           location_name: formData.location,
@@ -152,6 +162,9 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           image_url: formData.imageURL || null,
           capacity: formData.capacity ? parseInt(formData.capacity, 10) : null,
           group_id: formData.groupId || null,
+          registration_deadline: formData.registrationDeadline ? new Date(formData.registrationDeadline).getTime() : undefined,
+          amendment_deadline: formData.amendmentDeadline ? new Date(formData.amendmentDeadline).getTime() : undefined,
+          candidacy_deadline: formData.candidacyDeadline ? new Date(formData.candidacyDeadline).getTime() : undefined,
         };
 
         await updateEvent(updateData);

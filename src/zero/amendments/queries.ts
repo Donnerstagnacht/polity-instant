@@ -31,7 +31,7 @@ export const amendmentQueries = {
         .where('id', id)
         .related('collaborators', q => q.related('user'))
         .related('amendment_hashtags', q => q.related('hashtag'))
-        .related('vote_entries', q => q.related('user'))
+        .related('vote_entries', q => q.related('choices'))
         .related('change_requests')
         .related('support_confirmations')
         .related('group')
@@ -50,7 +50,7 @@ export const amendmentQueries = {
         .related('group')
         .related('event')
         .related('agenda_items')
-        .related('votes')
+        .related('vote_entries')
         .related('paths', q => q.related('segments', sq => sq.related('group').related('event')))
         .one()
   ),
@@ -130,14 +130,6 @@ export const amendmentQueries = {
         .orderBy('created_at', 'desc')
   ),
 
-  votingSessions: defineQuery(
-    z.object({ amendment_id: z.string() }),
-    ({ args: { amendment_id } }) =>
-      zql.amendment_voting_session
-        .where('amendment_id', amendment_id)
-        .orderBy('created_at', 'desc')
-  ),
-
   paths: defineQuery(
     z.object({ amendment_id: z.string() }),
     ({ args: { amendment_id } }) =>
@@ -213,15 +205,6 @@ export const amendmentQueries = {
         .where('amendment_id', amendment_id)
         .where('scope', 'amendment')
         .related('action_rights')
-  ),
-
-  // All amendment votes with relations (for decision terminal)
-  amendmentVotesAll: defineQuery(
-    z.object({}),
-    () =>
-      zql.amendment_vote
-        .related('amendment')
-        .related('user')
   ),
 
   // Document versions by document

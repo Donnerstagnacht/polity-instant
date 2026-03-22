@@ -18,6 +18,9 @@ export const agendaItem = table('agenda_item')
     end_time: number().optional(),
     activated_at: number().optional(),
     completed_at: number().optional(),
+    majority_type: string().optional(),
+    time_limit: number().optional(),
+    voting_phase: string().optional(),
     created_at: number(),
     updated_at: number(),
   })
@@ -32,6 +35,8 @@ export const speakerList = table('speaker_list')
     order_index: number().optional(),
     time: number().optional(),
     completed: boolean(),
+    start_time: number().optional(),
+    end_time: number().optional(),
     created_at: number(),
   })
   .primaryKey('id')

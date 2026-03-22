@@ -67,6 +67,26 @@ export function isClosed(endsAt: Date | string): boolean {
 }
 
 /**
+ * Check if a decision is opening soon (starts within 24 hours and hasn't started yet)
+ */
+export function isOpeningSoon(startsAt: Date | string): boolean {
+  const start = new Date(startsAt);
+  const now = new Date();
+  const diffMs = start.getTime() - now.getTime();
+  return diffMs > 0 && diffMs <= 24 * 60 * 60 * 1000; // 24 hours
+}
+
+/**
+ * Check if a decision was recently closed (within the last 24 hours)
+ */
+export function isRecentlyClosed(endsAt: Date | string): boolean {
+  const end = new Date(endsAt);
+  const now = new Date();
+  const diffMs = now.getTime() - end.getTime();
+  return diffMs >= 0 && diffMs <= 24 * 60 * 60 * 1000; // 24 hours
+}
+
+/**
  * Format countdown as HH:MM:SS or Xd HH:MM:SS for long durations
  */
 export function formatCountdown(endsAt: Date | string): string {

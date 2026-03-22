@@ -24,7 +24,6 @@ export function DecisionTerminal({
   isLoading = false,
   className,
 }: DecisionTerminalProps) {
-  const { t } = useTranslation();
   const [activeFilter, setActiveFilter] = useState<TerminalFilter>('live');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDecision, setSelectedDecision] = useState<DecisionItem | null>(null);
@@ -36,13 +35,13 @@ export function DecisionTerminal({
     // Apply filter
     switch (activeFilter) {
       case 'live':
-        filtered = filtered.filter(d => !d.isClosed);
+        filtered = filtered.filter(d => !d.isClosed && !d.isOpeningSoon);
         break;
-      case 'closing_soon':
-        filtered = filtered.filter(d => !d.isClosed && d.isClosingSoon);
+      case 'opening_soon':
+        filtered = filtered.filter(d => !d.isClosed && d.isOpeningSoon);
         break;
       case 'recently_closed':
-        filtered = filtered.filter(d => d.isClosed);
+        filtered = filtered.filter(d => d.isClosed && d.isRecentlyClosed);
         break;
       case 'all':
       default:
@@ -165,7 +164,7 @@ function TerminalEmptyState({ filter }: { filter: TerminalFilter }) {
 
   const messages: Record<TerminalFilter, string> = {
     live: t('timeline.terminal.empty.live'),
-    closing_soon: t('timeline.terminal.empty.closingSoon'),
+    opening_soon: t('timeline.terminal.empty.openingSoon'),
     recently_closed: t('timeline.terminal.empty.recentlyClosed'),
     all: t('timeline.terminal.empty.all'),
   };

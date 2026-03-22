@@ -279,6 +279,8 @@ export const timelineTranslations = {
     active: 'active',
     ended: 'Ended',
     endedAgo: 'Ended {{time}} ago',
+    startsIn: 'Starts in',
+    closesIn: 'Closes in',
     timeRemaining: 'Time Remaining',
     turnout: 'Turnout',
     trend: 'Trend',
@@ -305,6 +307,7 @@ export const timelineTranslations = {
     showLess: 'Show less',
     filters: {
       live: 'LIVE',
+      openingSoon: 'OPENING SOON',
       closingSoon: 'CLOSING SOON',
       recentlyClosed: 'RECENTLY CLOSED',
       all: 'ALL',
@@ -332,6 +335,7 @@ export const timelineTranslations = {
     },
     empty: {
       live: 'No live decisions at the moment',
+      openingSoon: 'No decisions opening soon',
       closingSoon: 'No decisions closing soon',
       recentlyClosed: 'No recently closed decisions',
       all: 'No decisions to display',

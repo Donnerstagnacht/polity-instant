@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useQuery } from '@rocicorp/zero/react'
 import { queries } from '../queries'
 import { useAgendaState } from '../agendas/useAgendaState'
+import { useElectionState } from '../elections/useElectionState'
 import { useCommonState } from '../common/useCommonState'
 
 export interface SearchLimits {
@@ -85,15 +86,16 @@ export function useSearchState(options: SearchOptions = {}) {
     [events]
   )
 
-  const { agendaItems, electionsForSearch: elections } = useAgendaState({
+  const { agendaItems } = useAgendaState({
     eventIds: eventIds.length > 0 ? eventIds : undefined,
+  })
+
+  const { electionsForSearch: elections } = useElectionState({
     includeElectionsForSearch: true,
   })
 
-  // ── Voting sessions ─────────────────────────────────────────────────
-  const [eventVotingSessions] = useQuery(
-    queries.search.searchableVotingSessions({ limit: votingSessionsLimit })
-  )
+  // TODO: Removed with voting session migration
+  // searchableVotingSessions query no longer exists
 
   return {
     users: users ?? [],
@@ -110,7 +112,7 @@ export function useSearchState(options: SearchOptions = {}) {
     timelineEvents: timelineEvents ?? [],
     agendaItems: eventIds.length > 0 ? (agendaItems ?? []) : [],
     elections: elections ?? [],
-    eventVotingSessions: eventVotingSessions ?? [],
+    eventVotingSessions: [] as readonly { readonly id: string }[],
     allHashtags: allHashtags ?? [],
     isLoading: false,
   }

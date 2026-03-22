@@ -7,7 +7,7 @@ import { Vote, Award, ChevronRight } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { StatusBadge, type DecisionStatus } from './StatusBadge';
 import { CountdownTimer, EndedAgo } from './CountdownTimer';
-import { VoteBarCompact } from './VoteProgressBar';
+import { CandidateBarCompact, VoteBarCompact } from './VoteProgressBar';
 import { TrendIndicator } from './TrendIndicator';
 import { ResultBadge } from './ResultBadge';
 import type { DecisionItem } from './types';
@@ -18,6 +18,25 @@ export interface MobileDecisionCardProps {
   className?: string;
 }
 
+function getElectionBarData(decision: DecisionItem) {
+  if (decision.type !== 'election' || !decision.candidates?.length) {
+    return null;
+  }
+
+  const candidates = decision.candidates
+    .map(candidate => ({
+      id: candidate.id,
+      label: candidate.name,
+      value: decision.isIndicationPhase ? (candidate.indicationVotes || 0) : (candidate.votes || 0),
+    }))
+    .sort((left, right) => right.value - left.value || left.label.localeCompare(right.label));
+
+  return {
+    totalSelections: decision.votedCount ?? candidates.reduce((total, candidate) => total + candidate.value, 0),
+    candidates,
+  };
+}
+
 /**
  * Mobile-friendly card for Decision Terminal
  * Compact but shows key info: status, time, trend
@@ -25,6 +44,7 @@ export interface MobileDecisionCardProps {
 export function MobileDecisionCard({ decision, onClick, className }: MobileDecisionCardProps) {
   const { t } = useTranslation();
   const Icon = decision.type === 'vote' ? Vote : Award;
+  const electionBarData = getElectionBarData(decision);
 
   return (
     <Card
@@ -49,8 +69,18 @@ export function MobileDecisionCard({ decision, onClick, className }: MobileDecis
           <div className="text-right">
             {decision.isClosed ? (
               <EndedAgo endedAt={decision.endsAt} />
+            ) : decision.isOpeningSoon && decision.startsAt ? (
+              <CountdownTimer
+                endsAt={decision.startsAt}
+                compact
+                compactLabel={t('timeline.terminal.startsIn', 'Starts in')}
+              />
             ) : (
-              <CountdownTimer endsAt={decision.endsAt} compact />
+              <CountdownTimer
+                endsAt={decision.endsAt}
+                compact
+                compactLabel={t('timeline.terminal.closesIn', 'Closes in')}
+              />
             )}
           </div>
         </div>
@@ -65,58 +95,53 @@ export function MobileDecisionCard({ decision, onClick, className }: MobileDecis
           </div>
         </div>
 
-        {/* Vote bar and trend (for open votes) */}
-        {decision.votes && (
+        {/* Vote bar and trend (for votes) or candidate share bar (for elections) */}
+        {decision.type === 'election' && electionBarData ? (
           <div className="mb-3 mt-3 space-y-2">
-            {/* Indication display */}
-            {decision.isIndicationPhase && decision.indicationVotes ? (
-              <>
-                <div className="flex items-center justify-between">
-                  <VoteBarCompact
-                    votes={decision.indicationVotes}
-                    className="w-full max-w-[180px] opacity-70"
-                  />
-                </div>
-                <div className="text-[11px] text-blue-500">
-                  * {t('timeline.terminal.indicationOnly', { defaultValue: 'Indication only' })}
-                </div>
-              </>
-            ) : (
-              <>
-                {/* Show indication comparison if available */}
-                {decision.indicationVotes && !decision.isIndicationPhase && (
-                  <div className="text-[10px] text-muted-foreground">
-                    <span className="text-blue-400">
-                      {t('timeline.terminal.indication', { defaultValue: 'Ind' })}:{' '}
-                      {decision.indicationSupportPercentage}%
-                    </span>
-                    <span className="mx-1">→</span>
-                    <span className="font-medium">{decision.supportPercentage}%</span>
-                  </div>
-                )}
-                <div className="flex items-center justify-between">
-                  <VoteBarCompact votes={decision.votes} className="w-full max-w-[180px]" />
-                  {!decision.isClosed && <TrendIndicator trend={decision.trend} compact />}
-                </div>
-                <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                    {t('timeline.terminal.support', { defaultValue: 'Support' })}:{' '}
-                    {decision.votes.support}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
-                    {t('timeline.terminal.oppose', { defaultValue: 'Oppose' })}:{' '}
-                    {decision.votes.oppose}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
-                    {t('timeline.terminal.abstain', { defaultValue: 'Abstain' })}:{' '}
-                    {decision.votes.abstain}
-                  </span>
-                </div>
-              </>
-            )}
+            <div className="flex items-center gap-2">
+              {decision.isIndicationPhase && (
+                <span className="shrink-0 text-[11px] text-blue-500">
+                  {t('timeline.terminal.indication', 'Ind')}
+                </span>
+              )}
+              {!decision.isIndicationPhase && electionBarData.candidates.some(c => c.value > 0) && (
+                <span className="shrink-0 text-[10px] text-blue-400">
+                  {t('timeline.terminal.indication', 'Ind')}
+                  {' '}→
+                </span>
+              )}
+              <CandidateBarCompact candidates={electionBarData.candidates} className="min-w-0 flex-1" />
+              <span className="shrink-0 font-mono text-[11px] text-muted-foreground">
+                {electionBarData.totalSelections}
+              </span>
+            </div>
+            {!decision.isClosed && <TrendIndicator trend={decision.trend} compact />}
+          </div>
+        ) : decision.votes && (
+          <div className="mb-3 mt-3 space-y-2">
+            <div className="flex items-center gap-2">
+              {decision.isIndicationPhase && decision.indicationVotes ? (
+                <span className="shrink-0 text-[11px] text-blue-500">
+                  {t('timeline.terminal.indication', 'Ind')}
+                </span>
+              ) : decision.indicationVotes && !decision.isIndicationPhase ? (
+                <span className="shrink-0 text-[10px] text-blue-400">
+                  {t('timeline.terminal.indication', 'Ind')}
+                  {' '}→
+                </span>
+              ) : null}
+              <VoteBarCompact
+                votes={decision.isIndicationPhase && decision.indicationVotes ? decision.indicationVotes : decision.votes}
+                className={cn('min-w-0 flex-1', decision.isIndicationPhase && 'opacity-70')}
+              />
+              <span className="shrink-0 font-mono text-[11px] text-muted-foreground">
+                {(() => {
+                  const v = decision.isIndicationPhase && decision.indicationVotes ? decision.indicationVotes : decision.votes;
+                  return `${v.support}/${v.oppose}/${v.abstain}`;
+                })()}
+              </span>
+            </div>
+            {!decision.isClosed && <TrendIndicator trend={decision.trend} compact />}
           </div>
         )}
 

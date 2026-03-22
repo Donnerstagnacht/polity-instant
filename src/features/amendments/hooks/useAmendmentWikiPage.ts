@@ -24,8 +24,7 @@ export function useAmendmentWikiPage(amendmentId: string) {
   // Collaboration hook
   const collaborationData = useAmendmentCollaboration(amendmentId);
 
-  const { updateAmendment, deleteVoteEntry, updateVoteEntry, createVoteEntry } =
-    useAmendmentActions();
+  const { updateAmendment } = useAmendmentActions();
 
   // All data via facade
   const facadeResult = useAmendmentState({
@@ -118,57 +117,26 @@ export function useAmendmentWikiPage(amendmentId: string) {
     }
 
     try {
-      const { userVote } = voteState;
-      if (userVote) {
-        if (userVote.vote === voteValue) {
-          await deleteVoteEntry(userVote.id);
-          await updateAmendment({
-            id: amendmentId,
-            upvotes: voteValue === 1 ? (amendment.upvotes || 1) - 1 : amendment.upvotes,
-            downvotes: voteValue === -1 ? (amendment.downvotes || 1) - 1 : amendment.downvotes,
-          });
-        } else {
-          await updateVoteEntry({ id: userVote.id, vote: voteValue });
-          await updateAmendment({
-            id: amendmentId,
-            upvotes:
-              voteValue === 1
-                ? (amendment.upvotes || 0) + 1
-                : Math.max(0, (amendment.upvotes || 1) - 1),
-            downvotes:
-              voteValue === -1
-                ? (amendment.downvotes || 0) + 1
-                : Math.max(0, (amendment.downvotes || 1) - 1),
-          });
-        }
-      } else {
-        const voteId = crypto.randomUUID();
-        await createVoteEntry({
-          id: voteId,
-          vote: voteValue,
-          amendment_id: amendmentId,
-        });
-        await updateAmendment({
-          id: amendmentId,
-          upvotes: voteValue === 1 ? (amendment.upvotes || 0) + 1 : amendment.upvotes,
-          downvotes: voteValue === -1 ? (amendment.downvotes || 0) + 1 : amendment.downvotes,
-        });
-      }
+      // TODO: Per-user upvote/downvote tracking removed with voting system migration
+      // For now, just update the aggregate counts directly
+      await updateAmendment({
+        id: amendmentId,
+        upvotes: voteValue === 1 ? (amendment.upvotes || 0) + 1 : amendment.upvotes,
+        downvotes: voteValue === -1 ? (amendment.downvotes || 0) + 1 : amendment.downvotes,
+      });
 
-      // Notify amendment author about vote (skip on vote removal)
-      if (!(userVote && userVote.vote === voteValue)) {
-        const adminCollab = collaborators.find((c) => c.status === 'admin');
-        const authorUserId = adminCollab?.user?.id;
-        if (authorUserId && authorUserId !== user.id) {
-          await notifyAmendmentVoted({
-            senderId: user.id,
-            senderName: user.email || 'Someone',
-            recipientUserId: authorUserId,
-            amendmentId,
-            amendmentTitle: amendment.title ?? '',
-            voteType: voteValue === 1 ? 'upvote' : 'downvote',
-          });
-        }
+      // Notify amendment author about vote
+      const adminCollab = collaborators.find((c) => c.status === 'admin');
+      const authorUserId = adminCollab?.user?.id;
+      if (authorUserId && authorUserId !== user.id) {
+        await notifyAmendmentVoted({
+          senderId: user.id,
+          senderName: user.email || 'Someone',
+          recipientUserId: authorUserId,
+          amendmentId,
+          amendmentTitle: amendment.title ?? '',
+          voteType: voteValue === 1 ? 'upvote' : 'downvote',
+        });
       }
     } catch (error) {
       console.error('Error voting:', error);

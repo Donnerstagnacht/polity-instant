@@ -2,6 +2,8 @@ import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
+import { useElectionActions } from '@/zero/elections/useElectionActions';
+import { useVoteActions } from '@/zero/votes/useVoteActions';
 import {
   useAllEvents,
   useAllAmendments,
@@ -21,15 +23,27 @@ import { TooltipProvider } from '@/features/shared/ui/ui/tooltip';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { notifyAgendaItemCreated } from '@/features/notifications/utils/notification-helpers.ts';
 import type { CreateFormConfig } from '../types/create-form.types';
+import { PositionSearchInput } from '../ui/inputs/PositionSearchInput';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/features/shared/ui/ui/select';
 
-type AgendaItemType = 'election' | 'vote' | 'speech' | 'discussion';
+type AgendaItemType = 'election' | 'vote' | 'speech' | 'discussion' | 'accreditation';
+
+type MajorityType = 'simple' | 'absolute' | 'two_thirds';
 
 export function useCreateAgendaItemForm(): CreateFormConfig {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const searchParams = useSearch({ strict: false });
   const { user } = useAuth();
-  const { createAgendaItem, createElection } = useAgendaActions();
+  const { createAgendaItem } = useAgendaActions();
+  const { createElection } = useElectionActions();
+  const { createVote, createVoteChoice } = useVoteActions();
 
   const eventIdParam = (searchParams as { eventId?: string }).eventId;
   const typeParam = (searchParams as { type?: AgendaItemType }).type;
@@ -47,6 +61,8 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
   const [eventId, setEventId] = useState(eventIdParam || '');
   const [amendmentId, setAmendmentId] = useState('');
   const [positionId, setPositionId] = useState('');
+  const [majorityType, setMajorityType] = useState<MajorityType>('simple');
+  const [timeLimit, setTimeLimit] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { agendaItems: eventAgendaItems } = useEventAgenda(eventId || undefined);
@@ -92,6 +108,8 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
     try {
       const agendaItemId = crypto.randomUUID();
 
+      const isVotable = type === 'election' || type === 'vote';
+
       await createAgendaItem({
         id: agendaItemId,
         title: title.trim(),
@@ -108,6 +126,9 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
         completed_at: 0,
         event_id: eventId || null,
         amendment_id: amendmentId || null,
+        voting_phase: isVotable ? 'indication' : null,
+        majority_type: isVotable ? majorityType : null,
+        time_limit: isVotable && timeLimit ? parseInt(timeLimit) * 60 : null,
       });
 
       if (type === 'election') {
@@ -115,17 +136,45 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
         await createElection({
           id: electionId,
           title: title.trim(),
-          description: description.trim() || '',
-          majority_type: 'relative',
-          is_multiple_choice: false,
-          max_selections: 1,
-          status: 'pending',
-          voting_start_time: 0,
-          voting_end_time: 0,
+          description: description.trim() || null,
+          status: 'indicative',
+          majority_type: majorityType,
+          closing_type: null,
+          closing_duration_seconds: null,
+          closing_end_time: null,
+          is_public: true,
+          max_votes: 1,
           agenda_item_id: agendaItemId,
           position_id: positionId || null,
-          amendment_id: null,
         });
+      }
+
+      if (type === 'vote') {
+        const voteId = crypto.randomUUID();
+        await createVote({
+          id: voteId,
+          title: title.trim(),
+          description: description.trim() || null,
+          status: 'indicative',
+          majority_type: majorityType,
+          closing_type: 'moderator',
+          closing_duration_seconds: null,
+          closing_end_time: null,
+          is_public: true,
+          agenda_item_id: agendaItemId,
+          amendment_id: amendmentId || null,
+        });
+
+        // Create default choices: Yes, No, Abstain
+        const defaultChoices = ['Yes', 'No', 'Abstain'];
+        for (let i = 0; i < defaultChoices.length; i++) {
+          await createVoteChoice({
+            id: crypto.randomUUID(),
+            vote_id: voteId,
+            label: defaultChoices[i],
+            order_index: i + 1,
+          });
+        }
       }
 
       await notifyAgendaItemCreated({
@@ -230,6 +279,43 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
             </div>
           ),
         },
+        ...((type === 'election' || type === 'vote') ? [{
+          label: t('pages.create.agendaItem.votingSettings', 'Voting Settings'),
+          isValid: () => true,
+          content: (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>{t('pages.create.agendaItem.majorityType', 'Majority Type')}</Label>
+                <Select value={majorityType} onValueChange={(v: string) => setMajorityType(v as MajorityType)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="simple">
+                      {t('pages.create.agendaItem.majoritySimple', 'Simple Majority (>50%)')}
+                    </SelectItem>
+                    <SelectItem value="absolute">
+                      {t('pages.create.agendaItem.majorityAbsolute', 'Absolute Majority')}
+                    </SelectItem>
+                    <SelectItem value="two_thirds">
+                      {t('pages.create.agendaItem.majorityTwoThirds', 'Two-Thirds Majority (≥66.7%)')}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>{t('pages.create.agendaItem.timeLimit', 'Time Limit (minutes)')}</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  placeholder={t('pages.create.agendaItem.timeLimitPlaceholder', 'No limit')}
+                  value={timeLimit}
+                  onChange={e => setTimeLimit(e.target.value)}
+                />
+              </div>
+            </div>
+          ),
+        }] : []),
         {
           label: t('pages.create.agendaItem.additionalLinks'),
           isValid: () => true,
@@ -253,17 +339,13 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
               )}
               {type === 'election' && (
                 <div className="space-y-2">
-                  <Label>{t('pages.create.agendaItem.positionOptional')}</Label>
-                  <TypeaheadSearch
-                    items={toTypeaheadItems(
-                      userPositions,
-                      'position',
-                      p => p.title || 'Position',
-                      p => p.description?.substring(0, 60)
-                    )}
+                  <PositionSearchInput
                     value={positionId}
-                    onChange={(item: TypeaheadItem | null) => setPositionId(item?.id ?? '')}
+                    onChange={setPositionId}
+                    label={t('pages.create.agendaItem.positionOptional')}
                     placeholder={t('pages.create.agendaItem.positionPlaceholder')}
+                    groupIds={selectedEvent?.group_id ? [selectedEvent.group_id] : undefined}
+                    eventId={eventId || undefined}
                   />
                 </div>
               )}
@@ -315,6 +397,20 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                       },
                     ]
                   : []),
+                ...((type === 'election' || type === 'vote')
+                  ? [
+                      {
+                        label: t('pages.create.agendaItem.majorityType', 'Majority Type'),
+                        value: majorityType === 'two_thirds' ? '⅔ Majority' : majorityType === 'absolute' ? 'Absolute' : 'Simple',
+                      },
+                      ...(timeLimit
+                        ? [{
+                            label: t('pages.create.agendaItem.timeLimit', 'Time Limit'),
+                            value: `${timeLimit} min`,
+                          }]
+                        : []),
+                    ]
+                  : []),
               ]}
             />
           ),
@@ -330,6 +426,8 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       eventId,
       amendmentId,
       positionId,
+      majorityType,
+      timeLimit,
       isSubmitting,
       userEvents,
       userAmendments,

@@ -54,7 +54,7 @@ export const searchQueries = {
       zql.amendment
         .related('amendment_hashtags', q => q.related('hashtag'))
         .related('collaborators', q => q.related('user'))
-        .related('votes', q => q.related('user'))
+        .related('vote_entries', q => q.related('choices'))
         .related('support_votes', q => q.related('user'))
         .related('change_requests')
         .related('group')
@@ -69,9 +69,7 @@ export const searchQueries = {
         .related('group')
         .related('participants', q => q.related('user'))
         .related('event_hashtags', q => q.related('hashtag'))
-        .related('voting_sessions', q => q.related('agenda_item').related('votes'))
         .related('event_positions', q => q.related('holders'))
-        .related('scheduled_elections')
         .related('agenda_items', q => q.related('election').related('amendment'))
         .limit(limit)
   ),
@@ -103,13 +101,4 @@ export const searchQueries = {
         .limit(limit)
   ),
 
-  searchableVotingSessions: defineQuery(
-    z.object({ limit: z.number() }),
-    ({ args: { limit } }) =>
-      zql.event_voting_session
-        .related('event')
-        .related('votes', q => q.related('user'))
-        .related('agenda_item', q => q.related('event').related('election').related('amendment'))
-        .limit(limit)
-  ),
 }

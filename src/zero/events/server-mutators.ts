@@ -270,27 +270,6 @@ export const eventServerMutators = {
     })
   }),
 
-  finalizeAgendaItem: defineMutator(z.object({ id: z.string(), status: z.string(), end_time: z.number().optional() }), async ({ tx, ctx, args }) => {
-    const session = await tx.run(zql.event_voting_session.where('id', args.id).one())
-
-    await mutators.events.finalizeAgendaItem.fn({ tx, ctx, args })
-
-    if (!session) return
-
-    const eventId = session.event_id
-    const eTitle = await eventTitle(tx, eventId)
-
-    if (args.status === 'voting') {
-      fireNotification('notifyVotingPhaseStarted', {
-        senderId: ctx.userID, eventId, eventTitle: eTitle, sessionId: args.id,
-      })
-    } else if (args.status === 'completed') {
-      fireNotification('notifyVotingCompleted', {
-        senderId: ctx.userID, eventId, eventTitle: eTitle, sessionId: args.id,
-      })
-    }
-  }),
-
   // Event position overrides
   createPosition: defineMutator(createEventPositionSchema, async ({ tx, ctx, args }) => {
     await mutators.events.createPosition.fn({ tx, ctx, args })

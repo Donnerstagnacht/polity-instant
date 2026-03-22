@@ -23,12 +23,13 @@ export function DecisionTable({
   className,
 }: DecisionTableProps) {
   const { t } = useTranslation();
+  const gridColumnsClass = 'grid-cols-[70px_minmax(0,0.9fr)_140px_100px_112px_180px_80px]';
 
   return (
     <div className={cn('w-full overflow-x-auto', className)}>
       {/* Table header */}
-      <div className="sticky top-0 z-10 min-w-[920px] bg-muted/95 backdrop-blur">
-        <div className="grid grid-cols-[70px_0.9fr_140px_100px_80px_180px_80px] gap-2 border-b border-gray-200 px-4 py-2 dark:border-gray-700">
+      <div className="sticky top-0 z-10 min-w-[960px] bg-muted/95 backdrop-blur">
+        <div className={cn('grid gap-2 border-b border-gray-200 px-4 py-2 dark:border-gray-700', gridColumnsClass)}>
           <div className="font-mono text-xs font-semibold uppercase text-muted-foreground">
             {t('timeline.terminal.columns.id')}
           </div>
@@ -45,7 +46,7 @@ export function DecisionTable({
             {t('timeline.terminal.columns.status')}
           </div>
           <div className="font-mono text-xs font-semibold uppercase text-muted-foreground">
-            {t('timeline.terminal.columns.votes', { defaultValue: 'Votes' })}
+            {t('timeline.terminal.columns.votes', 'Votes')}
           </div>
           <div className="font-mono text-xs font-semibold uppercase text-muted-foreground">
             {t('timeline.terminal.columns.trend')}
@@ -54,7 +55,7 @@ export function DecisionTable({
       </div>
 
       {/* Table body */}
-      <div className="min-w-[920px] divide-y divide-gray-100 dark:divide-gray-800">
+      <div className="min-w-[960px] divide-y divide-gray-100 dark:divide-gray-800">
         {decisions.map(decision => (
           <DecisionRow
             key={decision.id}

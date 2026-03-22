@@ -18,6 +18,53 @@ export interface VoteProgressBarProps {
   className?: string;
 }
 
+export interface CompactBarSegment {
+  id: string;
+  label: string;
+  value: number;
+}
+
+const ELECTION_SEGMENT_COLORS = [
+  'bg-sky-500',
+  'bg-emerald-500',
+  'bg-amber-500',
+  'bg-fuchsia-500',
+  'bg-orange-500',
+  'bg-cyan-500',
+  'bg-violet-500',
+  'bg-lime-500',
+];
+
+function CompactStackedBar({
+  segments,
+  className,
+}: {
+  segments: Array<CompactBarSegment & { colorClass: string }>;
+  className?: string;
+}) {
+  const total = segments.reduce((sum, segment) => sum + segment.value, 0);
+
+  return (
+    <div className={cn('flex h-2.5 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700', className)}>
+      {total > 0 &&
+        segments
+          .filter(segment => segment.value > 0)
+          .map(segment => {
+            const percentage = (segment.value / total) * 100;
+
+            return (
+              <div
+                key={segment.id}
+                className={cn(segment.colorClass, 'transition-all duration-300')}
+                style={{ width: `${percentage}%` }}
+                title={`${segment.label}: ${segment.value} (${Math.round(percentage)}%)`}
+              />
+            );
+          })}
+    </div>
+  );
+}
+
 /**
  * Calculate percentages from vote counts
  */
@@ -146,27 +193,26 @@ export function VoteProgressBar({
  * Simple inline vote bar for table rows
  */
 export function VoteBarCompact({ votes, className }: { votes: VoteData; className?: string }) {
-  const percentages = calculateVotePercentages(votes);
+  const segments = [
+    { id: 'support', label: 'Support', value: votes.support, colorClass: 'bg-green-500' },
+    { id: 'oppose', label: 'Oppose', value: votes.oppose, colorClass: 'bg-red-500' },
+    { id: 'abstain', label: 'Abstain', value: votes.abstain, colorClass: 'bg-gray-400' },
+  ];
 
-  return (
-    <div className={cn('flex items-center gap-2', className)}>
-      <div className="flex h-1.5 w-24 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-        {percentages.support > 0 && (
-          <div
-            className="bg-green-500 transition-all duration-300"
-            style={{ width: `${percentages.support}%` }}
-          />
-        )}
-        {percentages.oppose > 0 && (
-          <div
-            className="bg-red-500 transition-all duration-300"
-            style={{ width: `${percentages.oppose}%` }}
-          />
-        )}
-      </div>
-      <span className="font-mono text-xs font-medium text-green-600 dark:text-green-400">
-        {percentages.support}%
-      </span>
-    </div>
-  );
+  return <CompactStackedBar segments={segments} className={cn('w-full', className)} />;
+}
+
+export function CandidateBarCompact({
+  candidates,
+  className,
+}: {
+  candidates: CompactBarSegment[];
+  className?: string;
+}) {
+  const segments = candidates.map((candidate, index) => ({
+    ...candidate,
+    colorClass: ELECTION_SEGMENT_COLORS[index % ELECTION_SEGMENT_COLORS.length],
+  }));
+
+  return <CompactStackedBar segments={segments} className={cn('w-full', className)} />;
 }

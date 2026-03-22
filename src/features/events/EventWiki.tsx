@@ -2,7 +2,7 @@
 
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Trophy, UserCheck, Users, Video, Building2, MapPin, Repeat } from 'lucide-react';
+import { Trophy, UserCheck, Users, Repeat } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -40,6 +40,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/ava
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { DelegatesOverview } from '@/features/delegates/ui/DelegatesOverview';
+import { EventDeadlinesCard } from './ui/EventDeadlinesCard';
 import {
   Carousel,
   CarouselContent,
@@ -239,56 +240,12 @@ export function EventWiki({ eventId }: EventWikiProps) {
         />
       )}
 
-      {/* Location Card */}
-      {event.location_type && (
-        <Card className={`mb-6 overflow-hidden ${GRADIENTS[2]}`}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              {event.location_type === 'online' ? (
-                <Video className="h-5 w-5" />
-              ) : event.location_type === 'physical' ? (
-                <Building2 className="h-5 w-5" />
-              ) : (
-                <MapPin className="h-5 w-5" />
-              )}
-              {event.location_type === 'online' ? 'Online Meeting' : 'Veranstaltungsort'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {event.location_type === 'online' ? (
-              <>
-                {event.location_url && (
-                  <div className="bg-background/80 flex items-center justify-between rounded-lg border p-4 shadow-sm backdrop-blur-sm">
-                    <span className="font-medium">Meeting Link:</span>
-                    <a
-                      href={event.location_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary max-w-[60%] truncate hover:underline"
-                    >
-                      {event.location_url}
-                    </a>
-                  </div>
-                )}
-              </>
-            ) : event.location_type === 'physical' ? (
-              <div className="bg-background/80 space-y-2 rounded-lg border p-4 shadow-sm backdrop-blur-sm">
-                {event.location_name && (
-                  <p className="text-lg font-semibold">{event.location_name}</p>
-                )}
-                {event.location_address && (
-                  <p className="text-muted-foreground">{event.location_address}</p>
-                )}
-              </div>
-            ) : event.location_name ? (
-              <div className="bg-background/80 flex items-center gap-2 rounded-lg border p-4 shadow-sm backdrop-blur-sm">
-                <MapPin className="text-muted-foreground h-4 w-4" />
-                <span>{event.location_name}</span>
-              </div>
-            ) : null}
-          </CardContent>
-        </Card>
-      )}
+      {/* Deadlines Card */}
+      <EventDeadlinesCard
+        registrationDeadline={event.registration_deadline}
+        amendmentDeadline={event.amendment_deadline}
+        candidacyDeadline={event.candidacy_deadline}
+      />
 
       {/* Public Participants Card */}
       {event.is_public && (

@@ -20,14 +20,7 @@ import {
 } from '../change-requests/schema'
 import {
   createChangeRequestVoteSchema,
-  createAmendmentVoteSchema,
-  deleteAmendmentVoteSchema,
   createAmendmentSupportVoteSchema,
-  createAmendmentVoteEntrySchema,
-  updateAmendmentVoteEntrySchema,
-  deleteAmendmentVoteEntrySchema,
-  createAmendmentVotingSessionSchema,
-  updateAmendmentVotingSessionSchema,
 } from '../votes/schema'
 import { z } from 'zod'
 
@@ -119,18 +112,6 @@ export const amendmentSharedMutators = {
     }
   ),
 
-  castAmendmentVote: defineMutator(
-    createAmendmentVoteSchema,
-    async ({ tx, ctx: { userID }, args }) => {
-      const now = Date.now()
-      await tx.mutate.amendment_vote.insert({
-        ...args,
-        user_id: userID,
-        created_at: now,
-      })
-    }
-  ),
-
   updateWorkflowStatus: defineMutator(
     z.object({ id: z.string(), workflow_status: z.string() }),
     async ({ tx, args }) => {
@@ -151,59 +132,6 @@ export const amendmentSharedMutators = {
         user_id: userID,
         created_at: now,
       })
-    }
-  ),
-
-  // Amendment Vote Entry mutators
-  createVoteEntry: defineMutator(
-    createAmendmentVoteEntrySchema,
-    async ({ tx, ctx: { userID }, args }) => {
-      const now = Date.now()
-      await tx.mutate.amendment_vote_entry.insert({
-        ...args,
-        user_id: userID,
-        created_at: now,
-      })
-    }
-  ),
-
-  updateVoteEntry: defineMutator(
-    updateAmendmentVoteEntrySchema,
-    async ({ tx, args }) => {
-      await tx.mutate.amendment_vote_entry.update(args)
-    }
-  ),
-
-  deleteVoteEntry: defineMutator(
-    deleteAmendmentVoteEntrySchema,
-    async ({ tx, args }) => {
-      await tx.mutate.amendment_vote_entry.delete({ id: args.id })
-    }
-  ),
-
-  deleteAmendmentVote: defineMutator(
-    deleteAmendmentVoteSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.amendment_vote.delete({ id: args.id })
-    }
-  ),
-
-  // Amendment Voting Session mutators
-  createVotingSession: defineMutator(
-    createAmendmentVotingSessionSchema,
-    async ({ tx, args }) => {
-      const now = Date.now()
-      await tx.mutate.amendment_voting_session.insert({
-        ...args,
-        created_at: now,
-      })
-    }
-  ),
-
-  updateVotingSession: defineMutator(
-    updateAmendmentVotingSessionSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.amendment_voting_session.update(args)
     }
   ),
 

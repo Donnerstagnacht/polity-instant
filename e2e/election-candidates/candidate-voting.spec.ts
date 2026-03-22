@@ -8,7 +8,7 @@ test.describe('Election Candidates - Candidate Voting Integration', () => {
   test('Vote for candidate', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as voter
     // 2. Navigate to election
-    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/stream`);
+    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda`);
     await page.waitForLoadState('networkidle');
 
     // 3. Find election with candidates
@@ -38,7 +38,7 @@ test.describe('Election Candidates - Candidate Voting Integration', () => {
   test('Change vote to different candidate', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as voter
     // 2. Navigate to election
-    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/stream`);
+    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda`);
     await page.waitForLoadState('networkidle');
 
     // 3. User has voted for Candidate A

@@ -66,6 +66,8 @@ CREATE TABLE IF NOT EXISTS public.event (
   main_group_delegate_allocation_mode TEXT,
   current_agenda_item_id UUID,
   amendment_deadline TIMESTAMPTZ,
+  registration_deadline TIMESTAMPTZ,
+  candidacy_deadline TIMESTAMPTZ,
   delegates_nomination_deadline TIMESTAMPTZ,
   group_id UUID,
   creator_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,

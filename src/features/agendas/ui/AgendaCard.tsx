@@ -3,22 +3,25 @@
 import { ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
-import { Badge } from '@/features/shared/ui/ui/badge.tsx';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/features/shared/ui/ui/card.tsx';
-import { UserCheck, Vote, Users, FileText, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { cn } from '@/features/shared/utils/utils.ts';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { AgendaStatusBadge, AgendaTypeBadge } from './AgendaBadges';
 
-export type AgendaItemType = 'election' | 'vote' | 'speech' | 'discussion';
+export type AgendaItemType = 'election' | 'vote' | 'speech' | 'discussion' | 'accreditation';
 export type AgendaItemStatus = 'completed' | 'in-progress' | 'pending' | 'planned';
 
 interface AgendaCardProps {
   id: string;
   title: string;
   description?: string;
+  subtitle?: string;
   type: AgendaItemType;
   status: AgendaItemStatus;
   creatorName?: string;
+  creatorAvatar?: string;
   detailsLink: string;
   detailsLabel?: string;
   footer?: ReactNode;
@@ -27,55 +30,17 @@ interface AgendaCardProps {
   actionButton?: ReactNode;
   showMoveButton?: boolean;
   onMoveClick?: () => void;
+  footerRight?: ReactNode;
 }
-
-const getAgendaItemIcon = (type: AgendaItemType) => {
-  switch (type) {
-    case 'election':
-      return <UserCheck className="h-4 w-4" />;
-    case 'vote':
-      return <Vote className="h-4 w-4" />;
-    case 'speech':
-      return <Users className="h-4 w-4" />;
-    case 'discussion':
-    default:
-      return <FileText className="h-4 w-4" />;
-  }
-};
-
-const getStatusColor = (status: AgendaItemStatus) => {
-  switch (status) {
-    case 'completed':
-      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-    case 'in-progress':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-    case 'pending':
-    case 'planned':
-    default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
-  }
-};
-
-const getTypeColor = (type: AgendaItemType) => {
-  switch (type) {
-    case 'election':
-      return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
-    case 'vote':
-      return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
-    case 'speech':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-    case 'discussion':
-    default:
-      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-  }
-};
 
 export function AgendaCard({
   title,
   description,
+  subtitle,
   type,
   status,
   creatorName,
+  creatorAvatar,
   detailsLink,
   footer,
   className,
@@ -83,8 +48,10 @@ export function AgendaCard({
   actionButton,
   showMoveButton = false,
   onMoveClick,
+  footerRight,
 }: AgendaCardProps) {
   const { t } = useTranslation();
+  const visualStatus = isActive ? 'active' : status;
 
   return (
     <Link to={detailsLink} className="block">
@@ -101,17 +68,12 @@ export function AgendaCard({
             <div className="flex items-start justify-between">
               <div className="flex-1 space-y-1">
                 <CardTitle className="text-lg">{title}</CardTitle>
+                {subtitle && (
+                  <p className="text-sm text-muted-foreground">{subtitle}</p>
+                )}
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge className={getTypeColor(type)}>
-                    {getAgendaItemIcon(type)}
-                    <span className="ml-1 capitalize">{type}</span>
-                  </Badge>
-                  <Badge className={getStatusColor(status)}>{status}</Badge>
-                  {isActive && (
-                    <Badge className="animate-pulse bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                      {t('features.events.agenda.active')}
-                    </Badge>
-                  )}
+                  <AgendaTypeBadge type={type} />
+                  <AgendaStatusBadge status={visualStatus} />
                 </div>
               </div>
               <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
@@ -139,19 +101,31 @@ export function AgendaCard({
             </CardContent>
           )}
 
-          {(creatorName || footer) && (
+          {(creatorName || footer || footerRight) && (
             <CardFooter className="pt-3">
               {footer || (
-                <div className="flex w-full items-center justify-between">
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
+                <div
+                  className={cn(
+                    'flex w-full items-center gap-3',
+                    creatorName ? 'justify-between' : 'justify-end',
+                  )}
+                >
+                  {creatorName ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={creatorAvatar} />
+                        <AvatarFallback className="text-xs">
+                          {creatorName?.[0]?.toUpperCase() || '?'}
+                        </AvatarFallback>
+                      </Avatar>
                       <span>
                         {t('features.events.agenda.by', {
                           name: creatorName || t('features.events.agenda.unspecified'),
                         })}
                       </span>
                     </div>
-                  </div>
+                  ) : null}
+                  {footerRight ? <div className="flex items-center">{footerRight}</div> : null}
                 </div>
               )}
             </CardFooter>

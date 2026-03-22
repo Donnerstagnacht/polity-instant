@@ -8,7 +8,7 @@ test.describe('Election Candidates - Loading States and Error Handling', () => {
   test('Display loading state while fetching candidates', async ({ authenticatedPage: page }) => {
     // 1. Login as user
     // 2. Navigate to election page
-    const navigationPromise = page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/stream`);
+    const navigationPromise = page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda`);
 
     // 3. Candidates section loads
     // Initial loading state shown

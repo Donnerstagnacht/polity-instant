@@ -5,15 +5,15 @@ export const election = table('election')
     id: string(),
     agenda_item_id: string().optional(),
     position_id: string().optional(),
-    amendment_id: string().optional(),
     title: string().optional(),
     description: string().optional(),
     status: string().optional(),
-    is_multiple_choice: boolean(),
     majority_type: string().optional(),
-    max_selections: number().optional(),
-    voting_start_time: number().optional(),
-    voting_end_time: number().optional(),
+    closing_type: string().optional(),
+    closing_duration_seconds: number().optional(),
+    closing_end_time: number().optional(),
+    is_public: boolean(),
+    max_votes: number(),
     created_at: number(),
     updated_at: number(),
   })
@@ -33,14 +33,49 @@ export const electionCandidate = table('election_candidate')
   })
   .primaryKey('id')
 
-export const scheduledElection = table('scheduled_election')
+export const elector = table('elector')
   .columns({
     id: string(),
-    event_id: string(),
-    position_id: string().optional(),
-    title: string().optional(),
-    scheduled_date: number().optional(),
-    status: string().optional(),
+    election_id: string(),
+    user_id: string(),
+    created_at: number(),
+  })
+  .primaryKey('id')
+
+export const indicativeElectorParticipation = table('indicative_elector_participation')
+  .columns({
+    id: string(),
+    election_id: string(),
+    elector_id: string(),
+    created_at: number(),
+  })
+  .primaryKey('id')
+
+export const indicativeCandidateSelection = table('indicative_candidate_selection')
+  .columns({
+    id: string(),
+    election_id: string(),
+    candidate_id: string(),
+    elector_participation_id: string().optional(),
+    created_at: number(),
+  })
+  .primaryKey('id')
+
+export const finalElectorParticipation = table('final_elector_participation')
+  .columns({
+    id: string(),
+    election_id: string(),
+    elector_id: string(),
+    created_at: number(),
+  })
+  .primaryKey('id')
+
+export const finalCandidateSelection = table('final_candidate_selection')
+  .columns({
+    id: string(),
+    election_id: string(),
+    candidate_id: string(),
+    elector_participation_id: string().optional(),
     created_at: number(),
   })
   .primaryKey('id')

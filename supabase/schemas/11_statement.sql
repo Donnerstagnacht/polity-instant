@@ -68,3 +68,18 @@ CREATE INDEX idx_statement_survey_vote_user ON public.statement_survey_vote (use
 
 ALTER TABLE public.statement_survey_vote ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.statement_survey_vote FOR ALL TO service_role USING (true);
+
+-- Statement support vote table
+CREATE TABLE IF NOT EXISTS public.statement_support_vote (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  statement_id UUID NOT NULL REFERENCES public.statement (id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
+  vote TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_statement_support_vote_statement ON public.statement_support_vote (statement_id);
+CREATE INDEX idx_statement_support_vote_user ON public.statement_support_vote (user_id);
+
+ALTER TABLE public.statement_support_vote ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.statement_support_vote FOR ALL TO service_role USING (true);

@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { useGroupPositions as useFacadeGroupPositions } from '@/zero/groups/useGroupState';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
+import { useElectionActions } from '@/zero/elections/useElectionActions';
 import {
   notifyPositionCreated,
   notifyPositionAssigned,
@@ -25,7 +26,8 @@ export function useGroupPositions(groupId: string) {
     createPositionHolderHistory: createHistoryAction,
     updatePositionHolderHistory: updateHistoryAction,
   } = useGroupActions();
-  const { createElection: createElectionAction, createAgendaItem: createAgendaItemAction } = useAgendaActions();
+  const { createElection: createElectionAction } = useElectionActions();
+  const { createAgendaItem: createAgendaItemAction } = useAgendaActions();
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [assignHolderDialogOpen, setAssignHolderDialogOpen] = useState(false);
@@ -106,13 +108,13 @@ export function useGroupPositions(groupId: string) {
           description: `Vote for the ${positionTitle} position`,
           majority_type: 'simple',
           status: 'pending',
-          is_multiple_choice: false,
-          max_selections: 1,
+          is_public: true,
+          max_votes: 1,
           position_id: positionId,
           agenda_item_id: agendaItemId,
-          amendment_id: null,
-          voting_start_time: 0,
-          voting_end_time: 0,
+          closing_type: null,
+          closing_duration_seconds: null,
+          closing_end_time: null,
         });
 
         await createAgendaItemAction({
@@ -131,6 +133,9 @@ export function useGroupPositions(groupId: string) {
           completed_at: 0,
           event_id: null,
           amendment_id: null,
+          majority_type: null,
+          time_limit: null,
+          voting_phase: null,
         });
       }
 
@@ -326,13 +331,13 @@ export function useGroupPositions(groupId: string) {
         description: `Vote for the ${position.title} position`,
         majority_type: 'simple',
         status: 'pending',
-        is_multiple_choice: false,
-        max_selections: 1,
+        is_public: true,
+        max_votes: 1,
         position_id: positionId,
         agenda_item_id: agendaItemId,
-        amendment_id: null,
-        voting_start_time: 0,
-        voting_end_time: 0,
+        closing_type: null,
+        closing_duration_seconds: null,
+        closing_end_time: null,
       });
 
       await createAgendaItemAction({
@@ -351,6 +356,9 @@ export function useGroupPositions(groupId: string) {
         completed_at: 0,
         event_id: eventId || null,
         amendment_id: null,
+        majority_type: null,
+        time_limit: null,
+        voting_phase: null,
       });
 
       toast.success('Election created successfully');

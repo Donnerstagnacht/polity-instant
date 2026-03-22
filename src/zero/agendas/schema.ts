@@ -21,6 +21,9 @@ const baseAgendaItemSchema = z.object({
   end_time: nullableTimestampSchema,
   activated_at: nullableTimestampSchema,
   completed_at: nullableTimestampSchema,
+  majority_type: z.string().nullable(),
+  time_limit: z.number().nullable(),
+  voting_phase: z.string().nullable(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
 })
@@ -30,7 +33,7 @@ export const createAgendaItemSchema = baseAgendaItemSchema
   .omit({ id: true, created_at: true, updated_at: true, creator_id: true })
   .extend({ id: z.string() })
 export const updateAgendaItemSchema = baseAgendaItemSchema
-  .pick({ title: true, description: true, type: true, status: true, forwarding_status: true, order_index: true, duration: true, scheduled_time: true, activated_at: true, completed_at: true, start_time: true, end_time: true, event_id: true, amendment_id: true })
+  .pick({ title: true, description: true, type: true, status: true, forwarding_status: true, order_index: true, duration: true, scheduled_time: true, activated_at: true, completed_at: true, start_time: true, end_time: true, event_id: true, amendment_id: true, majority_type: true, time_limit: true, voting_phase: true })
   .partial()
   .extend({ id: z.string() })
 export const deleteAgendaItemSchema = z.object({ id: z.string() })
@@ -49,6 +52,8 @@ const baseSpeakerListSchema = z.object({
   order_index: z.number().nullable(),
   time: z.number().nullable(),
   completed: z.boolean(),
+  start_time: nullableTimestampSchema,
+  end_time: nullableTimestampSchema,
   created_at: timestampSchema,
 })
 

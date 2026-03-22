@@ -15,8 +15,8 @@ import { payment, stripeCustomer, stripeSubscription, stripePayment } from './pa
 import { statement, statementSurvey, statementSurveyOption, statementSurveyVote } from './statements/table'
 import { hashtag, userHashtag, groupHashtag, amendmentHashtag, eventHashtag, blogHashtag, statementHashtag, link, timelineEvent, reaction } from './common/table'
 // New domain imports
-import { election, electionCandidate, scheduledElection } from './elections/table'
-import { amendmentVoteEntry, amendmentSupportVote, amendmentVote, amendmentVotingSession, amendmentVotingSessionVote, changeRequestVote, eventVotingSession, eventVote, electionVote, blogSupportVote, statementSupportVote, threadVote, commentVote } from './votes/table'
+import { election, electionCandidate, elector, indicativeElectorParticipation, indicativeCandidateSelection, finalElectorParticipation, finalCandidateSelection } from './elections/table'
+import { vote, voteChoice, voter, indicativeVoterParticipation, indicativeChoiceDecision, finalVoterParticipation, finalChoiceDecision, amendmentSupportVote, changeRequestVote, blogSupportVote, statementSupportVote, threadVote, commentVote } from './votes/table'
 import { changeRequest } from './change-requests/table'
 import { thread, comment } from './discussions/table'
 import { position, positionHolderHistory, eventPosition, eventPositionHolder } from './positions/table'
@@ -25,6 +25,10 @@ import { meetingSlot, meetingBooking } from './meet/table'
 import { follow, groupRelationship, subscriber } from './network/table'
 import { userPreference } from './preferences/table'
 import { calendarSubscription } from './calendar-subscriptions/table'
+// Voting Password
+import { votingPassword } from './voting-password/table'
+// Accreditation
+import { accreditation } from './accreditation/table'
 
 // Relationship imports
 import { allRelationships } from './relationships'
@@ -47,11 +51,15 @@ export const schema = createSchema({
     // Agendas
     agendaItem, speakerList,
     // Elections
-    election, electionCandidate, scheduledElection,
+    election, electionCandidate, elector,
+    indicativeElectorParticipation, indicativeCandidateSelection,
+    finalElectorParticipation, finalCandidateSelection,
     // Votes
-    amendmentVoteEntry, amendmentSupportVote, amendmentVote, amendmentVotingSession,
-    amendmentVotingSessionVote, changeRequestVote, eventVotingSession, eventVote,
-    electionVote, blogSupportVote, statementSupportVote, threadVote, commentVote,
+    vote, voteChoice, voter,
+    indicativeVoterParticipation, indicativeChoiceDecision,
+    finalVoterParticipation, finalChoiceDecision,
+    amendmentSupportVote, changeRequestVote,
+    blogSupportVote, statementSupportVote, threadVote, commentVote,
     // Change Requests
     changeRequest,
     // Discussions
@@ -82,6 +90,10 @@ export const schema = createSchema({
     hashtag, userHashtag, groupHashtag, amendmentHashtag, eventHashtag, blogHashtag, statementHashtag, link, timelineEvent, reaction,
     // Calendar Subscriptions
     calendarSubscription,
+    // Voting Password
+    votingPassword,
+    // Accreditation
+    accreditation,
   ],
   relationships: allRelationships,
 })
@@ -117,21 +129,14 @@ export type MeetingBooking = Row<Schema['tables']['meeting_booking']>
 export type Participant = Row<Schema['tables']['participant']>
 export type EventPosition = Row<Schema['tables']['event_position']>
 export type EventPositionHolder = Row<Schema['tables']['event_position_holder']>
-export type EventVotingSession = Row<Schema['tables']['event_voting_session']>
-export type EventVote = Row<Schema['tables']['event_vote']>
-export type ScheduledElection = Row<Schema['tables']['scheduled_election']>
 export type EventException = Row<Schema['tables']['event_exception']>
 export type CalendarSubscription = Row<Schema['tables']['calendar_subscription']>
 
 // Amendments
 export type Amendment = Row<Schema['tables']['amendment']>
-export type AmendmentVoteEntry = Row<Schema['tables']['amendment_vote_entry']>
 export type AmendmentSupportVote = Row<Schema['tables']['amendment_support_vote']>
-export type AmendmentVote = Row<Schema['tables']['amendment_vote']>
 export type ChangeRequest = Row<Schema['tables']['change_request']>
 export type ChangeRequestVote = Row<Schema['tables']['change_request_vote']>
-export type AmendmentVotingSession = Row<Schema['tables']['amendment_voting_session']>
-export type AmendmentVotingSessionVote = Row<Schema['tables']['amendment_voting_session_vote']>
 export type AmendmentCollaborator = Row<Schema['tables']['amendment_collaborator']>
 export type AmendmentPath = Row<Schema['tables']['amendment_path']>
 export type AmendmentPathSegment = Row<Schema['tables']['amendment_path_segment']>
@@ -152,7 +157,18 @@ export type AgendaItem = Row<Schema['tables']['agenda_item']>
 export type SpeakerList = Row<Schema['tables']['speaker_list']>
 export type Election = Row<Schema['tables']['election']>
 export type ElectionCandidate = Row<Schema['tables']['election_candidate']>
-export type ElectionVote = Row<Schema['tables']['election_vote']>
+export type Elector = Row<Schema['tables']['elector']>
+export type IndicativeElectorParticipation = Row<Schema['tables']['indicative_elector_participation']>
+export type IndicativeCandidateSelection = Row<Schema['tables']['indicative_candidate_selection']>
+export type FinalElectorParticipation = Row<Schema['tables']['final_elector_participation']>
+export type FinalCandidateSelection = Row<Schema['tables']['final_candidate_selection']>
+export type Vote = Row<Schema['tables']['vote']>
+export type VoteChoice = Row<Schema['tables']['vote_choice']>
+export type Voter = Row<Schema['tables']['voter']>
+export type IndicativeVoterParticipation = Row<Schema['tables']['indicative_voter_participation']>
+export type IndicativeChoiceDecision = Row<Schema['tables']['indicative_choice_decision']>
+export type FinalVoterParticipation = Row<Schema['tables']['final_voter_participation']>
+export type FinalChoiceDecision = Row<Schema['tables']['final_choice_decision']>
 
 // Todos
 export type Todo = Row<Schema['tables']['todo']>
@@ -189,6 +205,12 @@ export type StatementHashtag = Row<Schema['tables']['statement_hashtag']>
 
 // Preferences
 export type UserPreference = Row<Schema['tables']['user_preference']>
+
+// Voting Password
+export type VotingPasswordRow = Row<Schema['tables']['voting_password']>
+
+// Accreditation
+export type AccreditationRow = Row<Schema['tables']['accreditation']>
 
 // Common
 export type Subscriber = Row<Schema['tables']['subscriber']>

@@ -8,7 +8,7 @@ test.describe('Election Candidates - Vote Counting and Results', () => {
   test('Display vote count', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
     // 2. Navigate to election
-    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/stream`);
+    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda`);
     await page.waitForLoadState('networkidle');
 
     // 3. Multiple voters vote for candidate
@@ -25,7 +25,7 @@ test.describe('Election Candidates - Vote Counting and Results', () => {
   test('Calculate vote percentage', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
     // 2. Navigate to election with results
-    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/stream`);
+    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda`);
     await page.waitForLoadState('networkidle');
 
     // 3. Election has multiple candidates
@@ -45,7 +45,7 @@ test.describe('Election Candidates - Vote Counting and Results', () => {
   test('Display election results', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
     // 2. Voting ends
-    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/stream`);
+    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda`);
     await page.waitForLoadState('networkidle');
 
     // 3. View results page

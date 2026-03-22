@@ -14,7 +14,7 @@ import { useSyncedVotingTimer } from '../hooks/useVotingTimer';
 import { Clock, CheckCircle, XCircle, PlayCircle, PauseCircle, Timer } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
 
-type VotingPhase = 'setup' | 'introduction' | 'voting' | 'closed';
+type VotingPhase = 'setup' | 'introduction' | 'voting' | 'closed' | 'indication' | 'final_vote';
 type VotingResult = 'passed' | 'rejected' | 'tie' | null;
 
 interface VotingPhaseIndicatorProps {
@@ -35,6 +35,8 @@ const phaseConfig: Record<VotingPhase, { icon: React.ElementType; color: string 
   introduction: { icon: PlayCircle, color: 'bg-blue-500' },
   voting: { icon: Timer, color: 'bg-amber-500' },
   closed: { icon: CheckCircle, color: 'bg-green-500' },
+  indication: { icon: PauseCircle, color: 'bg-blue-400' },
+  final_vote: { icon: Timer, color: 'bg-amber-500' },
 };
 
 const resultConfig: Record<

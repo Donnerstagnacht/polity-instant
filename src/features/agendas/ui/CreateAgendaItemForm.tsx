@@ -22,6 +22,8 @@ import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { TypeSelector } from '@/features/shared/ui/ui/type-selector';
 import { TooltipProvider } from '@/features/shared/ui/ui/tooltip';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
+import { useElectionActions } from '@/zero/elections/useElectionActions';
+import { useVoteActions } from '@/zero/votes/useVoteActions';
 import {
   useAllEvents,
   useAllAmendments,
@@ -36,14 +38,16 @@ export function CreateAgendaItemForm() {
   const navigate = useNavigate();
   const searchParams = useSearch({ strict: false });
   const { user } = useAuth();
-  const { createAgendaItem, createElection } = useAgendaActions();
+  const { createAgendaItem } = useAgendaActions();
+  const { createElection } = useElectionActions();
+  const { createVote, createVoteChoice } = useVoteActions();
 
   const eventIdParam = (searchParams as Record<string, string | undefined>).eventId;
 
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    type: 'discussion' as 'election' | 'vote' | 'speech' | 'discussion',
+    type: 'discussion' as 'election' | 'vote' | 'speech' | 'discussion' | 'accreditation',
     order: 1,
     duration: '',
     eventId: eventIdParam || '',
@@ -108,6 +112,9 @@ export function CreateAgendaItemForm() {
         completed_at: 0,
         event_id: formData.eventId,
         amendment_id: formData.amendmentId || '',
+        majority_type: null,
+        time_limit: null,
+        voting_phase: null,
       });
 
       // If creating an election, also create the election entity
@@ -116,17 +123,46 @@ export function CreateAgendaItemForm() {
         await createElection({
           id: electionId,
           title: formData.title,
-          description: formData.description || '',
+          description: formData.description || null,
+          status: 'indicative',
           majority_type: 'relative',
-          is_multiple_choice: false,
-          max_selections: 1,
-          status: 'pending',
-          voting_start_time: 0,
-          voting_end_time: 0,
+          closing_type: null,
+          closing_duration_seconds: null,
+          closing_end_time: null,
+          is_public: true,
+          max_votes: 1,
           agenda_item_id: agendaItemId,
-          position_id: formData.positionId || '',
-          amendment_id: null,
+          position_id: formData.positionId || null,
         });
+      }
+
+      // If creating a vote, also create the vote entity with default choices
+      if (formData.type === 'vote') {
+        const voteId = crypto.randomUUID();
+        await createVote({
+          id: voteId,
+          title: formData.title,
+          description: formData.description || null,
+          status: 'indicative',
+          majority_type: 'relative',
+          closing_type: null,
+          closing_duration_seconds: null,
+          closing_end_time: null,
+          is_public: true,
+          agenda_item_id: agendaItemId,
+          amendment_id: formData.amendmentId || null,
+        });
+
+        // Create default choices: Yes, No, Abstain
+        const defaultChoices = ['Yes', 'No', 'Abstain'];
+        for (let i = 0; i < defaultChoices.length; i++) {
+          await createVoteChoice({
+            id: crypto.randomUUID(),
+            vote_id: voteId,
+            label: defaultChoices[i],
+            order_index: i + 1,
+          });
+        }
       }
 
       // Send notification to event participants

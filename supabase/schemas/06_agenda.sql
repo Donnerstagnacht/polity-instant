@@ -22,6 +22,9 @@ CREATE TABLE IF NOT EXISTS public.agenda_item (
   end_time TIMESTAMPTZ,
   activated_at TIMESTAMPTZ,
   completed_at TIMESTAMPTZ,
+  majority_type TEXT,
+  time_limit INTEGER,
+  voting_phase TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -41,6 +44,8 @@ CREATE TABLE IF NOT EXISTS public.speaker_list (
   order_index INTEGER,
   time INTEGER,
   completed BOOLEAN NOT NULL DEFAULT false,
+  start_time TIMESTAMPTZ,
+  end_time TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

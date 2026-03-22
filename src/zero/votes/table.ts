@@ -1,64 +1,89 @@
 import { table, string, number, boolean } from '@rocicorp/zero'
 
-// ── Amendment votes ───────────────────────────────────────────────────
+// ── Vote (amendment votes in agenda context) ──────────────────────────
 
-export const amendmentVoteEntry = table('amendment_vote_entry')
+export const vote = table('vote')
   .columns({
     id: string(),
-    amendment_id: string(),
-    user_id: string(),
-    vote: number().optional(),
+    agenda_item_id: string().optional(),
+    amendment_id: string().optional(),
+    title: string().optional(),
+    description: string().optional(),
+    status: string().optional(),
+    majority_type: string().optional(),
+    closing_type: string().optional(),
+    closing_duration_seconds: number().optional(),
+    closing_end_time: number().optional(),
+    is_public: boolean(),
+    created_at: number(),
+    updated_at: number(),
+  })
+  .primaryKey('id')
+
+export const voteChoice = table('vote_choice')
+  .columns({
+    id: string(),
+    vote_id: string(),
+    label: string().optional(),
+    order_index: number().optional(),
     created_at: number(),
   })
   .primaryKey('id')
+
+export const voter = table('voter')
+  .columns({
+    id: string(),
+    vote_id: string(),
+    user_id: string(),
+    created_at: number(),
+  })
+  .primaryKey('id')
+
+export const indicativeVoterParticipation = table('indicative_voter_participation')
+  .columns({
+    id: string(),
+    vote_id: string(),
+    voter_id: string(),
+    created_at: number(),
+  })
+  .primaryKey('id')
+
+export const indicativeChoiceDecision = table('indicative_choice_decision')
+  .columns({
+    id: string(),
+    vote_id: string(),
+    choice_id: string(),
+    voter_participation_id: string().optional(),
+    created_at: number(),
+  })
+  .primaryKey('id')
+
+export const finalVoterParticipation = table('final_voter_participation')
+  .columns({
+    id: string(),
+    vote_id: string(),
+    voter_id: string(),
+    created_at: number(),
+  })
+  .primaryKey('id')
+
+export const finalChoiceDecision = table('final_choice_decision')
+  .columns({
+    id: string(),
+    vote_id: string(),
+    choice_id: string(),
+    voter_participation_id: string().optional(),
+    created_at: number(),
+  })
+  .primaryKey('id')
+
+// ── Amendment support votes ───────────────────────────────────────────
 
 export const amendmentSupportVote = table('amendment_support_vote')
   .columns({
     id: string(),
     amendment_id: string(),
     user_id: string(),
-    created_at: number(),
-  })
-  .primaryKey('id')
-
-export const amendmentVote = table('amendment_vote')
-  .columns({
-    id: string(),
-    amendment_id: string(),
-    user_id: string(),
-    event_id: string().optional(),
-    vote: string().optional(),
-    weight: number(),
-    is_delegate_vote: boolean(),
-    group_id: string().optional(),
-    created_at: number(),
-  })
-  .primaryKey('id')
-
-export const amendmentVotingSession = table('amendment_voting_session')
-  .columns({
-    id: string(),
-    amendment_id: string(),
-    event_id: string().optional(),
-    title: string().optional(),
-    description: string().optional(),
-    status: string().optional(),
-    voting_type: string().optional(),
-    majority_type: string().optional(),
-    start_time: number().optional(),
-    end_time: number().optional(),
-    created_at: number(),
-  })
-  .primaryKey('id')
-
-export const amendmentVotingSessionVote = table('amendment_voting_session_vote')
-  .columns({
-    id: string(),
-    session_id: string(),
-    user_id: string(),
-    vote: string().optional(),
-    weight: number(),
-    is_delegate: boolean(),
     created_at: number(),
   })
   .primaryKey('id')
@@ -75,51 +100,6 @@ export const changeRequestVote = table('change_request_vote')
   })
   .primaryKey('id')
 
-// ── Event votes ───────────────────────────────────────────────────────
-
-export const eventVotingSession = table('event_voting_session')
-  .columns({
-    id: string(),
-    event_id: string(),
-    agenda_item_id: string().optional(),
-    title: string().optional(),
-    description: string().optional(),
-    status: string().optional(),
-    voting_type: string().optional(),
-    majority_type: string().optional(),
-    start_time: number().optional(),
-    end_time: number().optional(),
-    created_at: number(),
-  })
-  .primaryKey('id')
-
-export const eventVote = table('event_vote')
-  .columns({
-    id: string(),
-    session_id: string(),
-    user_id: string(),
-    vote: string().optional(),
-    weight: number(),
-    is_delegate: boolean(),
-    created_at: number(),
-  })
-  .primaryKey('id')
-
-// ── Election votes ────────────────────────────────────────────────────
-
-export const electionVote = table('election_vote')
-  .columns({
-    id: string(),
-    election_id: string(),
-    candidate_id: string(),
-    voter_id: string(),
-    is_indication: boolean(),
-    indicated_at: number().optional(),
-    created_at: number(),
-    updated_at: number(),
-  })
-  .primaryKey('id')
-
 // ── Blog votes ────────────────────────────────────────────────────────
 
 export const blogSupportVote = table('blog_support_vote')
@@ -127,7 +107,7 @@ export const blogSupportVote = table('blog_support_vote')
     id: string(),
     blog_id: string(),
     user_id: string(),
-    vote: number().optional(),
+    vote: string().optional(),
     created_at: number(),
   })
   .primaryKey('id')
@@ -139,7 +119,7 @@ export const statementSupportVote = table('statement_support_vote')
     id: string(),
     statement_id: string(),
     user_id: string(),
-    vote: number().optional(),
+    vote: string().optional(),
     created_at: number(),
   })
   .primaryKey('id')
@@ -151,7 +131,7 @@ export const threadVote = table('thread_vote')
     id: string(),
     thread_id: string(),
     user_id: string(),
-    vote: number().optional(),
+    vote: string().optional(),
     created_at: number(),
   })
   .primaryKey('id')
@@ -161,7 +141,7 @@ export const commentVote = table('comment_vote')
     id: string(),
     comment_id: string(),
     user_id: string(),
-    vote: number().optional(),
+    vote: string().optional(),
     created_at: number(),
   })
   .primaryKey('id')

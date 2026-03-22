@@ -6,7 +6,7 @@ import { Vote, Award } from 'lucide-react';
 import { StatusBadge, type DecisionStatus } from './StatusBadge';
 import { TrendIndicator } from './TrendIndicator';
 import { CountdownTimer, EndedAgo } from './CountdownTimer';
-import { VoteBarCompact } from './VoteProgressBar';
+import { CandidateBarCompact, VoteBarCompact } from './VoteProgressBar';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { ResultCompact } from './ResultBadge';
 import type { DecisionItem } from './types';
@@ -15,6 +15,26 @@ export interface DecisionRowProps {
   decision: DecisionItem;
   onClick: () => void;
   isSelected?: boolean;
+}
+
+function getElectionBarData(decision: DecisionItem) {
+  if (decision.type !== 'election' || !decision.candidates?.length) {
+    return null;
+  }
+
+  const candidates = decision.candidates
+    .map(candidate => ({
+      id: candidate.id,
+      label: candidate.name,
+      value: decision.isIndicationPhase ? candidate.indicationVotes || 0 : candidate.votes || 0,
+    }))
+    .sort((left, right) => right.value - left.value || left.label.localeCompare(right.label));
+
+  return {
+    totalSelections:
+      decision.votedCount ?? candidates.reduce((total, candidate) => total + candidate.value, 0),
+    candidates,
+  };
 }
 
 /**
@@ -26,6 +46,8 @@ export function DecisionRow({ decision, onClick, isSelected }: DecisionRowProps)
   const { t } = useTranslation();
   const [isFlashing, setIsFlashing] = useState(false);
   const prevTrendRef = useRef(decision.trend.percentage);
+  const electionBarData = getElectionBarData(decision);
+  const gridColumnsClass = 'grid-cols-[70px_minmax(0,0.9fr)_140px_100px_112px_180px_80px]';
 
   // Flash effect when trend changes significantly (> 2%)
   useEffect(() => {
@@ -44,7 +66,8 @@ export function DecisionRow({ decision, onClick, isSelected }: DecisionRowProps)
   return (
     <div
       className={cn(
-        'grid cursor-pointer grid-cols-[70px_0.9fr_140px_100px_80px_180px_80px] gap-2 px-4 py-3 transition-colors',
+        'grid cursor-pointer gap-2 px-4 py-3 transition-colors',
+        gridColumnsClass,
         'hover:bg-muted/50',
         isSelected && 'bg-muted',
         isFlashing && 'animate-flash-yellow'
@@ -61,7 +84,7 @@ export function DecisionRow({ decision, onClick, isSelected }: DecisionRowProps)
     >
       {/* ID */}
       <div className="flex items-center gap-1">
-        <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+        <Icon className="text-muted-foreground h-3.5 w-3.5" />
         <span className="font-mono text-xs font-medium">{decision.id}</span>
       </div>
 
@@ -72,20 +95,30 @@ export function DecisionRow({ decision, onClick, isSelected }: DecisionRowProps)
 
       {/* Body/Category */}
       <div className="flex items-center">
-        <span className="truncate text-xs text-muted-foreground">{decision.body}</span>
+        <span className="text-muted-foreground truncate text-xs">{decision.body}</span>
       </div>
 
       {/* Time */}
       <div className="flex items-center">
         {decision.isClosed ? (
           <EndedAgo endedAt={decision.endsAt} />
+        ) : decision.isOpeningSoon && decision.startsAt ? (
+          <CountdownTimer
+            endsAt={decision.startsAt}
+            compact
+            compactLabel={t('timeline.terminal.startsIn', 'Starts in')}
+          />
         ) : (
-          <CountdownTimer endsAt={decision.endsAt} compact />
+          <CountdownTimer
+            endsAt={decision.endsAt}
+            compact
+            compactLabel={t('timeline.terminal.closesIn', 'Closes in')}
+          />
         )}
       </div>
 
       {/* Status */}
-      <div className="flex items-center">
+      <div className="flex min-w-0 items-center">
         {decision.isClosed ? (
           <ResultCompact
             result={decision.status as 'passed' | 'failed' | 'tied' | 'elected'}
@@ -98,61 +131,64 @@ export function DecisionRow({ decision, onClick, isSelected }: DecisionRowProps)
 
       {/* Votes */}
       <div className="flex items-center">
-        {decision.votes ? (
-          <div className="flex w-full flex-col gap-1">
-            {/* Show indication bar if in indication phase */}
-            {decision.isIndicationPhase && decision.indicationVotes ? (
-              <>
-                <VoteBarCompact votes={decision.indicationVotes} className="w-full opacity-70" />
-                <div className="flex items-center gap-2 text-[10px] text-blue-500">
-                  <span>* {t('timeline.terminal.indication', { defaultValue: 'Ind' })}</span>
-                  <span>{decision.indicationVotes.support}</span>
-                  <span>/</span>
-                  <span>{decision.indicationVotes.oppose}</span>
-                </div>
-              </>
-            ) : (
-              <>
-                {/* Show both if we have indication data and not in indication phase */}
-                {decision.indicationVotes && !decision.isIndicationPhase && (
-                  <div className="mb-0.5 flex items-center gap-1 text-[9px] text-muted-foreground">
-                    <span className="text-blue-400">
-                      {t('timeline.terminal.indication', { defaultValue: 'Ind' })}:{' '}
-                      {decision.indicationSupportPercentage}%
-                    </span>
-                    <span>→</span>
-                  </div>
-                )}
-                <VoteBarCompact votes={decision.votes} className="w-full" />
-                <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                    {t('timeline.terminal.support', { defaultValue: 'Support' })}:{' '}
-                    {decision.votes.support}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
-                    {t('timeline.terminal.oppose', { defaultValue: 'Oppose' })}:{' '}
-                    {decision.votes.oppose}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
-                    {t('timeline.terminal.abstain', { defaultValue: 'Abstain' })}:{' '}
-                    {decision.votes.abstain}
-                  </span>
-                </div>
-              </>
+        {decision.type === 'election' && electionBarData ? (
+          <div className="flex w-full items-center gap-2 overflow-hidden">
+            {decision.isIndicationPhase && (
+              <span className="shrink-0 text-[10px] text-blue-500">
+                {t('timeline.terminal.indication', 'Ind')}
+              </span>
             )}
+            {!decision.isIndicationPhase && electionBarData.candidates.some(c => c.value > 0) && (
+              <span className="shrink-0 text-[9px] text-blue-400">
+                {t('timeline.terminal.indication', 'Ind')} →
+              </span>
+            )}
+            <CandidateBarCompact
+              candidates={electionBarData.candidates}
+              className="min-w-0 flex-1"
+            />
+            <span className="text-muted-foreground shrink-0 font-mono text-[10px]">
+              {electionBarData.totalSelections}
+            </span>
+          </div>
+        ) : decision.votes ? (
+          <div className="flex w-full items-center gap-2 overflow-hidden">
+            {decision.isIndicationPhase && decision.indicationVotes ? (
+              <span className="shrink-0 text-[10px] text-blue-500">
+                {t('timeline.terminal.indication', 'Ind')}
+              </span>
+            ) : decision.indicationVotes && !decision.isIndicationPhase ? (
+              <span className="shrink-0 text-[9px] text-blue-400">
+                {t('timeline.terminal.indication', 'Ind')} →
+              </span>
+            ) : null}
+            <VoteBarCompact
+              votes={
+                decision.isIndicationPhase && decision.indicationVotes
+                  ? decision.indicationVotes
+                  : decision.votes
+              }
+              className={cn('min-w-0 flex-1', decision.isIndicationPhase && 'opacity-70')}
+            />
+            <span className="text-muted-foreground shrink-0 font-mono text-[10px]">
+              {(() => {
+                const v =
+                  decision.isIndicationPhase && decision.indicationVotes
+                    ? decision.indicationVotes
+                    : decision.votes;
+                return `${v.support}/${v.oppose}/${v.abstain}`;
+              })()}
+            </span>
           </div>
         ) : (
-          <span className="text-xs text-muted-foreground">—</span>
+          <span className="text-muted-foreground text-xs">—</span>
         )}
       </div>
 
       {/* Trend */}
       <div className="flex items-center">
         {decision.isClosed && decision.supportPercentage !== undefined ? (
-          <span className="font-mono text-xs text-muted-foreground">
+          <span className="text-muted-foreground font-mono text-xs">
             {decision.supportPercentage}%
           </span>
         ) : (

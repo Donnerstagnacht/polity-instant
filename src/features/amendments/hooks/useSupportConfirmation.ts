@@ -189,6 +189,9 @@ export async function triggerSupporterConfirmation(
       end_time: 0,
       activated_at: 0,
       completed_at: 0,
+      majority_type: null,
+      time_limit: null,
+      voting_phase: null,
     }));
 
     // NOTE: agenda_item_id column does not exist on support_confirmation table
@@ -229,6 +232,9 @@ export async function createConfirmationAgendaItem(
     end_time: 0,
     activated_at: 0,
     completed_at: 0,
+    majority_type: null,
+    time_limit: null,
+    voting_phase: null,
   }));
 
   // NOTE: agenda_item_id column does not exist on support_confirmation table

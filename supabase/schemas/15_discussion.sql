@@ -48,3 +48,33 @@ CREATE INDEX idx_comment_parent ON public.comment (parent_id);
 
 ALTER TABLE public.comment ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.comment FOR ALL TO service_role USING (true);
+
+-- Thread vote table
+CREATE TABLE IF NOT EXISTS public.thread_vote (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  thread_id UUID NOT NULL REFERENCES public.thread (id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
+  vote TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_thread_vote_thread ON public.thread_vote (thread_id);
+CREATE INDEX idx_thread_vote_user ON public.thread_vote (user_id);
+
+ALTER TABLE public.thread_vote ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.thread_vote FOR ALL TO service_role USING (true);
+
+-- Comment vote table
+CREATE TABLE IF NOT EXISTS public.comment_vote (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  comment_id UUID NOT NULL REFERENCES public.comment (id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
+  vote TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_comment_vote_comment ON public.comment_vote (comment_id);
+CREATE INDEX idx_comment_vote_user ON public.comment_vote (user_id);
+
+ALTER TABLE public.comment_vote ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.comment_vote FOR ALL TO service_role USING (true);

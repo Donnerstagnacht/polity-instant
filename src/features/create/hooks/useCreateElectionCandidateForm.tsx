@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useAuth } from '@/providers/auth-provider'
-import { useAgendaActions } from '@/zero/agendas/useAgendaActions'
+import { useElectionActions } from '@/zero/elections/useElectionActions'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { toast } from 'sonner'
 import { Textarea } from '@/features/shared/ui/ui/textarea'
@@ -15,7 +15,7 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { addCandidate } = useAgendaActions()
+  const { addCandidate } = useElectionActions()
 
   const [candidateId] = useState(() => crypto.randomUUID())
   const [electionId, setElectionId] = useState('')

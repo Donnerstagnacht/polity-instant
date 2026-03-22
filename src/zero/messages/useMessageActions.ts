@@ -3,6 +3,7 @@ import { useZero } from '@rocicorp/zero/react'
 import { toast } from 'sonner'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { mutators } from '../mutators'
+import { serverConfirmed } from '../mutate-with-server-check'
 
 /**
  * Action hook for message/conversation mutations.
@@ -16,7 +17,8 @@ export function useMessageActions() {
   const createConversation = useCallback(
     async (args: Parameters<typeof mutators.messages.createConversation>[0]) => {
       try {
-        await zero.mutate(mutators.messages.createConversation(args))
+        const result = zero.mutate(mutators.messages.createConversation(args))
+        await serverConfirmed(result)
         toast.success(t('features.messages.toasts.conversationCreated'))
       } catch (error) {
         console.error('Failed to create conversation:', error)
@@ -30,7 +32,8 @@ export function useMessageActions() {
   const updateConversation = useCallback(
     async (args: Parameters<typeof mutators.messages.updateConversation>[0]) => {
       try {
-        await zero.mutate(mutators.messages.updateConversation(args))
+        const result = zero.mutate(mutators.messages.updateConversation(args))
+        await serverConfirmed(result)
       } catch (error) {
         console.error('Failed to update conversation:', error)
         toast.error(t('features.messages.toasts.conversationUpdateFailed'))
@@ -43,7 +46,8 @@ export function useMessageActions() {
   const deleteConversation = useCallback(
     async (args: Parameters<typeof mutators.messages.deleteConversation>[0]) => {
       try {
-        await zero.mutate(mutators.messages.deleteConversation(args))
+        const result = zero.mutate(mutators.messages.deleteConversation(args))
+        await serverConfirmed(result)
         toast.success(t('features.messages.toasts.conversationDeleted'))
       } catch (error) {
         console.error('Failed to delete conversation:', error)
@@ -58,7 +62,8 @@ export function useMessageActions() {
   const sendMessage = useCallback(
     async (args: Parameters<typeof mutators.messages.sendMessage>[0]) => {
       try {
-        await zero.mutate(mutators.messages.sendMessage(args))
+        const result = zero.mutate(mutators.messages.sendMessage(args))
+        await serverConfirmed(result)
       } catch (error) {
         console.error('Failed to send message:', error)
         toast.error(t('features.messages.toasts.sendFailed'))
@@ -71,7 +76,8 @@ export function useMessageActions() {
   const updateMessage = useCallback(
     async (args: Parameters<typeof mutators.messages.updateMessage>[0]) => {
       try {
-        await zero.mutate(mutators.messages.updateMessage(args))
+        const result = zero.mutate(mutators.messages.updateMessage(args))
+        await serverConfirmed(result)
       } catch (error) {
         console.error('Failed to update message:', error)
         toast.error(t('features.messages.toasts.updateFailed'))
@@ -84,7 +90,8 @@ export function useMessageActions() {
   const deleteMessage = useCallback(
     async (args: Parameters<typeof mutators.messages.deleteMessage>[0]) => {
       try {
-        await zero.mutate(mutators.messages.deleteMessage(args))
+        const result = zero.mutate(mutators.messages.deleteMessage(args))
+        await serverConfirmed(result)
         toast.success(t('features.messages.toasts.messageDeleted'))
       } catch (error) {
         console.error('Failed to delete message:', error)
@@ -99,7 +106,8 @@ export function useMessageActions() {
   const addParticipant = useCallback(
     async (args: Parameters<typeof mutators.messages.addParticipant>[0]) => {
       try {
-        await zero.mutate(mutators.messages.addParticipant(args))
+        const result = zero.mutate(mutators.messages.addParticipant(args))
+        await serverConfirmed(result)
         toast.success(t('features.messages.toasts.participantAdded'))
       } catch (error) {
         console.error('Failed to add participant:', error)
@@ -113,7 +121,8 @@ export function useMessageActions() {
   const removeParticipant = useCallback(
     async (args: Parameters<typeof mutators.messages.removeParticipant>[0]) => {
       try {
-        await zero.mutate(mutators.messages.removeParticipant(args))
+        const result = zero.mutate(mutators.messages.removeParticipant(args))
+        await serverConfirmed(result)
         toast.success(t('features.messages.toasts.participantRemoved'))
       } catch (error) {
         console.error('Failed to remove participant:', error)
@@ -128,7 +137,8 @@ export function useMessageActions() {
   const markRead = useCallback(
     async (args: Parameters<typeof mutators.messages.markRead>[0]) => {
       try {
-        await zero.mutate(mutators.messages.markRead(args))
+        const result = zero.mutate(mutators.messages.markRead(args))
+        await serverConfirmed(result)
       } catch (error) {
         console.error('Failed to mark as read:', error)
         toast.error(t('features.messages.toasts.markReadFailed'))

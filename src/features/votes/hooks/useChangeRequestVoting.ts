@@ -8,9 +8,9 @@
 import { useCallback, useMemo } from 'react';
 import { useZero } from '@rocicorp/zero/react';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
-import { useEventActions } from '@/zero/events/useEventActions';
+import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useCommonActions } from '@/zero/common/useCommonActions';
-import { useVotingSessionWithVotes, useChangeRequestsByAmendment } from '@/zero/events/useEventState';
+import { useChangeRequestsByAmendment } from '@/zero/events/useEventState';
 import { usePermissions } from '@/zero/rbac';
 import {
   countVotes,
@@ -44,11 +44,12 @@ export function useChangeRequestVoting({
   const { can } = usePermissions({ eventId });
   const zero = useZero();
   const { updateChangeRequest } = useAmendmentActions();
-  const { finalizeAgendaItem, castVote: doEventCastVote } = useEventActions();
+  const { updateAgendaItem } = useAgendaActions();
   const { createTimelineEvent } = useCommonActions();
 
-  // Query current voting session with votes
-  const { session: votingSession, isLoading: sessionLoading } = useVotingSessionWithVotes(votingSessionId);
+  // TODO: Wire up to new vote model — session-based voting no longer exists
+  const votingSession = null;
+  const sessionLoading = false;
 
   // Query change requests for the agenda item
   const { changeRequests: changeRequestsRaw, isLoading: crLoading } = useChangeRequestsByAmendment(amendmentId);
@@ -57,7 +58,8 @@ export function useChangeRequestVoting({
   const error = undefined;
 
   const changeRequests = changeRequestsRaw ?? [];
-  const votes = votingSession?.votes ?? [];
+  // TODO: Wire up votes from new vote model
+  const votes: { vote: string; user: { id: string } | undefined }[] = [];
 
   // We track current change request by finding the one with voting_status 'voting'
   const currentChangeRequestId = useMemo(() => {
@@ -113,9 +115,9 @@ export function useChangeRequestVoting({
         voting_status: 'voting',
       });
 
-      await finalizeAgendaItem({
+      await updateAgendaItem({
         id: votingSessionId,
-        status: 'voting',
+        voting_phase: 'voting',
       });
 
       await createTimelineEvent({
@@ -169,17 +171,17 @@ export function useChangeRequestVoting({
         voting_status: 'voting',
       });
 
-      await finalizeAgendaItem({
+      await updateAgendaItem({
         id: votingSessionId,
-        status: 'voting',
+        voting_phase: 'voting',
       });
       return { hasNext: true, nextId: nextChangeRequest.id };
     } else {
       // No more change requests, complete the session
-      await finalizeAgendaItem({
+      await updateAgendaItem({
         id: votingSessionId,
-        status: 'completed',
-        end_time: Date.now(),
+        voting_phase: 'completed',
+        completed_at: Date.now(),
       });
       return { hasNext: false, nextId: null };
     }
@@ -200,14 +202,8 @@ export function useChangeRequestVoting({
         throw new Error('Permission denied');
       }
 
+      // TODO: Wire up to new vote model — castVote no longer exists on event actions
       const voteId = crypto.randomUUID();
-      await doEventCastVote({
-        id: voteId,
-        vote: voteType,
-        session_id: votingSessionId,
-        weight: 1,
-        is_delegate: false,
-      });
 
       return voteId;
     },

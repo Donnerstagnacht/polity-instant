@@ -14,6 +14,7 @@ import { LanguageToggle } from '@/features/navigation/toggles/language-toggle';
 import { StateToggle } from '@/features/navigation/toggles/state-toggle';
 import { useNavigationStore } from '@/features/navigation/state/navigation.store';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { VotingPasswordTab } from './VotingPasswordTab';
 import type { UserProfileFormData } from '../hooks/useUserProfileForm';
 
 interface UserProfileEditFormProps {
@@ -74,6 +75,9 @@ export function UserProfileEditForm({
           </TabsTrigger>
           <TabsTrigger value="subscriptions">
             {t('pages.user.settingsTabs.subscriptions')}
+          </TabsTrigger>
+          <TabsTrigger value="voting-password">
+            {t('pages.user.settingsTabs.votingPassword', 'Voting Password')}
           </TabsTrigger>
         </TabsList>
 
@@ -192,6 +196,11 @@ export function UserProfileEditForm({
               hasCustomPlan={hasCustomPlan}
             />
           </div>
+        </TabsContent>
+
+        {/* Voting Password Tab */}
+        <TabsContent value="voting-password">
+          <VotingPasswordTab userId={userId} />
         </TabsContent>
       </Tabs>
     </div>

@@ -1,6 +1,9 @@
 import { type ContentType } from '@/features/timeline/constants/content-type-config';
 import type { useSearchState } from '@/zero/shared/useSearchState';
-import type { ElectionCandidateRow } from '@/zero/agendas/queries';
+import type { ElectionForSearchRow } from '@/zero/elections/queries';
+
+/** Candidate row derived from elections-for-search query */
+type ElectionCandidateRow = ElectionForSearchRow['candidates'][number];
 
 // ============================================
 // Derive search entity types from Zero query results

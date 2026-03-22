@@ -17,16 +17,17 @@ export function getSupportStatus(
   return 'active';
 }
 
-type VotableAmendment = Pick<NonNullable<AmendmentFullRow>, 'upvotes' | 'downvotes' | 'vote_entries'>;
+type VotableAmendment = Pick<NonNullable<AmendmentFullRow>, 'upvotes' | 'downvotes'>;
 
 export function deriveVoteState(
   amendment: VotableAmendment,
-  userId: string | undefined,
+  _userId: string | undefined,
 ) {
   const score = (amendment.upvotes || 0) - (amendment.downvotes || 0);
-  const userVote = amendment.vote_entries?.find((v) => v.user?.id === userId);
-  const hasUpvoted = userVote?.vote === 1;
-  const hasDownvoted = userVote?.vote === -1;
+  // TODO: Per-user upvote/downvote tracking removed with voting system migration
+  const userVote = undefined;
+  const hasUpvoted = false;
+  const hasDownvoted = false;
   return { score, userVote, hasUpvoted, hasDownvoted };
 }
 

@@ -10,6 +10,11 @@ export const agendaQueries = {
       zql.agenda_item
         .where('event_id', event_id)
         .orderBy('order_index', 'asc')
+        .related('event')
+        .related('creator')
+        .related('election', q => q.related('position'))
+        .related('amendment')
+        .related('votes')
   ),
 
   // Agenda items by multiple event IDs with relations
@@ -21,6 +26,7 @@ export const agendaQueries = {
         .related('event')
         .related('election')
         .related('amendment')
+        .related('votes')
   ),
 
   // Single agenda item by ID
@@ -38,61 +44,6 @@ export const agendaQueries = {
         .where('agenda_item_id', agenda_item_id)
         .orderBy('order_index', 'asc')
   ),
-
-  // Elections for an agenda item
-  elections: defineQuery(
-    z.object({ agenda_item_id: z.string() }),
-    ({ args: { agenda_item_id } }) =>
-      zql.election
-        .where('agenda_item_id', agenda_item_id)
-        .orderBy('created_at', 'desc')
-  ),
-
-  // All elections with full details (candidates, votes+candidate, agenda_item+event, position)
-  electionsWithDetails: defineQuery(
-    z.object({}),
-    () =>
-      zql.election
-        .related('candidates')
-        .related('votes', q => q.related('candidate'))
-        .related('agenda_item', q => q.related('event'))
-        .related('position')
-  ),
-
-  // Elections for search (position+group, candidates, agenda_item+event)
-  electionsForSearch: defineQuery(
-    z.object({}),
-    () =>
-      zql.election
-        .related('position', q => q.related('group'))
-        .related('candidates')
-        .related('agenda_item', q => q.related('event'))
-  ),
-
-  // Candidates for an election
-  candidates: defineQuery(
-    z.object({ election_id: z.string() }),
-    ({ args: { election_id } }) =>
-      zql.election_candidate
-        .where('election_id', election_id)
-        .orderBy('order_index', 'asc')
-  ),
-
-  // Votes for an election
-  votes: defineQuery(
-    z.object({ election_id: z.string() }),
-    ({ args: { election_id } }) =>
-      zql.election_vote
-        .where('election_id', election_id)
-  ),
-
-  pendingElections: defineQuery(
-    z.object({}),
-    () =>
-      zql.election
-        .where('status', 'pending')
-        .related('position', q => q.related('group'))
-  ),
 }
 
 // ── Query Row Types ─────────────────────────────────────────────────
@@ -100,8 +51,3 @@ export type AgendaItemByEventRow = QueryRowType<typeof agendaQueries.byEvent>
 export type AgendaItemByEventIdsRow = QueryRowType<typeof agendaQueries.byEventIds>
 export type AgendaItemByIdRow = QueryRowType<typeof agendaQueries.byId>
 export type SpeakerListRow = QueryRowType<typeof agendaQueries.speakerList>
-export type ElectionRow = QueryRowType<typeof agendaQueries.elections>
-export type ElectionWithDetailsRow = QueryRowType<typeof agendaQueries.electionsWithDetails>
-export type ElectionForSearchRow = QueryRowType<typeof agendaQueries.electionsForSearch>
-export type ElectionCandidateRow = QueryRowType<typeof agendaQueries.candidates>
-export type ElectionVoteRow = QueryRowType<typeof agendaQueries.votes>

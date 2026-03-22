@@ -3,6 +3,7 @@ import { useZero } from '@rocicorp/zero/react'
 import { toast } from 'sonner'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { mutators } from '../mutators'
+import { serverConfirmed } from '../mutate-with-server-check'
 
 /**
  * Action hook for todo mutations.
@@ -16,7 +17,8 @@ export function useTodoActions() {
   const createTodo = useCallback(
     async (args: Parameters<typeof mutators.todos.create>[0]) => {
       try {
-        await zero.mutate(mutators.todos.create(args))
+        const result = zero.mutate(mutators.todos.create(args))
+        await serverConfirmed(result)
         toast.success(t('features.todos.toasts.created'))
       } catch (error) {
         console.error('Failed to create todo:', error)
@@ -30,7 +32,8 @@ export function useTodoActions() {
   const updateTodo = useCallback(
     async (args: Parameters<typeof mutators.todos.update>[0]) => {
       try {
-        await zero.mutate(mutators.todos.update(args))
+        const result = zero.mutate(mutators.todos.update(args))
+        await serverConfirmed(result)
       } catch (error) {
         console.error('Failed to update todo:', error)
         toast.error(t('features.todos.toasts.updateFailed'))
@@ -43,7 +46,8 @@ export function useTodoActions() {
   const deleteTodo = useCallback(
     async (id: string) => {
       try {
-        await zero.mutate(mutators.todos.delete({ id }))
+        const result = zero.mutate(mutators.todos.delete({ id }))
+        await serverConfirmed(result)
         toast.success(t('features.todos.toasts.deleted'))
       } catch (error) {
         console.error('Failed to delete todo:', error)
@@ -58,7 +62,8 @@ export function useTodoActions() {
   const toggleComplete = useCallback(
     async (id: string) => {
       try {
-        await zero.mutate(mutators.todos.toggleComplete({ id }))
+        const result = zero.mutate(mutators.todos.toggleComplete({ id }))
+        await serverConfirmed(result)
       } catch (error) {
         console.error('Failed to toggle todo completion:', error)
         toast.error(t('features.todos.toasts.toggleFailed'))
@@ -72,7 +77,8 @@ export function useTodoActions() {
   const assignUser = useCallback(
     async (args: Parameters<typeof mutators.todos.assign>[0]) => {
       try {
-        await zero.mutate(mutators.todos.assign(args))
+        const result = zero.mutate(mutators.todos.assign(args))
+        await serverConfirmed(result)
         toast.success(t('features.todos.toasts.userAssigned'))
       } catch (error) {
         console.error('Failed to assign user:', error)
@@ -86,7 +92,8 @@ export function useTodoActions() {
   const unassignUser = useCallback(
     async (id: string) => {
       try {
-        await zero.mutate(mutators.todos.unassign({ id }))
+        const result = zero.mutate(mutators.todos.unassign({ id }))
+        await serverConfirmed(result)
         toast.success(t('features.todos.toasts.userUnassigned'))
       } catch (error) {
         console.error('Failed to unassign user:', error)

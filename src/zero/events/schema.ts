@@ -60,6 +60,8 @@ const eventBaseSchema = z.object({
   main_group_delegate_allocation_mode: z.string().nullable(),
   current_agenda_item_id: z.string().nullable(),
   amendment_deadline: nullableTimestampSchema,
+  registration_deadline: nullableTimestampSchema,
+  candidacy_deadline: nullableTimestampSchema,
   delegates_nomination_deadline: nullableTimestampSchema,
   group_id: z.string().nullable(),
   creator_id: z.string(),
@@ -120,6 +122,10 @@ export const eventUpdateSchema = eventBaseSchema
     recurrence_days: true,
     recurrence_end_date: true,
     current_agenda_item_id: true,
+    registration_deadline: true,
+    amendment_deadline: true,
+    candidacy_deadline: true,
+    group_id: true,
   })
   .partial()
   .extend({ id: z.string() });

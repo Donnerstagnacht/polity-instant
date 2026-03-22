@@ -3,6 +3,7 @@ import { useZero } from '@rocicorp/zero/react'
 import { toast } from 'sonner'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { mutators } from '../mutators'
+import { serverConfirmed } from '../mutate-with-server-check'
 
 /**
  * Action hook for notification mutations.
@@ -16,7 +17,8 @@ export function useNotificationActions() {
   const markRead = useCallback(
     async (args: Parameters<typeof mutators.notifications.markRead>[0]) => {
       try {
-        await zero.mutate(mutators.notifications.markRead(args))
+        const result = zero.mutate(mutators.notifications.markRead(args))
+        await serverConfirmed(result)
       } catch (error) {
         console.error('Failed to mark notification as read:', error)
         toast.error(t('features.notifications.toasts.markReadFailed'))
@@ -29,7 +31,8 @@ export function useNotificationActions() {
   const markAllRead = useCallback(
     async (args: Parameters<typeof mutators.notifications.markAllRead>[0]) => {
       try {
-        await zero.mutate(mutators.notifications.markAllRead(args))
+        const result = zero.mutate(mutators.notifications.markAllRead(args))
+        await serverConfirmed(result)
         toast.success(t('features.notifications.toasts.allMarkedRead'))
       } catch (error) {
         console.error('Failed to mark all notifications as read:', error)
@@ -44,7 +47,8 @@ export function useNotificationActions() {
   const deleteNotification = useCallback(
     async (args: Parameters<typeof mutators.notifications.delete>[0]) => {
       try {
-        await zero.mutate(mutators.notifications.delete(args))
+        const result = zero.mutate(mutators.notifications.delete(args))
+        await serverConfirmed(result)
         toast.success(t('features.notifications.toasts.deleted'))
       } catch (error) {
         console.error('Failed to delete notification:', error)
@@ -59,7 +63,8 @@ export function useNotificationActions() {
   const updateSettings = useCallback(
     async (args: Parameters<typeof mutators.notifications.updateSettings>[0]) => {
       try {
-        await zero.mutate(mutators.notifications.updateSettings(args))
+        const result = zero.mutate(mutators.notifications.updateSettings(args))
+        await serverConfirmed(result)
         toast.success(t('features.notifications.toasts.settingsUpdated'))
       } catch (error) {
         console.error('Failed to update notification settings:', error)
@@ -73,7 +78,8 @@ export function useNotificationActions() {
   const createSettings = useCallback(
     async (args: Parameters<typeof mutators.notifications.createSettings>[0]) => {
       try {
-        await zero.mutate(mutators.notifications.createSettings(args))
+        const result = zero.mutate(mutators.notifications.createSettings(args))
+        await serverConfirmed(result)
         toast.success(t('features.notifications.toasts.settingsCreated'))
       } catch (error) {
         console.error('Failed to create notification settings:', error)
@@ -90,7 +96,8 @@ export function useNotificationActions() {
       args: Parameters<typeof mutators.notifications.registerPushSubscription>[0]
     ) => {
       try {
-        await zero.mutate(mutators.notifications.registerPushSubscription(args))
+        const result = zero.mutate(mutators.notifications.registerPushSubscription(args))
+        await serverConfirmed(result)
         toast.success(t('features.notifications.toasts.pushEnabled'))
       } catch (error) {
         console.error('Failed to register push subscription:', error)
@@ -106,7 +113,8 @@ export function useNotificationActions() {
       args: Parameters<typeof mutators.notifications.unregisterPushSubscription>[0]
     ) => {
       try {
-        await zero.mutate(mutators.notifications.unregisterPushSubscription(args))
+        const result = zero.mutate(mutators.notifications.unregisterPushSubscription(args))
+        await serverConfirmed(result)
         toast.success(t('features.notifications.toasts.pushDisabled'))
       } catch (error) {
         console.error('Failed to unregister push subscription:', error)
@@ -121,7 +129,8 @@ export function useNotificationActions() {
   const createNotification = useCallback(
     async (args: Parameters<typeof mutators.notifications.createNotification>[0]) => {
       try {
-        await zero.mutate(mutators.notifications.createNotification(args))
+        const result = zero.mutate(mutators.notifications.createNotification(args))
+        await serverConfirmed(result)
       } catch (error) {
         console.error('Failed to create notification:', error)
         toast.error(t('features.notifications.toasts.createFailed'))
@@ -135,7 +144,8 @@ export function useNotificationActions() {
   const markEntityNotificationRead = useCallback(
     async (args: Parameters<typeof mutators.notifications.markEntityNotificationRead>[0]) => {
       try {
-        await zero.mutate(mutators.notifications.markEntityNotificationRead(args))
+        const result = zero.mutate(mutators.notifications.markEntityNotificationRead(args))
+        await serverConfirmed(result)
       } catch (error) {
         console.error('Failed to mark entity notification as read:', error)
       }
@@ -146,7 +156,8 @@ export function useNotificationActions() {
   const markAllEntityNotificationsRead = useCallback(
     async (args: Parameters<typeof mutators.notifications.markAllEntityNotificationsRead>[0]) => {
       try {
-        await zero.mutate(mutators.notifications.markAllEntityNotificationsRead(args))
+        const result = zero.mutate(mutators.notifications.markAllEntityNotificationsRead(args))
+        await serverConfirmed(result)
       } catch (error) {
         console.error('Failed to mark all entity notifications as read:', error)
       }

@@ -84,7 +84,6 @@ export function useCloneAmendment(
   const {
     createAmendment,
     requestCollaboration: addAmendmentCollaborator,
-    castAmendmentVote,
     createPath,
     createPathSegment,
   } = useAmendmentActions();
@@ -247,17 +246,13 @@ export function useCloneAmendment(
             completed_at: 0,
             event_id: segment.eventId,
             amendment_id: cloneId,
+            majority_type: null,
+            time_limit: null,
+            voting_phase: null,
           });
 
-          await castAmendmentVote({
-            id: amendmentVoteId,
-            amendment_id: cloneId,
-            event_id: segment.eventId,
-            vote: 'pending',
-            weight: 1,
-            is_delegate_vote: false,
-            group_id: null,
-          });
+          // TODO: Wire up to new vote model if needed
+          // Old castAmendmentVote removed with voting migration
         }
 
         enrichedPath.push({

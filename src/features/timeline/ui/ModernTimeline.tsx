@@ -119,17 +119,19 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
                 : undefined;
       const tags = event.tags ?? fallbackTags;
       const eventParticipants = event.event?.participants;
-      const eventVotingSessions = event.event?.voting_sessions;
+      // TODO: Removed with voting session migration
+      const eventVotingSessions: never[] = [];
       const eventPositions = event.event?.event_positions;
-      const scheduledElections = event.event?.scheduled_elections;
+      // TODO: Removed with voting session migration
+      const scheduledElections: never[] = [];
       const eventEventId = event.event?.id;
       const agendaItems = eventEventId
         ? subscriptionTimeline.agendaItemsByEventId?.get(eventEventId)
         : undefined;
 
-      // Extract agenda item links from election or amendment_vote relationships
+      // Extract agenda item links from election or amendment_vote_id relationships
       const linkedElection = event.election;
-      const linkedAmendmentVote = event.amendment_vote;
+      const linkedAmendmentVoteId = event.amendment_vote_id;
 
       const agendaEventId =
         linkedElection?.agenda_item?.event?.id ||
@@ -175,9 +177,7 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
         attendeeCount: eventParticipants?.length,
         electionsCount:
           eventPositions?.filter(position => Boolean(position?.holders?.length)).length ||
-          scheduledElections?.length ||
           agendaItems?.length ||
-          eventVotingSessions?.filter(session => Boolean(session?.votes?.length)).length ||
           undefined,
         amendmentsCount:
           event.event?.agenda_items?.filter(item => Boolean(item?.amendment)).length ||

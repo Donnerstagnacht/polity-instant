@@ -10,6 +10,10 @@ interface PositionSearchInputProps {
   onChange: (positionId: string) => void
   label?: string
   placeholder?: string
+  /** Filter positions to only these groups */
+  groupIds?: string[]
+  /** Filter positions to this event's groups */
+  eventId?: string
 }
 
 export function PositionSearchInput({
@@ -17,18 +21,27 @@ export function PositionSearchInput({
   onChange,
   label,
   placeholder = 'Search for a position...',
+  groupIds,
 }: PositionSearchInputProps) {
   const { positions } = usePositionsWithGroups()
+
+  const filteredPositions = useMemo(() => {
+    if (!positions) return []
+    if (!groupIds || groupIds.length === 0) return positions
+    return positions.filter(
+      (p) => p.group_id && groupIds.includes(p.group_id),
+    )
+  }, [positions, groupIds])
 
   const items = useMemo(
     () =>
       toTypeaheadItems(
-        positions ?? [],
+        filteredPositions,
         'position',
         (p) => p.title || 'Position',
         (p) => p.description?.substring(0, 60),
       ),
-    [positions],
+    [filteredPositions],
   )
 
   const handleChange = (item: TypeaheadItem | null) => {

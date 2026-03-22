@@ -1,6 +1,6 @@
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch'
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems'
-import { useAgendaState } from '@/zero/agendas/useAgendaState'
+import { useElectionState } from '@/zero/elections/useElectionState'
 import { Label } from '@/features/shared/ui/ui/label'
 import { useMemo } from 'react'
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers'
@@ -18,7 +18,7 @@ export function ElectionSearchInput({
   label,
   placeholder = 'Search for an election...',
 }: ElectionSearchInputProps) {
-  const { electionsForSearch } = useAgendaState({ includeElectionsForSearch: true })
+  const { electionsForSearch } = useElectionState({ includeElectionsForSearch: true })
 
   const items = useMemo(
     () =>

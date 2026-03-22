@@ -155,11 +155,8 @@ export function useAmendmentState(options: AmendmentStateOptions = {}) {
       : undefined
   )
 
-  const [amendmentVotes] = useQuery(
-    includeAmendmentVotes
-      ? queries.amendments.amendmentVotesAll({})
-      : undefined
-  )
+  // TODO: Removed with voting session migration
+  const amendmentVotes = undefined
 
   const [supportConfirmations] = useQuery(
     includeSupportConfirmations && userId

@@ -1,141 +1,114 @@
-'use client';
+'use client'
 
-import type { ElectionCandidateRow, ElectionVoteRow } from '@/zero/agendas/queries';
+import type { CandidatesByElectionRow } from '@/zero/elections/queries'
+import type { ChoicesByVoteRow } from '@/zero/votes/queries'
 
-interface ElectionCandidateStats {
-  candidate: ElectionCandidateRow;
-  totalVotes: number;
-  indicationCount: number;
-  actualCount: number;
-  indicationPercentage: number;
-  actualPercentage: number;
+interface CandidateSelectionEntry {
+  candidate_id: string
 }
 
-interface AmendmentVoteStats {
-  yes: number;
-  no: number;
-  abstain: number;
-  total: number;
-  indicationYes: number;
-  indicationNo: number;
-  indicationAbstain: number;
-  yesPercentage: number;
-  noPercentage: number;
-  indicationYesPercentage: number;
-  indicationNoPercentage: number;
+interface CandidateStats {
+  candidate: CandidatesByElectionRow
+  indicativeCount: number
+  finalCount: number
+  indicativePercentage: number
+  finalPercentage: number
 }
 
-export type VotingPhase = 'unknown' | 'indication' | 'voting' | 'closed';
+interface ChoiceDecisionEntry {
+  choice_id: string
+}
+
+interface ChoiceStats {
+  choice: ChoicesByVoteRow
+  indicativeCount: number
+  finalCount: number
+  indicativePercentage: number
+  finalPercentage: number
+}
+
+export type VotingPhase = 'unknown' | 'indicative' | 'final' | 'closed'
 
 /**
- * Utility function to determine voting phase from agenda item status
+ * Derive the voting phase from election/vote status.
  */
-export function getVotingPhase(status?: string): VotingPhase {
-  if (!status) return 'unknown';
-  if (status === 'planned') return 'indication';
-  if (status === 'active') return 'voting';
-  if (status === 'completed') return 'closed';
-  return 'unknown';
+export function getVotingPhase(status?: string | null): VotingPhase {
+  if (!status) return 'unknown'
+  if (status === 'indicative') return 'indicative'
+  if (status === 'final' || status === 'final_vote') return 'final'
+  if (status === 'closed') return 'closed'
+  return 'unknown'
 }
 
 /**
- * Utility function to calculate election statistics with indication support
+ * Calculate election stats from candidates + indicative/final selections.
  */
 export function calculateElectionStats(
-  candidates: ElectionCandidateRow[],
-  votes: ElectionVoteRow[]
-): { candidates: ElectionCandidateStats[]; totalVotes: number } {
+  candidates: CandidatesByElectionRow[],
+  indicativeSelections: ReadonlyArray<CandidateSelectionEntry>,
+  finalSelections: ReadonlyArray<CandidateSelectionEntry>,
+): { candidates: CandidateStats[]; totalIndicative: number; totalFinal: number } {
   if (!candidates?.length) {
-    return { candidates: [], totalVotes: 0 };
+    return { candidates: [], totalIndicative: 0, totalFinal: 0 }
   }
 
-  const totalVotes = votes.length;
+  const totalIndicative = indicativeSelections.length
+  const totalFinal = finalSelections.length
 
-  const candidateStats = candidates.map(candidate => {
-    const candidateVotes = votes.filter(v => v.candidate_id === candidate.id);
-    const indicationVotesArr = candidateVotes.filter(v => v.is_indication);
-    const actualVotesArr = candidateVotes.filter(v => !v.is_indication);
+  const candidateStats = candidates.map((candidate) => {
+    const indCount = indicativeSelections.filter((s) => s.candidate_id === candidate.id).length
+    const finCount = finalSelections.filter((s) => s.candidate_id === candidate.id).length
 
     return {
       candidate,
-      totalVotes: candidateVotes.length,
-      indicationCount: indicationVotesArr.length,
-      actualCount: actualVotesArr.length,
-      indicationPercentage: totalVotes > 0 ? (indicationVotesArr.length / totalVotes) * 100 : 0,
-      actualPercentage: totalVotes > 0 ? (actualVotesArr.length / totalVotes) * 100 : 0,
-    };
-  });
+      indicativeCount: indCount,
+      finalCount: finCount,
+      indicativePercentage: totalIndicative > 0 ? (indCount / totalIndicative) * 100 : 0,
+      finalPercentage: totalFinal > 0 ? (finCount / totalFinal) * 100 : 0,
+    }
+  })
 
-  return { candidates: candidateStats, totalVotes };
+  return { candidates: candidateStats, totalIndicative, totalFinal }
 }
 
 /**
- * Utility function to calculate amendment vote statistics with indication support
+ * Calculate vote stats from choices + indicative/final decisions.
  */
-interface VotingEntry {
-  is_indication?: boolean;
-  vote?: string;
-}
-
-export function calculateAmendmentStats(entries: VotingEntry[]): AmendmentVoteStats {
-  if (!entries?.length) {
-    return {
-      yes: 0,
-      no: 0,
-      abstain: 0,
-      total: 0,
-      indicationYes: 0,
-      indicationNo: 0,
-      indicationAbstain: 0,
-      yesPercentage: 0,
-      noPercentage: 0,
-      indicationYesPercentage: 0,
-      indicationNoPercentage: 0,
-    };
+export function calculateVoteStats(
+  choices: ChoicesByVoteRow[],
+  indicativeDecisions: ReadonlyArray<ChoiceDecisionEntry>,
+  finalDecisions: ReadonlyArray<ChoiceDecisionEntry>,
+): { choices: ChoiceStats[]; totalIndicative: number; totalFinal: number } {
+  if (!choices?.length) {
+    return { choices: [], totalIndicative: 0, totalFinal: 0 }
   }
 
-  const indicationEntries = entries.filter(e => e.is_indication);
-  const actualEntries = entries.filter(e => !e.is_indication);
+  const totalIndicative = indicativeDecisions.length
+  const totalFinal = finalDecisions.length
 
-  const countVotes = (votes: VotingEntry[], type: string) =>
-    votes.filter(v => v.vote === type).length;
+  const choiceStats = choices.map((choice) => {
+    const indCount = indicativeDecisions.filter((d) => d.choice_id === choice.id).length
+    const finCount = finalDecisions.filter((d) => d.choice_id === choice.id).length
 
-  const total = entries.length;
-  const yes = countVotes(actualEntries, 'yes');
-  const no = countVotes(actualEntries, 'no');
-  const abstain = countVotes(actualEntries, 'abstain');
-  const indicationYes = countVotes(indicationEntries, 'yes');
-  const indicationNo = countVotes(indicationEntries, 'no');
-  const indicationAbstain = countVotes(indicationEntries, 'abstain');
+    return {
+      choice,
+      indicativeCount: indCount,
+      finalCount: finCount,
+      indicativePercentage: totalIndicative > 0 ? (indCount / totalIndicative) * 100 : 0,
+      finalPercentage: totalFinal > 0 ? (finCount / totalFinal) * 100 : 0,
+    }
+  })
 
-  const actualTotal = yes + no + abstain;
-  const indicationTotal = indicationYes + indicationNo + indicationAbstain;
-
-  return {
-    yes,
-    no,
-    abstain,
-    total,
-    indicationYes,
-    indicationNo,
-    indicationAbstain,
-    yesPercentage: actualTotal > 0 ? (yes / actualTotal) * 100 : 0,
-    noPercentage: actualTotal > 0 ? (no / actualTotal) * 100 : 0,
-    indicationYesPercentage: indicationTotal > 0 ? (indicationYes / indicationTotal) * 100 : 0,
-    indicationNoPercentage: indicationTotal > 0 ? (indicationNo / indicationTotal) * 100 : 0,
-  };
+  return { choices: choiceStats, totalIndicative, totalFinal }
 }
 
 /**
  * Hook for accessing agenda item voting utilities.
- * This hook provides helper functions and types for voting operations.
- * For actual vote submissions, use useEventAgendaItem which has the full
- * voting implementation with indication support.
  */
 export function useAgendaItemVoting() {
   return {
     getVotingPhase,
     calculateElectionStats,
-    calculateAmendmentStats,
-  };
+    calculateVoteStats,
+  }
 }
