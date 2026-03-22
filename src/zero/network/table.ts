@@ -34,3 +34,27 @@ export const subscriber = table('subscriber')
     created_at: number(),
   })
   .primaryKey('id')
+
+export const groupWorkflow = table('group_workflow')
+  .columns({
+    id: string(),
+    group_id: string(),
+    name: string().optional(),
+    description: string().optional(),
+    status: string().optional(),
+    created_by_id: string(),
+    created_at: number(),
+    updated_at: number(),
+  })
+  .primaryKey('id')
+
+export const groupWorkflowStep = table('group_workflow_step')
+  .columns({
+    id: string(),
+    workflow_id: string(),
+    group_id: string(),
+    order_index: number(),
+    label: string().optional(),
+    created_at: number(),
+  })
+  .primaryKey('id')

@@ -27,7 +27,7 @@ import { eventDelegate, groupDelegateAllocation } from './delegates/table'
 // Meet
 import { meetingSlot, meetingBooking } from './meet/table'
 // Network
-import { follow, groupRelationship, subscriber } from './network/table'
+import { follow, groupRelationship, subscriber, groupWorkflow, groupWorkflowStep } from './network/table'
 // Todos
 import { todo, todoAssignment } from './todos/table'
 // Messages
@@ -611,6 +611,17 @@ export const subscriberRelationships = relationships(subscriber, ({ one }) => ({
   blog: one({ sourceField: ['blog_id'], destSchema: blog, destField: ['id'] }),
 }))
 
+export const groupWorkflowRelationships = relationships(groupWorkflow, ({ one, many }) => ({
+  group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
+  created_by: one({ sourceField: ['created_by_id'], destSchema: user, destField: ['id'] }),
+  steps: many({ sourceField: ['id'], destSchema: groupWorkflowStep, destField: ['workflow_id'] }),
+}))
+
+export const groupWorkflowStepRelationships = relationships(groupWorkflowStep, ({ one }) => ({
+  workflow: one({ sourceField: ['workflow_id'], destSchema: groupWorkflow, destField: ['id'] }),
+  group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
+}))
+
 export const hashtagRelationships = relationships(hashtag, ({ many }) => ({
   user_hashtags: many({ sourceField: ['id'], destSchema: userHashtag, destField: ['hashtag_id'] }),
   group_hashtags: many({ sourceField: ['id'], destSchema: groupHashtag, destField: ['hashtag_id'] }),
@@ -843,4 +854,7 @@ export const allRelationships = [
   votingPasswordRelationships,
   // Accreditation
   accreditationRelationships,
+  // Workflows
+  groupWorkflowRelationships,
+  groupWorkflowStepRelationships,
 ]

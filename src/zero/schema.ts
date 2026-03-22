@@ -22,7 +22,7 @@ import { thread, comment } from './discussions/table'
 import { position, positionHolderHistory, eventPosition, eventPositionHolder } from './positions/table'
 import { eventDelegate, groupDelegateAllocation } from './delegates/table'
 import { meetingSlot, meetingBooking } from './meet/table'
-import { follow, groupRelationship, subscriber } from './network/table'
+import { follow, groupRelationship, subscriber, groupWorkflow, groupWorkflowStep } from './network/table'
 import { userPreference } from './preferences/table'
 import { calendarSubscription } from './calendar-subscriptions/table'
 // Voting Password
@@ -71,7 +71,7 @@ export const schema = createSchema({
     // Meet
     meetingSlot, meetingBooking,
     // Network
-    follow, groupRelationship, subscriber,
+    follow, groupRelationship, subscriber, groupWorkflow, groupWorkflowStep,
     // Todos
     todo, todoAssignment,
     // Messages
@@ -211,6 +211,10 @@ export type VotingPasswordRow = Row<Schema['tables']['voting_password']>
 
 // Accreditation
 export type AccreditationRow = Row<Schema['tables']['accreditation']>
+
+// Workflows
+export type GroupWorkflowRow = Row<Schema['tables']['group_workflow']>
+export type GroupWorkflowStepRow = Row<Schema['tables']['group_workflow_step']>
 
 // Common
 export type Subscriber = Row<Schema['tables']['subscriber']>

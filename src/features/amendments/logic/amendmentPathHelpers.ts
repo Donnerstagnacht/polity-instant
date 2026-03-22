@@ -195,3 +195,30 @@ export function getUpwardConnectedGroupsForUser(
     }) !== null
   );
 }
+
+/**
+ * Build a path from a workflow's ordered step sequence,
+ * assigning the closest upcoming event for each step's group.
+ */
+export function calculateWorkflowPathWithClosestEvents(
+  workflowSteps: readonly { group_id: string; group?: { id: string; name: string | null } | null }[],
+  events: NetworkEventRow[],
+): PathWithEventSegment[] {
+  const sorted = [...workflowSteps].sort((a, b) => {
+    const aIdx = (a as { order_index?: number }).order_index ?? 0
+    const bIdx = (b as { order_index?: number }).order_index ?? 0
+    return aIdx - bIdx
+  })
+
+  return sorted.map(step => {
+    const closestEvent = getClosestUpcomingEventForGroup(step.group_id, events)
+
+    return {
+      groupId: step.group_id,
+      groupName: step.group?.name ?? 'Unknown',
+      eventId: closestEvent?.id ?? null,
+      eventTitle: closestEvent?.title ?? 'No upcoming event',
+      eventStartDate: closestEvent?.start_date ?? null,
+    }
+  })
+}

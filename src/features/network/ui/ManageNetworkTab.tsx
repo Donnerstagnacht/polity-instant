@@ -31,10 +31,12 @@ import { EntitySearchBar, type FilterOption } from '@/features/shared/ui/ui/enti
 import { RightBadge } from './RightBadge';
 import { RIGHT_TYPES, RIGHT_GRADIENTS } from './RightFilters';
 import { LinkGroupDialog } from './LinkGroupDialog';
+import { WorkflowEditor } from './WorkflowEditor';
 import { PermissionGuard } from '@/features/auth/PermissionGuard';
 import { Pencil, Trash2, Clock } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { NormalizedGroupRelationship, NetworkGroupEntity } from '../types/network.types';
+import type { WorkflowWithStepsRow } from '@/zero/network/queries';
 
 interface GroupedRequest {
   group: NetworkGroupEntity;
@@ -62,6 +64,25 @@ interface ManageNetworkTabProps {
   onAcceptRequest: (rels: NormalizedGroupRelationship[]) => void;
   onRejectRequest: (rels: NormalizedGroupRelationship[]) => void;
   onDeleteRelationship: (targetGroupId: string) => void;
+  // Workflow props
+  workflows: WorkflowWithStepsRow[];
+  workflowsLoading: boolean;
+  isWorkflowEditorOpen: boolean;
+  editingWorkflow: WorkflowWithStepsRow | null;
+  workflowDraftName: string;
+  onWorkflowDraftNameChange: (name: string) => void;
+  workflowDraftDescription: string;
+  onWorkflowDraftDescriptionChange: (description: string) => void;
+  workflowDraftSteps: { group_id: string; label: string | null }[];
+  availableGroups: { id: string; name: string | null }[];
+  onOpenNewWorkflow: () => void;
+  onOpenEditWorkflow: (workflow: WorkflowWithStepsRow) => void;
+  onCloseWorkflowEditor: () => void;
+  onAddWorkflowStep: (groupId: string, label: string | null) => void;
+  onRemoveWorkflowStep: (index: number) => void;
+  onMoveWorkflowStep: (fromIndex: number, toIndex: number) => void;
+  onSaveWorkflow: () => void;
+  onDeleteWorkflow: (workflowId: string) => void;
 }
 
 export function ManageNetworkTab({
@@ -80,6 +101,24 @@ export function ManageNetworkTab({
   onAcceptRequest,
   onRejectRequest,
   onDeleteRelationship,
+  workflows,
+  workflowsLoading,
+  isWorkflowEditorOpen,
+  editingWorkflow,
+  workflowDraftName,
+  onWorkflowDraftNameChange,
+  workflowDraftDescription,
+  onWorkflowDraftDescriptionChange,
+  workflowDraftSteps,
+  availableGroups,
+  onOpenNewWorkflow,
+  onOpenEditWorkflow,
+  onCloseWorkflowEditor,
+  onAddWorkflowStep,
+  onRemoveWorkflowStep,
+  onMoveWorkflowStep,
+  onSaveWorkflow,
+  onDeleteWorkflow,
 }: ManageNetworkTabProps) {
   const { t } = useTranslation();
   const incomingRequestCount = incomingRequests.reduce((total, entry) => total + entry.rels.length, 0);
@@ -389,6 +428,30 @@ export function ManageNetworkTab({
           </div>
         </CardContent>
       </Card>
+
+      {/* Workflows Section */}
+      <PermissionGuard action="manage" resource="groupRelationships" context={{ groupId }}>
+        <WorkflowEditor
+          workflows={workflows}
+          isLoading={workflowsLoading}
+          isEditorOpen={isWorkflowEditorOpen}
+          editingWorkflow={editingWorkflow}
+          draftName={workflowDraftName}
+          setDraftName={onWorkflowDraftNameChange}
+          draftDescription={workflowDraftDescription}
+          setDraftDescription={onWorkflowDraftDescriptionChange}
+          draftSteps={workflowDraftSteps}
+          availableGroups={availableGroups}
+          onOpenNew={onOpenNewWorkflow}
+          onOpenEdit={onOpenEditWorkflow}
+          onClose={onCloseWorkflowEditor}
+          onAddStep={onAddWorkflowStep}
+          onRemoveStep={onRemoveWorkflowStep}
+          onMoveStep={onMoveWorkflowStep}
+          onSave={onSaveWorkflow}
+          onDelete={onDeleteWorkflow}
+        />
+      </PermissionGuard>
     </div>
   );
 }

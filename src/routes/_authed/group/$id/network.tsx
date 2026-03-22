@@ -35,6 +35,24 @@ function GroupNetworkPage() {
             onAcceptRequest={np.handleAcceptRequest}
             onRejectRequest={np.handleRejectRequest}
             onDeleteRelationship={np.handleDeleteRelationship}
+            workflows={np.workflows}
+            workflowsLoading={np.workflowsLoading}
+            isWorkflowEditorOpen={np.isWorkflowEditorOpen}
+            editingWorkflow={np.editingWorkflow}
+            workflowDraftName={np.workflowDraftName}
+            onWorkflowDraftNameChange={np.setWorkflowDraftName}
+            workflowDraftDescription={np.workflowDraftDescription}
+            onWorkflowDraftDescriptionChange={np.setWorkflowDraftDescription}
+            workflowDraftSteps={np.workflowDraftSteps}
+            availableGroups={np.availableGroups}
+            onOpenNewWorkflow={np.openNewWorkflow}
+            onOpenEditWorkflow={np.openEditWorkflow}
+            onCloseWorkflowEditor={np.closeWorkflowEditor}
+            onAddWorkflowStep={np.addWorkflowStep}
+            onRemoveWorkflowStep={np.removeWorkflowStep}
+            onMoveWorkflowStep={np.moveWorkflowStep}
+            onSaveWorkflow={np.handleSaveWorkflow}
+            onDeleteWorkflow={np.handleDeleteWorkflow}
           />
         }
       />

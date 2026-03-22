@@ -63,6 +63,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
       eventTitle: string;
       eventStartDate: number | null;
     }>;
+    workflowId: string | null;
   } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -147,6 +148,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
           amendmentTitle: title.trim(),
           amendmentReason: null,
           enrichedPath,
+          workflowId: targetSelection.workflowId,
         });
       }
 
@@ -218,6 +220,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                       eventId: selection.eventId,
                       eventData: selection.eventData,
                       pathWithEvents: selection.pathWithEvents,
+                      workflowId: selection.workflowId,
                     });
                   }}
                   selectedGroupId={targetSelection?.groupId}

@@ -21,6 +21,7 @@ import { electionQueries } from './elections/queries'
 import { voteQueries } from './votes/queries'
 import { votingPasswordQueries } from './voting-password/queries'
 import { accreditationQueries } from './accreditation/queries'
+import { networkQueries } from './network/queries'
 
 export const queries = defineQueries({
   users: userQueries,
@@ -44,4 +45,5 @@ export const queries = defineQueries({
   votes: voteQueries,
   votingPassword: votingPasswordQueries,
   accreditation: accreditationQueries,
+  network: networkQueries,
 })

@@ -88,6 +88,8 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
     eventId: string;
     eventData: PendingTargetEventData;
     pathWithEvents?: PathWithEventSegment[];
+    pathMode: 'hierarchy' | 'workflow';
+    workflowId: string | null;
   } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'path' | 'network'>('network');
@@ -222,6 +224,8 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
               location_name: eventData.location_name ?? null,
               participant_count: eventData.participant_count ?? null,
             },
+            pathMode: 'hierarchy',
+            workflowId: null,
           });
           setEntityDialogOpen(false);
           setTargetDialogOpen(true);
@@ -281,8 +285,10 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
         await deletePath({ id: amendmentPath.id });
       }
 
-      // Calculate shortest path with events
-      const pathWithEvents = calculatePathWithEvents(groupId);
+      // Use the pre-calculated path from the selector (supports both hierarchy and workflow)
+      const pathWithEvents = pendingTarget.pathWithEvents && pendingTarget.pathWithEvents.length > 0
+        ? pendingTarget.pathWithEvents
+        : calculatePathWithEvents(groupId);
 
       if (!pathWithEvents || pathWithEvents.length === 0) {
         toast.error(t('features.amendments.process.noValidPath'));
@@ -305,6 +311,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
         amendmentTitle: amendment.title ?? '',
         amendmentReason: amendment.reason || null,
         enrichedPath,
+        workflowId: pendingTarget.workflowId,
       });
 
       // Update amendment with target group and event
@@ -1083,7 +1090,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                 email: u.email ?? undefined,
                 avatar: u.avatar ?? undefined,
               }))}
-              onSelect={({ groupId, groupData, eventId, eventData, pathWithEvents, selectedUserId: selUserId }) => {
+              onSelect={({ groupId, groupData, eventId, eventData, pathWithEvents, selectedUserId: selUserId, pathMode, workflowId }) => {
                 setPendingTarget({
                   groupId,
                   groupData: {
@@ -1105,6 +1112,8 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                     participant_count: eventData.participant_count ?? null,
                   },
                   pathWithEvents,
+                  pathMode,
+                  workflowId,
                 });
                 setTargetCollaboratorUserId(selUserId);
               }}

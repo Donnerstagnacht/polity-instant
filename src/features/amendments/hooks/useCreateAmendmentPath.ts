@@ -9,6 +9,7 @@ interface CreateAmendmentPathArgs {
   amendmentTitle: string;
   amendmentReason: string | null;
   enrichedPath: EnrichedPathSegment[];
+  workflowId?: string | null;
 }
 
 /**
@@ -29,6 +30,7 @@ export function useCreateAmendmentPath() {
       amendmentTitle,
       amendmentReason,
       enrichedPath,
+      workflowId,
     }: CreateAmendmentPathArgs) => {
       // Create agenda items and votes for each segment with an event
       for (const segment of enrichedPath) {
@@ -72,6 +74,7 @@ export function useCreateAmendmentPath() {
         id: pathId,
         amendment_id: amendmentId,
         title: '',
+        workflow_id: workflowId ?? null,
       });
 
       // Create path segments

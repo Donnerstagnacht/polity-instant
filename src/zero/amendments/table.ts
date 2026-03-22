@@ -57,6 +57,7 @@ export const amendmentPath = table('amendment_path')
     id: string(),
     amendment_id: string(),
     title: string().optional(),
+    workflow_id: string().optional(),
     created_at: number(),
   })
   .primaryKey('id')

@@ -3,15 +3,18 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Label } from '@/features/shared/ui/ui/label';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/features/shared/ui/ui/tabs';
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
+import { useWorkflowState } from '@/zero/network/useWorkflowState';
 import {
   type AmendmentNetworkEvent,
   type AmendmentNetworkGroup,
   type PathWithEventSegment,
   calculateUpwardPathWithClosestEvents,
+  calculateWorkflowPathWithClosestEvents,
   getActiveUserGroupIds,
   getUpwardConnectedGroupsForUser,
 } from '@/features/amendments/logic/amendmentPathHelpers';
@@ -29,6 +32,8 @@ interface TargetGroupEventSelectorProps {
     eventData: AmendmentNetworkEvent;
     pathWithEvents: PathWithEventSegment[];
     selectedUserId: string;
+    pathMode: 'hierarchy' | 'workflow';
+    workflowId: string | null;
   }) => void;
   selectedGroupId?: string;
   selectedEventId?: string;
@@ -50,6 +55,13 @@ export function TargetGroupEventSelector({
   const [pathWithEvents, setPathWithEvents] = useState<PathWithEventSegment[]>([]);
   const [pathValidationError, setPathValidationError] = useState<string | null>(null);
   const lastEmittedSelectionRef = useRef<string | null>(null);
+
+  // Path mode: hierarchy (BFS path) or workflow (predefined workflow sequence)
+  const [pathMode, setPathMode] = useState<'hierarchy' | 'workflow'>('hierarchy');
+  const [selectedWorkflowId, setSelectedWorkflowId] = useState<string>('');
+
+  // Fetch workflows (all workflows the user might reference)
+  const { allWorkflows } = useWorkflowState({});
 
   // Fetch network data via facade
   const {
@@ -88,7 +100,20 @@ export function TargetGroupEventSelector({
       return;
     }
 
-    const calculatedPath = calculatePathWithEvents(selectedGroup.id);
+    let calculatedPath: PathWithEventSegment[] | null = null;
+
+    if (pathMode === 'workflow' && selectedWorkflowId) {
+      const workflow = allWorkflows.find(w => w.id === selectedWorkflowId);
+      if (workflow) {
+        calculatedPath = calculateWorkflowPathWithClosestEvents(
+          workflow.steps,
+          networkData.events,
+        );
+      }
+    } else {
+      calculatedPath = calculatePathWithEvents(selectedGroup.id);
+    }
+
     if (!calculatedPath) {
       setPathWithEvents([]);
       return;
@@ -106,7 +131,7 @@ export function TargetGroupEventSelector({
     );
 
     setPathWithEvents(seededPath);
-  }, [selectedGroup, selectedEvent, selectedUserId, eventsData]);
+  }, [selectedGroup, selectedEvent, selectedUserId, eventsData, pathMode, selectedWorkflowId, allWorkflows]);
 
   // Calculate path from user to target group with events for each step
   const calculatePathWithEvents = (targetGroupId: string) => {
@@ -289,6 +314,8 @@ export function TargetGroupEventSelector({
       eventData: targetEvent,
       pathWithEvents,
       selectedUserId,
+      pathMode,
+      workflowId: selectedWorkflowId || null,
     });
   }, [
     getUpcomingEventsForGroup,
@@ -325,65 +352,216 @@ export function TargetGroupEventSelector({
         </div>
       )}
 
-      {/* Group Selection with TypeAhead */}
-      <div className="space-y-2">
-        <Label>Select Target Group</Label>
-        {connectedGroups.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No connected groups found. You need to be a member of groups with amendment rights.
-          </p>
-        ) : (
-          <TypeaheadSearch
-            items={toTypeaheadItems(
-              connectedGroups,
-              'group',
-              (g) => g.name || 'Group',
-              (g) => g.description?.substring(0, 60),
+      {/* Path Mode Selection + Group/Event Selection */}
+      {allWorkflows.length > 0 ? (
+        <Tabs
+          value={pathMode}
+          onValueChange={(value) => {
+            const mode = value as 'hierarchy' | 'workflow';
+            setPathMode(mode);
+            setSelectedGroup(null);
+            setSelectedEvent(null);
+            setPathWithEvents([]);
+            setPathValidationError(null);
+            if (mode === 'hierarchy') setSelectedWorkflowId('');
+          }}
+        >
+          <TabsList className="w-full">
+            <TabsTrigger value="hierarchy" className="flex-1">Hierarchy Path</TabsTrigger>
+            <TabsTrigger value="workflow" className="flex-1">Workflow Path</TabsTrigger>
+          </TabsList>
+
+          {/* Hierarchy Tab */}
+          <TabsContent value="hierarchy" className="space-y-4">
+            <div className="space-y-2">
+              <Label>Select Target Group</Label>
+              {connectedGroups.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No connected groups found. You need to be a member of groups with amendment rights.
+                </p>
+              ) : (
+                <TypeaheadSearch
+                  items={toTypeaheadItems(
+                    connectedGroups,
+                    'group',
+                    (g) => g.name || 'Group',
+                    (g) => g.description?.substring(0, 60),
+                  )}
+                  value={selectedGroup?.id || ''}
+                  onChange={(item: TypeaheadItem | null) => {
+                    if (item) {
+                      const group = connectedGroups.find((g) => g.id === item.id);
+                      if (group) {
+                        setSelectedGroup({ id: group.id, data: group });
+                        setSelectedEvent(null);
+                      }
+                    }
+                  }}
+                  placeholder="Search for a group..."
+                  disablePortal={disablePortal}
+                />
+              )}
+            </div>
+
+            {selectedGroup && (
+              <div className="space-y-2">
+                <Label>Select Target Event</Label>
+                {upcomingEvents.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No events found for this group</p>
+                ) : (
+                  <TypeaheadSearch
+                    items={targetEventItems}
+                    value={selectedEvent?.id || ''}
+                    onChange={(item: TypeaheadItem | null) => {
+                      if (!item) { setSelectedEvent(null); return; }
+                      const event = upcomingEvents.find((entry) => entry.id === item.id);
+                      if (event) setSelectedEvent({ id: event.id, data: event });
+                    }}
+                    placeholder="Search for an event..."
+                    disablePortal={disablePortal}
+                  />
+                )}
+              </div>
             )}
-            value={selectedGroup?.id || ''}
-            onChange={(item: TypeaheadItem | null) => {
-              if (item) {
-                const group = connectedGroups.find((g) => g.id === item.id);
-                if (group) {
-                  setSelectedGroup({ id: group.id, data: group });
-                  setSelectedEvent(null);
-                }
-              }
-            }}
-            placeholder="Search for a group..."
-            disablePortal={disablePortal}
-          />
-        )}
-      </div>
+          </TabsContent>
 
-      {/* Event Selection (shown after group is selected) */}
-      {selectedGroup && (
-        <div className="space-y-2">
-          <Label>Select Target Event</Label>
-          {upcomingEvents.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No events found for this group
-            </p>
-          ) : (
-            <TypeaheadSearch
-              items={targetEventItems}
-              value={selectedEvent?.id || ''}
-              onChange={(item: TypeaheadItem | null) => {
-                if (!item) {
+          {/* Workflow Tab */}
+          <TabsContent value="workflow" className="space-y-4">
+            <div className="space-y-2">
+              <Label>Select Workflow</Label>
+              <TypeaheadSearch
+                items={toTypeaheadItems(
+                  allWorkflows,
+                  'group',
+                  (w) => w.name || 'Untitled Workflow',
+                  (w) => w.group?.name ? `Group: ${w.group.name}` : undefined,
+                )}
+                value={selectedWorkflowId}
+                onChange={(item: TypeaheadItem | null) => {
+                  setSelectedWorkflowId(item?.id ?? '');
+                  setSelectedGroup(null);
                   setSelectedEvent(null);
-                  return;
-                }
+                  setPathWithEvents([]);
+                }}
+                placeholder="Select a workflow..."
+                disablePortal={disablePortal}
+              />
+            </div>
 
-                const event = upcomingEvents.find((entry) => entry.id === item.id);
-                if (event) {
-                  setSelectedEvent({ id: event.id, data: event });
-                }
-              }}
-              placeholder="Search for an event..."
-              disablePortal={disablePortal}
-            />
+            {selectedWorkflowId && (() => {
+              const selectedWorkflow = allWorkflows.find(w => w.id === selectedWorkflowId);
+              const workflowGroups = (selectedWorkflow?.steps ?? [])
+                .map(s => s.group)
+                .filter((g): g is NonNullable<typeof g> => !!g);
+              return (
+                <>
+                  <div className="space-y-2">
+                    <Label>Select Target Group</Label>
+                    {workflowGroups.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No groups defined in this workflow.</p>
+                    ) : (
+                      <TypeaheadSearch
+                        items={toTypeaheadItems(
+                          workflowGroups,
+                          'group',
+                          (g) => g.name || 'Group',
+                          (g) => g.description?.substring(0, 60),
+                        )}
+                        value={selectedGroup?.id || ''}
+                        onChange={(item: TypeaheadItem | null) => {
+                          if (item) {
+                            const group = workflowGroups.find((g) => g.id === item.id);
+                            if (group) {
+                              setSelectedGroup({ id: group.id, data: group });
+                              setSelectedEvent(null);
+                            }
+                          }
+                        }}
+                        placeholder="Search for a group..."
+                        disablePortal={disablePortal}
+                      />
+                    )}
+                  </div>
+
+                  {selectedGroup && (
+                    <div className="space-y-2">
+                      <Label>Select Target Event</Label>
+                      {upcomingEvents.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No events found for this group</p>
+                      ) : (
+                        <TypeaheadSearch
+                          items={targetEventItems}
+                          value={selectedEvent?.id || ''}
+                          onChange={(item: TypeaheadItem | null) => {
+                            if (!item) { setSelectedEvent(null); return; }
+                            const event = upcomingEvents.find((entry) => entry.id === item.id);
+                            if (event) setSelectedEvent({ id: event.id, data: event });
+                          }}
+                          placeholder="Search for an event..."
+                          disablePortal={disablePortal}
+                        />
+                      )}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </TabsContent>
+        </Tabs>
+      ) : (
+        /* No workflows available — hierarchy-only (no tabs) */
+        <>
+          <div className="space-y-2">
+            <Label>Select Target Group</Label>
+            {connectedGroups.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No connected groups found. You need to be a member of groups with amendment rights.
+              </p>
+            ) : (
+              <TypeaheadSearch
+                items={toTypeaheadItems(
+                  connectedGroups,
+                  'group',
+                  (g) => g.name || 'Group',
+                  (g) => g.description?.substring(0, 60),
+                )}
+                value={selectedGroup?.id || ''}
+                onChange={(item: TypeaheadItem | null) => {
+                  if (item) {
+                    const group = connectedGroups.find((g) => g.id === item.id);
+                    if (group) {
+                      setSelectedGroup({ id: group.id, data: group });
+                      setSelectedEvent(null);
+                    }
+                  }
+                }}
+                placeholder="Search for a group..."
+                disablePortal={disablePortal}
+              />
+            )}
+          </div>
+
+          {selectedGroup && (
+            <div className="space-y-2">
+              <Label>Select Target Event</Label>
+              {upcomingEvents.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No events found for this group</p>
+              ) : (
+                <TypeaheadSearch
+                  items={targetEventItems}
+                  value={selectedEvent?.id || ''}
+                  onChange={(item: TypeaheadItem | null) => {
+                    if (!item) { setSelectedEvent(null); return; }
+                    const event = upcomingEvents.find((entry) => entry.id === item.id);
+                    if (event) setSelectedEvent({ id: event.id, data: event });
+                  }}
+                  placeholder="Search for an event..."
+                  disablePortal={disablePortal}
+                />
+              )}
+            </div>
           )}
-        </div>
+        </>
       )}
 
       {pathWithEvents.length > 0 && (

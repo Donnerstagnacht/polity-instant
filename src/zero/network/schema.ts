@@ -70,9 +70,65 @@ export const createSubscriberSchema = baseSubscriberSchema
 export const deleteSubscriberSchema = z.object({ id: z.string() })
 
 // ============================================
+// Group Workflow Schemas
+// ============================================
+
+const groupWorkflowBaseSchema = z.object({
+  id: z.string(),
+  group_id: z.string(),
+  name: z.string().nullable(),
+  description: z.string().nullable(),
+  status: z.string().nullable(),
+  created_by_id: z.string(),
+  created_at: timestampSchema,
+  updated_at: timestampSchema,
+})
+
+export const groupWorkflowSelectSchema = groupWorkflowBaseSchema
+
+export const createGroupWorkflowSchema = groupWorkflowBaseSchema
+  .omit({ id: true, created_at: true, updated_at: true })
+  .extend({ id: z.string() })
+
+export const updateGroupWorkflowSchema = groupWorkflowBaseSchema
+  .pick({ name: true, description: true, status: true })
+  .partial()
+  .extend({ id: z.string() })
+
+export const deleteGroupWorkflowSchema = z.object({ id: z.string() })
+
+// ============================================
+// Group Workflow Step Schemas
+// ============================================
+
+const groupWorkflowStepBaseSchema = z.object({
+  id: z.string(),
+  workflow_id: z.string(),
+  group_id: z.string(),
+  order_index: z.number(),
+  label: z.string().nullable(),
+  created_at: timestampSchema,
+})
+
+export const groupWorkflowStepSelectSchema = groupWorkflowStepBaseSchema
+
+export const createGroupWorkflowStepSchema = groupWorkflowStepBaseSchema
+  .omit({ id: true, created_at: true })
+  .extend({ id: z.string() })
+
+export const updateGroupWorkflowStepSchema = groupWorkflowStepBaseSchema
+  .pick({ group_id: true, order_index: true, label: true })
+  .partial()
+  .extend({ id: z.string() })
+
+export const deleteGroupWorkflowStepSchema = z.object({ id: z.string() })
+
+// ============================================
 // Inferred Types
 // ============================================
 
 export type Follow = z.infer<typeof followSelectSchema>
 export type GroupRelationship = z.infer<typeof groupRelationshipSelectSchema>
 export type Subscriber = z.infer<typeof selectSubscriberSchema>
+export type GroupWorkflow = z.infer<typeof groupWorkflowSelectSchema>
+export type GroupWorkflowStep = z.infer<typeof groupWorkflowStepSelectSchema>

@@ -8,8 +8,6 @@ import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { useAuthStore } from '../auth';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { useUserActions } from '@/zero/users/useUserActions';
-import { generateRandomHandle } from '../logic/user-initialization-helpers';
 
 interface VerificationResult {
   success: boolean;
@@ -21,9 +19,7 @@ interface UseAuthVerificationReturn {
   isVerifying: boolean;
   verifyAndInitialize: (
     email: string,
-    code: string,
-    firstName?: string,
-    lastName?: string
+    code: string
   ) => Promise<VerificationResult>;
 }
 
@@ -35,14 +31,11 @@ export function useAuthVerification(): UseAuthVerificationReturn {
   const { t } = useTranslation();
   const [isVerifying, setIsVerifying] = useState(false);
   const { verifyMagicCode } = useAuthStore();
-  const { updateProfile } = useUserActions();
 
   const verifyAndInitialize = useCallback(
     async (
       email: string,
-      code: string,
-      firstName?: string,
-      lastName?: string
+      code: string
     ): Promise<VerificationResult> => {
       setIsVerifying(true);
       console.log('🔐 Starting verification and initialization flow');
@@ -70,21 +63,6 @@ export function useAuthVerification(): UseAuthVerificationReturn {
 
         console.log('✅ User verified:', user.id);
 
-        // Step 3: Initialize user profile if first/last name provided
-        if (firstName && lastName) {
-          try {
-            await updateProfile({
-              first_name: firstName,
-              last_name: lastName,
-              handle: generateRandomHandle(),
-            });
-            console.log('✅ User profile initialized');
-            return { success: true, isNewUser: true };
-          } catch (initError) {
-            console.warn('⚠️ User initialization failed (user may already exist):', initError);
-          }
-        }
-
         return { success: true, isNewUser: false };
       } catch (error) {
         console.error('❌ Verification flow failed:', error);
@@ -96,7 +74,7 @@ export function useAuthVerification(): UseAuthVerificationReturn {
         setIsVerifying(false);
       }
     },
-    [verifyMagicCode, updateProfile]
+    [verifyMagicCode]
   );
 
   return {

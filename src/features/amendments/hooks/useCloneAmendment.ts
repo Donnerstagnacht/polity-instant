@@ -5,7 +5,11 @@ import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
-import { findShortestPath, type GroupRelationship, type GroupNode } from '@/features/amendments/logic/path-finding.ts';
+import {
+  findShortestPath,
+  type GroupRelationship,
+  type GroupNode,
+} from '@/features/amendments/logic/path-finding.ts';
 import { notifyAmendmentCloned } from '@/features/notifications/utils/notification-helpers.ts';
 
 interface CloneAmendmentDocument {
@@ -50,8 +54,12 @@ interface CloneNetworkRelationship {
   readonly with_right: string | null;
   readonly group_id: string;
   readonly related_group_id: string;
-  readonly group: { readonly id: string; readonly name: string | null; readonly description: string | null } | undefined;
-  readonly related_group: { readonly id: string; readonly name: string | null; readonly description: string | null } | undefined;
+  readonly group:
+    | { readonly id: string; readonly name: string | null; readonly description: string | null }
+    | undefined;
+  readonly related_group:
+    | { readonly id: string; readonly name: string | null; readonly description: string | null }
+    | undefined;
 }
 
 interface CloneNetworkData {
@@ -74,7 +82,7 @@ export function useCloneAmendment(
   amendment: CloneAmendmentData | null | undefined,
   networkData: CloneNetworkData | null | undefined,
   userId: string | undefined,
-  userEmail: string | undefined,
+  userEmail: string | undefined
 ) {
   const navigate = useNavigate();
   const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
@@ -108,11 +116,7 @@ export function useCloneAmendment(
       return;
     }
 
-    const {
-      groupId: targetGroupId,
-      eventId: selectedEventId,
-      collaboratorUserId,
-    } = selection;
+    const { groupId: targetGroupId, eventId: selectedEventId, collaboratorUserId } = selection;
 
     setIsCloning(true);
     try {
@@ -127,7 +131,7 @@ export function useCloneAmendment(
       const targetUserId = collaboratorUserId || userId;
       const userMemberships =
         networkData?.groupMemberships.filter(
-          (m) => (m.status === 'active' || m.status === 'admin') && m.user?.id === targetUserId,
+          m => (m.status === 'active' || m.status === 'admin') && m.user?.id === targetUserId
         ) ?? [];
       const userGroupIds = userMemberships.map(m => m.group?.id).filter((id): id is string => !!id);
       const allGroups = networkData?.groups ?? [];
@@ -153,15 +157,14 @@ export function useCloneAmendment(
 
       const groupsMap = new Map<string, GroupNode>();
       allGroups.forEach(g => {
-        groupsMap.set(g.id, { id: g.id, name: g.name ?? '', description: g.description ?? undefined });
+        groupsMap.set(g.id, {
+          id: g.id,
+          name: g.name ?? '',
+          description: g.description ?? undefined,
+        });
       });
 
-      const path = findShortestPath(
-        userGroupIds,
-        targetGroupId,
-        amendmentRelationships,
-        groupsMap,
-      );
+      const path = findShortestPath(userGroupIds, targetGroupId, amendmentRelationships, groupsMap);
 
       if (!path || path.length === 0) {
         toast.error('No valid path found to target group');
@@ -171,16 +174,14 @@ export function useCloneAmendment(
 
       // For each group in path, find the closest upcoming event
       const now = new Date();
-      const pathWithEvents = path.map((segment) => {
+      const pathWithEvents = path.map(segment => {
         const groupId = segment.group.id;
         const groupName = segment.group.name;
 
         const groupEvents = events.filter(
-          e => e.group?.id === groupId && e.start_date != null && new Date(e.start_date) > now,
+          e => e.group?.id === groupId && e.start_date != null && new Date(e.start_date) > now
         );
-        groupEvents.sort(
-          (a, b) => (a.start_date ?? 0) - (b.start_date ?? 0),
-        );
+        groupEvents.sort((a, b) => (a.start_date ?? 0) - (b.start_date ?? 0));
         const closestEvent = groupEvents[0];
 
         return {
@@ -204,9 +205,7 @@ export function useCloneAmendment(
       }
 
       // Find the closest event in the path
-      const eventsWithDates = pathWithEvents.filter(
-        (seg) => seg.eventStartDate != null,
-      );
+      const eventsWithDates = pathWithEvents.filter(seg => seg.eventStartDate != null);
       eventsWithDates.sort((a, b) => {
         const dateA = a.eventStartDate ? new Date(a.eventStartDate).getTime() : 0;
         const dateB = b.eventStartDate ? new Date(b.eventStartDate).getTime() : 0;
@@ -312,6 +311,7 @@ export function useCloneAmendment(
         id: pathId,
         amendment_id: cloneId,
         title: '',
+        workflow_id: null,
       });
 
       // Create path segments

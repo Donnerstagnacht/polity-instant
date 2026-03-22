@@ -2,8 +2,10 @@ import { useState, useMemo, useCallback } from 'react';
 import { useGroupNetwork } from './useGroupNetwork';
 import { useGroupData } from '@/features/groups/hooks/useGroupData';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
+import { useAllGroups } from '@/zero/groups/useGroupState';
 import { useAuth } from '@/providers/auth-provider';
 import { RIGHT_TYPES } from '@/features/network/ui/RightFilters';
+import { useWorkflowEditor } from './useWorkflowEditor';
 import type { NetworkTab, NormalizedGroupRelationship, NetworkGroupEntity } from '../types/network.types';
 
 interface GroupedRelationshipRequests {
@@ -198,6 +200,22 @@ export function useNetworkPage(groupId: string) {
     [activeRelationships, groupId, deleteRelationship]
   );
 
+  // Workflow editor
+  const workflowEditor = useWorkflowEditor(groupId);
+
+  const handleSaveWorkflow = useCallback(async () => {
+    if (!authUser?.id) return;
+    await workflowEditor.saveWorkflow(authUser.id);
+  }, [authUser?.id, workflowEditor]);
+
+  // Collect all groups for workflow step selection
+  const { groups: allGroupsRaw } = useAllGroups();
+  const availableGroups = useMemo(() => {
+    return allGroupsRaw
+      .map(g => ({ id: g.id, name: g.name }))
+      .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
+  }, [allGroupsRaw]);
+
   return {
     // Auth
     authUser,
@@ -236,5 +254,25 @@ export function useNetworkPage(groupId: string) {
     handleAcceptRequest,
     handleRejectRequest,
     handleDeleteRelationship,
+
+    // Workflows
+    workflows: workflowEditor.workflows,
+    workflowsLoading: workflowEditor.isLoading,
+    isWorkflowEditorOpen: workflowEditor.isEditorOpen,
+    editingWorkflow: workflowEditor.editingWorkflow,
+    workflowDraftName: workflowEditor.draftName,
+    setWorkflowDraftName: workflowEditor.setDraftName,
+    workflowDraftDescription: workflowEditor.draftDescription,
+    setWorkflowDraftDescription: workflowEditor.setDraftDescription,
+    workflowDraftSteps: workflowEditor.draftSteps,
+    availableGroups,
+    openNewWorkflow: workflowEditor.openNewWorkflow,
+    openEditWorkflow: workflowEditor.openEditWorkflow,
+    closeWorkflowEditor: workflowEditor.closeEditor,
+    addWorkflowStep: workflowEditor.addDraftStep,
+    removeWorkflowStep: workflowEditor.removeDraftStep,
+    moveWorkflowStep: workflowEditor.moveDraftStep,
+    handleSaveWorkflow,
+    handleDeleteWorkflow: workflowEditor.deleteWorkflow,
   };
 }

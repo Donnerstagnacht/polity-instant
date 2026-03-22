@@ -118,6 +118,7 @@ const baseAmendmentPathSchema = z.object({
   id: z.string(),
   amendment_id: z.string(),
   title: z.string().nullable(),
+  workflow_id: z.string().nullable(),
   created_at: timestampSchema,
 })
 

@@ -1,17 +1,27 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Node, Edge, useNodesState, useEdgesState, MarkerType } from '@xyflow/react';
 import { NetworkFlowBase } from '@/features/network/ui/NetworkFlowBase';
 import { getGroupDisplayLabel } from '@/features/network/ui/networkVisualHelpers';
 import { NetworkControlPanel } from '@/features/network/ui/NetworkControlPanel';
 import { NetworkEntityDialog } from '@/features/network/ui/NetworkEntityDialog';
+import { WorkflowFlowVisualization } from '@/features/network/ui/WorkflowFlowVisualization';
 import { useNetworkFlowControls } from '@/features/network/hooks/useNetworkFlowControls';
 import { buildDirectRelationships, buildIndirectRelationships } from '@/features/network/logic/networkRelationshipHelpers';
 import { filterEdgesByRights, filterNodesByEdges } from '@/features/network/logic/networkFilterHelpers';
 import { useGroupState } from '@/zero/groups/useGroupState';
+import { useWorkflowState } from '@/zero/network/useWorkflowState';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { normalizeGroupRelationship, type NormalizedGroupRelationship, type NetworkGroupEntity } from '../types/network.types';
+import { Button } from '@/features/shared/ui/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/features/shared/ui/ui/select';
 
 interface GroupNode extends Node {
   data: {
@@ -42,6 +52,17 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
   } = controls;
   const [nodes, setNodes, onNodesChange] = useNodesState<GroupNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+
+  // View mode: 'hierarchy' | 'workflow'
+  const [viewMode, setViewMode] = useState<'hierarchy' | 'workflow'>('hierarchy');
+  const [selectedWorkflowId, setSelectedWorkflowId] = useState<string>('');
+
+  // Fetch workflows for this group
+  const { groupWorkflows } = useWorkflowState({ groupId });
+  const selectedWorkflow = useMemo(
+    () => groupWorkflows.find(w => w.id === selectedWorkflowId),
+    [groupWorkflows, selectedWorkflowId]
+  );
 
   // Fetch the specific group and relationships (both directions)
   const { group, relationships: relationshipsRaw, relationshipsAsTarget: relationshipsAsTargetRaw } = useGroupState({ groupId });
@@ -293,8 +314,78 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
     );
   }
 
+  // View mode toggle + workflow visualization
+  if (viewMode === 'workflow') {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setViewMode('hierarchy')}
+          >
+            {t('common.network.hierarchyView', 'Hierarchy')}
+          </Button>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => setViewMode('workflow')}
+          >
+            {t('common.network.workflowView', 'Workflows')}
+          </Button>
+          <Select value={selectedWorkflowId} onValueChange={setSelectedWorkflowId}>
+            <SelectTrigger className="w-[240px]">
+              <SelectValue placeholder={t('features.network.workflows.selectWorkflow', 'Select a workflow...')} />
+            </SelectTrigger>
+            <SelectContent>
+              {groupWorkflows.map(w => (
+                <SelectItem key={w.id} value={w.id}>
+                  {w.name ?? 'Untitled'}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {groupWorkflows.length === 0 ? (
+          <div className="flex h-[calc(100dvh-12rem)] min-h-[400px] w-full items-center justify-center rounded-lg border bg-background">
+            <p className="text-muted-foreground text-sm">
+              {t('features.network.workflows.empty', 'No workflows defined yet.')}
+            </p>
+          </div>
+        ) : selectedWorkflow ? (
+          <WorkflowFlowVisualization workflow={selectedWorkflow} />
+        ) : (
+          <div className="flex h-[calc(100dvh-12rem)] min-h-[400px] w-full items-center justify-center rounded-lg border bg-background">
+            <p className="text-muted-foreground text-sm">
+              {t('features.network.workflows.selectWorkflow', 'Select a workflow...')}
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <NetworkFlowBase
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Button
+          variant={viewMode === 'hierarchy' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setViewMode('hierarchy')}
+        >
+          {t('common.network.hierarchyView', 'Hierarchy')}
+        </Button>
+        {groupWorkflows.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setViewMode('workflow')}
+          >
+            {t('common.network.workflowView', 'Workflows')}
+          </Button>
+        )}
+      </div>
+      <NetworkFlowBase
       nodes={filteredNodes.map(node => ({
         ...node,
         style: {
@@ -359,5 +450,6 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
     >
       <NetworkEntityDialog open={dialogOpen} onOpenChange={setDialogOpen} entity={selectedEntity} />
     </NetworkFlowBase>
+    </div>
   );
 }

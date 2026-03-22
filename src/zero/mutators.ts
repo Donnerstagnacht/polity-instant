@@ -19,6 +19,7 @@ import { electionSharedMutators } from './elections/shared-mutators'
 import { voteSharedMutators } from './votes/shared-mutators'
 import { votingPasswordSharedMutators } from './voting-password/shared-mutators'
 import { accreditationSharedMutators } from './accreditation/shared-mutators'
+import { networkSharedMutators } from './network/shared-mutators'
 
 export const mutators = defineMutators({
   users: userSharedMutators,
@@ -40,4 +41,5 @@ export const mutators = defineMutators({
   votes: voteSharedMutators,
   votingPassword: votingPasswordSharedMutators,
   accreditation: accreditationSharedMutators,
+  network: networkSharedMutators,
 })

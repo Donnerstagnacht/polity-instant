@@ -21,6 +21,7 @@ import { Route as AuthedImport } from './routes/_authed'
 import { Route as SplatImport } from './routes/$'
 import { Route as IndexImport } from './routes/index'
 import { Route as DocsIndexImport } from './routes/docs/index'
+import { Route as AuthIndexImport } from './routes/auth/index'
 import { Route as DocsTopicImport } from './routes/docs/$topic'
 import { Route as AuthVerifyImport } from './routes/auth/verify'
 import { Route as AuthedTodosImport } from './routes/_authed/todos'
@@ -157,6 +158,12 @@ const DocsIndexRoute = DocsIndexImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => DocsRoute,
+} as any)
+
+const AuthIndexRoute = AuthIndexImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthRoute,
 } as any)
 
 const DocsTopicRoute = DocsTopicImport.update({
@@ -756,6 +763,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/docs/$topic'
       preLoaderRoute: typeof DocsTopicImport
       parentRoute: typeof DocsImport
+    }
+    '/auth/': {
+      id: '/auth/'
+      path: '/'
+      fullPath: '/auth/'
+      preLoaderRoute: typeof AuthIndexImport
+      parentRoute: typeof AuthImport
     }
     '/docs/': {
       id: '/docs/'
@@ -1522,10 +1536,12 @@ const AuthedRouteWithChildren =
 
 interface AuthRouteChildren {
   AuthVerifyRoute: typeof AuthVerifyRoute
+  AuthIndexRoute: typeof AuthIndexRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthVerifyRoute: AuthVerifyRoute,
+  AuthIndexRoute: AuthIndexRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
@@ -1560,6 +1576,7 @@ export interface FileRoutesByFullPath {
   '/todos': typeof AuthedTodosRouteWithChildren
   '/auth/verify': typeof AuthVerifyRoute
   '/docs/$topic': typeof DocsTopicRoute
+  '/auth/': typeof AuthIndexRoute
   '/docs/': typeof DocsIndexRoute
   '/amendment/$id': typeof AuthedAmendmentIdRouteWithChildren
   '/create/agenda-item': typeof AuthedCreateAgendaItemRoute
@@ -1635,7 +1652,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '': typeof AuthedRouteWithChildren
-  '/auth': typeof AuthRouteWithChildren
   '/features': typeof FeaturesRoute
   '/pricing': typeof PricingRoute
   '/solutions': typeof SolutionsRoute
@@ -1648,6 +1664,7 @@ export interface FileRoutesByTo {
   '/todos': typeof AuthedTodosRouteWithChildren
   '/auth/verify': typeof AuthVerifyRoute
   '/docs/$topic': typeof DocsTopicRoute
+  '/auth': typeof AuthIndexRoute
   '/docs': typeof DocsIndexRoute
   '/create/agenda-item': typeof AuthedCreateAgendaItemRoute
   '/create/amendment': typeof AuthedCreateAmendmentRoute
@@ -1729,6 +1746,7 @@ export interface FileRoutesById {
   '/_authed/todos': typeof AuthedTodosRouteWithChildren
   '/auth/verify': typeof AuthVerifyRoute
   '/docs/$topic': typeof DocsTopicRoute
+  '/auth/': typeof AuthIndexRoute
   '/docs/': typeof DocsIndexRoute
   '/_authed/amendment/$id': typeof AuthedAmendmentIdRouteWithChildren
   '/_authed/create/agenda-item': typeof AuthedCreateAgendaItemRoute
@@ -1820,6 +1838,7 @@ export interface FileRouteTypes {
     | '/todos'
     | '/auth/verify'
     | '/docs/$topic'
+    | '/auth/'
     | '/docs/'
     | '/amendment/$id'
     | '/create/agenda-item'
@@ -1894,7 +1913,6 @@ export interface FileRouteTypes {
     | '/'
     | '/$'
     | ''
-    | '/auth'
     | '/features'
     | '/pricing'
     | '/solutions'
@@ -1907,6 +1925,7 @@ export interface FileRouteTypes {
     | '/todos'
     | '/auth/verify'
     | '/docs/$topic'
+    | '/auth'
     | '/docs'
     | '/create/agenda-item'
     | '/create/amendment'
@@ -1986,6 +2005,7 @@ export interface FileRouteTypes {
     | '/_authed/todos'
     | '/auth/verify'
     | '/docs/$topic'
+    | '/auth/'
     | '/docs/'
     | '/_authed/amendment/$id'
     | '/_authed/create/agenda-item'
@@ -2139,7 +2159,8 @@ export const routeTree = rootRoute
     "/auth": {
       "filePath": "auth.tsx",
       "children": [
-        "/auth/verify"
+        "/auth/verify",
+        "/auth/"
       ]
     },
     "/docs": {
@@ -2195,6 +2216,10 @@ export const routeTree = rootRoute
     "/docs/$topic": {
       "filePath": "docs/$topic.tsx",
       "parent": "/docs"
+    },
+    "/auth/": {
+      "filePath": "auth/index.tsx",
+      "parent": "/auth"
     },
     "/docs/": {
       "filePath": "docs/index.tsx",

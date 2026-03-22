@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { Alert, AlertDescription } from '@/features/shared/ui/ui/alert';
-import { Loader2, Mail, ArrowRight, CheckCircle } from 'lucide-react';
+import { Loader2, Mail, ArrowRight } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { useAuthLogin } from '@/features/auth/hooks/useAuthLogin';
@@ -25,62 +25,18 @@ export function LoginForm() {
   const { isSending, sendMagicLink } = useAuthLogin();
 
   const [email, setEmail] = useState('');
-  const [isCodeSent, setIsCodeSent] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('📧 handleSubmit called');
-    console.log('📧 Email:', email);
 
-    if (!email) {
-      console.log('❌ No email provided');
-      return;
-    }
+    if (!email) return;
 
-    console.log('📤 Sending magic link to:', email);
     const result = await sendMagicLink(email);
-    console.log('📤 Send magic link result:', result.success);
 
     if (result.success) {
-      console.log('✅ Code sent successfully, redirecting to verify page');
-      setIsCodeSent(true);
-      // Redirect to verification page with email parameter
-      navigate({ to: `/auth/verify?email=${encodeURIComponent(email)}` });
-    } else {
-      console.log('❌ Failed to send code:', result.error);
+      navigate({ to: '/auth/verify', search: { email } });
     }
   };
-
-  const handleBackToEmail = () => {
-    setIsCodeSent(false);
-    setEmail('');
-  };
-
-  if (isCodeSent) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4 dark:from-gray-900 dark:to-gray-800">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mb-4 flex justify-center">
-              <CheckCircle className="h-12 w-12 text-green-500" />
-            </div>
-            <CardTitle className="text-2xl font-bold text-green-700 dark:text-green-400">
-              {t('auth.codeSent.title')}
-            </CardTitle>
-            <CardDescription>{t('auth.codeSent.description', { email })}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-muted-foreground text-center text-sm">
-              {t('auth.codeSent.instructions')}
-            </p>
-            <Button variant="outline" className="w-full" onClick={handleBackToEmail}>
-              {t('auth.codeSent.backToEmail')}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4 dark:from-gray-900 dark:to-gray-800">
