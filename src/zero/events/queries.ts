@@ -304,7 +304,7 @@ export const eventQueries = {
             .related('voters', v => v.related('user'))
         )
         .related('amendment', q =>
-          q.related('change_requests').related('group')
+          q.related('change_requests').related('group').related('document')
         )
         .related('speaker_list', q => q.related('user'))
   ),

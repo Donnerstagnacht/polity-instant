@@ -126,5 +126,10 @@ export const editor = {
     allSuggestions: 'All Suggestions',
     searchPlaceholder: 'Search change requests...',
     noResults: 'No change requests found.',
+    selectMode: 'Select',
+    choiceMode: 'Choice',
+    nSelected: '{{count}} selected',
+    selectAll: 'Select All',
+    deselectAll: 'Deselect All',
   },
 };

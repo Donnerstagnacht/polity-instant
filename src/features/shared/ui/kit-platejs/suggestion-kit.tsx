@@ -8,7 +8,7 @@ import {
 } from 'platejs';
 import { toTPlatePlugin } from 'platejs/react';
 
-import { BlockSuggestion } from '@/features/shared/ui/ui-platejs/block-suggestion.tsx';
+import { BlockSuggestion, FilteredBlockSuggestion } from '@/features/shared/ui/ui-platejs/block-suggestion.tsx';
 import { SuggestionLeaf, SuggestionLineBreak } from '@/features/shared/ui/ui-platejs/suggestion-node.tsx';
 
 import { discussionPlugin } from './discussion-kit.tsx';
@@ -83,7 +83,7 @@ export const suggestionPlugin = toTPlatePlugin<SuggestionConfig>(
         return null;
       }
 
-      return <BlockSuggestion element={element} />;
+      return <FilteredBlockSuggestion element={element} />;
     },
   },
 });

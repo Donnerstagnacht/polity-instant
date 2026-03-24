@@ -1,6 +1,15 @@
 'use client';
 
+import { useState } from 'react';
+import { Link } from '@tanstack/react-router';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/features/shared/ui/ui/collapsible';
+import { EditingModeBadge } from '@/features/shared/ui/ui/editing-mode.tsx';
 import {
   Clock,
   Calendar,
@@ -12,6 +21,11 @@ import {
   Play,
   CheckCircle2,
   Timer,
+  ChevronDown,
+  ChevronRight,
+  ScrollText,
+  Building2,
+  ExternalLink,
 } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
@@ -39,6 +53,30 @@ interface AgendaItemContextCardProps {
     activatedAt?: Date;
     completedAt?: Date;
   };
+  /** Amendment data for amendment-type agenda items */
+  amendment?: {
+    id: string;
+    title?: string | null;
+    reason?: string | null;
+    preamble?: string | null;
+    editing_mode?: string | null;
+    change_request_count?: number;
+    collaborator_count?: number;
+    group?: { id: string; name?: string | null } | null;
+  } | null;
+  /** Election data for election-type agenda items */
+  election?: {
+    id: string;
+    title?: string | null;
+    position?: {
+      id: string;
+      title?: string | null;
+      description?: string | null;
+      term?: string | null;
+      group_id: string;
+      group?: { id: string; name?: string | null } | null;
+    } | null;
+  } | null;
   /** Voting/election opening time (when voting starts) */
   votingStartTime?: Date;
   /** Voting/election closing time (when voting ends) */
@@ -102,6 +140,8 @@ function getGradientClass(type: string) {
  */
 export function AgendaItemContextCard({
   agendaItem,
+  amendment,
+  election,
   votingStartTime,
   votingEndTime,
   className,
@@ -348,7 +388,176 @@ export function AgendaItemContextCard({
             </p>
           </div>
         )}
+
+        {/* Amendment details (collapsible) */}
+        {amendment && (
+          <AmendmentDetailsSection amendment={amendment} />
+        )}
+
+        {/* Election / Position details (collapsible) */}
+        {election?.position && (
+          <ElectionDetailsSection election={election} />
+        )}
       </CardContent>
     </Card>
+  );
+}
+
+// ── Amendment collapsible details ───────────────────────────────────
+
+function AmendmentDetailsSection({
+  amendment,
+}: {
+  amendment: NonNullable<AgendaItemContextCardProps['amendment']>;
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <div className="rounded-lg border bg-muted/30">
+        <CollapsibleTrigger className="flex w-full items-center gap-2 px-4 py-3 text-sm font-medium hover:bg-muted/50 transition-colors">
+          {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          <ScrollText className="h-4 w-4 text-muted-foreground" />
+          <span>{t('features.events.agenda.amendmentDetails', 'Amendment Details')}</span>
+          {amendment.editing_mode && (
+            <EditingModeBadge mode={amendment.editing_mode} variant="secondary" />
+          )}
+          <Link
+            to="/amendment/$id"
+            params={{ id: amendment.id }}
+            className="ml-auto flex items-center gap-1 text-xs text-primary hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {t('features.events.agenda.viewAmendment', 'View Amendment')}
+            <ExternalLink className="h-3 w-3" />
+          </Link>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent>
+          <div className="space-y-3 border-t px-4 py-3">
+            {amendment.title && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">
+                  {t('common.title', 'Title')}
+                </p>
+                <p className="text-sm">{amendment.title}</p>
+              </div>
+            )}
+
+            {amendment.reason && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">
+                  {t('features.amendments.reason', 'Reason')}
+                </p>
+                <p className="text-sm whitespace-pre-wrap">{amendment.reason}</p>
+              </div>
+            )}
+
+            {amendment.preamble && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">
+                  {t('features.amendments.preamble', 'Preamble')}
+                </p>
+                <p className="text-sm whitespace-pre-wrap">{amendment.preamble}</p>
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2">
+              {amendment.group?.name && (
+                <Badge variant="outline" className="text-xs">
+                  <Building2 className="mr-1 h-3 w-3" />
+                  {amendment.group.name}
+                </Badge>
+              )}
+              {typeof amendment.change_request_count === 'number' && amendment.change_request_count > 0 && (
+                <Badge variant="secondary" className="text-xs">
+                  {amendment.change_request_count} {t('features.amendments.changeRequests', 'Change Requests')}
+                </Badge>
+              )}
+              {typeof amendment.collaborator_count === 'number' && amendment.collaborator_count > 0 && (
+                <Badge variant="secondary" className="text-xs">
+                  <Users className="mr-1 h-3 w-3" />
+                  {amendment.collaborator_count} {t('features.amendments.collaborators', 'Collaborators')}
+                </Badge>
+              )}
+            </div>
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
+  );
+}
+
+// ── Election / Position collapsible details ─────────────────────────
+
+function ElectionDetailsSection({
+  election,
+}: {
+  election: NonNullable<AgendaItemContextCardProps['election']>;
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const position = election.position;
+  const group = position?.group;
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <div className="rounded-lg border bg-muted/30">
+        <CollapsibleTrigger className="flex w-full items-center gap-2 px-4 py-3 text-sm font-medium hover:bg-muted/50 transition-colors">
+          {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          <UserCheck className="h-4 w-4 text-muted-foreground" />
+          <span>{t('features.events.agenda.positionDetails', 'Position Details')}</span>
+          {group && (
+            <Link
+              to="/group/$id"
+              params={{ id: group.id }}
+              className="ml-auto flex items-center gap-1 text-xs text-primary hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {group.name ?? t('features.events.agenda.viewGroup', 'View Group')}
+              <ExternalLink className="h-3 w-3" />
+            </Link>
+          )}
+        </CollapsibleTrigger>
+
+        <CollapsibleContent>
+          <div className="space-y-3 border-t px-4 py-3">
+            {position?.title && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">
+                  {t('features.events.agenda.position', 'Position')}
+                </p>
+                <p className="text-sm">{position.title}</p>
+              </div>
+            )}
+
+            {position?.description && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">
+                  {t('common.description', 'Description')}
+                </p>
+                <p className="text-sm whitespace-pre-wrap">{position.description}</p>
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2">
+              {position?.term && (
+                <Badge variant="secondary" className="text-xs">
+                  <Calendar className="mr-1 h-3 w-3" />
+                  {t('features.events.agenda.term', 'Term')}: {position.term}
+                </Badge>
+              )}
+              {group?.name && (
+                <Badge variant="outline" className="text-xs">
+                  <Building2 className="mr-1 h-3 w-3" />
+                  {group.name}
+                </Badge>
+              )}
+            </div>
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
   );
 }

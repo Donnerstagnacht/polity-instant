@@ -11,6 +11,8 @@ import {
   type SuggestionConfig,
   suggestionPlugin,
 } from '@/features/shared/ui/kit-platejs/suggestion-kit.tsx';
+import { discussionPlugin } from '@/features/shared/ui/kit-platejs/discussion-kit.tsx';
+import { useModeContext } from '@/features/shared/ui/kit-platejs/mode-context.tsx';
 
 export function SuggestionLeaf(props: PlateLeafProps<TSuggestionText>) {
   const { api, setOption } = useEditorPlugin(suggestionPlugin);
@@ -21,9 +23,33 @@ export function SuggestionLeaf(props: PlateLeafProps<TSuggestionText>) {
   const hoverSuggestionId = usePluginOption(suggestionPlugin, 'hoverId');
   const dataList = api.suggestion.dataList(leaf);
 
+  // CR filtering: when specific CRs are selected, hide marks from other CRs
+  const { selectedCrIds } = useModeContext();
+  const discussions = usePluginOption(discussionPlugin, 'discussions');
+  const leafCrId = discussions?.find((d: { id: string; crId?: string }) => d.id === leafId)?.crId;
+  const isFilteredOut = selectedCrIds != null && leafCrId != null && !selectedCrIds.has(leafCrId);
+
   const hasRemove = dataList.some(data => data.type === 'remove');
   const hasActive = dataList.some(data => data.id === activeSuggestionId);
   const hasHover = dataList.some(data => data.id === hoverSuggestionId);
+
+  // When filtered out: inserts (green) should be hidden, removes (red) should appear as plain text
+  if (isFilteredOut) {
+    if (!hasRemove) {
+      // Insert from another CR: hide entirely
+      return (
+        <PlateLeaf {...props} as="span" className="hidden">
+          {props.children}
+        </PlateLeaf>
+      );
+    }
+    // Remove from another CR: show as plain text (no suggestion styling)
+    return (
+      <PlateLeaf {...props} as="span">
+        {props.children}
+      </PlateLeaf>
+    );
+  }
 
   const diffOperation = { type: hasRemove ? 'delete' : 'insert' } as const;
 
@@ -74,6 +100,14 @@ function SuggestionLineBreakContent({ suggestionData }: { suggestionData: TSugge
 
   const activeSuggestionId = usePluginOption(suggestionPlugin, 'activeId');
   const hoverSuggestionId = usePluginOption(suggestionPlugin, 'hoverId');
+
+  // CR filtering: hide line break indicators from other CRs
+  const { selectedCrIds } = useModeContext();
+  const discussions = usePluginOption(discussionPlugin, 'discussions');
+  const lineBreakCrId = discussions?.find((d: { id: string; crId?: string }) => d.id === suggestionData.id)?.crId;
+  const isFilteredOut = selectedCrIds != null && lineBreakCrId != null && !selectedCrIds.has(lineBreakCrId);
+
+  if (isFilteredOut) return null;
 
   const isActive = activeSuggestionId === suggestionData.id;
   const isHover = hoverSuggestionId === suggestionData.id;

@@ -9,7 +9,6 @@ import { TransferAgendaItemDialog } from './TransferAgendaItemDialog';
 import { AgendaItemContextCard } from './AgendaItemContextCard';
 import {
   AgendaRelatedAmendmentCard,
-  AgendaRelatedPositionCard,
 } from './AgendaRelatedEntityCard';
 import { AgendaSpeakerListSection } from './AgendaSpeakerListSection';
 import { AgendaVoteSection } from './AgendaVoteSection';
@@ -25,6 +24,8 @@ import { usePermissions } from '@/zero/rbac';
 import { useVotingPasswordActions } from '@/zero/voting-password/useVotingPasswordActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { toast } from 'sonner';
+import type { Value } from 'platejs';
+import type { TDiscussion } from '@/features/editor/types';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAgendaItemCRVoting, getVotePhase } from '../hooks/useAgendaItemCRVoting';
@@ -32,6 +33,8 @@ import { extractAmendmentCRSummaries } from '../logic/extractAmendmentCRSummarie
 import { createMockCRTimelineItems } from '../logic/createMockCRTimelineItems';
 import { buildFinalVoteFromAgendaVote } from '../logic/buildFinalVoteFromAgendaVote';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
+import { extractSuggestionContent } from '@/features/change-requests/utils/suggestion-extraction';
+import type { ChangeRequestDiffData } from './ChangeRequestTimelineCard';
 
 function getEffectiveVotingPhase(
   status?: string | null,
@@ -156,6 +159,43 @@ export function EventAgendaItemDetail({
 
     return createMockCRTimelineItems(summaries);
   }, [agendaItem?.amendment_id, agendaItem?.amendment, crTimeline.length]);
+
+  // Extract document content for editor preview
+  const documentContent = agendaItem?.amendment?.document?.content as Value | undefined;
+
+  // Build TDiscussion array from amendment discussions for SuggestionViewToggle mapping
+  const amendmentDiscussions = useMemo<TDiscussion[]>(() => {
+    const rawDiscussions = agendaItem?.amendment?.discussions;
+    if (!rawDiscussions || !Array.isArray(rawDiscussions)) return [];
+    return (rawDiscussions as Record<string, unknown>[]).map((d) => ({
+      id: (d.id as string) ?? '',
+      crId: (d.crId as string) ?? null,
+      title: (d.title as string) ?? '',
+      userId: (d.userId as string) ?? '',
+      comments: (d.comments as TDiscussion['comments']) ?? [],
+      createdAt: (d.createdAt as number) ?? 0,
+      isResolved: (d.isResolved as boolean) ?? false,
+    }));
+  }, [agendaItem?.amendment?.discussions]);
+
+  // Build diffMap from document content for each discussion
+  const crDiffMap = useMemo<Record<string, ChangeRequestDiffData>>(() => {
+    if (!documentContent || !amendmentDiscussions.length) return {};
+    const map: Record<string, ChangeRequestDiffData> = {};
+    for (const d of amendmentDiscussions) {
+      if (!d.id) continue;
+      const content = extractSuggestionContent(d.id, documentContent);
+      if (content.type === 'unknown' && !content.text && !content.newText) continue;
+      map[d.id] = {
+        changeType: content.type,
+        originalText: content.text || undefined,
+        newText: content.newText || undefined,
+        properties: content.properties as Record<string, string> | undefined,
+        newProperties: content.newProperties as Record<string, string> | undefined,
+      };
+    }
+    return map;
+  }, [documentContent, amendmentDiscussions]);
 
   const hasAmendmentCRs = crTimeline.length > 0 || mockCRItems.length > 0;
   const crDisplayItemsBase = crTimeline.length > 0
@@ -679,6 +719,8 @@ export function EventAgendaItemDetail({
           activatedAt: agendaItem.activated_at ? new Date(agendaItem.activated_at) : undefined,
           completedAt: agendaItem.completed_at ? new Date(agendaItem.completed_at) : undefined,
         }}
+        amendment={agendaItem.amendment ?? undefined}
+        election={election ?? undefined}
         votingStartTime={agendaItem.start_time ? new Date(agendaItem.start_time) : undefined}
         votingEndTime={
           (election?.closing_end_time ?? vote?.closing_end_time)
@@ -720,6 +762,11 @@ export function EventAgendaItemDetail({
           completedCount={isCRVotingActive ? completedItems.length : undefined}
           allCRsProcessed={isCRVotingActive ? allCRsProcessed : undefined}
           isTimelineComplete={isCRVotingActive ? isTimelineComplete : undefined}
+          diffMap={crDiffMap}
+          documentContent={documentContent}
+          discussions={amendmentDiscussions}
+          amendmentId={agendaItem.amendment_id ?? undefined}
+          agendaItemId={agendaItemId}
           hasUserVoted={isCRVotingActive ? hasUserVotedOnCR : undefined}
           getUserSelectedChoiceIds={isCRVotingActive ? getUserSelectedChoiceIds : undefined}
           onCastVote={isCRVotingActive ? castCRVote : undefined}
@@ -751,9 +798,6 @@ export function EventAgendaItemDetail({
             onBecomeCandidate={actionBarHook.handleBecomeCandidate}
             onWithdrawCandidacy={actionBarHook.handleWithdrawCandidacy}
           />
-          {election.position && (
-            <AgendaRelatedPositionCard position={election.position} />
-          )}
         </div>
       )}
 

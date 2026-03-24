@@ -38,8 +38,8 @@ interface PlateEditorProps {
   currentMode?: EditorMode; // Current editing mode from DB
   onModeChange?: (mode: EditorMode) => void; // Mode change callback
   isOwnerOrCollaborator?: boolean; // Whether user can change modes
-  selectedCrId?: string | null; // Filter suggestions to a single CR
-  onSelectedCrIdChange?: (crId: string | null) => void;
+  selectedCrIds?: Set<string> | null; // Filter suggestions to selected CRs
+  onSelectedCrIdsChange?: (crIds: Set<string> | null) => void;
   /** Remote cursor sync props */
   remoteCursors?: {
     entityId: string;
@@ -69,8 +69,8 @@ export function PlateEditor({
   currentMode,
   onModeChange,
   isOwnerOrCollaborator = true,
-  selectedCrId,
-  onSelectedCrIdChange,
+  selectedCrIds,
+  onSelectedCrIdsChange,
   remoteCursors,
 }: PlateEditorProps) {
   const onChangeRef = React.useRef(onChange);
@@ -290,8 +290,8 @@ export function PlateEditor({
       currentMode={currentMode}
       onModeChange={onModeChange}
       isOwnerOrCollaborator={isOwnerOrCollaborator}
-      selectedCrId={selectedCrId}
-      onSelectedCrIdChange={onSelectedCrIdChange}
+      selectedCrIds={selectedCrIds}
+      onSelectedCrIdsChange={onSelectedCrIdsChange}
     >
       <SuggestionCallbacksProvider
         callbacks={{

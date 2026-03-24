@@ -142,6 +142,23 @@ export function BlockSuggestion({ element }: { element: TSuggestionElement }) {
   );
 }
 
+/**
+ * Wrapper around BlockSuggestion that filters by selected CR.
+ * Used in `belowRootNodes` render where hooks are available.
+ */
+export function FilteredBlockSuggestion({ element }: { element: TSuggestionElement }) {
+  const { selectedCrIds } = useModeContext();
+  const discussions = usePluginOption(discussionPlugin, 'discussions');
+
+  const suggestionId = element.suggestion?.id;
+  const blockCrId = discussions?.find((d: { id: string; crId?: string }) => d.id === suggestionId)?.crId;
+  const isFilteredOut = selectedCrIds != null && blockCrId != null && !selectedCrIds.has(blockCrId);
+
+  if (isFilteredOut) return null;
+
+  return <BlockSuggestion element={element} />;
+}
+
 export function BlockSuggestionCard({
   idx,
   isLast,

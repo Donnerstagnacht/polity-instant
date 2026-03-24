@@ -198,6 +198,13 @@ export const amendmentQueries = {
       zql.document.where('amendment_id', amendment_id)
   ),
 
+  // Single document by id
+  documentById: defineQuery(
+    z.object({ id: z.string() }),
+    ({ args: { id } }) =>
+      zql.document.where('id', id).one()
+  ),
+
   // Roles for amendment collaborators
   rolesByAmendment: defineQuery(
     z.object({ amendment_id: z.string() }),

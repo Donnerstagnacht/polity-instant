@@ -88,14 +88,14 @@ const BlockCommentContent = ({
   suggestionNodes: NodeEntry<TElement | TSuggestionText>[];
 }) => {
   const editor = useEditorRef();
-  const { selectedCrId } = useModeContext();
+  const { selectedCrIds } = useModeContext();
 
   const resolvedSuggestions = useResolveSuggestion(suggestionNodes, blockPath);
   const resolvedDiscussions = useResolvedDiscussion(commentNodes, blockPath);
 
-  // Filter suggestions when a specific CR is selected
-  const filteredSuggestions = selectedCrId
-    ? resolvedSuggestions.filter(s => s.crId === selectedCrId)
+  // Filter suggestions when specific CRs are selected
+  const filteredSuggestions = selectedCrIds
+    ? resolvedSuggestions.filter(s => s.crId != null && selectedCrIds.has(s.crId))
     : resolvedSuggestions;
 
   const suggestionsCount = filteredSuggestions.length;

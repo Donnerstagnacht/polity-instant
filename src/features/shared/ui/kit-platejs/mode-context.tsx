@@ -6,8 +6,8 @@ interface ModeContextValue {
   currentMode?: EditorMode;
   onModeChange?: (mode: EditorMode) => void;
   isOwnerOrCollaborator?: boolean;
-  selectedCrId?: string | null;
-  onSelectedCrIdChange?: (crId: string | null) => void;
+  selectedCrIds?: Set<string> | null;
+  onSelectedCrIdsChange?: (crIds: Set<string> | null) => void;
 }
 
 const ModeContext = React.createContext<ModeContextValue>({

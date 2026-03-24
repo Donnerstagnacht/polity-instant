@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import type { Value } from 'platejs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -24,6 +25,10 @@ import { getVotePhase, getVoteResult } from '../hooks/useAgendaItemCRVoting';
 import { calculateVoteStats } from '../hooks/useAgendaItemVoting';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 import type { ChoicesByVoteRow } from '@/zero/votes/queries';
+import { CREditorPreview } from '@/features/change-requests/ui/CREditorPreview';
+import { SuggestionViewToggle } from '@/features/editor/ui/SuggestionViewToggle';
+import { EditingModeSelector } from '@/features/editor/ui/EditingModeSelector';
+import type { TDiscussion } from '@/features/editor/types';
 
 const CR_CHOICE_COLORS = [
   { color: 'bg-green-500', light: 'bg-green-300/60' },
@@ -62,6 +67,20 @@ interface ChangeRequestTimelineCardProps {
   canVote: boolean;
   isFinalVoteLocked?: boolean;
   diff?: ChangeRequestDiffData;
+  documentContent?: Value;
+  suggestionId?: string;
+  /** Short CR identifier (e.g. "CR-1") used to default-select this card's CR */
+  crId?: string;
+  /** All discussions for the amendment — used by the per-card SuggestionViewToggle */
+  discussions?: TDiscussion[];
+  /** Amendment editing mode — determines interactive vs read-only preview */
+  editingMode?: string | null;
+  /** Amendment ID — needed for interactive editor and mode selector */
+  amendmentId?: string;
+  /** Current user ID — needed for interactive editor */
+  userId?: string;
+  /** Agenda item ID — passed to interactive editor */
+  agendaItemId?: string;
   onCastVote?: (item: ChangeRequestTimelineRow, choiceId: string) => Promise<void>;
   onStartIndicative?: (itemId: string) => Promise<void>;
   onStartFinal?: (itemId: string) => Promise<void>;
@@ -105,6 +124,14 @@ export function ChangeRequestTimelineCard({
   canVote,
   isFinalVoteLocked,
   diff,
+  documentContent,
+  suggestionId,
+  crId,
+  discussions,
+  editingMode,
+  amendmentId,
+  userId,
+  agendaItemId,
   onCastVote,
   onStartIndicative,
   onStartFinal,
@@ -112,6 +139,39 @@ export function ChangeRequestTimelineCard({
 }: ChangeRequestTimelineCardProps) {
   const { t } = useTranslation();
   const [votingLoading, setVotingLoading] = useState(false);
+
+  // Per-card CR selection state — defaults to this card's own CR
+  const [selectedCrIds, setSelectedCrIds] = useState<Set<string> | null>(
+    () => crId ? new Set([crId]) : null,
+  );
+
+  // Map crId → discussion UUID for converting selected CRs to suggestion IDs
+  const crIdToDiscussionId = useMemo(() => {
+    const map = new Map<string, string>();
+    if (discussions) {
+      for (const d of discussions) {
+        if (d.crId) map.set(d.crId, d.id);
+      }
+    }
+    return map;
+  }, [discussions]);
+
+  // Convert selected crIds to discussion UUIDs for the editor preview filter
+  const selectedSuggestionIds = useMemo<Set<string>>(() => {
+    if (!selectedCrIds) {
+      // null = show all suggestions
+      return new Set(discussions?.map(d => d.id) ?? (suggestionId ? [suggestionId] : []));
+    }
+    const ids = new Set<string>();
+    for (const cId of selectedCrIds) {
+      const did = crIdToDiscussionId.get(cId);
+      if (did) ids.add(did);
+    }
+    // Fallback: if mapping didn't find anything, use this card's own suggestionId
+    if (ids.size === 0 && suggestionId) ids.add(suggestionId);
+    return ids;
+  }, [selectedCrIds, crIdToDiscussionId, discussions, suggestionId]);
+
   const cr = item.change_request;
   const vote = item.vote;
 
@@ -269,82 +329,76 @@ export function ChangeRequestTimelineCard({
               <p className="text-sm text-muted-foreground">{cr.description}</p>
             )}
 
-            {/* Text diff details (collapsible) */}
+            {/* Suggestion text changes (Add / Delete) */}
             {diff && !item.is_final_vote && (diff.originalText || diff.newText || diff.justification || (diff.newProperties && Object.keys(diff.newProperties).length > 0)) && (
-              <Collapsible>
-                <CollapsibleTrigger className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground">
-                  <ChevronDown className="h-3 w-3 transition-transform [[data-state=open]_&]:rotate-180" />
-                  {t('features.agendas.crTimeline.showChanges', 'Show Changes')}
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-2 space-y-3">
-                  {/* Formatting change */}
-                  {diff.changeType === 'update' && diff.newText && (
-                    <div>
-                      <h4 className="mb-2 text-sm font-semibold text-blue-600 dark:text-blue-400">
-                        {isClosed ? 'Formatting Changed:' : 'Formatting Change:'}
-                      </h4>
-                      {diff.newProperties && Object.keys(diff.newProperties).length > 0 && (
-                        <div className="rounded-lg bg-blue-500/10 p-3">
-                          <div className="mb-1 flex flex-wrap gap-2">
-                            {Object.entries(diff.newProperties).map(([key, value]) => (
-                              <Badge key={key} variant="outline" className="text-xs capitalize">
-                                {key}: {String(value)}
-                              </Badge>
-                            ))}
-                          </div>
-                          <p className="whitespace-pre-wrap text-xs">To text: &quot;{diff.newText}&quot;</p>
+              <div className="space-y-3">
+                {/* Formatting change */}
+                {diff.changeType === 'update' && diff.newText && (
+                  <div>
+                    <h4 className="mb-2 text-sm font-semibold text-blue-600 dark:text-blue-400">
+                      {isClosed ? 'Formatting Changed:' : 'Formatting Change:'}
+                    </h4>
+                    {diff.newProperties && Object.keys(diff.newProperties).length > 0 && (
+                      <div className="rounded-lg bg-blue-500/10 p-3">
+                        <div className="mb-1 flex flex-wrap gap-2">
+                          {Object.entries(diff.newProperties).map(([key, value]) => (
+                            <Badge key={key} variant="outline" className="text-xs capitalize">
+                              {key}: {String(value)}
+                            </Badge>
+                          ))}
                         </div>
-                      )}
-                      {diff.properties && Object.keys(diff.properties).length > 0 && (
-                        <div className="mt-2 rounded-lg bg-muted/50 p-3">
-                          <p className="mb-1 text-xs font-semibold text-muted-foreground">
-                            {isClosed ? 'Removed formatting:' : 'Remove formatting:'}
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            {Object.entries(diff.properties).map(([key, value]) => (
-                              <Badge key={key} variant="outline" className="text-xs capitalize opacity-60">
-                                {key}: {String(value)}
-                              </Badge>
-                            ))}
-                          </div>
+                        <p className="whitespace-pre-wrap text-xs">To text: &quot;{diff.newText}&quot;</p>
+                      </div>
+                    )}
+                    {diff.properties && Object.keys(diff.properties).length > 0 && (
+                      <div className="mt-2 rounded-lg bg-muted/50 p-3">
+                        <p className="mb-1 text-xs font-semibold text-muted-foreground">
+                          {isClosed ? 'Removed formatting:' : 'Remove formatting:'}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {Object.entries(diff.properties).map(([key, value]) => (
+                            <Badge key={key} variant="outline" className="text-xs capitalize opacity-60">
+                              {key}: {String(value)}
+                            </Badge>
+                          ))}
                         </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Removed text */}
-                  {diff.originalText && (diff.changeType === 'remove' || diff.changeType === 'replace') && (
-                    <div>
-                      <h4 className="mb-1 text-sm font-semibold text-red-600 dark:text-red-400">
-                        {diff.changeType === 'remove' ? (isClosed ? 'Deleted:' : 'Delete:') : 'Original Text:'}
-                      </h4>
-                      <div className="rounded-lg bg-red-500/10 p-3 line-through">
-                        <p className="whitespace-pre-wrap text-xs">{diff.originalText}</p>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                )}
 
-                  {/* Added/replacement text */}
-                  {diff.newText && (diff.changeType === 'insert' || diff.changeType === 'replace') && (
-                    <div>
-                      <h4 className="mb-1 text-sm font-semibold text-green-600 dark:text-green-400">
-                        {diff.changeType === 'insert' ? (isClosed ? 'Added:' : 'Add:') : 'Replace with:'}
-                      </h4>
-                      <div className="rounded-lg bg-green-500/10 p-3">
-                        <p className="whitespace-pre-wrap text-xs">{diff.newText}</p>
-                      </div>
+                {/* Removed text */}
+                {diff.originalText && (diff.changeType === 'remove' || diff.changeType === 'replace') && (
+                  <div>
+                    <h4 className="mb-1 text-sm font-semibold text-red-600 dark:text-red-400">
+                      {diff.changeType === 'remove' ? (isClosed ? 'Deleted:' : 'Delete:') : 'Original Text:'}
+                    </h4>
+                    <div className="rounded-lg bg-red-500/10 p-3 line-through">
+                      <p className="whitespace-pre-wrap text-xs">{diff.originalText}</p>
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  {/* Justification */}
-                  {diff.justification && (
-                    <div>
-                      <h4 className="mb-1 text-sm font-semibold">Justification:</h4>
-                      <p className="text-xs text-muted-foreground">{diff.justification}</p>
+                {/* Added/replacement text */}
+                {diff.newText && (diff.changeType === 'insert' || diff.changeType === 'replace') && (
+                  <div>
+                    <h4 className="mb-1 text-sm font-semibold text-green-600 dark:text-green-400">
+                      {diff.changeType === 'insert' ? (isClosed ? 'Added:' : 'Add:') : 'Replace with:'}
+                    </h4>
+                    <div className="rounded-lg bg-green-500/10 p-3">
+                      <p className="whitespace-pre-wrap text-xs">{diff.newText}</p>
                     </div>
-                  )}
-                </CollapsibleContent>
-              </Collapsible>
+                  </div>
+                )}
+
+                {/* Justification */}
+                {diff.justification && (
+                  <div>
+                    <h4 className="mb-1 text-sm font-semibold">Justification:</h4>
+                    <p className="text-xs text-muted-foreground">{diff.justification}</p>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Vote result sentence when closed */}
@@ -504,6 +558,35 @@ export function ChangeRequestTimelineCard({
                     {t('features.agendas.crTimeline.closeVoting')}
                   </Button>
                 )}
+              </div>
+            )}
+
+            {/* Editor preview with per-card suggestion filter */}
+            {(((editingMode === 'suggest_event' || editingMode === 'vote_event') && amendmentId) || (documentContent && suggestionId)) && (
+              <div className="space-y-2">
+                {/* Mode selector — always shown when amendmentId is available */}
+                {amendmentId && (
+                  <EditingModeSelector
+                    amendmentId={amendmentId}
+                    currentMode={editingMode}
+                  />
+                )}
+                {/* Suggestion filter — only for read-only preview (interactive editor has its own) */}
+                {editingMode !== 'suggest_event' && editingMode !== 'vote_event' && discussions && discussions.length > 1 && (
+                  <SuggestionViewToggle
+                    discussions={discussions}
+                    selectedCrIds={selectedCrIds}
+                    onSelectedCrIdsChange={setSelectedCrIds}
+                  />
+                )}
+                <CREditorPreview
+                  documentContent={documentContent ?? ([] as Value)}
+                  suggestionIds={selectedSuggestionIds}
+                  editingMode={editingMode}
+                  amendmentId={amendmentId}
+                  userId={userId}
+                  agendaItemId={agendaItemId}
+                />
               </div>
             )}
           </CardContent>

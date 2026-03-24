@@ -233,7 +233,7 @@ export interface EditorState {
   content: Value;
   discussions: TDiscussionType[];
   mode: EditorMode;
-  selectedCrId: string | null;
+  selectedCrIds: Set<string> | null;
 
   // Save status
   saveStatus: 'saved' | 'saving' | 'error';
@@ -256,7 +256,7 @@ export interface EditorActions {
   setContent: (content: Value) => void;
   setDiscussions: (discussions: TDiscussionType[]) => void;
   setMode: (mode: EditorMode) => Promise<void>;
-  setSelectedCrId: (crId: string | null) => void;
+  setSelectedCrIds: (crIds: Set<string> | null) => void;
   restoreVersion: (content: Value) => Promise<void>;
 }
 

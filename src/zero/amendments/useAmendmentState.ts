@@ -143,6 +143,21 @@ export function useAmendmentState(options: AmendmentStateOptions = {}) {
       : undefined
   )
 
+  // Fallback: fetch document by amendment.document_id (forward relationship)
+  // in case document.amendment_id is not populated
+  const amendmentDocumentId = amendment?.document_id as string | undefined
+  const [documentById] = useQuery(
+    includeDocuments && amendmentDocumentId && (!documents || documents.length === 0)
+      ? queries.amendments.documentById({ id: amendmentDocumentId })
+      : undefined
+  )
+
+  const resolvedDocuments = (documents && documents.length > 0)
+    ? documents
+    : documentById
+      ? [documentById]
+      : []
+
   const [changeRequestsWithVotes] = useQuery(
     includeChangeRequestsWithVotes && amendmentId
       ? queries.amendments.changeRequestsWithVotes({ amendment_id: amendmentId })
@@ -308,7 +323,7 @@ export function useAmendmentState(options: AmendmentStateOptions = {}) {
     // Optional slices
     clones: clones ?? [],
     threads: threads ?? [],
-    documents: documents ?? [],
+    documents: resolvedDocuments,
     changeRequestsWithVotes: changeRequestsWithVotes ?? [],
     roles: roles ?? [],
     amendmentVotes: amendmentVotes ?? [],

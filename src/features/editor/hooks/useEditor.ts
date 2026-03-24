@@ -117,7 +117,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
   const [content, setContentState] = useState<Value>(DEFAULT_EDITOR_CONTENT);
   const [discussions, setDiscussionsState] = useState<TDiscussion[]>([]);
   const [mode, setModeState] = useState<EditorMode>('edit');
-  const [selectedCrId, setSelectedCrId] = useState<string | null>(null);
+  const [selectedCrIds, setSelectedCrIds] = useState<Set<string> | null>(null);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSavingTitle, setIsSavingTitle] = useState(false);
@@ -469,7 +469,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
     content,
     discussions,
     mode,
-    selectedCrId,
+    selectedCrIds,
 
     // Save status
     saveStatus,
@@ -488,7 +488,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
     setContent,
     setDiscussions,
     setMode,
-    setSelectedCrId,
+    setSelectedCrIds,
     restoreVersion: handleRestoreVersion,
   };
 }

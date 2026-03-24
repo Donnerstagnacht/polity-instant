@@ -127,5 +127,10 @@ export const editor = {
     allSuggestions: 'Alle Vorschläge',
     searchPlaceholder: 'Änderungsanträge suchen...',
     noResults: 'Keine Änderungsanträge gefunden.',
+    selectMode: 'Auswahl',
+    choiceMode: 'Mehrfach',
+    nSelected: '{{count}} ausgewählt',
+    selectAll: 'Alle auswählen',
+    deselectAll: 'Alle abwählen',
   },
 };

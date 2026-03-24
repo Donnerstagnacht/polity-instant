@@ -12,7 +12,7 @@ export const agendaQueries = {
         .orderBy('order_index', 'asc')
         .related('event')
         .related('creator')
-        .related('election', q => q.related('position'))
+        .related('election', q => q.related('position', pq => pq.related('group')))
         .related('amendment')
         .related('votes')
   ),

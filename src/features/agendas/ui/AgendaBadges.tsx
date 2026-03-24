@@ -1,6 +1,7 @@
 'use client';
 
-import { UserCheck, Vote, Users, FileText, ShieldCheck } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+import { UserCheck, Vote, Users, FileText, ShieldCheck, ScrollText, Building2 } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { cn } from '@/features/shared/utils/utils';
@@ -10,7 +11,10 @@ import type { AgendaItemStatus, AgendaItemType } from './AgendaCard';
 type AgendaVisualStatus = AgendaItemStatus | 'active';
 type AgendaCountdownTone = 'start' | 'active' | 'end' | 'completed';
 
-function getAgendaStatusConfig(status: AgendaVisualStatus, t: ReturnType<typeof useTranslation>['t']) {
+function getAgendaStatusConfig(
+  status: AgendaVisualStatus,
+  t: ReturnType<typeof useTranslation>['t']
+) {
   switch (status) {
     case 'active':
     case 'in-progress':
@@ -109,10 +113,10 @@ export function AgendaStatusBadge({
     <Badge
       variant="outline"
       className={cn(
-        'font-mono text-[11px] font-bold uppercase tracking-wide',
+        'font-mono text-[11px] font-bold tracking-wide uppercase',
         config.colorClass,
         config.pulseClass,
-        className,
+        className
       )}
     >
       <span className="mr-1">{config.emoji}</span>
@@ -121,13 +125,7 @@ export function AgendaStatusBadge({
   );
 }
 
-export function AgendaTypeBadge({
-  type,
-  className,
-}: {
-  type: AgendaItemType;
-  className?: string;
-}) {
+export function AgendaTypeBadge({ type, className }: { type: AgendaItemType; className?: string }) {
   const { t } = useTranslation();
   const config = getAgendaTypeConfig(type, t);
   const Icon = config.icon;
@@ -136,14 +134,52 @@ export function AgendaTypeBadge({
     <Badge
       variant="outline"
       className={cn(
-        'font-mono text-[11px] font-bold uppercase tracking-wide',
+        'font-mono text-[11px] font-bold tracking-wide uppercase',
         config.colorClass,
-        className,
+        className
       )}
     >
       <Icon className="mr-1 h-3.5 w-3.5" />
       {config.label}
     </Badge>
+  );
+}
+
+/**
+ * Clickable entity badge for related amendment or position/group.
+ * Follows the same visual style as AgendaTypeBadge.
+ */
+export function AgendaEntityBadge({
+  label,
+  href,
+  variant,
+  className,
+}: {
+  label: string;
+  href: string;
+  variant: 'amendment' | 'position';
+  className?: string;
+}) {
+  const Icon = variant === 'amendment' ? ScrollText : Building2;
+  const colorClass =
+    variant === 'amendment'
+      ? 'border-indigo-500/30 bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-500/25'
+      : 'border-pink-500/30 bg-pink-500/15 text-pink-700 dark:text-pink-400 hover:bg-pink-500/25';
+
+  return (
+    <Link to={href} onClick={e => e.stopPropagation()}>
+      <Badge
+        variant="outline"
+        className={cn(
+          'cursor-pointer font-mono text-[11px] font-bold tracking-wide uppercase transition-colors',
+          colorClass,
+          className
+        )}
+      >
+        <Icon className="mr-1 h-3.5 w-3.5" />
+        {label}
+      </Badge>
+    </Link>
   );
 }
 
@@ -163,7 +199,7 @@ export function AgendaCountdownPill({
       className={cn(
         'inline-flex rounded-xl border px-3 py-2 shadow-sm',
         getCountdownToneClasses(tone),
-        className,
+        className
       )}
     >
       <CountdownTimer endsAt={endsAt} compact showIcon={false} compactLabel={label} />
@@ -182,10 +218,10 @@ export function AgendaEndedPill({
     <div
       className={cn(
         'inline-flex rounded-xl border border-slate-500/25 bg-slate-500/10 px-3 py-2 shadow-sm',
-        className,
+        className
       )}
     >
-      <EndedAgo endedAt={endedAt} className="font-mono text-[11px] uppercase tracking-wide" />
+      <EndedAgo endedAt={endedAt} className="font-mono text-[11px] tracking-wide uppercase" />
     </div>
   );
 }

@@ -70,8 +70,8 @@ export function EditorView({
     setContent,
     setDiscussions,
     setMode,
-    setSelectedCrId,
-    selectedCrId,
+    setSelectedCrIds,
+    selectedCrIds,
     restoreVersion,
   } = editorState;
 
@@ -395,8 +395,8 @@ export function EditorView({
           {(mode === 'suggest_internal' || mode === 'suggest_event' || mode === 'vote_internal' || mode === 'vote_event') && discussions.length > 0 && (
             <SuggestionViewToggle
               discussions={discussions}
-              selectedCrId={selectedCrId}
-              onSelectedCrIdChange={setSelectedCrId}
+              selectedCrIds={selectedCrIds}
+              onSelectedCrIdsChange={setSelectedCrIds}
             />
           )}
 
@@ -525,8 +525,8 @@ export function EditorView({
               onVoteAccept={capabilities.voting ? onVoteAccept : undefined}
               onVoteReject={capabilities.voting ? onVoteReject : undefined}
               onVoteAbstain={capabilities.voting ? onVoteAbstain : undefined}
-              selectedCrId={selectedCrId}
-              onSelectedCrIdChange={setSelectedCrId}
+              selectedCrIds={selectedCrIds}
+              onSelectedCrIdsChange={setSelectedCrIds}
               remoteCursors={{
                 entityId: contentEntityId,
                 userId,

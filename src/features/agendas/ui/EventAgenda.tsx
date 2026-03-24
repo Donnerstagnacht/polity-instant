@@ -931,6 +931,8 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                       onMoveClick={() =>
                         setTransferDialogItem({ id: item.id, title: item.title ?? '' })
                       }
+                      amendment={item.amendment ?? undefined}
+                      election={item.election?.[0] ?? undefined}
                     />
                   </div>
                 </TimelineItem>

@@ -8,7 +8,7 @@ import { ArrowRight } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { cn } from '@/features/shared/utils/utils.ts';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { AgendaStatusBadge, AgendaTypeBadge } from './AgendaBadges';
+import { AgendaStatusBadge, AgendaTypeBadge, AgendaEntityBadge } from './AgendaBadges';
 
 export type AgendaItemType = 'election' | 'vote' | 'speech' | 'discussion' | 'accreditation';
 export type AgendaItemStatus = 'completed' | 'in-progress' | 'pending' | 'planned';
@@ -31,6 +31,15 @@ interface AgendaCardProps {
   showMoveButton?: boolean;
   onMoveClick?: () => void;
   footerRight?: ReactNode;
+  /** Related amendment — shown as a clickable tag linking to amendment wiki */
+  amendment?: { id: string; title?: string | null } | null;
+  /** Related election with position — shown as a clickable tag linking to group wiki */
+  election?: {
+    position?: {
+      title?: string | null;
+      group?: { id: string; name?: string | null } | null;
+    } | null;
+  } | null;
 }
 
 export function AgendaCard({
@@ -49,6 +58,8 @@ export function AgendaCard({
   showMoveButton = false,
   onMoveClick,
   footerRight,
+  amendment,
+  election,
 }: AgendaCardProps) {
   const { t } = useTranslation();
   const visualStatus = isActive ? 'active' : status;
@@ -74,6 +85,20 @@ export function AgendaCard({
                 <div className="flex flex-wrap items-center gap-2">
                   <AgendaTypeBadge type={type} />
                   <AgendaStatusBadge status={visualStatus} />
+                  {amendment?.title && (
+                    <AgendaEntityBadge
+                      label={amendment.title}
+                      href={`/amendment/${amendment.id}`}
+                      variant="amendment"
+                    />
+                  )}
+                  {election?.position?.group && (
+                    <AgendaEntityBadge
+                      label={election.position.title ?? election.position.group.name ?? 'Position'}
+                      href={`/group/${election.position.group.id}`}
+                      variant="position"
+                    />
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>

@@ -1,13 +1,16 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import type { Value } from 'platejs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Progress } from '@/features/shared/ui/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
-import { Vote, FileEdit, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Vote, FileEdit, AlertTriangle, CheckCircle2, Search } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { Input } from '@/features/shared/ui/ui/input';
+import type { TDiscussion } from '@/features/editor/types';
 import { ChangeRequestTimelineCard, type ChangeRequestDiffData } from './ChangeRequestTimelineCard';
 import { getCRFilterStatus } from '../logic/createMockCRTimelineItems';
 import { getVoteResult } from '../hooks/useAgendaItemCRVoting';
@@ -30,6 +33,14 @@ interface ChangeRequestCardsListProps {
   completedCount?: number;
   allCRsProcessed?: boolean;
   isTimelineComplete?: boolean;
+  /** Document content for editor preview */
+  documentContent?: Value;
+  /** Discussion entries from amendment for CR ID mapping */
+  discussions?: TDiscussion[];
+  /** Amendment ID — needed for interactive editor and mode selector */
+  amendmentId?: string;
+  /** Agenda item ID — passed to interactive editor */
+  agendaItemId?: string;
   hasUserVoted?: (item: ChangeRequestTimelineRow) => boolean;
   getUserSelectedChoiceIds?: (item: ChangeRequestTimelineRow) => string[];
   onCastVote?: (item: ChangeRequestTimelineRow, choiceId: string) => Promise<void>;
@@ -65,6 +76,10 @@ export function ChangeRequestCardsList({
   completedCount,
   allCRsProcessed,
   isTimelineComplete,
+  documentContent,
+  discussions,
+  amendmentId,
+  agendaItemId,
   hasUserVoted,
   getUserSelectedChoiceIds,
   onCastVote,
@@ -74,10 +89,36 @@ export function ChangeRequestCardsList({
 }: ChangeRequestCardsListProps) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabValue>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Build crId → discussion UUID map from discussions
+  const crIdToDiscussionId = useMemo(() => {
+    const map = new Map<string, string>();
+    if (discussions) {
+      for (const d of discussions) {
+        if (d.crId) {
+          map.set(d.crId, d.id);
+        }
+      }
+    }
+    return map;
+  }, [discussions]);
 
   // Separate final vote from regular CR items for filtering
   const finalVoteItem = useMemo(() => items.find(i => i.is_final_vote), [items]);
   const crItems = useMemo(() => items.filter(i => !i.is_final_vote), [items]);
+
+  // Text search filter
+  const searchedItems = useMemo(() => {
+    if (!searchQuery.trim()) return crItems;
+    const query = searchQuery.toLowerCase();
+    return crItems.filter((item) => {
+      const cr = item.change_request;
+      const title = cr?.title?.toLowerCase() ?? '';
+      const description = cr?.description?.toLowerCase() ?? '';
+      return title.includes(query) || description.includes(query);
+    });
+  }, [crItems, searchQuery]);
 
   // Categorize CR items by status for tabs
   const categorized = useMemo(() => {
@@ -85,7 +126,7 @@ export function ChangeRequestCardsList({
     const accepted: ChangeRequestTimelineRow[] = [];
     const rejected: ChangeRequestTimelineRow[] = [];
 
-    for (const item of crItems) {
+    for (const item of searchedItems) {
       const filterStatus = getCRFilterStatus(
         item,
         isVotingActive ? (getVoteResult as (item: never) => string) : undefined,
@@ -96,7 +137,7 @@ export function ChangeRequestCardsList({
     }
 
     return { open, accepted, rejected };
-  }, [crItems, isVotingActive]);
+  }, [searchedItems, isVotingActive]);
 
   const getFilteredItems = (tab: TabValue): ChangeRequestTimelineRow[] => {
     switch (tab) {
@@ -104,7 +145,7 @@ export function ChangeRequestCardsList({
       case 'accepted': return categorized.accepted;
       case 'rejected': return categorized.rejected;
       case 'all':
-      default: return crItems;
+      default: return searchedItems;
     }
   };
 
@@ -168,7 +209,7 @@ export function ChangeRequestCardsList({
           <TabsList>
             <TabsTrigger value="all" className="gap-1.5">
               {t('features.agendas.crTimeline.tabAll', 'All')}
-              <Badge variant="secondary" className="ml-0.5 text-xs">{crItems.length}</Badge>
+              <Badge variant="secondary" className="ml-0.5 text-xs">{searchedItems.length}</Badge>
             </TabsTrigger>
             <TabsTrigger value="open" className="gap-1.5">
               {t('features.agendas.crTimeline.tabOpen', 'Open')}
@@ -189,6 +230,19 @@ export function ChangeRequestCardsList({
             </TabsTrigger>
           </TabsList>
         </Tabs>
+
+        {/* Search */}
+        {crItems.length > 1 && (
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={t('features.agendas.crTimeline.searchPlaceholder', 'Search change requests…')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-9 text-sm"
+            />
+          </div>
+        )}
       </CardHeader>
 
       <CardContent>
@@ -207,6 +261,8 @@ export function ChangeRequestCardsList({
             filteredItems.map((item, index) => {
               const crId = item.change_request_id ?? item.id;
               const diff = diffMap?.[crId] ?? diffMap?.[item.id];
+              const crTitle = item.change_request?.title;
+              const suggestionId = crTitle ? crIdToDiscussionId.get(crTitle) : undefined;
 
               return (
                 <ChangeRequestTimelineCard
@@ -220,6 +276,14 @@ export function ChangeRequestCardsList({
                   canVote={isVotingActive ? canVote : false}
                   isFinalVoteLocked={false}
                   diff={diff}
+                  documentContent={documentContent}
+                  suggestionId={suggestionId}
+                  crId={crTitle || undefined}
+                  discussions={discussions}
+                  editingMode={editingMode}
+                  amendmentId={amendmentId}
+                  userId={userId}
+                  agendaItemId={agendaItemId}
                   onCastVote={isVotingActive ? onCastVote : undefined}
                   onStartIndicative={isVotingActive ? onStartIndicative : undefined}
                   onStartFinal={isVotingActive ? onStartFinal : undefined}

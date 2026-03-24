@@ -1,17 +1,17 @@
 import { useMemo } from 'react';
 import { Link } from '@tanstack/react-router';
+import type { Value } from 'platejs';
 import { Button } from '@/features/shared/ui/ui/button';
 import { PageWrapper } from '@/layout/page-wrapper';
 import { ArrowLeft, FileEdit } from 'lucide-react';
+import { AgendaCRVoteTimeline } from '@/features/agendas/ui/AgendaCRVoteTimeline';
 import { ChangeRequestCardsList } from '@/features/agendas/ui/ChangeRequestCardsList';
-import { useAgendaItemByAmendment } from '@/zero/agendas/useAgendaState';
-import { useAgendaItemCRVoting } from '@/features/agendas/hooks/useAgendaItemCRVoting';
-import { useVoteState } from '@/zero/votes/useVoteState';
-import { useChangeRequests } from '../hooks/useChangeRequests';
-import { createMockCRTimelineItems, type CRSummary } from '@/features/agendas/logic/createMockCRTimelineItems';
-import { buildFinalVoteFromAgendaVote } from '@/features/agendas/logic/buildFinalVoteFromAgendaVote';
 import type { ChangeRequestDiffData } from '@/features/agendas/ui/ChangeRequestTimelineCard';
+import { createMockCRTimelineItems, type CRSummary } from '@/features/agendas/logic/createMockCRTimelineItems';
+import { useAgendaItemByAmendment } from '@/zero/agendas/useAgendaState';
+import type { TDiscussion } from '@/features/editor/types';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
+import { useChangeRequests } from '../hooks/useChangeRequests';
 
 interface ChangeRequestsViewProps {
   amendmentId: string;
@@ -21,7 +21,10 @@ interface ChangeRequestsViewProps {
 export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewProps) {
   const {
     amendment,
-    changeRequests,
+    document,
+    openChangeRequests,
+    approvedChangeRequests,
+    declinedChangeRequests,
     isLoading,
   } = useChangeRequests(amendmentId);
 
@@ -29,74 +32,71 @@ export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewPr
   const { agendaItemId } = useAgendaItemByAmendment(amendmentId);
   const isInVotingStage = amendment?.editing_mode === 'vote_event' || amendment?.editing_mode === 'vote_internal';
 
-  // Real CR voting timeline (only used when in voting stage)
-  const crVoting = useAgendaItemCRVoting(agendaItemId ?? '', userId);
+  const allChangeRequests = useMemo(
+    () => [...openChangeRequests, ...approvedChangeRequests, ...declinedChangeRequests],
+    [openChangeRequests, approvedChangeRequests, declinedChangeRequests],
+  );
 
-  // Agenda item's own vote (used as final vote in the CR list)
-  const { vote: agendaVote } = useVoteState({ agendaItemId: agendaItemId ?? undefined });
+  // Convert ChangeRequest[] → CRSummary[] → mock timeline items
+  const crSummaries = useMemo<CRSummary[]>(
+    () =>
+      allChangeRequests.map((cr) => ({
+        id: cr.id,
+        crId: cr.crId,
+        title: cr.title || cr.crId,
+        description: cr.description || '',
+        status: cr.resolution
+          ? (cr.resolution === 'approved' || cr.resolution === 'accepted' ? 'approved' : 'declined')
+          : cr.status,
+        type: cr.type,
+        text: cr.text,
+        newText: cr.newText,
+        properties: cr.properties as Record<string, string>,
+        newProperties: cr.newProperties as Record<string, string>,
+        justification: cr.justification,
+      })),
+    [allChangeRequests],
+  );
 
-  // Build diff map from useChangeRequests data (provides text diff info from document)
+  const mockTimelineItems = useMemo(
+    () => createMockCRTimelineItems(crSummaries) as unknown as ChangeRequestTimelineRow[],
+    [crSummaries],
+  );
+
+  // Build diffMap: keyed by cr.id (= change_request_id in mock items)
   const diffMap = useMemo<Record<string, ChangeRequestDiffData>>(() => {
     const map: Record<string, ChangeRequestDiffData> = {};
-    for (const cr of changeRequests) {
-      // Key by the suggestion id (used as mock CR id) and by changeRequestEntityId
-      const diff: ChangeRequestDiffData = {
-        changeType: cr.type || undefined,
+    for (const cr of allChangeRequests) {
+      map[cr.id] = {
+        changeType: cr.type,
         originalText: cr.text || undefined,
         newText: cr.newText || undefined,
         properties: cr.properties as Record<string, string> | undefined,
         newProperties: cr.newProperties as Record<string, string> | undefined,
         justification: cr.justification || undefined,
       };
-      map[cr.id] = diff;
-      if (cr.changeRequestEntityId) {
-        map[cr.changeRequestEntityId] = diff;
-      }
     }
     return map;
-  }, [changeRequests]);
+  }, [allChangeRequests]);
 
-  // Build mock timeline items for non-voting mode
-  const mockItems = useMemo(() => {
-    if (isInVotingStage && crVoting.crTimeline.length > 0) return [];
+  // Build TDiscussion-compatible array for SuggestionViewToggle
+  const discussions = useMemo<TDiscussion[]>(
+    () =>
+      allChangeRequests
+        .filter((cr) => !!cr.crId)
+        .map((cr) => ({
+          id: cr.id,
+          crId: cr.crId,
+          title: cr.title || cr.crId,
+          userId: cr.userId,
+          comments: [],
+          createdAt: new Date(cr.createdAt),
+          isResolved: cr.isResolved,
+        })),
+    [allChangeRequests],
+  );
 
-    const summaries: CRSummary[] = changeRequests.map(cr => ({
-      id: cr.id,
-      crId: cr.crId,
-      title: cr.title || cr.crId,
-      description: cr.description || '',
-      status: cr.isResolved ? (cr.resolution || cr.status) : 'open',
-      type: cr.type,
-      text: cr.text,
-      newText: cr.newText,
-      properties: cr.properties as Record<string, string> | undefined,
-      newProperties: cr.newProperties as Record<string, string> | undefined,
-      justification: cr.justification,
-    }));
-
-    return createMockCRTimelineItems(summaries);
-  }, [changeRequests, isInVotingStage, crVoting.crTimeline.length]);
-
-  // Determine which items to display
-  const useRealTimeline = isInVotingStage && agendaItemId && crVoting.crTimeline.length > 0;
-  const displayItemsBase = useRealTimeline
-    ? crVoting.crTimeline
-    : mockItems as unknown as ChangeRequestTimelineRow[];
-
-  // Synthesize a final vote item from the agenda item's own vote (if it exists)
-  // If timeline already has a final vote (legacy data), prefer that.
-  const timelineHasFinalVote = displayItemsBase.some(i => i.is_final_vote);
-  const synthesizedFinalVoteItem = useMemo(() => {
-    if (timelineHasFinalVote) return null;
-    if (!agendaVote || displayItemsBase.length === 0) return null;
-    const orderIndex = displayItemsBase.length;
-    return buildFinalVoteFromAgendaVote(agendaVote, orderIndex) as unknown as ChangeRequestTimelineRow;
-  }, [timelineHasFinalVote, agendaVote, displayItemsBase.length]);
-
-  const displayItems = useMemo(() => {
-    if (!synthesizedFinalVoteItem) return displayItemsBase;
-    return [...displayItemsBase, synthesizedFinalVoteItem];
-  }, [displayItemsBase, synthesizedFinalVoteItem]);
+  const documentContent = document?.content as Value | undefined;
 
   if (isLoading) {
     return (
@@ -112,7 +112,7 @@ export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewPr
         <div className="py-12 text-center">
           <h1 className="mb-4 text-2xl font-bold">Amendment Not Found</h1>
           <p className="text-muted-foreground">
-            The amendment you&apos;re looking for doesn&apos;t exist or has been removed.
+            The amendment you're looking for doesn't exist or has been removed.
           </p>
         </div>
       </PageWrapper>
@@ -137,29 +137,37 @@ export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewPr
           <FileEdit className="h-8 w-8" />
           <h1 className="text-4xl font-bold">Change Requests</h1>
         </div>
+        <p className="text-muted-foreground">
+          {openChangeRequests.length} open, {approvedChangeRequests.length} approved,{' '}
+          {declinedChangeRequests.length} declined change request
+          {allChangeRequests.length !== 1 ? 's' : ''} for this amendment
+        </p>
       </div>
 
-      {/* Unified CR Cards List with tabs */}
-      <ChangeRequestCardsList
-        items={displayItems}
-        editingMode={amendment.editing_mode}
-        isVotingActive={!!useRealTimeline}
-        userId={userId}
-        canManage={false}
-        canVote={false}
-        currentItemId={useRealTimeline ? crVoting.currentItem?.id : null}
-        diffMap={diffMap}
-        progress={useRealTimeline ? crVoting.progress : undefined}
-        completedCount={useRealTimeline ? crVoting.completedItems.length : undefined}
-        allCRsProcessed={useRealTimeline ? crVoting.allCRsProcessed : undefined}
-        isTimelineComplete={useRealTimeline ? crVoting.isTimelineComplete : undefined}
-        hasUserVoted={useRealTimeline ? crVoting.hasUserVoted : undefined}
-        getUserSelectedChoiceIds={useRealTimeline ? crVoting.getUserSelectedChoiceIds : undefined}
-        onCastVote={useRealTimeline ? crVoting.castCRVote : undefined}
-        onStartIndicative={useRealTimeline ? crVoting.startIndicativePhase : undefined}
-        onStartFinal={useRealTimeline ? crVoting.startFinalPhase : undefined}
-        onCloseVoting={useRealTimeline ? crVoting.closeVoting : undefined}
-      />
+      {/* CR Voting Timeline — shown when amendment is in a voting stage */}
+      {isInVotingStage && agendaItemId && (
+        <div className="mb-8">
+          <AgendaCRVoteTimeline
+            agendaItemId={agendaItemId}
+            userId={userId}
+          />
+        </div>
+      )}
+
+      {/* Change Request Cards — agenda-item style */}
+      {allChangeRequests.length > 0 && (
+        <ChangeRequestCardsList
+          items={mockTimelineItems}
+          editingMode={amendment.editing_mode}
+          isVotingActive={false}
+          userId={userId}
+          diffMap={diffMap}
+          documentContent={documentContent}
+          discussions={discussions}
+          amendmentId={amendment.id}
+          agendaItemId={agendaItemId ?? undefined}
+        />
+      )}
     </PageWrapper>
   );
 }
