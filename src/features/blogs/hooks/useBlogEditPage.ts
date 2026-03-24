@@ -6,12 +6,13 @@ import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { notifyBlogPublished } from '@/features/notifications/utils/notification-helpers.ts';
+import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
 
 export interface BlogFormData {
   title: string;
   description: string;
   imageURL: string;
-  isPublic: boolean;
+  visibility: Visibility;
   tags: string[];
 }
 
@@ -27,7 +28,7 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
     title: '',
     description: '',
     imageURL: '',
-    isPublic: true,
+    visibility: 'public' as Visibility,
     tags: [],
   });
 
@@ -57,7 +58,7 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
         title: blog.title || '',
         description: blog.description || '',
         imageURL: blog.image_url || '',
-        isPublic: blog.is_public ?? true,
+        visibility: (blog.visibility as Visibility) ?? 'public',
         tags: existingTags.length > 0 ? existingTags : [],
       });
     }
@@ -93,12 +94,12 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
         title: formData.title,
         description: formData.description,
         image_url: formData.imageURL,
-        is_public: formData.isPublic,
+        visibility: formData.visibility,
       });
 
       // Timeline and notifications are server-only — send separately
       try {
-        if (formData.isPublic && actorId) {
+        if (formData.visibility === 'public' && actorId) {
           if (formData.imageURL && formData.imageURL !== blog.image_url) {
             await createTimelineEvent({
               data: {
@@ -114,7 +115,7 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
           }
         }
 
-        if (formData.isPublic && !blog.is_public && actorId) {
+        if (formData.visibility === 'public' && blog.visibility !== 'public' && actorId) {
           await notifyBlogPublished({
             senderId: actorId,
             blogId,

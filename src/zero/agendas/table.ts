@@ -40,3 +40,17 @@ export const speakerList = table('speaker_list')
     created_at: number(),
   })
   .primaryKey('id')
+
+export const agendaItemChangeRequest = table('agenda_item_change_request')
+  .columns({
+    id: string(),
+    agenda_item_id: string(),
+    change_request_id: string().optional(),
+    vote_id: string().optional(),
+    order_index: number(),
+    is_final_vote: boolean(),
+    status: string(),
+    created_at: number(),
+    updated_at: number(),
+  })
+  .primaryKey('id')

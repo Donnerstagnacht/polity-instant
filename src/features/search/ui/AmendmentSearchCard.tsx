@@ -2,6 +2,7 @@ import React from 'react';
 import { AmendmentTimelineCard } from '@/features/timeline/ui/cards/AmendmentTimelineCard';
 import { useAuth } from '@/providers/auth-provider';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
+import { normalizeEditingMode } from '@/zero/rbac/workflow-constants';
 
 import { type SearchAmendment } from '../types/search.types';
 
@@ -39,48 +40,6 @@ export function AmendmentSearchCard({ amendment }: AmendmentSearchCardProps) {
             ? 'requested'
             : undefined;
 
-  const normalizeStatus = (
-    status?: string | null
-  ):
-    | 'collaborative_editing'
-    | 'internal_suggesting'
-    | 'internal_voting'
-    | 'viewing'
-    | 'event_suggesting'
-    | 'event_voting'
-    | 'passed'
-    | 'rejected' => {
-    if (!status) return 'viewing';
-    const normalized = status.toLowerCase();
-    if (
-      normalized === 'collaborative_editing' ||
-      normalized === 'internal_suggesting' ||
-      normalized === 'internal_voting' ||
-      normalized === 'viewing' ||
-      normalized === 'event_suggesting' ||
-      normalized === 'event_voting' ||
-      normalized === 'passed' ||
-      normalized === 'rejected'
-    ) {
-      return normalized as
-        | 'collaborative_editing'
-        | 'internal_suggesting'
-        | 'internal_voting'
-        | 'viewing'
-        | 'event_suggesting'
-        | 'event_voting'
-        | 'passed'
-        | 'rejected';
-    }
-    if (normalized === 'drafting' || normalized === 'draft') {
-      return 'collaborative_editing';
-    }
-    if (normalized === 'under review' || normalized === 'review') {
-      return 'internal_voting';
-    }
-    return 'viewing';
-  };
-
   return (
     <AmendmentTimelineCard
       amendment={{
@@ -88,7 +47,7 @@ export function AmendmentSearchCard({ amendment }: AmendmentSearchCardProps) {
         title: amendment.title ?? '',
         subtitle: amendment.group?.name ?? undefined,
         description: amendment.reason ?? undefined,
-        status: normalizeStatus(amendment.status),
+        status: normalizeEditingMode(amendment.editing_mode),
         supportCount: supporters,
         groupName: amendment.group?.name ?? undefined,
         groupId: amendment.group?.id,

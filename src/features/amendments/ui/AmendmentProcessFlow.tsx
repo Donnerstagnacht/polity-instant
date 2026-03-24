@@ -61,7 +61,6 @@ interface PendingTargetEventData {
   id: string;
   title: string | null;
   description?: string | null;
-  is_public?: boolean;
   start_date?: number | null;
   location_name?: string | null;
   participant_count?: number | null;
@@ -219,7 +218,6 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
               id: eventId,
               title: eventData.title ?? null,
               description: eventData.description ?? null,
-              is_public: eventData.is_public,
               start_date: eventData.start_date ?? null,
               location_name: eventData.location_name ?? null,
               participant_count: eventData.participant_count ?? null,
@@ -1106,7 +1104,6 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                     id: eventId,
                     title: eventData.title ?? null,
                     description: eventData.description ?? null,
-                    is_public: eventData.is_public,
                     start_date: eventData.start_date ?? null,
                     location_name: eventData.location_name ?? null,
                     participant_count: eventData.participant_count ?? null,

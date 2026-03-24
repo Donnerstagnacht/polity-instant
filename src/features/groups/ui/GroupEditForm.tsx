@@ -9,6 +9,7 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { Loader2 } from 'lucide-react';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
+import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
 import { BasicInfoSection } from './BasicInfoSection';
 import { LocationInfoSection } from './LocationInfoSection';
 import { SocialMediaSection } from './SocialMediaSection';
@@ -108,6 +109,9 @@ export function GroupEditForm({ groupId, initialData, onCancel, actorId, visibil
 
       {/* Basic Information */}
       <BasicInfoSection formData={formData} onChange={updateField} />
+
+      {/* Visibility */}
+      <VisibilityInput value={formData.visibility} onChange={v => updateField('visibility', v)} />
 
       {/* Location Information */}
       <LocationInfoSection formData={formData} onChange={updateField} />

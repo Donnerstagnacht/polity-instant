@@ -5,8 +5,8 @@ import { Check, X } from 'lucide-react';
 import { MessageBubble } from './MessageBubble';
 import { Conversation, Message } from '../types/message.types';
 import { getOtherParticipant } from '../logic/messageUtils';
-import { AriaKaiMessageActions } from '@/features/messages/ui/AriaKaiMessageActions.tsx';
-import { ARIA_KAI_USER_ID } from '@/features/auth/constants';
+import { AriaKaiMessageActions } from '@/features/assistant/ui/AriaKaiMessageActions.tsx';
+import { isAssistantConversation } from '@/features/assistant/logic/assistantHelpers';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface MessageListProps {
@@ -51,7 +51,7 @@ export function MessageList({
         )}
 
         {/* Aria & Kai Tutorial Actions - Show only in Aria & Kai conversation */}
-        {conversation.participants.some(p => p.user?.id === ARIA_KAI_USER_ID) && currentUserId && (
+        {isAssistantConversation(conversation) && currentUserId && (
           <AriaKaiMessageActions conversationId={conversation.id} currentUserId={currentUserId} />
         )}
 

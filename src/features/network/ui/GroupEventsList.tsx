@@ -90,7 +90,7 @@ export function GroupEventsList({ groupId, onEventClick }: GroupEventsListProps)
                 {event.title}
               </h4>
               <div className="flex gap-1">
-                {event.is_public && (
+                {event.visibility === 'public' && (
                   <Badge variant="outline" className="text-xs">
                     {t('common.labels.public')}
                   </Badge>

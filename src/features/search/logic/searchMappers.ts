@@ -2,7 +2,7 @@ import type { SearchContentItem, SearchResultItem } from '../types/search.types'
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import { getUserAvatar, getUserDisplayName } from '../utils/searchUtils';
 
-export function toTags(hashtags?: Array<{ tag?: string | null }>): string[] {
+export function toTags(hashtags?: { tag?: string | null }[]): string[] {
   if (!hashtags) return [];
   return hashtags.map(tag => tag?.tag).filter((tag): tag is string => Boolean(tag));
 }
@@ -18,7 +18,10 @@ export function toDate(value?: string | number | Date | null): Date {
  */
 export function mapMosaicToContentItems(
   mosaicResults: readonly SearchResultItem[],
-  agendaItemsByEventId: Map<string, Array<{ election?: { id?: string } | null; amendment?: { id?: string } | null }>>,
+  agendaItemsByEventId: Map<
+    string,
+    { election?: { id?: string } | null; amendment?: { id?: string } | null }[]
+  >
 ): SearchContentItem[] {
   if (!mosaicResults || mosaicResults.length === 0) return [];
 
@@ -54,9 +57,8 @@ export function mapMosaicToContentItems(
           attendeeCount: item.participants?.length,
           electionsCount:
             item.agenda_items?.filter(ai => Boolean(ai?.election)).length ??
-            agendaItemsByEventId
-              .get(item.id)
-              ?.filter(agendaItem => Boolean(agendaItem?.election)).length ??
+            agendaItemsByEventId.get(item.id)?.filter(agendaItem => Boolean(agendaItem?.election))
+              .length ??
             0,
           amendmentsCount: item.agenda_items?.filter(ai => Boolean(ai?.amendment)).length,
           tags: extractHashtagTags(item.event_hashtags),
@@ -78,6 +80,7 @@ export function mapMosaicToContentItems(
           tags: extractHashtagTags(item.amendment_hashtags),
           groupId: item.group?.id,
           groupName: item.group?.name,
+          status: item.editing_mode,
           collaboratorCount: item.collaborators?.length,
           changeRequestCount: item.change_requests?.length,
           stats: {
@@ -88,13 +91,11 @@ export function mapMosaicToContentItems(
         break;
       case 'blog': {
         const blogRelations = item.bloggers ?? [];
-        const blogOwnerRelation = blogRelations
-          .find(relation => relation.status === 'owner')
-          || blogRelations.find(relation => Boolean(relation.user || relation.user_id));
-        const blogAuthor = blogOwnerRelation?.user
-          || blogRelations
-            .map(relation => relation.user)
-            .find(Boolean);
+        const blogOwnerRelation =
+          blogRelations.find(relation => relation.status === 'owner') ||
+          blogRelations.find(relation => Boolean(relation.user || relation.user_id));
+        const blogAuthor =
+          blogOwnerRelation?.user || blogRelations.map(relation => relation.user).find(Boolean);
         acc.push({
           id: item.id,
           type: 'blog',
@@ -126,7 +127,10 @@ export function mapMosaicToContentItems(
           createdAt: toDate(item.created_at),
           tags: extractHashtagTags(item.statement_hashtags),
           authorId: item.user?.id,
-          authorName: item.user ? `${item.user.first_name ?? ''} ${item.user.last_name ?? ''}`.trim() || item.user.handle : undefined,
+          authorName: item.user
+            ? `${item.user.first_name ?? ''} ${item.user.last_name ?? ''}`.trim() ||
+              item.user.handle
+            : undefined,
           authorAvatar: item.user?.avatar,
           groupId: item.group?.id,
           groupName: item.group?.name,

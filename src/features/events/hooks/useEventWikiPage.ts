@@ -10,6 +10,7 @@ import { useSubscribeEvent } from './useSubscribeEvent';
 import { useEventParticipation } from './useEventParticipation';
 import { computeAgendaStats } from '@/features/agendas/logic/computeAgendaStats';
 import { notifyCandidateAdded } from '@/features/notifications/utils/notification-helpers.ts';
+import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 
 export function useEventWikiPage(eventId: string) {
   const navigate = useNavigate();
@@ -113,9 +114,15 @@ export function useEventWikiPage(eventId: string) {
     }
   }, [user, selectedElection, currentUserProfile, getUserCandidacy, addCandidate, eventId, event?.title]);
 
+  // Visibility access check
+  const canAccess = checkEntityAccess(event?.visibility, !!user, participationData.isParticipant);
+
   return {
     navigate,
     user,
+
+    // Access
+    canAccess,
 
     // Subscribe
     ...subscribeData,

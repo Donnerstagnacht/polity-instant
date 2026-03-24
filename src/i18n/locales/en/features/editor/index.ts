@@ -39,6 +39,7 @@ export const editor = {
     bloggers: 'Bloggers',
     owner: 'Owner',
     public: 'Public',
+    authenticated: 'Authenticated',
     private: 'Private',
     lastUpdated: 'Last updated',
     canEdit: 'Can edit',
@@ -118,5 +119,12 @@ export const editor = {
     invitedOne: 'Collaborator invited successfully',
     invitedMultiple: '{{count}} collaborators invited successfully',
     inviteFailed: 'Failed to invite collaborators',
+  },
+
+  // Suggestion View Toggle
+  suggestionView: {
+    allSuggestions: 'All Suggestions',
+    searchPlaceholder: 'Search change requests...',
+    noResults: 'No change requests found.',
   },
 };

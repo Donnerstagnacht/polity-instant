@@ -290,6 +290,12 @@ export const commonTranslations = {
     voteCastFailed: 'Stimme konnte nicht abgegeben werden',
     voteUpdateFailed: 'Stimme konnte nicht aktualisiert werden',
     voteRemoveFailed: 'Stimme konnte nicht entfernt werden',
+    crCreateFailed: 'Änderungsantrags-Verknüpfung konnte nicht erstellt werden',
+    crUpdateFailed: 'Änderungsantrags-Verknüpfung konnte nicht aktualisiert werden',
+    crReorderFailed: 'Änderungsanträge konnten nicht umsortiert werden',
+    crDeleteFailed: 'Änderungsantrags-Verknüpfung konnte nicht gelöscht werden',
+    crVotingInitialized: 'Änderungsantrags-Abstimmung initialisiert',
+    crVotingInitFailed: 'Änderungsantrags-Abstimmung konnte nicht initialisiert werden',
   },
   votingPassword: {
     setSuccess: 'Abstimmungspasswort gespeichert',

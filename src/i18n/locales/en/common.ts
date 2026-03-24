@@ -289,6 +289,12 @@ export const commonTranslations = {
     voteCastFailed: 'Failed to cast vote',
     voteUpdateFailed: 'Failed to update vote',
     voteRemoveFailed: 'Failed to remove vote',
+    crCreateFailed: 'Failed to create change request link',
+    crUpdateFailed: 'Failed to update change request link',
+    crReorderFailed: 'Failed to reorder change requests',
+    crDeleteFailed: 'Failed to delete change request link',
+    crVotingInitialized: 'Change request voting initialized',
+    crVotingInitFailed: 'Failed to initialize change request voting',
   },
   votingPassword: {
     setSuccess: 'Voting password saved',

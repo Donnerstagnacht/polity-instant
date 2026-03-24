@@ -1,9 +1,13 @@
 import * as React from 'react';
 
+import type { EditorMode } from '@/features/editor/types';
+
 interface ModeContextValue {
-  currentMode?: 'edit' | 'view' | 'suggest' | 'vote';
-  onModeChange?: (mode: 'edit' | 'view' | 'suggest' | 'vote') => void;
+  currentMode?: EditorMode;
+  onModeChange?: (mode: EditorMode) => void;
   isOwnerOrCollaborator?: boolean;
+  selectedCrId?: string | null;
+  onSelectedCrIdChange?: (crId: string | null) => void;
 }
 
 const ModeContext = React.createContext<ModeContextValue>({

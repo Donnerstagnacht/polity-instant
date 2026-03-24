@@ -3,6 +3,7 @@ import { Input } from '@/features/shared/ui/ui/input';
 import { Search } from 'lucide-react';
 import { AmendmentTimelineCard } from '@/features/timeline/ui/cards/AmendmentTimelineCard';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { normalizeEditingMode } from '@/zero/rbac';
 import type { ProfileAmendmentCollaboration } from '../types/user.types';
 
 interface AmendmentListTabProps {
@@ -30,7 +31,7 @@ export const AmendmentListTab: React.FC<AmendmentListTabProps> = ({
       const a = collab.amendment!;
       return (
         (a.title ?? '').toLowerCase().includes(term) ||
-        (a.status ?? '').toLowerCase().includes(term) ||
+        (a.editing_mode ?? '').toLowerCase().includes(term) ||
         (a.reason ?? '').toLowerCase().includes(term) ||
         (a.code ?? '').toLowerCase().includes(term) ||
         String(a.created_at).toLowerCase().includes(term) ||
@@ -49,48 +50,6 @@ export const AmendmentListTab: React.FC<AmendmentListTabProps> = ({
       return true;
     });
   }, [filtered]);
-
-  const normalizeStatus = (
-    status?: string | null
-  ):
-    | 'collaborative_editing'
-    | 'internal_suggesting'
-    | 'internal_voting'
-    | 'viewing'
-    | 'event_suggesting'
-    | 'event_voting'
-    | 'passed'
-    | 'rejected' => {
-    if (!status) return 'viewing';
-    const normalized = status.toLowerCase();
-    if (
-      normalized === 'collaborative_editing' ||
-      normalized === 'internal_suggesting' ||
-      normalized === 'internal_voting' ||
-      normalized === 'viewing' ||
-      normalized === 'event_suggesting' ||
-      normalized === 'event_voting' ||
-      normalized === 'passed' ||
-      normalized === 'rejected'
-    ) {
-      return normalized as
-        | 'collaborative_editing'
-        | 'internal_suggesting'
-        | 'internal_voting'
-        | 'viewing'
-        | 'event_suggesting'
-        | 'event_voting'
-        | 'passed'
-        | 'rejected';
-    }
-    if (normalized === 'drafting' || normalized === 'draft') {
-      return 'collaborative_editing';
-    }
-    if (normalized === 'under review' || normalized === 'review') {
-      return 'internal_voting';
-    }
-    return 'viewing';
-  };
 
   return (
     <>
@@ -129,7 +88,7 @@ export const AmendmentListTab: React.FC<AmendmentListTabProps> = ({
                   title: a.title ?? '',
                   subtitle: a.reason ?? undefined,
                   description: a.reason ?? undefined,
-                  status: normalizeStatus(a.status),
+                  status: normalizeEditingMode(a.editing_mode),
                   groupName: a.group?.name ?? undefined,
                   groupId: a.group?.id,
                   hashtags: tags?.map((tag, index) => ({

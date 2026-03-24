@@ -117,7 +117,6 @@ export function useNavigation() {
       id: amendmentData.id,
       user: amendmentData.created_by ? { id: amendmentData.created_by.id } : undefined,
       group: amendmentData.group ? { id: amendmentData.group.id } : undefined,
-      status: amendmentData.status ?? undefined,
       roles: mappedRoles,
       amendmentRoleCollaborators: rawCollaborators.map(collaborator => ({
         id: collaborator.id,

@@ -13,6 +13,7 @@ import { useCommonState, useCommonActions } from '@/zero/common';
 import { useMessageActions } from '@/zero/messages/useMessageActions';
 import { useMessageState } from '@/zero/messages/useMessageState';
 import { notifyGroupProfileUpdated } from '@/features/notifications/utils/notification-helpers.ts';
+import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
 
 export type GroupType = 'base' | 'hierarchical';
 
@@ -23,6 +24,7 @@ export interface GroupFormData {
   region: string;
   country: string;
   imageURL: string;
+  visibility: Visibility;
   whatsapp: string;
   instagram: string;
   twitter: string;
@@ -34,7 +36,7 @@ export interface GroupFormData {
 interface UseGroupUpdateResult {
   formData: GroupFormData;
   setFormData: (data: GroupFormData) => void;
-  updateField: (field: keyof GroupFormData, value: string) => void;
+  updateField: <K extends keyof GroupFormData>(field: K, value: GroupFormData[K]) => void;
   isSubmitting: boolean;
   handleSubmit: (e?: React.FormEvent) => Promise<void>;
   resetForm: () => void;
@@ -47,6 +49,7 @@ const initialFormState: GroupFormData = {
   region: '',
   country: '',
   imageURL: '',
+  visibility: 'public' as Visibility,
   whatsapp: '',
   instagram: '',
   twitter: '',
@@ -117,6 +120,7 @@ export function useGroupUpdate(
         region: initialData.region || '',
         country: initialData.country || '',
         imageURL: initialData.imageURL || '',
+        visibility: initialData.visibility ?? 'public',
         whatsapp: initialData.whatsapp || '',
         instagram: initialData.instagram || '',
         twitter: initialData.twitter || '',
@@ -132,7 +136,7 @@ export function useGroupUpdate(
   /**
    * Update a single form field
    */
-  const updateField = (field: keyof GroupFormData, value: string) => {
+  const updateField = <K extends keyof GroupFormData>(field: K, value: GroupFormData[K]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -148,6 +152,7 @@ export function useGroupUpdate(
         region: initialData.region || '',
         country: initialData.country || '',
         imageURL: initialData.imageURL || '',
+        visibility: initialData.visibility ?? 'public',
         whatsapp: initialData.whatsapp || '',
         instagram: initialData.instagram || '',
         twitter: initialData.twitter || '',
@@ -195,8 +200,7 @@ export function useGroupUpdate(
           youtube: null,
           linkedin: null,
           website: null,
-          is_public: true,
-          visibility: options?.visibility ?? 'public',
+          visibility: formData.visibility,
           group_type: options.groupType,
           owner_id: null,
         });
@@ -208,6 +212,7 @@ export function useGroupUpdate(
           location: formData.location,
           image_url: formData.imageURL || null,
           x: formData.twitter,
+          visibility: formData.visibility,
         });
 
         // Sync name to group conversation if it changed

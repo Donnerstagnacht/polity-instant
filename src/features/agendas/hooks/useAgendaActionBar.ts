@@ -63,7 +63,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
     status: currentAgendaItem?.voting_phase ?? election?.status ?? vote?.status,
     electorId,
     voterId,
-    isPublic: election?.is_public ?? vote?.is_public ?? true,
+    isPublic: (election?.visibility ?? vote?.visibility ?? 'public') === 'public',
   })
 
   // Speaker list membership (only active / not-completed entries block rejoining)

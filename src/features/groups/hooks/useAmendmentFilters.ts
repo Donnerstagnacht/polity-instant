@@ -47,7 +47,7 @@ interface FilterableAmendment {
   title?: string | null;
   subtitle?: string | null;
   code?: string | null;
-  status?: string | null;
+  editing_mode?: string | null;
   date?: string | number | null;
   amendment_hashtags?: readonly { hashtag?: { tag?: string | null } | null }[];
 }
@@ -99,7 +99,7 @@ export function useFilteredAmendments(amendments: FilterableAmendment[], filters
   // Apply all filters
   const filteredAmendments = amendments.filter(amendment => {
     if (!matchesSearchQuery(amendment, filters.searchQuery)) return false;
-    if (filters.statusFilter !== 'all' && amendment.status !== filters.statusFilter) return false;
+    if (filters.statusFilter !== 'all' && amendment.editing_mode !== filters.statusFilter) return false;
     if (!matchesHashtag(amendment, filters.hashtagFilter)) return false;
     return true;
   });
@@ -111,23 +111,23 @@ export function useFilteredAmendments(amendments: FilterableAmendment[], filters
     return dateB - dateA;
   });
 
-  // Group amendments by status
+  // Group amendments by editing_mode
   const groupedAmendments = {
     passed: sortedAmendments.filter(a => {
-      const status = a.status?.toLowerCase();
-      return status === 'approved' || status === 'passed' || status === 'active';
+      const mode = a.editing_mode?.toLowerCase();
+      return mode === 'passed';
     }),
     underReview: sortedAmendments.filter(a => {
-      const status = a.status?.toLowerCase();
-      return status === 'pending' || status === 'under review' || status === 'review';
+      const mode = a.editing_mode?.toLowerCase();
+      return mode === 'vote_internal' || mode === 'vote_event' || mode === 'suggest_internal' || mode === 'suggest_event';
     }),
     drafting: sortedAmendments.filter(a => {
-      const status = a.status?.toLowerCase();
-      return status === 'draft' || status === 'drafting';
+      const mode = a.editing_mode?.toLowerCase();
+      return mode === 'edit' || mode === 'view' || !mode;
     }),
     rejected: sortedAmendments.filter(a => {
-      const status = a.status?.toLowerCase();
-      return status === 'rejected' || status === 'denied';
+      const mode = a.editing_mode?.toLowerCase();
+      return mode === 'rejected';
     }),
   };
 

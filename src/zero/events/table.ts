@@ -12,7 +12,6 @@ export const event = table('event')
     location_address: string().optional(),
     location_url: string().optional(),
     location_coordinates: string().optional(),
-    is_public: boolean(),
     visibility: string(),
     start_date: number().optional(),
     end_date: number().optional(),

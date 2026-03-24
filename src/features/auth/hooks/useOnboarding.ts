@@ -16,7 +16,7 @@ export interface Group {
   description?: string;
   member_count: number;
   location?: string;
-  is_public: boolean;
+  visibility: string;
 }
 
 export interface OnboardingData {
@@ -87,9 +87,9 @@ export function useOnboarding(): UseOnboardingReturn {
   const nextStep = useCallback(() => {
     const currentIndex = STEP_ORDER.indexOf(step);
     if (currentIndex < STEP_ORDER.length - 1) {
-      // Skip confirm step if no group selected
+      // Skip confirm step if no group selected, but still show ariaKai
       if (step === 'groupSearch' && !data.selectedGroup) {
-        setStep('summary');
+        setStep('ariaKai');
       } else {
         setStep(STEP_ORDER[currentIndex + 1]);
       }
@@ -100,8 +100,10 @@ export function useOnboarding(): UseOnboardingReturn {
     const currentIndex = STEP_ORDER.indexOf(step);
     if (currentIndex > 0) {
       // Skip confirm step when going back if no group
-      if (step === 'summary' && !data.selectedGroup) {
+      if (step === 'ariaKai' && !data.selectedGroup) {
         setStep('groupSearch');
+      } else if (step === 'summary') {
+        setStep('ariaKai');
       } else {
         setStep(STEP_ORDER[currentIndex - 1]);
       }
@@ -170,7 +172,7 @@ export function useOnboarding(): UseOnboardingReturn {
 
   const skipMembership = useCallback(() => {
     setData(prev => ({ ...prev, requestMembership: false }));
-    setStep('summary');
+    setStep('ariaKai');
   }, []);
 
   const completeOnboarding = useCallback(

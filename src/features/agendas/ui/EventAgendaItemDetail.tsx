@@ -19,13 +19,15 @@ import { EditElectionVoteDialog } from './EditElectionVoteDialog';
 import { useAgendaActionBar } from '../hooks/useAgendaActionBar';
 import { useAgendaNavigation } from '../hooks/useAgendaNavigation';
 import { VoteCastDialog } from '@/features/vote-cast/ui/VoteCastDialog';
+import { AgendaCRVoteTimeline } from './AgendaCRVoteTimeline';
 import { AccreditationSection } from './AccreditationSection';
 import { usePermissions } from '@/zero/rbac';
 import { useVotingPasswordActions } from '@/zero/voting-password/useVotingPasswordActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { toast } from 'sonner';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { useAgendaItemCRVoting, getVotePhase } from '../hooks/useAgendaItemCRVoting';
 
 function getEffectiveVotingPhase(
   status?: string | null,
@@ -35,6 +37,21 @@ function getEffectiveVotingPhase(
   if (status === 'closed') return 'closed';
   if (status === 'indicative') return 'indication';
   return fallback ?? null;
+}
+
+function getEffectiveCRVotingPhase(
+  item?: {
+    status?: string | null;
+    vote?: { status?: string | null } | null;
+  } | null,
+): string | null {
+  if (!item) return null;
+  if (item.status === 'pending') return 'pending';
+
+  const phase = getVotePhase(item as Parameters<typeof getVotePhase>[0]);
+  if (phase === 'final_vote') return 'final_vote';
+  if (phase === 'closed') return 'closed';
+  return 'indication';
 }
 
 export function EventAgendaItemDetail({
@@ -84,6 +101,19 @@ export function EventAgendaItemDetail({
     agendaItem?.voting_phase ?? null,
   );
 
+  const {
+    crTimeline,
+    currentItem: currentCRItem,
+    finalVoteItem,
+    isTimelineComplete,
+    allCRsProcessed,
+    hasUserVoted: hasUserVotedOnCR,
+    startIndicativePhase,
+    startFinalPhase,
+    closeVoting,
+    castCRVote,
+  } = useAgendaItemCRVoting(agendaItemId, user?.id);
+
   // Action bar hook — pass election/vote data for phase management
   const actionBarHook = useAgendaActionBar({
     eventId,
@@ -103,6 +133,196 @@ export function EventAgendaItemDetail({
 
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const [markingSpeakerComplete, setMarkingSpeakerComplete] = useState<string | null>(null);
+  const [selectedCRToolbarItemId, setSelectedCRToolbarItemId] = useState<string | null>(null);
+
+  const nonFinalCRItems = useMemo(
+    () => crTimeline.filter(item => !item.is_final_vote),
+    [crTimeline]
+  );
+
+  const fallbackSelectedCRItemId = useMemo(() => {
+    if (currentCRItem?.id) return currentCRItem.id;
+
+    const nextPendingCR = nonFinalCRItems.find(item => item.status !== 'completed');
+    if (nextPendingCR) return nextPendingCR.id;
+
+    return finalVoteItem?.id ?? null;
+  }, [currentCRItem?.id, nonFinalCRItems, finalVoteItem?.id]);
+
+  useEffect(() => {
+    if (currentCRItem?.id && currentCRItem.id !== selectedCRToolbarItemId) {
+      setSelectedCRToolbarItemId(currentCRItem.id);
+      return;
+    }
+
+    const selectedItemStillExists = selectedCRToolbarItemId
+      ? crTimeline.some(item => item.id === selectedCRToolbarItemId)
+      : false;
+
+    if (!selectedItemStillExists && fallbackSelectedCRItemId) {
+      setSelectedCRToolbarItemId(fallbackSelectedCRItemId);
+    }
+  }, [
+    crTimeline,
+    currentCRItem?.id,
+    fallbackSelectedCRItemId,
+    selectedCRToolbarItemId,
+  ]);
+
+  const selectedCRToolbarItem = useMemo(
+    () =>
+      crTimeline.find(item => item.id === selectedCRToolbarItemId)
+      ?? crTimeline.find(item => item.id === fallbackSelectedCRItemId)
+      ?? null,
+    [crTimeline, fallbackSelectedCRItemId, selectedCRToolbarItemId]
+  );
+
+  const isCRToolbarActive = !!agendaItem?.amendment_id && crTimeline.length > 0 && !!selectedCRToolbarItem;
+  const selectedCRPhase = getEffectiveCRVotingPhase(selectedCRToolbarItem);
+  const isSelectedCRFinalVote = !!selectedCRToolbarItem?.is_final_vote;
+  const hasUserVotedOnSelectedCR = useMemo(
+    () => (selectedCRToolbarItem ? hasUserVotedOnCR(selectedCRToolbarItem) : false),
+    [hasUserVotedOnCR, selectedCRToolbarItem]
+  );
+
+  const selectedCRToolbarIndex = useMemo(() => {
+    if (!selectedCRToolbarItem) return -1;
+    if (selectedCRToolbarItem.is_final_vote) return nonFinalCRItems.length;
+    return nonFinalCRItems.findIndex(item => item.id === selectedCRToolbarItem.id);
+  }, [selectedCRToolbarItem, nonFinalCRItems]);
+
+  const hasPreviousChangeRequest = useMemo(() => {
+    if (!selectedCRToolbarItem) return false;
+    if (selectedCRToolbarItem.is_final_vote) return nonFinalCRItems.length > 0;
+    return selectedCRToolbarIndex > 0;
+  }, [selectedCRToolbarItem, nonFinalCRItems.length, selectedCRToolbarIndex]);
+
+  const hasNextChangeRequest = useMemo(() => {
+    if (!selectedCRToolbarItem || selectedCRToolbarItem.is_final_vote) return false;
+    if (selectedCRToolbarIndex < nonFinalCRItems.length - 1) return true;
+    return !!finalVoteItem && allCRsProcessed;
+  }, [selectedCRToolbarItem, selectedCRToolbarIndex, nonFinalCRItems.length, finalVoteItem, allCRsProcessed]);
+
+  const handlePreviousChangeRequest = useCallback(() => {
+    if (!selectedCRToolbarItem) return;
+
+    if (selectedCRToolbarItem.is_final_vote) {
+      const lastCRItem = nonFinalCRItems[nonFinalCRItems.length - 1];
+      if (lastCRItem) setSelectedCRToolbarItemId(lastCRItem.id);
+      return;
+    }
+
+    const previousItem = nonFinalCRItems[selectedCRToolbarIndex - 1];
+    if (previousItem) setSelectedCRToolbarItemId(previousItem.id);
+  }, [selectedCRToolbarItem, nonFinalCRItems, selectedCRToolbarIndex]);
+
+  const handleNextChangeRequest = useCallback(() => {
+    if (!selectedCRToolbarItem || selectedCRToolbarItem.is_final_vote) return;
+
+    const nextItem = nonFinalCRItems[selectedCRToolbarIndex + 1];
+    if (nextItem) {
+      setSelectedCRToolbarItemId(nextItem.id);
+      return;
+    }
+
+    if (finalVoteItem && allCRsProcessed) {
+      setSelectedCRToolbarItemId(finalVoteItem.id);
+    }
+  }, [selectedCRToolbarItem, nonFinalCRItems, selectedCRToolbarIndex, finalVoteItem, allCRsProcessed]);
+
+  const handleToolbarStartVote = useCallback(() => {
+    if (!selectedCRToolbarItem) return;
+    void startIndicativePhase(selectedCRToolbarItem.id);
+  }, [selectedCRToolbarItem, startIndicativePhase]);
+
+  const handleToolbarStartFinalVote = useCallback(() => {
+    if (isCRToolbarActive) {
+      if (!selectedCRToolbarItem) return;
+      void startFinalPhase(selectedCRToolbarItem.id);
+      return;
+    }
+
+    void actionBarHook.handleStartFinalVote();
+  }, [isCRToolbarActive, selectedCRToolbarItem, startFinalPhase, actionBarHook]);
+
+  const handleToolbarCloseVote = useCallback(() => {
+    if (isCRToolbarActive) {
+      if (!selectedCRToolbarItem) return;
+      void closeVoting(selectedCRToolbarItem.id);
+      return;
+    }
+
+    void actionBarHook.handleCloseFinalVote();
+  }, [isCRToolbarActive, selectedCRToolbarItem, closeVoting, actionBarHook]);
+
+  const handleCastCRVoteFromDialog = useCallback(
+    async (choiceId: string) => {
+      if (!selectedCRToolbarItem) return;
+      await castCRVote(selectedCRToolbarItem, choiceId);
+    },
+    [selectedCRToolbarItem, castCRVote]
+  );
+
+  const selectedCRTitle = useMemo(() => {
+    if (!selectedCRToolbarItem) return agendaItem?.title ?? undefined;
+    if (selectedCRToolbarItem.is_final_vote) {
+      return t('features.agendas.crTimeline.finalVote', 'Final Vote');
+    }
+
+    return (
+      selectedCRToolbarItem.change_request?.title ||
+      `${t('features.agendas.crTimeline.changeRequest', 'Change Request')} ${selectedCRToolbarIndex + 1}`
+    );
+  }, [agendaItem?.title, selectedCRToolbarItem, selectedCRToolbarIndex, t]);
+
+  const selectedCRChoices = useMemo(
+    () =>
+      (selectedCRToolbarItem?.vote?.choices ?? []).map(choice => ({
+        id: choice.id,
+        label: choice.label || 'Choice',
+      })),
+    [selectedCRToolbarItem?.vote?.choices]
+  );
+
+  const selectedCRDialogPhase = useMemo(() => {
+    if (selectedCRPhase === 'final_vote') return 'final_vote' as const;
+    if (selectedCRPhase === 'closed') return 'closed' as const;
+    return 'indication' as const;
+  }, [selectedCRPhase]);
+
+  const toolbarVotingPhase = isCRToolbarActive
+    ? selectedCRPhase
+    : effectiveVotingPhase;
+
+  const startVoteTooltip = isCRToolbarActive
+    ? isSelectedCRFinalVote
+      ? t('features.events.agenda.actions.startFinalVote', 'Start Final Vote')
+      : t('features.agendas.crTimeline.startVote', 'Start Change Request Vote')
+    : undefined;
+
+  const startFinalVoteTooltip = isCRToolbarActive
+    ? isSelectedCRFinalVote
+      ? t('features.events.agenda.actions.startFinalVote', 'Start Final Vote')
+      : t('features.agendas.crTimeline.startFinal', 'Start Change Request Final Vote')
+    : undefined;
+
+  const closeVoteTooltip = isCRToolbarActive
+    ? isSelectedCRFinalVote
+      ? t('features.events.agenda.actions.closeFinalVote', 'Close Final Vote')
+      : t('features.agendas.crTimeline.closeVoting', 'Close Change Request Vote')
+    : undefined;
+
+  const castIndicativeVoteTooltip = isCRToolbarActive
+    ? isSelectedCRFinalVote
+      ? t('features.events.agenda.actions.castIndicativeVote', 'Cast Indication')
+      : t('features.agendas.crTimeline.castIndicative', 'Cast Change Request Indication')
+    : undefined;
+
+  const castFinalVoteTooltip = isCRToolbarActive
+    ? isSelectedCRFinalVote
+      ? t('features.events.agenda.actions.castFinalVote', 'Cast Final Vote')
+      : t('features.agendas.crTimeline.castFinal', 'Cast Change Request Final Vote')
+    : undefined;
 
   // Handler: Mark speaker as completed
   const handleMarkSpeakerCompleted = async (speakerId: string) => {
@@ -275,9 +495,11 @@ export function EventAgendaItemDetail({
           id: agendaItem.id,
           type: agendaItem.type,
           status: agendaItem.status,
-          voting_phase: effectiveVotingPhase,
+          voting_phase: toolbarVotingPhase,
           election: election ? { id: election.id } : null,
-          vote: vote ? { id: vote.id } : null,
+          vote: isCRToolbarActive
+            ? (selectedCRToolbarItem?.vote ? { id: selectedCRToolbarItem.vote.id } : null)
+            : (vote ? { id: vote.id } : null),
         }}
         canManageAgenda={actionBarHook.canManageAgenda}
         canVote={actionBarHook.hasVotingRight}
@@ -290,6 +512,10 @@ export function EventAgendaItemDetail({
         onPreviousItem={agendaNav.moveToPreviousItem}
         onNextItem={agendaNav.moveToNextItem}
         onCompleteItem={agendaNav.completeCurrentItem}
+        hasPreviousChangeRequest={isCRToolbarActive ? hasPreviousChangeRequest : undefined}
+        hasNextChangeRequest={isCRToolbarActive ? hasNextChangeRequest : undefined}
+        onPreviousChangeRequest={isCRToolbarActive ? handlePreviousChangeRequest : undefined}
+        onNextChangeRequest={isCRToolbarActive ? handleNextChangeRequest : undefined}
         navigationLoading={agendaNav.isLoading}
         speakerLoading={actionBarHook.speakerLoading}
         candidateLoading={actionBarHook.candidateLoading}
@@ -301,9 +527,29 @@ export function EventAgendaItemDetail({
         onLeaveSpeakerList={actionBarHook.handleLeaveSpeakerList}
         onBecomeCandidate={actionBarHook.handleBecomeCandidate}
         onWithdrawCandidacy={actionBarHook.handleWithdrawCandidacy}
-        onStartFinalVote={actionBarHook.handleStartFinalVote}
-        onCloseFinalVote={actionBarHook.handleCloseFinalVote}
-        onVoteClick={actionBarHook.handleVoteClick}
+        onStartVote={isCRToolbarActive && toolbarVotingPhase === 'pending' ? handleToolbarStartVote : undefined}
+        onStartFinalVote={
+          isCRToolbarActive
+            ? (toolbarVotingPhase === 'indication' ? handleToolbarStartFinalVote : undefined)
+            : handleToolbarStartFinalVote
+        }
+        onCloseFinalVote={
+          isCRToolbarActive
+            ? (toolbarVotingPhase === 'final_vote' ? handleToolbarCloseVote : undefined)
+            : handleToolbarCloseVote
+        }
+        onVoteClick={
+          isCRToolbarActive
+            ? (toolbarVotingPhase !== 'pending' && toolbarVotingPhase !== 'closed' && !hasUserVotedOnSelectedCR
+              ? actionBarHook.handleVoteClick
+              : undefined)
+            : actionBarHook.handleVoteClick
+        }
+        startVoteTooltip={startVoteTooltip}
+        startFinalVoteTooltip={startFinalVoteTooltip}
+        closeVoteTooltip={closeVoteTooltip}
+        castIndicativeVoteTooltip={castIndicativeVoteTooltip}
+        castFinalVoteTooltip={castFinalVoteTooltip}
       />
       {/* Spacer for fixed toolbar */}
       <div className="h-10" />
@@ -312,15 +558,15 @@ export function EventAgendaItemDetail({
       <VoteCastDialog
         open={actionBarHook.voteDialogOpen}
         onOpenChange={actionBarHook.setVoteDialogOpen}
-        phase={actionBarHook.voteCasting.phase}
-        title={agendaItem.title ?? undefined}
-        candidates={election ? candidates.map(c => ({
+        phase={isCRToolbarActive ? selectedCRDialogPhase : actionBarHook.voteCasting.phase}
+        title={isCRToolbarActive ? selectedCRTitle : agendaItem.title ?? undefined}
+        candidates={isCRToolbarActive ? undefined : election ? candidates.map(c => ({
           id: c.id,
           name: c.user ? `${c.user.first_name ?? ''} ${c.user.last_name ?? ''}`.trim() || c.user.email || 'Candidate' : c.name || 'Candidate',
           avatar: c.user?.avatar ?? undefined,
         })) : undefined}
         maxVotes={election?.max_votes ?? 1}
-        choices={vote ? choices.map(c => ({
+        choices={isCRToolbarActive ? selectedCRChoices : vote ? choices.map(c => ({
           id: c.id,
           label: c.label || 'Choice',
         })) : undefined}
@@ -340,9 +586,9 @@ export function EventAgendaItemDetail({
             setIsPasswordVerifying(false);
           }
         }}
-        onCastVote={actionBarHook.voteCasting.castAmendmentVote}
-        onCastElectionVote={actionBarHook.voteCasting.castElectionVote}
-        isLoading={actionBarHook.voteCasting.isLoading}
+        onCastVote={isCRToolbarActive ? handleCastCRVoteFromDialog : actionBarHook.voteCasting.castAmendmentVote}
+        onCastElectionVote={isCRToolbarActive ? undefined : actionBarHook.voteCasting.castElectionVote}
+        isLoading={isCRToolbarActive ? false : actionBarHook.voteCasting.isLoading}
       />
 
       {/* Edit Election/Vote Dialog */}
@@ -401,6 +647,23 @@ export function EventAgendaItemDetail({
       {/* Accreditation Section */}
       {agendaItem.type === 'accreditation' && (
         <AccreditationSection eventId={eventId} agendaItemId={agendaItemId} />
+      )}
+
+      {/* Change Request Vote Timeline — shown for amendment agenda items */}
+      {(() => {
+        console.log('[CR-Timeline-Guard] agendaItemId:', agendaItemId);
+        console.log('[CR-Timeline-Guard] agendaItem.amendment_id:', agendaItem.amendment_id);
+        console.log('[CR-Timeline-Guard] agendaItem.type:', agendaItem.type);
+        console.log('[CR-Timeline-Guard] amendment relation:', agendaItem.amendment);
+        return null;
+      })()}
+      {agendaItem.amendment_id && (
+        <AgendaCRVoteTimeline
+          agendaItemId={agendaItemId}
+          userId={user?.id}
+          canManage={canManageAgenda}
+          canVote={hasVotingRight}
+        />
       )}
 
       {/* Section 3: Election */}

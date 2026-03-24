@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { EditorView } from '@/features/editor/ui/EditorView'
 import { useAuth } from '@/providers/auth-provider'
 import { useUserState } from '@/zero/users/useUserState'
+import { useAmendmentState } from '@/zero/amendments/useAmendmentState'
 
 export const Route = createFileRoute('/_authed/amendment/$id/text')({
   component: AmendmentTextPage,
@@ -11,6 +12,12 @@ function AmendmentTextPage() {
   const { id } = Route.useParams()
   const { user } = useAuth()
   const { user: userRecord } = useUserState({ userId: user?.id })
+  const { amendmentProcess } = useAmendmentState({
+    amendmentId: id,
+    includeProcessData: true,
+  })
+
+  const agendaItemId = amendmentProcess?.agenda_items?.[0]?.id
 
   const mappedUserRecord = userRecord
     ? {
@@ -27,6 +34,7 @@ function AmendmentTextPage() {
       entityId={id}
       userId={user?.id}
       userRecord={mappedUserRecord}
+      agendaItemId={agendaItemId}
     />
   )
 }

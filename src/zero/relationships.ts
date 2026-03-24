@@ -11,7 +11,7 @@ import { amendment, amendmentCollaborator, amendmentPath, amendmentPathSegment, 
 // Documents
 import { document, documentVersion, documentCollaborator, documentCursor } from './documents/table'
 // Agendas
-import { agendaItem, speakerList } from './agendas/table'
+import { agendaItem, speakerList, agendaItemChangeRequest } from './agendas/table'
 // Elections
 import { election, electionCandidate, elector, indicativeElectorParticipation, indicativeCandidateSelection, finalElectorParticipation, finalCandidateSelection } from './elections/table'
 // Votes
@@ -292,6 +292,7 @@ export const changeRequestRelationships = relationships(changeRequest, ({ one, m
   amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
   votes: many({ sourceField: ['id'], destSchema: changeRequestVote, destField: ['change_request_id'] }),
+  agenda_item_links: many({ sourceField: ['id'], destSchema: agendaItemChangeRequest, destField: ['change_request_id'] }),
 }))
 
 export const changeRequestVoteRelationships = relationships(changeRequestVote, ({ one }) => ({
@@ -384,11 +385,18 @@ export const agendaItemRelationships = relationships(agendaItem, ({ one, many })
   election: many({ sourceField: ['id'], destSchema: election, destField: ['agenda_item_id'] }),
   votes: many({ sourceField: ['id'], destSchema: vote, destField: ['agenda_item_id'] }),
   accreditations: many({ sourceField: ['id'], destSchema: accreditation, destField: ['agenda_item_id'] }),
+  change_request_timeline: many({ sourceField: ['id'], destSchema: agendaItemChangeRequest, destField: ['agenda_item_id'] }),
 }))
 
 export const speakerListRelationships = relationships(speakerList, ({ one }) => ({
   agenda_item: one({ sourceField: ['agenda_item_id'], destSchema: agendaItem, destField: ['id'] }),
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
+}))
+
+export const agendaItemChangeRequestRelationships = relationships(agendaItemChangeRequest, ({ one }) => ({
+  agenda_item: one({ sourceField: ['agenda_item_id'], destSchema: agendaItem, destField: ['id'] }),
+  change_request: one({ sourceField: ['change_request_id'], destSchema: changeRequest, destField: ['id'] }),
+  vote: one({ sourceField: ['vote_id'], destSchema: vote, destField: ['id'] }),
 }))
 
 export const electionRelationships = relationships(election, ({ one, many }) => ({
@@ -692,6 +700,7 @@ export const voteRelationships = relationships(vote, ({ one, many }) => ({
   indicative_decisions: many({ sourceField: ['id'], destSchema: indicativeChoiceDecision, destField: ['vote_id'] }),
   final_participations: many({ sourceField: ['id'], destSchema: finalVoterParticipation, destField: ['vote_id'] }),
   final_decisions: many({ sourceField: ['id'], destSchema: finalChoiceDecision, destField: ['vote_id'] }),
+  agenda_item_change_request: many({ sourceField: ['id'], destSchema: agendaItemChangeRequest, destField: ['vote_id'] }),
 }))
 
 export const voteChoiceRelationships = relationships(voteChoice, ({ one, many }) => ({
@@ -793,6 +802,7 @@ export const allRelationships = [
   // Agendas
   agendaItemRelationships,
   speakerListRelationships,
+  agendaItemChangeRequestRelationships,
   electionRelationships,
   electionCandidateRelationships,
   electorRelationships,

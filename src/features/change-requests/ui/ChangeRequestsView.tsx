@@ -7,6 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/u
 import { PageWrapper } from '@/layout/page-wrapper';
 import { ArrowLeft, FileEdit, Clock, User, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { VoteControls } from '@/features/votes/ui/VoteControls';
+import { AgendaCRVoteTimeline } from '@/features/agendas/ui/AgendaCRVoteTimeline';
+import { useAgendaItemByAmendment } from '@/zero/agendas/useAgendaState';
 import { useChangeRequests, type ChangeRequest } from '../hooks/useChangeRequests';
 
 interface ChangeRequestsViewProps {
@@ -25,14 +27,22 @@ function getResolutionLabel(resolution: string | null | undefined) {
 function getStatusColor(status: string) {
   switch (status) {
     case 'approved':
-      return 'bg-green-500/10 text-green-500 border-green-500/20';
+      return 'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400';
     case 'rejected':
-      return 'bg-red-500/10 text-red-500 border-red-500/20';
+      return 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400';
     case 'pending':
-      return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
+      return 'border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400';
     default:
-      return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+      return 'border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-400';
   }
+}
+
+function getResolutionBadgeClass(resolution: string | null | undefined) {
+  if (!isApprovedResolution(resolution)) {
+    return '';
+  }
+
+  return 'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400';
 }
 
 function getStatusIcon(status: string) {
@@ -81,8 +91,8 @@ function ChangeRequestCard({
               <span>{request.title}</span>
               {isClosed && request.resolution && (
                 <Badge
-                  variant={isApprovedResolution(request.resolution) ? 'default' : 'destructive'}
-                  className="ml-2"
+                  variant={isApprovedResolution(request.resolution) ? 'outline' : 'destructive'}
+                  className={isApprovedResolution(request.resolution) ? `ml-2 ${getResolutionBadgeClass(request.resolution)}` : 'ml-2'}
                 >
                   {getResolutionLabel(request.resolution)}
                 </Badge>
@@ -108,7 +118,7 @@ function ChangeRequestCard({
             )}
           </div>
           {!isClosed && (
-            <Badge className={getStatusColor(request.status)}>
+            <Badge variant="outline" className={getStatusColor(request.status)}>
               <span className="flex items-center gap-1">
                 {getStatusIcon(request.status)}
                 {request.status}
@@ -228,6 +238,29 @@ function ChangeRequestCard({
             </div>
           )}
 
+          {/* Vote result summary for closed CRs */}
+          {isClosed && request.votes && request.votes.length > 0 && (
+            <div className="rounded-lg border bg-muted/30 p-3">
+              <h4 className="mb-2 text-sm font-semibold">Vote Result</h4>
+              <div className="flex items-center gap-4 text-sm">
+                <span className="flex items-center gap-1 text-green-600">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  {request.votes.filter(v => v.vote === 'accept').length} Accept
+                </span>
+                <span className="flex items-center gap-1 text-red-600">
+                  <XCircle className="h-3.5 w-3.5" />
+                  {request.votes.filter(v => v.vote === 'reject').length} Reject
+                </span>
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  {request.votes.filter(v => v.vote === 'abstain').length} Abstain
+                </span>
+                <span className="ml-auto text-xs text-muted-foreground">
+                  {request.votes.length} total vote{request.votes.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Metadata */}
           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
             {request.userId && users[request.userId] && (
@@ -324,6 +357,10 @@ export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewPr
     isLoading,
   } = useChangeRequests(amendmentId);
 
+  // Check if this amendment has an agenda item with CR voting timeline
+  const { agendaItemId } = useAgendaItemByAmendment(amendmentId);
+  const isInVotingStage = amendment?.editing_mode === 'vote_event' || amendment?.editing_mode === 'vote_internal';
+
   if (isLoading) {
     return (
       <PageWrapper>
@@ -373,6 +410,16 @@ export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewPr
         </p>
       </div>
 
+      {/* CR Voting Timeline — shown when amendment is in a voting stage */}
+      {isInVotingStage && agendaItemId && (
+        <div className="mb-8">
+          <AgendaCRVoteTimeline
+            agendaItemId={agendaItemId}
+            userId={userId}
+          />
+        </div>
+      )}
+
       {/* Tabs for Open/Approved/Declined */}
       <Tabs
         value={activeTab}
@@ -387,7 +434,10 @@ export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewPr
           </TabsTrigger>
           <TabsTrigger value="approved" className="gap-2">
             Approved
-            <Badge variant="secondary" className="ml-1">
+            <Badge
+              variant="outline"
+              className="ml-1 border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400"
+            >
               {approvedChangeRequests.length}
             </Badge>
           </TabsTrigger>

@@ -145,17 +145,15 @@ export function calculateEngagementVelocity(
  * Based on visibility and quality criteria
  */
 export function isPublicContent(item: {
-  isPublic?: boolean;
   visibility?: string;
   status?: string;
 }): boolean {
-  // Must be explicitly public or have public visibility
-  if (item.isPublic === true) return true;
+  // Must have public visibility
   if (item.visibility === 'public') return true;
 
   // Check status for amendments/events
   if (item.status) {
-    const activeStatuses = ['published', 'active', 'viewing', 'passed'];
+    const activeStatuses = ['published', 'active', 'view', 'passed'];
     return activeStatuses.includes(item.status);
   }
 

@@ -18,7 +18,7 @@ export type EditorEntityType = 'amendment' | 'blog' | 'document' | 'groupDocumen
 /**
  * Editor editing modes
  */
-export type EditorMode = 'edit' | 'view' | 'suggest' | 'vote';
+export type EditorMode = 'edit' | 'view' | 'vote_internal' | 'vote_event' | 'suggest_internal' | 'suggest_event';
 
 /**
  * Capabilities available for an editor instance
@@ -170,7 +170,7 @@ export interface EditorEntity {
   content: Value;
   discussions: TDiscussionType[];
   editingMode: EditorMode;
-  isPublic: boolean;
+  visibility: string;
   updatedAt: number;
   owner?: EditorUser;
   collaborators: EditorCollaborator[];
@@ -233,6 +233,7 @@ export interface EditorState {
   content: Value;
   discussions: TDiscussionType[];
   mode: EditorMode;
+  selectedCrId: string | null;
 
   // Save status
   saveStatus: 'saved' | 'saving' | 'error';
@@ -255,6 +256,7 @@ export interface EditorActions {
   setContent: (content: Value) => void;
   setDiscussions: (discussions: TDiscussionType[]) => void;
   setMode: (mode: EditorMode) => Promise<void>;
+  setSelectedCrId: (crId: string | null) => void;
   restoreVersion: (content: Value) => Promise<void>;
 }
 
@@ -277,6 +279,8 @@ export interface EditorViewProps {
   backUrl?: string;
   /** Back navigation label */
   backLabel?: string;
+  /** Agenda item ID for amendment CR voting initialization */
+  agendaItemId?: string;
 }
 
 /**

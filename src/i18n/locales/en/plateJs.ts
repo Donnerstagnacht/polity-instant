@@ -104,6 +104,11 @@ export const plateJsTranslations = {
       editing: 'Editing',
       viewing: 'Viewing',
       suggestion: 'Suggestion',
+      suggestInternal: 'Suggest (Internal)',
+      suggestEvent: 'Suggest (Event)',
+      voteInternal: 'Vote (Internal)',
+      voteEvent: 'Vote (Event)',
+      voting: 'Voting',
     },
     listTypes: {
       decimal: 'Decimal (1, 2, 3)',

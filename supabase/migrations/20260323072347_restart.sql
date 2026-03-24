@@ -56,6 +56,22 @@ alter table "public"."action_right" enable row level security;
 alter table "public"."agenda_item" enable row level security;
 
 
+  create table "public"."agenda_item_change_request" (
+    "id" uuid not null default gen_random_uuid(),
+    "agenda_item_id" uuid not null,
+    "change_request_id" uuid,
+    "vote_id" uuid,
+    "order_index" integer not null default 0,
+    "is_final_vote" boolean not null default false,
+    "status" text not null default 'pending'::text,
+    "created_at" timestamp with time zone not null default now(),
+    "updated_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."agenda_item_change_request" enable row level security;
+
+
   create table "public"."amendment" (
     "id" uuid not null default gen_random_uuid(),
     "code" text,
@@ -127,6 +143,7 @@ alter table "public"."amendment_hashtag" enable row level security;
     "id" uuid not null default gen_random_uuid(),
     "amendment_id" uuid not null,
     "title" text,
+    "workflow_id" uuid,
     "created_at" timestamp with time zone not null default now()
       );
 
@@ -753,6 +770,34 @@ alter table "public"."group_membership" enable row level security;
 
 
 alter table "public"."group_relationship" enable row level security;
+
+
+  create table "public"."group_workflow" (
+    "id" uuid not null default gen_random_uuid(),
+    "group_id" uuid not null,
+    "name" text,
+    "description" text,
+    "status" text,
+    "created_by_id" uuid not null,
+    "created_at" timestamp with time zone not null default now(),
+    "updated_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."group_workflow" enable row level security;
+
+
+  create table "public"."group_workflow_step" (
+    "id" uuid not null default gen_random_uuid(),
+    "workflow_id" uuid not null,
+    "group_id" uuid not null,
+    "order_index" integer not null default 0,
+    "label" text,
+    "created_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."group_workflow_step" enable row level security;
 
 
   create table "public"."hashtag" (
@@ -1442,6 +1487,8 @@ CREATE UNIQUE INDEX accreditation_pkey ON public.accreditation USING btree (id);
 
 CREATE UNIQUE INDEX action_right_pkey ON public.action_right USING btree (id);
 
+CREATE UNIQUE INDEX agenda_item_change_request_pkey ON public.agenda_item_change_request USING btree (id);
+
 CREATE UNIQUE INDEX agenda_item_pkey ON public.agenda_item USING btree (id);
 
 CREATE UNIQUE INDEX amendment_collaborator_pkey ON public.amendment_collaborator USING btree (id);
@@ -1546,6 +1593,10 @@ CREATE UNIQUE INDEX group_pkey ON public."group" USING btree (id);
 
 CREATE UNIQUE INDEX group_relationship_pkey ON public.group_relationship USING btree (id);
 
+CREATE UNIQUE INDEX group_workflow_pkey ON public.group_workflow USING btree (id);
+
+CREATE UNIQUE INDEX group_workflow_step_pkey ON public.group_workflow_step USING btree (id);
+
 CREATE UNIQUE INDEX hashtag_pkey ON public.hashtag USING btree (id);
 
 CREATE INDEX idx_accreditation_agenda_item ON public.accreditation USING btree (agenda_item_id);
@@ -1559,6 +1610,14 @@ CREATE INDEX idx_action_right_role ON public.action_right USING btree (role_id);
 CREATE INDEX idx_agenda_item_creator ON public.agenda_item USING btree (creator_id);
 
 CREATE INDEX idx_agenda_item_event ON public.agenda_item USING btree (event_id);
+
+CREATE INDEX idx_aicr_agenda_item ON public.agenda_item_change_request USING btree (agenda_item_id);
+
+CREATE INDEX idx_aicr_change_request ON public.agenda_item_change_request USING btree (change_request_id);
+
+CREATE UNIQUE INDEX idx_aicr_unique ON public.agenda_item_change_request USING btree (agenda_item_id, change_request_id) WHERE (change_request_id IS NOT NULL);
+
+CREATE INDEX idx_aicr_vote ON public.agenda_item_change_request USING btree (vote_id);
 
 CREATE INDEX idx_amendment_collaborator_amendment ON public.amendment_collaborator USING btree (amendment_id);
 
@@ -1725,6 +1784,14 @@ CREATE INDEX idx_group_owner ON public."group" USING btree (owner_id);
 CREATE INDEX idx_group_relationship_group ON public.group_relationship USING btree (group_id);
 
 CREATE INDEX idx_group_relationship_related ON public.group_relationship USING btree (related_group_id);
+
+CREATE INDEX idx_group_workflow_created_by ON public.group_workflow USING btree (created_by_id);
+
+CREATE INDEX idx_group_workflow_group ON public.group_workflow USING btree (group_id);
+
+CREATE INDEX idx_group_workflow_step_group ON public.group_workflow_step USING btree (group_id);
+
+CREATE INDEX idx_group_workflow_step_workflow ON public.group_workflow_step USING btree (workflow_id);
 
 CREATE UNIQUE INDEX idx_hashtag_tag ON public.hashtag USING btree (tag);
 
@@ -2016,6 +2083,8 @@ alter table "public"."action_right" add constraint "action_right_pkey" PRIMARY K
 
 alter table "public"."agenda_item" add constraint "agenda_item_pkey" PRIMARY KEY using index "agenda_item_pkey";
 
+alter table "public"."agenda_item_change_request" add constraint "agenda_item_change_request_pkey" PRIMARY KEY using index "agenda_item_change_request_pkey";
+
 alter table "public"."amendment" add constraint "amendment_pkey" PRIMARY KEY using index "amendment_pkey";
 
 alter table "public"."amendment_collaborator" add constraint "amendment_collaborator_pkey" PRIMARY KEY using index "amendment_collaborator_pkey";
@@ -2101,6 +2170,10 @@ alter table "public"."group_hashtag" add constraint "group_hashtag_pkey" PRIMARY
 alter table "public"."group_membership" add constraint "group_membership_pkey" PRIMARY KEY using index "group_membership_pkey";
 
 alter table "public"."group_relationship" add constraint "group_relationship_pkey" PRIMARY KEY using index "group_relationship_pkey";
+
+alter table "public"."group_workflow" add constraint "group_workflow_pkey" PRIMARY KEY using index "group_workflow_pkey";
+
+alter table "public"."group_workflow_step" add constraint "group_workflow_step_pkey" PRIMARY KEY using index "group_workflow_step_pkey";
 
 alter table "public"."hashtag" add constraint "hashtag_pkey" PRIMARY KEY using index "hashtag_pkey";
 
@@ -2210,6 +2283,18 @@ alter table "public"."agenda_item" add constraint "agenda_item_creator_id_fkey" 
 
 alter table "public"."agenda_item" validate constraint "agenda_item_creator_id_fkey";
 
+alter table "public"."agenda_item_change_request" add constraint "agenda_item_change_request_agenda_item_id_fkey" FOREIGN KEY (agenda_item_id) REFERENCES public.agenda_item(id) ON DELETE CASCADE not valid;
+
+alter table "public"."agenda_item_change_request" validate constraint "agenda_item_change_request_agenda_item_id_fkey";
+
+alter table "public"."agenda_item_change_request" add constraint "agenda_item_change_request_change_request_id_fkey" FOREIGN KEY (change_request_id) REFERENCES public.change_request(id) ON DELETE CASCADE not valid;
+
+alter table "public"."agenda_item_change_request" validate constraint "agenda_item_change_request_change_request_id_fkey";
+
+alter table "public"."agenda_item_change_request" add constraint "agenda_item_change_request_vote_id_fkey" FOREIGN KEY (vote_id) REFERENCES public.vote(id) ON DELETE SET NULL not valid;
+
+alter table "public"."agenda_item_change_request" validate constraint "agenda_item_change_request_vote_id_fkey";
+
 alter table "public"."amendment" add constraint "amendment_created_by_id_fkey" FOREIGN KEY (created_by_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
 
 alter table "public"."amendment" validate constraint "amendment_created_by_id_fkey";
@@ -2243,6 +2328,10 @@ alter table "public"."amendment_hashtag" validate constraint "amendment_hashtag_
 alter table "public"."amendment_path" add constraint "amendment_path_amendment_id_fkey" FOREIGN KEY (amendment_id) REFERENCES public.amendment(id) ON DELETE CASCADE not valid;
 
 alter table "public"."amendment_path" validate constraint "amendment_path_amendment_id_fkey";
+
+alter table "public"."amendment_path" add constraint "amendment_path_workflow_id_fkey" FOREIGN KEY (workflow_id) REFERENCES public.group_workflow(id) ON DELETE SET NULL not valid;
+
+alter table "public"."amendment_path" validate constraint "amendment_path_workflow_id_fkey";
 
 alter table "public"."amendment_path_segment" add constraint "amendment_path_segment_path_id_fkey" FOREIGN KEY (path_id) REFERENCES public.amendment_path(id) ON DELETE CASCADE not valid;
 
@@ -2551,6 +2640,22 @@ alter table "public"."group_relationship" validate constraint "group_relationshi
 alter table "public"."group_relationship" add constraint "group_relationship_related_group_id_fkey" FOREIGN KEY (related_group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
 
 alter table "public"."group_relationship" validate constraint "group_relationship_related_group_id_fkey";
+
+alter table "public"."group_workflow" add constraint "group_workflow_created_by_id_fkey" FOREIGN KEY (created_by_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."group_workflow" validate constraint "group_workflow_created_by_id_fkey";
+
+alter table "public"."group_workflow" add constraint "group_workflow_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."group_workflow" validate constraint "group_workflow_group_id_fkey";
+
+alter table "public"."group_workflow_step" add constraint "group_workflow_step_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."group_workflow_step" validate constraint "group_workflow_step_group_id_fkey";
+
+alter table "public"."group_workflow_step" add constraint "group_workflow_step_workflow_id_fkey" FOREIGN KEY (workflow_id) REFERENCES public.group_workflow(id) ON DELETE CASCADE not valid;
+
+alter table "public"."group_workflow_step" validate constraint "group_workflow_step_workflow_id_fkey";
 
 alter table "public"."indicative_candidate_selection" add constraint "indicative_candidate_selection_candidate_id_fkey" FOREIGN KEY (candidate_id) REFERENCES public.election_candidate(id) ON DELETE CASCADE not valid;
 
@@ -2989,6 +3094,48 @@ grant trigger on table "public"."agenda_item" to "service_role";
 grant truncate on table "public"."agenda_item" to "service_role";
 
 grant update on table "public"."agenda_item" to "service_role";
+
+grant delete on table "public"."agenda_item_change_request" to "anon";
+
+grant insert on table "public"."agenda_item_change_request" to "anon";
+
+grant references on table "public"."agenda_item_change_request" to "anon";
+
+grant select on table "public"."agenda_item_change_request" to "anon";
+
+grant trigger on table "public"."agenda_item_change_request" to "anon";
+
+grant truncate on table "public"."agenda_item_change_request" to "anon";
+
+grant update on table "public"."agenda_item_change_request" to "anon";
+
+grant delete on table "public"."agenda_item_change_request" to "authenticated";
+
+grant insert on table "public"."agenda_item_change_request" to "authenticated";
+
+grant references on table "public"."agenda_item_change_request" to "authenticated";
+
+grant select on table "public"."agenda_item_change_request" to "authenticated";
+
+grant trigger on table "public"."agenda_item_change_request" to "authenticated";
+
+grant truncate on table "public"."agenda_item_change_request" to "authenticated";
+
+grant update on table "public"."agenda_item_change_request" to "authenticated";
+
+grant delete on table "public"."agenda_item_change_request" to "service_role";
+
+grant insert on table "public"."agenda_item_change_request" to "service_role";
+
+grant references on table "public"."agenda_item_change_request" to "service_role";
+
+grant select on table "public"."agenda_item_change_request" to "service_role";
+
+grant trigger on table "public"."agenda_item_change_request" to "service_role";
+
+grant truncate on table "public"."agenda_item_change_request" to "service_role";
+
+grant update on table "public"."agenda_item_change_request" to "service_role";
 
 grant delete on table "public"."amendment" to "anon";
 
@@ -4795,6 +4942,90 @@ grant trigger on table "public"."group_relationship" to "service_role";
 grant truncate on table "public"."group_relationship" to "service_role";
 
 grant update on table "public"."group_relationship" to "service_role";
+
+grant delete on table "public"."group_workflow" to "anon";
+
+grant insert on table "public"."group_workflow" to "anon";
+
+grant references on table "public"."group_workflow" to "anon";
+
+grant select on table "public"."group_workflow" to "anon";
+
+grant trigger on table "public"."group_workflow" to "anon";
+
+grant truncate on table "public"."group_workflow" to "anon";
+
+grant update on table "public"."group_workflow" to "anon";
+
+grant delete on table "public"."group_workflow" to "authenticated";
+
+grant insert on table "public"."group_workflow" to "authenticated";
+
+grant references on table "public"."group_workflow" to "authenticated";
+
+grant select on table "public"."group_workflow" to "authenticated";
+
+grant trigger on table "public"."group_workflow" to "authenticated";
+
+grant truncate on table "public"."group_workflow" to "authenticated";
+
+grant update on table "public"."group_workflow" to "authenticated";
+
+grant delete on table "public"."group_workflow" to "service_role";
+
+grant insert on table "public"."group_workflow" to "service_role";
+
+grant references on table "public"."group_workflow" to "service_role";
+
+grant select on table "public"."group_workflow" to "service_role";
+
+grant trigger on table "public"."group_workflow" to "service_role";
+
+grant truncate on table "public"."group_workflow" to "service_role";
+
+grant update on table "public"."group_workflow" to "service_role";
+
+grant delete on table "public"."group_workflow_step" to "anon";
+
+grant insert on table "public"."group_workflow_step" to "anon";
+
+grant references on table "public"."group_workflow_step" to "anon";
+
+grant select on table "public"."group_workflow_step" to "anon";
+
+grant trigger on table "public"."group_workflow_step" to "anon";
+
+grant truncate on table "public"."group_workflow_step" to "anon";
+
+grant update on table "public"."group_workflow_step" to "anon";
+
+grant delete on table "public"."group_workflow_step" to "authenticated";
+
+grant insert on table "public"."group_workflow_step" to "authenticated";
+
+grant references on table "public"."group_workflow_step" to "authenticated";
+
+grant select on table "public"."group_workflow_step" to "authenticated";
+
+grant trigger on table "public"."group_workflow_step" to "authenticated";
+
+grant truncate on table "public"."group_workflow_step" to "authenticated";
+
+grant update on table "public"."group_workflow_step" to "authenticated";
+
+grant delete on table "public"."group_workflow_step" to "service_role";
+
+grant insert on table "public"."group_workflow_step" to "service_role";
+
+grant references on table "public"."group_workflow_step" to "service_role";
+
+grant select on table "public"."group_workflow_step" to "service_role";
+
+grant trigger on table "public"."group_workflow_step" to "service_role";
+
+grant truncate on table "public"."group_workflow_step" to "service_role";
+
+grant update on table "public"."group_workflow_step" to "service_role";
 
 grant delete on table "public"."hashtag" to "anon";
 
@@ -6631,6 +6862,15 @@ using (true);
 
 
   create policy "service_role_all"
+  on "public"."agenda_item_change_request"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
   on "public"."amendment"
   as permissive
   for all
@@ -7010,6 +7250,24 @@ using (true);
 
   create policy "service_role_all"
   on "public"."group_relationship"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
+  on "public"."group_workflow"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
+  on "public"."group_workflow_step"
   as permissive
   for all
   to service_role

@@ -18,6 +18,7 @@ import { ActionBar } from '@/features/shared/ui/ui/ActionBar';
 import { SubscribeButton, MembershipButton } from 'src/features/shared/ui/action-buttons';
 import { InfoTabs } from '@/features/shared/ui/wiki/InfoTabs.tsx';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { EditingModeBadge } from '@/features/shared/ui/ui/editing-mode.tsx';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
 import { SupporterStatusBadge } from '@/features/amendments/ui/SupporterStatusBadge';
@@ -26,6 +27,7 @@ import { TargetSelectionDialog } from '@/features/amendments/ui/TargetSelectionD
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAmendmentWikiPage } from './hooks/useAmendmentWikiPage';
+import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 
 interface AmendmentWikiProps {
   amendmentId: string;
@@ -36,6 +38,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
   const {
     navigate,
     user,
+    canAccess,
     isSubscribed,
     subscriberCount,
     toggleSubscribe,
@@ -64,7 +67,6 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
     targetGroupEventsData,
     usersData,
     getSupportStatus,
-    statusColors,
   } = useAmendmentWikiPage(amendmentId);
 
   if (!amendment) {
@@ -80,13 +82,17 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
     );
   }
 
+  if (!canAccess) {
+    return <AccessDenied />;
+  }
+
   return (
     <div>
       {/* Header with centered title and subtitle */}
       <div className="mb-8 text-center">
         <div className="mb-2 flex items-center justify-center gap-3">
           <h1 className="text-4xl font-bold">{amendment.title}</h1>
-          <Badge className={statusColors[amendment.status ?? ''] || ''}>{amendment.status}</Badge>
+          <EditingModeBadge mode={amendment.editing_mode} showIcon />
         </div>
         {amendment.preamble && (
           <p className="text-muted-foreground text-xl">{amendment.preamble}</p>
@@ -398,15 +404,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        <Badge
-                          variant="secondary"
-                          className={
-                            statusColors[clone.status ?? ''] ||
-                            'border-gray-500/20 bg-gray-500/10 text-gray-500'
-                          }
-                        >
-                          {clone.status}
-                        </Badge>
+                        <EditingModeBadge mode={clone.editing_mode} showIcon />
                         {clone.code && (
                           <Badge variant="outline" className="text-xs">
                             {clone.code}

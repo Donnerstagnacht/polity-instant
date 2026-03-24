@@ -6,6 +6,7 @@ import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useAuth } from '@/providers/auth-provider';
 import type { VoteValue } from '@/features/shared/ui/voting/VoteButtons';
 import type { CommentData } from '@/features/shared/ui/comments/CommentItem';
+import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 
 interface UseStatementDetailOptions {
   id: string;
@@ -247,6 +248,9 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
 
   const isOwner = !!userId && statement?.user_id === userId;
 
+  // Visibility access check
+  const canAccess = checkEntityAccess(statement?.visibility, !!userId, isOwner);
+
   // ── Survey CRUD for editing ────────────────────────────────────
   const handleSaveSurvey = useCallback(
     async (question: string, options: string[], durationHours: number) => {
@@ -288,6 +292,7 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
     isLoading,
     userId,
     isOwner,
+    canAccess,
     // edit
     isEditOpen,
     handleEditOpen,

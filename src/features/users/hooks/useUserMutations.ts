@@ -99,6 +99,7 @@ export function useUserMutations() {
       linkedin?: string;
       website?: string;
       location?: string;
+      visibility?: string;
       hashtags?: string[];
       existingJunctions?: Array<{ id: string; hashtag_id: string; hashtag?: { id: string; tag: string } | undefined }>;
       allHashtags?: Array<{ id: string; tag: string }>;
@@ -119,6 +120,7 @@ export function useUserMutations() {
         linkedin: profileData.linkedin,
         website: profileData.website,
         location: profileData.location,
+        visibility: profileData.visibility,
       });
 
       // Sync hashtags via junction tables

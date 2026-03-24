@@ -408,7 +408,7 @@ export function BlockSuggestionCard({
           />
         ))}
 
-        {hovering && currentMode !== 'vote' && (
+        {hovering && currentMode !== 'vote_internal' && currentMode !== 'vote_event' && (
           <div className="absolute right-4 top-4 flex gap-2">
             <Button
               variant="ghost"
@@ -428,7 +428,7 @@ export function BlockSuggestionCard({
           </div>
         )}
 
-        {currentMode === 'vote' && (
+        {(currentMode === 'vote_internal' || currentMode === 'vote_event') && (
           <div className="mt-4 space-y-2">
             {hasVoted ? (
               <div className="rounded-md border border-blue-500/30 bg-blue-500/5 p-4">
@@ -530,39 +530,43 @@ export const useResolveSuggestion = (
   blockPath: Path
 ) => {
   const discussions = usePluginOption(discussionPlugin, 'discussions');
+  const uniquePathMap = usePluginOption(suggestionPlugin, 'uniquePathMap');
   const TYPE_TEXT_MAP = useTypeTextMap();
 
   const { api, editor, getOption, setOption } = useEditorPlugin(suggestionPlugin);
 
-  suggestionNodes.forEach(([node]) => {
-    const id = api.suggestion.nodeId(node);
-    const map = getOption('uniquePathMap');
+  React.useEffect(() => {
+    suggestionNodes.forEach(([node]) => {
+      const id = api.suggestion.nodeId(node);
+      const map = getOption('uniquePathMap');
 
-    if (!id) return;
+      if (!id) return;
 
-    const previousPath = map.get(id);
+      const previousPath = map.get(id);
 
-    // If there are no suggestion nodes in the corresponding path in the map, then update it.
-    if (PathApi.isPath(previousPath)) {
-      const nodes = api.suggestion.node({ id, at: previousPath, isText: true });
-      const parentNode = api.node(previousPath);
-      let lineBreakId: string | null = null;
+      // If there are no suggestion nodes in the corresponding path in the map, then update it.
+      if (PathApi.isPath(previousPath)) {
+        const nodes = api.suggestion.node({ id, at: previousPath, isText: true });
+        const parentNode = api.node(previousPath);
+        let lineBreakId: string | null = null;
 
-      if (parentNode && ElementApi.isElement(parentNode[0])) {
-        lineBreakId = api.suggestion.nodeId(parentNode[0]) ?? null;
+        if (parentNode && ElementApi.isElement(parentNode[0])) {
+          lineBreakId = api.suggestion.nodeId(parentNode[0]) ?? null;
+        }
+
+        if (!nodes && lineBreakId !== id) {
+          setOption('uniquePathMap', new Map(map).set(id, blockPath));
+          return;
+        }
+
+        return;
       }
-
-      if (!nodes && lineBreakId !== id) {
-        return setOption('uniquePathMap', new Map(map).set(id, blockPath));
-      }
-
-      return;
-    }
-    setOption('uniquePathMap', new Map(map).set(id, blockPath));
-  });
+      setOption('uniquePathMap', new Map(map).set(id, blockPath));
+    });
+  }, [api, blockPath, getOption, setOption, suggestionNodes]);
 
   const resolvedSuggestion: ResolvedSuggestion[] = React.useMemo(() => {
-    const map = getOption('uniquePathMap');
+    const map = uniquePathMap;
 
     if (suggestionNodes.length === 0) return [];
 
@@ -747,7 +751,7 @@ export const useResolveSuggestion = (
     });
 
     return res;
-  }, [api.suggestion, blockPath, discussions, editor.api, getOption, suggestionNodes]);
+  }, [api.suggestion, blockPath, discussions, editor.api, suggestionNodes, uniquePathMap]);
 
   // Effect to ensure all suggestions have CR IDs
   React.useEffect(() => {

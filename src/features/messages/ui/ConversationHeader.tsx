@@ -4,7 +4,7 @@ import { CardHeader } from '@/features/shared/ui/ui/card';
 import { ArrowLeft, Pin, PinOff, Trash2 } from 'lucide-react';
 import { Conversation } from '../types/message.types';
 import { getConversationDisplay, getOtherParticipant } from '../logic/messageUtils';
-import { ARIA_KAI_USER_ID } from '@/features/auth/constants';
+import { isAssistantConversation } from '@/features/assistant/logic/assistantHelpers';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Link } from '@tanstack/react-router';
 
@@ -90,7 +90,7 @@ export function ConversationHeader({
         )}
         {/* Show delete for direct messages, not group chats or Aria & Kai conversation */}
         {conversation.type !== 'group' &&
-          !conversation.participants.some(p => p.user?.id === ARIA_KAI_USER_ID) && (
+          !isAssistantConversation(conversation) && (
             <Button
               variant="ghost"
               size="icon"

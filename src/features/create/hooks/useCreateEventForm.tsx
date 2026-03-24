@@ -9,6 +9,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/features/shared/ui/u
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
 import { DateTimeRangeInput } from '../ui/inputs/DateTimeRangeInput';
+import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
+import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { EventTypeInput } from '../ui/inputs/EventTypeInput';
 import { RecurringPatternInput } from '../ui/inputs/RecurringPatternInput';
@@ -49,7 +51,7 @@ export function useCreateEventForm(): CreateFormConfig {
   const [onlineLink, setOnlineLink] = useState('');
   const [capacity, setCapacity] = useState('');
   const [imageURL, setImageURL] = useState('');
-  const [isPublic, setIsPublic] = useState(true);
+  const [visibility, setVisibility] = useState<Visibility>('public');
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [delegatesNominationDeadline, setDelegatesNominationDeadline] = useState('');
@@ -83,8 +85,7 @@ export function useCreateEventForm(): CreateFormConfig {
         location_url: locationType === 'online' ? (onlineLink || null) : null,
         start_date: startDate ? new Date(`${startDate}T${startTime || '00:00'}`).getTime() : null,
         end_date: endDate ? new Date(`${endDate}T${endTime || '00:00'}`).getTime() : null,
-        is_public: isPublic,
-        visibility: isPublic ? 'public' : 'private',
+        visibility,
         image_url: imageURL || null,
         capacity: capacity ? parseInt(capacity, 10) : null,
         event_type: eventType,
@@ -330,10 +331,7 @@ export function useCreateEventForm(): CreateFormConfig {
           optional: true,
           content: (
             <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Switch id="isPublic" checked={isPublic} onCheckedChange={setIsPublic} />
-                <Label htmlFor="isPublic">{t('pages.create.common.public')}</Label>
-              </div>
+              <VisibilityInput value={visibility} onChange={setVisibility} />
               <HashtagEditor
                 value={hashtags}
                 onChange={setHashtags}
@@ -391,9 +389,11 @@ export function useCreateEventForm(): CreateFormConfig {
                   : []),
                 {
                   label: t('pages.create.common.visibility'),
-                  value: isPublic
+                  value: visibility === 'public'
                     ? t('pages.create.common.public')
-                    : t('pages.create.common.private'),
+                    : visibility === 'authenticated'
+                      ? t('pages.create.common.authenticated')
+                      : t('pages.create.common.private'),
                 },
               ]}
             />
@@ -413,7 +413,7 @@ export function useCreateEventForm(): CreateFormConfig {
       onlineLink,
       capacity,
       imageURL,
-      isPublic,
+      visibility,
       hashtags,
       eventType,
       groupId,

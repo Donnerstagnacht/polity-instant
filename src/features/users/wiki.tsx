@@ -17,6 +17,8 @@ import { SubscribeButton } from 'src/features/shared/ui/action-buttons';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useMemo } from 'react';
+import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
+import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 
 interface UserWikiProps {
   userId?: string;
@@ -73,6 +75,13 @@ export function UserWiki(_props: UserWikiProps) {
       ).length,
     [dbUser?.amendment_collaborations],
   );
+
+  // Visibility access check: own profile always accessible
+  const canAccess = checkEntityAccess(dbUser?.visibility, !!authUser, isOwnUser);
+
+  if (dbUser && !canAccess) {
+    return <AccessDenied />;
+  }
 
   return (
     <>

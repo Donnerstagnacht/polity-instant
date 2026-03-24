@@ -18,7 +18,6 @@ CREATE TABLE IF NOT EXISTS public."user" (
   linkedin TEXT,
   website TEXT,
   location TEXT,
-  is_public BOOLEAN NOT NULL DEFAULT true,
   visibility TEXT NOT NULL DEFAULT 'public',
   subscriber_count INTEGER NOT NULL DEFAULT 0,
   amendment_count INTEGER NOT NULL DEFAULT 0,

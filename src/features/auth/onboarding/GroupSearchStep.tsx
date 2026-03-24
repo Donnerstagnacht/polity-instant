@@ -58,7 +58,7 @@ export function GroupSearchStep({
         description: group.description ?? undefined,
         member_count: group.member_count || 0,
         location: group.location ?? undefined,
-        is_public: group.is_public,
+        visibility: group.visibility ?? 'public',
       });
     }
   };

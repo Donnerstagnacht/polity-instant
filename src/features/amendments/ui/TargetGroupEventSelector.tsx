@@ -644,7 +644,6 @@ interface DisplayGroupData {
 interface DisplayEventData {
   id: string;
   title?: string | null;
-  is_public?: boolean | null;
   start_date?: number | null;
   location_name?: string | null;
   description?: string | null;

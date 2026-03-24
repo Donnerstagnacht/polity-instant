@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS public.vote (
   closing_type TEXT NOT NULL DEFAULT 'moderator',
   closing_duration_seconds INTEGER,
   closing_end_time TIMESTAMPTZ,
-  is_public BOOLEAN NOT NULL DEFAULT true,
+  visibility VARCHAR NOT NULL DEFAULT 'public',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

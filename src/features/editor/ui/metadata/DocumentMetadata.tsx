@@ -8,7 +8,7 @@
 
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { Globe, Lock } from 'lucide-react';
+import { Globe, Lock, Users } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface Collaborator {
@@ -30,8 +30,8 @@ interface Owner {
 interface DocumentMetadataProps {
   /** Document owner */
   owner?: Owner;
-  /** Whether the document is public */
-  isPublic?: boolean;
+  /** Visibility level of the document */
+  visibility?: string;
   /** Last updated timestamp */
   updatedAt?: number;
   /** List of collaborators */
@@ -44,7 +44,7 @@ interface DocumentMetadataProps {
 
 export function DocumentMetadata({
   owner,
-  isPublic,
+  visibility,
   updatedAt,
   collaborators = [],
   showCollaborators = true,
@@ -68,12 +68,17 @@ export function DocumentMetadata({
       {/* Document metadata badges */}
       <div className="flex flex-wrap items-center gap-4 text-sm">
         {groupName && <Badge variant="secondary">{groupName}</Badge>}
-        {isPublic !== undefined && (
+        {visibility !== undefined && (
           <Badge variant="outline" className="flex items-center gap-1">
-            {isPublic ? (
+            {visibility === 'public' ? (
               <>
                 <Globe className="h-3 w-3" />
                 {t('features.editor.metadata.public')}
+              </>
+            ) : visibility === 'authenticated' ? (
+              <>
+                <Users className="h-3 w-3" />
+                {t('features.editor.metadata.authenticated')}
               </>
             ) : (
               <>

@@ -13,6 +13,7 @@ import {
   AMENDMENT_STATUS_COLORS,
 } from '../logic/amendmentHelpers';
 import { notifyAmendmentVoted } from '@/features/notifications/utils/notification-helpers.ts';
+import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 
 export function useAmendmentWikiPage(amendmentId: string) {
   const navigate = useNavigate();
@@ -153,10 +154,16 @@ export function useAmendmentWikiPage(amendmentId: string) {
       })),
     );
 
+  // Visibility access check
+  const canAccess = checkEntityAccess(amendment?.visibility, !!user, collaborationData.isCollaborator || collaborationData.isAdmin);
+
   return {
     // Navigation
     navigate,
     user,
+
+    // Access
+    canAccess,
 
     // Subscribe
     ...subscribeData,

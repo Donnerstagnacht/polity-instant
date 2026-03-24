@@ -8,6 +8,7 @@ import { useTodoDetailPage } from './hooks/useTodoDetailPage';
 import { TodoDetailHeader } from './ui/TodoDetailHeader';
 import { TodoDetailView } from './ui/TodoDetailView';
 import { TodoDetailEdit } from './ui/TodoDetailEdit';
+import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 
 interface TodoDetailPageProps {
   todoId: string;
@@ -17,6 +18,7 @@ export function TodoDetailPage({ todoId }: TodoDetailPageProps) {
   const { t } = useTranslation();
   const {
     todo,
+    canAccess,
     isEditing,
     isSaving,
     formData,
@@ -43,6 +45,10 @@ export function TodoDetailPage({ todoId }: TodoDetailPageProps) {
         </Link>
       </div>
     );
+  }
+
+  if (!canAccess) {
+    return <AccessDenied />;
   }
 
   return (

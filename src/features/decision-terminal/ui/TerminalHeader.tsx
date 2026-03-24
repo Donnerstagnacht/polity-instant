@@ -10,14 +10,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/features/shared/ui/ui/dropdown-menu';
-import { Search, Settings, SlidersHorizontal } from 'lucide-react';
+import { Search, Settings, SlidersHorizontal, Eye } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export type TerminalFilter = 'live' | 'opening_soon' | 'recently_closed' | 'all';
+export type VisibilityFilter = 'all' | 'public' | 'authenticated' | 'private';
 
 export interface TerminalHeaderProps {
   activeFilter: TerminalFilter;
   onFilterChange: (filter: TerminalFilter) => void;
+  visibilityFilter: VisibilityFilter;
+  onVisibilityFilterChange: (filter: VisibilityFilter) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
   urgentCount?: number;
@@ -32,6 +35,8 @@ export interface TerminalHeaderProps {
 export function TerminalHeader({
   activeFilter,
   onFilterChange,
+  visibilityFilter,
+  onVisibilityFilterChange,
   searchQuery,
   onSearchChange,
   urgentCount = 0,
@@ -92,6 +97,36 @@ export function TerminalHeader({
 
         {/* Actions */}
         <div className="flex items-center gap-2">
+          {/* Visibility filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 gap-1 font-mono text-xs">
+                <Eye className="h-3.5 w-3.5" />
+                {visibilityFilter === 'all'
+                  ? t('timeline.terminal.visibility.all')
+                  : visibilityFilter === 'public'
+                    ? t('timeline.terminal.visibility.public')
+                    : visibilityFilter === 'authenticated'
+                      ? t('timeline.terminal.visibility.authenticated')
+                      : t('timeline.terminal.visibility.private')}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onVisibilityFilterChange('all')}>
+                {t('timeline.terminal.visibility.all')}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onVisibilityFilterChange('public')}>
+                {t('timeline.terminal.visibility.public')}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onVisibilityFilterChange('authenticated')}>
+                {t('timeline.terminal.visibility.authenticated')}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onVisibilityFilterChange('private')}>
+                {t('timeline.terminal.visibility.private')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           {showSearch ? (
             <Input
               type="text"

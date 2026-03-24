@@ -6,6 +6,7 @@ import { useEventMutations } from './useEventMutations';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import { useAuth } from '@/providers/auth-provider';
+import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
 
 export interface EventFormData {
   title: string;
@@ -18,7 +19,7 @@ export interface EventFormData {
   capacity: string;
   groupId: string;
   imageURL: string;
-  isPublic: boolean;
+  visibility: Visibility;
   tags: string[];
   registrationDeadline: string;
   amendmentDeadline: string;
@@ -44,7 +45,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
     capacity: '',
     groupId: '',
     imageURL: '',
-    isPublic: true,
+    visibility: 'public' as Visibility,
     tags: [],
     registrationDeadline: '',
     amendmentDeadline: '',
@@ -103,7 +104,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
         capacity: event.capacity?.toString() || '',
         groupId: event.group_id || '',
         imageURL: event.image_url || '',
-        isPublic: event.is_public ?? true,
+        visibility: (event.visibility as Visibility) ?? 'public',
         tags: [],
         registrationDeadline: event.registration_deadline ? new Date(event.registration_deadline).toISOString().slice(0, 16) : '',
         amendmentDeadline: event.amendment_deadline ? new Date(event.amendment_deadline).toISOString().slice(0, 16) : '',
@@ -136,8 +137,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           location_name: formData.location || null,
           start_date: formData.startDate ? new Date(`${formData.startDate}T${formData.startTime || '00:00'}`).getTime() : null,
           end_date: formData.endDate ? new Date(`${formData.endDate}T${formData.endTime || '00:00'}`).getTime() : null,
-          is_public: formData.isPublic,
-          visibility: formData.isPublic ? 'public' : 'private',
+          visibility: formData.visibility,
           image_url: formData.imageURL || null,
           capacity: formData.capacity ? parseInt(formData.capacity, 10) : null,
           group_id: formData.groupId || null,
@@ -158,7 +158,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           location_name: formData.location,
           start_date: formData.startDate ? new Date(`${formData.startDate}T${formData.startTime || '00:00'}`).getTime() : undefined,
           end_date: formData.endDate ? new Date(`${formData.endDate}T${formData.endTime || '00:00'}`).getTime() : undefined,
-          is_public: formData.isPublic,
+          visibility: formData.visibility,
           image_url: formData.imageURL || null,
           capacity: formData.capacity ? parseInt(formData.capacity, 10) : null,
           group_id: formData.groupId || null,

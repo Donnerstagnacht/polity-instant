@@ -20,6 +20,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
+import { getEditingModeOption } from '@/features/shared/ui/ui/editing-mode.tsx';
 import { Progress } from '@/features/shared/ui/ui/progress';
 import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
@@ -43,12 +44,12 @@ export interface AmendmentTimelineCardProps {
     subtitle?: string;
     description?: string;
     status:
-      | 'collaborative_editing'
-      | 'internal_suggesting'
-      | 'internal_voting'
-      | 'viewing'
-      | 'event_suggesting'
-      | 'event_voting'
+      | 'edit'
+      | 'suggest_internal'
+      | 'vote_internal'
+      | 'view'
+      | 'suggest_event'
+      | 'vote_event'
       | 'passed'
       | 'rejected';
     supportPercentage?: number;
@@ -95,16 +96,16 @@ export interface AmendmentTimelineCardProps {
  */
 const STATUS_CONFIG: Record<
   string,
-  { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }
+  { variant: 'default' | 'secondary' | 'destructive' | 'outline' }
 > = {
-  collaborative_editing: { label: 'Editing', variant: 'secondary' },
-  internal_suggesting: { label: 'Suggesting', variant: 'secondary' },
-  internal_voting: { label: 'Voting', variant: 'destructive' },
-  viewing: { label: 'Viewing', variant: 'outline' },
-  event_suggesting: { label: 'Event Suggesting', variant: 'secondary' },
-  event_voting: { label: 'Event Voting', variant: 'destructive' },
-  passed: { label: 'Passed', variant: 'default' },
-  rejected: { label: 'Rejected', variant: 'destructive' },
+  edit: { variant: 'secondary' },
+  suggest_internal: { variant: 'secondary' },
+  vote_internal: { variant: 'destructive' },
+  view: { variant: 'outline' },
+  suggest_event: { variant: 'secondary' },
+  vote_event: { variant: 'destructive' },
+  passed: { variant: 'default' },
+  rejected: { variant: 'destructive' },
 };
 
 /**
@@ -143,8 +144,9 @@ export function AmendmentTimelineCard({
   const subscription = useSubscribeAmendment(amendment.id);
   const amendmentStyle = CONTENT_TYPE_CONFIG.amendment;
 
-  const statusConfig = STATUS_CONFIG[amendment.status] || STATUS_CONFIG.viewing;
-  const isVoting = amendment.status.includes('voting');
+  const statusConfig = STATUS_CONFIG[amendment.status] || STATUS_CONFIG.view;
+  const statusOption = getEditingModeOption(amendment.status, t);
+  const isVoting = amendment.status === 'vote_internal' || amendment.status === 'vote_event';
   const isCompleted = amendment.status === 'passed' || amendment.status === 'rejected';
 
   const resolvedCollaborationStatus = amendment.collaborationStatus ?? collaboration.status;
@@ -245,7 +247,7 @@ export function AmendmentTimelineCard({
             variant={statusConfig.variant}
             className={cn('px-3 py-1 text-xs', isVoting && 'animate-pulse')}
           >
-            {statusConfig.label}
+            {statusOption.label}
           </Badge>
         </div>
       </TimelineCardHeader>

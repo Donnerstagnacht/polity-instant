@@ -26,7 +26,7 @@ export const voteSharedMutators = {
         status: args.status ?? 'indicative',
         majority_type: args.majority_type ?? 'relative',
         closing_type: args.closing_type ?? 'moderator',
-        is_public: args.is_public ?? true,
+        visibility: args.visibility ?? 'public',
       }
 
       await tx.mutate.vote.insert({

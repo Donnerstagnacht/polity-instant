@@ -1,8 +1,12 @@
 import { useGroupWikiData } from '@/zero/groups/useGroupState';
 import { useSubscribeGroup } from '@/features/groups/hooks/useSubscribeGroup';
 import { useGroupMembership } from '@/features/groups/hooks/useGroupMembership';
+import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
+import { useAuth } from '@/providers/auth-provider';
 
 export function useGroupWikiPage(groupId: string) {
+  const { user } = useAuth();
+
   // Subscribe hook
   const {
     isSubscribed,
@@ -32,9 +36,13 @@ export function useGroupWikiPage(groupId: string) {
   const eventsCount = group?.event_count ?? group?.events?.length ?? 0;
   const amendmentsCount = group?.amendment_count ?? group?.amendments?.length ?? 0;
 
+  // Visibility access check
+  const canAccess = checkEntityAccess(group?.visibility, !!user, isMember);
+
   return {
     // Group data
     group,
+    canAccess,
 
     // Derived counts
     memberCount,

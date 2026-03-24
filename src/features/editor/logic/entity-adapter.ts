@@ -52,6 +52,17 @@ function buildUserName(user: RawEntity, fallback = 'Unknown'): string {
 }
 
 /**
+ * Maps an amendment's editing_mode value to an EditorMode.
+ * Terminal states (passed/rejected) are shown as 'view' in the editor.
+ */
+function mapAmendmentEditingMode(mode: string | null | undefined): EditorMode {
+  if (!mode) return 'suggest_internal';
+  if (mode === 'passed' || mode === 'rejected') return 'view';
+  const valid: EditorMode[] = ['edit', 'view', 'suggest_internal', 'suggest_event', 'vote_internal', 'vote_event'];
+  return valid.includes(mode as EditorMode) ? (mode as EditorMode) : 'suggest_internal';
+}
+
+/**
  * Adapts an amendment with its document to EditorEntity
  */
 export function adaptAmendmentToEntity(amendment: RawEntity | undefined | null, document: RawEntity | undefined | null): EditorEntity | null {
@@ -113,7 +124,7 @@ export function adaptAmendmentToEntity(amendment: RawEntity | undefined | null, 
     amendmentCode: amendment.code,
     amendmentDate: amendment.date,
     amendmentSupporters: amendment.supporters,
-    amendmentStatus: amendment.status,
+    amendmentEditingMode: amendment.editing_mode,
   };
 
   const content = Array.isArray(document.content) && document.content.length > 0
@@ -125,8 +136,8 @@ export function adaptAmendmentToEntity(amendment: RawEntity | undefined | null, 
     title: document.title || amendment.title || '',
     content,
     discussions: (amendment.discussions || []) as TDiscussion[],
-    editingMode: (document.editing_mode as EditorMode) || 'suggest',
-    isPublic: document.is_public ?? false,
+    editingMode: mapAmendmentEditingMode(amendment.editing_mode),
+    visibility: document.visibility ?? 'public',
     updatedAt: document.updated_at || Date.now(),
     owner,
     collaborators,
@@ -192,7 +203,7 @@ export function adaptBlogToEntity(blog: RawEntity | undefined | null): EditorEnt
     content: Array.isArray(blog.content) && blog.content.length > 0 ? sanitizeContent(blog.content) : DEFAULT_EDITOR_CONTENT,
     discussions: (blog.discussions || []) as TDiscussion[],
     editingMode: (blog.editing_mode as EditorMode) || 'edit',
-    isPublic: blog.is_public ?? true,
+    visibility: blog.visibility ?? 'public',
     updatedAt: blog.updated_at || Date.now(),
     owner,
     collaborators,
@@ -249,7 +260,7 @@ export function adaptDocumentToEntity(document: RawEntity | undefined | null): E
     content,
     discussions: (document.discussions || []) as TDiscussion[],
     editingMode: (document.editing_mode as EditorMode) || 'edit',
-    isPublic: document.is_public ?? false,
+    visibility: document.visibility ?? 'public',
     updatedAt: document.updated_at || Date.now(),
     owner,
     collaborators,
@@ -312,7 +323,7 @@ export function adaptGroupDocumentToEntity(
     content,
     discussions: (document.discussions || []) as TDiscussion[],
     editingMode: (document.editing_mode as EditorMode) || 'edit',
-    isPublic: document.is_public ?? false,
+    visibility: document.visibility ?? 'public',
     updatedAt: document.updated_at || Date.now(),
     owner,
     collaborators,
@@ -393,7 +404,8 @@ export function buildEditorUsersMap(
  */
 export function checkEntityAccess(entity: EditorEntity | null, userId?: string): boolean {
   if (!entity) return false;
-  if (entity.isPublic) return true;
+  if (entity.visibility === 'public') return true;
+  if (entity.visibility === 'authenticated' && !!userId) return true;
   if (!userId) return false;
   if (entity.owner?.id === userId) return true;
   return entity.collaborators.some(c => c.user.id === userId);

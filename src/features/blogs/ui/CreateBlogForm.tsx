@@ -89,7 +89,6 @@ export function CreateBlogForm() {
           content: null,
           date: formData.date,
           image_url: formData.imageURL,
-          is_public: formData.visibility === 'public',
           visibility: formData.visibility,
           like_count: 0,
           comment_count: 0,

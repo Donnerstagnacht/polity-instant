@@ -1,3 +1,4 @@
+import type { Visibility } from '@/features/auth/logic/checkEntityAccess';
 import type { TrendData } from './TrendIndicator';
 import type { VoteData } from './VoteProgressBar';
 
@@ -58,6 +59,9 @@ export interface DecisionItem {
 
   /** Is this urgent (< 1 hour)? */
   isUrgent: boolean;
+
+  /** Visibility tier of this decision */
+  visibility: Visibility;
 
   /** Trend data (support/oppose shift) */
   trend: TrendData;

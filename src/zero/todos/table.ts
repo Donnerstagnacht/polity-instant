@@ -1,4 +1,4 @@
-import { table, string, number, json } from '@rocicorp/zero'
+import { table, string, number, boolean, json } from '@rocicorp/zero'
 
 export const todo = table('todo')
   .columns({

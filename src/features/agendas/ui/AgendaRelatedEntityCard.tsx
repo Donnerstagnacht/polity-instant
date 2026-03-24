@@ -1,6 +1,7 @@
 'use client';
 
 import { Badge } from '@/features/shared/ui/ui/badge';
+import { EditingModeBadge } from '@/features/shared/ui/ui/editing-mode.tsx';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import {
   TimelineCardBadge,
@@ -16,7 +17,7 @@ interface AgendaRelatedAmendment {
   title?: string | null;
   reason?: string | null;
   status?: string | null;
-  workflow_status?: string | null;
+  editing_mode?: string | null;
   image_url?: string | null;
   upvotes?: number | null;
   downvotes?: number | null;
@@ -41,11 +42,6 @@ interface AgendaRelatedPosition {
 
 function hasText(value?: string | null): value is string {
   return Boolean(value && value.trim());
-}
-
-function formatStatusLabel(value?: string | null): string | null {
-  if (!hasText(value)) return null;
-  return value.replaceAll('_', ' ');
 }
 
 export function AgendaRelatedAmendmentCard({
@@ -87,8 +83,6 @@ export function AgendaRelatedAmendmentCard({
         ]
       : []),
   ];
-  const workflowStatus = formatStatusLabel(amendment.workflow_status);
-  const status = formatStatusLabel(amendment.status);
   const groupName = amendment.group?.name?.trim() || undefined;
 
   return (
@@ -110,18 +104,9 @@ export function AgendaRelatedAmendmentCard({
           />
         }
       >
-        {(workflowStatus || status) && (
+        {amendment.editing_mode && (
           <div className="mt-2 flex flex-wrap gap-2">
-            {workflowStatus && (
-              <Badge variant="secondary" className="text-xs capitalize">
-                {workflowStatus}
-              </Badge>
-            )}
-            {status && status !== workflowStatus && (
-              <Badge variant="outline" className="text-xs capitalize">
-                {status}
-              </Badge>
-            )}
+            <EditingModeBadge mode={amendment.editing_mode} variant="secondary" />
           </div>
         )}
       </TimelineCardHeader>

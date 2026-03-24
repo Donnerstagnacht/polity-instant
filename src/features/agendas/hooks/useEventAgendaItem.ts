@@ -63,7 +63,7 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
         id: crypto.randomUUID(),
         election_id: election.id,
         candidate_id: candidateId,
-        elector_participation_id: election.is_public ? participationId : null,
+        elector_participation_id: election.visibility === 'public' ? participationId : null,
       }))
 
       if (isIndicative) {
@@ -96,7 +96,7 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
         id: crypto.randomUUID(),
         vote_id: vote.id,
         choice_id: choiceId,
-        voter_participation_id: vote.is_public ? participationId : null,
+        voter_participation_id: vote.visibility === 'public' ? participationId : null,
       }]
 
       if (isIndicative) {

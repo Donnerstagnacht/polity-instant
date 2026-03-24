@@ -19,7 +19,6 @@ CREATE TABLE IF NOT EXISTS public.event (
   location_address TEXT,
   location_url TEXT,
   location_coordinates TEXT,
-  is_public BOOLEAN NOT NULL DEFAULT true,
   visibility TEXT NOT NULL DEFAULT 'public',
   start_date TIMESTAMPTZ,
   end_date TIMESTAMPTZ,

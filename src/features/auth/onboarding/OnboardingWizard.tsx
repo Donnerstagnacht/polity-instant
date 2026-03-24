@@ -9,7 +9,8 @@ import { NameStep } from './NameStep.tsx';
 import { GroupSearchStep } from './GroupSearchStep.tsx';
 import { MembershipConfirmStep } from './MembershipConfirmStep.tsx';
 import { SummaryStep } from './SummaryStep.tsx';
-import { AriaKaiStep } from './AriaKaiStep.tsx';
+import { AriaKaiStep } from '@/features/assistant/ui/AriaKaiStep.tsx';
+import { useAssistantConversation } from '@/features/assistant/hooks/useAssistantConversation.ts';
 import { useUserActions } from '@/zero/users/useUserActions.ts';
 import { useAuth } from '@/providers/auth-provider.tsx';
 
@@ -34,6 +35,7 @@ export function OnboardingWizard({ userId, userEmail, onComplete }: OnboardingWi
   const navigate = useNavigate();
   const { user } = useAuth();
   const { updateProfile } = useUserActions();
+  const { createAssistantConversation } = useAssistantConversation(userId);
 
   const {
     step,
@@ -78,63 +80,47 @@ export function OnboardingWizard({ userId, userEmail, onComplete }: OnboardingWi
   };
 
   const handleAriaKaiNext = async () => {
-    console.log('🎭 AriaKai step next, moving to summary');
-    
+    // Create the assistant conversation for this user
+    try {
+      await createAssistantConversation();
+    } catch (error) {
+      console.error('Failed to create assistant conversation:', error);
+    }
+
     // Save the "don't show again" preference if user checked it
     if (data.dontShowAriaKaiAgain && user?.id) {
-      console.log('💾 Saving assistantIntroduction preference');
       try {
         await updateProfile({
           assistant_introduction: false,
         });
-        console.log('✅ assistantIntroduction preference saved');
       } catch (error) {
-        console.error('❌ Error saving preference:', error);
+        console.error('Failed to save preference:', error);
       }
     }
     
     goToStep('summary');
   };
 
-  const handleGoToProfile = async () => {
-    console.log('🏠 handleGoToProfile called');
-    try {
-      console.log('✅ Redirecting to /user/' + userId);
-      navigate({ to: `/user/${userId}` });
-      onComplete();
-      console.log('✅ onComplete called');
-    } catch (error) {
-      console.error('❌ Failed to complete onboarding:', error);
-    }
+  const handleGoToProfile = () => {
+    console.log('🏠 handleGoToProfile called — navigating to /user/' + userId);
+    onComplete();
+    navigate({ to: `/user/${userId}` });
   };
 
-  const handleGoToGroup = async () => {
-    console.log('👥 handleGoToGroup called');
+  const handleGoToGroup = () => {
     if (!data.selectedGroup) {
       console.warn('⚠️ No selected group');
       return;
     }
-
-    try {
-      console.log('✅ Redirecting to group:', data.selectedGroup.id);
-      navigate({ to: `/group/${data.selectedGroup.id}` });
-      onComplete();
-      console.log('✅ onComplete called');
-    } catch (error) {
-      console.error('❌ Failed to complete onboarding:', error);
-    }
+    console.log('👥 handleGoToGroup called — navigating to group:', data.selectedGroup.id);
+    onComplete();
+    navigate({ to: `/group/${data.selectedGroup.id}` });
   };
 
-  const handleGoToAssistant = async () => {
-    console.log('💬 handleGoToAssistant called');
-    try {
-      console.log('✅ Redirecting to messages with AriaKai');
-      navigate({ to: '/messages', search: { openAriaKai: 'true' } });
-      onComplete();
-      console.log('✅ onComplete called');
-    } catch (error) {
-      console.error('❌ Failed to complete onboarding:', error);
-    }
+  const handleGoToAssistant = () => {
+    console.log('💬 handleGoToAssistant called — navigating to /messages');
+    onComplete();
+    navigate({ to: '/messages' });
   };
 
   return (

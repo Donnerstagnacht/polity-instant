@@ -4,6 +4,7 @@ import { queries } from '../queries'
 import { useAgendaState } from '../agendas/useAgendaState'
 import { useElectionState } from '../elections/useElectionState'
 import { useCommonState } from '../common/useCommonState'
+import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess'
 
 export interface SearchLimits {
   users?: number
@@ -97,20 +98,80 @@ export function useSearchState(options: SearchOptions = {}) {
   // TODO: Removed with voting session migration
   // searchableVotingSessions query no longer exists
 
+  // ── Visibility filtering ────────────────────────────────────────────
+  // Only show public entities or private entities where the user has a relationship.
+
+  const visibleUsers = useMemo(
+    () => (users ?? []).filter(u => checkEntityAccess(u.visibility, !!userId, u.id === userId)),
+    [users, userId]
+  )
+
+  const visibleGroups = useMemo(
+    () => (groups ?? []).filter(g => checkEntityAccess(g.visibility, !!userId, memberGroupIds.includes(g.id))),
+    [groups, memberGroupIds, userId]
+  )
+
+  const visibleStatements = useMemo(
+    () => (statements ?? []).filter(s => checkEntityAccess(s.visibility, !!userId, s.user_id === userId)),
+    [statements, userId]
+  )
+
+  const visibleBlogs = useMemo(
+    () => (blogs ?? []).filter(b =>
+      checkEntityAccess(b.visibility, !!userId, (b.bloggers ?? []).some(bl => bl.user?.id === userId))
+    ),
+    [blogs, userId]
+  )
+
+  const visibleAmendments = useMemo(
+    () => (amendments ?? []).filter(a =>
+      checkEntityAccess(a.visibility, !!userId, (a.collaborators ?? []).some(c => c.user?.id === userId))
+    ),
+    [amendments, userId]
+  )
+
+  const visibleEvents = useMemo(
+    () => (events ?? []).filter(e =>
+      checkEntityAccess(e.visibility, !!userId, (e.participants ?? []).some(p => p.user?.id === userId))
+    ),
+    [events, userId]
+  )
+
+  const visibleEventIds = useMemo(
+    () => new Set(visibleEvents.map(e => e.id)),
+    [visibleEvents]
+  )
+
+  const visibleTodos = useMemo(
+    () => {
+      const raw = hasTodoAccess ? (todos ?? []) : []
+      return raw.filter(t =>
+        checkEntityAccess(t.visibility, !!userId, t.creator_id === userId || assignedTodoIds.includes(t.id))
+      )
+    },
+    [todos, hasTodoAccess, userId, assignedTodoIds]
+  )
+
+  // Agenda items inherit visibility from their parent event
+  const visibleAgendaItems = useMemo(
+    () => (agendaItems ?? []).filter(ai => visibleEventIds.has(ai.event_id ?? '')),
+    [agendaItems, visibleEventIds]
+  )
+
   return {
-    users: users ?? [],
-    groups: groups ?? [],
-    statements: statements ?? [],
-    blogs: blogs ?? [],
-    amendments: amendments ?? [],
-    events: events ?? [],
+    users: visibleUsers,
+    groups: visibleGroups,
+    statements: visibleStatements,
+    blogs: visibleBlogs,
+    amendments: visibleAmendments,
+    events: visibleEvents,
     groupMemberships: userId ? (groupMemberships ?? []) : [],
     todoAssignments: userId ? (todoAssignments ?? []) : [],
     memberGroupIds,
     assignedTodoIds,
-    todos: hasTodoAccess ? (todos ?? []) : [],
+    todos: visibleTodos,
     timelineEvents: timelineEvents ?? [],
-    agendaItems: eventIds.length > 0 ? (agendaItems ?? []) : [],
+    agendaItems: visibleAgendaItems,
     elections: elections ?? [],
     eventVotingSessions: [] as readonly { readonly id: string }[],
     allHashtags: allHashtags ?? [],

@@ -39,6 +39,7 @@ export const editor = {
     bloggers: 'Blogger',
     owner: 'Besitzer',
     public: 'Öffentlich',
+    authenticated: 'Authentifiziert',
     private: 'Privat',
     lastUpdated: 'Zuletzt aktualisiert',
     canEdit: 'Kann bearbeiten',
@@ -119,5 +120,12 @@ export const editor = {
     invitedOne: 'Mitarbeiter erfolgreich eingeladen',
     invitedMultiple: '{{count}} Mitarbeiter erfolgreich eingeladen',
     inviteFailed: 'Einladung der Mitarbeiter fehlgeschlagen',
+  },
+
+  // Suggestion View Toggle
+  suggestionView: {
+    allSuggestions: 'Alle Vorschläge',
+    searchPlaceholder: 'Änderungsanträge suchen...',
+    noResults: 'Keine Änderungsanträge gefunden.',
   },
 };

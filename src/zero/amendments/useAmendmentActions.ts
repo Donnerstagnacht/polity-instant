@@ -137,16 +137,28 @@ export function useAmendmentActions() {
   )
 
   // ── Workflow ────────────────────────────────────────────────────────
-  const updateWorkflowStatus = useCallback(
-    async (id: string, workflowStatus: string) => {
+  const updateEditingMode = useCallback(
+    async (id: string, editingMode: string) => {
       try {
+        console.info('[useAmendmentActions] Persisting amendment editing mode', {
+          amendmentId: id,
+          editingMode,
+        })
         const result = zero.mutate(
-          mutators.amendments.update({ id, workflow_status: workflowStatus })
+          mutators.amendments.update({ id, editing_mode: editingMode })
         )
         await serverConfirmed(result)
-        toast.success(t('features.amendments.toasts.workflowChanged', { status: workflowStatus }))
+        console.info('[useAmendmentActions] Amendment editing mode persisted', {
+          amendmentId: id,
+          editingMode,
+        })
+        toast.success(t('features.amendments.toasts.workflowChanged', { status: editingMode }))
       } catch (error) {
-        console.error('Failed to update workflow status:', error)
+        console.error('[useAmendmentActions] Failed to update editing mode', {
+          amendmentId: id,
+          editingMode,
+          error,
+        })
         toast.error(t('features.amendments.toasts.workflowChangeFailed'))
         throw error
       }
@@ -160,7 +172,7 @@ export function useAmendmentActions() {
         const result = zero.mutate(
           mutators.amendments.update({
             id,
-            workflow_status: 'event_suggesting',
+            editing_mode: 'suggest_event',
             event_id: eventId,
           })
         )
@@ -181,8 +193,7 @@ export function useAmendmentActions() {
         const mutationResult = zero.mutate(
           mutators.amendments.update({
             id,
-            workflow_status: result,
-            status: result === 'passed' ? 'Passed' : 'Rejected',
+            editing_mode: result,
           })
         )
         await serverConfirmed(mutationResult)
@@ -400,7 +411,7 @@ export function useAmendmentActions() {
     updateCollaborator,
 
     // Workflow
-    updateWorkflowStatus,
+    updateEditingMode,
     submitToEvent,
     finalizeAmendment,
 

@@ -45,6 +45,7 @@ import {
 import { formatDistanceToNow, differenceInMinutes, format } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 
 interface StatementDetailProps {
   statementId: string;
@@ -65,6 +66,7 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
     isLoading,
     userId,
     isOwner,
+    canAccess,
     computedUpvotes,
     computedDownvotes,
     currentVoteValue,
@@ -104,6 +106,14 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
             {t('features.statements.detail.notFoundDescription')}
           </p>
         </div>
+      </PageWrapper>
+    );
+  }
+
+  if (!canAccess) {
+    return (
+      <PageWrapper>
+        <AccessDenied />
       </PageWrapper>
     );
   }

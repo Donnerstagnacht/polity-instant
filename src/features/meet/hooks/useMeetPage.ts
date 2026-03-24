@@ -234,7 +234,6 @@ export function useMeetPage(userId: string) {
         description: args.description,
         status: 'published',
         event_type: 'meeting',
-        is_public: args.meetingType === 'public-meeting',
         visibility: args.meetingType === 'public-meeting' ? 'public' : 'private',
         meeting_type: args.meetingType,
         is_bookable: true,

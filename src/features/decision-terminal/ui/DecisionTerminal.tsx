@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { cn } from '@/features/shared/utils/utils';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { TerminalHeader, type TerminalFilter } from './TerminalHeader';
+import { TerminalHeader, type TerminalFilter, type VisibilityFilter } from './TerminalHeader';
 import { DecisionTable } from './DecisionTable';
 import { DecisionSidePanel } from './DecisionSidePanel';
 import { MobileDecisionCard } from './MobileDecisionCard';
@@ -25,14 +25,15 @@ export function DecisionTerminal({
   className,
 }: DecisionTerminalProps) {
   const [activeFilter, setActiveFilter] = useState<TerminalFilter>('live');
+  const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDecision, setSelectedDecision] = useState<DecisionItem | null>(null);
 
-  // Filter decisions based on active filter and search
+  // Filter decisions based on active filter, visibility, and search
   const filteredDecisions = useMemo(() => {
     let filtered = [...decisions];
 
-    // Apply filter
+    // Apply time filter
     switch (activeFilter) {
       case 'live':
         filtered = filtered.filter(d => !d.isClosed && !d.isOpeningSoon);
@@ -42,6 +43,22 @@ export function DecisionTerminal({
         break;
       case 'recently_closed':
         filtered = filtered.filter(d => d.isClosed && d.isRecentlyClosed);
+        break;
+      case 'all':
+      default:
+        break;
+    }
+
+    // Apply visibility filter
+    switch (visibilityFilter) {
+      case 'public':
+        filtered = filtered.filter(d => d.visibility === 'public');
+        break;
+      case 'authenticated':
+        filtered = filtered.filter(d => d.visibility === 'authenticated');
+        break;
+      case 'private':
+        filtered = filtered.filter(d => d.visibility === 'private');
         break;
       case 'all':
       default:
@@ -60,7 +77,7 @@ export function DecisionTerminal({
     }
 
     return filtered;
-  }, [decisions, activeFilter, searchQuery]);
+  }, [decisions, activeFilter, visibilityFilter, searchQuery]);
 
   // Calculate counts
   const urgentCount = decisions.filter(d => !d.isClosed && d.isUrgent).length;
@@ -87,6 +104,8 @@ export function DecisionTerminal({
       <TerminalHeader
         activeFilter={activeFilter}
         onFilterChange={setActiveFilter}
+        visibilityFilter={visibilityFilter}
+        onVisibilityFilterChange={setVisibilityFilter}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         urgentCount={urgentCount}

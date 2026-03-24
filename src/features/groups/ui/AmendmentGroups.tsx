@@ -7,12 +7,13 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { AmendmentTimelineCard } from '@/features/timeline/ui/cards/AmendmentTimelineCard';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
+import { normalizeEditingMode } from '@/zero/rbac';
 
 interface AmendmentItem {
   id: string;
   title?: string | null;
   subtitle?: string | null;
-  status?: string | null;
+  editing_mode?: string | null;
   amendment_hashtags?: ReadonlyArray<{ hashtag?: { id: string; tag: string } | null }>;
 }
 
@@ -38,48 +39,6 @@ export function AmendmentGroups({ groupedAmendments, groupName, groupId }: Amend
 
   const toggleSection = (section: keyof typeof openSections) => {
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
-
-  const normalizeStatus = (
-    status?: string | null
-  ):
-    | 'collaborative_editing'
-    | 'internal_suggesting'
-    | 'internal_voting'
-    | 'viewing'
-    | 'event_suggesting'
-    | 'event_voting'
-    | 'passed'
-    | 'rejected' => {
-    if (!status) return 'viewing';
-    const normalized = status.toLowerCase();
-    if (
-      normalized === 'collaborative_editing' ||
-      normalized === 'internal_suggesting' ||
-      normalized === 'internal_voting' ||
-      normalized === 'viewing' ||
-      normalized === 'event_suggesting' ||
-      normalized === 'event_voting' ||
-      normalized === 'passed' ||
-      normalized === 'rejected'
-    ) {
-      return normalized as
-        | 'collaborative_editing'
-        | 'internal_suggesting'
-        | 'internal_voting'
-        | 'viewing'
-        | 'event_suggesting'
-        | 'event_voting'
-        | 'passed'
-        | 'rejected';
-    }
-    if (normalized === 'drafting' || normalized === 'draft') {
-      return 'collaborative_editing';
-    }
-    if (normalized === 'under review' || normalized === 'review') {
-      return 'internal_voting';
-    }
-    return 'viewing';
   };
 
   return (
@@ -111,7 +70,7 @@ export function AmendmentGroups({ groupedAmendments, groupName, groupId }: Amend
                       title: amendment.title ?? '',
                       subtitle: groupName,
                       description: amendment.subtitle ?? undefined,
-                      status: normalizeStatus(amendment.status),
+                      status: normalizeEditingMode(amendment.editing_mode),
                       groupName,
                       groupId,
                       hashtags: extractHashtags(amendment.amendment_hashtags),
@@ -154,7 +113,7 @@ export function AmendmentGroups({ groupedAmendments, groupName, groupId }: Amend
                       title: amendment.title ?? '',
                       subtitle: groupName,
                       description: amendment.subtitle ?? undefined,
-                      status: normalizeStatus(amendment.status),
+                      status: normalizeEditingMode(amendment.editing_mode),
                       groupName,
                       groupId,
                       hashtags: extractHashtags(amendment.amendment_hashtags),
@@ -194,7 +153,7 @@ export function AmendmentGroups({ groupedAmendments, groupName, groupId }: Amend
                       title: amendment.title ?? '',
                       subtitle: groupName,
                       description: amendment.subtitle ?? undefined,
-                      status: normalizeStatus(amendment.status),
+                      status: normalizeEditingMode(amendment.editing_mode),
                       groupName,
                       groupId,
                       hashtags: extractHashtags(amendment.amendment_hashtags),
@@ -234,7 +193,7 @@ export function AmendmentGroups({ groupedAmendments, groupName, groupId }: Amend
                       title: amendment.title ?? '',
                       subtitle: groupName,
                       description: amendment.subtitle ?? undefined,
-                      status: normalizeStatus(amendment.status),
+                      status: normalizeEditingMode(amendment.editing_mode),
                       groupName,
                       groupId,
                       hashtags: extractHashtags(amendment.amendment_hashtags),

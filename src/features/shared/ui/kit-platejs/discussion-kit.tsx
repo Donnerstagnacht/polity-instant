@@ -13,6 +13,7 @@ export interface TDiscussion {
   documentContent?: string;
   title?: string;
   crId?: string; // Format: CR-x (e.g., CR-1, CR-2, etc.)
+  changeRequestEntityId?: string; // UUID of the persisted change_request row
   votes?: {
     id: string;
     vote: string;

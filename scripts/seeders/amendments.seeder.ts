@@ -81,20 +81,20 @@ export const amendmentsSeeder: EntitySeeder = {
           ? 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg'
           : undefined;
 
-        // Determine workflow status based on amendment lifecycle
-        const workflowStatus = randomItem([
-          'collaborative_editing',
-          'internal_suggesting',
-          'internal_voting',
-          'viewing',
-          'event_suggesting',
-          'event_voting',
+        // Determine editing mode based on amendment lifecycle
+        const editingMode = randomItem([
+          'edit',
+          'suggest_internal',
+          'vote_internal',
+          'view',
+          'suggest_event',
+          'vote_event',
           'passed',
           'rejected',
         ] as const);
 
         // Only set currentEventId if in event phase
-        const currentEventId = ['event_suggesting', 'event_voting'].includes(workflowStatus)
+        const currentEventId = ['suggest_event', 'vote_event'].includes(editingMode)
           ? targetEventId
           : undefined;
 
@@ -110,8 +110,7 @@ export const amendmentsSeeder: EntitySeeder = {
             .update({
               title: amendmentTitle,
               subtitle: faker.lorem.sentence(),
-              status: randomItem(['Passed', 'Rejected', 'Under Review', 'Drafting'] as const),
-              workflowStatus,
+              editing_mode: editingMode,
               currentEventId,
               supporters: randomInt(10, 500),
               supporterGroups: supportingGroups,
@@ -272,17 +271,17 @@ export const amendmentsSeeder: EntitySeeder = {
 
         // Add document
         transactions.push(
-          ...createAmendmentDocumentRows(amendmentId, amendmentTitle, mainUserId, workflowStatus)
+          ...createAmendmentDocumentRows(amendmentId, amendmentTitle, mainUserId, editingMode)
         );
 
         // Add change requests (2-5 per amendment if in suggesting/voting phase)
         if (
-          ['internal_suggesting', 'internal_voting', 'event_suggesting', 'event_voting'].includes(
-            workflowStatus
+          ['suggest_internal', 'vote_internal', 'suggest_event', 'vote_event'].includes(
+            editingMode
           )
         ) {
           const changeRequestCount = randomInt(2, 5);
-          const isEventPhase = ['event_suggesting', 'event_voting'].includes(workflowStatus);
+          const isEventPhase = ['suggest_event', 'vote_event'].includes(editingMode);
 
           for (let k = 0; k < changeRequestCount; k++) {
             const changeRequestId = id();
@@ -312,7 +311,7 @@ export const amendmentsSeeder: EntitySeeder = {
                   source,
                   sourceEventId: isEventPhase ? currentEventId : undefined,
                   votingOrder: k, // Sequential order
-                  requiresVoting: workflowStatus.includes('voting'),
+                  requiresVoting: editingMode.includes('vote'),
                   votingThreshold: 50,
                   createdAt: faker.date.recent({ days: 30 }),
                   updatedAt: new Date(),
@@ -324,7 +323,7 @@ export const amendmentsSeeder: EntitySeeder = {
             );
 
             // Add votes on change requests if in voting phase
-            if (workflowStatus.includes('voting') && crStatus !== 'proposed') {
+            if (editingMode.includes('vote') && crStatus !== 'proposed') {
               const voteCount = randomInt(3, 8);
               const voters = randomItems(userIds, voteCount);
 
@@ -519,8 +518,8 @@ export const amendmentsSeeder: EntitySeeder = {
         pathsCreated++;
         amendmentPathsToAmendments++;
 
-        // Create voting session if in event_voting phase
-        if (workflowStatus === 'event_voting' && currentEventId) {
+        // Create voting session if in vote_event phase
+        if (editingMode === 'vote_event' && currentEventId) {
           const sessionId = id();
           const now = Date.now();
           const votingDuration = randomInt(15, 60) * 60 * 1000; // 15-60 minutes
@@ -544,7 +543,7 @@ export const amendmentsSeeder: EntitySeeder = {
                 agendaItem: pathSegmentIds[0], // Link to first agenda item
               })
           );
-        } else if (workflowStatus === 'internal_voting') {
+        } else if (editingMode === 'vote_internal') {
           // Create internal voting session
           const sessionId = id();
           const now = Date.now();
@@ -605,7 +604,7 @@ export const amendmentsSeeder: EntitySeeder = {
           .update({
             title: `${originalAmendment.title} (Clone)`,
             subtitle: faker.lorem.sentence(),
-            status: 'Drafting',
+            editing_mode: 'edit',
             supporters: 0,
             date: new Date().toISOString(),
             code: `AMN-${faker.string.alphanumeric(6).toUpperCase()}`,
@@ -671,7 +670,7 @@ export const amendmentsSeeder: EntitySeeder = {
           cloneId,
           `${originalAmendment.title} (Clone)`,
           cloneOwnerId,
-          'collaborative_editing'
+          'edit'
         )
       );
 

@@ -1,4 +1,4 @@
-import { table, string, number, boolean } from '@rocicorp/zero'
+import { table, string, number } from '@rocicorp/zero'
 
 export const group = table('group')
   .columns({
@@ -7,7 +7,6 @@ export const group = table('group')
     description: string().optional(),
     location: string().optional(),
     image_url: string().optional(),
-    is_public: boolean(),
     member_count: number(),
     subscriber_count: number(),
     event_count: number(),

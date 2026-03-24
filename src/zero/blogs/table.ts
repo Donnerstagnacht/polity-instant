@@ -8,7 +8,6 @@ export const blog = table('blog')
     content: json().optional(),
     date: string().optional(),
     image_url: string().optional(),
-    is_public: boolean().optional(),
     visibility: string(),
     subscriber_count: number(),
     supporter_count: number(),

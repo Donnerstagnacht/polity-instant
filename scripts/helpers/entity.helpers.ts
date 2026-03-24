@@ -41,7 +41,7 @@ export function createAmendmentDocumentRows(
   amendmentId: string,
   amendmentTitle: string,
   ownerId: string,
-  workflowStatus?: string
+  editingMode?: string
 ): InsertOp[] {
   const ops: InsertOp[] = [];
   const documentId = id();
@@ -64,20 +64,20 @@ export function createAmendmentDocumentRows(
     { type: 'p', children: [{ text: faker.lorem.paragraphs(1) }] },
   ];
 
-  // Map workflow status to editing mode
-  const getEditingMode = (wfStatus?: string) => {
-    if (!wfStatus) return 'edit';
+  // Map editing mode to document editing mode
+  const getEditingMode = (editingMode?: string) => {
+    if (!editingMode) return 'edit';
     const mapping: Record<string, string> = {
-      collaborative_editing: 'edit',
-      internal_suggesting: 'suggest',
-      internal_voting: 'vote',
-      viewing: 'view',
-      event_suggesting: 'suggest',
-      event_voting: 'vote',
+      edit: 'edit',
+      suggest_internal: 'suggest',
+      vote_internal: 'vote',
+      view: 'view',
+      suggest_event: 'suggest',
+      vote_event: 'vote',
       passed: 'view',
       rejected: 'view',
     };
-    return mapping[wfStatus] || 'edit';
+    return mapping[editingMode] || 'edit';
   };
 
   // Create the document
@@ -87,7 +87,7 @@ export function createAmendmentDocumentRows(
       id: documentId,
       title: amendmentTitle,
       content: documentContent,
-      editingMode: getEditingMode(workflowStatus),
+      editingMode: getEditingMode(editingMode),
       suggestionCounter: 0,
       createdAt: faker.date.past({ years: 0.5 }),
       updatedAt: faker.date.recent({ days: 7 }),

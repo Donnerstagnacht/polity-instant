@@ -20,15 +20,14 @@ function GroupAmendmentsPage() {
     const rejected: typeof amendments = []
 
     amendments.forEach((a) => {
-      const status = (a.status || '').toLowerCase()
-      if (status === 'passed') passed.push(a)
-      else if (status === 'rejected') rejected.push(a)
+      const mode = (a.editing_mode || '').toLowerCase()
+      if (mode === 'passed') passed.push(a)
+      else if (mode === 'rejected') rejected.push(a)
       else if (
-        status === 'internal_voting' ||
-        status === 'event_voting' ||
-        status === 'internal_suggesting' ||
-        status === 'event_suggesting' ||
-        status === 'under review'
+        mode === 'vote_internal' ||
+        mode === 'vote_event' ||
+        mode === 'suggest_internal' ||
+        mode === 'suggest_event'
       )
         underReview.push(a)
       else drafting.push(a)

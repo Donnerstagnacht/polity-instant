@@ -1,5 +1,5 @@
 // Table
-export { agendaItem, speakerList } from './table'
+export { agendaItem, speakerList, agendaItemChangeRequest } from './table'
 export { election, electionCandidate } from '../elections/table'
 
 // Zod Schemas
@@ -11,8 +11,13 @@ export {
   reorderAgendaItemsSchema,
   selectSpeakerListSchema,
   createSpeakerListSchema,
+  createAgendaItemChangeRequestSchema,
+  updateAgendaItemChangeRequestSchema,
+  deleteAgendaItemChangeRequestSchema,
+  reorderAgendaItemChangeRequestsSchema,
   type AgendaItem,
   type SpeakerList,
+  type AgendaItemChangeRequest,
 } from './schema'
 export {
   selectElectionSchema,
@@ -24,9 +29,9 @@ export {
 } from '../elections/schema'
 
 // Queries & Mutators
-export { agendaQueries } from './queries'
+export { agendaQueries, type ChangeRequestTimelineRow } from './queries'
 export { agendaSharedMutators } from './shared-mutators'
 
 // Facade Hooks
-export { useAgendaState } from './useAgendaState'
+export { useAgendaState, useAgendaItemCRTimeline } from './useAgendaState'
 export { useAgendaActions } from './useAgendaActions'

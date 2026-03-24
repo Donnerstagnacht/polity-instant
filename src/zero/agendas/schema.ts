@@ -64,7 +64,49 @@ export const createSpeakerListSchema = baseSpeakerListSchema
 export const deleteSpeakerListSchema = z.object({ id: z.string() })
 
 // ============================================
+// Agenda Item Change Request (junction)
+// ============================================
+const baseAgendaItemChangeRequestSchema = z.object({
+  id: z.string(),
+  agenda_item_id: z.string(),
+  change_request_id: z.string().nullable(),
+  vote_id: z.string().nullable(),
+  order_index: z.number(),
+  is_final_vote: z.boolean(),
+  status: z.string(),
+  created_at: timestampSchema,
+  updated_at: timestampSchema,
+})
+
+export const selectAgendaItemChangeRequestSchema = baseAgendaItemChangeRequestSchema
+export const createAgendaItemChangeRequestSchema = baseAgendaItemChangeRequestSchema
+  .omit({ created_at: true, updated_at: true })
+export const updateAgendaItemChangeRequestSchema = baseAgendaItemChangeRequestSchema
+  .pick({ vote_id: true, order_index: true, status: true })
+  .partial()
+  .extend({ id: z.string() })
+export const deleteAgendaItemChangeRequestSchema = z.object({ id: z.string() })
+export const reorderAgendaItemChangeRequestsSchema = z.object({
+  items: z.array(z.object({ id: z.string(), order_index: z.number() })),
+})
+
+// Server-only: initialize all CR votes + final vote for an agenda item
+export const initializeChangeRequestVotingSchema = z.object({
+  amendment_id: z.string(),
+  agenda_item_id: z.string(),
+  voting_context: z.enum(['event', 'internal']).optional(),
+  group_id: z.string().optional(),
+})
+
+// Server-only: process the result of a CR vote (accept/reject suggestion + save version)
+export const processCRVoteResultSchema = z.object({
+  agenda_item_change_request_id: z.string(),
+  vote_result: z.enum(['passed', 'rejected', 'tie']),
+})
+
+// ============================================
 // Inferred Types
 // ============================================
 export type AgendaItem = z.infer<typeof selectAgendaItemSchema>
 export type SpeakerList = z.infer<typeof selectSpeakerListSchema>
+export type AgendaItemChangeRequest = z.infer<typeof selectAgendaItemChangeRequestSchema>

@@ -312,6 +312,12 @@ export const timelineTranslations = {
       recentlyClosed: 'RECENTLY CLOSED',
       all: 'ALL',
     },
+    visibility: {
+      all: 'All',
+      public: 'Public',
+      authenticated: 'Authenticated',
+      private: 'Private',
+    },
     columns: {
       id: 'ID',
       title: 'Title',

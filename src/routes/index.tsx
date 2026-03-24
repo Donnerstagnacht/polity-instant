@@ -1,4 +1,5 @@
-import { createFileRoute, Link, Navigate, useSearch, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, Navigate, useNavigate } from '@tanstack/react-router'
+import { useState } from 'react'
 import { Button } from '@/features/shared/ui/ui/button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/features/shared/ui/ui/card'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
@@ -8,32 +9,49 @@ import { OnboardingWizard } from '@/features/auth/onboarding/OnboardingWizard'
 
 export const Route = createFileRoute('/')({
   component: HomePage,
-  validateSearch: (search: Record<string, unknown>) => ({
-    onboarding: search.onboarding === 'true' ? ('true' as const) : undefined,
-  }),
 })
 
 const featureIcons = ['👥', '📅', '📝', '💬'] as const
 const featureKeys = ['groups', 'events', 'amendments', 'messages'] as const
+
+const ONBOARDING_KEY = 'polity_onboarding'
 
 function HomePage() {
   const { t } = useTranslation()
   const { user } = useAuth()
   const zeroReady = useZeroReady()
   const navigate = useNavigate()
-  const { onboarding } = useSearch({ from: '/' })
 
-  if (user && zeroReady && onboarding === 'true') {
+  // Read onboarding flag from sessionStorage (set by VerifyForm before navigation)
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    if (typeof window === 'undefined') return false
+    const val = sessionStorage.getItem(ONBOARDING_KEY) === 'true'
+    console.log('[HomePage] Initial showOnboarding from sessionStorage:', val)
+    return val
+  })
+
+  console.log('[HomePage] Render — user:', !!user, 'zeroReady:', zeroReady, 'showOnboarding:', showOnboarding)
+
+  const handleOnboardingComplete = () => {
+    console.log('[HomePage] Onboarding complete — clearing sessionStorage flag')
+    sessionStorage.removeItem(ONBOARDING_KEY)
+    // Don't set showOnboarding=false here; the wizard's handler will navigate
+    // away from / so this component will unmount naturally
+  }
+
+  if (user && zeroReady && showOnboarding) {
+    console.log('[HomePage] ✅ Showing OnboardingWizard')
     return (
       <OnboardingWizard
         userId={user.id}
         userEmail={user.email}
-        onComplete={() => navigate({ to: '/home' })}
+        onComplete={handleOnboardingComplete}
       />
     )
   }
 
   if (user && zeroReady) {
+    console.log('[HomePage] User ready, no onboarding — redirecting to /home')
     return <Navigate to="/home" />
   }
 

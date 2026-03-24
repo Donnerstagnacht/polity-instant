@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { useUserMutations } from './useUserMutations';
 import { useCommonState } from '@/zero/common/useCommonState';
 import type { UserProfile } from '../types/user.types';
+import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
 
 // Co-located types
 export interface UserProfileFormData {
@@ -16,6 +17,7 @@ export interface UserProfileFormData {
   website: string;
   location: string;
   avatar: string;
+  visibility: Visibility;
   hashtags: string[];
 }
 
@@ -64,6 +66,7 @@ export function useUserProfileForm({
     website: '',
     location: '',
     avatar: '',
+    visibility: 'public' as Visibility,
     hashtags: [],
   });
 
@@ -85,6 +88,7 @@ export function useUserProfileForm({
         website: user.website || '',
         location: user.location || '',
         avatar: user.avatar || '',
+        visibility: (user.visibility as Visibility) ?? 'public',
         hashtags: [],
       });
     }
@@ -125,6 +129,7 @@ export function useUserProfileForm({
         x: formData.twitter,
         website: formData.website,
         location: formData.location,
+        visibility: formData.visibility,
         hashtags: formData.hashtags,
         existingJunctions: userHashtags ?? [],
         allHashtags: allHashtags ?? [],

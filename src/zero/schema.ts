@@ -6,7 +6,7 @@ import { group, groupMembership, role, actionRight } from './groups/table'
 import { event, eventParticipant, participant, eventException } from './events/table'
 import { amendment, amendmentCollaborator, amendmentPath, amendmentPathSegment, supportConfirmation } from './amendments/table'
 import { document, documentVersion, documentCollaborator, documentCursor } from './documents/table'
-import { agendaItem, speakerList } from './agendas/table'
+import { agendaItem, speakerList, agendaItemChangeRequest } from './agendas/table'
 import { todo, todoAssignment } from './todos/table'
 import { conversation, conversationParticipant, message } from './messages/table'
 import { notification, pushSubscription, notificationSetting, notificationRead } from './notifications/table'
@@ -49,7 +49,7 @@ export const schema = createSchema({
     // Documents
     document, documentVersion, documentCollaborator, documentCursor,
     // Agendas
-    agendaItem, speakerList,
+    agendaItem, speakerList, agendaItemChangeRequest,
     // Elections
     election, electionCandidate, elector,
     indicativeElectorParticipation, indicativeCandidateSelection,
@@ -155,6 +155,7 @@ export type CommentVote = Row<Schema['tables']['comment_vote']>
 // Agendas
 export type AgendaItem = Row<Schema['tables']['agenda_item']>
 export type SpeakerList = Row<Schema['tables']['speaker_list']>
+export type AgendaItemChangeRequestRow = Row<Schema['tables']['agenda_item_change_request']>
 export type Election = Row<Schema['tables']['election']>
 export type ElectionCandidate = Row<Schema['tables']['election_candidate']>
 export type Elector = Row<Schema['tables']['elector']>

@@ -61,6 +61,7 @@ export {
 
 // Workflow constants
 export type {
+  EditingMode,
   WorkflowStatus,
   AmendmentStatus,
   VotingSessionType,
@@ -69,15 +70,25 @@ export type {
 } from './workflow-constants';
 
 export {
+  EDITING_MODE_TRANSITIONS,
+  SELECTABLE_MODES,
+  EVENT_MODES,
+  TERMINAL_MODES,
+  EDITING_MODE_METADATA,
+  canTransitionTo,
+  isEventPhase,
+  isTerminalStatus,
+  isVotingMode,
+  isSuggestingMode,
+  isSelectableByCollaborator,
+  getDefaultEditingMode,
+  normalizeEditingMode,
+  // Deprecated aliases
   WORKFLOW_TRANSITIONS,
   COLLABORATOR_SELECTABLE_STATUSES,
   EVENT_CONTROLLED_STATUSES,
   TERMINAL_STATUSES,
   WORKFLOW_STATUS_METADATA,
-  canTransitionTo,
-  isEventPhase,
-  isTerminalStatus,
-  isSelectableByCollaborator,
   getDefaultWorkflowStatus,
 } from './workflow-constants';
 

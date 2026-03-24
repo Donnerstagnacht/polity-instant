@@ -142,7 +142,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
           closing_type: null,
           closing_duration_seconds: null,
           closing_end_time: null,
-          is_public: true,
+          visibility: 'public',
           max_votes: 1,
           agenda_item_id: agendaItemId,
           position_id: positionId || null,
@@ -160,7 +160,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
           closing_type: 'moderator',
           closing_duration_seconds: null,
           closing_end_time: null,
-          is_public: true,
+          visibility: 'public',
           agenda_item_id: agendaItemId,
           amendment_id: amendmentId || null,
         });

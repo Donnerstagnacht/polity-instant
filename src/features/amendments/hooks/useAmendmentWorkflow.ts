@@ -8,19 +8,21 @@ import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
-import type { WorkflowStatus } from '@/zero/rbac/workflow-constants';
+import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
+import type { EditingMode } from '@/zero/rbac/workflow-constants';
 import {
   canTransitionTo,
   isEventPhase,
   isTerminalStatus,
-  WORKFLOW_TRANSITIONS,
+  EDITING_MODE_TRANSITIONS,
 } from '@/zero/rbac/workflow-constants';
 import { notifyWorkflowChanged } from '@/features/notifications/utils/notification-helpers.ts';
 
 interface UseAmendmentWorkflowProps {
   amendmentId: string;
-  currentStatus: WorkflowStatus;
+  currentStatus: EditingMode;
   currentEventId?: string;
+  agendaItemId?: string;
   senderId?: string;
   amendmentTitle?: string;
 }
@@ -29,18 +31,20 @@ export function useAmendmentWorkflow({
   amendmentId,
   currentStatus,
   currentEventId,
+  agendaItemId,
   senderId,
   amendmentTitle,
 }: UseAmendmentWorkflowProps) {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const { updateAmendment } = useAmendmentActions();
   const { createVote } = useVoteActions();
+  const { initializeChangeRequestVoting } = useAgendaActions();
 
   /**
    * Transition to a new workflow status
    */
   const transitionTo = useCallback(
-    async (targetStatus: WorkflowStatus): Promise<boolean> => {
+    async (targetStatus: EditingMode): Promise<boolean> => {
       if (!canTransitionTo(currentStatus, targetStatus)) {
         toast.error(`Ungültiger Übergang von ${currentStatus} zu ${targetStatus}`);
         return false;
@@ -56,8 +60,19 @@ export function useAmendmentWorkflow({
       try {
         await updateAmendment({
           id: amendmentId,
-          workflow_status: targetStatus,
+          editing_mode: targetStatus,
         });
+
+        // Auto-initialize CR voting when transitioning to vote_event
+        if (targetStatus === 'vote_event' && agendaItemId) {
+          console.log('[useAmendmentWorkflow] Initializing CR voting — amendmentId:', amendmentId, 'agendaItemId:', agendaItemId);
+          await initializeChangeRequestVoting({
+            amendment_id: amendmentId,
+            agenda_item_id: agendaItemId,
+          });
+        } else if (targetStatus === 'vote_event' && !agendaItemId) {
+          console.warn('[useAmendmentWorkflow] Cannot initialize CR voting — agendaItemId is missing! amendmentId:', amendmentId);
+        }
 
         // Send notification to collaborators
         if (senderId) {
@@ -87,15 +102,15 @@ export function useAmendmentWorkflow({
    */
   const startInternalVoting = useCallback(
     async (intervalMinutes: number): Promise<string | null> => {
-      if (currentStatus !== 'internal_suggesting' && currentStatus !== 'internal_voting') {
+      if (currentStatus !== 'suggest_internal' && currentStatus !== 'vote_internal') {
         toast.error('Internes Voting kann nur im Suggesting oder Voting Modus gestartet werden.');
         return null;
       }
 
       try {
-        // Transition to internal_voting if not already there
-        if (currentStatus !== 'internal_voting') {
-          await transitionTo('internal_voting');
+        // Transition to vote_internal if not already there
+        if (currentStatus !== 'vote_internal') {
+          await transitionTo('vote_internal');
         }
 
         // Create voting session
@@ -114,7 +129,7 @@ export function useAmendmentWorkflow({
           closing_type: null,
           closing_duration_seconds: intervalMinutes * 60,
           closing_end_time: endTime,
-          is_public: false,
+          visibility: 'private',
         });
 
         toast.success(`Interne Abstimmung gestartet (${intervalMinutes} Minuten)`);
@@ -134,10 +149,10 @@ export function useAmendmentWorkflow({
   const submitToEvent = useCallback(
     async (eventId: string): Promise<boolean> => {
       // Can submit from all collaborator phase
-      const allowedPhases: WorkflowStatus[] = [
-        'collaborative_editing',
-        'internal_suggesting',
-        'internal_voting',
+      const allowedPhases: EditingMode[] = [
+        'edit',
+        'suggest_internal',
+        'vote_internal',
       ];
 
       if (!allowedPhases.includes(currentStatus)) {
@@ -148,7 +163,7 @@ export function useAmendmentWorkflow({
       try {
         await updateAmendment({
           id: amendmentId,
-          workflow_status: 'event_suggesting',
+          editing_mode: 'suggest_event',
           event_id: eventId,
         });
 
@@ -192,8 +207,7 @@ export function useAmendmentWorkflow({
       try {
         await updateAmendment({
           id: amendmentId,
-          workflow_status: result,
-          status: result === 'passed' ? 'Passed' : 'Rejected',
+          editing_mode: result,
         });
 
         toast.success(
@@ -212,8 +226,8 @@ export function useAmendmentWorkflow({
   return {
     currentStatus,
     isTransitioning,
-    canTransitionTo: (target: WorkflowStatus) => canTransitionTo(currentStatus, target),
-    possibleTransitions: WORKFLOW_TRANSITIONS[currentStatus],
+    canTransitionTo: (target: EditingMode) => canTransitionTo(currentStatus, target),
+    possibleTransitions: EDITING_MODE_TRANSITIONS[currentStatus],
     isInEventPhase: isEventPhase(currentStatus),
     isTerminal: isTerminalStatus(currentStatus),
     transitionTo,

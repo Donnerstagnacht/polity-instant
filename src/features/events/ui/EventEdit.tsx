@@ -11,7 +11,7 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
 import { Textarea } from '@/features/shared/ui/ui/textarea';
-import { Switch } from '@/features/shared/ui/ui/switch';
+import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
 import { Loader2, XCircle } from 'lucide-react';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
@@ -107,7 +107,7 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
         <div className="max-w-2xl">
           <CreateReviewCard
             badge={t('pages.create.event.reviewBadge')}
-            secondaryBadge={formData.isPublic ? t('pages.create.common.public') : t('pages.create.common.private')}
+            secondaryBadge={formData.visibility === 'public' ? t('pages.create.common.public') : t('pages.create.common.private')}
             title={formData.title || 'Untitled Event'}
             subtitle={formData.description || undefined}
             hashtags={formData.tags}
@@ -189,14 +189,7 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
                 rows={6}
               />
             </div>
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="isPublic"
-                checked={formData.isPublic}
-                onCheckedChange={checked => updateField('isPublic', checked)}
-              />
-              <Label htmlFor="isPublic">{t('features.events.editPage.publicEvent')}</Label>
-            </div>
+            <VisibilityInput value={formData.visibility} onChange={v => updateField('visibility', v)} />
             {!isCreating && event?.event_type && (
               <div className="space-y-2">
                 <Label>{t('pages.create.event.eventType')}</Label>

@@ -29,7 +29,6 @@ interface CreateTargetGroupData {
 interface CreateTargetEventData {
   id: string;
   title?: string | null;
-  is_public?: boolean | null;
   start_date?: number | null;
   location_name?: string | null;
   description?: string | null;
@@ -92,8 +91,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         id: amendmentId,
         title: title.trim(),
         code: subtitle || null,
-        status: 'Drafting',
-        workflow_status: 'collaborative_editing',
+        editing_mode: 'edit',
         reason: null,
         category: null,
         preamble: null,
@@ -103,8 +101,6 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         document_id: documentId,
         tags: hashtags.length > 0 ? hashtags : null,
         visibility,
-        is_public: visibility === 'public',
-        editing_mode: null,
         discussions: null,
         image_url: imageURL || null,
         x: null,

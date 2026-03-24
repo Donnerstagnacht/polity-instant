@@ -51,7 +51,7 @@ export const useCalendarData = () => {
             start_date: instance.start_date ?? 0,
             end_date: instance.end_date ?? 0,
             location: instance.location_name || instance.location_address || undefined,
-            is_public: instance.is_public ?? true,
+            visibility: instance.visibility ?? 'public',
             image_url: instance.image_url,
             description: instance.description || '',
             organizer: event.creator ? { id: event.creator.id, name: creatorName, avatar: event.creator.avatar ?? undefined } : undefined,

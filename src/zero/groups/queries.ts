@@ -216,7 +216,7 @@ export const groupQueries = {
   allUsersLimited: defineQuery(z.object({}), () => zql.user.limit(20)),
 
   /** Public groups with optional limit */
-  publicGroups: defineQuery(z.object({}), () => zql.group.where('is_public', true).limit(100)),
+  publicGroups: defineQuery(z.object({}), () => zql.group.where('visibility', 'public').limit(100)),
 
   /** User's group memberships with nested group→hashtags, events, amendments (for timeline) */
   userMembershipsWithGroupRelations: defineQuery(

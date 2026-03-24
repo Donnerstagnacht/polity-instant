@@ -94,9 +94,10 @@ export function VerifyForm() {
       console.log('✅ Verification successful, isNewUser:', result.isNewUser);
       
       if (result.isNewUser) {
-        // New user - redirect to onboarding
-        console.log('🎉 Redirecting to onboarding');
-        navigate({ to: '/', search: { onboarding: 'true' } });
+        // New user - set onboarding flag BEFORE navigating (TanStack Router strips unknown search params)
+        console.log('🎉 Setting polity_onboarding in sessionStorage and navigating to /');
+        sessionStorage.setItem('polity_onboarding', 'true');
+        navigate({ to: '/' });
       } else {
         // Existing user - redirect to homepage
         console.log('✅ Existing user, redirecting to homepage');

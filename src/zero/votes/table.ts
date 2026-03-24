@@ -1,4 +1,4 @@
-import { table, string, number, boolean } from '@rocicorp/zero'
+import { table, string, number } from '@rocicorp/zero'
 
 // ── Vote (amendment votes in agenda context) ──────────────────────────
 
@@ -14,7 +14,7 @@ export const vote = table('vote')
     closing_type: string().optional(),
     closing_duration_seconds: number().optional(),
     closing_end_time: number().optional(),
-    is_public: boolean(),
+    visibility: string(),
     created_at: number(),
     updated_at: number(),
   })

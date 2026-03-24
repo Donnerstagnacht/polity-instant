@@ -15,7 +15,7 @@ const baseElectionSchema = z.object({
   closing_type: z.string().nullable(),
   closing_duration_seconds: z.number().nullable(),
   closing_end_time: nullableTimestampSchema,
-  is_public: z.boolean(),
+  visibility: z.string(),
   max_votes: z.number(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
@@ -26,7 +26,7 @@ export const createElectionSchema = baseElectionSchema
   .omit({ id: true, created_at: true, updated_at: true })
   .extend({ id: z.string() })
 export const updateElectionSchema = baseElectionSchema
-  .pick({ title: true, description: true, status: true, majority_type: true, closing_type: true, closing_duration_seconds: true, closing_end_time: true, is_public: true, max_votes: true })
+  .pick({ title: true, description: true, status: true, majority_type: true, closing_type: true, closing_duration_seconds: true, closing_end_time: true, visibility: true, max_votes: true })
   .partial()
   .extend({ id: z.string() })
 export const deleteElectionSchema = z.object({ id: z.string() })

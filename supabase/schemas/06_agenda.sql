@@ -53,5 +53,3 @@ CREATE INDEX idx_speaker_list_agenda_item ON public.speaker_list (agenda_item_id
 
 ALTER TABLE public.speaker_list ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.speaker_list FOR ALL TO service_role USING (true);
-
-

@@ -226,7 +226,7 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
           closing_type: null,
           closing_duration_seconds: null,
           closing_end_time: null,
-          is_public: true,
+          visibility: 'public',
         });
 
         await updateAgendaItem({
@@ -336,7 +336,7 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
                 event_id: targetEventId,
                 amendment_id: amendmentId,
               });
-              await updateAmendment({ id: amendmentId, workflow_status: 'event_suggesting' });
+              await updateAmendment({ id: amendmentId, editing_mode: 'suggest_event' });
 
               await notifyAmendmentForwarded({
                 senderId: user.id,
@@ -347,9 +347,9 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
                 targetEventTitle: 'Event',
               });
             } else if (targetGroupId) {
-              await updateAmendment({ id: amendmentId, workflow_status: 'event_suggesting' });
+              await updateAmendment({ id: amendmentId, editing_mode: 'suggest_event' });
             } else {
-              await updateAmendment({ id: amendmentId, workflow_status: 'passed' });
+              await updateAmendment({ id: amendmentId, editing_mode: 'passed' });
             }
           } else if (result === 'rejected') {
             await updateAgendaItem({
@@ -357,7 +357,7 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
               forwarding_status: 'rejected',
               completed_at: Date.now(),
             });
-            await updateAmendment({ id: amendmentId, workflow_status: 'rejected' });
+            await updateAmendment({ id: amendmentId, editing_mode: 'rejected' });
 
             await notifyAmendmentRejected({
               senderId: user.id,

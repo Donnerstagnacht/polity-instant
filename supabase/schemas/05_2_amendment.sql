@@ -9,8 +9,6 @@ CREATE TABLE IF NOT EXISTS public.amendment (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   code TEXT,
   title TEXT,
-  status TEXT,
-  workflow_status TEXT,
   reason TEXT,
   category TEXT,
   preamble TEXT,
@@ -26,7 +24,6 @@ CREATE TABLE IF NOT EXISTS public.amendment (
   downvotes INTEGER NOT NULL DEFAULT 0,
   tags JSONB,
   visibility TEXT NOT NULL DEFAULT 'public',
-  is_public BOOLEAN NOT NULL DEFAULT true,
   subscriber_count INTEGER NOT NULL DEFAULT 0,
   clone_count INTEGER NOT NULL DEFAULT 0,
   change_request_count INTEGER NOT NULL DEFAULT 0,
@@ -46,7 +43,7 @@ CREATE TABLE IF NOT EXISTS public.amendment (
 CREATE INDEX idx_amendment_created_by ON public.amendment (created_by_id);
 CREATE INDEX idx_amendment_group ON public.amendment (group_id);
 CREATE INDEX idx_amendment_event ON public.amendment (event_id);
-CREATE INDEX idx_amendment_status ON public.amendment (status);
+CREATE INDEX idx_amendment_editing_mode ON public.amendment (editing_mode);
 
 ALTER TABLE public.amendment ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.amendment FOR ALL TO service_role USING (true);

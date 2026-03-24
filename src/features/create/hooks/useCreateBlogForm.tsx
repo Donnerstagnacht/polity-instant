@@ -63,7 +63,6 @@ export function useCreateBlogForm(): CreateFormConfig {
           content: null,
           date,
           image_url: imageURL,
-          is_public: visibility === 'public',
           visibility,
           like_count: 0,
           comment_count: 0,

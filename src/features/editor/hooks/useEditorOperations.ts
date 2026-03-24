@@ -43,7 +43,7 @@ function getDefaultVersionTitle(creationType: string): string {
 
 export function useEditorOperations(entityType: EditorEntityType, entityId: string) {
   const { createVersion } = useDocumentActions()
-  const { createChangeRequest, voteOnChangeRequest } = useAmendmentActions()
+  const { createChangeRequest, updateChangeRequest, voteOnChangeRequest } = useAmendmentActions()
 
   // Query versions for computing next version number
   const isBlog = entityType === 'blog'
@@ -75,6 +75,33 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
     [entityId, isBlog, latestVersionNumber, createVersion]
   )
 
+  const handleSuggestionCreated = useCallback(
+    async (params: { id: string; crId: string; amendmentId: string }) => {
+      console.log('[useEditorOperations] handleSuggestionCreated called:', params);
+      try {
+        await createChangeRequest({
+          id: params.id,
+          amendment_id: params.amendmentId,
+          title: params.crId,
+          description: '',
+          status: 'open',
+          source_type: null,
+          source_id: null,
+          source_title: null,
+          reason: null,
+          voting_status: 'open',
+          voting_deadline: null,
+          voting_majority_type: null,
+          quorum_required: null,
+        })
+        console.log('[useEditorOperations] change_request created successfully:', params.id);
+      } catch (error) {
+        console.error('[useEditorOperations] Failed to create change request entity:', error)
+      }
+    },
+    [createChangeRequest]
+  )
+
   const handleSuggestionAccepted = useCallback(
     async (
       userId: string,
@@ -84,7 +111,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
       editingMode?: EditorMode,
       amendmentId?: string,
     ): Promise<{ updatedDiscussions: TDiscussion[] }> => {
-      if (editingMode === 'vote') {
+      if (editingMode === 'vote_internal' || editingMode === 'vote_event') {
         toast.error(
           'This document is in voting mode. Changes must be approved by vote on the Change Requests page.'
         )
@@ -108,22 +135,30 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
         })
 
         if (entityType === 'amendment' && discussion && amendmentId) {
-          const changeRequestId = crypto.randomUUID()
-          await createChangeRequest({
-            id: changeRequestId,
-            amendment_id: amendmentId,
-            title: discussion.crId || 'Change Request',
-            description: '',
-            status: 'accepted',
-            source_type: null,
-            source_id: null,
-            source_title: null,
-            reason: null,
-            voting_status: 'completed',
-            voting_deadline: null,
-            voting_majority_type: null,
-            quorum_required: null,
-          })
+          if (discussion.changeRequestEntityId) {
+            await updateChangeRequest({
+              id: discussion.changeRequestEntityId,
+              status: 'accepted',
+              voting_status: 'completed',
+            })
+          } else {
+            const changeRequestId = crypto.randomUUID()
+            await createChangeRequest({
+              id: changeRequestId,
+              amendment_id: amendmentId,
+              title: discussion.crId || 'Change Request',
+              description: '',
+              status: 'accepted',
+              source_type: null,
+              source_id: null,
+              source_title: null,
+              reason: null,
+              voting_status: 'completed',
+              voting_deadline: null,
+              voting_majority_type: null,
+              quorum_required: null,
+            })
+          }
         }
 
         return { updatedDiscussions }
@@ -133,7 +168,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
         return { updatedDiscussions: discussions }
       }
     },
-    [entityType, createVersionForEntity, createChangeRequest]
+    [entityType, createVersionForEntity, createChangeRequest, updateChangeRequest]
   )
 
   const handleSuggestionDeclined = useCallback(
@@ -145,7 +180,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
       editingMode?: EditorMode,
       amendmentId?: string,
     ): Promise<{ updatedDiscussions: TDiscussion[] }> => {
-      if (editingMode === 'vote') {
+      if (editingMode === 'vote_internal' || editingMode === 'vote_event') {
         toast.error(
           'This document is in voting mode. Changes must be declined by vote on the Change Requests page.'
         )
@@ -170,22 +205,30 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
           )
 
           if (discussion) {
-            const changeRequestId = crypto.randomUUID()
-            await createChangeRequest({
-              id: changeRequestId,
-              amendment_id: amendmentId,
-              title: discussion.crId || 'Change Request',
-              description: '',
-              status: 'rejected',
-              source_type: null,
-              source_id: null,
-              source_title: null,
-              reason: null,
-              voting_status: 'completed',
-              voting_deadline: null,
-              voting_majority_type: null,
-              quorum_required: null,
-            })
+            if (discussion.changeRequestEntityId) {
+              await updateChangeRequest({
+                id: discussion.changeRequestEntityId,
+                status: 'rejected',
+                voting_status: 'completed',
+              })
+            } else {
+              const changeRequestId = crypto.randomUUID()
+              await createChangeRequest({
+                id: changeRequestId,
+                amendment_id: amendmentId,
+                title: discussion.crId || 'Change Request',
+                description: '',
+                status: 'rejected',
+                source_type: null,
+                source_id: null,
+                source_title: null,
+                reason: null,
+                voting_status: 'completed',
+                voting_deadline: null,
+                voting_majority_type: null,
+                quorum_required: null,
+              })
+            }
           }
         }
 
@@ -196,7 +239,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
         return { updatedDiscussions: discussions }
       }
     },
-    [entityType, createVersionForEntity, createChangeRequest]
+    [entityType, createVersionForEntity, createChangeRequest, updateChangeRequest]
   )
 
   const handleVoteOnSuggestion = useCallback(
@@ -217,23 +260,27 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
           return
         }
 
-        // Create a change request for the suggestion if needed
-        const changeRequestId = crypto.randomUUID()
-        await createChangeRequest({
-          id: changeRequestId,
-          amendment_id: amendmentId,
-          title: discussion.crId || 'Change Request',
-          description: '',
-          status: 'pending',
-          source_type: null,
-          source_id: null,
-          source_title: null,
-          reason: null,
-          voting_status: 'open',
-          voting_deadline: null,
-          voting_majority_type: null,
-          quorum_required: null,
-        })
+        let changeRequestId = discussion.changeRequestEntityId
+
+        if (!changeRequestId) {
+          // Fallback: create change request if none exists yet
+          changeRequestId = crypto.randomUUID()
+          await createChangeRequest({
+            id: changeRequestId,
+            amendment_id: amendmentId,
+            title: discussion.crId || 'Change Request',
+            description: '',
+            status: 'pending',
+            source_type: null,
+            source_id: null,
+            source_title: null,
+            reason: null,
+            voting_status: 'open',
+            voting_deadline: null,
+            voting_majority_type: null,
+            quorum_required: null,
+          })
+        }
 
         // Cast the vote on the change request
         const voteId = crypto.randomUUID()
@@ -253,6 +300,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
   )
 
   return {
+    handleSuggestionCreated,
     handleSuggestionAccepted,
     handleSuggestionDeclined,
     handleVoteOnSuggestion,

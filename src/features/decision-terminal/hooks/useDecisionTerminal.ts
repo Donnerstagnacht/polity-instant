@@ -8,6 +8,7 @@ import { useVoteState } from '@/zero/votes/useVoteState';
 import { computeVoteResultSummary, type MajorityType } from '@/features/vote-cast/logic/computeVoteResults';
 import type { VoteWithDetailsRow } from '@/zero/votes';
 import type { DecisionItem } from '../ui/types';
+import type { Visibility } from '@/features/auth/logic/checkEntityAccess';
 import type { TrendData } from '../ui/TrendIndicator';
 import {
   getDecisionStatus,
@@ -256,6 +257,7 @@ export function useDecisionTerminal(
         isOpeningSoon: !isEnded && startsAt ? isOpeningSoon(startsAt) : false,
         isRecentlyClosed: isEnded ? isRecentlyClosed(endsAt) : false,
         isUrgent: isUrgent(endsAt),
+        visibility: (election.visibility as Visibility) ?? 'public',
         trend: { direction: 'stable', percentage: 0 },
         votedCount: currentSelectionCount,
         totalMembers: totalElectors,
@@ -362,6 +364,7 @@ export function useDecisionTerminal(
         isOpeningSoon: !isEnded && voteStartsAt ? isOpeningSoon(voteStartsAt) : false,
         isRecentlyClosed: isEnded ? isRecentlyClosed(endsAt) : false,
         isUrgent: isUrgent(endsAt),
+        visibility: (vote.visibility as Visibility) ?? 'public',
         trend,
         votes: currentVotes,
         turnout,

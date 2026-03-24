@@ -5,7 +5,7 @@
 
 -- Election table (modified: removed amendment_id, is_multiple_choice, max_selections,
 -- voting_start_time, voting_end_time; added closing_type, closing_duration_seconds,
--- closing_end_time, is_public, max_votes)
+-- closing_end_time, max_votes)
 CREATE TABLE IF NOT EXISTS public.election (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   agenda_item_id UUID,
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS public.election (
   closing_type TEXT,
   closing_duration_seconds INTEGER,
   closing_end_time TIMESTAMPTZ,
-  is_public BOOLEAN NOT NULL DEFAULT true,
+  visibility VARCHAR NOT NULL DEFAULT 'public',
   max_votes INTEGER NOT NULL DEFAULT 1,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()

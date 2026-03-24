@@ -3,8 +3,10 @@ import { usePlateState } from 'platejs/react';
 import { SuggestionPlugin } from '@platejs/suggestion/react';
 import { useEditorPlugin } from 'platejs/react';
 
+import type { EditorMode } from '@/features/editor/types';
+
 interface ModeSyncProps {
-  currentMode?: 'edit' | 'view' | 'suggest' | 'vote';
+  currentMode?: EditorMode;
 }
 
 /**
@@ -19,11 +21,11 @@ export function ModeSync({ currentMode }: ModeSyncProps) {
     if (!currentMode) return;
 
     // Set readonly based on mode
-    const shouldBeReadOnly = currentMode === 'view' || currentMode === 'vote';
+    const shouldBeReadOnly = currentMode === 'view' || currentMode === 'vote_internal' || currentMode === 'vote_event';
     setReadOnly(shouldBeReadOnly);
 
     // Set suggesting based on mode
-    const shouldBeSuggesting = currentMode === 'suggest';
+    const shouldBeSuggesting = currentMode === 'suggest_internal' || currentMode === 'suggest_event';
     setOption('isSuggesting', shouldBeSuggesting);
   }, [currentMode, setReadOnly, setOption]);
 

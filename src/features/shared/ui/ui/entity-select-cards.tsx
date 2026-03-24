@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card.tsx';
 import { Badge } from '@/features/shared/ui/ui/badge.tsx';
+import { EditingModeBadge } from '@/features/shared/ui/ui/editing-mode.tsx';
 import { Calendar, Users, MapPin, Scale, FileText } from 'lucide-react';
 
 interface SelectableEvent {
@@ -20,7 +21,7 @@ interface SelectableGroup {
 interface SelectableAmendment {
   title?: string | null;
   subtitle?: string | null;
-  status?: string | null;
+  editing_mode?: string | null;
 }
 
 interface SelectableElection {
@@ -137,11 +138,9 @@ export function AmendmentSelectCard({ amendment }: { amendment: SelectableAmendm
           <CardDescription className="line-clamp-1 text-xs">{amendment.subtitle}</CardDescription>
         )}
       </CardHeader>
-      {amendment.status && (
+      {amendment.editing_mode && (
         <CardContent className="pt-0">
-          <Badge variant="secondary" className="text-xs">
-            {amendment.status}
-          </Badge>
+          <EditingModeBadge mode={amendment.editing_mode} variant="secondary" className="text-xs" />
         </CardContent>
       )}
     </Card>

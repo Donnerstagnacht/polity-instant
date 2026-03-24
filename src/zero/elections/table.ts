@@ -1,4 +1,4 @@
-import { table, string, number, boolean } from '@rocicorp/zero'
+import { table, string, number } from '@rocicorp/zero'
 
 export const election = table('election')
   .columns({
@@ -12,7 +12,7 @@ export const election = table('election')
     closing_type: string().optional(),
     closing_duration_seconds: number().optional(),
     closing_end_time: number().optional(),
-    is_public: boolean(),
+    visibility: string(),
     max_votes: number(),
     created_at: number(),
     updated_at: number(),

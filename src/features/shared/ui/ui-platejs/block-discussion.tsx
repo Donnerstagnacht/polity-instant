@@ -36,6 +36,7 @@ import {
 import { commentPlugin } from '@/features/shared/ui/kit-platejs/comment-kit.tsx';
 import { type TDiscussion, discussionPlugin } from '@/features/shared/ui/kit-platejs/discussion-kit.tsx';
 import { suggestionPlugin } from '@/features/shared/ui/kit-platejs/suggestion-kit.tsx';
+import { useModeContext } from '@/features/shared/ui/kit-platejs/mode-context.tsx';
 
 import {
   BlockSuggestionCard,
@@ -87,17 +88,23 @@ const BlockCommentContent = ({
   suggestionNodes: NodeEntry<TElement | TSuggestionText>[];
 }) => {
   const editor = useEditorRef();
+  const { selectedCrId } = useModeContext();
 
   const resolvedSuggestions = useResolveSuggestion(suggestionNodes, blockPath);
   const resolvedDiscussions = useResolvedDiscussion(commentNodes, blockPath);
 
-  const suggestionsCount = resolvedSuggestions.length;
+  // Filter suggestions when a specific CR is selected
+  const filteredSuggestions = selectedCrId
+    ? resolvedSuggestions.filter(s => s.crId === selectedCrId)
+    : resolvedSuggestions;
+
+  const suggestionsCount = filteredSuggestions.length;
   const discussionsCount = resolvedDiscussions.length;
   const totalCount = suggestionsCount + discussionsCount;
 
   const activeSuggestionId = usePluginOption(suggestionPlugin, 'activeId');
   const activeSuggestion =
-    activeSuggestionId && resolvedSuggestions.find(s => s.suggestionId === activeSuggestionId);
+    activeSuggestionId && filteredSuggestions.find(s => s.suggestionId === activeSuggestionId);
 
   const commentingBlock = usePluginOption(commentPlugin, 'commentingBlock');
   const activeCommentId = usePluginOption(commentPlugin, 'activeId');
@@ -107,13 +114,13 @@ const BlockCommentContent = ({
 
   const noneActive = !activeSuggestion && !activeDiscussion;
 
-  const sortedMergedData = [...resolvedDiscussions, ...resolvedSuggestions].sort(
+  const sortedMergedData = [...resolvedDiscussions, ...filteredSuggestions].sort(
     (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
   );
 
   const selected =
     resolvedDiscussions.some(d => d.id === activeCommentId) ||
-    resolvedSuggestions.some(s => s.suggestionId === activeSuggestionId);
+    filteredSuggestions.some(s => s.suggestionId === activeSuggestionId);
 
   const [_open, setOpen] = React.useState(selected);
 
@@ -358,29 +365,32 @@ const useResolvedDiscussion = (commentNodes: NodeEntry<TCommentText>[], blockPat
   const { api, getOption, setOption } = useEditorPlugin(commentPlugin);
 
   const discussions = usePluginOption(discussionPlugin, 'discussions');
+  const uniquePathMap = usePluginOption(commentPlugin, 'uniquePathMap');
 
-  commentNodes.forEach(([node]) => {
-    const id = api.comment.nodeId(node);
-    const map = getOption('uniquePathMap');
+  React.useEffect(() => {
+    commentNodes.forEach(([node]) => {
+      const id = api.comment.nodeId(node);
+      const map = getOption('uniquePathMap');
 
-    if (!id) return;
+      if (!id) return;
 
-    const previousPath = map.get(id);
+      const previousPath = map.get(id);
 
-    // If there are no comment nodes in the corresponding path in the map, then update it.
-    if (PathApi.isPath(previousPath)) {
-      const nodes = api.comment.node({ id, at: previousPath });
+      // If there are no comment nodes in the corresponding path in the map, then update it.
+      if (PathApi.isPath(previousPath)) {
+        const nodes = api.comment.node({ id, at: previousPath });
 
-      if (!nodes) {
-        setOption('uniquePathMap', new Map(map).set(id, blockPath));
+        if (!nodes) {
+          setOption('uniquePathMap', new Map(map).set(id, blockPath));
+          return;
+        }
+
         return;
       }
-
-      return;
-    }
-    // Fallback: set path when previousPath is not a valid path
-    setOption('uniquePathMap', new Map(map).set(id, blockPath));
-  });
+      // Fallback: set path when previousPath is not a valid path
+      setOption('uniquePathMap', new Map(map).set(id, blockPath));
+    });
+  }, [api.comment, blockPath, commentNodes, getOption, setOption]);
 
   const commentsIds = new Set(
     commentNodes.map(([node]) => api.comment.nodeId(node)).filter(Boolean)
@@ -393,8 +403,7 @@ const useResolvedDiscussion = (commentNodes: NodeEntry<TCommentText>[], blockPat
     }))
     .filter((item: TDiscussion) => {
       /** If comment cross blocks just show it in the first block */
-      const commentsPathMap = getOption('uniquePathMap');
-      const firstBlockPath = commentsPathMap.get(item.id);
+      const firstBlockPath = uniquePathMap.get(item.id);
 
       if (!firstBlockPath) return false;
       if (!PathApi.equals(firstBlockPath, blockPath)) return false;

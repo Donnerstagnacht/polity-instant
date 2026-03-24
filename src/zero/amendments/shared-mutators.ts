@@ -112,17 +112,6 @@ export const amendmentSharedMutators = {
     }
   ),
 
-  updateWorkflowStatus: defineMutator(
-    z.object({ id: z.string(), workflow_status: z.string() }),
-    async ({ tx, args }) => {
-      await tx.mutate.amendment.update({
-        id: args.id,
-        workflow_status: args.workflow_status,
-        updated_at: Date.now(),
-      })
-    }
-  ),
-
   supportAmendment: defineMutator(
     createAmendmentSupportVoteSchema,
     async ({ tx, ctx: { userID }, args }) => {

@@ -105,7 +105,7 @@ export const MonthView = ({ selectedDate, onDateSelect, events, allEvents }: Mon
                       )}
                       {event.isMeeting && (
                         <p className="mt-1 text-xs text-muted-foreground">
-                          {event.is_public
+                          {event.visibility === 'public'
                             ? t('features.calendar.eventCard.publicMeeting')
                             : t('features.calendar.eventCard.privateMeeting')}
                         </p>

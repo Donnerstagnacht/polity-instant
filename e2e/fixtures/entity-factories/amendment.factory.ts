@@ -40,21 +40,21 @@ export class AmendmentFactory extends FactoryBase {
     this._counter++;
     const amendmentId = overrides.id ?? this.generateId();
     const title = overrides.title ?? `E2E Amendment ${this._counter}`;
-    const workflowStatus = overrides.workflowStatus ?? 'collaborative_editing';
+    const workflowStatus = overrides.workflowStatus ?? 'edit';
     const now = new Date().toISOString();
 
     const documentId = this.generateId();
     const authorRoleId = this.generateId();
     const collaboratorRoleId = this.generateId();
 
-    // Map workflow status to editing mode
+    // Map editing mode to document editing mode
     const editingModeMap: Record<string, string> = {
-      collaborative_editing: 'edit',
-      internal_suggesting: 'suggest',
-      internal_voting: 'vote',
-      viewing: 'view',
-      event_suggesting: 'suggest',
-      event_voting: 'vote',
+      edit: 'edit',
+      suggest_internal: 'suggest',
+      vote_internal: 'vote',
+      view: 'view',
+      suggest_event: 'suggest',
+      vote_event: 'vote',
       passed: 'view',
       rejected: 'view',
     };
@@ -63,8 +63,7 @@ export class AmendmentFactory extends FactoryBase {
     await adminUpsert('amendment', {
       id: amendmentId,
       title,
-      status: overrides.status ?? 'Under Review',
-      workflow_status: workflowStatus,
+      editing_mode: workflowStatus,
       event_id: overrides.currentEventId ?? null,
       code: `AMN-E2E-${this._counter}`,
       visibility: overrides.visibility ?? 'public',

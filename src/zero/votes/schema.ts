@@ -16,7 +16,7 @@ const baseVoteSchema = z.object({
   closing_type: z.string().nullable(),
   closing_duration_seconds: z.number().nullable(),
   closing_end_time: nullableTimestampSchema,
-  is_public: z.boolean(),
+  visibility: z.string(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
 })
@@ -24,20 +24,20 @@ const baseVoteSchema = z.object({
 const defaultVoteStatusSchema = z.string().nullable().optional().transform(value => value ?? 'indicative')
 const defaultVoteMajorityTypeSchema = z.string().nullable().optional().transform(value => value ?? 'relative')
 const defaultVoteClosingTypeSchema = z.string().nullable().optional().transform(value => value ?? 'moderator')
-const defaultVoteVisibilitySchema = z.boolean().nullable().optional().transform(value => value ?? true)
+const defaultVoteVisibilitySchema = z.string().optional().transform(value => value ?? 'public')
 
 export const selectVoteSchema = baseVoteSchema
 export const createVoteSchema = baseVoteSchema
-  .omit({ id: true, created_at: true, updated_at: true, status: true, majority_type: true, closing_type: true, is_public: true })
+  .omit({ id: true, created_at: true, updated_at: true, status: true, majority_type: true, closing_type: true, visibility: true })
   .extend({
     id: z.string(),
     status: defaultVoteStatusSchema,
     majority_type: defaultVoteMajorityTypeSchema,
     closing_type: defaultVoteClosingTypeSchema,
-    is_public: defaultVoteVisibilitySchema,
+    visibility: defaultVoteVisibilitySchema,
   })
 export const updateVoteSchema = baseVoteSchema
-  .pick({ title: true, description: true, status: true, majority_type: true, closing_type: true, closing_duration_seconds: true, closing_end_time: true, is_public: true })
+  .pick({ title: true, description: true, status: true, majority_type: true, closing_type: true, closing_duration_seconds: true, closing_end_time: true, visibility: true })
   .partial()
   .extend({ id: z.string() })
 export const deleteVoteSchema = z.object({ id: z.string() })

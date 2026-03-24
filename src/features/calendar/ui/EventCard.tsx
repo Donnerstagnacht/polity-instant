@@ -51,7 +51,7 @@ export const EventCard = ({ event }: EventCardProps) => {
                     {t('features.calendar.eventCard.meeting')}
                   </Badge>
                 )}
-                {event.is_public ? (
+                {event.visibility === 'public' ? (
                   <Badge variant="secondary" className="text-xs">
                     {t('features.calendar.eventCard.public')}
                   </Badge>

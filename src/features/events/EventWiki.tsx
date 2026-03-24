@@ -49,6 +49,7 @@ import {
   CarouselPrevious,
 } from '@/features/shared/ui/ui/carousel';
 import { useEventWikiPage } from './hooks/useEventWikiPage';
+import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 
 interface EventWikiProps {
   eventId: string;
@@ -59,6 +60,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
   const {
     navigate,
     user,
+    canAccess,
     isSubscribed,
     subscriberCount,
     toggleSubscribe,
@@ -93,6 +95,10 @@ export function EventWiki({ eventId }: EventWikiProps) {
     );
   }
 
+  if (!canAccess) {
+    return <AccessDenied />;
+  }
+
   const { electionsCount, amendmentsCount, openChangeRequestsCount } = agendaStats;
 
   return (
@@ -101,7 +107,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
       <div className="mb-8 text-center">
         <div className="mb-2 flex items-center justify-center gap-3">
           <h1 className="text-4xl font-bold">{event.title}</h1>
-          {event.is_public ? (
+          {event.visibility === 'public' ? (
             <Badge variant="default">{t('components.badges.public')}</Badge>
           ) : (
             <Badge variant="secondary">{t('components.badges.private')}</Badge>
@@ -248,7 +254,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
       />
 
       {/* Public Participants Card */}
-      {event.is_public && (
+      {event.visibility === 'public' && (
         <Card
           className={`mb-6 cursor-pointer overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${GRADIENTS[1]}`}
           onClick={() => setParticipantsDialogOpen(true)}

@@ -38,6 +38,8 @@ import { useZero } from '@rocicorp/zero/react';
 import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import type { Value } from 'platejs';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
+import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
+import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useDocumentState } from '@/zero/documents/useDocumentState';
 import { mutators } from '@/zero/mutators';
@@ -74,6 +76,8 @@ interface UseEditorOptions {
   groupId?: string;
   /** Override default capabilities for this entity type */
   capabilities?: Partial<EditorCapabilities>;
+  /** Agenda item ID for amendment CR voting initialization */
+  agendaItemId?: string;
 }
 
 /**
@@ -83,8 +87,10 @@ interface UseEditorOptions {
  * @returns Editor state and actions
  */
 export function useEditor(options: UseEditorOptions): EditorState & EditorActions {
-  const { entityType, entityId, userId, groupId } = options;
+  const { entityType, entityId, userId, groupId, agendaItemId } = options;
   const zero = useZero();
+  const { updateEditingMode } = useAmendmentActions();
+  const { initializeChangeRequestVoting } = useAgendaActions();
 
   // Query data based on entity type via facade hooks
   const amId = entityType === 'amendment' ? entityId : undefined;
@@ -111,6 +117,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
   const [content, setContentState] = useState<Value>(DEFAULT_EDITOR_CONTENT);
   const [discussions, setDiscussionsState] = useState<TDiscussion[]>([]);
   const [mode, setModeState] = useState<EditorMode>('edit');
+  const [selectedCrId, setSelectedCrId] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSavingTitle, setIsSavingTitle] = useState(false);
@@ -375,6 +382,24 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         } else {
           await zero.mutate(mutators.documents.updateContent({ id: contentEntityId, editing_mode: newMode }));
         }
+
+        // For amendments, also update the amendment record and handle CR voting
+        if (entityType === 'amendment') {
+          await updateEditingMode(entityId, newMode);
+
+          if (newMode === 'vote_event' && agendaItemId) {
+            console.info('[useEditor] Initializing CR voting', { amendmentId: entityId, agendaItemId });
+            await initializeChangeRequestVoting({
+              amendment_id: entityId,
+              agenda_item_id: agendaItemId,
+              voting_context: 'event',
+            });
+            console.info('[useEditor] CR voting initialized', { amendmentId: entityId, agendaItemId });
+          } else if (newMode === 'vote_event' && !agendaItemId) {
+            console.warn('[useEditor] Cannot initialize CR voting — no agenda item linked', { amendmentId: entityId });
+          }
+        }
+
         setModeState(newMode);
         toast.success(`Mode changed to ${newMode}`);
       } catch (error) {
@@ -382,7 +407,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         toast.error('Failed to change mode');
       }
     },
-    [entityType, contentEntityId, zero]
+    [entityType, entityId, contentEntityId, agendaItemId, zero, updateEditingMode, initializeChangeRequestVoting]
   );
 
   // Restore version handler
@@ -412,7 +437,8 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
   // Access checks
   const hasAccess = useMemo(() => {
     if (!entity) return false;
-    if (entity.isPublic) return true;
+    if (entity.visibility === 'public') return true;
+    if (entity.visibility === 'authenticated' && !!userId) return true;
     if (!userId) return false;
     if (entity.owner?.id === userId) return true;
     return entity.collaborators.some(c => c.user.id === userId);
@@ -443,6 +469,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
     content,
     discussions,
     mode,
+    selectedCrId,
 
     // Save status
     saveStatus,
@@ -461,6 +488,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
     setContent,
     setDiscussions,
     setMode,
+    setSelectedCrId,
     restoreVersion: handleRestoreVersion,
   };
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Input } from '@/features/shared/ui/ui/input';
@@ -8,32 +8,38 @@ import { Label } from '@/features/shared/ui/ui/label';
 import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { ChevronDown, Loader2 } from 'lucide-react';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { VideoUpload } from '@/features/file-upload/ui/VideoUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/features/shared/ui/ui/dropdown-menu.tsx';
 import { Switch } from '@/features/shared/ui/ui/switch';
+import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
+import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
-import type { WorkflowStatus } from '@/zero/rbac/workflow-constants';
+import type { EditingMode } from '@/zero/rbac/workflow-constants';
+import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
 import {
-  WORKFLOW_STATUS_METADATA,
-  COLLABORATOR_SELECTABLE_STATUSES,
+  SELECTABLE_MODES,
   isEventPhase,
+  normalizeEditingMode,
 } from '@/zero/rbac/workflow-constants';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { notifyAmendmentProfileUpdated } from '@/features/notifications/utils/notification-helpers.ts';
 import type { AmendmentCollaboratorRow } from '@/zero/amendments/queries';
 import { CreateReviewCard, SummaryField } from '@/features/shared/ui/ui/create-review-card';
+import {
+  EditingModeMenuItems,
+  getEditingModeOption,
+  type SelectableEditingMode,
+} from '@/features/shared/ui/ui/editing-mode.tsx';
 
 interface AmendmentEditContentProps {
   amendmentId: string;
@@ -42,6 +48,7 @@ interface AmendmentEditContentProps {
   currentUserId: string;
   isLoading: boolean;
   mode?: 'create' | 'edit';
+  agendaItemId?: string;
 }
 
 export function AmendmentEditContent({
@@ -51,11 +58,13 @@ export function AmendmentEditContent({
   currentUserId,
   isLoading,
   mode,
+  agendaItemId,
 }: AmendmentEditContentProps) {
   const isCreating = mode === 'create' || !amendment;
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { updateAmendment, createAmendment } = useAmendmentActions();
+  const { updateAmendment, createAmendment, updateEditingMode } = useAmendmentActions();
+  const { initializeChangeRequestVoting } = useAgendaActions();
   const commonActions = useCommonActions();
   const { amendmentHashtags, allHashtags } = useCommonState({
     amendment_id: amendmentId,
@@ -69,13 +78,17 @@ export function AmendmentEditContent({
     imageURL: '',
     videoURL: '',
     videoThumbnailURL: '',
-    status: 'Drafting',
-    workflowStatus: 'collaborative_editing' as WorkflowStatus,
+    workflowStatus: 'edit' as EditingMode,
     autoCloseVoting: false,
+    visibility: 'public' as Visibility,
     date: '',
     supporters: 0,
     hashtags: [] as string[],
   });
+  const workflowStatusOption = getEditingModeOption(formData.workflowStatus, t);
+  const workflowMenuValue = (
+    SELECTABLE_MODES.includes(formData.workflowStatus) ? formData.workflowStatus : 'view'
+  ) as SelectableEditingMode;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showReview, setShowReview] = useState(false);
@@ -102,9 +115,9 @@ export function AmendmentEditContent({
         imageURL: amendment.image_url || '',
         videoURL: '',
         videoThumbnailURL: '',
-        status: amendment.status || 'Drafting',
-        workflowStatus: (amendment.workflow_status as WorkflowStatus) || 'collaborative_editing',
+        workflowStatus: normalizeEditingMode(amendment.editing_mode),
         autoCloseVoting: false, // Will be loaded from document settings
+        visibility: (amendment.visibility as Visibility) ?? 'public',
         date: new Date().toLocaleDateString(),
         supporters: 0,
         hashtags: amendmentHashtags
@@ -113,6 +126,73 @@ export function AmendmentEditContent({
       });
     }
   }, [amendment]);
+
+  useEffect(() => {
+    if (!amendment || !initializedRef.current) return;
+
+    const workflowStatus = normalizeEditingMode(amendment.editing_mode);
+
+    setFormData(prev =>
+      prev.workflowStatus === workflowStatus ? prev : { ...prev, workflowStatus }
+    );
+  }, [amendment?.editing_mode]);
+
+  const handleWorkflowStatusChange = useCallback(
+    async (value: SelectableEditingMode) => {
+      if (value === formData.workflowStatus) return;
+
+      const previousWorkflowStatus = formData.workflowStatus;
+      console.info('[AmendmentEditContent] Changing workflow status from settings', {
+        amendmentId,
+        newMode: value,
+        previousMode: previousWorkflowStatus,
+      });
+      setFormData(prev => ({ ...prev, workflowStatus: value as EditingMode }));
+
+      if (isCreating || !amendment) {
+        return;
+      }
+
+      try {
+        await updateEditingMode(amendmentId, value);
+        console.info('[AmendmentEditContent] Workflow status persisted from settings', {
+          amendmentId,
+          newMode: value,
+          previousMode: previousWorkflowStatus,
+        });
+
+        // Initialize CR voting when transitioning to vote_event
+        if (value === 'vote_event' && agendaItemId) {
+          console.info('[AmendmentEditContent] Initializing CR voting', {
+            amendmentId,
+            agendaItemId,
+          });
+          await initializeChangeRequestVoting({
+            amendment_id: amendmentId,
+            agenda_item_id: agendaItemId,
+            voting_context: 'event',
+          });
+          console.info('[AmendmentEditContent] CR voting initialized', {
+            amendmentId,
+            agendaItemId,
+          });
+        } else if (value === 'vote_event' && !agendaItemId) {
+          console.warn('[AmendmentEditContent] Cannot initialize CR voting — no agenda item linked to this amendment', {
+            amendmentId,
+          });
+        }
+      } catch (error) {
+        setFormData(prev => ({ ...prev, workflowStatus: previousWorkflowStatus }));
+        console.error('[AmendmentEditContent] Failed to persist workflow status from settings', {
+          amendmentId,
+          newMode: value,
+          previousMode: previousWorkflowStatus,
+          error,
+        });
+      }
+    },
+    [amendment, amendmentId, agendaItemId, formData.workflowStatus, isCreating, updateEditingMode, initializeChangeRequestVoting]
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,8 +203,7 @@ export function AmendmentEditContent({
           id: amendmentId,
           title: formData.title || null,
           code: formData.code || null,
-          status: formData.status || null,
-          workflow_status: formData.workflowStatus || null,
+          editing_mode: formData.workflowStatus || null,
           reason: null,
           category: null,
           preamble: null,
@@ -133,9 +212,7 @@ export function AmendmentEditContent({
           clone_source_id: null,
           document_id: null,
           tags: formData.hashtags.length > 0 ? formData.hashtags : null,
-          visibility: 'public',
-          is_public: true,
-          editing_mode: null,
+          visibility: formData.visibility,
           discussions: null,
           image_url: formData.imageURL || null,
           x: null,
@@ -152,8 +229,8 @@ export function AmendmentEditContent({
           id: amendmentId,
           title: formData.title,
           code: formData.code,
-          status: formData.status,
-          workflow_status: formData.workflowStatus,
+          editing_mode: formData.workflowStatus,
+          visibility: formData.visibility,
           supporters: formData.supporters,
           tags: formData.hashtags,
           image_url: formData.imageURL || null,
@@ -273,14 +350,14 @@ export function AmendmentEditContent({
         <div className="max-w-2xl">
           <CreateReviewCard
             badge={t('pages.create.amendment.reviewBadge')}
-            secondaryBadge={formData.status}
+            secondaryBadge={workflowStatusOption.label}
             title={formData.title || 'Untitled Amendment'}
             subtitle={formData.subtitle || undefined}
             hashtags={formData.hashtags}
             gradient="from-violet-100 to-purple-100 dark:from-violet-900/40 dark:to-purple-900/50"
           >
             {formData.code && <SummaryField label={t('features.amendments.editContent.codeLabel')} value={formData.code.length > 200 ? formData.code.slice(0, 200) + '…' : formData.code} />}
-            <SummaryField label={t('features.amendments.editContent.workflowStatusLabel')} value={WORKFLOW_STATUS_METADATA[formData.workflowStatus]?.label || formData.workflowStatus} />
+            <SummaryField label={t('features.amendments.editContent.workflowStatusLabel')} value={workflowStatusOption.label} />
           </CreateReviewCard>
           <div className="mt-6 flex gap-3">
             <Button variant="outline" onClick={() => setShowReview(false)}>
@@ -381,6 +458,7 @@ export function AmendmentEditContent({
                 rows={10}
               />
             </div>
+            <VisibilityInput value={formData.visibility} onChange={v => setFormData({ ...formData, visibility: v })} />
           </CardContent>
         </Card>
 
@@ -392,31 +470,6 @@ export function AmendmentEditContent({
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="status">{t('features.amendments.editContent.statusLabel')}</Label>
-              <Select
-                value={formData.status}
-                onValueChange={value => setFormData({ ...formData, status: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t('features.amendments.editContent.selectStatus')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Drafting">
-                    {t('features.amendments.editContent.statusDrafting')}
-                  </SelectItem>
-                  <SelectItem value="Under Review">
-                    {t('features.amendments.editContent.statusUnderReview')}
-                  </SelectItem>
-                  <SelectItem value="Passed">
-                    {t('features.amendments.editContent.statusPassed')}
-                  </SelectItem>
-                  <SelectItem value="Rejected">
-                    {t('features.amendments.editContent.statusRejected')}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
             <div className="space-y-2">
               <Label htmlFor="date">{t('features.amendments.editContent.dateLabel')}</Label>
               <Input
@@ -456,31 +509,30 @@ export function AmendmentEditContent({
               <Label htmlFor="workflowStatus">
                 {t('features.amendments.editContent.workflowStatusLabel')}
               </Label>
-              <Select
-                value={formData.workflowStatus}
-                onValueChange={value =>
-                  setFormData({ ...formData, workflowStatus: value as WorkflowStatus })
-                }
-                disabled={isEventPhase(formData.workflowStatus)}
-              >
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={t('features.amendments.editContent.selectWorkflowStatus')}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between"
+                    disabled={isEventPhase(formData.workflowStatus)}
+                  >
+                    <span className="flex items-center gap-2">
+                      <div className={`h-2.5 w-2.5 rounded-full ${workflowStatusOption.colorClass}`} />
+                      <workflowStatusOption.Icon className="h-4 w-4" />
+                      <span>{workflowStatusOption.label}</span>
+                    </span>
+                    <ChevronDown className="h-4 w-4 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-80">
+                  <EditingModeMenuItems
+                    value={workflowMenuValue}
+                    onValueChange={handleWorkflowStatusChange}
                   />
-                </SelectTrigger>
-                <SelectContent>
-                  {COLLABORATOR_SELECTABLE_STATUSES.map(status => {
-                    const config = WORKFLOW_STATUS_METADATA[status];
-                    return (
-                      <SelectItem key={status} value={status}>
-                        {config.label}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <p className="text-xs text-muted-foreground">
-                {WORKFLOW_STATUS_METADATA[formData.workflowStatus].description}
+                {workflowStatusOption.description}
               </p>
               {isEventPhase(formData.workflowStatus) && (
                 <p className="text-xs text-amber-600">
@@ -489,7 +541,7 @@ export function AmendmentEditContent({
               )}
             </div>
 
-            {formData.workflowStatus === 'internal_voting' && (
+            {formData.workflowStatus === 'vote_internal' && (
               <div className="space-y-2 rounded-lg border p-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
@@ -503,7 +555,7 @@ export function AmendmentEditContent({
                   <Switch
                     id="autoCloseVoting"
                     checked={formData.autoCloseVoting}
-                    onCheckedChange={checked =>
+                    onCheckedChange={(checked: boolean) =>
                       setFormData({ ...formData, autoCloseVoting: checked })
                     }
                   />

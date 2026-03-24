@@ -21,11 +21,11 @@ import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { toast } from 'sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
-type EditingMode = 'edit' | 'view' | 'suggest' | 'vote';
+import type { EditorMode } from '@/features/editor/types';
 
 interface ModeSelectorProps {
   documentId: string;
-  currentMode: EditingMode;
+  currentMode: EditorMode;
   isOwnerOrCollaborator: boolean;
 }
 
@@ -39,28 +39,28 @@ export function ModeSelector({
 
   const modes = [
     {
-      value: 'edit' as EditingMode,
+      value: 'edit' as EditorMode,
       label: t('features.amendments.workflow.collaborativeEditing'),
       icon: Edit,
       description: t('features.amendments.modeSelector.active'),
       color: 'bg-blue-500',
     },
     {
-      value: 'view' as EditingMode,
+      value: 'view' as EditorMode,
       label: t('features.amendments.workflow.viewing'),
       icon: Eye,
       description: t('features.amendments.modeSelector.viewOnly'),
       color: 'bg-gray-500',
     },
     {
-      value: 'suggest' as EditingMode,
+      value: 'suggest_internal' as EditorMode,
       label: t('features.amendments.workflow.internalSuggesting'),
       icon: MessageSquare,
       description: t('features.amendments.modeSelector.active'),
       color: 'bg-purple-500',
     },
     {
-      value: 'vote' as EditingMode,
+      value: 'vote_internal' as EditorMode,
       label: t('features.amendments.workflow.internalVoting'),
       icon: Vote,
       description: t('features.amendments.modeSelector.active'),
@@ -71,7 +71,7 @@ export function ModeSelector({
   const currentModeConfig = modes.find(m => m.value === currentMode) || modes[0];
   const Icon = currentModeConfig.icon;
 
-  const handleModeChange = async (newMode: EditingMode) => {
+  const handleModeChange = async (newMode: EditorMode) => {
     if (newMode === currentMode) return;
 
     if (!isOwnerOrCollaborator) {

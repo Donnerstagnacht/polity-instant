@@ -15,7 +15,6 @@ export const user = table('user')
     linkedin: string().optional(),
     website: string().optional(),
     location: string().optional(),
-    is_public: boolean(),
     visibility: string(),
     subscriber_count: number(),
     amendment_count: number(),

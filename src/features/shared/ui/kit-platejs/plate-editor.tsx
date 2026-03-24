@@ -14,6 +14,7 @@ import { ModeSync } from '@/features/shared/ui/kit-platejs/mode-sync.tsx';
 import type { TDiscussion } from '@/features/shared/ui/kit-platejs/discussion-kit.tsx';
 import { RemoteCursorsSync } from '@/features/editor/ui/RemoteCursorsSync';
 import type { ResolvedSuggestion } from '@/features/shared/ui/ui-platejs/block-suggestion.tsx';
+import type { EditorMode } from '@/features/editor/types';
 
 interface PlateEditorProps {
   initialValue?: Value;
@@ -34,9 +35,11 @@ interface PlateEditorProps {
   onVoteAbstain?: (suggestion: ResolvedSuggestion) => void; // Vote abstain callback
   documentId?: string; // Document ID for suggestion ID generation
   documentTitle?: string; // Document title to show in discussions/suggestions
-  currentMode?: 'edit' | 'view' | 'suggest' | 'vote'; // Current editing mode from DB
-  onModeChange?: (mode: 'edit' | 'view' | 'suggest' | 'vote') => void; // Mode change callback
+  currentMode?: EditorMode; // Current editing mode from DB
+  onModeChange?: (mode: EditorMode) => void; // Mode change callback
   isOwnerOrCollaborator?: boolean; // Whether user can change modes
+  selectedCrId?: string | null; // Filter suggestions to a single CR
+  onSelectedCrIdChange?: (crId: string | null) => void;
   /** Remote cursor sync props */
   remoteCursors?: {
     entityId: string;
@@ -66,6 +69,8 @@ export function PlateEditor({
   currentMode,
   onModeChange,
   isOwnerOrCollaborator = true,
+  selectedCrId,
+  onSelectedCrIdChange,
   remoteCursors,
 }: PlateEditorProps) {
   const onChangeRef = React.useRef(onChange);
@@ -285,6 +290,8 @@ export function PlateEditor({
       currentMode={currentMode}
       onModeChange={onModeChange}
       isOwnerOrCollaborator={isOwnerOrCollaborator}
+      selectedCrId={selectedCrId}
+      onSelectedCrIdChange={onSelectedCrIdChange}
     >
       <SuggestionCallbacksProvider
         callbacks={{

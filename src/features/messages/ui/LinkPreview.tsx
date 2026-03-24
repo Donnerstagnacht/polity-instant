@@ -3,6 +3,7 @@
 import { Card, CardContent } from '@/features/shared/ui/ui/card.tsx';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar.tsx';
 import { Badge } from '@/features/shared/ui/ui/badge.tsx';
+import { EditingModeBadge } from '@/features/shared/ui/ui/editing-mode.tsx';
 import {
   Users,
   Calendar,
@@ -255,10 +256,12 @@ function AmendmentPreview({ amendmentId, className }: { amendmentId: string; cla
             {amendment.reason && (
               <p className="text-muted-foreground truncate text-xs">{amendment.reason}</p>
             )}
-            {amendment.status && (
-              <Badge variant="secondary" className="mt-1 text-xs capitalize">
-                {amendment.status}
-              </Badge>
+            {amendment.editing_mode && (
+              <EditingModeBadge
+                mode={amendment.editing_mode}
+                variant="secondary"
+                className="mt-1 text-xs"
+              />
             )}
           </div>
           <Badge variant="outline" className="flex-shrink-0 text-xs">

@@ -4,15 +4,9 @@ export { EnsureUser, useUser, useRequiredUser } from './EnsureUser';
 export { useAuthStore } from './auth';
 export { PermissionGuard } from './PermissionGuard';
 
-// Export constants
-export { ARIA_KAI_USER_ID, ARIA_KAI_EMAIL, ARIA_KAI_WELCOME_MESSAGE, ENTITY_DESCRIPTIONS } from './constants';
-export type { EntityTopic } from './constants';
-
-// Export utilities
-export {
-  checkAriaKaiExists,
-  ARIA_KAI_ERRORS,
-} from './utils/aria-kai-helpers';
+// Re-export assistant constants for backward compatibility
+export { ARIA_KAI_USER_ID, ARIA_KAI_EMAIL, ARIA_KAI_WELCOME_MESSAGE, ENTITY_DESCRIPTIONS } from '@/features/assistant/constants';
+export type { EntityTopic } from '@/features/assistant/constants';
 export {
   generateRandomHandle,
   buildUserInitializationTransactions,

@@ -11,7 +11,6 @@ CREATE TABLE IF NOT EXISTS public.blog (
   content JSONB,
   date TEXT,
   image_url TEXT,
-  is_public BOOLEAN,
   visibility TEXT NOT NULL DEFAULT 'public',
   subscriber_count INTEGER NOT NULL DEFAULT 0,
   supporter_count INTEGER NOT NULL DEFAULT 0,

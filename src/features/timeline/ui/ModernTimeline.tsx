@@ -359,29 +359,29 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
   }, []);
 
   const normalizeAmendmentStatus = useCallback((status?: string) => {
-    if (!status) return 'viewing';
+    if (!status) return 'view';
     const normalized = status.toLowerCase();
     if (
-      normalized === 'collaborative_editing' ||
-      normalized === 'internal_suggesting' ||
-      normalized === 'internal_voting' ||
-      normalized === 'viewing' ||
-      normalized === 'event_suggesting' ||
-      normalized === 'event_voting' ||
+      normalized === 'edit' ||
+      normalized === 'suggest_internal' ||
+      normalized === 'vote_internal' ||
+      normalized === 'view' ||
+      normalized === 'suggest_event' ||
+      normalized === 'vote_event' ||
       normalized === 'passed' ||
       normalized === 'rejected'
     ) {
       return normalized as
-        | 'collaborative_editing'
-        | 'internal_suggesting'
-        | 'internal_voting'
-        | 'viewing'
-        | 'event_suggesting'
-        | 'event_voting'
+        | 'edit'
+        | 'suggest_internal'
+        | 'vote_internal'
+        | 'view'
+        | 'suggest_event'
+        | 'vote_event'
         | 'passed'
         | 'rejected';
     }
-    return 'viewing';
+    return 'view';
   }, []);
 
   const normalizeActionType = useCallback((eventType?: string) => {

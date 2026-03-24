@@ -38,6 +38,8 @@ import type { Value } from 'platejs';
 import { Link } from '@tanstack/react-router';
 import { mutators } from '@/zero/mutators';
 import { useNotificationDispatch } from '@/zero/notifications/useNotificationDispatch';
+import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
+import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,7 +63,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   // Permissions — blog-level + group-level
-  const { canEdit: blogCanEdit, canDelete: blogCanDelete } = useBlogPermissions(blogId);
+  const { canEdit: blogCanEdit, canDelete: blogCanDelete, isBlogger } = useBlogPermissions(blogId);
   const blogActions = useBlogActions();
   const { addComment: addCommentAction, voteComment } = useDocumentActions();
   const { currentUser } = useUserState();
@@ -310,6 +312,14 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
           <h1 className="mb-4 text-2xl font-bold">{t('features.blogs.detail.notFound')}</h1>
           <p className="text-muted-foreground">{t('features.blogs.detail.notFoundDescription')}</p>
         </div>
+      </PageWrapper>
+    );
+  }
+
+  if (!checkEntityAccess(blog.visibility, !!user, isBlogger)) {
+    return (
+      <PageWrapper>
+        <AccessDenied />
       </PageWrapper>
     );
   }

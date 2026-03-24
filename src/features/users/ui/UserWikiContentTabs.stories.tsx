@@ -17,7 +17,6 @@ const mockUser = {
   linkedin: null,
   website: null,
   location: 'Brussels, Belgium',
-  is_public: true,
   visibility: 'public',
   subscriber_count: 0,
   amendment_count: 2,

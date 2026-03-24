@@ -31,6 +31,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { useGroupWikiPage } from '@/features/groups/hooks/useGroupWikiPage';
 import { groupRelationshipsByGroup } from '@/features/groups/logic/groupWikiHelpers';
+import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 
 interface GroupWikiProps {
   groupId: string;
@@ -41,6 +42,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
 
   const {
     group,
+    canAccess,
     memberCount,
     eventsCount,
     amendmentsCount,
@@ -72,13 +74,17 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
     );
   }
 
+  if (!canAccess) {
+    return <AccessDenied />;
+  }
+
   return (
     <div>
       {/* Header with centered title and subtitle */}
       <div className="mb-8 text-center">
         <div className="mb-2 flex items-center justify-center gap-3">
           <h1 className="text-4xl font-bold">{group.name}</h1>
-          {group.is_public && (
+          {group.visibility === 'public' && (
             <Badge variant="secondary" className="text-sm">
               {t('components.badges.public')}
             </Badge>

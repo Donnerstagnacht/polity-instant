@@ -1,6 +1,7 @@
 import { Button } from '@/features/shared/ui/ui/button';
 import { Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
+import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
 import { AvatarUploadSection } from './AvatarUploadSection';
 import { BasicInformationSection } from './BasicInformationSection';
 import { AboutSection } from './AboutSection';
@@ -99,6 +100,8 @@ export function UserProfileEditForm({
               onLastNameChange={value => onFieldChange('lastName', value)}
               onSubtitleChange={value => onFieldChange('subtitle', value)}
             />
+
+            <VisibilityInput value={formData.visibility} onChange={v => onFieldChange('visibility', v)} />
 
             <AboutSection
               about={formData.about}

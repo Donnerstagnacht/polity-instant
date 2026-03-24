@@ -58,6 +58,10 @@ interface AgendaActionBarProps {
   onPreviousItem?: () => void;
   onNextItem?: () => void;
   onCompleteItem?: () => void;
+  hasPreviousChangeRequest?: boolean;
+  hasNextChangeRequest?: boolean;
+  onPreviousChangeRequest?: () => void;
+  onNextChangeRequest?: () => void;
   navigationLoading?: boolean;
 
   // Loading
@@ -66,6 +70,7 @@ interface AgendaActionBarProps {
   voteLoading?: boolean;
 
   // Handlers
+  onStartVote?: () => void;
   onStartFinalVote?: () => void;
   onCloseFinalVote?: () => void;
   onEditItem?: () => void;
@@ -77,6 +82,11 @@ interface AgendaActionBarProps {
   onBecomeCandidate?: () => void;
   onWithdrawCandidacy?: () => void;
   onVoteClick?: () => void;
+  startVoteTooltip?: string;
+  startFinalVoteTooltip?: string;
+  closeVoteTooltip?: string;
+  castIndicativeVoteTooltip?: string;
+  castFinalVoteTooltip?: string;
 }
 
 export function AgendaActionBar({
@@ -93,10 +103,15 @@ export function AgendaActionBar({
   onPreviousItem,
   onNextItem,
   onCompleteItem,
+  hasPreviousChangeRequest,
+  hasNextChangeRequest,
+  onPreviousChangeRequest,
+  onNextChangeRequest,
   navigationLoading,
   speakerLoading,
   candidateLoading,
   voteLoading,
+  onStartVote,
   onStartFinalVote,
   onCloseFinalVote,
   onEditItem,
@@ -108,6 +123,11 @@ export function AgendaActionBar({
   onBecomeCandidate,
   onWithdrawCandidacy,
   onVoteClick,
+  startVoteTooltip,
+  startFinalVoteTooltip,
+  closeVoteTooltip,
+  castIndicativeVoteTooltip,
+  castFinalVoteTooltip,
 }: AgendaActionBarProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -117,6 +137,7 @@ export function AgendaActionBar({
   const isVotable = isElection || isVote;
 
   const votingPhase = currentAgendaItem?.voting_phase;
+  const isPendingVote = votingPhase === 'pending';
   const isIndicationPhase = votingPhase === 'indication';
   const isFinalVotePhase = votingPhase === 'final_vote';
   const isClosed = votingPhase === 'closed';
@@ -178,6 +199,29 @@ export function AgendaActionBar({
         </ToolbarGroup>
       )}
 
+      {canManageAgenda && (onPreviousChangeRequest || onNextChangeRequest) && (
+        <ToolbarGroup>
+          {onPreviousChangeRequest && (
+            <ToolbarButton
+              tooltip={t('features.agendas.crTimeline.previous', 'Previous Change Request')}
+              onClick={onPreviousChangeRequest}
+              disabled={!hasPreviousChangeRequest}
+            >
+              <ChevronLeft />
+            </ToolbarButton>
+          )}
+          {onNextChangeRequest && (
+            <ToolbarButton
+              tooltip={t('features.agendas.crTimeline.next', 'Next Change Request')}
+              onClick={onNextChangeRequest}
+              disabled={!hasNextChangeRequest}
+            >
+              <ChevronRight />
+            </ToolbarButton>
+          )}
+        </ToolbarGroup>
+      )}
+
       {/* Group 3: Item management */}
       <ToolbarGroup>
         {onBackToAgenda && (
@@ -216,10 +260,18 @@ export function AgendaActionBar({
 
       {/* Group 4: Voting & participation */}
       <ToolbarGroup>
+        {canManageAgenda && isVotable && !isClosed && isPendingVote && onStartVote && (
+          <ToolbarButton
+            tooltip={startVoteTooltip || t('features.events.agenda.actions.startVote', 'Start Vote')}
+            onClick={onStartVote}
+          >
+            <Vote />
+          </ToolbarButton>
+        )}
         {/* Start / Close final vote (organizer) */}
         {canManageAgenda && isVotable && !isClosed && isIndicationPhase && onStartFinalVote && (
           <ToolbarButton
-            tooltip={t('features.events.agenda.actions.startFinalVote', 'Start Final Vote')}
+            tooltip={startFinalVoteTooltip || t('features.events.agenda.actions.startFinalVote', 'Start Final Vote')}
             onClick={onStartFinalVote}
           >
             <Vote />
@@ -227,7 +279,7 @@ export function AgendaActionBar({
         )}
         {canManageAgenda && isVotable && !isClosed && isFinalVotePhase && onCloseFinalVote && (
           <ToolbarButton
-            tooltip={t('features.events.agenda.actions.closeFinalVote', 'Close Final Vote')}
+            tooltip={closeVoteTooltip || t('features.events.agenda.actions.closeFinalVote', 'Close Final Vote')}
             onClick={onCloseFinalVote}
           >
             <Vote />
@@ -275,12 +327,12 @@ export function AgendaActionBar({
         )}
 
         {/* Vote / Cast button */}
-        {isVotable && canVote && !isClosed && onVoteClick && (
+        {isVotable && canVote && !isClosed && !isPendingVote && onVoteClick && (
           <ToolbarButton
             tooltip={
               isFinalVotePhase
-                ? t('features.events.agenda.actions.castFinalVote', 'Cast Final Vote')
-                : t('features.events.agenda.actions.castIndicativeVote', 'Cast Indication')
+                ? castFinalVoteTooltip || t('features.events.agenda.actions.castFinalVote', 'Cast Final Vote')
+                : castIndicativeVoteTooltip || t('features.events.agenda.actions.castIndicativeVote', 'Cast Indication')
             }
             onClick={onVoteClick}
             disabled={voteLoading}

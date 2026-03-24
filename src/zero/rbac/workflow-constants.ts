@@ -1,22 +1,26 @@
 /**
- * Amendment Workflow Status Constants
+ * Amendment Editing Mode Constants
  *
- * Defines workflow statuses, transitions, and validation rules.
- * Ported from db/rbac/workflow-constants.ts — no InstantDB dependencies.
+ * Defines editing modes, transitions, and validation rules.
+ * Unified type replaces the old WorkflowStatus and EditorMode.
  */
 
 /**
- * Workflow status types for amendments
+ * Editing mode for amendments — single source of truth for both
+ * the amendment lifecycle and the editor behaviour.
  */
-export type WorkflowStatus =
-  | 'collaborative_editing' // Collaborators can directly edit
-  | 'internal_suggesting' // Collaborators create suggestions
-  | 'internal_voting' // Collaborators vote on suggestions
-  | 'viewing' // Read-only mode
-  | 'event_suggesting' // Event participants create suggestions
-  | 'event_voting' // Event votes on suggestions sequentially
-  | 'passed' // Final approval reached
-  | 'rejected'; // Rejected at some point in process
+export type EditingMode =
+  | 'edit'              // Collaborators can directly edit
+  | 'view'              // Read-only mode
+  | 'suggest_internal'  // Collaborators create suggestions
+  | 'suggest_event'     // Event participants create suggestions
+  | 'vote_internal'     // Collaborators vote on suggestions
+  | 'vote_event'        // Event votes on suggestions sequentially
+  | 'passed'            // Final approval reached
+  | 'rejected';         // Rejected at some point in process
+
+/** @deprecated Use EditingMode instead */
+export type WorkflowStatus = EditingMode;
 
 /**
  * Amendment general status (legacy compatibility)
@@ -43,174 +47,202 @@ export type VotingSessionStatus = 'pending' | 'active' | 'completed';
 export type ChangeRequestSource = 'collaborator' | 'event_participant';
 
 /**
- * Valid workflow status transitions
- * Key: current status, Value: array of allowed next statuses
+ * Valid editing mode transitions
+ * Key: current mode, Value: array of allowed next modes
  */
-export const WORKFLOW_TRANSITIONS: Record<WorkflowStatus, WorkflowStatus[]> = {
-  collaborative_editing: [
-    'internal_suggesting',
-    'internal_voting',
-    'viewing',
-    'event_suggesting',
-  ],
-  internal_suggesting: [
-    'collaborative_editing',
-    'internal_voting',
-    'viewing',
-    'event_suggesting',
-  ],
-  internal_voting: [
-    'collaborative_editing',
-    'internal_suggesting',
-    'viewing',
-    'event_suggesting',
-  ],
-  viewing: [
-    'collaborative_editing',
-    'internal_suggesting',
-    'internal_voting',
-    'event_suggesting',
-  ],
-  event_suggesting: ['event_voting', 'viewing', 'rejected'],
-  event_voting: ['event_suggesting', 'passed', 'rejected'],
-  passed: [], // Terminal state
+export const EDITING_MODE_TRANSITIONS: Record<EditingMode, EditingMode[]> = {
+  edit: ['suggest_internal', 'suggest_event', 'vote_internal', 'vote_event', 'view'],
+  view: ['edit', 'suggest_internal', 'suggest_event', 'vote_internal', 'vote_event'],
+  suggest_internal: ['edit', 'view', 'vote_internal', 'suggest_event', 'vote_event'],
+  suggest_event: ['vote_event', 'view', 'rejected'],
+  vote_internal: ['edit', 'view', 'suggest_internal', 'suggest_event', 'vote_event'],
+  vote_event: ['suggest_event', 'passed', 'rejected'],
+  passed: [],   // Terminal state
   rejected: [], // Terminal state
 };
 
+/** @deprecated Use EDITING_MODE_TRANSITIONS instead */
+export const WORKFLOW_TRANSITIONS = EDITING_MODE_TRANSITIONS;
+
 /**
- * Workflow statuses available for manual selection by collaborators
+ * Non-terminal editing modes available for manual selection
  */
-export const COLLABORATOR_SELECTABLE_STATUSES: WorkflowStatus[] = [
-  'collaborative_editing',
-  'internal_suggesting',
-  'internal_voting',
-  'viewing',
+export const SELECTABLE_MODES: EditingMode[] = [
+  'edit',
+  'view',
+  'suggest_internal',
+  'suggest_event',
+  'vote_internal',
+  'vote_event',
 ];
 
+/** @deprecated Use SELECTABLE_MODES instead */
+export const COLLABORATOR_SELECTABLE_STATUSES = SELECTABLE_MODES;
+
 /**
- * Workflow statuses that require event organizer control
+ * Event-phase editing modes
  */
-export const EVENT_CONTROLLED_STATUSES: WorkflowStatus[] = [
-  'event_suggesting',
-  'event_voting',
+export const EVENT_MODES: EditingMode[] = [
+  'suggest_event',
+  'vote_event',
 ];
 
-/**
- * Terminal statuses (cannot transition from these)
- */
-export const TERMINAL_STATUSES: WorkflowStatus[] = ['passed', 'rejected'];
+/** @deprecated Use EVENT_MODES instead */
+export const EVENT_CONTROLLED_STATUSES = EVENT_MODES;
 
 /**
- * Workflow status display metadata
+ * Terminal modes (cannot transition from these)
  */
-export const WORKFLOW_STATUS_METADATA: Record<
-  WorkflowStatus,
+export const TERMINAL_MODES: EditingMode[] = ['passed', 'rejected'];
+
+/** @deprecated Use TERMINAL_MODES instead */
+export const TERMINAL_STATUSES = TERMINAL_MODES;
+
+/**
+ * Editing mode display metadata
+ */
+export const EDITING_MODE_METADATA: Record<
+  EditingMode,
   {
     label: string;
     description: string;
     color: string;
     icon: string;
-    allowedFor: ('collaborator' | 'event_organizer' | 'event_participant')[];
-    readonly?: boolean;
   }
 > = {
-  collaborative_editing: {
-    label: 'Gemeinsam Bearbeiten',
+  edit: {
+    label: 'Bearbeiten',
     description: 'Alle Collaborators können direkt bearbeiten',
     color: 'bg-blue-500',
     icon: 'Edit',
-    allowedFor: ['collaborator'],
   },
-  internal_suggesting: {
-    label: 'Vorschläge Intern',
-    description: 'Collaborators können Vorschläge einreichen',
-    color: 'bg-purple-500',
-    icon: 'MessageSquare',
-    allowedFor: ['collaborator'],
-  },
-  internal_voting: {
-    label: 'Interne Abstimmung',
-    description: 'Abstimmung unter Collaborators (zeitbasiert)',
-    color: 'bg-orange-500',
-    icon: 'Vote',
-    allowedFor: ['collaborator'],
-  },
-  viewing: {
+  view: {
     label: 'Ansicht',
     description: 'Nur-Lesen Modus',
     color: 'bg-gray-500',
     icon: 'Eye',
-    allowedFor: ['collaborator', 'event_participant'],
   },
-  event_suggesting: {
+  suggest_internal: {
+    label: 'Vorschläge Intern',
+    description: 'Collaborators können Vorschläge einreichen',
+    color: 'bg-purple-500',
+    icon: 'MessageSquare',
+  },
+  suggest_event: {
     label: 'Event Vorschläge',
     description: 'Event-Teilnehmer können Vorschläge einreichen',
     color: 'bg-teal-500',
     icon: 'Calendar',
-    allowedFor: ['event_participant'],
-    readonly: true,
   },
-  event_voting: {
+  vote_internal: {
+    label: 'Interne Abstimmung',
+    description: 'Abstimmung unter Collaborators (zeitbasiert)',
+    color: 'bg-orange-500',
+    icon: 'Vote',
+  },
+  vote_event: {
     label: 'Event Abstimmung',
     description: 'Event stimmt sequentiell über Änderungen ab',
     color: 'bg-red-500',
     icon: 'Gavel',
-    allowedFor: ['event_participant'],
-    readonly: true,
   },
   passed: {
     label: 'Angenommen',
     description: 'Amendment wurde angenommen',
     color: 'bg-green-500',
     icon: 'CheckCircle',
-    allowedFor: [],
-    readonly: true,
   },
   rejected: {
     label: 'Abgelehnt',
     description: 'Amendment wurde abgelehnt',
     color: 'bg-red-700',
     icon: 'XCircle',
-    allowedFor: [],
-    readonly: true,
   },
 };
 
+/** @deprecated Use EDITING_MODE_METADATA instead */
+export const WORKFLOW_STATUS_METADATA = EDITING_MODE_METADATA;
+
 /**
- * Validate if a workflow status transition is allowed
+ * Map of legacy editing_mode DB values to new EditingMode values.
+ */
+const LEGACY_MODE_MAP: Record<string, EditingMode> = {
+  collaborative_editing: 'edit',
+  internal_suggesting: 'suggest_internal',
+  internal_voting: 'vote_internal',
+  viewing: 'view',
+  event_suggesting: 'suggest_event',
+  event_voting: 'vote_event',
+  Drafting: 'edit',
+  'Under Review': 'suggest_internal',
+  Passed: 'passed',
+  Rejected: 'rejected',
+};
+
+/**
+ * Normalize a raw DB value to a valid EditingMode.
+ * Maps legacy values (collaborative_editing, Drafting, etc.) to new ones.
+ */
+export function normalizeEditingMode(raw: string | null | undefined): EditingMode {
+  if (!raw) return 'edit';
+  if (EDITING_MODE_METADATA[raw as EditingMode]) return raw as EditingMode;
+  return LEGACY_MODE_MAP[raw] ?? 'edit';
+}
+
+/**
+ * Validate if an editing mode transition is allowed
  */
 export function canTransitionTo(
-  currentStatus: WorkflowStatus,
-  targetStatus: WorkflowStatus
+  currentMode: EditingMode,
+  targetMode: EditingMode
 ): boolean {
-  const allowedTransitions = WORKFLOW_TRANSITIONS[currentStatus];
-  return allowedTransitions.includes(targetStatus);
+  const allowed = EDITING_MODE_TRANSITIONS[currentMode];
+  return allowed.includes(targetMode);
 }
 
 /**
- * Check if a status is in an event phase
+ * Check if a mode is in an event phase
  */
-export function isEventPhase(status: WorkflowStatus): boolean {
-  return EVENT_CONTROLLED_STATUSES.includes(status) || TERMINAL_STATUSES.includes(status);
+export function isEventPhase(mode: EditingMode): boolean {
+  return EVENT_MODES.includes(mode) || TERMINAL_MODES.includes(mode);
 }
 
 /**
- * Check if a status is terminal
+ * Check if a mode is terminal
  */
-export function isTerminalStatus(status: WorkflowStatus): boolean {
-  return TERMINAL_STATUSES.includes(status);
+export function isTerminalStatus(mode: EditingMode): boolean {
+  return TERMINAL_MODES.includes(mode);
 }
 
 /**
- * Check if a user can manually select a status
+ * Check if a mode is a voting mode
  */
-export function isSelectableByCollaborator(status: WorkflowStatus): boolean {
-  return COLLABORATOR_SELECTABLE_STATUSES.includes(status);
+export function isVotingMode(mode: EditingMode): boolean {
+  return mode === 'vote_internal' || mode === 'vote_event';
 }
 
 /**
- * Get the default workflow status for a new amendment
+ * Check if a mode is a suggesting mode
  */
-export function getDefaultWorkflowStatus(): WorkflowStatus {
-  return 'collaborative_editing';
+export function isSuggestingMode(mode: EditingMode): boolean {
+  return mode === 'suggest_internal' || mode === 'suggest_event';
+}
+
+/**
+ * Check if a user can manually select a mode
+ */
+export function isSelectableByCollaborator(mode: EditingMode): boolean {
+  return SELECTABLE_MODES.includes(mode);
+}
+
+/**
+ * Get the default editing mode for a new amendment
+ */
+export function getDefaultEditingMode(): EditingMode {
+  return 'edit';
+}
+
+/** @deprecated Use getDefaultEditingMode instead */
+export function getDefaultWorkflowStatus(): EditingMode {
+  return getDefaultEditingMode();
 }

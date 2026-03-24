@@ -21,12 +21,13 @@ import {
   SelectValue,
 } from '@/features/shared/ui/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/features/shared/ui/ui/radio-group';
-import { Switch } from '@/features/shared/ui/ui/switch';
+import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
 import { Loader2, Plus, X } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
+import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -35,7 +36,7 @@ interface ElectionSettings {
   majority_type?: string | null;
   closing_type?: string | null;
   closing_duration_seconds?: number | null;
-  is_public?: boolean;
+  visibility?: string | null;
   max_votes?: number;
 }
 
@@ -44,7 +45,7 @@ interface VoteSettings {
   majority_type?: string | null;
   closing_type?: string | null;
   closing_duration_seconds?: number | null;
-  is_public?: boolean;
+  visibility?: string | null;
 }
 
 interface VoteChoice {
@@ -91,7 +92,7 @@ export function EditElectionVoteDialog({
   const [closingDuration, setClosingDuration] = useState(
     entity?.closing_duration_seconds ? Math.round(entity.closing_duration_seconds / 60) : 5,
   );
-  const [isPublic, setIsPublic] = useState(entity?.is_public ?? true);
+  const [visibility, setVisibility] = useState<Visibility>((entity?.visibility as Visibility) ?? 'public');
   const [maxVotes, setMaxVotes] = useState(election?.max_votes ?? 1);
   const [title, setTitle] = useState(agendaItemTitle ?? '');
   const [description, setDescription] = useState(agendaItemDescription ?? '');
@@ -107,7 +108,7 @@ export function EditElectionVoteDialog({
       setClosingDuration(
         entity.closing_duration_seconds ? Math.round(entity.closing_duration_seconds / 60) : 5,
       );
-      setIsPublic(entity.is_public ?? true);
+      setVisibility((entity.visibility as Visibility) ?? 'public');
       if (isElection && election) {
         setMaxVotes(election.max_votes ?? 1);
       }
@@ -159,7 +160,7 @@ export function EditElectionVoteDialog({
           majority_type: majorityType,
           closing_type: closingType,
           closing_duration_seconds: durationSeconds,
-          is_public: isPublic,
+          visibility,
           max_votes: maxVotes,
         });
       } else if (vote) {
@@ -169,7 +170,7 @@ export function EditElectionVoteDialog({
           majority_type: majorityType,
           closing_type: closingType,
           closing_duration_seconds: durationSeconds,
-          is_public: isPublic,
+          visibility,
         });
 
         // Sync choices — add new, remove deleted
@@ -306,11 +307,8 @@ export function EditElectionVoteDialog({
             </div>
           )}
 
-          {/* Public / secret toggle */}
-          <div className="flex items-center justify-between">
-            <Label>{t('features.events.agenda.publicVote', 'Public vote')}</Label>
-            <Switch checked={isPublic} onCheckedChange={setIsPublic} />
-          </div>
+          {/* Visibility */}
+          <VisibilityInput value={visibility} onChange={setVisibility} />
 
           {/* Max votes (elections only) */}
           {isElection && (

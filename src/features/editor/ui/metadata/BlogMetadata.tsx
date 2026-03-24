@@ -9,7 +9,7 @@
 
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { Globe, Lock } from 'lucide-react';
+import { Globe, Lock, Users } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface Blogger {
@@ -27,8 +27,8 @@ interface BlogMetadataProps {
   date?: string;
   /** Number of upvotes */
   upvotes?: number;
-  /** Whether the blog is public */
-  isPublic?: boolean;
+  /** Visibility level of the blog */
+  visibility?: string;
   /** List of bloggers */
   bloggers?: Blogger[];
   /** Whether to show the bloggers list */
@@ -38,7 +38,7 @@ interface BlogMetadataProps {
 export function BlogMetadata({
   date,
   upvotes,
-  isPublic,
+  visibility,
   bloggers = [],
   showBloggers = true,
 }: BlogMetadataProps) {
@@ -48,12 +48,17 @@ export function BlogMetadata({
     <div className="space-y-4">
       {/* Blog metadata badges */}
       <div className="flex flex-wrap items-center gap-4 text-sm">
-        {isPublic !== undefined && (
+        {visibility !== undefined && (
           <Badge variant="outline" className="flex items-center gap-1">
-            {isPublic ? (
+            {visibility === 'public' ? (
               <>
                 <Globe className="h-3 w-3" />
                 {t('features.editor.metadata.public')}
+              </>
+            ) : visibility === 'authenticated' ? (
+              <>
+                <Users className="h-3 w-3" />
+                {t('features.editor.metadata.authenticated')}
               </>
             ) : (
               <>

@@ -23,8 +23,8 @@ import { useEditorPresence } from '../hooks/useEditorPresence';
 import { useEditorUsers } from '../hooks/useEditorUsers';
 import { useEditorOperations } from '../hooks/useEditorOperations';
 import { VersionControl } from './VersionControl';
-import { ModeSelector } from './ModeSelector';
 import { InviteCollaboratorDialog } from './InviteCollaboratorDialog';
+import { SuggestionViewToggle } from './SuggestionViewToggle';
 import { EditorHeader } from './EditorHeader';
 import type { ResolvedSuggestion } from '@/features/shared/ui/ui-platejs/block-suggestion.tsx';
 import type { EditorViewProps, EditorUser, TDiscussion } from '../types';
@@ -38,6 +38,7 @@ export function EditorView({
   capabilities: capabilitiesOverride,
   backUrl,
   backLabel,
+  agendaItemId,
 }: EditorViewProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -49,6 +50,7 @@ export function EditorView({
     entityId,
     userId,
     capabilities: capabilitiesOverride,
+    agendaItemId,
   });
 
   const {
@@ -68,6 +70,8 @@ export function EditorView({
     setContent,
     setDiscussions,
     setMode,
+    setSelectedCrId,
+    selectedCrId,
     restoreVersion,
   } = editorState;
 
@@ -114,18 +118,33 @@ export function EditorView({
   // Track which remote users have active cursors in the editor
   const [activeCursorUserIds, setActiveCursorUserIds] = useState<Set<string>>(new Set());
 
-  // Auto-assign suggestion IDs
-  useSuggestionIdAssignment({
-    documentId: contentEntityId,
-    discussions,
-    onDiscussionsUpdate: setDiscussions,
-  });
-
   // Editor operations (suggestion accept/decline/vote via Zero)
   const editorOps = useEditorOperations(entityType, contentEntityId);
 
   // Get amendment-specific data
   const amendmentId = entity?.metadata?.amendmentId;
+
+  // Callback to persist a change_request entity when a suggestion is created
+  const handleChangeRequestCreate = useCallback(
+    ({ crId, changeRequestEntityId }: { crId: string; discussionId: string; changeRequestEntityId: string }) => {
+      console.log('[EditorView] handleChangeRequestCreate called:', { crId, changeRequestEntityId, amendmentId, entityType });
+      if (!amendmentId) return;
+      editorOps.handleSuggestionCreated({
+        id: changeRequestEntityId,
+        crId,
+        amendmentId,
+      });
+    },
+    [amendmentId, editorOps]
+  );
+
+  // Auto-assign suggestion IDs
+  useSuggestionIdAssignment({
+    documentId: contentEntityId,
+    discussions,
+    onDiscussionsUpdate: setDiscussions,
+    onChangeRequestCreate: entityType === 'amendment' ? handleChangeRequestCreate : undefined,
+  });
   const amendmentTitle = entity?.metadata?.amendmentCode
     ? `${entity.metadata.amendmentCode} - ${title}`
     : title;
@@ -240,17 +259,17 @@ export function EditorView({
   // Status badge based on entity type
   const statusBadge = useMemo(() => {
     if (!entity) return null;
-    if (entityType === 'amendment' && entity.metadata?.amendmentStatus) {
+    if (entityType === 'amendment' && entity.metadata?.amendmentEditingMode) {
       return (
         <Badge variant="outline" className="capitalize">
-          {entity.metadata.amendmentStatus}
+          {entity.metadata.amendmentEditingMode}
         </Badge>
       );
     }
     if (entityType === 'blog') {
       return (
         <Badge variant="outline" className="capitalize">
-          {entity.isPublic ? 'Public' : 'Private'}
+          {entity.visibility === 'public' ? 'Public' : entity.visibility === 'authenticated' ? 'Authenticated' : 'Private'}
         </Badge>
       );
     }
@@ -372,14 +391,12 @@ export function EditorView({
             />
           )}
 
-          {/* Mode Selector */}
-          {capabilities.modeSelection && (
-            <ModeSelector
-              entityType={entityType}
-              entityId={contentEntityId}
-              currentMode={mode}
-              isOwnerOrCollaborator={isOwnerOrCollaborator}
-              onModeChange={setMode}
+          {/* Suggestion View Toggle (visible in suggest/vote modes) */}
+          {(mode === 'suggest_internal' || mode === 'suggest_event' || mode === 'vote_internal' || mode === 'vote_event') && discussions.length > 0 && (
+            <SuggestionViewToggle
+              discussions={discussions}
+              selectedCrId={selectedCrId}
+              onSelectedCrIdChange={setSelectedCrId}
             />
           )}
 
@@ -489,7 +506,7 @@ export function EditorView({
               documentId={contentEntityId}
               documentTitle={title}
               currentMode={mode}
-              onModeChange={capabilities.modeSelection ? setMode : undefined}
+              onModeChange={setMode}
               isOwnerOrCollaborator={isOwnerOrCollaborator}
               currentUser={
                 currentUser
@@ -508,6 +525,8 @@ export function EditorView({
               onVoteAccept={capabilities.voting ? onVoteAccept : undefined}
               onVoteReject={capabilities.voting ? onVoteReject : undefined}
               onVoteAbstain={capabilities.voting ? onVoteAbstain : undefined}
+              selectedCrId={selectedCrId}
+              onSelectedCrIdChange={setSelectedCrId}
               remoteCursors={{
                 entityId: contentEntityId,
                 userId,

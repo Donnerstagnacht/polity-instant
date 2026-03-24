@@ -2,13 +2,23 @@ import { useState, useEffect } from 'react';
 import { useTodoState } from '@/zero/todos/useTodoState';
 import { useTodoMutations } from './useTodoMutations';
 import { TodoFormData, TodoStatus, TodoPriority } from '../types/todo.types';
+import { useAuth } from '@/providers/auth-provider';
+import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 
 export function useTodoDetailPage(todoId: string) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { updateTodo } = useTodoMutations();
+  const { user } = useAuth();
 
-  const { todo } = useTodoState({ todoId });
+  const { todo, assignments } = useTodoState({ todoId });
+
+  // Visibility access check: creator or assignee can access private todos
+  const isCreatorOrAssignee =
+    !!user?.id &&
+    (todo?.creator_id === user.id ||
+      (assignments ?? []).some((a) => a.user_id === user.id));
+  const canAccess = checkEntityAccess(todo?.visibility, !!user?.id, isCreatorOrAssignee);
 
   const [formData, setFormData] = useState<TodoFormData>({
     title: todo?.title || '',
@@ -77,6 +87,7 @@ export function useTodoDetailPage(todoId: string) {
 
   return {
     todo,
+    canAccess,
     isEditing,
     isSaving,
     formData,
