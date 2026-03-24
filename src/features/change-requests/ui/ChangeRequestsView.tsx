@@ -6,8 +6,10 @@ import { ArrowLeft, FileEdit } from 'lucide-react';
 import { ChangeRequestCardsList } from '@/features/agendas/ui/ChangeRequestCardsList';
 import { useAgendaItemByAmendment } from '@/zero/agendas/useAgendaState';
 import { useAgendaItemCRVoting } from '@/features/agendas/hooks/useAgendaItemCRVoting';
+import { useVoteState } from '@/zero/votes/useVoteState';
 import { useChangeRequests } from '../hooks/useChangeRequests';
 import { createMockCRTimelineItems, type CRSummary } from '@/features/agendas/logic/createMockCRTimelineItems';
+import { buildFinalVoteFromAgendaVote } from '@/features/agendas/logic/buildFinalVoteFromAgendaVote';
 import type { ChangeRequestDiffData } from '@/features/agendas/ui/ChangeRequestTimelineCard';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 
@@ -29,6 +31,9 @@ export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewPr
 
   // Real CR voting timeline (only used when in voting stage)
   const crVoting = useAgendaItemCRVoting(agendaItemId ?? '', userId);
+
+  // Agenda item's own vote (used as final vote in the CR list)
+  const { vote: agendaVote } = useVoteState({ agendaItemId: agendaItemId ?? undefined });
 
   // Build diff map from useChangeRequests data (provides text diff info from document)
   const diffMap = useMemo<Record<string, ChangeRequestDiffData>>(() => {
@@ -74,9 +79,24 @@ export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewPr
 
   // Determine which items to display
   const useRealTimeline = isInVotingStage && agendaItemId && crVoting.crTimeline.length > 0;
-  const displayItems = useRealTimeline
+  const displayItemsBase = useRealTimeline
     ? crVoting.crTimeline
     : mockItems as unknown as ChangeRequestTimelineRow[];
+
+  // Synthesize a final vote item from the agenda item's own vote (if it exists)
+  // If timeline already has a final vote (legacy data), prefer that.
+  const timelineHasFinalVote = displayItemsBase.some(i => i.is_final_vote);
+  const synthesizedFinalVoteItem = useMemo(() => {
+    if (timelineHasFinalVote) return null;
+    if (!agendaVote || displayItemsBase.length === 0) return null;
+    const orderIndex = displayItemsBase.length;
+    return buildFinalVoteFromAgendaVote(agendaVote, orderIndex) as unknown as ChangeRequestTimelineRow;
+  }, [timelineHasFinalVote, agendaVote, displayItemsBase.length]);
+
+  const displayItems = useMemo(() => {
+    if (!synthesizedFinalVoteItem) return displayItemsBase;
+    return [...displayItemsBase, synthesizedFinalVoteItem];
+  }, [displayItemsBase, synthesizedFinalVoteItem]);
 
   if (isLoading) {
     return (

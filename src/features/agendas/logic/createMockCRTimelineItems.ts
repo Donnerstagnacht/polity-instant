@@ -99,21 +99,6 @@ export function createMockCRTimelineItems(crSummaries: CRSummary[]) {
     _originalStatus: cr.status,
   }));
 
-  // Add final vote item
-  const finalVoteId = 'mock-final-vote';
-  items.push({
-    id: finalVoteId,
-    agenda_item_id: 'mock-agenda',
-    change_request_id: null as never,
-    vote_id: `mock-vote-${finalVoteId}`,
-    order_index: crSummaries.length,
-    is_final_vote: true,
-    status: 'pending',
-    change_request: null as never,
-    vote: createMockVote(finalVoteId),
-    _originalStatus: 'open',
-  });
-
   return items;
 }
 

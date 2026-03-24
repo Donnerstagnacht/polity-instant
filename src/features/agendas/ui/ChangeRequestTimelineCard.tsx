@@ -116,7 +116,7 @@ export function ChangeRequestTimelineCard({
   const vote = item.vote;
 
   const title = item.is_final_vote
-    ? t('features.agendas.crTimeline.finalVote')
+    ? t('features.agendas.crTimeline.acceptAmendment', 'Accept amendment as modified')
     : cr?.title || `${t('features.agendas.crTimeline.changeRequest')} ${index + 1}`;
 
   const phase = getVotePhase(item);
@@ -212,7 +212,7 @@ export function ChangeRequestTimelineCard({
   const isLocked = item.is_final_vote && isFinalVoteLocked;
 
   return (
-    <Collapsible defaultOpen={isCurrent}>
+    <Collapsible defaultOpen={isCurrent || item.is_final_vote}>
       <Card className={cn(
         'transition-all',
         isCurrent && !isLocked && 'ring-2 ring-blue-500/50',

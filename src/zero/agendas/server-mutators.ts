@@ -187,22 +187,6 @@ export const agendaServerMutators = {
         })
       }
 
-      // 4. Create final amendment vote + junction record (always last)
-      const finalVoteId = await createVoteWithChoicesAndVoters(
-        'Accept amendment as modified'
-      )
-
-      await tx.mutate.agenda_item_change_request.insert({
-        id: crypto.randomUUID(),
-        agenda_item_id,
-        change_request_id: null,
-        vote_id: finalVoteId,
-        order_index: changeRequests.length,
-        is_final_vote: true,
-        status: 'pending',
-        created_at: now,
-        updated_at: now,
-      })
     }
   ),
 

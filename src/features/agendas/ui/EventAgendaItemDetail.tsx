@@ -30,6 +30,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAgendaItemCRVoting, getVotePhase } from '../hooks/useAgendaItemCRVoting';
 import { extractAmendmentCRSummaries } from '../logic/extractAmendmentCRSummaries';
 import { createMockCRTimelineItems } from '../logic/createMockCRTimelineItems';
+import { buildFinalVoteFromAgendaVote } from '../logic/buildFinalVoteFromAgendaVote';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 
 function getEffectiveVotingPhase(
@@ -107,7 +108,6 @@ export function EventAgendaItemDetail({
   const {
     crTimeline,
     currentItem: currentCRItem,
-    finalVoteItem,
     completedItems,
     progress,
     isTimelineComplete,
@@ -141,6 +141,53 @@ export function EventAgendaItemDetail({
   const [markingSpeakerComplete, setMarkingSpeakerComplete] = useState<string | null>(null);
   const [selectedCRToolbarItemId, setSelectedCRToolbarItemId] = useState<string | null>(null);
 
+  // Build mock CR items for pre-voting display
+  const mockCRItems = useMemo(() => {
+    if (!agendaItem?.amendment_id) return [];
+    if (crTimeline.length > 0) return [];
+
+    const amendment = agendaItem.amendment;
+    if (!amendment) return [];
+
+    const summaries = extractAmendmentCRSummaries(
+      amendment.discussions as readonly unknown[] | null | undefined,
+      amendment.change_requests as readonly { id: string; title?: string | null; description?: string | null; status?: string | null }[] | null | undefined,
+    );
+
+    return createMockCRTimelineItems(summaries);
+  }, [agendaItem?.amendment_id, agendaItem?.amendment, crTimeline.length]);
+
+  const hasAmendmentCRs = crTimeline.length > 0 || mockCRItems.length > 0;
+  const crDisplayItemsBase = crTimeline.length > 0
+    ? crTimeline
+    : mockCRItems as unknown as ChangeRequestTimelineRow[];
+  const isCRVotingActive = crTimeline.length > 0;
+
+  // Synthesize a final vote item from the agenda item's own vote.
+  // If the timeline already includes a final vote (legacy data), prefer that.
+  const timelineHasFinalVote = crDisplayItemsBase.some(i => i.is_final_vote);
+  const synthesizedFinalVoteItem = useMemo(() => {
+    if (timelineHasFinalVote) return null;
+    if (!vote || !hasAmendmentCRs) return null;
+    const orderIndex = crDisplayItemsBase.length;
+    return buildFinalVoteFromAgendaVote(vote, orderIndex) as unknown as ChangeRequestTimelineRow;
+  }, [timelineHasFinalVote, vote, hasAmendmentCRs, crDisplayItemsBase.length]);
+
+  // Combine CR items + synthesized final vote
+  const crDisplayItems = useMemo(() => {
+    if (!synthesizedFinalVoteItem) return crDisplayItemsBase;
+    return [...crDisplayItemsBase, synthesizedFinalVoteItem];
+  }, [crDisplayItemsBase, synthesizedFinalVoteItem]);
+
+  // Derive the effective final vote item (from timeline or synthesized)
+  const effectiveFinalVoteItem = useMemo(
+    () => crDisplayItems.find(i => i.is_final_vote) ?? null,
+    [crDisplayItems],
+  );
+
+  // Whether the vote is embedded in the CR list (so we can hide standalone AgendaVoteSection)
+  const isVoteInCRList = hasAmendmentCRs && !!effectiveFinalVoteItem && !!vote;
+
   const nonFinalCRItems = useMemo(
     () => crTimeline.filter(item => !item.is_final_vote),
     [crTimeline]
@@ -152,8 +199,8 @@ export function EventAgendaItemDetail({
     const nextPendingCR = nonFinalCRItems.find(item => item.status !== 'completed');
     if (nextPendingCR) return nextPendingCR.id;
 
-    return finalVoteItem?.id ?? null;
-  }, [currentCRItem?.id, nonFinalCRItems, finalVoteItem?.id]);
+    return effectiveFinalVoteItem?.id ?? null;
+  }, [currentCRItem?.id, nonFinalCRItems, effectiveFinalVoteItem?.id]);
 
   useEffect(() => {
     if (currentCRItem?.id && currentCRItem.id !== selectedCRToolbarItemId) {
@@ -163,6 +210,7 @@ export function EventAgendaItemDetail({
 
     const selectedItemStillExists = selectedCRToolbarItemId
       ? crTimeline.some(item => item.id === selectedCRToolbarItemId)
+        || effectiveFinalVoteItem?.id === selectedCRToolbarItemId
       : false;
 
     if (!selectedItemStillExists && fallbackSelectedCRItemId) {
@@ -171,6 +219,7 @@ export function EventAgendaItemDetail({
   }, [
     crTimeline,
     currentCRItem?.id,
+    effectiveFinalVoteItem?.id,
     fallbackSelectedCRItemId,
     selectedCRToolbarItemId,
   ]);
@@ -178,9 +227,11 @@ export function EventAgendaItemDetail({
   const selectedCRToolbarItem = useMemo(
     () =>
       crTimeline.find(item => item.id === selectedCRToolbarItemId)
+      ?? (effectiveFinalVoteItem?.id === selectedCRToolbarItemId ? effectiveFinalVoteItem : null)
       ?? crTimeline.find(item => item.id === fallbackSelectedCRItemId)
+      ?? (effectiveFinalVoteItem?.id === fallbackSelectedCRItemId ? effectiveFinalVoteItem : null)
       ?? null,
-    [crTimeline, fallbackSelectedCRItemId, selectedCRToolbarItemId]
+    [crTimeline, effectiveFinalVoteItem, fallbackSelectedCRItemId, selectedCRToolbarItemId]
   );
 
   const isCRToolbarActive = !!agendaItem?.amendment_id && crTimeline.length > 0 && !!selectedCRToolbarItem;
@@ -206,8 +257,8 @@ export function EventAgendaItemDetail({
   const hasNextChangeRequest = useMemo(() => {
     if (!selectedCRToolbarItem || selectedCRToolbarItem.is_final_vote) return false;
     if (selectedCRToolbarIndex < nonFinalCRItems.length - 1) return true;
-    return !!finalVoteItem && allCRsProcessed;
-  }, [selectedCRToolbarItem, selectedCRToolbarIndex, nonFinalCRItems.length, finalVoteItem, allCRsProcessed]);
+    return !!effectiveFinalVoteItem && allCRsProcessed;
+  }, [selectedCRToolbarItem, selectedCRToolbarIndex, nonFinalCRItems.length, effectiveFinalVoteItem, allCRsProcessed]);
 
   const handlePreviousChangeRequest = useCallback(() => {
     if (!selectedCRToolbarItem) return;
@@ -231,10 +282,10 @@ export function EventAgendaItemDetail({
       return;
     }
 
-    if (finalVoteItem && allCRsProcessed) {
-      setSelectedCRToolbarItemId(finalVoteItem.id);
+    if (effectiveFinalVoteItem && allCRsProcessed) {
+      setSelectedCRToolbarItemId(effectiveFinalVoteItem.id);
     }
-  }, [selectedCRToolbarItem, nonFinalCRItems, selectedCRToolbarIndex, finalVoteItem, allCRsProcessed]);
+  }, [selectedCRToolbarItem, nonFinalCRItems, selectedCRToolbarIndex, effectiveFinalVoteItem, allCRsProcessed]);
 
   const handleToolbarStartVote = useCallback(() => {
     if (!selectedCRToolbarItem) return;
@@ -272,7 +323,7 @@ export function EventAgendaItemDetail({
   const selectedCRTitle = useMemo(() => {
     if (!selectedCRToolbarItem) return agendaItem?.title ?? undefined;
     if (selectedCRToolbarItem.is_final_vote) {
-      return t('features.agendas.crTimeline.finalVote', 'Final Vote');
+      return t('features.agendas.crTimeline.acceptAmendment', 'Accept amendment as modified');
     }
 
     return (
@@ -385,29 +436,6 @@ export function EventAgendaItemDetail({
   }, [agendaItem?.speaker_list]);
 
   const isUserInSpeakerList = speakerListData.some(speaker => speaker.user?.id === user?.id && !speaker.completed);
-
-  // Build mock CR items for pre-voting display
-  const mockCRItems = useMemo(() => {
-    if (!agendaItem?.amendment_id) return [];
-    // If real timeline exists, don't create mocks
-    if (crTimeline.length > 0) return [];
-
-    const amendment = agendaItem.amendment;
-    if (!amendment) return [];
-
-    const summaries = extractAmendmentCRSummaries(
-      amendment.discussions as readonly unknown[] | null | undefined,
-      amendment.change_requests as readonly { id: string; title?: string | null; description?: string | null; status?: string | null }[] | null | undefined,
-    );
-
-    return createMockCRTimelineItems(summaries);
-  }, [agendaItem?.amendment_id, agendaItem?.amendment, crTimeline.length]);
-
-  const hasAmendmentCRs = crTimeline.length > 0 || mockCRItems.length > 0;
-  const crDisplayItems = crTimeline.length > 0
-    ? crTimeline
-    : mockCRItems as unknown as ChangeRequestTimelineRow[];
-  const isCRVotingActive = crTimeline.length > 0;
 
   // Derive election/vote data for section components
   const indicativeSelections = useMemo(
@@ -729,8 +757,8 @@ export function EventAgendaItemDetail({
         </div>
       )}
 
-      {/* Section 3: Vote */}
-      {vote && (
+      {/* Section 3: Vote — hidden when vote is embedded in the CR list */}
+      {vote && !isVoteInCRList && (
         <div className="space-y-4">
           <AgendaVoteSection
             voteTitle={vote.title || agendaItem.title || 'Vote'}
