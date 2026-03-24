@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import type { Value } from 'platejs';
-import { filterDocumentToSingleSuggestion } from '../logic/filterDocumentToSingleSuggestion';
+import { filterDocumentToSuggestions } from '../logic/filterDocumentToSingleSuggestion';
 import type { EditorViewMode } from '../ui/EditorViewModeToggle';
 
 interface ChangeRequestInfo {
@@ -48,7 +48,7 @@ export function useSuggestionPreview(
     if (!documentContent) return undefined;
     if (viewMode === 'all' || !selectedCRId) return documentContent;
 
-    return filterDocumentToSingleSuggestion(documentContent, selectedCRId);
+    return filterDocumentToSuggestions(documentContent, new Set([selectedCRId]));
   }, [documentContent, viewMode, selectedCRId]);
 
   // Map change requests to the format expected by EditorViewModeToggle

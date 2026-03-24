@@ -25,7 +25,7 @@ export const electionQueries = {
       zql.election
         .where('id', id)
         .related('agenda_item')
-        .related('position')
+        .related('position', q => q.related('group'))
         .related('candidates', q => q.orderBy('order_index', 'asc').related('user'))
         .related('electors', q => q.related('user'))
         .related('indicative_participations', q => q.related('elector').related('selections', q2 => q2.related('candidate')))

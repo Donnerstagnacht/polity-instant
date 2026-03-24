@@ -61,7 +61,6 @@ export function useDocumentMutations(groupId: string): UseDocumentMutationsResul
         id: amendmentId,
         title,
         group_id: groupId,
-        status: 'draft',
         visibility: 'group',
         editing_mode: 'edit',
         code: null,

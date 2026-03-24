@@ -199,6 +199,7 @@ export interface EditorEntityMetadata {
   amendmentCode?: string;
   amendmentDate?: string;
   amendmentSupporters?: number;
+  amendmentEditingMode?: string;
   amendmentStatus?: string;
   /** Blog-specific */
   blogId?: string;
