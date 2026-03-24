@@ -1,365 +1,82 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { Link } from '@tanstack/react-router';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { PageWrapper } from '@/layout/page-wrapper';
-import { ArrowLeft, FileEdit, Clock, User, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
-import { VoteControls } from '@/features/votes/ui/VoteControls';
-import { AgendaCRVoteTimeline } from '@/features/agendas/ui/AgendaCRVoteTimeline';
+import { ArrowLeft, FileEdit } from 'lucide-react';
+import { ChangeRequestCardsList } from '@/features/agendas/ui/ChangeRequestCardsList';
 import { useAgendaItemByAmendment } from '@/zero/agendas/useAgendaState';
-import { useChangeRequests, type ChangeRequest } from '../hooks/useChangeRequests';
+import { useAgendaItemCRVoting } from '@/features/agendas/hooks/useAgendaItemCRVoting';
+import { useChangeRequests } from '../hooks/useChangeRequests';
+import { createMockCRTimelineItems, type CRSummary } from '@/features/agendas/logic/createMockCRTimelineItems';
+import type { ChangeRequestDiffData } from '@/features/agendas/ui/ChangeRequestTimelineCard';
+import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 
 interface ChangeRequestsViewProps {
   amendmentId: string;
   userId?: string;
 }
 
-function isApprovedResolution(resolution: string | null | undefined) {
-  return resolution === 'approved' || resolution === 'accepted';
-}
-
-function getResolutionLabel(resolution: string | null | undefined) {
-  return isApprovedResolution(resolution) ? 'Approved' : 'Declined';
-}
-
-function getStatusColor(status: string) {
-  switch (status) {
-    case 'approved':
-      return 'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400';
-    case 'rejected':
-      return 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400';
-    case 'pending':
-      return 'border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400';
-    default:
-      return 'border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-400';
-  }
-}
-
-function getResolutionBadgeClass(resolution: string | null | undefined) {
-  if (!isApprovedResolution(resolution)) {
-    return '';
-  }
-
-  return 'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400';
-}
-
-function getStatusIcon(status: string) {
-  switch (status) {
-    case 'approved':
-      return <CheckCircle2 className="h-4 w-4" />;
-    case 'rejected':
-      return <XCircle className="h-4 w-4" />;
-    default:
-      return <AlertCircle className="h-4 w-4" />;
-  }
-}
-
-interface ChangeRequestCardProps {
-  request: ChangeRequest;
-  users: Record<string, { name?: string }>;
-  document?: { id?: string; editingMode?: string };
-  collaborators: readonly { id: string; user_id?: string; user?: { id: string; first_name?: string | null; last_name?: string | null; avatar?: string | null } | null }[];
-  amendmentId: string;
-  amendmentTitle?: string;
-  userId?: string;
-  isClosed?: boolean;
-}
-
-function ChangeRequestCard({
-  request,
-  users,
-  document,
-  collaborators,
-  amendmentId,
-  amendmentTitle,
-  userId,
-  isClosed = false,
-}: ChangeRequestCardProps) {
-  return (
-    <Card className={isClosed ? 'overflow-hidden opacity-75' : 'overflow-hidden'}>
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <CardTitle className="mb-2 flex items-center gap-2">
-              {request.crId && (
-                <Badge variant="secondary" className="font-mono text-xs">
-                  {request.crId}
-                </Badge>
-              )}
-              <span>{request.title}</span>
-              {isClosed && request.resolution && (
-                <Badge
-                  variant={isApprovedResolution(request.resolution) ? 'outline' : 'destructive'}
-                  className={isApprovedResolution(request.resolution) ? `ml-2 ${getResolutionBadgeClass(request.resolution)}` : 'ml-2'}
-                >
-                  {getResolutionLabel(request.resolution)}
-                </Badge>
-              )}
-            </CardTitle>
-            {request.description && <CardDescription>{request.description}</CardDescription>}
-            {!request.description && request.type && (
-              <CardDescription className="capitalize">
-                {request.type === 'insert' && 'Suggestion to add text'}
-                {request.type === 'remove' && 'Suggestion to remove text'}
-                {request.type === 'replace' && 'Suggestion to replace text'}
-                {request.type === 'update' &&
-                  request.newProperties &&
-                  Object.keys(request.newProperties).length > 0 && (
-                    <span>
-                      Suggestion to apply {Object.keys(request.newProperties).join(', ')} formatting
-                    </span>
-                  )}
-                {request.type === 'update' &&
-                  (!request.newProperties || Object.keys(request.newProperties).length === 0) &&
-                  'Suggestion to update formatting'}
-              </CardDescription>
-            )}
-          </div>
-          {!isClosed && (
-            <Badge variant="outline" className={getStatusColor(request.status)}>
-              <span className="flex items-center gap-1">
-                {getStatusIcon(request.status)}
-                {request.status}
-              </span>
-            </Badge>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {/* Update Type (for formatting changes) */}
-          {request.type === 'update' && request.newText && (
-            <div>
-              <h4 className="mb-2 font-semibold text-blue-600 dark:text-blue-400">
-                {isClosed ? 'Formatting Changed:' : 'Formatting Change:'}
-              </h4>
-              <div className="space-y-2">
-                {request.newProperties && Object.keys(request.newProperties).length > 0 && (
-                  <div className="rounded-lg bg-blue-500/10 p-4">
-                    <p className="mb-2 text-sm font-semibold">
-                      {isClosed ? 'Applied' : 'Apply'} formatting:
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {Object.entries(request.newProperties).map(([key, value]) => (
-                        <Badge key={key} variant="outline" className="capitalize">
-                          {key}: {String(value)}
-                        </Badge>
-                      ))}
-                    </div>
-                    <p className="mt-3 whitespace-pre-wrap text-sm">To text: "{request.newText}"</p>
-                  </div>
-                )}
-                {request.properties && Object.keys(request.properties).length > 0 && (
-                  <div className="rounded-lg bg-muted/50 p-4">
-                    <p className="mb-2 text-sm font-semibold text-muted-foreground">
-                      {isClosed ? 'Removed' : 'Remove'} formatting:
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {Object.entries(request.properties).map(([key, value]) => (
-                        <Badge key={key} variant="outline" className="capitalize opacity-60">
-                          {key}: {String(value)}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Original Text (for remove/replace types) */}
-          {request.text && (request.type === 'remove' || request.type === 'replace') && (
-            <div>
-              <h4 className="mb-2 font-semibold text-red-600 dark:text-red-400">
-                {request.type === 'remove' ? (isClosed ? 'Deleted:' : 'Delete:') : 'Original Text:'}
-              </h4>
-              <div className="rounded-lg bg-red-500/10 p-4 line-through">
-                <p className="whitespace-pre-wrap text-sm">{request.text}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Proposed Change (for insert/replace types) */}
-          {request.newText && (request.type === 'insert' || request.type === 'replace') && (
-            <div>
-              <h4 className="mb-2 font-semibold text-green-600 dark:text-green-400">
-                {request.type === 'insert' ? (isClosed ? 'Added:' : 'Add:') : 'Replace with:'}
-              </h4>
-              <div className="rounded-lg bg-green-500/10 p-4">
-                <p className="whitespace-pre-wrap text-sm">{request.newText}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Fallback for proposedChange */}
-          {request.type !== 'update' &&
-            !request.newText &&
-            !request.text &&
-            request.proposedChange && (
-              <div>
-                <h4 className="mb-2 font-semibold">Proposed Change:</h4>
-                <div className="rounded-lg bg-muted p-4">
-                  <p className="whitespace-pre-wrap text-sm">{request.proposedChange}</p>
-                </div>
-              </div>
-            )}
-
-          {/* Justification */}
-          {request.justification && (
-            <div>
-              <h4 className="mb-2 font-semibold">Justification:</h4>
-              <p className="text-sm text-muted-foreground">{request.justification}</p>
-            </div>
-          )}
-
-          {/* Comments from discussions */}
-          {request.comments && request.comments.length > 0 && (
-            <div>
-              <h4 className="mb-2 font-semibold">Discussion ({request.comments.length})</h4>
-              <div className="space-y-2">
-                {request.comments.slice(0, 3).map((comment, idx) => (
-                  <div key={idx} className="rounded-lg border bg-muted/50 p-3 text-sm">
-                    <p className="text-muted-foreground">{comment.text || comment.value}</p>
-                    {comment.userId && users[comment.userId] && (
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        — {users[comment.userId].name}
-                      </p>
-                    )}
-                  </div>
-                ))}
-                {request.comments.length > 3 && (
-                  <p className="text-xs text-muted-foreground">
-                    +{request.comments.length - 3} more comments
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Vote result summary for closed CRs */}
-          {isClosed && request.votes && request.votes.length > 0 && (
-            <div className="rounded-lg border bg-muted/30 p-3">
-              <h4 className="mb-2 text-sm font-semibold">Vote Result</h4>
-              <div className="flex items-center gap-4 text-sm">
-                <span className="flex items-center gap-1 text-green-600">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  {request.votes.filter(v => v.vote === 'accept').length} Accept
-                </span>
-                <span className="flex items-center gap-1 text-red-600">
-                  <XCircle className="h-3.5 w-3.5" />
-                  {request.votes.filter(v => v.vote === 'reject').length} Reject
-                </span>
-                <span className="flex items-center gap-1 text-muted-foreground">
-                  {request.votes.filter(v => v.vote === 'abstain').length} Abstain
-                </span>
-                <span className="ml-auto text-xs text-muted-foreground">
-                  {request.votes.length} total vote{request.votes.length !== 1 ? 's' : ''}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Metadata */}
-          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-            {request.userId && users[request.userId] && (
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                <span>{users[request.userId].name || 'Unknown User'}</span>
-              </div>
-            )}
-            {request.crId && (
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs">
-                  {request.crId}
-                </Badge>
-              </div>
-            )}
-            {request.createdAt && (
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                <span>{new Date(request.createdAt).toLocaleDateString()}</span>
-              </div>
-            )}
-            {isClosed && request.resolvedAt && (
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                <span>Resolved {new Date(request.resolvedAt).toLocaleDateString()}</span>
-              </div>
-            )}
-          </div>
-
-          {/* Voting Controls (only in vote mode for open requests) */}
-          {!isClosed && document?.editingMode === 'vote' && userId && (
-            <div className="mt-6 border-t pt-4">
-              <VoteControls
-                changeRequestId={request.changeRequestEntityId || request.id}
-                currentUserId={userId}
-                votes={[...(request.votes || [])].map(v => ({
-                  id: v.id,
-                  vote: v.vote ?? '',
-                  createdAt: v.created_at ?? 0,
-                  voter: {
-                    id: v.user?.id ?? v.user_id ?? '',
-                    user: v.user ? {
-                      name: `${v.user.first_name ?? ''} ${v.user.last_name ?? ''}`.trim() || undefined,
-                      avatar: v.user.avatar ?? undefined,
-                    } : undefined,
-                  },
-                }))}
-                collaborators={collaborators
-                  .filter(c => c.user?.id)
-                  .map(c => ({
-                    id: c.id,
-                    user: {
-                      id: c.user?.id ?? '',
-                      name: `${c.user?.first_name ?? ''} ${c.user?.last_name ?? ''}`.trim() || undefined,
-                      avatar: c.user?.avatar ?? undefined,
-                    },
-                  }))}
-                status={request.status}
-                amendmentId={amendmentId}
-                amendmentTitle={amendmentTitle}
-                documentId={document?.id || ''}
-                suggestionData={
-                  !request.changeRequestEntityId
-                    ? {
-                        crId: request.crId || '',
-                        description: request.description || '',
-                        proposedChange: request.proposedChange || '',
-                        justification: request.justification || '',
-                        userId: request.userId || '',
-                        createdAt: request.createdAt || Date.now(),
-                      }
-                    : undefined
-                }
-              />
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewProps) {
-  const [activeTab, setActiveTab] = useState<'open' | 'approved' | 'declined'>('open');
-
   const {
     amendment,
-    document,
-    openChangeRequests,
-    approvedChangeRequests,
-    declinedChangeRequests,
-    users,
-    collaborators,
+    changeRequests,
     isLoading,
   } = useChangeRequests(amendmentId);
 
   // Check if this amendment has an agenda item with CR voting timeline
   const { agendaItemId } = useAgendaItemByAmendment(amendmentId);
   const isInVotingStage = amendment?.editing_mode === 'vote_event' || amendment?.editing_mode === 'vote_internal';
+
+  // Real CR voting timeline (only used when in voting stage)
+  const crVoting = useAgendaItemCRVoting(agendaItemId ?? '', userId);
+
+  // Build diff map from useChangeRequests data (provides text diff info from document)
+  const diffMap = useMemo<Record<string, ChangeRequestDiffData>>(() => {
+    const map: Record<string, ChangeRequestDiffData> = {};
+    for (const cr of changeRequests) {
+      // Key by the suggestion id (used as mock CR id) and by changeRequestEntityId
+      const diff: ChangeRequestDiffData = {
+        changeType: cr.type || undefined,
+        originalText: cr.text || undefined,
+        newText: cr.newText || undefined,
+        properties: cr.properties as Record<string, string> | undefined,
+        newProperties: cr.newProperties as Record<string, string> | undefined,
+        justification: cr.justification || undefined,
+      };
+      map[cr.id] = diff;
+      if (cr.changeRequestEntityId) {
+        map[cr.changeRequestEntityId] = diff;
+      }
+    }
+    return map;
+  }, [changeRequests]);
+
+  // Build mock timeline items for non-voting mode
+  const mockItems = useMemo(() => {
+    if (isInVotingStage && crVoting.crTimeline.length > 0) return [];
+
+    const summaries: CRSummary[] = changeRequests.map(cr => ({
+      id: cr.id,
+      crId: cr.crId,
+      title: cr.title || cr.crId,
+      description: cr.description || '',
+      status: cr.isResolved ? (cr.resolution || cr.status) : 'open',
+      type: cr.type,
+      text: cr.text,
+      newText: cr.newText,
+      properties: cr.properties as Record<string, string> | undefined,
+      newProperties: cr.newProperties as Record<string, string> | undefined,
+      justification: cr.justification,
+    }));
+
+    return createMockCRTimelineItems(summaries);
+  }, [changeRequests, isInVotingStage, crVoting.crTimeline.length]);
+
+  // Determine which items to display
+  const useRealTimeline = isInVotingStage && agendaItemId && crVoting.crTimeline.length > 0;
+  const displayItems = useRealTimeline
+    ? crVoting.crTimeline
+    : mockItems as unknown as ChangeRequestTimelineRow[];
 
   if (isLoading) {
     return (
@@ -375,15 +92,12 @@ export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewPr
         <div className="py-12 text-center">
           <h1 className="mb-4 text-2xl font-bold">Amendment Not Found</h1>
           <p className="text-muted-foreground">
-            The amendment you're looking for doesn't exist or has been removed.
+            The amendment you&apos;re looking for doesn&apos;t exist or has been removed.
           </p>
         </div>
       </PageWrapper>
     );
   }
-
-  const totalChangeRequests =
-    openChangeRequests.length + approvedChangeRequests.length + declinedChangeRequests.length;
 
   return (
     <PageWrapper>
@@ -403,131 +117,29 @@ export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewPr
           <FileEdit className="h-8 w-8" />
           <h1 className="text-4xl font-bold">Change Requests</h1>
         </div>
-        <p className="text-muted-foreground">
-          {openChangeRequests.length} open, {approvedChangeRequests.length} approved,{' '}
-          {declinedChangeRequests.length} declined change request
-          {totalChangeRequests !== 1 ? 's' : ''} for this amendment
-        </p>
       </div>
 
-      {/* CR Voting Timeline — shown when amendment is in a voting stage */}
-      {isInVotingStage && agendaItemId && (
-        <div className="mb-8">
-          <AgendaCRVoteTimeline
-            agendaItemId={agendaItemId}
-            userId={userId}
-          />
-        </div>
-      )}
-
-      {/* Tabs for Open/Approved/Declined */}
-      <Tabs
-        value={activeTab}
-        onValueChange={value => setActiveTab(value as 'open' | 'approved' | 'declined')}
-      >
-        <TabsList className="mb-6">
-          <TabsTrigger value="open" className="gap-2">
-            Open
-            <Badge variant="secondary" className="ml-1">
-              {openChangeRequests.length}
-            </Badge>
-          </TabsTrigger>
-          <TabsTrigger value="approved" className="gap-2">
-            Approved
-            <Badge
-              variant="outline"
-              className="ml-1 border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400"
-            >
-              {approvedChangeRequests.length}
-            </Badge>
-          </TabsTrigger>
-          <TabsTrigger value="declined" className="gap-2">
-            Declined
-            <Badge variant="secondary" className="ml-1">
-              {declinedChangeRequests.length}
-            </Badge>
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Open Change Requests Tab */}
-        <TabsContent value="open" className="space-y-4">
-          {openChangeRequests.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <FileEdit className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                <p className="text-muted-foreground">
-                  No open change requests. Be the first to propose a change!
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            openChangeRequests.map(request => (
-              <ChangeRequestCard
-                key={request.id}
-                request={request}
-                users={users}
-                document={document}
-                collaborators={collaborators}
-                amendmentId={amendmentId}
-                amendmentTitle={amendment?.title ?? undefined}
-                userId={userId}
-              />
-            ))
-          )}
-        </TabsContent>
-
-        {/* Approved Change Requests Tab */}
-        <TabsContent value="approved" className="space-y-4">
-          {approvedChangeRequests.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <FileEdit className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                <p className="text-muted-foreground">No approved change requests yet.</p>
-              </CardContent>
-            </Card>
-          ) : (
-            approvedChangeRequests.map(request => (
-              <ChangeRequestCard
-                key={request.id}
-                request={request}
-                users={users}
-                document={document}
-                collaborators={collaborators}
-                amendmentId={amendmentId}
-                amendmentTitle={amendment?.title ?? undefined}
-                userId={userId}
-                isClosed={true}
-              />
-            ))
-          )}
-        </TabsContent>
-
-        {/* Declined Change Requests Tab */}
-        <TabsContent value="declined" className="space-y-4">
-          {declinedChangeRequests.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <FileEdit className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                <p className="text-muted-foreground">No declined change requests yet.</p>
-              </CardContent>
-            </Card>
-          ) : (
-            declinedChangeRequests.map(request => (
-              <ChangeRequestCard
-                key={request.id}
-                request={request}
-                users={users}
-                document={document}
-                collaborators={collaborators}
-                amendmentId={amendmentId}
-                amendmentTitle={amendment?.title ?? undefined}
-                userId={userId}
-                isClosed={true}
-              />
-            ))
-          )}
-        </TabsContent>
-      </Tabs>
+      {/* Unified CR Cards List with tabs */}
+      <ChangeRequestCardsList
+        items={displayItems}
+        editingMode={amendment.editing_mode}
+        isVotingActive={!!useRealTimeline}
+        userId={userId}
+        canManage={false}
+        canVote={false}
+        currentItemId={useRealTimeline ? crVoting.currentItem?.id : null}
+        diffMap={diffMap}
+        progress={useRealTimeline ? crVoting.progress : undefined}
+        completedCount={useRealTimeline ? crVoting.completedItems.length : undefined}
+        allCRsProcessed={useRealTimeline ? crVoting.allCRsProcessed : undefined}
+        isTimelineComplete={useRealTimeline ? crVoting.isTimelineComplete : undefined}
+        hasUserVoted={useRealTimeline ? crVoting.hasUserVoted : undefined}
+        getUserSelectedChoiceIds={useRealTimeline ? crVoting.getUserSelectedChoiceIds : undefined}
+        onCastVote={useRealTimeline ? crVoting.castCRVote : undefined}
+        onStartIndicative={useRealTimeline ? crVoting.startIndicativePhase : undefined}
+        onStartFinal={useRealTimeline ? crVoting.startFinalPhase : undefined}
+        onCloseVoting={useRealTimeline ? crVoting.closeVoting : undefined}
+      />
     </PageWrapper>
   );
 }

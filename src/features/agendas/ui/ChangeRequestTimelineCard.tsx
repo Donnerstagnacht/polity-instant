@@ -42,6 +42,16 @@ function normalizeMajorityType(value?: string | null): MajorityType {
   return 'simple';
 }
 
+/** Optional text diff data to render inside the card. */
+export interface ChangeRequestDiffData {
+  changeType?: string;
+  originalText?: string;
+  newText?: string;
+  properties?: Record<string, string>;
+  newProperties?: Record<string, string>;
+  justification?: string;
+}
+
 interface ChangeRequestTimelineCardProps {
   item: ChangeRequestTimelineRow;
   index: number;
@@ -51,6 +61,7 @@ interface ChangeRequestTimelineCardProps {
   canManage: boolean;
   canVote: boolean;
   isFinalVoteLocked?: boolean;
+  diff?: ChangeRequestDiffData;
   onCastVote?: (item: ChangeRequestTimelineRow, choiceId: string) => Promise<void>;
   onStartIndicative?: (itemId: string) => Promise<void>;
   onStartFinal?: (itemId: string) => Promise<void>;
@@ -63,10 +74,25 @@ function getStatusIcon(status: string | null, isCurrent: boolean) {
   return <Circle className="h-5 w-5 text-muted-foreground" />;
 }
 
-function getStatusBadge(status: string | null, isCurrent: boolean, t: (key: string) => string) {
-  if (status === 'completed') return <Badge variant="default" className="bg-green-600">{t('features.agendas.crTimeline.completed')}</Badge>;
+function getStatusBadge(
+  status: string | null,
+  isCurrent: boolean,
+  t: (key: string, fallback?: string) => string,
+  voteResult?: string,
+  originalStatus?: string,
+) {
+  // Determine accepted/rejected from vote result or original mock status
+  if (status === 'completed') {
+    if (voteResult === 'passed' || originalStatus === 'approved' || originalStatus === 'accepted') {
+      return <Badge variant="default" className="bg-green-600">{t('features.agendas.crTimeline.accepted', 'Accepted')}</Badge>;
+    }
+    if (voteResult === 'rejected' || voteResult === 'failed' || originalStatus === 'declined' || originalStatus === 'rejected') {
+      return <Badge variant="default" className="bg-red-600">{t('features.agendas.crTimeline.rejected', 'Rejected')}</Badge>;
+    }
+    return <Badge variant="default" className="bg-green-600">{t('features.agendas.crTimeline.completed')}</Badge>;
+  }
   if (isCurrent) return <Badge variant="default" className="bg-blue-600">{t('features.agendas.crTimeline.voting')}</Badge>;
-  return <Badge variant="secondary">{t('features.agendas.crTimeline.pending')}</Badge>;
+  return <Badge variant="default" className="bg-blue-600">{t('features.agendas.crTimeline.open', 'Open')}</Badge>;
 }
 
 export function ChangeRequestTimelineCard({
@@ -78,6 +104,7 @@ export function ChangeRequestTimelineCard({
   canManage,
   canVote,
   isFinalVoteLocked,
+  diff,
   onCastVote,
   onStartIndicative,
   onStartFinal,
@@ -216,7 +243,13 @@ export function ChangeRequestTimelineCard({
                   phase={isIndicative ? 'indication' : isClosed ? 'closed' : 'final_vote'}
                 />
               )}
-              {getStatusBadge(item.status, isCurrent && !isLocked, t)}
+              {getStatusBadge(
+                item.status,
+                isCurrent && !isLocked,
+                t,
+                resolvedVoteResult,
+                (item as Record<string, unknown>)._originalStatus as string | undefined,
+              )}
               <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]_&]:rotate-180" />
             </div>
           </CardHeader>
@@ -234,6 +267,84 @@ export function ChangeRequestTimelineCard({
             {/* CR description */}
             {cr?.description && (
               <p className="text-sm text-muted-foreground">{cr.description}</p>
+            )}
+
+            {/* Text diff details (collapsible) */}
+            {diff && !item.is_final_vote && (diff.originalText || diff.newText || diff.justification || (diff.newProperties && Object.keys(diff.newProperties).length > 0)) && (
+              <Collapsible>
+                <CollapsibleTrigger className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground">
+                  <ChevronDown className="h-3 w-3 transition-transform [[data-state=open]_&]:rotate-180" />
+                  {t('features.agendas.crTimeline.showChanges', 'Show Changes')}
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-2 space-y-3">
+                  {/* Formatting change */}
+                  {diff.changeType === 'update' && diff.newText && (
+                    <div>
+                      <h4 className="mb-2 text-sm font-semibold text-blue-600 dark:text-blue-400">
+                        {isClosed ? 'Formatting Changed:' : 'Formatting Change:'}
+                      </h4>
+                      {diff.newProperties && Object.keys(diff.newProperties).length > 0 && (
+                        <div className="rounded-lg bg-blue-500/10 p-3">
+                          <div className="mb-1 flex flex-wrap gap-2">
+                            {Object.entries(diff.newProperties).map(([key, value]) => (
+                              <Badge key={key} variant="outline" className="text-xs capitalize">
+                                {key}: {String(value)}
+                              </Badge>
+                            ))}
+                          </div>
+                          <p className="whitespace-pre-wrap text-xs">To text: &quot;{diff.newText}&quot;</p>
+                        </div>
+                      )}
+                      {diff.properties && Object.keys(diff.properties).length > 0 && (
+                        <div className="mt-2 rounded-lg bg-muted/50 p-3">
+                          <p className="mb-1 text-xs font-semibold text-muted-foreground">
+                            {isClosed ? 'Removed formatting:' : 'Remove formatting:'}
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {Object.entries(diff.properties).map(([key, value]) => (
+                              <Badge key={key} variant="outline" className="text-xs capitalize opacity-60">
+                                {key}: {String(value)}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Removed text */}
+                  {diff.originalText && (diff.changeType === 'remove' || diff.changeType === 'replace') && (
+                    <div>
+                      <h4 className="mb-1 text-sm font-semibold text-red-600 dark:text-red-400">
+                        {diff.changeType === 'remove' ? (isClosed ? 'Deleted:' : 'Delete:') : 'Original Text:'}
+                      </h4>
+                      <div className="rounded-lg bg-red-500/10 p-3 line-through">
+                        <p className="whitespace-pre-wrap text-xs">{diff.originalText}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Added/replacement text */}
+                  {diff.newText && (diff.changeType === 'insert' || diff.changeType === 'replace') && (
+                    <div>
+                      <h4 className="mb-1 text-sm font-semibold text-green-600 dark:text-green-400">
+                        {diff.changeType === 'insert' ? (isClosed ? 'Added:' : 'Add:') : 'Replace with:'}
+                      </h4>
+                      <div className="rounded-lg bg-green-500/10 p-3">
+                        <p className="whitespace-pre-wrap text-xs">{diff.newText}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Justification */}
+                  {diff.justification && (
+                    <div>
+                      <h4 className="mb-1 text-sm font-semibold">Justification:</h4>
+                      <p className="text-xs text-muted-foreground">{diff.justification}</p>
+                    </div>
+                  )}
+                </CollapsibleContent>
+              </Collapsible>
             )}
 
             {/* Vote result sentence when closed */}

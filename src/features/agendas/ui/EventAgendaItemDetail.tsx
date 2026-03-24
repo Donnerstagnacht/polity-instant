@@ -19,7 +19,7 @@ import { EditElectionVoteDialog } from './EditElectionVoteDialog';
 import { useAgendaActionBar } from '../hooks/useAgendaActionBar';
 import { useAgendaNavigation } from '../hooks/useAgendaNavigation';
 import { VoteCastDialog } from '@/features/vote-cast/ui/VoteCastDialog';
-import { AgendaCRVoteTimeline } from './AgendaCRVoteTimeline';
+import { ChangeRequestCardsList } from './ChangeRequestCardsList';
 import { AccreditationSection } from './AccreditationSection';
 import { usePermissions } from '@/zero/rbac';
 import { useVotingPasswordActions } from '@/zero/voting-password/useVotingPasswordActions';
@@ -28,6 +28,9 @@ import { toast } from 'sonner';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAgendaItemCRVoting, getVotePhase } from '../hooks/useAgendaItemCRVoting';
+import { extractAmendmentCRSummaries } from '../logic/extractAmendmentCRSummaries';
+import { createMockCRTimelineItems } from '../logic/createMockCRTimelineItems';
+import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 
 function getEffectiveVotingPhase(
   status?: string | null,
@@ -105,9 +108,12 @@ export function EventAgendaItemDetail({
     crTimeline,
     currentItem: currentCRItem,
     finalVoteItem,
+    completedItems,
+    progress,
     isTimelineComplete,
     allCRsProcessed,
     hasUserVoted: hasUserVotedOnCR,
+    getUserSelectedChoiceIds,
     startIndicativePhase,
     startFinalPhase,
     closeVoting,
@@ -380,6 +386,29 @@ export function EventAgendaItemDetail({
 
   const isUserInSpeakerList = speakerListData.some(speaker => speaker.user?.id === user?.id && !speaker.completed);
 
+  // Build mock CR items for pre-voting display
+  const mockCRItems = useMemo(() => {
+    if (!agendaItem?.amendment_id) return [];
+    // If real timeline exists, don't create mocks
+    if (crTimeline.length > 0) return [];
+
+    const amendment = agendaItem.amendment;
+    if (!amendment) return [];
+
+    const summaries = extractAmendmentCRSummaries(
+      amendment.discussions as readonly unknown[] | null | undefined,
+      amendment.change_requests as readonly { id: string; title?: string | null; description?: string | null; status?: string | null }[] | null | undefined,
+    );
+
+    return createMockCRTimelineItems(summaries);
+  }, [agendaItem?.amendment_id, agendaItem?.amendment, crTimeline.length]);
+
+  const hasAmendmentCRs = crTimeline.length > 0 || mockCRItems.length > 0;
+  const crDisplayItems = crTimeline.length > 0
+    ? crTimeline
+    : mockCRItems as unknown as ChangeRequestTimelineRow[];
+  const isCRVotingActive = crTimeline.length > 0;
+
   // Derive election/vote data for section components
   const indicativeSelections = useMemo(
     () => election?.indicative_selections ?? [],
@@ -649,20 +678,26 @@ export function EventAgendaItemDetail({
         <AccreditationSection eventId={eventId} agendaItemId={agendaItemId} />
       )}
 
-      {/* Change Request Vote Timeline — shown for amendment agenda items */}
-      {(() => {
-        console.log('[CR-Timeline-Guard] agendaItemId:', agendaItemId);
-        console.log('[CR-Timeline-Guard] agendaItem.amendment_id:', agendaItem.amendment_id);
-        console.log('[CR-Timeline-Guard] agendaItem.type:', agendaItem.type);
-        console.log('[CR-Timeline-Guard] amendment relation:', agendaItem.amendment);
-        return null;
-      })()}
-      {agendaItem.amendment_id && (
-        <AgendaCRVoteTimeline
-          agendaItemId={agendaItemId}
+      {/* Change Request Cards — always shown for amendment agenda items */}
+      {agendaItem.amendment_id && hasAmendmentCRs && (
+        <ChangeRequestCardsList
+          items={crDisplayItems}
+          editingMode={agendaItem.amendment?.editing_mode}
+          isVotingActive={isCRVotingActive}
           userId={user?.id}
           canManage={canManageAgenda}
           canVote={hasVotingRight}
+          currentItemId={isCRVotingActive ? currentCRItem?.id : null}
+          progress={isCRVotingActive ? progress : undefined}
+          completedCount={isCRVotingActive ? completedItems.length : undefined}
+          allCRsProcessed={isCRVotingActive ? allCRsProcessed : undefined}
+          isTimelineComplete={isCRVotingActive ? isTimelineComplete : undefined}
+          hasUserVoted={isCRVotingActive ? hasUserVotedOnCR : undefined}
+          getUserSelectedChoiceIds={isCRVotingActive ? getUserSelectedChoiceIds : undefined}
+          onCastVote={isCRVotingActive ? castCRVote : undefined}
+          onStartIndicative={isCRVotingActive ? startIndicativePhase : undefined}
+          onStartFinal={isCRVotingActive ? startFinalPhase : undefined}
+          onCloseVoting={isCRVotingActive ? closeVoting : undefined}
         />
       )}
 
