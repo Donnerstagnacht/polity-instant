@@ -31,7 +31,7 @@ export interface GroupTimelineCardProps {
     topics?: string[];
     hashtags?: { id: string; tag: string }[];
     /** User's membership status */
-    membershipStatus?: 'member' | 'admin' | 'invited' | 'requested' | null;
+    membershipStatus?: 'active' | 'member' | 'admin' | 'invited' | 'requested' | null;
     /** Whether user is subscribed to this group */
     isSubscribed?: boolean;
   };
@@ -86,6 +86,7 @@ export function GroupTimelineCard({
 
   const resolvedMembershipStatus = group.membershipStatus ?? membership.status;
   const isMember =
+    resolvedMembershipStatus === 'active' ||
     resolvedMembershipStatus === 'member' ||
     resolvedMembershipStatus === 'admin' ||
     membership.isMember;

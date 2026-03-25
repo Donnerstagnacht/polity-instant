@@ -135,7 +135,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
 
       await groupActions.updateMemberRole({
         id: membershipId,
-        status: 'member',
+        status: 'active',
       });
 
       // Add timeline event for member joining (if group is public)

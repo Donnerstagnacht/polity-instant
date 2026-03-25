@@ -38,7 +38,7 @@ export function GroupSearchCard({ group }: GroupSearchCardProps) {
           eventCount: group.events?.length || 0,
           amendmentCount: group.amendments?.length || 0,
           hashtags: extractHashtags(group.group_hashtags),
-          membershipStatus: (userMembership?.status as 'admin' | 'invited' | 'requested' | 'member' | null | undefined) || (role === 'Visitor' ? null : 'member'),
+          membershipStatus: (userMembership?.status as 'active' | 'admin' | 'invited' | 'requested' | 'member' | null | undefined) || (role === 'Visitor' ? null : 'member'),
         }}
       />
     );

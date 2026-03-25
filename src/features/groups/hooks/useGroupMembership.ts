@@ -6,9 +6,40 @@ import { toast } from 'sonner';
 
 export type MembershipStatus = 'invited' | 'requested' | 'member' | 'admin';
 
+function isAdminRole(roleName: string | null | undefined) {
+  return roleName === 'Admin' || roleName === 'Board Member';
+}
+
+function isMemberRole(roleName: string | null | undefined) {
+  return roleName === 'Member' || isAdminRole(roleName);
+}
+
+function normalizeMembershipStatus(
+  status: string | null | undefined,
+  roleName: string | null | undefined
+): MembershipStatus | null {
+  if (status === 'requested' || status === 'invited') {
+    return status;
+  }
+
+  if (status === 'admin' || isAdminRole(roleName)) {
+    return 'admin';
+  }
+
+  if (status === 'active' || status === 'member' || isMemberRole(roleName)) {
+    return 'member';
+  }
+
+  return null;
+}
+
 export function useGroupMembership(groupId: string) {
   const { user } = useAuth();
-  const { memberships: membershipsData, allMemberships: allMembershipsData, isLoading: queryLoading } = useUserMembershipInGroup(user?.id, groupId);
+  const {
+    memberships: membershipsData,
+    allMemberships: allMembershipsData,
+    isLoading: queryLoading,
+  } = useUserMembershipInGroup(user?.id, groupId);
   const { joinGroup, leaveGroup: leaveGroupAction, updateMemberRole } = useGroupActions();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -20,11 +51,17 @@ export function useGroupMembership(groupId: string) {
 
   // If there are multiple memberships, prioritize by role/status
   if (memberships.length > 1) {
-    const boardMemberMembership = memberships.find(m => m.role?.name === 'Board Member');
-    const memberMembership = memberships.find(m => m.status === 'member');
+    const adminMembership = memberships.find(
+      m => m.status === 'admin' || isAdminRole(m.role?.name)
+    );
+    const memberMembership = memberships.find(
+      m => m.status === 'active' || m.status === 'member' || isMemberRole(m.role?.name)
+    );
     const invitedMembership = memberships.find(m => m.status === 'invited');
+    const requestedMembership = memberships.find(m => m.status === 'requested');
 
-    membership = boardMemberMembership || memberMembership || invitedMembership || membership;
+    membership =
+      adminMembership || memberMembership || invitedMembership || requestedMembership || membership;
 
     console.warn('Multiple memberships found for user in group:', {
       groupId,
@@ -42,12 +79,15 @@ export function useGroupMembership(groupId: string) {
   // Filter to count only members and board members (excluding invited and requested)
   const memberCount =
     (allMembershipsData || []).filter(
-      m => m.status === 'member' || m.role?.name === 'Board Member'
+      m =>
+        m.status === 'active' ||
+        m.status === 'member' ||
+        m.status === 'admin' ||
+        isMemberRole(m.role?.name)
     ).length || 0;
-  const status: MembershipStatus | null = (membership?.status as MembershipStatus) || null;
-  const role = membership?.role?.name;
-  const isMember = status === 'member' || role === 'Board Member' || role === 'Member';
-  const isAdmin = role === 'Board Member';
+  const status = normalizeMembershipStatus(membership?.status, membership?.role?.name);
+  const isMember = status === 'member' || status === 'admin';
+  const isAdmin = status === 'admin';
   const hasRequested = status === 'requested';
   const isInvited = status === 'invited';
 
@@ -57,8 +97,6 @@ export function useGroupMembership(groupId: string) {
 
     setIsLoading(true);
     try {
-      const groupName = 'Group'; // Group name not critical for membership request
-
       const newMembershipId = crypto.randomUUID();
 
       await joinGroup({
@@ -88,7 +126,7 @@ export function useGroupMembership(groupId: string) {
       // Conversation cleanup handled separately if needed
       await leaveGroupAction({ id: membership.id });
       // Conversation membership: Requires conversation_participant record cleanup. Deferred until conversation-group linking is implemented.
-      
+
       // Show different message based on membership status
       if (status === 'requested') {
         toast.success('Request successfully withdrawn.');
@@ -112,7 +150,7 @@ export function useGroupMembership(groupId: string) {
       // Conversation membership handled separately if needed
       await updateMemberRole({
         id: membership.id,
-        status: 'member',
+        status: 'active',
       });
       // Conversation membership: Requires conversation_participant record creation. Deferred until conversation-group linking is implemented.
       toast.success('Successfully joined the group');

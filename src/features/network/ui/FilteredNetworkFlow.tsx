@@ -71,7 +71,7 @@ export function FilteredNetworkFlow({
     if (!memberships.length) return [] as NetworkGroupEntity[];
     return memberships
       .filter(
-        (m) => m.group && (m.status === 'member' || m.status === 'admin')
+        (m) => m.group && (m.status === 'active' || m.status === 'member' || m.status === 'admin')
       )
       .map((m) => m.group)
       .filter((g): g is NonNullable<typeof g> => g != null);

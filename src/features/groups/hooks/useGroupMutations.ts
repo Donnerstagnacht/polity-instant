@@ -70,7 +70,7 @@ export function useGroupMutations(groupId: string) {
     try {
       await updateMemberRole({
         id: membershipId,
-        status: 'member',
+        status: 'active',
       });
 
       toast.success('Membership approved');
@@ -285,7 +285,7 @@ export function useGroupMutations(groupId: string) {
     try {
       await updateMemberRole({
         id: membershipId,
-        status: 'member',
+        status: 'active',
       });
 
       toast.success('Admin demoted to member');
