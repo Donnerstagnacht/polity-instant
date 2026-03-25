@@ -1,6 +1,12 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
@@ -10,7 +16,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/features/shared/ui/ui/carousel';
-import { Settings, ArrowUp, ArrowDown, Users, Copy } from 'lucide-react';
+import { ArrowUp, ArrowDown, Users, Copy } from 'lucide-react';
 import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
 import { StatsBar } from '@/features/shared/ui/ui/StatsBar';
@@ -36,7 +42,6 @@ interface AmendmentWikiProps {
 export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
   const { t } = useTranslation();
   const {
-    navigate,
     user,
     canAccess,
     isSubscribed,
@@ -45,7 +50,6 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
     isLoading: subscribeLoading,
     collaboration,
     amendment,
-    isAdmin,
     collaborators,
     supportingGroups,
     clones,
@@ -173,7 +177,10 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
       {/* Stats Bar */}
       <StatsBar
         stats={[
-          { value: amendment.collaborator_count ?? collaboration.collaboratorCount, labelKey: 'components.labels.collaborators' },
+          {
+            value: amendment.collaborator_count ?? collaboration.collaboratorCount,
+            labelKey: 'components.labels.collaborators',
+          },
           { value: subscriberCount, labelKey: 'components.labels.subscribers' },
           { value: amendment.supporters ?? score, labelKey: 'components.labels.supporters' },
           { value: amendment.clone_count ?? clones.length, labelKey: 'components.labels.clones' },
@@ -233,15 +240,6 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
           title={amendment.title ?? ''}
           description={amendment.preamble || amendment.code || ''}
         />
-        {isAdmin && (
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => navigate({ to: `/amendment/${amendmentId}/edit` })}
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
-        )}
       </ActionBar>
 
       {/* Hashtags */}
@@ -292,12 +290,15 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
                             <Avatar className="border-background h-12 w-12 border-2">
                               <AvatarImage src={collab.user?.avatar ?? undefined} />
                               <AvatarFallback>
-                                {(collab.user?.first_name?.[0] ?? collab.user?.last_name?.[0])?.toUpperCase() || 'U'}
+                                {(
+                                  collab.user?.first_name?.[0] ?? collab.user?.last_name?.[0]
+                                )?.toUpperCase() || 'U'}
                               </AvatarFallback>
                             </Avatar>
                             <div className="min-w-0 flex-1">
                               <CardTitle className="line-clamp-1 text-lg">
-                                {`${collab.user?.first_name ?? ''} ${collab.user?.last_name ?? ''}`.trim() || 'Unknown'}
+                                {`${collab.user?.first_name ?? ''} ${collab.user?.last_name ?? ''}`.trim() ||
+                                  'Unknown'}
                               </CardTitle>
                               {collab.user?.handle && (
                                 <CardDescription className="text-xs">
@@ -346,8 +347,8 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
               {supportingGroups
-                .filter((group) => getSupportStatus(group.id) !== 'declined')
-                .map((group) => {
+                .filter(group => getSupportStatus(group.id) !== 'declined')
+                .map(group => {
                   const supportStatus = getSupportStatus(group.id);
                   return (
                     <div key={group.id} className="relative">
@@ -434,7 +435,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
         networkData={networkData}
         targetGroupEventsData={targetGroupEventsData}
         currentUserId={user?.id || ''}
-        allUsers={(usersData?.$users || []).map((u) => ({
+        allUsers={(usersData?.$users || []).map(u => ({
           id: u.id,
           name: u.handle || u.email || 'Unknown User',
           email: u.email,
