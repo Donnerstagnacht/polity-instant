@@ -155,6 +155,7 @@ const baseAmendmentSupportVoteSchema = z.object({
   id: z.string(),
   amendment_id: z.string(),
   user_id: z.string(),
+  vote: z.number().nullable(),
   created_at: timestampSchema,
 })
 
@@ -163,6 +164,12 @@ export const selectAmendmentSupportVoteSchema = baseAmendmentSupportVoteSchema
 export const createAmendmentSupportVoteSchema = baseAmendmentSupportVoteSchema
   .omit({ id: true, created_at: true, user_id: true })
   .extend({ id: z.string() })
+
+export const updateAmendmentSupportVoteSchema = baseAmendmentSupportVoteSchema
+  .pick({ vote: true })
+  .extend({ id: z.string() })
+
+export const deleteAmendmentSupportVoteSchema = z.object({ id: z.string() })
 
 // ============================================
 // Change Request Vote Schemas

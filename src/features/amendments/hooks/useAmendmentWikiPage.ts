@@ -14,6 +14,7 @@ import {
 } from '../logic/amendmentHelpers';
 import { notifyAmendmentVoted } from '@/features/notifications/utils/notification-helpers.ts';
 import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
+import type { VoteValue } from '@/features/shared/ui/voting/VoteButtons';
 
 export function useAmendmentWikiPage(amendmentId: string) {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ export function useAmendmentWikiPage(amendmentId: string) {
   // Collaboration hook
   const collaborationData = useAmendmentCollaboration(amendmentId);
 
-  const { updateAmendment } = useAmendmentActions();
+  const { supportAmendment, updateSupportVote, deleteSupportVote } = useAmendmentActions();
 
   // All data via facade
   const facadeResult = useAmendmentState({
@@ -103,11 +104,20 @@ export function useAmendmentWikiPage(amendmentId: string) {
     () =>
       amendment
         ? deriveVoteState(amendment, user?.id)
-        : { score: 0, userVote: null, hasUpvoted: false, hasDownvoted: false },
+        : {
+            score: 0,
+            upvotes: 0,
+            downvotes: 0,
+            supporterCount: 0,
+            userVote: undefined,
+            currentVoteValue: 0 as VoteValue,
+            hasUpvoted: false,
+            hasDownvoted: false,
+          },
     [amendment, user?.id]
   );
 
-  const handleVote = async (voteValue: number) => {
+  const handleVote = async (voteValue: VoteValue) => {
     if (!user?.id) {
       toast.error('Please log in to vote');
       return;
@@ -118,26 +128,31 @@ export function useAmendmentWikiPage(amendmentId: string) {
     }
 
     try {
-      // TODO: Per-user upvote/downvote tracking removed with voting system migration
-      // For now, just update the aggregate counts directly
-      await updateAmendment({
-        id: amendmentId,
-        upvotes: voteValue === 1 ? (amendment.upvotes || 0) + 1 : amendment.upvotes,
-        downvotes: voteValue === -1 ? (amendment.downvotes || 0) + 1 : amendment.downvotes,
-      });
-
-      // Notify amendment author about vote
-      const adminCollab = collaborators.find((c) => c.status === 'admin');
-      const authorUserId = adminCollab?.user?.id;
-      if (authorUserId && authorUserId !== user.id) {
-        await notifyAmendmentVoted({
-          senderId: user.id,
-          senderName: user.email || 'Someone',
-          recipientUserId: authorUserId,
-          amendmentId,
-          amendmentTitle: amendment.title ?? '',
-          voteType: voteValue === 1 ? 'upvote' : 'downvote',
+      if (voteState.userVote) {
+        if (voteState.currentVoteValue === voteValue) {
+          await deleteSupportVote(voteState.userVote.id);
+        } else {
+          await updateSupportVote({ id: voteState.userVote.id, vote: voteValue });
+        }
+      } else {
+        await supportAmendment({
+          id: crypto.randomUUID(),
+          amendment_id: amendmentId,
+          vote: voteValue,
         });
+
+        const adminCollab = collaborators.find((c) => c.status === 'admin');
+        const authorUserId = adminCollab?.user?.id;
+        if (authorUserId && authorUserId !== user.id) {
+          await notifyAmendmentVoted({
+            senderId: user.id,
+            senderName: user.email || 'Someone',
+            recipientUserId: authorUserId,
+            amendmentId,
+            amendmentTitle: amendment.title ?? '',
+            voteType: voteValue === 1 ? 'upvote' : 'downvote',
+          });
+        }
       }
     } catch (error) {
       console.error('Error voting:', error);

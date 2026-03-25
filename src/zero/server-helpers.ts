@@ -134,12 +134,17 @@ export async function recomputeAmendmentCounters(tx: Transaction<Schema>, amendm
     ACTIVE_COLLABORATOR_STATUSES.has(collaborator.status ?? '')
   ).length
 
+  const upvotes = supportVotes.filter(vote => (vote.vote ?? 1) > 0).length
+  const downvotes = supportVotes.filter(vote => (vote.vote ?? 1) < 0).length
+
   await tx.mutate.amendment.update({
     id: amendmentId,
     subscriber_count: subscribers.length,
     clone_count: clones.length,
     change_request_count: changeRequests.length,
-    supporters: supportVotes.length,
+    supporters: upvotes,
+    upvotes,
+    downvotes,
     collaborator_count: activeCollaborators,
   })
 }

@@ -261,10 +261,37 @@ export function useAmendmentActions() {
       try {
         const result = zero.mutate(mutators.amendments.supportAmendment(args))
         await serverConfirmed(result)
-        toast.success(t('features.amendments.toasts.supportAdded'))
       } catch (error) {
         console.error('Failed to support amendment:', error)
         toast.error(t('features.amendments.toasts.supportAddFailed'))
+        throw error
+      }
+    },
+    [zero]
+  )
+
+  const updateSupportVote = useCallback(
+    async (args: Parameters<typeof mutators.amendments.updateSupportVote>[0]) => {
+      try {
+        const result = zero.mutate(mutators.amendments.updateSupportVote(args))
+        await serverConfirmed(result)
+      } catch (error) {
+        console.error('Failed to update amendment support vote:', error)
+        toast.error(t('common.voteToasts.voteUpdateFailed', 'Failed to update vote'))
+        throw error
+      }
+    },
+    [zero]
+  )
+
+  const deleteSupportVote = useCallback(
+    async (id: string) => {
+      try {
+        const result = zero.mutate(mutators.amendments.deleteSupportVote({ id }))
+        await serverConfirmed(result)
+      } catch (error) {
+        console.error('Failed to delete amendment support vote:', error)
+        toast.error(t('common.voteToasts.voteDeleteFailed', 'Failed to delete vote'))
         throw error
       }
     },
@@ -428,6 +455,8 @@ export function useAmendmentActions() {
 
     // Support
     supportAmendment,
+    updateSupportVote,
+    deleteSupportVote,
     createSupportConfirmation,
     updateSupportConfirmation,
 

@@ -3,6 +3,7 @@
  */
 
 import type { AmendmentFullRow } from '@/zero/amendments/queries';
+import type { VoteValue } from '@/features/shared/ui/voting/VoteButtons';
 
 export function getSupportStatus(
   groupId: string,
@@ -17,18 +18,44 @@ export function getSupportStatus(
   return 'active';
 }
 
-type VotableAmendment = Pick<NonNullable<AmendmentFullRow>, 'upvotes' | 'downvotes'>;
+type VotableAmendment = Pick<NonNullable<AmendmentFullRow>, 'upvotes' | 'downvotes' | 'support_votes'>;
+
+type SupportVoteRow = NonNullable<NonNullable<AmendmentFullRow>['support_votes']>[number];
+
+function normalizeVoteValue(vote: number | null | undefined): Exclude<VoteValue, 0> {
+  return vote === -1 ? -1 : 1;
+}
 
 export function deriveVoteState(
   amendment: VotableAmendment,
-  _userId: string | undefined,
+  userId: string | undefined,
 ) {
-  const score = (amendment.upvotes || 0) - (amendment.downvotes || 0);
-  // TODO: Per-user upvote/downvote tracking removed with voting system migration
-  const userVote = undefined;
-  const hasUpvoted = false;
-  const hasDownvoted = false;
-  return { score, userVote, hasUpvoted, hasDownvoted };
+  const supportVotes = amendment.support_votes ?? [];
+  const hasSupportVotes = supportVotes.length > 0;
+
+  const upvotes = hasSupportVotes
+    ? supportVotes.filter(vote => normalizeVoteValue(vote.vote) === 1).length
+    : amendment.upvotes || 0;
+  const downvotes = hasSupportVotes
+    ? supportVotes.filter(vote => normalizeVoteValue(vote.vote) === -1).length
+    : amendment.downvotes || 0;
+  const score = upvotes - downvotes;
+
+  const userVote = userId
+    ? supportVotes.find(vote => (vote.user?.id ?? vote.user_id) === userId)
+    : undefined;
+  const currentVoteValue: VoteValue = userVote ? normalizeVoteValue(userVote.vote) : 0;
+
+  return {
+    score,
+    upvotes,
+    downvotes,
+    supporterCount: upvotes,
+    userVote: userVote as SupportVoteRow | undefined,
+    currentVoteValue,
+    hasUpvoted: currentVoteValue === 1,
+    hasDownvoted: currentVoteValue === -1,
+  };
 }
 
 export const AMENDMENT_STATUS_COLORS: Record<string, string> = {

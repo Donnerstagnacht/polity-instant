@@ -31,6 +31,7 @@ export const amendmentQueries = {
         .where('id', id)
         .related('collaborators', q => q.related('user'))
         .related('amendment_hashtags', q => q.related('hashtag'))
+        .related('support_votes', q => q.related('user'))
         .related('vote_entries', q => q.related('choices'))
         .related('change_requests')
         .related('support_confirmations')

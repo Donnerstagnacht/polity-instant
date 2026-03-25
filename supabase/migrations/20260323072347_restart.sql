@@ -169,6 +169,7 @@ alter table "public"."amendment_path_segment" enable row level security;
     "id" uuid not null default gen_random_uuid(),
     "amendment_id" uuid not null,
     "user_id" uuid not null,
+    "vote" integer,
     "created_at" timestamp with time zone not null default now()
       );
 

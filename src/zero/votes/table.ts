@@ -84,6 +84,7 @@ export const amendmentSupportVote = table('amendment_support_vote')
     id: string(),
     amendment_id: string(),
     user_id: string(),
+    vote: number().optional(),
     created_at: number(),
   })
   .primaryKey('id')

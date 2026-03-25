@@ -16,7 +16,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/features/shared/ui/ui/carousel';
-import { ArrowUp, ArrowDown, Users, Copy } from 'lucide-react';
+import { Users, Copy } from 'lucide-react';
 import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
 import { StatsBar } from '@/features/shared/ui/ui/StatsBar';
@@ -26,6 +26,7 @@ import { InfoTabs } from '@/features/shared/ui/wiki/InfoTabs.tsx';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { EditingModeBadge } from '@/features/shared/ui/ui/editing-mode.tsx';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
+import { VoteButtons, type VoteValue } from '@/features/shared/ui/voting';
 import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
 import { SupporterStatusBadge } from '@/features/amendments/ui/SupporterStatusBadge';
 import { GRADIENTS } from '@/features/users/state/gradientColors';
@@ -57,9 +58,10 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
     totalSupportingMembers,
     targetCollaborator,
     targetGroup,
-    score,
-    hasUpvoted,
-    hasDownvoted,
+    upvotes,
+    downvotes,
+    supporterCount,
+    currentVoteValue,
     handleVote,
     cloneDialogOpen,
     setCloneDialogOpen,
@@ -72,6 +74,8 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
     usersData,
     getSupportStatus,
   } = useAmendmentWikiPage(amendmentId);
+  const normalizedVoteValue: VoteValue =
+    currentVoteValue === -1 ? -1 : currentVoteValue === 1 ? 1 : 0;
 
   if (!amendment) {
     return (
@@ -182,7 +186,10 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
             labelKey: 'components.labels.collaborators',
           },
           { value: subscriberCount, labelKey: 'components.labels.subscribers' },
-          { value: amendment.supporters ?? score, labelKey: 'components.labels.supporters' },
+          {
+            value: amendment.supporters ?? supporterCount,
+            labelKey: 'components.labels.supporters',
+          },
           { value: amendment.clone_count ?? clones.length, labelKey: 'components.labels.clones' },
           { value: supportingGroups.length, labelKey: 'components.labels.supportingGroups' },
           { value: totalSupportingMembers, labelKey: 'components.labels.supportingMembers' },
@@ -213,24 +220,13 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
           onAcceptInvitation={collaboration.acceptInvitation}
           isLoading={collaboration.isLoading}
         />
-        <div className="bg-card flex h-10 items-center gap-1 rounded-lg border px-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`h-8 w-8 p-0 ${hasUpvoted ? 'text-orange-500' : ''}`}
-            onClick={() => handleVote(1)}
-          >
-            <ArrowUp className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`h-8 w-8 p-0 ${hasDownvoted ? 'text-blue-500' : ''}`}
-            onClick={() => handleVote(-1)}
-          >
-            <ArrowDown className="h-4 w-4" />
-          </Button>
-        </div>
+        <VoteButtons
+          upvotes={upvotes}
+          downvotes={downvotes}
+          userVote={normalizedVoteValue}
+          onVote={handleVote}
+          orientation="horizontal"
+        />
         <Button variant="outline" size="default" onClick={handleClone}>
           <Copy className="mr-2 h-4 w-4" />
           Clone

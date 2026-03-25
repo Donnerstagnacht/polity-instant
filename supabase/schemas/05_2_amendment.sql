@@ -118,6 +118,7 @@ CREATE TABLE IF NOT EXISTS public.amendment_support_vote (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
+  vote INTEGER,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

@@ -38,6 +38,8 @@ export {
   createFinalChoiceDecisionSchema,
   selectAmendmentSupportVoteSchema,
   createAmendmentSupportVoteSchema,
+  updateAmendmentSupportVoteSchema,
+  deleteAmendmentSupportVoteSchema,
   selectChangeRequestVoteSchema,
   createChangeRequestVoteSchema,
   selectBlogSupportVoteSchema,

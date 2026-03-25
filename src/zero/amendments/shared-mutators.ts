@@ -21,6 +21,8 @@ import {
 import {
   createChangeRequestVoteSchema,
   createAmendmentSupportVoteSchema,
+  updateAmendmentSupportVoteSchema,
+  deleteAmendmentSupportVoteSchema,
 } from '../votes/schema'
 import { z } from 'zod'
 
@@ -121,6 +123,20 @@ export const amendmentSharedMutators = {
         user_id: userID,
         created_at: now,
       })
+    }
+  ),
+
+  updateSupportVote: defineMutator(
+    updateAmendmentSupportVoteSchema,
+    async ({ tx, args }) => {
+      await tx.mutate.amendment_support_vote.update(args)
+    }
+  ),
+
+  deleteSupportVote: defineMutator(
+    deleteAmendmentSupportVoteSchema,
+    async ({ tx, args }) => {
+      await tx.mutate.amendment_support_vote.delete({ id: args.id })
     }
   ),
 

@@ -15,7 +15,11 @@ import {
   createChangeRequestSchema,
   updateChangeRequestSchema,
 } from '../change-requests/schema'
-import { createAmendmentSupportVoteSchema } from '../votes/schema'
+import {
+  createAmendmentSupportVoteSchema,
+  updateAmendmentSupportVoteSchema,
+  deleteAmendmentSupportVoteSchema,
+} from '../votes/schema'
 
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 export const amendmentServerMutators = {
@@ -265,5 +269,25 @@ export const amendmentServerMutators = {
   supportAmendment: defineMutator(createAmendmentSupportVoteSchema, async ({ tx, ctx, args }) => {
     await mutators.amendments.supportAmendment.fn({ tx, ctx, args })
     await recomputeAmendmentCounters(tx, args.amendment_id)
+  }),
+
+  updateSupportVote: defineMutator(updateAmendmentSupportVoteSchema, async ({ tx, ctx, args }) => {
+    const existingVote = await tx.run(zql.amendment_support_vote.where('id', args.id).one())
+
+    await mutators.amendments.updateSupportVote.fn({ tx, ctx, args })
+
+    if (!existingVote) return
+
+    await recomputeAmendmentCounters(tx, existingVote.amendment_id)
+  }),
+
+  deleteSupportVote: defineMutator(deleteAmendmentSupportVoteSchema, async ({ tx, ctx, args }) => {
+    const existingVote = await tx.run(zql.amendment_support_vote.where('id', args.id).one())
+
+    await mutators.amendments.deleteSupportVote.fn({ tx, ctx, args })
+
+    if (!existingVote) return
+
+    await recomputeAmendmentCounters(tx, existingVote.amendment_id)
   }),
 }
