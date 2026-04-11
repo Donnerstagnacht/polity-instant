@@ -171,6 +171,12 @@ function AuthenticatedHome({
     );
   }
 
+  // If onboarding just completed, the wizard navigates to the user-chosen destination itself.
+  // Only redirect to /home when onboarding was never needed (e.g. returning user).
+  if (!hasCompletedOnboarding) {
+    return null;
+  }
+
   console.log('[HomePage] User ready, no onboarding — redirecting to /home');
   return <Navigate to="/home" />;
 }
