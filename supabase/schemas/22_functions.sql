@@ -3,7 +3,7 @@
 -- =============================================================================
 
 -- Handle new user creation from Supabase Auth
--- Automatically creates a user profile and default notification settings
+-- Automatically creates a user profile, default notification settings, and user preferences
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -14,6 +14,9 @@ BEGIN
   VALUES (NEW.id, NEW.email);
 
   INSERT INTO public.notification_setting (user_id)
+  VALUES (NEW.id);
+
+  INSERT INTO public.user_preference (user_id)
   VALUES (NEW.id);
 
   RETURN NEW;

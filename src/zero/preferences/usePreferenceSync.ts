@@ -70,14 +70,26 @@ export function usePreferenceSync() {
     [zero]
   )
 
-  // DB → Zustand: restore preferences on first load
+  // DB → Zustand (existing user) or Zustand → DB (new user) on first load
   useEffect(() => {
     if (isLoading || hasSynced.current || !preference) return
 
     hasSynced.current = true
 
-    // Apply DB values to Zustand stores and update prev refs
-    // so the Zustand→DB effects don't write them back
+    // New user: trigger-created defaults have updated_at === created_at.
+    // Push current Zustand values (browser-derived) to DB instead of overwriting them.
+    const isNewUser = preference.created_at === preference.updated_at
+
+    if (isNewUser) {
+      // Zustand → DB: persist browser-derived values
+      prevTheme.current = theme
+      prevLanguage.current = language
+      prevNavigationView.current = navigationView
+      persistField({ theme, language, navigation_view: navigationView })
+      return
+    }
+
+    // Existing user: DB → Zustand (restore saved preferences)
     if (preference.theme) {
       const dbTheme = preference.theme as ThemeType
       prevTheme.current = dbTheme
@@ -95,7 +107,7 @@ export function usePreferenceSync() {
       prevNavigationView.current = dbNav
       setNavigationView(dbNav)
     }
-  }, [preference, isLoading, setTheme, setLanguage, setNavigationView])
+  }, [preference, isLoading, setTheme, setLanguage, setNavigationView, theme, language, navigationView, persistField])
 
   // Zustand → DB: persist theme changes
   useEffect(() => {
