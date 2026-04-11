@@ -1,0 +1,14 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "Dockerfile.zero"
+  },
+  "deploy": {
+    "startCommand": "/bin/sh -lc 'export ZERO_PORT=${PORT:-4848}; exec ./node_modules/.bin/zero-cache'",
+    "healthcheckPath": "/keepalive",
+    "healthcheckTimeout": 300,
+    "restartPolicyType": "ALWAYS",
+    "restartPolicyMaxRetries": 10
+  }
+}

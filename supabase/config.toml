@@ -5,7 +5,7 @@ schemas = ["public"]
 
 [db]
 port = 54322
-major_version = 15
+major_version = 17
 
 [db.pooler]
 enabled = false
@@ -26,6 +26,30 @@ site_url = "http://localhost:3000"
 enable_signup = true
 double_confirm_changes = false
 enable_confirmations = false
+
+[auth.email.template.confirmation]
+subject = "Confirm your signup for Polity"
+content_path = "./email-templates/confirm-signup.html"
+
+[auth.email.template.invite]
+subject = "You have been invited to Polity"
+content_path = "./email-templates/invite.html"
+
+[auth.email.template.magic_link]
+subject = "Your Magic Link for Polity"
+content_path = "./email-templates/magic-link.html"
+
+[auth.email.template.email_change]
+subject = "Confirm your email change for Polity"
+content_path = "./email-templates/confirm-email-change.html"
+
+[auth.email.template.recovery]
+subject = "Reset your password for Polity"
+content_path = "./email-templates/reset-password.html"
+
+[auth.email.template.reauthentication]
+subject = "Confirm reauthentication for Polity"
+content_path = "./email-templates/reauthentication.html"
 
 [storage]
 enabled = true

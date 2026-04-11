@@ -18,6 +18,29 @@
 
 ## Running the Project
 
+## Environment Modes
+
+This project now separates local development from production values via mode-specific env files:
+
+- `.env.development.local` for `npm run dev` and local Supabase CLI
+- `.env.production.local` for `npm run build` and local production previews against cloud services
+- `.env` should stay empty or contain only shared non-sensitive defaults
+
+### Local development mode
+
+- App: `npm run dev`
+- Supabase: local CLI stack via `npx supabase start`
+- Zero: local zero-cache via `npm run zero:dev`
+- Env source: `.env.development.local`
+
+### Production mode
+
+- Build: `npm run build`
+- Preview built app locally: `npm run start`
+- Supabase: cloud project
+- Zero: deployed zero-cache URL
+- Env source: `.env.production.local` locally, or platform env vars on Vercel/Railway
+
 ### 1. Install dependencies
 
 ```bash

@@ -78,6 +78,9 @@ jspm_packages/
 # Vercel
 .vercel
 
+# Fly.io
+.fly
+
 # Storybook
 storybook-static/
 *storybook.log
@@ -128,6 +131,9 @@ count.txt
 
 # Build outputs specific to this project
 dist/
+.output/
+.vinxi/
+
 
 # Test output files
 test-result.json

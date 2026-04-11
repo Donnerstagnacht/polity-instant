@@ -1,0 +1,373 @@
+<!doctype html>
+<html
+  lang="en"
+  xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:o="urn:schemas-microsoft-com:office:office"
+>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="supported-color-schemes" content="light dark" />
+    <title>Your Magic Link for Polity</title>
+    <!--[if mso]>
+      <noscript>
+        <xml>
+          <o:OfficeDocumentSettings>
+            <o:PixelsPerInch>96</o:PixelsPerInch>
+          </o:OfficeDocumentSettings>
+        </xml>
+      </noscript>
+    <![endif]-->
+    <style>
+      @media (prefers-color-scheme: dark) {
+        .email-body {
+          background-color: #09090b !important;
+        }
+        .email-card {
+          background-color: #18181b !important;
+          border-color: #27272a !important;
+        }
+        .email-heading {
+          color: #fafafa !important;
+        }
+        .email-text {
+          color: #e4e4e7 !important;
+        }
+        .email-muted {
+          color: #a1a1aa !important;
+        }
+        .email-btn {
+          background-color: #fafafa !important;
+        }
+        .email-btn a {
+          color: #18181b !important;
+        }
+        .email-divider {
+          border-color: #27272a !important;
+        }
+        .email-logo-text {
+          color: #fafafa !important;
+        }
+        .email-link {
+          color: #8b5cf6 !important;
+        }
+        .email-code {
+          background-color: #27272a !important;
+          color: #fafafa !important;
+          border-color: #3f3f46 !important;
+        }
+      }
+    </style>
+  </head>
+  <body
+    class="email-body"
+    style="
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f5;
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    "
+  >
+    <table
+      role="presentation"
+      cellpadding="0"
+      cellspacing="0"
+      width="100%"
+      style="background-color: #f4f4f5"
+      class="email-body"
+    >
+      <tr>
+        <td align="center" style="padding: 40px 20px">
+          <!-- Logo -->
+          <table
+            role="presentation"
+            cellpadding="0"
+            cellspacing="0"
+            width="600"
+            style="max-width: 600px"
+          >
+            <tr>
+              <td align="center" style="padding-bottom: 32px">
+                <img
+                  src="{{ .SiteURL }}/logo192.png"
+                  width="44"
+                  height="44"
+                  alt="Polity"
+                  style="display: block; border: 0; margin: 0 auto 12px auto"
+                />
+                <p
+                  class="email-logo-text"
+                  style="
+                    margin: 0;
+                    font-family:
+                      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+                      Arial, sans-serif;
+                    font-size: 18px;
+                    font-weight: 700;
+                    letter-spacing: 0.05em;
+                    color: #09090b;
+                    text-transform: uppercase;
+                  "
+                >
+                  POLITY
+                </p>
+              </td>
+            </tr>
+          </table>
+
+          <!-- Card -->
+          <table
+            class="email-card"
+            role="presentation"
+            cellpadding="0"
+            cellspacing="0"
+            width="600"
+            style="
+              max-width: 600px;
+              background-color: #ffffff;
+              border: 1px solid #e4e4e7;
+              border-radius: 8px;
+              border-collapse: separate;
+            "
+          >
+            <tr>
+              <td style="padding: 48px 40px">
+                <!-- Heading -->
+                <h1
+                  class="email-heading"
+                  style="
+                    margin: 0 0 8px 0;
+                    font-family:
+                      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+                      Arial, sans-serif;
+                    font-size: 22px;
+                    font-weight: 600;
+                    color: #09090b;
+                    line-height: 1.4;
+                  "
+                >
+                  Your Magic Link
+                </h1>
+
+                <!-- Divider -->
+                <hr
+                  class="email-divider"
+                  style="border: none; border-top: 1px solid #e4e4e7; margin: 20px 0"
+                />
+
+                <!-- Body -->
+                <p
+                  class="email-text"
+                  style="
+                    margin: 0 0 28px 0;
+                    font-family:
+                      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+                      Arial, sans-serif;
+                    font-size: 15px;
+                    color: #3f3f46;
+                    line-height: 1.6;
+                  "
+                >
+                  Click the button below to securely log in to your Polity account. This link will
+                  expire shortly.
+                </p>
+
+                <!-- CTA Button -->
+                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                  <tr>
+                    <td align="center" style="padding: 0 0 28px 0">
+                      <!--[if mso]>
+                        <v:roundrect
+                          xmlns:v="urn:schemas-microsoft-com:vml"
+                          href="{{ .ConfirmationURL }}"
+                          style="height: 44px; v-text-anchor: middle; width: 220px"
+                          arcsize="14%"
+                          fillcolor="#18181b"
+                          stroke="f"
+                        >
+                          <center
+                            style="
+                              color: #fafafa;
+                              font-family: sans-serif;
+                              font-size: 14px;
+                              font-weight: 500;
+                            "
+                          >
+                            Log In to Polity
+                          </center>
+                        </v:roundrect>
+                      <![endif]-->
+                      <!--[if !mso]><!-->
+                      <table role="presentation" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td
+                            class="email-btn"
+                            align="center"
+                            style="
+                              background-color: #18181b;
+                              border-radius: 6px;
+                              mso-padding-alt: 0;
+                            "
+                          >
+                            <a
+                              href="{{ .ConfirmationURL }}"
+                              target="_blank"
+                              style="
+                                display: inline-block;
+                                padding: 12px 36px;
+                                font-family:
+                                  -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+                                  'Helvetica Neue', Arial, sans-serif;
+                                font-size: 14px;
+                                font-weight: 500;
+                                color: #fafafa;
+                                text-decoration: none;
+                                border-radius: 6px;
+                                line-height: 1.2;
+                              "
+                              >Log In to Polity</a
+                            >
+                          </td>
+                        </tr>
+                      </table>
+                      <!--<![endif]-->
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Token Section -->
+                <p
+                  class="email-muted"
+                  style="
+                    margin: 0 0 12px 0;
+                    font-family:
+                      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+                      Arial, sans-serif;
+                    font-size: 13px;
+                    color: #71717a;
+                    line-height: 1.6;
+                  "
+                >
+                  Or use this one-time code:
+                </p>
+
+                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                  <tr>
+                    <td align="center" style="padding: 0 0 28px 0">
+                      <table role="presentation" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td
+                            class="email-code"
+                            align="center"
+                            style="
+                              background-color: #f4f4f5;
+                              border: 1px solid #e4e4e7;
+                              border-radius: 6px;
+                              padding: 16px 32px;
+                            "
+                          >
+                            <span
+                              style="
+                                font-family:
+                                  'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo,
+                                  monospace;
+                                font-size: 28px;
+                                font-weight: 600;
+                                letter-spacing: 0.15em;
+                                color: #09090b;
+                              "
+                              >{{ .Token }}</span
+                            >
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Fallback link -->
+                <p
+                  class="email-muted"
+                  style="
+                    margin: 0;
+                    font-family:
+                      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+                      Arial, sans-serif;
+                    font-size: 13px;
+                    color: #71717a;
+                    line-height: 1.6;
+                  "
+                >
+                  If the button doesn't work, copy and paste this link into your browser:
+                </p>
+                <p
+                  style="
+                    margin: 4px 0 0 0;
+                    font-family:
+                      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+                      Arial, sans-serif;
+                    font-size: 13px;
+                    line-height: 1.6;
+                    word-break: break-all;
+                  "
+                >
+                  <a
+                    class="email-link"
+                    href="{{ .ConfirmationURL }}"
+                    style="color: #6d28d9; text-decoration: underline"
+                    >{{ .ConfirmationURL }}</a
+                  >
+                </p>
+              </td>
+            </tr>
+          </table>
+
+          <!-- Footer -->
+          <table
+            role="presentation"
+            cellpadding="0"
+            cellspacing="0"
+            width="600"
+            style="max-width: 600px"
+          >
+            <tr>
+              <td align="center" style="padding: 28px 0 0 0">
+                <p
+                  class="email-muted"
+                  style="
+                    margin: 0 0 4px 0;
+                    font-family:
+                      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+                      Arial, sans-serif;
+                    font-size: 12px;
+                    color: #a1a1aa;
+                    line-height: 1.6;
+                  "
+                >
+                  &copy; 2026 Polity. All rights reserved.
+                </p>
+                <p
+                  class="email-muted"
+                  style="
+                    margin: 0;
+                    font-family:
+                      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+                      Arial, sans-serif;
+                    font-size: 12px;
+                    color: #a1a1aa;
+                    line-height: 1.6;
+                  "
+                >
+                  If you didn't request this login link, you can safely ignore this email.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

@@ -9,6 +9,9 @@ export default defineConfig({
   },
   vite: {
     plugins: [tsConfigPaths(), tailwindcss()],
+    ssr: {
+      noExternal: ['zustand'],
+    },
     css: {
       devSourcemap: true,
     },

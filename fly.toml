@@ -1,0 +1,49 @@
+# fly.toml — zero-cache on Fly.io
+#
+# First-time setup:
+#   1. fly auth login
+#   2. fly apps create polity-zero --machines
+#   3. fly volumes create zero_data --region fra --size 1
+#   4. fly secrets set \
+#        ZERO_UPSTREAM_DB="postgresql://postgres:PASSWORD@db.PROJECT.supabase.co:5432/postgres?sslmode=require" \
+#        ZERO_CVR_DB="postgresql://postgres.PROJECT:PASSWORD@aws-1-eu-central-1.pooler.supabase.com:5432/postgres?sslmode=require" \
+#        ZERO_CHANGE_DB="postgresql://postgres.PROJECT:PASSWORD@aws-1-eu-central-1.pooler.supabase.com:5432/postgres?sslmode=require" \
+#        ZERO_ADMIN_PASSWORD="your-strong-password"
+#   5. fly deploy
+
+app = "polity-zero"
+primary_region = "fra"
+
+[build]
+  dockerfile = "Dockerfile.zero"
+
+[env]
+  ZERO_PORT = "4848"
+  NODE_ENV = "production"
+
+[http_service]
+  internal_port = 4848
+  force_https = true
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    grace_period = "30s"
+    interval = "15s"
+    method = "GET"
+    timeout = "5s"
+    path = "/keepalive"
+
+[mounts]
+  source = "zero_data"
+  destination = "/data"
+  initial_size = "1gb"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+
+[[restart]]
+  policy = "on-failure"
+  retries = 5
