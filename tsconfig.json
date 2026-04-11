@@ -1,11 +1,12 @@
 {
   "compilerOptions": {
-    "lib": ["dom", "dom.iterable", "es2022", "webworker"],
+    "lib": ["dom", "es2022", "webworker"],
+    "types": ["node"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
-    "esModuleInterop": true,
+    "noUncheckedSideEffectImports": false,
     "module": "esnext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
@@ -13,7 +14,6 @@
     "jsx": "react-jsx",
     "incremental": true,
     "allowImportingTsExtensions": true,
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@/zero/*": ["./src/zero/*"]

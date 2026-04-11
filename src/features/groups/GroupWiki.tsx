@@ -23,7 +23,7 @@ import { BlogTimelineCard } from '@/features/timeline/ui/cards/BlogTimelineCard'
 import { GRADIENTS } from '@/features/users/state/gradientColors';
 import { StatsBar } from '@/features/shared/ui/ui/StatsBar';
 import { ActionBar } from '@/features/shared/ui/ui/ActionBar';
-import { SubscribeButton, MembershipButton } from 'src/features/shared/ui/action-buttons';
+import { SubscribeButton, MembershipButton } from '@/features/shared/ui/action-buttons';
 import { SocialBar } from '@/features/users/ui/SocialBar';
 import { InfoTabs } from '@/features/shared/ui/wiki/InfoTabs.tsx';
 import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';

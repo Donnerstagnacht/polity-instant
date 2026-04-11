@@ -13,7 +13,7 @@ import { useAuth } from '@/providers/auth-provider';
 import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
 import { StatsBar } from '@/features/shared/ui/ui/StatsBar';
 import { ActionBar } from '@/features/shared/ui/ui/ActionBar';
-import { SubscribeButton } from 'src/features/shared/ui/action-buttons';
+import { SubscribeButton } from '@/features/shared/ui/action-buttons';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useMemo } from 'react';

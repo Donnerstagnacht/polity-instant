@@ -21,7 +21,7 @@ import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
 import { StatsBar } from '@/features/shared/ui/ui/StatsBar';
 import { ActionBar } from '@/features/shared/ui/ui/ActionBar';
-import { SubscribeButton, MembershipButton } from 'src/features/shared/ui/action-buttons';
+import { SubscribeButton, MembershipButton } from '@/features/shared/ui/action-buttons';
 import { InfoTabs } from '@/features/shared/ui/wiki/InfoTabs.tsx';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { EditingModeBadge } from '@/features/shared/ui/ui/editing-mode.tsx';

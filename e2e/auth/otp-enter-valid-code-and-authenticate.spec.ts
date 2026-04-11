@@ -2,7 +2,7 @@
 // seed: e2e/seed.spec.ts
 
 import { test, expect } from '../fixtures/test-base';
-import { generateTestMagicCode } from 'e2e/helpers/magic-code-helper';
+import { generateTestMagicCode } from '../helpers/magic-code-helper';
 
 test.describe('OTP Code Verification', () => {
   test('Enter Valid OTP Code and Verify Automatic Authentication', async ({ page }) => {

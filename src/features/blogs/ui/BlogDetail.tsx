@@ -25,7 +25,7 @@ import { useSubscribeBlog } from '@/features/blogs/hooks/useSubscribeBlog';
 import { ActionBar } from '@/features/shared/ui/ui/ActionBar';
 import { useAuth } from '@/providers/auth-provider';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
-import { SubscribeButton } from 'src/features/shared/ui/action-buttons';
+import { SubscribeButton } from '@/features/shared/ui/action-buttons';
 import { VoteButtons, type VoteValue } from '@/features/shared/ui/voting';
 import { CommentThread } from '@/features/shared/ui/comments';
 import type { CommentData } from '@/features/shared/ui/comments';
