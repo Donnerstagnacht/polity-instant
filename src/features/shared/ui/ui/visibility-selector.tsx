@@ -2,7 +2,13 @@
 
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { Label } from '@/features/shared/ui/ui/label.tsx';
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/features/shared/ui/ui/tooltip.tsx';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from '@/features/shared/ui/ui/tooltip.tsx';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Info, Check, Globe, Lock, Users } from 'lucide-react';
 
 type Visibility = 'public' | 'authenticated' | 'private';
@@ -14,27 +20,6 @@ interface VisibilityOption {
   icon: React.ReactNode;
 }
 
-const visibilityOptions: VisibilityOption[] = [
-  {
-    value: 'public',
-    label: 'Public',
-    description: 'Anyone can see this content',
-    icon: <Globe className="h-4 w-4" />,
-  },
-  {
-    value: 'authenticated',
-    label: 'Authenticated',
-    description: 'Only logged-in users can see this',
-    icon: <Users className="h-4 w-4" />,
-  },
-  {
-    value: 'private',
-    label: 'Private',
-    description: 'Only collaborators/members can see this',
-    icon: <Lock className="h-4 w-4" />,
-  },
-];
-
 interface VisibilitySelectorProps {
   value: Visibility;
   onChange: (value: Visibility) => void;
@@ -45,19 +30,41 @@ interface VisibilitySelectorProps {
 export function VisibilitySelector({
   value,
   onChange,
-  label = 'Visibility',
+  label,
   showTooltip = true,
 }: VisibilitySelectorProps) {
+  const { t } = useTranslation();
+  const visibilityOptions: VisibilityOption[] = [
+    {
+      value: 'public',
+      label: t('common.visibility.public'),
+      description: t('common.visibility.descriptions.public'),
+      icon: <Globe className="h-4 w-4" />,
+    },
+    {
+      value: 'authenticated',
+      label: t('common.visibility.authenticated'),
+      description: t('common.visibility.descriptions.authenticated'),
+      icon: <Users className="h-4 w-4" />,
+    },
+    {
+      value: 'private',
+      label: t('common.visibility.private'),
+      description: t('common.visibility.descriptions.private'),
+      icon: <Lock className="h-4 w-4" />,
+    },
+  ];
   const selectedOption = visibilityOptions.find(opt => opt.value === value);
+  const resolvedLabel = label ?? t('common.visibility.label');
 
   const content = (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <Label>{label}</Label>
+        <Label>{resolvedLabel}</Label>
         {showTooltip && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <Info className="h-4 w-4 cursor-help text-muted-foreground" />
+              <Info className="text-muted-foreground h-4 w-4 cursor-help" />
             </TooltipTrigger>
             <TooltipContent className="max-w-xs">
               <p className="text-sm">{selectedOption?.description}</p>

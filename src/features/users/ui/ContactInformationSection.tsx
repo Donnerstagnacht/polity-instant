@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface ContactInformationSectionProps {
   email: string;
@@ -23,52 +24,54 @@ export function ContactInformationSection({
   onWebsiteChange,
   onLocationChange,
 }: ContactInformationSectionProps) {
+  const { t } = useTranslation();
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Contact Information</CardTitle>
-        <CardDescription>How people can reach you</CardDescription>
+        <CardTitle>{t('pages.user.settingsForm.contact.title')}</CardTitle>
+        <CardDescription>{t('pages.user.settingsForm.contact.description')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t('pages.user.settingsForm.contact.emailLabel')}</Label>
           <Input
             id="email"
             type="email"
             value={email}
             onChange={e => onEmailChange(e.target.value)}
-            placeholder="your.email@example.com"
+            placeholder={t('pages.user.settingsForm.contact.emailPlaceholder')}
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="twitter">Twitter/X</Label>
+          <Label htmlFor="twitter">{t('pages.user.settingsForm.contact.twitterLabel')}</Label>
           <Input
             id="twitter"
             value={twitter}
             onChange={e => onTwitterChange(e.target.value)}
-            placeholder="@yourusername"
+            placeholder={t('pages.user.settingsForm.contact.twitterPlaceholder')}
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="website">Website</Label>
+          <Label htmlFor="website">{t('pages.user.settingsForm.contact.websiteLabel')}</Label>
           <Input
             id="website"
             type="text"
             value={website}
             onChange={e => onWebsiteChange(e.target.value)}
-            placeholder="https://yourwebsite.com"
+            placeholder={t('pages.user.settingsForm.contact.websitePlaceholder')}
           />
           <p className="text-xs text-muted-foreground">
-            Enter a valid URL (e.g., https://example.com)
+            {t('pages.user.settingsForm.contact.websiteHint')}
           </p>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="location">Location</Label>
+          <Label htmlFor="location">{t('pages.user.settingsForm.contact.locationLabel')}</Label>
           <Input
             id="location"
             value={location}
             onChange={e => onLocationChange(e.target.value)}
-            placeholder="City, Country"
+            placeholder={t('pages.user.settingsForm.contact.locationPlaceholder')}
           />
         </div>
       </CardContent>

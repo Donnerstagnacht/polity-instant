@@ -3,6 +3,7 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { Label } from '@/features/shared/ui/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Camera, Loader2 } from 'lucide-react';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface AvatarUploadSectionProps {
   avatar: string;
@@ -17,11 +18,13 @@ export function AvatarUploadSection({
   isUploading,
   onUpload,
 }: AvatarUploadSectionProps) {
+  const { t } = useTranslation();
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>User Picture</CardTitle>
-        <CardDescription>Update your user picture</CardDescription>
+        <CardTitle>{t('pages.user.settingsForm.avatar.title')}</CardTitle>
+        <CardDescription>{t('pages.user.settingsForm.avatar.description')}</CardDescription>
       </CardHeader>
       <CardContent className="flex items-center gap-6">
         <div className="relative">
@@ -43,7 +46,7 @@ export function AvatarUploadSection({
             <Button type="button" variant="outline" size="sm" asChild>
               <span>
                 <Camera className="mr-2 h-4 w-4" />
-                Change Avatar
+                {t('pages.user.settingsForm.avatar.changeButton')}
               </span>
             </Button>
             <input
@@ -55,7 +58,9 @@ export function AvatarUploadSection({
               className="hidden"
             />
           </Label>
-          <p className="mt-1 text-xs text-muted-foreground">JPG, PNG or GIF. Max size 5MB.</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {t('pages.user.settingsForm.avatar.helpText')}
+          </p>
         </div>
       </CardContent>
     </Card>

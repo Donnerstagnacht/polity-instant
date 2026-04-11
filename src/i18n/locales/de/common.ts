@@ -70,6 +70,17 @@ export const commonTranslations = {
     actions: 'Aktionen',
     clear: 'Löschen',
   },
+  visibility: {
+    label: 'Sichtbarkeit',
+    public: 'Öffentlich',
+    authenticated: 'Authentifiziert',
+    private: 'Privat',
+    descriptions: {
+      public: 'Jeder kann diesen Inhalt sehen',
+      authenticated: 'Nur eingeloggte Nutzer können diesen Inhalt sehen',
+      private: 'Nur Mitarbeitende oder Mitglieder können diesen Inhalt sehen',
+    },
+  },
   labels: {
     groups: 'Gruppen',
     unspecifiedUser: 'nicht angegeben',

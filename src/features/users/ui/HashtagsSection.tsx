@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface HashtagsSectionProps {
   hashtags: string[];
@@ -7,17 +8,19 @@ interface HashtagsSectionProps {
 }
 
 export function HashtagsSection({ hashtags, onHashtagsChange }: HashtagsSectionProps) {
+  const { t } = useTranslation();
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Hashtags</CardTitle>
-        <CardDescription>Add hashtags to help others find you</CardDescription>
+        <CardTitle>{t('pages.user.settingsForm.hashtags.title')}</CardTitle>
+        <CardDescription>{t('pages.user.settingsForm.hashtags.description')}</CardDescription>
       </CardHeader>
       <CardContent>
         <HashtagEditor
           value={hashtags}
           onChange={onHashtagsChange}
-          placeholder="Add hashtags (e.g., developer, activist)"
+          placeholder={t('pages.user.settingsForm.hashtags.placeholder')}
         />
       </CardContent>
     </Card>

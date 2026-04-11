@@ -71,6 +71,17 @@ export const commonTranslations = {
     actions: 'Actions',
     clear: 'Clear',
   },
+  visibility: {
+    label: 'Visibility',
+    public: 'Public',
+    authenticated: 'Authenticated',
+    private: 'Private',
+    descriptions: {
+      public: 'Anyone can see this content',
+      authenticated: 'Only logged-in users can see this',
+      private: 'Only collaborators or members can see this content',
+    },
+  },
   labels: {
     groups: 'Groups',
     unspecifiedUser: 'not specified',

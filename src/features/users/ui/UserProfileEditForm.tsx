@@ -78,7 +78,7 @@ export function UserProfileEditForm({
             {t('pages.user.settingsTabs.subscriptions')}
           </TabsTrigger>
           <TabsTrigger value="voting-password">
-            {t('pages.user.settingsTabs.votingPassword', 'Voting Password')}
+            {t('pages.user.settingsTabs.votingPassword')}
           </TabsTrigger>
         </TabsList>
 
