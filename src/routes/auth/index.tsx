@@ -1,10 +1,8 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { LoginForm } from '@/features/auth/ui/LoginForm'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/auth/')({
-  component: AuthPage,
+  beforeLoad: () => {
+    throw redirect({ to: '/auth/sign-in' })
+  },
+  component: () => null,
 })
-
-function AuthPage() {
-  return <LoginForm />
-}

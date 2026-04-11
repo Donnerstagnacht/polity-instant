@@ -1,6 +1,6 @@
 // auth.ts
-// Supabase authentication implementation using magic links
-// Uses Supabase's built-in OTP/magic link system
+// Supabase authentication implementation using email+password and magic links
+// Uses Supabase's built-in auth system
 
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client';
 
 // Define the authentication store state interface
 // Note: Auth session state is managed by Supabase + AuthProvider.
-// This store handles imperative auth operations (send OTP, verify, sign out)
+// This store handles imperative auth operations (sign up, sign in, send OTP, verify, sign out)
 // and their associated loading/error UI state.
 interface AuthState {
   // Loading and error states
@@ -18,9 +18,17 @@ interface AuthState {
   // Magic link flow state
   pendingEmail: string | null;
 
-  // Actions
+  // Actions — password auth
+  signUpWithPassword: (email: string, password: string) => Promise<boolean>;
+  signInWithPassword: (email: string, password: string) => Promise<boolean>;
+  signInWithGoogle: () => Promise<boolean>;
+  resetPassword: (email: string) => Promise<boolean>;
+
+  // Actions — magic link auth
   requestMagicCode: (email: string) => Promise<boolean>;
   verifyMagicCode: (email: string, code: string) => Promise<boolean>;
+
+  // Actions — general
   signOut: () => Promise<void>;
   clearError: () => void;
   setLoading: (loading: boolean) => void;
@@ -34,7 +42,131 @@ export const useAuthStore = create<AuthState>()(
     error: null,
     pendingEmail: null,
 
-    // Actions
+    // Actions — password auth
+    signUpWithPassword: async (email: string, password: string) => {
+      set(state => {
+        state.isLoading = true;
+        state.error = null;
+      });
+
+      try {
+        const supabase = createClient();
+        const { error } = await supabase.auth.signUp({ email, password });
+
+        if (error) {
+          throw error;
+        }
+
+        set(state => {
+          state.isLoading = false;
+        });
+
+        return true;
+      } catch (error) {
+        console.error('Failed to sign up:', error);
+        set(state => {
+          state.isLoading = false;
+          state.error = error instanceof Error ? error.message : 'Failed to sign up';
+        });
+        return false;
+      }
+    },
+
+    signInWithPassword: async (email: string, password: string) => {
+      set(state => {
+        state.isLoading = true;
+        state.error = null;
+      });
+
+      try {
+        const supabase = createClient();
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+        if (error) {
+          throw error;
+        }
+
+        set(state => {
+          state.isLoading = false;
+        });
+
+        return true;
+      } catch (error) {
+        console.error('Failed to sign in:', error);
+        set(state => {
+          state.isLoading = false;
+          state.error = error instanceof Error ? error.message : 'Invalid email or password';
+        });
+        return false;
+      }
+    },
+
+    signInWithGoogle: async () => {
+      set(state => {
+        state.isLoading = true;
+        state.error = null;
+      });
+
+      try {
+        const supabase = createClient();
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: `${window.location.origin}/auth/callback`,
+          },
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        set(state => {
+          state.isLoading = false;
+        });
+
+        return true;
+      } catch (error) {
+        console.error('Failed to start Google sign in:', error);
+        set(state => {
+          state.isLoading = false;
+          state.error = error instanceof Error ? error.message : 'Failed to start Google sign in';
+        });
+        return false;
+      }
+    },
+
+    resetPassword: async (email: string) => {
+      set(state => {
+        state.isLoading = true;
+        state.error = null;
+      });
+
+      try {
+        const supabase = createClient();
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/auth/sign-in`,
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        set(state => {
+          state.isLoading = false;
+        });
+
+        return true;
+      } catch (error) {
+        console.error('Failed to send reset email:', error);
+        set(state => {
+          state.isLoading = false;
+          state.error = error instanceof Error ? error.message : 'Failed to send reset email';
+        });
+        return false;
+      }
+    },
+
+    // Actions — magic link auth
     requestMagicCode: async (email: string) => {
       set(state => {
         state.isLoading = true;

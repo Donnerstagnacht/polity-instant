@@ -24,6 +24,10 @@ import { Route as DocsIndexImport } from './routes/docs/index'
 import { Route as AuthIndexImport } from './routes/auth/index'
 import { Route as DocsTopicImport } from './routes/docs/$topic'
 import { Route as AuthVerifyImport } from './routes/auth/verify'
+import { Route as AuthSignUpImport } from './routes/auth/sign-up'
+import { Route as AuthSignInImport } from './routes/auth/sign-in'
+import { Route as AuthForgotPasswordImport } from './routes/auth/forgot-password'
+import { Route as AuthCallbackImport } from './routes/auth/callback'
 import { Route as AuthedTodosImport } from './routes/_authed/todos'
 import { Route as AuthedSearchImport } from './routes/_authed/search'
 import { Route as AuthedNotificationsImport } from './routes/_authed/notifications'
@@ -175,6 +179,30 @@ const DocsTopicRoute = DocsTopicImport.update({
 const AuthVerifyRoute = AuthVerifyImport.update({
   id: '/verify',
   path: '/verify',
+  getParentRoute: () => AuthRoute,
+} as any)
+
+const AuthSignUpRoute = AuthSignUpImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
+  getParentRoute: () => AuthRoute,
+} as any)
+
+const AuthSignInRoute = AuthSignInImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => AuthRoute,
+} as any)
+
+const AuthForgotPasswordRoute = AuthForgotPasswordImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => AuthRoute,
+} as any)
+
+const AuthCallbackRoute = AuthCallbackImport.update({
+  id: '/callback',
+  path: '/callback',
   getParentRoute: () => AuthRoute,
 } as any)
 
@@ -749,6 +777,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/todos'
       preLoaderRoute: typeof AuthedTodosImport
       parentRoute: typeof AuthedImport
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackImport
+      parentRoute: typeof AuthImport
+    }
+    '/auth/forgot-password': {
+      id: '/auth/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/auth/forgot-password'
+      preLoaderRoute: typeof AuthForgotPasswordImport
+      parentRoute: typeof AuthImport
+    }
+    '/auth/sign-in': {
+      id: '/auth/sign-in'
+      path: '/sign-in'
+      fullPath: '/auth/sign-in'
+      preLoaderRoute: typeof AuthSignInImport
+      parentRoute: typeof AuthImport
+    }
+    '/auth/sign-up': {
+      id: '/auth/sign-up'
+      path: '/sign-up'
+      fullPath: '/auth/sign-up'
+      preLoaderRoute: typeof AuthSignUpImport
+      parentRoute: typeof AuthImport
     }
     '/auth/verify': {
       id: '/auth/verify'
@@ -1535,11 +1591,19 @@ const AuthedRouteWithChildren =
   AuthedRoute._addFileChildren(AuthedRouteChildren)
 
 interface AuthRouteChildren {
+  AuthCallbackRoute: typeof AuthCallbackRoute
+  AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
+  AuthSignInRoute: typeof AuthSignInRoute
+  AuthSignUpRoute: typeof AuthSignUpRoute
   AuthVerifyRoute: typeof AuthVerifyRoute
   AuthIndexRoute: typeof AuthIndexRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
+  AuthCallbackRoute: AuthCallbackRoute,
+  AuthForgotPasswordRoute: AuthForgotPasswordRoute,
+  AuthSignInRoute: AuthSignInRoute,
+  AuthSignUpRoute: AuthSignUpRoute,
   AuthVerifyRoute: AuthVerifyRoute,
   AuthIndexRoute: AuthIndexRoute,
 }
@@ -1574,6 +1638,10 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof AuthedNotificationsRoute
   '/search': typeof AuthedSearchRoute
   '/todos': typeof AuthedTodosRouteWithChildren
+  '/auth/callback': typeof AuthCallbackRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/sign-in': typeof AuthSignInRoute
+  '/auth/sign-up': typeof AuthSignUpRoute
   '/auth/verify': typeof AuthVerifyRoute
   '/docs/$topic': typeof DocsTopicRoute
   '/auth/': typeof AuthIndexRoute
@@ -1662,6 +1730,10 @@ export interface FileRoutesByTo {
   '/notifications': typeof AuthedNotificationsRoute
   '/search': typeof AuthedSearchRoute
   '/todos': typeof AuthedTodosRouteWithChildren
+  '/auth/callback': typeof AuthCallbackRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/sign-in': typeof AuthSignInRoute
+  '/auth/sign-up': typeof AuthSignUpRoute
   '/auth/verify': typeof AuthVerifyRoute
   '/docs/$topic': typeof DocsTopicRoute
   '/auth': typeof AuthIndexRoute
@@ -1744,6 +1816,10 @@ export interface FileRoutesById {
   '/_authed/notifications': typeof AuthedNotificationsRoute
   '/_authed/search': typeof AuthedSearchRoute
   '/_authed/todos': typeof AuthedTodosRouteWithChildren
+  '/auth/callback': typeof AuthCallbackRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/sign-in': typeof AuthSignInRoute
+  '/auth/sign-up': typeof AuthSignUpRoute
   '/auth/verify': typeof AuthVerifyRoute
   '/docs/$topic': typeof DocsTopicRoute
   '/auth/': typeof AuthIndexRoute
@@ -1836,6 +1912,10 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/search'
     | '/todos'
+    | '/auth/callback'
+    | '/auth/forgot-password'
+    | '/auth/sign-in'
+    | '/auth/sign-up'
     | '/auth/verify'
     | '/docs/$topic'
     | '/auth/'
@@ -1923,6 +2003,10 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/search'
     | '/todos'
+    | '/auth/callback'
+    | '/auth/forgot-password'
+    | '/auth/sign-in'
+    | '/auth/sign-up'
     | '/auth/verify'
     | '/docs/$topic'
     | '/auth'
@@ -2003,6 +2087,10 @@ export interface FileRouteTypes {
     | '/_authed/notifications'
     | '/_authed/search'
     | '/_authed/todos'
+    | '/auth/callback'
+    | '/auth/forgot-password'
+    | '/auth/sign-in'
+    | '/auth/sign-up'
     | '/auth/verify'
     | '/docs/$topic'
     | '/auth/'
@@ -2159,6 +2247,10 @@ export const routeTree = rootRoute
     "/auth": {
       "filePath": "auth.tsx",
       "children": [
+        "/auth/callback",
+        "/auth/forgot-password",
+        "/auth/sign-in",
+        "/auth/sign-up",
         "/auth/verify",
         "/auth/"
       ]
@@ -2208,6 +2300,22 @@ export const routeTree = rootRoute
       "children": [
         "/_authed/todos/$id"
       ]
+    },
+    "/auth/callback": {
+      "filePath": "auth/callback.tsx",
+      "parent": "/auth"
+    },
+    "/auth/forgot-password": {
+      "filePath": "auth/forgot-password.tsx",
+      "parent": "/auth"
+    },
+    "/auth/sign-in": {
+      "filePath": "auth/sign-in.tsx",
+      "parent": "/auth"
+    },
+    "/auth/sign-up": {
+      "filePath": "auth/sign-up.tsx",
+      "parent": "/auth"
     },
     "/auth/verify": {
       "filePath": "auth/verify.tsx",

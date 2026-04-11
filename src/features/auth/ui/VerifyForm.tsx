@@ -27,7 +27,7 @@ export function VerifyForm() {
 
   useEffect(() => {
     if (!email) {
-      navigate({ to: '/auth' });
+      navigate({ to: '/auth/sign-in' });
     }
   }, [email, navigate]);
 
@@ -125,7 +125,7 @@ export function VerifyForm() {
   };
 
   const handleBackToEmail = () => {
-    navigate({ to: '/auth' });
+    navigate({ to: '/auth/sign-in' });
   };
 
   return (

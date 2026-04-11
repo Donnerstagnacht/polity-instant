@@ -76,8 +76,6 @@ alter table "public"."agenda_item_change_request" enable row level security;
     "id" uuid not null default gen_random_uuid(),
     "code" text,
     "title" text,
-    "status" text,
-    "workflow_status" text,
     "reason" text,
     "category" text,
     "preamble" text,
@@ -93,7 +91,6 @@ alter table "public"."agenda_item_change_request" enable row level security;
     "downvotes" integer not null default 0,
     "tags" jsonb,
     "visibility" text not null default 'public'::text,
-    "is_public" boolean not null default true,
     "subscriber_count" integer not null default 0,
     "clone_count" integer not null default 0,
     "change_request_count" integer not null default 0,
@@ -198,7 +195,6 @@ alter table "public"."amendment_vote_entry" enable row level security;
     "content" jsonb,
     "date" text,
     "image_url" text,
-    "is_public" boolean,
     "visibility" text not null default 'public'::text,
     "subscriber_count" integer not null default 0,
     "supporter_count" integer not null default 0,
@@ -432,7 +428,7 @@ alter table "public"."document_version" enable row level security;
     "closing_type" text,
     "closing_duration_seconds" integer,
     "closing_end_time" timestamp with time zone,
-    "is_public" boolean not null default true,
+    "visibility" character varying not null default 'public'::character varying,
     "max_votes" integer not null default 1,
     "created_at" timestamp with time zone not null default now(),
     "updated_at" timestamp with time zone not null default now()
@@ -480,7 +476,6 @@ alter table "public"."elector" enable row level security;
     "location_address" text,
     "location_url" text,
     "location_coordinates" text,
-    "is_public" boolean not null default true,
     "visibility" text not null default 'public'::text,
     "start_date" timestamp with time zone,
     "end_date" timestamp with time zone,
@@ -698,7 +693,7 @@ alter table "public"."follow" enable row level security;
     "description" text,
     "location" text,
     "image_url" text,
-    "is_public" boolean not null default true,
+    "visibility" text not null default 'public'::text,
     "member_count" integer not null default 0,
     "subscriber_count" integer not null default 0,
     "event_count" integer not null default 0,
@@ -708,7 +703,6 @@ alter table "public"."follow" enable row level security;
     "youtube" text,
     "linkedin" text,
     "website" text,
-    "visibility" text not null default 'public'::text,
     "group_type" text not null,
     "owner_id" uuid,
     "created_at" timestamp with time zone not null default now(),
@@ -1387,7 +1381,6 @@ alter table "public"."todo_assignment" enable row level security;
     "linkedin" text,
     "website" text,
     "location" text,
-    "is_public" boolean not null default true,
     "visibility" text not null default 'public'::text,
     "subscriber_count" integer not null default 0,
     "amendment_count" integer not null default 0,
@@ -1439,7 +1432,7 @@ alter table "public"."user_preference" enable row level security;
     "closing_type" text not null default 'moderator'::text,
     "closing_duration_seconds" integer,
     "closing_end_time" timestamp with time zone,
-    "is_public" boolean not null default true,
+    "visibility" character varying not null default 'public'::character varying,
     "created_at" timestamp with time zone not null default now(),
     "updated_at" timestamp with time zone not null default now()
       );
@@ -1626,6 +1619,8 @@ CREATE INDEX idx_amendment_collaborator_user ON public.amendment_collaborator US
 
 CREATE INDEX idx_amendment_created_by ON public.amendment USING btree (created_by_id);
 
+CREATE INDEX idx_amendment_editing_mode ON public.amendment USING btree (editing_mode);
+
 CREATE INDEX idx_amendment_event ON public.amendment USING btree (event_id);
 
 CREATE INDEX idx_amendment_group ON public.amendment USING btree (group_id);
@@ -1637,8 +1632,6 @@ CREATE INDEX idx_amendment_hashtag_hashtag ON public.amendment_hashtag USING btr
 CREATE INDEX idx_amendment_path_amendment ON public.amendment_path USING btree (amendment_id);
 
 CREATE INDEX idx_amendment_path_segment_path ON public.amendment_path_segment USING btree (path_id);
-
-CREATE INDEX idx_amendment_status ON public.amendment USING btree (status);
 
 CREATE INDEX idx_amendment_support_vote_amendment ON public.amendment_support_vote USING btree (amendment_id);
 
@@ -2963,6 +2956,9 @@ BEGIN
   VALUES (NEW.id, NEW.email);
 
   INSERT INTO public.notification_setting (user_id)
+  VALUES (NEW.id);
+
+  INSERT INTO public.user_preference (user_id)
   VALUES (NEW.id);
 
   RETURN NEW;

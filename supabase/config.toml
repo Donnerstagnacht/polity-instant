@@ -21,6 +21,7 @@ port = 54323
 [auth]
 enabled = true
 site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/auth/callback"]
 
 [auth.email]
 enable_signup = true
@@ -50,6 +51,12 @@ content_path = "./supabase/email-templates/reset-password.html"
 [auth.email.template.reauthentication]
 subject = "Confirm reauthentication for Polity"
 content_path = "./supabase/email-templates/reauthentication.html"
+
+[auth.external.google]
+enabled = true
+client_id = "env(SUPABASE_AUTH_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET)"
+skip_nonce_check = false
 
 [storage]
 enabled = true

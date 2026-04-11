@@ -16,3 +16,7 @@ export {
 export { useAuthVerification } from './hooks/useAuthVerification';
 export { useAuthLogin } from './hooks/useAuthLogin';
 export type { UseAuthLoginOptions } from './hooks/useAuthLogin';
+export { useAuthSignIn } from './hooks/useAuthSignIn';
+export { useAuthSignUp } from './hooks/useAuthSignUp';
+export { useGoogleAuth } from './hooks/useGoogleAuth';
+export { useAccountActions } from './hooks/useAccountActions';
