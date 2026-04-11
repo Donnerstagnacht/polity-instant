@@ -123,6 +123,101 @@ npm run zero:dev
 | `npm run format:check`    | Check formatting                               |
 | `npm run storybook`       | Start Storybook on port 6006                   |
 
+## Deployment
+
+The project deploys to three services:
+
+| Service      | Target                                        | Purpose                       |
+| ------------ | --------------------------------------------- | ----------------------------- |
+| **Supabase** | [supabase.com](https://supabase.com/) (cloud) | Postgres database + Auth      |
+| **Fly.io**   | `zero.polity.live` / `polity-zero.fly.dev`    | zero-cache (realtime sync)    |
+| **Vercel**   | `www.polity.live`                             | SSR frontend (TanStack Start) |
+
+### Deploy script
+
+```bash
+npm run deploy          # Full deploy: Supabase → Fly.io → Vercel
+npm run deploy:dry      # Dry-run (prints commands without executing)
+```
+
+Skip individual steps with flags:
+
+```bash
+npm run deploy -- --skip-supabase   # Skip Supabase migrations
+npm run deploy -- --skip-fly        # Skip Fly.io deploy
+npm run deploy -- --skip-vercel     # Skip Vercel deploy
+```
+
+The script enforces that you are on the `master` or `deploy` branch.
+
+### First-time setup
+
+#### 1. Install CLIs
+
+```bash
+npm i -g supabase       # Supabase CLI
+npm i -g vercel          # Vercel CLI
+# Fly.io CLI: https://fly.io/docs/flyctl/install/
+```
+
+#### 2. Authenticate
+
+```bash
+supabase login
+fly auth login
+vercel login
+```
+
+#### 3. Link Vercel project
+
+```bash
+vercel link
+```
+
+#### 4. Create Fly.io app & volume
+
+```bash
+fly apps create polity-zero --machines
+fly volumes create zero_data --region fra --size 1
+fly ips allocate-v4 --shared
+fly ips allocate-v6
+```
+
+#### 5. Set Fly.io secrets
+
+```bash
+fly secrets set ZERO_UPSTREAM_DB="postgresql://postgres:PASSWORD@db.PROJECT.supabase.co:5432/postgres?sslmode=require"
+fly secrets set ZERO_CVR_DB="postgresql://postgres.PROJECT:PASSWORD@aws-1-eu-central-1.pooler.supabase.com:5432/postgres?sslmode=require"
+fly secrets set ZERO_CHANGE_DB="postgresql://postgres.PROJECT:PASSWORD@aws-1-eu-central-1.pooler.supabase.com:5432/postgres?sslmode=require"
+fly secrets set ZERO_ADMIN_PASSWORD="your-strong-password"
+fly secrets set ZERO_QUERY_URL="https://your-app-domain.example/api/query"
+fly secrets set ZERO_MUTATE_URL="https://your-app-domain.example/api/mutate"
+```
+
+#### 6. Custom domain (optional)
+
+Add DNS records for `zero.your-domain.example` pointing to your Fly.io IPs (A + AAAA), plus an ACME challenge CNAME for TLS:
+
+```bash
+fly certs create zero.your-domain.example
+fly certs setup zero.your-domain.example   # Shows required DNS records
+```
+
+### Fly.io secrets reference
+
+| Secret                | Value                                                                         | Notes                                                |
+| --------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------- |
+| `ZERO_UPSTREAM_DB`    | `postgresql://postgres:PASS@db.PROJECT.supabase.co:5432/postgres`             | **Direct** connection (required for WAL replication) |
+| `ZERO_CVR_DB`         | `postgresql://postgres.PROJECT:PASS@REGION.pooler.supabase.com:5432/postgres` | **Session pooler** (supports prepared statements)    |
+| `ZERO_CHANGE_DB`      | `postgresql://postgres.PROJECT:PASS@REGION.pooler.supabase.com:5432/postgres` | **Session pooler** (supports prepared statements)    |
+| `ZERO_ADMIN_PASSWORD` | Any strong password                                                           | Protects zero-cache admin endpoints                  |
+| `ZERO_QUERY_URL`      | `https://your-app-domain/api/query`                                           | Custom query handler on Vercel (delegates auth)      |
+| `ZERO_MUTATE_URL`     | `https://your-app-domain/api/mutate`                                          | Custom mutate handler on Vercel (delegates auth)     |
+
+> **Connection strategy:** UPSTREAM uses the direct Supabase connection (Fly.io supports outbound IPv6 natively). CVR and CHANGE use the session pooler to avoid exhausting direct connection slots on Supabase free tier.
+
+---
+
 ## Project Structure
 
 ```
