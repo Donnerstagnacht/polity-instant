@@ -1,21 +1,32 @@
--- Add user_preference row creation to the signup trigger.
--- Previously only user + notification_setting were created on auth.users INSERT.
+-- =============================================================================
+-- Seed the Aria & Kai system assistant user
+-- This is a well-known bot user used for onboarding and in-app tutorials.
+-- =============================================================================
 
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = ''
-AS $$
-BEGIN
-  INSERT INTO public."user" (id, email)
-  VALUES (NEW.id, NEW.email);
-
-  INSERT INTO public.notification_setting (user_id)
-  VALUES (NEW.id);
-
-  INSERT INTO public.user_preference (user_id)
-  VALUES (NEW.id);
-
-  RETURN NEW;
-END;
-$$;
+INSERT INTO public."user" (
+  id,
+  email,
+  handle,
+  first_name,
+  last_name,
+  bio,
+  visibility,
+  subscriber_count,
+  amendment_count,
+  group_count,
+  created_at,
+  updated_at
+) VALUES (
+  'a12a0000-0000-4000-a000-000000000001',
+  'aria-kai-assistants@polity.com',
+  'aria-kai',
+  'Aria & Kai',
+  'Assistants',
+  'Your personal assistants — here to help you navigate Polity!',
+  'public',
+  0,
+  0,
+  0,
+  now(),
+  now()
+) ON CONFLICT (id) DO NOTHING;

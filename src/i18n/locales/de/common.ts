@@ -225,6 +225,12 @@ export const commonTranslations = {
       newestFirst: 'Neueste zuerst',
     },
   },
+  alphaWarning: {
+    title: 'Warnung zur Alpha-Version',
+    description:
+      'Diese App befindet sich derzeit in einer Alpha-Version und kann Datenverluste oder Probleme bei der Datensicherheit verursachen. Bitte verwenden Sie sie mit Vorsicht.',
+    confirm: 'Ich verstehe',
+  },
   pwa: {
     installTitle: 'Polity installieren',
     installDescription:

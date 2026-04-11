@@ -8,6 +8,7 @@ import { useNavigationStore } from '@/features/navigation/state/navigation.store
 import { useThemeInitializer } from '@/features/shared/global-state/theme.store.tsx';
 import { I18nSyncProvider } from '@/i18n/i18n-sync-provider.tsx';
 import { PWAInstallPrompt } from '@/features/pwa/ui/pwa-install-prompt.tsx';
+import { AlphaWarningDialog } from '@/features/shared/ui/AlphaWarningDialog.tsx';
 import type {
   NavigationItem,
   NavigationType,
@@ -102,6 +103,7 @@ function UnauthenticatedShell({ children }: { children: ReactNode }) {
 
         <Toaster richColors position="top-right" />
         <PWAInstallPrompt />
+        <AlphaWarningDialog />
       </div>
     </I18nSyncProvider>
   );
@@ -155,6 +157,7 @@ function AuthenticatedShell({ children }: { children: ReactNode }) {
 
         <Toaster richColors position="top-right" />
         <PWAInstallPrompt />
+        <AlphaWarningDialog />
       </div>
     </I18nSyncProvider>
   );

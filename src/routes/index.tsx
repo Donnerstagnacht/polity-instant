@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Navigate } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
   Card,
@@ -133,8 +133,9 @@ function AuthenticatedHome({
   showOnboarding: boolean;
 }) {
   const { currentUser } = useUserState();
-  // Once we decide to show the wizard, lock it so DB changes during the flow don't navigate away.
-  const [onboardingLocked, setOnboardingLocked] = useState(false);
+  // Use a ref (not useState) so the lock is immediate and survives concurrent re-renders.
+  // Once set to true, it stays true for this mount — no state batching can revert it.
+  const onboardingActiveRef = useRef(false);
 
   // Wait for Zero to load the user record before deciding.
   // Without this, we'd immediately navigate to /home while the DB check is still pending.
@@ -142,39 +143,34 @@ function AuthenticatedHome({
     return null;
   }
 
-  // Database-driven check: if user already has first_name, onboarding is done — regardless of sessionStorage.
+  // Database-driven check: if user already has first_name, onboarding is done.
   const hasCompletedOnboarding = currentUser != null && !!currentUser.first_name;
   const needsOnboarding =
-    onboardingLocked ||
-    (!hasCompletedOnboarding &&
-      (showOnboarding || (currentUser != null && !currentUser.first_name)));
+    !hasCompletedOnboarding &&
+    (showOnboarding || (currentUser != null && !currentUser.first_name));
 
-  // Lock the wizard on first render so mid-flow DB writes (e.g. saving first_name) don't abort it.
-  if (needsOnboarding && !onboardingLocked) {
-    setOnboardingLocked(true);
+  // Lock the wizard permanently (for this mount) once we decide to show it.
+  // This prevents Zero-triggered re-renders (e.g. after saving first_name) from
+  // flipping needsOnboarding to false and rendering <Navigate to="/home" />.
+  if (needsOnboarding) {
+    onboardingActiveRef.current = true;
   }
 
-  const handleOnboardingComplete = () => {
-    console.log('[HomePage] Onboarding complete — clearing sessionStorage flag');
-    sessionStorage.removeItem(ONBOARDING_KEY);
-    setOnboardingLocked(false);
-  };
-
-  if (needsOnboarding) {
+  // While the wizard is (or was) active, keep rendering it — never redirect.
+  // The wizard's own navigate() handles the final destination when the user
+  // picks profile / group / assistant on the summary step.
+  if (onboardingActiveRef.current) {
     console.log('[HomePage] ✅ Showing OnboardingWizard');
     return (
       <OnboardingWizard
         userId={user.id}
         userEmail={user.email}
-        onComplete={handleOnboardingComplete}
+        onComplete={() => {
+          console.log('[HomePage] Onboarding complete — clearing sessionStorage flag');
+          sessionStorage.removeItem(ONBOARDING_KEY);
+        }}
       />
     );
-  }
-
-  // If onboarding just completed, the wizard navigates to the user-chosen destination itself.
-  // Only redirect to /home when onboarding was never needed (e.g. returning user).
-  if (!hasCompletedOnboarding) {
-    return null;
   }
 
   console.log('[HomePage] User ready, no onboarding — redirecting to /home');

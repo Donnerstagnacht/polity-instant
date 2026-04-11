@@ -30,7 +30,7 @@ const STEP_PROGRESS: Record<OnboardingStep, number> = {
 
 export function OnboardingWizard({ userId, userEmail, onComplete }: OnboardingWizardProps) {
   console.log('🎯 OnboardingWizard RENDERING:', { userId, userEmail, onComplete: !!onComplete });
-  
+
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -52,7 +52,7 @@ export function OnboardingWizard({ userId, userEmail, onComplete }: OnboardingWi
     skipMembership,
     completeOnboarding,
   } = useOnboarding();
-  
+
   console.log('🎯 OnboardingWizard state:', { step, isLoading, data });
 
   const handleNameNext = async () => {
@@ -97,14 +97,14 @@ export function OnboardingWizard({ userId, userEmail, onComplete }: OnboardingWi
         console.error('Failed to save preference:', error);
       }
     }
-    
+
     goToStep('summary');
   };
 
   const handleGoToProfile = () => {
     console.log('🏠 handleGoToProfile called — navigating to /user/' + userId);
-    onComplete();
     navigate({ to: `/user/${userId}` });
+    onComplete();
   };
 
   const handleGoToGroup = () => {
@@ -113,14 +113,14 @@ export function OnboardingWizard({ userId, userEmail, onComplete }: OnboardingWi
       return;
     }
     console.log('👥 handleGoToGroup called — navigating to group:', data.selectedGroup.id);
-    onComplete();
     navigate({ to: `/group/${data.selectedGroup.id}` });
+    onComplete();
   };
 
   const handleGoToAssistant = () => {
     console.log('💬 handleGoToAssistant called — navigating to /messages');
-    onComplete();
     navigate({ to: '/messages' });
+    onComplete();
   };
 
   return (
@@ -128,10 +128,10 @@ export function OnboardingWizard({ userId, userEmail, onComplete }: OnboardingWi
       <Card className="w-full max-w-md">
         <CardHeader className="pb-2">
           <div className="mb-2 flex items-center justify-between">
-            <CardTitle className="text-lg text-muted-foreground">
+            <CardTitle className="text-muted-foreground text-lg">
               {t('onboarding.welcome')}
             </CardTitle>
-            <span className="text-sm text-muted-foreground">
+            <span className="text-muted-foreground text-sm">
               {step === 'name' && '1/5'}
               {step === 'groupSearch' && '2/5'}
               {step === 'confirm' && '3/5'}

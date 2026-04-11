@@ -225,6 +225,12 @@ export const commonTranslations = {
       newestFirst: 'Newest First',
     },
   },
+  alphaWarning: {
+    title: 'Alpha version warning',
+    description:
+      'This app is currently an alpha version and may cause data loss or data security issues. Please use it with caution.',
+    confirm: 'I understand',
+  },
   pwa: {
     installTitle: 'Install Polity',
     installDescription: 'Install our app for quick access and a better experience',
