@@ -203,6 +203,7 @@
     "web-vitals": "^4.2.4"
   },
   "overrides": {
+    "typescript": "^6.0.2",
     "@tanstack/react-router": "1.120.20",
     "@tanstack/router-core": "1.120.19",
     "@tanstack/history": "1.120.17",
