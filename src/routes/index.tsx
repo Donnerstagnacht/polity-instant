@@ -133,6 +133,8 @@ function AuthenticatedHome({
   showOnboarding: boolean;
 }) {
   const { currentUser } = useUserState();
+  // Once we decide to show the wizard, lock it so DB changes during the flow don't navigate away.
+  const [onboardingLocked, setOnboardingLocked] = useState(false);
 
   // Wait for Zero to load the user record before deciding.
   // Without this, we'd immediately navigate to /home while the DB check is still pending.
@@ -143,11 +145,19 @@ function AuthenticatedHome({
   // Database-driven check: if user already has first_name, onboarding is done — regardless of sessionStorage.
   const hasCompletedOnboarding = currentUser != null && !!currentUser.first_name;
   const needsOnboarding =
-    !hasCompletedOnboarding && (showOnboarding || (currentUser != null && !currentUser.first_name));
+    onboardingLocked ||
+    (!hasCompletedOnboarding &&
+      (showOnboarding || (currentUser != null && !currentUser.first_name)));
+
+  // Lock the wizard on first render so mid-flow DB writes (e.g. saving first_name) don't abort it.
+  if (needsOnboarding && !onboardingLocked) {
+    setOnboardingLocked(true);
+  }
 
   const handleOnboardingComplete = () => {
     console.log('[HomePage] Onboarding complete — clearing sessionStorage flag');
     sessionStorage.removeItem(ONBOARDING_KEY);
+    setOnboardingLocked(false);
   };
 
   if (needsOnboarding) {
