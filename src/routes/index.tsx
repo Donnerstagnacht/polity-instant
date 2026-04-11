@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Navigate, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, Navigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Button } from '@/features/shared/ui/ui/button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/features/shared/ui/ui/card'
@@ -6,6 +6,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { useAuth } from '@/providers/auth-provider'
 import { useZeroReady } from '@/providers/zero-provider'
 import { OnboardingWizard } from '@/features/auth/onboarding/OnboardingWizard'
+import { useUserState } from '@/zero/users/useUserState'
 
 export const Route = createFileRoute('/')({
   component: HomePage,
@@ -20,10 +21,9 @@ function HomePage() {
   const { t } = useTranslation()
   const { user } = useAuth()
   const zeroReady = useZeroReady()
-  const navigate = useNavigate()
 
   // Read onboarding flag from sessionStorage (set by VerifyForm before navigation)
-  const [showOnboarding, setShowOnboarding] = useState(() => {
+  const [showOnboarding] = useState(() => {
     if (typeof window === 'undefined') return false
     const val = sessionStorage.getItem(ONBOARDING_KEY) === 'true'
     console.log('[HomePage] Initial showOnboarding from sessionStorage:', val)
@@ -32,27 +32,9 @@ function HomePage() {
 
   console.log('[HomePage] Render — user:', !!user, 'zeroReady:', zeroReady, 'showOnboarding:', showOnboarding)
 
-  const handleOnboardingComplete = () => {
-    console.log('[HomePage] Onboarding complete — clearing sessionStorage flag')
-    sessionStorage.removeItem(ONBOARDING_KEY)
-    // Don't set showOnboarding=false here; the wizard's handler will navigate
-    // away from / so this component will unmount naturally
-  }
-
-  if (user && zeroReady && showOnboarding) {
-    console.log('[HomePage] ✅ Showing OnboardingWizard')
-    return (
-      <OnboardingWizard
-        userId={user.id}
-        userEmail={user.email}
-        onComplete={handleOnboardingComplete}
-      />
-    )
-  }
-
+  // When authenticated and Zero is ready, delegate to a child that can safely use Zero hooks
   if (user && zeroReady) {
-    console.log('[HomePage] User ready, no onboarding — redirecting to /home')
-    return <Navigate to="/home" />
+    return <AuthenticatedHome user={user} showOnboarding={showOnboarding} />
   }
 
   const quickLinks = [
@@ -110,4 +92,36 @@ function HomePage() {
       </section>
     </div>
   )
+}
+
+/**
+ * Rendered only when authenticated + ZeroProvider is available.
+ * Safe to call Zero hooks here.
+ */
+function AuthenticatedHome({ user, showOnboarding }: { user: { id: string; email: string }; showOnboarding: boolean }) {
+  const { currentUser } = useUserState()
+
+  // Database-driven check: if user already has first_name, onboarding is done — regardless of sessionStorage.
+  // sessionStorage flag is only trusted when Zero hasn't loaded the user yet or first_name is still null.
+  const hasCompletedOnboarding = currentUser != null && !!currentUser.first_name
+  const needsOnboarding = !hasCompletedOnboarding && (showOnboarding || (currentUser != null && !currentUser.first_name))
+
+  const handleOnboardingComplete = () => {
+    console.log('[HomePage] Onboarding complete — clearing sessionStorage flag')
+    sessionStorage.removeItem(ONBOARDING_KEY)
+  }
+
+  if (needsOnboarding) {
+    console.log('[HomePage] ✅ Showing OnboardingWizard')
+    return (
+      <OnboardingWizard
+        userId={user.id}
+        userEmail={user.email}
+        onComplete={handleOnboardingComplete}
+      />
+    )
+  }
+
+  console.log('[HomePage] User ready, no onboarding — redirecting to /home')
+  return <Navigate to="/home" />
 }

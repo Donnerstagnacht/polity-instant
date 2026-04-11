@@ -19,19 +19,19 @@ export function GlobalLoadingAnimation({ connectionStatus = 'syncing' }: GlobalL
         <div className="relative">
           {/* Steam wisps */}
           <div className="absolute -top-8 left-1/2 -translate-x-1/2 flex gap-2">
-            <span className="animate-loading-steam block text-2xl opacity-0" style={{ animationDelay: '0s' }}>
+            <span className="animate-loading-steam block text-2xl opacity-0 will-change-[transform,opacity]" style={{ animationDelay: '0s' }}>
               ~
             </span>
-            <span className="animate-loading-steam block text-2xl opacity-0" style={{ animationDelay: '0.4s' }}>
+            <span className="animate-loading-steam block text-2xl opacity-0 will-change-[transform,opacity]" style={{ animationDelay: '0.4s' }}>
               ~
             </span>
-            <span className="animate-loading-steam block text-2xl opacity-0" style={{ animationDelay: '0.8s' }}>
+            <span className="animate-loading-steam block text-2xl opacity-0 will-change-[transform,opacity]" style={{ animationDelay: '0.8s' }}>
               ~
             </span>
           </div>
 
           {/* Coffee emoji */}
-          <span className="animate-loading-cup block text-6xl" role="img" aria-label="coffee">
+          <span className="animate-loading-cup block text-6xl will-change-transform" role="img" aria-label="coffee">
             ☕
           </span>
         </div>
@@ -64,7 +64,7 @@ export function GlobalLoadingAnimation({ connectionStatus = 'syncing' }: GlobalL
 
         {/* Progress bar */}
         <div className="w-full max-w-xs overflow-hidden rounded-full bg-muted h-1.5">
-          <div className="animate-loading-progress h-full rounded-full bg-brand" />
+          <div className="animate-loading-progress h-full rounded-full bg-brand will-change-transform" />
         </div>
       </div>
     </div>

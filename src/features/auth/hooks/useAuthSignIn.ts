@@ -29,7 +29,11 @@ interface UseAuthSignInReturn {
 export function useAuthSignIn(): UseAuthSignInReturn {
   const { t } = useTranslation();
   const [isSigningIn, setIsSigningIn] = useState(false);
-  const { signInWithPassword, requestMagicCode, resetPassword: storeResetPassword } = useAuthStore();
+  const {
+    signInWithPassword,
+    requestMagicCode,
+    resetPassword: storeResetPassword,
+  } = useAuthStore();
 
   const signIn = useCallback(
     async (email: string, password: string): Promise<SignInResult> => {
@@ -48,25 +52,32 @@ export function useAuthSignIn(): UseAuthSignInReturn {
 
         // Check if new user (created_at within last 60 seconds)
         const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
 
         if (!user?.id) {
-          return { success: false, isNewUser: false, error: t('features.auth.errors.authenticationFailed') };
+          return {
+            success: false,
+            isNewUser: false,
+            error: t('features.auth.errors.authenticationFailed'),
+          };
         }
 
         const createdAt = new Date(user.created_at).getTime();
-        const isNewUser = Date.now() - createdAt < 60_000;
+        const isNewUser = Date.now() - createdAt < 300_000;
 
         return { success: true, isNewUser };
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : t('features.auth.errors.unexpectedError');
+        const errorMessage =
+          error instanceof Error ? error.message : t('features.auth.errors.unexpectedError');
         toast.error(errorMessage);
         return { success: false, isNewUser: false, error: errorMessage };
       } finally {
         setIsSigningIn(false);
       }
     },
-    [signInWithPassword, t],
+    [signInWithPassword, t]
   );
 
   const sendMagicLink = useCallback(
@@ -79,14 +90,15 @@ export function useAuthSignIn(): UseAuthSignInReturn {
         }
         return { success: true };
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : t('features.auth.errors.unexpectedError');
+        const errorMessage =
+          error instanceof Error ? error.message : t('features.auth.errors.unexpectedError');
         toast.error(errorMessage);
         return { success: false, error: errorMessage };
       } finally {
         setIsSigningIn(false);
       }
     },
-    [requestMagicCode, t],
+    [requestMagicCode, t]
   );
 
   const resetPassword = useCallback(
@@ -99,14 +111,15 @@ export function useAuthSignIn(): UseAuthSignInReturn {
         }
         return { success: true };
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : t('features.auth.errors.unexpectedError');
+        const errorMessage =
+          error instanceof Error ? error.message : t('features.auth.errors.unexpectedError');
         toast.error(errorMessage);
         return { success: false, error: errorMessage };
       } finally {
         setIsSigningIn(false);
       }
     },
-    [storeResetPassword, t],
+    [storeResetPassword, t]
   );
 
   return { isSigningIn, signIn, sendMagicLink, resetPassword };

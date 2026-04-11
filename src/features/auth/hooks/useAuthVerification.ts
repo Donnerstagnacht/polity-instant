@@ -70,7 +70,7 @@ export function useAuthVerification(): UseAuthVerificationReturn {
         // Detect new user: created_at within the last 60 seconds means first-time signup
         const createdAt = new Date(user.created_at).getTime();
         const now = Date.now();
-        const isNewUser = now - createdAt < 60_000;
+        const isNewUser = now - createdAt < 300_000;
 
         return { success: true, isNewUser };
       } catch (error) {

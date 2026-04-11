@@ -21,23 +21,33 @@ export function AuthCallbackPage() {
         const code = searchParams.get('code');
 
         if (code) {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
-
-          if (error) {
-            throw error;
+          try {
+            const { error } = await supabase.auth.exchangeCodeForSession(code);
+            if (error) {
+              console.warn('Code exchange failed, falling back to session check:', error.message);
+            }
+          } catch (exchangeError) {
+            // PKCE code verifier can be lost during cross-domain redirects.
+            // Fall back to checking if the session was established via onAuthStateChange.
+            console.warn('Code exchange threw, falling back to session check:', exchangeError);
           }
         }
 
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+        // Try getSession first — it may already be set via onAuthStateChange / auto-detection
+        let user = (await supabase.auth.getUser()).data.user;
+
+        if (!user?.id) {
+          // Last resort: wait briefly for onAuthStateChange to propagate
+          await new Promise(resolve => setTimeout(resolve, 500));
+          user = (await supabase.auth.getUser()).data.user;
+        }
 
         if (!user?.id) {
           throw new Error(t('auth.callback.failed'));
         }
 
         const createdAt = new Date(user.created_at).getTime();
-        const isNewUser = Date.now() - createdAt < 60_000;
+        const isNewUser = Date.now() - createdAt < 300_000;
 
         if (isNewUser) {
           sessionStorage.setItem('polity_onboarding', 'true');
@@ -47,7 +57,7 @@ export function AuthCallbackPage() {
           navigate({ to: '/' });
         }
       } catch (error) {
-        console.error('Failed to complete Google auth:', error);
+        console.error('Failed to complete auth callback:', error);
 
         if (isActive) {
           toast.error(t('auth.callback.failed'));
