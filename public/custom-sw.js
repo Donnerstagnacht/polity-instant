@@ -32,8 +32,8 @@ self.addEventListener('push', (event) => {
   let notificationData = {
     title: 'Neue Benachrichtigung',
     body: 'Sie haben eine neue Nachricht',
-    icon: '/icons/icon-192x192.png',
-    badge: '/icons/icon-192x192.png',
+    icon: '/android-chrome-192x192.png',
+    badge: '/favicon-32x32.png',
     tag: 'notification',
     requireInteraction: false,
     data: {
